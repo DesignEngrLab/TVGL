@@ -1,0 +1,1108 @@
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : Matt Campbell
+// Created          : 02-27-2015
+//
+// Last Modified By : Matt Campbell
+// Last Modified On : 03-07-2015
+// ***********************************************************************
+// <copyright file="TessellatedSolid.cs" company="">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using MIConvexHull;
+using StarMathLib;
+
+namespace TVGL.Tessellation
+{
+    /// <summary>
+    ///     Class TessellatedSolid.
+    /// </summary>
+    public class TessellatedSolid
+    {
+        #region Fields and Properties
+
+        /// <summary>
+        ///     The _bounds
+        /// </summary>
+        private double[][] _bounds;
+
+        /// <summary>
+        ///     Gets the center.
+        /// </summary>
+        /// <value>The center.</value>
+        public double[] Center { get; private set; }
+
+        /// <summary>
+        ///     Gets the z maximum.
+        /// </summary>
+        /// <value>The z maximum.</value>
+        public double ZMax { get; private set; }
+
+        /// <summary>
+        ///     Gets the y maximum.
+        /// </summary>
+        /// <value>The y maximum.</value>
+        public double YMax { get; private set; }
+
+        /// <summary>
+        ///     Gets the x maximum.
+        /// </summary>
+        /// <value>The x maximum.</value>
+        public double XMax { get; private set; }
+
+        /// <summary>
+        ///     Gets the z minimum.
+        /// </summary>
+        /// <value>The z minimum.</value>
+        public double ZMin { get; private set; }
+
+        /// <summary>
+        ///     Gets the y minimum.
+        /// </summary>
+        /// <value>The y minimum.</value>
+        public double YMin { get; private set; }
+
+        /// <summary>
+        ///     Gets the x minimum.
+        /// </summary>
+        /// <value>The x minimum.</value>
+        public double XMin { get; private set; }
+
+        /// <summary>
+        ///     Gets the bounds.
+        /// </summary>
+        /// <value>The bounds.</value>
+        public double[][] Bounds
+        {
+            get
+            {
+                if (_bounds == null)
+                {
+                    _bounds = new double[2][];
+                    _bounds[0] = new[] { XMin, YMin, ZMin };
+                    _bounds[1] = new[] { XMax, YMax, ZMax };
+                }
+                return
+                    _bounds;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the volume.
+        /// </summary>
+        /// <value>The volume.</value>
+        public double Volume { get; private set; }
+
+        /// <summary>
+        ///     Gets the surface area.
+        /// </summary>
+        /// <value>The surface area.</value>
+        public double SurfaceArea { get; private set; }
+
+        /// <summary>
+        ///     The name of solid
+        /// </summary>
+        /// <value>The name.</value>
+        public string Name { get; set; }
+
+        /// <summary>
+        ///     Gets the faces.
+        /// </summary>
+        /// <value>The faces.</value>
+        public PolygonalFace[] Faces { get; private set; }
+
+        /// <summary>
+        ///     Gets the edges.
+        /// </summary>
+        /// <value>The edges.</value>
+        public Edge[] Edges { get; private set; }
+
+        /// <summary>
+        ///     Gets the vertices.
+        /// </summary>
+        /// <value>The vertices.</value>
+        public Vertex[] Vertices { get; private set; }
+
+        /// <summary>
+        ///     Gets the number of faces.
+        /// </summary>
+        /// <value>The number of faces.</value>
+        public int NumberOfFaces { get; private set; }
+
+        /// <summary>
+        ///     Gets the number of vertices.
+        /// </summary>
+        /// <value>The number of vertices.</value>
+        public int NumberOfVertices { get; private set; }
+
+        /// <summary>
+        ///     Gets the number of edges.
+        /// </summary>
+        /// <value>The number of edges.</value>
+        public int NumberOfEdges { get; private set; }
+
+
+        /// <summary>
+        ///     Gets the convex hull faces.
+        /// </summary>
+        /// <value>The convex hull faces.</value>
+        public PolygonalFace[] ConvexHullFaces { get; private set; }
+
+        /// <summary>
+        ///     Gets the convex hull edges.
+        /// </summary>
+        /// <value>The convex hull edges.</value>
+        public Edge[] ConvexHullEdges { get; private set; }
+
+        /// <summary>
+        ///     Gets the convex hull vertices.
+        /// </summary>
+        /// <value>The convex hull vertices.</value>
+        public Vertex[] ConvexHullVertices { get; private set; }
+
+
+        /// <summary>
+        /// The has uniform color
+        /// </summary>
+        public Boolean HasUniformColor = true;
+
+        /// <summary>
+        /// The solid color
+        /// </summary>
+        public Color SolidColor = new Color(Constants.DefaultColor);
+        #endregion
+
+        #region Constructors
+        /// <summary>
+        ///     Prevents a default instance of the <see cref="TessellatedSolid" /> class from being created.
+        /// </summary>
+        private TessellatedSolid()
+        {
+        }
+
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="normals">The normals.</param>
+        /// <param name="vertsPerFace">The verts per face.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="performInParallel">The perform in parallel.</param>
+        public TessellatedSolid(string name, List<double[]> normals, List<List<double[]>> vertsPerFace,
+            List<Color> colors, bool performInParallel = false)
+        {
+            List<int> indicesOfDuplicates = null;
+            var now = DateTime.Now;
+            Name = name;
+            List<List<int>> faceToVertexIndices = new List<List<int>>();
+            #region Parallel Approach
+
+            if (performInParallel)
+            {
+                /*** Tasks 1 & 2 ***/
+                /* Task 1 makes the faces and adds in the normals. */
+                var task1 = Task.Factory.StartNew(() => MakeFaces(normals));
+                /* Task 2 makes the Vertices, avoids duplicates and creates the FaceToVertexMatcher */
+                var task2 = Task.Factory.StartNew(() => MakeVertices(vertsPerFace, faceToVertexIndices, out indicesOfDuplicates));
+                Task.WaitAll(task1, task2);
+
+                /*** Tasks 3, 4 & 5 ***/
+                /* Task 3 Make the convex hull. Requires: 2 */
+                var task3 = Task.Factory.StartNew(CreateConvexHull);
+                /* Task 4 Remove any duplicate faces or faces that connect to the same vertex more than 
+                 * once, and then link the face to its vertices. Requires: 1, 2 */
+                var task4 = Task.Factory.StartNew(() => RemoveDuplicateFacesAndLinkToVertices(faceToVertexIndices));
+                /* Task 5 defines the bounding box and the center of the solid (by averaging the vertices). Requires 2 */
+                var task5 = Task.Factory.StartNew(DefineBoundingBoxAndCenter);
+                Task.WaitAll(task4, task5);
+
+                /*** Tasks 6, & 7 ***/
+                /* Task 6 now remove the duplicates found above. Requires 2 and 5 (well, 5 has to be done before we do this, but
+                 * 6 is not dependent on 5. */
+                var task6 = Task.Factory.StartNew(() => RemoveDuplicateVertices(indicesOfDuplicates));
+                /* Task 7 makes the edges. Requires 4 */
+                var task7 = Task.Factory.StartNew(MakeEdges);
+                /* Task 8 averages the vertices of the face to define the center. Requires 4 */
+                var task8 = Task.Factory.StartNew(() => DefineFaceCentersAndColors(colors));
+                Task.WaitAll(task3, task6, task7, task8);
+
+                /*** Tasks 8 & 9 ***/
+                /* Task 9 defines the edge vector and the length. Requires 6 */
+                var task9 = Task.Factory.StartNew(DefineEdgeVectorAndLengths);
+                /* Task 10 relates the Convex Hull results back to the objects. Requires 3, 6 */
+                var task10 = Task.Factory.StartNew(ConnectConvexHullToObjects);
+                Task.WaitAll(task10, task9);
+
+                /* Task 11 find the angle and concavity of each edge. Requires 9 */
+                var task11 = Task.Factory.StartNew(DefineEdgeAngles);
+                /* Task 12 find the areas of faces and the volume of the solid. Requires 9 */
+                var task12 = Task.Factory.StartNew(DefineVolumeAndAreas);
+                Task.WaitAll(task11);
+
+                /* Task 13 goes through the faces and, by examining the edge angles determines it curvature. 
+                 * Requires 11 */
+                var task13 = Task.Factory.StartNew(DefineFaceCurvature);
+                /* Task 14 goes through the vertices and  and, by examining the edge angles determines it curvature. 
+                 * Requires 11 */
+                var task14 = Task.Factory.StartNew(DefineVertexCurvature);
+                Task.WaitAll(task14, task12, task13);
+            }
+            #endregion
+            #region Series Approach
+
+            else
+            {
+                MakeFaces(normals);
+                MakeVertices(vertsPerFace, faceToVertexIndices, out indicesOfDuplicates);
+                CreateConvexHull();
+                RemoveDuplicateFacesAndLinkToVertices(faceToVertexIndices);
+                RemoveDuplicateVertices(indicesOfDuplicates);
+                DefineBoundingBoxAndCenter();
+                MakeEdges();
+                DefineFaceCentersAndColors(colors);
+                DefineEdgeVectorAndLengths();
+                ConnectConvexHullToObjects();
+                DefineEdgeAngles();
+                DefineVolumeAndAreas();
+                DefineFaceCurvature();
+                DefineVertexCurvature();
+            }
+
+            #endregion
+
+            Debug.WriteLine((DateTime.Now - now).ToString());
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="performInParallel">if set to <c>true</c> [perform in parallel].</param>
+        public TessellatedSolid(string name, List<double[]> vertices, List<List<int>> faceToVertexIndices,
+            List<Color> colors, bool performInParallel)
+        {
+            List<int> indicesOfDuplicates = null;
+            var now = DateTime.Now;
+            Name = name;
+
+            if (performInParallel)
+            {
+                /*** Task 1: make vertices ***/
+                MakeVertices(vertices);
+                /*** Tasks 2, 3, & 4 ***/
+                /* Task 3 Find all duplicate vertices. Requires: 1 */
+                var task2 = Task.Factory.StartNew(() => FindDuplicateVertices(out indicesOfDuplicates));
+                /* Task 3 Make the convex hull. Requires: 1 */
+                var task3 = Task.Factory.StartNew(CreateConvexHull);
+                /* Task 4 defines the bounding box and the center of the solid (by averaging the vertices). Requires 1 */
+                var task4 = Task.Factory.StartNew(DefineBoundingBoxAndCenter);
+                Task.WaitAll(task2);
+                /* Task 5  link the face to its vertices. Requires: 1, 2 */
+                var task5 = Task.Factory.StartNew(() => MakeFaces(faceToVertexIndices));
+                Task.WaitAll(task5);
+
+                /*** Tasks 6, & 7 ***/
+                /* Task 6 now remove the duplicates found above. Requires 2 and 5 (well, 5 has to be done before we do this, but
+                 * 6 is not dependent on 5. */
+                var task6 = Task.Factory.StartNew(() => RemoveDuplicateVertices(indicesOfDuplicates));
+                /* Task 7 makes the edges. Requires 4 */
+                var task7 = Task.Factory.StartNew(MakeEdges);
+                /* Task 8 averages the vertices of the face to define the center. Requires 4 */
+                var task8 = Task.Factory.StartNew(() => DefineFaceCentersAndColors(colors));
+                Task.WaitAll(task3, task4, task6, task7);
+
+                /*** Tasks 9 & 10 ***/
+                /* Task 9 defines the edge vector and the length. Requires 6 */
+                var task9 = Task.Factory.StartNew(DefineEdgeVectorAndLengths);
+                /* Task 10 relates the Convex Hull results back to the objects. Requires 3, 6 */
+                var task10 = Task.Factory.StartNew(ConnectConvexHullToObjects);
+                Task.WaitAll(task8, task9);
+
+                /* Task 11 find the angle and concavity of each edge. Requires 8 */
+                var task11 = Task.Factory.StartNew(DefineEdgeAngles);
+                /* Task 12 find the areas of faces and the volume of the solid. Requires 8 */
+                var task12 = Task.Factory.StartNew(DefineVolumeAndAreas);
+                Task.WaitAll(task10, task11);
+
+                /* Task 13 goes through the faces and, by examining the edge angles determines it curvature. 
+                 * Requires 11 */
+                var task13 = Task.Factory.StartNew(DefineFaceCurvature);
+                /* Task 13 goes through the vertices and  and, by examining the edge angles determines it curvature. 
+                 * Requires 11 */
+                var task14 = Task.Factory.StartNew(DefineVertexCurvature);
+                Task.WaitAll(task11, task12, task13, task14);
+            }
+            else
+            {
+                //1
+                MakeVertices(vertices);
+                //2
+                FindDuplicateVertices(out indicesOfDuplicates);
+                CreateConvexHull();
+                DefineBoundingBoxAndCenter();
+                //3
+                MakeFaces(faceToVertexIndices);
+                //4
+                RemoveDuplicateVertices(indicesOfDuplicates);
+                MakeEdges();
+                DefineFaceCentersAndColors(colors);
+                //5
+                DefineEdgeVectorAndLengths();
+                ConnectConvexHullToObjects();
+                DefineEdgeAngles();
+                DefineVolumeAndAreas();
+                DefineFaceCurvature();
+                DefineVertexCurvature();
+            }
+            Debug.WriteLine((DateTime.Now - now).ToString());
+        }
+
+
+        #endregion
+
+        #region Make many elements (called from constructors)
+        /// <summary>
+        /// Makes the faces.
+        /// </summary>
+        /// <param name="normals">The normals.</param>
+        private void MakeFaces(IList<double[]> normals)
+        {
+            NumberOfFaces = normals.Count;
+            Faces = new PolygonalFace[NumberOfFaces];
+            for (var i = 0; i < NumberOfFaces; i++)
+            {
+                /* the normal vector read in the from the file should already be a unit vector,
+                 * but just to be certain, and to increase the precision since most numbers in an
+                 * STL or similar file are only 10 characters or so (and that often includes E-001) */
+                var normal = normals[i].normalize();
+                if (normal.Any(double.IsNaN)) normal = new double[3];
+                Faces[i] = new PolygonalFace(normal);
+            }
+        }
+
+        private void MakeFaces(List<List<int>> faceToVertexIndices)
+        {
+            NumberOfFaces = faceToVertexIndices.Count;
+            var listOfFaces = new List<PolygonalFace>(NumberOfFaces);
+            for (var i = 0; i < NumberOfFaces; i++)
+            {
+                var badFace = false;
+                var vertexIndices = faceToVertexIndices[i];
+                var numVertices = vertexIndices.Count;
+                var vertices = new List<Vertex>();
+                for (int j = 0; j < numVertices; j++)
+                {
+                    if (vertices.Contains(Vertices[vertexIndices[j]]))
+                        badFace = true;
+                    vertices.Add(Vertices[vertexIndices[j]]);
+                }
+                if (!badFace)
+                    listOfFaces.Add(new PolygonalFace(vertices));
+            }
+            Faces = listOfFaces.ToArray();
+            NumberOfFaces = Faces.GetLength(0);
+        }
+        
+
+        /// <summary>
+        ///     Makes the edges.
+        /// </summary>
+        /// <exception cref="System.Exception">edge to same vertices.</exception>
+        private void MakeEdges()
+        {
+            NumberOfEdges = 3 * NumberOfFaces / 2;
+            var alreadyDefinedEdges = new Dictionary<int, Edge>();
+
+            for (var i = 0; i < NumberOfFaces; i++)
+            {
+                var face = Faces[i];
+                var lastIndex = face.Vertices.Count - 1;
+                for (var j = 0; j <= lastIndex; j++)
+                {
+                    var fromIndex = face.Vertices[j].IndexInList;
+                    var toIndex = (j == lastIndex)
+                        ? face.Vertices[0].IndexInList
+                        : face.Vertices[j + 1].IndexInList;
+
+                    if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+                    var checksum = (fromIndex < toIndex)
+                        ? fromIndex + (NumberOfVertices * toIndex)
+                        : toIndex + (NumberOfVertices * fromIndex);
+                    if (alreadyDefinedEdges.ContainsKey(checksum))
+                    {
+                        var edge = alreadyDefinedEdges[checksum];
+                        edge.OtherFace = Faces[i];
+                        Faces[i].Edges.Add(edge);
+                    }
+                    else
+                    {
+                        var edge = new Edge(Vertices[fromIndex], Vertices[toIndex], Faces[i], null);
+                        Faces[i].Edges.Add(edge);
+                        alreadyDefinedEdges.Add(checksum, edge);
+                    }
+                }
+            }
+            //var badEdges = new List<Edge>();
+            foreach (var edge in alreadyDefinedEdges.Values)
+                if (edge.OwnedFace == null || edge.OtherFace == null)
+                {
+                    // badEdges.Add(edge);
+                    edge.Curvature = CurvatureType.Undefined;
+                    edge.OwnedFace = edge.OtherFace = edge.OwnedFace ?? edge.OtherFace;
+                    Debug.WriteLine("Edge found with only face (face normal = " +
+                                    edge.OwnedFace.Normal.MakePrintString()
+                                    + ", between vertices " + edge.From.Position.MakePrintString() + " & " +
+                                    edge.To.Position.MakePrintString());
+                }
+            Edges = alreadyDefinedEdges.Values.ToArray();
+            NumberOfEdges = Edges.GetLength(0);
+        }
+
+        /// <summary>
+        /// Makes the vertices.
+        /// </summary>
+        /// <param name="vertsPerFace">The verts per face.</param>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="indicesToRemove">The indices to remove.</param>
+        private void MakeVertices(ICollection<List<double[]>> vertsPerFace,
+            List<List<int>> faceToVertexIndices, out List<int> indicesToRemove)
+        {
+            /* if all the faces are triangles and nothing was gone wrong,
+             * then we know the number of vertices is 2 more than half the number
+             * of faces. This comes from the Euler operator equation V - E + F = 2 */
+            var expectedNumberOfVertices = 2 + vertsPerFace.Count / 2;
+            /* vertexMatchingIndices will be used to speed up the linking of faces and edges to vertices
+             * it  preserves the order of vertsPerFace (as read in from the file), and indicates where
+             * you can find each vertex in the new array of vertices. This is essentially what is built in 
+             * the remainder of this method. */
+            var listOfVertices = new List<double[]>(expectedNumberOfVertices);
+            // we are not confident that NumberOfVertices will be correct,
+            //  so we start with a list and convert it to an array later.
+            var simpleCompareDict = new Dictionary<string, int>();
+            //in order to reduce compare times we use a string comparer and dictionary
+            foreach (var t in vertsPerFace)
+            {
+                var locationIndices = new List<int>(); // this will become a row in faceToVertexIndices
+                foreach (var vertex in t)
+                {
+                    /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
+                     * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
+                    var lookupString = vertex[0].ToString(Constants.LookUpStringFormat) + "|"
+                                       + vertex[1].ToString(Constants.LookUpStringFormat) + "|"
+                                       + vertex[2].ToString(Constants.LookUpStringFormat) + "|";
+                    if (simpleCompareDict.ContainsKey(lookupString))
+                        /* if it's in the dictionary, simply put the location in the locationIndices */
+                        locationIndices.Add(simpleCompareDict[lookupString]);
+                    else
+                    {
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
+                       * the position in the locationIndices. */
+                        var newIndex = listOfVertices.Count;
+                        listOfVertices.Add(vertex);
+                        simpleCompareDict.Add(lookupString, newIndex);
+                        locationIndices.Add(newIndex);
+                    }
+                }
+                faceToVertexIndices.Add(locationIndices);
+            }
+            MakeVertices(listOfVertices);
+            if (listOfVertices.Count > expectedNumberOfVertices)
+                indicesToRemove = RemoveNClosestVertices(listOfVertices.Count - expectedNumberOfVertices, simpleCompareDict);
+            else if (listOfVertices.Count < expectedNumberOfVertices)
+            {
+                Debug.WriteLine("expected number of vertices = " + expectedNumberOfVertices + "; actual = " + listOfVertices.Count);
+                indicesToRemove = new List<int>();
+            }
+            else indicesToRemove = new List<int>();    
+        }
+
+
+        /// <summary>
+        ///     Makes the vertices.
+        /// </summary>
+        /// <param name="listOfVertices">The list of vertices.</param>
+        private void MakeVertices(IList<double[]> listOfVertices)
+        {
+            NumberOfVertices = listOfVertices.Count;
+            Vertices = new Vertex[NumberOfVertices];
+            for (var i = 0; i < NumberOfVertices; i++)
+                Vertices[i] = new Vertex(listOfVertices[i], i);
+        }
+
+
+        #endregion
+
+        #region Define Additional Characteristics of Faces, Edges and Vertices
+
+        /// <summary>
+        ///     Defines the face centers.
+        /// </summary>
+        private void DefineFaceCentersAndColors(List<Color> colors)
+        {
+            HasUniformColor = true;
+            if (colors == null) SolidColor = new Color(Constants.DefaultColor);
+            else if (colors.Count == 1) SolidColor = new Color(Constants.DefaultColor);
+            else HasUniformColor = false;
+            for (int i = 0; i < Faces.Length; i++)
+            {
+                var face = Faces[i];
+                var centerX = face.Vertices.Average(v => v.X);
+                var centerY = face.Vertices.Average(v => v.Y);
+                var centerZ = face.Vertices.Average(v => v.Z);
+                face.Center = new[] { centerX, centerY, centerZ };
+                if (!HasUniformColor)
+                {
+                    var j = (i < colors.Count - 1) ? i : colors.Count - 1;
+                    face.color = colors[j];
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Defines the edge vector and lengths.
+        /// </summary>
+        private void DefineEdgeVectorAndLengths()
+        {
+            DefineEdgeVectorAndLengths(Edges);
+        }
+
+        /// <summary>
+        ///     Defines the edge vector and lengths.
+        /// </summary>
+        /// <param name="edges">The edges.</param>
+        private static void DefineEdgeVectorAndLengths(IEnumerable<Edge> edges)
+        {
+            foreach (var e in edges)
+            {
+                e.DefineVectorAndLength();
+            }
+        }
+
+        /// <summary>
+        ///     Defines the edge angles.
+        /// </summary>
+        private void DefineEdgeAngles()
+        {
+            DefineEdgeAngles(Edges);
+        }
+
+        /// <summary>
+        ///     Defines the edge angles.
+        /// </summary>
+        /// <param name="edges">The edges.</param>
+        private static void DefineEdgeAngles(IEnumerable<Edge> edges)
+        {
+            foreach (var e in edges)
+            {
+                /* this is a tricky function. What we need to do is take the dot-product of the normals.
+                 * which will give the cos(theta). Calling inverse cosine will result in a value from 0 to
+                 * pi, but is the edge convex or concave? It is convex if the crossproduct of the normals is 
+                 * in the same direction as the edge vector (dot product is positive). But we need to know 
+                 * which face-normal goes first in the cross product calculation as this will change the 
+                 * resulting direction. The one to go first is the one that "owns" the edge. What I mean by
+                 * own is that the from-to of the edge makes sense in the counter-clockwise prediction of 
+                 * the face normal. For one face the from-to will be incorrect (normal facing inwards) - 
+                 * in some geometry approaches this is solved by the concept of half-edges. Here we will 
+                 * just re-order the two faces referenced in the edge so that the first is the one that 
+                 * owns the edge...the face for which the direction makes sense, and the second face will 
+                 * need to reverse the edge vector to make it work out in a proper counter-clockwise loop 
+                 * for that face. */
+                if (e.OwnedFace == e.OtherFace) continue;
+                var nextOwnedFaceEdge = e.OwnedFace.Edges.FirstOrDefault(otherEdge => otherEdge.From.Equals(e.To));
+                double[] nextEdgeVector;
+                if (nextOwnedFaceEdge == null)
+                {
+                    nextOwnedFaceEdge = e.OwnedFace.Edges.First(otherEdge => otherEdge.To.Equals(e.To));
+                    nextEdgeVector = nextOwnedFaceEdge.Vector.multiply(-1);
+                }
+                else nextEdgeVector = nextOwnedFaceEdge.Vector;
+                var ownedFaceNormal = e.Vector.crossProduct(nextEdgeVector);
+                if (ownedFaceNormal.dotProduct(e.OwnedFace.Normal) < 0)
+                {
+                    /* then switch owned face and opposite face since the predicted normal
+                     * is in the wrong direction. When OwnedFace and OppositeFace were defined
+                     * it was arbitrary anyway - so this is another by-product of this method - 
+                     * correct the owned and opposite faces. */
+                    var temp = e.OwnedFace;
+                    e.OwnedFace = e.OtherFace;
+                    e.OtherFace = temp;
+                }
+                var dot = e.OwnedFace.Normal.dotProduct(e.OtherFace.Normal, 3);
+                if (dot > 1.0 || StarMath.IsPracticallySame(dot, 1.0))
+                {
+                    e.InternalAngle = Math.PI;
+                    e.Curvature = CurvatureType.SaddleOrFlat;
+                }
+                else
+                {
+                    var cross = e.OwnedFace.Normal.crossProduct(e.OtherFace.Normal);
+                    if (cross.dotProduct(e.Vector) < 0)
+                    {
+                        e.InternalAngle = Math.PI + Math.Acos(dot);
+                        e.Curvature = CurvatureType.Concave;
+                    }
+                    else
+                    {
+                        e.InternalAngle = Math.Acos(dot);
+                        e.Curvature = CurvatureType.Convex;
+                    }
+                }
+                //Debug.WriteLine("angle = " + (e.InternalAngle * (180 / Math.PI)).ToString() + "; " + e.SurfaceIs.ToString());
+            }
+        }
+
+        /// <summary>
+        ///     Defines the volume and areas.
+        /// </summary>
+        private void DefineVolumeAndAreas()
+        {
+            Volume = 0;
+            SurfaceArea = 0;
+            foreach (var face in Faces)
+            {
+                // error when one of these faces is still connected to a degenerate edge
+                face.Area = face.Edges[0].Vector.crossProduct(face.Edges[1].Vector).norm2() / 2;
+                SurfaceArea += face.Area;
+                /* the negative sign here is because the face normal points outward and the center is in the other direction, so
+                 * the dot-product is likely a negative value but the tetrahedron's volume should be added to the cumulative Volume */
+                Volume += face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(Center))) / 3;
+            }
+        }
+
+        /// <summary>
+        ///     Defines the bounding box and center.
+        /// </summary>
+        private void DefineBoundingBoxAndCenter()
+        {
+            XMax = double.NegativeInfinity;
+            YMax = double.NegativeInfinity;
+            ZMax = double.NegativeInfinity;
+            XMin = double.PositiveInfinity;
+            YMin = double.PositiveInfinity;
+            ZMin = double.PositiveInfinity;
+            double xSum = 0;
+            double ySum = 0;
+            double zSum = 0;
+            foreach (var v in Vertices)
+            {
+                xSum += v.Position[0];
+                ySum += v.Position[1];
+                zSum += v.Position[2];
+                if (XMax < v.Position[0]) XMax = v.Position[0];
+                if (YMax < v.Position[1]) YMax = v.Position[1];
+                if (ZMax < v.Position[2]) ZMax = v.Position[2];
+                if (XMin > v.Position[0]) XMin = v.Position[0];
+                if (YMin > v.Position[1]) YMin = v.Position[1];
+                if (ZMin > v.Position[2]) ZMin = v.Position[2];
+            }
+            Center = new[] { xSum / NumberOfVertices, ySum / NumberOfVertices, zSum / NumberOfVertices };
+        }
+        #endregion
+
+        #region Remove Bad or Duplicate elements
+        /// <summary>
+        ///     Removes the duplicate faces and link to vertices.
+        /// </summary>
+        private void RemoveDuplicateFacesAndLinkToVertices(List<List<int>> faceToVertexIndices)
+        {
+            var faceChecksum = new HashSet<long>();
+            var duplicates = new List<int>();
+            var numberOfDegenerate = 0;
+            var checksumMultiplier = new long[Constants.MaxNumberEdgesPerFace];
+            for (var j = 0; j < Constants.MaxNumberEdgesPerFace; j++)
+                checksumMultiplier[j] = (long)(Math.Pow(NumberOfVertices, j));
+            for (var i = 0; i < NumberOfFaces; i++)
+            {
+                long checksum = 0;
+                var orderedIndices = new List<int>(faceToVertexIndices[i].Select(index =>Vertices[index].IndexInList));
+                orderedIndices.Sort();
+                if (orderedIndices.Count != Constants.MaxNumberEdgesPerFace
+                    || ContainsDuplicateIndices(orderedIndices))
+                {
+                    duplicates.Add(i);
+                    numberOfDegenerate++;
+                    continue;
+                }
+                for (var j = 0; j < orderedIndices.Count; j++)
+                    checksum += orderedIndices[j] * checksumMultiplier[j];
+                if (faceChecksum.Contains(checksum)) duplicates.Add(i);
+                else
+                {
+                    faceChecksum.Add(checksum);
+                    foreach (var vertexMatchingIndex in faceToVertexIndices[i])
+                    {
+                        var v = Vertices[vertexMatchingIndex];
+                        Faces[i].Vertices.Add(v);
+                        v.Faces.Add(Faces[i]);
+                    }
+                }
+            }
+            if (duplicates.Count == 0) return;
+            Debug.WriteLine("Removing {0} duplicate faces and {1} degenerate faces.",
+                duplicates.Count - numberOfDegenerate, numberOfDegenerate);
+            var facesList = Faces.ToList();
+            for (var i = duplicates.Count - 1; i >= 0; i--)
+                facesList.RemoveAt(duplicates[i]);
+            Faces = facesList.ToArray();
+            NumberOfFaces = Faces.Count();
+        }
+
+        /// <summary>
+        ///     Duplicates the vertices.
+        /// </summary>
+        /// <param name="orderedIndices">The ordered indices.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private static bool ContainsDuplicateIndices(List<int> orderedIndices)
+        {
+            for (var i = 0; i < orderedIndices.Count - 1; i++)
+                if (orderedIndices[i] == orderedIndices[i + 1]) return true;
+            return false;
+        }
+
+        private List<int> RemoveNClosestVertices(int n, Dictionary<string, int> simpleCompareDict)
+        {
+            var sortedVerts = new SortedList<string, int>(simpleCompareDict);
+            var removeList = new SortedList<double, Tuple<int, int>>(new NoEqualSort());
+            var largestError = double.PositiveInfinity;
+            var numVerts = Vertices.GetLength(0);
+            for (int i = 1; i < numVerts; i++)
+            {
+                var pIndex0 = sortedVerts.Values[i - 1];
+                var pIndex1 = sortedVerts.Values[i];
+                var distance = Vertices[pIndex0].Position.norm2(Vertices[pIndex1].Position, true);
+                if (distance < largestError)
+                {
+                    removeList.Add(distance, new Tuple<int, int>(pIndex0, pIndex1));
+                    if (removeList.Count == n + 1)
+                    {
+                        removeList.RemoveAt(n);
+                        largestError = removeList.Keys[n - 1];
+                    }
+                }
+            }
+            foreach (var replace in removeList.Values)
+                Vertices[replace.Item1] = Vertices[replace.Item2];
+            return removeList.Values.Select(tuple => tuple.Item1).ToList();
+        }
+
+        private void FindDuplicateVertices(out List<int> indicesOfDuplicates)
+        {
+            indicesOfDuplicates = new List<int>();
+            /* this is similar to the STL reader, but it is important. Sometimes these
+             * other (better) formats still duplicate vertices. We don't want that. So,
+             * a similar dictionary-hashstring approach is used. */
+            // we are not confident that NumberOfVertices will be correct,
+            //  so we start with a list and convert it to an array later.
+            var simpleCompareDict = new Dictionary<string, int>();
+            //in order to reduce compare times we use a string comparer and dictionary
+            for (int i = 0; i < Vertices.Length; i++)
+            {
+                var coord = Vertices[i].Position;
+                var lookupString = coord[0].ToString(Constants.LookUpStringFormat) + "|"
+                                   + coord[1].ToString(Constants.LookUpStringFormat) + "|"
+                                   + coord[2].ToString(Constants.LookUpStringFormat) + "|";
+                if (simpleCompareDict.ContainsKey(lookupString))
+                {
+                    Vertices[i] = Vertices[simpleCompareDict[lookupString]];
+                    indicesOfDuplicates.Add(i);
+                }
+                else
+                    simpleCompareDict.Add(lookupString, i);
+            }
+            if (indicesOfDuplicates.Any())
+                Debug.WriteLine("expected number of vertices = " + NumberOfVertices + "; actual = " +
+                                    (NumberOfVertices - indicesOfDuplicates.Count));
+        }
+
+        private void RemoveDuplicateVertices(List<int> indicesOfDuplicates)
+        {
+            var offset = 0;
+            var numberOfDuplicates = indicesOfDuplicates.Count;
+            indicesOfDuplicates.Sort();
+            NumberOfVertices -= numberOfDuplicates;
+            var newVertices = new Vertex[NumberOfVertices];
+            for (int i = 0; i < NumberOfVertices; i++)
+            {
+                while (offset < numberOfDuplicates && (i + offset) == indicesOfDuplicates[offset])
+                    offset++;
+                var v = Vertices[i + offset];
+                v.IndexInList = i;
+                newVertices[i] = v;
+            }
+            Vertices = newVertices;
+        }
+
+        #endregion
+
+        #region the Copy Function
+
+        /// <summary>
+        ///     Copies this instance.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
+        public TessellatedSolid Copy()
+        {
+            var faces = new PolygonalFace[NumberOfFaces];
+            for (var i = 0; i < NumberOfFaces; i++)
+                faces[i] = Faces[i].Copy();
+            var vertices = new Vertex[NumberOfVertices];
+            for (var i = 0; i < NumberOfVertices; i++)
+                vertices[i] = Vertices[i].Copy();
+            var faceToVertexIndices = new List<List<int>>();
+            for (var fIndex = 0; fIndex < NumberOfFaces; fIndex++)
+            {
+                var thisFace = faces[fIndex];
+                var oldFace = Faces[fIndex];
+                var vertexIndices = new List<int>();
+                foreach (var oldVertex in oldFace.Vertices)
+                {
+                    var vIndex = oldVertex.IndexInList;
+                    vertexIndices.Add(vIndex);
+                    var thisVertex = vertices[vIndex];
+                    thisFace.Vertices.Add(thisVertex);
+                    thisVertex.Faces.Add(thisFace);
+                }
+                faceToVertexIndices.Add(vertexIndices);
+            }
+            var copy = new TessellatedSolid
+           {
+               SurfaceArea = SurfaceArea,
+               Center = (double[])Center.Clone(),
+               Faces = faces,
+               Vertices = vertices,
+               Name = Name,
+               NumberOfFaces = NumberOfFaces,
+               NumberOfVertices = NumberOfVertices,
+               Volume = Volume,
+               XMax = XMax,
+               XMin = XMin,
+               YMax = YMax,
+               YMin = YMin,
+               ZMax = ZMax,
+               ZMin = ZMin
+           };
+            copy.MakeEdges();
+            copy.CreateConvexHull();
+            CopyEdgeData(Edges, copy.Edges);
+            return copy;
+        }
+
+        void CopyEdgeData(Edge[] originalEdges, Edge[] copiedEdges)
+        {
+            for (int i = 0; i < NumberOfEdges; i++)
+            {
+                var origEdge = originalEdges[i];
+                var copiedEdge = copiedEdges[i];
+                copiedEdge.InternalAngle = origEdge.InternalAngle;
+                copiedEdge.Curvature = origEdge.Curvature;
+                copiedEdge.PartofConvexHull = origEdge.PartofConvexHull;
+                copiedEdge.Length = origEdge.Length;
+                copiedEdge.Vector = (double[])origEdge.Vector.Clone();
+            }
+        }
+
+        #endregion
+
+        #region Convex hull and curvatures
+
+        /// <summary>
+        ///     Defines the vertex curvature.
+        /// </summary>
+        private void DefineVertexCurvature()
+        {
+            foreach (var v in Vertices)
+            {
+                if (v.Edges.Any(e => e.Curvature == CurvatureType.Undefined))
+                    v.EdgeCurvature = CurvatureType.Undefined;
+                else if (v.Edges.All(e => e.Curvature == CurvatureType.SaddleOrFlat))
+                    v.EdgeCurvature = CurvatureType.SaddleOrFlat;
+                else if (v.Edges.Any(e => e.Curvature != CurvatureType.Convex))
+                    v.EdgeCurvature = CurvatureType.Concave;
+                else if (v.Edges.Any(e => e.Curvature != CurvatureType.Concave))
+                    v.EdgeCurvature = CurvatureType.Convex;
+                else v.EdgeCurvature = CurvatureType.SaddleOrFlat;
+            }
+        }
+
+        /// <summary>
+        ///     Connects the convex hull to objects.
+        /// </summary>
+        private void ConnectConvexHullToObjects()
+        {
+            foreach (var cvxHullPt in ConvexHullVertices)
+                cvxHullPt.PartofConvexHull = true;
+            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartofConvexHull)))
+            {
+                face.PartofConvexHull = true;
+                foreach (var e in face.Edges)
+                    e.PartofConvexHull = true;
+            }
+        }
+
+        /// <summary>
+        ///     Creates the convex hull.
+        /// </summary>
+        private void CreateConvexHull()
+        {
+            var convexHull = ConvexHull.Create<Vertex, DefaultConvexFace<Vertex>>(Vertices);
+            ConvexHullVertices = convexHull.Points.ToArray();
+            var numCvxFaces = convexHull.Faces.Count();
+            ConvexHullFaces = new PolygonalFace[numCvxFaces];
+            ConvexHullEdges = new Edge[3 * numCvxFaces / 2];
+            var faceIndex = 0;
+            var edgeIndex = 0;
+            foreach (var cvxFace in convexHull.Faces)
+            {
+                var newFace = new PolygonalFace(cvxFace.Normal) { Vertices = cvxFace.Vertices.ToList() };
+                foreach (var v in newFace.Vertices)
+                    v.Faces.Add(newFace);
+                ConvexHullFaces[faceIndex++] = newFace;
+            }
+            faceIndex = 0;
+            foreach (var cvxFace in convexHull.Faces)
+            {
+                var newFace = ConvexHullFaces[faceIndex++];
+                for (var j = 0; j < cvxFace.Adjacency.GetLength(0); j++)
+                {
+                    var adjacentOldFace = cvxFace.Adjacency[j];
+                    if (newFace.Edges.Count <= j || newFace.Edges[j] == null)
+                    {
+                        var adjFaceIndex = convexHull.Faces.FindIndex(adjacentOldFace);
+                        var adjFace = ConvexHullFaces[adjFaceIndex];
+                        var sharedVerts = newFace.Vertices.Intersect(adjacentOldFace.Vertices).ToList();
+                        var newEdge = new Edge(sharedVerts[0], sharedVerts[1], newFace, adjFace);
+                        while (newFace.Edges.Count <= j) newFace.Edges.Add(null);
+                        newFace.Edges[j] = newEdge;
+                        var k = adjacentOldFace.Adjacency.FindIndex(cvxFace);
+                        while (adjFace.Edges.Count <= k) adjFace.Edges.Add(null);
+                        adjFace.Edges[k] = newEdge;
+                        ConvexHullEdges[edgeIndex++] = newEdge;
+                    }
+                }
+            }
+            DefineEdgeVectorAndLengths(ConvexHullEdges);
+            DefineEdgeAngles(ConvexHullEdges);
+        }
+
+
+        /// <summary>
+        ///     Defines the face curvature. Depends on DefineEdgeAngle
+        /// </summary>
+        private void DefineFaceCurvature()
+        {
+            foreach (var face in Faces)
+            {
+                if (face.Edges.Any(e => e.Curvature == CurvatureType.Undefined))
+                    face.Curvature = CurvatureType.Undefined;
+                else if (face.Edges.All(e => e.Curvature != CurvatureType.Concave))
+                    face.Curvature = CurvatureType.Convex;
+                else if (face.Edges.All(e => e.Curvature != CurvatureType.Convex))
+                    face.Curvature = CurvatureType.Concave;
+                else face.Curvature = CurvatureType.SaddleOrFlat;
+            }
+        }
+
+        #endregion
+        #region Add or Remove Items
+        #region Vertices - the important thing about these is updating the IndexInList property of the vertices
+        internal void AddVertex(Vertex newVertex)
+        {
+            var newVertices = new Vertex[NumberOfVertices + 1];
+            for (int i = 0; i < NumberOfVertices; i++)
+                newVertices[i] = Vertices[i];
+            newVertices[NumberOfVertices] = newVertex;
+            newVertex.IndexInList = NumberOfVertices;
+            Vertices = newVertices;
+            NumberOfVertices++;
+        }
+
+        internal void RemoveVertex(Vertex removeVertex)
+        {
+            RemoveVertex(Vertices.FindIndex(removeVertex));
+        }
+
+        internal void RemoveVertex(int removeVIndex)
+        {
+            NumberOfVertices--;
+            var newVertices = new Vertex[NumberOfVertices];
+            for (int i = 0; i < removeVIndex; i++)
+                newVertices[i] = Vertices[i];
+            for (int i = removeVIndex; i < NumberOfVertices; i++)
+            {
+                var v = Vertices[i + 1];
+                v.IndexInList--;
+                newVertices[i] = v;
+            }
+            Vertices = newVertices;
+        }
+        #endregion
+        #region Faces
+        internal void AddFace(PolygonalFace newFace)
+        {
+            var newFaces = new PolygonalFace[NumberOfFaces + 1];
+            for (int i = 0; i < NumberOfFaces; i++)
+                newFaces[i] = Faces[i];
+            newFaces[NumberOfFaces] = newFace;
+            Faces = newFaces;
+            NumberOfFaces++;
+        }
+
+        internal void RemoveFace(PolygonalFace removeFace)
+        {
+            RemoveFace(Faces.FindIndex(removeFace));
+        }
+
+        internal void RemoveFace(int removeFaceIndex)
+        {
+            NumberOfFaces--;
+            var newFaces = new PolygonalFace[NumberOfFaces];
+            for (int i = 0; i < removeFaceIndex; i++)
+                newFaces[i] = Faces[i];
+            for (int i = removeFaceIndex; i < NumberOfFaces; i++)
+                newFaces[i] = Faces[i + 1];
+            Faces = newFaces;
+        }
+        #endregion
+        #region Edges
+        internal void AddEdge(Edge newEdge)
+        {
+            var newEdges = new Edge[NumberOfEdges + 1];
+            for (int i = 0; i < NumberOfEdges; i++)
+                newEdges[i] = Edges[i];
+            newEdges[NumberOfEdges] = newEdge;
+            Edges = newEdges;
+            NumberOfEdges++;
+        }
+
+        internal void RemoveEdge(Edge removeEdge)
+        {
+            RemoveEdge(Edges.FindIndex(removeEdge));
+        }
+
+        internal void RemoveEdge(int removeEdgeIndex)
+        {
+            NumberOfEdges--;
+            var newEdges = new Edge[NumberOfEdges];
+            for (int i = 0; i < removeEdgeIndex; i++)
+                newEdges[i] = Edges[i];
+            for (int i = removeEdgeIndex; i < NumberOfEdges; i++)
+                newEdges[i] = Edges[i + 1];
+            Edges = newEdges;
+        }
+        #endregion
+
+        #endregion
+    }
+}

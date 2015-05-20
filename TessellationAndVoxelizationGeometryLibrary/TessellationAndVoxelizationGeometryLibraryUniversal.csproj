@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <MinimumVisualStudioVersion>10.0</MinimumVisualStudioVersion>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E3489019-D590-46A8-B2C2-E3481E8DB77C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>TVGL</RootNamespace>
+    <AssemblyName>TessellationAndVoxelizationGeometryLibrary</AssemblyName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <TargetFrameworkProfile>Profile158</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Boolean Operations\ContactData.cs" />
+    <Compile Include="Boolean Operations\Slice.cs" />
+    <Compile Include="InputOutput Operations\3mf.classes.cs" />
+    <Compile Include="InputOutput Operations\amf.classes.cs" />
+    <Compile Include="InputOutput Operations\OFFFileData.cs" />
+    <Compile Include="InputOutput Operations\AMFFileData.cs" />
+    <Compile Include="ListFunctions.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Primitive Surfaces\Torus.cs" />
+    <Compile Include="3DLineFunctions.cs" />
+    <Compile Include="Colors.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="Primitive Surfaces\DenseRegion.cs" />
+    <Compile Include="InputOutput Operations\IOFunctions.cs" />
+    <Compile Include="InputOutput Operations\STLFileData.cs" />
+    <Compile Include="Primitive Surfaces\Cone.cs" />
+    <Compile Include="Primitive Surfaces\Cylinder.cs" />
+    <Compile Include="Primitive Surfaces\Flat.cs" />
+    <Compile Include="Primitive Surfaces\Sphere.cs" />
+    <Compile Include="Primitive Surfaces\PrimitiveSurface.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Enclosure Operations\BoundingBox.cs" />
+    <Compile Include="Enclosure Operations\ConvexHull2D.cs" />
+    <Compile Include="Enclosure Operations\MinimumEnclosure.cs" />
+    <Compile Include="SortedList.cs" />
+    <Compile Include="Tessellation\Edge.cs" />
+    <Compile Include="Tessellation\PolygonalFace.cs" />
+    <Compile Include="Tessellation\TessellatedSolid.cs" />
+    <Compile Include="Tessellation\Vertex.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MIConvexHull">
+      <HintPath>..\packages\MIConvexHull.1.0.10.1021\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+    </Reference>
+    <Reference Include="StarMath">
+      <HintPath>..\packages\StarMath.2.0.15.0217\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <EmbeddedResource Include="Resources\NewEdgeRules.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\NewFaRules.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="StarMath.XML" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
