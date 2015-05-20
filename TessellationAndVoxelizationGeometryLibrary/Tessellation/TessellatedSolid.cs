@@ -19,12 +19,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using MIConvexHull;
 using StarMathLib;
-
+                             
 namespace TVGL.Tessellation
-{
+{        
+    /// <tags>help</tags>             
     /// <summary>
     ///     Class TessellatedSolid.
     /// </summary>
+    /// <remarks>This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid, and
+    /// all interesting operations work on the TessellatedSolid.</remarks>
     public class TessellatedSolid
     {
         #region Fields and Properties

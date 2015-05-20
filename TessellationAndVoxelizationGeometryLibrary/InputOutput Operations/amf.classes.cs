@@ -13,7 +13,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Object.
     /// </summary>
+#if help
+    internal class AMF_Object
+#else
     public class AMF_Object
+#endif
     {
         /// <summary>
         ///     The identifier
@@ -29,7 +33,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Mesh.
     /// </summary>
+#if help
+    internal class AMF_Mesh
+#else                   
     public class AMF_Mesh
+#endif
     {
         /// <summary>
         ///     The vertices
@@ -45,7 +53,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Vertices.
     /// </summary>
+ #if help
+    internal class AMF_Vertices
+#else                   
     public class AMF_Vertices
+#endif  
     {
         /// <summary>
         ///     The edges
@@ -70,7 +82,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Triangle.
     /// </summary>
+  #if help
+    internal class AMF_Triangle
+#else                   
     public class AMF_Triangle
+#endif   
     {
         /// <summary>
         ///     The color
@@ -110,7 +126,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Color.
     /// </summary>
+  #if help
+    internal class AMF_Color
+#else                   
     public class AMF_Color
+#endif    
     {
         /// <summary>
         ///     a
@@ -136,7 +156,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Volume.
     /// </summary>
+  #if help
+    internal class AMF_Volume
+#else                   
     public class AMF_Volume
+#endif   
     {
         /// <summary>
         ///     The color
@@ -175,7 +199,11 @@ namespace amf
     /// <summary>
     ///     Enum AMF_VolumeType
     /// </summary>
+  #if help
+    internal enum AMF_VolumeType
+#else                   
     public enum AMF_VolumeType
+#endif  
     {
         /// <summary>
         ///     The object
@@ -191,7 +219,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Edge.
     /// </summary>
+  #if help
+    internal class AMF_Edge
+#else                   
     public class AMF_Edge
+#endif   
     {
         /// <summary>
         ///     The DX1
@@ -237,7 +269,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Normal.
     /// </summary>
+  #if help
+    internal class AMF_Normal
+#else                   
     public class AMF_Normal
+#endif
     {
         /// <summary>
         ///     The nx
@@ -258,7 +294,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Coordinates.
     /// </summary>
+  #if help
+    internal class AMF_Coordinates
+#else                   
     public class AMF_Coordinates
+#endif
     {
         /// <summary>
         ///     The x
@@ -288,7 +328,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Vertex.
     /// </summary>
+   #if help
+    internal class AMF_Vertex
+#else                   
     public class AMF_Vertex
+#endif  
     {
         /// <summary>
         ///     The coordinates
@@ -300,7 +344,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Constellation.
     /// </summary>
+    #if help
+    internal class AMF_Constellation
+#else                   
     public class AMF_Constellation
+#endif 
     {
         /// <summary>
         ///     The identifier
@@ -324,7 +372,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Instance.
     /// </summary>
+   #if help
+    internal class AMF_Instance
+#else                   
     public class AMF_Instance
+#endif 
     {
         /// <summary>
         ///     The deltax
@@ -395,7 +447,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Texture.
     /// </summary>
+   #if help
+    internal class AMF_Texture
+#else                   
     public class AMF_Texture
+#endif  
     {
         /// <summary>
         ///     The depth
@@ -436,7 +492,11 @@ namespace amf
     /// <summary>
     ///     Enum AMF_TextureType
     /// </summary>
+  #if help
+    internal enum AMF_TextureType
+#else
     public enum AMF_TextureType
+#endif    
     {
         /// <summary>
         ///     The grayscale
@@ -447,7 +507,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Composite.
     /// </summary>
+   #if help
+    internal class AMF_Composite
+#else                   
     public class AMF_Composite
+#endif     
     {
         /// <summary>
         ///     The materialid
@@ -463,7 +527,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Material.
     /// </summary>
+  #if help
+    internal class AMF_Material
+#else                   
     public class AMF_Material
+#endif   
     {
         /// <summary>
         ///     The composite
@@ -493,7 +561,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_Metadata.
     /// </summary>
+   #if help
+    internal class AMF_Metadata
+#else                   
     public class AMF_Metadata
+#endif    
     {
         /// <summary>
         ///     The type
@@ -509,7 +581,11 @@ namespace amf
     /// <summary>
     ///     Class AMF_TexMap.
     /// </summary>
+ #if help
+    internal class AMF_TexMap
+#else                   
     public class AMF_TexMap
+#endif   
     {
         /// <summary>
         ///     The atexid
@@ -595,7 +671,11 @@ namespace amf
     /// <summary>
     ///     Enum AMF_Unit
     /// </summary>
+  #if help
+    internal enum AMF_Unit
+#else
     public enum AMF_Unit
+#endif     
     {
         /// <summary>
         ///     The inch

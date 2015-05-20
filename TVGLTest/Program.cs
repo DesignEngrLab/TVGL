@@ -27,7 +27,7 @@ namespace TVGL_Test
           "../../../TestFiles/Beam_Clean.STL",
         "../../../TestFiles/piston.stl",
         "../../../TestFiles/Z682.stl",   
-        "../../../TestFiles/85408.stl",
+       // "../../../TestFiles/85408.stl",
         "../../../TestFiles/sth2.stl",
            "../../../TestFiles/pump.stl", 
          "../../../TestFiles/bradley.stl",

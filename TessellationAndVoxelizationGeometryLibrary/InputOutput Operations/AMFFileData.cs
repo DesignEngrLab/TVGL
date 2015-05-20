@@ -20,7 +20,11 @@ namespace TVGL.IOFunctions
     ///     Class AMFFileData.
     /// </summary>
     [XmlRoot("amf")]
+     #if help
+    internal class AMFFileData : IO
+#else                   
     public class AMFFileData : IO
+#endif
     {
         /// <summary>
         ///     Initializes a new instance of the <see cref="AMFFileData" /> class.

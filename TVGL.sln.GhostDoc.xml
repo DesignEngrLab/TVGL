@@ -17,25 +17,28 @@
     <HelpFileName>TVGL</HelpFileName>
     <ImageFolderPath />
     <HtmlFormats>
-      <HtmlHelp>true</HtmlHelp>
+      <HtmlHelp>false</HtmlHelp>
       <MSHelpViewer>false</MSHelpViewer>
       <MSHelp2>false</MSHelp2>
-      <Website>false</Website>
+      <Website>true</Website>
     </HtmlFormats>
     <IncludeScopes>
       <Public>true</Public>
       <Internal>false</Internal>
       <Protected>false</Protected>
       <Private>false</Private>
-      <Inherited>true</Inherited>
-      <InheritedFromReferences>true</InheritedFromReferences>
+      <Inherited>false</Inherited>
+      <InheritedFromReferences>false</InheritedFromReferences>
       <EnableTags>false</EnableTags>
-      <TagList />
+      <TagList>help</TagList>
     </IncludeScopes>
     <ResolveCrefLinks>true</ResolveCrefLinks>
     <HeaderText />
     <FooterText />
-    <SelectedProjects />
+    <SelectedProjects>
+      <SelectedProject>TessellationAndVoxelizationGeometryLibraryUniversal</SelectedProject>
+      <SelectedProject>TVGL Helix Presenter</SelectedProject>
+    </SelectedProjects>
   </HelpConfiguration>
 </HelpConfigurations>
 </GhostDoc>

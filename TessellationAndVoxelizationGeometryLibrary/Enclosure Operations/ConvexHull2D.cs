@@ -22,7 +22,7 @@ namespace TVGL
 {
     /// <summary>
     /// The MinimumEnclosure class includes static functions for defining smallest enclosures for a 
-    /// tesselated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
+    /// tessellated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
     /// </summary>
     public static partial class MinimumEnclosure
     {
@@ -43,7 +43,7 @@ namespace TVGL
         }
 
         /// <summary>                   
-        /// Returns the 2D convex hull for the x & y values of the vertices - ignoring their z coordinate. This is essentially
+        /// Returns the 2D convex hull for the x and y values of the vertices - ignoring their z coordinate. This is essentially
         /// called by the other overload of "ConvexHull2D".
         /// </summary>
         /// <param name="origVertices">The original vertices.</param>

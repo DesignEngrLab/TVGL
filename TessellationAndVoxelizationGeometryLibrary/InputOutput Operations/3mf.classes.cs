@@ -7,7 +7,6 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -17,7 +16,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Model.
     /// </summary>
+   #if help
     internal class CT_Model
+#else
+    public class CT_Model
+#endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Model"/> class.
@@ -68,7 +71,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Metadata.
     /// </summary>
+    #if help
+    internal class CT_Metadata
+#else
     public class CT_Metadata
+#endif 
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Metadata"/> class.
@@ -95,7 +102,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Item.
     /// </summary>
+     #if help
+    internal class CT_Item
+#else
     public class CT_Item
+#endif
     {
         /// <summary>
         /// Gets or sets the objectid.
@@ -117,7 +128,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Build.
     /// </summary>
+     #if help
+    internal class CT_Build
+#else
     public class CT_Build
+#endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Build"/> class.
@@ -137,7 +152,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Components.
     /// </summary>
+     #if help
+    internal class CT_Components
+#else
     public class CT_Components
+#endif 
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Components"/> class.
@@ -157,7 +176,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Component.
     /// </summary>
+     #if help
+    internal class CT_Component
+#else
     public class CT_Component
+#endif  
     {
         /// <summary>
         /// Gets or sets the objectid.
@@ -174,7 +197,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Triangle.
     /// </summary>
+   #if help
+    internal class CT_Triangle
+#else
     public class CT_Triangle
+#endif     
     {
         /// <summary>
         /// Gets or sets the v1.
@@ -216,7 +243,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Vertex.
     /// </summary>
+   #if help
+    internal class CT_Vertex
+#else
     public class CT_Vertex
+#endif 
     {
         /// <summary>
         /// Gets or sets the x.
@@ -238,7 +269,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Mesh.
     /// </summary>
+   #if help
+    internal class CT_Mesh
+#else
     public class CT_Mesh
+#endif  
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Mesh"/> class.
@@ -267,7 +302,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Object.
     /// </summary>
+   #if help
+    internal class CT_Object
+#else
     public class CT_Object
+#endif 
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Object"/> class.
@@ -325,7 +364,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Enum ST_ObjectType
     /// </summary>
+    #if help
+    internal enum ST_ObjectType
+#else
     public enum ST_ObjectType
+#endif    
     {
         /// <summary>
         /// The model
@@ -346,7 +389,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Base.
     /// </summary>
+   #if help
+    internal class CT_Base
+#else
     public class CT_Base
+#endif
     {
         /// <summary>
         /// Gets or sets the name.
@@ -363,7 +410,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_BaseMaterials.
     /// </summary>
+    #if help
+    internal class CT_BaseMaterials
+#else
     public class CT_BaseMaterials
+#endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_BaseMaterials"/> class.
@@ -388,7 +439,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Resources.
     /// </summary>
+    #if help
+    internal class CT_Resources
+#else
     public class CT_Resources
+#endif   
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Resources"/> class.
@@ -414,7 +469,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Enum ST_Unit
     /// </summary>
+    #if help
+    internal enum ST_Unit
+#else
     public enum ST_Unit
+#endif
     {
         /// <summary>
         /// The micron
@@ -450,7 +509,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Vertices.
     /// </summary>
+    #if help
+    internal class CT_Vertices
+#else
     public class CT_Vertices
+#endif
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Vertices"/> class.
@@ -470,7 +533,11 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Triangles.
     /// </summary>
+    #if help
+    internal class CT_Triangles
+#else
     public class CT_Triangles
+#endif  
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CT_Triangles"/> class.
