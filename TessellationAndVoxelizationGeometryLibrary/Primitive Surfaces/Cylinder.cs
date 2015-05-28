@@ -20,7 +20,7 @@ using TVGL.Tessellation;
 namespace TVGL
 {
     /// <summary>
-    /// Class Cylinder.
+    /// The class for Cylinder primitives.
     /// </summary>
     public class Cylinder : PrimitiveSurface
     {

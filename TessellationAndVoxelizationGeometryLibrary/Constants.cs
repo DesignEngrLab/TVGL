@@ -60,7 +60,7 @@ namespace TVGL
         /// <summary>
         ///     The look up string format
         /// </summary>
-        public const string LookUpStringFormat = "F12"; // "e8";
+        public const string LookUpStringFormat = "F16";
 
         /// <summary>
         ///     The minimum probability for primitive classifier

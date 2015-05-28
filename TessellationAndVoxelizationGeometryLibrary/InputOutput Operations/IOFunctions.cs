@@ -24,14 +24,16 @@ using TVGL.Tessellation;
 namespace TVGL.IOFunctions
 {
     /// <summary>
-    ///     Class IO.
+    ///  The IO or input/output class contains static functions for saving and loading files in common formats.
+    ///  Note that as a Portable class library, these IO functions cannot interact with your file system. In order
+    ///  to load or save, the filename is not enough. One needs to provide the stream. 
     /// </summary>
     public class IO
     {
         #region Open/Load/Read
 
         /// <summary>
-        ///     Opens the specified s.
+        ///     Opens the specified stream, s. Note that as a Portable class library
         /// </summary>
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>

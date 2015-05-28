@@ -8,7 +8,7 @@ using TVGL.Tessellation;
 namespace TVGL
 {
     /// <summary>
-    /// Class Cone.
+    /// The class for Cone primitives.
     /// </summary>
     public class Cone : PrimitiveSurface
     {
