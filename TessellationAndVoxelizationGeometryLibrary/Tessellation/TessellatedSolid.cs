@@ -19,9 +19,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using MIConvexHull;
 using StarMathLib;
-                             
+
 namespace TVGL.Tessellation
-{        
+{
     /// <tags>help</tags>             
     /// <summary>
     ///     Class TessellatedSolid.
@@ -231,25 +231,20 @@ namespace TVGL.Tessellation
                 /*** Tasks 6, & 7 ***/
                 /* Task 6 now remove the duplicates found above. Requires 2 and 5 (well, 5 has to be done before we do this, but
                  * 6 is not dependent on 5. */
-                var task6 = Task.Factory.StartNew(() => RemoveDuplicateVertices(indicesOfDuplicates));
+                var task6 = Task.Factory.StartNew(() => RemoveVertices(indicesOfDuplicates));
                 /* Task 7 makes the edges. Requires 4 */
                 var task7 = Task.Factory.StartNew(MakeEdges);
                 /* Task 8 averages the vertices of the face to define the center. Requires 4 */
                 var task8 = Task.Factory.StartNew(() => DefineFaceCentersAndColors(colors));
                 Task.WaitAll(task3, task6, task7, task8);
 
-                /*** Tasks 8 & 9 ***/
-                /* Task 9 defines the edge vector and the length. Requires 6 */
-                var task9 = Task.Factory.StartNew(DefineEdgeVectorAndLengths);
+                /*** Tasks 8 & 9 ***/                                   
+                /* Task 9 find the areas of faces and the volume of the solid. Requires 9 */
+                var task9 = Task.Factory.StartNew(DefineVolumeAndAreas);
                 /* Task 10 relates the Convex Hull results back to the objects. Requires 3, 6 */
                 var task10 = Task.Factory.StartNew(ConnectConvexHullToObjects);
                 Task.WaitAll(task10, task9);
 
-                /* Task 11 find the angle and concavity of each edge. Requires 9 */
-                var task11 = Task.Factory.StartNew(DefineEdgeAngles);
-                /* Task 12 find the areas of faces and the volume of the solid. Requires 9 */
-                var task12 = Task.Factory.StartNew(DefineVolumeAndAreas);
-                Task.WaitAll(task11);
 
                 /* Task 13 goes through the faces and, by examining the edge angles determines it curvature. 
                  * Requires 11 */
@@ -257,7 +252,7 @@ namespace TVGL.Tessellation
                 /* Task 14 goes through the vertices and  and, by examining the edge angles determines it curvature. 
                  * Requires 11 */
                 var task14 = Task.Factory.StartNew(DefineVertexCurvature);
-                Task.WaitAll(task14, task12, task13);
+                Task.WaitAll(task14,  task13);
             }
             #endregion
             #region Series Approach
@@ -268,13 +263,11 @@ namespace TVGL.Tessellation
                 MakeVertices(vertsPerFace, faceToVertexIndices, out indicesOfDuplicates);
                 CreateConvexHull();
                 RemoveDuplicateFacesAndLinkToVertices(faceToVertexIndices);
-                RemoveDuplicateVertices(indicesOfDuplicates);
+                RemoveVertices(indicesOfDuplicates);
                 DefineBoundingBoxAndCenter();
                 MakeEdges();
                 DefineFaceCentersAndColors(colors);
-                DefineEdgeVectorAndLengths();
                 ConnectConvexHullToObjects();
-                DefineEdgeAngles();
                 DefineVolumeAndAreas();
                 DefineFaceCurvature();
                 DefineVertexCurvature();
@@ -319,25 +312,20 @@ namespace TVGL.Tessellation
                 /*** Tasks 6, & 7 ***/
                 /* Task 6 now remove the duplicates found above. Requires 2 and 5 (well, 5 has to be done before we do this, but
                  * 6 is not dependent on 5. */
-                var task6 = Task.Factory.StartNew(() => RemoveDuplicateVertices(indicesOfDuplicates));
+                var task6 = Task.Factory.StartNew(() => RemoveVertices(indicesOfDuplicates));
                 /* Task 7 makes the edges. Requires 4 */
                 var task7 = Task.Factory.StartNew(MakeEdges);
                 /* Task 8 averages the vertices of the face to define the center. Requires 4 */
                 var task8 = Task.Factory.StartNew(() => DefineFaceCentersAndColors(colors));
                 Task.WaitAll(task3, task4, task6, task7);
 
-                /*** Tasks 9 & 10 ***/
-                /* Task 9 defines the edge vector and the length. Requires 6 */
-                var task9 = Task.Factory.StartNew(DefineEdgeVectorAndLengths);
+                /*** Tasks 9 & 10 ***/                                           
+                /* Task 9 find the areas of faces and the volume of the solid. Requires 8 */
+                var task9 = Task.Factory.StartNew(DefineVolumeAndAreas);
                 /* Task 10 relates the Convex Hull results back to the objects. Requires 3, 6 */
                 var task10 = Task.Factory.StartNew(ConnectConvexHullToObjects);
                 Task.WaitAll(task8, task9);
 
-                /* Task 11 find the angle and concavity of each edge. Requires 8 */
-                var task11 = Task.Factory.StartNew(DefineEdgeAngles);
-                /* Task 12 find the areas of faces and the volume of the solid. Requires 8 */
-                var task12 = Task.Factory.StartNew(DefineVolumeAndAreas);
-                Task.WaitAll(task10, task11);
 
                 /* Task 13 goes through the faces and, by examining the edge angles determines it curvature. 
                  * Requires 11 */
@@ -345,7 +333,7 @@ namespace TVGL.Tessellation
                 /* Task 13 goes through the vertices and  and, by examining the edge angles determines it curvature. 
                  * Requires 11 */
                 var task14 = Task.Factory.StartNew(DefineVertexCurvature);
-                Task.WaitAll(task11, task12, task13, task14);
+                Task.WaitAll( task13, task14);
             }
             else
             {
@@ -358,13 +346,11 @@ namespace TVGL.Tessellation
                 //3
                 MakeFaces(faceToVertexIndices);
                 //4
-                RemoveDuplicateVertices(indicesOfDuplicates);
+                RemoveVertices(indicesOfDuplicates);
                 MakeEdges();
                 DefineFaceCentersAndColors(colors);
                 //5
-                DefineEdgeVectorAndLengths();
                 ConnectConvexHullToObjects();
-                DefineEdgeAngles();
                 DefineVolumeAndAreas();
                 DefineFaceCurvature();
                 DefineVertexCurvature();
@@ -417,7 +403,7 @@ namespace TVGL.Tessellation
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);
         }
-        
+
 
         /// <summary>
         ///     Makes the edges.
@@ -462,7 +448,6 @@ namespace TVGL.Tessellation
                 if (edge.OwnedFace == null || edge.OtherFace == null)
                 {
                     // badEdges.Add(edge);
-                    edge.Curvature = CurvatureType.Undefined;
                     edge.OwnedFace = edge.OtherFace = edge.OwnedFace ?? edge.OtherFace;
                     Debug.WriteLine("Edge found with only face (face normal = " +
                                     edge.OwnedFace.Normal.MakePrintString()
@@ -528,7 +513,7 @@ namespace TVGL.Tessellation
                 Debug.WriteLine("expected number of vertices = " + expectedNumberOfVertices + "; actual = " + listOfVertices.Count);
                 indicesToRemove = new List<int>();
             }
-            else indicesToRemove = new List<int>();    
+            else indicesToRemove = new List<int>();
         }
 
 
@@ -573,98 +558,6 @@ namespace TVGL.Tessellation
             }
         }
 
-        /// <summary>
-        ///     Defines the edge vector and lengths.
-        /// </summary>
-        private void DefineEdgeVectorAndLengths()
-        {
-            DefineEdgeVectorAndLengths(Edges);
-        }
-
-        /// <summary>
-        ///     Defines the edge vector and lengths.
-        /// </summary>
-        /// <param name="edges">The edges.</param>
-        private static void DefineEdgeVectorAndLengths(IEnumerable<Edge> edges)
-        {
-            foreach (var e in edges)
-            {
-                e.DefineVectorAndLength();
-            }
-        }
-
-        /// <summary>
-        ///     Defines the edge angles.
-        /// </summary>
-        private void DefineEdgeAngles()
-        {
-            DefineEdgeAngles(Edges);
-        }
-
-        /// <summary>
-        ///     Defines the edge angles.
-        /// </summary>
-        /// <param name="edges">The edges.</param>
-        private static void DefineEdgeAngles(IEnumerable<Edge> edges)
-        {
-            foreach (var e in edges)
-            {
-                /* this is a tricky function. What we need to do is take the dot-product of the normals.
-                 * which will give the cos(theta). Calling inverse cosine will result in a value from 0 to
-                 * pi, but is the edge convex or concave? It is convex if the crossproduct of the normals is 
-                 * in the same direction as the edge vector (dot product is positive). But we need to know 
-                 * which face-normal goes first in the cross product calculation as this will change the 
-                 * resulting direction. The one to go first is the one that "owns" the edge. What I mean by
-                 * own is that the from-to of the edge makes sense in the counter-clockwise prediction of 
-                 * the face normal. For one face the from-to will be incorrect (normal facing inwards) - 
-                 * in some geometry approaches this is solved by the concept of half-edges. Here we will 
-                 * just re-order the two faces referenced in the edge so that the first is the one that 
-                 * owns the edge...the face for which the direction makes sense, and the second face will 
-                 * need to reverse the edge vector to make it work out in a proper counter-clockwise loop 
-                 * for that face. */
-                if (e.OwnedFace == e.OtherFace) continue;
-                var nextOwnedFaceEdge = e.OwnedFace.Edges.FirstOrDefault(otherEdge => otherEdge.From.Equals(e.To));
-                double[] nextEdgeVector;
-                if (nextOwnedFaceEdge == null)
-                {
-                    nextOwnedFaceEdge = e.OwnedFace.Edges.First(otherEdge => otherEdge.To.Equals(e.To));
-                    nextEdgeVector = nextOwnedFaceEdge.Vector.multiply(-1);
-                }
-                else nextEdgeVector = nextOwnedFaceEdge.Vector;
-                var ownedFaceNormal = e.Vector.crossProduct(nextEdgeVector);
-                if (ownedFaceNormal.dotProduct(e.OwnedFace.Normal) < 0)
-                {
-                    /* then switch owned face and opposite face since the predicted normal
-                     * is in the wrong direction. When OwnedFace and OppositeFace were defined
-                     * it was arbitrary anyway - so this is another by-product of this method - 
-                     * correct the owned and opposite faces. */
-                    var temp = e.OwnedFace;
-                    e.OwnedFace = e.OtherFace;
-                    e.OtherFace = temp;
-                }
-                var dot = e.OwnedFace.Normal.dotProduct(e.OtherFace.Normal, 3);
-                if (dot > 1.0 || StarMath.IsPracticallySame(dot, 1.0))
-                {
-                    e.InternalAngle = Math.PI;
-                    e.Curvature = CurvatureType.SaddleOrFlat;
-                }
-                else
-                {
-                    var cross = e.OwnedFace.Normal.crossProduct(e.OtherFace.Normal);
-                    if (cross.dotProduct(e.Vector) < 0)
-                    {
-                        e.InternalAngle = Math.PI + Math.Acos(dot);
-                        e.Curvature = CurvatureType.Concave;
-                    }
-                    else
-                    {
-                        e.InternalAngle = Math.Acos(dot);
-                        e.Curvature = CurvatureType.Convex;
-                    }
-                }
-                //Debug.WriteLine("angle = " + (e.InternalAngle * (180 / Math.PI)).ToString() + "; " + e.SurfaceIs.ToString());
-            }
-        }
 
         /// <summary>
         ///     Defines the volume and areas.
@@ -729,7 +622,7 @@ namespace TVGL.Tessellation
             for (var i = 0; i < NumberOfFaces; i++)
             {
                 long checksum = 0;
-                var orderedIndices = new List<int>(faceToVertexIndices[i].Select(index =>Vertices[index].IndexInList));
+                var orderedIndices = new List<int>(faceToVertexIndices[i].Select(index => Vertices[index].IndexInList));
                 orderedIndices.Sort();
                 if (orderedIndices.Count != Constants.MaxNumberEdgesPerFace
                     || ContainsDuplicateIndices(orderedIndices))
@@ -829,24 +722,6 @@ namespace TVGL.Tessellation
                                     (NumberOfVertices - indicesOfDuplicates.Count));
         }
 
-        private void RemoveDuplicateVertices(List<int> indicesOfDuplicates)
-        {
-            var offset = 0;
-            var numberOfDuplicates = indicesOfDuplicates.Count;
-            indicesOfDuplicates.Sort();
-            NumberOfVertices -= numberOfDuplicates;
-            var newVertices = new Vertex[NumberOfVertices];
-            for (int i = 0; i < NumberOfVertices; i++)
-            {
-                while (offset < numberOfDuplicates && (i + offset) == indicesOfDuplicates[offset])
-                    offset++;
-                var v = Vertices[i + offset];
-                v.IndexInList = i;
-                newVertices[i] = v;
-            }
-            Vertices = newVertices;
-        }
-
         #endregion
 
         #region the Copy Function
@@ -908,11 +783,11 @@ namespace TVGL.Tessellation
             {
                 var origEdge = originalEdges[i];
                 var copiedEdge = copiedEdges[i];
-                copiedEdge.InternalAngle = origEdge.InternalAngle;
-                copiedEdge.Curvature = origEdge.Curvature;
+                //copiedEdge.InternalAngle = origEdge.InternalAngle;
+                //copiedEdge.Curvature = origEdge.Curvature;
                 copiedEdge.PartofConvexHull = origEdge.PartofConvexHull;
-                copiedEdge.Length = origEdge.Length;
-                copiedEdge.Vector = (double[])origEdge.Vector.Clone();
+                //copiedEdge.Length = origEdge.Length;
+                //copiedEdge.Vector = (double[])origEdge.Vector.Clone();
             }
         }
 
@@ -995,8 +870,6 @@ namespace TVGL.Tessellation
                     }
                 }
             }
-            DefineEdgeVectorAndLengths(ConvexHullEdges);
-            DefineEdgeAngles(ConvexHullEdges);
         }
 
 
@@ -1030,6 +903,21 @@ namespace TVGL.Tessellation
             Vertices = newVertices;
             NumberOfVertices++;
         }
+        internal void AddVertices(IList<Vertex> verticesToAdd)
+        {
+            var numToAdd = verticesToAdd.Count();
+            var newVertices = new Vertex[NumberOfVertices + numToAdd];
+            for (int i = 0; i < NumberOfVertices; i++)
+                newVertices[i] = Vertices[i];
+            for (int i = 0; i < numToAdd; i++)
+            {
+                var newVertex = verticesToAdd[i];
+                newVertices[NumberOfVertices + i] = newVertex;
+                newVertex.IndexInList = NumberOfVertices + i;
+            }
+            Vertices = newVertices;
+            NumberOfVertices += numToAdd;
+        }
 
         internal void RemoveVertex(Vertex removeVertex)
         {
@@ -1050,6 +938,30 @@ namespace TVGL.Tessellation
             }
             Vertices = newVertices;
         }
+
+        private void RemoveVertices(List<Vertex> removeVertices)
+        {
+            RemoveVertices(removeVertices.Select(Vertices.FindIndex).ToList());
+        }
+
+        private void RemoveVertices(List<int> removeIndices)
+        {
+            var offset = 0;
+            var numToRemove = removeIndices.Count;
+            removeIndices.Sort();
+            NumberOfVertices -= numToRemove;
+            var newVertices = new Vertex[NumberOfVertices];
+            for (int i = 0; i < NumberOfVertices; i++)
+            {
+                while (offset < numToRemove && (i + offset) == removeIndices[offset])
+                    offset++;
+                var v = Vertices[i + offset];
+                v.IndexInList = i;
+                newVertices[i] = v;
+            }
+            Vertices = newVertices;
+        }
+
         #endregion
         #region Faces
         internal void AddFace(PolygonalFace newFace)
@@ -1062,6 +974,17 @@ namespace TVGL.Tessellation
             NumberOfFaces++;
         }
 
+        internal void AddFaces(IList<PolygonalFace> facesToAdd)
+        {
+            var numToAdd = facesToAdd.Count();
+            var newFaces = new PolygonalFace[NumberOfFaces + numToAdd];
+            for (int i = 0; i < NumberOfFaces; i++)
+                newFaces[i] = Faces[i];
+            for (int i = 0; i < numToAdd; i++)
+                newFaces[NumberOfFaces + i] = facesToAdd[i];
+            Faces = newFaces;
+            NumberOfFaces += numToAdd;
+        }
         internal void RemoveFace(PolygonalFace removeFace)
         {
             RemoveFace(Faces.FindIndex(removeFace));
@@ -1077,6 +1000,27 @@ namespace TVGL.Tessellation
                 newFaces[i] = Faces[i + 1];
             Faces = newFaces;
         }
+        internal void RemoveFaces(List<PolygonalFace> removeFaces)
+        {
+            RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList());
+        }
+
+        internal void RemoveFaces(List<int> removeIndices)
+        {
+            var offset = 0;
+            var numToRemove = removeIndices.Count;
+            removeIndices.Sort();
+            NumberOfFaces -= numToRemove;
+            var newFaces = new PolygonalFace[NumberOfFaces];
+            for (int i = 0; i < NumberOfFaces; i++)
+            {
+                while (offset < numToRemove && (i + offset) == removeIndices[offset])
+                    offset++;
+                newFaces[i] = Faces[i + offset];
+            }
+            Faces = newFaces;
+        }
+
         #endregion
         #region Edges
         internal void AddEdge(Edge newEdge)
@@ -1089,6 +1033,17 @@ namespace TVGL.Tessellation
             NumberOfEdges++;
         }
 
+        internal void AddEdges(IList<Edge> edgesToAdd)
+        {
+            var numToAdd = edgesToAdd.Count();
+            var newEdges = new Edge[NumberOfEdges + numToAdd];
+            for (int i = 0; i < NumberOfEdges; i++)
+                newEdges[i] = Edges[i];
+            for (int i = 0; i < numToAdd; i++)
+                newEdges[NumberOfEdges + i] = edgesToAdd[i];
+            Edges = newEdges;
+            NumberOfEdges += numToAdd;
+        }
         internal void RemoveEdge(Edge removeEdge)
         {
             RemoveEdge(Edges.FindIndex(removeEdge));
@@ -1104,8 +1059,28 @@ namespace TVGL.Tessellation
                 newEdges[i] = Edges[i + 1];
             Edges = newEdges;
         }
+        internal void RemoveEdges(List<Edge> removeEdges)
+        {
+            RemoveEdges(removeEdges.Select(Edges.FindIndex).ToList());
+        }
+
+        internal void RemoveEdges(List<int> removeIndices)
+        {
+            var offset = 0;
+            var numToRemove = removeIndices.Count;
+            removeIndices.Sort();
+            NumberOfEdges -= numToRemove;
+            var newEdges = new Edge[NumberOfEdges];
+            for (int i = 0; i < NumberOfEdges; i++)
+            {
+                while (offset < numToRemove && (i + offset) == removeIndices[offset])
+                    offset++;
+                newEdges[i] = Edges[i + offset];
+            }
+            Edges = newEdges;
+        }
+        #endregion
         #endregion
 
-        #endregion
     }
 }

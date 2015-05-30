@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using StarMathLib;
 
 namespace TVGL.Tessellation
 {
@@ -23,17 +24,8 @@ namespace TVGL.Tessellation
             fromVertex.Edges.Add(this);
             To = toVertex;
             toVertex.Edges.Add(this);
-            OwnedFace = ownedFace;
-            OtherFace = otherFace;
-        }
-
-        #endregion
-
-        private Edge()
-        {
-        }
-        internal void DefineVectorAndLength()
-        {
+            _ownedFace = ownedFace;
+            _otherFace = otherFace;
             Vector = new[]
             {
                 (To.Position[0] - From.Position[0]),
@@ -42,8 +34,14 @@ namespace TVGL.Tessellation
             };
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
+            DefineInternalEdgeAngle();
         }
 
+        #endregion
+
+        private Edge()
+        {
+        }
         /// <summary>
         ///     Others the vertex.
         /// </summary>
@@ -65,7 +63,7 @@ namespace TVGL.Tessellation
         /// <value>
         ///     From.
         /// </value>
-        public Vertex From { get; internal set; }
+        public readonly Vertex From;
 
         /// <summary>
         ///     Gets the To Vertex.
@@ -73,7 +71,7 @@ namespace TVGL.Tessellation
         /// <value>
         ///     To.
         /// </value>
-        public Vertex To { get; internal set; }
+        public readonly Vertex To;
 
         /// <summary>
         ///     Gets the length.
@@ -81,7 +79,7 @@ namespace TVGL.Tessellation
         /// <value>
         ///     The length.
         /// </value>
-        public double Length { get; internal set; }
+        public readonly double Length;
 
         /// <summary>
         ///     Gets the vector.
@@ -89,7 +87,10 @@ namespace TVGL.Tessellation
         /// <value>
         ///     The vector.
         /// </value>
-        public double[] Vector { get; internal set; }
+        public readonly double[] Vector;
+
+        private PolygonalFace _otherFace;
+        private PolygonalFace _ownedFace;
 
         /// <summary>
         ///     Gets the owned face (the face in which the from-to direction makes sense
@@ -98,7 +99,16 @@ namespace TVGL.Tessellation
         /// <value>
         ///     The owned face.
         /// </value>
-        public PolygonalFace OwnedFace { get; internal set; }
+        public PolygonalFace OwnedFace
+        {
+            get { return _ownedFace; }
+            internal set
+            {
+                if (_ownedFace == value) return;
+                _ownedFace = value;
+                DefineInternalEdgeAngle();
+            }
+        }
 
         /// <summary>
         ///     Gets the other face (the face in which the from-to direction doesn not
@@ -107,7 +117,16 @@ namespace TVGL.Tessellation
         /// <value>
         ///     The other face.
         /// </value>
-        public PolygonalFace OtherFace { get; internal set; }
+        public PolygonalFace OtherFace
+        {
+            get { return _otherFace; }
+            internal set
+            {
+                if (_otherFace == value) return;
+                _otherFace = value;
+                DefineInternalEdgeAngle();
+            }
+        }
 
         /// <summary>
         ///     Gets the internal angle in radians.
@@ -115,7 +134,7 @@ namespace TVGL.Tessellation
         /// <value>
         ///     The internal angle.
         /// </value>
-        public double InternalAngle { get; internal set; }
+        public double InternalAngle { get; private set; }
 
         /// <summary>
         ///     Gets the curvature of the surface.
@@ -123,7 +142,7 @@ namespace TVGL.Tessellation
         /// <value>
         ///     The curvature of the surface.
         /// </value>
-        public CurvatureType Curvature { get; internal set; }
+        public CurvatureType Curvature { get; private set; }
 
         /// <summary>
         ///     Gets a value indicating whether [is part of the convex hull].
@@ -132,6 +151,71 @@ namespace TVGL.Tessellation
         ///     <c>true</c> if [is part of the convex hull]; otherwise, <c>false</c>.
         /// </value>
         public Boolean PartofConvexHull { get; internal set; }
+
+
+        /// <summary>
+        ///     Defines the edge angle.
+        /// </summary>
+        /// <param name="edges">The edges.</param>
+        private void DefineInternalEdgeAngle()
+        {
+            /* this is a tricky function. What we need to do is take the dot-product of the normals.
+             * which will give the cos(theta). Calling inverse cosine will result in a value from 0 to
+             * pi, but is the edge convex or concave? It is convex if the crossproduct of the normals is 
+             * in the same direction as the edge vector (dot product is positive). But we need to know 
+             * which face-normal goes first in the cross product calculation as this will change the 
+             * resulting direction. The one to go first is the one that "owns" the edge. What I mean by
+             * own is that the from-to of the edge makes sense in the counter-clockwise prediction of 
+             * the face normal. For one face the from-to will be incorrect (normal facing inwards) - 
+             * in some geometry approaches this is solved by the concept of half-edges. Here we will 
+             * just re-order the two faces referenced in the edge so that the first is the one that 
+             * owns the edge...the face for which the direction makes sense, and the second face will 
+             * need to reverse the edge vector to make it work out in a proper counter-clockwise loop 
+             * for that face. */
+            if (OwnedFace == OtherFace || OwnedFace == null || OtherFace == null)
+            {
+                InternalAngle = double.NaN;
+                Curvature = CurvatureType.Undefined;
+                return;
+            }
+            var ownedFaceToIndex = OwnedFace.Vertices.IndexOf(To);
+            var ownedFaceNextIndex = (ownedFaceToIndex + 1 == OwnedFace.Vertices.Count) ? 0 : ownedFaceToIndex + 1;
+
+            var nextOwnedFaceVertex = OwnedFace.Vertices[ownedFaceNextIndex];
+            var nextEdgeVector = nextOwnedFaceVertex.Position.subtract(To.Position);
+
+            if (Vector.crossProduct(nextEdgeVector).dotProduct(OwnedFace.Normal) < 0)
+            {
+                /* then switch owned face and opposite face since the predicted normal
+                 * is in the wrong direction. When OwnedFace and OppositeFace were defined
+                 * it was arbitrary anyway - so this is another by-product of this method - 
+                 * correct the owned and opposite faces. */
+                var temp = OwnedFace;
+                OwnedFace = OtherFace;
+                OtherFace = temp;
+            }
+            var dot = OwnedFace.Normal.dotProduct(OtherFace.Normal, 3);
+            if (dot > 1.0 || StarMath.IsPracticallySame(dot, 1.0))
+            {
+                InternalAngle = Math.PI;
+                Curvature = CurvatureType.SaddleOrFlat;
+            }
+            else
+            {
+                var cross = OwnedFace.Normal.crossProduct(OtherFace.Normal);
+                if (cross.dotProduct(Vector) < 0)
+                {
+                    InternalAngle = Math.PI + Math.Acos(dot);
+                    Curvature = CurvatureType.Concave;
+                }
+                else
+                {
+                    InternalAngle = Math.Acos(dot);
+                    Curvature = CurvatureType.Convex;
+                }
+            }
+            //Debug.WriteLine("angle = " + (InternalAngle * (180 / Math.PI)).ToString() + "; " + SurfaceIs.ToString());
+        }
 
 
         /// <summary>

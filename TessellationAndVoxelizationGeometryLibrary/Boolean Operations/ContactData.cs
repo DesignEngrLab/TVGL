@@ -130,7 +130,6 @@ namespace TVGL.Boolean_Operations
                     SplitFaceNegative = edge.OwnedFace
                 };
             }
-            contactElt.ContactEdge.DefineVectorAndLength();
             return contactElt;
         }
 

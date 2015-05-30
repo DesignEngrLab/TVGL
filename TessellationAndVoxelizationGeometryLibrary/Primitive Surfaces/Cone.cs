@@ -51,25 +51,25 @@ namespace TVGL
         {
             base.UpdateWith(face);
         }
-        internal Cone(List<PolygonalFace> facesAll, double[] Axis, double Aperture)
+        internal Cone(List<PolygonalFace> facesAll, double[] axis, double aperture)
             : base(facesAll)
         {
             var faces = ListFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
             var centers = new List<double[]>();
             double[] center;
-            var n1 = faces[0].Normal.crossProduct(Axis);
-            var n2 = faces[numFaces - 1].Normal.crossProduct(Axis);
+            var n1 = faces[0].Normal.crossProduct(axis);
+            var n2 = faces[numFaces - 1].Normal.crossProduct(axis);
             GeometryFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.dotProduct(n1),
-              n2, faces[numFaces - 1].Center.dotProduct(n2), Axis, out center);
+              n2, faces[numFaces - 1].Center.dotProduct(n2), axis, out center);
             if (!center.Any(double.IsNaN) || StarMath.IsNegligible(center))
                 centers.Add(center);
-            for (var i = 1; i < numFaces; i++)
+            for (int i = 1; i < numFaces; i++)
             {
-                n1 = faces[0].Normal.crossProduct(Axis);
-                n2 = faces[numFaces - 1].Normal.crossProduct(Axis);
+                n1 = faces[0].Normal.crossProduct(axis);
+                n2 = faces[numFaces - 1].Normal.crossProduct(axis);
                 GeometryFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.dotProduct(n1),
-                  n2, faces[numFaces - 1].Center.dotProduct(n2), Axis, out center);
+                  n2, faces[numFaces - 1].Center.dotProduct(n2), axis, out center);
                 if (!center.Any(double.IsNaN) || StarMath.IsNegligible(center))
                     centers.Add(center);
             }
@@ -77,29 +77,33 @@ namespace TVGL
             center = centers.Aggregate(center, (current, c) => current.add(c));
             center = center.divide(centers.Count);
             /*re-attach to plane through origin */
-            var distBackToOrigin = -1 * Axis.dotProduct(center);
-            center = center.subtract(Axis.multiply(distBackToOrigin));
-            /* determine is positive or negative */
-            var isPositive = (faces[0].Normal.dotProduct(Axis) >= 0.0);
+            var distBackToOrigin = -1 * axis.dotProduct(center);
+            center = center.subtract(axis.multiply(distBackToOrigin));
             // approach to find  Apex    
             var numApices = 0;
             var apexDistance = 0.0;
-            for (var i = 1; i < numFaces; i++)
+            for (int i = 1; i < numFaces; i++)
             {
-                var distToAxis = GeometryFunctions.DistancePointToLine(faces[i].Center, center, Axis);
-                var distAlongAxis = Axis.dotProduct(faces[i].Center);
-                distAlongAxis += distToAxis / Math.Tan(Aperture);
-                if (double.IsNaN(distAlongAxis))
+                var distToAxis = GeometryFunctions.DistancePointToLine(faces[i].Center, center, axis);
+                var distAlongAxis = axis.dotProduct(faces[i].Center);
+                distAlongAxis += distToAxis / Math.Tan(aperture);
+                if (!double.IsNaN(distAlongAxis))
                 {
                     numApices++;
                     apexDistance += distAlongAxis;
                 }
                 apexDistance /= numApices;
             }
-            Apex = center.add(Axis.multiply(apexDistance));
-            this.Axis = Axis;
-            this.Aperture = Aperture;
-            IsPositive = isPositive;
+            Apex = center.add(axis.multiply(apexDistance));
+            /* determine is positive or negative */
+            var v2Apex = Apex.subtract(faces[0].Center);
+            if (v2Apex.dotProduct(axis) > 0)
+                Axis = axis.multiply(-1);
+            else Axis = axis;
+
+            IsPositive = (faces[0].Normal.dotProduct(Axis) >= 0.0);
+
+            this.Aperture = aperture;
         }
     }
 }
