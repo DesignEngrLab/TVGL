@@ -26,6 +26,7 @@ namespace TVGL.Boolean_Operations
     public static class Slice
     {
         #region Define Contact at a Flat Plane
+
         /// <summary>
         /// When the tessellated solid is sliced at the specified plane, the contact surfaces are
         /// described by the return ContactData object. This is a non-destructive function typically
@@ -45,7 +46,7 @@ namespace TVGL.Boolean_Operations
             var edgeHashSet = new HashSet<Edge>(ts.Edges);
             // Contact elements are constructed and then later arranged into loops. Loops make up the returned object, ContactData. 
             var straddleContactElts = new List<ContactElement>();
-            var inPlaneContactElts = new List<ContactElement>();
+            var inPlaneContactElts = new List<CoincidentEdgeContactElement>();
             while (edgeHashSet.Any())
             {
                 // instead of the foreach, we have this while statement and these first 2 lines to enumerate over the edges.
@@ -58,26 +59,30 @@ namespace TVGL.Boolean_Operations
                         inPlaneContactElts);
                 else if ((toDistance > 0 && fromDistance < 0)
                          || (toDistance < 0 && fromDistance > 0))
-                    straddleContactElts.Add(ContactElement.MakeStraddleContactElement(plane, edge, toDistance));
+                    straddleContactElts.Add(new ThroughFaceContactElement(plane, edge, toDistance));
             }
             foreach (var contactElement in inPlaneContactElts)
-            {   // next, we find any additional vertices that just touch the plane but don't have in-plane edges
+            {
+                // next, we find any additional vertices that just touch the plane but don't have in-plane edges
                 // to facilitate this we negate all vertices already captures in the inPlaneContactElts 
-                vertexDistancesToPlane[contactElement.ReferenceStart.IndexInList] = double.NaN;
-                vertexDistancesToPlane[contactElement.ReferenceEnd.IndexInList] = double.NaN;
+                vertexDistancesToPlane[contactElement.StartVertex.IndexInList] = double.NaN;
+                vertexDistancesToPlane[contactElement.EndVertex.IndexInList] = double.NaN;
             }
             for (int i = 0; i < ts.NumberOfVertices; i++)
             {
                 if (!StarMath.IsNegligible(vertexDistancesToPlane[i])) continue;
-                var vertexContactElement = ContactElement.MakeVertexOnPlaneContactElement(plane, ts.Vertices[i],
-                    vertexDistancesToPlane);
-                if (vertexContactElement != null) straddleContactElts.Add(vertexContactElement);
+                var v = ts.Vertices[i];
+                PolygonalFace negativeFace, positiveFace;
+                if (ThroughVertexContactElement.FindNegativeAndPositiveFaces(plane, v, vertexDistancesToPlane,
+                    out negativeFace, out positiveFace))
+                    straddleContactElts.Add(new ThroughVertexContactElement(v, negativeFace, positiveFace));
             }
             straddleContactElts.AddRange(inPlaneContactElts);
             var loops = new List<Loop>();
             var numberOfTries = 0;
             while (straddleContactElts.Any() && numberOfTries < straddleContactElts.Count)
-            {   // now build loops from stringing together contact elements
+            {
+                // now build loops from stringing together contact elements
                 var loop = FindLoop(plane, straddleContactElts, vertexDistancesToPlane);
                 if (loop != null)
                 {
@@ -100,15 +105,17 @@ namespace TVGL.Boolean_Operations
         /// <returns>Loop.</returns>
         private static Loop FindLoop(Flat plane, List<ContactElement> contacts, double[] vertexDistancesToPlane)
         {
+            Vertex connectingVertex;
             var contactElements = new List<ContactElement>();
-            var firstContactElt = contacts[0];   // start with the first one, and keep a reference to it so that we 
+            var firstContactElt = contacts[0]; // start with the first one, and keep a reference to it so that we 
             // can tell when we've looped around.                      
             // contacts.RemoveAt(0);  why is this commented out? I left it here to help you understand that it is important
             // to identify a loop. When the below while-loop re-finds this firstContactElt
             var contactElt = firstContactElt;
-            int nextContactEltIndex = FindNextContactElement(contacts, contactElt);
+            int nextContactEltIndex = FindNextContactElement(contacts, contactElt, out connectingVertex);
             if (nextContactEltIndex == -1)
-            {  //if failed to find the loop, stick it on the end and start over
+            {
+                //if failed to find the loop, stick it on the end and start over
                 contacts.RemoveAt(0);
                 contacts.Add(contactElt);
                 return null;
@@ -116,23 +123,22 @@ namespace TVGL.Boolean_Operations
             while (nextContactEltIndex != -1)
             {
                 var nextContactElt = contacts[nextContactEltIndex];
-                if (contactElt.SplitType != FaceSplitType.CoincidentEdge)
-                    contactElt.ContactEdge = new Edge(contactElt.ContactPoint, nextContactElt.ContactPoint, null, null);
-                else if (contactElt.SplitType == FaceSplitType.CoincidentEdge &&
-                   nextContactElt.SplitType != FaceSplitType.CoincidentEdge)
+                if (!(contactElt is CoincidentEdgeContactElement))
+                    contactElt.ContactEdge = new Edge(contactElt.StartVertex, connectingVertex, null, null);
+                else if (contactElt is CoincidentEdgeContactElement &&
+                         !(nextContactElt is CoincidentEdgeContactElement))
                 {
                     contactElements.Add(contactElt);
-                    contactElt = new ContactElement
+                    contactElt = new ThroughVertexContactElement(connectingVertex, null, null)
                     {
-                        ContactEdge = new Edge(contactElt.ReferenceEnd, nextContactElt.ContactPoint, null, null),
-                        ReferenceStart = contactElt.ReferenceEnd,
-                        SplitType = FaceSplitType.ThroughVertex
+                        ContactEdge = new Edge(((CoincidentEdgeContactElement)contactElt).EndVertex, connectingVertex, null, null)
                     };
                 }
                 contactElements.Add(contactElt);
                 contacts.RemoveAt(nextContactEltIndex);
                 contactElt = nextContactElt;
-                nextContactEltIndex = FindNextContactElement(contacts, contactElt);
+
+                nextContactEltIndex = FindNextContactElement(contacts, contactElt, out connectingVertex);
             }
             if (contactElt == firstContactElt)
                 return new Loop(contactElements, plane.Normal, true, true);
@@ -140,110 +146,181 @@ namespace TVGL.Boolean_Operations
             //    return new Loop(contactElements, plane.Normal, false);
             // else work backwards        
             contactElt = firstContactElt;
-            contacts.RemoveAt(0); // now it is right to remove the first contact, and instead, we will re-add the last one
+            contacts.RemoveAt(0);
+            // now it is right to remove the first contact, and instead, we will re-add the last one
             firstContactElt = contactElements.Last();
             contacts.Add(firstContactElt);
-            int prevContactEltIndex = FindPrevContactElement(contacts, contactElt);
+            int prevContactEltIndex = FindPrevContactElement(contacts, contactElt, out connectingVertex);
             while (prevContactEltIndex != -1)
             {
                 var prevContactElt = contacts[prevContactEltIndex];
-                if (contactElt.SplitType != FaceSplitType.CoincidentEdge)
-                    contactElt.ContactEdge = new Edge(prevContactElt.ContactPoint, contactElt.ContactPoint, null, null);
-                else if (contactElt.SplitType == FaceSplitType.CoincidentEdge &&
-                  prevContactElt.SplitType != FaceSplitType.CoincidentEdge)
+                if (!(contactElt is CoincidentEdgeContactElement))
+                    contactElt.ContactEdge = new Edge(connectingVertex, contactElt.StartVertex, null, null);
+                else if (contactElt is CoincidentEdgeContactElement &&
+                         !(prevContactElt is CoincidentEdgeContactElement))
                 {
                     contactElements.Insert(0, contactElt);
-                    contactElt = new ContactElement
+                    contactElt = new ThroughVertexContactElement(connectingVertex, null, null)
                     {
-                        ContactEdge = new Edge(contactElt.ReferenceStart, prevContactElt.ContactPoint, null, null),
-                        ReferenceEnd = contactElt.ReferenceStart,
-                        SplitType = FaceSplitType.ThroughVertex
+                        ContactEdge = new Edge(connectingVertex, ((CoincidentEdgeContactElement)contactElt).StartVertex, null, null)
                     };
                 }
                 contactElements.Insert(0, contactElt);
                 contacts.RemoveAt(prevContactEltIndex);
                 contactElt = prevContactElt;
-                prevContactEltIndex = FindPrevContactElement(contacts, prevContactElt);
+                prevContactEltIndex = FindPrevContactElement(contacts, contactElt, out connectingVertex);
             }
-            if (((contactElements[0].ReferenceStart != null)
-                && (contactElements[0].ReferenceStart == contactElements.Last().ReferenceEnd))
-                || StarMath.IsPracticallySame(contactElements[0].ContactEdge.From.Position,
-                contactElements.Last().ContactEdge.To.Position))
+            if (contactElements[0].ContactEdge.From == contactElements.Last().ContactEdge.To)
+                return new Loop(contactElements, plane.Normal, true, true);
+            if (StarMath.IsPracticallySame(contactElements[0].ContactEdge.From.Position,
+                  contactElements.Last().ContactEdge.To.Position))
             {
                 contactElements[0].ContactEdge = new Edge(contactElements.Last().ContactEdge.To,
                     contactElements[0].ContactEdge.To, null, null);
-                contactElements[0].ContactEdge.From.Edges.Add(contactElements[0].ContactEdge);
-                return new Loop(contactElements, plane.Normal, true, true);
+                return new Loop(contactElements, plane.Normal, true, false);
             }
             contacts.Remove(firstContactElt); //it didn't work to connect it up, so you're going to have to leave
             // the loop open. Be sure to remove that one contact that you were hoping to re-find. Otherwise, the 
             // outer process will continue to consider it.
-            var artificialContactElement = new ContactElement
+            var artificialContactElement = new ArtificialContactElement
             {
                 ContactEdge =
-                    new Edge(contactElements.Last().ContactEdge.To, contactElements[0].ContactEdge.From, null, null),
-                SplitType = FaceSplitType.Artificial
+                    new Edge(contactElements.Last().ContactEdge.To, contactElements[0].ContactEdge.From, null, null)
             };
             Debug.WriteLine("Adding an artificial edge to close the loop for plane @" + plane.Normal.MakePrintString()
-                + " with a distance of " + plane.DistanceToOrigin);
+                            + " with a distance of " + plane.DistanceToOrigin);
             contactElements.Add(artificialContactElement);
             return new Loop(contactElements, plane.Normal, true, false);
 
         }
 
-        private static int FindPrevContactElement(List<ContactElement> contacts, ContactElement current)
+
+        private static int FindNextContactElement(List<ContactElement> contacts, ContactElement current,
+            out Vertex connectingVertex)
         {
-            if (current.SplitType == FaceSplitType.ThroughVertex)
+            // there are six cases to handle: A=ThroughFace (abbreviated as face below), ThroughVertex (vertex), CoincidentEdge (edge)
+            // current contact element --> next contact element  
+            // 1. vertex --> face            
+            // 2. edge --> edge            
+            // 3. edge --> face            
+            // 4. face --> face            
+            // 5. face --> vertex            
+            // 6. face --> edge                              
+            if (current is ThroughVertexContactElement)
+            {
                 // from a ThroughVertex, it only make sense that you could go to ThroughFace
-                return contacts.FindIndex(ce =>
-                    (ce.SplitType == FaceSplitType.ThroughFace
-                     && ce.SplitFacePositive == current.SplitFaceNegative));
-            if (current.SplitType == FaceSplitType.CoincidentEdge)
+                for (int i = 0; i < contacts.Count; i++)
+                {
+                    var ce = contacts[i];
+                    if (ce is ThroughFaceContactElement && ce.SplitFaceNegative == current.SplitFacePositive)
+                    {
+                        connectingVertex = ce.StartVertex;
+                        return i;
+                    }
+                }
+                connectingVertex = null;
+                return -1;
+            }
+            else if (current is CoincidentEdgeContactElement)
+            {
                 // from a Coincident Edge, the valid options are another CoincidentEdge or ThroughFace.
                 // It doesn't make sense that you could go to a ThroughVertex (redundant with this)
-                return contacts.FindIndex(ce =>
-                    (ce.SplitType == FaceSplitType.CoincidentEdge && ce.ReferenceEnd == current.ReferenceStart)
-                        //|| (ce.SplitType == FaceSplitType.ThroughFace && ce.SplitFacePositive.Vertices.Contains(current.ReferenceStart)));
-            || (ce.SplitType == FaceSplitType.ThroughFace && ce.SplitFacePositive.OtherVertex(ce.SplitEdge) == current.ReferenceStart));
-            // finally from ThroughFace, you can go to any of the other three.
-            return contacts.FindIndex(ce =>
-                (ce.SplitType == FaceSplitType.CoincidentEdge &&
-                    //current.SplitFaceNegative.Vertices.Contains(ce.ReferenceEnd))
-                    current.SplitFaceNegative.OtherVertex(current.SplitEdge) == ce.ReferenceEnd)
-                || (ce.SplitType != FaceSplitType.CoincidentEdge
-                    && ce.SplitFacePositive == current.SplitFaceNegative));
+                for (int i = 0; i < contacts.Count; i++)
+                {
+                    var ce = contacts[i];
+                    if ((ce is CoincidentEdgeContactElement &&
+                         ((CoincidentEdgeContactElement)ce).StartVertex ==
+                         ((CoincidentEdgeContactElement)current).EndVertex)
+                        || (ce is ThroughFaceContactElement
+                            &&
+                            ((ThroughFaceContactElement)ce).SplitFaceNegative.OtherVertex(
+                                ((ThroughFaceContactElement)ce).SplitEdge) ==
+                            ((CoincidentEdgeContactElement)current).EndVertex))
+                    {
+                        connectingVertex = ce.StartVertex;
+                        return i;
+                    }
+                }
+                connectingVertex = null;
+                return -1;
+            }
+            // finally from ThroughFace, you can go to any of the other three.     
+            for (int i = 0; i < contacts.Count; i++)
+            {
+                var ce = contacts[i];
+                if ((ce is CoincidentEdgeContactElement &&
+                    current.SplitFacePositive.OtherVertex(((ThroughFaceContactElement)current).SplitEdge) ==
+                    ((CoincidentEdgeContactElement)ce).StartVertex)
+                ||
+                (!(ce is CoincidentEdgeContactElement) && ce.SplitFaceNegative == current.SplitFacePositive))
+                {
+                    connectingVertex = ce.StartVertex;
+                    return i;
+                }
+            }
+            connectingVertex = null;
+            return -1;
         }
 
-
-        private static int FindNextContactElement(List<ContactElement> contacts, ContactElement current)
-        {   // there are six cases to handle: A=ThroughFace, B=ThroughVertex, C = CoincidentEdge
-            // current contact element --> next contact element  
-            // 1. B --> A            
-            // 2. C --> C            
-            // 3. C --> A            
-            // 4. A --> A            
-            // 5. A --> B            
-            // 6. A --> C
-
-            if (current.SplitType == FaceSplitType.ThroughVertex)
-                // from a ThroughVertex, it only make sense that you could go to ThroughFace
-                return contacts.FindIndex(ce =>
-                    (ce.SplitType == FaceSplitType.ThroughFace
-                     && ce.SplitFaceNegative == current.SplitFacePositive));
-            if (current.SplitType == FaceSplitType.CoincidentEdge)
-                // from a Coincident Edge, the valid options are another CoincidentEdge or ThroughFace.
-                // It doesn't make sense that you could go to a ThroughVertex (redundant with this)
-                return contacts.FindIndex(ce =>
-                    (ce.SplitType == FaceSplitType.CoincidentEdge && ce.ReferenceStart == current.ReferenceEnd)
-                        //|| (ce.SplitType == FaceSplitType.ThroughFace && ce.SplitFaceNegative.Vertices.Contains(current.ReferenceEnd)));
-            || (ce.SplitType == FaceSplitType.ThroughFace && ce.SplitFaceNegative.OtherVertex(ce.SplitEdge) == current.ReferenceEnd));
-            // finally from ThroughFace, you can go to any of the other three.
-            return contacts.FindIndex(ce =>
-                (ce.SplitType == FaceSplitType.CoincidentEdge &&
-                    //current.SplitFacePositive.Vertices.Contains(ce.ReferenceStart))
-                    current.SplitFacePositive.OtherVertex(current.SplitEdge) == ce.ReferenceStart)
-                || (ce.SplitType != FaceSplitType.CoincidentEdge
-                    && ce.SplitFaceNegative == current.SplitFacePositive));
+        private static int FindPrevContactElement(List<ContactElement> contacts, ContactElement current,
+            out Vertex connectingVertex)
+        {
+            // this is the same as "FindNextContactElement" except it works backwards. Some subtle differences
+            // in the queries between the two functions
+            if (current is ThroughVertexContactElement)
+            {
+                for (int i = 0; i < contacts.Count; i++)
+                {
+                    var ce = contacts[i];
+                    if (ce is ThroughFaceContactElement && ce.SplitFacePositive == current.SplitFaceNegative)
+                    {
+                        connectingVertex = ce.StartVertex;
+                        return i;
+                    }
+                }
+                connectingVertex = null;
+                return -1;
+            }
+            else if (current is CoincidentEdgeContactElement)
+            {
+                for (int i = 0; i < contacts.Count; i++)
+                {
+                    var ce = contacts[i];
+                    if (ce is CoincidentEdgeContactElement &&
+                        ((CoincidentEdgeContactElement)ce).EndVertex ==
+                        ((CoincidentEdgeContactElement)current).StartVertex)
+                    {
+                        connectingVertex = ((CoincidentEdgeContactElement)ce).EndVertex;
+                        return i;
+                    }
+                    else if (ce is ThroughFaceContactElement
+                             &&
+                             ((ThroughFaceContactElement)ce).SplitFacePositive.OtherVertex(
+                                 ((ThroughFaceContactElement)ce).SplitEdge) ==
+                             ((CoincidentEdgeContactElement)current).EndVertex)
+                    {
+                        connectingVertex = ce.StartVertex;
+                        return i;
+                    }
+                }
+                connectingVertex = null;
+                return -1;
+            }
+            for (int i = 0; i < contacts.Count; i++)
+            {
+                var ce = contacts[i];
+                if ((ce is CoincidentEdgeContactElement &&
+                    current.SplitFacePositive.OtherVertex(((ThroughFaceContactElement)current).SplitEdge) ==
+                    ((CoincidentEdgeContactElement)ce).EndVertex)
+                ||
+                (!(ce is CoincidentEdgeContactElement) && ce.SplitFacePositive == current.SplitFaceNegative))
+                {
+                    connectingVertex = ce.StartVertex;
+                    return i;
+                }
+            }
+            connectingVertex = null;
+            return -1;
         }
 
         #endregion
@@ -258,10 +335,12 @@ namespace TVGL.Boolean_Operations
         /// <param name="positiveSideSolids">The solids that are on the positive side of the plane
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
-        public static void OnFlat(TessellatedSolid oldSolid, Flat plane, out List<TessellatedSolid> positiveSideSolids,
-            out List<TessellatedSolid> negativeSideSolids)
+        public static
+        void OnFlat
+            (TessellatedSolid oldSolid, Flat plane, out List<TessellatedSolid> positiveSideSolids,
+                out List<TessellatedSolid> negativeSideSolids)
         {
-            var ts = oldSolid.Copy();  // user should know this is destructive! why slow down again here.
+            var ts = oldSolid.Copy(); // user should know this is destructive! why slow down again here.
             var contactData = DefineContact(plane, ts);
             DivideUpContact(ts, contactData, plane);
             //todo: now need to split the ts into separate lists...perhaps by following faces in tree
@@ -277,7 +356,9 @@ namespace TVGL.Boolean_Operations
         /// <param name="contactData">The contact data.</param>
         /// <param name="plane">The plane.</param>
         /// <exception cref="System.Exception">face is supposed to be split at plane but lives only on one side</exception>
-        private static void DivideUpContact(TessellatedSolid ts, ContactData contactData, Flat plane)
+        private static
+            void DivideUpContact
+            (TessellatedSolid ts, ContactData contactData, Flat plane)
         {
             var edgesToAdd = new List<Edge>();
             var facesToAdd = new List<PolygonalFace>();
@@ -291,7 +372,7 @@ namespace TVGL.Boolean_Operations
             {
                 foreach (var contactElement in loop)
                 {
-                    if (contactElement.SplitType == FaceSplitType.CoincidentEdge)
+                    if (contactElement is CoincidentEdgeContactElement)
                         // If the contact element is at a coincident edge, then there is nothing to do in this stage. When contact element was
                         // created, it properly defined SplitFacePositive and SplitFaceNegative.
                         continue;
@@ -299,7 +380,8 @@ namespace TVGL.Boolean_Operations
                     var faceToSplit = contactElement.SplitFacePositive;
                     facesToDelete.Add(faceToSplit);
                     var vertPlaneDistances =
-                        faceToSplit.Vertices.Select(v => v.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin).ToArray();
+                        faceToSplit.Vertices.Select(
+                            v => v.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin).ToArray();
                     var maxIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Max());
                     var maxVert = faceToSplit.Vertices[maxIndex];
                     var minIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Min());
@@ -307,18 +389,21 @@ namespace TVGL.Boolean_Operations
                     var midVert = faceToSplit.Vertices.First(v => v != maxVert && v != minVert);
                     var dxMidVert = midVert.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin;
                     var faceVerts = new List<Vertex>();
-                    if (contactElement.SplitType == FaceSplitType.ThroughFace)
+                    if (contactElement is ThroughFaceContactElement)
                     {
-                        edgesToDelete.Add(contactElement.SplitEdge);
-                        verticesToAdd.Add(contactElement.ContactPoint);
-                        if (contactElement.SplitEdge.From == midVert || contactElement.SplitEdge.To == midVert)
-                        {// then connect third-face to the From of contact element
+                        var tfce = (ThroughFaceContactElement)contactElement;
+                        edgesToDelete.Add(tfce.SplitEdge);
+                        verticesToAdd.Add(tfce.StartVertex);
+                        if (tfce.SplitEdge.From == midVert || tfce.SplitEdge.To == midVert)
+                        {
+                            // then connect third-face to the From of contact element
                             if (dxMidVert < 0)
                                 faceVerts.AddRange(new[] { contactElement.ContactEdge.From, midVert, minVert });
                             else faceVerts.AddRange(new[] { contactElement.ContactEdge.From, maxVert, midVert });
                         }
                         else
-                        { // then connect third-face to the TO of contact element
+                        {
+                            // then connect third-face to the TO of contact element
                             if (dxMidVert < 0)
                                 faceVerts.AddRange(new[] { contactElement.ContactEdge.To, minVert, midVert });
                             else faceVerts.AddRange(new[] { contactElement.ContactEdge.To, midVert, maxVert });
@@ -339,12 +424,12 @@ namespace TVGL.Boolean_Operations
             foreach (var face in facesToDelete)
             {
                 foreach (var vertex in face.Vertices)
-                    vertex.Faces.Remove(face);   //-2 remove f from v
+                    vertex.Faces.Remove(face); //-2 remove f from v
                 foreach (var edge in face.Edges)
                 {
                     if (edgesToDelete.Contains(edge)) continue;
                     edgesToModify.Add(edge);
-                    if (edge.OwnedFace == face) edge.OwnedFace = null;       //-3 remove f from e
+                    if (edge.OwnedFace == face) edge.OwnedFace = null; //-3 remove f from e
                     else edge.OtherFace = null;
                 }
             }
@@ -352,7 +437,7 @@ namespace TVGL.Boolean_Operations
             ts.RemoveFaces(facesToDelete);
             foreach (var edge in edgesToDelete)
             {
-                edge.From.Edges.Remove(edge);     //-6 remove e from v
+                edge.From.Edges.Remove(edge); //-6 remove e from v
                 edge.To.Edges.Remove(edge);
             }
             ts.RemoveEdges(edgesToDelete);
@@ -363,7 +448,7 @@ namespace TVGL.Boolean_Operations
             {
                 foreach (var vertex in face.Vertices)
                 {
-                    vertex.Faces.Add(face);  //+2 add f to v
+                    vertex.Faces.Add(face); //+2 add f to v
                     var edge = face.OtherEdge(vertex);
                     //+3 add f to e
                     //+4 add e to f

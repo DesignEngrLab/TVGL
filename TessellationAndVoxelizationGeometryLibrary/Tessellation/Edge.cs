@@ -18,14 +18,25 @@ namespace TVGL.Tessellation
         /// <param name="toVertex">To vertex.</param>
         /// <param name="ownedFace">The face.</param>
         /// <param name="otherFace">The other face.</param>
-        public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace)
+        /// <param name="doublyLinkedFaces"></param>
+        /// <param name="doublyLinkedVertices"></param>
+        public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace, 
+            Boolean doublyLinkedFaces=false, Boolean doublyLinkedVertices=false)
         {
             From = fromVertex;
-            fromVertex.Edges.Add(this);
             To = toVertex;
-            toVertex.Edges.Add(this);
             _ownedFace = ownedFace;
             _otherFace = otherFace;
+            if (doublyLinkedVertices)
+            {
+                fromVertex.Edges.Add(this);
+                toVertex.Edges.Add(this);
+            }
+            if (doublyLinkedFaces)
+            {
+                if (_ownedFace != null) _ownedFace.Edges.Add(this);
+                if (_otherFace != null) _otherFace.Edges.Add(this);
+            }
             Vector = new[]
             {
                 (To.Position[0] - From.Position[0]),
@@ -172,29 +183,29 @@ namespace TVGL.Tessellation
              * owns the edge...the face for which the direction makes sense, and the second face will 
              * need to reverse the edge vector to make it work out in a proper counter-clockwise loop 
              * for that face. */
-            if (OwnedFace == OtherFace || OwnedFace == null || OtherFace == null)
+            if (_ownedFace == _otherFace || _ownedFace == null || _otherFace == null)
             {
                 InternalAngle = double.NaN;
                 Curvature = CurvatureType.Undefined;
                 return;
             }
-            var ownedFaceToIndex = OwnedFace.Vertices.IndexOf(To);
-            var ownedFaceNextIndex = (ownedFaceToIndex + 1 == OwnedFace.Vertices.Count) ? 0 : ownedFaceToIndex + 1;
+            var ownedFaceToIndex = _ownedFace.Vertices.IndexOf(To);
+            var ownedFaceNextIndex = (ownedFaceToIndex + 1 == _ownedFace.Vertices.Count) ? 0 : ownedFaceToIndex + 1;
 
-            var nextOwnedFaceVertex = OwnedFace.Vertices[ownedFaceNextIndex];
+            var nextOwnedFaceVertex = _ownedFace.Vertices[ownedFaceNextIndex];
             var nextEdgeVector = nextOwnedFaceVertex.Position.subtract(To.Position);
 
-            if (Vector.crossProduct(nextEdgeVector).dotProduct(OwnedFace.Normal) < 0)
+            if (Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal) < 0)
             {
                 /* then switch owned face and opposite face since the predicted normal
                  * is in the wrong direction. When OwnedFace and OppositeFace were defined
                  * it was arbitrary anyway - so this is another by-product of this method - 
                  * correct the owned and opposite faces. */
-                var temp = OwnedFace;
-                OwnedFace = OtherFace;
-                OtherFace = temp;
+                var temp = _ownedFace;
+                _ownedFace = _otherFace;
+                _otherFace = temp;
             }
-            var dot = OwnedFace.Normal.dotProduct(OtherFace.Normal, 3);
+            var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
             if (dot > 1.0 || StarMath.IsPracticallySame(dot, 1.0))
             {
                 InternalAngle = Math.PI;
@@ -202,7 +213,7 @@ namespace TVGL.Tessellation
             }
             else
             {
-                var cross = OwnedFace.Normal.crossProduct(OtherFace.Normal);
+                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal);
                 if (cross.dotProduct(Vector) < 0)
                 {
                     InternalAngle = Math.PI + Math.Acos(dot);

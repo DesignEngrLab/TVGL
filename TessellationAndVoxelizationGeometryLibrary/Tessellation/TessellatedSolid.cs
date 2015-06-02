@@ -238,7 +238,7 @@ namespace TVGL.Tessellation
                 var task8 = Task.Factory.StartNew(() => DefineFaceCentersAndColors(colors));
                 Task.WaitAll(task3, task6, task7, task8);
 
-                /*** Tasks 8 & 9 ***/                                   
+                /*** Tasks 8 & 9 ***/
                 /* Task 9 find the areas of faces and the volume of the solid. Requires 9 */
                 var task9 = Task.Factory.StartNew(DefineVolumeAndAreas);
                 /* Task 10 relates the Convex Hull results back to the objects. Requires 3, 6 */
@@ -252,7 +252,7 @@ namespace TVGL.Tessellation
                 /* Task 14 goes through the vertices and  and, by examining the edge angles determines it curvature. 
                  * Requires 11 */
                 var task14 = Task.Factory.StartNew(DefineVertexCurvature);
-                Task.WaitAll(task14,  task13);
+                Task.WaitAll(task14, task13);
             }
             #endregion
             #region Series Approach
@@ -275,7 +275,7 @@ namespace TVGL.Tessellation
 
             #endregion
 
-            Debug.WriteLine((DateTime.Now - now).ToString());
+            Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
         /// <summary>
@@ -319,7 +319,7 @@ namespace TVGL.Tessellation
                 var task8 = Task.Factory.StartNew(() => DefineFaceCentersAndColors(colors));
                 Task.WaitAll(task3, task4, task6, task7);
 
-                /*** Tasks 9 & 10 ***/                                           
+                /*** Tasks 9 & 10 ***/
                 /* Task 9 find the areas of faces and the volume of the solid. Requires 8 */
                 var task9 = Task.Factory.StartNew(DefineVolumeAndAreas);
                 /* Task 10 relates the Convex Hull results back to the objects. Requires 3, 6 */
@@ -333,7 +333,7 @@ namespace TVGL.Tessellation
                 /* Task 13 goes through the vertices and  and, by examining the edge angles determines it curvature. 
                  * Requires 11 */
                 var task14 = Task.Factory.StartNew(DefineVertexCurvature);
-                Task.WaitAll( task13, task14);
+                Task.WaitAll(task13, task14, task10);
             }
             else
             {
@@ -355,7 +355,7 @@ namespace TVGL.Tessellation
                 DefineFaceCurvature();
                 DefineVertexCurvature();
             }
-            Debug.WriteLine((DateTime.Now - now).ToString());
+            Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
 
@@ -432,22 +432,21 @@ namespace TVGL.Tessellation
                     if (alreadyDefinedEdges.ContainsKey(checksum))
                     {
                         var edge = alreadyDefinedEdges[checksum];
-                        edge.OtherFace = Faces[i];
-                        Faces[i].Edges.Add(edge);
+                        edge.OtherFace = face;
+                        face.Edges.Add(edge);
                     }
                     else
                     {
-                        var edge = new Edge(Vertices[fromIndex], Vertices[toIndex], Faces[i], null);
-                        Faces[i].Edges.Add(edge);
+                        var edge = new Edge(Vertices[fromIndex], Vertices[toIndex], face, null, true, true);
                         alreadyDefinedEdges.Add(checksum, edge);
                     }
                 }
             }
-            //var badEdges = new List<Edge>();
+            var badEdges = new List<Edge>();
             foreach (var edge in alreadyDefinedEdges.Values)
                 if (edge.OwnedFace == null || edge.OtherFace == null)
                 {
-                    // badEdges.Add(edge);
+                     badEdges.Add(edge);
                     edge.OwnedFace = edge.OtherFace = edge.OwnedFace ?? edge.OtherFace;
                     Debug.WriteLine("Edge found with only face (face normal = " +
                                     edge.OwnedFace.Normal.MakePrintString()
@@ -844,8 +843,8 @@ namespace TVGL.Tessellation
             foreach (var cvxFace in convexHull.Faces)
             {
                 var newFace = new PolygonalFace(cvxFace.Normal) { Vertices = cvxFace.Vertices.ToList() };
-                foreach (var v in newFace.Vertices)
-                    v.Faces.Add(newFace);
+                //foreach (var v in newFace.Vertices)
+                //    v.Faces.Add(newFace);
                 ConvexHullFaces[faceIndex++] = newFace;
             }
             faceIndex = 0;
@@ -860,7 +859,7 @@ namespace TVGL.Tessellation
                         var adjFaceIndex = convexHull.Faces.FindIndex(adjacentOldFace);
                         var adjFace = ConvexHullFaces[adjFaceIndex];
                         var sharedVerts = newFace.Vertices.Intersect(adjacentOldFace.Vertices).ToList();
-                        var newEdge = new Edge(sharedVerts[0], sharedVerts[1], newFace, adjFace);
+                        var newEdge = new Edge(sharedVerts[0], sharedVerts[1], newFace, adjFace, true);
                         while (newFace.Edges.Count <= j) newFace.Edges.Add(null);
                         newFace.Edges[j] = newEdge;
                         var k = adjacentOldFace.Adjacency.FindIndex(cvxFace);

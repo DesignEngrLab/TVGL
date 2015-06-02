@@ -35,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Boolean Operations\ContactElement Classes.cs" />
     <Compile Include="Boolean Operations\ContactData.cs" />
     <Compile Include="Boolean Operations\Slice.cs" />
     <Compile Include="InputOutput Operations\3mf.classes.cs" />

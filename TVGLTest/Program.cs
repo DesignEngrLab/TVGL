@@ -14,8 +14,8 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = { 
-       //"../../../TestFiles/Mic_Holder_SW.stl",  
-       //  "../../../TestFiles/Mic_Holder_JR.stl",
+       "../../../TestFiles/Mic_Holder_SW.stl",  
+         "../../../TestFiles/Mic_Holder_JR.stl",
                                                 //"../../../TestFiles/3_bananas.amf",    
                                                 //"../../../TestFiles/drillparts.amf",    
                                                 //"../../../TestFiles/wrenchsns.amf",     
@@ -24,8 +24,8 @@ namespace TVGL_Test
         //"../../../TestFiles/trapezoid.4d.off",
         //     "../../../TestFiles/mushroom.off",   
           //"../../../TestFiles/ABF.STL",           
-          "../../../TestFiles/Pump-1repair.STL",
-          "../../../TestFiles/Pump-1.STL",
+          //"../../../TestFiles/Pump-1repair.STL",
+          //"../../../TestFiles/Pump-1.STL",
           "../../../TestFiles/Beam_Clean.STL",
         "../../../TestFiles/piston.stl",
         "../../../TestFiles/Z682.stl",   
@@ -103,7 +103,7 @@ namespace TVGL_Test
                 for (var j = 0; j < numSteps; j++)
                 {
                     var dist = crossAreas[i][j, 0] = coordValues[j];
-                    Console.WriteLine("slie at Coord " + i + " at " + coordValues[j]);
+                    Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
                     crossAreas[i][j, 1] = Slice.DefineContact(new Flat(dist, direction), ts).Area;
                 }
             }//);
