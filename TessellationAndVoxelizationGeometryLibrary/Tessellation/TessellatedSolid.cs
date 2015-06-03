@@ -404,19 +404,19 @@ namespace TVGL.Tessellation
             NumberOfFaces = Faces.GetLength(0);
         }
 
-
-        /// <summary>
-        ///     Makes the edges.
-        /// </summary>
-        /// <exception cref="System.Exception">edge to same vertices.</exception>
         private void MakeEdges()
+        {
+            Edges = MakeEdges(Faces, Vertices);
+        }
+
+        private Edge[] MakeEdges(PolygonalFace[] localFaces, Vertex[] localVertices)
         {
             NumberOfEdges = 3 * NumberOfFaces / 2;
             var alreadyDefinedEdges = new Dictionary<int, Edge>();
 
             for (var i = 0; i < NumberOfFaces; i++)
             {
-                var face = Faces[i];
+                var face = localFaces[i];
                 var lastIndex = face.Vertices.Count - 1;
                 for (var j = 0; j <= lastIndex; j++)
                 {
@@ -437,7 +437,7 @@ namespace TVGL.Tessellation
                     }
                     else
                     {
-                        var edge = new Edge(Vertices[fromIndex], Vertices[toIndex], face, null, true, true);
+                        var edge = new Edge(localVertices[fromIndex], localVertices[toIndex], face, null, true, true);
                         alreadyDefinedEdges.Add(checksum, edge);
                     }
                 }
@@ -446,15 +446,16 @@ namespace TVGL.Tessellation
             foreach (var edge in alreadyDefinedEdges.Values)
                 if (edge.OwnedFace == null || edge.OtherFace == null)
                 {
-                     badEdges.Add(edge);
+                    badEdges.Add(edge);
                     edge.OwnedFace = edge.OtherFace = edge.OwnedFace ?? edge.OtherFace;
                     Debug.WriteLine("Edge found with only face (face normal = " +
                                     edge.OwnedFace.Normal.MakePrintString()
                                     + ", between vertices " + edge.From.Position.MakePrintString() + " & " +
                                     edge.To.Position.MakePrintString());
                 }
-            Edges = alreadyDefinedEdges.Values.ToArray();
-            NumberOfEdges = Edges.GetLength(0);
+            var localEdges = alreadyDefinedEdges.Values.ToArray();
+            NumberOfEdges = localEdges.GetLength(0);
+            return localEdges;
         }
 
         /// <summary>
@@ -731,34 +732,34 @@ namespace TVGL.Tessellation
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid Copy()
         {
-            var faces = new PolygonalFace[NumberOfFaces];
+            var copyOfFaces = new PolygonalFace[NumberOfFaces];
             for (var i = 0; i < NumberOfFaces; i++)
-                faces[i] = Faces[i].Copy();
-            var vertices = new Vertex[NumberOfVertices];
+                copyOfFaces[i] = Faces[i].Copy();
+            var copyOfVertices = new Vertex[NumberOfVertices];
             for (var i = 0; i < NumberOfVertices; i++)
-                vertices[i] = Vertices[i].Copy();
-            var faceToVertexIndices = new List<List<int>>();
+                copyOfVertices[i] = Vertices[i].Copy();
             for (var fIndex = 0; fIndex < NumberOfFaces; fIndex++)
             {
-                var thisFace = faces[fIndex];
+                var thisFace = copyOfFaces[fIndex];
                 var oldFace = Faces[fIndex];
                 var vertexIndices = new List<int>();
                 foreach (var oldVertex in oldFace.Vertices)
                 {
                     var vIndex = oldVertex.IndexInList;
                     vertexIndices.Add(vIndex);
-                    var thisVertex = vertices[vIndex];
+                    var thisVertex = copyOfVertices[vIndex];
                     thisFace.Vertices.Add(thisVertex);
                     thisVertex.Faces.Add(thisFace);
                 }
-                faceToVertexIndices.Add(vertexIndices);
             }
+            Edge[] copyOfEdges = MakeEdges(copyOfFaces, copyOfVertices);
             var copy = new TessellatedSolid
            {
                SurfaceArea = SurfaceArea,
                Center = (double[])Center.Clone(),
-               Faces = faces,
-               Vertices = vertices,
+               Faces = copyOfFaces,
+               Vertices = copyOfVertices,
+               Edges = copyOfEdges,
                Name = Name,
                NumberOfFaces = NumberOfFaces,
                NumberOfVertices = NumberOfVertices,
@@ -770,24 +771,8 @@ namespace TVGL.Tessellation
                ZMax = ZMax,
                ZMin = ZMin
            };
-            copy.MakeEdges();
             copy.CreateConvexHull();
-            CopyEdgeData(Edges, copy.Edges);
             return copy;
-        }
-
-        void CopyEdgeData(Edge[] originalEdges, Edge[] copiedEdges)
-        {
-            for (int i = 0; i < NumberOfEdges; i++)
-            {
-                var origEdge = originalEdges[i];
-                var copiedEdge = copiedEdges[i];
-                //copiedEdge.InternalAngle = origEdge.InternalAngle;
-                //copiedEdge.Curvature = origEdge.Curvature;
-                copiedEdge.PartofConvexHull = origEdge.PartofConvexHull;
-                //copiedEdge.Length = origEdge.Length;
-                //copiedEdge.Vector = (double[])origEdge.Vector.Clone();
-            }
         }
 
         #endregion

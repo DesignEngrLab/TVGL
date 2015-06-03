@@ -120,7 +120,8 @@ namespace TVGL.Tessellation
                 PointCurvature = PointCurvature,
                 Edges = new List<Edge>(),
                 Faces = new List<PolygonalFace>(),
-                Position = (double[])Position.Clone()
+                Position = (double[])Position.Clone(),
+                IndexInList = IndexInList
             };
         }
     }

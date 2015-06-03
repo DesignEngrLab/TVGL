@@ -141,9 +141,7 @@ namespace TVGL.Boolean_Operations
                 nextContactEltIndex = FindNextContactElement(contacts, contactElt, out connectingVertex);
             }
             if (contactElt == firstContactElt)
-                return new Loop(contactElements, plane.Normal, true, true);
-            //if (!contacts.Any())
-            //    return new Loop(contactElements, plane.Normal, false);
+                return new Loop(contactElements, plane.Normal, true, false);
             // else work backwards        
             contactElt = firstContactElt;
             contacts.RemoveAt(0);
@@ -171,13 +169,13 @@ namespace TVGL.Boolean_Operations
                 prevContactEltIndex = FindPrevContactElement(contacts, contactElt, out connectingVertex);
             }
             if (contactElements[0].ContactEdge.From == contactElements.Last().ContactEdge.To)
-                return new Loop(contactElements, plane.Normal, true, true);
+                return new Loop(contactElements, plane.Normal, true, false);
             if (StarMath.IsPracticallySame(contactElements[0].ContactEdge.From.Position,
                   contactElements.Last().ContactEdge.To.Position))
             {
                 contactElements[0].ContactEdge = new Edge(contactElements.Last().ContactEdge.To,
                     contactElements[0].ContactEdge.To, null, null);
-                return new Loop(contactElements, plane.Normal, true, false);
+                return new Loop(contactElements, plane.Normal, true, true);
             }
             contacts.Remove(firstContactElt); //it didn't work to connect it up, so you're going to have to leave
             // the loop open. Be sure to remove that one contact that you were hoping to re-find. Otherwise, the 
@@ -190,7 +188,7 @@ namespace TVGL.Boolean_Operations
             Debug.WriteLine("Adding an artificial edge to close the loop for plane @" + plane.Normal.MakePrintString()
                             + " with a distance of " + plane.DistanceToOrigin);
             contactElements.Add(artificialContactElement);
-            return new Loop(contactElements, plane.Normal, true, false);
+            return new Loop(contactElements, plane.Normal, true, true);
 
         }
 
@@ -337,10 +335,9 @@ namespace TVGL.Boolean_Operations
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
         public static
         void OnFlat
-            (TessellatedSolid oldSolid, Flat plane, out List<TessellatedSolid> positiveSideSolids,
+            (TessellatedSolid ts, Flat plane, out List<TessellatedSolid> positiveSideSolids,
                 out List<TessellatedSolid> negativeSideSolids)
         {
-            var ts = oldSolid.Copy(); // user should know this is destructive! why slow down again here.
             var contactData = DefineContact(plane, ts);
             DivideUpContact(ts, contactData, plane);
             //todo: now need to split the ts into separate lists...perhaps by following faces in tree
@@ -389,8 +386,19 @@ namespace TVGL.Boolean_Operations
                     var midVert = faceToSplit.Vertices.First(v => v != maxVert && v != minVert);
                     var dxMidVert = midVert.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin;
                     var faceVerts = new List<Vertex>();
+                    faceVerts.AddRange(new[] { contactElement.ContactEdge.From, contactElement.ContactEdge.To, maxVert });
+                    var positiveFace = new PolygonalFace(faceVerts);
+                    //todo var edge1 = new Edge(contactElement.ContactEdge.From, contactElement.ContactEdge.To,positiveFace,)
+                    facesToAdd.Add(positiveFace);
+                    faceVerts.Clear();
+                    faceVerts.AddRange(new[] { contactElement.ContactEdge.To, contactElement.ContactEdge.From, minVert });
+                    var negativeFace = new PolygonalFace(faceVerts);
+                    facesToAdd.Add(negativeFace);
+                    //#+1 add v to f           (both of these are done in the preceding PolygonalFace
+                    //#+2 add f to v            constructors as well as the one for thirdFace below)
                     if (contactElement is ThroughFaceContactElement)
                     {
+                        faceVerts.Clear();
                         var tfce = (ThroughFaceContactElement)contactElement;
                         edgesToDelete.Add(tfce.SplitEdge);
                         verticesToAdd.Add(tfce.StartVertex);
@@ -398,7 +406,7 @@ namespace TVGL.Boolean_Operations
                         {
                             // then connect third-face to the From of contact element
                             if (dxMidVert < 0)
-                                faceVerts.AddRange(new[] { contactElement.ContactEdge.From, midVert, minVert });
+                                faceVerts.AddRange(new[] { minVert, contactElement.ContactEdge.From, midVert });
                             else faceVerts.AddRange(new[] { contactElement.ContactEdge.From, maxVert, midVert });
                         }
                         else
@@ -406,21 +414,17 @@ namespace TVGL.Boolean_Operations
                             // then connect third-face to the TO of contact element
                             if (dxMidVert < 0)
                                 faceVerts.AddRange(new[] { contactElement.ContactEdge.To, minVert, midVert });
-                            else faceVerts.AddRange(new[] { contactElement.ContactEdge.To, midVert, maxVert });
+                            else faceVerts.AddRange(new[] { maxVert, contactElement.ContactEdge.To, midVert });
                         }
+                        var thirdFace = new PolygonalFace(faceVerts);
+                        facesToAdd.Add(thirdFace);
+                        edgesToAdd.Add(new Edge(faceVerts[0], faceVerts[1], thirdFace, (dxMidVert < 0) ? negativeFace : positiveFace));
+                        // for the new edges in a through face this line accomplishes: +3 add f to e; +4 add e to f; +5 add v to e;
+                        //    +6 add e to v
                     }
-                    facesToAdd.Add(new PolygonalFace(faceVerts));
-                    faceVerts.Clear();
-                    faceVerts.AddRange(new[] { contactElement.ContactEdge.From, contactElement.ContactEdge.To, maxVert });
-                    facesToAdd.Add(new PolygonalFace(faceVerts));
-                    faceVerts.Clear();
-                    faceVerts.AddRange(new[] { contactElement.ContactEdge.To, contactElement.ContactEdge.From, midVert });
-                    facesToAdd.Add(new PolygonalFace(faceVerts));
-                    //#+1 add v to f
                 }
             }
             // -1 remove v from f - no need to do this as no v's are removed
-            // -5 remove v from e - again not done
             foreach (var face in facesToDelete)
             {
                 foreach (var vertex in face.Vertices)
@@ -435,27 +439,24 @@ namespace TVGL.Boolean_Operations
             }
             //-4 remove e from f - no need to do as the only edges deleted are the ones between deleted faces
             ts.RemoveFaces(facesToDelete);
+            // -5 remove v from e - not needed as no vertices are deleted (like -1 above)
             foreach (var edge in edgesToDelete)
             {
                 edge.From.Edges.Remove(edge); //-6 remove e from v
                 edge.To.Edges.Remove(edge);
             }
             ts.RemoveEdges(edgesToDelete);
+            // now to add new faces to modified edges
+            foreach (var edge in edgesToModify)
+            {
+                var faceToAttach = facesToAdd.First(f => f.Vertices.Contains(edge.To) && f.Vertices.Contains(edge.From));
+                faceToAttach.Edges.Add(edge);       //+4 add e to f
+                if (edge.OwnedFace == null) edge.OwnedFace = faceToAttach;  //+3 add f to e
+                else edge.OtherFace = faceToAttach;
+            }
             ts.AddVertices(verticesToAdd);
             ts.AddEdges(edgesToAdd);
             ts.AddFaces(facesToAdd);
-            foreach (var face in facesToAdd)
-            {
-                foreach (var vertex in face.Vertices)
-                {
-                    vertex.Faces.Add(face); //+2 add f to v
-                    var edge = face.OtherEdge(vertex);
-                    //+3 add f to e
-                    //+4 add e to f
-                    //+5 add v to e
-                    //+6 add e to v
-                }
-            }
         }
     }
 }

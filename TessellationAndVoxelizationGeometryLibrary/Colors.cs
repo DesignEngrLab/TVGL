@@ -594,7 +594,7 @@ namespace TVGL
     /// <summary>
     /// Struct Color
     /// </summary>
-    public struct Color
+    public class Color
     {
         #region Constructors
 

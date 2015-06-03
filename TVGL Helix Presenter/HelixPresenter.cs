@@ -52,7 +52,7 @@ namespace TVGL_Helix_Presenter
             if (ts.HasUniformColor)
             {
                 var positions = ts.Faces.SelectMany(f => f.Vertices.Select(v => new Point3D(v.Position[0], v.Position[1], v.Position[2])));
-                var normals = ts.Faces.SelectMany(f => f.Vertices.Select(v => new Vector3D(f.Normal[0], f.Normal[1], f.Normal[2])));  
+                var normals = ts.Faces.SelectMany(f => f.Vertices.Select(v => new Vector3D(f.Normal[0], f.Normal[1], f.Normal[2])));
                 return new ModelVisual3D
                 {
                     Content =
@@ -61,7 +61,7 @@ namespace TVGL_Helix_Presenter
                             Geometry = new MeshGeometry3D
                             {
                                 Positions = new Point3DCollection(positions),
-                               // TriangleIndices = new Int32Collection(triIndices),
+                                // TriangleIndices = new Int32Collection(triIndices),
                                 Normals = new Vector3DCollection(normals)
                             },
                             Material = defaultMaterial
@@ -74,14 +74,17 @@ namespace TVGL_Helix_Presenter
                 var vOrder = new Point3DCollection();
                 for (var i = 0; i < 3; i++)
                     vOrder.Add(new Point3D(f.Vertices[i].X, f.Vertices[i].Y, f.Vertices[i].Z));
-                var c = new Color { A = f.color.A, B = f.color.B, G = f.color.G, R = f.color.R };
+
+                var c = (f.color == null)
+                    ? defaultMaterial
+                    : MaterialHelper.CreateMaterial(new Color { A = f.color.A, B = f.color.B, G = f.color.G, R = f.color.R });
                 result.Children.Add(new ModelVisual3D
                 {
                     Content =
                         new GeometryModel3D
                         {
                             Geometry = new MeshGeometry3D { Positions = vOrder },
-                            Material = new DiffuseMaterial(new SolidColorBrush(c))
+                            Material = c
                         }
                 });
             }

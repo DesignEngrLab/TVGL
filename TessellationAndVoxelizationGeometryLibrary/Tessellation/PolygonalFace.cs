@@ -73,7 +73,7 @@ namespace TVGL.Tessellation
             }
             n = normals.Count;
             if (n == 0)  // this would happen if the face collapse to a line.
-                Normal = new[] {double.NaN, double.NaN, double.NaN};
+                Normal = new[] { double.NaN, double.NaN, double.NaN };
             else
             {
                 var dotProduct = new double[n];
@@ -95,7 +95,7 @@ namespace TVGL.Tessellation
                         if (d < 0) likeFirstNormal = !likeFirstNormal;
                         if (likeFirstNormal) numLikeFirstNormal++;
                     }
-                    if (2*numLikeFirstNormal >= normals.Count) Normal = normals[0];
+                    if (2 * numLikeFirstNormal >= normals.Count) Normal = normals[0];
                     else Normal = normals[0].multiply(-1);
                 }
             }
@@ -248,13 +248,17 @@ namespace TVGL.Tessellation
             };
         }
 
-        internal Edge OtherEdge(Vertex thisVertex)
+        internal Edge OtherEdge(Vertex thisVertex, Boolean willAcceptNullAnswer = false)
         {
-           return Edges.First(e => e.To != thisVertex && e.From!=thisVertex);
+            if (willAcceptNullAnswer)
+                return Edges.FirstOrDefault(e => e.To != thisVertex && e.From != thisVertex);
+            return Edges.First(e => e.To != thisVertex && e.From != thisVertex);
         }
 
-        internal Vertex OtherVertex(Edge thisEdge)
+        internal Vertex OtherVertex(Edge thisEdge, Boolean willAcceptNullAnswer = false)
         {
+            if (willAcceptNullAnswer)
+                return Vertices.FirstOrDefault(v => v != thisEdge.To && v != thisEdge.From);
             return Vertices.First(v => v != thisEdge.To && v != thisEdge.From);
         }
     }

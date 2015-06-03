@@ -14,41 +14,41 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = { 
-       "../../../TestFiles/Mic_Holder_SW.stl",  
-         "../../../TestFiles/Mic_Holder_JR.stl",
+      // "../../../TestFiles/Mic_Holder_SW.stl",  
+        // "../../../TestFiles/Mic_Holder_JR.stl",
                                                 //"../../../TestFiles/3_bananas.amf",    
                                                 //"../../../TestFiles/drillparts.amf",    
                                                 //"../../../TestFiles/wrenchsns.amf",     
                                                 //"../../../TestFiles/Rook.amf",          
-                                                //"../../../TestFiles/amf_Cube.amf",
+                                                "../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/trapezoid.4d.off",
         //     "../../../TestFiles/mushroom.off",   
           //"../../../TestFiles/ABF.STL",           
           //"../../../TestFiles/Pump-1repair.STL",
           //"../../../TestFiles/Pump-1.STL",
-          "../../../TestFiles/Beam_Clean.STL",
-        "../../../TestFiles/piston.stl",
-        "../../../TestFiles/Z682.stl",   
-        "../../../TestFiles/85408.stl",
-        "../../../TestFiles/sth2.stl",
-           "../../../TestFiles/pump.stl", 
-         "../../../TestFiles/bradley.stl",
-        "../../../TestFiles/45.stl",
-        "../../../TestFiles/Cuboide.stl",
-        "../../../TestFiles/new/5.STL",
-         "../../../TestFiles/new/2.stl",
-        "../../../TestFiles/new/6.stl",
-        "../../../TestFiles/new/4.stl",
-       "../../../TestFiles/radiobox.stl",
-        "../../../TestFiles/brace.stl",        
-        "../../../TestFiles/box.stl",
-        "../../../TestFiles/G0.stl",
-        "../../../TestFiles/GKJ0.stl",
-        "../../../TestFiles/SCS12UU.stl",
-        "../../../TestFiles/testblock2.stl",
-        "../../../TestFiles/Z665.stl",
-        "../../../TestFiles/Casing.stl",
-        "../../../TestFiles/mendel_extruder.stl"
+       //   "../../../TestFiles/Beam_Clean.STL",
+       // "../../../TestFiles/piston.stl",
+       // "../../../TestFiles/Z682.stl",   
+       // "../../../TestFiles/85408.stl",
+       // "../../../TestFiles/sth2.stl",
+       //    "../../../TestFiles/pump.stl", 
+       //  "../../../TestFiles/bradley.stl",
+       // "../../../TestFiles/45.stl",
+       // "../../../TestFiles/Cuboide.stl",
+       // "../../../TestFiles/new/5.STL",
+       //  "../../../TestFiles/new/2.stl",
+       // "../../../TestFiles/new/6.stl",
+       // "../../../TestFiles/new/4.stl",
+       //"../../../TestFiles/radiobox.stl",
+       // "../../../TestFiles/brace.stl",        
+       // "../../../TestFiles/box.stl",
+       // "../../../TestFiles/G0.stl",
+       // "../../../TestFiles/GKJ0.stl",
+       // "../../../TestFiles/SCS12UU.stl",
+       // "../../../TestFiles/testblock2.stl",
+       // "../../../TestFiles/Z665.stl",
+       // "../../../TestFiles/Casing.stl",
+       // "../../../TestFiles/mendel_extruder.stl"
         };
 
         [STAThread]
@@ -61,10 +61,10 @@ namespace TVGL_Test
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
                 //TestClassification(ts[0]);
-                 TestXSections(ts[0]);
-                //TestSlice(ts[0]);
+               // TestXSections(ts[0]);
+                TestSlice(ts[0]);
                 //TestOBB(ts[0]);       
-                 TVGL_Helix_Presenter.HelixPresenter.Show(ts);
+                TVGL_Helix_Presenter.HelixPresenter.Show(ts);
 
             }
             Console.ReadKey();
@@ -130,7 +130,7 @@ namespace TVGL_Test
             var crossAreas = new double[3][,];
 
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
-            Slice.OnFlat(ts, new Flat(1, new[] { 1.0, 0, 0 }), out positiveSideSolids, out negativeSideSolids);
+            Slice.OnFlat(ts, new Flat(0, new[] { 1.0, 0, 0 }), out positiveSideSolids, out negativeSideSolids);
 
         }
     }
