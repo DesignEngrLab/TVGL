@@ -35,10 +35,10 @@ namespace TVGL
         /// </summary>
         /// <param name="facesAll">The faces all.</param>
         /// <param name="axis">The axis.</param>
-        internal Cylinder(List<PolygonalFace> facesAll, double[] axis)
+        public Cylinder(IEnumerable<PolygonalFace> facesAll, double[] axis)
             : base(facesAll)
         {
-            var faces = ListFunctions.FacesWithDistinctNormals(facesAll);
+            var faces = ListFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
             var centers = new List<double[]>();
             double[] center;
@@ -156,7 +156,7 @@ namespace TVGL
         /// </summary>
         /// <param name="face">The face.</param>
         /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
-        internal override bool IsNewMemberOf(PolygonalFace face)
+        public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
             if (Math.Abs(face.Normal.dotProduct(Axis)) > Constants.ErrorForFaceInSurface)
@@ -166,11 +166,12 @@ namespace TVGL
                     return false;
             return true;
         }
+
         /// <summary>
         /// Updates the with.
         /// </summary>
         /// <param name="face">The face.</param>
-        internal override void UpdateWith(PolygonalFace face)
+        public override void UpdateWith(PolygonalFace face)
         {
             var numFaces = Faces.Count;
             double[] inBetweenPoint;

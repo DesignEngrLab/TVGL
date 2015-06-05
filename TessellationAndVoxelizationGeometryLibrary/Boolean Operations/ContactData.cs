@@ -55,8 +55,24 @@ namespace TVGL.Boolean_Operations
         /// <summary>
         /// Gets the loops of negative area (i.e. holes).
         /// </summary>
-        /// <value>The negative loops.</value>
+        /// <value>The negative loops.</value>                    
         public List<Loop> NegativeLoops { get; internal set; }
+
+        /// <summary>
+        /// Gets all loops in one list (the positive loops are followed by the
+        /// negative loops).
+        /// </summary>
+        /// <value>All loops.</value>
+        public List<Loop> AllLoops
+        {
+            get
+            {
+                var allLoops = new List<Loop>(PositiveLoops);
+                allLoops.AddRange(NegativeLoops);
+                return allLoops;
+            }
+        }
+
 
         /// <summary>
         /// The combined perimeter of the 2D loops defined with the Contact Data.

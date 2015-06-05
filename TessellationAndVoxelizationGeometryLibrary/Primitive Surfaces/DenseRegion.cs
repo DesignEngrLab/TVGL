@@ -28,7 +28,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        internal override bool IsNewMemberOf(PolygonalFace face)
+        public override bool IsNewMemberOf(PolygonalFace face)
         {
             throw new NotImplementedException();
         }
@@ -38,7 +38,7 @@ namespace TVGL
         /// </summary>
         /// <param name="face">The face.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        internal override void UpdateWith(PolygonalFace face)
+        public override void UpdateWith(PolygonalFace face)
         {
             throw new NotImplementedException();
         }

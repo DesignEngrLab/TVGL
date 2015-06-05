@@ -20,8 +20,8 @@ namespace TVGL.Tessellation
         /// <param name="otherFace">The other face.</param>
         /// <param name="doublyLinkedFaces"></param>
         /// <param name="doublyLinkedVertices"></param>
-        public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace, 
-            Boolean doublyLinkedFaces=false, Boolean doublyLinkedVertices=false)
+        public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
+            Boolean doublyLinkedFaces = false, Boolean doublyLinkedVertices = false)
         {
             From = fromVertex;
             To = toVertex;
@@ -227,17 +227,6 @@ namespace TVGL.Tessellation
             }
             //Debug.WriteLine("angle = " + (InternalAngle * (180 / Math.PI)).ToString() + "; " + SurfaceIs.ToString());
         }
-
-
-        /// <summary>
-        ///     A dictionary with 5 groups of Flat, Cylinder, Sphere, Flat to Curve and Sharp Edge and their
-        ///     probabilities.
-        /// </summary>
-        /// <value>
-        ///     Group Probability
-        /// </value>
-        internal Dictionary<int, double> CatProb { get; set; }
-
         #endregion
     }
 }

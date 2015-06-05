@@ -28,8 +28,8 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Flat"/> class.
         /// </summary>
         /// <param name="Faces">The faces.</param>
-        public Flat(List<PolygonalFace> Faces)
-            : base(Faces)
+        public Flat(IEnumerable<PolygonalFace> faces)
+            : base(faces)
         {
             var normalSum = new double[3];
             normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
@@ -82,7 +82,7 @@ namespace TVGL
         /// </summary>
         /// <param name="face">The face.</param>
         /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
-        internal override bool IsNewMemberOf(PolygonalFace face)
+        public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
             if (!StarMath.IsPracticallySame(face.Normal.dotProduct(Normal), 1.0))
@@ -97,7 +97,7 @@ namespace TVGL
         /// Updates the with.
         /// </summary>
         /// <param name="face">The face.</param>
-        internal override void UpdateWith(PolygonalFace face)
+        public override void UpdateWith(PolygonalFace face)
         {
             Normal = Normal.multiply(Faces.Count).add(face.Normal).divide(Faces.Count + 1);
             Normal.normalizeInPlace();

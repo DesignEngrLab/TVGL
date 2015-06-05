@@ -40,18 +40,18 @@ namespace TVGL
         public double[] Axis { get; internal set; }
 
 
-        internal override bool IsNewMemberOf(PolygonalFace face)
+        public override bool IsNewMemberOf(PolygonalFace face)
         {
             return false;
             // todo
             throw new NotImplementedException();
         }
 
-        internal override void UpdateWith(PolygonalFace face)
+        public override void UpdateWith(PolygonalFace face)
         {
             base.UpdateWith(face);
         }
-        internal Cone(List<PolygonalFace> facesAll, double[] axis, double aperture)
+        public Cone(List<PolygonalFace> facesAll, double[] axis, double aperture)
             : base(facesAll)
         {
             var faces = ListFunctions.FacesWithDistinctNormals(facesAll);

@@ -26,7 +26,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="PrimitiveSurface" /> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        public Torus(List<PolygonalFace> faces) : base(faces)
+        public Torus(IEnumerable<PolygonalFace> faces) : base(faces)
         {
         }
         /// <summary>
@@ -61,7 +61,7 @@ namespace TVGL
         /// <param name="face">The face.</param>
         /// <returns>Boolean.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        internal override Boolean IsNewMemberOf(PolygonalFace face)
+        public override Boolean IsNewMemberOf(PolygonalFace face)
         {
             throw new NotImplementedException();
         }
@@ -71,7 +71,7 @@ namespace TVGL
         /// </summary>
         /// <param name="face">The face.</param>
         /// <exception cref="System.NotImplementedException"></exception>
-        internal override void UpdateWith(PolygonalFace face)
+        public override void UpdateWith(PolygonalFace face)
         {
             throw new NotImplementedException();
             base.UpdateWith(face);

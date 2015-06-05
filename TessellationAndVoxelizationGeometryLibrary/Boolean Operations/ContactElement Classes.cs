@@ -25,6 +25,10 @@ namespace TVGL.Boolean_Operations
     /// </summary>
     public class CoincidentEdgeContactElement : ContactElement
     {
+        internal CoincidentEdgeContactElement()
+        {
+        }
+
         internal CoincidentEdgeContactElement(Edge edge, Flat plane)
         {
             var avgFaceNormal = edge.OwnedFace.Normal.add(edge.OtherFace.Normal).divide(2);

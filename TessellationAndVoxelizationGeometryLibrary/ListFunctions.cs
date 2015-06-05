@@ -8,10 +8,10 @@ using TVGL.Tessellation;
 
 namespace TVGL
 {
-    internal static class ListFunctions
+    public static class ListFunctions
     {
 
-        internal static List<PolygonalFace> FacesWithDistinctNormals(List<PolygonalFace> faces)
+        public static List<PolygonalFace> FacesWithDistinctNormals(List<PolygonalFace> faces)
         {
             var distinctList = new List<PolygonalFace>(faces);
             var n = faces.Count;

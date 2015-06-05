@@ -16,14 +16,14 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="PrimitiveSurface"/> class.
         /// </summary>
         /// <param name="faces">The faces.</param>
-        protected PrimitiveSurface(List<PolygonalFace> faces)
+        protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
         {
-            Faces = faces;
-            Area = faces.Sum(f => f.Area);
+            Faces = faces.ToList();
+            Area = Faces.Sum(f => f.Area);
 
             var outerEdges = new HashSet<Edge>();
             var innerEdges = new HashSet<Edge>();
-            foreach (var face in faces)
+            foreach (var face in Faces)
             {
                 foreach (var edge in face.Edges)
                 {
@@ -38,8 +38,7 @@ namespace TVGL
             }
             OuterEdges = new List<Edge>(outerEdges);
             InnerEdges =new List<Edge>(innerEdges);
-            Vertices = faces.SelectMany(f => f.Vertices).Distinct().ToList();
-
+            Vertices = Faces.SelectMany(f => f.Vertices).Distinct().ToList();
         }
         #endregion
 
@@ -99,9 +98,9 @@ namespace TVGL
         /// </value>
         public List<Vertex> Vertices { get; internal set; }
 
-        internal abstract Boolean IsNewMemberOf(PolygonalFace face);
+        public abstract Boolean IsNewMemberOf(PolygonalFace face);
 
-        internal virtual void UpdateWith(PolygonalFace face)
+        public virtual void UpdateWith(PolygonalFace face)
         {
             Area += face.Area;
             foreach (var v in face.Vertices)

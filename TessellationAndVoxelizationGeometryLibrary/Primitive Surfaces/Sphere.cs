@@ -12,10 +12,10 @@ namespace TVGL
     public class Sphere : PrimitiveSurface
     {
         #region Constructor
-        internal Sphere(List<PolygonalFace> facesAll)
+        public Sphere(IEnumerable<PolygonalFace> facesAll)
             : base(facesAll)
         {
-            var faces = ListFunctions.FacesWithDistinctNormals(facesAll);
+            var faces = ListFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
             var centers = new List<double[]>();
             double[] center;
@@ -81,7 +81,7 @@ namespace TVGL
         /// The radius.
         /// </value>
         public double Radius { get; internal set; }
-        internal override Boolean IsNewMemberOf(PolygonalFace face)
+        public override Boolean IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
             if (Math.Abs(face.Normal.dotProduct(face.Center.subtract(Center)) - 1) >
@@ -93,7 +93,7 @@ namespace TVGL
             return true;
         }
 
-        internal override void UpdateWith(PolygonalFace face)
+        public override void UpdateWith(PolygonalFace face)
         {
             double[] pointOnLine;
             var distance = GeometryFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);

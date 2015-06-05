@@ -358,6 +358,33 @@ namespace TVGL.Tessellation
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
+        internal TessellatedSolid(List<PolygonalFace> facesList, Vertex[] subSolidVertices, IEnumerable<Vertex> verticesAtHoles)
+        {
+            Faces = facesList.ToArray();
+            Vertices = subSolidVertices;
+            PatchHoles(verticesAtHoles);
+            MakeEdges();                  
+            CreateConvexHull();
+            DefineBoundingBoxAndCenter();
+            for (int i = 0; i < Faces.Length; i++)
+            {
+                var face = Faces[i];
+                var centerX = face.Vertices.Average(v => v.X);
+                var centerY = face.Vertices.Average(v => v.Y);
+                var centerZ = face.Vertices.Average(v => v.Z);
+                face.Center = new[] { centerX, centerY, centerZ };
+            }
+            ConnectConvexHullToObjects();
+            DefineVolumeAndAreas();
+            DefineFaceCurvature();
+            DefineVertexCurvature();
+        }
+
+        private void PatchHoles(IEnumerable<Vertex> verticesAtHoles)
+        {
+            return;
+            throw new NotImplementedException();
+        }
 
         #endregion
 

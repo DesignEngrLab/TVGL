@@ -333,18 +333,27 @@ namespace TVGL.Boolean_Operations
         /// <param name="positiveSideSolids">The solids that are on the positive side of the plane
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
-        public static
-        void OnFlat
-            (TessellatedSolid ts, Flat plane, out List<TessellatedSolid> positiveSideSolids,
-                out List<TessellatedSolid> negativeSideSolids)
+        public static void OnFlat(TessellatedSolid ts, Flat plane,
+            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
             var contactData = DefineContact(plane, ts);
+
             DivideUpContact(ts, contactData, plane);
-            //todo: now need to split the ts into separate lists...perhaps by following faces in tree
-            // until contact data is hit?
-            positiveSideSolids = new List<TessellatedSolid>();
-            negativeSideSolids = new List<TessellatedSolid>();
+            var loops =
+                contactData.AllLoops.Where(loop => loop.All(
+                            ce => !(ce.ContactEdge.Curvature == CurvatureType.Convex && ce is CoincidentEdgeContactElement))).ToList();
+            var allNegativeStartingFaces =
+               loops.SelectMany(loop => loop.Select(ce => ce.SplitFaceNegative)).ToList();
+            var allPositiveStartingFaces =
+                loops.SelectMany(loop => loop.Select(ce => ce.SplitFacePositive)).ToList();
+
+            var negativeSideFaceList = FindAllSolidsWithTheseFaces(allNegativeStartingFaces, allPositiveStartingFaces);
+            var positiveSideFaceList = FindAllSolidsWithTheseFaces(allPositiveStartingFaces, allNegativeStartingFaces);
+
+            negativeSideSolids = convertFaceListsToSolids(ts, negativeSideFaceList, loops, false);
+            positiveSideSolids = convertFaceListsToSolids(ts, positiveSideFaceList, loops, true);
         }
+
 
         /// <summary>
         /// Divides up contact.
@@ -353,9 +362,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="contactData">The contact data.</param>
         /// <param name="plane">The plane.</param>
         /// <exception cref="System.Exception">face is supposed to be split at plane but lives only on one side</exception>
-        private static
-            void DivideUpContact
-            (TessellatedSolid ts, ContactData contactData, Flat plane)
+        private static void DivideUpContact(TessellatedSolid ts, ContactData contactData, Flat plane)
         {
             var edgesToAdd = new List<Edge>();
             var facesToAdd = new List<PolygonalFace>();
@@ -363,18 +370,18 @@ namespace TVGL.Boolean_Operations
             var edgesToDelete = new List<Edge>();
             var facesToDelete = new List<PolygonalFace>();
             var edgesToModify = new List<Edge>();
-            var allLoops = new List<Loop>(contactData.PositiveLoops);
-            allLoops.AddRange(contactData.NegativeLoops);
-            foreach (var loop in allLoops)
+            foreach (var loop in contactData.AllLoops)
             {
-                foreach (var contactElement in loop)
+                for (int i = 0; i < loop.Count; i++)
                 {
-                    if (contactElement is CoincidentEdgeContactElement)
+                    var ce = loop[i];
+                    if (ce is CoincidentEdgeContactElement)
                         // If the contact element is at a coincident edge, then there is nothing to do in this stage. When contact element was
                         // created, it properly defined SplitFacePositive and SplitFaceNegative.
                         continue;
-                    edgesToAdd.Add(contactElement.ContactEdge);
-                    var faceToSplit = contactElement.SplitFacePositive;
+                    edgesToAdd.Add(ce.ContactEdge);
+                    edgesToModify.Add(ce.ContactEdge);
+                    var faceToSplit = ce.SplitFacePositive;
                     facesToDelete.Add(faceToSplit);
                     var vertPlaneDistances =
                         faceToSplit.Vertices.Select(
@@ -385,43 +392,57 @@ namespace TVGL.Boolean_Operations
                     var minVert = faceToSplit.Vertices[minIndex];
                     var midVert = faceToSplit.Vertices.First(v => v != maxVert && v != minVert);
                     var dxMidVert = midVert.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin;
-                    var faceVerts = new List<Vertex>();
-                    faceVerts.AddRange(new[] { contactElement.ContactEdge.From, contactElement.ContactEdge.To, maxVert });
-                    var positiveFace = new PolygonalFace(faceVerts);
-                    //todo var edge1 = new Edge(contactElement.ContactEdge.From, contactElement.ContactEdge.To,positiveFace,)
+                    var positiveFace =
+                        new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, maxVert });
                     facesToAdd.Add(positiveFace);
-                    faceVerts.Clear();
-                    faceVerts.AddRange(new[] { contactElement.ContactEdge.To, contactElement.ContactEdge.From, minVert });
-                    var negativeFace = new PolygonalFace(faceVerts);
+                    var negativeFace =
+                        new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, minVert });
                     facesToAdd.Add(negativeFace);
                     //#+1 add v to f           (both of these are done in the preceding PolygonalFace
                     //#+2 add f to v            constructors as well as the one for thirdFace below)
-                    if (contactElement is ThroughFaceContactElement)
+                    if (ce is ThroughFaceContactElement && !StarMath.IsNegligible(dxMidVert))
                     {
-                        faceVerts.Clear();
-                        var tfce = (ThroughFaceContactElement)contactElement;
+                        PolygonalFace thirdFace;
+                        var tfce = (ThroughFaceContactElement)ce;
                         edgesToDelete.Add(tfce.SplitEdge);
                         verticesToAdd.Add(tfce.StartVertex);
+                        var positiveEdge = new Edge(maxVert, ce.ContactEdge.From, positiveFace, null, false,
+                            true);
+                        edgesToAdd.Add(positiveEdge);
+                        edgesToModify.Add(positiveEdge);
+                        var negativeEdge = new Edge(ce.ContactEdge.From, minVert, negativeFace, null, false,
+                            true);
+                        edgesToAdd.Add(negativeEdge);
+                        edgesToModify.Add(negativeEdge);
                         if (tfce.SplitEdge.From == midVert || tfce.SplitEdge.To == midVert)
                         {
-                            // then connect third-face to the From of contact element
+                            // then connect third-face to the From of contact element 
                             if (dxMidVert < 0)
-                                faceVerts.AddRange(new[] { minVert, contactElement.ContactEdge.From, midVert });
-                            else faceVerts.AddRange(new[] { contactElement.ContactEdge.From, maxVert, midVert });
+                                thirdFace = new PolygonalFace(new[] { minVert, ce.ContactEdge.From, midVert });
+                            else
+                                thirdFace = new PolygonalFace(new[] { ce.ContactEdge.From, maxVert, midVert });
                         }
                         else
                         {
-                            // then connect third-face to the TO of contact element
+                            // then connect third-face to the TO of contact element 
                             if (dxMidVert < 0)
-                                faceVerts.AddRange(new[] { contactElement.ContactEdge.To, minVert, midVert });
-                            else faceVerts.AddRange(new[] { maxVert, contactElement.ContactEdge.To, midVert });
+                                thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, minVert, midVert });
+                            else thirdFace = new PolygonalFace(new[] { maxVert, ce.ContactEdge.To, midVert });
                         }
-                        var thirdFace = new PolygonalFace(faceVerts);
                         facesToAdd.Add(thirdFace);
-                        edgesToAdd.Add(new Edge(faceVerts[0], faceVerts[1], thirdFace, (dxMidVert < 0) ? negativeFace : positiveFace));
-                        // for the new edges in a through face this line accomplishes: +3 add f to e; +4 add e to f; +5 add v to e;
-                        //    +6 add e to v
+                        edgesToAdd.Add(new Edge(thirdFace.Vertices[0], thirdFace.Vertices[1], thirdFace,
+                            (dxMidVert < 0) ? negativeFace : positiveFace, true, true));
+                        // for the new edges in a through face this line accomplishes: +3 add f to e; +4 add e to f; +5 add v to e; 
+                        //    +6 add e to v 
                     }
+                    loop[i] = new CoincidentEdgeContactElement
+                    {
+                        ContactEdge = ce.ContactEdge,
+                        EndVertex = ce.ContactEdge.To,
+                        StartVertex = ce.ContactEdge.From,
+                        SplitFaceNegative = negativeFace,
+                        SplitFacePositive = positiveFace
+                    };
                 }
             }
             // -1 remove v from f - no need to do this as no v's are removed
@@ -446,17 +467,89 @@ namespace TVGL.Boolean_Operations
                 edge.To.Edges.Remove(edge);
             }
             ts.RemoveEdges(edgesToDelete);
-            // now to add new faces to modified edges
+            // now to add new faces to modified edges   
+            ts.AddVertices(verticesToAdd);
+            ts.AddFaces(facesToAdd);
+
             foreach (var edge in edgesToModify)
             {
-                var faceToAttach = facesToAdd.First(f => f.Vertices.Contains(edge.To) && f.Vertices.Contains(edge.From));
-                faceToAttach.Edges.Add(edge);       //+4 add e to f
-                if (edge.OwnedFace == null) edge.OwnedFace = faceToAttach;  //+3 add f to e
-                else edge.OtherFace = faceToAttach;
+                var facesToAttach = facesToAdd.Where(f => f.Vertices.Contains(edge.To) && f.Vertices.Contains(edge.From));
+                foreach (var face in facesToAttach)
+                {
+                    face.Edges.Add(edge); //+4 add e to f
+                    var fromIndex = face.Vertices.IndexOf(edge.From);
+                    if ((fromIndex == face.Vertices.Count - 1 && face.Vertices[0] == edge.To)
+                        || (fromIndex < face.Vertices.Count - 1 && face.Vertices[fromIndex + 1] == edge.To))
+                        edge.OwnedFace = face; //+3 add f to e
+                    else edge.OtherFace = face;
+                }
             }
-            ts.AddVertices(verticesToAdd);
             ts.AddEdges(edgesToAdd);
-            ts.AddFaces(facesToAdd);
+        }
+
+        private static List<List<PolygonalFace>> FindAllSolidsWithTheseFaces(IEnumerable<PolygonalFace> frontierFacesEnumerable,
+            IEnumerable<PolygonalFace> forbiddenFacesEnumerable)
+        {
+            var frontierFaces = new HashSet<PolygonalFace>(frontierFacesEnumerable);
+            var forbiddenFaces = new HashSet<PolygonalFace>(forbiddenFacesEnumerable);
+            var facesLists = new List<List<PolygonalFace>>();
+            while (frontierFaces.Any())
+            {
+                var startFace = frontierFaces.First();
+                var faceList = new List<PolygonalFace>();
+                var stack = new Stack<PolygonalFace>(new[] { startFace });
+                while (stack.Any())
+                {
+                    var face = stack.Pop();
+                    if (forbiddenFaces.Contains(face)) continue;
+                    if (frontierFaces.Contains(face)) frontierFaces.Remove(face);
+                    forbiddenFaces.Add(face);
+                    faceList.Add(face);
+                    foreach (var adjacentFace in face.AdjacentFaces)
+                        if (!forbiddenFaces.Contains(adjacentFace))
+                            stack.Push(adjacentFace);
+                }
+                facesLists.Add(faceList);
+            }
+            return facesLists;
+        }
+        private static List<TessellatedSolid> convertFaceListsToSolids(TessellatedSolid ts, List<List<PolygonalFace>> facesLists,
+            List<Loop> loops, Boolean onPositiveSide)
+        {
+            List<TessellatedSolid> solids = new List<TessellatedSolid>();
+            foreach (var facesList in facesLists)
+            {
+                var vertIndices = facesList.SelectMany(f => f.Vertices.Select(v => v.IndexInList))
+                    .Distinct().OrderBy(index => index).ToArray();
+                var numVertices = vertIndices.Count();
+                var connectedLoops = loops.Where(loop =>
+                    (onPositiveSide && loop.Any(ce => facesList.Contains(ce.SplitFacePositive)))
+                    || (!onPositiveSide && loop.Any(ce => facesList.Contains(ce.SplitFaceNegative))))
+                    .ToList();
+                var subSolidVertices = new Vertex[numVertices];
+                var indicesToCopy = connectedLoops.SelectMany(loop => loop.Select(ce => ce.StartVertex.IndexInList))
+                    .OrderBy(index => index).ToArray();
+                var numIndicesToCopy = indicesToCopy.GetLength(0);
+                List<Vertex> edgeVertices = new List<Vertex>();
+                var copyIndex = 0;
+                for (int i = 0; i < numVertices; i++)
+                {
+                    Vertex thisVertex;
+                    if (copyIndex < numIndicesToCopy && vertIndices[i] == indicesToCopy[copyIndex])
+                    {
+                        thisVertex = ts.Vertices[vertIndices[i]].Copy();
+                        edgeVertices.Add(thisVertex);
+                    }
+                    else thisVertex = ts.Vertices[vertIndices[i]];
+                    thisVertex.IndexInList = i;
+                    subSolidVertices[i] = thisVertex;
+                    while (vertIndices[i] > indicesToCopy[copyIndex])
+                        copyIndex++;
+                }
+                solids.Add(new TessellatedSolid(facesList, subSolidVertices, edgeVertices));
+                //todo: make sure edgeVertices are in order
+            }
+            return solids;
         }
     }
 }

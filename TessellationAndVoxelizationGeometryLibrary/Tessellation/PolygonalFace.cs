@@ -47,7 +47,7 @@ namespace TVGL.Tessellation
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(List<Vertex> vertices)
+        public PolygonalFace(IList<Vertex> vertices)
             : this()
         {
             foreach (var v in vertices)
@@ -152,48 +152,6 @@ namespace TVGL.Tessellation
         /// </summary>
         /// <value>The color.</value>
         public Color color { get; set; }
-
-
-        ////////////////////////////////////////////////////////////////////
-        /// <summary>
-        /// gets the Area * edge ratio of the face. Edge ratio is the the length of longest
-        /// edge to the length of the shortest edge
-        /// </summary>
-        /// <value>
-        /// AreaRatio
-        /// </value>
-        public double AreaRatio { get; set; }
-        /// <summary>
-        /// Dictionary with possible face category obtained from different 
-        /// combinatons  of its edges' groups 
-        /// </summary>
-        /// <value>
-        /// Face Category
-        /// </value>
-        internal Dictionary<PrimitiveSurfaceType, double> FaceCat { get; set; }
-        /// <summary>
-        /// Dictionary with faceCat on its key and the combinaton which makes the category on its value
-        /// </summary>
-        /// <value>
-        /// Category to combination
-        /// </value>
-        internal Dictionary<PrimitiveSurfaceType, int[]> CatToCom { get; set; }
-        /// <summary>
-        /// Dictionary with edge combinations on key and edges obtained from face rules on its value
-        /// </summary>
-        /// <value>
-        /// Combination to Edges
-        /// </value>
-        internal Dictionary<int[], Edge[]> ComToEdge { get; set; }
-        /// <summary>
-        /// Dictionary with faceCat on key and edges lead to the category on its value
-        /// </summary>
-        /// <value>
-        /// Edges lead to desired category
-        /// </value>
-        internal Dictionary<PrimitiveSurfaceType, List<Edge>> CatToELDC { get; set; }
-        ////////////////////////////////////////////////////////////////////
-
         /// <summary>
         /// Gets the curvature.
         /// </summary>
@@ -237,7 +195,6 @@ namespace TVGL.Tessellation
             return new PolygonalFace
             {
                 Area = Area,
-                AreaRatio = AreaRatio,
                 Center = (double[])Center.Clone(),
                 Curvature = Curvature,
                 color = new Color(color.A, color.R, color.G, color.B),
