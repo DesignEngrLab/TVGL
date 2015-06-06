@@ -18,7 +18,7 @@ using System.Linq;
 using StarMathLib;
 using TVGL.Tessellation;
 
-namespace TVGL.Boolean_Operations
+namespace TVGL
 {
     /// <summary>
     /// A ContactData object represents a 2D path on the surface of the tesselated solid. 

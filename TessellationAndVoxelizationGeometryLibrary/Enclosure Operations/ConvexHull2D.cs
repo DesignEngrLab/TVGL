@@ -36,23 +36,22 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> ConvexHull2D(IList<IVertex> vertices, double[] direction = null)
+        public static List<Point> ConvexHull2D(IList<IVertex> vertices, double[] direction)
         {
-            var points2D = Get2DProjectionPoints(vertices, direction);
-            return ConvexHull2D(points2D);
+           return ConvexHull2D(new List<Point>(Get2DProjectionPoints(vertices, direction)));
         }
 
-        /// <summary>                   
-        /// Returns the 2D convex hull for the x and y values of the vertices - ignoring their z coordinate. This is essentially
-        /// called by the other overload of "ConvexHull2D".
+        /// <summary>
+        /// Returns the 2D convex hull for the 3D vertices within the plane defined by the normal, direction.
+        /// The returned points are a List of points (3D double array) that represent the points as they have been
+        /// converted to the 2D plane. The vertices are not altered by this function. This is a simple two-line function
+        /// that first call the non-destructive "Get2DProjectionPoints" and then the overload of "ConvexHull2D".
         /// </summary>
-        /// <param name="origVertices">The original vertices.</param>
+        /// <param name="points">The points.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<double[]> ConvexHull2D(IList<double[]> origVertices)
-        {
-            var vertices = new List<double[]>(origVertices);
-            var origVNum = vertices.Count;
-
+        public static List<Point> ConvexHull2D(IList<Point> points)
+        {                                                               
+            var origVNum = points.Count;
             #region Step 1 : Define Convex Octogon
 
             /* The first step is to quickly identify the three to eight vertices based on the
@@ -68,72 +67,69 @@ namespace TVGL
 
             /* the array of extreme is comprised of: 0.minX, 1. minSum, 2. minY, 3. maxDiff, 4. MaxX, 
              * 5. MaxSum, 6. MaxY, 7. MinDiff. */
-            var extremeVertices = new int[8];
-            //  int[] extremeVertexIndices = new int[8]; I thought that this might speed things up. That is, to use this to RemoveAt
-            // as oppoaws to the Remove in line 91, which I thought might be slow. Turns out I was wrong - plus code is more succinct
-            // way.
+            var extremePointsIndices = new int[8];
             for (var i = 0; i < origVNum; i++)
             {
-                var n = vertices[i];
-                if (n[0] < minX)
+                var pt = points[i];
+                if (pt[0] < minX)
                 {
-                    extremeVertices[0] = i;
-                    minX = n[0];
+                    extremePointsIndices[0] = i;
+                    minX = pt[0];
                 }
-                if ((n[0] + n[1]) < minSum)
+                if ((pt[0] + pt[1]) < minSum)
                 {
-                    extremeVertices[1] = i;
-                    minSum = n[0] + n[1];
+                    extremePointsIndices[1] = i;
+                    minSum = pt[0] + pt[1];
                 }
-                if (n[1] < minY)
+                if (pt[1] < minY)
                 {
-                    extremeVertices[2] = i;
-                    minY = n[1];
+                    extremePointsIndices[2] = i;
+                    minY = pt[1];
                 }
-                if ((n[0] - n[1]) > maxDiff)
+                if ((pt[0] - pt[1]) > maxDiff)
                 {
-                    extremeVertices[3] = i;
-                    maxDiff = n[0] - n[1];
+                    extremePointsIndices[3] = i;
+                    maxDiff = pt[0] - pt[1];
                 }
-                if (n[0] > maxX)
+                if (pt[0] > maxX)
                 {
-                    extremeVertices[4] = i;
-                    maxX = n[0];
+                    extremePointsIndices[4] = i;
+                    maxX = pt[0];
                 }
-                if ((n[0] + n[1]) > maxSum)
+                if ((pt[0] + pt[1]) > maxSum)
                 {
-                    extremeVertices[5] = i;
-                    maxSum = n[0] + n[1];
+                    extremePointsIndices[5] = i;
+                    maxSum = pt[0] + pt[1];
                 }
-                if (n[1] > maxY)
+                if (pt[1] > maxY)
                 {
-                    extremeVertices[6] = i;
-                    maxY = n[1];
+                    extremePointsIndices[6] = i;
+                    maxY = pt[1];
                 }
-                if ((n[0] - n[1]) >= minDiff) continue;
-                extremeVertices[7] = i;
-                minDiff = n[0] - n[1];
+                if ((pt[0] - pt[1]) >= minDiff) continue;
+                extremePointsIndices[7] = i;
+                minDiff = pt[0] - pt[1];
             }
 
             /* convexHullCCW is the result of this function. It is a list of 
              * vertices found in the original vertices and ordered to make a
              * counter-clockwise loop beginning with the leftmost (minimum
              * value of X) IVertexConvHull. */
-            var convexHullCCW = new List<double[]> {vertices[extremeVertices[0]]};
+            var convexHullCCW = new List<Point> {points[extremePointsIndices[0]]};
             for (var i = 1; i < 8; i++)
-                if (extremeVertices[i] != extremeVertices[i - 1])
-                    convexHullCCW.Add(vertices[extremeVertices[i]]);
-            extremeVertices = extremeVertices.Distinct().OrderByDescending(x => x).ToArray();
+                if (extremePointsIndices[i] != extremePointsIndices[i - 1])
+                    convexHullCCW.Add(points[extremePointsIndices[i]]);
+            extremePointsIndices = extremePointsIndices.Distinct().OrderByDescending(x => x).ToArray();
 
             #endregion
 
             /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
              * steamline the code, these are established. */
-            var cvxVNum = extremeVertices.GetLength(0);
+            var cvxVNum = extremePointsIndices.GetLength(0);
             origVNum -= cvxVNum;
             var last = cvxVNum - 1;
-            for (var i = 0; i < extremeVertices.GetLength(0); i++)
-                vertices.RemoveAt(extremeVertices[i]);
+            for (var i = 0; i < extremePointsIndices.GetLength(0); i++)
+                points.RemoveAt(extremePointsIndices[i]);
 
             #region Step 2 : Find Signed-Distance to each convex edge
 
@@ -169,9 +165,9 @@ namespace TVGL
             /* An array of sorted dictionaries! As we find new candidate convex points, we store them here. The second
              * part of the tuple (Item2 is a double) is the "positionAlong" - this is used to order the nodes that
              * are found for a particular side (More on this in 23 lines). */
-            var hullCands = new SortedList<double, double[]>[cvxVNum];
+            var hullCands = new SortedList<double, Point>[cvxVNum];
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
-            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, double[]>();
+            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, Point>();
 
             /* Now a big loop. For each of the original vertices, check them with the 3 to 8 edges to see if they 
              * are inside or out. If they are out, add them to the proper row of the hullCands array. */
@@ -181,8 +177,8 @@ namespace TVGL
                 {
                     var b = new[]
                     {
-                        vertices[i][0] - convexHullCCW[j][0],
-                        vertices[i][1] - convexHullCCW[j][1]
+                        points[i][0] - convexHullCCW[j][0],
+                        points[i][1] - convexHullCCW[j][1]
                     };
                     //signedDists[0, k, i] = signedDistance(convexVectInfo[i, 0], convexVectInfo[i, 1], bX, bY, convexVectInfo[i, 2]);
                     //signedDists[1, k, i] = positionAlong(convexVectInfo[i, 0], convexVectInfo[i, 1], bX, bY, convexVectInfo[i, 2]);
@@ -192,7 +188,7 @@ namespace TVGL
                      * original polygon. It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
                     if (StarMath.crossProduct2(StarMath.GetRow(j, edgeUnitVectors), b) > 0) continue;
-                    hullCands[j].Add(StarMath.GetRow(j, edgeUnitVectors).dotProduct(b, 2), vertices[i]);
+                    hullCands[j].Add(StarMath.GetRow(j, edgeUnitVectors).dotProduct(b, 2), points[i]);
                     break;
                 }
             }
@@ -215,7 +211,7 @@ namespace TVGL
                      * were all linear). The above octagon trick was to conquer and divide the candidates. */
 
                     /* a renaming for compactness and clarity */
-                    var hc = new List<double[]>(hullCands[j - 1].Values);
+                    var hc = new List<Point>(hullCands[j - 1].Values);
 
                     /* put the known starting IVertexConvHull as the beginning of the list. No need for the "positionAlong"
                      * anymore since the list is now sorted. At any rate, the positionAlong is zero. */
@@ -226,12 +222,12 @@ namespace TVGL
                     else hc.Add(convexHullCCW[j]);
 
                     /* Now starting from second from end, work backwards looks for places where the angle 
-                     * between the vertices in concave (which would produce a negative value of z). */
+                     * between the vertices is concave (which would produce a negative value of z). */
                     var i = hc.Count - 2;
                     while (i > 0)
                     {
-                        var zValue = StarMath.crossProduct2(hc[i].subtract(hc[i - 1], 2),
-                            hc[i + 1].subtract(hc[i], 2));
+                        var zValue = StarMath.crossProduct2(hc[i].Position.subtract(hc[i - 1].Position, 2),
+                            hc[i + 1].Position.subtract(hc[i].Position, 2));
                         if (zValue < 0)
                         {
                             /* remove any vertices that create concave angles. */

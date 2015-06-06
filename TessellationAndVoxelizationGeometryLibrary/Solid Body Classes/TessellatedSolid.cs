@@ -19,6 +19,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MIConvexHull;
 using StarMathLib;
+using TVGL.Boolean_Operations;
 
 namespace TVGL.Tessellation
 {
@@ -358,11 +359,18 @@ namespace TVGL.Tessellation
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
-        internal TessellatedSolid(List<PolygonalFace> facesList, Vertex[] subSolidVertices, IEnumerable<Vertex> verticesAtHoles)
+        internal TessellatedSolid(List<PolygonalFace> facesList, Vertex[] subSolidVertices, Vertex[][] newEdgeVertices, double[] normal)
         {
             Faces = facesList.ToArray();
             Vertices = subSolidVertices;
-            PatchHoles(verticesAtHoles);
+            var numloops = newEdgeVertices.GetLength(0);
+            var points2D = new Point[numloops][];
+            for (int i = 0; i < numloops; i++)
+               points2D[i] =MinimumEnclosure. Get2DProjectionPoints(newEdgeVertices[i], normal);
+            List<Point[]> patchFaces =TriangulatePolygon.PatchHole(points2D);
+            //todo:
+            //1. make faces from list of points
+            //2. connect to existing.
             MakeEdges();                  
             CreateConvexHull();
             DefineBoundingBoxAndCenter();
@@ -380,11 +388,7 @@ namespace TVGL.Tessellation
             DefineVertexCurvature();
         }
 
-        private void PatchHoles(IEnumerable<Vertex> verticesAtHoles)
-        {
-            return;
-            throw new NotImplementedException();
-        }
+
 
         #endregion
 

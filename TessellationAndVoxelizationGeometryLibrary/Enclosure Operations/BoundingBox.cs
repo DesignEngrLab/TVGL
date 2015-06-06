@@ -39,6 +39,10 @@ namespace TVGL
         public double[][] Directions;
 
         /// <summary>
+        /// The corner points
+        /// </summary>
+        public Point[] CornerPoints;
+        /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox"/> class.
         /// </summary>
         /// <param name="volume">The volume.</param>
@@ -49,6 +53,10 @@ namespace TVGL
             Volume = volume;
             ExtremeVertices = extremeVertices;
             Directions = directions;
+
+            //todo: find corner points. These are the 8 points at the intersections of the
+            // planes defined by the extremeVertices and the direction vectors
+            CornerPoints = null;
         }
     }
 }

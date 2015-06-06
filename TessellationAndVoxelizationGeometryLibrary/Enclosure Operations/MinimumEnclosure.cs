@@ -20,7 +20,7 @@ using StarMathLib;
 using TVGL.Tessellation;
 
 namespace TVGL
-{                
+{
     /// <summary>
     /// The MinimumEnclosure class includes static functions for defining smallest enclosures for a 
     /// tesselated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
@@ -117,7 +117,7 @@ namespace TVGL
             Get2DProjectionPoints(vertices, direction, out backTransform);
 
             double minArea;
-            var rotateZ = StarMath.RotationZ(RotatingCalipers2DMethod(vertices.Select(v => v.Position).ToArray(), out minArea));
+            var rotateZ = StarMath.RotationZ(RotatingCalipers2DMethod(vertices.Select(v => new Point(v)).ToArray(), out minArea));
             backTransform = backTransform.multiply(rotateZ);
             var dirVectorPlusZero = backTransform.GetColumn(0);
             var nx = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
@@ -131,17 +131,51 @@ namespace TVGL
             GetLengthAndExtremeVertices(ny, vertices, out v2Low, out v2High);
             IVertex v3Low, v3High;
             GetLengthAndExtremeVertices(nz, vertices, out v3Low, out v3High);
-            return new BoundingBox(length * minArea, new [] { v1Low, v1High, v2Low, v2High, v3Low, v3High }, new[] { direction, ny, nz });
+            return new BoundingBox(length * minArea, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High }, new[] { direction, ny, nz });
         }
+
         /// <summary>
-        /// Transforms the vertices so that they are in the x-y plane (although the z-values will be non-zero)
-        /// This destructively alters the vertices. However, the backTransform is provided to change the points
-        /// back if needed.
+        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in 
+        /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
+        /// the vertices. 
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
-        /// <param name="backTransform">The back transform.</param>
-        public static void Get2DProjectionPoints(IList<IVertex> vertices, double[] direction, out double[,] backTransform)
+        /// <returns>Point2D[].</returns>
+        public static Point[] Get2DProjectionPoints(IList<IVertex> vertices, double[] direction)
+        {
+            var xDir = direction[0];
+            var yDir = direction[1];
+            var zDir = direction[2];
+
+            var rotateY = StarMath.RotationY(-Math.Atan(xDir / zDir), true);
+            var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
+            var rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
+            var transform = rotateX.multiply(rotateY);
+
+
+            var points = new Point[vertices.Count];
+            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
+            for (var i = 0; i < vertices.Count; i++)
+            {
+                pointAs4[0] = vertices[i].Position[0];
+                pointAs4[1] = vertices[i].Position[1];
+                pointAs4[2] = vertices[i].Position[2];
+                pointAs4 = transform.multiply(pointAs4);
+                points[i] = new Point(vertices[i], pointAs4[0], pointAs4[1], pointAs4[2]);
+            }
+            return points;
+        }
+
+        /// <summary>
+        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in 
+        /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
+        /// the vertices. 
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>Point2D[].</returns>
+        public static Point[] Get2DProjectionPoints(IList<IVertex> vertices, double[] direction, out double[,] backTransform)
         {
             var xDir = direction[0];
             var yDir = direction[1];
@@ -154,6 +188,9 @@ namespace TVGL
             var backRotateX = StarMath.RotationX(-Math.Atan(yDir / baseLength), true);
             var transform = rotateX.multiply(rotateY);
             backTransform = backRotateY.multiply(backRotateX);
+
+
+            var points = new Point[vertices.Count];
             var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
             for (var i = 0; i < vertices.Count; i++)
             {
@@ -161,52 +198,9 @@ namespace TVGL
                 pointAs4[1] = vertices[i].Position[1];
                 pointAs4[2] = vertices[i].Position[2];
                 pointAs4 = transform.multiply(pointAs4);
-                vertices[i].Position= new[] { pointAs4[0], pointAs4[1], pointAs4[2] };
+                points[i] = new Point(vertices[i], pointAs4[0], pointAs4[1], pointAs4[2]);
             }
-          }
-
-        /// <summary>                      
-        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represted in 
-        /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        /// the vertices. 
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <returns>System.Double[][].</returns>
-        public static double[][] Get2DProjectionPoints(IList<IVertex> vertices, double[] direction)
-        {
-            return Get2DProjectionPoints(vertices.Select(v => v.Position).ToArray(), direction);
-        }
-
-        /// <summary>                                  
-        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represted in 
-        /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        /// the vertices. 
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <returns>System.Double[][].</returns>
-        public static double[][] Get2DProjectionPoints(IList<double[]> vertices, double[] direction)
-        {
-            var xDir = direction[0];
-            var yDir = direction[1];
-            var zDir = direction[2];
-
-            var rotateY = StarMath.RotationY(-Math.Atan(xDir / zDir), true);
-            var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
-            var rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
-            var transform = rotateX.multiply(rotateY);
-            var points2D = new double[vertices.Count][];
-            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
-            for (var i = 0; i < vertices.Count; i++)
-            {
-                pointAs4[0] = vertices[i][0];
-                pointAs4[1] = vertices[i][1];
-                pointAs4[2] = vertices[i][2];
-                pointAs4 = transform.multiply(pointAs4);
-                points2D[i] = new[] { pointAs4[0], pointAs4[1], pointAs4[2] };
-            }
-            return points2D;
+            return points;
         }
 
 
@@ -237,8 +231,8 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="minArea">The minimum area.</param>
         /// <returns>System.Double.</returns>
-        private static double RotatingCalipers2DMethod(IList<double[]> points, out double minArea)
-        {
+        private static double RotatingCalipers2DMethod(IList<Point> points, out double minArea)
+        {      
             #region Initialization
             var cvxPoints = ConvexHull2D(points);
             var numCvxPoints = cvxPoints.Count;
@@ -279,7 +273,7 @@ namespace TVGL
                     }
                 }
                 var delta = deltaAngles.Min();
-                deltaToUpdate = deltaAngles.FindIndex( delta);
+                deltaToUpdate = deltaAngles.FindIndex(delta);
                 extremeIndices[deltaToUpdate]--;
                 if (extremeIndices[deltaToUpdate] < 0) extremeIndices[deltaToUpdate] = numCvxPoints - 1;
                 angle += delta;

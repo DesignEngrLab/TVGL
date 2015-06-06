@@ -42,11 +42,12 @@
     <Compile Include="InputOutput Operations\amf.classes.cs" />
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
-    <Compile Include="ListFunctions.cs">
+    <Compile Include="Miscellaneous Functions\ListFunctions.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Point.cs" />
     <Compile Include="Primitive Surfaces\Torus.cs" />
-    <Compile Include="3DLineFunctions.cs" />
+    <Compile Include="Miscellaneous Functions\3DLineFunctions.cs" />
     <Compile Include="Colors.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Primitive Surfaces\DenseRegion.cs" />
@@ -66,11 +67,12 @@
     <Compile Include="Enclosure Operations\BoundingBox.cs" />
     <Compile Include="Enclosure Operations\ConvexHull2D.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure.cs" />
-    <Compile Include="SortedList.cs" />
-    <Compile Include="Tessellation\Edge.cs" />
-    <Compile Include="Tessellation\PolygonalFace.cs" />
-    <Compile Include="Tessellation\TessellatedSolid.cs" />
-    <Compile Include="Tessellation\Vertex.cs" />
+    <Compile Include="Miscellaneous Functions\SortedList.cs" />
+    <Compile Include="Solid Body Classes\Edge.cs" />
+    <Compile Include="Solid Body Classes\PolygonalFace.cs" />
+    <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
+    <Compile Include="Solid Body Classes\Vertex.cs" />
+    <Compile Include="Miscellaneous Functions\TriangulatePolygon.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MIConvexHull">
@@ -82,12 +84,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <EmbeddedResource Include="Resources\NewEdgeRules.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\NewFaRules.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -98,6 +94,7 @@
   <ItemGroup>
     <Content Include="StarMath.XML" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

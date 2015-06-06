@@ -18,7 +18,7 @@ using System.Linq;
 using StarMathLib;
 using TVGL.Tessellation;
 
-namespace TVGL.Boolean_Operations
+namespace TVGL
 {
     /// <summary>
     /// The contact element corresponds to an existing edge within the solid.

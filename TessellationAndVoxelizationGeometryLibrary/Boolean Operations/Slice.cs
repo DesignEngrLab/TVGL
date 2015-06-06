@@ -350,8 +350,8 @@ namespace TVGL.Boolean_Operations
             var negativeSideFaceList = FindAllSolidsWithTheseFaces(allNegativeStartingFaces, allPositiveStartingFaces);
             var positiveSideFaceList = FindAllSolidsWithTheseFaces(allPositiveStartingFaces, allNegativeStartingFaces);
 
-            negativeSideSolids = convertFaceListsToSolids(ts, negativeSideFaceList, loops, false);
-            positiveSideSolids = convertFaceListsToSolids(ts, positiveSideFaceList, loops, true);
+            negativeSideSolids = convertFaceListsToSolids(ts, negativeSideFaceList, loops, false, plane);
+            positiveSideSolids = convertFaceListsToSolids(ts, positiveSideFaceList, loops, true, plane);
         }
 
 
@@ -514,7 +514,7 @@ namespace TVGL.Boolean_Operations
             return facesLists;
         }
         private static List<TessellatedSolid> convertFaceListsToSolids(TessellatedSolid ts, List<List<PolygonalFace>> facesLists,
-            List<Loop> loops, Boolean onPositiveSide)
+            List<Loop> loops, Boolean onPositiveSide, Flat plane)
         {
             List<TessellatedSolid> solids = new List<TessellatedSolid>();
             foreach (var facesList in facesLists)
@@ -530,15 +530,34 @@ namespace TVGL.Boolean_Operations
                 var indicesToCopy = connectedLoops.SelectMany(loop => loop.Select(ce => ce.StartVertex.IndexInList))
                     .OrderBy(index => index).ToArray();
                 var numIndicesToCopy = indicesToCopy.GetLength(0);
-                List<Vertex> edgeVertices = new List<Vertex>();
+                var newEdgeVertices = new Vertex[connectedLoops.Count][];
+                for (int i = 0; i < connectedLoops.Count; i++)
+                    newEdgeVertices[i] = new Vertex[connectedLoops[i].Count];
                 var copyIndex = 0;
                 for (int i = 0; i < numVertices; i++)
                 {
                     Vertex thisVertex;
                     if (copyIndex < numIndicesToCopy && vertIndices[i] == indicesToCopy[copyIndex])
                     {
-                        thisVertex = ts.Vertices[vertIndices[i]].Copy();
-                        edgeVertices.Add(thisVertex);
+                        var oldVertex = ts.Vertices[vertIndices[i]];
+                        thisVertex = oldVertex.Copy();
+                        foreach (var face in oldVertex.Faces)
+                        {
+                            if (facesList.Contains(face))
+                            {
+                                face.Vertices.Remove(oldVertex);
+                                face.Vertices.Add(thisVertex);
+                                thisVertex.Faces.Add(face);
+                            }
+                            for (int j = 0; j < connectedLoops.Count; j++)
+                            {
+                                for (int k = 0; k < connectedLoops[j].Count; k++)
+                                {
+                                    if (connectedLoops[j][k].StartVertex == oldVertex)
+                                        newEdgeVertices[j][k] = thisVertex;
+                                }
+                            }
+                        }
                     }
                     else thisVertex = ts.Vertices[vertIndices[i]];
                     thisVertex.IndexInList = i;
@@ -546,8 +565,7 @@ namespace TVGL.Boolean_Operations
                     while (vertIndices[i] > indicesToCopy[copyIndex])
                         copyIndex++;
                 }
-                solids.Add(new TessellatedSolid(facesList, subSolidVertices, edgeVertices));
-                //todo: make sure edgeVertices are in order
+                solids.Add(new TessellatedSolid(facesList, subSolidVertices, newEdgeVertices, onPositiveSide ? plane.Normal.multiply(-1) : plane.Normal));
             }
             return solids;
         }
