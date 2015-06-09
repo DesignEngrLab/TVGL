@@ -519,13 +519,17 @@ namespace TVGL.Boolean_Operations
             List<TessellatedSolid> solids = new List<TessellatedSolid>();
             foreach (var facesList in facesLists)
             {
+                // get a list of the vertex indices from the original solid
                 var vertIndices = facesList.SelectMany(f => f.Vertices.Select(v => v.IndexInList))
                     .Distinct().OrderBy(index => index).ToArray();
                 var numVertices = vertIndices.Count();
+                // get the set of connected loops for this list of faces. it could be one or it could be all
                 var connectedLoops = loops.Where(loop =>
                     (onPositiveSide && loop.Any(ce => facesList.Contains(ce.SplitFacePositive)))
                     || (!onPositiveSide && loop.Any(ce => facesList.Contains(ce.SplitFaceNegative))))
                     .ToList();
+                // put the vertices from vertIndices in subSolidVertices, except those that are on the loop.
+                // you'll need to copy those.
                 var subSolidVertices = new Vertex[numVertices];
                 var indicesToCopy = connectedLoops.SelectMany(loop => loop.Select(ce => ce.StartVertex.IndexInList))
                     .OrderBy(index => index).ToArray();
@@ -565,7 +569,8 @@ namespace TVGL.Boolean_Operations
                     while (vertIndices[i] > indicesToCopy[copyIndex])
                         copyIndex++;
                 }
-                solids.Add(new TessellatedSolid(facesList, subSolidVertices, newEdgeVertices, onPositiveSide ? plane.Normal.multiply(-1) : plane.Normal));
+                solids.Add(new TessellatedSolid(facesList, subSolidVertices, newEdgeVertices, onPositiveSide ? plane.Normal.multiply(-1) : plane.Normal,
+                    connectedLoops.Select(loop=>loop.IsPositive).ToArray()));
             }
             return solids;
         }

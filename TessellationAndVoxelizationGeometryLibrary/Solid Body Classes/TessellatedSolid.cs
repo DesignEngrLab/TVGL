@@ -359,19 +359,20 @@ namespace TVGL.Tessellation
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
-        internal TessellatedSolid(List<PolygonalFace> facesList, Vertex[] subSolidVertices, Vertex[][] newEdgeVertices, double[] normal)
+        internal TessellatedSolid(List<PolygonalFace> facesList, Vertex[] subSolidVertices, Vertex[][] newEdgeVertices,
+            double[] normal, Boolean[] loopIsPositive)
         {
             Faces = facesList.ToArray();
             Vertices = subSolidVertices;
             var numloops = newEdgeVertices.GetLength(0);
             var points2D = new Point[numloops][];
             for (int i = 0; i < numloops; i++)
-               points2D[i] =MinimumEnclosure. Get2DProjectionPoints(newEdgeVertices[i], normal);
-            List<Point[]> patchFaces =TriangulatePolygon.PatchHole(points2D);
+                points2D[i] = MinimumEnclosure.Get2DProjectionPoints(newEdgeVertices[i], normal);
+            List<Point[]> patchFaces = TriangulatePolygon.Run(points2D, loopIsPositive);
             //todo:
             //1. make faces from list of points
             //2. connect to existing.
-            MakeEdges();                  
+            MakeEdges();
             CreateConvexHull();
             DefineBoundingBoxAndCenter();
             for (int i = 0; i < Faces.Length; i++)
