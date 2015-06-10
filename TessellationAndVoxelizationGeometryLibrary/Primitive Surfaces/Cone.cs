@@ -53,7 +53,8 @@ namespace TVGL
         }
         public Cone(List<PolygonalFace> facesAll, double[] axis, double aperture)
             : base(facesAll)
-        {
+        {                                           
+            this.Aperture = aperture;
             var faces = ListFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
             var centers = new List<double[]>();
@@ -62,15 +63,15 @@ namespace TVGL
             var n2 = faces[numFaces - 1].Normal.crossProduct(axis);
             GeometryFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.dotProduct(n1),
               n2, faces[numFaces - 1].Center.dotProduct(n2), axis, out center);
-            if (!center.Any(double.IsNaN) || StarMath.IsNegligible(center))
+            if (!center.Any(double.IsNaN) && !StarMath.IsNegligible(center))
                 centers.Add(center);
             for (int i = 1; i < numFaces; i++)
             {
-                n1 = faces[0].Normal.crossProduct(axis);
-                n2 = faces[numFaces - 1].Normal.crossProduct(axis);
-                GeometryFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.dotProduct(n1),
-                  n2, faces[numFaces - 1].Center.dotProduct(n2), axis, out center);
-                if (!center.Any(double.IsNaN) || StarMath.IsNegligible(center))
+                n1 = faces[i].Normal.crossProduct(axis);
+                n2 = faces[i - 1].Normal.crossProduct(axis);
+                GeometryFunctions.LineIntersectingTwoPlanes(n1, faces[i].Center.dotProduct(n1),
+                  n2, faces[i - 1].Center.dotProduct(n2), axis, out center);
+                if (!center.Any(double.IsNaN) && !StarMath.IsNegligible(center))
                     centers.Add(center);
             }
             center = new double[3];
@@ -100,10 +101,15 @@ namespace TVGL
             if (v2Apex.dotProduct(axis) > 0)
                 Axis = axis.multiply(-1);
             else Axis = axis;
+            var volume=0.0;
+            foreach (var face in faces)
+            {
+                face.Area = face.Edges[0].Vector.crossProduct(face.Edges[1].Vector).norm2() / 2;
+                volume += face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(center))) / 3;
+            }
 
-            IsPositive = (faces[0].Normal.dotProduct(Axis) >= 0.0);
+            IsPositive = (volume >= 0.0);
 
-            this.Aperture = aperture;
         }
     }
 }
