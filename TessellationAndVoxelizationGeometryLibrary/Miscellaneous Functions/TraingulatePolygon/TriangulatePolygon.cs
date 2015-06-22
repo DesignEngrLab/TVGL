@@ -7,7 +7,7 @@ using StarMathLib;
 
 namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
 {
-    internal static class TriangulatePolygon
+    public static class TriangulatePolygon
     {
         /// <summary>
         ///     Triangulates a Polygon into faces.
@@ -16,8 +16,10 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
         /// <param name="isPositive">Indicates whether the corresponding loop is positive or not.</param>
         /// <returns>List&lt;Point[]&gt;, which represents vertices of new faces.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        internal static List<Point[]> Run(Point[][] points2D, Boolean[] isPositive)
+        public static List<Point[]> Run(Point[][] points2D, Boolean[] isPositive)
         {
+
+            #region Preprocessing
             //Preprocessing
             // 1) For each loop in points2D
             // 2)   Create nodes and lines from points, and retain whether a point
@@ -77,8 +79,8 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
                 sortedLoops.Add(sortedLoop);
                 i++;
             }
+            #endregion
 
-            // Trapezoidation
             // 1) For each positive loop
             // 2)   Remove it from orderedLoops.
             // 3)   Create a new group
@@ -280,23 +282,23 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
                 
                 //Create Monotone Polygons from Trapezoids
                 var currentTrap = completedTrapezoids[0];
-                var monotonePolygons = new List<List<Trapezoid>> ();
-                monotonePolygons[0].Add(currentTrap);
+                var monotoneTrapPolygons = new List<List<Trapezoid>> ();
+                monotoneTrapPolygons[0].Add(currentTrap);
                 //for each trapezoid except the first one, which was added in the intitialization above.
                 for (var j =1; j < completedTrapezoids.Count; j++)
                 {
                     //Check if next trapezoid can attach to any existing monotone polygon
                     var boolstatus = false;
-                    for (var k = 0; k < monotonePolygons.Count; k++)
+                    for (var k = 0; k < monotoneTrapPolygons.Count; k++)
                     {
-                        currentTrap = monotonePolygons[k].Last();
+                        currentTrap = monotoneTrapPolygons[k].Last();
                         
                         if (currentTrap.BottomNode == completedTrapezoids[j].TopNode)
                         {
                             if (currentTrap.LeftLine == completedTrapezoids[j].LeftLine ||
                                 currentTrap.RightLine == completedTrapezoids[j].RightLine)
                             {
-                                monotonePolygons[k].Add(completedTrapezoids[j]);
+                                monotoneTrapPolygons[k].Add(completedTrapezoids[j]);
                                 boolstatus = true;
                                 break;
                             }
@@ -305,56 +307,65 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
                     // If they cannot be attached to any existing monotone polygon, create a new monotone polygon
                     if (boolstatus == false)
                     {
-                        var trapezoidList = new List<Trapezoid> {completedTrapezoids[j]};   
-                        monotonePolygons.Add(trapezoidList);
+                        var trapezoidList = new List<Trapezoid> {completedTrapezoids[j]};
+                        monotoneTrapPolygons.Add(trapezoidList);
                     }
                 }
 
                 //Convert the lists of trapezoids that form monotone polygons into the monotone polygon class\
                 //This class includes a sorted list of all the points in the monotone polygon and two monotone chains.
                 //Both of these lists are used during traingulation.
-                var monotonePolygons2 = new List<MonotonePolygon2>();
-                foreach (var monotonePoly in monotonePolygons)
+                var monotonePolygons = new List<MonotonePolygon>();
+                foreach (var monotoneTrapPoly in monotoneTrapPolygons)
                 {
+                    //Biuld the right left chains and the sorted list of all nodes
                     var monotoneRightChain = new List<Node>();
                     var monotoneLeftChain = new List<Node>();
+                    var sortedMonotonePolyNodes = new List<Node>();
 
-                    //Add upper node to both chains
-                    monotoneRightChain.Add(monotonePoly[0].TopNode);
-                    monotoneLeftChain.Add(monotonePoly[0].TopNode);
+                    //Add upper node to both chains and sorted list
+                    monotoneRightChain.Add(monotoneTrapPoly[0].TopNode);
+                    monotoneLeftChain.Add(monotoneTrapPoly[0].TopNode);
+                    sortedMonotonePolyNodes.Add(monotoneTrapPoly[0].TopNode);
 
-                    for (var j = 1; j < monotonePoly.Count; j++)
+                    //Add all the middle nodes to one chain (right or left)
+                    for (var j = 1; j < monotoneTrapPoly.Count; j++)
                     {
+                        //Add the topNode of each trapezoid (minus the initial trapezoid) to the sorted list.
+                        sortedMonotonePolyNodes.Add(monotoneTrapPoly[j].TopNode);
+
                         //If trapezoid upper node is on the right line, add it to the right chain
-                        if (monotonePoly[j].RightLine.FromNode == monotonePoly[j].TopNode ||
-                            monotonePoly[j].RightLine.ToNode == monotonePoly[j].TopNode)
+                        if (monotoneTrapPoly[j].RightLine.FromNode == monotoneTrapPoly[j].TopNode ||
+                            monotoneTrapPoly[j].RightLine.ToNode == monotoneTrapPoly[j].TopNode)
                         {
-                            monotoneRightChain.Add(monotonePoly[j].TopNode);
+                            monotoneRightChain.Add(monotoneTrapPoly[j].TopNode);
                         }
                         //Else add it to the left chain
                         else
                         {
-                            monotoneLeftChain.Add(monotonePoly[j].TopNode);
+                            monotoneLeftChain.Add(monotoneTrapPoly[j].TopNode);
                         }
                     }
 
-                    var monotonePolygon = new MonotonePolygon2(monotoneLeftChain, monotoneRightChain);
-                    monotonePolygons2.Add(monotonePolygon);
+                    //Add bottom node of last trapezoid to both chains and sorted list
+                    monotoneRightChain.Add(monotoneTrapPoly.Last().BottomNode);
+                    monotoneLeftChain.Add(monotoneTrapPoly.Last().BottomNode);
+                    sortedMonotonePolyNodes.Add(monotoneTrapPoly.Last().BottomNode);
+
+                    //Create new monotone polygon based on these two chains and sorted list.
+                    var monotonePolygon = new MonotonePolygon(monotoneLeftChain, monotoneRightChain, sortedMonotonePolyNodes);
+                    monotonePolygons.Add(monotonePolygon);
                 }
-                
                 #endregion
 
                 #region Triangulate Monotone Polygons
-
                 //Triangulates the monotone polygons
                 var triangles = new List<Point[]>();
-                foreach (var monotonePolygon2 in monotonePolygons2)
+                foreach (var monotonePolygon2 in monotonePolygons)
                 {
                     Triangulate(monotonePolygon2, triangles);
                 }
-                #endregion
-
-                
+                #endregion               
             }
             return null;
         }
@@ -364,7 +375,7 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
         /// Gets the type of node for B.
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
-        public static int NodeType(Point a, Point b, Point c)
+        internal static int NodeType(Point a, Point b, Point c)
         {
             if (a.Y < b.Y)
             {
@@ -415,7 +426,7 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
         /// "If" statements were determined by observation
-        static double GetAngle(Point a, Point b, Point c)
+        internal static double GetAngle(Point a, Point b, Point c)
         {
             var edgeVectors = new double[1][];
             edgeVectors[0] = b.Position.subtract(a.Position).normalize();
@@ -435,7 +446,7 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
         #endregion
 
         #region Create Trapezoid and Insert Into List
-        static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, IList<PartialTrapezoid> trapTree, ICollection<Trapezoid> completedTrapezoids )
+        internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, IList<PartialTrapezoid> trapTree, ICollection<Trapezoid> completedTrapezoids )
         {
             var matchesTrap = false;
             var i = 0;
@@ -455,7 +466,7 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
         #endregion
 
         #region Find Lines to Left or Right
-        static double LinesToLeft(Node node, IEnumerable<Line> lineList, Line leftLine)
+        internal static double LinesToLeft(Node node, IEnumerable<Line> lineList, Line leftLine)
         {
             var xleft = double.NegativeInfinity;
             var counter = 0;
@@ -476,14 +487,14 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
             return counter;
         }
 
-        static Line FindLeftLine(Node node, IEnumerable<Line> lineList)
+        internal static Line FindLeftLine(Node node, IEnumerable<Line> lineList)
         {
             Line leftLine = null;
             var counter = LinesToLeft(node, lineList, leftLine);
             return leftLine;
         }
 
-        static double LinesToRight(Node node, IEnumerable<Line> lineList, Line rightLine)
+        internal static double LinesToRight(Node node, IEnumerable<Line> lineList, Line rightLine)
         {
             var xright = double.PositiveInfinity;
             var counter = 0;
@@ -504,21 +515,16 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
             return counter;
         }
 
-        static Line FindRightLine(Node node, IEnumerable<Line> lineList)
+        internal static Line FindRightLine(Node node, IEnumerable<Line> lineList)
         {
             Line rightLine = null;
             var counter = LinesToLeft(node, lineList, rightLine);
             return rightLine;
         }
         #endregion
-
-        private static void Triangulate(MonotonePolygon2 monoPoly, List<Point[]> triangles)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         #region Insert Node in Sorted List
-        private static int InsertNodeInSortedList(List<Node> sortedNodes, Node node)
+        internal static int InsertNodeInSortedList(List<Node> sortedNodes, Node node)
         {
             //Search for insertion location starting from the first element in the list.
             for (int i = 0; i < sortedNodes.Count(); i++)
@@ -542,7 +548,7 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
         #endregion
 
         #region Merge Two Sorted Lists of Nodes
-        private static void MergeSortedListsOfNodes(List<Node> sortedNodes, List<Node> negativeLoop, Node node)
+        internal static void MergeSortedListsOfNodes(List<Node> sortedNodes, List<Node> negativeLoop, Node node)
         {
             //For each node in negativeLoop, minus the first node (which is already in the list)
             int nodeID = sortedNodes.IndexOf(node);
@@ -575,5 +581,62 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
             }
         }
         #endregion
-    }
+
+        #region Triangulate Monotone Polygon
+        internal static void Triangulate(MonotonePolygon monotonePolygon, List<Point[]> triangles)
+        {
+            var scan = new List<Node>();
+            var leftChain = monotonePolygon.LeftChain;
+            var rightChain = monotonePolygon.RightChain;
+            var sortedNodes = monotonePolygon.SortedNodes;
+
+            //Add first two nodes to scan
+            scan.Add(sortedNodes[0]);
+            scan.Add(sortedNodes[1]);
+
+            for (var i = 2; i < sortedNodes.Count; i++ )
+            {
+                var node = sortedNodes[i];
+                var boolstatus = false;
+                if (leftChain[1] == node && rightChain[1] == scan.Last())
+                {
+                    boolstatus = true;
+                }
+                else if (leftChain[1] == scan.Last() && rightChain[1] == node)
+                {
+                    boolstatus = true;
+                }
+                //If either condition above was true, do the following
+                if (boolstatus == true)
+                {
+                    while (scan.Count > 1)
+                    {
+                        //Add triangle to list 
+                        var triangle = new Point[] { node.Point, scan[0].Point, scan[1].Point };
+                        triangles.Add(triangle);
+
+                        //Remove first item in scan list and add node to end of scan list
+                        scan.RemoveAt(0);
+                        scan.Add(node);
+                    }
+                }
+                else 
+                {
+                    while (GetAngle(node, scan.Last(), scan[scan.Count - 2]) < 180 && scan.Count() > 1)
+                    {
+                        //Add triangle to list 
+                        var triangle = new Point[] { node.Point, scan.Last().Point, scan[scan.Count - 2].Point};
+                        triangles.Add(triangle);
+
+                        //Remove last node from scan list 
+                        scan.Remove(scan.Last());
+                    }
+                    //Regardless of whether the while loop is activated, add node to scan list
+                    scan.Add(node);
+                }
+            }
+        }
+        #endregion
+    }      
+
 }
