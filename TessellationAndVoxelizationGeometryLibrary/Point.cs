@@ -16,7 +16,7 @@ using System.Collections.Generic;
 using MIConvexHull;
 
 namespace TVGL
-{
+{    
     /// <summary>
     /// The Point class is used to indicate a 2D or 3D location that may be outside
     /// of a solid (hence making Vertex an inappropriate choice). 

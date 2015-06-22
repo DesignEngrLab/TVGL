@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 using MIConvexHull;
 using StarMathLib;
 using TVGL.Boolean_Operations;
+using TVGL.Miscellaneous_Functions.TraingulatePolygon;
 
 namespace TVGL.Tessellation
 {

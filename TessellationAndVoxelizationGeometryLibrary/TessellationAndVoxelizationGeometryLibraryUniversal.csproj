@@ -45,6 +45,8 @@
     <Compile Include="Miscellaneous Functions\ListFunctions.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Miscellaneous Functions\TraingulatePolygon\SpecialClasses.cs" />
+    <Compile Include="Miscellaneous Functions\TraingulatePolygon\TriangulatePolygon.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="Primitive Surfaces\Torus.cs" />
     <Compile Include="Miscellaneous Functions\3DLineFunctions.cs" />
@@ -72,7 +74,6 @@
     <Compile Include="Solid Body Classes\PolygonalFace.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />
-    <Compile Include="Miscellaneous Functions\TriangulatePolygon.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MIConvexHull">
