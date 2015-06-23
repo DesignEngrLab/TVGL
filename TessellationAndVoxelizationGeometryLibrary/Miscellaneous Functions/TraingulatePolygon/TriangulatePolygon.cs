@@ -6,7 +6,7 @@ using System.ServiceModel.Channels;
 using StarMathLib;
 using MIConvexHull;
 
-namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
+namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 {
     public static class TriangulatePolygon
     {

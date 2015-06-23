@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using MIConvexHull;
 
-namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
+namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 {
     #region Node Class
     /// <summary>
