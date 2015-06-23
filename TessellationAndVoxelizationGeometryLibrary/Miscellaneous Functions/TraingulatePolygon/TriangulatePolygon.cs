@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.ServiceModel.Channels;
 using StarMathLib;
+using MIConvexHull;
 
 namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
 {
@@ -16,7 +17,7 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
         /// <param name="isPositive">Indicates whether the corresponding loop is positive or not.</param>
         /// <returns>List&lt;Point[]&gt;, which represents vertices of new faces.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public static List<Point[]> Run(Point[][] points2D, Boolean[] isPositive)
+        public static List<Point[]> Run(List<Point[]> points2D, Boolean[] isPositive)
         {
 
             #region Preprocessing
@@ -426,15 +427,16 @@ namespace TVGL.Miscellaneous_Functions.TraingulatePolygon
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
         /// "If" statements were determined by observation
-        internal static double GetAngle(Point a, Point b, Point c)
+        public static double GetAngle(Point a, Point b, Point c)
         {
             var edgeVectors = new double[1][];
-            edgeVectors[0] = b.Position.subtract(a.Position).normalize();
-            edgeVectors[1] = c.Position.subtract(b.Position).normalize();
+            edgeVectors[0] = StarMath.normalize(StarMath.subtract(b.Position, a.Position));
+            edgeVectors[1] = StarMath.normalize(StarMath.subtract(c.Position, b.Position));
+            
 
             //Since these points are in 2D, use crossProduct2
             var tempCross = StarMath.crossProduct2(edgeVectors[0], edgeVectors[1]);
-            var tempDot = edgeVectors[0].dotProduct(edgeVectors[1]);
+            var tempDot = StarMath.dotProduct(edgeVectors[0],edgeVectors[1]);
             var theta = Math.Asin(tempCross);
             if (tempDot >= 0)
             {

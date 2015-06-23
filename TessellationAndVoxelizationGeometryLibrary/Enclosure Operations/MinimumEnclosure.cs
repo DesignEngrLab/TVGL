@@ -213,7 +213,7 @@ namespace TVGL
         /// <param name="vLow">The v low.</param>
         /// <param name="vHigh">The v high.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(IList<double> dir, IList<IVertex> vertices, out IVertex vLow, out IVertex vHigh)
+        public static double GetLengthAndExtremeVertices(double[] dir, IList<IVertex> vertices, out IVertex vLow, out IVertex vHigh)
         {
             var dotProducts = new double[vertices.Count];
             var i = 0;
