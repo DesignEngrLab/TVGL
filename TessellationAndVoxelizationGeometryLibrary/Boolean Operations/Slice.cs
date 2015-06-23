@@ -379,59 +379,72 @@ namespace TVGL.Boolean_Operations
                         // If the contact element is at a coincident edge, then there is nothing to do in this stage. When contact element was
                         // created, it properly defined SplitFacePositive and SplitFaceNegative.
                         continue;
-                    edgesToAdd.Add(ce.ContactEdge);
-                    edgesToModify.Add(ce.ContactEdge);
-                    var faceToSplit = ce.SplitFacePositive;
-                    facesToDelete.Add(faceToSplit);
-                    var vertPlaneDistances =
+                    edgesToAdd.Add(ce.ContactEdge); // the contact edge is a new edge for the solid
+                    edgesToModify.Add(ce.ContactEdge); // the contact edge will need to be linked to vertices and faces further down.
+                    var faceToSplit = ce.SplitFacePositive; //faceToSplit will be removed, but before we do that, we use
+                    facesToDelete.Add(faceToSplit);         // use it to build the new 2 to 3 triangles
+
+                    PolygonalFace positiveFace, negativeFace;
+                    if (ce is ThroughVertexContactElement)
+                    {
+                        var vertPlaneDistances =              //signed distances of faceToSplit's vertices from the plane
                         faceToSplit.Vertices.Select(
                             v => v.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin).ToArray();
-                    var maxIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Max());
-                    var maxVert = faceToSplit.Vertices[maxIndex];
-                    var minIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Min());
-                    var minVert = faceToSplit.Vertices[minIndex];
-                    var midVert = faceToSplit.Vertices.First(v => v != maxVert && v != minVert);
-                    var dxMidVert = midVert.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin;
-                    var positiveFace =
-                        new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, maxVert });
-                    facesToAdd.Add(positiveFace);
-                    var negativeFace =
-                        new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, minVert });
-                    facesToAdd.Add(negativeFace);
-                    //#+1 add v to f           (both of these are done in the preceding PolygonalFace
+                        var maxIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Max());
+                        var maxVert = faceToSplit.Vertices[maxIndex];
+                        var minIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Min());
+                        var minVert = faceToSplit.Vertices[minIndex];
+                        positiveFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, maxVert });
+                        facesToAdd.Add(positiveFace);
+                        negativeFace = new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, minVert });
+                        facesToAdd.Add(negativeFace);
+                    } //#+1 add v to f           (both of these are done in the preceding PolygonalFace
                     //#+2 add f to v            constructors as well as the one for thirdFace below)
-                    if (ce is ThroughFaceContactElement && !StarMath.IsNegligible(dxMidVert))
+                    else // then ce is a ThroughFaceContactElement                                                
                     {
-                        PolygonalFace thirdFace;
-                        var tfce = (ThroughFaceContactElement)ce;
+                        var tfce = (ThroughFaceContactElement)ce; // ce is renamed and recast as tfce 
                         edgesToDelete.Add(tfce.SplitEdge);
                         verticesToAdd.Add(tfce.StartVertex);
-                        var positiveEdge = new Edge(maxVert, ce.ContactEdge.From, positiveFace, null, false,
-                            true);
-                        edgesToAdd.Add(positiveEdge);
-                        edgesToModify.Add(positiveEdge);
-                        var negativeEdge = new Edge(ce.ContactEdge.From, minVert, negativeFace, null, false,
-                            true);
-                        edgesToAdd.Add(negativeEdge);
-                        edgesToModify.Add(negativeEdge);
-                        if (tfce.SplitEdge.From == midVert || tfce.SplitEdge.To == midVert)
+                        Vertex positiveVertex, negativeVertex;
+                        if (tfce.SplitEdge.To.Position.dotProduct(plane.Normal) > plane.DistanceToOrigin)
                         {
-                            // then connect third-face to the From of contact element 
-                            if (dxMidVert < 0)
-                                thirdFace = new PolygonalFace(new[] { minVert, ce.ContactEdge.From, midVert });
-                            else
-                                thirdFace = new PolygonalFace(new[] { ce.ContactEdge.From, maxVert, midVert });
+                            positiveVertex = tfce.SplitEdge.To;
+                            negativeVertex = tfce.SplitEdge.From;
                         }
                         else
                         {
-                            // then connect third-face to the TO of contact element 
-                            if (dxMidVert < 0)
-                                thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, minVert, midVert });
-                            else thirdFace = new PolygonalFace(new[] { maxVert, ce.ContactEdge.To, midVert });
+                            positiveVertex = tfce.SplitEdge.From;
+                            negativeVertex = tfce.SplitEdge.To;
                         }
-                        facesToAdd.Add(thirdFace);
-                        edgesToAdd.Add(new Edge(thirdFace.Vertices[0], thirdFace.Vertices[1], thirdFace,
-                            (dxMidVert < 0) ? negativeFace : positiveFace, true, true));
+                        positiveFace =
+                           new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, positiveVertex });
+                        facesToAdd.Add(positiveFace);
+                        negativeFace =
+                           new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, negativeVertex });
+                        facesToAdd.Add(negativeFace);
+                        var positiveEdge = new Edge(positiveVertex, ce.ContactEdge.From, positiveFace, null, true,
+                            true);
+                        edgesToAdd.Add(positiveEdge);
+                        edgesToModify.Add(positiveEdge);
+                        var negativeEdge = new Edge(ce.ContactEdge.From, negativeVertex, negativeFace, null, true,
+                            true);
+                        edgesToAdd.Add(negativeEdge);
+                        edgesToModify.Add(negativeEdge);
+
+                        var otherVertex = faceToSplit.Vertices.First(v => v != positiveVertex && v != negativeVertex);
+                        PolygonalFace thirdFace;
+                        if (otherVertex.Position.dotProduct(plane.Normal) > plane.DistanceToOrigin)
+                        {
+                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, otherVertex, positiveVertex });
+                            facesToAdd.Add(thirdFace);
+                            edgesToAdd.Add(new Edge(ce.ContactEdge.To, positiveVertex, positiveFace, thirdFace, true, true));
+                        }
+                        else
+                        {
+                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, negativeVertex, otherVertex });
+                            facesToAdd.Add(thirdFace);
+                            edgesToAdd.Add(new Edge(negativeVertex, ce.ContactEdge.To, negativeFace, thirdFace, true, true));
+                        }
                         // for the new edges in a through face this line accomplishes: +3 add f to e; +4 add e to f; +5 add v to e; 
                         //    +6 add e to v 
                     }
@@ -473,7 +486,9 @@ namespace TVGL.Boolean_Operations
 
             foreach (var edge in edgesToModify)
             {
-                var facesToAttach = facesToAdd.Where(f => f.Vertices.Contains(edge.To) && f.Vertices.Contains(edge.From));
+                var facesToAttach = facesToAdd.Where(f => f.Vertices.Contains(edge.To) && f.Vertices.Contains(edge.From)
+                    && !f.Edges.Contains(edge));
+                if (facesToAttach.Count() > 2) throw new Exception();
                 foreach (var face in facesToAttach)
                 {
                     face.Edges.Add(edge); //+4 add e to f
@@ -540,37 +555,31 @@ namespace TVGL.Boolean_Operations
                 var copyIndex = 0;
                 for (int i = 0; i < numVertices; i++)
                 {
-                    Vertex thisVertex;
+                    Vertex vertexCopy;
                     if (copyIndex < numIndicesToCopy && vertIndices[i] == indicesToCopy[copyIndex])
                     {
                         var oldVertex = ts.Vertices[vertIndices[i]];
-                        thisVertex = oldVertex.Copy();
-                        foreach (var face in oldVertex.Faces)
+                        vertexCopy = oldVertex.Copy();
+                        for (int j = 0; j < connectedLoops.Count; j++)
                         {
-                            if (facesList.Contains(face))
-                            {
-                                face.Vertices.Remove(oldVertex);
-                                face.Vertices.Add(thisVertex);
-                                thisVertex.Faces.Add(face);
-                            }
-                            for (int j = 0; j < connectedLoops.Count; j++)
-                            {
-                                for (int k = 0; k < connectedLoops[j].Count; k++)
-                                {
-                                    if (connectedLoops[j][k].StartVertex == oldVertex)
-                                        newEdgeVertices[j][k] = thisVertex;
-                                }
-                            }
+                            var k = connectedLoops[j].FindIndex(ce => ce.StartVertex == oldVertex);
+                            newEdgeVertices[j][k] = vertexCopy;
                         }
+                        foreach (var face in oldVertex.Faces.Where(face => facesList.Contains(face)))
+                        {
+                            face.Vertices.Remove(oldVertex);
+                            face.Vertices.Add(vertexCopy);
+                            vertexCopy.Faces.Add(face);
+                        }
+                        while (copyIndex < numIndicesToCopy && vertIndices[i] >= indicesToCopy[copyIndex])
+                            copyIndex++;
                     }
-                    else thisVertex = ts.Vertices[vertIndices[i]];
-                    thisVertex.IndexInList = i;
-                    subSolidVertices[i] = thisVertex;
-                    while (vertIndices[i] > indicesToCopy[copyIndex])
-                        copyIndex++;
+                    else vertexCopy = ts.Vertices[vertIndices[i]];
+                    vertexCopy.IndexInList = i;
+                    subSolidVertices[i] = vertexCopy;
                 }
                 solids.Add(new TessellatedSolid(facesList, subSolidVertices, newEdgeVertices, onPositiveSide ? plane.Normal.multiply(-1) : plane.Normal,
-                    connectedLoops.Select(loop=>loop.IsPositive).ToArray()));
+                    connectedLoops.Select(loop => loop.IsPositive).ToArray()));
             }
             return solids;
         }
