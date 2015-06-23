@@ -12,11 +12,12 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
 using System.Collections.Generic;
 using MIConvexHull;
 
 namespace TVGL
-{    
+{
     /// <summary>
     /// The Point class is used to indicate a 2D or 3D location that may be outside
     /// of a solid (hence making Vertex an inappropriate choice). 
@@ -69,6 +70,24 @@ namespace TVGL
                 Y = value[1];
                 if (value.GetLength(0) > 2)
                     Z = value[2];
+                else Z = 0.0;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the coordinates or position.
+        /// </summary>
+        /// <value>The coordinates or position.</value>
+        public double[] Position2D
+        {
+            get { return new[] { X, Y }; }
+            set
+            {
+                X = value[0];
+                Y = value[1];
+                if (value.GetLength(0) > 2)
+                    throw new Exception("Cannot set the value of a point with an array with more than 2 values.");
+                 Z = 0.0;
             }
         }
 
@@ -107,9 +126,9 @@ namespace TVGL
             Y = y;
             Z = z;
         }
-public double this[int index]
+        public double this[int index]
         {
-    get { return Position[index]; }
+            get { return Position[index]; }
         }
 
 
