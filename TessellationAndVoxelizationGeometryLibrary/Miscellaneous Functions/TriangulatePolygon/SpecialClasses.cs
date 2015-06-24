@@ -6,6 +6,11 @@ using MIConvexHull;
 
 namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 {
+    internal enum NodeType
+    {
+        DownwardReflex, UpwardReflex, Peak, Root, Left, Right,
+        Duplicate
+    }
     #region Node Class
     /// <summary>
     /// Node class used in Triangulate Polygon
@@ -27,25 +32,25 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <summary>
         /// Gets the line that ends at this node.
         /// </summary>
-        internal Line EndLine { get;  set; }
+        internal Line EndLine { get; set; }
 
         /// <summary>
         /// Gets the type of  node.
         /// </summary>
-        internal int Type { get; private set; }
+        internal NodeType Type { get; private set; }
 
         /// <summary>
         /// Gets the base class, Point of this node.
         /// </summary>
         internal Point Point { get; private set; }
         #endregion
-        
+
         #region Constructor
         /// <summary>
         /// Create a new node from a given point
         /// /// </summary>
         /// <param name="point"></param>
-        internal Node(Point currentPoint, int nodeType, int loopID)
+        internal Node(Point currentPoint, NodeType nodeType, int loopID)
             : base(new Point(currentPoint))
         {
             LoopID = loopID;
@@ -83,7 +88,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// </summary>
         internal Line RightLine { get; private set; }
         #endregion
-        
+
         #region Constructor
         /// <summary>
         /// Constructs a new trapezoid based on two nodes and two vertical lines.
@@ -212,7 +217,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 
         private readonly double m;
         private readonly double b;
-        
+
         /// <summary>
         /// Sets to and from nodes as well as slope and intercept of line.
         /// </summary>
@@ -222,7 +227,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         {
             FromNode = fromNode;
             ToNode = toNode;
-                        
+
             //Solve for y = mx + b
             m = (ToNode.Y - FromNode.Y) / (ToNode.X - FromNode.X);
             b = ToNode.Y - m * ToNode.X;
@@ -235,7 +240,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <returns></returns>
         internal double Xintercept(double y)
         {
-            return (y - b)/m;
+            return (y - b) / m;
         }
 
         /// <summary>
@@ -245,7 +250,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <returns></returns>
         internal double Yintercept(double x)
         {
-            return (x - b)/m;
+            return (x - b) / m;
         }
 
     }

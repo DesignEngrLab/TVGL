@@ -37,7 +37,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 var orderedLoop = new List<Node>();
 
                 //Create first node
-                var nodeType = NodeType(loop.Last(), loop[0], loop[1]);
+                var nodeType = GetNodeType(loop.Last(), loop[0], loop[1]);
                 var firstNode = new Node(loop.Last(), nodeType, i);
                 var previousNode = firstNode;
                 Line line = null;
@@ -47,7 +47,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 for (var j = 1; j < loop.Count() - 1; j++)
                 {
                     //Create New Node
-                    nodeType = NodeType(loop[j - 1], loop[j], loop[j + 1]);
+                    nodeType = GetNodeType(loop[j - 1], loop[j], loop[j + 1]);
                     var node = new Node(loop[j], nodeType, i);
 
                     //Add node to the ordered loop
@@ -62,7 +62,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 }
 
                 //Create last node
-                nodeType = NodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0]);
+                nodeType = GetNodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0]);
                 var lastNode = new Node(loop[loop.Count() - 1], nodeType, i);
                 orderedLoop.Add(lastNode);
 
@@ -91,7 +91,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             // 6)   If not inside, remove that nodes from the group list. 
             // 7)      else remove the negative loop from orderedLoops and merge the negative loop with the group list.
             // 8)   Continue with Trapezoidation
-            var completeListSortedLoops = sortedLoops;
+            List<List<Node>> completeListSortedLoops =new List<List<Node>>(sortedLoops);
             while (orderedLoops.Any())
             {
                 //Get information about positive loop, remove from loops, and create new group
@@ -177,7 +177,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 
                     switch (node.Type)
                     {
-                        case 0: //Downward Reflex
+                        case NodeType.DownwardReflex:
                             {
                                 leftLine = FindLeftLine(node, lineList);
                                 rightLine = FindRightLine(node, lineList);
@@ -193,7 +193,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                                 trapTree.Add(newPartialTrapezoid);
                             }
                             break;
-                        case 1: //Upward Reflex
+                        case NodeType.UpwardReflex:
                             {
                                 if (leftLine == null) //If from the first negative point, leftLine and rightLine will already be set.
                                 {
@@ -213,20 +213,20 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                                 trapTree.Add(newPartialTrapezoid2);
                             }
                             break;
-                        case 2: //Peak
+                        case NodeType.Peak:
                             {
                                 //Create one new partial trapezoid
                                 var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, node.EndLine);
                                 trapTree.Add(newPartialTrapezoid);
                             }
                             break;
-                        case 3: //Root
+                        case NodeType.Root:
                             {
                                 //Close one trapezoid
                                 InsertTrapezoid(node, node.EndLine, node.StartLine, trapTree, completedTrapezoids);
                             }
                             break;
-                        case 4: //Left
+                        case NodeType.Left:
                             {
                                 //Create one trapezoid
                                 leftLine = FindLeftLine(node, lineList);
@@ -238,7 +238,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                                 trapTree.Add(newPartialTrapezoid);
                             }
                             break;
-                        case 5: //Right
+                        case NodeType.Right:
                             {
                                 //Create one trapezoid
                                 rightLine = FindRightLine(node, lineList);
@@ -261,7 +261,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 for (var j = 0; j < completedTrapezoids.Count; j++)
                 {
                     var trapezoid = completedTrapezoids[j];
-                    if (trapezoid.TopNode.Type == 0) //If upper node is reflex down (bottom node could be reflex up, reflex down, or other)
+                    if (trapezoid.TopNode.Type == NodeType.DownwardReflex) //If upper node is reflex down (bottom node could be reflex up, reflex down, or other)
                     {
                         var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
                         completedTrapezoids.RemoveAt(j);
@@ -270,7 +270,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                         completedTrapezoids.Insert(j, rightTrapezoid); //right trapezoid will end up right below left trapezoid
                         completedTrapezoids.Insert(j, leftTrapezoid); //left trapezoid will end up were the original trapezoid was located
                     }
-                    else if (trapezoid.BottomNode.Type == 1) //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
+                    else if (trapezoid.BottomNode.Type == NodeType.UpwardReflex) //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
                     {
                         var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
                         completedTrapezoids.RemoveAt(j);
@@ -376,19 +376,19 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// Gets the type of node for B.
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
-        internal static int NodeType(Point a, Point b, Point c)
+        internal static NodeType GetNodeType(Point a, Point b, Point c)
         {
             if (a.Y < b.Y)
             {
                 if (c.Y < b.Y)
                 {
-                    return GetAngle(a, b, c) < Math.PI ? 2 : 1;
+                    return GetAngle(a, b, c) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
                 }
                 if (c.Y > b.Y)
                 {
-                    return 4;
+                    return NodeType.Left;
                 }
-                return GetAngle(a, b, c) < Math.PI ? 4 : 1;
+                return GetAngle(a, b, c) < Math.PI ? NodeType.Left : NodeType.UpwardReflex;
 
             }
 
@@ -396,28 +396,28 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 if (c.Y > b.Y)
                 {
-                    return GetAngle(a, b, c) < Math.PI ? 3 : 0;
+                    return GetAngle(a, b, c) < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
                 }
                 if (c.Y < b.Y)
                 {
-                    return 5;
+                    return NodeType.Right;
                 }
-                return GetAngle(a, b, c) < Math.PI ? 5 : 0;
+                return GetAngle(a, b, c) < Math.PI ? NodeType.Right : NodeType.DownwardReflex;
             }
 
             if (c.Y > b.Y)
             {
-                return GetAngle(a, b, c) > Math.PI ? 4 : 3;
+                return GetAngle(a, b, c) > Math.PI ? NodeType.Left : NodeType.Root;
             }
             if (c.Y < b.Y)
             {
-                return GetAngle(a, b, c) > Math.PI ? 5 : 2;
+                return GetAngle(a, b, c) > Math.PI ? NodeType.Right : NodeType.Peak;
             }
             if (a.X > c.X)
             {
-                return 4;
+                return NodeType.Left;
             }
-            return a.X < c.X ? 5 : 11; //11 signifies an error (two points with exactly the same coordinates)     
+            return a.X < c.X ? NodeType.Right : NodeType.Duplicate; //11 signifies an error (two points with exactly the same coordinates)     
         }
         #endregion
 
@@ -435,7 +435,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 
             //Since these points are in 2D, use crossProduct2
             var tempCross = StarMath.crossProduct2(edgeVectors0, edgeVectors1);
-            var tempDot = StarMath.dotProduct(edgeVectors0, edgeVectors1);
+            var tempDot = edgeVectors0.dotProduct(edgeVectors1);
             var theta = Math.Asin(tempCross);
             if (tempDot >= 0)
             {
