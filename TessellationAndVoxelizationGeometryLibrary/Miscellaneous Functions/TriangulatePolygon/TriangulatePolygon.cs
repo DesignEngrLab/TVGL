@@ -19,6 +19,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <exception cref="System.NotImplementedException"></exception>
         public static List<Point[]> Run(List<Point[]> points2D, Boolean[] isPositive)
         {
+            //Return variable triangles
+            var triangles = new List<Point[]>();
 
             #region Preprocessing
             //Preprocessing
@@ -37,8 +39,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 var orderedLoop = new List<Node>();
 
                 //Create first node
-                var nodeType = GetNodeType(loop.Last(), loop[0], loop[1]);
-                var firstNode = new Node(loop.Last(), nodeType, i);
+                var nodeType = GetNodeType(loop.Last(), loop[0], loop[1], isPositive[i]);
+                var firstNode = new Node(loop[0], nodeType, i);
                 var previousNode = firstNode;
                 Line line = null;
                 orderedLoop.Add(firstNode);
@@ -47,7 +49,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 for (var j = 1; j < loop.Count() - 1; j++)
                 {
                     //Create New Node
-                    nodeType = GetNodeType(loop[j - 1], loop[j], loop[j + 1]);
+                    nodeType = GetNodeType(loop[j - 1], loop[j], loop[j + 1], isPositive[i]);
                     var node = new Node(loop[j], nodeType, i);
 
                     //Add node to the ordered loop
@@ -62,7 +64,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 }
 
                 //Create last node
-                nodeType = GetNodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0]);
+                nodeType = GetNodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0], isPositive[i]);
                 var lastNode = new Node(loop[loop.Count() - 1], nodeType, i);
                 orderedLoop.Add(lastNode);
 
@@ -96,8 +98,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 //Get information about positive loop, remove from loops, and create new group
                 i = listPositive.FindIndex(true);
-                var posOrderedLoop = orderedLoops[i];
-                var sortedGroup = sortedLoops[i];
+                var posOrderedLoop = new List<Node>(orderedLoops[i]);
+                var sortedGroup = new List<Node>(sortedLoops[i]);
                 listPositive.RemoveAt(i);
                 orderedLoops.RemoveAt(i);
                 sortedLoops.RemoveAt(i);
@@ -134,9 +136,9 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     //Similarly points2D is static.
                     if (node == completeListSortedLoops[node.LoopID][0] && isPositive[node.LoopID] == false) //if first point in the sorted loop and loop is negative 
                     {
-                        if (LinesToLeft(node, lineList, leftLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
+                        if (LinesToLeft(node, lineList, out leftLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
                         {
-                            if (LinesToRight(node, lineList, rightLine) % 2 == 0) //If remainder is not equal to 0, then it is odd. 
+                            if (LinesToRight(node, lineList, out rightLine) % 2 == 0) //If remainder is not equal to 0, then it is odd. 
                             {
                                 //NOTE: This node must be a reflex upward point by observation
                                 //leftLine and rightLine are set in the two previous call and are now not null.
@@ -179,14 +181,14 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     {
                         case NodeType.DownwardReflex:
                             {
-                                leftLine = FindLeftLine(node, lineList);
-                                rightLine = FindRightLine(node, lineList);
+                                FindLeftLine(node, lineList, out leftLine);
+                                FindRightLine(node, lineList, out rightLine);
 
                                 //Close two trapezoids
                                 //Left trapezoid:
-                                InsertTrapezoid(node, leftLine, node.StartLine, trapTree, completedTrapezoids);
+                                InsertTrapezoid(node, leftLine, node.StartLine, ref trapTree, ref completedTrapezoids);
                                 //Right trapezoid:
-                                InsertTrapezoid(node, node.EndLine, rightLine, trapTree, completedTrapezoids);
+                                InsertTrapezoid(node, node.EndLine, rightLine, ref trapTree, ref completedTrapezoids);
 
                                 //Create one new partial trapezoid
                                 var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, rightLine);
@@ -197,12 +199,12 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                             {
                                 if (leftLine == null) //If from the first negative point, leftLine and rightLine will already be set.
                                 {
-                                    leftLine = FindLeftLine(node, lineList);
-                                    rightLine = FindRightLine(node, lineList);
+                                    FindLeftLine(node, lineList, out leftLine);
+                                    FindRightLine(node, lineList, out rightLine);
                                 }
 
                                 //Close one trapezoid
-                                InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
+                                InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
 
                                 //Create two new partial trapezoids
                                 //Left Trapezoid
@@ -223,15 +225,15 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                         case NodeType.Root:
                             {
                                 //Close one trapezoid
-                                InsertTrapezoid(node, node.EndLine, node.StartLine, trapTree, completedTrapezoids);
+                                InsertTrapezoid(node, node.EndLine, node.StartLine, ref trapTree, ref completedTrapezoids);
                             }
                             break;
                         case NodeType.Left:
                             {
                                 //Create one trapezoid
-                                leftLine = FindLeftLine(node, lineList);
+                                FindLeftLine(node, lineList, out leftLine);
                                 rightLine = node.StartLine;
-                                InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
+                                InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
 
                                 //Create one new partial trapezoid
                                 var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, node.EndLine);
@@ -241,12 +243,12 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                         case NodeType.Right:
                             {
                                 //Create one trapezoid
-                                rightLine = FindRightLine(node, lineList);
+                                FindRightLine(node, lineList, out rightLine);
                                 leftLine = node.EndLine;
-                                InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
+                                InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
 
                                 //Create one new partial trapezoid
-                                var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, node.EndLine);
+                                var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, rightLine);
                                 trapTree.Add(newPartialTrapezoid);
                             }
                             break;
@@ -269,6 +271,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                         var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
                         completedTrapezoids.Insert(j, rightTrapezoid); //right trapezoid will end up right below left trapezoid
                         completedTrapezoids.Insert(j, leftTrapezoid); //left trapezoid will end up were the original trapezoid was located
+                        j++; //Extra counter to skip extra trapezoid
                     }
                     else if (trapezoid.BottomNode.Type == NodeType.UpwardReflex) //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
                     {
@@ -278,13 +281,14 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                         var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
                         completedTrapezoids.Insert(j, rightTrapezoid); //right trapezoid will end up right below left trapezoid
                         completedTrapezoids.Insert(j, leftTrapezoid); //left trapezoid will end up were the original trapezoid was located
+                        j++; //Extra counter to skip extra trapezoid
                     }
                 }
 
                 //Create Monotone Polygons from Trapezoids
                 var currentTrap = completedTrapezoids[0];
-                var monotoneTrapPolygons = new List<List<Trapezoid>>();
-                monotoneTrapPolygons[0].Add(currentTrap);
+                var monotoneTrapPolygon = new List<Trapezoid> { currentTrap };
+                var monotoneTrapPolygons = new List<List<Trapezoid>>{monotoneTrapPolygon};
                 //for each trapezoid except the first one, which was added in the intitialization above.
                 for (var j = 1; j < completedTrapezoids.Count; j++)
                 {
@@ -361,14 +365,13 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 
                 #region Triangulate Monotone Polygons
                 //Triangulates the monotone polygons
-                var triangles = new List<Point[]>();
                 foreach (var monotonePolygon2 in monotonePolygons)
                 {
-                    Triangulate(monotonePolygon2, triangles);
+                    Triangulate(monotonePolygon2, ref triangles);
                 }
                 #endregion
             }
-            return null;
+            return triangles;
         }
 
         #region Get Node Type
@@ -376,19 +379,19 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// Gets the type of node for B.
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
-        internal static NodeType GetNodeType(Point a, Point b, Point c)
+        internal static NodeType GetNodeType(Point a, Point b, Point c, Boolean isPositive)
         {
             if (a.Y < b.Y)
             {
                 if (c.Y < b.Y)
                 {
-                    return GetAngle(a, b, c) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
+                    return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
                 }
                 if (c.Y > b.Y)
                 {
                     return NodeType.Left;
                 }
-                return GetAngle(a, b, c) < Math.PI ? NodeType.Left : NodeType.UpwardReflex;
+                return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Left : NodeType.UpwardReflex;
 
             }
 
@@ -396,22 +399,22 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 if (c.Y > b.Y)
                 {
-                    return GetAngle(a, b, c) < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
+                    return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
                 }
                 if (c.Y < b.Y)
                 {
                     return NodeType.Right;
                 }
-                return GetAngle(a, b, c) < Math.PI ? NodeType.Right : NodeType.DownwardReflex;
+                return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Right : NodeType.DownwardReflex;
             }
 
             if (c.Y > b.Y)
             {
-                return GetAngle(a, b, c) > Math.PI ? NodeType.Left : NodeType.Root;
+                return GetAngle(a, b, c, isPositive) > Math.PI ? NodeType.Left : NodeType.Root;
             }
             if (c.Y < b.Y)
             {
-                return GetAngle(a, b, c) > Math.PI ? NodeType.Right : NodeType.Peak;
+                return GetAngle(a, b, c, isPositive) > Math.PI ? NodeType.Right : NodeType.Peak;
             }
             if (a.X > c.X)
             {
@@ -427,16 +430,20 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
         /// "If" statements were determined by observation
-        public static double GetAngle(Point a, Point b, Point c)
+        public static double GetAngle(Point a, Point b, Point c, Boolean isPositive)
         {
             var edgeVectors0 = StarMath.normalize(StarMath.subtract(b.Position2D, a.Position2D));
             var edgeVectors1 = StarMath.normalize(StarMath.subtract(c.Position2D, b.Position2D));
 
 
             //Since these points are in 2D, use crossProduct2
-            var tempCross = StarMath.crossProduct2(edgeVectors0, edgeVectors1);
+            var tempCross = StarMath.crossProduct2( edgeVectors0, edgeVectors1);//If tempCross is positive, use smaller angle
+            if (!isPositive) //If a negative loop, reverse tempCross
+            {
+                tempCross = -tempCross;
+            }
             var tempDot = edgeVectors0.dotProduct(edgeVectors1);
-            var theta = Math.Asin(tempCross);
+            var theta = Math.Abs(Math.Asin(tempCross));
             if (tempDot >= 0)
             {
                 return (tempCross >= 0) ? Math.PI - theta : Math.PI + theta;
@@ -447,7 +454,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         #endregion
 
         #region Create Trapezoid and Insert Into List
-        internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, IList<PartialTrapezoid> trapTree, ICollection<Trapezoid> completedTrapezoids)
+        internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, ref List<PartialTrapezoid> trapTree, ref List<Trapezoid> completedTrapezoids)
         {
             var matchesTrap = false;
             var i = 0;
@@ -467,8 +474,9 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         #endregion
 
         #region Find Lines to Left or Right
-        internal static double LinesToLeft(Node node, IEnumerable<Line> lineList, Line leftLine)
+        internal static double LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine)
         {
+            leftLine = null;
             var xleft = double.NegativeInfinity;
             var counter = 0;
             foreach (var line in lineList)
@@ -488,15 +496,14 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             return counter;
         }
 
-        internal static Line FindLeftLine(Node node, IEnumerable<Line> lineList)
+        internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
         {
-            Line leftLine = null;
-            var counter = LinesToLeft(node, lineList, leftLine);
-            return leftLine;
+            var counter = LinesToLeft(node, lineList, out leftLine);
         }
 
-        internal static double LinesToRight(Node node, IEnumerable<Line> lineList, Line rightLine)
+        internal static double LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine)
         {
+            rightLine = null;
             var xright = double.PositiveInfinity;
             var counter = 0;
             foreach (var line in lineList)
@@ -516,11 +523,9 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             return counter;
         }
 
-        internal static Line FindRightLine(Node node, IEnumerable<Line> lineList)
+        internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
         {
-            Line rightLine = null;
-            var counter = LinesToLeft(node, lineList, rightLine);
-            return rightLine;
+            var counter = LinesToRight(node, lineList, out rightLine);
         }
         #endregion
 
@@ -584,28 +589,56 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         #endregion
 
         #region Triangulate Monotone Polygon
-        internal static void Triangulate(MonotonePolygon monotonePolygon, List<Point[]> triangles)
+        internal static void Triangulate(MonotonePolygon monotonePolygon, ref List<Point[]> triangles)
         {
             var scan = new List<Node>();
             var leftChain = monotonePolygon.LeftChain;
             var rightChain = monotonePolygon.RightChain;
             var sortedNodes = monotonePolygon.SortedNodes;
+            var k = 0; 
+            var j = 0;
 
-            //Add first two nodes to scan
+            //Add first two nodes to scan and adjust the counter
             scan.Add(sortedNodes[0]);
             scan.Add(sortedNodes[1]);
+            if (leftChain[j + 1] == sortedNodes[1])
+            {
+                j++; 
+            }
+            else
+            {
+                k++;
+            }
 
+            //Begin to find triangles
             for (var i = 2; i < sortedNodes.Count; i++)
             {
                 var node = sortedNodes[i];
                 var boolstatus = false;
-                if (leftChain[1] == node && rightChain[1] == scan.Last())
+                var isLeftChain = false;
+                if (rightChain[k + 1] == node && leftChain[j + 1] == node) //If both chains have reached the root node.
                 {
-                    boolstatus = true;
+                    var triangle = new Point[] { node.Point, scan[0].Point, scan[1].Point };
+                    triangles.Add(triangle);
+                    break;
                 }
-                else if (leftChain[1] == scan.Last() && rightChain[1] == node)
+                else if (leftChain[j+1] == node)
+                {   
+                    j++;
+                    isLeftChain = true;
+                    if (rightChain[k] == scan.Last())
+                    {
+                        boolstatus = true;
+                    }
+                }
+                else //rightChain[k+1] == node
                 {
-                    boolstatus = true;
+                    k++;
+                    isLeftChain = false;
+                    if (leftChain[j] == scan.Last())
+                    {
+                        boolstatus = true;
+                    }                  
                 }
                 //If either condition above was true, do the following
                 if (boolstatus == true)
@@ -616,17 +649,18 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                         var triangle = new Point[] { node.Point, scan[0].Point, scan[1].Point };
                         triangles.Add(triangle);
 
-                        //Remove first item in scan list and add node to end of scan list
+                        //Remove first item in scan list.
                         scan.RemoveAt(0);
-                        scan.Add(node);
                     }
+                    //add node to end of scan list
+                    scan.Add(node);
                 }
                 else
                 {
-                    while (GetAngle(node, scan.Last(), scan[scan.Count - 2]) < 180 && scan.Count() > 1)
+                    while (GetAngle(scan[scan.Count - 2], scan.Last(), node, isLeftChain) < Math.PI && scan.Count() > 1) //NOTE: Assume positive loop only (since the negative loops have been merged)
                     {
                         //Add triangle to list 
-                        var triangle = new Point[] { node.Point, scan.Last().Point, scan[scan.Count - 2].Point };
+                        var triangle = new Point[] { scan[scan.Count - 2].Point, scan.Last().Point, node.Point };
                         triangles.Add(triangle);
 
                         //Remove last node from scan list 
