@@ -51,7 +51,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// /// </summary>
         /// <param name="point"></param>
         internal Node(Point currentPoint, NodeType nodeType, int loopID)
-            : base(new Point(currentPoint))
+            : base(new Point(currentPoint.References[0]))
         {
             LoopID = loopID;
             Type = nodeType;
@@ -230,6 +230,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 
             //Solve for y = mx + b
             m = (ToNode.Y - FromNode.Y) / (ToNode.X - FromNode.X);
+            
             b = ToNode.Y - m * ToNode.X;
         }
 
@@ -240,17 +241,21 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <returns></returns>
         internal double Xintercept(double y)
         {
+            //If basically a vertical line, return an x value on that line (e.g., ToNode.X)
+            if (Math.Abs(m)>= 10000000000.0)
+            {
+                return ToNode.X;
+            }
+            //If a flat line give either positive or negative infinitity depending on the direction of the line.
+            else if (StarMathLib.StarMath.IsNegligible(Math.Abs(m)))
+            {
+                if (ToNode.X -FromNode.X > 0)
+                {
+                    return double.PositiveInfinity;
+                }
+                return double.NegativeInfinity;
+            }
             return (y - b) / m;
-        }
-
-        /// <summary>
-        ///   Gets Y intercept given X
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        internal double Yintercept(double x)
-        {
-            return (x - b) / m;
         }
 
     }

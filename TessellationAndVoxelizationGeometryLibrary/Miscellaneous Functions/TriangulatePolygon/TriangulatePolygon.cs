@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.ServiceModel.Channels;
 using StarMathLib;
 using MIConvexHull;
+using TVGL.Tessellation;
 
 namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 {
@@ -17,10 +18,10 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <param name="isPositive">Indicates whether the corresponding loop is positive or not.</param>
         /// <returns>List&lt;Point[]&gt;, which represents vertices of new faces.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public static List<Point[]> Run(List<Point[]> points2D, Boolean[] isPositive)
+        public static List<PolygonalFace> Run(List<Point[]> points2D, Boolean[] isPositive)
         {
             //Return variable triangles
-            var triangles = new List<Point[]>();
+            var triangles = new List<PolygonalFace>();
 
             #region Preprocessing
             //Preprocessing
@@ -589,7 +590,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         #endregion
 
         #region Triangulate Monotone Polygon
-        internal static void Triangulate(MonotonePolygon monotonePolygon, ref List<Point[]> triangles)
+        internal static void Triangulate(MonotonePolygon monotonePolygon, ref List<PolygonalFace> triangles)
         {
             var scan = new List<Node>();
             var leftChain = monotonePolygon.LeftChain;
@@ -618,7 +619,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 var isLeftChain = false;
                 if (rightChain[k + 1] == node && leftChain[j + 1] == node) //If both chains have reached the root node.
                 {
-                    var triangle = new Point[] { node.Point, scan[0].Point, scan[1].Point };
+                    var triangle = new PolygonalFace(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                     triangles.Add(triangle);
                     break;
                 }
@@ -646,7 +647,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     while (scan.Count > 1)
                     {
                         //Add triangle to list 
-                        var triangle = new Point[] { node.Point, scan[0].Point, scan[1].Point };
+                        var triangle = new PolygonalFace(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                         triangles.Add(triangle);
 
                         //Remove first item in scan list.
@@ -660,7 +661,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     while (GetAngle(scan[scan.Count - 2], scan.Last(), node, isLeftChain) < Math.PI && scan.Count() > 1) //NOTE: Assume positive loop only (since the negative loops have been merged)
                     {
                         //Add triangle to list 
-                        var triangle = new Point[] { scan[scan.Count - 2].Point, scan.Last().Point, node.Point };
+                        var triangle = new PolygonalFace(new [] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
                         triangles.Add(triangle);
 
                         //Remove last node from scan list 
