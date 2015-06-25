@@ -384,15 +384,11 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         {
             if (a.Y < b.Y)
             {
-                if (c.Y < b.Y)
-                {
-                    return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
-                }
                 if (c.Y > b.Y)
                 {
                     return NodeType.Left;
                 }
-                return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Left : NodeType.UpwardReflex;
+                return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
 
             }
 
@@ -404,24 +400,26 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 }
                 if (c.Y < b.Y)
                 {
-                    return NodeType.Right;
-                }
-                return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Right : NodeType.DownwardReflex;
+                    return NodeType.Right; 
+                }               
+                //else c.Y = b.Y)
+                return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Root : NodeType.Right;
             }
 
+            //Else, a.Y = b.Y
             if (c.Y > b.Y)
             {
-                return GetAngle(a, b, c, isPositive) > Math.PI ? NodeType.Left : NodeType.Root;
+                return GetAngle(a, b, c, isPositive) > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
             }
             if (c.Y < b.Y)
             {
-                return GetAngle(a, b, c, isPositive) > Math.PI ? NodeType.Right : NodeType.Peak;
+                return GetAngle(a, b, c, isPositive) > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
             }
             if (a.X > c.X)
             {
-                return NodeType.Left;
+                return NodeType.Right;
             }
-            return a.X < c.X ? NodeType.Right : NodeType.Duplicate; //11 signifies an error (two points with exactly the same coordinates)     
+            return a.X < c.X ? NodeType.Left : NodeType.Duplicate; //11 signifies an error (two points with exactly the same coordinates)     
         }
         #endregion
 
@@ -484,7 +482,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (xdif < 0)
+                if (xdif <= 0)
                 {
                     counter++;
                     if (xdif > xleft)
@@ -511,7 +509,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (xdif > 0)
+                if (xdif >= 0)
                 {
                     counter++;
                     if (xdif < xright)
@@ -619,8 +617,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 var isLeftChain = false;
                 if (rightChain[k + 1] == node && leftChain[j + 1] == node) //If both chains have reached the root node.
                 {
-                    var triangle = new PolygonalFace(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
-                    triangles.Add(triangle);
+                    //var triangle = new PolygonalFace(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
+                    //triangles.Add(triangle);
                     break;
                 }
                 else if (leftChain[j+1] == node)
@@ -647,8 +645,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     while (scan.Count > 1)
                     {
                         //Add triangle to list 
-                        var triangle = new PolygonalFace(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
-                        triangles.Add(triangle);
+                        //var triangle = new PolygonalFace(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
+                        //triangles.Add(triangle);
 
                         //Remove first item in scan list.
                         scan.RemoveAt(0);
@@ -661,8 +659,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     while (GetAngle(scan[scan.Count - 2], scan.Last(), node, isLeftChain) < Math.PI && scan.Count() > 1) //NOTE: Assume positive loop only (since the negative loops have been merged)
                     {
                         //Add triangle to list 
-                        var triangle = new PolygonalFace(new [] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
-                        triangles.Add(triangle);
+                        //var triangle = new PolygonalFace(new [] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
+                        //triangles.Add(triangle);
 
                         //Remove last node from scan list 
                         scan.Remove(scan.Last());

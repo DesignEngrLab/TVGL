@@ -228,10 +228,22 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             FromNode = fromNode;
             ToNode = toNode;
 
-            //Solve for y = mx + b
-            m = (ToNode.Y - FromNode.Y) / (ToNode.X - FromNode.X);
-            
-            b = ToNode.Y - m * ToNode.X;
+            //Solve for slope and y intercept. 
+            if (Math.Abs(ToNode.X - FromNode.X) < 1E+10) //If vertical line, set slope = inf.
+            {
+                m = double.PositiveInfinity;
+                b = double.PositiveInfinity;
+            }
+            else if (Math.Abs(ToNode.Y - FromNode.Y) < 1E+10) //If horizontal line, set slope = 0.
+            {
+                m = 0.0;
+                b = ToNode.Y;
+            }
+            else //Else y = mx + b
+            {
+                m = (ToNode.Y - FromNode.Y) / (ToNode.X - FromNode.X);
+                b = ToNode.Y - m * ToNode.X;
+            }
         }
 
         /// <summary>
@@ -242,14 +254,14 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         internal double Xintercept(double y)
         {
             //If basically a vertical line, return an x value on that line (e.g., ToNode.X)
-            if (Math.Abs(m)>= 10000000000.0)
+            if (m >= double.PositiveInfinity)
             {
-                return ToNode.X;
+                return FromNode.X;
             }
             //If a flat line give either positive or negative infinitity depending on the direction of the line.
-            else if (StarMathLib.StarMath.IsNegligible(Math.Abs(m)))
+            else if (m == 0.0)
             {
-                if (ToNode.X -FromNode.X > 0)
+                if (ToNode.X - FromNode.X > 0)
                 {
                     return double.PositiveInfinity;
                 }

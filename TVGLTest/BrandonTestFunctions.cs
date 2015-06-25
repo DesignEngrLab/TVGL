@@ -41,9 +41,9 @@ namespace TVGL_Test
             foreach (var triangle in listTriangles)
             {
                 Console.WriteLine("Triangle: " + i);
-                Console.WriteLine("(" + (triangle[0].X) + " , " + (triangle[0].Y) + ")");
-                Console.WriteLine("(" + (triangle[1].X) + " , " + (triangle[1].Y) + ")");
-                Console.WriteLine("(" + (triangle[2].X) + " , " + (triangle[2].Y) + ")");
+                Console.WriteLine("(" + (triangle.Vertices[0].X) + " , " + (triangle.Vertices[0].Y) + ")");
+                Console.WriteLine("(" + (triangle.Vertices[1].X) + " , " + (triangle.Vertices[1].Y) + ")");
+                Console.WriteLine("(" + (triangle.Vertices[2].X) + " , " + (triangle.Vertices[2].Y) + ")");
                 i++;
             }
 
