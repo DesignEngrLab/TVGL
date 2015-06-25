@@ -43,7 +43,6 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 var nodeType = GetNodeType(loop.Last(), loop[0], loop[1], isPositive[i]);
                 var firstNode = new Node(loop[0], nodeType, i);
                 var previousNode = firstNode;
-                Line line = null;
                 orderedLoop.Add(firstNode);
 
                 //Create other nodes
@@ -57,7 +56,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     orderedLoop.Add(node);
 
                     //Create New Line
-                    line = new Line(previousNode, node);
+                    var line = new Line(previousNode, node);
                     previousNode.StartLine = line;
                     node.EndLine = line;
 
@@ -70,12 +69,12 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 orderedLoop.Add(lastNode);
 
                 //Create both missing lines 
-                line = new Line(previousNode, lastNode);
-                previousNode.StartLine = line;
-                lastNode.EndLine = line;
-                line = new Line(lastNode, firstNode);
-                lastNode.StartLine = line;
-                firstNode.EndLine = line;
+                var line1 = new Line(previousNode, lastNode);
+                previousNode.StartLine = line1;
+                lastNode.EndLine = line1;
+                var line2 = new Line(lastNode, firstNode);
+                lastNode.StartLine = line2;
+                firstNode.EndLine = line2;
 
                 //Sort nodes by descending Y, ascending X
                 var sortedLoop = orderedLoop.OrderByDescending(node => node.Y).ThenBy(node => node.X).ToList<Node>();
@@ -476,11 +475,11 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             leftLine = null;
             var xleft = double.NegativeInfinity;
             var counter = 0;
-            foreach (var line in lineList)
+            foreach (Line line in lineList)
             {
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (xdif <= 0)
+                if (xdif < 0)
                 {
                     counter++;
                     if (xdif > xleft)
@@ -503,11 +502,11 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             rightLine = null;
             var xright = double.PositiveInfinity;
             var counter = 0;
-            foreach (var line in lineList)
+            foreach (Line line in lineList)
             {
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (xdif >= 0)
+                if (xdif > 0)
                 {
                     counter++;
                     if (xdif < xright)
@@ -617,34 +616,40 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 if (rightChain[k + 1] == node && leftChain[j + 1] == node) //If both chains have reached the root node.
                 {
                     triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
-
                     break;
                 }
                 else if (leftChain[j + 1] == node)
                 {
-                    j++;
-                    isLeftChain = true;
-                    if (rightChain[k] == scan.Last())
+                    if (leftChain[j] == scan.Last() && leftChain[j-1] == scan[scan.Count-2]) //If all the nodes are on the left chain 
+                    {
+                        boolstatus = false;
+                    }
+                    else
                     {
                         boolstatus = true;
                     }
+                    j++;
+                    isLeftChain = true;
                 }
                 else //rightChain[k+1] == node
                 {
-                    k++;
-                    isLeftChain = false;
-                    if (leftChain[j] == scan.Last())
+                    if (rightChain[k] == scan.Last() && leftChain[k-1] == scan[scan.Count-1])
+                    {
+                        boolstatus = false;
+                    }
+                    else
                     {
                         boolstatus = true;
                     }
+                    k++;
+                    isLeftChain = false;
                 }
                 //If either condition above was true, do the following
                 if (boolstatus == true)
                 {
                     while (scan.Count > 1)
                     {
-                        triangles.Add(
-                            new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
+                        triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
                         //Remove first item in scan list.
                         scan.RemoveAt(0);
                     }
@@ -655,8 +660,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 {
                     while (GetAngle(scan[scan.Count - 2], scan.Last(), node, isLeftChain) < Math.PI && scan.Count() > 1) //NOTE: Assume positive loop only (since the negative loops have been merged)
                     {
-                        triangles.Add(
-                            new PolygonalFace(new[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] }));
+                        triangles.Add(new PolygonalFace(new[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] }));
                         //Remove last node from scan list 
                         scan.Remove(scan.Last());
                     }

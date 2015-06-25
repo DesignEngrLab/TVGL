@@ -229,12 +229,12 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             ToNode = toNode;
 
             //Solve for slope and y intercept. 
-            if (Math.Abs(ToNode.X - FromNode.X) < 1E+10) //If vertical line, set slope = inf.
+            if (Math.Abs(ToNode.X - FromNode.X) < 1E-10) //If vertical line, set slope = inf.
             {
                 m = double.PositiveInfinity;
                 b = double.PositiveInfinity;
             }
-            else if (Math.Abs(ToNode.Y - FromNode.Y) < 1E+10) //If horizontal line, set slope = 0.
+            else if (Math.Abs(ToNode.Y - FromNode.Y) < 1E-10) //If horizontal line, set slope = 0.
             {
                 m = 0.0;
                 b = ToNode.Y;
