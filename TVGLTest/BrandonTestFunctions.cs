@@ -16,7 +16,7 @@ namespace TVGL_Test
     {
 
         [STAThread]
-        private static void Main2(string[] args)
+        private static void Main(string[] args)
         {
             //  var position = new double[] { 0, 0, 0 };
             //   var vertex1 = new Vertex(position);

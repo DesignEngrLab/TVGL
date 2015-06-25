@@ -94,7 +94,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             // 6)   If not inside, remove that nodes from the group list. 
             // 7)      else remove the negative loop from orderedLoops and merge the negative loop with the group list.
             // 8)   Continue with Trapezoidation
-            List<List<Node>> completeListSortedLoops =new List<List<Node>>(sortedLoops);
+            List<List<Node>> completeListSortedLoops = new List<List<Node>>(sortedLoops);
             while (orderedLoops.Any())
             {
                 //Get information about positive loop, remove from loops, and create new group
@@ -289,7 +289,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 //Create Monotone Polygons from Trapezoids
                 var currentTrap = completedTrapezoids[0];
                 var monotoneTrapPolygon = new List<Trapezoid> { currentTrap };
-                var monotoneTrapPolygons = new List<List<Trapezoid>>{monotoneTrapPolygon};
+                var monotoneTrapPolygons = new List<List<Trapezoid>> { monotoneTrapPolygon };
                 //for each trapezoid except the first one, which was added in the intitialization above.
                 for (var j = 1; j < completedTrapezoids.Count; j++)
                 {
@@ -367,9 +367,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 #region Triangulate Monotone Polygons
                 //Triangulates the monotone polygons
                 foreach (var monotonePolygon2 in monotonePolygons)
-                {
-                    Triangulate(monotonePolygon2, ref triangles);
-                }
+                    triangles.AddRange(Triangulate(monotonePolygon2));
                 #endregion
             }
             return triangles;
@@ -400,8 +398,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 }
                 if (c.Y < b.Y)
                 {
-                    return NodeType.Right; 
-                }               
+                    return NodeType.Right;
+                }
                 //else c.Y = b.Y)
                 return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Root : NodeType.Right;
             }
@@ -436,7 +434,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 
 
             //Since these points are in 2D, use crossProduct2
-            var tempCross = StarMath.crossProduct2( edgeVectors0, edgeVectors1);//If tempCross is positive, use smaller angle
+            var tempCross = StarMath.crossProduct2(edgeVectors0, edgeVectors1);//If tempCross is positive, use smaller angle
             if (!isPositive) //If a negative loop, reverse tempCross
             {
                 tempCross = -tempCross;
@@ -588,13 +586,14 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         #endregion
 
         #region Triangulate Monotone Polygon
-        internal static void Triangulate(MonotonePolygon monotonePolygon, ref List<PolygonalFace> triangles)
+        internal static List<PolygonalFace> Triangulate(MonotonePolygon monotonePolygon)
         {
+            var triangles = new List<PolygonalFace>();
             var scan = new List<Node>();
             var leftChain = monotonePolygon.LeftChain;
             var rightChain = monotonePolygon.RightChain;
             var sortedNodes = monotonePolygon.SortedNodes;
-            var k = 0; 
+            var k = 0;
             var j = 0;
 
             //Add first two nodes to scan and adjust the counter
@@ -602,7 +601,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             scan.Add(sortedNodes[1]);
             if (leftChain[j + 1] == sortedNodes[1])
             {
-                j++; 
+                j++;
             }
             else
             {
@@ -617,12 +616,12 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 var isLeftChain = false;
                 if (rightChain[k + 1] == node && leftChain[j + 1] == node) //If both chains have reached the root node.
                 {
-                    //var triangle = new PolygonalFace(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
-                    //triangles.Add(triangle);
+                    triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
+
                     break;
                 }
-                else if (leftChain[j+1] == node)
-                {   
+                else if (leftChain[j + 1] == node)
+                {
                     j++;
                     isLeftChain = true;
                     if (rightChain[k] == scan.Last())
@@ -637,17 +636,15 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     if (leftChain[j] == scan.Last())
                     {
                         boolstatus = true;
-                    }                  
+                    }
                 }
                 //If either condition above was true, do the following
                 if (boolstatus == true)
                 {
                     while (scan.Count > 1)
                     {
-                        //Add triangle to list 
-                        //var triangle = new PolygonalFace(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
-                        //triangles.Add(triangle);
-
+                        triangles.Add(
+                            new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
                         //Remove first item in scan list.
                         scan.RemoveAt(0);
                     }
@@ -658,10 +655,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 {
                     while (GetAngle(scan[scan.Count - 2], scan.Last(), node, isLeftChain) < Math.PI && scan.Count() > 1) //NOTE: Assume positive loop only (since the negative loops have been merged)
                     {
-                        //Add triangle to list 
-                        //var triangle = new PolygonalFace(new [] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
-                        //triangles.Add(triangle);
-
+                        triangles.Add(
+                            new PolygonalFace(new[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] }));
                         //Remove last node from scan list 
                         scan.Remove(scan.Last());
                     }
@@ -669,6 +664,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     scan.Add(node);
                 }
             }
+            return triangles;
         }
         #endregion
     }

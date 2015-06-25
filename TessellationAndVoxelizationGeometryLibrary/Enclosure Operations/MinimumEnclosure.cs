@@ -109,9 +109,9 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="System.Exception"></exception>
-        public static BoundingBox FindOBBAlongDirection(IList<IVertex> vertices, double[] direction = null)
+        public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction = null)
         {
-            IVertex v1Low, v1High;
+            Vertex v1Low, v1High;
             var length = GetLengthAndExtremeVertices(direction, vertices, out v1Low, out v1High);
             double[,] backTransform;
             Get2DProjectionPoints(vertices, direction, out backTransform);
@@ -127,9 +127,9 @@ namespace TVGL
             var ny = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
             dirVectorPlusZero = backTransform.GetColumn(2);
             var nz = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
-            IVertex v2Low, v2High;
+            Vertex v2Low, v2High;
             GetLengthAndExtremeVertices(ny, vertices, out v2Low, out v2High);
-            IVertex v3Low, v3High;
+            Vertex v3Low, v3High;
             GetLengthAndExtremeVertices(nz, vertices, out v3Low, out v3High);
             return new BoundingBox(length * minArea, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High }, new[] { direction, ny, nz });
         }
@@ -142,7 +142,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<IVertex> vertices, double[] direction)
+        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction)
         {
             var xDir = direction[0];
             var yDir = direction[1];
@@ -175,7 +175,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<IVertex> vertices, double[] direction, out double[,] backTransform)
+        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction, out double[,] backTransform)
         {
             var xDir = direction[0];
             var yDir = direction[1];
@@ -213,7 +213,7 @@ namespace TVGL
         /// <param name="vLow">The v low.</param>
         /// <param name="vHigh">The v high.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(double[] dir, IList<IVertex> vertices, out IVertex vLow, out IVertex vHigh)
+        public static double GetLengthAndExtremeVertices(double[] dir, IList<Vertex> vertices, out Vertex vLow, out Vertex vHigh)
         {
             var dotProducts = new double[vertices.Count];
             var i = 0;

@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using MIConvexHull;
+using TVGL.Tessellation;
 
 namespace TVGL
 {
@@ -55,7 +56,7 @@ namespace TVGL
         /// Gets or sets the references.
         /// </summary>
         /// <value>The references.</value>
-        public List<IVertex> References { get; set; }
+        public List<Vertex> References { get; set; }
 
         /// <summary>
         /// Gets or sets the coordinates or position.
@@ -98,7 +99,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Point"/> class.
         /// </summary>
         /// <param name="v">The v.</param>
-        public Point(IVertex v)
+        public Point(Vertex v)
             : this(v, v.Position[0], v.Position[1], v.Position[2])
         { }
 
@@ -108,7 +109,7 @@ namespace TVGL
         /// <param name="vertex">The vertex.</param>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
-        public Point(IVertex vertex, double x, double y)
+        public Point(Vertex vertex, double x, double y)
             : this(vertex, x, y, 0.0)
         { }
 
@@ -119,9 +120,9 @@ namespace TVGL
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         /// <param name="z">The z.</param>
-        public Point(IVertex vertex, double x, double y, double z)
+        public Point(Vertex vertex, double x, double y, double z)
         {
-            References = new List<IVertex> { vertex };
+            References = new List<Vertex> { vertex };
             X = x;
             Y = y;
             Z = z;

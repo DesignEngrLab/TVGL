@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
+using TVGL.Tessellation;
 
 namespace TVGL
 {
@@ -36,7 +37,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
-        public static List<Point> ConvexHull2D(IList<IVertex> vertices, double[] direction)
+        public static List<Point> ConvexHull2D(IList<Vertex> vertices, double[] direction)
         {
            return ConvexHull2D(new List<Point>(Get2DProjectionPoints(vertices, direction)));
         }

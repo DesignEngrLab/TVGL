@@ -53,7 +53,8 @@ namespace TVGL
         }
         public Cone(List<PolygonalFace> facesAll, double[] axis, double aperture)
             : base(facesAll)
-        {                                           
+        {
+            this.Axis = axis;
             this.Aperture = aperture;
             var faces = ListFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
@@ -96,7 +97,7 @@ namespace TVGL
             Apex = axisRefPoint.add(axis.multiply(apexDistance));
             /* determine is positive or negative */
             var v2Apex = Apex.subtract(faces[0].Center);
-            IsPositive = (v2Apex.dotProduct(axis) > 0);
+            IsPositive = (v2Apex.dotProduct(axis) >= 0);
         }
     }
 }

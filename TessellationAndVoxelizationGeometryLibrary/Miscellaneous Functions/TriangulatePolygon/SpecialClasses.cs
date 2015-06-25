@@ -51,7 +51,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// /// </summary>
         /// <param name="point"></param>
         internal Node(Point currentPoint, NodeType nodeType, int loopID)
-            : base(new Point(currentPoint.References[0]))
+            : base(currentPoint.References[0])
         {
             LoopID = loopID;
             Type = nodeType;
