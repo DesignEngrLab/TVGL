@@ -16,33 +16,19 @@ namespace TVGL_Test
     {
 
         [STAThread]
-        private static void Main(string[] args)
+        private static void Main2(string[] args)
         {
             //  var position = new double[] { 0, 0, 0 };
             //   var vertex1 = new Vertex(position);
             //   var point1 = new Point(vertex1);
-            var point1 = new Point(new Vertex(new[] { 0.0, 0, 0 }));
-          var  position = new double[] { 1, 0.25, 0 };
-            var vertex2 = new Vertex(position);
-            var point2 = new Point(vertex2);
+            var point0 = new Point(new Vertex(new[] { 0.0, 0.0, 0.0 }));         
+            var point1 = new Point(new Vertex(new[]{ 1.0, 0.25, 0.0 }));
+            var point2 = new Point(new Vertex(new[]{ 0.75, 0.5, 0.0}));
+            var point3 = new Point(new Vertex(new[]{ 0.6, 0.4, 0.0  }));
+            var point4 = new Point(new Vertex(new[]{ 0.4, 0.6, 0.0  }));
+            var point5 = new Point(new Vertex(new[]{0.2, 0.1, 0.0}));
 
-            position = new double[] { 0.75, 0.5, 0 };
-            var vertex3 = new Vertex(position);
-            var point3 = new Point(vertex3);
-
-            position = new double[] { 0.6, 0.4, 0 };
-            var vertex4 = new Vertex(position);
-            var point4 = new Point(vertex4);
-
-            position = new double[] { 0.4, 0.6, 0 };
-            var vertex5 = new Vertex(position);
-            var point5 = new Point(vertex5);
-
-            position = new double[] { .2, .1, 0 };
-            var vertex6 = new Vertex(position);
-            var point6 = new Point(vertex6);
-
-            var posLoop = new Point[] { point1, point2, point3, point4, point5, point6 };
+            var posLoop = new Point[] { point0, point1, point2, point3, point4, point5};
             var listPoints = new List<Point[]> { posLoop };
             var listBool = new Boolean[] { true };
 
