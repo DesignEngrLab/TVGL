@@ -601,11 +601,14 @@ namespace TVGL.Tessellation
             SurfaceArea = 0;
             foreach (var face in Faces)
             {
-                // error when one of these faces is still connected to a degenerate edge
+                // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
                 face.Area = face.Edges[0].Vector.crossProduct(face.Edges[1].Vector).norm2() / 2;
-                SurfaceArea += face.Area;
-                /* the negative sign here is because the face normal points outward and the center is in the other direction, so
-                 * the dot-product is likely a negative value but the tetrahedron's volume should be added to the cumulative Volume */
+                SurfaceArea += face.Area;   // accumulate areas into surface area
+                /* the Center is not correct! It's merely the center of the bounding box, but it doesn't need to be the true center for
+                 * the calculation of the volume. Each tetrahedron is added up - even if they are negative - to form the correct value for
+                 * the volume. The dot-product to the center gives the height, and 1/3 of the height times the area gives the volume.
+                 * While, we're working on it, we should average the centers of the tetrahedrons and do a weighted sum to find the
+                 * true center of mass (todo: MV).*/
                 Volume += face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(Center))) / 3;
             }
         }
