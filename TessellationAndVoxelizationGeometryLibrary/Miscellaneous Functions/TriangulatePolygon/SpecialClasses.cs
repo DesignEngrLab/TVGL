@@ -16,13 +16,32 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
     /// Node class used in Triangulate Polygon
     /// Inherets position from point class
     /// </summary>
-    internal class Node : Point
+    internal class Node
     {
         #region Properties
         /// <summary>
         /// Gets the loop ID that this node belongs to.
         /// </summary>
         internal int LoopID { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the x.
+        /// </summary>
+        /// <value>The x.</value>
+        public double X { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the y.
+        /// </summary>
+        /// <value>The y.</value>
+        public double Y { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the z coordinate. If one is using Point in a 2D capacity, it can be ignored.
+        /// </summary>
+        /// <value>The z.</value>
+        public double Z { get; private set; }
+
 
         /// <summary>
         /// Gets the line that starts at this node.
@@ -51,11 +70,13 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// /// </summary>
         /// <param name="point"></param>
         internal Node(Point currentPoint, NodeType nodeType, int loopID)
-            : base(currentPoint.References[0])
         {
             LoopID = loopID;
             Type = nodeType;
             Point = currentPoint;
+            X = currentPoint.X;
+            Y = currentPoint.Y;
+            Z = currentPoint.Z;
         }
         #endregion
     }

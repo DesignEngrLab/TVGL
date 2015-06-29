@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using TVGL;
-using TVGL.Boolean_Operations;
-using TVGL.IOFunctions;
 using TVGL.Miscellaneous_Functions.TriangulatePolygon;
 using TVGL.Tessellation;
 
@@ -16,7 +11,7 @@ namespace TVGL_Test
     {
 
         [STAThread]
-        private static void Main2(string[] args)
+        private static void Main(string[] args)
         {
             //  var position = new double[] { 0, 0, 0 };
             //   var vertex1 = new Vertex(position);
