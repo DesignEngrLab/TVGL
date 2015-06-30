@@ -20,26 +20,39 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             //Return variable triangles
             var triangles = new List<PolygonalFace>();
 
+            //Check incomining lists
+            if (points2D.Count() != isPositive.Count())
+            {
+                throw new System.ArgumentException("Inputs into 'TriangulatePolygon' are unbalanced");
+            }
+
             #region Preprocessing
             //Preprocessing
             // 1) For each loop in points2D
-            // 2)   Create nodes and lines from points, and retain whether a point
+            // 2)   Count the number of points and add to total.
+            // 3)   Create nodes and lines from points, and retain whether a point
             //      was in a positive or negative loop.
-            // 3)   Add nodes to an ordered loop (same as points2D except now Nodes) 
+            // 4)   Add nodes to an ordered loop (same as points2D except now Nodes) 
             //      and a sorted loop (used for sweeping).
+            // 5) Get the number of positive and negative loops. 
             var i = 0;
             var orderedLoops = new List<List<Node>>();
             var sortedLoops = new List<List<Node>>();
             var listPositive = isPositive.ToList<bool>();
+            var negativeLoopCount = 0;
+            var positiveLoopCount = 0;
+            var pointCount = 0;
 
             foreach (var loop in points2D)
             {
                 var orderedLoop = new List<Node>();
+                //Count the number of points and add to total.
+                pointCount = pointCount + loop.Count();
 
                 //Create first node
                 //Note that getNodeType -> GetAngle functions works for both + and - loops without a reverse boolean.
                 //This is because the loops are ordered clockwise - and counterclockwise +.
-                var nodeType = GetNodeType(loop.Last(), loop[0], loop[1]); 
+                var nodeType = GetNodeType(loop.Last(), loop[0], loop[1]);
                 var firstNode = new Node(loop[0], nodeType, i);
                 var previousNode = firstNode;
                 orderedLoop.Add(firstNode);
@@ -81,7 +94,22 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 sortedLoops.Add(sortedLoop);
                 i++;
             }
+
+            //Get the number of negative loops
+            for (var j = 0; j < isPositive.Count(); j++)
+            {
+                if (isPositive[j] == true)
+                {
+                    positiveLoopCount++;
+                }
+                else
+                {
+                    negativeLoopCount++;
+                }
+            }
             #endregion
+
+
 
             // 1) For each positive loop
             // 2)   Remove it from orderedLoops.
@@ -377,6 +405,15 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     triangles.AddRange(Triangulate(monotonePolygon2));
                 #endregion
             }
+            //Check to see if the proper number of triangles were created from this set of loops
+            //For a polgyon: traingles = (number of vertices) - 2
+            //The addition of negative loops makes this: triangles = (number of vertices) + 2*(number of negative loops) - 2
+            //The most general form (by inspection) is then: triangles = (number of vertices) + 2*(number of negative loops) - 2*(number of positive loops)
+            //You could individually solve the equation for each positive loop, but simpler just to use most general form.
+            if (triangles.Count != pointCount+2*negativeLoopCount-2*positiveLoopCount)
+            {
+                throw new System.ArgumentException("Incorrect number of triangles created in triangulate function");
+            }
             return triangles;
         }
 
@@ -643,6 +680,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                         triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain
+                        //Essentially this moves the peak. 
+                        //Though not mentioned explicitely in algorithm description, this step is required.
                         scan[0].IsLeftChain = true;
                         scan[0].IsRightChain = true;
                      }
@@ -661,7 +700,11 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     //Regardless of whether the while loop is activated, add node to scan list
                     scan.Add(node);
                 }
-  
+            }
+            //Check to see if the proper number of triangles were created from this monotone polygon
+            if (triangles.Count != sortedNodes.Count - 2)
+            {
+                throw new System.ArgumentException("Incorrect number of triangles created in triangulate monotone polgon function");
             }
             return triangles;
         }

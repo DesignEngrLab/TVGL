@@ -11,7 +11,7 @@ namespace TVGL_Test
     {
 
         [STAThread]
-        private static void Main2(string[] args)
+        private static void Main(string[] args)
         {
             //Counterclockwise ordered positive loop
             var point0 = new Point(new Vertex(new[] { -0.1, -0.1, 0.0 }));         
