@@ -364,16 +364,17 @@ namespace TVGL.Tessellation
             double[] normal, Boolean[] loopIsPositive)
         {
             Faces = facesList.ToArray();
+            NumberOfFaces = facesList.Count;
             Vertices = subSolidVertices;
+            NumberOfVertices = Vertices.GetLength(0);
             var numloops = newEdgeVertices.GetLength(0);
             var points2D = new Point[numloops][];
             for (int i = 0; i < numloops; i++)
                 points2D[i] = MinimumEnclosure.Get2DProjectionPoints(newEdgeVertices[i], normal);
-            List<PolygonalFace> patchFaces = TriangulatePolygon.Run(points2D.ToList<Point[]>(), loopIsPositive);
-
-            //todo:
-            //1. make faces from list of points
-            //2. connect to existing.
+            List<Vertex[]> patchFaces = TriangulatePolygon.Run(points2D.ToList<Point[]>(), loopIsPositive);
+            
+           // AddVertices(newEdgeVertices.SelectMany(v => v).ToList());
+   
             MakeEdges();
             CreateConvexHull();
             DefineBoundingBoxAndCenter();

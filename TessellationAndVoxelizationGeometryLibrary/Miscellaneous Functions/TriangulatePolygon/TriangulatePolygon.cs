@@ -15,18 +15,17 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <param name="isPositive">Indicates whether the corresponding loop is positive or not.</param>
         /// <returns>List&lt;Point[]&gt;, which represents vertices of new faces.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        public static List<PolygonalFace> Run(List<Point[]> points2D, Boolean[] isPositive)
+        public static List<Vertex[]> Run(List<Point[]> points2D, Boolean[] isPositive)
         {
             //ASSUMPTION: NO lines intersect other lines or points they are not connected to && NO two points in any of the loops are the same (Except,
             // it is ok if two positive loops share a point, because they are processed separately).
-
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
             //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
             //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.
             //Ex 3) If a positive loop intersects itself, it should be two seperate positive loops
-
-            //Return variable triangles
-            var triangles = new List<PolygonalFace>();
+            
+            //Create return variable
+            var triangles = new List<Vertex[]>();
 
             //Check incomining lists
             if (points2D.Count() != isPositive.Count())
@@ -116,8 +115,6 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 }
             }
             #endregion
-
-
 
             // 1) For each positive loop
             // 2)   Remove it from orderedLoops.
@@ -648,9 +645,9 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         #endregion
 
         #region Triangulate Monotone Polygon
-        internal static List<PolygonalFace> Triangulate(MonotonePolygon monotonePolygon)
+        internal static List<Vertex[]> Triangulate(MonotonePolygon monotonePolygon)
         {
-            var triangles = new List<PolygonalFace>();
+            var triangles = new List<Vertex[]>();
             var scan = new List<Node>();
             var leftChain = monotonePolygon.LeftChain;
             var rightChain = monotonePolygon.RightChain;
@@ -694,7 +691,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 {
                     while (scan.Count > 1)
                     {
-                        triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
+                        triangles.Add(new Vertex[] {node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain
                         //Essentially this moves the peak. 
@@ -710,7 +707,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     //Note that if the chain is the right chain, the order of nodes will be backwards and therefore GetAngle(a,b,c,reverse = true)
                     while (scan.Count() > 1 && GetAngle(scan[scan.Count - 2].Point, scan.Last().Point, node.Point, node.IsRightChain) < Math.PI) 
                     {
-                        triangles.Add(new PolygonalFace(new[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] }));
+                        triangles.Add(new Vertex[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
                         //Remove last node from scan list 
                         scan.Remove(scan.Last());
                     }

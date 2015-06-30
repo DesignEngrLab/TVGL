@@ -11,9 +11,9 @@ namespace TVGL_Test
     {
 
         [STAThread]
-        private static void Main(string[] args)
+        private static void Main2(string[] args)
         {
-            Test1();
+            Test2();
         }
 
         private static void Test1()
@@ -65,9 +65,9 @@ namespace TVGL_Test
             foreach (var triangle in listTriangles)
             {
                 Console.WriteLine("Triangle: " + i);
-                Console.WriteLine("(" + (triangle.Vertices[0].X) + " , " + (triangle.Vertices[0].Y) + ")");
-                Console.WriteLine("(" + (triangle.Vertices[1].X) + " , " + (triangle.Vertices[1].Y) + ")");
-                Console.WriteLine("(" + (triangle.Vertices[2].X) + " , " + (triangle.Vertices[2].Y) + ")");
+                Console.WriteLine("(" + (triangle[0].X) + " , " + (triangle[0].Y) + ")");
+                Console.WriteLine("(" + (triangle[1].X) + " , " + (triangle[1].Y) + ")");
+                Console.WriteLine("(" + (triangle[2].X) + " , " + (triangle[2].Y) + ")");
                 i++;
             }
 
@@ -110,9 +110,9 @@ namespace TVGL_Test
             foreach (var triangle in listTriangles)
             {
                 Console.WriteLine("Triangle: " + i);
-                Console.WriteLine("(" + (triangle.Vertices[0].X) + " , " + (triangle.Vertices[0].Y) + ")");
-                Console.WriteLine("(" + (triangle.Vertices[1].X) + " , " + (triangle.Vertices[1].Y) + ")");
-                Console.WriteLine("(" + (triangle.Vertices[2].X) + " , " + (triangle.Vertices[2].Y) + ")");
+                Console.WriteLine("(" + (triangle[0].X) + " , " + (triangle[0].Y) + ")");
+                Console.WriteLine("(" + (triangle[1].X) + " , " + (triangle[1].Y) + ")");
+                Console.WriteLine("(" + (triangle[2].X) + " , " + (triangle[2].Y) + ")");
                 i++;
             }
 

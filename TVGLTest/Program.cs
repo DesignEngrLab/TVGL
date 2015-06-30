@@ -52,7 +52,7 @@ namespace TVGL_Test
         };
 
         [STAThread]
-        private static void Main2(string[] args)
+        private static void Main(string[] args)
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
@@ -61,10 +61,10 @@ namespace TVGL_Test
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
                 //TestClassification(ts[0]);
-               // TestXSections(ts[0]);
-                TestSlice(ts[0]);
+                // TestXSections(ts[0]);
+                var slicedTS = TestSlice(ts[0]);
                 //TestOBB(ts[0]);       
-                TVGL_Helix_Presenter.HelixPresenter.Show(ts);
+                TVGL_Helix_Presenter.HelixPresenter.Show(slicedTS);
 
             }
             Console.ReadKey();
@@ -119,7 +119,7 @@ namespace TVGL_Test
                 }
             }
         }
-        private static void TestSlice(TessellatedSolid ts)
+        private static TessellatedSolid TestSlice(TessellatedSolid ts)
         {
             //var a= ContactData.Divide(new Flat { DistanceToOrigin = 40 , Normal = new []{0,1.0,0} }, ts).Area;
             //                          Debug.WriteLine(a);
@@ -131,7 +131,7 @@ namespace TVGL_Test
 
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
             Slice.OnFlat(ts, new Flat(0, new[] { 1.0, 0, 0 }), out positiveSideSolids, out negativeSideSolids);
-
+            return negativeSideSolids[0];
         }
     }
 }
