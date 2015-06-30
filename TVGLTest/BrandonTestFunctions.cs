@@ -13,6 +13,11 @@ namespace TVGL_Test
         [STAThread]
         private static void Main(string[] args)
         {
+            Test2();
+        }
+
+        private static void Test1()
+        {
             //Counterclockwise ordered positive loop
             var point0 = new Point(new Vertex(new[] { -0.1, -0.1, 0.0 }));         
             var point1 = new Point(new Vertex(new[]{ 1.0, 0.25, 0.0 }));
@@ -68,6 +73,52 @@ namespace TVGL_Test
 
             Console.ReadLine();
 
-        }//End TesselatePolygons
-    }//End TestFunction
+        }//End TestFunction
+
+    private static void Test2()
+        {
+            //Counterclockwise ordered positive loop
+            var point0 = new Point(new Vertex(new[] { -1.0, -1.0, 0.0 }));         
+            var point1 = new Point(new Vertex(new[]{ -0.5, -1.5, 0.0 }));
+            var point2 = new Point(new Vertex(new[] { 0.0, -2.0, 0.0 }));
+            var point3 = new Point(new Vertex(new[]{ 0.0, 0.0, 0.0}));
+            var point4 = new Point(new Vertex(new[]{ 0.001, -2.001, 0.0  }));
+            var point5 = new Point(new Vertex(new[]{ -1.0, -2.0, 0.0  }));
+            var point6 = new Point(new Vertex(new[] { 0.001, -2.002, 0.0 }));
+            var point7 = new Point(new Vertex(new[] { 0.3, 1.2, 0.0 }));
+            var point8 = new Point(new Vertex(new[] { 0.2, 1.2, 0.0 }));
+            var point9 = new Point(new Vertex(new[] { 0.2, 0.4, 0.0 }));
+            var point10 = new Point(new Vertex(new[] { -0.1, 0.4, 0.0 }));
+            var posLoop1 = new Point[] { point0, point1, point2, point3, point4, point5, point6, point7, point8, point9, point10};
+
+            //Clockwise ordered negative loop inside positive loop
+            var point11 = new Point(new Vertex(new[] { -0.99, -1.0, 0.0 }));
+            var point12 = new Point(new Vertex(new[] { -.001, 0.0, 0.0 }));    
+            var point13 = new Point(new Vertex(new[] {-0.2, -1.0, 0.0 }));
+            var negLoop1 = new Point[] { point11, point12, point13 };
+
+            //Add loops to a list of loops
+            var listPoints = new List<Point[]> { posLoop1, negLoop1};
+            var listBool = new Boolean[] { true,false };
+
+            var listTriangles = TriangulatePolygon.Run(listPoints, listBool);
+
+
+            //Print Triangles to Console
+            var i = 1;
+            Console.WriteLine("New Triangles");
+            foreach (var triangle in listTriangles)
+            {
+                Console.WriteLine("Triangle: " + i);
+                Console.WriteLine("(" + (triangle.Vertices[0].X) + " , " + (triangle.Vertices[0].Y) + ")");
+                Console.WriteLine("(" + (triangle.Vertices[1].X) + " , " + (triangle.Vertices[1].Y) + ")");
+                Console.WriteLine("(" + (triangle.Vertices[2].X) + " , " + (triangle.Vertices[2].Y) + ")");
+                i++;
+            }
+
+            Console.ReadLine();
+
+        }//End TestFunction
+    }
+
 }//End Namespace

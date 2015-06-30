@@ -245,8 +245,8 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// </summary>
         internal Node FromNode { get; private set; }
 
-        private readonly double m;
-        private readonly double b;
+        internal double m { get; private set; }
+        internal double b { get; private set; }
 
         /// <summary>
         /// Sets to and from nodes as well as slope and intercept of line.

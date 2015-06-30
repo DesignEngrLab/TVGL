@@ -17,6 +17,14 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <exception cref="System.NotImplementedException"></exception>
         public static List<PolygonalFace> Run(List<Point[]> points2D, Boolean[] isPositive)
         {
+            //ASSUMPTION: NO lines intersect other lines or points they are not connected to && NO two points in any of the loops are the same (Except,
+            // it is ok if two positive loops share a point, because they are processed separately).
+
+            //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
+            //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
+            //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.
+            //Ex 3) If a positive loop intersects itself, it should be two seperate positive loops
+
             //Return variable triangles
             var triangles = new List<PolygonalFace>();
 
@@ -521,17 +529,19 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             leftLine = null;
             var xleft = double.NegativeInfinity;
             var counter = 0;
+            var slopeMax = double.PositiveInfinity;
             foreach (var line in lineList)
             {
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (xdif < 0)
+                if (xdif < 0 && Math.Abs(xdif) > 1E-10 )//Moved to the left by some tolerance
                 {
                     counter++;
-                    if (xdif > xleft)
+                    if (xdif > xleft || ((Math.Abs(xdif - xleft) < 1E-10) && line.m <= slopeMax))//If less than OR if approximately equal and slope is more negative
                     {
                         xleft = xdif;
                         leftLine = line;
+                        slopeMax = line.m;
                     }
                 }
             }
@@ -548,17 +558,20 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             rightLine = null;
             var xright = double.PositiveInfinity;
             var counter = 0;
+            var slopeMax = double.NegativeInfinity;
             foreach (var line in lineList)
             {
                 var x = line.Xintercept(node.Y);
+                
                 var xdif = x - node.X;
-                if (xdif > 0)
+                if (xdif > 0 && Math.Abs(xdif)> 1E-10 )//Moved to the right by some tolerance
                 {
                     counter++;
-                    if (xdif < xright)
+                    if (xdif < xright || ((Math.Abs(xdif-xright) < 1E-10) && line.m >= slopeMax)) //If less than OR if approximately equal and slope is more positive
                     {
                         xright = xdif;
                         rightLine = line;
+                        slopeMax = line.m;
                     }
                 }
             }
