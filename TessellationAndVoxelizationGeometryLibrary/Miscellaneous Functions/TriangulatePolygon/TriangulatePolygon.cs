@@ -37,7 +37,9 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 var orderedLoop = new List<Node>();
 
                 //Create first node
-                var nodeType = GetNodeType(loop.Last(), loop[0], loop[1], isPositive[i]);
+                //Note that getNodeType -> GetAngle functions works for both + and - loops without a reverse boolean.
+                //This is because the loops are ordered clockwise - and counterclockwise +.
+                var nodeType = GetNodeType(loop.Last(), loop[0], loop[1]); 
                 var firstNode = new Node(loop[0], nodeType, i);
                 var previousNode = firstNode;
                 orderedLoop.Add(firstNode);
@@ -46,7 +48,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 for (var j = 1; j < loop.Count() - 1; j++)
                 {
                     //Create New Node
-                    nodeType = GetNodeType(loop[j - 1], loop[j], loop[j + 1], isPositive[i]);
+                    nodeType = GetNodeType(loop[j - 1], loop[j], loop[j + 1]);
                     var node = new Node(loop[j], nodeType, i);
 
                     //Add node to the ordered loop
@@ -61,7 +63,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 }
 
                 //Create last node
-                nodeType = GetNodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0], isPositive[i]);
+                nodeType = GetNodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0]);
                 var lastNode = new Node(loop[loop.Count() - 1], nodeType, i);
                 orderedLoop.Add(lastNode);
 
@@ -119,11 +121,13 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 
                 var trapTree = new List<PartialTrapezoid>();
                 var completedTrapezoids = new List<Trapezoid>();
+                var size = sortedGroup.Count();
 
                 //Use the red-black tree to determine if the first node from a negative loop is inside the polygon.
                 //for each node in sortedNodes, update the lineList. Note that at this point each node only has two edges.
-                foreach (var node in sortedGroup)
+                for (var j = 0; j < size; j++)
                 {
+                    var node = sortedGroup[j];
                     Line leftLine = null;
                     Line rightLine = null;
 
@@ -134,25 +138,35 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     {
                         if (LinesToLeft(node, lineList, out leftLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
                         {
-                            if (LinesToRight(node, lineList, out rightLine) % 2 == 0) //If remainder is not equal to 0, then it is odd. 
+                            if (LinesToRight(node, lineList, out rightLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
                             {
                                 //NOTE: This node must be a reflex upward point by observation
                                 //leftLine and rightLine are set in the two previous call and are now not null.
 
                                 //Add remaining points from loop into sortedGroup.
                                 MergeSortedListsOfNodes(sortedGroup, completeListSortedLoops[node.LoopID], node);
+                                
+                                //Remove this loop from lists of loops and the boolean list
+                                var loop = completeListSortedLoops[node.LoopID];
+                                var k = sortedLoops.FindIndex(loop);
+                                listPositive.RemoveAt(k); 
+                                orderedLoops.RemoveAt(k);
+                                sortedLoops.RemoveAt(k);
                             }
                             else //Number of lines is even. Remove from group and go to next node
                             {
                                 sortedGroup.Remove(node);
+                                j--; //Pick the same index for the next iteration as the node which was just removed
                                 continue;
                             }
                         }
                         else //Number of lines is even. Remove from group and go to next node
                         {
                             sortedGroup.Remove(node);
+                            j--; //Pick the same index for the next iteration as the node which was just removed
                             continue;
                         }
+                        size = sortedGroup.Count();
                     }
 
                     //Add to or remove from Red-Black Tree
@@ -363,6 +377,10 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     triangles.AddRange(Triangulate(monotonePolygon2));
                 #endregion
             }
+            if (triangles.Count != sortedNodes.Count - 2)
+            {
+                throw new System.ArgumentException("Incorrect number of traingles created from triangulate monotone polygon function");
+            }
             return triangles;
         }
 
@@ -371,7 +389,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// Gets the type of node for B.
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
-        internal static NodeType GetNodeType(Point a, Point b, Point c, bool isPositive)
+        internal static NodeType GetNodeType(Point a, Point b, Point c, bool reverse = false)
         {
             if (a.Y < b.Y)
             {
@@ -379,7 +397,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 {
                     return NodeType.Left;
                 }
-                return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
+                return GetAngle(a, b, c, reverse) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
 
             }
 
@@ -387,24 +405,24 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 if (c.Y > b.Y)
                 {
-                    return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
+                    return GetAngle(a, b, c, reverse) < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
                 }
                 if (c.Y < b.Y)
                 {
                     return NodeType.Right;
                 }
                 //else c.Y = b.Y)
-                return GetAngle(a, b, c, isPositive) < Math.PI ? NodeType.Root : NodeType.Right;
+                return GetAngle(a, b, c, reverse) < Math.PI ? NodeType.Root : NodeType.Right;
             }
 
             //Else, a.Y = b.Y
             if (c.Y > b.Y)
             {
-                return GetAngle(a, b, c, isPositive) > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
+                return GetAngle(a, b, c, reverse) > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
             }
             if (c.Y < b.Y)
             {
-                return GetAngle(a, b, c, isPositive) > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
+                return GetAngle(a, b, c, reverse) > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
             }
             if (a.X > c.X)
             {
@@ -420,15 +438,16 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
         /// "If" statements were determined by observation
-        public static double GetAngle(Point a, Point b, Point c, bool isPositive)
+        public static double GetAngle(Point a, Point b, Point c, bool reverse = false)
         {
             var edgeVectors0 = b.Position2D.subtract(a.Position2D).normalize();
             var edgeVectors1 = c.Position2D.subtract(b.Position2D).normalize();
 
 
             //Since these points are in 2D, use crossProduct2
-            var tempCross = StarMath.crossProduct2(edgeVectors0, edgeVectors1);//If tempCross is positive, use smaller angle
-            if (!isPositive) //If a negative loop, reverse tempCross
+            var tempCross = StarMath.crossProduct2(edgeVectors0, edgeVectors1);
+            //If points are in the incorrect order (e.g., left line from the triangulate function), use inverse tempCross
+            if (reverse == true)
             {
                 tempCross = -tempCross;
             }
@@ -523,14 +542,14 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         internal static int InsertNodeInSortedList(List<Node> sortedNodes, Node node)
         {
             //Search for insertion location starting from the first element in the list.
-            for (int i = 0; i < sortedNodes.Count(); i++)
+            for (int i = 0; i < sortedNodes.Count(); i++) 
             {
-                if (node.Y > sortedNodes[i].Y)
+                if (node.Y > sortedNodes[i].Y) //Descending Y
                 {
                     sortedNodes.Insert(i, node);
                     return i;
                 }
-                if (Math.Abs(node.Y - sortedNodes[i].Y) < 0.000001 && node.X < sortedNodes[i].X) //approaximately equal
+                if (Math.Abs(node.Y - sortedNodes[i].Y) < 0.000001 && node.X > sortedNodes[i].X) //Descending X
                 {
                     sortedNodes.Insert(i, node);
                     return i;
@@ -586,73 +605,44 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             var leftChain = monotonePolygon.LeftChain;
             var rightChain = monotonePolygon.RightChain;
             var sortedNodes = monotonePolygon.SortedNodes;
-            var k = 0;
-            var j = 0;
 
-            //Add first two nodes to scan and adjust the counter
-            scan.Add(sortedNodes[0]);
+            //For each node other than the start and finish, add a chain affiliation.
+            //Note that this is updated each time the triangulate function is called, 
+            //thus allowing a node to be part of multiple monotone polygons
+            for (var i = 1; i < leftChain.Count(); i++)
+            {
+                var node = leftChain[i];
+                node.IsRightChain = false;
+                node.IsLeftChain = true;
+            }
+            for (var i = 1; i < rightChain.Count(); i++)
+            {
+                var node = rightChain[i];
+                node.IsRightChain = true;
+                node.IsLeftChain = false;
+            }
+            //The start and end nodes belong to both chains
+            var startNode = sortedNodes[0];
+            startNode.IsRightChain = true;
+            startNode.IsLeftChain = true;
+            var endNode = sortedNodes.Last();
+            endNode.IsRightChain = true;
+            endNode.IsLeftChain = true;
+
+            //Add first two nodes to scan 
+            scan.Add(startNode);
             scan.Add(sortedNodes[1]);
-            if (leftChain[j + 1] == sortedNodes[1])
-            {
-                j++;
-            }
-            else
-            {
-                k++;
-            }
 
             //Begin to find triangles
             for (var i = 2; i < sortedNodes.Count; i++)
             {
                 var node = sortedNodes[i];
-                var boolstatus = false;
-                var isLeftChain = false;
-                if (rightChain[k + 1] == node && leftChain[j + 1] == node) //If both chains have reached the root node.
+
+                //If all the nodes are on the left chain OR the right chain
+                if ((node.IsLeftChain == true && scan.Last().IsLeftChain == true && scan[scan.Count - 2].IsLeftChain == true) ||
+                    (node.IsRightChain == true && scan.Last().IsRightChain == true && scan[scan.Count - 2].IsRightChain == true))
                 {
-                    triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
-                    break;
-                }
-                else if (leftChain[j + 1] == node)
-                {
-                    if (leftChain[j] == scan.Last() && leftChain[j-1] == scan[scan.Count-2]) //If all the nodes are on the left chain 
-                    {
-                        boolstatus = false;
-                    }
-                    else
-                    {
-                        boolstatus = true;
-                    }
-                    j++;
-                    isLeftChain = true;
-                }
-                else //rightChain[k+1] == node
-                {
-                    if (rightChain[k] == scan.Last() && leftChain[k-1] == scan[scan.Count-1])
-                    {
-                        boolstatus = false;
-                    }
-                    else
-                    {
-                        boolstatus = true;
-                    }
-                    k++;
-                    isLeftChain = false;
-                }
-                //If either condition above was true, do the following
-                if (boolstatus == true)
-                {
-                    while (scan.Count > 1)
-                    {
-                        triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
-                        //Remove first item in scan list.
-                        scan.RemoveAt(0);
-                    }
-                    //add node to end of scan list
-                    scan.Add(node);
-                }
-                else
-                {
-                    while (GetAngle(scan[scan.Count - 2].Point, scan.Last().Point, node.Point, isLeftChain) < Math.PI && scan.Count() > 1) //NOTE: Assume positive loop only (since the negative loops have been merged)
+                    while (scan.Count() > 1 && GetAngle(scan[scan.Count - 2].Point, scan.Last().Point, node.Point, node.IsRightChain) < Math.PI) 
                     {
                         triangles.Add(new PolygonalFace(new[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] }));
                         //Remove last node from scan list 
@@ -660,6 +650,29 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     }
                     //Regardless of whether the while loop is activated, add node to scan list
                     scan.Add(node);
+                }
+                else //The current node is on opposite chain from at least 1 or two points in L.
+                {
+                    while (scan.Count > 1)
+                    {
+                        triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
+                        //If any exists, remove the node that was on the same chain as the current node, else remove the first node
+                        if (node.IsLeftChain == true && scan[1].IsLeftChain == true)
+                        {
+                            scan.RemoveAt(1);
+                        }
+                        else if (node.IsRightChain == true && scan[1].IsRightChain == true)
+                        {
+                            scan.RemoveAt(1);
+                        }
+                        //Else, the default is to remove at 0. So either scan.[0] can be opposite or the same chain.
+                        else
+                        {
+                            scan.RemoveAt(0);
+                        }
+                    }
+                    //add node to end of scan list
+                    scan.Add(node);  
                 }
             }
             return triangles;

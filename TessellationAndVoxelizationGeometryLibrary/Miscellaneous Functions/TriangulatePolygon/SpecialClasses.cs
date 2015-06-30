@@ -42,7 +42,6 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// <value>The z.</value>
         public double Z { get; private set; }
 
-
         /// <summary>
         /// Gets the line that starts at this node.
         /// </summary>
@@ -62,6 +61,16 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// Gets the base class, Point of this node.
         /// </summary>
         internal Point Point { get; private set; }
+
+        /// <summary>
+        /// Gets the base class, Point of this node.
+        /// </summary>
+        internal bool IsRightChain { get; set; }
+
+        /// <summary>
+        /// Gets the base class, Point of this node.
+        /// </summary>
+        internal bool IsLeftChain { get; set; }
         #endregion
 
         #region Constructor
