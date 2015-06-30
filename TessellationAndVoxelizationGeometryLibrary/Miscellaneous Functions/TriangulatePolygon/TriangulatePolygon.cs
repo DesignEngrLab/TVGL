@@ -377,10 +377,6 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     triangles.AddRange(Triangulate(monotonePolygon2));
                 #endregion
             }
-            if (triangles.Count != sortedNodes.Count - 2)
-            {
-                throw new System.ArgumentException("Incorrect number of traingles created from triangulate monotone polygon function");
-            }
             return triangles;
         }
 
@@ -573,13 +569,13 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 //Starting from after the nodeID, search for an insertion location
                 for (var j = nodeId + 1; j < sortedNodes.Count; j++)
                 {
-                    if (negativeLoop[i].Y > sortedNodes[j].Y)
+                    if (negativeLoop[i].Y > sortedNodes[j].Y) //Descending Y
                     {
                         sortedNodes.Insert(j, negativeLoop[i]);
                         isInserted = true;
                         break;
                     }
-                    if (Math.Abs(negativeLoop[i].Y - sortedNodes[j].Y) < 0.000001 && negativeLoop[i].X < sortedNodes[j].X) //approaximately equal
+                    if (Math.Abs(negativeLoop[i].Y - sortedNodes[j].Y) < 0.000001 && negativeLoop[i].X > sortedNodes[j].X) //Descending X
                     {
                         sortedNodes.Insert(j, negativeLoop[i]);
                         isInserted = true;
@@ -638,10 +634,24 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 var node = sortedNodes[i];
 
-                //If all the nodes are on the left chain OR the right chain
-                if ((node.IsLeftChain == true && scan.Last().IsLeftChain == true && scan[scan.Count - 2].IsLeftChain == true) ||
-                    (node.IsRightChain == true && scan.Last().IsRightChain == true && scan[scan.Count - 2].IsRightChain == true))
+                //If the nodes is on the opposite chain from any other node (s). 
+                if ((node.IsLeftChain == true && (scan.Last().IsLeftChain == false || scan[scan.Count - 2].IsLeftChain == false)) ||
+                    (node.IsRightChain == true && (scan.Last().IsRightChain == false || scan[scan.Count - 2].IsRightChain == false)))
                 {
+                    while (scan.Count > 1)
+                    {
+                        triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
+                        scan.RemoveAt(0);
+                        //Make the new scan[0] point both left and right for the remaining chain
+                        scan[0].IsLeftChain = true;
+                        scan[0].IsRightChain = true;
+                     }
+                    //add node to end of scan list
+                    scan.Add(node);  
+                }
+                else 
+                {
+                    //Note that if the chain is the right chain, the order of nodes will be backwards and therefore GetAngle(a,b,c,reverse = true)
                     while (scan.Count() > 1 && GetAngle(scan[scan.Count - 2].Point, scan.Last().Point, node.Point, node.IsRightChain) < Math.PI) 
                     {
                         triangles.Add(new PolygonalFace(new[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] }));
@@ -651,29 +661,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                     //Regardless of whether the while loop is activated, add node to scan list
                     scan.Add(node);
                 }
-                else //The current node is on opposite chain from at least 1 or two points in L.
-                {
-                    while (scan.Count > 1)
-                    {
-                        triangles.Add(new PolygonalFace(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] }));
-                        //If any exists, remove the node that was on the same chain as the current node, else remove the first node
-                        if (node.IsLeftChain == true && scan[1].IsLeftChain == true)
-                        {
-                            scan.RemoveAt(1);
-                        }
-                        else if (node.IsRightChain == true && scan[1].IsRightChain == true)
-                        {
-                            scan.RemoveAt(1);
-                        }
-                        //Else, the default is to remove at 0. So either scan.[0] can be opposite or the same chain.
-                        else
-                        {
-                            scan.RemoveAt(0);
-                        }
-                    }
-                    //add node to end of scan list
-                    scan.Add(node);  
-                }
+  
             }
             return triangles;
         }
