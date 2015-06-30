@@ -300,6 +300,10 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                             break;
                     }
                 }
+                if (trapTree.Count > 0 )
+                {
+                    throw new System.ArgumentException("Trapezoidation failed to complete properly. Check to see that the assumptions are met.");
+                }
                 #endregion
 
                 #region Create Monotone Polygons
