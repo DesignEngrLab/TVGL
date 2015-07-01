@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
 using TVGL.Tessellation;
-
 namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 {
     public static class TriangulatePolygon

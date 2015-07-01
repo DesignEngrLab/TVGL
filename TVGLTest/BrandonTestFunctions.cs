@@ -11,9 +11,9 @@ namespace TVGL_Test
     {
 
         [STAThread]
-        private static void Main2(string[] args)
+        private static void Main(string[] args)
         {
-            Test2();
+            Test3();
         }
 
         private static void Test1()
@@ -119,6 +119,45 @@ namespace TVGL_Test
             Console.ReadLine();
 
         }//End TestFunction
+
+    private static void Test3() //ClipperOffset
+    {
+        //Counterclockwise ordered positive loop
+        var point0 = new Point(new Vertex(new[] { -0.1, -0.1, 0.0 }));
+        var point1 = new Point(new Vertex(new[] { 1.0, 0.25, 0.0 }));
+        var point2 = new Point(new Vertex(new[] { 0.4, 1.2, 0.0 }));
+        var point3 = new Point(new Vertex(new[] { 0.75, 0.5, 0.0 }));
+        var point4 = new Point(new Vertex(new[] { 0.6, 0.4, 0.0 }));
+        var point5 = new Point(new Vertex(new[] { 0.4, 0.6, 0.0 }));
+        var point6 = new Point(new Vertex(new[] { 0.2, 0.1, 0.0 }));
+        var point7 = new Point(new Vertex(new[] { 0.3, 1.2, 0.0 }));
+        var point8 = new Point(new Vertex(new[] { 0.2, 1.4, 0.0 }));
+        var point9 = new Point(new Vertex(new[] { 0.2, 0.4, 0.0 }));
+        var point10 = new Point(new Vertex(new[] { -0.1, 1.0, 0.0 }));
+        var posLoop1 = new Point[] { point0, point1, point2, point3, point4, point5, point6, point7, point8, point9, point10 };
+
+
+        //Add loops to a list of loops
+        var listPoints = new List<Point[]> { posLoop1 };
+        var offsets = TVGL.Miscellaneous_Functions.Offset.Run(listPoints);
+
+
+        //Print Triangles to Console
+        var i = 1;
+        Console.WriteLine("New Loops");
+        foreach (var Loop in offsets)
+        {
+            Console.WriteLine("Triangle: " + i);           
+            foreach (var vertex in Loop)
+            {
+                Console.WriteLine("(" + (vertex.X) + " , " + (vertex.Y) + ")");
+            }
+            i++;
+        }
+
+        Console.ReadLine();
+
+    }//End TestFunction
     }
 
 }//End Namespace

@@ -52,7 +52,7 @@ namespace TVGL_Test
         };
 
         [STAThread]
-        private static void Main(string[] args)
+        private static void Main2(string[] args)
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
