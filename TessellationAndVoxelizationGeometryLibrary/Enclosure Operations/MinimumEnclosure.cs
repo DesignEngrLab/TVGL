@@ -226,27 +226,34 @@ namespace TVGL
             return max_d - min_d;
         }
         /// <summary>
-        /// Rotatings the calipers2 d method.
+        /// Rotating the calipers2 d method.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="minArea">The minimum area.</param>
         /// <returns>System.Double.</returns>
         private static double RotatingCalipers2DMethod(IList<Point> points, out double minArea)
-        {      
+        {
             #region Initialization
             var cvxPoints = ConvexHull2D(points);
             var numCvxPoints = cvxPoints.Count;
             /* the cvxPoints are counter-clockwise starting with a vertex that is minimum in X. */
             var extremeIndices = new int[4];
-            extremeIndices[3] = cvxPoints.Count;
-            do extremeIndices[3]--;
-            while (extremeIndices[3] >= 1 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1]);
+            // start with max-Y point at the last index in the cvxhull list
+            //        extremeIndices[3] => max-Y
+            extremeIndices[3] = cvxPoints.Count - 1;
+            while (extremeIndices[3] >= 1 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1])
+                extremeIndices[3]--;
+
+            //        extremeIndices[2] => max-X
             extremeIndices[2] = extremeIndices[3];
             while (extremeIndices[2] >= 1 && cvxPoints[extremeIndices[2]][0] <= cvxPoints[extremeIndices[2] - 1][0])
                 extremeIndices[2]--;
+
+            //        extremeIndices[1] => min-Y
             extremeIndices[1] = extremeIndices[2];
             while (extremeIndices[1] >= 1 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
                 extremeIndices[1]--;
+            //        extremeIndices[0] => min-X
             extremeIndices[0] = extremeIndices[1];
             while (extremeIndices[0] >= 1 && cvxPoints[extremeIndices[0]][0] >= cvxPoints[extremeIndices[0] - 1][0])
                 extremeIndices[0]--;
@@ -254,15 +261,18 @@ namespace TVGL
             #region Cycle through 90-degrees
             var angle = 0.0;
             var bestAngle = double.NegativeInfinity;
-            var deltaToUpdate = -1;
+            var deltaToUpdateIndex = -1;
+            // deltaAngles stores the four angles for each of the sides of the rectangle to rotate s.t. the edge is parallel
+            // to that side
             var deltaAngles = new double[4];
             var offsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
             minArea = double.PositiveInfinity;
             do
             {
+                #region update the deltaAngles from the current orientation
                 for (var i = 0; i < 4; i++)
                 {
-                    if (deltaToUpdate == -1 || i == deltaToUpdate)
+                    if (deltaToUpdateIndex == -1 || i == deltaToUpdateIndex)
                     {
                         var index = extremeIndices[i];
                         var prev = (index == 0) ? numCvxPoints - 1 : index - 1;
@@ -273,10 +283,12 @@ namespace TVGL
                     }
                 }
                 var delta = deltaAngles.Min();
-                deltaToUpdate = deltaAngles.FindIndex(delta);
-                extremeIndices[deltaToUpdate]--;
-                if (extremeIndices[deltaToUpdate] < 0) extremeIndices[deltaToUpdate] = numCvxPoints - 1;
+                deltaToUpdateIndex = deltaAngles.FindIndex(delta);  
+                #endregion
+                extremeIndices[deltaToUpdateIndex]--;
+                if (extremeIndices[deltaToUpdateIndex] < 0) extremeIndices[deltaToUpdateIndex] = numCvxPoints - 1;
                 angle += delta;
+                #region find area
                 var sinAngle = Math.Sin(angle);
                 var cosAngle = Math.Cos(angle);
                 var vectorWidth = new[]
@@ -293,6 +305,7 @@ namespace TVGL
                 };
                 angleVector = new[] { -sinAngle, cosAngle };
                 tempArea *= Math.Abs(vectorHeight.dotProduct(angleVector));
+                #endregion
                 if (minArea > tempArea)
                 {
                     minArea = tempArea;
