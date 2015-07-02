@@ -129,8 +129,12 @@ namespace TVGL
             var cvxVNum = extremePointsIndices.GetLength(0);
             origVNum -= cvxVNum;
             var last = cvxVNum - 1;
+            var remainingPoints = new List<Point>(points);
             for (var i = 0; i < extremePointsIndices.GetLength(0); i++)
-                points.RemoveAt(extremePointsIndices[i]);
+            {
+                var point = points[extremePointsIndices[i]];
+                remainingPoints.Remove(point);
+            }
 
             #region Step 2 : Find Signed-Distance to each convex edge
 
@@ -178,8 +182,8 @@ namespace TVGL
                 {
                     var b = new[]
                     {
-                        points[i][0] - convexHullCCW[j][0],
-                        points[i][1] - convexHullCCW[j][1]
+                        remainingPoints[i][0] - convexHullCCW[j][0],
+                        remainingPoints[i][1] - convexHullCCW[j][1]
                     };
                     //signedDists[0, k, i] = signedDistance(convexVectInfo[i, 0], convexVectInfo[i, 1], bX, bY, convexVectInfo[i, 2]);
                     //signedDists[1, k, i] = positionAlong(convexVectInfo[i, 0], convexVectInfo[i, 1], bX, bY, convexVectInfo[i, 2]);
@@ -189,7 +193,7 @@ namespace TVGL
                      * original polygon. It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
                     if (StarMath.crossProduct2(StarMath.GetRow(j, edgeUnitVectors), b) > 0) continue;
-                    hullCands[j].Add(StarMath.GetRow(j, edgeUnitVectors).dotProduct(b, 2), points[i]);
+                    hullCands[j].Add(StarMath.GetRow(j, edgeUnitVectors).dotProduct(b, 2), remainingPoints[i]);
                     break;
                 }
             }

@@ -8,8 +8,19 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
     public static class TriangulatePolygon
     {
         /// <summary>
-        ///     Triangulates a Polygon into faces.
-        /// </summary>
+        ///     Triangulates a Polygon into faces in O(n log n) time.
+        /// </summary>    
+        /// <References>
+        ///     Trapezoidation algorithm heavily based on: 
+        ///     "A Fast Trapezoidation Technique For Planar Polygons" by
+        ///     Gian Paolo Lorenzetto, Amitava Datta, and Richard Thomas. 2000.
+        ///     http://www.researchgate.net/publication/2547487_A_Fast_Trapezoidation_Technique_For_Planar_Polygons
+        ///     This algorithm should run in O(n log n)  time.    
+        /// 
+        ///     Triangulation method based on Montuno's work, but referenced material and algorithm are from:
+        ///     http://www.personal.kent.edu/~rmuhamma/Compgeometry/MyCG/PolyPart/polyPartition.htm
+        ///     This algorithm should run in O(n) time.
+        /// </References>
         /// <param name="points2D">The 2D points represented in loops.</param>
         /// <param name="isPositive">Indicates whether the corresponding loop is positive or not.</param>
         /// <returns>List&lt;Point[]&gt;, which represents vertices of new faces.</returns>
