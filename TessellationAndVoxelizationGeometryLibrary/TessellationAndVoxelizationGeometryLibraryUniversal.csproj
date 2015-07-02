@@ -38,7 +38,11 @@
     <Compile Include="Boolean Operations\ContactElement Classes.cs" />
     <Compile Include="Boolean Operations\ContactData.cs" />
     <Compile Include="Boolean Operations\Slice.cs" />
+<<<<<<< HEAD
     <Compile Include="clipper.cs" />
+=======
+    <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
+>>>>>>> origin/master
     <Compile Include="InputOutput Operations\3mf.classes.cs" />
     <Compile Include="InputOutput Operations\amf.classes.cs" />
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
