@@ -257,11 +257,21 @@ namespace TVGL
             while (extremeIndices[1] >= 1 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
                 extremeIndices[1]--;
 
-            //        extremeIndices[0] => min-X
-
+            //        extremeIndices[0] => min-X 
+            // A bit more complicated, since it needs to look past the zero index.
+            var currentIndex = -1;
+            var previousIndex = -1;
             extremeIndices[0] = extremeIndices[1];
-            while (extremeIndices[0] >= 1 && cvxPoints[extremeIndices[0]][0] >= cvxPoints[extremeIndices[0] - 1][0])
+            do
+            {   
+                currentIndex = extremeIndices[0];
                 extremeIndices[0]--;
+                if (extremeIndices[0] < 0) { extremeIndices[0] = numCvxPoints - 1; }
+                previousIndex = extremeIndices[0];
+            } while (cvxPoints[currentIndex][0] >= cvxPoints[previousIndex][0]);
+            extremeIndices[0]++;
+            if (extremeIndices[0] > numCvxPoints-1) { extremeIndices[0] = 0; }
+
             #endregion
 
             #region Cycle through 90-degrees
@@ -325,7 +335,9 @@ namespace TVGL
                     minArea = tempArea;
                     bestAngle = angle;
                 }
-            } while (angle <= Math.PI / 2);
+            } while (angle < Math.PI / 2); //Don't check beyond a 90 degree angle.
+            //If best angle is 90 degrees, then don't bother to rotate. 
+            if (bestAngle == Math.PI/2) { bestAngle = 0; }
             #endregion
 
             return bestAngle;
