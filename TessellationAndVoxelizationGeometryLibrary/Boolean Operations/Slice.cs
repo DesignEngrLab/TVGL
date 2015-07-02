@@ -25,6 +25,37 @@ namespace TVGL.Boolean_Operations
     /// </summary>
     public static class Slice
     {
+        /// <summary>
+        /// Performs the slicing operation on the prescribed flat plane. This destructively alters
+        /// the tessellated solid into one or more solids which are returned in the "out" parameter
+        /// lists.
+        /// </summary>
+        /// <param name="oldSolid">The old solid.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="positiveSideSolids">The solids that are on the positive side of the plane
+        /// This means that are on the side that the normal faces.</param>
+        /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
+        public static void OnFlat(TessellatedSolid ts, Flat plane,
+            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
+        {
+            var contactData = DefineContact(plane, ts);
+
+            DivideUpContact(ts, contactData, plane);
+            var loops =
+                contactData.AllLoops.Where(loop => loop.All(
+                            ce => !(ce.ContactEdge.Curvature == CurvatureType.Convex && ce is CoincidentEdgeContactElement))).ToList();
+            var allNegativeStartingFaces =
+               loops.SelectMany(loop => loop.Select(ce => ce.SplitFaceNegative)).ToList();
+            var allPositiveStartingFaces =
+                loops.SelectMany(loop => loop.Select(ce => ce.SplitFacePositive)).ToList();
+
+            var negativeSideFaceList = FindAllSolidsWithTheseFaces(allNegativeStartingFaces, allPositiveStartingFaces);
+            var positiveSideFaceList = FindAllSolidsWithTheseFaces(allPositiveStartingFaces, allNegativeStartingFaces);
+
+            negativeSideSolids = convertFaceListsToSolids(ts, negativeSideFaceList, loops, false, plane);
+            positiveSideSolids = convertFaceListsToSolids(ts, positiveSideFaceList, loops, true, plane);
+        }
+
         #region Define Contact at a Flat Plane
 
         /// <summary>
@@ -124,14 +155,14 @@ namespace TVGL.Boolean_Operations
             {
                 var nextContactElt = contacts[nextContactEltIndex];
                 if (!(contactElt is CoincidentEdgeContactElement))
-                    contactElt.ContactEdge = new Edge(contactElt.StartVertex, connectingVertex, null, null);
+                    contactElt.ContactEdge = new Edge(contactElt.StartVertex, connectingVertex, false);
                 else if (contactElt is CoincidentEdgeContactElement &&
                          !(nextContactElt is CoincidentEdgeContactElement))
                 {
                     contactElements.Add(contactElt);
                     contactElt = new ThroughVertexContactElement(connectingVertex, null, null)
                     {
-                        ContactEdge = new Edge(((CoincidentEdgeContactElement)contactElt).EndVertex, connectingVertex, null, null)
+                        ContactEdge = new Edge(((CoincidentEdgeContactElement)contactElt).EndVertex, connectingVertex, false)
                     };
                 }
                 contactElements.Add(contactElt);
@@ -153,14 +184,14 @@ namespace TVGL.Boolean_Operations
             {
                 var prevContactElt = contacts[prevContactEltIndex];
                 if (!(contactElt is CoincidentEdgeContactElement))
-                    contactElt.ContactEdge = new Edge(connectingVertex, contactElt.StartVertex, null, null);
+                    contactElt.ContactEdge = new Edge(connectingVertex, contactElt.StartVertex, false);
                 else if (contactElt is CoincidentEdgeContactElement &&
                          !(prevContactElt is CoincidentEdgeContactElement))
                 {
                     contactElements.Insert(0, contactElt);
                     contactElt = new ThroughVertexContactElement(connectingVertex, null, null)
                     {
-                        ContactEdge = new Edge(connectingVertex, ((CoincidentEdgeContactElement)contactElt).StartVertex, null, null)
+                        ContactEdge = new Edge(connectingVertex, ((CoincidentEdgeContactElement)contactElt).StartVertex, false)
                     };
                 }
                 contactElements.Insert(0, contactElt);
@@ -174,7 +205,7 @@ namespace TVGL.Boolean_Operations
                   contactElements.Last().ContactEdge.To.Position))
             {
                 contactElements[0].ContactEdge = new Edge(contactElements.Last().ContactEdge.To,
-                    contactElements[0].ContactEdge.To, null, null);
+                    contactElements[0].ContactEdge.To, false);
                 return new Loop(contactElements, plane.Normal, true, true);
             }
             contacts.Remove(firstContactElt); //it didn't work to connect it up, so you're going to have to leave
@@ -183,7 +214,7 @@ namespace TVGL.Boolean_Operations
             var artificialContactElement = new ArtificialContactElement
             {
                 ContactEdge =
-                    new Edge(contactElements.Last().ContactEdge.To, contactElements[0].ContactEdge.From, null, null)
+                    new Edge(contactElements.Last().ContactEdge.To, contactElements[0].ContactEdge.From, false)
             };
             Debug.WriteLine("Adding an artificial edge to close the loop for plane @" + plane.Normal.MakePrintString()
                             + " with a distance of " + plane.DistanceToOrigin);
@@ -323,37 +354,6 @@ namespace TVGL.Boolean_Operations
 
         #endregion
 
-        /// <summary>
-        /// Performs the slicing operation on the prescribed flat plane. This destructively alters
-        /// the tessellated solid into one or more solids which are returned in the "out" parameter
-        /// lists.
-        /// </summary>
-        /// <param name="oldSolid">The old solid.</param>
-        /// <param name="plane">The plane.</param>
-        /// <param name="positiveSideSolids">The solids that are on the positive side of the plane
-        /// This means that are on the side that the normal faces.</param>
-        /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
-        public static void OnFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
-        {
-            var contactData = DefineContact(plane, ts);
-
-            DivideUpContact(ts, contactData, plane);
-            var loops =
-                contactData.AllLoops.Where(loop => loop.All(
-                            ce => !(ce.ContactEdge.Curvature == CurvatureType.Convex && ce is CoincidentEdgeContactElement))).ToList();
-            var allNegativeStartingFaces =
-               loops.SelectMany(loop => loop.Select(ce => ce.SplitFaceNegative)).ToList();
-            var allPositiveStartingFaces =
-                loops.SelectMany(loop => loop.Select(ce => ce.SplitFacePositive)).ToList();
-
-            var negativeSideFaceList = FindAllSolidsWithTheseFaces(allNegativeStartingFaces, allPositiveStartingFaces);
-            var positiveSideFaceList = FindAllSolidsWithTheseFaces(allPositiveStartingFaces, allNegativeStartingFaces);
-
-            negativeSideSolids = convertFaceListsToSolids(ts, negativeSideFaceList, loops, false, plane);
-            positiveSideSolids = convertFaceListsToSolids(ts, positiveSideFaceList, loops, true, plane);
-        }
-
 
         /// <summary>
         /// Divides up contact.
@@ -375,6 +375,11 @@ namespace TVGL.Boolean_Operations
                 for (int i = 0; i < loop.Count; i++)
                 {
                     var ce = loop[i];
+                    // in DefineContact the loop edges were not connected to the vertices as the desire
+                    // was to leave the TS unaffected. But not that we are working these changes in, we need
+                    // to ensure that the edges, vertices, and faces are all properly connected.                           
+                    if (!ce.ContactEdge.From.Edges.Contains(ce.ContactEdge)) ce.ContactEdge.From.Edges.Add(ce.ContactEdge);
+                    if (!ce.ContactEdge.To.Edges.Contains(ce.ContactEdge)) ce.ContactEdge.To.Edges.Add(ce.ContactEdge);
                     if (ce is CoincidentEdgeContactElement)
                         // If the contact element is at a coincident edge, then there is nothing to do in this stage. When contact element was
                         // created, it properly defined SplitFacePositive and SplitFaceNegative.
@@ -394,13 +399,13 @@ namespace TVGL.Boolean_Operations
                         var maxVert = faceToSplit.Vertices[maxIndex];
                         var minIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Min());
                         var minVert = faceToSplit.Vertices[minIndex];
-                        positiveFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, maxVert });
+                        positiveFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, maxVert }, faceToSplit.Normal);
                         facesToAdd.Add(positiveFace);
-                        negativeFace = new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, minVert });
+                        negativeFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, minVert }, faceToSplit.Normal);
                         facesToAdd.Add(negativeFace);
                     } //#+1 add v to f           (both of these are done in the preceding PolygonalFace
                     //#+2 add f to v            constructors as well as the one for thirdFace below)
-                    else // then ce is a ThroughFaceContactElement                                                
+                    else if (ce is ThroughFaceContactElement)                                             
                     {
                         var tfce = (ThroughFaceContactElement)ce; // ce is renamed and recast as tfce 
                         edgesToDelete.Add(tfce.SplitEdge);
@@ -417,17 +422,15 @@ namespace TVGL.Boolean_Operations
                             negativeVertex = tfce.SplitEdge.To;
                         }
                         positiveFace =
-                           new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, positiveVertex });
+                           new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, positiveVertex }, faceToSplit.Normal);
                         facesToAdd.Add(positiveFace);
                         negativeFace =
-                           new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, negativeVertex });
+                           new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, negativeVertex }, faceToSplit.Normal);
                         facesToAdd.Add(negativeFace);
-                        var positiveEdge = new Edge(positiveVertex, ce.ContactEdge.From, positiveFace, null, true,
-                            true);
+                        var positiveEdge = new Edge(positiveVertex, ce.ContactEdge.From, positiveFace, null);
                         edgesToAdd.Add(positiveEdge);
                         edgesToModify.Add(positiveEdge);
-                        var negativeEdge = new Edge(ce.ContactEdge.From, negativeVertex, negativeFace, null, true,
-                            true);
+                        var negativeEdge = new Edge(ce.ContactEdge.From, negativeVertex, negativeFace, null);
                         edgesToAdd.Add(negativeEdge);
                         edgesToModify.Add(negativeEdge);
 
@@ -435,18 +438,23 @@ namespace TVGL.Boolean_Operations
                         PolygonalFace thirdFace;
                         if (otherVertex.Position.dotProduct(plane.Normal) > plane.DistanceToOrigin)
                         {
-                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, otherVertex, positiveVertex });
+                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, otherVertex, positiveVertex }, faceToSplit.Normal);
                             facesToAdd.Add(thirdFace);
-                            edgesToAdd.Add(new Edge(ce.ContactEdge.To, positiveVertex, positiveFace, thirdFace, true, true));
+                            edgesToAdd.Add(new Edge(ce.ContactEdge.To, positiveVertex, positiveFace, thirdFace));
                         }
                         else
                         {
-                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, negativeVertex, otherVertex });
+                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, negativeVertex, otherVertex }, faceToSplit.Normal);
                             facesToAdd.Add(thirdFace);
-                            edgesToAdd.Add(new Edge(negativeVertex, ce.ContactEdge.To, negativeFace, thirdFace, true, true));
+                            edgesToAdd.Add(new Edge(negativeVertex, ce.ContactEdge.To, negativeFace, thirdFace));
                         }
                         // for the new edges in a through face this line accomplishes: +3 add f to e; +4 add e to f; +5 add v to e; 
                         //    +6 add e to v 
+                    }
+                    else  //then artificial. How to handle this?
+                    {
+                        negativeFace = null;
+                        positiveFace = null;
                     }
                     loop[i] = new CoincidentEdgeContactElement
                     {
@@ -563,7 +571,7 @@ namespace TVGL.Boolean_Operations
                         for (int j = 0; j < connectedLoops.Count; j++)
                         {
                             var k = connectedLoops[j].FindIndex(ce => ce.StartVertex == oldVertex);
-                            newEdgeVertices[j][k] = vertexCopy;
+                            if (k >= 0) newEdgeVertices[j][k] = vertexCopy;
                         }
                         foreach (var face in oldVertex.Faces.Where(face => facesList.Contains(face)))
                         {

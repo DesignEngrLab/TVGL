@@ -21,21 +21,46 @@ namespace TVGL.Tessellation
         /// <param name="doublyLinkedFaces"></param>
         /// <param name="doublyLinkedVertices"></param>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            Boolean doublyLinkedFaces = false, Boolean doublyLinkedVertices = false)
+            Boolean doublyLinkedVertices=true)
         {
             From = fromVertex;
             To = toVertex;
             _ownedFace = ownedFace;
             _otherFace = otherFace;
+            if (_ownedFace != null) _ownedFace.Edges.Add(this);
+            if (_otherFace != null) _otherFace.Edges.Add(this);
             if (doublyLinkedVertices)
             {
                 fromVertex.Edges.Add(this);
                 toVertex.Edges.Add(this);
             }
-            if (doublyLinkedFaces)
+            Vector = new[]
             {
-                if (_ownedFace != null) _ownedFace.Edges.Add(this);
-                if (_otherFace != null) _otherFace.Edges.Add(this);
+                (To.Position[0] - From.Position[0]),
+                (To.Position[1] - From.Position[1]),
+                (To.Position[2] - From.Position[2])
+            };
+            Length =
+                Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
+            DefineInternalEdgeAngle();
+        }
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Edge" /> class.
+        /// </summary>
+        /// <param name="fromVertex">From vertex.</param>
+        /// <param name="toVertex">To vertex.</param>
+        /// <param name="ownedFace">The face.</param>
+        /// <param name="otherFace">The other face.</param>
+        /// <param name="doublyLinkedFaces"></param>
+        /// <param name="doublyLinkedVertices"></param>
+        public Edge(Vertex fromVertex, Vertex toVertex, Boolean doublyLinkedVertices)
+        {
+            From = fromVertex;
+            To = toVertex;
+            if (doublyLinkedVertices)
+            {
+                fromVertex.Edges.Add(this);
+                toVertex.Edges.Add(this);
             }
             Vector = new[]
             {

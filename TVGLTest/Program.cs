@@ -19,14 +19,14 @@ namespace TVGL_Test
                                                 //"../../../TestFiles/3_bananas.amf",    
                                                 //"../../../TestFiles/drillparts.amf",    
                                                 //"../../../TestFiles/wrenchsns.amf",     
-                                                //"../../../TestFiles/Rook.amf",          
-                                                "../../../TestFiles/amf_Cube.amf",
+                                              //  "../../../TestFiles/Rook.amf",          
+                                               "../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/trapezoid.4d.off",
         //     "../../../TestFiles/mushroom.off",   
-          //"../../../TestFiles/ABF.STL",           
+         //  "../../../TestFiles/ABF.STL",           
           //"../../../TestFiles/Pump-1repair.STL",
-          //"../../../TestFiles/Pump-1.STL",
-       //   "../../../TestFiles/Beam_Clean.STL",
+      //    "../../../TestFiles/Pump-1.STL",
+         // "../../../TestFiles/Beam_Clean.STL",
        // "../../../TestFiles/piston.stl",
        // "../../../TestFiles/Z682.stl",   
        // "../../../TestFiles/85408.stl",
@@ -35,7 +35,7 @@ namespace TVGL_Test
        //  "../../../TestFiles/bradley.stl",
        // "../../../TestFiles/45.stl",
        // "../../../TestFiles/Cuboide.stl",
-       // "../../../TestFiles/new/5.STL",
+        //"../../../TestFiles/new/5.STL",
        //  "../../../TestFiles/new/2.stl",
        // "../../../TestFiles/new/6.stl",
        // "../../../TestFiles/new/4.stl",
@@ -61,10 +61,10 @@ namespace TVGL_Test
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
                 //TestClassification(ts[0]);
-                // TestXSections(ts[0]);
-                var slicedTS = TestSlice(ts[0]);
+                // TestXSections(ts[0]);   
+                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
+                TestSlice(ts[0]);
                 //TestOBB(ts[0]);       
-                TVGL_Helix_Presenter.HelixPresenter.Show(slicedTS);
 
             }
             Console.ReadKey();
@@ -119,7 +119,7 @@ namespace TVGL_Test
                 }
             }
         }
-        private static TessellatedSolid TestSlice(TessellatedSolid ts)
+        private static void TestSlice(TessellatedSolid ts)
         {
             //var a= ContactData.Divide(new Flat { DistanceToOrigin = 40 , Normal = new []{0,1.0,0} }, ts).Area;
             //                          Debug.WriteLine(a);
@@ -131,7 +131,9 @@ namespace TVGL_Test
 
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
             Slice.OnFlat(ts, new Flat(0, new[] { 1.0, 0, 0 }), out positiveSideSolids, out negativeSideSolids);
-            return negativeSideSolids[0];
+          
+            TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
+            TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
         }
     }
 }

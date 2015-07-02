@@ -365,17 +365,23 @@ namespace TVGL.Tessellation
         {
             Faces = facesList.ToArray();
             NumberOfFaces = facesList.Count;
-            Vertices = subSolidVertices;
+            Vertices = new Vertex[0];
+            AddVertices(subSolidVertices);
             NumberOfVertices = Vertices.GetLength(0);
             var numloops = newEdgeVertices.GetLength(0);
             var points2D = new Point[numloops][];
             for (int i = 0; i < numloops; i++)
                 points2D[i] = MinimumEnclosure.Get2DProjectionPoints(newEdgeVertices[i], normal);
-            List<Vertex[]> patchFaces = TriangulatePolygon.Run(points2D.ToList<Point[]>(), loopIsPositive);
-            
-           // AddVertices(newEdgeVertices.SelectMany(v => v).ToList());
-   
-            MakeEdges();
+            var patchTriangles = TriangulatePolygon.Run(points2D.ToList(), loopIsPositive);
+            var patchFaces = new List<PolygonalFace>();
+            foreach (var triangle in patchTriangles)
+                patchFaces.Add(new PolygonalFace(triangle, normal));
+            AddFaces(patchFaces);
+            foreach (var face in Faces)
+                face.Edges.Clear();
+            foreach (var vertex in Vertices)
+                vertex.Edges.Clear();
+            MakeEdges(Faces);
             CreateConvexHull();
             DefineBoundingBoxAndCenter();
             for (int i = 0; i < Faces.Length; i++)
@@ -441,29 +447,22 @@ namespace TVGL.Tessellation
 
         private void MakeEdges()
         {
-            Edges = MakeEdges(Faces, Vertices);
+            Edges = MakeEdges(Faces);
         }
 
-        private Edge[] MakeEdges(PolygonalFace[] localFaces, Vertex[] localVertices)
+        private Edge[] MakeEdges(PolygonalFace[] localFaces)
         {
             NumberOfEdges = 3 * NumberOfFaces / 2;
             var alreadyDefinedEdges = new Dictionary<int, Edge>();
-
             for (var i = 0; i < NumberOfFaces; i++)
             {
                 var face = localFaces[i];
                 var lastIndex = face.Vertices.Count - 1;
                 for (var j = 0; j <= lastIndex; j++)
                 {
-                    var fromIndex = face.Vertices[j].IndexInList;
-                    var toIndex = (j == lastIndex)
-                        ? face.Vertices[0].IndexInList
-                        : face.Vertices[j + 1].IndexInList;
-
-                    if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
-                    var checksum = (fromIndex < toIndex)
-                        ? fromIndex + (NumberOfVertices * toIndex)
-                        : toIndex + (NumberOfVertices * fromIndex);
+                    var fromVertex = face.Vertices[j];
+                    var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
+                    var checksum = EdgeChecksum(fromVertex, toVertex);
                     if (alreadyDefinedEdges.ContainsKey(checksum))
                     {
                         var edge = alreadyDefinedEdges[checksum];
@@ -472,7 +471,7 @@ namespace TVGL.Tessellation
                     }
                     else
                     {
-                        var edge = new Edge(localVertices[fromIndex], localVertices[toIndex], face, null, true, true);
+                        var edge = new Edge(fromVertex, toVertex, face, null);
                         alreadyDefinedEdges.Add(checksum, edge);
                     }
                 }
@@ -491,6 +490,17 @@ namespace TVGL.Tessellation
             var localEdges = alreadyDefinedEdges.Values.ToArray();
             NumberOfEdges = localEdges.GetLength(0);
             return localEdges;
+        }
+
+        private int EdgeChecksum(Vertex from, Vertex to)
+        {
+            var fromIndex = from.IndexInList;
+            var toIndex = to.IndexInList;
+
+            if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+            return (fromIndex < toIndex)
+                 ? fromIndex + (NumberOfVertices * toIndex)
+                 : toIndex + (NumberOfVertices * fromIndex);
         }
 
         /// <summary>
@@ -597,10 +607,17 @@ namespace TVGL.Tessellation
         /// <summary>
         ///     Defines the volume and areas.
         /// </summary>
+
+        /// <summary>
+        ///     Defines the volume and areas.
+        /// </summary>    
         private void DefineVolumeAndAreas()
         {
             Volume = 0;
             SurfaceArea = 0;
+            double tempProductX = 0;
+            double tempProductY = 0;
+            double tempProductZ = 0;
             foreach (var face in Faces)
             {
                 // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
@@ -609,10 +626,15 @@ namespace TVGL.Tessellation
                 /* the Center is not correct! It's merely the center of the bounding box, but it doesn't need to be the true center for
                  * the calculation of the volume. Each tetrahedron is added up - even if they are negative - to form the correct value for
                  * the volume. The dot-product to the center gives the height, and 1/3 of the height times the area gives the volume.
-                 * While, we're working on it, we should average the centers of the tetrahedrons and do a weighted sum to find the
-                 * true center of mass (todo: MV).*/
-                Volume += face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(Center))) / 3;
+                 * While, we're working on it, we  average the centers of the tetrahedrons and do a weighted sum to find the
+                 * true center of mass.*/
+                var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(Center))) / 3;
+                tempProductX += (face.Vertices[0].Position[0] + face.Vertices[1].Position[0] + face.Vertices[2].Position[0] + Center[0]) * tetrahedronVolume / 4;
+                tempProductY += (face.Vertices[0].Position[1] + face.Vertices[1].Position[1] + face.Vertices[2].Position[1] + Center[1]) * tetrahedronVolume / 4;
+                tempProductZ += (face.Vertices[0].Position[2] + face.Vertices[1].Position[2] + face.Vertices[2].Position[2] + Center[2]) * tetrahedronVolume / 4;
+                Volume += tetrahedronVolume;
             }
+            Center = new[] { tempProductX / Volume, tempProductY / Volume, tempProductZ / Volume };
         }
 
         /// <summary>
@@ -790,7 +812,7 @@ namespace TVGL.Tessellation
                     thisVertex.Faces.Add(thisFace);
                 }
             }
-            Edge[] copyOfEdges = MakeEdges(copyOfFaces, copyOfVertices);
+            Edge[] copyOfEdges = MakeEdges(copyOfFaces);
             var copy = new TessellatedSolid
            {
                SurfaceArea = SurfaceArea,
@@ -882,7 +904,7 @@ namespace TVGL.Tessellation
                         var adjFaceIndex = convexHull.Faces.FindIndex(adjacentOldFace);
                         var adjFace = ConvexHullFaces[adjFaceIndex];
                         var sharedVerts = newFace.Vertices.Intersect(adjacentOldFace.Vertices).ToList();
-                        var newEdge = new Edge(sharedVerts[0], sharedVerts[1], newFace, adjFace, true);
+                        var newEdge = new Edge(sharedVerts[0], sharedVerts[1], newFace, adjFace, false);
                         while (newFace.Edges.Count <= j) newFace.Edges.Add(null);
                         newFace.Edges[j] = newEdge;
                         var k = adjacentOldFace.Adjacency.FindIndex(cvxFace);

@@ -47,6 +47,23 @@ namespace TVGL.Tessellation
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
+        public PolygonalFace(IList<Vertex> vertices, double[] normal)
+            : this()
+        {
+            Normal = normal;
+            var edge1 = vertices[1].Position.subtract(vertices[0].Position);
+            var edge2 = vertices[2].Position.subtract(vertices[1].Position);
+            if (Normal.dotProduct(edge1.crossProduct(edge2)) <= 0)
+                Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
+            else Vertices = new List<Vertex>(vertices);
+            foreach (var v in vertices)
+                v.Faces.Add(this);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
         public PolygonalFace(IList<Vertex> vertices)
             : this()
         {
