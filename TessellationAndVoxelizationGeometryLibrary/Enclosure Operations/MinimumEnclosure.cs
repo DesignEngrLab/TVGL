@@ -284,33 +284,41 @@ namespace TVGL
                         var prev = (index == 0) ? numCvxPoints - 1 : index - 1;
                         var tempDelta = Math.Atan2(cvxPoints[prev][1] - cvxPoints[index][1],
                              cvxPoints[prev][0] - cvxPoints[index][0]);
-                        //if (tempDelta < 0) tempDelta += 2 * Math.PI;
                         deltaAngles[i] = offsetAngles[i] - tempDelta;
+                        //If the angle has rotated beyond the 90 degree bounds, it will be negative
+                        //And should never be chosen from then on.
+                        if (deltaAngles[i] < 0) { deltaAngles[i] = 2*Math.PI; }
                     }
                 }
                 var delta = deltaAngles.Min();
                 deltaToUpdateIndex = deltaAngles.FindIndex(delta);  
                 #endregion
+                var currentPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
                 extremeIndices[deltaToUpdateIndex]--;
                 if (extremeIndices[deltaToUpdateIndex] < 0) {extremeIndices[deltaToUpdateIndex] = numCvxPoints - 1;}
-                angle += delta;
+                var previousPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
+                angle = delta;
                 #region find area
-                var sinAngle = Math.Sin(angle);
-                var cosAngle = Math.Cos(angle);
+                //Get unit normal for current edge
+                var direction = previousPoint.Position2D.subtract(currentPoint.Position2D).normalize();
+                //If point type = 1 or 3, then use inversed direction
+                if (deltaToUpdateIndex == 1 || deltaToUpdateIndex == 3) { direction = new[] { -direction[1], direction[0] }; } 
                 var vectorWidth = new[]
                 {
                     cvxPoints[extremeIndices[2]][0] - cvxPoints[extremeIndices[0]][0],
                     cvxPoints[extremeIndices[2]][1] - cvxPoints[extremeIndices[0]][1]
                 };
-                var angleVector = new[] { cosAngle, sinAngle };
-                var tempArea = Math.Abs(vectorWidth.dotProduct(angleVector));
+                
+                var angleVector = new[] { -direction[1], direction[0] };
+                var width = Math.Abs(vectorWidth.dotProduct(angleVector));
                 var vectorHeight = new[]
                 { 
                     cvxPoints[extremeIndices[3]][0] - cvxPoints[extremeIndices[1]][0], 
                     cvxPoints[extremeIndices[3]][1] - cvxPoints[extremeIndices[1]][1]
                 };
-                angleVector = new[] { -sinAngle, cosAngle };
-                tempArea *= Math.Abs(vectorHeight.dotProduct(angleVector));
+                angleVector = new[] { direction[0], direction[1] };
+                var height = Math.Abs(vectorHeight.dotProduct(angleVector));
+                var tempArea = height * width;
                 #endregion
                 if (minArea > tempArea)
                 {

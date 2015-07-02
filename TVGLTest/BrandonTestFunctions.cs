@@ -162,21 +162,30 @@ namespace TVGL_Test
         private static void Test4() //Bounding Rectangle
         {
             //Counterclockwise ordered positive loop
-            var point0 = new Point(new Vertex(new[] { 0.0, 0.0, 0.0 }));
-            var point1 = new Point(new Vertex(new[] { 2.0, 0.0, 0.0 }));
-            var point2 = new Point(new Vertex(new[] { 6.0, 1.0, 0.0 }));
-            var point3 = new Point(new Vertex(new[] { 9.0, 3.0, 0.0 }));
-            var point4 = new Point(new Vertex(new[] { 8.0, 5.0, 0.0 }));
-            var point5 = new Point(new Vertex(new[] { 5.0, 4.5, 0.0 }));
-            var point6 = new Point(new Vertex(new[] { 3.0, 3.4, 0.0 }));
-            var point7 = new Point(new Vertex(new[] { 2.0, 2.5, 0.0 }));
-            var point8 = new Point(new Vertex(new[] { 1.0, 1.5, 0.0 }));
-            var posLoop1 = new Point[] { point0, point1, point2, point3, point4, point5, point6, point7, point8 };
+            var point0 = new Point(new Vertex(new[] { -0.1, -0.1, 0.0 }));
+            var point1 = new Point(new Vertex(new[] { 1.0, 0.25, 0.0 }));
+            var point2 = new Point(new Vertex(new[] { 0.4, 1.2, 0.0 }));
+            var point3 = new Point(new Vertex(new[] { 0.75, 0.5, 0.0 }));
+            var point4 = new Point(new Vertex(new[] { 0.6, 0.4, 0.0 }));
+            var point5 = new Point(new Vertex(new[] { 0.4, 0.6, 0.0 }));
+            var point6 = new Point(new Vertex(new[] { 0.2, 0.1, 0.0 }));
+            var point7 = new Point(new Vertex(new[] { 0.3, 1.2, 0.0 }));
+            var point8 = new Point(new Vertex(new[] { 0.2, 1.4, 0.0 }));
+            var point9 = new Point(new Vertex(new[] { 0.2, 0.4, 0.0 }));
+            var point10 = new Point(new Vertex(new[] { -0.1, 1.0, 0.0 }));
+            var posLoop1 = new Point[] { point0, point1, point2, point3, point4, point5, point6, point7, point8, point9, point10 };
 
 
             //Add loops to a list of loops
             var BoundingArea = 0.0;
-            var offsets = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1, out BoundingArea);
+            var bestAngle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1, out BoundingArea);
+            Console.WriteLine("Best Angle for Bounding Box:");
+            Console.WriteLine(Math.Round(bestAngle,3) + " radians");
+            Console.WriteLine(Math.Round(bestAngle*180/Math.PI,3) + " degrees (Clockwise rotation of left caliper,");
+            Console.WriteLine("which could now look like its on top.)");
+            Console.WriteLine();
+            Console.WriteLine("Minimum Bounding Area:");
+            Console.WriteLine(BoundingArea);
             Console.ReadLine();
         }//End TestFunction
     }
