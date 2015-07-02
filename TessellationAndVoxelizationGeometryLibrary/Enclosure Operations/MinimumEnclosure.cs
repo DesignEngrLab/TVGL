@@ -231,57 +231,34 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="minArea">The minimum area.</param>
         /// <returns>System.Double.</returns>
-        private static double RotatingCalipers2DMethod(IList<Point> points, out double minArea)
-<<<<<<< HEAD
         public static double RotatingCalipers2DMethod(IList<Point> points, out double minArea)
-        {      
-=======
         {
->>>>>>> origin/master
+
             #region Initialization
             var cvxPoints = ConvexHull2D(points);
             var numCvxPoints = cvxPoints.Count;
             var extremeIndices = new int[4];
-<<<<<<< HEAD
+
             extremeIndices[3] = cvxPoints.Count;
 
-            //Find maximumY point. with maximum x value.
-            //Do decrement index.
-            do extremeIndices[3]--;
-            //While CurrentPoint.Y <= PreviousPoint.Y = True
-            while (extremeIndices[3] >= 1 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1]);
-
-            //Find maximum X point. with minimum y value.
-            //While CurrentPoint.X <= PreviousPoint.X = True
-=======
-            // start with max-Y point at the last index in the cvxhull list
             //        extremeIndices[3] => max-Y
             extremeIndices[3] = cvxPoints.Count - 1;
             while (extremeIndices[3] >= 1 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1])
                 extremeIndices[3]--;
 
             //        extremeIndices[2] => max-X
->>>>>>> origin/master
             extremeIndices[2] = extremeIndices[3];
             while (extremeIndices[2] >= 1 && cvxPoints[extremeIndices[2]][0] <= cvxPoints[extremeIndices[2] - 1][0])
                 extremeIndices[2]--;
 
-<<<<<<< HEAD
-            //Find minimum Y point. with minimum x value.
-            //While CurrentPoint.Y >= PreviousPoint.Y = True
-            extremeIndices[1] = extremeIndices[2];
-            while (extremeIndices[1] >= 1 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
-                extremeIndices[1]--;
 
-            //Find minimum X point. with maximum y value.
-            //While CurrentPoint.X >= PreviousPoint.X = True
-=======
             //        extremeIndices[1] => min-Y
             extremeIndices[1] = extremeIndices[2];
             while (extremeIndices[1] >= 1 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
                 extremeIndices[1]--;
+
             //        extremeIndices[0] => min-X
->>>>>>> origin/master
+
             extremeIndices[0] = extremeIndices[1];
             while (extremeIndices[0] >= 1 && cvxPoints[extremeIndices[0]][0] >= cvxPoints[extremeIndices[0] - 1][0])
                 extremeIndices[0]--;
@@ -291,25 +268,18 @@ namespace TVGL
             var angle = 0.0;
             var bestAngle = double.NegativeInfinity;
             var deltaToUpdateIndex = -1;
-            // deltaAngles stores the four angles for each of the sides of the rectangle to rotate s.t. the edge is parallel
-            // to that side
             var deltaAngles = new double[4];
             var offsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
             minArea = double.PositiveInfinity;
-            do
-            do //Stop when angle exceeds 90 degrees.
+            do 
             {
-<<<<<<< HEAD
                 //For each of the 4 supporting points (those forming the rectangle),
-                //Set the deltaAngles
-=======
                 #region update the deltaAngles from the current orientation
->>>>>>> origin/master
                 for (var i = 0; i < 4; i++)
-                {
-                    if (deltaToUpdateIndex == -1 || i == deltaToUpdateIndex)
-                    {
+                {   
                     //Update all angles on first pass. For each additional pass, only update one deltaAngle.
+                    if (deltaToUpdateIndex == -1 || i == deltaToUpdateIndex)
+                    {                
                         var index = extremeIndices[i];
                         var prev = (index == 0) ? numCvxPoints - 1 : index - 1;
                         var tempDelta = Math.Atan2(cvxPoints[prev][1] - cvxPoints[index][1],
@@ -322,7 +292,7 @@ namespace TVGL
                 deltaToUpdateIndex = deltaAngles.FindIndex(delta);  
                 #endregion
                 extremeIndices[deltaToUpdateIndex]--;
-                if (extremeIndices[deltaToUpdateIndex] < 0) extremeIndices[deltaToUpdateIndex] = numCvxPoints - 1;
+                if (extremeIndices[deltaToUpdateIndex] < 0) {extremeIndices[deltaToUpdateIndex] = numCvxPoints - 1;}
                 angle += delta;
                 #region find area
                 var sinAngle = Math.Sin(angle);

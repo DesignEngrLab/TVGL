@@ -13,7 +13,6 @@ namespace TVGL_Test
         [STAThread]
         private static void Main(string[] args)
         {
-            var l = 0;
             Test4();
         }
 
