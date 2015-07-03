@@ -187,7 +187,6 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
     #endregion
 
     #region MonotonePolygon class
-
     /// <summary>
     /// Monotone Polygon, which consists of two ordered chains
     /// The chains start and end at the same nodes
