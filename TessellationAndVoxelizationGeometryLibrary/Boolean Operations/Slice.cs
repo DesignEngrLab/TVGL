@@ -160,7 +160,7 @@ namespace TVGL.Boolean_Operations
                          !(nextContactElt is CoincidentEdgeContactElement))
                 {
                     contactElements.Add(contactElt);
-                    contactElt = new ThroughVertexContactElement(connectingVertex, null, null)
+                    contactElt = new ThroughVertexContactElement(connectingVertex, null, nextContactElt.SplitFaceNegative)
                     {
                         ContactEdge = new Edge(((CoincidentEdgeContactElement)contactElt).EndVertex, connectingVertex, false)
                     };
@@ -189,7 +189,7 @@ namespace TVGL.Boolean_Operations
                          !(prevContactElt is CoincidentEdgeContactElement))
                 {
                     contactElements.Insert(0, contactElt);
-                    contactElt = new ThroughVertexContactElement(connectingVertex, null, null)
+                    contactElt = new ThroughVertexContactElement(connectingVertex, prevContactElt.SplitFacePositive, null)
                     {
                         ContactEdge = new Edge(connectingVertex, ((CoincidentEdgeContactElement)contactElt).StartVertex, false)
                     };
@@ -405,7 +405,7 @@ namespace TVGL.Boolean_Operations
                         facesToAdd.Add(negativeFace);
                     } //#+1 add v to f           (both of these are done in the preceding PolygonalFace
                     //#+2 add f to v            constructors as well as the one for thirdFace below)
-                    else if (ce is ThroughFaceContactElement)                                             
+                    else if (ce is ThroughFaceContactElement)
                     {
                         var tfce = (ThroughFaceContactElement)ce; // ce is renamed and recast as tfce 
                         edgesToDelete.Add(tfce.SplitEdge);
@@ -422,7 +422,7 @@ namespace TVGL.Boolean_Operations
                             negativeVertex = tfce.SplitEdge.To;
                         }
                         positiveFace =
-                           new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, positiveVertex }, faceToSplit.Normal);
+                           new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, positiveVertex }, faceToSplit.Normal);
                         facesToAdd.Add(positiveFace);
                         negativeFace =
                            new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, negativeVertex }, faceToSplit.Normal);
@@ -448,6 +448,10 @@ namespace TVGL.Boolean_Operations
                             facesToAdd.Add(thirdFace);
                             edgesToAdd.Add(new Edge(negativeVertex, ce.ContactEdge.To, negativeFace, thirdFace));
                         }
+                        ts.HasUniformColor = false;
+                        thirdFace.color = new Color(KnownColors.Turquoise);
+                        negativeFace.color = new Color(KnownColors.CornflowerBlue);
+                        positiveFace.color = new Color(KnownColors.HotPink);
                         // for the new edges in a through face this line accomplishes: +3 add f to e; +4 add e to f; +5 add v to e; 
                         //    +6 add e to v 
                     }
@@ -575,8 +579,7 @@ namespace TVGL.Boolean_Operations
                         }
                         foreach (var face in oldVertex.Faces.Where(face => facesList.Contains(face)))
                         {
-                            face.Vertices.Remove(oldVertex);
-                            face.Vertices.Add(vertexCopy);
+                            face.Vertices[face.Vertices.IndexOf(oldVertex)] = vertexCopy;
                             vertexCopy.Faces.Add(face);
                         }
                         while (copyIndex < numIndicesToCopy && vertIndices[i] >= indicesToCopy[copyIndex])
