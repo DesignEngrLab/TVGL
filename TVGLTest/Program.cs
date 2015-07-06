@@ -39,7 +39,7 @@ namespace TVGL_Test
        //  "../../../TestFiles/new/2.stl",
        // "../../../TestFiles/new/6.stl",
        // "../../../TestFiles/new/4.stl",
-       //"../../../TestFiles/radiobox.stl",
+      // "../../../TestFiles/radiobox.stl",
        // "../../../TestFiles/brace.stl",        
        // "../../../TestFiles/box.stl",
        // "../../../TestFiles/G0.stl",
@@ -52,7 +52,7 @@ namespace TVGL_Test
         };
 
         [STAThread]
-        private static void Main2(string[] args)
+        private static void Main(string[] args)
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
@@ -130,7 +130,7 @@ namespace TVGL_Test
             var crossAreas = new double[3][,];
 
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
-            Slice.OnFlat(ts, new Flat(0, new[] { 1.0, 0, 0 }), out positiveSideSolids, out negativeSideSolids);
+            Slice.OnFlat(ts, new Flat(0.1, new[] { 1.0, 1, 0 }), out positiveSideSolids, out negativeSideSolids);
           
             TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
             TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
