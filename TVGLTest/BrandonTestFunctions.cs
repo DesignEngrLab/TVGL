@@ -11,7 +11,7 @@ namespace TVGL_Test
     {
 
         [STAThread]
-        private static void Main(string[] args)
+        private static void Main2(string[] args)
         {
             Test9();
         }
