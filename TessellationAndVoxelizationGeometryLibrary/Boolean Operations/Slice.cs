@@ -42,8 +42,8 @@ namespace TVGL.Boolean_Operations
 
             DivideUpContact(ts, contactData, plane);
             var loops =
-                contactData.AllLoops.Where(loop => loop.All(
-                            ce => !(ce.ContactEdge.Curvature == CurvatureType.Convex && ce is CoincidentEdgeContactElement))).ToList();
+                contactData.AllLoops;
+            //.Where(loop => loop.All(ce => !(ce.ContactEdge.Curvature == CurvatureType.Convex && ce is CoincidentEdgeContactElement))).ToList();
             var allNegativeStartingFaces =
                loops.SelectMany(loop => loop.Select(ce => ce.SplitFaceNegative)).ToList();
             var allPositiveStartingFaces =
@@ -78,6 +78,7 @@ namespace TVGL.Boolean_Operations
             // Contact elements are constructed and then later arranged into loops. Loops make up the returned object, ContactData. 
             var straddleContactElts = new List<ContactElement>();
             var inPlaneContactElts = new List<CoincidentEdgeContactElement>();
+            var inPlaneVertices = new List<Vertex>();
             while (edgeHashSet.Any())
             {
                 // instead of the foreach, we have this while statement and these first 2 lines to enumerate over the edges.
@@ -88,21 +89,14 @@ namespace TVGL.Boolean_Operations
                 if (StarMath.IsNegligible(toDistance) && StarMath.IsNegligible(fromDistance))
                     ContactElement.MakeInPlaneContactElement(plane, edge, edgeHashSet, vertexDistancesToPlane,
                         inPlaneContactElts);
+                else if (StarMath.IsNegligible(toDistance)) inPlaneVertices.Add(edge.To);
+                else if (StarMath.IsNegligible(fromDistance)) inPlaneVertices.Add(edge.From);
                 else if ((toDistance > 0 && fromDistance < 0)
                          || (toDistance < 0 && fromDistance > 0))
                     straddleContactElts.Add(new ThroughFaceContactElement(plane, edge, toDistance));
             }
-            foreach (var contactElement in inPlaneContactElts)
+            foreach (var v in inPlaneVertices )
             {
-                // next, we find any additional vertices that just touch the plane but don't have in-plane edges
-                // to facilitate this we negate all vertices already captures in the inPlaneContactElts 
-                vertexDistancesToPlane[contactElement.StartVertex.IndexInList] = double.NaN;
-                vertexDistancesToPlane[contactElement.EndVertex.IndexInList] = double.NaN;
-            }
-            for (int i = 0; i < ts.NumberOfVertices; i++)
-            {
-                if (!StarMath.IsNegligible(vertexDistancesToPlane[i])) continue;
-                var v = ts.Vertices[i];
                 PolygonalFace negativeFace, positiveFace;
                 if (ThroughVertexContactElement.FindNegativeAndPositiveFaces(plane, v, vertexDistancesToPlane,
                     out negativeFace, out positiveFace))
@@ -376,7 +370,7 @@ namespace TVGL.Boolean_Operations
                 {
                     var ce = loop[i];
                     // in DefineContact the loop edges were not connected to the vertices as the desire
-                    // was to leave the TS unaffected. But not that we are working these changes in, we need
+                    // was to leave the TS unaffected. But now that we are working these changes in, we need
                     // to ensure that the edges, vertices, and faces are all properly connected.                           
                     if (!ce.ContactEdge.From.Edges.Contains(ce.ContactEdge)) ce.ContactEdge.From.Edges.Add(ce.ContactEdge);
                     if (!ce.ContactEdge.To.Edges.Contains(ce.ContactEdge)) ce.ContactEdge.To.Edges.Add(ce.ContactEdge);
