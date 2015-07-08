@@ -34,7 +34,7 @@ namespace TVGL
         private const double MaxDeltaAngle = Math.PI / 36.0;
 
         /// <summary>
-        /// Orienteds the bounding box.
+        ///  Finds the minimum bounding box oriented along a particular direction.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
@@ -48,13 +48,77 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
-
+        /// <summary>
+        /// Finds the minimum bounding box using a direct approach called continuous PCA.
+        /// Variant include All-PCA Min-PCA, Max-PCA, and continuous PCA [http://dl.acm.org/citation.cfm?id=2019641]
+        /// The most accurate is continuous PCA, and Dimitrov 2009 has some good improvements
+        /// http://link.springer.com/chapter/10.1007%2F978-3-642-10226-4_3
+        /// Simple implementation (2/5)
+        /// </summary>
+        /// <timeDomain>
+        /// O(nlog(n)) time
+        /// </timeDomain>
+        /// <accuracy>
+        /// Generally fairly accurate, but suboptimal solutions. 
+        /// Particular cases can yeild very poor results.
+        /// Ex. Dimitrov showed in 2009 that continuous PCA yeilds a volume 4x optimal for a octahedron
+        /// http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
+        /// </accuracy>
         private static BoundingBox Find_via_PCA_Approach(TessellatedSolid ts)
         {
             throw new NotImplementedException();
-
         }
 
+        /// <summary>
+        /// Finds the minimum bounding box using a brute force method based on the 2D Caliper Approach 
+        /// Based on: Rourke. "Finding Minimal Enclosing Boxes." 1985.
+        /// http://cs.smith.edu/~orourke/Papers/MinVolBox.pdf
+        /// Difficult implementation (5/5)
+        /// </summary>
+        /// <timeDomain>
+        /// (n^3) time
+        /// </timeDomain>
+        /// <accuracy>
+        /// Gaurantees and optimal solution.
+        /// </accuracy>
+        private static BoundingBox Find_via_Rourke_Approach(TessellatedSolid ts)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Finds the minimum bounding box using an iterative optimization based on the genetic algorithm and Nelder-Mead algorithm
+        /// Based on: CHANG, GORISSEN, and MELCHIOR. "Fast Oriented Bounding Box Optimization on the Rotation Group SO(3, R)." Oct 2011.
+        /// http://dl.acm.org/citation.cfm?id=2019641
+        /// Difficult implementation (4/5)
+        /// </summary>
+        /// <timeDomain>
+        /// Much faster than O'Rourke's, more accurate than hueristic based (PCA).
+        /// Near linear in practice
+        /// </timeDomain>
+        /// <accuracy>
+        /// Often exact, but some small error may be present.
+        /// </accuracy>
+        private static BoundingBox Find_via_HYBBRID_Approach(TessellatedSolid ts)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Finds the minimum bounding box based on a simple O(n^2) time algorithm that 
+        /// finds all minimum boxes with at least one face flush with the convex polygon.
+        /// The MC_ApproachOne is a brute force method which includes the flush face algorithm, 
+        /// but limits the maximum angle of rotation between faces. 
+        /// In this way, it gaurantees a much more optimal solution than the O(n^2) time algorithm.
+        /// </summary>
+        /// <timeDomain>
+        /// Since the computation cost for each Bounding Box is linear O(n),
+        /// and the approximate worse case number of normals considered is n*PI/maxDeltaAngle,
+        /// Lower Bound O(n^2). Upper Bound O(n^(2)*PI/maxDeltaAngle). [ex.  upper bound is O(36*n^2) when MaxDeltaAngle = 5 degrees.]
+        /// </timeDomain>
+        /// <accuracy>
+        /// Garantees the optimial orientation is within MaxDeltaAngle error.
+        /// </accuracy>
         private static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts)
         {
             BoundingBox minBox = new BoundingBox();
@@ -97,7 +161,6 @@ namespace TVGL
             throw new NotImplementedException();
 
         }
-
 
         /// <summary>
         /// Finds the minimum oriented bounding rectangle (2D). The 3D points of a tessellated solid

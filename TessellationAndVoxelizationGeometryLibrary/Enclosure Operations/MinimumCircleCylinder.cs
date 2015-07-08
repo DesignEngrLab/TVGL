@@ -37,11 +37,9 @@ namespace TVGL
         /// and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
         /// <param name="points"></param>
-        /// <param name="direction">The direction.</param>
         /// <param name="center">The center.</param>
         /// <param name="radius">The radius.</param>
         /// <returns>System.Double.</returns>
-        /// <exception cref="System.NotImplementedException"></exception>
         public static double MinimumCircle(List<Point> points, out Point center, out double radius)
         {
             //Randomize the list of points
