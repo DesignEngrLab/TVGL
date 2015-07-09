@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TVGL.Tessellation;
 using StarMathLib;
 
@@ -44,13 +45,8 @@ namespace TVGL
         {
             //Randomize the list of points
             var r = new Random();
-            var randomPoints = new List<Point>();
-            while (points.Count > 0)
-            {
-                var index = r.Next(0, points.Count);
-                randomPoints.Add(points[index]);
-                points.RemoveAt(index);
-            }
+            var randomPoints = new List<Point>(points.OrderBy(p=>r.Next()));
+           
             center = null;
             radius = 0;
             if (randomPoints.Count < 2) return 0;

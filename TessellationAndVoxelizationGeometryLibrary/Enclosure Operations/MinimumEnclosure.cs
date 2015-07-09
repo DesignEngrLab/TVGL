@@ -71,7 +71,7 @@ namespace TVGL
         {
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
-            var totalArea =  0.0;
+            var totalArea = 0.0;
             //Set the area for each triangle and its center vertex 
             //Also, aggregate to get the surface area of the convex hull
             foreach (var triangle in triangles)
@@ -79,16 +79,16 @@ namespace TVGL
                 var vector1 = triangle.Vertices[0].Position.subtract(triangle.Vertices[1].Position);
                 var vector2 = triangle.Vertices[0].Position.subtract(triangle.Vertices[2].Position);
                 var cross = vector1.crossProduct(vector2);
-                triangle.Area = 0.5*(Math.Sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]));
+                triangle.Area = 0.5 * (Math.Sqrt(cross[0] * cross[0] + cross[1] * cross[1] + cross[2] * cross[2]));
                 totalArea = totalArea + triangle.Area;
-                var xAve = (triangle.Vertices[0].X + triangle.Vertices[1].X + triangle.Vertices[2].X)/3;
-                var yAve = (triangle.Vertices[0].Y + triangle.Vertices[1].Y + triangle.Vertices[2].Y)/3;
-                var zAve = (triangle.Vertices[0].Z + triangle.Vertices[1].Z + triangle.Vertices[2].Z)/3;
-                triangle.Center = new[] {xAve, yAve, zAve};
+                var xAve = (triangle.Vertices[0].X + triangle.Vertices[1].X + triangle.Vertices[2].X) / 3;
+                var yAve = (triangle.Vertices[0].Y + triangle.Vertices[1].Y + triangle.Vertices[2].Y) / 3;
+                var zAve = (triangle.Vertices[0].Z + triangle.Vertices[1].Z + triangle.Vertices[2].Z) / 3;
+                triangle.Center = new[] { xAve, yAve, zAve };
             }
 
             //Calculate the center of gravity of each triangle
-            var c = new double[]{0.0,0.0,0.0};
+            var c = new double[] { 0.0, 0.0, 0.0 };
             foreach (var triangle in triangles)
             {
                 //Find the triangle weight based proportional to area
@@ -101,25 +101,25 @@ namespace TVGL
             var covariance = new double[3, 3];
             foreach (var triangle in triangles)
             {
-                var covarianceI = new double[3,3];
+                var covarianceI = new double[3, 3];
                 for (var j = 0; j < 3; j++)
                 {
                     var jTerm1 = new double[3, 3];
                     var vector1 = triangle.Vertices[j].Position.subtract(c);
-                    var term1 = new [,]{{vector1[0],vector1[1],vector1[2]}};
+                    var term1 = new[,] { { vector1[0], vector1[1], vector1[2] } };
                     var term3 = term1;
-                    var term4 =new [,]{{vector1[0]},{vector1[1]},{vector1[2]}};
+                    var term4 = new[,] { { vector1[0] }, { vector1[1] }, { vector1[2] } };
                     for (var k = 0; k < 3; k++)
                     {
                         var vector2 = triangle.Vertices[k].Position.subtract(c);
-                        var term2 = new [,]{{vector2[0]},{vector2[1]},{vector2[2]}};
+                        var term2 = new[,] { { vector2[0] }, { vector2[1] }, { vector2[2] } };
                         jTerm1 = term1.multiply(term2);
                     }
                     covarianceI = covarianceI.add(jTerm1.add(term3.multiply(term4)));
                 }
-                covariance = covariance.add(covarianceI.multiply(1.0/12.0));
+                covariance = covariance.add(covarianceI.multiply(1.0 / 12.0));
             }
-            
+
             //Find eigenvalues of covariance matrix
             double[][] eigenVectors;
             var eigenValues = covariance.GetEigenValuesAndVectors(out eigenVectors);
@@ -127,8 +127,8 @@ namespace TVGL
             foreach (var eigenVector in eigenVectors)
             {
             }
-           
-            
+
+
             throw new NotImplementedException();
         }
 
@@ -278,14 +278,24 @@ namespace TVGL
             var xDir = direction[0];
             var yDir = direction[1];
             var zDir = direction[2];
-            
-            var rotateY = StarMath.RotationY(-Math.Atan(xDir/zDir), true);
-            if (zDir == 0 && xDir != 0)
+            double[,] rotateX, rotateY;
+            if (xDir == 0 && zDir == 0)
             {
-                rotateY = StarMath.RotationY(-Math.Atan(xDir*double.PositiveInfinity), true);
-            }           
-            var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
-            var rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
+                rotateX = StarMath.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
+                rotateY = StarMath.makeIdentity(4);
+            }
+            else if (zDir == 0)
+            {
+                rotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
+                var baseLength = Math.Abs(xDir);
+                rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
+            }
+            else
+            {
+                rotateY = StarMath.RotationY(-Math.Atan(xDir / zDir), true);
+                var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
+                rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
+            }
             var transform = rotateX.multiply(rotateY);
 
 
@@ -316,11 +326,31 @@ namespace TVGL
             var yDir = direction[1];
             var zDir = direction[2];
 
-            var rotateY = StarMath.RotationY(-Math.Atan(xDir / zDir), true);
-            var backRotateY = StarMath.RotationY(Math.Atan(xDir / zDir), true);
-            var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
-            var rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
-            var backRotateX = StarMath.RotationX(-Math.Atan(yDir / baseLength), true);
+            double[,] rotateX, rotateY, backRotateX, backRotateY;
+            if (xDir == 0 && zDir == 0)
+            {
+                rotateX = StarMath.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
+                backRotateX = StarMath.RotationX(-Math.Sign(yDir) * Math.PI / 2, true);
+                backRotateY = rotateY = StarMath.makeIdentity(4);
+            }
+            else if (zDir == 0)
+            {
+                rotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
+                backRotateY = StarMath.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
+                var rotXAngle = Math.Atan(yDir / Math.Abs(xDir));
+                rotateX = StarMath.RotationX(rotXAngle, true);
+                backRotateX = StarMath.RotationX(-rotXAngle, true);
+            }
+            else
+            {
+                var rotYAngle = Math.Atan(xDir / zDir);
+                rotateY = StarMath.RotationY(-rotYAngle, true);
+                backRotateY = StarMath.RotationY(rotYAngle, true);
+                var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
+                var rotXAngle = Math.Atan(yDir / baseLength);
+                rotateX = StarMath.RotationX(rotXAngle, true);
+                backRotateX = StarMath.RotationX(-rotXAngle, true);
+            }
             var transform = rotateX.multiply(rotateY);
             backTransform = backRotateY.multiply(backRotateX);
 
@@ -398,14 +428,14 @@ namespace TVGL
             var previousIndex = -1;
             extremeIndices[0] = extremeIndices[1];
             do
-            {   
+            {
                 currentIndex = extremeIndices[0];
                 extremeIndices[0]--;
                 if (extremeIndices[0] < 0) { extremeIndices[0] = numCvxPoints - 1; }
                 previousIndex = extremeIndices[0];
             } while (cvxPoints[currentIndex][0] >= cvxPoints[previousIndex][0]);
             extremeIndices[0]++;
-            if (extremeIndices[0] > numCvxPoints-1) { extremeIndices[0] = 0; }
+            if (extremeIndices[0] > numCvxPoints - 1) { extremeIndices[0] = 0; }
 
             #endregion
 
@@ -416,15 +446,15 @@ namespace TVGL
             var deltaAngles = new double[4];
             var offsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
             minArea = double.PositiveInfinity;
-            do 
+            do
             {
                 //For each of the 4 supporting points (those forming the rectangle),
                 #region update the deltaAngles from the current orientation
                 for (var i = 0; i < 4; i++)
-                {   
+                {
                     //Update all angles on first pass. For each additional pass, only update one deltaAngle.
                     if (deltaToUpdateIndex == -1 || i == deltaToUpdateIndex)
-                    {                
+                    {
                         var index = extremeIndices[i];
                         var prev = (index == 0) ? numCvxPoints - 1 : index - 1;
                         var tempDelta = Math.Atan2(cvxPoints[prev][1] - cvxPoints[index][1],
@@ -432,28 +462,28 @@ namespace TVGL
                         deltaAngles[i] = offsetAngles[i] - tempDelta;
                         //If the angle has rotated beyond the 90 degree bounds, it will be negative
                         //And should never be chosen from then on.
-                        if (deltaAngles[i] < 0) { deltaAngles[i] = 2*Math.PI; }
+                        if (deltaAngles[i] < 0) { deltaAngles[i] = 2 * Math.PI; }
                     }
                 }
                 var delta = deltaAngles.Min();
-                deltaToUpdateIndex = deltaAngles.FindIndex(delta);  
+                deltaToUpdateIndex = deltaAngles.FindIndex(delta);
                 #endregion
                 var currentPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
                 extremeIndices[deltaToUpdateIndex]--;
-                if (extremeIndices[deltaToUpdateIndex] < 0) {extremeIndices[deltaToUpdateIndex] = numCvxPoints - 1;}
+                if (extremeIndices[deltaToUpdateIndex] < 0) { extremeIndices[deltaToUpdateIndex] = numCvxPoints - 1; }
                 var previousPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
                 angle = delta;
                 #region find area
                 //Get unit normal for current edge
                 var direction = previousPoint.Position2D.subtract(currentPoint.Position2D).normalize();
                 //If point type = 1 or 3, then use inversed direction
-                if (deltaToUpdateIndex == 1 || deltaToUpdateIndex == 3) { direction = new[] { -direction[1], direction[0] }; } 
+                if (deltaToUpdateIndex == 1 || deltaToUpdateIndex == 3) { direction = new[] { -direction[1], direction[0] }; }
                 var vectorWidth = new[]
                 {
                     cvxPoints[extremeIndices[2]][0] - cvxPoints[extremeIndices[0]][0],
                     cvxPoints[extremeIndices[2]][1] - cvxPoints[extremeIndices[0]][1]
                 };
-                
+
                 var angleVector = new[] { -direction[1], direction[0] };
                 var width = Math.Abs(vectorWidth.dotProduct(angleVector));
                 var vectorHeight = new[]
@@ -472,7 +502,7 @@ namespace TVGL
                 }
             } while (angle < Math.PI / 2); //Don't check beyond a 90 degree angle.
             //If best angle is 90 degrees, then don't bother to rotate. 
-            if (bestAngle == Math.PI/2) { bestAngle = 0; }
+            if (bestAngle == Math.PI / 2) { bestAngle = 0; }
             #endregion
 
             return bestAngle;
