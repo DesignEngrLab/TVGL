@@ -15,6 +15,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using ClipperLib;
 using MIConvexHull;
 using StarMathLib;
 using TVGL.Tessellation;
@@ -52,6 +54,7 @@ namespace TVGL
         /// Finds the minimum bounding box using a direct approach called continuous PCA.
         /// Variant include All-PCA Min-PCA, Max-PCA, and continuous PCA [http://dl.acm.org/citation.cfm?id=2019641]
         /// The most accurate is continuous PCA, and Dimitrov 2009 has some good improvements
+        /// Dimitrov, Holst, and Kriegel. "Closed-Form Solutions for Continuous PCA and Bounding Box Algorithms"
         /// http://link.springer.com/chapter/10.1007%2F978-3-642-10226-4_3
         /// Simple implementation (2/5)
         /// </summary>
@@ -64,14 +67,69 @@ namespace TVGL
         /// Ex. Dimitrov showed in 2009 that continuous PCA yeilds a volume 4x optimal for a octahedron
         /// http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
         /// </accuracy>
-        private static BoundingBox Find_via_PCA_Approach(TessellatedSolid ts)
+        public static BoundingBox Find_via_ContinuousPCA_Approach(TessellatedSolid ts)
         {
+            //Find a continuous set of 3 dimensional vextors with constant density
+            var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
+            double totalArea;
+            //Set the area for each triangle and aggregate to get the surface area of the convex hull
+            foreach (var triangle in triangles)
+            {
+                var vector1 = triangle.Vertices[0].Position.subtract(triangle.Vertices[1].Position);
+                var vector2 = triangle.Vertices[0].Position.subtract(triangle.Vertices[2].Position);
+                var cross = vector1.crossProduct(vector2);
+                triangle.Area = 0.5*(Math.Sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]));
+                totalArea = totalArea + triangle.Area;
+            }
+
+            //Calculate the center of gravity of each triangle
+            var c = new double[3];
+            foreach (var triangle in triangles)
+            {
+                //Find the triangle weight based proportional to area
+                var w = triangle.Area / totalArea;
+                //Find the center of gravity
+                c = c.add(triangle.Center.multiply(w));
+            }
+
+            //Find the covariance matrix  of the convex hull
+            var covariance = new double[3, 3];
+            foreach (var triangle in triangles)
+            {
+                var covarianceI = new double[3,3];
+                for (var j = 0; j < 3; j++)
+                {
+                    var jTerm1 = new double[3, 3];
+                    var vector1 = triangle.Vertices[j].Position.subtract(c);
+                    var term1 = new [,]{{vector1[0],vector1[1],vector1[2]}};
+                    var term3 = term1;
+                    var term4 =new [,]{{vector1[0]},{vector1[1]},{vector1[2]}};
+                    for (var k = 0; k < 3; k++)
+                    {
+                        var vector2 = triangle.Vertices[k].Position.subtract(c);
+                        var term2 = new [,]{{vector2[0]},{vector2[1]},{vector2[2]}};
+                        jTerm1 = term1.multiply(term2);
+                    }
+                    covarianceI = covarianceI.add(jTerm1.add(term3.multiply(term4)));
+                }
+                covariance = covariance.add(covarianceI.multiply(1.0/12.0));
+            }
+            
+            //Find eigenvalues of covariance matrix
+            double[][] eigenVectors;
+            var eigenValues = covariance.GetEigenValuesAndVectors(out eigenVectors);
+            //Find the most important eigenVector?
+            foreach (var eigenVector in eigenVectors)
+            {
+            }
+           
+            
             throw new NotImplementedException();
         }
 
         /// <summary>
         /// Finds the minimum bounding box using a brute force method based on the 2D Caliper Approach 
-        /// Based on: Rourke. "Finding Minimal Enclosing Boxes." 1985.
+        /// Based on: O'Rourke. "Finding Minimal Enclosing Boxes." 1985.
         /// http://cs.smith.edu/~orourke/Papers/MinVolBox.pdf
         /// Difficult implementation (5/5)
         /// </summary>
@@ -81,8 +139,13 @@ namespace TVGL
         /// <accuracy>
         /// Gaurantees and optimal solution.
         /// </accuracy>
-        private static BoundingBox Find_via_Rourke_Approach(TessellatedSolid ts)
+        private static BoundingBox Find_via_ORourke_Approach(TessellatedSolid ts)
         {
+            //Construct Gaussian sphere for the given convex polyhedron: completed in O(n) time
+            //for all pairs of edges e1 and e2: completed in O(n^2) time
+            //  Rotate 3 orthogonal "calipers" throughout Theta1 range,
+            //  computing volume of each local minimum.
+            //return global minima
             throw new NotImplementedException();
         }
 
