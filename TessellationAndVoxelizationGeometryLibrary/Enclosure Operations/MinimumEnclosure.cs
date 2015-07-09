@@ -210,8 +210,12 @@ namespace TVGL
             var xDir = direction[0];
             var yDir = direction[1];
             var zDir = direction[2];
-
-            var rotateY = StarMath.RotationY(-Math.Atan(xDir / zDir), true);
+            
+            var rotateY = StarMath.RotationY(-Math.Atan(xDir/zDir), true);
+            if (zDir == 0 && xDir != 0)
+            {
+                rotateY = StarMath.RotationY(-Math.Atan(xDir*double.PositiveInfinity), true);
+            }           
             var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
             var rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
             var transform = rotateX.multiply(rotateY);

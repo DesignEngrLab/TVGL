@@ -52,7 +52,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             // 4)   Add nodes to an ordered loop (same as points2D except now Nodes) 
             //      and a sorted loop (used for sweeping).
             // 5) Get the number of positive and negative loops. 
-            var i = 0;
+            var i = 0; //i is the used to set the loop ID
             var orderedLoops = new List<List<Node>>();
             var sortedLoops = new List<List<Node>>();
             var listPositive = isPositive.ToList<bool>();
@@ -441,7 +441,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// Gets the type of node for B.
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
-        internal static NodeType GetNodeType(Point a, Point b, Point c, bool reverse = false)
+        internal static NodeType GetNodeType(Point a, Point b, Point c)
         {
             if (a.Y < b.Y)
             {
@@ -449,7 +449,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 {
                     return NodeType.Left;
                 }
-                return GetAngle(a, b, c, reverse) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
+                return GetAngle(a, b, c) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
 
             }
 
@@ -457,24 +457,24 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 if (c.Y > b.Y)
                 {
-                    return GetAngle(a, b, c, reverse) < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
+                    return GetAngle(a, b, c) < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
                 }
                 if (c.Y < b.Y)
                 {
                     return NodeType.Right;
                 }
                 //else c.Y = b.Y)
-                return GetAngle(a, b, c, reverse) < Math.PI ? NodeType.Root : NodeType.Right;
+                return GetAngle(a, b, c) < Math.PI ? NodeType.Root : NodeType.Right;
             }
 
             //Else, a.Y = b.Y
             if (c.Y > b.Y)
             {
-                return GetAngle(a, b, c, reverse) > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
+                return GetAngle(a, b, c) > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
             }
             if (c.Y < b.Y)
             {
-                return GetAngle(a, b, c, reverse) > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
+                return GetAngle(a, b, c) > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
             }
             if (a.X > c.X)
             {
