@@ -71,8 +71,9 @@ namespace TVGL
         {
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
-            double totalArea;
-            //Set the area for each triangle and aggregate to get the surface area of the convex hull
+            var totalArea =  0.0;
+            //Set the area for each triangle and its center vertex 
+            //Also, aggregate to get the surface area of the convex hull
             foreach (var triangle in triangles)
             {
                 var vector1 = triangle.Vertices[0].Position.subtract(triangle.Vertices[1].Position);
@@ -80,10 +81,14 @@ namespace TVGL
                 var cross = vector1.crossProduct(vector2);
                 triangle.Area = 0.5*(Math.Sqrt(cross[0]*cross[0] + cross[1]*cross[1] + cross[2]*cross[2]));
                 totalArea = totalArea + triangle.Area;
+                var xAve = (triangle.Vertices[0].X + triangle.Vertices[1].X + triangle.Vertices[2].X)/3;
+                var yAve = (triangle.Vertices[0].Y + triangle.Vertices[1].Y + triangle.Vertices[2].Y)/3;
+                var zAve = (triangle.Vertices[0].Z + triangle.Vertices[1].Z + triangle.Vertices[2].Z)/3;
+                triangle.Center = new[] {xAve, yAve, zAve};
             }
 
             //Calculate the center of gravity of each triangle
-            var c = new double[3];
+            var c = new double[]{0.0,0.0,0.0};
             foreach (var triangle in triangles)
             {
                 //Find the triangle weight based proportional to area

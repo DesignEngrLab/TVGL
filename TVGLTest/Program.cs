@@ -63,6 +63,7 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                 // TestXSections(ts[0]);   
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
+                MinimumEnclosure.Find_via_ContinuousPCA_Approach(ts[0]);
                 TestSlice(ts[0]);
                 //TestOBB(ts[0]);       
 
