@@ -72,7 +72,7 @@ namespace TVGL
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
 
-            var totalArea =  0.0;
+            var totalArea = 0.0;
             var minArea = double.PositiveInfinity;
             //Set the area for each triangle and its center vertex 
             //Also, aggregate to get the surface area of the convex hull
@@ -103,7 +103,7 @@ namespace TVGL
             var covariance = new double[3, 3];
             foreach (var triangle in triangles)
             {
-                var covarianceI = new [,] {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+                var covarianceI = new[,] { { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 } };
                 for (var j = 0; j < 3; j++)
                 {
                     var jTerm1 = new double[3, 3];
@@ -129,10 +129,10 @@ namespace TVGL
             //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
-                var points = Get2DProjectionPoints(ts.ConvexHullVertices, eigenVector);
+                var points = MiscFunctions.Get2DProjectionPoints(ts.ConvexHullVertices, eigenVector);
                 var cvHull = ConvexHull2D(points);
                 double area;
-                RotatingCalipers2DMethod(cvHull,out area);
+                RotatingCalipers2DMethod(cvHull, out area);
                 if (area < minArea)
                 {
                     minArea = area;
@@ -162,49 +162,49 @@ namespace TVGL
             //for all pairs of edges e1 and e2: completed in O(n^2) time
             var edges = new List<Edge>();
             var minVolume = double.PositiveInfinity;
-            for(var i = 0; i < edges.Count-1; i++)
+            for (var i = 0; i < edges.Count - 1; i++)
             {
-                for(var j=i+1; j < edges.Count; j++)
+                for (var j = i + 1; j < edges.Count; j++)
                 {
                     var edge1 = edges[i];
                     var edge2 = edges[j];
-                    
+
                     //Find the three normals defined by the two edges being flush with two adjacent faces
                     //Note that the three normals are dependent on one another based on lemma #3 in O'Rourke
                     //Now use the Gaussian sphere to pick values for n1. (Difficult)
                     //todo: While....
-                        double theta =0.0; //todo: Find theta?
-                        double phi=0.0;   //Find phi?
-                        var e1 = new [] {0.0, 0.0, 1.0}; 
-                        var e2 = new [] {0.0, Math.Cos(phi), Math.Sin(phi)};
-                        var normal1 = new [] {Math.Cos(theta), Math.Sin(theta), 0};
-                        var R = Math.Sqrt(Math.Pow(Math.Cos(theta), 2) +
-                                          Math.Pow(Math.Sin(theta), 2)*
-                                          Math.Pow(Math.Sin(phi), 2));
-                        var x2 = -Math.Sign(Math.Sin(phi))*Math.Sin(phi)*Math.Sin(theta)*Math.Sin(phi)/R;
-                        var y2 =  Math.Sign(Math.Sin(phi)) * Math.Sin(phi) * Math.Cos(theta) * Math.Sin(phi) / R;
-                        var z2 = -Math.Cos(theta)*Math.Cos(phi)/R;
-                        var normal2 = new[] {x2, y2, z2};
-                        var normal3 = normal1.crossProduct(normal2);
-                        var normals = new double[][]{normal1,normal2,normal3};
-                        
+                    double theta = 0.0; //todo: Find theta?
+                    double phi = 0.0;   //Find phi?
+                    var e1 = new[] { 0.0, 0.0, 1.0 };
+                    var e2 = new[] { 0.0, Math.Cos(phi), Math.Sin(phi) };
+                    var normal1 = new[] { Math.Cos(theta), Math.Sin(theta), 0 };
+                    var R = Math.Sqrt(Math.Pow(Math.Cos(theta), 2) +
+                                      Math.Pow(Math.Sin(theta), 2) *
+                                      Math.Pow(Math.Sin(phi), 2));
+                    var x2 = -Math.Sign(Math.Sin(phi)) * Math.Sin(phi) * Math.Sin(theta) * Math.Sin(phi) / R;
+                    var y2 = Math.Sign(Math.Sin(phi)) * Math.Sin(phi) * Math.Cos(theta) * Math.Sin(phi) / R;
+                    var z2 = -Math.Cos(theta) * Math.Cos(phi) / R;
+                    var normal2 = new[] { x2, y2, z2 };
+                    var normal3 = normal1.crossProduct(normal2);
+                    var normals = new double[][] { normal1, normal2, normal3 };
 
-                        //actually, only do this portion once.
-                        //The gaussian sphere determines the new contacts
-                        //Now search along the normals to find the furthest point and get the minimum volume.
-                        var lengths = new List<double>();
-                        foreach (var normal in normals)
-                        {
-                            Vertex vLow;
-                            Vertex vHigh;
-                            var length = GetLengthAndExtremeVertices(normal, ts.ConvexHullVertices, out vLow, out vHigh);
-                            lengths.Add(length);
-                        }
-                        var volume = lengths[0]*lengths[1]*lengths[2];
-                        if (volume < minVolume)
-                        {
-                            minVolume = volume;
-                        } 
+
+                    //actually, only do this portion once.
+                    //The gaussian sphere determines the new contacts
+                    //Now search along the normals to find the furthest point and get the minimum volume.
+                    var lengths = new List<double>();
+                    foreach (var normal in normals)
+                    {
+                        Vertex vLow;
+                        Vertex vHigh;
+                        var length = GetLengthAndExtremeVertices(normal, ts.ConvexHullVertices, out vLow, out vHigh);
+                        lengths.Add(length);
+                    }
+                    var volume = lengths[0] * lengths[1] * lengths[2];
+                    if (volume < minVolume)
+                    {
+                        minVolume = volume;
+                    }
 
                     //End while
                 }
@@ -301,7 +301,7 @@ namespace TVGL
             Vertex v1Low, v1High;
             var length = GetLengthAndExtremeVertices(direction, vertices, out v1Low, out v1High);
             double[,] backTransform;
-            Get2DProjectionPoints(vertices, direction, out backTransform);
+          MiscFunctions.  Get2DProjectionPoints(vertices, direction, out backTransform);
 
             double minArea;
             var rotateZ = StarMath.RotationZ(RotatingCalipers2DMethod(vertices.Select(v => new Point(v)).ToArray(), out minArea));
@@ -319,109 +319,6 @@ namespace TVGL
             Vertex v3Low, v3High;
             GetLengthAndExtremeVertices(nz, vertices, out v3Low, out v3High);
             return new BoundingBox(length * minArea, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High }, new[] { direction, ny, nz });
-        }
-
-        /// <summary>
-        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in 
-        /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        /// the vertices. 
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction)
-        {
-            var xDir = direction[0];
-            var yDir = direction[1];
-            var zDir = direction[2];
-            double[,] rotateX, rotateY;
-            if (xDir == 0 && zDir == 0)
-            {
-                rotateX = StarMath.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
-                rotateY = StarMath.makeIdentity(4);
-            }
-            else if (zDir == 0)
-            {
-                rotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
-                var baseLength = Math.Abs(xDir);
-                rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
-            }
-            else
-            {
-                rotateY = StarMath.RotationY(-Math.Atan(xDir / zDir), true);
-                var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
-                rotateX = StarMath.RotationX(Math.Atan(yDir / baseLength), true);
-            }
-            var transform = rotateX.multiply(rotateY);
-
-
-            var points = new Point[vertices.Count];
-            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
-            for (var i = 0; i < vertices.Count; i++)
-            {
-                pointAs4[0] = vertices[i].Position[0];
-                pointAs4[1] = vertices[i].Position[1];
-                pointAs4[2] = vertices[i].Position[2];
-                pointAs4 = transform.multiply(pointAs4);
-                points[i] = new Point(vertices[i], pointAs4[0], pointAs4[1], pointAs4[2]);
-            }
-            return points;
-        }
-
-        /// <summary>
-        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in 
-        /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        /// the vertices. 
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
-        /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction, out double[,] backTransform)
-        {
-            var xDir = direction[0];
-            var yDir = direction[1];
-            var zDir = direction[2];
-
-            double[,] rotateX, rotateY, backRotateX, backRotateY;
-            if (xDir == 0 && zDir == 0)
-            {
-                rotateX = StarMath.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
-                backRotateX = StarMath.RotationX(-Math.Sign(yDir) * Math.PI / 2, true);
-                backRotateY = rotateY = StarMath.makeIdentity(4);
-            }
-            else if (zDir == 0)
-            {
-                rotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
-                backRotateY = StarMath.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
-                var rotXAngle = Math.Atan(yDir / Math.Abs(xDir));
-                rotateX = StarMath.RotationX(rotXAngle, true);
-                backRotateX = StarMath.RotationX(-rotXAngle, true);
-            }
-            else
-            {
-                var rotYAngle = Math.Atan(xDir / zDir);
-                rotateY = StarMath.RotationY(-rotYAngle, true);
-                backRotateY = StarMath.RotationY(rotYAngle, true);
-                var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
-                var rotXAngle = Math.Atan(yDir / baseLength);
-                rotateX = StarMath.RotationX(rotXAngle, true);
-                backRotateX = StarMath.RotationX(-rotXAngle, true);
-            }
-            var transform = rotateX.multiply(rotateY);
-            backTransform = backRotateY.multiply(backRotateX);
-
-
-            var points = new Point[vertices.Count];
-            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
-            for (var i = 0; i < vertices.Count; i++)
-            {
-                pointAs4[0] = vertices[i].Position[0];
-                pointAs4[1] = vertices[i].Position[1];
-                pointAs4[2] = vertices[i].Position[2];
-                pointAs4 = transform.multiply(pointAs4);
-                points[i] = new Point(vertices[i], pointAs4[0], pointAs4[1], pointAs4[2]);
-            }
-            return points;
         }
 
 

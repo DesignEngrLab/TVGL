@@ -219,7 +219,7 @@ namespace TVGL.Boolean_Operations
             // These are the faces on either side of the edge that are in the backward or forward direction of the loop.
             var splitEdgeDict = straddleEdges.ToDictionary(edge => edge,
                 edge => new Tuple<Vertex, PolygonalFace, PolygonalFace>(
-                    LineFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, edge.From, edge.To), null, null));
+                    MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, edge.From, edge.To), null, null));
             // next add 0,1,or 2 ContactElements for the inPlane Vertices. Why is this not known? Because many of the vertices
             // are ends of inPlaneEdges, which are defined in the previous loop.
             foreach (var startingVertex in inPlaneVerticesHash)

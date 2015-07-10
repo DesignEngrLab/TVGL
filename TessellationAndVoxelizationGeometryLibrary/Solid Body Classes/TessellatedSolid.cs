@@ -371,7 +371,7 @@ namespace TVGL.Tessellation
             var numloops = newEdgeVertices.GetLength(0);
             var points2D = new Point[numloops][];
             for (int i = 0; i < numloops; i++)
-                points2D[i] = MinimumEnclosure.Get2DProjectionPoints(newEdgeVertices[i], normal);
+                points2D[i] = MiscFunctions.Get2DProjectionPoints(newEdgeVertices[i], normal);
             var patchTriangles = TriangulatePolygon.Run(points2D.ToList(), loopIsPositive);
             var patchFaces = new List<PolygonalFace>();
             foreach (var triangle in patchTriangles)

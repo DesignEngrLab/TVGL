@@ -21,7 +21,7 @@ namespace TVGL
             double[] center;
             double t1, t2;
             var signedDistances = new List<double>();
-            LineFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
+            MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
                faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
             if (!center.Any(double.IsNaN) || center.IsNegligible())
             {
@@ -31,7 +31,7 @@ namespace TVGL
             }
             for (var i = 1; i < n; i++)
             {
-                LineFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
+                MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
                    faces[i - 1].Center, faces[i - 1].Normal, out center, out t1, out t2);
                 if (!center.Any(double.IsNaN) || center.IsNegligible())
                 {
@@ -49,7 +49,7 @@ namespace TVGL
             var isPositive = (numNeg > numPos);
             var radii = new List<double>();
             foreach (var face in faces)
-                radii.AddRange(face.Vertices.Select(v => LineFunctions.DistancePointToPoint(v.Position, center)));
+                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToPoint(v.Position, center)));
             var averageRadius = radii.Average();
 
             Center = center;
@@ -88,7 +88,7 @@ namespace TVGL
                 Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
-                if (Math.Abs(LineFunctions.DistancePointToPoint(v.Position, Center) - Radius) > Constants.ErrorForFaceInSurface * Radius)
+                if (Math.Abs(MiscFunctions.DistancePointToPoint(v.Position, Center) - Radius) > Constants.ErrorForFaceInSurface * Radius)
                     return false;
             return true;
         }
@@ -96,13 +96,13 @@ namespace TVGL
         public override void UpdateWith(PolygonalFace face)
         {
             double[] pointOnLine;
-            var distance = LineFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);
+            var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);
             var fractionToMove = 1 / Faces.Count;
             var MoveVector = pointOnLine.subtract(Center);
             Center = Center.add(new[] { MoveVector[0] * fractionToMove * distance, MoveVector[1] * fractionToMove * distance, MoveVector[2] * fractionToMove * distance });
 
 
-            var totalOfRadii = Vertices.Sum(v => LineFunctions.DistancePointToPoint(Center, v.Position));
+            var totalOfRadii = Vertices.Sum(v => MiscFunctions.DistancePointToPoint(Center, v.Position));
             Radius = totalOfRadii / Vertices.Count;
             base.UpdateWith(face);
         }

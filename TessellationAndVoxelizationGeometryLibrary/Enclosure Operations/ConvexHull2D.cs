@@ -39,7 +39,7 @@ namespace TVGL
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<Point> ConvexHull2D(IList<Vertex> vertices, double[] direction)
         {
-           return ConvexHull2D(new List<Point>(Get2DProjectionPoints(vertices, direction)));
+           return ConvexHull2D(new List<Point>(MiscFunctions.Get2DProjectionPoints(vertices, direction)));
         }
 
         /// <summary>

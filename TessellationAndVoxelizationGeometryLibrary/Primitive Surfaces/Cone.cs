@@ -62,7 +62,7 @@ namespace TVGL
             double[] axisRefPoint;
             var n1 = faces[0].Normal.crossProduct(axis);
             var n2 = faces[numFaces - 1].Normal.crossProduct(axis);
-            LineFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.dotProduct(n1),
+            MiscFunctions.LineIntersectingTwoPlanes(n1, faces[0].Center.dotProduct(n1),
               n2, faces[numFaces - 1].Center.dotProduct(n2), axis, out axisRefPoint);
             if (!axisRefPoint.Any(double.IsNaN) && !axisRefPoint.IsNegligible())
                 axisRefPoints.Add(axisRefPoint);
@@ -70,7 +70,7 @@ namespace TVGL
             {
                 n1 = faces[i].Normal.crossProduct(axis);
                 n2 = faces[i - 1].Normal.crossProduct(axis);
-                LineFunctions.LineIntersectingTwoPlanes(n1, faces[i].Center.dotProduct(n1),
+                MiscFunctions.LineIntersectingTwoPlanes(n1, faces[i].Center.dotProduct(n1),
                   n2, faces[i - 1].Center.dotProduct(n2), axis, out axisRefPoint);
                 if (!axisRefPoint.Any(double.IsNaN) && !axisRefPoint.IsNegligible())
                     axisRefPoints.Add(axisRefPoint);
@@ -86,7 +86,7 @@ namespace TVGL
             var apexDistance = 0.0;
             for (int i = 1; i < numFaces; i++)
             {
-                var distToAxis = LineFunctions.DistancePointToLine(faces[i].Center, axisRefPoint, axis);
+                var distToAxis = MiscFunctions.DistancePointToLine(faces[i].Center, axisRefPoint, axis);
                 var distAlongAxis = axis.dotProduct(faces[i].Center);
                 distAlongAxis += distToAxis / Math.Tan(aperture);
                 if (double.IsNaN(distAlongAxis)) continue;

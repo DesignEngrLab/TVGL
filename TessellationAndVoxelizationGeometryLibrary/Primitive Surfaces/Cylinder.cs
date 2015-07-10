@@ -44,7 +44,7 @@ namespace TVGL
             double[] center;
             double t1, t2;
             var signedDistances = new List<double>();
-            LineFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
+            MiscFunctions.SkewedLineIntersection(faces[0].Center, faces[0].Normal,
                faces[n - 1].Center, faces[n - 1].Normal, out center, out t1, out t2);
             if (!center.Any(double.IsNaN) || center.IsNegligible())
             {
@@ -54,7 +54,7 @@ namespace TVGL
             }
             for (var i = 1; i < n; i++)
             {
-                LineFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
+                MiscFunctions.SkewedLineIntersection(faces[i].Center, faces[i].Normal,
                    faces[i - 1].Center, faces[i - 1].Normal, out center, out t1, out t2);
                 if (!center.Any(double.IsNaN) || center.IsNegligible())
                 {
@@ -75,7 +75,7 @@ namespace TVGL
             var isPositive = (numNeg > numPos);
             var radii = new List<double>();
             foreach (var face in faces)
-                radii.AddRange(face.Vertices.Select(v => LineFunctions.DistancePointToLine(v.Position, center, axis)));
+                radii.AddRange(face.Vertices.Select(v => MiscFunctions.DistancePointToLine(v.Position, center, axis)));
             var averageRadius = radii.Average();
 
             Axis = axis;
@@ -100,7 +100,7 @@ namespace TVGL
             var v3 = edge.OwnedFace.Vertices.First(v => v != v1 && v != v2);
             var v4 = edge.OtherFace.Vertices.First(v => v != v1 && v != v2);
             double[] center;
-            LineFunctions.SkewedLineIntersection(edge.OwnedFace.Center, edge.OwnedFace.Normal,
+            MiscFunctions.SkewedLineIntersection(edge.OwnedFace.Center, edge.OwnedFace.Normal,
                edge.OtherFace.Center, edge.OtherFace.Normal, out center);
             /* determine is positive or negative */
             var isPositive = (edge.Curvature == CurvatureType.Convex);
@@ -117,10 +117,10 @@ namespace TVGL
                 center[1] - distToOrigin*axis[1],
                 center[2] - distToOrigin*axis[2]
             };
-            var d1 = LineFunctions.DistancePointToLine(v1.Position, center, axis);
-            var d2 = LineFunctions.DistancePointToLine(v2.Position, center, axis);
-            var d3 = LineFunctions.DistancePointToLine(v3.Position, center, axis);
-            var d4 = LineFunctions.DistancePointToLine(v4.Position, center, axis);
+            var d1 = MiscFunctions.DistancePointToLine(v1.Position, center, axis);
+            var d2 = MiscFunctions.DistancePointToLine(v2.Position, center, axis);
+            var d3 = MiscFunctions.DistancePointToLine(v3.Position, center, axis);
+            var d4 = MiscFunctions.DistancePointToLine(v4.Position, center, axis);
             var averageRadius = (d1 + d2 + d3 + d4) / 4;
             var outerEdges = new List<Edge>(edge.OwnedFace.Edges);
             outerEdges.AddRange(edge.OtherFace.Edges);
@@ -162,7 +162,7 @@ namespace TVGL
             if (Math.Abs(face.Normal.dotProduct(Axis)) > Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
-                if (Math.Abs(LineFunctions.DistancePointToLine(v.Position, Anchor, Axis) - Radius) > Constants.ErrorForFaceInSurface * Radius)
+                if (Math.Abs(MiscFunctions.DistancePointToLine(v.Position, Anchor, Axis) - Radius) > Constants.ErrorForFaceInSurface * Radius)
                     return false;
             return true;
         }
@@ -175,7 +175,7 @@ namespace TVGL
         {
             var numFaces = Faces.Count;
             double[] inBetweenPoint;
-            var distance = LineFunctions.SkewedLineIntersection(face.Center, face.Normal, Anchor, Axis, out inBetweenPoint);
+            var distance = MiscFunctions.SkewedLineIntersection(face.Center, face.Normal, Anchor, Axis, out inBetweenPoint);
             var fractionToMove = 1 / numFaces;
             var moveVector = Anchor.crossProduct(face.Normal);
             if (moveVector.dotProduct(face.Center.subtract(inBetweenPoint)) < 0)
@@ -200,7 +200,7 @@ namespace TVGL
             foreach (var v in face.Vertices)
                 if (!Vertices.Contains(v))
                     Vertices.Add(v);
-            var totalOfRadii = Vertices.Sum(v => LineFunctions.DistancePointToLine(v.Position, Anchor, Axis));
+            var totalOfRadii = Vertices.Sum(v => MiscFunctions.DistancePointToLine(v.Position, Anchor, Axis));
             /**** set new Radius (by averaging in with last n values) ****/
             Radius = totalOfRadii / Vertices.Count;
             base.UpdateWith(face);

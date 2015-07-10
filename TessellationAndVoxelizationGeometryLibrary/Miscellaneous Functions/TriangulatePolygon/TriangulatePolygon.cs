@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 using TVGL.Tessellation;
@@ -33,7 +34,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
             //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.
             //Ex 3) If a positive loop intersects itself, it should be two seperate positive loops
-            
+
             //Create return variable
             var triangles = new List<Vertex[]>();
 
@@ -188,11 +189,11 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
 
                                 //Add remaining points from loop into sortedGroup.
                                 MergeSortedListsOfNodes(sortedGroup, completeListSortedLoops[node.LoopID], node);
-                                
+
                                 //Remove this loop from lists of loops and the boolean list
                                 var loop = completeListSortedLoops[node.LoopID];
                                 var k = sortedLoops.FindIndex(loop);
-                                listPositive.RemoveAt(k); 
+                                listPositive.RemoveAt(k);
                                 orderedLoops.RemoveAt(k);
                                 sortedLoops.RemoveAt(k);
                             }
@@ -307,7 +308,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                             break;
                     }
                 }
-                if (trapTree.Count > 0 )
+                if (trapTree.Count > 0)
                 {
                     throw new System.ArgumentException("Trapezoidation failed to complete properly. Check to see that the assumptions are met.");
                 }
@@ -429,7 +430,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             //The addition of negative loops makes this: triangles = (number of vertices) + 2*(number of negative loops) - 2
             //The most general form (by inspection) is then: triangles = (number of vertices) + 2*(number of negative loops) - 2*(number of positive loops)
             //You could individually solve the equation for each positive loop, but simpler just to use most general form.
-            if (triangles.Count != pointCount+2*negativeLoopCount-2*positiveLoopCount)
+            if (triangles.Count != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
             {
                 throw new System.ArgumentException("Incorrect number of triangles created in triangulate function");
             }
@@ -443,13 +444,14 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         /// A, B, & C are counterclockwise ordered points.
         internal static NodeType GetNodeType(Point a, Point b, Point c)
         {
+            var angle = MiscFunctions.AngleBetweenEdgesCCW(a, b, c);
             if (a.Y < b.Y)
             {
                 if (c.Y > b.Y)
                 {
                     return NodeType.Left;
                 }
-                return LineFunctions.AngleBetweenEdgesCCW(a, b, c) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
+                return angle < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
 
             }
 
@@ -457,24 +459,24 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 if (c.Y > b.Y)
                 {
-                    return GetAngle(a, b, c) < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
+                    return angle < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
                 }
                 if (c.Y < b.Y)
                 {
                     return NodeType.Right;
                 }
                 //else c.Y = b.Y)
-                return GetAngle(a, b, c) < Math.PI ? NodeType.Root : NodeType.Right;
+                return angle < Math.PI ? NodeType.Root : NodeType.Right;
             }
 
             //Else, a.Y = b.Y
             if (c.Y > b.Y)
             {
-                return GetAngle(a, b, c) > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
+                return angle > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
             }
             if (c.Y < b.Y)
             {
-                return GetAngle(a, b, c) > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
+                return angle > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
             }
             if (a.X > c.X)
             {
@@ -484,35 +486,6 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         }
         #endregion
 
-        #region Get Angle Between Three Points That Form Two Vectors
-        /// <summary>
-        /// Gets the  clockwise angle from line AB to BC. 
-        /// </summary>
-        /// A, B, & C are counterclockwise ordered points.
-        /// "If" statements were determined by observation
-        public static double GetAngle(Point a, Point b, Point c, bool reverse = false)
-        {
-            var edgeVectors0 = b.Position2D.subtract(a.Position2D).normalize();
-            var edgeVectors1 = c.Position2D.subtract(b.Position2D).normalize();
-
-
-            //Since these points are in 2D, use crossProduct2
-            var tempCross = StarMath.crossProduct2(edgeVectors0, edgeVectors1);
-            //If points are in the incorrect order (e.g., left line from the triangulate function), use inverse tempCross
-            if (reverse == true)
-            {
-                tempCross = -tempCross;
-            }
-            var tempDot = edgeVectors0.dotProduct(edgeVectors1);
-            var theta = Math.Abs(Math.Asin(tempCross));
-            if (tempDot >= 0)
-            {
-                return (tempCross >= 0) ? Math.PI - theta : Math.PI + theta;
-            }
-            //Else, tempDot < 0 ...
-            return (tempCross < 0) ? 2 * Math.PI - theta : theta;
-        }
-        #endregion
 
         #region Create Trapezoid and Insert Into List
         internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, ref List<PartialTrapezoid> trapTree, ref List<Trapezoid> completedTrapezoids)
@@ -545,7 +518,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             {
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (xdif < 0 && Math.Abs(xdif) > 1E-10 )//Moved to the left by some tolerance
+                if (xdif < 0 && Math.Abs(xdif) > 1E-10)//Moved to the left by some tolerance
                 {
                     counter++;
                     if (xdif > xleft || ((Math.Abs(xdif - xleft) < 1E-10) && line.m <= slopeMax))//If less than OR if approximately equal and slope is more negative
@@ -573,12 +546,12 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
             foreach (var line in lineList)
             {
                 var x = line.Xintercept(node.Y);
-                
+
                 var xdif = x - node.X;
-                if (xdif > 0 && Math.Abs(xdif)> 1E-10 )//Moved to the right by some tolerance
+                if (xdif > 0 && Math.Abs(xdif) > 1E-10)//Moved to the right by some tolerance
                 {
                     counter++;
-                    if (xdif < xright || ((Math.Abs(xdif-xright) < 1E-10) && line.m >= slopeMax)) //If less than OR if approximately equal and slope is more positive
+                    if (xdif < xright || ((Math.Abs(xdif - xright) < 1E-10) && line.m >= slopeMax)) //If less than OR if approximately equal and slope is more positive
                     {
                         xright = xdif;
                         rightLine = line;
@@ -599,7 +572,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
         internal static int InsertNodeInSortedList(List<Node> sortedNodes, Node node)
         {
             //Search for insertion location starting from the first element in the list.
-            for (int i = 0; i < sortedNodes.Count(); i++) 
+            for (int i = 0; i < sortedNodes.Count(); i++)
             {
                 if (node.Y > sortedNodes[i].Y) //Descending Y
                 {
@@ -701,21 +674,25 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 {
                     while (scan.Count > 1)
                     {
-                        triangles.Add(new Vertex[] {node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
+                        triangles.Add(new Vertex[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain
                         //Essentially this moves the peak. 
                         //Though not mentioned explicitely in algorithm description, this step is required.
                         scan[0].IsLeftChain = true;
                         scan[0].IsRightChain = true;
-                     }
+                    }
                     //add node to end of scan list
-                    scan.Add(node);  
+                    scan.Add(node);
                 }
-                else 
+                else
                 {
                     //Note that if the chain is the right chain, the order of nodes will be backwards and therefore GetAngle(a,b,c,reverse = true)
-                    while (scan.Count() > 1 && GetAngle(scan[scan.Count - 2].Point, scan.Last().Point, node.Point, node.IsRightChain) < Math.PI) 
+                    var angle = (node.IsRightChain)
+                        ? MiscFunctions.AngleBetweenEdgesCCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point)
+                        : MiscFunctions.AngleBetweenEdgesCCW(scan[scan.Count - 2].Point, scan.Last().Point, node.Point);
+                    //todo: Brandon to check. Did i break something?
+                    while (scan.Count() > 1 && angle < Math.PI)
                     {
                         triangles.Add(new Vertex[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
                         //Remove last node from scan list 
