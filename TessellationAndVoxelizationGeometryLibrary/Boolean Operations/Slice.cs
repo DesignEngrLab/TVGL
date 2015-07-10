@@ -133,16 +133,12 @@ namespace TVGL.Boolean_Operations
                 if (possibleNextCEs.Count == 1) thisCE = possibleNextCEs[0];
                 else if (possibleNextCEs.Count > 1)
                 {
-                    var thisAngle = Math.Atan2(thisCE.EndVertex.Y - thisCE.StartVertex.Y,
-                        thisCE.EndVertex.X - thisCE.StartVertex.X);
                     var minIndex = -1;
                     var minAngle = double.PositiveInfinity;
                     for (int i = 0; i < possibleNextCEs.Count; i++)
                     {
-                        var nextAngle = Math.Atan2(possibleNextCEs[i].EndVertex.Y - possibleNextCEs[i].StartVertex.Y,
-                            possibleNextCEs[i].EndVertex.X - possibleNextCEs[i].StartVertex.X);
-                        var angleChange = Math.PI - (nextAngle - thisAngle);
-                        if (angleChange < 0) angleChange += Math.PI;
+                        var angleChange = MiscFunctions.AngleBetweenEdgesCCW(thisCE.Vector, possibleNextCEs[i].Vector,
+                            plane.Normal);
                         if (angleChange < minAngle)
                         {
                             minAngle = angleChange;

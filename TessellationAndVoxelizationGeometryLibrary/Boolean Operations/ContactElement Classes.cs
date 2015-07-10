@@ -95,6 +95,19 @@ namespace TVGL
 
 
         internal ContactTypes ContactType { get; set; }
+
+        internal double[] Vector
+        {
+            get
+            {
+                return new[]
+                {
+                    EndVertex.X - StartVertex.X,
+                    EndVertex.Y - StartVertex.Y,
+                    EndVertex.Z - StartVertex.Z
+                };
+            }
+        }
     }
 }
 

@@ -7,6 +7,7 @@ namespace TVGL
 {
     static class MiscFunctions
     {
+        #region Flatten to 2D
         /// <summary>
         /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in 
         /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
@@ -104,7 +105,8 @@ namespace TVGL
             backTransform = backRotateY.multiply(backRotateX);
             return rotateX.multiply(rotateY);
         }
-
+        #endregion
+        #region Angle between Edges/Lines
         internal static double SmallerAngleBetweenEdges(Edge edge1, Edge edge2)
         {
             var axis = edge1.Vector.crossProduct(edge2.Vector);
@@ -121,6 +123,16 @@ namespace TVGL
         internal static double AngleBetweenEdgesCCW(Edge edge1, Edge edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
+            return AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]);
+        }
+        internal static double AngleBetweenEdgesCW(double[] edge1, double[] edge2, double[] axis)
+        {
+            var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
+            return AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]);
+        }
+        internal static double AngleBetweenEdgesCCW(double[] edge1, double[] edge2, double[] axis)
+        {
+            var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
             return AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]);
         }
         internal static double AngleBetweenEdgesCW(Point a, Point b, Point c)
@@ -146,7 +158,9 @@ namespace TVGL
             if (angleChange < 0) return angleChange + 2 * Math.PI;
             return angleChange;
         }
+        #endregion
 
+        #region Intersection Method (between lines, between planes, etc.)
         internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, out double[] DirectionOfLine, out double[] PointOnLine)
         {
             DirectionOfLine = n1.crossProduct(n2).normalize();
@@ -196,7 +210,9 @@ namespace TVGL
             center = new[] { (interSect1[0] + interSect2[0]) / 2, (interSect1[1] + interSect2[1]) / 2, (interSect1[2] + interSect2[2]) / 2 };
             return DistancePointToPoint(interSect1, interSect2);
         }
+        #endregion
 
+        #region Distance Methods (between point, line, and plane)
         /// <summary>
         /// Returns the distance the point to line.
         /// </summary>
@@ -252,5 +268,6 @@ namespace TVGL
             return new Vertex(position);
 
         }
+        #endregion
     }
 }
