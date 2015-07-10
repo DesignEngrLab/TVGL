@@ -23,7 +23,7 @@ namespace TVGL
         }
         internal static double AngleBetweenEdgesCW(Point a, Point b, Point c)
         {
-
+            return 2*Math.PI - AngleBetweenEdgesCCW(a, b, c);
         }
         internal static double AngleBetweenEdgesCCW(Point a, Point b, Point c)
         {
