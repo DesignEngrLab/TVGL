@@ -108,6 +108,8 @@ namespace TVGL
                 };
             }
         }
+
+        internal bool CannotStart { get; set; }
     }
 }
 

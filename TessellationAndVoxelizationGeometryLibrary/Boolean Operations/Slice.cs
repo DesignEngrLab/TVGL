@@ -67,7 +67,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="ts">The ts.</param>
         /// <returns>ContactData.</returns>
         /// <exception cref="System.Exception">Contact Edges found that are not contained in loop.</exception>
-        public static ContactData DefineContact(Flat plane, TessellatedSolid ts, Boolean artficiallyCloseOpenLoops = true)
+        public static ContactData DefineContact(Flat plane, TessellatedSolid ts, Boolean artificiallyCloseOpenLoops = true)
         {
             // Contact elements are constructed and then later arranged into loops. Loops make up the returned object, ContactData.
             // Throughout the operations in this method, the distance a given vertex is from the plane is needed. In order to avoid 
@@ -81,7 +81,7 @@ namespace TVGL.Boolean_Operations
             var numberOfTries = 0;
             while (numberOfTries < contactElements.Count)
             {
-                var loop = FindLoop(contactElements, plane, distancesToPlane, artficiallyCloseOpenLoops);
+                var loop = FindLoop(ref contactElements, plane, distancesToPlane, artificiallyCloseOpenLoops);
                 if (loop != null)
                 {
                     Debug.WriteLine(loops.Count + ": " + loop.MakeDebugContactString() + "  ");
@@ -96,17 +96,20 @@ namespace TVGL.Boolean_Operations
                     numberOfTries++;
                 }
             }
-            if (numberOfTries > 0) Debug.WriteLine("Contact Edges found that are not contained in loop.");
+            if (numberOfTries > 0 && !contactElements.All(ce=>ce.CannotStart)) Debug.WriteLine("{0} Contact Elements found that are not contained in loop.", contactElements.Count);
             return new ContactData(loops);
         }
 
-        private static Loop FindLoop(List<ContactElement> contactElements, Flat plane, double[] vertexDistancesToPlane, bool artficiallyCloseOpenLoops)
+        private static Loop FindLoop(ref List<ContactElement> contactElements, Flat plane, double[] vertexDistancesToPlane, bool artificiallyCloseOpenLoops)
         {
             var thisCE = contactElements[0];
+            if (thisCE.CannotStart) return null;
             var loop = new List<ContactElement>();
+            var remainingCEs = new List<ContactElement>(contactElements);
             do
             {
                 loop.Add(thisCE);
+                remainingCEs.Remove(thisCE);
                 var newStartVertex = thisCE.EndVertex;
                 if (loop[0].StartVertex == newStartVertex) // then a loop is found!
                 {
@@ -119,17 +122,20 @@ namespace TVGL.Boolean_Operations
                              vertexDistancesToPlane[ce.SplitFaceNegative.OtherVertex(ce.ContactEdge).IndexInList]
                                  .IsNegligible())))
                     {
-                        contactElements.RemoveAll(
-                            ce => loop.Contains(ce) && ce.ContactEdge.Curvature == CurvatureType.Convex);
+                        contactElements = remainingCEs;
+                        var concaveFlatsCouldBeReused =
+                            loop.Where(ce => ce.ContactEdge.Curvature == CurvatureType.Concave).ToList();
+                        foreach (var contactElement in concaveFlatsCouldBeReused)
+                        contactElement.CannotStart = true;                
+                        contactElements.AddRange(concaveFlatsCouldBeReused);
                         return new Loop(loop, plane.Normal, true, false, true);
-                    }
-
-                    contactElements.RemoveAll(ce => loop.Contains(ce));
+                    }                              
+                    contactElements = remainingCEs;
                     return new Loop(loop, plane.Normal, true, false, false);
                 }
-                var possibleNextCEs = contactElements.Where(ce => ce.StartVertex == newStartVertex).ToList();
+                var possibleNextCEs = remainingCEs.Where(ce => ce.StartVertex == newStartVertex).ToList();
                 if (!possibleNextCEs.Any())
-                    possibleNextCEs = contactElements.Where(ce => ce.StartVertex.Position.IsPracticallySame(newStartVertex.Position)).ToList();
+                    possibleNextCEs = remainingCEs.Where(ce => ce.StartVertex.Position.IsPracticallySame(newStartVertex.Position)).ToList();
                 if (possibleNextCEs.Count == 1) thisCE = possibleNextCEs[0];
                 else if (possibleNextCEs.Count > 1)
                 {
@@ -147,9 +153,9 @@ namespace TVGL.Boolean_Operations
                     }
                     thisCE = possibleNextCEs[minIndex];
                 }
-                else if (artficiallyCloseOpenLoops)
+                else if (artificiallyCloseOpenLoops)
                 {
-                    contactElements.RemoveAll(ce => loop.Contains(ce));
+                    contactElements = remainingCEs;
                     loop.Add(new ContactElement(newStartVertex, null, loop[0].StartVertex, null, null,
                         ContactTypes.Artificial));
                     return new Loop(loop, plane.Normal, true, true, false);
@@ -204,7 +210,7 @@ namespace TVGL.Boolean_Operations
                 var planeDistOtherFOV = distancesToPlane[otherFaceOtherVertex.IndexInList];
                 if (planeDistOwnedFOV.IsNegligible() && planeDistOtherFOV.IsNegligible()) continue;
                 if (planeDistOwnedFOV * planeDistOtherFOV > 0) continue; //if both distances have the same sign, but 
-                                                                         //this is "knife-edge" on the plane
+                //this is "knife-edge" on the plane
                 contactElements.Add(new ContactElement(inPlaneEdge, planeDistOwnedFOV > 0));
             }
             // now things get complicated. For each straddle each make a dictionary to ensure that newly
@@ -214,8 +220,10 @@ namespace TVGL.Boolean_Operations
             // <new vertex on the straddle edge; the backward face; the forward face> .
             // These are the faces on either side of the edge that are in the backward or forward direction of the loop.
             var splitEdgeDict = straddleEdges.ToDictionary(edge => edge,
-                edge => new Tuple<Vertex, PolygonalFace, PolygonalFace>(
-                    MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, edge.From, edge.To), null, null));
+                edge => new StraddleData()
+                {
+                    SplitVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, edge.From, edge.To)
+                });
             // next add 0,1,or 2 ContactElements for the inPlane Vertices. Why is this not known? Because many of the vertices
             // are ends of inPlaneEdges, which are defined in the previous loop.
             foreach (var startingVertex in inPlaneVerticesHash)
@@ -225,23 +233,24 @@ namespace TVGL.Boolean_Operations
                 if (straddleFace != null)
                 {
                     var connectingData = splitEdgeDict[otherEdge];
-                    contactElements.Add(new ContactElement(startingVertex, null, connectingData.Item1, otherEdge, straddleFace, ContactTypes.ThroughVertex));
+                    contactElements.Add(new ContactElement(startingVertex, null, connectingData.SplitVertex, otherEdge, straddleFace, ContactTypes.ThroughVertex));
                     // update the dictionary entry with the fact that the face on the backward side of this forward edge has been found. A "through vertex"
                     // contact element is created for this straddle vertex.
-                    splitEdgeDict[otherEdge] = new Tuple<Vertex, PolygonalFace, PolygonalFace>(connectingData.Item1, straddleFace, connectingData.Item3);
+                    connectingData.BackwardFace = straddleFace;
                 }
                 straddleFace = FindBackwardStraddleFace(plane, startingVertex, distancesToPlane, out otherEdge);
                 if (straddleFace != null)
                 {
                     var connectingData = splitEdgeDict[otherEdge];
-                    contactElements.Add(new ContactElement(connectingData.Item1, otherEdge, startingVertex, null, straddleFace, ContactTypes.ThroughVertex));
-                    splitEdgeDict[otherEdge] = new Tuple<Vertex, PolygonalFace, PolygonalFace>(connectingData.Item1, connectingData.Item2, straddleFace);
+                    contactElements.Add(new ContactElement(connectingData.SplitVertex, otherEdge, startingVertex, null, straddleFace, ContactTypes.ThroughVertex));
+                    connectingData.ForwardFace = straddleFace;
                 }
             }
             foreach (var keyValuePair in splitEdgeDict)
             {   // finally, we make ContactElements for the straddleEdges. This is the trickiest part.
+               
                 var edge = keyValuePair.Key;
-                var newVertex = keyValuePair.Value.Item1;
+                var newVertex = keyValuePair.Value.SplitVertex;
                 var backwardFace = edge.OwnedFace;
                 var forwardFace = edge.OtherFace;
                 if (distancesToPlane[edge.To.IndexInList] < 0)
@@ -250,10 +259,10 @@ namespace TVGL.Boolean_Operations
                     backwardFace = edge.OtherFace;
                     forwardFace = edge.OwnedFace;
                 }
-                if (keyValuePair.Value.Item2 == null)
+                if (keyValuePair.Value.BackwardFace == null)
                 {
                     var otherEdge =
-                        backwardFace.Edges.First(
+                        backwardFace.Edges.FirstOrDefault(
                             e =>
                                 e != edge &&
                                 ((distancesToPlane[e.To.IndexInList] < 0 &&
@@ -261,12 +270,17 @@ namespace TVGL.Boolean_Operations
                                  ||
                                  (distancesToPlane[e.To.IndexInList] > 0 &&
                                   distancesToPlane[e.From.IndexInList] < 0)));
-                    contactElements.Add(new ContactElement(splitEdgeDict[otherEdge].Item1, otherEdge, newVertex, edge, backwardFace, ContactTypes.ThroughFace));
+                    if (otherEdge != null)
+                    {
+                        contactElements.Add(new ContactElement(splitEdgeDict[otherEdge].SplitVertex, otherEdge,
+                            newVertex, edge, backwardFace, ContactTypes.ThroughFace));
+                        splitEdgeDict[otherEdge].ForwardFace = backwardFace;
+                    }
                 }
-                if (keyValuePair.Value.Item3 == null)
+                if (keyValuePair.Value.ForwardFace == null)
                 {
                     var otherEdge =
-                        forwardFace.Edges.First(
+                        forwardFace.Edges.FirstOrDefault(
                             e =>
                                 e != edge &&
                                 ((distancesToPlane[e.To.IndexInList] < 0 &&
@@ -274,10 +288,22 @@ namespace TVGL.Boolean_Operations
                                  ||
                                  (distancesToPlane[e.To.IndexInList] > 0 &&
                                   distancesToPlane[e.From.IndexInList] < 0)));
-                    contactElements.Add(new ContactElement(newVertex, edge, splitEdgeDict[otherEdge].Item1, otherEdge, forwardFace, ContactTypes.ThroughFace));
+                    if (otherEdge != null)
+                    {
+                        contactElements.Add(new ContactElement(newVertex, edge, splitEdgeDict[otherEdge].SplitVertex,
+                            otherEdge, forwardFace, ContactTypes.ThroughFace));
+                        splitEdgeDict[otherEdge].BackwardFace = forwardFace;
+                    }
                 }
             }
             return contactElements;
+        }
+
+        class StraddleData
+        {
+            internal Vertex SplitVertex;
+            internal PolygonalFace BackwardFace;
+            internal PolygonalFace ForwardFace;
         }
 
         internal static PolygonalFace FindForwardStraddleFace(Flat plane, Vertex onPlaneVertex, double[] vertexDistancesToPlane, out Edge edge)
@@ -288,8 +314,8 @@ namespace TVGL.Boolean_Operations
                 var otherEdge = face.OtherEdge(onPlaneVertex);
                 var toDistance = vertexDistancesToPlane[otherEdge.To.IndexInList];
                 var fromDistance = vertexDistancesToPlane[otherEdge.From.IndexInList];
-                if ((toDistance > 0 && fromDistance < 0 && face == otherEdge.OwnedFace)
-                    || (toDistance < 0 && fromDistance > 0 && face == otherEdge.OtherFace))
+                if ((toDistance.IsGreaterThanNonNegligible() && fromDistance.IsLessThanNonNegligible() && face == otherEdge.OwnedFace)
+                    || (toDistance.IsLessThanNonNegligible() && fromDistance.IsGreaterThanNonNegligible() && face == otherEdge.OtherFace))
                 {
                     edge = otherEdge;
                     return face;
@@ -305,8 +331,8 @@ namespace TVGL.Boolean_Operations
                 var otherEdge = face.OtherEdge(onPlaneVertex);
                 var toDistance = vertexDistancesToPlane[otherEdge.To.IndexInList];
                 var fromDistance = vertexDistancesToPlane[otherEdge.From.IndexInList];
-                if ((toDistance > 0 && fromDistance < 0 && face == otherEdge.OtherFace) ||
-                    (toDistance < 0 && fromDistance > 0 && face == otherEdge.OwnedFace))
+                if ((toDistance.IsGreaterThanNonNegligible() && fromDistance.IsLessThanNonNegligible() && face == otherEdge.OtherFace) ||
+                    (toDistance.IsLessThanNonNegligible() && fromDistance.IsGreaterThanNonNegligible() && face == otherEdge.OwnedFace))
                 {
                     edge = otherEdge;
                     return face;
