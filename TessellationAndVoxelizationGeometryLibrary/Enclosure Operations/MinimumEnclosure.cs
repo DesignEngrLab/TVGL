@@ -67,11 +67,12 @@ namespace TVGL
         /// Ex. Dimitrov showed in 2009 that continuous PCA yeilds a volume 4x optimal for a octahedron
         /// http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
         /// </accuracy>
-        public static BoundingBox Find_via_ContinuousPCA_Approach(TessellatedSolid ts)
+        public static double Find_via_ContinuousPCA_Approach(TessellatedSolid ts)
         {
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
             var totalArea =  0.0;
+            var minArea = double.PositiveInfinity;
             //Set the area for each triangle and its center vertex 
             //Also, aggregate to get the surface area of the convex hull
             foreach (var triangle in triangles)
@@ -101,7 +102,7 @@ namespace TVGL
             var covariance = new double[3, 3];
             foreach (var triangle in triangles)
             {
-                var covarianceI = new double[3,3];
+                var covarianceI = new [,] {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
                 for (var j = 0; j < 3; j++)
                 {
                     var jTerm1 = new double[3, 3];
@@ -114,6 +115,7 @@ namespace TVGL
                         var vector2 = triangle.Vertices[k].Position.subtract(c);
                         var term2 = new [,]{{vector2[0]},{vector2[1]},{vector2[2]}};
                         jTerm1 = term1.multiply(term2);
+                        //todo: Figure out how to add these summations up properly
                     }
                     covarianceI = covarianceI.add(jTerm1.add(term3.multiply(term4)));
                 }
@@ -123,13 +125,19 @@ namespace TVGL
             //Find eigenvalues of covariance matrix
             double[][] eigenVectors;
             var eigenValues = covariance.GetEigenValuesAndVectors(out eigenVectors);
-            //Find the most important eigenVector?
+            //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
+                var points = Get2DProjectionPoints(ts.ConvexHullVertices, eigenVector);
+                var cvHull = ConvexHull2D(points);
+                double area;
+                RotatingCalipers2DMethod(cvHull,out area);
+                if (area < minArea)
+                {
+                    minArea = area;
+                }
             }
-           
-            
-            throw new NotImplementedException();
+            return minArea;
         }
 
         /// <summary>
@@ -146,11 +154,60 @@ namespace TVGL
         /// </accuracy>
         private static BoundingBox Find_via_ORourke_Approach(TessellatedSolid ts)
         {
-            //Construct Gaussian sphere for the given convex polyhedron: completed in O(n) time
+            //todo: Create a Gausian sphere from the vertices and faces in the convexHull
+            //for each face normal, create a vertex on the unit sphere 
+            //for every edge, create an arc connecting the two faces adjacent to the edge
+
             //for all pairs of edges e1 and e2: completed in O(n^2) time
-            //  Rotate 3 orthogonal "calipers" throughout Theta1 range,
-            //  computing volume of each local minimum.
-            //return global minima
+            var edges = new List<Edge>();
+            var minVolume = double.PositiveInfinity;
+            for(var i = 0; i < edges.Count-1; i++)
+            {
+                for(var j=i+1; j < edges.Count; j++)
+                {
+                    var edge1 = edges[i];
+                    var edge2 = edges[j];
+                    
+                    //Find the three normals defined by the two edges being flush with two adjacent faces
+                    //Note that the three normals are dependent on one another based on lemma #3 in O'Rourke
+                    //Now use the Gaussian sphere to pick values for n1. (Difficult)
+                    //todo: While....
+                        double theta =0.0; //todo: Find theta?
+                        double phi=0.0;   //Find phi?
+                        var e1 = new [] {0.0, 0.0, 1.0}; 
+                        var e2 = new [] {0.0, Math.Cos(phi), Math.Sin(phi)};
+                        var normal1 = new [] {Math.Cos(theta), Math.Sin(theta), 0};
+                        var R = Math.Sqrt(Math.Pow(Math.Cos(theta), 2) +
+                                          Math.Pow(Math.Sin(theta), 2)*
+                                          Math.Pow(Math.Sin(phi), 2));
+                        var x2 = -Math.Sign(Math.Sin(phi))*Math.Sin(phi)*Math.Sin(theta)*Math.Sin(phi)/R;
+                        var y2 =  Math.Sign(Math.Sin(phi)) * Math.Sin(phi) * Math.Cos(theta) * Math.Sin(phi) / R;
+                        var z2 = -Math.Cos(theta)*Math.Cos(phi)/R;
+                        var normal2 = new[] {x2, y2, z2};
+                        var normal3 = normal1.crossProduct(normal2);
+                        var normals = new double[][]{normal1,normal2,normal3};
+                        
+
+                        //actually, only do this portion once.
+                        //The gaussian sphere determines the new contacts
+                        //Now search along the normals to find the furthest point and get the minimum volume.
+                        var lengths = new List<double>();
+                        foreach (var normal in normals)
+                        {
+                            Vertex vLow;
+                            Vertex vHigh;
+                            var length = GetLengthAndExtremeVertices(normal, ts.ConvexHullVertices, out vLow, out vHigh);
+                            lengths.Add(length);
+                        }
+                        var volume = lengths[0]*lengths[1]*lengths[2];
+                        if (volume < minVolume)
+                        {
+                            minVolume = volume;
+                        } 
+
+                    //End while
+                }
+            }
             throw new NotImplementedException();
         }
 
@@ -173,8 +230,6 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds the minimum bounding box based on a simple O(n^2) time algorithm that 
-        /// finds all minimum boxes with at least one face flush with the convex polygon.
         /// The MC_ApproachOne is a brute force method which includes the flush face algorithm, 
         /// but limits the maximum angle of rotation between faces. 
         /// In this way, it gaurantees a much more optimal solution than the O(n^2) time algorithm.
@@ -224,10 +279,10 @@ namespace TVGL
             return minBox;
         }
 
+
         private static BoundingBox Find_via_MC_ApproachTwo(TessellatedSolid ts)
         {
             throw new NotImplementedException();
-
         }
 
         /// <summary>
