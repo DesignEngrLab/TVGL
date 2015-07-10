@@ -38,7 +38,7 @@ namespace TVGL.Boolean_Operations
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
-            var contactData = DefineContact(plane, ts);
+            var contactData = DefineContact(plane, ts, false);
 
             DivideUpContact(ts, contactData, plane);
             var loops =
@@ -60,292 +60,264 @@ namespace TVGL.Boolean_Operations
 
         /// <summary>
         /// When the tessellated solid is sliced at the specified plane, the contact surfaces are
-        /// described by the return ContactData object. This is a non-destructive function typically
-        /// used to find the shape and size of 2D surface on the prescribed plane..
+        /// described by the returned ContactData object. This is a non-destructive function typically
+        /// used to find the shape and size of 2D surface on the prescribed plane.
         /// </summary>
         /// <param name="plane">The plane.</param>
         /// <param name="ts">The ts.</param>
         /// <returns>ContactData.</returns>
         /// <exception cref="System.Exception">Contact Edges found that are not contained in loop.</exception>
-        public static ContactData DefineContact(Flat plane, TessellatedSolid ts)
+        public static ContactData DefineContact(Flat plane, TessellatedSolid ts, Boolean artficiallyCloseOpenLoops = true)
         {
-            var vertexDistancesToPlane = new double[ts.NumberOfVertices];
+            // Contact elements are constructed and then later arranged into loops. Loops make up the returned object, ContactData.
+            // Throughout the operations in this method, the distance a given vertex is from the plane is needed. In order to avoid 
+            // calculating these distances multiple times, we first construct an array of distances.
+            var distancesToPlane = new double[ts.NumberOfVertices];
             for (int i = 0; i < ts.NumberOfVertices; i++)
-                vertexDistancesToPlane[i] = ts.Vertices[i].Position.dotProduct(plane.Normal) - plane.DistanceToOrigin;
-            // the edges serve as the easiest way to identify where the solid is interacting with the plane.
-            // Instead of a foreach, the while loop lets us look ahead to known edges that are irrelevant.
-            var edgeHashSet = new HashSet<Edge>(ts.Edges);
-            // Contact elements are constructed and then later arranged into loops. Loops make up the returned object, ContactData. 
-            var straddleContactElts = new List<ContactElement>();
-            var inPlaneContactElts = new List<CoincidentEdgeContactElement>();
-            var inPlaneVertices = new List<Vertex>();
-            while (edgeHashSet.Any())
-            {
-                // instead of the foreach, we have this while statement and these first 2 lines to enumerate over the edges.
-                var edge = edgeHashSet.First();
-                edgeHashSet.Remove(edge);
-                var toDistance = vertexDistancesToPlane[edge.To.IndexInList];
-                var fromDistance = vertexDistancesToPlane[edge.From.IndexInList];
-                if (StarMath.IsNegligible(toDistance) && StarMath.IsNegligible(fromDistance))
-                    ContactElement.MakeInPlaneContactElement(plane, edge, edgeHashSet, vertexDistancesToPlane,
-                        inPlaneContactElts);
-                else if (StarMath.IsNegligible(toDistance)) inPlaneVertices.Add(edge.To);
-                else if (StarMath.IsNegligible(fromDistance)) inPlaneVertices.Add(edge.From);
-                else if ((toDistance > 0 && fromDistance < 0)
-                         || (toDistance < 0 && fromDistance > 0))
-                    straddleContactElts.Add(new ThroughFaceContactElement(plane, edge, toDistance));
-            }
-            foreach (var v in inPlaneVertices )
-            {
-                PolygonalFace negativeFace, positiveFace;
-                if (ThroughVertexContactElement.FindNegativeAndPositiveFaces(plane, v, vertexDistancesToPlane,
-                    out negativeFace, out positiveFace))
-                    straddleContactElts.Add(new ThroughVertexContactElement(v, negativeFace, positiveFace));
-            }
-            straddleContactElts.AddRange(inPlaneContactElts);
+                distancesToPlane[i] = ts.Vertices[i].Position.dotProduct(plane.Normal) - plane.DistanceToOrigin;
+            var contactElements = GetContactElements(plane, ts, distancesToPlane);
+
             var loops = new List<Loop>();
             var numberOfTries = 0;
-            while (straddleContactElts.Any() && numberOfTries < straddleContactElts.Count)
+            while (numberOfTries < contactElements.Count)
             {
-                // now build loops from stringing together contact elements
-                var loop = FindLoop(plane, straddleContactElts, vertexDistancesToPlane);
+                var loop = FindLoop(contactElements, plane, distancesToPlane, artficiallyCloseOpenLoops);
                 if (loop != null)
                 {
                     Debug.WriteLine(loops.Count + ": " + loop.MakeDebugContactString() + "  ");
                     loops.Add(loop);
                     numberOfTries = 0;
                 }
-                else numberOfTries++;
+                else
+                {
+                    var startingEdge = contactElements[0];
+                    contactElements.RemoveAt(0);
+                    contactElements.Add(startingEdge);
+                    numberOfTries++;
+                }
             }
-            if (straddleContactElts.Any()) Debug.WriteLine("Contact Edges found that are not contained in loop.");
+            if (numberOfTries > 0) Debug.WriteLine("Contact Edges found that are not contained in loop.");
             return new ContactData(loops);
         }
 
-        /// <summary>
-        /// Finds the loop.
-        /// </summary>
-        /// <param name="plane">The plane.</param>
-        /// <param name="contacts">The contacts.</param>
-        /// <param name="vertexDistancesToPlane"></param>
-        /// <returns>Loop.</returns>
-        private static Loop FindLoop(Flat plane, List<ContactElement> contacts, double[] vertexDistancesToPlane)
+        private static Loop FindLoop(List<ContactElement> contactElements, Flat plane, double[] vertexDistancesToPlane, bool artficiallyCloseOpenLoops)
         {
-            Vertex connectingVertex;
-            var contactElements = new List<ContactElement>();
-            var firstContactElt = contacts[0]; // start with the first one, and keep a reference to it so that we 
-            // can tell when we've looped around.                      
-            // contacts.RemoveAt(0);  why is this commented out? I left it here to help you understand that it is important
-            // to identify a loop. When the below while-loop re-finds this firstContactElt
-            var contactElt = firstContactElt;
-            int nextContactEltIndex = FindNextContactElement(contacts, contactElt, out connectingVertex);
-            if (nextContactEltIndex == -1)
+            var thisCE = contactElements[0];
+            var loop = new List<ContactElement>();
+            do
             {
-                //if failed to find the loop, stick it on the end and start over
-                contacts.RemoveAt(0);
-                contacts.Add(contactElt);
-                return null;
-            }
-            while (nextContactEltIndex != -1)
-            {
-                var nextContactElt = contacts[nextContactEltIndex];
-                if (!(contactElt is CoincidentEdgeContactElement))
-                    contactElt.ContactEdge = new Edge(contactElt.StartVertex, connectingVertex, false);
-                else if (contactElt is CoincidentEdgeContactElement &&
-                         !(nextContactElt is CoincidentEdgeContactElement))
+                loop.Add(thisCE);
+                var newStartVertex = thisCE.EndVertex;
+                if (loop[0].StartVertex == newStartVertex) // then a loop is found!
                 {
-                    contactElements.Add(contactElt);
-                    contactElt = new ThroughVertexContactElement(connectingVertex, null, nextContactElt.SplitFaceNegative)
+                    if (loop.All(
+                        ce =>
+                            ce.ContactType == ContactTypes.AlongEdge &&
+                            (vertexDistancesToPlane[ce.SplitFacePositive.OtherVertex(ce.ContactEdge).IndexInList]
+                                .IsNegligible()
+                             ||
+                             vertexDistancesToPlane[ce.SplitFaceNegative.OtherVertex(ce.ContactEdge).IndexInList]
+                                 .IsNegligible())))
                     {
-                        ContactEdge = new Edge(((CoincidentEdgeContactElement)contactElt).EndVertex, connectingVertex, false)
-                    };
-                }
-                contactElements.Add(contactElt);
-                contacts.RemoveAt(nextContactEltIndex);
-                contactElt = nextContactElt;
+                        contactElements.RemoveAll(
+                            ce => loop.Contains(ce) && ce.ContactEdge.Curvature == CurvatureType.Convex);
+                        return new Loop(loop, plane.Normal, true, false, true);
+                    }
 
-                nextContactEltIndex = FindNextContactElement(contacts, contactElt, out connectingVertex);
-            }
-            if (contactElt == firstContactElt)
-                return new Loop(contactElements, plane.Normal, true, false);
-            // else work backwards        
-            contactElt = firstContactElt;
-            contacts.RemoveAt(0);
-            // now it is right to remove the first contact, and instead, we will re-add the last one
-            firstContactElt = contactElements.Last();
-            contacts.Add(firstContactElt);
-            int prevContactEltIndex = FindPrevContactElement(contacts, contactElt, out connectingVertex);
-            while (prevContactEltIndex != -1)
-            {
-                var prevContactElt = contacts[prevContactEltIndex];
-                if (!(contactElt is CoincidentEdgeContactElement))
-                    contactElt.ContactEdge = new Edge(connectingVertex, contactElt.StartVertex, false);
-                else if (contactElt is CoincidentEdgeContactElement &&
-                         !(prevContactElt is CoincidentEdgeContactElement))
+                    contactElements.RemoveAll(ce => loop.Contains(ce));
+                    return new Loop(loop, plane.Normal, true, false, false);
+                }
+                var possibleNextCEs = contactElements.Where(ce => ce.StartVertex == newStartVertex).ToList();
+                if (!possibleNextCEs.Any())
+                    possibleNextCEs = contactElements.Where(ce => ce.StartVertex.Position.IsPracticallySame(newStartVertex.Position)).ToList();
+                if (possibleNextCEs.Count == 1) thisCE = possibleNextCEs[0];
+                else if (possibleNextCEs.Count > 1)
                 {
-                    contactElements.Insert(0, contactElt);
-                    contactElt = new ThroughVertexContactElement(connectingVertex, prevContactElt.SplitFacePositive, null)
+                    var thisAngle = Math.Atan2(thisCE.EndVertex.Y - thisCE.StartVertex.Y,
+                        thisCE.EndVertex.X - thisCE.StartVertex.X);
+                    var minIndex = -1;
+                    var minAngle = double.PositiveInfinity;
+                    for (int i = 0; i < possibleNextCEs.Count; i++)
                     {
-                        ContactEdge = new Edge(connectingVertex, ((CoincidentEdgeContactElement)contactElt).StartVertex, false)
-                    };
+                        var nextAngle = Math.Atan2(possibleNextCEs[i].EndVertex.Y - possibleNextCEs[i].StartVertex.Y,
+                            possibleNextCEs[i].EndVertex.X - possibleNextCEs[i].StartVertex.X);
+                        var angleChange = Math.PI - (nextAngle - thisAngle);
+                        if (angleChange < 0) angleChange += Math.PI;
+                        if (angleChange < minAngle)
+                        {
+                            minAngle = angleChange;
+                            minIndex = i;
+                        }
+                    }
+                    thisCE = possibleNextCEs[minIndex];
                 }
-                contactElements.Insert(0, contactElt);
-                contacts.RemoveAt(prevContactEltIndex);
-                contactElt = prevContactElt;
-                prevContactEltIndex = FindPrevContactElement(contacts, contactElt, out connectingVertex);
-            }
-            if (contactElements[0].ContactEdge.From == contactElements.Last().ContactEdge.To)
-                return new Loop(contactElements, plane.Normal, true, false);
-            if (StarMath.IsPracticallySame(contactElements[0].ContactEdge.From.Position,
-                  contactElements.Last().ContactEdge.To.Position))
-            {
-                contactElements[0].ContactEdge = new Edge(contactElements.Last().ContactEdge.To,
-                    contactElements[0].ContactEdge.To, false);
-                return new Loop(contactElements, plane.Normal, true, true);
-            }
-            contacts.Remove(firstContactElt); //it didn't work to connect it up, so you're going to have to leave
-            // the loop open. Be sure to remove that one contact that you were hoping to re-find. Otherwise, the 
-            // outer process will continue to consider it.
-            var artificialContactElement = new ArtificialContactElement
-            {
-                ContactEdge =
-                    new Edge(contactElements.Last().ContactEdge.To, contactElements[0].ContactEdge.From, false)
-            };
-            Debug.WriteLine("Adding an artificial edge to close the loop for plane @" + plane.Normal.MakePrintString()
-                            + " with a distance of " + plane.DistanceToOrigin);
-            contactElements.Add(artificialContactElement);
-            return new Loop(contactElements, plane.Normal, true, true);
-
+                else if (artficiallyCloseOpenLoops)
+                {
+                    contactElements.RemoveAll(ce => loop.Contains(ce));
+                    loop.Add(new ContactElement(newStartVertex, null, loop[0].StartVertex, null, null,
+                        ContactTypes.Artificial));
+                    return new Loop(loop, plane.Normal, true, true, false);
+                }
+                else return null;
+            } while (true);
         }
 
 
-        private static int FindNextContactElement(List<ContactElement> contacts, ContactElement current,
-            out Vertex connectingVertex)
+        private static List<ContactElement> GetContactElements(Flat plane, TessellatedSolid ts, double[] distancesToPlane)
         {
-            // there are six cases to handle: A=ThroughFace (abbreviated as face below), ThroughVertex (vertex), CoincidentEdge (edge)
-            // current contact element --> next contact element  
-            // 1. vertex --> face            
-            // 2. edge --> edge            
-            // 3. edge --> face            
-            // 4. face --> face            
-            // 5. face --> vertex            
-            // 6. face --> edge                              
-            if (current is ThroughVertexContactElement)
+            // the edges serve as the easiest way to identify where the solid is interacting with the plane, so we search over those
+            // and organize the edges (or vertices into the following three categories: edges that straddle the plane (straddleEdges),
+            // edges that in on the plane (inPlaneEdges), and edges endpoints (or rather just the vertex in question) that are in the
+            // plane.
+            var straddleEdges = new List<Edge>();
+            var inPlaneEdges = new List<Edge>();
+            var inPlaneVerticesHash = new HashSet<Vertex>();  //since these will be found multiple times, in the following loop, 
+            // the hash-set allows us to quickly check if the v is already included
+            foreach (var edge in ts.Edges)
             {
-                // from a ThroughVertex, it only make sense that you could go to ThroughFace
-                for (int i = 0; i < contacts.Count; i++)
-                {
-                    var ce = contacts[i];
-                    if (ce is ThroughFaceContactElement && ce.SplitFaceNegative == current.SplitFacePositive)
-                    {
-                        connectingVertex = ce.StartVertex;
-                        return i;
-                    }
+                var toDistance = distancesToPlane[edge.To.IndexInList];
+                var fromDistance = distancesToPlane[edge.From.IndexInList];
+                if (toDistance.IsNegligible() && fromDistance.IsNegligible())
+                {   // both the to and from vertices are on the plane --> inPlaneEdge
+                    inPlaneEdges.Add(edge);
+                    if (!inPlaneVerticesHash.Contains(edge.From)) inPlaneVerticesHash.Add(edge.From);
+                    if (!inPlaneVerticesHash.Contains(edge.To)) inPlaneVerticesHash.Add(edge.To);
                 }
-                connectingVertex = null;
-                return -1;
+                else if (toDistance.IsNegligible())
+                {   // both ends are not, but the head of the edge is --> inPlaneVertex
+                    inPlaneVerticesHash.Add(edge.To);
+                    if (!inPlaneVerticesHash.Contains(edge.To)) inPlaneVerticesHash.Add(edge.To);
+                }
+                else if (fromDistance.IsNegligible())
+                {   // both ends are not, but the tail of the edge is --> inPlaneVertex
+                    inPlaneVerticesHash.Add(edge.From);
+                    if (!inPlaneVerticesHash.Contains(edge.From)) inPlaneVerticesHash.Add(edge.From);
+                }
+                else if ((toDistance > 0 && fromDistance < 0) || (toDistance < 0 && fromDistance > 0))
+                    // the to and from are on either side --> straddle edge
+                    straddleEdges.Add(edge);
             }
-            else if (current is CoincidentEdgeContactElement)
+            // the following contactElements is what is returned by this method.
+            List<ContactElement> contactElements = new List<ContactElement>();
+            foreach (var inPlaneEdge in inPlaneEdges)
+            {   //  inPlaneEdges are the easiest to make into ContactElements, but there are some
+                // subtle issues related to inner edges and convexity of the edges (as occurs later on).   
+                var ownedFaceOtherVertex = inPlaneEdge.OwnedFace.OtherVertex(inPlaneEdge);
+                var planeDistOwnedFOV = distancesToPlane[ownedFaceOtherVertex.IndexInList];
+                var otherFaceOtherVertex = inPlaneEdge.OtherFace.OtherVertex(inPlaneEdge);
+                var planeDistOtherFOV = distancesToPlane[otherFaceOtherVertex.IndexInList];
+                if (planeDistOwnedFOV.IsNegligible() && planeDistOtherFOV.IsNegligible()) continue;
+                if (planeDistOwnedFOV * planeDistOtherFOV > 0) continue; //if both distances have the same sign, but 
+                                                                         //this is "knife-edge" on the plane
+                contactElements.Add(new ContactElement(inPlaneEdge, planeDistOwnedFOV > 0));
+            }
+            // now things get complicated. For each straddle each make a dictionary to ensure that newly
+            // defined ContactElements use the same vertices. Well, specifically any new vertices that are
+            // created when a straddleEdge is split.
+            // in this splitEdgeDict, the straddleEdge is the Key and the Value is a Tuple of:
+            // <new vertex on the straddle edge; the backward face; the forward face> .
+            // These are the faces on either side of the edge that are in the backward or forward direction of the loop.
+            var splitEdgeDict = straddleEdges.ToDictionary(edge => edge,
+                edge => new Tuple<Vertex, PolygonalFace, PolygonalFace>(
+                    GeometryFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, edge.From, edge.To), null, null));
+            // next add 0,1,or 2 ContactElements for the inPlane Vertices. Why is this not known? Because many of the vertices
+            // are ends of inPlaneEdges, which are defined in the previous loop.
+            foreach (var startingVertex in inPlaneVerticesHash)
             {
-                // from a Coincident Edge, the valid options are another CoincidentEdge or ThroughFace.
-                // It doesn't make sense that you could go to a ThroughVertex (redundant with this)
-                for (int i = 0; i < contacts.Count; i++)
+                Edge otherEdge;
+                var straddleFace = FindForwardStraddleFace(plane, startingVertex, distancesToPlane, out otherEdge);
+                if (straddleFace != null)
                 {
-                    var ce = contacts[i];
-                    if ((ce is CoincidentEdgeContactElement &&
-                         ((CoincidentEdgeContactElement)ce).StartVertex ==
-                         ((CoincidentEdgeContactElement)current).EndVertex)
-                        || (ce is ThroughFaceContactElement
-                            &&
-                            ((ThroughFaceContactElement)ce).SplitFaceNegative.OtherVertex(
-                                ((ThroughFaceContactElement)ce).SplitEdge) ==
-                            ((CoincidentEdgeContactElement)current).EndVertex))
-                    {
-                        connectingVertex = ce.StartVertex;
-                        return i;
-                    }
+                    var connectingData = splitEdgeDict[otherEdge];
+                    contactElements.Add(new ContactElement(startingVertex, null, connectingData.Item1, otherEdge, straddleFace, ContactTypes.ThroughVertex));
+                    // update the dictionary entry with the fact that the face on the backward side of this forward edge has been found. A "through vertex"
+                    // contact element is created for this straddle vertex.
+                    splitEdgeDict[otherEdge] = new Tuple<Vertex, PolygonalFace, PolygonalFace>(connectingData.Item1, straddleFace, connectingData.Item3);
                 }
-                connectingVertex = null;
-                return -1;
-            }
-            // finally from ThroughFace, you can go to any of the other three.     
-            for (int i = 0; i < contacts.Count; i++)
-            {
-                var ce = contacts[i];
-                if ((ce is CoincidentEdgeContactElement &&
-                    current.SplitFacePositive.OtherVertex(((ThroughFaceContactElement)current).SplitEdge) ==
-                    ((CoincidentEdgeContactElement)ce).StartVertex)
-                ||
-                (!(ce is CoincidentEdgeContactElement) && ce.SplitFaceNegative == current.SplitFacePositive))
+                straddleFace = FindBackwardStraddleFace(plane, startingVertex, distancesToPlane, out otherEdge);
+                if (straddleFace != null)
                 {
-                    connectingVertex = ce.StartVertex;
-                    return i;
+                    var connectingData = splitEdgeDict[otherEdge];
+                    contactElements.Add(new ContactElement(connectingData.Item1, otherEdge, startingVertex, null, straddleFace, ContactTypes.ThroughVertex));
+                    splitEdgeDict[otherEdge] = new Tuple<Vertex, PolygonalFace, PolygonalFace>(connectingData.Item1, connectingData.Item2, straddleFace);
                 }
             }
-            connectingVertex = null;
-            return -1;
+            foreach (var keyValuePair in splitEdgeDict)
+            {   // finally, we make ContactElements for the straddleEdges. This is the trickiest part.
+                var edge = keyValuePair.Key;
+                var newVertex = keyValuePair.Value.Item1;
+                var backwardFace = edge.OwnedFace;
+                var forwardFace = edge.OtherFace;
+                if (distancesToPlane[edge.To.IndexInList] < 0)
+                {   // whoops! the assignment should be reversed, given that the head of the arc
+                    // is on the negative side of the plane and not the positive
+                    backwardFace = edge.OtherFace;
+                    forwardFace = edge.OwnedFace;
+                }
+                if (keyValuePair.Value.Item2 == null)
+                {
+                    var otherEdge =
+                        backwardFace.Edges.First(
+                            e =>
+                                e != edge &&
+                                ((distancesToPlane[e.To.IndexInList] < 0 &&
+                                  distancesToPlane[e.From.IndexInList] > 0)
+                                 ||
+                                 (distancesToPlane[e.To.IndexInList] > 0 &&
+                                  distancesToPlane[e.From.IndexInList] < 0)));
+                    contactElements.Add(new ContactElement(splitEdgeDict[otherEdge].Item1, otherEdge, newVertex, edge, backwardFace, ContactTypes.ThroughFace));
+                }
+                if (keyValuePair.Value.Item3 == null)
+                {
+                    var otherEdge =
+                        forwardFace.Edges.First(
+                            e =>
+                                e != edge &&
+                                ((distancesToPlane[e.To.IndexInList] < 0 &&
+                                  distancesToPlane[e.From.IndexInList] > 0)
+                                 ||
+                                 (distancesToPlane[e.To.IndexInList] > 0 &&
+                                  distancesToPlane[e.From.IndexInList] < 0)));
+                    contactElements.Add(new ContactElement(newVertex, edge, splitEdgeDict[otherEdge].Item1, otherEdge, forwardFace, ContactTypes.ThroughFace));
+                }
+            }
+            return contactElements;
         }
 
-        private static int FindPrevContactElement(List<ContactElement> contacts, ContactElement current,
-            out Vertex connectingVertex)
+        internal static PolygonalFace FindForwardStraddleFace(Flat plane, Vertex onPlaneVertex, double[] vertexDistancesToPlane, out Edge edge)
         {
-            // this is the same as "FindNextContactElement" except it works backwards. Some subtle differences
-            // in the queries between the two functions
-            if (current is ThroughVertexContactElement)
+            edge = null;
+            foreach (var face in onPlaneVertex.Faces)
             {
-                for (int i = 0; i < contacts.Count; i++)
+                var otherEdge = face.OtherEdge(onPlaneVertex);
+                var toDistance = vertexDistancesToPlane[otherEdge.To.IndexInList];
+                var fromDistance = vertexDistancesToPlane[otherEdge.From.IndexInList];
+                if ((toDistance > 0 && fromDistance < 0 && face == otherEdge.OwnedFace)
+                    || (toDistance < 0 && fromDistance > 0 && face == otherEdge.OtherFace))
                 {
-                    var ce = contacts[i];
-                    if (ce is ThroughFaceContactElement && ce.SplitFacePositive == current.SplitFaceNegative)
-                    {
-                        connectingVertex = ce.StartVertex;
-                        return i;
-                    }
-                }
-                connectingVertex = null;
-                return -1;
-            }
-            else if (current is CoincidentEdgeContactElement)
-            {
-                for (int i = 0; i < contacts.Count; i++)
-                {
-                    var ce = contacts[i];
-                    if (ce is CoincidentEdgeContactElement &&
-                        ((CoincidentEdgeContactElement)ce).EndVertex ==
-                        ((CoincidentEdgeContactElement)current).StartVertex)
-                    {
-                        connectingVertex = ((CoincidentEdgeContactElement)ce).EndVertex;
-                        return i;
-                    }
-                    else if (ce is ThroughFaceContactElement
-                             &&
-                             ((ThroughFaceContactElement)ce).SplitFacePositive.OtherVertex(
-                                 ((ThroughFaceContactElement)ce).SplitEdge) ==
-                             ((CoincidentEdgeContactElement)current).EndVertex)
-                    {
-                        connectingVertex = ce.StartVertex;
-                        return i;
-                    }
-                }
-                connectingVertex = null;
-                return -1;
-            }
-            for (int i = 0; i < contacts.Count; i++)
-            {
-                var ce = contacts[i];
-                if ((ce is CoincidentEdgeContactElement &&
-                    current.SplitFacePositive.OtherVertex(((ThroughFaceContactElement)current).SplitEdge) ==
-                    ((CoincidentEdgeContactElement)ce).EndVertex)
-                ||
-                (!(ce is CoincidentEdgeContactElement) && ce.SplitFacePositive == current.SplitFaceNegative))
-                {
-                    connectingVertex = ce.StartVertex;
-                    return i;
+                    edge = otherEdge;
+                    return face;
                 }
             }
-            connectingVertex = null;
-            return -1;
+            return null;
         }
-
+        internal static PolygonalFace FindBackwardStraddleFace(Flat plane, Vertex onPlaneVertex, double[] vertexDistancesToPlane, out Edge edge)
+        {
+            edge = null;
+            foreach (var face in onPlaneVertex.Faces)
+            {
+                var otherEdge = face.OtherEdge(onPlaneVertex);
+                var toDistance = vertexDistancesToPlane[otherEdge.To.IndexInList];
+                var fromDistance = vertexDistancesToPlane[otherEdge.From.IndexInList];
+                if ((toDistance > 0 && fromDistance < 0 && face == otherEdge.OtherFace) ||
+                    (toDistance < 0 && fromDistance > 0 && face == otherEdge.OwnedFace))
+                {
+                    edge = otherEdge;
+                    return face;
+                }
+            }
+            return null;
+        }
         #endregion
 
 
@@ -372,54 +344,63 @@ namespace TVGL.Boolean_Operations
                     // in DefineContact the loop edges were not connected to the vertices as the desire
                     // was to leave the TS unaffected. But now that we are working these changes in, we need
                     // to ensure that the edges, vertices, and faces are all properly connected.                           
-                    if (!ce.ContactEdge.From.Edges.Contains(ce.ContactEdge)) ce.ContactEdge.From.Edges.Add(ce.ContactEdge);
+                    if (!ce.ContactEdge.From.Edges.Contains(ce.ContactEdge))
+                        ce.ContactEdge.From.Edges.Add(ce.ContactEdge);
                     if (!ce.ContactEdge.To.Edges.Contains(ce.ContactEdge)) ce.ContactEdge.To.Edges.Add(ce.ContactEdge);
-                    if (ce is CoincidentEdgeContactElement)
+                    if (ce.ContactType == ContactTypes.AlongEdge)
                         // If the contact element is at a coincident edge, then there is nothing to do in this stage. When contact element was
                         // created, it properly defined SplitFacePositive and SplitFaceNegative.
                         continue;
                     edgesToAdd.Add(ce.ContactEdge); // the contact edge is a new edge for the solid
-                    edgesToModify.Add(ce.ContactEdge); // the contact edge will need to be linked to vertices and faces further down.
+                    edgesToModify.Add(ce.ContactEdge);
+                    // the contact edge will need to be linked to vertices and faces further down.
                     var faceToSplit = ce.SplitFacePositive; //faceToSplit will be removed, but before we do that, we use
-                    facesToDelete.Add(faceToSplit);         // use it to build the new 2 to 3 triangles
+                    facesToDelete.Add(faceToSplit); // use it to build the new 2 to 3 triangles
 
                     PolygonalFace positiveFace, negativeFace;
-                    if (ce is ThroughVertexContactElement)
+                    if (ce.ContactType == ContactTypes.ThroughVertex)
                     {
-                        var vertPlaneDistances =              //signed distances of faceToSplit's vertices from the plane
-                        faceToSplit.Vertices.Select(
-                            v => v.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin).ToArray();
+                        var vertPlaneDistances = //signed distances of faceToSplit's vertices from the plane
+                            faceToSplit.Vertices.Select(
+                                v => v.Position.dotProduct(plane.Normal) - plane.DistanceToOrigin).ToArray();
                         var maxIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Max());
                         var maxVert = faceToSplit.Vertices[maxIndex];
                         var minIndex = vertPlaneDistances.FindIndex(vertPlaneDistances.Min());
                         var minVert = faceToSplit.Vertices[minIndex];
-                        positiveFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, maxVert }, faceToSplit.Normal);
+                        positiveFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, maxVert },
+                            faceToSplit.Normal);
                         facesToAdd.Add(positiveFace);
-                        negativeFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, minVert }, faceToSplit.Normal);
+                        negativeFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, minVert },
+                            faceToSplit.Normal);
                         facesToAdd.Add(negativeFace);
+                        ce.ContactType = ContactTypes.AlongEdge;
+                        ce.SplitFacePositive = positiveFace;
+                        ce.SplitFaceNegative = negativeFace;
                     } //#+1 add v to f           (both of these are done in the preceding PolygonalFace
                     //#+2 add f to v            constructors as well as the one for thirdFace below)
-                    else if (ce is ThroughFaceContactElement)
+                    else if (ce.ContactType == ContactTypes.ThroughFace)
                     {
-                        var tfce = (ThroughFaceContactElement)ce; // ce is renamed and recast as tfce 
-                        edgesToDelete.Add(tfce.SplitEdge);
+                        var tfce = ce; // ce is renamed and recast as tfce 
+                        edgesToDelete.Add(tfce.StartEdge);
                         verticesToAdd.Add(tfce.StartVertex);
                         Vertex positiveVertex, negativeVertex;
-                        if (tfce.SplitEdge.To.Position.dotProduct(plane.Normal) > plane.DistanceToOrigin)
+                        if (tfce.StartEdge.To.Position.dotProduct(plane.Normal) > plane.DistanceToOrigin)
                         {
-                            positiveVertex = tfce.SplitEdge.To;
-                            negativeVertex = tfce.SplitEdge.From;
+                            positiveVertex = tfce.StartEdge.To;
+                            negativeVertex = tfce.StartEdge.From;
                         }
                         else
                         {
-                            positiveVertex = tfce.SplitEdge.From;
-                            negativeVertex = tfce.SplitEdge.To;
+                            positiveVertex = tfce.StartEdge.From;
+                            negativeVertex = tfce.StartEdge.To;
                         }
                         positiveFace =
-                           new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, positiveVertex }, faceToSplit.Normal);
+                            new PolygonalFace(new[] { ce.ContactEdge.To, ce.ContactEdge.From, positiveVertex },
+                                faceToSplit.Normal);
                         facesToAdd.Add(positiveFace);
                         negativeFace =
-                           new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, negativeVertex }, faceToSplit.Normal);
+                            new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, negativeVertex },
+                                faceToSplit.Normal);
                         facesToAdd.Add(negativeFace);
                         var positiveEdge = new Edge(positiveVertex, ce.ContactEdge.From, positiveFace, null);
                         edgesToAdd.Add(positiveEdge);
@@ -432,13 +413,15 @@ namespace TVGL.Boolean_Operations
                         PolygonalFace thirdFace;
                         if (otherVertex.Position.dotProduct(plane.Normal) > plane.DistanceToOrigin)
                         {
-                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, otherVertex, positiveVertex }, faceToSplit.Normal);
+                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, otherVertex, positiveVertex },
+                                faceToSplit.Normal);
                             facesToAdd.Add(thirdFace);
                             edgesToAdd.Add(new Edge(ce.ContactEdge.To, positiveVertex, positiveFace, thirdFace));
                         }
                         else
                         {
-                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, negativeVertex, otherVertex }, faceToSplit.Normal);
+                            thirdFace = new PolygonalFace(new[] { ce.ContactEdge.To, negativeVertex, otherVertex },
+                                faceToSplit.Normal);
                             facesToAdd.Add(thirdFace);
                             edgesToAdd.Add(new Edge(negativeVertex, ce.ContactEdge.To, negativeFace, thirdFace));
                         }
@@ -446,22 +429,12 @@ namespace TVGL.Boolean_Operations
                         thirdFace.color = new Color(KnownColors.Turquoise);
                         negativeFace.color = new Color(KnownColors.CornflowerBlue);
                         positiveFace.color = new Color(KnownColors.HotPink);
+                        ce.ContactType = ContactTypes.AlongEdge;
+                        ce.SplitFacePositive = positiveFace;
+                        ce.SplitFaceNegative = negativeFace;
                         // for the new edges in a through face this line accomplishes: +3 add f to e; +4 add e to f; +5 add v to e; 
                         //    +6 add e to v 
                     }
-                    else  //then artificial. How to handle this?
-                    {
-                        negativeFace = null;
-                        positiveFace = null;
-                    }
-                    loop[i] = new CoincidentEdgeContactElement
-                    {
-                        ContactEdge = ce.ContactEdge,
-                        EndVertex = ce.ContactEdge.To,
-                        StartVertex = ce.ContactEdge.From,
-                        SplitFaceNegative = negativeFace,
-                        SplitFacePositive = positiveFace
-                    };
                 }
             }
             // -1 remove v from f - no need to do this as no v's are removed

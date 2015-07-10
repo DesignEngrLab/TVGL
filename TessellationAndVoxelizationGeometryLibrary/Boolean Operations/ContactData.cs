@@ -110,17 +110,24 @@ namespace TVGL
         /// </summary>
         public readonly Boolean ArtificiallyClosed;
         /// <summary>
+        /// Does the loop enclose a bunch of faces that lie in the plane?
+        /// </summary>
+        public readonly Boolean EnclosesInPlaneFace;
+     
+        /// <summary>
         /// Initializes a new instance of the <see cref="Loop" /> class.
         /// </summary>
         /// <param name="contactElements">The contact elements.</param>
         /// <param name="normal">The normal.</param>
         /// <param name="isClosed">is closed.</param>
         /// <param name="artificiallyClosed">is artificially closed.</param>
-        internal Loop(ICollection<ContactElement> contactElements, double[] normal, Boolean isClosed, Boolean artificiallyClosed)
+        /// <param name="b"></param>
+        internal Loop(ICollection<ContactElement> contactElements, double[] normal, bool isClosed, bool artificiallyClosed, bool enclosesInPlaneFace)
             : base(contactElements)
         {
             ArtificiallyClosed = artificiallyClosed;
             IsClosed = isClosed;
+            EnclosesInPlaneFace = enclosesInPlaneFace;
             if (!IsClosed) Debug.WriteLine("loop not closed!");
             var center = new double[3];
             foreach (var contactElement in contactElements)
@@ -148,16 +155,26 @@ namespace TVGL
             var result = "";
             foreach (var ce in this)
             {
-                if (ce is ArtificialContactElement)
-                    result += "a";
-                else if (ce is CoincidentEdgeContactElement)
-                    result += "_";
-                else if (ce is ThroughFaceContactElement)
-                    result += "|";
-                else result += ".";
+                switch (ce.ContactType)
+                {
+                    case ContactTypes.Artificial:
+                        result += "a";
+                        break;
+                    case ContactTypes.ThroughFace:
+                        result += "|";
+                        break;
+                    case ContactTypes.ThroughVertex:
+                        result += ".";
+                        break;
+                    case ContactTypes.AlongEdge:
+                        result += "_";
+                        break;
+                }
             }
             return result;
         }
+
+
     }
 }
 
