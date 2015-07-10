@@ -94,7 +94,7 @@ namespace TVGL.IOFunctions
                 if (TryParseDoubleArray(line, out point))
                 {
                     if (offData.ContainsHomogeneousCoordinates
-                        && !StarMath.IsNegligible(point[3]))
+                        && !point[3].IsNegligible())
                         offData.Vertices.Add(new[]
                         {
                             point[0]/point[3],

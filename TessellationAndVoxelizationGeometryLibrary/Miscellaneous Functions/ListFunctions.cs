@@ -23,8 +23,8 @@ namespace TVGL
             indices = indices.OrderBy(index => checkSums[index]).ToArray();
             for (var i = n - 1; i > 0; i--)
             {
-                if (StarMath.IsNegligible(faces[indices[i]].Normal.subtract(faces[indices[i - 1]].Normal))
-                    || StarMath.IsNegligible(faces[indices[i]].Normal.subtract(faces[indices[i - 1]].Normal.multiply(-1)))) 
+                if (faces[indices[i]].Normal.subtract(faces[indices[i - 1]].Normal).IsNegligible()
+                    || faces[indices[i]].Normal.subtract(faces[indices[i - 1]].Normal.multiply(-1)).IsNegligible()) 
                     distinctList[indices[i]] = null;
             }
             distinctList.RemoveAll(v => v == null);

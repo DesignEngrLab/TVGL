@@ -85,7 +85,7 @@ namespace TVGL
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
-            if (!StarMath.IsPracticallySame(face.Normal.dotProduct(Normal), 1.0))
+            if (!face.Normal.dotProduct(Normal).IsPracticallySame(1.0))
                 return false;
             foreach (var v in face.Vertices)
                 if (Math.Abs(v.Position.dotProduct(Normal) - DistanceToOrigin) > Constants.ErrorForFaceInSurface * Math.Abs(DistanceToOrigin))

@@ -83,7 +83,7 @@
       <HintPath>..\packages\MIConvexHull.1.0.10.1021\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
     </Reference>
     <Reference Include="StarMath">
-      <HintPath>..\packages\StarMath.2.0.15.0217\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+      <HintPath>..\packages\StarMath.2.0.15.0707\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -96,10 +96,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="StarMath.XML" />
+    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
-    <WCFMetadata Include="Service References\" />
+    <Content Include="StarMath.XML" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

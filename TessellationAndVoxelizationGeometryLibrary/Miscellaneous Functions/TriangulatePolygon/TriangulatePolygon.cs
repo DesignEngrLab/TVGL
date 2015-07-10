@@ -449,7 +449,7 @@ namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
                 {
                     return NodeType.Left;
                 }
-                return GetAngle(a, b, c) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
+                return LineFunctions.AngleBetweenEdgesCCW(a, b, c) < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
 
             }
 

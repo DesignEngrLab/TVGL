@@ -4,8 +4,36 @@ using TVGL.Tessellation;
 
 namespace TVGL
 {
-    static class GeometryFunctions
+    static class LineFunctions
     {
+        internal static double SmallerAngleBetweenEdges(Edge edge1, Edge edge2)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal static double ClockwiseAngleBetweenEdges(Edge edge1, Edge edge2, double[] axis)
+        {
+            throw new NotImplementedException();
+
+        }
+        internal static double CounterClockwiseAngleBetweenEdges(Edge edge1, Edge edge2, double[] axis)
+        {
+
+            throw new NotImplementedException();
+        }
+        internal static double AngleBetweenEdgesCW(Point a, Point b, Point c)
+        {
+
+        }
+        internal static double AngleBetweenEdgesCCW(Point a, Point b, Point c)
+        {
+            var angleAB = Math.Atan2(b.Y - a.Y, b.X - a.X);
+            var angleBC = Math.Atan2(c.Y - b.Y, c.X - b.X);
+            var angleChange = Math.PI - (angleBC - angleAB);
+            if (angleChange < 0) return angleChange + Math.PI;  
+            return angleChange;
+        }
+
         internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, out double[] DirectionOfLine, out double[] PointOnLine)
         {
             DirectionOfLine = n1.crossProduct(n2).normalize();

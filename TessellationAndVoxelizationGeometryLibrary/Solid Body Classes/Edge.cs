@@ -231,7 +231,7 @@ namespace TVGL.Tessellation
                 _otherFace = temp;
             }
             var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
-            if (dot > 1.0 || StarMath.IsPracticallySame(dot, 1.0))
+            if (dot > 1.0 || dot.IsPracticallySame(1.0))
             {
                 InternalAngle = Math.PI;
                 Curvature = CurvatureType.SaddleOrFlat;

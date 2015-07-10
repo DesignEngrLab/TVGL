@@ -90,7 +90,7 @@ namespace TVGL
 
             //Return information about minimum circle
             center = circle.Center;
-            radius = StarMath.IsNegligible(circle.SqRadius) ? 0 : Math.Sqrt(circle.SqRadius);
+            radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
             return Math.Pow(radius, 2)*Math.PI;
         }
 
