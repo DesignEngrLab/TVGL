@@ -14,32 +14,32 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = { 
-      // "../../../TestFiles/Mic_Holder_SW.stl",  
-        // "../../../TestFiles/Mic_Holder_JR.stl",
-                                                //"../../../TestFiles/3_bananas.amf",    
-                                                //"../../../TestFiles/drillparts.amf",    
-                                                //"../../../TestFiles/wrenchsns.amf",     
-                                              //  "../../../TestFiles/Rook.amf",          
-                                               "../../../TestFiles/amf_Cube.amf",
-        //"../../../TestFiles/trapezoid.4d.off",
-        //     "../../../TestFiles/mushroom.off",   
-         //  "../../../TestFiles/ABF.STL",           
-          //"../../../TestFiles/Pump-1repair.STL",
-      //    "../../../TestFiles/Pump-1.STL",
-         // "../../../TestFiles/Beam_Clean.STL",
-       // "../../../TestFiles/piston.stl",
-       // "../../../TestFiles/Z682.stl",   
-       // "../../../TestFiles/85408.stl",
-       // "../../../TestFiles/sth2.stl",
+       //"../../../TestFiles/Mic_Holder_SW.stl",  
+       //  "../../../TestFiles/Mic_Holder_JR.stl",
+       //                                         "../../../TestFiles/3_bananas.amf",    
+       //                                         "../../../TestFiles/drillparts.amf",    
+       //                                         "../../../TestFiles/wrenchsns.amf",     
+       //                                         "../../../TestFiles/Rook.amf",          
+                                              "../../../TestFiles/amf_Cube.amf",
+       // "../../../TestFiles/trapezoid.4d.off",
+       //      "../../../TestFiles/mushroom.off",   
+       //    "../../../TestFiles/ABF.STL",           
+        //  "../../../TestFiles/Pump-1repair.STL",
+        //  "../../../TestFiles/Pump-1.STL",
+        //  "../../../TestFiles/Beam_Clean.STL",
+        //"../../../TestFiles/piston.stl",
+        //"../../../TestFiles/Z682.stl",   
+        //"../../../TestFiles/85408.stl",
+        //"../../../TestFiles/sth2.stl",
        //    "../../../TestFiles/pump.stl", 
        //  "../../../TestFiles/bradley.stl",
        // "../../../TestFiles/45.stl",
        // "../../../TestFiles/Cuboide.stl",
-        //"../../../TestFiles/new/5.STL",
+       // "../../../TestFiles/new/5.STL",
        //  "../../../TestFiles/new/2.stl",
        // "../../../TestFiles/new/6.stl",
        // "../../../TestFiles/new/4.stl",
-      // "../../../TestFiles/radiobox.stl",
+       //"../../../TestFiles/radiobox.stl",
        // "../../../TestFiles/brace.stl",        
        // "../../../TestFiles/box.stl",
        // "../../../TestFiles/G0.stl",
@@ -54,17 +54,17 @@ namespace TVGL_Test
         [STAThread]
         private static void Main(string[] args)
         {
-            var writer = new TextWriterTraceListener(Console.Out);
-            Debug.Listeners.Add(writer);
+            //var writer = new TextWriterTraceListener(Console.Out);
+            //Debug.Listeners.Add(writer);
             foreach (var filename in filenames)
             {
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
                 //TestClassification(ts[0]);
-                // TestXSections(ts[0]);   
+                //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                MinimumEnclosure.Find_via_ContinuousPCA_Approach(ts[0]);
-                TestSlice(ts[0]);
+                // MinimumEnclosure.Find_via_ContinuousPCA_Approach(ts[0]);
+                 TestSlice(ts[0]);
                 //TestOBB(ts[0]);       
 
             }
@@ -104,21 +104,21 @@ namespace TVGL_Test
                 for (var j = 0; j < numSteps; j++)
                 {
                     var dist = crossAreas[i][j, 0] = coordValues[j];
-                    Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
-                    crossAreas[i][j, 1] = Slice.DefineContact(new Flat(dist, direction), ts).Area;
+                    //Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
+                    crossAreas[i][j, 1] = Slice.DefineContact(new Flat(dist, direction), ts, false).Area;
                 }
             }//);
             Debug.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
 
-            Console.ReadKey();
-            for (var i = 0; i < 3; i++)
-            {
-                Debug.WriteLine("\nfor direction " + i);
-                for (var j = 0; j < crossAreas[i].GetLength(0); j++)
-                {
-                    Debug.WriteLine(crossAreas[i][j, 0] + ", " + crossAreas[i][j, 1]);
-                }
-            }
+            //Console.ReadKey();
+            //for (var i = 0; i < 3; i++)
+            //{
+            //    Debug.WriteLine("\nfor direction " + i);
+            //    for (var j = 0; j < crossAreas[i].GetLength(0); j++)
+            //    {
+            //        Debug.WriteLine(crossAreas[i][j, 0] + ", " + crossAreas[i][j, 1]);
+            //    }
+            //}
         }
         private static void TestSlice(TessellatedSolid ts)
         {
@@ -131,8 +131,8 @@ namespace TVGL_Test
             var crossAreas = new double[3][,];
 
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
-            Slice.OnFlat(ts, new Flat(0.1, new[] { 1.0, 1, 0 }), out positiveSideSolids, out negativeSideSolids);
-          
+            Slice.OnFlat(ts, new Flat(0.10, new[] { 1.0, 1, 0 }), out positiveSideSolids, out negativeSideSolids);
+
             TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
             TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
         }

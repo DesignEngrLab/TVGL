@@ -360,23 +360,13 @@ namespace TVGL.Tessellation
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
-        internal TessellatedSolid(List<PolygonalFace> facesList, Vertex[] subSolidVertices, Vertex[][] newEdgeVertices,
-            double[] normal, Boolean[] loopIsPositive)
+        internal TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices)
         {
-            Faces = facesList.ToArray();
-            NumberOfFaces = facesList.Count;
+            Faces = faces.ToArray();
+            NumberOfFaces = Faces.Count();
             Vertices = new Vertex[0];
-            AddVertices(subSolidVertices);
+            AddVertices(vertices);
             NumberOfVertices = Vertices.GetLength(0);
-            var numloops = newEdgeVertices.GetLength(0);
-            var points2D = new Point[numloops][];
-            for (int i = 0; i < numloops; i++)
-                points2D[i] = MiscFunctions.Get2DProjectionPoints(newEdgeVertices[i], normal);
-            var patchTriangles = TriangulatePolygon.Run(points2D.ToList(), loopIsPositive);
-            var patchFaces = new List<PolygonalFace>();
-            foreach (var triangle in patchTriangles)
-                patchFaces.Add(new PolygonalFace(triangle, normal));
-            AddFaces(patchFaces);
             foreach (var face in Faces)
                 face.Edges.Clear();
             foreach (var vertex in Vertices)
@@ -384,20 +374,12 @@ namespace TVGL.Tessellation
             MakeEdges(Faces);
             CreateConvexHull();
             DefineBoundingBoxAndCenter();
-            for (int i = 0; i < Faces.Length; i++)
-            {
-                var face = Faces[i];
-                var centerX = face.Vertices.Average(v => v.X);
-                var centerY = face.Vertices.Average(v => v.Y);
-                var centerZ = face.Vertices.Average(v => v.Z);
-                face.Center = new[] { centerX, centerY, centerZ };
-            }
+            DefineFaceCentersAndColors();
             ConnectConvexHullToObjects();
             DefineVolumeAndAreas();
             DefineFaceCurvature();
             DefineVertexCurvature();
         }
-
 
 
         #endregion
@@ -582,7 +564,7 @@ namespace TVGL.Tessellation
         /// <summary>
         ///     Defines the face centers.
         /// </summary>
-        private void DefineFaceCentersAndColors(List<Color> colors)
+        private void DefineFaceCentersAndColors(List<Color> colors = null)
         {
             HasUniformColor = true;
             if (colors == null) SolidColor = new Color(Constants.DefaultColor);
