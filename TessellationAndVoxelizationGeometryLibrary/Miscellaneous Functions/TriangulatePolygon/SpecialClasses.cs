@@ -287,8 +287,8 @@ namespace TVGL
             {
                 return FromNode.X;
             }
-            //If a flat line give either positive or negative infinitity depending on the direction of the line.
-            else if (m == 0.0)
+            //If a flat line give either really high positive or negative (NOT infinity) depending on the direction of the line.
+            if (Math.Abs(m) < 1E-10)
             {
                 if (ToNode.X - FromNode.X > 0)
                 {

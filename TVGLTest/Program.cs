@@ -14,23 +14,23 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {     
-                                                "../../../TestFiles/amf_Cube.amf",
-       "../../../TestFiles/Mic_Holder_SW.stl",  
-          "../../../TestFiles/Mic_Holder_JR.stl",
-                                               "../../../TestFiles/3_bananas.amf",    
+                                                //"../../../TestFiles/amf_Cube.amf",
+       //"../../../TestFiles/Mic_Holder_SW.stl",  
+        //  "../../../TestFiles/Mic_Holder_JR.stl",
+                                              // "../../../TestFiles/3_bananas.amf",    
                                              //  "../../../TestFiles/drillparts.amf",    
                                              //    "../../../TestFiles/wrenchsns.amf",     
-                                                "../../../TestFiles/Rook.amf",   
+                                              //  "../../../TestFiles/Rook.amf",   
       //  "../../../TestFiles/trapezoid.4d.off",
        //      "../../../TestFiles/mushroom.off",   
-           "../../../TestFiles/ABF.STL",           
-          "../../../TestFiles/Pump-1repair.STL",
-          "../../../TestFiles/Pump-1.STL",
-          "../../../TestFiles/Beam_Clean.STL",
-        "../../../TestFiles/piston.stl",
-        "../../../TestFiles/Z682.stl",   
+      //     "../../../TestFiles/ABF.STL",           
+      //    "../../../TestFiles/Pump-1repair.STL",
+         // "../../../TestFiles/Pump-1.STL",
+         // "../../../TestFiles/Beam_Clean.STL",
+      //  "../../../TestFiles/piston.stl",
+     //   "../../../TestFiles/Z682.stl",   
     //    "../../../TestFiles/85408.stl",
-        "../../../TestFiles/sth2.stl",
+     //   "../../../TestFiles/sth2.stl",
            "../../../TestFiles/pump.stl", 
         "../../../TestFiles/bradley.stl",
       //  "../../../TestFiles/45.stl",
@@ -134,16 +134,16 @@ namespace TVGL_Test
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
             var length = MinimumEnclosure.GetLengthAndExtremeVertices(dir, ts.Vertices, out vLow, out vHigh);
             var distToVLow = vLow.Position.dotProduct(dir);
-            try
-            {
+            //try
+            //{
                 Slice.OnFlat(ts, new Flat(distToVLow + (length / 2), dir), out positiveSideSolids, out negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Failed to slice: {0}", ts.Name);
-            }
+            //}
+            //catch (Exception)
+            //{
+            //    Console.WriteLine("Failed to slice: {0}", ts.Name);
+            //}
 
         }
     }

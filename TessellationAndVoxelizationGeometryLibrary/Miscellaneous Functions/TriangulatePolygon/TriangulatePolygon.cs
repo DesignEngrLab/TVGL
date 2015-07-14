@@ -81,6 +81,10 @@ namespace TVGL
                     //Create New Node
                     nodeType = GetNodeType(loop[j - 1], loop[j], loop[j + 1]);
                     var node = new Node(loop[j], nodeType, i);
+                    if (nodeType == NodeType.UpwardReflex)
+                    {
+                        nodeType = NodeType.UpwardReflex;
+                    }
 
                     //Add node to the ordered loop
                     orderedLoop.Add(node);
@@ -106,6 +110,33 @@ namespace TVGL
                 lastNode.StartLine = line2;
                 firstNode.EndLine = line2;
 
+                //Debug to see if the proper balance of point types has been used
+                var downwardReflexCount = 0;
+                var upwardReflexCount = 0;
+                var peakCount = 0;
+                var rootCount = 0;
+                foreach (var node in orderedLoop)
+                {
+                    if (node.Type == NodeType.DownwardReflex) downwardReflexCount ++;
+                    if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
+                    if (node.Type == NodeType.Peak) peakCount++;
+                    if (node.Type == NodeType.Root) rootCount++;
+                }
+                if (isPositive[i]) //If a positive loop, the following conditions must be balanced
+                {
+                    if (peakCount != downwardReflexCount + 1 || rootCount != upwardReflexCount + 1)
+                    {
+                        throw new System.ArgumentException("Incorrect balance of node types");
+                    }
+                }
+                else //If negative loop, the conditions change
+                {
+                    if (peakCount != downwardReflexCount - 1 || rootCount != upwardReflexCount - 1)
+                    {
+                        throw new System.ArgumentException("Incorrect balance of node types");
+                    }
+                }
+                
                 //Sort nodes by descending Y, descending X
                 var sortedLoop = orderedLoop.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList<Node>();
                 orderedLoops.Add(orderedLoop);
@@ -451,8 +482,8 @@ namespace TVGL
                 {
                     return NodeType.Left;
                 }
-                return angle < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
-
+                if (angle < Math.PI) return NodeType.Peak; //Solution is peak if c.y > or = b.Y
+                return c.Y < b.Y ? NodeType.UpwardReflex : NodeType.Left; //Solution changes whether c.y > or = b.Y
             }
 
             if (a.Y > b.Y)
@@ -504,6 +535,7 @@ namespace TVGL
                 }
                 i++;
             }
+            if (matchesTrap == false) throw new System.ArgumentException("Trapezoid failed to find left or right line.");
         }
         #endregion
 
@@ -513,7 +545,6 @@ namespace TVGL
             leftLine = null;
             var xleft = double.NegativeInfinity;
             var counter = 0;
-            var slopeMax = double.PositiveInfinity;
             foreach (var line in lineList)
             {
                 var x = line.Xintercept(node.Y);
@@ -521,11 +552,34 @@ namespace TVGL
                 if (xdif < 0 && Math.Abs(xdif) > 1E-10)//Moved to the left by some tolerance
                 {
                     counter++;
-                    if (xdif > xleft || ((Math.Abs(xdif - xleft) < 1E-10) && line.m <= slopeMax))//If less than OR if approximately equal and slope is more negative
+                    if (Math.Abs(xdif - xleft) < 1E-10) // if approximately equal
+                    {
+                        //Choose whichever line has the right most other node
+                        //Note that this condition will only occur when line and
+                        //leftLine share a node.                        
+                        Node nodeOnLine;
+                        if (leftLine.ToNode == line.FromNode)
+                        {
+                            nodeOnLine = line.FromNode;
+                        }
+                        else
+                        {
+                            nodeOnLine = line.ToNode;
+                        }
+
+                        if (nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X)
+                        {
+                            leftLine = nodeOnLine.EndLine;
+                        }
+                        else
+                        {
+                            leftLine = nodeOnLine.StartLine;
+                        }
+                    }
+                    else if (xdif >= xleft) 
                     {
                         xleft = xdif;
                         leftLine = line;
-                        slopeMax = line.m;
                     }
                 }
             }
@@ -535,6 +589,7 @@ namespace TVGL
         internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
         {
             LinesToLeft(node, lineList, out leftLine);
+            if (leftLine == null) throw new System.ArgumentException("Failed to find line to left.");
         }
 
         internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine)
@@ -542,20 +597,42 @@ namespace TVGL
             rightLine = null;
             var xright = double.PositiveInfinity;
             var counter = 0;
-            var slopeMax = double.NegativeInfinity;
             foreach (var line in lineList)
             {
                 var x = line.Xintercept(node.Y);
-
                 var xdif = x - node.X;
                 if (xdif > 0 && Math.Abs(xdif) > 1E-10)//Moved to the right by some tolerance
                 {
                     counter++;
-                    if (xdif < xright || ((Math.Abs(xdif - xright) < 1E-10) && line.m >= slopeMax)) //If less than OR if approximately equal and slope is more positive
+                    if (Math.Abs(xdif - xright) < 1E-10) // if approximately equal
+                    {
+                        //Choose whichever line has the right most other node
+                        //Note that this condition will only occur when line and
+                        //leftLine share a node.                        
+                        Node nodeOnLine;
+                        if (rightLine.ToNode == line.FromNode)
+                        {
+                            nodeOnLine = line.FromNode;
+                        }
+                        else
+                        {
+                            nodeOnLine = line.ToNode;
+                        }
+
+                        //Choose whichever line has the right most other node
+                        if (nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X) //if approximately equal
+                        {
+                            rightLine = nodeOnLine.StartLine;
+                        }
+                        else
+                        {
+                            rightLine = nodeOnLine.EndLine;
+                        }
+                    }
+                    else if (xdif <= xright) //If less than
                     {
                         xright = xdif;
                         rightLine = line;
-                        slopeMax = line.m;
                     }
                 }
             }
@@ -565,6 +642,7 @@ namespace TVGL
         internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
         {
             LinesToRight(node, lineList, out rightLine);
+            if (rightLine == null) throw new System.ArgumentException("Failed to find line to right.");
         }
         #endregion
 
@@ -579,7 +657,7 @@ namespace TVGL
                     sortedNodes.Insert(i, node);
                     return i;
                 }
-                if (Math.Abs(node.Y - sortedNodes[i].Y) < 0.000001 && node.X > sortedNodes[i].X) //Descending X
+                if (Math.Abs(node.Y - sortedNodes[i].Y) < 1E-10 && node.X > sortedNodes[i].X) //Descending X
                 {
                     sortedNodes.Insert(i, node);
                     return i;
@@ -609,7 +687,7 @@ namespace TVGL
                         isInserted = true;
                         break;
                     }
-                    if (Math.Abs(negativeLoop[i].Y - sortedNodes[j].Y) < 0.000001 && negativeLoop[i].X > sortedNodes[j].X) //Descending X
+                    if (Math.Abs(negativeLoop[i].Y - sortedNodes[j].Y) < 1E-10 && negativeLoop[i].X > sortedNodes[j].X) //Descending X
                     {
                         sortedNodes.Insert(j, negativeLoop[i]);
                         isInserted = true;
