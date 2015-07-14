@@ -68,6 +68,8 @@ namespace TVGL
         }
 
 
+        internal Vertex DuplicateVertex; //I can't say I'm proud of this being here, but it was the simplest
+        // way to do the slicing 
         internal readonly Vertex StartVertex;
         internal readonly Vertex EndVertex;
         internal readonly Edge StartEdge;

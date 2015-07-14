@@ -196,7 +196,10 @@ namespace TVGL.Tessellation
                 var adjacentFaces = new PolygonalFace[3];
                 var i = 0;
                 foreach (var e in Edges)
-                    adjacentFaces[i++] = (this == e.OwnedFace) ? e.OtherFace : e.OwnedFace;
+                {
+                    if (e == null) adjacentFaces[i++] = null;
+                    else adjacentFaces[i++] = (this == e.OwnedFace) ? e.OtherFace : e.OwnedFace;
+                }
                 return adjacentFaces;
             }
         }
