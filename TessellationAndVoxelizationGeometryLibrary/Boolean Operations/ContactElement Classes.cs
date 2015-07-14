@@ -61,7 +61,6 @@ namespace TVGL
             StartVertex = startVertex;
             StartEdge = startEdge;
             EndVertex = endVertex;
-            EndEdge = endEdge;
             ContactEdge = new Edge(StartVertex, EndVertex, false);
             SplitFacePositive = face;
             ContactType = contactType;
@@ -73,7 +72,6 @@ namespace TVGL
         internal readonly Vertex StartVertex;
         internal readonly Vertex EndVertex;
         internal readonly Edge StartEdge;
-        internal readonly Edge EndEdge;
 
         /// <summary>
         /// Gets the edge corresponds to the surface of the solid within the designated slice.
@@ -110,8 +108,6 @@ namespace TVGL
                 };
             }
         }
-
-        internal bool CannotStart { get; set; }
     }
 }
 

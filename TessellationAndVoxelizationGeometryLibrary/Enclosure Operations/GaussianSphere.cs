@@ -13,15 +13,15 @@ namespace TVGL.Enclosure_Operations
     /// Where r is the radial distance (r = 1 for the unit circle), θ is the azimuthal angle (XY && 0 <= θ <= 360), and φ is the polar angle (From Z axis && 0 <= φ <= 180). 
     public struct GaussianSphere
     {
-         /// <summary>
+        /// <summary>
         /// The volume of the bounding box.
         /// </summary>
-        internal List<Node> Nodes { get; private set; }
+        internal List<Node> Nodes;
 
         /// <summary>
         /// The Directions are the three unit vectors that describe the orientation of the box.
         /// </summary>
-        internal List<Arc> Arcs { get; private set; }
+        internal List<Arc> Arcs;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GaussianSphere"/> class.

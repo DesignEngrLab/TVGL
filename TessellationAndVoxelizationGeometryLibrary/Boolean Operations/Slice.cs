@@ -40,6 +40,16 @@ namespace TVGL.Boolean_Operations
             out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
             var contactData = DefineContact(plane, ts, false);
+            if (!contactData.AllLoops.Any())
+            {
+                Debug.WriteLine("Plane does not pass through solid.");
+                negativeSideSolids = new List<TessellatedSolid>();
+                positiveSideSolids = new List<TessellatedSolid>();
+                if (ts.Center.dotProduct(plane.Normal) > plane.DistanceToOrigin)
+                    positiveSideSolids.Add(ts);
+                else negativeSideSolids.Add(ts);
+                return;
+            }
             DivideUpContact(ts, contactData, plane);
             DuplicateVerticesAtContact(contactData);
             #region make negative side solids
@@ -140,7 +150,7 @@ namespace TVGL.Boolean_Operations
                     numberOfTries++;
                 }
             }
-            if (numberOfTries > 0 && !contactElements.All(ce => ce.CannotStart)) Debug.WriteLine("{0} Contact Elements found that are not contained in loop.", contactElements.Count);
+            if (numberOfTries > 0) Debug.WriteLine("{0} Contact Elements found that are not contained in loop.", contactElements.Count);
             int numberOfNewVertices = DetermineNumberOfNewVertices(loops);
             for (int i = 0; i < numberOfNewVertices; i++) distancesToPlane.Add(0.0);
 
@@ -152,16 +162,9 @@ namespace TVGL.Boolean_Operations
             int numberOfNewVertices = 0;
             foreach (var loop in loops)
             {
-                for (int i = 0; i < loop.Count; i++)
-                {
-                    var ce = loop[i];
-                    if (ce.ContactType == ContactTypes.ThroughFace) numberOfNewVertices++;
-                    if (ce.ContactType == ContactTypes.ThroughVertex)
-                    {
-                        var prevCE = (i == 0) ? loop.Last() : loop[i - 1];
-                        if (prevCE.ContactType == ContactTypes.ThroughVertex) numberOfNewVertices++;
-                    }
-                }
+                numberOfNewVertices += loop.Count(ce => ce.ContactType == ContactTypes.ThroughFace);
+                numberOfNewVertices += loop.Count(ce => ce.ContactType == ContactTypes.ThroughVertex) / 2;
+                // this is correct, but I can't prove why it is the case..
             }
             return numberOfNewVertices;
         }
@@ -351,7 +354,6 @@ namespace TVGL.Boolean_Operations
         private static Loop FindLoop(ref List<ContactElement> contactElements, Flat plane, List<double> vertexDistancesToPlane, bool artificiallyCloseOpenLoops)
         {
             var thisCE = contactElements[0];
-            if (thisCE.CannotStart) return null;
             var loop = new List<ContactElement>();
             var remainingCEs = new List<ContactElement>(contactElements);
             do
@@ -361,29 +363,6 @@ namespace TVGL.Boolean_Operations
                 var newStartVertex = thisCE.EndVertex;
                 if (loop[0].StartVertex == newStartVertex) // then a loop is found!
                 {
-                    #region commented code for loops enclosing in-plane faces
-                    //this commented code was from when loops capturing in plane faces was included. This may 
-                    //still be preferred in some situations, but it makes this a heck of a lot easier to ignore them
-                    // one issue is the effect on Concave edges at in-plane faces. These concave edges would need
-                    // to be included in either 1 or 2 loops and if 2 then in opposite direction
-                    //if (loop.All(
-                    //    ce =>
-                    //        ce.ContactType == ContactTypes.AlongEdge &&
-                    //        (vertexDistancesToPlane[ce.SplitFacePositive.OtherVertex(ce.ContactEdge).IndexInList]
-                    //            .IsNegligible()
-                    //         ||
-                    //         vertexDistancesToPlane[ce.SplitFaceNegative.OtherVertex(ce.ContactEdge).IndexInList]
-                    //             .IsNegligible())))
-                    //{
-                    //    contactElements = remainingCEs;
-                    //    var concaveFlatsCouldBeReused =
-                    //        loop.Where(ce => ce.ContactEdge.Curvature == CurvatureType.Concave).ToList();
-                    //    foreach (var contactElement in concaveFlatsCouldBeReused)
-                    //        contactElement.CannotStart = true;
-                    //    contactElements.AddRange(concaveFlatsCouldBeReused);
-                    //    return new Loop(loop, plane.Normal, true, false, true);
-                    //}
-                    #endregion
                     contactElements = remainingCEs;
                     return new Loop(loop, plane.Normal, true, false, false);
                 }
@@ -455,7 +434,9 @@ namespace TVGL.Boolean_Operations
                     edgesToModify.Add(ce.ContactEdge);
                     // the contact edge will need to be linked to vertices and faces further down.
                     var faceToSplit = ce.SplitFacePositive; //faceToSplit will be removed, but before we do that, we use
-                    facesToDelete.Add(faceToSplit); // use it to build the new 2 to 3 triangles
+                    facesToDelete.Add(faceToSplit); // use it to build the new 2 to 3 triangles           
+                    if (!ts.Vertices.Contains(ce.StartVertex)) verticesToAdd.Add(ce.StartVertex);
+                    if (ce.StartEdge != null) edgesToDelete.Add(ce.StartEdge);
 
                     PolygonalFace positiveFace, negativeFace;
                     if (ce.ContactType == ContactTypes.ThroughVertex)
@@ -473,6 +454,15 @@ namespace TVGL.Boolean_Operations
                         negativeFace = new PolygonalFace(new[] { ce.ContactEdge.From, ce.ContactEdge.To, minVert },
                             faceToSplit.Normal);
                         facesToAdd.Add(negativeFace);
+                        if (ce.StartEdge != null)
+                        {
+                            var positiveEdge = new Edge(maxVert, ce.ContactEdge.From, positiveFace, null);
+                            edgesToAdd.Add(positiveEdge);
+                            edgesToModify.Add(positiveEdge);
+                            var negativeEdge = new Edge(ce.ContactEdge.From, minVert, negativeFace, null);
+                            edgesToAdd.Add(negativeEdge);
+                            edgesToModify.Add(negativeEdge);
+                        }
                         ce.ContactType = ContactTypes.AlongEdge;
                         ce.SplitFacePositive = positiveFace;
                         ce.SplitFaceNegative = negativeFace;
@@ -480,8 +470,6 @@ namespace TVGL.Boolean_Operations
                     //#+2 add f to v            constructors as well as the one for thirdFace below)
                     else if (ce.ContactType == ContactTypes.ThroughFace)
                     {
-                        edgesToDelete.Add(ce.StartEdge);
-                        verticesToAdd.Add(ce.StartVertex);
                         Vertex positiveVertex, negativeVertex;
                         if (ce.StartEdge.To.Position.dotProduct(plane.Normal) > plane.DistanceToOrigin)
                         {
@@ -663,33 +651,6 @@ namespace TVGL.Boolean_Operations
             return new List<PolygonalFace>(faces);
         }
 
-
-        private static List<List<PolygonalFace>> FindAllSolidsWithTheseFaces(IEnumerable<PolygonalFace> frontierFacesEnumerable,
-            IEnumerable<PolygonalFace> forbiddenFacesEnumerable)
-        {
-            var frontierFaces = new HashSet<PolygonalFace>(frontierFacesEnumerable);
-            var forbiddenFaces = new HashSet<PolygonalFace>(forbiddenFacesEnumerable);
-            var facesLists = new List<List<PolygonalFace>>();
-            while (frontierFaces.Any())
-            {
-                var startFace = frontierFaces.First();
-                var faceList = new List<PolygonalFace>();
-                var stack = new Stack<PolygonalFace>(new[] { startFace });
-                while (stack.Any())
-                {
-                    var face = stack.Pop();
-                    if (forbiddenFaces.Contains(face)) continue;
-                    if (frontierFaces.Contains(face)) frontierFaces.Remove(face);
-                    forbiddenFaces.Add(face);
-                    faceList.Add(face);
-                    foreach (var adjacentFace in face.Vertices.SelectMany(v => v.Faces).Distinct())
-                        if (!forbiddenFaces.Contains(adjacentFace))
-                            stack.Push(adjacentFace);
-                }
-                facesLists.Add(faceList);
-            }
-            return facesLists;
-        }
     }
 }
 

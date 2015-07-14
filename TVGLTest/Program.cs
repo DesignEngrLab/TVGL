@@ -14,17 +14,17 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = { 
-       //"../../../TestFiles/Mic_Holder_SW.stl",  
-       //  "../../../TestFiles/Mic_Holder_JR.stl",
-       //                                         "../../../TestFiles/3_bananas.amf",    
-       //                                         "../../../TestFiles/drillparts.amf",    
-       //                                         "../../../TestFiles/wrenchsns.amf",     
-       //                                         "../../../TestFiles/Rook.amf",          
-                                              "../../../TestFiles/amf_Cube.amf",
+      // "../../../TestFiles/Mic_Holder_SW.stl",  
+         // "../../../TestFiles/Mic_Holder_JR.stl",
+         //                                      "../../../TestFiles/3_bananas.amf",    
+        //                                       "../../../TestFiles/drillparts.amf",    
+         //                                        "../../../TestFiles/wrenchsns.amf",     
+          //                                      "../../../TestFiles/Rook.amf",          
+                //                              "../../../TestFiles/amf_Cube.amf",
        // "../../../TestFiles/trapezoid.4d.off",
        //      "../../../TestFiles/mushroom.off",   
        //    "../../../TestFiles/ABF.STL",           
-        //  "../../../TestFiles/Pump-1repair.STL",
+       //   "../../../TestFiles/Pump-1repair.STL",
         //  "../../../TestFiles/Pump-1.STL",
         //  "../../../TestFiles/Beam_Clean.STL",
         //"../../../TestFiles/piston.stl",
@@ -32,7 +32,7 @@ namespace TVGL_Test
         //"../../../TestFiles/85408.stl",
         //"../../../TestFiles/sth2.stl",
        //    "../../../TestFiles/pump.stl", 
-       //  "../../../TestFiles/bradley.stl",
+        "../../../TestFiles/bradley.stl",
        // "../../../TestFiles/45.stl",
        // "../../../TestFiles/Cuboide.stl",
        // "../../../TestFiles/new/5.STL",
@@ -131,7 +131,7 @@ namespace TVGL_Test
             var crossAreas = new double[3][,];
 
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
-            Slice.OnFlat(ts, new Flat(0.10, new[] { 1.0, 1, 0 }), out positiveSideSolids, out negativeSideSolids);
+            Slice.OnFlat(ts, new Flat(2.0, new[] { 1.0, 1, 0.5 }), out positiveSideSolids, out negativeSideSolids);
 
             TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
             TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
