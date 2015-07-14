@@ -129,22 +129,22 @@ namespace TVGL_Test
             //return;
             var now = DateTime.Now;
             Debug.WriteLine("start...");
-            var dir = new[] { 1.0, 1, 1 };
+            var dir = new[] { 1.0, 0, 0 };
             dir.normalize();
             Vertex vLow, vHigh;
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
             var length = MinimumEnclosure.GetLengthAndExtremeVertices(dir, ts.Vertices, out vLow, out vHigh);
             var distToVLow = vLow.Position.dotProduct(dir);
-            //try
-            //{
+            try
+            {
                 Slice.OnFlat(ts, new Flat(distToVLow + (length / 2), dir), out positiveSideSolids, out negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
-            //}
-            //catch (Exception)
-            //{
-            //    Console.WriteLine("Failed to slice: {0}", ts.Name);
-            //}
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Failed to slice: {0}", ts.Name);
+            }
 
         }
     }

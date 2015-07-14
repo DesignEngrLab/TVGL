@@ -510,10 +510,6 @@ namespace TVGL.Boolean_Operations
                             facesToAdd.Add(thirdFace);
                             edgesToAdd.Add(new Edge(negativeVertex, ce.ContactEdge.To, negativeFace, thirdFace));
                         }
-                        ts.HasUniformColor = false;
-                        thirdFace.color = new Color(KnownColors.Turquoise);
-                        negativeFace.color = new Color(KnownColors.HotPink);
-                        positiveFace.color = new Color(KnownColors.HotPink);
                         ce.ContactType = ContactTypes.AlongEdge;
                         ce.SplitFacePositive = positiveFace;
                         ce.SplitFaceNegative = negativeFace;
@@ -634,16 +630,8 @@ namespace TVGL.Boolean_Operations
                         var newConnectingLoop = (OnPositiveSide)
                             ? loopsOnThisSolid.First(l => l.Any(ce => ce.SplitFacePositive == face))
                             : loopsOnThisSolid.First(l => l.Any(ce => ce.SplitFaceNegative == face));
-                        var allSideFaces =
-                            newConnectingLoop.Select(ce => OnPositiveSide ? ce.SplitFacePositive : ce.SplitFaceNegative)
-                                .ToList();
-                        foreach (var sideFace in allSideFaces)
-                            if (sideFace != face) faces.Add(sideFace);
-                        var sideFaceNeighbors = allSideFaces.SelectMany(f => f.AdjacentFaces).Distinct().ToList();
-                        sideFaceNeighbors.Remove(null);
-                        foreach (var sideFaceNeighbor in sideFaceNeighbors)
-                            stack.Push(sideFaceNeighbor);
-                        connectingLoops.Add(newConnectingLoop);
+                        if (!connectingLoops.Contains(newConnectingLoop))
+                            connectingLoops.Add(newConnectingLoop);
                     }
                     else if (!faces.Contains(adjacentFace))
                         stack.Push(adjacentFace);
