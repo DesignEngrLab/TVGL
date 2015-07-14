@@ -19,10 +19,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using MIConvexHull;
 using StarMathLib;
-using TVGL.Boolean_Operations;
-using TVGL.Miscellaneous_Functions.TriangulatePolygon;
 
-namespace TVGL.Tessellation
+namespace TVGL
 {
     /// <tags>help</tags>             
     /// <summary>
@@ -568,7 +566,7 @@ namespace TVGL.Tessellation
         {
             HasUniformColor = true;
             if (colors == null) SolidColor = new Color(Constants.DefaultColor);
-            else if (colors.Count == 1) SolidColor = new Color(Constants.DefaultColor);
+            else if (colors.Count == 1) SolidColor = colors[0];
             else HasUniformColor = false;
             for (int i = 0; i < Faces.Length; i++)
             {
@@ -577,10 +575,15 @@ namespace TVGL.Tessellation
                 var centerY = face.Vertices.Average(v => v.Y);
                 var centerZ = face.Vertices.Average(v => v.Z);
                 face.Center = new[] { centerX, centerY, centerZ };
-                if (!HasUniformColor)
+                if (face.color != null && !face.color.Equals(SolidColor)) HasUniformColor = false;
+                else if (!HasUniformColor)
                 {
-                    var j = (i < colors.Count - 1) ? i : colors.Count - 1;
-                    face.color = colors[j];
+                    if (colors == null || !colors.Any()) face.color = SolidColor;
+                    else
+                    {
+                        var j = (i < colors.Count - 1) ? i : colors.Count - 1;
+                        face.color = colors[j];
+                    }
                 }
             }
         }

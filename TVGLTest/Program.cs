@@ -3,52 +3,52 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
-using TVGL.Tessellation;
 
 
 namespace TVGL_Test
 {
     internal partial class Program
     {
-        private static string[] filenames = { 
-       //"../../../TestFiles/Mic_Holder_SW.stl",  
-       //  "../../../TestFiles/Mic_Holder_JR.stl",
-       //                                         "../../../TestFiles/3_bananas.amf",    
-       //                                         "../../../TestFiles/drillparts.amf",    
-       //                                         "../../../TestFiles/wrenchsns.amf",     
-       //                                         "../../../TestFiles/Rook.amf",          
-                                              "../../../TestFiles/amf_Cube.amf",
-       // "../../../TestFiles/trapezoid.4d.off",
+        private static string[] filenames = {     
+                                                "../../../TestFiles/amf_Cube.amf",
+       "../../../TestFiles/Mic_Holder_SW.stl",  
+          "../../../TestFiles/Mic_Holder_JR.stl",
+                                               "../../../TestFiles/3_bananas.amf",    
+                                             //  "../../../TestFiles/drillparts.amf",    
+                                             //    "../../../TestFiles/wrenchsns.amf",     
+                                                "../../../TestFiles/Rook.amf",   
+      //  "../../../TestFiles/trapezoid.4d.off",
        //      "../../../TestFiles/mushroom.off",   
-       //    "../../../TestFiles/ABF.STL",           
-        //  "../../../TestFiles/Pump-1repair.STL",
-        //  "../../../TestFiles/Pump-1.STL",
-        //  "../../../TestFiles/Beam_Clean.STL",
-        //"../../../TestFiles/piston.stl",
-        //"../../../TestFiles/Z682.stl",   
-        //"../../../TestFiles/85408.stl",
-        //"../../../TestFiles/sth2.stl",
-       //    "../../../TestFiles/pump.stl", 
-       //  "../../../TestFiles/bradley.stl",
-       // "../../../TestFiles/45.stl",
-       // "../../../TestFiles/Cuboide.stl",
-       // "../../../TestFiles/new/5.STL",
-       //  "../../../TestFiles/new/2.stl",
-       // "../../../TestFiles/new/6.stl",
-       // "../../../TestFiles/new/4.stl",
-       //"../../../TestFiles/radiobox.stl",
-       // "../../../TestFiles/brace.stl",        
-       // "../../../TestFiles/box.stl",
-       // "../../../TestFiles/G0.stl",
-       // "../../../TestFiles/GKJ0.stl",
-       // "../../../TestFiles/SCS12UU.stl",
-       // "../../../TestFiles/testblock2.stl",
-       // "../../../TestFiles/Z665.stl",
-       // "../../../TestFiles/Casing.stl",
-       // "../../../TestFiles/mendel_extruder.stl"
+           "../../../TestFiles/ABF.STL",           
+          "../../../TestFiles/Pump-1repair.STL",
+          "../../../TestFiles/Pump-1.STL",
+          "../../../TestFiles/Beam_Clean.STL",
+        "../../../TestFiles/piston.stl",
+        "../../../TestFiles/Z682.stl",   
+    //    "../../../TestFiles/85408.stl",
+        "../../../TestFiles/sth2.stl",
+           "../../../TestFiles/pump.stl", 
+        "../../../TestFiles/bradley.stl",
+      //  "../../../TestFiles/45.stl",
+        "../../../TestFiles/Cuboide.stl",
+        "../../../TestFiles/new/5.STL",
+         "../../../TestFiles/new/2.stl",
+        "../../../TestFiles/new/6.stl",
+        "../../../TestFiles/new/4.stl",
+       "../../../TestFiles/radiobox.stl",
+        "../../../TestFiles/brace.stl",        
+        "../../../TestFiles/box.stl",
+        "../../../TestFiles/G0.stl",
+        "../../../TestFiles/GKJ0.stl",
+        "../../../TestFiles/SCS12UU.stl",
+        "../../../TestFiles/testblock2.stl",
+        "../../../TestFiles/Z665.stl",
+        "../../../TestFiles/Casing.stl",
+        "../../../TestFiles/mendel_extruder.stl"
         };
 
         [STAThread]
@@ -64,7 +64,7 @@ namespace TVGL_Test
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 // MinimumEnclosure.Find_via_ContinuousPCA_Approach(ts[0]);
-                 TestSlice(ts[0]);
+                TestSlice(ts[0]);
                 //TestOBB(ts[0]);       
 
             }
@@ -128,13 +128,23 @@ namespace TVGL_Test
             //return;
             var now = DateTime.Now;
             Debug.WriteLine("start...");
-            var crossAreas = new double[3][,];
-
+            var dir = new[] { 1.0, 0, 0 };
+            dir.normalize();
+            Vertex vLow, vHigh;
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
-            Slice.OnFlat(ts, new Flat(0.10, new[] { 1.0, 1, 0 }), out positiveSideSolids, out negativeSideSolids);
+            var length = MinimumEnclosure.GetLengthAndExtremeVertices(dir, ts.Vertices, out vLow, out vHigh);
+            var distToVLow = vLow.Position.dotProduct(dir);
+            try
+            {
+                Slice.OnFlat(ts, new Flat(distToVLow + (length / 2), dir), out positiveSideSolids, out negativeSideSolids);
+                TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
+                TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Failed to slice: {0}", ts.Name);
+            }
 
-            TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
-            TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
         }
     }
 }

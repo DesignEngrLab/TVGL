@@ -751,5 +751,16 @@ namespace TVGL
             return (byte)(value * 255f);
         }
 
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            if (obj is Color)
+            {
+                var otherColor = (Color) obj;
+                return A == otherColor.A && B == otherColor.B
+                       && G == otherColor.G && R == otherColor.R;
+            }
+            return false;
+        }
     }
 }

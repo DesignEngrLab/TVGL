@@ -15,7 +15,6 @@
 using System;
 using System.Collections.Generic;
 using MIConvexHull;
-using TVGL.Tessellation;
 
 namespace TVGL
 {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
 
-namespace TVGL.Tessellation
+namespace TVGL
 {
     /// <summary>
     /// This class defines a flat polygonal face. The implementation began with triangular faces in mind. 
@@ -196,7 +196,10 @@ namespace TVGL.Tessellation
                 var adjacentFaces = new PolygonalFace[3];
                 var i = 0;
                 foreach (var e in Edges)
-                    adjacentFaces[i++] = (this == e.OwnedFace) ? e.OtherFace : e.OwnedFace;
+                {
+                    if (e == null) adjacentFaces[i++] = null;
+                    else adjacentFaces[i++] = (this == e.OwnedFace) ? e.OtherFace : e.OwnedFace;
+                }
                 return adjacentFaces;
             }
         }

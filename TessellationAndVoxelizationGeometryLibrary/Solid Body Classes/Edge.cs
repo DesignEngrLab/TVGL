@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using StarMathLib;
 
-namespace TVGL.Tessellation
+namespace TVGL
 {
     /// <summary>
     ///     The straight-line edge class. It connects to two nodes and lies between two faces.
@@ -21,7 +21,7 @@ namespace TVGL.Tessellation
         /// <param name="doublyLinkedFaces"></param>
         /// <param name="doublyLinkedVertices"></param>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            Boolean doublyLinkedVertices=true)
+            Boolean doublyLinkedVertices = true)
         {
             From = fromVertex;
             To = toVertex;
@@ -99,7 +99,7 @@ namespace TVGL.Tessellation
         /// <value>
         ///     From.
         /// </value>
-        public readonly Vertex From;
+        public Vertex From { get; internal set; }
 
         /// <summary>
         ///     Gets the To Vertex.
@@ -107,7 +107,7 @@ namespace TVGL.Tessellation
         /// <value>
         ///     To.
         /// </value>
-        public readonly Vertex To;
+        public Vertex To { get; internal set; }
 
         /// <summary>
         ///     Gets the length.

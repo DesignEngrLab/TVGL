@@ -4,7 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using MIConvexHull;
 
-namespace TVGL.Miscellaneous_Functions.TriangulatePolygon
+namespace TVGL
 {
     internal enum NodeType
     {

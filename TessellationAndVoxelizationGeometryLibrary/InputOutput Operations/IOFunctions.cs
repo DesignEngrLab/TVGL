@@ -19,7 +19,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using amf;
-using TVGL.Tessellation;
 
 namespace TVGL.IOFunctions
 {

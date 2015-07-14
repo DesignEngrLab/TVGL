@@ -46,41 +46,14 @@ namespace TVGL
         ///     The epsilon same angle
         /// </summary>
         public const double EpsilonSameAngle = 1e-15;
-
-        /// <summary>
-        ///     The float size
-        /// </summary>
-        public const int FloatSize = sizeof(float);
-
-        /// <summary>
-        ///     The vertex size
-        /// </summary>
-        public const int VertexSize = (FloatSize * 3);
-
         /// <summary>
         ///     The look up string format
         /// </summary>
         public const string LookUpStringFormat = "F12";
-
-        /// <summary>
-        ///     The minimum probability for primitive classifier
-        /// </summary>
-        public const double MinProbabilityForPrimitiveClassifer = 0.001;
-
         /// <summary>
         ///     The error for face in surface
         /// </summary>
         public const double ErrorForFaceInSurface = 0.002;//0.02
-
-        /// <summary>
-        ///     The surface area fraction for primitive
-        /// </summary>
-        public const double SurfaceAreaFractionForPrimitive = 0.001;
-
-        /// <summary>
-        ///     The minimum probability for primitive of winged edge
-        /// </summary>
-        public const double MinProbabilityForPrimitiveOfWingedEdge = 0.3;
 
         /// <summary>
         ///     The maximum number edges per face
@@ -166,17 +139,6 @@ namespace TVGL
         /// The file is binary.
         /// </summary>
         Binary
-    }
-
-    internal enum PrimitiveSurfaceType
-    {
-        Unknown = 0,
-        Dense = 123456789,
-        Flat = 500,
-        Cylinder = 501,
-        Sphere = 502,
-        Flat_to_Curve = 503,
-        Sharp = 504
     }
 
     /// <summary>

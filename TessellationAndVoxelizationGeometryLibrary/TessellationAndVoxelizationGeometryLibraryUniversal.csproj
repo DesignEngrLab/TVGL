@@ -86,9 +86,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <WCFMetadata Include="Service References\" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>

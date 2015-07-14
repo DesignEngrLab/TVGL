@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using StarMathLib;
-using TVGL.Tessellation;
 using ClipperLib;
 
-namespace TVGL.Miscellaneous_Functions
+namespace TVGL
 {
     public static class Offset
     {

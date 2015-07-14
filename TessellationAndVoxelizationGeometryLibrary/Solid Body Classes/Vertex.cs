@@ -16,7 +16,7 @@ using MIConvexHull;
 using System.Collections.Generic;
 
 
-namespace TVGL.Tessellation
+namespace TVGL
 {
     /// <summary>
     /// The 3D vertex can connect to any number of faces and edges. It inherits from the
