@@ -20,6 +20,7 @@ using ClipperLib;
 using MIConvexHull;
 using StarMathLib;
 using TVGL.Tessellation;
+using TVGL.Enclosure_Operations;
 
 namespace TVGL
 {
@@ -281,9 +282,62 @@ namespace TVGL
         }
 
 
-        private static BoundingBox Find_via_MC_ApproachTwo(TessellatedSolid ts)
+        private static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
         {
-            throw new NotImplementedException();
+            var gaussianSphere = new GaussianSphere(ts);
+            var minBox = new BoundingBox();
+            var minVolume = double.PositiveInfinity;
+            var minArea = double.PositiveInfinity;
+            foreach (var arc in gaussianSphere.Arcs)
+            {
+                //Create great circle one (GC1) along direction of arc.
+                //Intersections on this great circle will determine changes in length.
+
+                //Create great circle two (GC2) orthoganal to the current normal (n1).
+                //GC2 contains an arc list of all the arcs it intersects
+                //The intersections and perspective determine the cross sectional area.
+                //Find the next node from each line along the direction of the arc (angle of rotation)
+
+                //List intersections from GC1 and nodes from GC2 based on angle of rotation to each.
+                var delta = 0;
+
+                //Get the initial length
+                Vertex vLow;
+                Vertex vHigh;
+                var length = GetLengthAndExtremeVertices(arc.Nodes[0],ts.ConvexHullVertices,out vLow, out vHigh);
+                do
+                {
+                    RotatingCalipers2DMethod(greatCircle2, minArea);//GC2 explicitley determines the ordered 2D convex hull
+                    var volume = minArea * length;
+                    if (volume < minVolume) minVolume = volume;
+
+                    //Set delta, where delta is the angle from the original orientation to the next intersection
+                    delta = delta;//+ intersections[0].angle
+
+                    while (theta <= delta) //Optimize the volume based on changes is projection of the 2D Bounding Box.;
+                    {
+                        //If the 2D bounding box changes vertices with the projection, then we will need RotatingCalipers
+                        //Else, project the same four'ish vertices and recalculate area.  
+                        if (volume < minVolume) minVolume = volume;
+                    }
+
+                    //After delta is reached, update the volume parameters of either length or cross sectional area (convex hull points).
+                    //If the closest intersection is on GC1, recalculate length.
+                    if (intersections[0].GC = GC1) 
+                    {
+                        length = StarMath.magnitude(arc.Nodes[0].Vector.subtract(intersections[0].Vertex));
+                    }
+                    else
+                    {
+                        var node = intersections[0].Node;
+                        Foreach (var arc in node.Arcs)
+                        {
+                              if (GC2.arcList.Contains(arc) ?  GC2.arcList.remove(arc): GC2.arcList.add(arc);     
+                        }
+                    }
+                } while (delta <= Maxtheta);
+            }
+            return minBox;
         }
 
         /// <summary>
@@ -458,6 +512,20 @@ namespace TVGL
             if (bestAngle == Math.PI / 2) { bestAngle = 0; }
             #endregion
 
+            return bestAngle;
+        }
+
+
+        /// <summary>
+        /// Rotating the calipers, based on the given gaussian circle.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="minArea">The minimum area.</param>
+        /// <returns>System.Double.</returns>
+        public static double RotatingCalipers2DMethod(GreatCircle greatCircle, out double minArea)
+        {
+            //create a list of vertices from the list of arcs in GC2  
+            //GC2 explicitley determines the ordered 2D convex hull
             return bestAngle;
         }
     }
