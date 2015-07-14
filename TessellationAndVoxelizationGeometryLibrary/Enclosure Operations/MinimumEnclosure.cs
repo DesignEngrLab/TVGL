@@ -19,7 +19,6 @@ using System.Linq.Expressions;
 using ClipperLib;
 using MIConvexHull;
 using StarMathLib;
-using TVGL.Tessellation;
 
 namespace TVGL
 {

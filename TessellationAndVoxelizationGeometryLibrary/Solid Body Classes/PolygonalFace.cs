@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
 
-namespace TVGL.Tessellation
+namespace TVGL
 {
     /// <summary>
     /// This class defines a flat polygonal face. The implementation began with triangular faces in mind. 

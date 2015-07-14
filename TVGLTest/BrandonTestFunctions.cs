@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using TVGL;
-using TVGL.Miscellaneous_Functions.TriangulatePolygon;
-using TVGL.Tessellation;
 
 
 namespace TVGL_Test
@@ -139,7 +137,7 @@ namespace TVGL_Test
 
             //Add loops to a list of loops
             var listPoints = new List<Point[]> { posLoop1 };
-            var offsets = TVGL.Miscellaneous_Functions.Offset.Run(listPoints);
+            var offsets = TVGL.Offset.Run(listPoints);
 
 
             //Print Triangles to Console

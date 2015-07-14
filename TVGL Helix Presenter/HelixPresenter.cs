@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Media;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
-using TVGL.Tessellation;
+using TVGL;
 
 namespace TVGL_Helix_Presenter
 {
@@ -42,7 +43,7 @@ namespace TVGL_Helix_Presenter
         private static Visual3D MakeModelVisual3D(TessellatedSolid ts)
         {
             var defaultMaterial = MaterialHelper.CreateMaterial(
-                    new Color
+                    new System.Windows.Media.Color
                     {
                         A = ts.SolidColor.A,
                         B = ts.SolidColor.B,
@@ -77,7 +78,7 @@ namespace TVGL_Helix_Presenter
 
                 var c = (f.color == null)
                     ? defaultMaterial
-                    : MaterialHelper.CreateMaterial(new Color { A = f.color.A, B = f.color.B, G = f.color.G, R = f.color.R });
+                    : MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = f.color.A, B = f.color.B, G = f.color.G, R = f.color.R });
                 result.Children.Add(new ModelVisual3D
                 {
                     Content =

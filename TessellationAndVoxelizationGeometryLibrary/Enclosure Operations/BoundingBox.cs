@@ -13,7 +13,6 @@
 // ***********************************************************************
 
 using MIConvexHull;
-using TVGL.Tessellation;
 
 namespace TVGL
 {

@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using amf;
 using StarMathLib;
-using TVGL.Tessellation;
 
 namespace TVGL.Enclosure_Operations
 {

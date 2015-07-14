@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using StarMathLib;
-using TVGL.Tessellation;
 
 namespace TVGL
 {
-    static class MiscFunctions
+  public  static class MiscFunctions
     {
         #region Flatten to 2D
         /// <summary>
@@ -114,6 +113,10 @@ namespace TVGL
             return Math.Min(AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]),
                 AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]));
         }
+        internal static double SmallerAngleBetweenEdges(double[] v0, double[] v1)
+        {
+            return Math.Min(AngleBetweenEdgesCW(v0, v1), AngleBetweenEdgesCCW(v0, v1));
+        }
 
         internal static double AngleBetweenEdgesCW(Edge edge1, Edge edge2, double[] axis)
         {
@@ -220,7 +223,7 @@ namespace TVGL
         /// <param name="lineRefPt">The line reference point on the line.</param>
         /// <param name="lineVector">The line direction vector.</param>
         /// <returns></returns>
-        internal static double DistancePointToLine(double[] qPoint, double[] lineRefPt, double[] lineVector)
+        public static double DistancePointToLine(double[] qPoint, double[] lineRefPt, double[] lineVector)
         {
             double[] dummy;
             return DistancePointToLine(qPoint, lineRefPt, lineVector, out dummy);
@@ -233,7 +236,7 @@ namespace TVGL
         /// <param name="lineVector">n is the vector of the line direction.</param>
         /// <param name="pointOnLine">The point on line closest to point, q.</param>
         /// <returns></returns>
-        internal static double DistancePointToLine(double[] qPoint, double[] lineRefPt, double[] lineVector, out double[] pointOnLine)
+        public static double DistancePointToLine(double[] qPoint, double[] lineRefPt, double[] lineVector, out double[] pointOnLine)
         {
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
@@ -249,7 +252,7 @@ namespace TVGL
         /// <param name="p1">point, p1.</param>
         /// <param name="p2">point, p2.</param>
         /// <returns>the distance between the two 3D points.</returns>
-        internal static double DistancePointToPoint(double[] p1, double[] p2)
+        public static double DistancePointToPoint(double[] p1, double[] p2)
         {
             var dX = p1[0] - p2[0];
             var dY = p1[1] - p2[1];
@@ -257,7 +260,42 @@ namespace TVGL
             return Math.Sqrt(dX * dX + dY * dY + dZ * dZ);
         }
 
-        internal static Vertex PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Vertex point1, Vertex point2)
+        /// <summary>
+        /// Returns the signed distance of the point to the plane.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="positionOnPlane">The position on plane.</param>
+        /// <returns>the distance between the two 3D points.</returns>
+        public static double DistancePointToPlane(double[] point, double[] normalOfPlane, double[] positionOnPlane)
+        {
+            return DistancePointToPlane(point, normalOfPlane, positionOnPlane.dotProduct(normalOfPlane));
+        }
+
+        /// <summary>
+        /// Returns the signed distance of the point to the plane. If the point is "above" the plane, then a positive
+        /// distance is return - if "below" then negative. This "above" means that the point is on the side of the
+        /// plane that the normal points towards.
+        /// </summary>
+        /// <param name="point">The point.</param>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="signedDistanceToPlane">The signed distance to plane.</param>
+        /// <returns>the distance between the two 3D points.</returns>
+        public static double DistancePointToPlane(double[] point, double[] normalOfPlane, double signedDistanceToPlane)
+        {
+            return normalOfPlane.dotProduct(point) - signedDistanceToPlane;
+        }
+
+        /// <summary>
+        /// Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+        /// with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        public static Vertex PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Vertex point1, Vertex point2)
         {
             var d1 = normalOfPlane.dotProduct(point1.Position);
             var d2 = normalOfPlane.dotProduct(point2.Position);
@@ -266,7 +304,24 @@ namespace TVGL
             for (var i = 0; i < 3; i++)
                 position[i] = point2.Position[i] * fraction + point1.Position[i] * (1 - fraction);
             return new Vertex(position);
+        }
 
+        /// <summary>
+        /// Finds the point on the plane made by a ray. If that ray is not going to pass through the 
+        /// that plane, then null is returned.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="rayPosition">The ray position.</param>
+        /// <param name="rayDirection">The ray direction.</param>
+        /// <returns>Vertex.</returns>
+        public static double[] PointOnPlaneFromRay(double[] normalOfPlane, double distOfPlane, double[] rayPosition, double[] rayDirection)
+        {
+            var d1 = -DistancePointToPlane(rayDirection,normalOfPlane,distOfPlane);
+            var angle = SmallerAngleBetweenEdges(normalOfPlane, rayDirection);
+            var d2 = d1 / Math.Cos(angle);
+            if (d2 < 0) return null;
+            return rayPosition.add(rayDirection.multiply(d2));
         }
         #endregion
     }

@@ -7,7 +7,6 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
-using TVGL.Tessellation;
 
 
 namespace TVGL_Test

@@ -16,8 +16,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
-using TVGL.Miscellaneous_Functions.TriangulatePolygon;
-using TVGL.Tessellation;
 
 namespace TVGL.Boolean_Operations
 {

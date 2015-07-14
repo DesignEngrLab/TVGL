@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using StarMathLib;
 
-namespace TVGL.Tessellation
+namespace TVGL
 {
     /// <summary>
     ///     The straight-line edge class. It connects to two nodes and lies between two faces.

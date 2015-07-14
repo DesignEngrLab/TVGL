@@ -19,10 +19,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using MIConvexHull;
 using StarMathLib;
-using TVGL.Boolean_Operations;
-using TVGL.Miscellaneous_Functions.TriangulatePolygon;
 
-namespace TVGL.Tessellation
+namespace TVGL
 {
     /// <tags>help</tags>             
     /// <summary>
