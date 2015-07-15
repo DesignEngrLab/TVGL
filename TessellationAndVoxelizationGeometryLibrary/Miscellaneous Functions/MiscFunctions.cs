@@ -4,50 +4,71 @@ using StarMathLib;
 
 namespace TVGL
 {
-  public  static class MiscFunctions
+    public static class MiscFunctions
     {
         #region Flatten to 2D
         /// <summary>
-        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in 
+        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in
         /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        /// the vertices. 
+        /// the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
+        /// <param name="MergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction)
+        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction,
+            Boolean MergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction);
-            return Get2DProjectionPoints(vertices, transform);
+            return Get2DProjectionPoints(vertices, transform, MergeDuplicateReferences);
         }
 
         /// <summary>
-        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in 
+        /// Returns the positions (array of 3D arrays) of the vertices as that they would be represented in
         /// the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        /// the vertices. 
+        /// the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
+        /// <param name="backTransform">The back transform.</param>
+        /// <param name="MergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction, out double[,] backTransform)
+        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction, out double[,] backTransform,
+            Boolean MergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return Get2DProjectionPoints(vertices, transform);
+            return Get2DProjectionPoints(vertices, transform, MergeDuplicateReferences);
         }
 
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[,] transform)
+        /// <summary>
+        /// Get2s the d projection points.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="transform">The transform.</param>
+        /// <param name="MergeDuplicateReferences">The merge duplicate references.</param>
+        /// <returns>Point[].</returns>
+        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[,] transform,
+            Boolean MergeDuplicateReferences = false)
         {
-            var points = new Point[vertices.Count];
+            var points = new List<Point>();
             var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
-            for (var i = 0; i < vertices.Count; i++)
+            foreach (var vertex in vertices)
             {
-                pointAs4[0] = vertices[i].Position[0];
-                pointAs4[1] = vertices[i].Position[1];
-                pointAs4[2] = vertices[i].Position[2];
+                pointAs4[0] = vertex.Position[0];
+                pointAs4[1] = vertex.Position[1];
+                pointAs4[2] = vertex.Position[2];
                 pointAs4 = transform.multiply(pointAs4);
-                points[i] = new Point(vertices[i], pointAs4[0], pointAs4[1], pointAs4[2]);
+                var point2D = new[] { pointAs4[0], pointAs4[1] };
+                if (MergeDuplicateReferences)
+                {
+                    var sameIndex = points.FindIndex(p => p.Position2D.IsPracticallySame(point2D));
+                    if (sameIndex >= 0)
+                        points[sameIndex].References.Add(vertex);
+                    points.Add(new Point(vertex, pointAs4[0], pointAs4[1], pointAs4[2]));
+                }
+                points.Add(new Point(vertex, pointAs4[0], pointAs4[1], pointAs4[2]));
             }
-            return points;
+            return points.ToArray();
         }
 
         public static double[][] Get2DProjectionPoints(IList<double[]> vertices, double[] direction)
@@ -317,7 +338,7 @@ namespace TVGL
         /// <returns>Vertex.</returns>
         public static double[] PointOnPlaneFromRay(double[] normalOfPlane, double distOfPlane, double[] rayPosition, double[] rayDirection)
         {
-            var d1 = -DistancePointToPlane(rayDirection,normalOfPlane,distOfPlane);
+            var d1 = -DistancePointToPlane(rayDirection, normalOfPlane, distOfPlane);
             var angle = SmallerAngleBetweenEdges(normalOfPlane, rayDirection);
             var d2 = d1 / Math.Cos(angle);
             if (d2 < 0) return null;

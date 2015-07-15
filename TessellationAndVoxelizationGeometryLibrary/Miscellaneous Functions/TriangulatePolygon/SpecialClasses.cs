@@ -265,6 +265,7 @@ namespace TVGL
                 m = double.PositiveInfinity;
                 b = double.PositiveInfinity;
             }
+
             else if (ToNode.Y.IsPracticallySame(FromNode.Y)) //If horizontal line, set slope = 0.
             {
                 m = 0.0;
@@ -289,7 +290,8 @@ namespace TVGL
             {
                 return FromNode.X;
             }
-            //If a flat line give either really high positive or negative (NOT infinity) depending on the direction of the line.
+
+            //If a flat line give either positive or negative infinity depending on the direction of the line.
             if (m.IsNegligible())
             {
                 if (ToNode.X - FromNode.X > 0)
