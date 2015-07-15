@@ -121,6 +121,7 @@ namespace TVGL
                     if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
                     if (node.Type == NodeType.Peak) peakCount++;
                     if (node.Type == NodeType.Root) rootCount++;
+                    if (node.Type == NodeType.Duplicate) throw new System.ArgumentException("Duplicate point found");
                 }
                 if (isPositive[i]) //If a positive loop, the following conditions must be balanced
                 {
@@ -476,47 +477,33 @@ namespace TVGL
         internal static NodeType GetNodeType(Point a, Point b, Point c)
         {
             var angle = MiscFunctions.AngleBetweenEdgesCCW(a, b, c);
-            if (a.Y < b.Y)
+            if (a.Y.IsPracticallySame(b.Y))
             {
-                if (c.Y > b.Y)
+                if (c.Y.IsPracticallySame(b.Y))
                 {
-                    return NodeType.Left;
+                    if (a.X.IsPracticallySame(c.X)) return NodeType.Duplicate; //signifies an error (two points with practically the same coordinates)
+                    return a.X > c.X ? NodeType.Right : NodeType.Left;
                 }
-                if (angle < Math.PI) return NodeType.Peak; //Solution is peak if c.y > or = b.Y
-                return c.Y < b.Y ? NodeType.UpwardReflex : NodeType.Left; //Solution changes whether c.y > or = b.Y
-            }
-
-            if (a.Y > b.Y)
-            {
-                if (c.Y > b.Y)
-                {
-                    return angle < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
-                }
-                if (c.Y < b.Y)
-                {
-                    return NodeType.Right;
-                }
-                //else c.Y = b.Y)
-                return angle < Math.PI ? NodeType.Root : NodeType.Right;
-            }
-
-            //Else, a.Y = b.Y
-            if (c.Y > b.Y)
-            {
-                return angle > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
-            }
-            if (c.Y < b.Y)
-            {
+                if (c.Y > b.Y) return angle > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
+                //else c.Y < b.Y
                 return angle > Math.PI ? NodeType.UpwardReflex : NodeType.Right;
             }
-            if (a.X > c.X)
+
+            if (a.Y < b.Y)
             {
-                return NodeType.Right;
+                if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Peak: NodeType.Left;
+                if (c.Y > b.Y) return NodeType.Left;
+                //else c.Y < b.Y
+                return angle < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
             }
-            return a.X < c.X ? NodeType.Left : NodeType.Duplicate; //11 signifies an error (two points with exactly the same coordinates)     
+
+            //else a.Y > b.Y)
+            if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Root : NodeType.Right;
+            if (c.Y > b.Y) return angle < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
+            //else (c.Y < b.Y)
+            return NodeType.Right;           
         }
         #endregion
-
 
         #region Create Trapezoid and Insert Into List
         internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, ref List<PartialTrapezoid> trapTree, ref List<Trapezoid> completedTrapezoids)
@@ -547,16 +534,18 @@ namespace TVGL
             var counter = 0;
             foreach (var line in lineList)
             {
+                //Check to make sure that the line does not contain the node
+                if (line.FromNode == node || line.ToNode == node) continue;
+                //Find distance to line
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (xdif < 0 && Math.Abs(xdif) > 1E-10)//Moved to the left by some tolerance
+                if (xdif < 0 && !xdif.IsNegligible())//Moved to the left by some tolerance 
                 {
+                    
                     counter++;
-                    if (Math.Abs(xdif - xleft) < 1E-10) // if approximately equal
+                    if (xdif.IsPracticallySame(xleft)) // if approximately equal
                     {
-                        //Choose whichever line has the right most other node
-                        //Note that this condition will only occur when line and
-                        //leftLine share a node.                        
+                        //Find the shared node
                         Node nodeOnLine;
                         if (leftLine.ToNode == line.FromNode)
                         {
@@ -567,6 +556,9 @@ namespace TVGL
                             nodeOnLine = line.ToNode;
                         }
 
+                        //Choose whichever line has the right most other node
+                        //Note that this condition will only occur when line and
+                        //leftLine share a node. 
                         if (nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X)
                         {
                             leftLine = nodeOnLine.EndLine;
@@ -599,12 +591,15 @@ namespace TVGL
             var counter = 0;
             foreach (var line in lineList)
             {
+                //Check to make sure that the line does not contain the node
+                if (line.FromNode == node || line.ToNode == node) continue;
+                //Find distance to line
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (xdif > 0 && Math.Abs(xdif) > 1E-10)//Moved to the right by some tolerance
+                if (xdif > 0 && !xdif.IsNegligible())//Moved to the right by some tolerance
                 {
                     counter++;
-                    if (Math.Abs(xdif - xright) < 1E-10) // if approximately equal
+                    if (xdif.IsPracticallySame(xright)) // if approximately equal
                     {
                         //Choose whichever line has the right most other node
                         //Note that this condition will only occur when line and
@@ -657,7 +652,7 @@ namespace TVGL
                     sortedNodes.Insert(i, node);
                     return i;
                 }
-                if (Math.Abs(node.Y - sortedNodes[i].Y) < 1E-10 && node.X > sortedNodes[i].X) //Descending X
+                if (node.Y.IsPracticallySame(sortedNodes[i].Y)  && node.X > sortedNodes[i].X) //Descending X
                 {
                     sortedNodes.Insert(i, node);
                     return i;
@@ -687,7 +682,7 @@ namespace TVGL
                         isInserted = true;
                         break;
                     }
-                    if (Math.Abs(negativeLoop[i].Y - sortedNodes[j].Y) < 1E-10 && negativeLoop[i].X > sortedNodes[j].X) //Descending X
+                    if (negativeLoop[i].Y.IsPracticallySame(sortedNodes[j].Y) && negativeLoop[i].X > sortedNodes[j].X) //Descending X
                     {
                         sortedNodes.Insert(j, negativeLoop[i]);
                         isInserted = true;

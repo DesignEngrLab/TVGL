@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using MIConvexHull;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -11,6 +12,7 @@ namespace TVGL
         DownwardReflex, UpwardReflex, Peak, Root, Left, Right,
         Duplicate
     }
+
     #region Node Class
     /// <summary>
     /// Node class used in Triangulate Polygon
@@ -258,12 +260,12 @@ namespace TVGL
             ToNode = toNode;
 
             //Solve for slope and y intercept. 
-            if (Math.Abs(ToNode.X - FromNode.X) < 1E-10) //If vertical line, set slope = inf.
+            if (ToNode.X.IsPracticallySame(FromNode.X)) //If vertical line, set slope = inf.
             {
                 m = double.PositiveInfinity;
                 b = double.PositiveInfinity;
             }
-            else if (Math.Abs(ToNode.Y - FromNode.Y) < 1E-10) //If horizontal line, set slope = 0.
+            else if (ToNode.Y.IsPracticallySame(FromNode.Y)) //If horizontal line, set slope = 0.
             {
                 m = 0.0;
                 b = ToNode.Y;
@@ -288,7 +290,7 @@ namespace TVGL
                 return FromNode.X;
             }
             //If a flat line give either really high positive or negative (NOT infinity) depending on the direction of the line.
-            if (Math.Abs(m) < 1E-10)
+            if (m.IsNegligible())
             {
                 if (ToNode.X - FromNode.X > 0)
                 {
