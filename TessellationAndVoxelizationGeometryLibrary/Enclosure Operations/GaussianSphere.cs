@@ -166,5 +166,41 @@ namespace TVGL.Enclosure_Operations
         }
     }
 
+
+    /// <summary>
+    /// Gaussian Sphere for a polyhedron
+    /// </summary>
+    /// NOTE: Using spherical coordinates from mathematics (r, θ, φ), since it follows the right hand rule.
+    /// Where r is the radial distance (r = 1 for the unit circle), θ is the azimuthal angle (XY && 0 <= θ <= 360), and φ is the polar angle (From Z axis && 0 <= φ <= 180). 
+    public struct GreatCircle
+    {
+        /// <summary>
+        /// The volume of the bounding box.
+        /// </summary>
+        internal GreatCircle(GaussianSphere gaussianSphere, double[] direction)
+        {
+
+        }
+    }
+
+    public struct Intersection
+    {
+        internal Node Node;
+        internal GreatCircle GC;
+        internal Vertex Vertex;
+
+        internal Intersection(Node node, GreatCircle gc)
+        {
+            Node = node;
+            GC = gc;
+            Vertex = null;
+        }
+        internal Intersection(Vertex vertex, GreatCircle gc)
+        {
+            Node = null;
+            GC = gc;
+            Vertex = vertex;
+        }
+    }
     
 }
