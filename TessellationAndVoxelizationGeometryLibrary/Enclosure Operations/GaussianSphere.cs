@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Xml.Linq;
+using amf;
 using StarMathLib;
 
 namespace TVGL.Enclosure_Operations
@@ -113,22 +115,23 @@ namespace TVGL.Enclosure_Operations
     {
         internal double ArcLength;
         internal List<Node> Nodes;
-        private double m;
-        private double b;
+        private readonly double m;
+        private readonly double b;
         internal Arc(Node node1, Node node2)
         {
             Nodes = new List<Node>{node1,node2};
             //Calculate arc length. Base on the following answer, where r = 1 for our unit circle.
             //http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
+            //Note that the arc length must be the smaller of the two directions around the sphere.
             ArcLength = Math.Acos(node1.Vector.dotProduct(node2.Vector));
 
             //Set slope and intercept to use for intersections
-            if (node1.Phi - node2.Phi == 0) //if rise = 0, Horizontal Line (slope = 0).
+            if (node1.Phi.IsPracticallySame(node2.Phi)) //if rise = 0, Horizontal Line (slope = 0).
             {
                 m = 0;
                 b = node1.Phi;
             }
-            else if (node1.Theta - node2.Theta == 0) // if run = 0, Vertical Line (slope = infinity)
+            else if (node1.Theta.IsPracticallySame(node2.Theta)) // if run = 0, Vertical Line (slope = infinity)
             {
                 m = double.PositiveInfinity;
                 b = double.PositiveInfinity;
@@ -140,65 +143,133 @@ namespace TVGL.Enclosure_Operations
             }     
         }
 
-        internal bool Intersect(Arc arc1, Arc arc2, out double[] intersection, out double[][] segment)
+        internal bool Intersect(Arc arc1, Arc arc2, out Vertex intersection)
         {
             intersection = null; 
-            segment = null;
-
-            //Arc intersection is identical to cartisian intersection, 
-            //where the theta and phi angles represent x and y repsectively.
-            if (arc1.m - arc2.m == 0 && arc2.b - arc1.b == 0) //The two arcs are on same great circle.
+            
+            //Create two planes given arc1 and arc2
+            var norm1 = arc1.Nodes[0].Vector.crossProduct(arc1.Nodes[1].Vector); //unit normal
+            var norm2 = arc2.Nodes[0].Vector.crossProduct(arc2.Nodes[1].Vector);
+            //Check whether the planes are the same. 
+            if (norm1[0].IsPracticallySame(norm2[0]) && norm1[1].IsPracticallySame(norm2[1]) &&
+                norm1[2].IsPracticallySame(norm2[2])) return true; //All points intersect
+            //Check whether the planes are the same, but built with opposite normals.
+            if (norm1[0].IsPracticallySame(-norm2[0]) && norm1[1].IsPracticallySame(-norm2[1]) &&
+                norm1[2].IsPracticallySame(-norm2[2])) return true; //All points intersect
+            //Find points of intersection between two planes
+            var position1 = norm1.crossProduct(norm2).normalize(); 
+            var position2 = new [] {-position1[0], -position1[1], -position1[2]};
+            var vertices = new []{new Vertex(position1) , new Vertex(position2), };
+            //Check to see if the intersections are on the arcs
+            for (var i = 0; i < 2; i++)
             {
-                //todo: determine if arcs overlap and by how much (start and end point)
+                var l1 = arc1.ArcLength;
+                var l2 = Math.Acos(arc1.Nodes[0].Vector.dotProduct(vertices[i].Position));
+                var l3 = Math.Acos(arc1.Nodes[1].Vector.dotProduct(vertices[i].Position));
+                var total1 = l1 - l2 - l3;
+                l1 = arc2.ArcLength;
+                l2 = Math.Acos(arc2.Nodes[0].Vector.dotProduct(vertices[i].Position));
+                l3 = Math.Acos(arc2.Nodes[1].Vector.dotProduct(vertices[i].Position));
+                var total2 = l1 - l2 - l3;
+                if (!total1.IsNegligible() || !total2.IsNegligible()) continue;
+                intersection = vertices[i];
                 return true;
             }
-             if (arc1.m - arc2.m == 0) //The two arcs are parallel, but never equal
+            return false;
+        }
+
+        internal Node NextNodeAlongRotation(double[] rotation, Arc arc)
+        {
+            foreach (var node in arc.Nodes)
             {
-                return false;
+                //todo: implement next node function
             }
- 
-            var x = (arc2.b - arc1.b)/(arc1.m - arc2.m);
-            var y = arc1.m*x + arc1.b;
-            //Intersection is theta(X) and phi(Y).
-            intersection = new double[] {x, y};
-            return true;
-            
+            Node node1 = null;
+            return node1;
         }
     }
-
 
     /// <summary>
-    /// Gaussian Sphere for a polyhedron
+    /// Great Circle based on a gaussian sphere. 
     /// </summary>
-    /// NOTE: Using spherical coordinates from mathematics (r, θ, φ), since it follows the right hand rule.
-    /// Where r is the radial distance (r = 1 for the unit circle), θ is the azimuthal angle (XY && 0 <= θ <= 360), and φ is the polar angle (From Z axis && 0 <= φ <= 180). 
-    public struct GreatCircle
+    public class GreatCircle
     {
+        private readonly double[] vector1;
+        private readonly double[] vector2;
+        internal List<Arc> ArcList;
+        internal List<Vertex> IntersectionVertices;
+        internal double[] Normal;
         /// <summary>
-        /// The volume of the bounding box.
+        /// The volume of the bounding box. 
+        /// Note that antipodal points would result in an infinite number of great circles, but can
+        /// be ignored since we are assuming the thickness of this solid is greater than 0.
         /// </summary>
-        internal GreatCircle(GaussianSphere gaussianSphere, double[] direction)
+        internal GreatCircle(GaussianSphere gaussianSphere, double[] vector1, double[] vector2)
         {
+            this.vector1 = vector1;
+            this.vector2 = vector2;
+            ArcList = new List<Arc>();
+            IntersectionVertices = new List<Vertex>();
+            Normal = vector1.crossProduct(vector2);
+            var segmentBool = false;
+            foreach (var arc in gaussianSphere.Arcs)
+            {
+                //Create two planes given arc and the great circle
+                var norm2 = arc.Nodes[0].Vector.crossProduct(arc.Nodes[1].Vector);
+                //Check whether the planes are the same. 
+                if (Normal[0].IsPracticallySame(norm2[0]) && Normal[1].IsPracticallySame(norm2[1]) &&
+                    Normal[2].IsPracticallySame(norm2[2])) segmentBool = true; //All points intersect
+                //Check whether the planes are the same, but built with opposite normals.
+                if (Normal[0].IsPracticallySame(-norm2[0]) && Normal[1].IsPracticallySame(-norm2[1]) &&
+                    Normal[2].IsPracticallySame(-norm2[2])) segmentBool = true; //All points intersect
+                if (segmentBool)
+                {
+                    //Both nodes are intersection vertices and the arc should be on the arc list.
+                    IntersectionVertices.Add(new Vertex(arc.Nodes[0].Vector));
+                    IntersectionVertices.Add(new Vertex(arc.Nodes[1].Vector));
+                    ArcList.Add(arc);
+                    continue;
+                }
 
+                //Find points of intersection between two planes
+                var position1 = Normal.crossProduct(norm2).normalize();
+                var position2 = new[] { -position1[0], -position1[1], -position1[2] };
+                var vertices = new[] { new Vertex(position1), new Vertex(position2), };
+                //Check to see if the intersection is on the arc. We already know it is on the great circle.
+                for (var i = 0; i < 2; i++)
+                {
+                    var l1 = arc.ArcLength;
+                    var l2 = Math.Acos(arc.Nodes[0].Vector.dotProduct(vertices[i].Position));
+                    var l3 = Math.Acos(arc.Nodes[1].Vector.dotProduct(vertices[i].Position));
+                    var total = l1 - l2 - l3;
+                    if (!total.IsNegligible()) continue;
+                    IntersectionVertices.Add(vertices[i]);
+                    ArcList.Add(arc);
+                    break;
+                }
+            }
         }
     }
 
-    public struct Intersection
+    /// <summary>
+    /// Intersection Class retains information about the type of arc intersection
+    /// </summary>
+    internal class Intersection
     {
         internal Node Node;
-        internal GreatCircle GC;
+        internal GreatCircle GreatCircle;
         internal Vertex Vertex;
 
-        internal Intersection(Node node, GreatCircle gc)
+        internal Intersection(Node node, GreatCircle greatCircle)
         {
             Node = node;
-            GC = gc;
+            GreatCircle = greatCircle;
             Vertex = null;
         }
-        internal Intersection(Vertex vertex, GreatCircle gc)
+        internal Intersection(Vertex vertex, GreatCircle greatCircle)
         {
             Node = null;
-            GC = gc;
+            GreatCircle = greatCircle;
             Vertex = vertex;
         }
     }

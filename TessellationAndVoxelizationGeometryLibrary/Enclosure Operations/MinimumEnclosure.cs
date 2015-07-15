@@ -19,6 +19,7 @@ using System.Linq.Expressions;
 using ClipperLib;
 using MIConvexHull;
 using StarMathLib;
+using TVGL.Enclosure_Operations;
 
 namespace TVGL
 {
@@ -280,63 +281,74 @@ namespace TVGL
         }
 
 
-        //private static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
-        //{
-        //    var gaussianSphere = new GaussianSphere(ts);
-        //    var minBox = new BoundingBox();
-        //    var minVolume = double.PositiveInfinity;
-        //    var minArea = double.PositiveInfinity;
-        //    foreach (var arc in gaussianSphere.Arcs)
-        //    {
-        //        //Create great circle one (GC1) along direction of arc.
-        //        //Intersections on this great circle will determine changes in length.
+        private static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
+        {
+            var gaussianSphere = new GaussianSphere(ts);
+            var minBox = new BoundingBox();
+            var minVolume = double.PositiveInfinity;
+            var minArea = double.PositiveInfinity;
+            foreach (var arc in gaussianSphere.Arcs)
+            {
+                //Create great circle one (GC1) along direction of arc.
+                //Intersections on this great circle will determine changes in length.
+                var greatCircle1 = new GreatCircle(gaussianSphere, arc.Nodes[0].Vector, arc.Nodes[1].Vector);
 
-        //        //Create great circle two (GC2) orthoganal to the current normal (n1).
-        //        //GC2 contains an arc list of all the arcs it intersects
-        //        //The intersections and perspective determine the cross sectional area.
-        //        //Find the next node from each line along the direction of the arc (angle of rotation)
+                //Create great circle two (GC2) orthoganal to the current normal (n1).
+                //GC2 contains an arc list of all the arcs it intersects
+                //The intersections and perspective determine the cross sectional area.
+                var vector1 = arc.Nodes[0].Vector.crossProduct(arc.Nodes[1].Vector);
+                //vector 2 is + 90 degrees in the direction of the arc.
+                var vector2 = vector1.crossProduct(arc.Nodes[0].Vector);
+                var greatCircle2 = new GreatCircle(gaussianSphere, vector1, vector2);
+                
+                //Find the next node from each line along the direction of the arc (angle of rotation)
+                //List intersections from GC1 and nodes from GC2 based on angle of rotation to each.
 
-        //        //List intersections from GC1 and nodes from GC2 based on angle of rotation to each.
-        //        var delta = 0;
+                //Get the initial length
+                Vertex vLow;
+                Vertex vHigh;
+                var delta = 0.0;
+                var theta = 0.0;
+                var MaxTheta = 0.0;
+                var intersections = new List<Intersection>();
+                var length = GetLengthAndExtremeVertices(arc.Nodes[0].Vector,ts.ConvexHullVertices,out vLow, out vHigh);
+                do
+                {
+                    RotatingCalipers2DMethod(greatCircle2, out minArea);//GC2 explicitley determines the ordered 2D convex hull
+                    var volume = minArea * length;
+                    if (volume < minVolume) minVolume = volume;
 
-        //        //Get the initial length
-        //        Vertex vLow;
-        //        Vertex vHigh;
-        //        var length = GetLengthAndExtremeVertices(arc.Nodes[0],ts.ConvexHullVertices,out vLow, out vHigh);
-        //        do
-        //        {
-        //            RotatingCalipers2DMethod(greatCircle2, minArea);//GC2 explicitley determines the ordered 2D convex hull
-        //            var volume = minArea * length;
-        //            if (volume < minVolume) minVolume = volume;
+                    //Set delta, where delta is the angle from the original orientation to the next intersection
+                    delta =+ delta;//+ intersections[0].angle
 
-        //            //Set delta, where delta is the angle from the original orientation to the next intersection
-        //            delta = delta;//+ intersections[0].angle
+                    while (theta <= delta) //Optimize the volume based on changes is projection of the 2D Bounding Box.;
+                    {
+                        //If the 2D bounding box changes vertices with the projection, then we will need RotatingCalipers
+                        //Else, project the same four'ish vertices and recalculate area.  
+                        if (volume < minVolume) minVolume = volume;
+                    }
 
-        //            while (theta <= delta) //Optimize the volume based on changes is projection of the 2D Bounding Box.;
-        //            {
-        //                //If the 2D bounding box changes vertices with the projection, then we will need RotatingCalipers
-        //                //Else, project the same four'ish vertices and recalculate area.  
-        //                if (volume < minVolume) minVolume = volume;
-        //            }
-
-        //            //After delta is reached, update the volume parameters of either length or cross sectional area (convex hull points).
-        //            //If the closest intersection is on GC1, recalculate length.
-        //            if (intersections[0].GC = GC1) 
-        //            {
-        //                length = StarMath.magnitude(arc.Nodes[0].Vector.subtract(intersections[0].Vertex));
-        //            }
-        //            else
-        //            {
-        //                var node = intersections[0].Node;
-        //                foreach (var arc in node.Arcs)
-        //                {
-        //                      if (GC2.arcList.Contains(arc) ?  GC2.arcList.remove(arc): GC2.arcList.add(arc);     
-        //                }
-        //            }
-        //        } while (delta <= Maxtheta);
-        //    }
-        //    return minBox;
-        //}
+                    //After delta is reached, update the volume parameters of either length or cross sectional area (convex hull points).
+                    //If the closest intersection is on GC1, recalculate length.
+                    if (intersections[0].GreatCircle == greatCircle1)
+                    {
+                        var vector = arc.Nodes[0].Vector.subtract(intersections[0].Node.Vector);
+                        length = Math.Sqrt(vector[0]*vector[0]+vector[1]*vector[1]+vector[2]*vector[2]);
+                    }
+                    else
+                    {
+                        var node = intersections[0].Node;
+                        foreach (var intersectedArc in node.Arcs)
+                        {
+                            if (greatCircle2.ArcList.Contains(intersectedArc))
+                                greatCircle2.ArcList.Remove(intersectedArc);
+                            else greatCircle2.ArcList.Add(intersectedArc);
+                        }
+                    }
+                } while (delta <= MaxTheta);
+            }
+            return minBox;
+        }
 
         /// <summary>
         /// Finds the minimum oriented bounding rectangle (2D). The 3D points of a tessellated solid
@@ -518,14 +530,16 @@ namespace TVGL
         /// <summary>
         /// Rotating the calipers, based on the given gaussian circle.
         /// </summary>
-        /// <param name="points">The points.</param>
+        /// <param name="greatCircle">The points.</param>
         /// <param name="minArea">The minimum area.</param>
         /// <returns>System.Double.</returns>
-        //public static double RotatingCalipers2DMethod(GreatCircle greatCircle, out double minArea)
-        //{
+        public static double RotatingCalipers2DMethod(GreatCircle greatCircle, out double minArea)
+        {
+            var bestAngle = 0.0;
             //create a list of vertices from the list of arcs in GC2  
             //GC2 explicitley determines the ordered 2D convex hull
-        //    return bestAngle;
-        //}
+            minArea = 0.0;
+            return bestAngle;
+        }
     }
 }
