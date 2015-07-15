@@ -128,7 +128,7 @@ namespace TVGL
             //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
-                var points = MiscFunctions.Get2DProjectionPoints(ts.ConvexHullVertices, eigenVector);
+                var points = MiscFunctions.Get2DProjectionPoints(ts.ConvexHullVertices, eigenVector, true);
                 var cvHull = ConvexHull2D(points);
                 double area;
                 RotatingCalipers2DMethod(cvHull, out area);
@@ -300,7 +300,7 @@ namespace TVGL
             Vertex v1Low, v1High;
             var length = GetLengthAndExtremeVertices(direction, vertices, out v1Low, out v1High);
             double[,] backTransform;
-          MiscFunctions.  Get2DProjectionPoints(vertices, direction, out backTransform);
+            MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, true);
 
             double minArea;
             var rotateZ = StarMath.RotationZ(RotatingCalipers2DMethod(vertices.Select(v => new Point(v)).ToArray(), out minArea));
@@ -313,6 +313,7 @@ namespace TVGL
             var ny = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
             dirVectorPlusZero = backTransform.GetColumn(2);
             var nz = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
+            // todo: check that this code works correctly.
             Vertex v2Low, v2High;
             GetLengthAndExtremeVertices(ny, vertices, out v2Low, out v2High);
             Vertex v3Low, v3High;

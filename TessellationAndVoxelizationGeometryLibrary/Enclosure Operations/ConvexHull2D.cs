@@ -38,7 +38,7 @@ namespace TVGL
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<Point> ConvexHull2D(IList<Vertex> vertices, double[] direction)
         {
-           return ConvexHull2D(new List<Point>(MiscFunctions.Get2DProjectionPoints(vertices, direction)));
+            return ConvexHull2D(new List<Point>(MiscFunctions.Get2DProjectionPoints(vertices, direction, true)));
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<Point> ConvexHull2D(IList<Point> points)
-        {                                                               
+        {
             var origVNum = points.Count;
             #region Step 1 : Define Convex Octogon
 
@@ -115,7 +115,7 @@ namespace TVGL
              * vertices found in the original vertices and ordered to make a
              * counter-clockwise loop beginning with the leftmost (minimum
              * value of X) IVertexConvHull. */
-            var convexHullCCW = new List<Point> {points[extremePointsIndices[0]]};
+            var convexHullCCW = new List<Point> { points[extremePointsIndices[0]] };
             for (var i = 1; i < 8; i++)
                 if (extremePointsIndices[i] != extremePointsIndices[i - 1])
                     convexHullCCW.Add(points[extremePointsIndices[i]]);
@@ -148,15 +148,15 @@ namespace TVGL
             {
                 edgeUnitVectors[i, 0] = (convexHullCCW[i + 1][0] - convexHullCCW[i][0]);
                 edgeUnitVectors[i, 1] = (convexHullCCW[i + 1][1] - convexHullCCW[i][1]);
-                magnitude = Math.Sqrt(edgeUnitVectors[i, 0]*edgeUnitVectors[i, 0] +
-                                      edgeUnitVectors[i, 1]*edgeUnitVectors[i, 1]);
+                magnitude = Math.Sqrt(edgeUnitVectors[i, 0] * edgeUnitVectors[i, 0] +
+                                      edgeUnitVectors[i, 1] * edgeUnitVectors[i, 1]);
                 edgeUnitVectors[i, 0] /= magnitude;
                 edgeUnitVectors[i, 1] /= magnitude;
             }
             edgeUnitVectors[last, 0] = convexHullCCW[0][0] - convexHullCCW[last][0];
             edgeUnitVectors[last, 1] = convexHullCCW[0][1] - convexHullCCW[last][1];
-            magnitude = Math.Sqrt(edgeUnitVectors[last, 0]*edgeUnitVectors[last, 0] +
-                                  edgeUnitVectors[last, 1]*edgeUnitVectors[last, 1]);
+            magnitude = Math.Sqrt(edgeUnitVectors[last, 0] * edgeUnitVectors[last, 0] +
+                                  edgeUnitVectors[last, 1] * edgeUnitVectors[last, 1]);
             edgeUnitVectors[last, 0] /= magnitude;
             edgeUnitVectors[last, 1] /= magnitude;
 

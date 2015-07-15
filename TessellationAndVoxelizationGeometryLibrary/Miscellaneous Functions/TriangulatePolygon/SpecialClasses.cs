@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using MIConvexHull;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -258,11 +259,12 @@ namespace TVGL
             ToNode = toNode;
 
             //Solve for slope and y intercept. 
-            if (Math.Abs(ToNode.X - FromNode.X) < 1E-10) //If vertical line, set slope = inf.
+            if (ToNode.X.IsPracticallySame(FromNode.X)) //If vertical line, set slope = inf.
             {
                 m = double.PositiveInfinity;
                 b = double.PositiveInfinity;
             }
+                //todo: use starmath functions
             else if (Math.Abs(ToNode.Y - FromNode.Y) < 1E-10) //If horizontal line, set slope = 0.
             {
                 m = 0.0;
@@ -287,7 +289,7 @@ namespace TVGL
             {
                 return FromNode.X;
             }
-            //If a flat line give either positive or negative infinitity depending on the direction of the line.
+            //If a flat line give either positive or negative infinity depending on the direction of the line.
             else if (m == 0.0)
             {
                 if (ToNode.X - FromNode.X > 0)
