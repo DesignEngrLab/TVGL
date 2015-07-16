@@ -175,15 +175,14 @@ namespace TVGL_Test
 
 
             //Add loops to a list of loops
-            var BoundingArea = 0.0;
-            var bestAngle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1, out BoundingArea);
+            var boundingRectangle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1);
             Console.WriteLine("Best Angle for Bounding Box:");
-            Console.WriteLine(Math.Round(bestAngle,3) + " radians");
-            Console.WriteLine(Math.Round(bestAngle*180/Math.PI,3) + " degrees (Clockwise rotation of left caliper,");
+            Console.WriteLine(Math.Round(boundingRectangle.BestAngle, 3) + " radians");
+            Console.WriteLine(Math.Round(boundingRectangle.BestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
             Console.WriteLine("which could now look like its on top.)");
             Console.WriteLine();
             Console.WriteLine("Minimum Bounding Area:");
-            Console.WriteLine(BoundingArea);
+            Console.WriteLine(boundingRectangle.Area);
             Console.ReadLine();
         }//End TestFunction
 
@@ -205,15 +204,14 @@ namespace TVGL_Test
 
 
             //Add loops to a list of loops
-            var BoundingArea = 0.0;
-            var bestAngle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1, out BoundingArea);
+            var boundingRectangle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1);
             Console.WriteLine("Best Angle for Bounding Box:");
-            Console.WriteLine(Math.Round(bestAngle, 3) + " radians");
-            Console.WriteLine(Math.Round(bestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
+            Console.WriteLine(Math.Round(boundingRectangle.BestAngle, 3) + " radians");
+            Console.WriteLine(Math.Round(boundingRectangle.BestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
             Console.WriteLine("which could now look like its on top.)");
             Console.WriteLine();
             Console.WriteLine("Minimum Bounding Area:");
-            Console.WriteLine(BoundingArea);
+            Console.WriteLine(boundingRectangle.Area);
             Console.ReadLine();
         }//End TestFunction
 
@@ -229,15 +227,14 @@ namespace TVGL_Test
 
 
             //Add loops to a list of loops
-            var BoundingArea = 0.0;
-            var bestAngle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1, out BoundingArea);
+            var boundingRectangle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1);
             Console.WriteLine("Best Angle for Bounding Box:");
-            Console.WriteLine(Math.Round(bestAngle, 3) + " radians");
-            Console.WriteLine(Math.Round(bestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
+            Console.WriteLine(Math.Round(boundingRectangle.BestAngle, 3) + " radians");
+            Console.WriteLine(Math.Round(boundingRectangle.BestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
             Console.WriteLine("which could now look like its on top.)");
             Console.WriteLine();
             Console.WriteLine("Minimum Bounding Area:");
-            Console.WriteLine(BoundingArea);
+            Console.WriteLine(boundingRectangle.Area);
             Console.ReadLine();
         }//End TestFunction
 
@@ -252,15 +249,14 @@ namespace TVGL_Test
 
 
             //Add loops to a list of loops
-            var BoundingArea = 0.0;
-            var bestAngle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1, out BoundingArea);
+            var boundingRectangle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1);
             Console.WriteLine("Best Angle for Bounding Box:");
-            Console.WriteLine(Math.Round(bestAngle, 3) + " radians");
-            Console.WriteLine(Math.Round(bestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
+            Console.WriteLine(Math.Round(boundingRectangle.BestAngle, 3) + " radians");
+            Console.WriteLine(Math.Round(boundingRectangle.BestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
             Console.WriteLine("which could now look like its on top.)");
             Console.WriteLine();
             Console.WriteLine("Minimum Bounding Area:");
-            Console.WriteLine(BoundingArea);
+            Console.WriteLine(boundingRectangle.Area);
             Console.ReadLine();
         }//End TestFunction
 

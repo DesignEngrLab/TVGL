@@ -12,7 +12,8 @@
 // <summary></summary>
 // ***********************************************************************
 
-using MIConvexHull;
+using System.Collections.Generic;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -31,7 +32,7 @@ namespace TVGL
         /// The extreme vertices which are vertices of the tessellated solid that are on the faces
         /// of the bounding box. These are not the corners of the bounding box.
         /// </summary>
-        public IVertex[] ExtremeVertices;
+        public Vertex[] ExtremeVertices;
         /// <summary>
         /// The Directions are the three unit vectors that describe the orientation of the box.
         /// </summary>
@@ -40,22 +41,75 @@ namespace TVGL
         /// <summary>
         /// The corner points
         /// </summary>
-        public Point[] CornerPoints;
+        public Vertex[] CornerVertices;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox"/> class.
         /// </summary>
         /// <param name="volume">The volume.</param>
         /// <param name="extremeVertices">The extreme vertices.</param>
-        /// <param name="directions">The directions.</param>
-        internal BoundingBox(double volume, IVertex[] extremeVertices, double[][] directions)
-        {
+        /// <param name="directions"></param>
+        internal BoundingBox(double volume, Vertex[] extremeVertices, double[][] directions)
+        { 
+            CornerVertices = new Vertex[8];
             Volume = volume;
-            ExtremeVertices = extremeVertices;
-            Directions = directions;
+            Directions = directions; //parallels extreme vertices list 
+            ExtremeVertices = extremeVertices; //list of vertices in order of pairs with the directions
 
-            //todo: find corner points. These are the 8 points at the intersections of the
-            // planes defined by the extremeVertices and the direction vectors
-            CornerPoints = null;
+            //Find Corners
+            var normalMatrix = new[,] {{directions[0][0],directions[0][1],directions[0][2]}, 
+                                        {directions[1][0],directions[1][1],directions[1][2]},
+                                        {directions[2][0],directions[2][1],directions[2][2]}};
+            var count = 0;
+            for (var i = 0; i < 2; i++)
+            {
+                var distance1 = extremeVertices[i].Position.dotProduct(directions[0]);
+                for (var j = 0; j < 2; j++)
+                {
+                    var distance2 = extremeVertices[j + 2].Position.dotProduct(directions[1]);
+                    for (var k = 0; k < 2; k++)
+                    {
+                        var distance3 = extremeVertices[k + 4].Position.dotProduct(directions[2]);
+                        var distance = new[] {distance1, distance2, distance3};
+                        var position = distance.multiply(normalMatrix.transpose());
+                       
+                        CornerVertices[count] = new Vertex(position);
+                        count++;
+                    }
+                }
+            }
         }
     }
+
+    /// <summary>
+    /// Bounding rectangle information based on area and point pairs.
+    /// </summary>
+    public struct BoundingRectangle
+    {
+        /// <summary>
+        /// The Area of the bounding box.
+        /// </summary>
+        public double Area;
+
+        /// <summary>
+        /// The point pairs that define the bounding rectangle limits
+        /// </summary>
+        public List<Point[]> PointPairs;
+
+        /// <summary>
+        /// The angle that this bounding box was is rotated in the xy plane. 
+        /// </summary>
+        public double BestAngle;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
+        /// </summary>
+        internal BoundingRectangle(double area, double bestAngle, List<Point[]> pointPairs)
+        {
+            Area = area;
+            PointPairs = pointPairs;
+            BestAngle = bestAngle;
+        }
+    }
+
 }

@@ -98,13 +98,13 @@ namespace TVGL
             var zDir = direction[2];
 
             double[,] rotateX, rotateY, backRotateX, backRotateY;
-            if (xDir == 0 && zDir == 0)
+            if (xDir.IsNegligible() && zDir.IsNegligible())
             {
                 rotateX = StarMath.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
                 backRotateX = StarMath.RotationX(-Math.Sign(yDir) * Math.PI / 2, true);
                 backRotateY = rotateY = StarMath.makeIdentity(4);
             }
-            else if (zDir == 0)
+            else if (zDir.IsNegligible())
             {
                 rotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
                 backRotateY = StarMath.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
@@ -126,6 +126,7 @@ namespace TVGL
             return rotateX.multiply(rotateY);
         }
         #endregion
+
         #region Angle between Edges/Lines
         internal static double SmallerAngleBetweenEdges(Edge edge1, Edge edge2)
         {
