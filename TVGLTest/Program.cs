@@ -14,7 +14,7 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {     
-                                                //"../../../TestFiles/amf_Cube.amf",
+                                                "../../../TestFiles/amf_Cube.amf",
        "../../../TestFiles/Mic_Holder_SW.stl",  
           "../../../TestFiles/Mic_Holder_JR.stl",
                                                "../../../TestFiles/3_bananas.amf",    
@@ -63,9 +63,8 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                // MinimumEnclosure.Find_via_ContinuousPCA_Approach(ts[0]);
-                TestSlice(ts[0]);
-                //TestOBB(ts[0]);       
+                //TestSlice(ts[0]);
+                TestOBB(ts[0]);       
 
             }
             Console.ReadKey();
@@ -78,7 +77,8 @@ namespace TVGL_Test
 
         private static void TestOBB(TessellatedSolid ts)
         {
-            var obb = MinimumEnclosure.OrientedBoundingBox(ts);
+            var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
+            //var obb = MinimumEnclosure.OrientedBoundingBox(ts);
         }
 
         private static void TestXSections(TessellatedSolid ts)

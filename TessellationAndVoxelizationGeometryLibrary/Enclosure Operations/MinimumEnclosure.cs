@@ -13,6 +13,7 @@
 // ***********************************************************************
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -51,8 +52,9 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Finds the minimum bounding box using a direct approach called continuous PCA.
+        /// Finds the minimum bounding box using a direct approach called PCA.
         /// Variant include All-PCA Min-PCA, Max-PCA, and continuous PCA [http://dl.acm.org/citation.cfm?id=2019641]
+        /// The one implemented looks at Min-PCA, Max-PCA and Mid-PCA (considers all three of the eigen vectors).
         /// The most accurate is continuous PCA, and Dimitrov 2009 has some good improvements
         /// Dimitrov, Holst, and Kriegel. "Closed-Form Solutions for Continuous PCA and Bounding Box Algorithms"
         /// http://link.springer.com/chapter/10.1007%2F978-3-642-10226-4_3
@@ -67,13 +69,13 @@ namespace TVGL
         /// Ex. Dimitrov showed in 2009 that continuous PCA yeilds a volume 4x optimal for a octahedron
         /// http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
         /// </accuracy>
-        public static double Find_via_ContinuousPCA_Approach(TessellatedSolid ts)
+        public static BoundingBox Find_via_PCA_Approach(TessellatedSolid ts)
         {
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
 
             var totalArea = 0.0;
-            var minArea = double.PositiveInfinity;
+            var minVolume = double.PositiveInfinity;
             //Set the area for each triangle and its center vertex 
             //Also, aggregate to get the surface area of the convex hull
             foreach (var triangle in triangles)
@@ -89,8 +91,8 @@ namespace TVGL
                 triangle.Center = new[] { xAve, yAve, zAve };
             }
 
-            //Calculate the center of gravity of each triangle
-            var c = new double[] { 0.0, 0.0, 0.0 };
+            //Calculate the center of gravity of combined triangles
+            var c = new [] { 0.0, 0.0, 0.0 };
             foreach (var triangle in triangles)
             {
                 //Find the triangle weight based proportional to area
@@ -107,6 +109,7 @@ namespace TVGL
                 for (var j = 0; j < 3; j++)
                 {
                     var jTerm1 = new double[3, 3];
+                    var jTerm1Total = new double[3, 3];
                     var vector1 = triangle.Vertices[j].Position.subtract(c);
                     var term1 = new[,] { { vector1[0], vector1[1], vector1[2] } };
                     var term3 = term1;
@@ -115,30 +118,36 @@ namespace TVGL
                     {
                         var vector2 = triangle.Vertices[k].Position.subtract(c);
                         var term2 = new[,] { { vector2[0] }, { vector2[1] }, { vector2[2] } };
-                        jTerm1 = term1.multiply(term2);
-                        //todo: Figure out how to add these summations up properly
+                        jTerm1 = term2.multiply(term1);
+                        jTerm1Total = jTerm1Total.add(jTerm1);
                     }
-                    covarianceI = covarianceI.add(jTerm1.add(term3.multiply(term4)));
+                    var jTerm2 = term4.multiply(term3);
+                    var jTermTotal = jTerm1.add(jTerm2);
+                    covarianceI = covarianceI.add(jTermTotal);
                 }
                 covariance = covariance.add(covarianceI.multiply(1.0 / 12.0));
             }
 
             //Find eigenvalues of covariance matrix
             double[][] eigenVectors;
-            var eigenValues = covariance.GetEigenValuesAndVectors(out eigenVectors);
+            var heightVertices = new Vertex[] {};
+            var bestEigenVector = new double[]{};
+            BoundingRectangle boundingRectangle = new BoundingRectangle();
+            covariance.GetEigenValuesAndVectors(out eigenVectors);
+
+            BoundingBox bestOBB = new BoundingBox();
             //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
-                var points = MiscFunctions.Get2DProjectionPoints(ts.ConvexHullVertices, eigenVector, true);
-                var cvHull = ConvexHull2D(points);
-                double area;
-                RotatingCalipers2DMethod(cvHull, out area);
-                if (area < minArea)
+                var OBB = FindOBBAlongDirection(ts.ConvexHullVertices, eigenVector.normalize());
+                if (OBB.Volume < minVolume)
                 {
-                    minArea = area;
+                    minVolume = OBB.Volume;
+                    bestOBB = OBB;
                 }
             }
-            return minArea;
+
+            return bestOBB;
         }
 
         /// <summary>
@@ -305,8 +314,7 @@ namespace TVGL
                 //List intersections from GC1 and nodes from GC2 based on angle of rotation to each.
 
                 //Get the initial length
-                Vertex vLow;
-                Vertex vHigh;
+                Vertex vLow, vHigh;
                 var delta = 0.0;
                 var theta = 0.0;
                 var MaxTheta = 0.0;
@@ -360,30 +368,33 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="System.Exception"></exception>
-        public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction = null)
+        public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction)
         {
             Vertex v1Low, v1High;
             var length = GetLengthAndExtremeVertices(direction, vertices, out v1Low, out v1High);
             double[,] backTransform;
-            MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, true);
+            var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform);
+            var boundingRectangle = RotatingCalipers2DMethod(points);
+            //Get reference vertices from boundingRectangle
+            var v2Low = boundingRectangle.PointPairs[0][0].References[0];
+            var v2High = boundingRectangle.PointPairs[0][1].References[0];
+            var v3Low = boundingRectangle.PointPairs[1][0].References[0];
+            var v3High = boundingRectangle.PointPairs[1][1].References[0];
 
-            double minArea;
-            var rotateZ = StarMath.RotationZ(RotatingCalipers2DMethod(vertices.Select(v => new Point(v)).ToArray(), out minArea));
+            //Get the direction vectors from rotating caliper and projection.
+            var rotateZ = StarMath.RotationZ(boundingRectangle.BestAngle);
             backTransform = backTransform.multiply(rotateZ);
             var dirVectorPlusZero = backTransform.GetColumn(0);
             var nx = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
             /* temporarily check that nx is the same as direction */
-            if (!nx.SequenceEqual(direction)) throw new Exception();
+            //if (!nx.SequenceEqual(direction)) throw new Exception();
+            //todo: check if these direction vectors are correct, note that I had to comment out the line above.
             dirVectorPlusZero = backTransform.GetColumn(1);
             var ny = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
             dirVectorPlusZero = backTransform.GetColumn(2);
             var nz = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
-            // todo: check that this code works correctly.
-            Vertex v2Low, v2High;
-            GetLengthAndExtremeVertices(ny, vertices, out v2Low, out v2High);
-            Vertex v3Low, v3High;
-            GetLengthAndExtremeVertices(nz, vertices, out v3Low, out v3High);
-            return new BoundingBox(length * minArea, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High }, new[] { direction, ny, nz });
+
+            return new BoundingBox(length * boundingRectangle.Area, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High }, new[] { direction, ny, nz });
         }
 
 
@@ -414,7 +425,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="minArea">The minimum area.</param>
         /// <returns>System.Double.</returns>
-        public static double RotatingCalipers2DMethod(IList<Point> points, out double minArea)
+        public static BoundingRectangle RotatingCalipers2DMethod(IList<Point> points)
         {
 
             #region Initialization
@@ -463,7 +474,9 @@ namespace TVGL
             var deltaToUpdateIndex = -1;
             var deltaAngles = new double[4];
             var offsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
-            minArea = double.PositiveInfinity;
+            Point[] pointPair1 = null;
+            Point[] pointPair2 = null;
+            var minArea = double.PositiveInfinity;
             do
             {
                 //For each of the 4 supporting points (those forming the rectangle),
@@ -517,13 +530,17 @@ namespace TVGL
                 {
                     minArea = tempArea;
                     bestAngle = angle;
+                    pointPair1 = new [] {cvxPoints[extremeIndices[2]], cvxPoints[extremeIndices[0]]};
+                    pointPair2 = new [] { cvxPoints[extremeIndices[3]], cvxPoints[extremeIndices[1]] };
                 }
             } while (angle < Math.PI / 2); //Don't check beyond a 90 degree angle.
             //If best angle is 90 degrees, then don't bother to rotate. 
-            if (bestAngle == Math.PI / 2) { bestAngle = 0; }
+            if (bestAngle.IsPracticallySame(Math.PI / 2)) { bestAngle = 0; }
             #endregion
 
-            return bestAngle;
+            var extremePoints = new List<Point[]> {pointPair1, pointPair2};
+            var boundingRectangle = new BoundingRectangle(minArea, bestAngle, extremePoints);
+            return boundingRectangle;
         }
 
 
