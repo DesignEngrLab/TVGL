@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
 using amf;
 using StarMathLib;
@@ -23,6 +24,8 @@ namespace TVGL.Enclosure_Operations
         /// </summary>
         internal List<Arc> Arcs;
 
+        internal List<Edge> ReferenceEdges;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="GaussianSphere"/> class.
         /// </summary>
@@ -30,27 +33,46 @@ namespace TVGL.Enclosure_Operations
         {
             Nodes = new List<Node>();
             Arcs = new List<Arc>();
+            ReferenceEdges = new List<Edge>();
             var i = 0;
             var referenceIndices = new List<int[]>();
-            
             foreach (var triangle in ts.ConvexHullFaces)
             {
-                //Create the node for this polygonal face
-                var node = new Node(triangle);
-                
-                Nodes.Add(node);
+                //todo: Clean triangles at the source
+                var sameIndex = Nodes.FindIndex(p => p.Vector.IsPracticallySame(triangle.Normal));
+                if (sameIndex >= 0) //If the normal already exists, 
+                {
+                    var node = Nodes[sameIndex];
+                    node.ReferenceFaces.Add(triangle);
+                    foreach (var edge in triangle.Edges)
+                    {
+                        if (node.ReferenceEdges.Contains(edge)) node.ReferenceEdges.Remove(edge);
+                        else node.ReferenceEdges.Add(edge);
+                    }
+                }
+                else //the normal does not exist yet, create a new node.
+                {
+                    var node = new Node(triangle);
+                    Nodes.Add(node);
+                }
+            }
 
+            foreach (var node in Nodes)
+            {
                 //Save info to create an arc for every edge that is owned by this face
                 //Since an edge is owned by only one face, each edge will
                 //only be represented by reference indices once.
-                foreach (var edge in triangle.Edges)
+                foreach (var edge in node.ReferenceEdges)
                 {
-                    if (edge.OwnedFace == triangle)
+                    foreach (var triangle in node.ReferenceFaces)
                     {
-                        var j = ts.ConvexHullFaces.FindIndex(edge.OtherFace);
-                        var referenceIndex = new int[] {i, j};
-                        referenceIndices.Add(referenceIndex);
-                    }
+                        if (edge.OwnedFace == triangle)
+                        {
+                            var j = ts.ConvexHullFaces.FindIndex(edge.OtherFace);
+                            var referenceIndex = new int[] { i, j };
+                            referenceIndices.Add(referenceIndex);
+                        }
+                    }  
                 }
                 i++;
             }
@@ -75,14 +97,16 @@ namespace TVGL.Enclosure_Operations
         internal double Theta;
         internal double Phi;
         internal List<Arc> Arcs; 
-        internal PolygonalFace ReferenceFace;
+        internal List<PolygonalFace> ReferenceFaces;
+        internal List<Edge> ReferenceEdges;
         internal Node(PolygonalFace triangle)
         {
-            ReferenceFace = triangle;
+            ReferenceFaces = new List<PolygonalFace>{triangle};
+            ReferenceEdges = triangle.Edges.ToList();
             Vector = triangle.Normal; //Set unit normal as location on sphere
             X = triangle.Normal[0];
-            X = triangle.Normal[1];
-            X = triangle.Normal[2];
+            Y = triangle.Normal[1];
+            Z = triangle.Normal[2];
             Arcs = new List<Arc>();
             
             //bound azimuthal angle (theta) to 0 <= θ <= 360
@@ -144,14 +168,15 @@ namespace TVGL.Enclosure_Operations
               b = node1.Phi - m * node1.Phi;
             }
 
+            //todo: Fix this:
             //Find reference vertices. There should be 2 for every arc.
-            foreach (var referenceVertex1 in node1.ReferenceFace.Vertices)
-            {
-                foreach (var referenceVertex2 in node2.ReferenceFace.Vertices)
-                {
-                    if (referenceVertex1 == referenceVertex2) ReferenceVertices.Add(referenceVertex1);
-                }
-            }
+            //foreach (var referenceFace in node1.ReferenceFace.Vertices)
+            //{
+            //    foreach (var referenceVertex2 in node2.ReferenceFace.Vertices)
+             //   {
+            //        if (referenceVertex1 == referenceVertex2) ReferenceVertices.Add(referenceVertex1);
+            //    }
+            //}
             if (ReferenceVertices.Count != 2) throw new System.ArgumentException("Incorrect number of reference vertices");
         }
 

@@ -152,7 +152,6 @@ namespace TVGL
         /// <value>The number of edges.</value>
         public int NumberOfEdges { get; private set; }
 
-
         /// <summary>
         ///     Gets the convex hull faces.
         /// </summary>
@@ -170,7 +169,6 @@ namespace TVGL
         /// </summary>
         /// <value>The convex hull vertices.</value>
         public Vertex[] ConvexHullVertices { get; private set; }
-
 
         /// <summary>
         /// The has uniform color
@@ -881,21 +879,31 @@ namespace TVGL
             foreach (var cvxFace in convexHull.Faces)
             {
                 var newFace = ConvexHullFaces[faceIndex++];
+                //For every adjacent face to newFace
                 for (var j = 0; j < cvxFace.Adjacency.GetLength(0); j++)
                 {
                     var adjacentOldFace = cvxFace.Adjacency[j];
-                    if (newFace.Edges.Count <= j || newFace.Edges[j] == null)
+                    //If the face doesn't have all its edges
+                    if (newFace.Edges.Count <= cvxFace.Adjacency.GetLength(0))
                     {
+                        //Find the shared vertices between the two faces
                         var adjFaceIndex = convexHull.Faces.FindIndex(adjacentOldFace);
                         var adjFace = ConvexHullFaces[adjFaceIndex];
                         var sharedVerts = newFace.Vertices.Intersect(adjacentOldFace.Vertices).ToList();
-                        var newEdge = new Edge(sharedVerts[0], sharedVerts[1], newFace, adjFace, false);
-                        while (newFace.Edges.Count <= j) newFace.Edges.Add(null);
-                        newFace.Edges[j] = newEdge;
-                        var k = adjacentOldFace.Adjacency.FindIndex(cvxFace);
-                        while (adjFace.Edges.Count <= k) adjFace.Edges.Add(null);
-                        adjFace.Edges[k] = newEdge;
-                        ConvexHullEdges[edgeIndex++] = newEdge;
+                        
+                        //If no edge with those two vertices exists, create it.
+                        var isNewEdge = true;
+                        foreach (var edge in newFace.Edges)
+                        {
+                            if (edge.From == sharedVerts[0] && edge.To == sharedVerts[1]) isNewEdge = false;
+                            if (edge.From == sharedVerts[1] && edge.To == sharedVerts[0]) isNewEdge = false;
+                        }
+                        if (isNewEdge)
+                        {
+                            //Creating a new edge automatically adds the edge to the newFace and adjFace edge lists
+                            var newEdge = new Edge(sharedVerts[0], sharedVerts[1], newFace, adjFace, false);
+                            ConvexHullEdges[edgeIndex++] = newEdge;
+                        }
                     }
                 }
             }

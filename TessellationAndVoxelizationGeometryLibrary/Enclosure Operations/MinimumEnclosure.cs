@@ -273,7 +273,6 @@ namespace TVGL
             var minVolume = double.PositiveInfinity;
             foreach (var convexHullEdge in ts.ConvexHullEdges)
             {
-                if (convexHullEdge == null) continue;
                 var rotAxis = convexHullEdge.Vector.normalize();
                 var n = convexHullEdge.OwnedFace.Normal;
                 var numSamples = (int)Math.Ceiling((Math.PI - convexHullEdge.InternalAngle) / MaxDeltaAngle);
@@ -294,6 +293,7 @@ namespace TVGL
                         direction = invCrossMatrix.multiply(rotAxis.multiply(Math.Sin(angleChange))).normalize();
                     }
                     if (double.IsNaN(direction[0])) continue;
+                    //todo: figure out why direction is NaN
                     var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
                     if (obb.Volume < minVolume)
                     {
@@ -306,7 +306,7 @@ namespace TVGL
         }
 
 
-        private static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
+        public static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
         {
             var gaussianSphere = new GaussianSphere(ts);
             var minBox = new BoundingBox();
