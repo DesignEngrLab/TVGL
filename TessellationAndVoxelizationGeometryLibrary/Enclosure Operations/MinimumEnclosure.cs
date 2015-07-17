@@ -130,12 +130,9 @@ namespace TVGL
 
             //Find eigenvalues of covariance matrix
             double[][] eigenVectors;
-            var heightVertices = new Vertex[] {};
-            var bestEigenVector = new double[]{};
-            BoundingRectangle boundingRectangle = new BoundingRectangle();
             covariance.GetEigenValuesAndVectors(out eigenVectors);
 
-            BoundingBox bestOBB = new BoundingBox();
+            var bestOBB = new BoundingBox();
             //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
@@ -146,7 +143,6 @@ namespace TVGL
                     bestOBB = OBB;
                 }
             }
-
             return bestOBB;
         }
 
@@ -382,19 +378,23 @@ namespace TVGL
             var v3High = boundingRectangle.PointPairs[1][1].References[0];
 
             //Get the direction vectors from rotating caliper and projection.
-            var rotateZ = StarMath.RotationZ(boundingRectangle.BestAngle);
-            backTransform = backTransform.multiply(rotateZ);
-            var dirVectorPlusZero = backTransform.GetColumn(0);
-            var nx = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
-            /* temporarily check that nx is the same as direction */
-            //if (!nx.SequenceEqual(direction)) throw new Exception();
-            //todo: check if these direction vectors are correct, note that I had to comment out the line above.
-            dirVectorPlusZero = backTransform.GetColumn(1);
-            var ny = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
-            dirVectorPlusZero = backTransform.GetColumn(2);
-            var nz = new[] { dirVectorPlusZero[0], dirVectorPlusZero[1], dirVectorPlusZero[2] };
+            var tempDirection = new []
+            {
+                boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1], 
+                boundingRectangle.Directions[0][2], 1.0
+            };
+            tempDirection = backTransform.multiply(tempDirection);
+            var direction2 = new [] {tempDirection[0], tempDirection[1], tempDirection[2]};
+            tempDirection = new []
+            {
+                boundingRectangle.Directions[1][0], boundingRectangle.Directions[1][1], 
+                boundingRectangle.Directions[1][2], 1.0
+            };
+            tempDirection = backTransform.multiply(tempDirection);
+            var direction3 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
 
-            return new BoundingBox(length * boundingRectangle.Area, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High }, new[] { direction, ny, nz });
+            return new BoundingBox(length * boundingRectangle.Area, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High},
+                new[] { direction.normalize(), direction2.normalize(), direction3.normalize() });
         }
 
 
@@ -471,6 +471,8 @@ namespace TVGL
             #region Cycle through 90-degrees
             var angle = 0.0;
             var bestAngle = double.NegativeInfinity;
+            var direction1 = new double[3];
+            var direction2 = new double[3];
             var deltaToUpdateIndex = -1;
             var deltaAngles = new double[4];
             var offsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
@@ -515,31 +517,34 @@ namespace TVGL
                     cvxPoints[extremeIndices[2]][1] - cvxPoints[extremeIndices[0]][1]
                 };
 
-                var angleVector = new[] { -direction[1], direction[0] };
-                var width = Math.Abs(vectorWidth.dotProduct(angleVector));
+                var angleVector1 = new[] { -direction[1], direction[0] };
+                var width = Math.Abs(vectorWidth.dotProduct(angleVector1));
                 var vectorHeight = new[]
                 { 
                     cvxPoints[extremeIndices[3]][0] - cvxPoints[extremeIndices[1]][0], 
                     cvxPoints[extremeIndices[3]][1] - cvxPoints[extremeIndices[1]][1]
                 };
-                angleVector = new[] { direction[0], direction[1] };
-                var height = Math.Abs(vectorHeight.dotProduct(angleVector));
+                var angleVector2 = new[] { direction[0], direction[1] };
+                var height = Math.Abs(vectorHeight.dotProduct(angleVector2));
                 var tempArea = height * width;
                 #endregion
                 if (minArea > tempArea)
                 {
                     minArea = tempArea;
                     bestAngle = angle;
-                    pointPair1 = new [] {cvxPoints[extremeIndices[2]], cvxPoints[extremeIndices[0]]};
+                    pointPair1 = new [] { cvxPoints[extremeIndices[2]], cvxPoints[extremeIndices[0]]};
                     pointPair2 = new [] { cvxPoints[extremeIndices[3]], cvxPoints[extremeIndices[1]] };
+                    direction1 = new [] { angleVector1[0], angleVector1[1], 0.0};
+                    direction2 = new [] { angleVector2[0], angleVector2[1], 0.0 };
                 }
             } while (angle < Math.PI / 2); //Don't check beyond a 90 degree angle.
             //If best angle is 90 degrees, then don't bother to rotate. 
-            if (bestAngle.IsPracticallySame(Math.PI / 2)) { bestAngle = 0; }
+            if (bestAngle.IsPracticallySame(Math.PI / 2)) { bestAngle = 0.0; }
             #endregion
 
+            var directions = new List<double[]>{direction1.normalize(), direction2.normalize()};
             var extremePoints = new List<Point[]> {pointPair1, pointPair2};
-            var boundingRectangle = new BoundingRectangle(minArea, bestAngle, extremePoints);
+            var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints);
             return boundingRectangle;
         }
 

@@ -102,13 +102,19 @@ namespace TVGL
         public double BestAngle;
 
         /// <summary>
+        /// Vector directions of length and width of rectangle
+        /// </summary>
+        public List<double[]> Directions;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox"/> class.
         /// </summary>
-        internal BoundingRectangle(double area, double bestAngle, List<Point[]> pointPairs)
+        internal BoundingRectangle(double area, double bestAngle, List<double[]> directions, List<Point[]> pointPairs)
         {
             Area = area;
             PointPairs = pointPairs;
             BestAngle = bestAngle;
+            Directions = directions;
         }
     }
 

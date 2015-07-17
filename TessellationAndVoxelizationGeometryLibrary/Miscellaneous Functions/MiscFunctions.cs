@@ -37,7 +37,7 @@ namespace TVGL
             Boolean MergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return Get2DProjectionPoints(vertices, transform, MergeDuplicateReferences);
+            return Get2DProjectionPoints(vertices, transform , MergeDuplicateReferences );
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace TVGL
                 pointAs4[1] = vertex.Position[1];
                 pointAs4[2] = vertex.Position[2];
                 pointAs4 = transform.multiply(pointAs4);
-                var point2D = new[] { pointAs4[0], pointAs4[1] };
+                var point2D = new[] { pointAs4[0], pointAs4[1], pointAs4[2]};
                 if (MergeDuplicateReferences)
                 {
                     var sameIndex = points.FindIndex(p => p.Position2D.IsPracticallySame(point2D));
@@ -82,7 +82,7 @@ namespace TVGL
                 pointAs4[1] = vertices[i][1];
                 pointAs4[2] = vertices[i][2];
                 pointAs4 = transform.multiply(pointAs4);
-                points[i] = new[] { pointAs4[0], pointAs4[1] };
+                points[i] = new[] { pointAs4[0], pointAs4[1], pointAs4[2] };
             }
             return points;
         }
