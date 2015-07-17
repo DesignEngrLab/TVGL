@@ -33,8 +33,9 @@ namespace TVGL
         /// of the bounding box. These are not the corners of the bounding box.
         /// </summary>
         public Vertex[] ExtremeVertices;
+
         /// <summary>
-        /// The Directions are the three unit vectors that describe the orientation of the box.
+        /// The Directions normal are the three unit vectors that describe the orientation of the box.
         /// </summary>
         public double[][] Directions;
 
@@ -53,23 +54,23 @@ namespace TVGL
         { 
             CornerVertices = new Vertex[8];
             Volume = volume;
-            Directions = directions; //parallels extreme vertices list 
+            Directions = new[] { directions[0].normalize(), directions[1].normalize(), directions[2].normalize() };
             ExtremeVertices = extremeVertices; //list of vertices in order of pairs with the directions
 
             //Find Corners
-            var normalMatrix = new[,] {{directions[0][0],directions[0][1],directions[0][2]}, 
-                                        {directions[1][0],directions[1][1],directions[1][2]},
-                                        {directions[2][0],directions[2][1],directions[2][2]}};
+            var normalMatrix = new[,] {{Directions[0][0],Directions[0][1],Directions[0][2]}, 
+                                        {Directions[1][0],Directions[1][1],Directions[1][2]},
+                                        {Directions[2][0],Directions[2][1],Directions[2][2]}};
             var count = 0;
             for (var i = 0; i < 2; i++)
             {
-                var distance1 = extremeVertices[i].Position.dotProduct(directions[0]);
+                var distance1 = extremeVertices[i].Position.dotProduct(Directions[0]);
                 for (var j = 0; j < 2; j++)
                 {
-                    var distance2 = extremeVertices[j + 2].Position.dotProduct(directions[1]);
+                    var distance2 = extremeVertices[j + 2].Position.dotProduct(Directions[1]);
                     for (var k = 0; k < 2; k++)
                     {
-                        var distance3 = extremeVertices[k + 4].Position.dotProduct(directions[2]);
+                        var distance3 = extremeVertices[k + 4].Position.dotProduct(Directions[2]);
                         var distance = new[] {distance1, distance2, distance3};
                         var position = distance.multiply(normalMatrix.transpose());
                        

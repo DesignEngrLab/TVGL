@@ -16,8 +16,8 @@ namespace TVGL_Test
         private static string[] filenames = {    
                                                 "../../../TestFiles/off_axis_box.STL",
                                                 "../../../TestFiles/amf_Cube.amf",
-       "../../../TestFiles/Mic_Holder_SW.stl",  
-          "../../../TestFiles/Mic_Holder_JR.stl",
+        "../../../TestFiles/Mic_Holder_SW.stl",  
+         "../../../TestFiles/Mic_Holder_JR.stl",
                                                "../../../TestFiles/3_bananas.amf",    
                                              //  "../../../TestFiles/drillparts.amf",    
                                              //    "../../../TestFiles/wrenchsns.amf",     
@@ -78,7 +78,9 @@ namespace TVGL_Test
 
         private static void TestOBB(TessellatedSolid ts)
         {
-            var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
+            //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
+            //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
+            var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);
             //var obb = MinimumEnclosure.OrientedBoundingBox(ts);
         }
 

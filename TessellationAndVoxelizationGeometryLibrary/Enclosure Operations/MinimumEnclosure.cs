@@ -46,16 +46,35 @@ namespace TVGL
             return Find_via_MC_ApproachOne(ts);
         }
 
-        private static BoundingBox Find_via_ChanTan_AABB_Approach(TessellatedSolid ts)
+        public static BoundingBox Find_via_ChanTan_AABB_Approach(TessellatedSolid ts)
         {
-            throw new NotImplementedException();
+            //Find OBB along x axis <1,0,0>.
+            var direction1 = new [] {1.0, 0.0, 0.0};
+            var previousObb = FindOBBAlongDirection(ts.ConvexHullVertices, direction1);
+            var continueBool = true;
+            //While improvement is being made,
+            while (continueBool)
+            {
+                continueBool = false;
+                //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
+                for (var i = 1; i < 3; i++)
+                {
+                    var newObb = FindOBBAlongDirection(ts.ConvexHullVertices, previousObb.Directions[i]);
+                    if (newObb.Volume < previousObb.Volume)
+                    {
+                        previousObb = newObb;
+                        continueBool = true;
+                    }
+                }
+            }
+            return previousObb;
         }
 
         /// <summary>
         /// Finds the minimum bounding box using a direct approach called PCA.
-        /// Variant include All-PCA Min-PCA, Max-PCA, and continuous PCA [http://dl.acm.org/citation.cfm?id=2019641]
+        /// Variants include All-PCA, Min-PCA, Max-PCA, and continuous PCA [http://dl.acm.org/citation.cfm?id=2019641]
         /// The one implemented looks at Min-PCA, Max-PCA and Mid-PCA (considers all three of the eigen vectors).
-        /// The most accurate is continuous PCA, and Dimitrov 2009 has some good improvements
+        /// The most accurate is continuous PCA, and Dimitrov 2009 has some improvements
         /// Dimitrov, Holst, and Kriegel. "Closed-Form Solutions for Continuous PCA and Bounding Box Algorithms"
         /// http://link.springer.com/chapter/10.1007%2F978-3-642-10226-4_3
         /// Simple implementation (2/5)
@@ -248,20 +267,20 @@ namespace TVGL
         /// <accuracy>
         /// Garantees the optimial orientation is within MaxDeltaAngle error.
         /// </accuracy>
-        private static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts)
+        public static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts)
         {
             BoundingBox minBox = new BoundingBox();
             var minVolume = double.PositiveInfinity;
             foreach (var convexHullEdge in ts.ConvexHullEdges)
             {
+                if (convexHullEdge == null) continue;
                 var rotAxis = convexHullEdge.Vector.normalize();
                 var n = convexHullEdge.OwnedFace.Normal;
                 var numSamples = (int)Math.Ceiling((Math.PI - convexHullEdge.InternalAngle) / MaxDeltaAngle);
                 var deltaAngle = (Math.PI - convexHullEdge.InternalAngle) / numSamples;
-                var edgeBBs = new BoundingBox[numSamples];
+                double[] direction;
                 for (var i = 0; i < numSamples; i++)
                 {
-                    double[] direction;
                     if (i == 0) direction = n;
                     else
                     {
@@ -272,12 +291,13 @@ namespace TVGL
                             {n[1]*n[0], n[1]*n[1], n[1]*n[2]},
                             {n[2]*n[0], n[2]*n[1], n[2]*n[2]}
                         };
-                        direction = invCrossMatrix.multiply(rotAxis.multiply(Math.Sin(angleChange)));
+                        direction = invCrossMatrix.multiply(rotAxis.multiply(Math.Sin(angleChange))).normalize();
                     }
-                    edgeBBs[i] = FindOBBAlongDirection(ts.ConvexHullVertices, direction);
-                    if (edgeBBs[i].Volume < minVolume)
+                    if (double.IsNaN(direction[0])) continue;
+                    var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
+                    if (obb.Volume < minVolume)
                     {
-                        minBox = edgeBBs[i];
+                        minBox = obb;
                         minVolume = minBox.Volume;
                     }
                 }
@@ -363,7 +383,7 @@ namespace TVGL
             Vertex v1Low, v1High;
             var length = GetLengthAndExtremeVertices(direction, vertices, out v1Low, out v1High);
             double[,] backTransform;
-            var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform);
+            var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, true);
             var boundingRectangle = RotatingCalipers2DMethod(points);
             //Get reference vertices from boundingRectangle
             var v2Low = boundingRectangle.PointPairs[0][0].References[0];
@@ -386,9 +406,13 @@ namespace TVGL
             };
             tempDirection = backTransform.multiply(tempDirection);
             var direction3 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            var direction1 = direction2.crossProduct(direction3);
+            length = GetLengthAndExtremeVertices(direction1, vertices, out v1Low, out v1High);
+            //todo: Fix Get2DProjectionPoints, which seems to be transforming the points to 2D, but not normal to
+            //the given direction vector. If it was normal, direction1 should equal direction or its direction.inverse.
 
             return new BoundingBox(length * boundingRectangle.Area, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High},
-                new[] { direction.normalize(), direction2.normalize(), direction3.normalize() });
+                new[] { direction1, direction2, direction3});
         }
 
 
@@ -401,8 +425,9 @@ namespace TVGL
         /// <param name="vLow">The v low.</param>
         /// <param name="vHigh">The v high.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(double[] dir, IList<Vertex> vertices, out Vertex vLow, out Vertex vHigh)
+        public static double GetLengthAndExtremeVertices(double[] direction, IList<Vertex> vertices, out Vertex vLow, out Vertex vHigh)
         {
+            var dir = direction.normalize();
             var dotProducts = new double[vertices.Count];
             var i = 0;
             foreach (var v in vertices)
@@ -536,7 +561,7 @@ namespace TVGL
             if (bestAngle.IsPracticallySame(Math.PI / 2)) { bestAngle = 0.0; }
             #endregion
 
-            var directions = new List<double[]>{direction1.normalize(), direction2.normalize()};
+            var directions = new List<double[]>{direction1, direction2};
             var extremePoints = new List<Point[]> {pointPair1, pointPair2};
             var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints);
             return boundingRectangle;
