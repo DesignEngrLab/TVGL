@@ -13,7 +13,8 @@ namespace TVGL_Test
 {
     internal partial class Program
     {
-        private static string[] filenames = {     
+        private static string[] filenames = {    
+                                                "../../../TestFiles/off_axis_box.STL",
                                                 "../../../TestFiles/amf_Cube.amf",
        "../../../TestFiles/Mic_Holder_SW.stl",  
           "../../../TestFiles/Mic_Holder_JR.stl",

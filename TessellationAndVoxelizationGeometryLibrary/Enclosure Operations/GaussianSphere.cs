@@ -115,11 +115,13 @@ namespace TVGL.Enclosure_Operations
     {
         internal double ArcLength;
         internal List<Node> Nodes;
+        internal List<Vertex> ReferenceVertices;
         private readonly double m;
         private readonly double b;
         internal Arc(Node node1, Node node2)
         {
             Nodes = new List<Node>{node1,node2};
+            ReferenceVertices = new List<Vertex>();
             //Calculate arc length. Base on the following answer, where r = 1 for our unit circle.
             //http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
             //Note that the arc length must be the smaller of the two directions around the sphere.
@@ -140,7 +142,17 @@ namespace TVGL.Enclosure_Operations
             {
               m = (node1.Phi - node2.Phi)/(node1.Theta - node2.Theta);
               b = node1.Phi - m * node1.Phi;
-            }     
+            }
+
+            //Find reference vertices. There should be 2 for every arc.
+            foreach (var referenceVertex1 in node1.ReferenceFace.Vertices)
+            {
+                foreach (var referenceVertex2 in node2.ReferenceFace.Vertices)
+                {
+                    if (referenceVertex1 == referenceVertex2) ReferenceVertices.Add(referenceVertex1);
+                }
+            }
+            if (ReferenceVertices.Count != 2) throw new System.ArgumentException("Incorrect number of reference vertices");
         }
 
         internal bool Intersect(Arc arc1, Arc arc2, out Vertex intersection)
@@ -198,7 +210,8 @@ namespace TVGL.Enclosure_Operations
         private readonly double[] vector2;
         internal List<Arc> ArcList;
         internal List<Vertex> IntersectionVertices;
-        internal double[] Normal;
+        internal List<Vertex> ReferenceVertices;
+        internal double[] Normal { get; set; }
         /// <summary>
         /// The volume of the bounding box. 
         /// Note that antipodal points would result in an infinite number of great circles, but can
@@ -210,6 +223,7 @@ namespace TVGL.Enclosure_Operations
             this.vector2 = vector2;
             ArcList = new List<Arc>();
             IntersectionVertices = new List<Vertex>();
+            ReferenceVertices = new List<Vertex>();
             Normal = vector1.crossProduct(vector2);
             var segmentBool = false;
             foreach (var arc in gaussianSphere.Arcs)
@@ -246,6 +260,14 @@ namespace TVGL.Enclosure_Operations
                     IntersectionVertices.Add(vertices[i]);
                     ArcList.Add(arc);
                     break;
+                }
+            }
+            //Add the reference vertices to a list 
+            foreach (var arc in ArcList)
+            {
+                foreach (var referenceVertex in arc.ReferenceVertices)
+                {
+                    if (!ReferenceVertices.Contains(referenceVertex)) ReferenceVertices.Add(referenceVertex);
                 }
             }
         }

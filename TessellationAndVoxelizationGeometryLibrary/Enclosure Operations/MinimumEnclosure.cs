@@ -291,7 +291,6 @@ namespace TVGL
             var gaussianSphere = new GaussianSphere(ts);
             var minBox = new BoundingBox();
             var minVolume = double.PositiveInfinity;
-            var minArea = double.PositiveInfinity;
             foreach (var arc in gaussianSphere.Arcs)
             {
                 //Create great circle one (GC1) along direction of arc.
@@ -309,18 +308,14 @@ namespace TVGL
                 //Find the next node from each line along the direction of the arc (angle of rotation)
                 //List intersections from GC1 and nodes from GC2 based on angle of rotation to each.
 
-                //Get the initial length
-                Vertex vLow, vHigh;
                 var delta = 0.0;
                 var theta = 0.0;
                 var MaxTheta = 0.0;
                 var intersections = new List<Intersection>();
-                var length = GetLengthAndExtremeVertices(arc.Nodes[0].Vector,ts.ConvexHullVertices,out vLow, out vHigh);
                 do
                 {
-                    RotatingCalipers2DMethod(greatCircle2, out minArea);//GC2 explicitley determines the ordered 2D convex hull
-                    var volume = minArea * length;
-                    if (volume < minVolume) minVolume = volume;
+                    var boundingBox = FindOBBAlongDirection(greatCircle2.ReferenceVertices, greatCircle2.Normal);
+                    if (boundingBox.Volume < minVolume) minVolume = boundingBox.Volume;
 
                     //Set delta, where delta is the angle from the original orientation to the next intersection
                     delta =+ delta;//+ intersections[0].angle
@@ -329,7 +324,7 @@ namespace TVGL
                     {
                         //If the 2D bounding box changes vertices with the projection, then we will need RotatingCalipers
                         //Else, project the same four'ish vertices and recalculate area.  
-                        if (volume < minVolume) minVolume = volume;
+                        if (boundingBox.Volume < minVolume) minVolume = boundingBox.Volume;
                     }
 
                     //After delta is reached, update the volume parameters of either length or cross sectional area (convex hull points).
@@ -337,7 +332,6 @@ namespace TVGL
                     if (intersections[0].GreatCircle == greatCircle1)
                     {
                         var vector = arc.Nodes[0].Vector.subtract(intersections[0].Node.Vector);
-                        length = Math.Sqrt(vector[0]*vector[0]+vector[1]*vector[1]+vector[2]*vector[2]);
                     }
                     else
                     {
@@ -546,22 +540,6 @@ namespace TVGL
             var extremePoints = new List<Point[]> {pointPair1, pointPair2};
             var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints);
             return boundingRectangle;
-        }
-
-
-        /// <summary>
-        /// Rotating the calipers, based on the given gaussian circle.
-        /// </summary>
-        /// <param name="greatCircle">The points.</param>
-        /// <param name="minArea">The minimum area.</param>
-        /// <returns>System.Double.</returns>
-        public static double RotatingCalipers2DMethod(GreatCircle greatCircle, out double minArea)
-        {
-            var bestAngle = 0.0;
-            //create a list of vertices from the list of arcs in GC2  
-            //GC2 explicitley determines the ordered 2D convex hull
-            minArea = 0.0;
-            return bestAngle;
         }
     }
 }
