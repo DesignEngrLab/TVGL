@@ -19,6 +19,46 @@ using StarMathLib;
 
 namespace TVGL
 {
+    
+    /// <summary>
+    /// Public circle structure, given a center point and radius
+    /// </summary>
+    public struct Circle
+    {
+        /// <summary>
+        /// Center Point of circle
+        /// </summary>
+        public Point Center;
+
+        /// <summary>
+        /// Radius of circle
+        /// </summary>
+        public double Radius;
+
+        /// <summary>
+        /// Area of circle
+        /// </summary>
+        public double Area;
+
+        /// <summary>
+        /// Circumference of circle
+        /// </summary>
+        public double Circumference;
+
+        /// <summary>
+        /// Creates a circle, given a radius. Center point is optional
+        /// </summary>
+        /// <param name="radius"></param>
+        /// <param name="center"></param>
+        public Circle(double radius, Point center = null)
+        {
+            Center = center;
+            Radius = radius;
+            Area = Math.PI*radius*radius;
+            Circumference = 2*Math.PI*radius;
+        }
+    }
+
     /// <summary>
     /// The MinimumEnclosure class includes static functions for defining smallest enclosures for a 
     /// tessellated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
@@ -37,23 +77,19 @@ namespace TVGL
         /// and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
         /// <param name="points"></param>
-        /// <param name="center">The center.</param>
-        /// <param name="radius">The radius.</param>
         /// <returns>System.Double.</returns>
-        public static double MinimumCircle(List<Point> points, out Point center, out double radius)
+        public static Circle MinimumCircle(List<Point> points)
         {
             //Randomize the list of points
             var r = new Random();
             var randomPoints = new List<Point>(points.OrderBy(p=>r.Next()));
            
-            center = null;
-            radius = 0;
-            if (randomPoints.Count < 2) return 0;
+            if (randomPoints.Count < 2) return new Circle(0.0, points[0]);
             //Get any two points in the list points.
             var point1 = randomPoints[0];
             var point2 = randomPoints[1];
             var previousPoints = new List<Point>();
-            var circle = new Circle(new List<Point> {point1, point2});
+            var circle = new BoundingCircle(new List<Point> {point1, point2});
             
             for (var i = 0; i < randomPoints.Count; i++)
             {
@@ -65,7 +101,7 @@ namespace TVGL
                 if (previousPoints.Contains(currentPoint))
                 {
                     //Make a new circle from the current two-point circle and the current point
-                    circle = new Circle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
+                    circle = new BoundingCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
                     previousPoints.Remove(currentPoint);
                 }
                 else
@@ -74,7 +110,7 @@ namespace TVGL
                     Point furthestPoint;
                     circle.Furthest(currentPoint, out furthestPoint, ref previousPoints);
                     //Make a new circle from the furthest point and current point
-                    circle = new Circle(new List<Point> {currentPoint, furthestPoint});
+                    circle = new BoundingCircle(new List<Point> {currentPoint, furthestPoint});
                     //Add previousPoints to the front of the list
                     foreach (var previousPoint in previousPoints)
                     {
@@ -88,12 +124,11 @@ namespace TVGL
             }
 
             //Return information about minimum circle
-            center = circle.Center;
-            radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
-            return Math.Pow(radius, 2)*Math.PI;
+            var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
+            return new Circle(radius, circle.Center);
         }
 
-        internal class Circle
+        internal class BoundingCircle
         {
             #region Properties
             /// <summary>
@@ -117,7 +152,7 @@ namespace TVGL
             /// Create a new circle from either 2 or 3 points
             /// /// </summary>
             /// <param name="points"></param>
-            internal Circle(IEnumerable<Point> points)
+            internal BoundingCircle(IEnumerable<Point> points)
             {
                 Center = null;
                 SqRadius = 0;
@@ -224,6 +259,7 @@ namespace TVGL
             /// <returns></returns>
             internal void Furthest(Point point, out Point furthestPoint, ref List<Point> previousPoints)
             {
+                if (previousPoints == null) throw new ArgumentNullException("previousPoints cannot be null");
                 furthestPoint = null;
                 previousPoints = new List<Point>(Points);
                 var maxSquareDistance = double.NegativeInfinity;

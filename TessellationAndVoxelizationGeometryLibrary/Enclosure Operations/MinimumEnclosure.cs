@@ -43,10 +43,22 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
         {
-            return Find_via_MC_ApproachOne(ts);
+            return Find_via_PCA_Approach(ts);
         }
 
-        public static BoundingBox Find_via_ChanTan_AABB_Approach(TessellatedSolid ts)
+        /// <summary>
+        /// Finds the minimum bounding rectangle given a set of points. Either send any set of points
+        /// OR the convex hull 2D. 
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="pointsAreConvexHull"></param>
+        /// <returns></returns>
+        public static BoundingRectangle BoundingRectangle(IList<Point> points, bool pointsAreConvexHull = false)
+        {
+            return RotatingCalipers2DMethod(points, pointsAreConvexHull);
+        }
+
+        private static BoundingBox Find_via_ChanTan_AABB_Approach(TessellatedSolid ts)
         {
             //Find OBB along x axis <1,0,0>.
             var direction1 = new [] {1.0, 0.0, 0.0};
@@ -88,7 +100,7 @@ namespace TVGL
         /// Ex. Dimitrov showed in 2009 that continuous PCA yeilds a volume 4x optimal for a octahedron
         /// http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
         /// </accuracy>
-        public static BoundingBox Find_via_PCA_Approach(TessellatedSolid ts)
+        private static BoundingBox Find_via_PCA_Approach(TessellatedSolid ts)
         {
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
@@ -267,7 +279,7 @@ namespace TVGL
         /// <accuracy>
         /// Garantees the optimial orientation is within MaxDeltaAngle error.
         /// </accuracy>
-        public static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts)
+        private static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts)
         {
             BoundingBox minBox = new BoundingBox();
             var minVolume = double.PositiveInfinity;
@@ -306,7 +318,7 @@ namespace TVGL
         }
 
 
-        public static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
+        private static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
         {
             var gaussianSphere = new GaussianSphere(ts);
             var minBox = new BoundingBox();
@@ -315,7 +327,7 @@ namespace TVGL
             {
                 //Create great circle one (GC1) along direction of arc.
                 //Intersections on this great circle will determine changes in length.
-                var greatCircle1 = new GreatCircle(gaussianSphere, arc.Nodes[0].Vector, arc.Nodes[1].Vector);
+                var greatCircle1 = new GreatCircleAlongArc(gaussianSphere, arc.Nodes[0].Vector, arc.Nodes[1].Vector,arc);
 
                 //Create great circle two (GC2) orthoganal to the current normal (n1).
                 //GC2 contains an arc list of all the arcs it intersects
@@ -323,14 +335,12 @@ namespace TVGL
                 var vector1 = arc.Nodes[0].Vector.crossProduct(arc.Nodes[1].Vector);
                 //vector 2 is + 90 degrees in the direction of the arc.
                 var vector2 = vector1.crossProduct(arc.Nodes[0].Vector);
-                var greatCircle2 = new GreatCircle(gaussianSphere, vector1, vector2);
+                var greatCircle2 = new GreatCircleOrthogonalToArc(gaussianSphere, vector1, vector2, arc);
                 
-                //Find the next node from each line along the direction of the arc (angle of rotation)
                 //List intersections from GC1 and nodes from GC2 based on angle of rotation to each.
-
                 var delta = 0.0;
-                var theta = 0.0;
-                var MaxTheta = 0.0;
+                var totalChange = 0.0;
+                var maxChange = arc.ArcLength;
                 var intersections = new List<Intersection>();
                 do
                 {
@@ -340,7 +350,7 @@ namespace TVGL
                     //Set delta, where delta is the angle from the original orientation to the next intersection
                     delta =+ delta;//+ intersections[0].angle
 
-                    while (theta <= delta) //Optimize the volume based on changes is projection of the 2D Bounding Box.;
+                    while (totalChange <= delta) //Optimize the volume based on changes is projection of the 2D Bounding Box.;
                     {
                         //If the 2D bounding box changes vertices with the projection, then we will need RotatingCalipers
                         //Else, project the same four'ish vertices and recalculate area.  
@@ -349,7 +359,7 @@ namespace TVGL
 
                     //After delta is reached, update the volume parameters of either length or cross sectional area (convex hull points).
                     //If the closest intersection is on GC1, recalculate length.
-                    if (intersections[0].GreatCircle == greatCircle1)
+                    if (greatCircle1.Intersections[0].SphericalDistance < greatCircle2.Intersections[0].SphericalDistance)
                     {
                         var vector = arc.Nodes[0].Vector.subtract(intersections[0].Node.Vector);
                     }
@@ -363,7 +373,7 @@ namespace TVGL
                             else greatCircle2.ArcList.Add(intersectedArc);
                         }
                     }
-                } while (delta <= MaxTheta);
+                } while (delta <= maxChange);
             }
             return minBox;
         }
@@ -438,17 +448,18 @@ namespace TVGL
             vHigh = vertices[dotProducts.FindIndex(max_d)];
             return max_d - min_d;
         }
+
         /// <summary>
         /// Rotating the calipers2 d method.
         /// </summary>
         /// <param name="points">The points.</param>
-        /// <param name="minArea">The minimum area.</param>
+        /// <param name="pointsAreConvexHull"></param>
         /// <returns>System.Double.</returns>
-        public static BoundingRectangle RotatingCalipers2DMethod(IList<Point> points)
+        private static BoundingRectangle RotatingCalipers2DMethod(IList<Point> points, bool pointsAreConvexHull = false)
         {
 
             #region Initialization
-            var cvxPoints = ConvexHull2D(points);
+            var cvxPoints = pointsAreConvexHull ? points : ConvexHull2D(points);
             var numCvxPoints = cvxPoints.Count;
             var extremeIndices = new int[4];
 

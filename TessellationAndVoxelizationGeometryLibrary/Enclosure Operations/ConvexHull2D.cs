@@ -42,6 +42,29 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Finds the area of the convex hull region, given a set of convex hull points.
+        /// </summary>
+        /// <param name="convexHullPoints2D"></param>
+        /// <returns></returns>
+        public static double ConvexHull2DArea(List<Point> convexHullPoints2D)
+        {
+            //Set origin point to first point in convex hull
+            var point1 = convexHullPoints2D[0];
+            var totalArea = 0.0;
+
+            //Find area of triangle between first point and every triangle that can be formed from the first point.
+            for (var i = 1; i < convexHullPoints2D.Count-1; i++)
+            {
+                var point2 = convexHullPoints2D[i];
+                var point3 = convexHullPoints2D[i+1];
+                //Reference: <http://www.mathopenref.com/coordtrianglearea.html>
+                var triangleArea = 0.5 * Math.Abs(point1.X * (point2.Y - point3.Y) + point2.X * (point3.Y - point1.Y) + point3.X * (point1.Y - point2.Y));
+                totalArea = totalArea + triangleArea;
+            }
+            return totalArea;
+        }
+
+        /// <summary>
         /// Returns the 2D convex hull for the 3D vertices within the plane defined by the normal, direction.
         /// The returned points are a List of points (3D double array) that represent the points as they have been
         /// converted to the 2D plane. The vertices are not altered by this function. This is a simple two-line function

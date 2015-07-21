@@ -175,7 +175,7 @@ namespace TVGL_Test
 
 
             //Add loops to a list of loops
-            var boundingRectangle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1);
+            var boundingRectangle = TVGL.MinimumEnclosure.BoundingRectangle(posLoop1);
             Console.WriteLine("Best Angle for Bounding Box:");
             Console.WriteLine(Math.Round(boundingRectangle.BestAngle, 3) + " radians");
             Console.WriteLine(Math.Round(boundingRectangle.BestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
@@ -204,7 +204,7 @@ namespace TVGL_Test
 
 
             //Add loops to a list of loops
-            var boundingRectangle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1);
+            var boundingRectangle = TVGL.MinimumEnclosure.BoundingRectangle(posLoop1);
             Console.WriteLine("Best Angle for Bounding Box:");
             Console.WriteLine(Math.Round(boundingRectangle.BestAngle, 3) + " radians");
             Console.WriteLine(Math.Round(boundingRectangle.BestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
@@ -227,7 +227,7 @@ namespace TVGL_Test
 
 
             //Add loops to a list of loops
-            var boundingRectangle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1);
+            var boundingRectangle = TVGL.MinimumEnclosure.BoundingRectangle(posLoop1);
             Console.WriteLine("Best Angle for Bounding Box:");
             Console.WriteLine(Math.Round(boundingRectangle.BestAngle, 3) + " radians");
             Console.WriteLine(Math.Round(boundingRectangle.BestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
@@ -249,7 +249,7 @@ namespace TVGL_Test
 
 
             //Add loops to a list of loops
-            var boundingRectangle = TVGL.MinimumEnclosure.RotatingCalipers2DMethod(posLoop1);
+            var boundingRectangle = TVGL.MinimumEnclosure.BoundingRectangle(posLoop1);
             Console.WriteLine("Best Angle for Bounding Box:");
             Console.WriteLine(Math.Round(boundingRectangle.BestAngle, 3) + " radians");
             Console.WriteLine(Math.Round(boundingRectangle.BestAngle * 180 / Math.PI, 3) + " degrees (Clockwise rotation of left caliper,");
@@ -268,21 +268,17 @@ namespace TVGL_Test
             var point2 = new Point(new Vertex(new[] { 1.0, 1.0, 0.0 }));
             var point3 = new Point(new Vertex(new[] { 0.0, 1.0, 0.0 }));
             var posLoop1 = new Point[] { point0, point1, point2, point3 };
-            Point center;
-            double radius;
-
-
-
+ 
             //Add loops to a list of loops
-            var minArea = TVGL.MinimumEnclosure.MinimumCircle(new List<Point> (posLoop1), out center, out radius);
+            var minimumCircle = MinimumEnclosure.MinimumCircle(new List<Point> (posLoop1));  
             Console.WriteLine("Minimum Area Circle:");
-            Console.WriteLine(Math.Round(minArea, 3));
+            Console.WriteLine(Math.Round(minimumCircle.Area, 3));
             Console.WriteLine();
             Console.WriteLine("Radius:");
-            Console.WriteLine(Math.Round(radius,3));
+            Console.WriteLine(Math.Round(minimumCircle.Radius, 3));
             Console.WriteLine();
             Console.WriteLine("Center:");
-            Console.WriteLine("(" + Math.Round(center.X,3) + "," + Math.Round(center.Y,3) + ")");
+            Console.WriteLine("(" + Math.Round(minimumCircle.Center.X, 3) + "," + Math.Round(minimumCircle.Center.Y, 3) + ")");
             Console.ReadLine();
         }//End TestFunction
 
@@ -299,21 +295,17 @@ namespace TVGL_Test
             var point7 = new Point(new Vertex(new[] { 2.0, 2.5, 0.0 }));
             var point8 = new Point(new Vertex(new[] { 1.0, 1.5, 0.0 }));
             var posLoop1 = new Point[] { point0, point1, point2, point3, point4, point5, point6, point7, point8 };
-            Point center;
-            double radius;
-
-
 
             //Add loops to a list of loops
-            var minArea = TVGL.MinimumEnclosure.MinimumCircle(new List<Point>(posLoop1), out center, out radius);
+            var minimumCircle = MinimumEnclosure.MinimumCircle(new List<Point>(posLoop1));
             Console.WriteLine("Minimum Area Circle:");
-            Console.WriteLine(Math.Round(minArea, 3));
+            Console.WriteLine(Math.Round(minimumCircle.Area, 3));
             Console.WriteLine();
             Console.WriteLine("Radius:");
-            Console.WriteLine(Math.Round(radius, 3));
+            Console.WriteLine(Math.Round(minimumCircle.Radius, 3));
             Console.WriteLine();
             Console.WriteLine("Center:");
-            Console.WriteLine("(" + Math.Round(center.X, 3) + "," + Math.Round(center.Y, 3) + ")");
+            Console.WriteLine("(" + Math.Round(minimumCircle.Center.X, 3) + "," + Math.Round(minimumCircle.Center.Y, 3) + ")");
             Console.ReadLine();
         }//End TestFunction
     }

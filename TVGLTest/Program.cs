@@ -80,8 +80,8 @@ namespace TVGL_Test
         {
             //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
-            var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);
-            //var obb = MinimumEnclosure.OrientedBoundingBox(ts);
+            //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);
+            var obb = MinimumEnclosure.OrientedBoundingBox(ts);
             //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
         }
 
