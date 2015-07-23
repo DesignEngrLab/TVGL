@@ -14,7 +14,7 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {    
-                                                "../../../TestFiles/off_axis_box.STL",
+                                                //"../../../TestFiles/off_axis_box.STL",
                                                 "../../../TestFiles/amf_Cube.amf",
         "../../../TestFiles/Mic_Holder_SW.stl",  
          "../../../TestFiles/Mic_Holder_JR.stl",
@@ -65,7 +65,8 @@ namespace TVGL_Test
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 //TestSlice(ts[0]);
-                TestOBB(ts[0]);       
+                //TestOBB(ts[0]);
+                TestInsidePolyhedron(ts[0]);
 
             }
             Console.ReadKey();
@@ -81,9 +82,21 @@ namespace TVGL_Test
             //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);
-            var obb = MinimumEnclosure.OrientedBoundingBox(ts);
+            //var obb = MinimumEnclosure.OrientedBoundingBox(ts);
             //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
         }
+
+        private static void TestInsidePolyhedron(TessellatedSolid ts)
+        {
+            var vertexInQuestion = new Vertex(new[] {0.5, 0.8, 0.8});
+            //ToDo: figure function. It does not work properly.
+            //Add loops to a list of loops
+            var isVertexInside = MinimumEnclosure.IsVertexInsidePolyhedron(ts, vertexInQuestion);
+            Console.WriteLine("Is Vertex Inside Polyhedron?");
+            Console.WriteLine(isVertexInside);
+            Console.ReadLine();
+        }
+
 
         private static void TestXSections(TessellatedSolid ts)
         {

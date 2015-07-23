@@ -11,7 +11,7 @@ namespace TVGL_Test
         [STAThread]
         private static void Main2(string[] args)
         {
-            Test9();
+            Test10();
         }
 
         private static void Test1()
@@ -306,6 +306,28 @@ namespace TVGL_Test
             Console.WriteLine();
             Console.WriteLine("Center:");
             Console.WriteLine("(" + Math.Round(minimumCircle.Center.X, 3) + "," + Math.Round(minimumCircle.Center.Y, 3) + ")");
+            Console.ReadLine();
+        }//End TestFunction
+
+        private static void Test10() //Is Point inside polygon
+        {
+            //Counterclockwise ordered positive loop
+            var point0 = new Point(new Vertex(new[] { 0.0, 0.0, 0.0 }));
+            var point1 = new Point(new Vertex(new[] { 2.0, 0.0, 0.0 }));
+            var point2 = new Point(new Vertex(new[] { 6.0, 1.0, 0.0 }));
+            var point3 = new Point(new Vertex(new[] { 9.0, 3.0, 0.0 }));
+            var point4 = new Point(new Vertex(new[] { 8.0, 5.0, 0.0 }));
+            var point5 = new Point(new Vertex(new[] { 5.0, 5.0, 0.0 }));
+            var point6 = new Point(new Vertex(new[] { 3.0, 3.4, 0.0 }));
+            var point7 = new Point(new Vertex(new[] { 2.0, 2.5, 0.0 }));
+            var point8 = new Point(new Vertex(new[] { 1.0, 1.5, 0.0 }));
+            var posLoop1 = new Point[] { point0, point1, point2, point3, point4, point5, point6, point7, point8 };
+
+            var pointInQuestion = new Point(new Vertex(new[] { 5.1, 5.0, 0.0 }));
+            //Add loops to a list of loops
+            var isPointInside = MinimumEnclosure.IsPointInsidePolygon(new List<Point>(posLoop1), pointInQuestion, false);
+            Console.WriteLine("Is Point Inside Polygon?");
+            Console.WriteLine(isPointInside);
             Console.ReadLine();
         }//End TestFunction
     }

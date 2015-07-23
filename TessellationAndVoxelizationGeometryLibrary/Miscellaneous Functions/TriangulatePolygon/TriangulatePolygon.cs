@@ -527,7 +527,7 @@ namespace TVGL
         #endregion
 
         #region Find Lines to Left or Right
-        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine)
+        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, bool includeOnLine = false)
         {
             leftLine = null;
             var xleft = double.NegativeInfinity;
@@ -539,6 +539,7 @@ namespace TVGL
                 //Find distance to line
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
+                if (includeOnLine && xdif.IsNegligible()) counter++; //Add +1 to number of lines intersected
                 if (xdif < 0 && !xdif.IsNegligible())//Moved to the left by some tolerance 
                 {
                     
@@ -584,7 +585,7 @@ namespace TVGL
             if (leftLine == null) throw new System.ArgumentException("Failed to find line to left.");
         }
 
-        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine)
+        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, bool includeOnLine = false)
         {
             rightLine = null;
             var xright = double.PositiveInfinity;
@@ -596,6 +597,7 @@ namespace TVGL
                 //Find distance to line
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
+                if (includeOnLine && xdif.IsNegligible()) counter++; //Add +1 to number of lines intersected
                 if (xdif > 0 && !xdif.IsNegligible())//Moved to the right by some tolerance
                 {
                     counter++;

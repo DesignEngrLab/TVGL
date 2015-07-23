@@ -452,24 +452,23 @@ namespace TVGL
         /// http://www.cescg.org/CESCG-2012/papers/Horvat-Ray-casting_point-in-polyhedron_test.pdf
         /// </summary>
         /// <returns></returns>
-        public static bool IsVertexInsidePolyhedron(TessellatedSolid ts, Vertex vertexInQuestion)
+        public static bool IsVertexInsidePolyhedron(TessellatedSolid ts, Vertex vertexInQuestion, bool onBoundaryIsInside = true)
         {
             var numberOfIntercepts = 0;
-
             var direction = new[] {0.0, 0.0, 1.0};
             foreach (var face in ts.Faces) 
             {
-                if (face.Vertices.Count != 3) throw new NotImplementedException();
                 var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
                 var t = -(vertexInQuestion.Position.dotProduct(face.Normal) + distanceToOrigin) /
                         (direction.dotProduct(face.Normal));
                 if (t < 0) continue;
+                //ToDo: figure out boundary conditions
                 //Note that if t == 0, then it is on the face, which is considered inside for this method
                 //else, find the intersection point and determine if it is inside the polygon (face)
                 var newVertex = new Vertex(vertexInQuestion.Position.add(direction.multiply(t)));
                 var points = MiscFunctions.Get2DProjectionPoints(face.Vertices.ToArray(), face.Normal);
                 var pointInQuestion = MiscFunctions.Get2DProjectionPoints(new List<Vertex> { newVertex }, face.Normal);
-                if (IsPointInsidePolygon(points.ToList(), pointInQuestion[0])) numberOfIntercepts++;
+                if (IsPointInsidePolygon(points.ToList(), pointInQuestion[0], true)) numberOfIntercepts++;
             }
             if (numberOfIntercepts == 0) return false;
             return numberOfIntercepts%2 == 0; //Even number of intercepts, means the vertex is inside
@@ -481,7 +480,7 @@ namespace TVGL
         /// And the polygon is not self-intersecting
         /// </summary>
         /// <returns></returns>
-        public static bool IsPointInsidePolygon(List<Point> points, Point pointInQuestion)
+        public static bool IsPointInsidePolygon(List<Point> points, Point pointInQuestion, bool onBoundaryIsInside = true)
         {
             //If the point in question is == a point in points, then it is inside the polygon
             if (points.Any(point => point.X.IsPracticallySame(pointInQuestion.X) && point.Y.IsPracticallySame(pointInQuestion.Y)))
@@ -518,11 +517,14 @@ namespace TVGL
                 //If reached the point in question, then find intercepts on the lineList
                 if (node.StartLine == null)
                 {
-                    if (lineList.Count % 2 != 0 || lineList.Count < 1) return false;
-                    //Else, check to see that it is in between an odd number of lines to left and right
+                    if (lineList.Count % 2 != 0 || lineList.Count < 1) return false; 
                     Line leftLine, rightLine;
-                    if (TriangulatePolygon.LinesToLeft(node, lineList, out leftLine) %2 == 0) return false;
-                    if (TriangulatePolygon.LinesToRight(node, lineList, out rightLine) % 2 != 0) return true;
+                    //Check if the point is on the left line or right line (note that one direction search is sufficient).
+                    if (TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, false) !=
+                        TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, true)) return onBoundaryIsInside;
+                    //Else, not on a boundary, so check to see that it is in between an odd number of lines to left and right
+                    if (TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, false) %2 == 0) return false;
+                    return TriangulatePolygon.LinesToRight(node, lineList, out rightLine, false) % 2 != 0;  
                 }
                 if (lineList.Contains(node.StartLine))
                 {
