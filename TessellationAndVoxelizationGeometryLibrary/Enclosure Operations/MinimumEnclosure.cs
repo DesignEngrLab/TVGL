@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using StarMathLib;
 using TVGL.Enclosure_Operations;
@@ -454,24 +455,68 @@ namespace TVGL
         /// <returns></returns>
         public static bool IsVertexInsidePolyhedron(TessellatedSolid ts, Vertex vertexInQuestion, bool onBoundaryIsInside = true)
         {
-            var numberOfIntercepts = 0;
-            var direction = new[] {0.0, 0.0, 1.0};
-            foreach (var face in ts.Faces) 
+            var facesAbove = new List<PolygonalFace>();
+            var facesBelow = new List<PolygonalFace>();
+            var inconclusive = true;
+            var rnd = new Random();
+            //Added while inconclusive and random direction because there are some special cases that look the  
+            //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis, 
+            //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box
+            //centered on the origin. A point on the origin would point to an edge (of the two triangles
+            //forming the face) above and one below. Therefore, it was decided that special cases (through
+            //edges or vertices, will yeild inconclusive results. 
+            while (inconclusive)
             {
-                var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-                var t = -(vertexInQuestion.Position.dotProduct(face.Normal) + distanceToOrigin) /
-                        (direction.dotProduct(face.Normal));
-                if (t < 0) continue;
-                //ToDo: figure out boundary conditions
-                //Note that if t == 0, then it is on the face, which is considered inside for this method
-                //else, find the intersection point and determine if it is inside the polygon (face)
-                var newVertex = new Vertex(vertexInQuestion.Position.add(direction.multiply(t)));
-                var points = MiscFunctions.Get2DProjectionPoints(face.Vertices.ToArray(), face.Normal);
-                var pointInQuestion = MiscFunctions.Get2DProjectionPoints(new List<Vertex> { newVertex }, face.Normal);
-                if (IsPointInsidePolygon(points.ToList(), pointInQuestion[0], true)) numberOfIntercepts++;
+                inconclusive = false;
+                var direction = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
+                foreach (var face in ts.Faces)
+                {
+                    var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
+                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal) - distanceToOrigin)/
+                            (direction.dotProduct(face.Normal));
+                    //Note that if t == 0, then it is on the face, which is considered inside for this method
+                    //else, find the intersection point and determine if it is inside the polygon (face)
+                    var newVertex = new Vertex(vertexInQuestion.Position.add(direction.multiply(t)));
+                    var points = MiscFunctions.Get2DProjectionPoints(face.Vertices.ToArray(), direction);
+                    var pointInQuestion = MiscFunctions.Get2DProjectionPoints(new List<Vertex> {newVertex}, direction);
+                    if (IsPointInsidePolygon(points.ToList(), pointInQuestion[0], true))
+                    {
+                        //If the distance between the vertex and a plane is neglible and the vertex is inside that face
+                        if (t.IsNegligible())
+                        {
+                            return onBoundaryIsInside;
+                        }
+                        if (t > 0.0) //Face is higher on Z axis than vertex.
+                        {
+                            //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes 
+                            //through an edge).
+                            var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesAbove.Contains(adjacentFace));
+                           //Else, inconclusive (e.g., corners of cresent moon) 
+                            if (!onAdjacentFace) facesAbove.Add(face);
+                            else
+                            {
+                                inconclusive = true;
+                                break;
+                            }
+                        }
+                        else //Face is lower on Z axis than vertex.
+                        {
+                            //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes 
+                            //through an edge).
+                            var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesBelow.Contains(adjacentFace));
+                            if (!onAdjacentFace) facesBelow.Add(face);
+                            else //Else, inconclusive (e.g., corners of cresent moon) 
+                            {
+                                inconclusive = true;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
-            if (numberOfIntercepts == 0) return false;
-            return numberOfIntercepts%2 == 0; //Even number of intercepts, means the vertex is inside
+            
+            if (facesAbove.Count == 0 || facesBelow.Count == 0) return false;
+            return facesAbove.Count%2 != 0 && facesBelow.Count%2 != 0; //Even number of intercepts, means the vertex is inside
         }
 
 

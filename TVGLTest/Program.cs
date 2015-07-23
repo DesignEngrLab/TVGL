@@ -88,9 +88,7 @@ namespace TVGL_Test
 
         private static void TestInsidePolyhedron(TessellatedSolid ts)
         {
-            var vertexInQuestion = new Vertex(new[] {0.5, 0.8, 0.8});
-            //ToDo: figure function. It does not work properly.
-            //Add loops to a list of loops
+            var vertexInQuestion = new Vertex(new[] {0.0, 0.0, 0.0});
             var isVertexInside = MinimumEnclosure.IsVertexInsidePolyhedron(ts, vertexInQuestion);
             Console.WriteLine("Is Vertex Inside Polyhedron?");
             Console.WriteLine(isVertexInside);
