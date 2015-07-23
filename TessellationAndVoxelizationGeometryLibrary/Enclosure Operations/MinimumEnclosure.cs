@@ -102,7 +102,6 @@ namespace TVGL
         {
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
-
             var totalArea = 0.0;
             var minVolume = double.PositiveInfinity;
             //Set the area for each triangle and its center vertex 
@@ -448,12 +447,26 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Determines if a point is inside a polyhedron (tesselated solid).
-        /// And the polygon is not self-intersecting
-        /// http://www.cescg.org/CESCG-2012/papers/Horvat-Ray-casting_point-in-polyhedron_test.pdf
+        /// Determines if a solid is inside another solid (polyhedron).
+        /// All vertices from the inside Solid must be inside the outer Solid AND
+        /// all vertices from the outside Solid must not be inside the inner Solid.
+        /// This is because a vertex from the outer Solid could pierce a face of the 
+        /// inner Solid, without causing the first condition to fail.
         /// </summary>
         /// <returns></returns>
-        public static bool IsVertexInsidePolyhedron(TessellatedSolid ts, Vertex vertexInQuestion, bool onBoundaryIsInside = true)
+        public static bool IsSolidInsideSolid(TessellatedSolid insideSolid, TessellatedSolid outsideSolid, bool onBoundaryIsInside = true)
+        {
+            return insideSolid.Vertices.All(vertex => IsVertexInsideSolid(outsideSolid, vertex, onBoundaryIsInside)) && 
+                outsideSolid.Vertices.All(vertex => IsVertexInsideSolid(insideSolid, vertex, onBoundaryIsInside));
+        }
+
+        /// <summary>
+        /// Determines if a point is inside a tesselated solid (polyhedron).
+        /// And the polygon is not self-intersecting
+        /// http://www.cescg.org/CESCG-2012/papers/Horvat-Ray-casting_point-in-Solid_test.pdf
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsVertexInsideSolid(TessellatedSolid ts, Vertex vertexInQuestion, bool onBoundaryIsInside = true)
         {
             var facesAbove = new List<PolygonalFace>();
             var facesBelow = new List<PolygonalFace>();

@@ -15,7 +15,7 @@ namespace TVGL_Test
     {
         private static string[] filenames = {    
                                                 //"../../../TestFiles/off_axis_box.STL",
-                                                "../../../TestFiles/amf_Cube.amf",
+                                                //"../../../TestFiles/amf_Cube.amf",
         "../../../TestFiles/Mic_Holder_SW.stl",  
          "../../../TestFiles/Mic_Holder_JR.stl",
                                                "../../../TestFiles/3_bananas.amf",    
@@ -66,8 +66,7 @@ namespace TVGL_Test
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0]);
-                TestInsidePolyhedron(ts[0]);
-
+                TestInsideSolid(ts[0]);
             }
             Console.ReadKey();
         }
@@ -86,12 +85,13 @@ namespace TVGL_Test
             //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
         }
 
-        private static void TestInsidePolyhedron(TessellatedSolid ts)
+        private static void TestInsideSolid(TessellatedSolid ts)
         {
-            var vertexInQuestion = new Vertex(new[] {0.0, 0.0, 0.0});
-            var isVertexInside = MinimumEnclosure.IsVertexInsidePolyhedron(ts, vertexInQuestion);
-            Console.WriteLine("Is Vertex Inside Polyhedron?");
-            Console.WriteLine(isVertexInside);
+            var solidIsInside = MinimumEnclosure.IsSolidInsideSolid(ts, ts, true);
+            //var vertexInQuestion = new Vertex(new[] {0.0, 0.0, 0.0});
+            //var isVertexInside = MinimumEnclosure.IsVertexInsideSolid(ts, vertexInQuestion);
+            Console.WriteLine("Is the Solid inside the Solid?");
+            Console.WriteLine(solidIsInside);
             Console.ReadLine();
         }
 
