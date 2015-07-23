@@ -125,6 +125,7 @@ namespace TVGL
         public Boolean IsConvex { get; private set; }
 
         #endregion
+
         #region Properties
         /// <summary>
         /// Gets the normal.
