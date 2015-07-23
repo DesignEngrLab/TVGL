@@ -454,7 +454,7 @@ namespace TVGL
         /// <returns></returns>
         public static bool IsVertexInsidePolyhedron(TessellatedSolid ts, Vertex vertexInQuestion)
         {
-            int numberOfIntercepts;
+            var numberOfIntercepts = 0;
 
             var direction = new[] {0.0, 0.0, 1.0};
             foreach (var face in ts.Faces) 
@@ -471,7 +471,7 @@ namespace TVGL
                 var pointInQuestion = MiscFunctions.Get2DProjectionPoints(new List<Vertex> { newVertex }, face.Normal);
                 if (IsPointInsidePolygon(points.ToList(), pointInQuestion[0])) numberOfIntercepts++;
             }
-
+            if (numberOfIntercepts == 0) return false;
             return numberOfIntercepts%2 == 0; //Even number of intercepts, means the vertex is inside
         }
 
