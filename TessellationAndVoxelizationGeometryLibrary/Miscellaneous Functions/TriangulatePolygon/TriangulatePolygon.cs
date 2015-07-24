@@ -212,9 +212,10 @@ namespace TVGL
                     //Similarly points2D is static.
                     if (node == completeListSortedLoops[node.LoopID][0] && isPositive[node.LoopID] == false) //if first point in the sorted loop and loop is negative 
                     {
-                        if (LinesToLeft(node, lineList, out leftLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
+                        bool isOnLine;
+                        if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
                         {
-                            if (LinesToRight(node, lineList, out rightLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
+                            if (LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
                             {
                                 //NOTE: This node must be a reflex upward point by observation
                                 //leftLine and rightLine are set in the two previous call and are now not null.
@@ -527,8 +528,9 @@ namespace TVGL
         #endregion
 
         #region Find Lines to Left or Right
-        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, bool includeOnLine = false)
+        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, out bool isOnLine)
         {
+            isOnLine = false; 
             leftLine = null;
             var xleft = double.NegativeInfinity;
             var counter = 0;
@@ -539,7 +541,7 @@ namespace TVGL
                 //Find distance to line
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (includeOnLine && xdif.IsNegligible()) counter++; //Add +1 to number of lines intersected
+                if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
                 if (xdif < 0 && !xdif.IsNegligible())//Moved to the left by some tolerance 
                 {
                     
@@ -581,12 +583,14 @@ namespace TVGL
 
         internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
         {
-            LinesToLeft(node, lineList, out leftLine);
+            bool isOnLine; 
+            LinesToLeft(node, lineList, out leftLine, out isOnLine);
             if (leftLine == null) throw new System.ArgumentException("Failed to find line to left.");
         }
 
-        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, bool includeOnLine = false)
+        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, out bool isOnLine)
         {
+            isOnLine = false; 
             rightLine = null;
             var xright = double.PositiveInfinity;
             var counter = 0;
@@ -597,7 +601,7 @@ namespace TVGL
                 //Find distance to line
                 var x = line.Xintercept(node.Y);
                 var xdif = x - node.X;
-                if (includeOnLine && xdif.IsNegligible()) counter++; //Add +1 to number of lines intersected
+                if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
                 if (xdif > 0 && !xdif.IsNegligible())//Moved to the right by some tolerance
                 {
                     counter++;
@@ -638,7 +642,8 @@ namespace TVGL
 
         internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
         {
-            LinesToRight(node, lineList, out rightLine);
+            bool isOnLine; 
+            LinesToRight(node, lineList, out rightLine, out isOnLine);
             if (rightLine == null) throw new System.ArgumentException("Failed to find line to right.");
         }
         #endregion

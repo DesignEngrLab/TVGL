@@ -14,21 +14,21 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {    
-                                                //"../../../TestFiles/off_axis_box.STL",
-                                                //"../../../TestFiles/amf_Cube.amf",
-        "../../../TestFiles/Mic_Holder_SW.stl",  
-         "../../../TestFiles/Mic_Holder_JR.stl",
-                                               "../../../TestFiles/3_bananas.amf",    
-                                             //  "../../../TestFiles/drillparts.amf",    
-                                             //    "../../../TestFiles/wrenchsns.amf",     
-                                                "../../../TestFiles/Rook.amf",   
+                                            //"../../../TestFiles/off_axis_box.STL",
+                                            //"../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/Mic_Holder_SW.stl",  
+        // "../../../TestFiles/Mic_Holder_JR.stl",
+                                                // "../../../TestFiles/3_bananas.amf",    
+                                            //  "../../../TestFiles/drillparts.amf",    
+                                            //  "../../../TestFiles/wrenchsns.amf",     
+                                            // "../../../TestFiles/Rook.amf",   
       //  "../../../TestFiles/trapezoid.4d.off",
        //      "../../../TestFiles/mushroom.off",   
       //     "../../../TestFiles/ABF.STL",           
-          "../../../TestFiles/Pump-1repair.STL",
+      //    "../../../TestFiles/Pump-1repair.STL",
          // "../../../TestFiles/Pump-1.STL",
          // "../../../TestFiles/Beam_Clean.STL",
-        "../../../TestFiles/piston.stl",
+      //  "../../../TestFiles/piston.stl",
      //   "../../../TestFiles/Z682.stl",   
     //    "../../../TestFiles/85408.stl",
      //   "../../../TestFiles/sth2.stl",
@@ -87,11 +87,14 @@ namespace TVGL_Test
 
         private static void TestInsideSolid(TessellatedSolid ts)
         {
+            var now = DateTime.Now;
+            Console.WriteLine("start...");
             var solidIsInside = MinimumEnclosure.IsSolidInsideSolid(ts, ts, true);
             //var vertexInQuestion = new Vertex(new[] {0.0, 0.0, 0.0});
             //var isVertexInside = MinimumEnclosure.IsVertexInsideSolid(ts, vertexInQuestion);
             Console.WriteLine("Is the Solid inside the Solid?");
             Console.WriteLine(solidIsInside);
+            Console.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
             Console.ReadLine();
         }
 

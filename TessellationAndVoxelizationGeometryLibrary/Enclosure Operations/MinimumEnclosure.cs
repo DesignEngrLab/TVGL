@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using StarMathLib;
 using TVGL.Enclosure_Operations;
 
@@ -456,22 +457,46 @@ namespace TVGL
         /// <returns></returns>
         public static bool IsSolidInsideSolid(TessellatedSolid insideSolid, TessellatedSolid outsideSolid, bool onBoundaryIsInside = true)
         {
-            return insideSolid.Vertices.All(vertex => IsVertexInsideSolid(outsideSolid, vertex, onBoundaryIsInside)) && 
-                outsideSolid.Vertices.All(vertex => IsVertexInsideSolid(insideSolid, vertex, onBoundaryIsInside));
+            //This is an n^2 operation to same vertices from the lists to avoid some special cases.
+            var insideVertices = new List<Vertex>(insideSolid.Vertices);
+            var outsideVertices = new List<Vertex>(outsideSolid.Vertices);
+            //for (var i = 0; i < insideVertices.Count; i++)
+            //{
+             //   for (var j = 0; j < outsideVertices.Count; j++)
+            //    {
+            //        if (insideVertices[i].X.IsPracticallySame(outsideVertices[j].X) &&
+            //            insideVertices[i].Y.IsPracticallySame(outsideVertices[j].Y) &&
+            //            insideVertices[i].Z.IsPracticallySame(outsideVertices[j].Z))
+            //        {
+            //            if (!onBoundaryIsInside) return false;
+            //            insideVertices.RemoveAt(j);
+            //            outsideVertices.RemoveAt(j);
+            //            i--; //Decrement i by 1 and leave j loop
+            //            break;
+           //         }
+            //    }
+           // }
+            //If nothing left of the vertices inside, return true. Else check the vertices left in both lists.
+            //if (insideVertices.Count == 0) return true;
+
+            return insideVertices.All(vertex => IsVertexInsideSolid(outsideSolid.Faces, vertex, onBoundaryIsInside)) &&
+                !outsideVertices.All(vertex => IsVertexInsideSolid(insideSolid.Faces, vertex, false));
         }
 
         /// <summary>
         /// Determines if a point is inside a tesselated solid (polyhedron).
         /// And the polygon is not self-intersecting
-        /// http://www.cescg.org/CESCG-2012/papers/Horvat-Ray-casting_point-in-Solid_test.pdf
+        /// http://www.cescg.org/CESCG-2012/papers/Horvat-Ray-casting_point-in-polyhedron_test.pdf
         /// </summary>
         /// <returns></returns>
-        public static bool IsVertexInsideSolid(TessellatedSolid ts, Vertex vertexInQuestion, bool onBoundaryIsInside = true)
+        public static bool IsVertexInsideSolid(IList<PolygonalFace> faces, Vertex vertexInQuestion, bool onBoundaryIsInside = true)
         {
             var facesAbove = new List<PolygonalFace>();
             var facesBelow = new List<PolygonalFace>();
             var inconclusive = true;
             var rnd = new Random();
+            var t = 0.0;
+            var direction = new[] { 0.0, 0.0, 1.0 };
             //Added while inconclusive and random direction because there are some special cases that look the  
             //same. For instance, consider a vertex sitting at the center of a half moon. Along the z axis, 
             //It will go through 1 edge or vertex (special cases) above and one below. Then consider a box
@@ -481,18 +506,28 @@ namespace TVGL
             while (inconclusive)
             {
                 inconclusive = false;
-                var direction = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
-                foreach (var face in ts.Faces)
+                direction = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
+                foreach (var face in faces)
                 {
+                    if (face.Vertices.Any(vertex => vertexInQuestion.X.IsPracticallySame(vertex.X) &&
+                                                    vertexInQuestion.Y.IsPracticallySame(vertex.Y) &&
+                                                    vertexInQuestion.Z.IsPracticallySame(vertex.Z)))
+                    {
+                        return onBoundaryIsInside;
+                    }
+                    
                     var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal) - distanceToOrigin)/
+                    t = -(vertexInQuestion.Position.dotProduct(face.Normal) - distanceToOrigin)/
                             (direction.dotProduct(face.Normal));
-                    //Note that if t == 0, then it is on the face, which is considered inside for this method
+                    //Note that if t == 0, then it is on the face
                     //else, find the intersection point and determine if it is inside the polygon (face)
-                    var newVertex = new Vertex(vertexInQuestion.Position.add(direction.multiply(t)));
-                    var points = MiscFunctions.Get2DProjectionPoints(face.Vertices.ToArray(), direction);
-                    var pointInQuestion = MiscFunctions.Get2DProjectionPoints(new List<Vertex> {newVertex}, direction);
-                    if (IsPointInsidePolygon(points.ToList(), pointInQuestion[0], true))
+                    var newVertex = t.IsNegligible() ? vertexInQuestion : new Vertex(vertexInQuestion.Position.add(direction.multiply(t)));
+                    //var points = MiscFunctions.Get2DProjectionPoints(face.Vertices.ToArray(), direction);
+                    //var pointInQuestion = MiscFunctions.Get2DProjectionPoints(new List<Vertex> {newVertex}, direction);
+                    //ToDo: error in isSolidInsideSolid likely fails in this next line, because in the case of
+                    //ToDo: solid inside solid, we should always exit the current function with t.IsNegligible
+                    //ToDo: because the point should be on at three or more faces of the solid.
+                    if (IsPointInsideTriangle(face.Vertices, newVertex, true))
                     {
                         //If the distance between the vertex and a plane is neglible and the vertex is inside that face
                         if (t.IsNegligible())
@@ -527,11 +562,33 @@ namespace TVGL
                     }
                 }
             }
-            
-            if (facesAbove.Count == 0 || facesBelow.Count == 0) return false;
-            return facesAbove.Count%2 != 0 && facesBelow.Count%2 != 0; //Even number of intercepts, means the vertex is inside
+            if (facesAbove.Count == 0 && facesBelow.Count == 0) return false;
+            return facesAbove.Count%2 != 0 && facesBelow.Count%2 != 0;//Even number of intercepts, means the vertex is inside
         }
 
+        /// <summary>
+        /// Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        /// And the polygon is not self-intersecting
+        /// http://www.blackpawn.com/texts/pointinpoly/
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsPointInsideTriangle(List<Vertex> vertices, Vertex vertexInQuestion, bool onBoundaryIsInside = true)
+        {
+            if(vertices.Count != 3) throw new System.ArgumentException("Incorrect number of points in traingle");
+            var p = vertexInQuestion.Position;
+            var a = vertices[0].Position;
+            var b = vertices[1].Position;
+            var c = vertices[2].Position;
+            return (SameSide(p, a, b, c) && SameSide(p, b, a, c) && SameSide(p, c, a, b)) ;
+        }
+
+        internal static bool SameSide(double[] p1, double[] p2, double[] a, double[] b)
+        {
+            var cp1 = b.subtract(a).crossProduct(p1.subtract(a));
+            var cp2 = b.subtract(a).crossProduct(p2.subtract(a));
+            var dot = cp1.dotProduct(cp2);
+            return (double.IsNaN(dot) || dot.IsNegligible() || dot > 0.0);
+        }
 
         /// <summary>
         /// Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
@@ -577,12 +634,13 @@ namespace TVGL
                 {
                     if (lineList.Count % 2 != 0 || lineList.Count < 1) return false; 
                     Line leftLine, rightLine;
+                    bool isOnLine;
+                    var numberOfLinesToLeft = TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, out isOnLine);
                     //Check if the point is on the left line or right line (note that one direction search is sufficient).
-                    if (TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, false) !=
-                        TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, true)) return onBoundaryIsInside;
+                    if (isOnLine) return onBoundaryIsInside;
                     //Else, not on a boundary, so check to see that it is in between an odd number of lines to left and right
-                    if (TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, false) %2 == 0) return false;
-                    return TriangulatePolygon.LinesToRight(node, lineList, out rightLine, false) % 2 != 0;  
+                    if (numberOfLinesToLeft %2 == 0) return false;
+                    return TriangulatePolygon.LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;  
                 }
                 if (lineList.Contains(node.StartLine))
                 {
