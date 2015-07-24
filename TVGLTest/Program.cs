@@ -18,7 +18,7 @@ namespace TVGL_Test
                                             //"../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/Mic_Holder_SW.stl",  
         // "../../../TestFiles/Mic_Holder_JR.stl",
-                                                // "../../../TestFiles/3_bananas.amf",    
+                                                 "../../../TestFiles/3_bananas.amf",    
                                             //  "../../../TestFiles/drillparts.amf",    
                                             //  "../../../TestFiles/wrenchsns.amf",     
                                             // "../../../TestFiles/Rook.amf",   
