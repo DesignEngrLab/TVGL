@@ -16,7 +16,7 @@ namespace TVGL_Test
         private static string[] filenames = {    
                                             //"../../../TestFiles/off_axis_box.STL",
                                             //"../../../TestFiles/amf_Cube.amf",
-        //"../../../TestFiles/Mic_Holder_SW.stl",  
+       // "../../../TestFiles/Mic_Holder_SW.stl",  
         // "../../../TestFiles/Mic_Holder_JR.stl",
                                                  "../../../TestFiles/3_bananas.amf",    
                                             //  "../../../TestFiles/drillparts.amf",    
@@ -32,7 +32,7 @@ namespace TVGL_Test
      //   "../../../TestFiles/Z682.stl",   
     //    "../../../TestFiles/85408.stl",
      //   "../../../TestFiles/sth2.stl",
-           "../../../TestFiles/pump.stl", 
+     //      "../../../TestFiles/pump.stl", 
         "../../../TestFiles/bradley.stl",
       //  "../../../TestFiles/45.stl",
         "../../../TestFiles/Cuboide.stl",
@@ -57,16 +57,21 @@ namespace TVGL_Test
         {
             //var writer = new TextWriterTraceListener(Console.Out);
             //Debug.Listeners.Add(writer);
-            foreach (var filename in filenames)
+            for (var i= 0; i < filenames.Count();i++)
             {
+                var filename = filenames[i];
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
+
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0]);
-                TestInsideSolid(ts[0]);
+                var filename2 = filenames[i+1];
+                FileStream fileStream2 = File.OpenRead(filename2);
+                var ts2= IO.Open(fileStream2, filename2, false);
+                TestInsideSolid(ts[0], ts2[0]);
             }
             Console.ReadKey();
         }
@@ -85,15 +90,21 @@ namespace TVGL_Test
             //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
         }
 
-        private static void TestInsideSolid(TessellatedSolid ts)
+        private static void TestInsideSolid(TessellatedSolid ts1, TessellatedSolid ts2)
         {
             var now = DateTime.Now;
             Console.WriteLine("start...");
-            var solidIsInside = MinimumEnclosure.IsSolidInsideSolid(ts, ts, true);
+            List<Vertex> insideVertices1;
+            List<Vertex> outsideVertices1;
+            List<Vertex> insideVertices2;
+            List<Vertex> outsideVertices2;
+            MiscFunctions.FindSolidIntersections(ts2, ts1, out insideVertices1, out outsideVertices1, out insideVertices2, out outsideVertices2, true);
             //var vertexInQuestion = new Vertex(new[] {0.0, 0.0, 0.0});
             //var isVertexInside = MinimumEnclosure.IsVertexInsideSolid(ts, vertexInQuestion);
+            //ToDo: Run test multiple times and look for vertices that change. Get visual and determine cause of error.
+            //ToDo: Also, check if boundary function works 
             Console.WriteLine("Is the Solid inside the Solid?");
-            Console.WriteLine(solidIsInside);
+            Console.WriteLine();
             Console.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
             Console.ReadLine();
         }

@@ -102,6 +102,12 @@ namespace TVGL
         /// </summary>
         /// <value>The index in list.</value>
         public int IndexInList { get; internal set; }
+
+        /// <summary>
+        /// Gets or sets an arbitrary ReferenceIndex to track vertex
+        /// </summary>
+        /// <value>The reference index.</value>
+        public int ReferenceIndex { get; set; }
         #endregion
         /// <summary>
         /// Prevents a default instance of the <see cref="Vertex"/> class from being created.
