@@ -183,7 +183,7 @@ namespace TVGL.Boolean_Operations
                                  ||
                                  (distancesToPlane[e.To.IndexInList] > 0 &&
                                   distancesToPlane[e.From.IndexInList] < 0)));
-                    if (otherEdge != null)
+                    if (otherEdge != null && splitEdgeDict.ContainsKey(otherEdge))
                     {
                         contactElements.Add(new ContactElement(splitEdgeDict[otherEdge].SplitVertex, otherEdge,
                             newVertex, edge, backwardFace, ContactTypes.ThroughFace));
@@ -201,7 +201,7 @@ namespace TVGL.Boolean_Operations
                                  ||
                                  (distancesToPlane[e.To.IndexInList] > 0 &&
                                   distancesToPlane[e.From.IndexInList] < 0)));
-                    if (otherEdge != null)
+                    if (otherEdge != null && splitEdgeDict.ContainsKey(otherEdge))
                     {
                         contactElements.Add(new ContactElement(newVertex, edge, splitEdgeDict[otherEdge].SplitVertex,
                             otherEdge, forwardFace, ContactTypes.ThroughFace));
@@ -625,7 +625,7 @@ namespace TVGL.Boolean_Operations
                 {
                     if (adjacentFace == null)
                     {
-                        var newConnectingLoop = (OnPositiveSide)
+                        var newConnectingLoop = (OnPositiveSide) 
                             ? loopsOnThisSolid.First(l => l.Any(ce => ce.SplitFacePositive == face))
                             : loopsOnThisSolid.First(l => l.Any(ce => ce.SplitFaceNegative == face));
                         if (!connectingLoops.Contains(newConnectingLoop))

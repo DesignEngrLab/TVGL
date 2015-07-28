@@ -14,39 +14,39 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {    
-        //"../../../TestFiles/off_axis_box.STL",
+        "../../../TestFiles/off_axis_box.STL",
         "../../../TestFiles/amf_Cube.amf",
         "../../../TestFiles/Mic_Holder_SW.stl",  
-        //"../../../TestFiles/Mic_Holder_JR.stl",
-        //"../../../TestFiles/3_bananas.amf",
-        //"../../../TestFiles/drillparts.amf",    
-        //"../../../TestFiles/wrenchsns.amf",     
-        //"../../../TestFiles/Rook.amf",   
+        "../../../TestFiles/Mic_Holder_JR.stl",
+        "../../../TestFiles/3_bananas.amf",
+        "../../../TestFiles/drillparts.amf",    
+        "../../../TestFiles/wrenchsns.amf",     
+        "../../../TestFiles/Rook.amf",   
         //"../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
         //"../../../TestFiles/mushroom.off",   //breaks in OFFFileData
-        //"../../../TestFiles/ABF.STL",           
-        //"../../../TestFiles/Pump-1repair.STL",
-        //"../../../TestFiles/Pump-1.STL",
-        //"../../../TestFiles/Beam_Clean.STL",
-        //"../../../TestFiles/piston.stl",
-        //"../../../TestFiles/Z682.stl",   
-        //"../../../TestFiles/sth2.stl", 
-        //"../../../TestFiles/pump.stl", 
-        //"../../../TestFiles/bradley.stl",
-        //"../../../TestFiles/Cuboide.stl",
-        //"../../../TestFiles/new/5.STL",
-        //"../../../TestFiles/new/2.stl",
-        //"../../../TestFiles/new/6.stl",
-        //"../../../TestFiles/new/4.stl", //breaks in slice
-        //"../../../TestFiles/radiobox.stl", 
-        //"../../../TestFiles/brace.stl",        
+        "../../../TestFiles/ABF.STL",           
+        "../../../TestFiles/Pump-1repair.STL",
+        "../../../TestFiles/Pump-1.STL",
+        "../../../TestFiles/Beam_Clean.STL",
+        "../../../TestFiles/piston.stl",
+        "../../../TestFiles/Z682.stl",   
+        "../../../TestFiles/sth2.stl", 
+        "../../../TestFiles/pump.stl", 
+        "../../../TestFiles/bradley.stl",
+        "../../../TestFiles/Cuboide.stl",
+        "../../../TestFiles/new/5.STL",
+        "../../../TestFiles/new/2.stl",
+        "../../../TestFiles/new/6.stl",
+        //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
+        "../../../TestFiles/radiobox.stl", 
+        "../../../TestFiles/brace.stl",        
         //"../../../TestFiles/box.stl", //breaks in slice
-        //"../../../TestFiles/G0.stl",
-        //"../../../TestFiles/GKJ0.stl",
+        "../../../TestFiles/G0.stl",
+        "../../../TestFiles/GKJ0.stl",
         //"../../../TestFiles/SCS12UU.stl", //Negative and positive loop values are identical??
-        //"../../../TestFiles/testblock2.stl",
-        //"../../../TestFiles/Z665.stl", //breaks in slice
-        //"../../../TestFiles/Casing.stl", //breaks in slice
+        "../../../TestFiles/testblock2.stl",
+        "../../../TestFiles/Z665.stl", 
+        //"../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
         "../../../TestFiles/mendel_extruder.stl" 
         };
 
@@ -61,7 +61,12 @@ namespace TVGL_Test
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
-
+                for (var j = 0; j < ts[0].Faces.Count(); j++ )
+                {
+                    var face = ts[0].Faces[j];
+                    var d = Math.Abs(face.Normal[0]) + Math.Abs(face.Normal[1]) + Math.Abs(face.Normal[2]);
+                    if (d.IsNegligible()) throw new Exception();
+                }
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
