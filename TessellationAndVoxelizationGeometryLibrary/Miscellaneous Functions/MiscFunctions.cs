@@ -524,8 +524,8 @@ namespace TVGL
             return IsPointInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint.Position : null;
         }
         #endregion
-  
-        #region Sort Vertices Along Direction
+
+        #region Sort Along Direction
         /// <summary>
         /// Returns a list of sorted vertices along a set direction. Ties are broken by direction[1] then direction[2] if available.
         /// </summary>
@@ -581,6 +581,7 @@ namespace TVGL
             //tolerance as the "isNeglible" star math function 
             var sortedPoints =
                 points.OrderBy(point => point.X).ThenBy(point => point.Y).ThenBy(point => point.Z).ToList<Point>();
+
 
             //Linear operation to locate duplicates and convert back to a list of vertices
             var previousDuplicate = false;

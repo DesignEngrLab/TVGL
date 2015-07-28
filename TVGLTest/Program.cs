@@ -14,42 +14,40 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {    
-                                            //"../../../TestFiles/off_axis_box.STL",
-                                            //"../../../TestFiles/amf_Cube.amf",
-       // "../../../TestFiles/Mic_Holder_SW.stl",  
-        // "../../../TestFiles/Mic_Holder_JR.stl",
-                                                 "../../../TestFiles/3_bananas.amf",    
-                                            //  "../../../TestFiles/drillparts.amf",    
-                                            //  "../../../TestFiles/wrenchsns.amf",     
-                                            // "../../../TestFiles/Rook.amf",   
-      //  "../../../TestFiles/trapezoid.4d.off",
-       //      "../../../TestFiles/mushroom.off",   
-      //     "../../../TestFiles/ABF.STL",           
-      //    "../../../TestFiles/Pump-1repair.STL",
-         // "../../../TestFiles/Pump-1.STL",
-         // "../../../TestFiles/Beam_Clean.STL",
-      //  "../../../TestFiles/piston.stl",
-     //   "../../../TestFiles/Z682.stl",   
-    //    "../../../TestFiles/85408.stl",
-     //   "../../../TestFiles/sth2.stl",
-     //      "../../../TestFiles/pump.stl", 
-        "../../../TestFiles/bradley.stl",
-      //  "../../../TestFiles/45.stl",
-        "../../../TestFiles/Cuboide.stl",
-        "../../../TestFiles/new/5.STL",
-         "../../../TestFiles/new/2.stl",
-        "../../../TestFiles/new/6.stl",
-        "../../../TestFiles/new/4.stl",
-       "../../../TestFiles/radiobox.stl",
-        "../../../TestFiles/brace.stl",        
-        "../../../TestFiles/box.stl",
-        "../../../TestFiles/G0.stl",
-        "../../../TestFiles/GKJ0.stl",
-        "../../../TestFiles/SCS12UU.stl",
-        "../../../TestFiles/testblock2.stl",
-        "../../../TestFiles/Z665.stl",
-        "../../../TestFiles/Casing.stl",
-        "../../../TestFiles/mendel_extruder.stl"
+        //"../../../TestFiles/off_axis_box.STL",
+        "../../../TestFiles/amf_Cube.amf",
+        "../../../TestFiles/Mic_Holder_SW.stl",  
+        //"../../../TestFiles/Mic_Holder_JR.stl",
+        //"../../../TestFiles/3_bananas.amf",
+        //"../../../TestFiles/drillparts.amf",    
+        //"../../../TestFiles/wrenchsns.amf",     
+        //"../../../TestFiles/Rook.amf",   
+        //"../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
+        //"../../../TestFiles/mushroom.off",   //breaks in OFFFileData
+        //"../../../TestFiles/ABF.STL",           
+        //"../../../TestFiles/Pump-1repair.STL",
+        //"../../../TestFiles/Pump-1.STL",
+        //"../../../TestFiles/Beam_Clean.STL",
+        //"../../../TestFiles/piston.stl",
+        //"../../../TestFiles/Z682.stl",   
+        //"../../../TestFiles/sth2.stl", 
+        //"../../../TestFiles/pump.stl", 
+        //"../../../TestFiles/bradley.stl",
+        //"../../../TestFiles/Cuboide.stl",
+        //"../../../TestFiles/new/5.STL",
+        //"../../../TestFiles/new/2.stl",
+        //"../../../TestFiles/new/6.stl",
+        //"../../../TestFiles/new/4.stl", //breaks in slice
+        //"../../../TestFiles/radiobox.stl", 
+        //"../../../TestFiles/brace.stl",        
+        //"../../../TestFiles/box.stl", //breaks in slice
+        //"../../../TestFiles/G0.stl",
+        //"../../../TestFiles/GKJ0.stl",
+        //"../../../TestFiles/SCS12UU.stl", //Negative and positive loop values are identical??
+        //"../../../TestFiles/testblock2.stl",
+        //"../../../TestFiles/Z665.stl", //breaks in slice
+        //"../../../TestFiles/Casing.stl", //breaks in slice
+        "../../../TestFiles/mendel_extruder.stl" 
         };
 
         [STAThread]
@@ -60,19 +58,21 @@ namespace TVGL_Test
             for (var i= 0; i < filenames.Count();i++)
             {
                 var filename = filenames[i];
+                Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
 
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                //TestSlice(ts[0]);
+                TestSlice(ts[0]);
                 //TestOBB(ts[0]);
-                var filename2 = filenames[i+1];
-                FileStream fileStream2 = File.OpenRead(filename2);
-                var ts2= IO.Open(fileStream2, filename2, false);
-                TestInsideSolid(ts[0], ts2[0]);
+                //var filename2 = filenames[i+1];
+                //FileStream fileStream2 = File.OpenRead(filename2);
+                //var ts2= IO.Open(fileStream2, filename2, false);
+                //TestInsideSolid(ts[0], ts2[0]);
             }
+            Console.WriteLine("Completed.");
             Console.ReadKey();
         }
 

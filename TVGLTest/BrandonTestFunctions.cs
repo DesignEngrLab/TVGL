@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using TVGL;
+using StarMathLib;
 
 
 namespace TVGL_Test
@@ -325,6 +326,8 @@ namespace TVGL_Test
 
             var pointInQuestion = new Point(new Vertex(new[] { 5.1, 5.0, 0.0 }));
             //Add loops to a list of loops
+            
+
             var isPointInside = MiscFunctions.IsPointInsidePolygon(new List<Point>(posLoop1), pointInQuestion, false);
             Console.WriteLine("Is Point Inside Polygon?");
             Console.WriteLine(isPointInside);
@@ -337,13 +340,23 @@ namespace TVGL_Test
             var point0 = new Vertex(new[] { 19.99, 26.168, 19.639 });
             var point1 =new Vertex(new[] { 13.6080,23.92,25.572 });
             var point2 =new Vertex(new[] {2.2697,4.28,5.9330});
-            var posLoop1 = new [] { point0, point1, point2};
+            var point3 = new Vertex(new[] { 0.0, -13.476, -7.262 });
+            var posLoop1 = new[] { point0, point1, point2, point3};
+
 
             //var pointInQuestion = new Vertex(new[] { 11.12985, 15.224, 12.786 }); //On a line
             //var pointInQuestion = new Vertex(new[] { 19.99, 26.168, 19.639 }); //On a vertex
             //var pointInQuestion = new Vertex(new[] { 5.42080538, 9.73828825, 11.39101034 }); 
             var pointInQuestion = new Vertex(new[] { 7.93885, 14.1000, 15.7525 }); 
             //Add loops to a list of loops
+
+            var direction1 = new[] { 19.99, -13.26, 4.546 }.normalize();
+            var direction2 = new[] { direction1[1], -direction1[0], 0.0 }; 
+            var directions = new[] { direction1, direction2 };
+            List<Vertex> sortedVertices;
+            List<int[]> duplicateRanges;
+            MiscFunctions.SortAlongDirection(directions, new List<Vertex>(posLoop1), out sortedVertices, out duplicateRanges);
+            
             var isPointInside = MiscFunctions.IsPointInsideTriangle(new List<Vertex>(posLoop1), pointInQuestion, true);
             Console.WriteLine("Is Point Inside Polygon?");
             Console.WriteLine(isPointInside);
