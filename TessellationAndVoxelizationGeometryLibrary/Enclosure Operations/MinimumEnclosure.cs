@@ -287,10 +287,26 @@ namespace TVGL
                 var seriesData = new List<double[]>();
                 var r = convexHullEdge.Vector.normalize();
                 var n = convexHullEdge.OwnedFace.Normal;
-                var numSamples = (int)Math.Ceiling((Math.PI - convexHullEdge.InternalAngle) / MaxDeltaAngle);
-                var deltaAngle = (Math.PI - convexHullEdge.InternalAngle) / numSamples;
+                var internalAngle = convexHullEdge.InternalAngle;
+                //r cross owned face normal should point along the other face normal.
+                if( Math.Abs(internalAngle - Math.PI) < 0.0001) continue; //Skip this edge, since it is on two faces with basically the same normal.
+                if (convexHullEdge.Curvature == CurvatureType.Concave) //ERROR 
+                {
+                    //throw new Exception("Error when either defining face vertex order"); 
+                    //Handle error while this is broken.
+                    if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0)
+                    {
+                        r = r.multiply(-1.0);
+                        internalAngle = internalAngle - Math.PI;
+                    }
+                    else throw new Exception("Error in internal angle definition"); 
+                }
+                var numSamples = (int)Math.Ceiling((Math.PI - internalAngle) / MaxDeltaAngle);
+                var deltaAngle = (Math.PI - internalAngle) / numSamples;
+                if (Math.Round(internalAngle, 5).IsNegligible()) continue; 
+                if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0) throw new Exception();
+                    
                 double[] direction;
-                
                 for (var i = 0; i < numSamples; i++)
                 {
                     var angleChange = 0.0;
