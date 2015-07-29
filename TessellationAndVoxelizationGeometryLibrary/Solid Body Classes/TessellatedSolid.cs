@@ -431,31 +431,10 @@ namespace TVGL
         private Edge[] MakeEdges(PolygonalFace[] localFaces)
         {
             NumberOfEdges = 3 * NumberOfFaces / 2;
-            var alreadyDefinedEdges = new Dictionary<int, Edge>();
-            for (var i = 0; i < NumberOfFaces; i++)
-            {
-                var face = localFaces[i];
-                var lastIndex = face.Vertices.Count - 1;
-                for (var j = 0; j <= lastIndex; j++)
-                {
-                    var fromVertex = face.Vertices[j];
-                    var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
-                    var checksum = EdgeChecksum(fromVertex, toVertex);
-                    if (alreadyDefinedEdges.ContainsKey(checksum))
-                    {
-                        var edge = alreadyDefinedEdges[checksum];
-                        edge.OtherFace = face;
-                        face.Edges.Add(edge);
-                    }
-                    else
-                    {
-                        var edge = new Edge(fromVertex, toVertex, face, null);
-                        alreadyDefinedEdges.Add(checksum, edge);
-                    }
-                }
-            }
+            var localEdges = MakeEdges(localFaces, true);
+
             var badEdges = new List<Edge>();
-            foreach (var edge in alreadyDefinedEdges.Values)
+            foreach (var edge in localEdges)
                 if (edge.OwnedFace == null || edge.OtherFace == null)
                 {
                     badEdges.Add(edge);
@@ -465,21 +444,44 @@ namespace TVGL
                                     + ", between vertices " + edge.From.Position.MakePrintString() + " & " +
                                     edge.To.Position.MakePrintString());
                 }
-            var localEdges = alreadyDefinedEdges.Values.ToArray();
             NumberOfEdges = localEdges.GetLength(0);
             return localEdges;
         }
 
-        private int EdgeChecksum(Vertex from, Vertex to)
+        private static Edge[] MakeEdges(IList<PolygonalFace> faces, Boolean doublyLinkToVertices)
         {
-            var fromIndex = from.IndexInList;
-            var toIndex = to.IndexInList;
-
-            if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
-            return (fromIndex < toIndex)
-                 ? fromIndex + (NumberOfVertices * toIndex)
-                 : toIndex + (NumberOfVertices * fromIndex);
+            var alreadyDefinedEdges = new Dictionary<int, Edge>();
+            foreach (var face in faces)
+            {
+                var lastIndex = face.Vertices.Count - 1;
+                for (var j = 0; j <= lastIndex; j++)
+                {
+                    var fromVertex = face.Vertices[j];
+                    var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
+                    #region get the CheckSum value
+                    var fromIndex = from.IndexInList;
+                    var toIndex = to.IndexInList;
+                    if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+                    var checksum = (fromIndex < toIndex)
+                            ? fromIndex + (NumberOfVertices * toIndex)
+                            : toIndex + (NumberOfVertices * fromIndex);
+                    #endregion
+                    if (alreadyDefinedEdges.ContainsKey(checksum))
+                    {
+                        var edge = alreadyDefinedEdges[checksum];
+                        edge.OtherFace = face;
+                        face.Edges.Add(edge);
+                    }
+                    else
+                    {
+                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices);
+                        alreadyDefinedEdges.Add(checksum, edge);
+                    }
+                }
+            }
+            return alreadyDefinedEdges.Values.ToArray();
         }
+
 
         /// <summary>
         /// Makes the vertices.
@@ -870,43 +872,12 @@ namespace TVGL
             var edgeIndex = 0;
             foreach (var cvxFace in convexHull.Faces)
             {
-                var newFace = new PolygonalFace(cvxFace.Normal) { Vertices = cvxFace.Vertices.ToList() };
+                var newFace = new PolygonalFace(cvxFace.Vertices.ToList(), cvxFace.Normal);
                 //foreach (var v in newFace.Vertices)
                 //    v.Faces.Add(newFace);
                 ConvexHullFaces[faceIndex++] = newFace;
             }
-            faceIndex = 0;
-            foreach (var cvxFace in convexHull.Faces)
-            {
-                var newFace = ConvexHullFaces[faceIndex++];
-                //For every adjacent face to newFace
-                for (var j = 0; j < cvxFace.Adjacency.GetLength(0); j++)
-                {
-                    var adjacentOldFace = cvxFace.Adjacency[j];
-                    //If the face doesn't have all its edges
-                    if (newFace.Edges.Count <= cvxFace.Adjacency.GetLength(0))
-                    {
-                        //Find the shared vertices between the two faces
-                        var adjFaceIndex = convexHull.Faces.FindIndex(adjacentOldFace);
-                        var adjFace = ConvexHullFaces[adjFaceIndex];
-                        var sharedVerts = newFace.Vertices.Intersect(adjacentOldFace.Vertices).ToList();
-                        
-                        //If no edge with those two vertices exists, create it.
-                        var isNewEdge = true;
-                        foreach (var edge in newFace.Edges)
-                        {
-                            if (edge.From == sharedVerts[0] && edge.To == sharedVerts[1]) isNewEdge = false;
-                            if (edge.From == sharedVerts[1] && edge.To == sharedVerts[0]) isNewEdge = false;
-                        }
-                        if (isNewEdge)
-                        {
-                            //Creating a new edge automatically adds the edge to the newFace and adjFace edge lists
-                            var newEdge = new Edge(sharedVerts[0], sharedVerts[1], newFace, adjFace, false);
-                            ConvexHullEdges[edgeIndex++] = newEdge;
-                        }
-                    }
-                }
-            }
+            ConvexHullEdges = MakeEdges(ConvexHullFaces, false);
         }
 
 

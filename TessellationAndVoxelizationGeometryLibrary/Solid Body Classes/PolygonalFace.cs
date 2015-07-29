@@ -56,7 +56,7 @@ namespace TVGL
             if (Normal.dotProduct(edge1.crossProduct(edge2)) <= 0)
                 Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
             else Vertices = new List<Vertex>(vertices);
-            foreach (var v in vertices)
+            foreach (var v in Vertices)
                 v.Faces.Add(this);
         }
 
