@@ -69,9 +69,9 @@ namespace TVGL_Test
                 }
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
-                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                TestSlice(ts[0]);
-                //TestOBB(ts[0]);
+                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);              
+                //TestSlice(ts[0]);
+                TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
                 //FileStream fileStream2 = File.OpenRead(filename2);
                 //var ts2= IO.Open(fileStream2, filename2, false);
@@ -86,13 +86,15 @@ namespace TVGL_Test
         //    TesselationToPrimitives.Run(ts);
         //}
 
-        private static void TestOBB(TessellatedSolid ts)
+        private static void TestOBB(TessellatedSolid ts, string filename)
         {
             //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);
-            //var obb = MinimumEnclosure.OrientedBoundingBox(ts);
+            List<List<double[]>> VolumeData;
+            var obb = MinimumEnclosure.OrientedBoundingBox(ts, out VolumeData);
             //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
+            TVGLTest.ExcelInterface.CreateNewGraph(VolumeData, filename, "Angle", "Volume");
         }
 
         private static void TestInsideSolid(TessellatedSolid ts1, TessellatedSolid ts2)

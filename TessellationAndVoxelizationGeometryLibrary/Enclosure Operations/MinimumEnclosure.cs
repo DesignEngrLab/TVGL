@@ -33,16 +33,16 @@ namespace TVGL
         /// <summary>
         /// The maximum delta angle
         /// </summary>
-        private const double MaxDeltaAngle = Math.PI / 36.0;
+        private const double MaxDeltaAngle = Math.PI / 180.0;
 
         /// <summary>
         ///  Finds the minimum bounding box oriented along a particular direction.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
+        public static BoundingBox OrientedBoundingBox(TessellatedSolid ts, out List<List<double[]>> volumeData)
         {
-            return Find_via_PCA_Approach(ts);
+            return Find_via_MC_ApproachOne(ts, out volumeData);
         }
 
         /// <summary>
@@ -277,40 +277,58 @@ namespace TVGL
         /// <accuracy>
         /// Garantees the optimial orientation is within MaxDeltaAngle error.
         /// </accuracy>
-        private static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts)
+        private static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts, out List<List<double[]>> volumeData)
         {
+            volumeData = new List<List<double[]>>();
             BoundingBox minBox = new BoundingBox();
             var minVolume = double.PositiveInfinity;
             foreach (var convexHullEdge in ts.ConvexHullEdges)
             {
-                var rotAxis = convexHullEdge.Vector.normalize();
+                var seriesData = new List<double[]>();
+                var r = convexHullEdge.Vector.normalize();
                 var n = convexHullEdge.OwnedFace.Normal;
                 var numSamples = (int)Math.Ceiling((Math.PI - convexHullEdge.InternalAngle) / MaxDeltaAngle);
                 var deltaAngle = (Math.PI - convexHullEdge.InternalAngle) / numSamples;
                 double[] direction;
+                
                 for (var i = 0; i < numSamples; i++)
                 {
+                    var angleChange = 0.0;
                     if (i == 0) direction = n;
                     else
                     {
-                        var angleChange = i * deltaAngle;
-                        var invCrossMatrix = new[,]
+                        angleChange = i * deltaAngle;
+                        var s = Math.Sin(angleChange);
+                        var c = Math.Cos(angleChange);
+                        var t = 1.0 - c;
+                        //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
+                        var rotMatrix = new [,]
                         {
-                            {n[0]*n[0], n[0]*n[1], n[0]*n[2]},
-                            {n[1]*n[0], n[1]*n[1], n[1]*n[2]},
-                            {n[2]*n[0], n[2]*n[1], n[2]*n[2]}
+                            {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
+                            {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
+                            {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
                         };
-                        direction = invCrossMatrix.multiply(rotAxis.multiply(Math.Sin(angleChange))).normalize();
+                        direction = rotMatrix.multiply(n);
+                       // var invCrossMatrix = new[,]
+                        //{
+                        //    {n[0]*n[0], n[0]*n[1], n[0]*n[2]},
+                        //    {n[1]*n[0], n[1]*n[1], n[1]*n[2]},
+                        //    {n[2]*n[0], n[2]*n[1], n[2]*n[2]}
+                        //};
+                        //direction = invCrossMatrix.multiply(rotAxis.multiply(Math.Sin(angleChange))).normalize();
                     }
-                    if (double.IsNaN(direction[0])) continue;
+                    if (double.IsNaN(direction[0])) throw new Exception();
                     //todo: figure out why direction is NaN
                     var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
+                    var dataPoint = new double[] { angleChange, obb.Volume };
+                    seriesData.Add(dataPoint);
                     if (obb.Volume < minVolume)
                     {
                         minBox = obb;
                         minVolume = minBox.Volume;
                     }
                 }
+                if (numSamples > 0) volumeData.Add(seriesData);
             }
             return minBox;
         }
