@@ -450,6 +450,7 @@ namespace TVGL
 
         private static Edge[] MakeEdges(IList<PolygonalFace> faces, Boolean doublyLinkToVertices)
         {
+            var checkSumMultiplier = faces.Count/2 + 2;
             var alreadyDefinedEdges = new Dictionary<int, Edge>();
             foreach (var face in faces)
             {
@@ -459,12 +460,12 @@ namespace TVGL
                     var fromVertex = face.Vertices[j];
                     var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
                     #region get the CheckSum value
-                    var fromIndex = from.IndexInList;
-                    var toIndex = to.IndexInList;
+                    var fromIndex = fromVertex.IndexInList;
+                    var toIndex = toVertex.IndexInList;
                     if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
                     var checksum = (fromIndex < toIndex)
-                            ? fromIndex + (NumberOfVertices * toIndex)
-                            : toIndex + (NumberOfVertices * fromIndex);
+                            ? fromIndex + (checkSumMultiplier * toIndex)
+                            : toIndex + (checkSumMultiplier * fromIndex);
                     #endregion
                     if (alreadyDefinedEdges.ContainsKey(checksum))
                     {
