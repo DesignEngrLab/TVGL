@@ -118,11 +118,11 @@ namespace TVGL
             }
             else
             {
-                var rotYAngle = Math.Atan(xDir / zDir);
-                rotateY = StarMath.RotationY(-rotYAngle, true);
-                backRotateY = StarMath.RotationY(rotYAngle, true);
+                var rotYAngle = -Math.Atan(xDir / zDir);
+                rotateY = StarMath.RotationY(rotYAngle, true);
+                backRotateY = StarMath.RotationY(-rotYAngle, true);
                 var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
-                var rotXAngle = Math.Atan(yDir / baseLength);
+                var rotXAngle = Math.Sign(zDir)*Math.Atan(yDir / baseLength);
                 rotateX = StarMath.RotationX(rotXAngle, true);
                 backRotateX = StarMath.RotationX(-rotXAngle, true);
             }

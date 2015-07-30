@@ -284,28 +284,24 @@ namespace TVGL
             var minVolume = double.PositiveInfinity;
             foreach (var convexHullEdge in ts.ConvexHullEdges)
             {
+                //Initialize variables
                 var seriesData = new List<double[]>();
                 var r = convexHullEdge.Vector.normalize();
                 var n = convexHullEdge.OwnedFace.Normal;
                 var internalAngle = convexHullEdge.InternalAngle;
+                
+                //Check for exceptions and special cases.
+                //Skip the edge if its internal angle is practically 0 or 180 since.
+                if( Math.Abs(internalAngle - Math.PI) < 0.0001 || Math.Round(internalAngle, 5).IsNegligible()) continue; 
+                if (convexHullEdge.Curvature == CurvatureType.Concave)  throw new Exception("Error in internal angle definition"); 
                 //r cross owned face normal should point along the other face normal.
-                if( Math.Abs(internalAngle - Math.PI) < 0.0001) continue; //Skip this edge, since it is on two faces with basically the same normal.
-                if (convexHullEdge.Curvature == CurvatureType.Concave) //ERROR 
-                {
-                    //throw new Exception("Error when either defining face vertex order"); 
-                    //Handle error while this is broken.
-                    if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0)
-                    {
-                        r = r.multiply(-1.0);
-                        internalAngle = internalAngle - Math.PI;
-                    }
-                    else throw new Exception("Error in internal angle definition"); 
-                }
+                if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0) throw new Exception();
+
+                //Set the sampling parameters
                 var numSamples = (int)Math.Ceiling((Math.PI - internalAngle) / MaxDeltaAngle);
                 var deltaAngle = (Math.PI - internalAngle) / numSamples;
                 if (Math.Round(internalAngle, 5).IsNegligible()) continue; 
-                if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0) throw new Exception();
-                    
+                  
                 double[] direction;
                 for (var i = 0; i < numSamples; i++)
                 {
@@ -335,6 +331,13 @@ namespace TVGL
                     }
                     if (double.IsNaN(direction[0])) throw new Exception();
                     //todo: figure out why direction is NaN
+                    
+                    //for debug only: 
+                    //ToDo: Delete these next few lines
+                    Vertex v1Low, v1High;
+                    var length = GetLengthAndExtremeVertices(direction.normalize(), ts.ConvexHullVertices, out v1Low, out v1High);
+
+
                     var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
                     var dataPoint = new double[] { angleChange, obb.Volume };
                     seriesData.Add(dataPoint);
