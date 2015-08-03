@@ -450,7 +450,7 @@ namespace TVGL
 
         private static Edge[] MakeEdges(IList<PolygonalFace> faces, Boolean doublyLinkToVertices)
         {
-            var checkSumMultiplier = faces.Count/2 + 2;
+            var checkSumMultiplier = faces.Count / 2 + 2;
             var alreadyDefinedEdges = new Dictionary<int, Edge>();
             foreach (var face in faces)
             {
@@ -800,23 +800,23 @@ namespace TVGL
             }
             Edge[] copyOfEdges = MakeEdges(copyOfFaces);
             var copy = new TessellatedSolid
-           {
-               SurfaceArea = SurfaceArea,
-               Center = (double[])Center.Clone(),
-               Faces = copyOfFaces,
-               Vertices = copyOfVertices,
-               Edges = copyOfEdges,
-               Name = Name,
-               NumberOfFaces = NumberOfFaces,
-               NumberOfVertices = NumberOfVertices,
-               Volume = Volume,
-               XMax = XMax,
-               XMin = XMin,
-               YMax = YMax,
-               YMin = YMin,
-               ZMax = ZMax,
-               ZMin = ZMin
-           };
+            {
+                SurfaceArea = SurfaceArea,
+                Center = (double[])Center.Clone(),
+                Faces = copyOfFaces,
+                Vertices = copyOfVertices,
+                Edges = copyOfEdges,
+                Name = Name,
+                NumberOfFaces = NumberOfFaces,
+                NumberOfVertices = NumberOfVertices,
+                Volume = Volume,
+                XMax = XMax,
+                XMin = XMin,
+                YMax = YMax,
+                YMin = YMin,
+                ZMax = ZMax,
+                ZMin = ZMin
+            };
             copy.CreateConvexHull();
             return copy;
         }
@@ -873,7 +873,7 @@ namespace TVGL
             var edgeIndex = 0;
             foreach (var cvxFace in convexHull.Faces)
             {
-                var newFace = new PolygonalFace(cvxFace.Vertices.ToList(), cvxFace.Normal);
+                var newFace = new PolygonalFace(cvxFace.Vertices.ToList(), cvxFace.Normal, false);
                 //foreach (var v in newFace.Vertices)
                 //    v.Faces.Add(newFace);
                 ConvexHullFaces[faceIndex++] = newFace;

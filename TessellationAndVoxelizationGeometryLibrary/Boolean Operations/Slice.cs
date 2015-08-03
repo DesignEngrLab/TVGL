@@ -77,22 +77,21 @@ namespace TVGL.Boolean_Operations
         {
             // the edges serve as the easiest way to identify where the solid is interacting with the plane, so we search over those
             // and organize the edges (or vertices into the following three categories: edges that straddle the plane (straddleEdges),
-            // edges that in on the plane (inPlaneEdges), and edges endpoints (or rather just the vertex in question) that are in the
+            // edges that are on the plane (inPlaneEdges), and edges endpoints (or rather just the vertex in question) that are in the
             // plane.
             var straddleEdges = new List<Edge>();
             var inPlaneEdges = new List<Edge>();
             var inPlaneVerticesHash = new HashSet<Vertex>();  //since these will be found multiple times, in the following loop, 
             // the hash-set allows us to quickly check if the v is already included
-            var inPlaneFacesHash = new HashSet<PolygonalFace>();
             foreach (var edge in ts.Edges)
             {
                 var toDistance = distancesToPlane[edge.To.IndexInList];
                 var fromDistance = distancesToPlane[edge.From.IndexInList];
                 if (toDistance.IsNegligible())
-                    // both ends are not, but the head of the edge is --> inPlaneVertex
+                    // the head of the edge is on the plane--> inPlaneVertex
                     if (!inPlaneVerticesHash.Contains(edge.To)) inPlaneVerticesHash.Add(edge.To);
                 if (fromDistance.IsNegligible())
-                    // both ends are not, but the tail of the edge is --> inPlaneVertex
+                    // the tail of the edge is on the plane--> inPlaneVertex
                     if (!inPlaneVerticesHash.Contains(edge.From)) inPlaneVerticesHash.Add(edge.From);
                 if (toDistance.IsNegligible() && fromDistance.IsNegligible())
                     // both the to and from vertices are on the plane --> inPlaneEdge
@@ -101,44 +100,46 @@ namespace TVGL.Boolean_Operations
                     // the to and from are on either side --> straddle edge
                     straddleEdges.Add(edge);
             }
-            // the following contactElements is what is returned by this method.
+            // the following, contactElements, is what is returned by this method.
             List<ContactElement> contactElements = new List<ContactElement>();
+            var inPlaneFacesHash = new HashSet<PolygonalFace>();
             foreach (var inPlaneEdge in inPlaneEdges)
-            {   //  inPlaneEdges are the easiest to make into ContactElements, since the end vertices
-                // are simply known vertices in the solid, but there are some subtle issues related 
-                // to this (see preceding comments).inner edges and convexity of the edges (as occurs later on).   
+            {   // inPlaneEdges are the easiest to make into ContactElements, since the end vertices
+                // are simply known vertices in the solid (as opposed to new vertices that need to be made) 
+                // but there are some subtle issues related to this (see preceding comments):
+                // inner edges and convexity of the edges (as occurs later on).   
                 var ownedFaceOtherVertex = inPlaneEdge.OwnedFace.OtherVertex(inPlaneEdge);
                 var planeDistOwnedFOV = distancesToPlane[ownedFaceOtherVertex.IndexInList];
                 var otherFaceOtherVertex = inPlaneEdge.OtherFace.OtherVertex(inPlaneEdge);
                 var planeDistOtherFOV = distancesToPlane[otherFaceOtherVertex.IndexInList];
-                // in the faces are in the plane then do not include this edge as a contact element.      
+                // if both faces are in the plane then do not include this edge as a contact element.  
                 if (planeDistOwnedFOV.IsNegligible())
                     if (!inPlaneFacesHash.Contains(inPlaneEdge.OwnedFace)) inPlaneFacesHash.Add(inPlaneEdge.OwnedFace);
                 if (planeDistOtherFOV.IsNegligible())
-                    if (!inPlaneFacesHash.Contains(inPlaneEdge.OtherFace)) inPlaneFacesHash.Add(inPlaneEdge.OtherFace);
+                    if (!inPlaneFacesHash.Contains(inPlaneEdge.OtherFace)) inPlaneFacesHash.Add(inPlaneEdge.OtherFace);    
                 if (planeDistOwnedFOV.IsNegligible() && planeDistOtherFOV.IsNegligible()) continue;
                 // if one of the faces is in the plane and the other is not AND the edge is convex THEN nothing is cut at this edge
                 // and it is thus ignored. Concave edges are effected and a contact element should be made for them.
                 // in the last line of the foreach.
                 if ((planeDistOwnedFOV.IsNegligible() || planeDistOtherFOV.IsNegligible()) && inPlaneEdge.Curvature == CurvatureType.Convex)
                     continue;
-                if (planeDistOwnedFOV * planeDistOtherFOV > 0) continue; //if both distances have the same sign, but 
-                //this is "knife-edge" on the plane
+                if (planeDistOwnedFOV * planeDistOtherFOV > 0) continue; //if both distances have the same sign, then 
+                // this is "knife-edge" on the plane - we don't need that
                 contactElements.Add(new ContactElement(inPlaneEdge, (planeDistOwnedFOV - planeDistOtherFOV) > 0));
             }
-            // now things get complicated. For each straddle each make a dictionary to ensure that newly
-            // defined ContactElements use the same vertices. Well, specifically any new vertices that are
-            // created when a straddleEdge is split.
-            // in this splitEdgeDict, the straddleEdge is the Key and the Value is a Tuple of:
-            // <new vertex on the straddle edge; the backward face; the forward face> .
+            // now things get complicated. For each straddle edge make a dictionary entry to includes the
+            // straddle edge as the key and a StraddleData class for the value, which for the meantime is
+            // comprised only of the new vertex on that edge. The reason for this is to ensure that newly
+            // defined ContactElements use the same vertices - that adjacent elements don't make duplicates of these 
+            // vertices. When a previously defined straddle is found, we update the dictionary entries.
             // These are the faces on either side of the edge that are in the backward or forward direction of the loop.
             var splitEdgeDict = straddleEdges.ToDictionary(edge => edge,
                 edge => new StraddleData()
                 {
                     SplitVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, edge.From, edge.To)
                 });
-            // next add 0,1,or 2 ContactElements for the inPlane Vertices. Why is this not known? Because many of the vertices
-            // are ends of inPlaneEdges, which are defined in the previous loop.
+            // next add 0,1,or 2 ContactElements for the inPlane Vertices. Why is this not known? Because some of the vertices
+            // are ends of inPlaneEdges, which are defined in the previous loop and some of edges that terminate at the plane
             foreach (var startingVertex in inPlaneVerticesHash)
             {
                 Edge otherEdge;
@@ -160,8 +161,7 @@ namespace TVGL.Boolean_Operations
                 }
             }
             foreach (var keyValuePair in splitEdgeDict)
-            {   // finally, we make ContactElements for the straddleEdges. This is the trickiest part.
-
+            {   // finally, we make ContactElements for the straddleEdges. This is a little tricky.
                 var edge = keyValuePair.Key;
                 var newVertex = keyValuePair.Value.SplitVertex;
                 var backwardFace = edge.OwnedFace;

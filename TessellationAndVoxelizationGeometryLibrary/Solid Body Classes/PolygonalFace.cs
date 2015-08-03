@@ -47,7 +47,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices, double[] normal)
+        public PolygonalFace(IList<Vertex> vertices, double[] normal, Boolean ConnectVerticesBackToFace = true)
             : this()
         {
             Normal = normal;
@@ -56,21 +56,23 @@ namespace TVGL
             if (Normal.dotProduct(edge1.crossProduct(edge2)) <= 0)
                 Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
             else Vertices = new List<Vertex>(vertices);
-            foreach (var v in Vertices)
-                v.Faces.Add(this);
+            if (ConnectVerticesBackToFace)
+                foreach (var v in Vertices)
+                    v.Faces.Add(this);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices)
+        public PolygonalFace(IList<Vertex> vertices, Boolean ConnectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
             {
                 Vertices.Add(v);
-                v.Faces.Add(this);
+                if (ConnectVerticesBackToFace)
+                    v.Faces.Add(this);
             }
             // now determine normal
             var n = vertices.Count;
