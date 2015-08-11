@@ -246,7 +246,7 @@ namespace TVGL
                 }
                 else
                 {
-                    InternalAngle = Math.Acos(dot);
+                    InternalAngle = Math.PI - Math.Acos(dot);
                     Curvature = CurvatureType.Convex;
                 }
             }

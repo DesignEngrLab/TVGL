@@ -276,6 +276,7 @@ namespace TVGL
 
             #endregion
 
+            if (convexHullCCW.Count > points.Count) convexHullCCW.Remove(convexHullCCW.Last());
             return convexHullCCW;
         }
     }

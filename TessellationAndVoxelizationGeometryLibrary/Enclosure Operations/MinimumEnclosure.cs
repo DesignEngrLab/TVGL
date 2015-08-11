@@ -299,6 +299,7 @@ namespace TVGL
 
                 //Set the sampling parameters
                 var numSamples = (int)Math.Ceiling((Math.PI - internalAngle) / MaxDeltaAngle);
+                if (numSamples == 1) numSamples = 2; //At minimum, take two samples
                 var deltaAngle = (Math.PI - internalAngle) / numSamples;
                 if (Math.Round(internalAngle, 5).IsNegligible()) continue; 
                   
@@ -321,22 +322,8 @@ namespace TVGL
                             {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
                         };
                         direction = rotMatrix.multiply(n);
-                       // var invCrossMatrix = new[,]
-                        //{
-                        //    {n[0]*n[0], n[0]*n[1], n[0]*n[2]},
-                        //    {n[1]*n[0], n[1]*n[1], n[1]*n[2]},
-                        //    {n[2]*n[0], n[2]*n[1], n[2]*n[2]}
-                        //};
-                        //direction = invCrossMatrix.multiply(rotAxis.multiply(Math.Sin(angleChange))).normalize();
                     }
                     if (double.IsNaN(direction[0])) throw new Exception();
-                    //todo: figure out why direction is NaN
-                    
-                    //for debug only: 
-                    //ToDo: Delete these next few lines
-                    Vertex v1Low, v1High;
-                    var length = GetLengthAndExtremeVertices(direction.normalize(), ts.ConvexHullVertices, out v1Low, out v1High);
-
 
                     var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
                     var dataPoint = new double[] { angleChange, obb.Volume };
@@ -498,12 +485,15 @@ namespace TVGL
             var numCvxPoints = cvxPoints.Count;
             var extremeIndices = new int[4];
 
-            extremeIndices[3] = cvxPoints.Count;
-
-            //        extremeIndices[3] => max-Y
+           //        extremeIndices[3] => max-Y
             extremeIndices[3] = cvxPoints.Count - 1;
-            while (extremeIndices[3] >= 1 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1])
-                extremeIndices[3]--;
+            //Check if first point has a higher y value (only when point is both min-x and max-Y)
+            if (cvxPoints[0][1] > cvxPoints[extremeIndices[3]][1]) extremeIndices[3] = 0;
+            else
+            {
+                while (extremeIndices[3] >= 1 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1])
+                    extremeIndices[3]--;
+            }
 
             //        extremeIndices[2] => max-X
             extremeIndices[2] = extremeIndices[3];
@@ -544,6 +534,8 @@ namespace TVGL
             Point[] pointPair1 = null;
             Point[] pointPair2 = null;
             var minArea = double.PositiveInfinity;
+            var flag = false;
+            var cons = Math.PI / 2;
             do
             {
                 //For each of the 4 supporting points (those forming the rectangle),
@@ -564,13 +556,19 @@ namespace TVGL
                     }
                 }
                 var delta = deltaAngles.Min();
+                angle = delta;
+                if (angle > Math.PI / 2 && !angle.IsPracticallySame( Math.PI / 2))
+                {
+                    flag = true; //Exit while
+                    continue;
+                }
+                    
                 deltaToUpdateIndex = deltaAngles.FindIndex(delta);
                 #endregion
                 var currentPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
                 extremeIndices[deltaToUpdateIndex]--;
                 if (extremeIndices[deltaToUpdateIndex] < 0) { extremeIndices[deltaToUpdateIndex] = numCvxPoints - 1; }
                 var previousPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
-                angle = delta;
                 #region find area
                 //Get unit normal for current edge
                 var direction = previousPoint.Position2D.subtract(currentPoint.Position2D).normalize();
@@ -602,13 +600,14 @@ namespace TVGL
                     direction1 = new [] { angleVector1[0], angleVector1[1], 0.0};
                     direction2 = new [] { angleVector2[0], angleVector2[1], 0.0 };
                 }
-            } while (angle < Math.PI / 2); //Don't check beyond a 90 degree angle.
+            } while (!flag || angle.IsPracticallySame(Math.PI / 2)); //Don't check beyond a 90 degree angle.
             //If best angle is 90 degrees, then don't bother to rotate. 
             if (bestAngle.IsPracticallySame(Math.PI / 2)) { bestAngle = 0.0; }
             #endregion
 
             var directions = new List<double[]>{direction1, direction2};
             var extremePoints = new List<Point[]> {pointPair1, pointPair2};
+            if (pointPair1 == null) minArea = 0.0;
             var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints);
             return boundingRectangle;
         }
