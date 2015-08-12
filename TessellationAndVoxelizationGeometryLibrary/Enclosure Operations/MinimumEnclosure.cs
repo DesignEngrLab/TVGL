@@ -282,6 +282,10 @@ namespace TVGL
             volumeData = new List<List<double[]>>();
             BoundingBox minBox = new BoundingBox();
             var minVolume = double.PositiveInfinity;
+            //Get a list of flats
+            var faces = ListFunctions.FacesWithDistinctNormals(ts.ConvexHullFaces.ToList());
+            var flats = ListFunctions.Flats(ts.ConvexHullFaces.ToList());
+
             foreach (var convexHullEdge in ts.ConvexHullEdges)
             {
                 //Initialize variables
@@ -339,6 +343,163 @@ namespace TVGL
             return minBox;
         }
 
+        /// <summary>
+        /// The BM_ApproachTwo intelligently finds all the potential changes in vertices of the OBB
+        /// when rotated around each edge in the convex hull. This forms a discrete selection of angles
+        /// to check between the two face normals that form an edge.
+        /// All of these angles are then computed with FindOBBAlongDirection.
+        /// </summary>
+        /// <timeDomain>
+        /// Visiting each edge pair takes O(n^2) time. Then the number of additional linear operations is based on 
+        /// how often the vertices change. Let us assume O(logn). Together, this second portion is then O(nlogn) time
+        /// which is dominated by the first portion O(n^2), making the total time approximately O(n^2).
+        /// </timeDomain>
+        /// <accuracy>
+        /// Garantees the optimial orientation.
+        /// </accuracy>
+        private static BoundingBox Find_via_BM_ApproachTwo(TessellatedSolid ts, out List<List<double[]>> volumeData)
+        {
+            volumeData = new List<List<double[]>>();
+            var minBox = new BoundingBox();
+            var minVolume = double.PositiveInfinity;
+            foreach (var convexHullEdge in ts.ConvexHullEdges)
+            {
+                
+                var n = convexHullEdge.OwnedFace.Normal;
+                var internalAngle = convexHullEdge.InternalAngle;
+                var seriesData = new List<double[]>();
+                var angleList = new List<double>();
+
+                //Check for exceptions and special cases.
+                //Skip the edge if its internal angle is practically 0 or 180.
+                if (Math.Abs(internalAngle - Math.PI) < 0.0001 || Math.Round(internalAngle, 5).IsNegligible()) continue;
+                if (convexHullEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
+                //r cross owned face normal should point along the other face normal.
+                var r = convexHullEdge.Vector.normalize();
+                if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0) throw new Exception();
+                
+                //Find the angle between the two faces that form this edge
+                var maxTheta = Math.Acos(n.dotProduct(convexHullEdge.OtherFace.Normal));
+                angleList.Add(0.0);
+                angleList.Add(maxTheta);
+
+                //Build rotation matrix to align the edge.OwnedFace.Normal along the primary axis.
+                var xp = n;
+                var yp = convexHullEdge.Vector.normalize();
+                var zp = xp.crossProduct(yp).normalize();
+                var rotMatrix1 = new [,]
+                        {
+                            {xp[0], yp[0], zp[0]},
+                            {xp[1], yp[1], zp[1]},
+                            {xp[2], yp[2], zp[2]}
+                        }; 
+                
+                //Determine the sign of maxTheta
+                //If the new y value is pointing in the positive y direction, the rotation is positive (CCW around z)
+                var n2 = rotMatrix1.multiply(convexHullEdge.OtherFace.Normal);
+                var rotationDirection = Math.Sign(n2[1]); //CCW +
+                     
+                //Debug. ToDo: Remove the next few lines when sure of rotation matrix
+                var n1 = rotMatrix1.multiply(convexHullEdge.OwnedFace.Normal);
+                if (!n1[1].IsNegligible() || !n1[2].IsNegligible()) throw new Exception(); //Should be pointing along x axis
+                if (!n2[2].IsNegligible()) throw new Exception(); //Should be in XY plane
+
+                //Find all the changes in visible vertices along rotation from face to face
+                //In addition, find whenever the rear extreme vertex changes
+                foreach (var otherConvexHullEdge in ts.ConvexHullEdges)
+                {
+                    //Skip if the same edge is selected
+                    if (otherConvexHullEdge == convexHullEdge) continue;
+
+                    //Rotate face normal to a new position on the theoretical gaussian sphere
+                    var toPosition = rotMatrix1.multiply(otherConvexHullEdge.OtherFace.Normal);
+                    var fromPosition = rotMatrix1.multiply(otherConvexHullEdge.OwnedFace.Normal);
+
+                    #region Get Rotation Angle
+                    //Find the angle of the new position with respect to the direction of rotation in z
+                    double rotAngle;
+                    if (toPosition[1].IsPracticallySame(0.0)) 
+                    {
+                        if (Math.Sign(toPosition[0]) < 0) rotAngle = Math.PI / 2;
+                        else rotAngle = 0.0;
+                    }
+                    else
+                    {
+                        rotAngle = -rotationDirection*Math.Atan(toPosition[0]/toPosition[1]);
+                    }
+                    //Make adjustment to bound rotAngle between 0 and 180
+                    if (Math.Sign(rotAngle) < 0) rotAngle = Math.PI + rotAngle;
+                    #endregion
+
+                    //Add angle to list if it is within the bounds
+                    if (rotAngle > 0.0 && rotAngle < maxTheta) angleList.Add(rotAngle);
+
+                    #region Check if this edge changes the rear extreme vertex
+                    //Check whether this edge changes the rear extreme vertex 
+                    //First, it will have a to/from position on both sides of the XY plane
+                    //Or the one or both of the positions will be on the XY plane
+                    if (Math.Sign(toPosition[2] * fromPosition[2]) < 0 || toPosition[2].IsNegligible() || fromPosition[2].IsNegligible()) 
+                    {
+                        var arc1 = new[] {n1,n2};
+                        var arc2 = new[] {toPosition, fromPosition};
+                        double[][] intercepts;
+                        if (MiscFunctions.ArcArcIntersection(arc1, arc2, out intercepts));
+                        if (intercepts == null) //arcs are on the same great circle.
+                        {
+                            //Determine whether arc2.nodes are within inverse of arc1.
+                            //If yes, then get new rotation angle for toPosition and/or fromPosition and add to list
+                            throw new Exception("Not Implemented Yet");
+                        }
+                        else
+                        {
+                            //Get rotation angle to the intercept
+                            rotAngle = rotationDirection * Math.Atan(intercepts[0][1] / intercepts[0][0]);
+                            if (rotAngle > 0.0 && rotAngle < maxTheta) angleList.Add(rotAngle);
+                        }    
+                    }
+                    #endregion
+                }
+
+                #region Find OBB along direction at each angle of change
+                //sort the angles. Not strictly necessary, but useful for debugging.
+                //Debug: ToDo: Remove sort when 
+                angleList.Sort();
+                double[] direction;
+                var priorAngle = double.NegativeInfinity;
+                foreach (var angle in angleList)
+                {
+                    //Skip angles that are practically the same
+                    if (angle.IsPracticallySame(priorAngle)) continue;
+
+                    //Find rotation matrix
+                    var s = Math.Sin(angle);
+                    var c = Math.Cos(angle);
+                    var t = 1.0 - c;
+                    //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
+                    var rotMatrix2 = new[,]
+                    {
+                        {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
+                        {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
+                        {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
+                    };
+                    direction = rotMatrix2.multiply(n);
+                    if (double.IsNaN(direction[0])) throw new Exception();
+
+                    //Find OBB along direction and save minimum bounding box
+                    var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
+                    var dataPoint = new double[] { angle, obb.Volume };
+                    seriesData.Add(dataPoint);
+                    if (obb.Volume < minVolume)
+                    {
+                        minBox = obb;
+                        minVolume = minBox.Volume;
+                    }
+                }
+                if(angleList.Count > 0) volumeData.Add(seriesData);
+                #endregion
+            }
+            return minBox;
+        }
 
         private static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
         {

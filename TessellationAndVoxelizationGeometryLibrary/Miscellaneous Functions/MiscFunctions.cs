@@ -240,6 +240,43 @@ namespace TVGL
             return DistancePointToPoint(interSect1, interSect2);
         }
 
+        internal static bool ArcArcIntersection(double[][] arc1Vectors, double[][] arc2Vectors, out double[][] intercepts)
+        {
+            intercepts = null;
+            var tolerance = 0.0001;
+            //Create two planes given arc1 and arc2
+            var norm1 = arc1Vectors[0].crossProduct(arc1Vectors[1]).normalize(); //unit normal
+            var norm2 = arc2Vectors[0].crossProduct(arc2Vectors[1]).normalize(); //unit normal
+
+            //Check whether the planes are the same. 
+            if (Math.Abs(norm1[0] - norm2[0]) < tolerance && Math.Abs(norm1[1] - norm2[1]) < tolerance
+                && Math.Abs(norm1[2] - norm2[2]) < tolerance) return true; //All points intersect
+            if (Math.Abs(norm1[0] + norm2[0]) < tolerance && Math.Abs(norm1[1] + norm2[1]) < tolerance
+                && Math.Abs(norm1[2] + norm2[2]) < tolerance) return true; //All points intersect
+            //ToDo: determine what to do with the above cases
+
+            var position1 = norm1.crossProduct(norm2).normalize();
+            var position2 = new[] { -position1[0], -position1[1], -position1[2] };
+            var vertices = new[] { position1, position2 };
+            //Check to see if the intersections are on the arcs
+            for (var i = 0; i < 2; i++)
+            {
+                var l1 = Math.Acos(arc1Vectors[0].dotProduct(arc1Vectors[1]));
+                var l2 = Math.Acos(arc1Vectors[0].dotProduct(vertices[i]));
+                var l3 = Math.Acos(arc1Vectors[1].dotProduct(vertices[i]));
+                var total1 = l1 - l2 - l3;
+                l1 = Math.Acos(arc2Vectors[0].dotProduct(arc2Vectors[1]));
+                l2 = Math.Acos(arc2Vectors[0].dotProduct(vertices[i]));
+                l3 = Math.Acos(arc2Vectors[1].dotProduct(vertices[i]));
+                var total2 = l1 - l2 - l3;
+                if (!total1.IsNegligible() || !total2.IsNegligible()) continue;
+                intercepts[0] = vertices[i];
+                return true;
+            }
+            return false;
+        }
+
+
         /// <summary>
         /// Returns lists of vertices that are inside vs. outside of each solid.
         /// </summary>

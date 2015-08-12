@@ -28,5 +28,44 @@ namespace TVGL
             return distinctList;
         }
 
+        public static List<Flat> Flats(List<PolygonalFace> faces)
+        {
+            var tolerance = 0.002;
+            var n = faces.Count;
+            var checkSumMultipliers = new double[] { 1, 1e8, 1e16 };
+            var checkSums = new double[n];
+            for (var i = 0; i < n; i++)
+                checkSums[i] = Math.Abs(checkSumMultipliers.dotProduct(faces[i].Normal));
+            var indices = StarMath.makeLinearProgression(n);
+            indices = indices.OrderBy(index => checkSums[index]).ToArray();
+
+            var listFaces = new List<PolygonalFace>() { faces[indices[n - 1]] };
+            var firstFlat = new Flat(listFaces);
+            var listFlats = new List<Flat>(){firstFlat};
+            var currentFlat = firstFlat;
+            for (var i = n - 1; i > 0; i--)
+            {
+                var n1 = faces[indices[i]].Normal;
+                var n2 = faces[indices[i-1]].Normal;
+                if (Math.Abs(n1[0] - n2[0]) < tolerance &&
+                    Math.Abs(n1[1] - n2[1]) < tolerance &&
+                    Math.Abs(n1[2] - n2[2]) < tolerance)
+                {
+                    //Add the face to the appropriate existing flat.
+                    currentFlat.UpdateWith(faces[indices[i - 1]]);
+                }
+                else
+                {
+                    //Create a new flat and add to list
+                    listFaces[0] = faces[indices[i - 1]];
+                    var newFlat = new Flat(listFaces);
+                    listFlats.Add(newFlat);
+                    currentFlat = newFlat;
+                }
+            }
+
+            return listFlats;
+        }
+
     }
 }

@@ -15,7 +15,7 @@ namespace TVGL_Test
     {
         private static string[] filenames = {    
         "../../../TestFiles/Tetrahedron.STL",                                      
-        //"../../../TestFiles/off_axis_box.STL",
+        "../../../TestFiles/off_axis_box.STL",
         "../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/Mic_Holder_SW.stl",  
         //"../../../TestFiles/Mic_Holder_JR.stl",
