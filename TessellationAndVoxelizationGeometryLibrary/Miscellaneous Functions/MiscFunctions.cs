@@ -180,6 +180,7 @@ namespace TVGL
         //NOTE: This is opposite from getting the CCW angle from v0 and v1.
         internal static double AngleBetweenEdgesCCW(double[] v0, double[] v1)
         {
+            ////This is an alternative approach to the one that is not commented out
             ////Use law of cosines to find smaller angle between two vectors
             //var aSq = v0[0] * v0[0] + v0[1] * v0[1];
             //var bSq = v1[0] * v1[0] + v1[1] * v1[1];
@@ -194,7 +195,7 @@ namespace TVGL
             var angleChange = Math.PI - (angleV1 - angleV0);
             if (angleChange > 2 * Math.PI) return angleChange - 2 * Math.PI;
             if (angleChange < 0) return angleChange + 2 * Math.PI;
-            //if (Math.Abs(angle - angleChange) > 0.001) angle = angleChange;
+            //if (Math.Abs(angle - angleChange) > 0.001) throw new Exception();
             return angleChange;
         }
         #endregion
