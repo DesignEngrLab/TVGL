@@ -143,7 +143,6 @@ namespace TVGL
         {
             return Math.Min(AngleBetweenEdgesCW(v0, v1), AngleBetweenEdgesCCW(v0, v1));
         }
-
         internal static double AngleBetweenEdgesCW(Edge edge1, Edge edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
@@ -177,14 +176,25 @@ namespace TVGL
         {
             return 2 * Math.PI - AngleBetweenEdgesCCW(v0, v1);
         }
-
+        //Gets the angle between edges that are ordered in a CCW list. 
+        //NOTE: This is opposite from getting the CCW angle from v0 and v1.
         internal static double AngleBetweenEdgesCCW(double[] v0, double[] v1)
         {
+            ////Use law of cosines to find smaller angle between two vectors
+            //var aSq = v0[0] * v0[0] + v0[1] * v0[1];
+            //var bSq = v1[0] * v1[0] + v1[1] * v1[1];
+            //var cSq = (v0[0] + v1[0]) * (v0[0] + v1[0]) + (v0[1] + v1[1]) * (v0[1] + v1[1]);
+            //var angle = Math.Acos((aSq + bSq - cSq) / (2 * Math.Sqrt(aSq) * Math.Sqrt(bSq)));
+            ////Use cross product sign to determine if smaller angle is CCW from v0
+            //var cross = v0[0] * v1[1] - v0[1] * v1[0];
+            //if (Math.Sign(cross) < 0) angle = 2 * Math.PI - angle;
+
             var angleV0 = Math.Atan2(v0[1], v0[0]);
             var angleV1 = Math.Atan2(v1[1], v1[0]);
             var angleChange = Math.PI - (angleV1 - angleV0);
             if (angleChange > 2 * Math.PI) return angleChange - 2 * Math.PI;
             if (angleChange < 0) return angleChange + 2 * Math.PI;
+            //if (Math.Abs(angle - angleChange) > 0.001) angle = angleChange;
             return angleChange;
         }
         #endregion

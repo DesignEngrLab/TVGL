@@ -49,8 +49,8 @@ namespace TVGL
             var attempts = 0;
             while (successful == false && attempts < 2)
             {
-                try
-                {
+                //try
+                //{
                     attempts++;
 
                     #region Preprocessing
@@ -202,6 +202,7 @@ namespace TVGL
                     {
                         //Get information about positive loop, remove from loops, and create new group
                         i = listPositive.FindIndex(true);
+                        if (i == -1) throw new Exception("Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
                         var sortedGroup = new List<Node>(sortedLoops[i]);
                         listPositive.RemoveAt(i);
                         orderedLoops.RemoveAt(i);
@@ -224,11 +225,10 @@ namespace TVGL
 
                         var trapTree = new List<PartialTrapezoid>();
                         var completedTrapezoids = new List<Trapezoid>();
-                        var size = sortedGroup.Count();
 
                         //Use the red-black tree to determine if the first node from a negative loop is inside the polygon.
                         //for each node in sortedNodes, update the lineList. Note that at this point each node only has two edges.
-                        for (var j = 0; j < size; j++)
+                        for (var j = 0; j < sortedGroup.Count(); j++)
                         {
                             var node = sortedGroup[j];
                             Line leftLine = null;
@@ -270,7 +270,6 @@ namespace TVGL
                                     j--; //Pick the same index for the next iteration as the node which was just removed
                                     continue;
                                 }
-                                size = sortedGroup.Count();
                             }
 
                             //Add to or remove from Red-Black Tree
@@ -479,6 +478,23 @@ namespace TVGL
                         }
                         #endregion
 
+                        #region DEBUG: Find a chain containing a particular vertex
+                        //var vertexInQuestion = new Vertex(new double[] { 200.0, 100.0, 750.0 });
+                        //foreach (var monotonePolygon in monotonePolygons) 
+                        //{
+                        //    foreach (var node in monotonePolygon.SortedNodes)
+                        //    {
+                        //        var vertex = node.Point.References[0];
+                        //        if (vertex.X.IsPracticallySame(vertexInQuestion.X) &&
+                        //            vertex.Y.IsPracticallySame(vertexInQuestion.Y) &&
+                        //            vertex.Z.IsPracticallySame(vertexInQuestion.Z))
+                        //        {
+                        //            break;
+                        //        }
+                        //    }
+                        //}
+                        #endregion
+
                         #region Triangulate Monotone Polygons
                         //Triangulates the monotone polygons
                         foreach (var monotonePolygon2 in monotonePolygons)
@@ -495,12 +511,67 @@ namespace TVGL
                         throw new System.ArgumentException("Incorrect number of triangles created in triangulate function");
                     }
                     successful = true;
-                }
-                catch
-                {
-                    if (attempts == 1) Debug.WriteLine("First attempt at triangulation failed. Attempting again...");
-                    else throw new System.ArgumentException("Triangulation failed after two attempts");
-                }
+
+                    //Find all triangles with a particular vertex
+                    var vertexInQuestion1 = new Vertex(new double[] { 200.0, 100.0, 750.0 });
+                    var vertexInQuestion2 = new Vertex(new double[] { 50.0, 100.0, 784.99993896484375 });
+                    var vertexInQuestion3 = new Vertex(new double[] { 250.0, 100.0, 657.68762588382879 });
+                    var trianglesInQuestion = new List<Vertex[]>();
+                    foreach (var triangle in triangles)
+                    {
+                        foreach (var vertex in triangle)
+                        {
+                            if (vertex.X.IsPracticallySame(vertexInQuestion1.X) && 
+                                vertex.Y.IsPracticallySame(vertexInQuestion1.Y) && 
+                                vertex.Z.IsPracticallySame(vertexInQuestion1.Z))
+                            {
+                                trianglesInQuestion.Add(triangle);
+                                break;
+                            }
+                        }
+                    }
+                    trianglesInQuestion.Clear();
+                    var p = -1;
+                    for (var q = 0; q < triangles.Count(); q++ )
+                    {
+                        var triangle = triangles[q];
+                        foreach (var vertex in triangle)
+                        {
+                            if (vertex.X.IsPracticallySame(vertexInQuestion1.X) &&
+                                vertex.Y.IsPracticallySame(vertexInQuestion1.Y) &&
+                                vertex.Z.IsPracticallySame(vertexInQuestion1.Z))
+                            {
+                                foreach (var vertex2 in triangle)
+                                {
+                                    if (vertex2.X.IsPracticallySame(vertexInQuestion2.X) &&
+                                        vertex2.Y.IsPracticallySame(vertexInQuestion2.Y) &&
+                                        vertex2.Z.IsPracticallySame(vertexInQuestion2.Z))
+                                    {
+                                        foreach (var vertex3 in triangle)
+                                        {
+                                            if (vertex3.X.IsPracticallySame(vertexInQuestion3.X) &&
+                                                vertex3.Y.IsPracticallySame(vertexInQuestion3.Y) &&
+                                                vertex3.Z.IsPracticallySame(vertexInQuestion3.Z))
+                                            {
+                                                trianglesInQuestion.Add(triangle);
+                                                p = q;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    trianglesInQuestion.Clear();
+                    //triangles.RemoveAt(p);
+                    
+                //}
+                //catch
+                //{
+                //    if (attempts == 1) Debug.WriteLine("First attempt at triangulation failed. Attempting again...");
+                //    else throw new System.ArgumentException("Triangulation failed after two attempts");
+                //}
             }
             return triangles;
         }
@@ -812,11 +883,10 @@ namespace TVGL
                 }
                 else
                 {
-                    //Note that if the chain is the right chain, the order of nodes will be backwards and therefore GetAngle(a,b,c,reverse = true)
+                    //Note that if the chain is the right chain, the order of nodes will be backwards 
                     var angle = (node.IsRightChain)
                         ? MiscFunctions.AngleBetweenEdgesCCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point)
-                        : MiscFunctions.AngleBetweenEdgesCCW(scan[scan.Count - 2].Point, scan.Last().Point, node.Point);
-                    //todo: Brandon to check. Did i break something?
+                        : MiscFunctions.AngleBetweenEdgesCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point);
                     while (scan.Count() > 1 && angle < Math.PI)
                     {
                         triangles.Add(new Vertex[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });

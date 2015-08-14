@@ -14,26 +14,26 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {    
-        "../../../TestFiles/Tetrahedron.STL",                                      
-        "../../../TestFiles/off_axis_box.STL",
-        "../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/Tetrahedron.STL",                                      
+        //"../../../TestFiles/off_axis_box.STL",
+        //"../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/Mic_Holder_SW.stl",  
         //"../../../TestFiles/Mic_Holder_JR.stl",
         //"../../../TestFiles/3_bananas.amf",
         //"../../../TestFiles/drillparts.amf",    
         //"../../../TestFiles/wrenchsns.amf",     
-        "../../../TestFiles/Rook.amf",   
+        //"../../../TestFiles/Rook.amf",   
         //"../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
         //"../../../TestFiles/mushroom.off",   //breaks in OFFFileData
         //"../../../TestFiles/ABF.STL",           
         //"../../../TestFiles/Pump-1repair.STL",
-        "../../../TestFiles/Pump-1.STL",
-        //"../../../TestFiles/Beam_Clean.STL",
+        //"../../../TestFiles/Pump-1.STL",
+        "../../../TestFiles/Beam_Clean.STL", //ERROR In Triangulation
         //"../../../TestFiles/piston.stl",
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
-        //"../../../TestFiles/pump.stl", 
-        "../../../TestFiles/bradley.stl",
+        "../../../TestFiles/pump.stl", 
+        //"../../../TestFiles/bradley.stl",
         //"../../../TestFiles/Cuboide.stl",
         //"../../../TestFiles/new/5.STL",
         //"../../../TestFiles/new/2.stl",
@@ -43,12 +43,12 @@ namespace TVGL_Test
         //"../../../TestFiles/brace.stl",        
         //"../../../TestFiles/box.stl", //breaks in slice
         //"../../../TestFiles/G0.stl",
-        "../../../TestFiles/GKJ0.stl",
+        //"../../../TestFiles/GKJ0.stl",
         //"../../../TestFiles/SCS12UU.stl", //Negative and positive loop values are identical??
-        "../../../TestFiles/testblock2.stl",
+        //"../../../TestFiles/testblock2.stl",
         //"../../../TestFiles/Z665.stl", 
         //"../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
-        "../../../TestFiles/mendel_extruder.stl" 
+        //"../../../TestFiles/mendel_extruder.stl" 
         };
 
         [STAThread]
@@ -71,8 +71,8 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);              
-                //TestSlice(ts[0]);
-                TestOBB(ts[0],filename);
+                TestSlice(ts[0]);
+                //TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
                 //FileStream fileStream2 = File.OpenRead(filename2);
                 //var ts2= IO.Open(fileStream2, filename2, false);
@@ -165,7 +165,7 @@ namespace TVGL_Test
             //return;
             var now = DateTime.Now;
             Debug.WriteLine("start...");
-            var dir = new[] { 0.0, 0, 1.0 };
+            var dir = new[] { 0.0, 1.0, 0.0 };
             dir.normalize();
             Vertex vLow, vHigh;
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
@@ -173,7 +173,7 @@ namespace TVGL_Test
             var distToVLow = vLow.Position.dotProduct(dir);
             //try
             //{
-                Slice.OnFlat(ts, new Flat(75, dir), out positiveSideSolids, out negativeSideSolids);
+                Slice.OnFlat(ts, new Flat(distToVLow+length/2, dir), out positiveSideSolids, out negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
             //}
