@@ -49,8 +49,8 @@ namespace TVGL
             var attempts = 0;
             while (successful == false && attempts < 2)
             {
-                //try
-                //{
+                try
+                {
                     attempts++;
 
                     #region Preprocessing
@@ -564,12 +564,12 @@ namespace TVGL
                     //trianglesInQuestion.Clear();
                     #endregion
 
-                //}
-                //catch
-                //{
-                //    if (attempts == 1) Debug.WriteLine("First attempt at triangulation failed. Attempting again...");
-                //    else throw new System.ArgumentException("Triangulation failed after two attempts");
-                //}
+                }
+                catch
+                {
+                    if (attempts == 1) Debug.WriteLine("First attempt at triangulation failed. Attempting again...");
+                    else throw new System.ArgumentException("Triangulation failed after two attempts");
+                }
             }
             return triangles;
         }

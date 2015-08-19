@@ -29,7 +29,7 @@ namespace TVGL_Test
         //"../../../TestFiles/ABF.STL",           
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
-        //"../../../TestFiles/Beam_Clean.STL", 
+        "../../../TestFiles/Beam_Clean.STL", 
         //"../../../TestFiles/piston.stl",
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
@@ -72,8 +72,8 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);              
-                //TestSlice(ts[0]);
-                TestOBB(ts[0],filename);
+                TestSlice(ts[0]);
+                //TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
                 //FileStream fileStream2 = File.OpenRead(filename2);
                 //var ts2= IO.Open(fileStream2, filename2, false);
