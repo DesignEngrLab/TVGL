@@ -29,6 +29,14 @@ namespace TVGL
         /// </summary>
         public double Volume;
         /// <summary>
+        /// The area normal along the depth on the bounding box.
+        /// </summary>
+        public double Area;
+        /// <summary>
+        /// The depth of the bounding box.
+        /// </summary>
+        public double Depth;
+        /// <summary>
         /// The extreme vertices which are vertices of the tessellated solid that are on the faces
         /// of the bounding box. These are not the corners of the bounding box.
         /// </summary>
@@ -50,10 +58,12 @@ namespace TVGL
         /// <param name="volume">The volume.</param>
         /// <param name="extremeVertices">The extreme vertices.</param>
         /// <param name="directions"></param>
-        internal BoundingBox(double volume, Vertex[] extremeVertices, double[][] directions)
+        internal BoundingBox(double depth, double area, Vertex[] extremeVertices, double[][] directions)
         { 
             CornerVertices = new Vertex[8];
-            Volume = volume;
+            Area = area;
+            Depth = depth;
+            Volume = depth*area;
             Directions = new[] { directions[0].normalize(), directions[1].normalize(), directions[2].normalize() };
             ExtremeVertices = extremeVertices; //list of vertices in order of pairs with the directions
 

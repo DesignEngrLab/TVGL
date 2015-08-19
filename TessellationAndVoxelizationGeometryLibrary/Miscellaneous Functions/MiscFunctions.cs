@@ -171,7 +171,6 @@ namespace TVGL
         {
             return AngleBetweenEdgesCCW(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
-
         internal static double AngleBetweenEdgesCW(double[] v0, double[] v1)
         {
             return 2 * Math.PI - AngleBetweenEdgesCCW(v0, v1);
@@ -180,6 +179,7 @@ namespace TVGL
         //NOTE: This is opposite from getting the CCW angle from v0 and v1.
         internal static double AngleBetweenEdgesCCW(double[] v0, double[] v1)
         {
+            #region Law of Cosines Approach (Commented Out)
             ////This is an alternative approach to the one that is not commented out
             ////Use law of cosines to find smaller angle between two vectors
             //var aSq = v0[0] * v0[0] + v0[1] * v0[1];
@@ -189,6 +189,7 @@ namespace TVGL
             ////Use cross product sign to determine if smaller angle is CCW from v0
             //var cross = v0[0] * v1[1] - v0[1] * v1[0];
             //if (Math.Sign(cross) < 0) angle = 2 * Math.PI - angle;
+            #endregion
 
             var angleV0 = Math.Atan2(v0[1], v0[0]);
             var angleV1 = Math.Atan2(v1[1], v1[0]);
@@ -286,8 +287,7 @@ namespace TVGL
             }
             return false;
         }
-
-
+        
         /// <summary>
         /// Returns lists of vertices that are inside vs. outside of each solid.
         /// </summary>
@@ -919,6 +919,19 @@ namespace TVGL
             }
             //If not returned, throw error
             throw new System.ArgumentException("Failed to return intercept information");
+        }
+        #endregion
+
+        #region DEBUG: Is the convex hull correct?
+        public static bool IsConvexHullCorrect(TessellatedSolid ts)
+        {
+            //Check if the vertices of an edge belong to the two faces it is supposed to belong to
+            foreach (var edge in ts.ConvexHullEdges)
+            {
+                if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From)) return false;
+                if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From)) return false;
+            }
+            return true;
         }
         #endregion
     }

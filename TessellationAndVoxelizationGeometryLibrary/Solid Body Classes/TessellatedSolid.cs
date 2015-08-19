@@ -900,6 +900,7 @@ namespace TVGL
         }
 
         #endregion
+
         #region Add or Remove Items
         #region Vertices - the important thing about these is updating the IndexInList property of the vertices
         internal void AddVertex(Vertex newVertex)
@@ -1090,6 +1091,5 @@ namespace TVGL
         }
         #endregion
         #endregion
-
     }
 }
