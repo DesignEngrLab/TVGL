@@ -338,31 +338,80 @@ namespace TVGL.Boolean_Operations
             DivideUpContact(ts, contactData, plane);
             DuplicateVerticesAtContact(contactData);
 
-
-
-
             #region make negative side solids
             var loops = new List<Loop>(contactData.AllLoops);
             negativeSideSolids = new List<TessellatedSolid>();
             while (loops.Any())
             {
+                var negativeLoops = new List<Loop>();
+                var positiveLoops = new List<Loop>();
                 var loop = loops[0];
                 List<Loop> loopsOnThisSolid = new List<Loop>(loops);
                 List<PolygonalFace> negativeFaceList = FindSolidWithThisLoop(loop[0], ref loopsOnThisSolid, false);
-                foreach (var negativeLoop in loopsOnThisSolid)
-                    loops.Remove(negativeLoop);
+                foreach (var loopOnThisSolid in loopsOnThisSolid)
+                {
+                    if (loopOnThisSolid.IsPositive) positiveLoops.Add(loopOnThisSolid);
+                    else negativeLoops.Add(loopOnThisSolid);
+                    loops.Remove(loopOnThisSolid);
+                }   
+                //Check if any of the remaining positive loops are between any of the current positive and negative loops.
+                //The positive 
+                var remainingLoops = new List<Loop>(loops);
+                var flag = true;
+                while (remainingLoops.Any())
+                {
+                    var remainingLoop = remainingLoops[0];
+                    remainingLoops.RemoveAt(0);
+                    if (!remainingLoop.IsPositive) continue;
+                    var verticesOfRemainingLoop = remainingLoop.Select(ce => ce.StartVertex).ToArray();
+                    var pointsOfRemainingLoop = MiscFunctions.Get2DProjectionPoints(verticesOfRemainingLoop, plane.Normal);
+                    foreach (var positiveLoop in positiveLoops)
+                    {
+                        var verticesOfPositiveLoop = positiveLoop.Select(ce => ce.StartVertex).ToArray();
+                        var pointsOfPositiveLoop = MiscFunctions.Get2DProjectionPoints(verticesOfPositiveLoop, plane.Normal);
+                        foreach (var negativeLoop in negativeLoops)
+                        {
+                            var verticesOfNegativeLoop = negativeLoop.Select(ce => ce.StartVertex).ToArray();
+                            var pointsOfNegativeLoop = MiscFunctions.Get2DProjectionPoints(verticesOfNegativeLoop, plane.Normal);
+                                
+                            //Check if negative loop is inside positive loop. If no, continue to next negative loop.
+                            if (!MiscFunctions.IsPointInsidePolygon(pointsOfPositiveLoop.ToList(), pointsOfNegativeLoop[0])) continue;
+
+                            //Check if remaining loop is between positive loop and negative loop.
+                            if (!MiscFunctions.IsPointInsidePolygon(pointsOfPositiveLoop.ToList(), pointsOfRemainingLoop[0])) continue;
+                            if (!MiscFunctions.IsPointInsidePolygon(pointsOfRemainingLoop.ToList(), pointsOfNegativeLoop[0])) continue;
+                                
+                            //Add and remove loop from lists.
+                            List<Loop> additionalLoopsOnThisSolid = new List<Loop>(loops);
+                            List<PolygonalFace> additionalFaces = FindSolidWithThisLoop(remainingLoop[0], ref additionalLoopsOnThisSolid, false);
+                            negativeFaceList.AddRange(additionalFaces);
+                            foreach (var additionalLoopOnThisSolid in additionalLoopsOnThisSolid)
+                            {
+                                if (additionalLoopOnThisSolid.IsPositive) positiveLoops.Add(additionalLoopOnThisSolid);
+                                else negativeLoops.Add(additionalLoopOnThisSolid);
+                                loopsOnThisSolid.Add(additionalLoopOnThisSolid);
+                                loops.Remove(additionalLoopOnThisSolid);
+                                remainingLoops.Remove(additionalLoopOnThisSolid);
+                            }
+                            flag = false;
+                            if (flag == false) break;
+                        }
+                        if (flag == false) break;
+                    }                    
+                }
                 var numLoops = loopsOnThisSolid.Count;
                 var verticesOnPlane = new Vertex[numLoops][];
                 var points2D = new Point[numLoops][];
                 for (int i = 0; i < numLoops; i++)
                 {
                     verticesOnPlane[i] = loopsOnThisSolid[i].Select(ce => ce.StartVertex).ToArray();
-                    points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal);
+                    points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal,true);
                 }
                 var patchTriangles = TriangulatePolygon.Run(points2D.ToList(),
                     loopsOnThisSolid.Select(l => l.IsPositive).ToArray());
                 foreach (var triangle in patchTriangles)
                     negativeFaceList.Add(new PolygonalFace(triangle, plane.Normal));
+                //Create a new negative side solid
                 negativeSideSolids.Add(
                     new TessellatedSolid(negativeFaceList,
                         negativeFaceList.SelectMany(f => f.Vertices).Distinct().OrderBy(v => v.IndexInList).ToList()));
@@ -373,18 +422,69 @@ namespace TVGL.Boolean_Operations
             positiveSideSolids = new List<TessellatedSolid>();
             while (loops.Any())
             {
+                var negativeLoops = new List<Loop>();
+                var positiveLoops = new List<Loop>();
                 var loop = loops[0];
                 List<Loop> loopsOnThisSolid = new List<Loop>(loops);
                 List<PolygonalFace> positiveFaceList = FindSolidWithThisLoop(loop[0], ref loopsOnThisSolid, true);
-                foreach (var positiveLoop in loopsOnThisSolid)
-                    loops.Remove(positiveLoop);
+                foreach (var loopOnThisSolid in loopsOnThisSolid)
+                {
+                    if (loopOnThisSolid.IsPositive) positiveLoops.Add(loopOnThisSolid);
+                    else negativeLoops.Add(loopOnThisSolid);
+                    loops.Remove(loopOnThisSolid);
+                }   
+                //Check if any of the remaining positive loops are between any of the current positive and negative loops.
+                //The positive 
+                var remainingLoops = new List<Loop>(loops);
+                var flag = true;
+                while (remainingLoops.Any())
+                {
+                    var remainingLoop = remainingLoops[0];
+                    remainingLoops.RemoveAt(0);
+                    if (!remainingLoop.IsPositive) continue;
+                    var verticesOfRemainingLoop = remainingLoop.Select(ce => ce.StartVertex).ToArray();
+                    var pointsOfRemainingLoop = MiscFunctions.Get2DProjectionPoints(verticesOfRemainingLoop, plane.Normal);
+                    foreach (var positiveLoop in positiveLoops)
+                    {
+                        var verticesOfPositiveLoop = positiveLoop.Select(ce => ce.StartVertex).ToArray();
+                        var pointsOfPositiveLoop = MiscFunctions.Get2DProjectionPoints(verticesOfPositiveLoop, plane.Normal);
+                        foreach (var negativeLoop in negativeLoops)
+                        {
+                            var verticesOfNegativeLoop = negativeLoop.Select(ce => ce.StartVertex).ToArray();
+                            var pointsOfNegativeLoop = MiscFunctions.Get2DProjectionPoints(verticesOfNegativeLoop, plane.Normal);
+
+                            //Check if negative loop is inside positive loop. If no, continue to next negative loop.
+                            if (!MiscFunctions.IsPointInsidePolygon(pointsOfPositiveLoop.ToList(), pointsOfNegativeLoop[0])) continue;
+
+                            //Check if remaining loop is between positive loop and negative loop.
+                            if (!MiscFunctions.IsPointInsidePolygon(pointsOfPositiveLoop.ToList(), pointsOfRemainingLoop[0])) continue;
+                            if (!MiscFunctions.IsPointInsidePolygon(pointsOfRemainingLoop.ToList(), pointsOfNegativeLoop[0])) continue;
+
+                            //Add and remove loop from lists.
+                            List<Loop> additionalLoopsOnThisSolid = new List<Loop>(loops);
+                            List<PolygonalFace> additionalFaces = FindSolidWithThisLoop(remainingLoop[0], ref additionalLoopsOnThisSolid, false);
+                            positiveFaceList.AddRange(additionalFaces);
+                            foreach (var additionalLoopOnThisSolid in additionalLoopsOnThisSolid)
+                            {
+                                if (additionalLoopOnThisSolid.IsPositive) positiveLoops.Add(additionalLoopOnThisSolid);
+                                else negativeLoops.Add(additionalLoopOnThisSolid);
+                                loopsOnThisSolid.Add(additionalLoopOnThisSolid);
+                                loops.Remove(additionalLoopOnThisSolid);
+                                remainingLoops.Remove(additionalLoopOnThisSolid);
+                            }
+                            flag = false;
+                            if (flag == false) break;
+                        }
+                        if (flag == false) break;
+                    }
+                }
                 var numLoops = loopsOnThisSolid.Count;
                 var verticesOnPlane = new Vertex[numLoops][];
                 var points2D = new Point[numLoops][];
                 for (int i = 0; i < numLoops; i++)
                 {
                     verticesOnPlane[i] = loopsOnThisSolid[i].Select(ce => ce.DuplicateVertex).ToArray();
-                    points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal);
+                    points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal,true);
                 }
                 var patchTriangles = TriangulatePolygon.Run(points2D.ToList(),
                     loopsOnThisSolid.Select(l => l.IsPositive).ToArray());
@@ -625,12 +725,14 @@ namespace TVGL.Boolean_Operations
                 {
                     if (adjacentFace == null)
                     {
+                        //Add the loop containing this null adjacent face to "connectingLoops"
                         var newConnectingLoop = (OnPositiveSide) 
                             ? loopsOnThisSolid.First(l => l.Any(ce => ce.SplitFacePositive == face))
                             : loopsOnThisSolid.First(l => l.Any(ce => ce.SplitFaceNegative == face));
                         if (!connectingLoops.Contains(newConnectingLoop))
                             connectingLoops.Add(newConnectingLoop);
                     }
+                    //else, add the adjacent faces to "faces" (if not already there)
                     else if (!faces.Contains(adjacentFace))
                         stack.Push(adjacentFace);
                 }

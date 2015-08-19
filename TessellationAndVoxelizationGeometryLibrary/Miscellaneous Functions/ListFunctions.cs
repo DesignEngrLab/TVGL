@@ -63,7 +63,6 @@ namespace TVGL
                     currentFlat = newFlat;
                 }
             }
-
             return listFlats;
         }
 

@@ -14,7 +14,7 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {    
-        "../../../TestFiles/Tetrahedron.STL",                                      
+        //"../../../TestFiles/Tetrahedron.STL",                                      
         //"../../../TestFiles/off_axis_box.STL",
         //"../../../TestFiles/Wedge.STL",
         //"../../../TestFiles/amf_Cube.amf",
@@ -29,20 +29,20 @@ namespace TVGL_Test
         //"../../../TestFiles/ABF.STL",           
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/Beam_Clean.STL", 
+        //"../../../TestFiles/Beam_Clean.STL", 
         //"../../../TestFiles/piston.stl",
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
-        //"../../../TestFiles/pump.stl", 
-        "../../../TestFiles/bradley.stl",
+        //"../../../TestFiles/pump.stl",
+        //"../../../TestFiles/bradley.stl",
         //"../../../TestFiles/Cuboide.stl",
         //"../../../TestFiles/new/5.STL",
         //"../../../TestFiles/new/2.stl",
-        //"../../../TestFiles/new/6.stl",
+        //"../../../TestFiles/new/6.stl", //breaks in slice at 1/2 y direction
         //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
         //"../../../TestFiles/radiobox.stl", 
         //"../../../TestFiles/brace.stl",        
-        //"../../../TestFiles/box.stl", //breaks in slice
+        "../../../TestFiles/box.stl", //breaks in slice at 1/2 Z direction
         //"../../../TestFiles/G0.stl",
         //"../../../TestFiles/GKJ0.stl",
         //"../../../TestFiles/SCS12UU.stl", //Negative and positive loop values are identical??
@@ -69,9 +69,11 @@ namespace TVGL_Test
                     var d = Math.Abs(face.Normal[0]) + Math.Abs(face.Normal[1]) + Math.Abs(face.Normal[2]);
                     if (d.IsNegligible()) throw new Exception();
                 }
+                //Check Convex hull for errors
+                MiscFunctions.IsConvexHullCorrect(ts[0]);
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
-                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);              
+                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 TestSlice(ts[0]);
                 //TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
@@ -168,7 +170,7 @@ namespace TVGL_Test
             //return;
             var now = DateTime.Now;
             Debug.WriteLine("start...");
-            var dir = new[] { 0.0, 1.0, 0.0 };
+            var dir = new[] { 0.0, 0.0, 1.0 };
             dir.normalize();
             Vertex vLow, vHigh;
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;

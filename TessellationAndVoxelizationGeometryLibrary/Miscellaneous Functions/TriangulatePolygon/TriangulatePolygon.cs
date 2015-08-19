@@ -32,6 +32,8 @@ namespace TVGL
         {
             //ASSUMPTION: NO lines intersect other lines or points they are not connected to && NO two points in any of the loops are the same (Except,
             // it is ok if two positive loops share a point, because they are processed separately).
+            //SPECIAL CASES: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
+            //These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
             //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
             //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.

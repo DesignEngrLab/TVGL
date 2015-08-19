@@ -930,8 +930,11 @@ namespace TVGL
             {
                 if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From)) return false;
                 if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From)) return false;
+                if (edge.Curvature == CurvatureType.Concave) return false;
             }
             return true;
+
+
         }
         #endregion
     }
