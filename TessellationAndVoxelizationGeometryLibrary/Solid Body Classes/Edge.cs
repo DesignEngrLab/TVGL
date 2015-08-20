@@ -231,7 +231,7 @@ namespace TVGL
                 _otherFace = temp;
             }
             var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
-            if (dot > 1.0 || dot.IsPracticallySame(1.0))
+            if (dot > 1.0 || Math.Abs(dot - 1.0) < 0.00001) //Five decimal place accuracy seemed like the breaking point
             {
                 InternalAngle = Math.PI;
                 Curvature = CurvatureType.SaddleOrFlat;
@@ -239,7 +239,8 @@ namespace TVGL
             else
             {
                 var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal);
-                if (cross.dotProduct(Vector) < 0)
+                var num = cross.dotProduct(Vector);
+                if (num < 0)
                 {
                     InternalAngle = Math.PI + Math.Acos(dot);
                     Curvature = CurvatureType.Concave;

@@ -18,36 +18,36 @@ namespace TVGL_Test
         //"../../../TestFiles/off_axis_box.STL",
         //"../../../TestFiles/Wedge.STL",
         //"../../../TestFiles/amf_Cube.amf",
-        "../../../TestFiles/Mic_Holder_SW.stl",  
+        //"../../../TestFiles/Mic_Holder_SW.stl",  
         //"../../../TestFiles/Mic_Holder_JR.stl",
         //"../../../TestFiles/3_bananas.amf",
-        //"../../../TestFiles/drillparts.amf",    //broken convex hull
-        //"../../../TestFiles/wrenchsns.amf",     
+        //"../../../TestFiles/drillparts.amf",    
+        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/Rook.amf",   
         //"../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
         //"../../../TestFiles/mushroom.off",   //breaks in OFFFileData
         //"../../../TestFiles/ABF.STL",           
-        //"../../../TestFiles/Pump-1repair.STL",
+        "../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/Beam_Clean.STL", //broken convex hull
-        //"../../../TestFiles/piston.stl", //broken convex hull
-        //"../../../TestFiles/Z682.stl",   //broken convex hull
-        //"../../../TestFiles/sth2.stl", //broken convex hull
-        //"../../../TestFiles/pump.stl", //broken convex hull
-        //"../../../TestFiles/bradley.stl", //broken convex hull
-        //"../../../TestFiles/Cuboide.stl", //not water tight
-        //"../../../TestFiles/new/5.STL", //broken convex hull
-        //"../../../TestFiles/new/2.stl", //broken convex hull
-        //"../../../TestFiles/new/6.stl", //broken convex hull //breaks in slice at 1/2 y direction
+        "../../../TestFiles/Beam_Clean.STL", 
+        "../../../TestFiles/piston.stl", 
+        //"../../../TestFiles/Z682.stl",   
+        //"../../../TestFiles/sth2.stl", 
+        //"../../../TestFiles/pump.stl", 
+        //"../../../TestFiles/bradley.stl", 
+        //"../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
+        //"../../../TestFiles/new/5.STL", 
+        //"../../../TestFiles/new/2.stl", //Note that this is an assembly 
+        //"../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
         //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
-        //"../../../TestFiles/radiobox.stl", //broken convex hull
-        //"../../../TestFiles/brace.stl",        
-        //"../../../TestFiles/box.stl", //not water tight //breaks in slice at 1/2 Z direction
+        //"../../../TestFiles/radiobox.stl", 
+        //"../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
+        //"../../../TestFiles/box.stl", //not water tight, may be an assembly //breaks in slice at 1/2 Z direction
         //"../../../TestFiles/G0.stl",
         //"../../../TestFiles/GKJ0.stl",
-        //"../../../TestFiles/SCS12UU.stl", //Negative and positive loop values are identical??
+        //"../../../TestFiles/SCS12UU.stl", //Broken in slice because 3 triangles share the same edge at 1/2 Z direction
         //"../../../TestFiles/testblock2.stl",
-        //"../../../TestFiles/Z665.stl", //broken convex hull
+        //"../../../TestFiles/Z665.stl", 
         //"../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
         //"../../../TestFiles/mendel_extruder.stl" 
         };

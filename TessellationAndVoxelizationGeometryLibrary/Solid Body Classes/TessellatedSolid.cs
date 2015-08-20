@@ -450,7 +450,7 @@ namespace TVGL
 
         private static Edge[] MakeEdges(IList<PolygonalFace> faces, Boolean doublyLinkToVertices)
         {
-            var checkSumMultiplier = faces.Count / 2 + 2;
+            var checkSumMultiplier = (int)Math.Pow(10,(int)Math.Floor(Math.Log10(faces.Count * 2 + 2))+1);
             var alreadyDefinedEdges = new Dictionary<int, Edge>();
             foreach (var face in faces)
             {
@@ -867,6 +867,7 @@ namespace TVGL
             var convexHull = ConvexHull.Create<Vertex, DefaultConvexFace<Vertex>>(Vertices);
             ConvexHullVertices = convexHull.Points.ToArray();
             var numCvxFaces = convexHull.Faces.Count();
+            if (numCvxFaces < 3) throw new Exception("Convex Hull Failed in MIConvexHull");
             ConvexHullFaces = new PolygonalFace[numCvxFaces];
             ConvexHullEdges = new Edge[3 * numCvxFaces / 2];
             var faceIndex = 0;

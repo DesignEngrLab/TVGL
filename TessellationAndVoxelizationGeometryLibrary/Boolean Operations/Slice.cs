@@ -645,7 +645,13 @@ namespace TVGL.Boolean_Operations
             foreach (var edge in edgesToModify)
             {
                 var facesToAttach = facesToAdd.Where(f => f.Vertices.Contains(edge.To) && f.Vertices.Contains(edge.From)
-                    && !f.Edges.Contains(edge));
+                    && !f.Edges.Contains(edge) && f != edge.OwnedFace && f != edge.OtherFace);
+                var listFaces = new List<PolygonalFace>();
+                foreach (var face in facesToAdd)
+                {
+                    if (face.Vertices.Contains(edge.To) && face.Vertices.Contains(edge.From) && face != edge.OwnedFace && face != edge.OtherFace) listFaces.Add(face);
+
+                }
                 if (facesToAttach.Count() > 2) throw new Exception();
                 foreach (var face in facesToAttach)
                 {
