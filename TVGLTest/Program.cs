@@ -18,10 +18,10 @@ namespace TVGL_Test
         //"../../../TestFiles/off_axis_box.STL",
         //"../../../TestFiles/Wedge.STL",
         //"../../../TestFiles/amf_Cube.amf",
-        //"../../../TestFiles/Mic_Holder_SW.stl",  
+        "../../../TestFiles/Mic_Holder_SW.stl",  
         //"../../../TestFiles/Mic_Holder_JR.stl",
         //"../../../TestFiles/3_bananas.amf",
-        //"../../../TestFiles/drillparts.amf",    
+        //"../../../TestFiles/drillparts.amf",    //broken convex hull
         //"../../../TestFiles/wrenchsns.amf",     
         //"../../../TestFiles/Rook.amf",   
         //"../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
@@ -29,25 +29,25 @@ namespace TVGL_Test
         //"../../../TestFiles/ABF.STL",           
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
-        //"../../../TestFiles/Beam_Clean.STL", 
-        //"../../../TestFiles/piston.stl",
-        //"../../../TestFiles/Z682.stl",   
-        //"../../../TestFiles/sth2.stl", 
-        //"../../../TestFiles/pump.stl",
-        //"../../../TestFiles/bradley.stl",
-        //"../../../TestFiles/Cuboide.stl",
-        //"../../../TestFiles/new/5.STL",
-        //"../../../TestFiles/new/2.stl",
-        //"../../../TestFiles/new/6.stl", //breaks in slice at 1/2 y direction
+        "../../../TestFiles/Beam_Clean.STL", //broken convex hull
+        //"../../../TestFiles/piston.stl", //broken convex hull
+        //"../../../TestFiles/Z682.stl",   //broken convex hull
+        //"../../../TestFiles/sth2.stl", //broken convex hull
+        //"../../../TestFiles/pump.stl", //broken convex hull
+        //"../../../TestFiles/bradley.stl", //broken convex hull
+        //"../../../TestFiles/Cuboide.stl", //not water tight
+        //"../../../TestFiles/new/5.STL", //broken convex hull
+        //"../../../TestFiles/new/2.stl", //broken convex hull
+        //"../../../TestFiles/new/6.stl", //broken convex hull //breaks in slice at 1/2 y direction
         //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
-        //"../../../TestFiles/radiobox.stl", 
+        //"../../../TestFiles/radiobox.stl", //broken convex hull
         //"../../../TestFiles/brace.stl",        
-        "../../../TestFiles/box.stl", //breaks in slice at 1/2 Z direction
+        //"../../../TestFiles/box.stl", //not water tight //breaks in slice at 1/2 Z direction
         //"../../../TestFiles/G0.stl",
         //"../../../TestFiles/GKJ0.stl",
         //"../../../TestFiles/SCS12UU.stl", //Negative and positive loop values are identical??
         //"../../../TestFiles/testblock2.stl",
-        //"../../../TestFiles/Z665.stl", 
+        //"../../../TestFiles/Z665.stl", //broken convex hull
         //"../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
         //"../../../TestFiles/mendel_extruder.stl" 
         };
@@ -63,14 +63,8 @@ namespace TVGL_Test
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
-                for (var j = 0; j < ts[0].Faces.Count(); j++ )
-                {
-                    var face = ts[0].Faces[j];
-                    var d = Math.Abs(face.Normal[0]) + Math.Abs(face.Normal[1]) + Math.Abs(face.Normal[2]);
-                    if (d.IsNegligible()) throw new Exception();
-                }
-                //Check Convex hull for errors
-                MiscFunctions.IsConvexHullCorrect(ts[0]);
+                MiscFunctions.IsSomethingBroken(ts[0]);
+
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);

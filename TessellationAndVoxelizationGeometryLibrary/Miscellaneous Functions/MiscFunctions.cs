@@ -922,19 +922,49 @@ namespace TVGL
         }
         #endregion
 
-        #region DEBUG: Is the convex hull correct?
-        public static bool IsConvexHullCorrect(TessellatedSolid ts)
+        #region DEBUG: Is something broken in the stl file or convex hull?
+        public static bool IsSomethingBroken(TessellatedSolid ts)
         {
             //Check if the vertices of an edge belong to the two faces it is supposed to belong to
             foreach (var edge in ts.ConvexHullEdges)
             {
-                if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From)) return false;
-                if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From)) return false;
-                if (edge.Curvature == CurvatureType.Concave) return false;
+                if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From)) throw new Exception();
+                if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From)) throw new Exception();
+                if (edge.Curvature == CurvatureType.Concave) throw new Exception();
             }
+            foreach (var edge in ts.Edges)
+            {
+                if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From)) throw new Exception();
+                if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From)) throw new Exception();
+            }
+
+            //Check if any faces are without a normal vector
+            for (var j = 0; j < ts.Faces.Count(); j++)
+            {
+                var face = ts.Faces[j];
+                var d = Math.Abs(face.Normal[0]) + Math.Abs(face.Normal[1]) + Math.Abs(face.Normal[2]);
+                if (d.IsNegligible()) throw new Exception();
+            }
+
+            //Check if water tight or multiple solids
+            var faces = new HashSet<PolygonalFace>();
+            var startFace = ts.Faces[0];
+            var stack = new Stack<PolygonalFace>(new[] { startFace });
+            while (stack.Any())
+            {
+                var face = stack.Pop();
+                if (faces.Contains(face)) continue;
+                faces.Add(face);
+                foreach (var adjacentFace in face.AdjacentFaces)
+                {
+                    if (adjacentFace == null) throw new Exception();
+                    stack.Push(adjacentFace);
+                }
+            }
+            if (faces.Count() != ts.Faces.Count()) throw new Exception();
+
+            //Passed all the debug criteria
             return true;
-
-
         }
         #endregion
     }

@@ -416,7 +416,6 @@ namespace TVGL
         /// </accuracy>
         private static BoundingBox Find_via_BM_ApproachTwo(TessellatedSolid ts, out List<List<double[]>> volumeData)
         {
-            if (!MiscFunctions.IsConvexHullCorrect(ts)) throw new Exception("Convex Hull is incorrect");
             volumeData = new List<List<double[]>>();
             var minBox = new BoundingBox();
             var minVolume = double.PositiveInfinity;
