@@ -12,8 +12,12 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
+using System.IO;
+using System.Linq;
 using System.Collections.Generic;
 using StarMathLib;
+
 
 namespace TVGL
 {
@@ -36,6 +40,14 @@ namespace TVGL
         /// The depth of the bounding box.
         /// </summary>
         public double Depth;
+        /// <summary>
+        /// The length of the bounding box / bounding rectangle.
+        /// </summary>
+        public double Length;
+        /// <summary>
+        /// The width of the bounding box / bounding rectangle..
+        /// </summary>
+        public double Width;
         /// <summary>
         /// The extreme vertices which are vertices of the tessellated solid that are on the faces
         /// of the bounding box. These are not the corners of the bounding box.
@@ -66,24 +78,32 @@ namespace TVGL
             Volume = depth*area;
             Directions = new[] { directions[0].normalize(), directions[1].normalize(), directions[2].normalize() };
             ExtremeVertices = extremeVertices; //list of vertices in order of pairs with the directions
+            var lengthVector = extremeVertices[3].Position.subtract(extremeVertices[2].Position);
+            Length = Math.Abs(lengthVector.dotProduct(Directions[1]));
+            var widthVector = extremeVertices[5].Position.subtract(extremeVertices[4].Position);
+            Width = Math.Abs(widthVector.dotProduct(Directions[2]));
+            if (Math.Abs(Area-Length*Width) > 1E-8) throw new Exception();
 
             //Find Corners
-            var normalMatrix = new[,] {{Directions[0][0],Directions[0][1],Directions[0][2]}, 
-                                        {Directions[1][0],Directions[1][1],Directions[1][2]},
-                                        {Directions[2][0],Directions[2][1],Directions[2][2]}};
+            var normalMatrix = new[,] {{Directions[0][0],Directions[1][0],Directions[2][0]}, 
+                                        {Directions[0][1],Directions[1][1],Directions[2][1]},
+                                        {Directions[0][2],Directions[1][2],Directions[2][2]}};
             var count = 0;
             for (var i = 0; i < 2; i++)
             {
-                var distance1 = extremeVertices[i].Position.dotProduct(Directions[0]);
+                var tempVect = normalMatrix.transpose().multiply(extremeVertices[i].Position);
+                var xPrime = tempVect[0];
                 for (var j = 0; j < 2; j++)
                 {
-                    var distance2 = extremeVertices[j + 2].Position.dotProduct(Directions[1]);
+                    tempVect = normalMatrix.transpose().multiply(extremeVertices[j + 2].Position);
+                    var yPrime = tempVect[1];
                     for (var k = 0; k < 2; k++)
                     {
-                        var distance3 = extremeVertices[k + 4].Position.dotProduct(Directions[2]);
-                        var distance = new[] {distance1, distance2, distance3};
-                        var position = distance.multiply(normalMatrix.transpose());
-                       
+                        tempVect = normalMatrix.transpose().multiply(extremeVertices[k + 4].Position);
+                        var zPrime = tempVect[2];
+                        var offAxisPosition = new[] {xPrime, yPrime, zPrime };
+                        //Rotate back into primary coordinates
+                        var position = normalMatrix.multiply(offAxisPosition);
                         CornerVertices[count] = new Vertex(position);
                         count++;
                     }
@@ -91,6 +111,8 @@ namespace TVGL
             }
         }
     }
+
+    
 
     /// <summary>
     /// Bounding rectangle information based on area and point pairs.
@@ -128,5 +150,4 @@ namespace TVGL
             Directions = directions;
         }
     }
-
 }

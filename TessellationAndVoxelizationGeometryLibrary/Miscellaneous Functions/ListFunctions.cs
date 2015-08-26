@@ -30,12 +30,13 @@ namespace TVGL
 
         public static List<Flat> Flats(List<PolygonalFace> faces)
         {
+            throw new Exception("These checksum values don't seem to be unique");
             var tolerance = 0.002;
             var n = faces.Count;
             var checkSumMultipliers = new double[] { 1, 1e8, 1e16 };
             var checkSums = new double[n];
             for (var i = 0; i < n; i++)
-                checkSums[i] = Math.Abs(checkSumMultipliers.dotProduct(faces[i].Normal));
+                checkSums[i] = (int)Math.Abs(checkSumMultipliers.dotProduct(faces[i].Normal));
             var indices = StarMath.makeLinearProgression(n);
             indices = indices.OrderBy(index => checkSums[index]).ToArray();
 
@@ -47,13 +48,7 @@ namespace TVGL
             {
                 var n1 = faces[indices[i]].Normal;
                 var n2 = faces[indices[i-1]].Normal;
-                if (Math.Abs(n1[0] - n2[0]) < tolerance &&
-                    Math.Abs(n1[1] - n2[1]) < tolerance &&
-                    Math.Abs(n1[2] - n2[2]) < tolerance)
-                {
-                    //Add the face to the appropriate existing flat.
-                    currentFlat.UpdateWith(faces[indices[i - 1]]);
-                }
+                if (currentFlat.IsNewMemberOf(faces[indices[i - 1]])) currentFlat.UpdateWith(faces[indices[i - 1]]);
                 else
                 {
                     //Create a new flat and add to list

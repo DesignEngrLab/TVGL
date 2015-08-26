@@ -222,18 +222,32 @@ namespace TVGL
         internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2)
         {
             double[] center;
+            double[] interSect1, interSect2;
             double t1, t2;
-            return SkewedLineIntersection(p1, n1, p2, n2, out center, out t1, out t2);
+            return SkewedLineIntersection(p1, n1, p2, n2, out center, out interSect1, out interSect2, out t1, out t2);
         }
         internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2,
             out double[] center)
         {
+            double[] interSect1, interSect2;
             double t1, t2;
-            return SkewedLineIntersection(p1, n1, p2, n2, out center, out t1, out t2);
+            return SkewedLineIntersection(p1, n1, p2, n2, out center, out interSect1, out interSect2, out t1, out t2);
         }
-
+        internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2, out double[] interSect1, 
+            out double[] interSect2)
+        {
+            double[] center;
+            double t1, t2;
+            return SkewedLineIntersection(p1, n1, p2, n2, out center, out interSect1, out interSect2, out t1, out t2);
+        }
         internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2, out double[] center,
             out double t1, out double t2)
+        {
+            double[] interSect1, interSect2;
+            return SkewedLineIntersection(p1, n1, p2, n2, out center, out interSect1, out interSect2, out t1, out t2);
+        }
+        internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2, out double[] center,
+            out double[] interSect1, out double[] interSect2, out double t1, out double t2)
         {
             var a00 = n1[0] * n1[0] + n1[1] * n1[1] + n1[2] * n1[2];
             var a01 = -n1[0] * n2[0] - n1[1] * n2[1] - n1[2] * n2[2];
@@ -246,8 +260,8 @@ namespace TVGL
             var t = StarMath.solve(A, b);
             t1 = t[0];
             t2 = t[1];
-            var interSect1 = new[] { p1[0] + n1[0] * t1, p1[1] + n1[1] * t1, p1[2] + n1[2] * t1 };
-            var interSect2 = new[] { p2[0] + n2[0] * t2, p2[1] + n2[1] * t2, p2[2] + n2[2] * t2 };
+            interSect1 = new[] { p1[0] + n1[0] * t1, p1[1] + n1[1] * t1, p1[2] + n1[2] * t1 };
+            interSect2 = new[] { p2[0] + n2[0] * t2, p2[1] + n2[1] * t2, p2[2] + n2[2] * t2 };
             center = new[] { (interSect1[0] + interSect2[0]) / 2, (interSect1[1] + interSect2[1]) / 2, (interSect1[2] + interSect2[2]) / 2 };
             return DistancePointToPoint(interSect1, interSect2);
         }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using ClipperLib;
 
 namespace TVGL
 {
@@ -18,35 +17,35 @@ namespace TVGL
             //Create return variable
             var offsetLoops = new List<Vertex[]>();
 
-            //Create IntPoints for use in ClipperLib
-            double scale = 100; //1E+6
-            var paths = new List<List<IntPoint>>();
-            var offset = new ClipperOffset();
-            foreach (var loop in points2D)
-            {
-                var path = new List<IntPoint>();
-                foreach (var point in loop)
-                {
-                    path.Add(new IntPoint(ScaleToInt(point.X, scale),ScaleToInt(point.Y,scale)));
-                    offset.AddPath(path, JoinType.jtRound, EndType.etClosedPolygon);
-                }
-                paths.Add(path);
-            }
-            var solution = new List<List<IntPoint>>();
-            offset.Execute(ref solution, -10);
+            ////Create IntPoints for use in ClipperLib
+            //double scale = 100; //1E+6
+            //var paths = new List<List<IntPoint>>();
+            //var offset = new ClipperOffset();
+            //foreach (var loop in points2D)
+            //{
+            //    var path = new List<IntPoint>();
+            //    foreach (var point in loop)
+            //    {
+            //        path.Add(new IntPoint(ScaleToInt(point.X, scale),ScaleToInt(point.Y,scale)));
+            //        offset.AddPath(path, JoinType.jtRound, EndType.etClosedPolygon);
+            //    }
+            //    paths.Add(path);
+            //}
+            //var solution = new List<List<IntPoint>>();
+            //offset.Execute(ref solution, -10);
             
-            //Convert back to Double
-            foreach (var path in solution)
-            {
-                var i = 0;
-                var loop = new Vertex[path.Count];
-                foreach (var intPoint in path)
-                {
-                    loop[i] = ConvertToVertex(intPoint, scale);
-                    i++;
-                }
-                offsetLoops.Add(loop);
-            }
+            ////Convert back to Double
+            //foreach (var path in solution)
+            //{
+            //    var i = 0;
+            //    var loop = new Vertex[path.Count];
+            //    foreach (var intPoint in path)
+            //    {
+            //        loop[i] = ConvertToVertex(intPoint, scale);
+            //        i++;
+            //    }
+            //    offsetLoops.Add(loop);
+            //}
 
             return offsetLoops;
         }
@@ -58,15 +57,15 @@ namespace TVGL
             return Convert.ToInt32(Math.Round(value * scale));
         }
 
-        public static Vertex ConvertToVertex(IntPoint intPoint, double scale)
-        {
-            double X = intPoint.X;
-            double Xd = X; //* (1 / scale);
-            double Y = intPoint.Y;
-            double Yd = Y; // *(1 / scale);
-            var v = new Vertex(new[] {Xd,Yd,0});
-            return v;
-        }
+        //public static Vertex ConvertToVertex(IntPoint intPoint, double scale)
+        //{
+        //    double X = intPoint.X;
+        //    double Xd = X; //* (1 / scale);
+        //    double Y = intPoint.Y;
+        //    double Yd = Y; // *(1 / scale);
+        //    var v = new Vertex(new[] {Xd,Yd,0});
+        //    return v;
+        //}
 
 
     }

@@ -83,9 +83,9 @@ namespace TVGL
         /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
         public override bool IsNewMemberOf(PolygonalFace face)
         {
+            var tolerance = 0.00001;
             if (Faces.Contains(face)) return false;
-            if (!face.Normal.dotProduct(Normal).IsPracticallySame(1.0))
-                return false;
+            if (Math.Abs(face.Normal.dotProduct(Normal) - 1.0) > tolerance) return false;
             foreach (var v in face.Vertices)
                 if (Math.Abs(v.Position.dotProduct(Normal) - DistanceToOrigin) > Constants.ErrorForFaceInSurface * Math.Abs(DistanceToOrigin))
                     return false;
