@@ -92,6 +92,9 @@
     <Reference Include="MIConvexHull">
       <HintPath>..\packages\MIConvexHull.1.0.10.1021\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
     </Reference>
+    <Reference Include="PrimitiveClassificationOfTessellatedSolids">
+      <HintPath>..\..\PrimitiveClassificationOfTesselatedSolids\obj\Debug\PrimitiveClassificationOfTessellatedSolids.dll</HintPath>
+    </Reference>
     <Reference Include="StarMath">
       <HintPath>..\packages\StarMath.2.0.15.0707\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
     </Reference>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
+//using PrimitiveClassificationOfTessellatedSolids;
 
 namespace TVGL
 {
@@ -61,5 +62,11 @@ namespace TVGL
             return listFlats;
         }
 
+        public static List<Flat> FlatsFromPrimitives(TessellatedSolid ts)
+        {
+            //var primitiveSurfaces = TesselationToPrimitives.Run(ts);
+            var flatFaces = new List<Flat>();
+            return flatFaces;
+        }
     }
 }

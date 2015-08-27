@@ -42,9 +42,9 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts, out List<List<double[]>> volumeData1, out List<List<double[]>> volumeData2)
         {
-            //volumeData1 = null;
+            volumeData1 = null;
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
-            var boundingBox1 = Find_via_MC_ApproachOne(ts, out volumeData1);
+            //var boundingBox1 = Find_via_MC_ApproachOne(ts, out volumeData1);
             return Find_via_BM_ApproachTwo(ts, out volumeData2);
         }
 
@@ -295,7 +295,7 @@ namespace TVGL
 
                 //Set the sampling parameters
                 var numSamples = (int)Math.Ceiling((Math.PI - internalAngle) / MaxDeltaAngle);
-                if (numSamples == 1) numSamples = 2; //At minimum, take two samples
+                if (numSamples < 20 ) numSamples = 20; //At minimum, take tewnty samples
                 var deltaAngle = (Math.PI - internalAngle) / numSamples;
                 if (Math.Round(internalAngle, 5).IsNegligible()) continue;
 
@@ -305,37 +305,24 @@ namespace TVGL
                 Vertex vertex4 = null;
                 Vertex vertex5 = null;
                 Vertex vertex6 = null;
-                var extremeLength = 0.0;
-                var extremeWidth = 0.0;
+                Vertex edgeVertex1 = null;
+                Vertex edgeVertex2 = null;
+                var vertexList = new List<Vertex>();
                 var extremeDepth = 0.0;
-                var extremeArea = 0.0;
                 double[] depthOrtho = null;
                 double[] direction = null;
-                double[] lengthOrtho = null;
-                double[] widthOrtho = null;
-                double[] widthVector = null;
-                double[] lengthVector = null;
-                double[] perpDiagonalOrtho = null;
-                double[] d0 = null;
-                double[] d1 = null;
-                double[] d2 = null;
-                var perpDiagonal = 0.0;
-                var constantLength = false;
-                var constantWidth = false;
-                var tolerance = 0.001;
-                var useLengthForDiagonal = true;
-                var triangleDim = new List<double>();
-                var pause = false;
-                if (volumeData.Count == 99) pause = true; //stop at this volume data function
+                double[] rotatingCaliperEdgeVector = null;
+                var tolerance = 0.0001;
                 #endregion
 
-                for (var i = 0; i < numSamples; i++)
+                for (var i = 0; i < numSamples + 1; i++)
                 {
                     var angleChange = 0.0;
                     if (i == 0) direction = n;
                     else
                     {
-                        angleChange = i * deltaAngle;
+                        if (i == numSamples) angleChange = Math.PI - internalAngle;
+                        else angleChange = i * deltaAngle;
                         var s = Math.Sin(angleChange);
                         var c = Math.Cos(angleChange);
                         var t = 1.0 - c;
@@ -352,6 +339,7 @@ namespace TVGL
 
                     var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction);
 
+                    #region Test for computing OBB volume when vertices are constant
                     if (obb.ExtremeVertices[1] == vertex1)
                     {
                         //Check if length function is correct
@@ -366,38 +354,17 @@ namespace TVGL
                         depthOrtho = vertex1.Position.subtract(pointOnLine).normalize();
                     }
 
-                    if(obb.ExtremeVertices[2] == vertex3 && obb.ExtremeVertices[3] == vertex4 && 
-                        obb.ExtremeVertices[4] == vertex5 && obb.ExtremeVertices[5] == vertex6 )
-                    {
-                        //Check if area function is correct
-                        #region Calculate new area from direction of max area
-                        var valCheck = Math.Abs(perpDiagonalOrtho.dotProduct(convexHullEdge.Vector.normalize()));
-                        var valCheck2 = Math.Abs(direction.dotProduct(convexHullEdge.Vector.normalize()));
-                        var adjustment = Math.Abs(perpDiagonalOrtho.dotProduct(direction));
-
-                        var theta = Math.Acos(d0.dotProduct(direction));
-                        var s = Math.Sin(theta);
-                        var c = Math.Cos(theta);
-                        var t = 1.0 - c;
-                        //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
-                        var rotMatrix3 = new[,]
-                        {
-                            {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
-                            {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
-                            {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
-                        };
-                        var direction1 = rotMatrix3.multiply(d1);
-                        var direction2 = rotMatrix3.multiply(d2);
-
-                        //var area = extremeArea * adjustment;
-                        var length = Math.Abs(direction1.dotProduct(lengthVector));
-                        var width = Math.Abs(direction2.dotProduct(widthVector));
-                        var area = length * width;
-                        var length2 = Math.Abs(direction1.dotProduct(widthVector));
-                        var width2 = Math.Abs(direction2.dotProduct(lengthVector));
-                        var alternateArea = length2 * width2;
-                        #endregion
-
+                    if (obb.ExtremeVertices[2] == vertex3 && obb.ExtremeVertices[3] == vertex4 &&
+                        obb.ExtremeVertices[4] == vertex5 && obb.ExtremeVertices[5] == vertex6 &&
+                        obb.EdgeVertices[0] == edgeVertex1 && obb.EdgeVertices[1] == edgeVertex2)
+                    {   
+                        //Calculate new area, given that the edge from rotating calipers and all the extreme vertices are the same
+                        var direction1 = rotatingCaliperEdgeVector.crossProduct(direction);
+                        var direction2 = direction1.crossProduct(direction);
+                        Vertex vLow, vHigh;
+                        var length = GetLengthAndExtremeVertices(direction1, vertexList, out vLow, out vHigh);
+                        var width = GetLengthAndExtremeVertices(direction2, vertexList, out vLow, out vHigh);
+                        var area = length * width;                     
                         if (Math.Abs(area - obb.Area) > tolerance) throw new Exception("equation incorrect");
                     }
                     else //Update the vertices
@@ -406,155 +373,13 @@ namespace TVGL
                         vertex4 = obb.ExtremeVertices[3];
                         vertex5 = obb.ExtremeVertices[4];
                         vertex6 = obb.ExtremeVertices[5];
-
-                        #region Find direction of max area and necessary maximum dimensions
-                        d0 = obb.Directions[0];
-                        d1 = obb.Directions[1];
-                        d2 = obb.Directions[2];
-
-                        //update length
-                        lengthVector = vertex4.Position.subtract(vertex3.Position);
-                        extremeLength = Math.Sqrt(lengthVector[0] * lengthVector[0] + lengthVector[1] * lengthVector[1] + lengthVector[2] * lengthVector[2]);
-                        lengthOrtho = lengthVector.crossProduct(convexHullEdge.Vector).normalize();
-                        var dot = lengthOrtho.dotProduct(convexHullEdge.Vector);
-                        //If vectors are the same line or parallel, length is constant
-                        if (double.IsNaN(dot) || dot.IsPracticallySame(1.0))
-                        {
-                            constantLength = true;
-                        }
-                        else
-                        {
-                            //Choose a cross product that is a positive angle change from Owned Face (use other face)
-                            dot = lengthOrtho.dotProduct(convexHullEdge.OtherFace.Normal);
-                            if (dot < 0.0) lengthOrtho = lengthOrtho.multiply(-1); //Reverse if should be opposite direction
-                            constantLength = false;
-                        }
-                        if (extremeLength.IsNegligible()) throw new Exception();
-
-                        //perpDiagonal
-                        var tempCross = lengthOrtho.crossProduct(convexHullEdge.Vector.normalize());
-                        var perpDiagonal1 = Math.Abs(lengthVector.dotProduct(tempCross));
-                        
-                        //update width
-                        widthVector = vertex6.Position.subtract(vertex5.Position);
-                        extremeWidth = Math.Sqrt(widthVector[0] * widthVector[0] + widthVector[1] * widthVector[1] + widthVector[2] * widthVector[2]);
-                        widthOrtho = widthVector.crossProduct(convexHullEdge.Vector).normalize();
-                        dot = widthOrtho.dotProduct(convexHullEdge.Vector);
-                        ////If vectors are the same line or parallel, width is constant
-                        if (double.IsNaN(dot) || dot.IsPracticallySame(1.0))
-                        {
-                            constantWidth = true;
-                        }
-                        else
-                        {
-                            //Choose a cross product that is a positive angle change from Owned Face (use other face)
-                            dot = widthOrtho.dotProduct(convexHullEdge.OtherFace.Normal);
-                            if (dot < 0.0) widthOrtho = widthOrtho.multiply(-1); //Reverse if should be opposite direction
-                            constantWidth = false;
-                        }
-                        if (extremeWidth.IsNegligible()) throw new Exception();
-
-                        //perpDiagonal
-                        tempCross = widthOrtho.crossProduct(convexHullEdge.Vector.normalize());
-                        var perpDiagonal2 = Math.Abs(widthVector.dotProduct(tempCross));
-
-                        //Set perpDiagonal to whichever value is greater.
-                        var dot1 = Math.Abs(obb.Directions[1].dotProduct(convexHullEdge.Vector.normalize()));
-                        var dot2 = Math.Abs(obb.Directions[2].dotProduct(convexHullEdge.Vector.normalize()));
-                        //double[] OnLine1, OnLine2, OnLine3;
-                        //var tempDistance1 = MiscFunctions.SkewedLineIntersection(obb.ExtremeVertices[2].Position, lengthVector,
-                        //        convexHullEdge.From.Position, convexHullEdge.Vector, out OnLine1, out OnLine2);
-                        //var tempDistance2 = MiscFunctions.SkewedLineIntersection(obb.ExtremeVertices[4].Position, widthVector,
-                        //        convexHullEdge.From.Position, convexHullEdge.Vector);
-                        ////Check if other method is necessary. Note that both length and width vectors must impact the X distance
-                        //if (!constantWidth && !constantLength && tempDistance1 > 0.001 && tempDistance2 > 0.001 && !dot1.IsPracticallySame(1.0) && !dot2.IsPracticallySame(1.0))
-                        //{
-                        //    double[] vector1 = null;
-                        //    double[] vector2 = null;
-                            
-                        //    vector1 = OnLine2.subtract(OnLine1).normalize();
-                        //    //Get the shortest distance between the length vector and the intersection on the convex hull edge from above
-                        //    MiscFunctions.DistancePointToLine(OnLine2, obb.ExtremeVertices[4].Position, widthVector, out OnLine3);
-                        //    vector2 = OnLine2.subtract(OnLine3).normalize();
-
-                        //    //Use cross products to determine when the combined distance from each vertex to the edge in a 2d plane is maximized.
-                        //    var cross1 = vector1.crossProduct(lengthVector.normalize()).normalize();
-                        //    var cross2 = vector2.crossProduct(widthVector.normalize()).normalize();
-                        //    var cross3 = cross1.crossProduct(cross2).normalize();
-                        //    var perpAxis = cross3.crossProduct(convexHullEdge.Vector.normalize()).normalize();
-                        //    perpDiagonalOrtho = perpAxis.crossProduct(convexHullEdge.Vector.normalize()).normalize();
-                        //}//Pick whichever side is least aligned with the edge vector.
-                        if ((Math.Abs(dot1 - 1.0) >= Math.Abs(dot2 - 1.0) || double.IsNaN(perpDiagonal2)) && !double.IsNaN(perpDiagonal1))
-                        {
-                            perpDiagonal = perpDiagonal1;
-                            perpDiagonalOrtho = lengthOrtho;
-                            useLengthForDiagonal = true;
-                        }
-                        else
-                        {
-                            perpDiagonal = perpDiagonal2;
-                            perpDiagonalOrtho = widthOrtho;
-                            useLengthForDiagonal = false;
-                        }
-                        
-                        //Get the rotated directions
-                        //Find direction of rotation 
-                        var rotationDirection = Math.Sign(convexHullEdge.Vector.dotProduct(perpDiagonalOrtho.crossProduct(obb.Directions[0])));
-                        if (rotationDirection >= 0) rotationDirection = 1;
-                        var angleOfExtreme = rotationDirection * Math.Abs(Math.Acos(perpDiagonalOrtho.dotProduct(obb.Directions[0])));
-                        if (double.IsNaN(angleOfExtreme)) angleOfExtreme = 0.0;
-
-                        var tempVertexList = new List<Vertex>() { convexHullEdge.From, convexHullEdge.To, 
-                            obb.CornerVertices[0],obb.CornerVertices[2], obb.CornerVertices[3] };
-                        var points2D = MiscFunctions.Get2DProjectionPoints(tempVertexList, obb.Directions[0]);
-                        var lineVector = points2D[1].Position.subtract(points2D[0].Position);
-                        double[] point1OnLine;
-                        double[] point2OnLine;
-                        double[] point3OnLine;
-                        
-                        //Find intersection points on the line for three points of the rectangle
-                        MiscFunctions.DistancePointToLine(points2D[2].Position, points2D[0].Position, lineVector, out point1OnLine);
-                        MiscFunctions.DistancePointToLine(points2D[3].Position, points2D[0].Position, lineVector, out point2OnLine);
-                        MiscFunctions.DistancePointToLine(points2D[4].Position, points2D[0].Position, lineVector, out point3OnLine);
-                        //Set x values as those perpendicular to the line
-                        int sign;
-                        var tempLine = points2D[2].Position.subtract(point1OnLine);
-                        var cross2D = lineVector[0] * tempLine[1] - lineVector[1] * tempLine[0];
-                        if (cross2D < 0) sign = -1;
-                        else sign = 1;
-                        var a_x =  sign * Math.Sqrt(tempLine[0] * tempLine[0] + tempLine[1] * tempLine[1]) / Math.Cos(angleOfExtreme);
-                        tempLine = points2D[3].Position.subtract(point2OnLine);
-                        cross2D = lineVector[0] * tempLine[1] - lineVector[1] * tempLine[0];
-                        if (cross2D < 0) sign = -1;
-                        else sign = 1;
-                        var b_x = sign * Math.Sqrt(tempLine[0] * tempLine[0] + tempLine[1] * tempLine[1]) / Math.Cos(angleOfExtreme);
-                        tempLine = points2D[4].Position.subtract(point3OnLine);
-                        cross2D = lineVector[0] * tempLine[1] - lineVector[1] * tempLine[0];
-                        if (cross2D < 0) sign = -1;
-                        else sign = 1;
-                        var c_x = sign * Math.Sqrt(tempLine[0] * tempLine[0] + tempLine[1] * tempLine[1]) / Math.Cos(angleOfExtreme);
-                        //Set y values as those on the line
-                        tempLine = point2OnLine.subtract(point3OnLine); //By - Cy
-                        var dot2D = lineVector[0] * tempLine[0] + lineVector[1] * tempLine[1];
-                        if (dot2D < 0) sign = -1;
-                        else sign = 1;
-                        var bc_y = sign * Math.Sqrt(tempLine[0] * tempLine[0] + tempLine[1] * tempLine[1]);
-                        tempLine = point3OnLine.subtract(point1OnLine); //Cy -Ay
-                        dot2D = lineVector[0] * tempLine[0] + lineVector[1] * tempLine[1];
-                        if (dot2D < 0) sign = -1;
-                        else sign = 1;
-                        var ca_y = sign * Math.Sqrt(tempLine[0] * tempLine[0] + tempLine[1] * tempLine[1]);
-                        tempLine = point1OnLine.subtract(point2OnLine); //Ay - By
-                        dot2D = lineVector[0] * tempLine[0] + lineVector[1] * tempLine[1];
-                        if (dot2D < 0) sign = -1;
-                        else sign = 1;
-                        var ab_y = sign * Math.Sqrt(tempLine[0] * tempLine[0] + tempLine[1] * tempLine[1]);
-                        //Store for later
-                        triangleDim = new List<double>{a_x, bc_y, b_x,  ca_y, c_x, ab_y};
-                        extremeArea = Math.Abs(triangleDim[0] * triangleDim[1] + triangleDim[2] * triangleDim[3] + triangleDim[4] * triangleDim[5]);
-                        #endregion
+                        edgeVertex1 = obb.EdgeVertices[0];
+                        edgeVertex2 = obb.EdgeVertices[1];
+                        vertexList = new List<Vertex> { vertex3, vertex4, vertex5, vertex6 };
+                        rotatingCaliperEdgeVector = obb.EdgeVector.normalize();
                     }
-    
+                    #endregion
+
                     var dataPoint = new double[] { angleChange, obb.Volume };
                     seriesData.Add(dataPoint);
                     if (obb.Volume < minVolume)
@@ -564,6 +389,121 @@ namespace TVGL
                     }
                 }
                 if (numSamples > 0) volumeData.Add(seriesData);
+            }
+            return minBox;
+        }
+        #endregion
+
+        #region Golden Sections ApproachOne
+        /// <summary>
+        /// The golden section approach rotates around each edge of the convex hull between the owned and 
+        /// other faces. It uses golden sections to find 
+        /// </summary>
+        /// <timeDomain>
+        /// Since the computation cost for each Oriented Bounding Box is linear O(n), and performed on each edge, 
+        /// The Golden sections search is O(k*n^2), where k is significant.
+        /// </timeDomain>
+        /// <accuracy>
+        /// Garantees the optimial orientation is within MaxDeltaAngle error.
+        /// </accuracy>
+        private static BoundingBox Find_via_GoldenSections_Approach(TessellatedSolid ts, out List<List<double[]>> volumeData)
+        {
+            volumeData = new List<List<double[]>>();
+            BoundingBox minBox = new BoundingBox();
+            var minVolume = double.PositiveInfinity;
+            foreach (var convexHullEdge in ts.ConvexHullEdges)
+            {
+                //Initialize variables
+                var seriesData = new List<double[]>();
+                var r = convexHullEdge.Vector.normalize();
+                var n = convexHullEdge.OwnedFace.Normal;
+                var internalAngle = convexHullEdge.InternalAngle;
+                var maxAngle = Math.PI - internalAngle;
+
+                //Check for exceptions and special cases.
+                //Skip the edge if its internal angle is practically 0 or 180 since.
+                if (Math.Abs(internalAngle - Math.PI) < 0.0001 || Math.Round(internalAngle, 5).IsNegligible()) continue;
+                if (convexHullEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
+                //r cross owned face normal should point along the other face normal.
+                if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0) throw new Exception();
+
+                #region Initialize Variables
+                Vertex vertex1 = null;
+                Vertex vertex3 = null;
+                Vertex vertex4 = null;
+                Vertex vertex5 = null;
+                Vertex vertex6 = null;
+                Vertex edgeVertex1 = null;
+                Vertex edgeVertex2 = null;
+                var vertexList = new List<Vertex>();
+                var extremeDepth = 0.0;
+                double[] depthOrtho = null;
+                double[] direction = null;
+                double[] rotatingCaliperEdgeVector = null;
+                var tolerance = 0.0001;
+                #endregion
+
+                #region Perform Golden Sections Search
+                var angleChange = 0.0;
+                var i = 0;
+                var sameVerticesAsLeftFrontier = false;
+                var sameVerticesAsRightFrontier = false;
+                var forward = true;
+                while (angleChange <= maxAngle)
+                {
+                    if (i == 0) direction = n;
+                    //Else, set a new direction
+                    else
+                    {
+
+                    }
+                    //If the new obb shares the same vertices as the left frontier, 
+                    //Check values in between and update left frontier
+                    if (sameVerticesAsLeftFrontier)
+                    {
+                        //If forward, continue and increase multiplier
+                        if (forward) 
+                        {
+
+                        }
+                        //else, switch back to forward direction and decrease multiplier.
+                        else
+                        {
+
+                        }
+                    }
+                    //If the new obb shares the same vertices as the right frontier, 
+                    //Check values in between and update innerRight frontier. 
+                    if (sameVerticesAsRightFrontier)
+                    {
+                        //If forward, reverse direction and decrease multiplier
+                        if (forward)
+                        {
+
+                        }
+                        //else, continue in reverse and increase multiplier.
+                        else
+                        {
+
+                        }
+                    }
+                    //Else, set a new right frontier and reverse direction and decrease multiplier.
+                    else
+                    {
+                        //If forward, set a new right frontier and reverse direction and decrease multiplier.
+                        if (forward)
+                        {
+
+                        }
+                        //Else, set a new right frontier and continue in reverse
+                        else
+                        {
+
+                        }
+                    }
+                    
+                }
+                #endregion
             }
             return minBox;
         }
@@ -586,7 +526,6 @@ namespace TVGL
         /// </accuracy>
         private static BoundingBox Find_via_BM_ApproachTwo(TessellatedSolid ts, out List<List<double[]>> volumeData)
         {
-            
             volumeData = new List<List<double[]>>();
             var minBox = new BoundingBox();
             var minVolume = double.PositiveInfinity;
@@ -695,37 +634,129 @@ namespace TVGL
                 //sort the angles. Not strictly necessary, but useful for debugging.
                 //Debug: ToDo: Remove sort when 
                 angleList.Sort();
+                var stepSize = 0.000000001;
                 double[] direction;
                 var priorAngle = double.NegativeInfinity;
+                //Remove Duplicate Angles
+                for (var i = 0; i < angleList.Count(); i++) 
+                {
+                    var angle = angleList[i];
+                    if (Math.Abs(angle - priorAngle) < stepSize*10)
+                    {
+                        angleList.Remove(angle);
+                        i--;
+                    }
+                    priorAngle = angle;
+                }
+                double[] dataPoint1 = new double[] { 0.0, 0.0 };
+                double[] dataPoint2 = new double[] { 0.0, 0.0 };
+                double left1 = double.PositiveInfinity;
+                double right1 = double.PositiveInfinity; 
+                double left2 = double.PositiveInfinity;
+                double right2 = double.PositiveInfinity;
+                var obbVertices = new List<Vertex>(); //Reset list
                 foreach (var angle in angleList)
                 {
-                    //Skip angles that are practically the same
-                    if (Math.Abs(angle - priorAngle) < 0.001) continue;
-                    priorAngle = angle;
-
-                    //Find rotation matrix
-                    var s = Math.Sin(angle);
-                    var c = Math.Cos(angle);
-                    var t = 1.0 - c;
-                    //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
-                    var rotMatrix2 = new[,]
+                    //Find three rotation matrices (two are tests)
+                    for (var i = -1; i < 2; i++)
                     {
-                        {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
-                        {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
-                        {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
-                    };
-                    direction = rotMatrix2.multiply(n);
-                    if (double.IsNaN(direction[0])) throw new Exception();
+                        if (angleList.IndexOf(angle) == 0 && i == -1) continue;
+                        if (angleList.IndexOf(angle) == angleList.Count() - 1 && i == 1) continue;
+                        var s = Math.Sin(angle + stepSize * i);
+                        var c = Math.Cos(angle + stepSize * i);
+                        var t = 1.0 - c;
+                        //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
+                        var rotMatrix2 = new[,]
+                        {
+                            {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
+                            {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
+                            {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
+                        };
+                        direction = rotMatrix2.multiply(n);
+                        if (double.IsNaN(direction[0])) throw new Exception();
 
-                    //Find OBB along direction and save minimum bounding box
-                    var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
-                    var dataPoint = new double[] { angle, obb.Volume };
-                    seriesData.Add(dataPoint);
-                    if (obb.Volume < minVolume)
-                    {
-                        minBox = obb;
-                        minVolume = minBox.Volume;
+                        //Find OBB along direction and save minimum bounding box
+                        var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
+                        var dataPoint = new double[] { angle, obb.Volume };
+                        seriesData.Add(dataPoint);
+                        if (i == -1)
+                        {
+                            left2 = obb.Volume;
+                            if (angleList.IndexOf(angle) != 0)
+                            {
+                                //If not the first data point, check to make sure it has equivalent vertices as the last data point
+                                foreach (var vertex in obb.ExtremeVertices)
+                                {
+                                    if (vertex == obb.ExtremeVertices[0]) continue;
+                                    if (!obbVertices.Contains(vertex)) throw new Exception();
+                                }
+                                foreach (var vertex in obb.EdgeVertices)
+                                {
+                                    if (!obbVertices.Contains(vertex)) throw new Exception();
+                                }
+                            }
+                        }
+                        if (i == 0) dataPoint2 = new double[] { dataPoint[0], dataPoint[1] };
+                        if (i == 1)
+                        {
+                            right2 = obb.Volume;
+                            obbVertices = new List<Vertex>(obb.ExtremeVertices.ToList());
+                            obbVertices.RemoveAt(0); //remove the depth vertex 1, since new obb could choose the other vertex on the edge
+                            obbVertices.AddRange(obb.EdgeVertices);
+                        }
+                        if (obb.Volume < minVolume)
+                        {
+                            minBox = obb;
+                            minVolume = minBox.Volume;
+                        }
                     }
+                    if (right1 < dataPoint1[1] && left2 < dataPoint2[1] && dataPoint1[0] + stepSize > dataPoint2[0])
+                    {
+                        //Check for minimum from dataPoint1 to dataPoint2
+                        var decreasing = true;
+                        var newAngle = dataPoint1[0];
+                        var minimaAngle = dataPoint1[0];
+                        var localMinVolume = dataPoint1[1];
+                        while(decreasing = true)
+                        {
+                            if(newAngle >= dataPoint2[0]) throw new Exception("Should have started increasing by now");
+                            newAngle = newAngle + stepSize;
+                            var s = Math.Sin(newAngle);
+                            var c = Math.Cos(newAngle);
+                            var t = 1.0 - c;
+                            var rotMatrix3 = new[,]
+                            {
+                                {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
+                                {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
+                                {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
+                            };
+                            direction = rotMatrix3.multiply(n);
+                            if (double.IsNaN(direction[0])) throw new Exception();
+
+                            //Find OBB along direction and save minimum bounding box
+                            var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
+                            if(obb.Volume < localMinVolume)
+                            {
+                                localMinVolume = obb.Volume;
+                                minimaAngle = newAngle;
+                                decreasing = true;
+                                if (obb.Volume < minVolume)
+                                {
+                                    minBox = obb;
+                                    minVolume = minBox.Volume;
+                                }  
+                            }
+                            else decreasing = false;
+                        }
+                        //Insert minimum into data series at correct location
+                        var dataPoint = new double[] { minimaAngle, localMinVolume };
+                        var index = seriesData.FindIndex(dataPoint2)-2;
+                        seriesData.Insert(index,dataPoint);
+                    }
+                    right1 = right2;
+                    left1 = left2;
+                    dataPoint1 = new double[] { dataPoint2[0], dataPoint2[1] };
+                    priorAngle = angle;
                 }
                 if(angleList.Count > 0) volumeData.Add(seriesData);
                 #endregion
@@ -924,7 +955,7 @@ namespace TVGL
             //the given direction vector. If it was normal, direction1 should equal direction or its direction.inverse.
 
             return new BoundingBox(depth, boundingRectangle.Area, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High},
-                new[] { direction1, direction2, direction3});
+                new[] { direction1, direction2, direction3}, boundingRectangle.EdgeVertices);
         }
         #endregion
 
@@ -1015,6 +1046,8 @@ namespace TVGL
             var offsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
             Point[] pointPair1 = null;
             Point[] pointPair2 = null;
+            Vertex edgeVertex1 = null;
+            Vertex edgeVertex2 = null;
             var minArea = double.PositiveInfinity;
             var flag = false;
             var cons = Math.PI / 2;
@@ -1084,6 +1117,8 @@ namespace TVGL
                     pointPair2 = new [] { cvxPoints[extremeIndices[3]], cvxPoints[extremeIndices[1]] };
                     direction1 = new [] { angleVector1[0], angleVector1[1], 0.0};
                     direction2 = new [] { angleVector2[0], angleVector2[1], 0.0 };
+                    edgeVertex1 = previousPoint.References[0];
+                    edgeVertex2 = currentPoint.References[0];
                 }
 
             } while (!flag || angle.IsPracticallySame(Math.PI / 2)); //Don't check beyond a 90 degree angle.
@@ -1094,7 +1129,7 @@ namespace TVGL
             var directions = new List<double[]>{direction1, direction2};
             var extremePoints = new List<Point[]> {pointPair1, pointPair2};
             if (pointPair1 == null) minArea = 0.0;
-            var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints);
+            var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints, new []{edgeVertex1, edgeVertex2});
             return boundingRectangle;
         }
         #endregion

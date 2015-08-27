@@ -65,13 +65,25 @@ namespace TVGL
         public Vertex[] CornerVertices;
 
         /// <summary>
+        /// Vertices that correspond to edge from rotating calipers
+        /// </summary>
+        public Vertex[] EdgeVertices;
+
+        /// <summary>
+        /// Vector directions of the edge from rotating calipers
+        /// </summary>
+        public double[] EdgeVector;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox"/> class.
         /// </summary>
         /// <param name="volume">The volume.</param>
         /// <param name="extremeVertices">The extreme vertices.</param>
         /// <param name="directions"></param>
-        internal BoundingBox(double depth, double area, Vertex[] extremeVertices, double[][] directions)
-        { 
+        internal BoundingBox(double depth, double area, Vertex[] extremeVertices, double[][] directions, Vertex[] edgeVertices = null)
+        {
+            EdgeVertices = edgeVertices;
+            EdgeVector = EdgeVertices[1].Position.subtract(EdgeVertices[0].Position);
             CornerVertices = new Vertex[8];
             Area = area;
             Depth = depth;
@@ -140,14 +152,26 @@ namespace TVGL
         public List<double[]> Directions;
 
         /// <summary>
+        /// Vertices that correspond to edge from rotating calipers
+        /// </summary>
+        public Vertex[] EdgeVertices;
+
+        /// <summary>
+        /// Vector directions of the edge from rotating calipers
+        /// </summary>
+        public double[] EdgeVector;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox"/> class.
         /// </summary>
-        internal BoundingRectangle(double area, double bestAngle, List<double[]> directions, List<Point[]> pointPairs)
+        internal BoundingRectangle(double area, double bestAngle, List<double[]> directions, List<Point[]> pointPairs, Vertex[] edgeVertices)
         {
             Area = area;
             PointPairs = pointPairs;
             BestAngle = bestAngle;
             Directions = directions;
+            EdgeVertices = edgeVertices;
+            EdgeVector = EdgeVertices[1].Position.subtract(EdgeVertices[0].Position);
         }
     }
 }
