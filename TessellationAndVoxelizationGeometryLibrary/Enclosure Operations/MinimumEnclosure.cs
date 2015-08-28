@@ -40,12 +40,18 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(TessellatedSolid ts, out List<List<double[]>> volumeData1, out List<List<double[]>> volumeData2)
+        public static BoundingBox OrientedBoundingBox_Test(TessellatedSolid ts, out List<List<double[]>> volumeData1, out List<List<double[]>> volumeData2)
         {
             volumeData1 = null;
+            volumeData2 = null;
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
-            //var boundingBox1 = Find_via_MC_ApproachOne(ts, out volumeData1);
+            var boundingBox1 = Find_via_MC_ApproachOne(ts, out volumeData1);
             return Find_via_BM_ApproachTwo(ts, out volumeData2);
+        }
+
+        public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
+        {
+            return Find_via_PCA_Approach(ts);
         }
 
         /// <summary>

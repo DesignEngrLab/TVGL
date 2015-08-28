@@ -1006,6 +1006,27 @@ namespace TVGL
             //Passed all the debug criteria
             return true;
         }
+
+        public static bool IsWaterTight(List<PolygonalFace> listFaces)
+        {
+            var faces = new HashSet<PolygonalFace>();
+            var startFace = listFaces[0];
+            var stack = new Stack<PolygonalFace>(new[] { startFace });
+            while (stack.Any())
+            {
+                var face = stack.Pop();
+                if (faces.Contains(face)) continue;
+                faces.Add(face);
+                foreach (var adjacentFace in face.AdjacentFaces)
+                {
+                    if (adjacentFace == null) throw new Exception();
+                    stack.Push(adjacentFace);
+                }
+            }
+            if (faces.Count() != listFaces.Count()) throw new Exception("Solid is not water tight");
+            //Passed all the debug criteria
+            return true;
+        }
         #endregion
     }
 }

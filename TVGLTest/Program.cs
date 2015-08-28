@@ -14,10 +14,11 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {    
-        "../../../TestFiles/Tetrahedron.STL",                                      
-        "../../../TestFiles/off_axis_box.STL",
-        "../../../TestFiles/Wedge.STL",
-        "../../../TestFiles/amf_Cube.amf",
+        "../../../TestFiles/Beam_Boss.STL",   
+        //"../../../TestFiles/Tetrahedron.STL",                                      
+        //"../../../TestFiles/off_axis_box.STL",
+        //"../../../TestFiles/Wedge.STL",
+        //"../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/Mic_Holder_SW.stl",  
         //"../../../TestFiles/Mic_Holder_JR.stl",
         //"../../../TestFiles/3_bananas.amf",
@@ -30,7 +31,7 @@ namespace TVGL_Test
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
         //"../../../TestFiles/Beam_Clean.STL", 
-        "../../../TestFiles/piston.stl", 
+        //"../../../TestFiles/piston.stl", 
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
         //"../../../TestFiles/pump.stl", 
@@ -92,7 +93,7 @@ namespace TVGL_Test
             var Flats = ListFunctions.FlatsFromPrimitives(ts);
             List<List<double[]>> VolumeData1;
             List<List<double[]>> VolumeData2;
-            var obb = MinimumEnclosure.OrientedBoundingBox(ts, out VolumeData1, out VolumeData2);
+            var obb = MinimumEnclosure.OrientedBoundingBox_Test(ts, out VolumeData1, out VolumeData2);
             //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
             //TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
             TVGLTest.ExcelInterface.PlotDataSets(VolumeData1, VolumeData2, "Edge", "Angle", "Volume");

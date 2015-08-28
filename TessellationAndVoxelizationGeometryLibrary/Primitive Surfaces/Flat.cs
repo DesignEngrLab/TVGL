@@ -33,7 +33,12 @@ namespace TVGL
             var normalSum = new double[3];
             normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
             Normal = normalSum.divide(Faces.Count);
-            DistanceToOrigin = Faces.Average(f => normalSum.dotProduct(f.Vertices[0].Position));
+            //Round to eliminate small deviations 
+            Normal[0] = Math.Round(Normal[0], 10);
+            Normal[1] = Math.Round(Normal[1], 10);
+            Normal[2] = Math.Round(Normal[2], 10);
+            Normal = Normal.normalize();
+            DistanceToOrigin = Math.Round(Faces.Average(f => Normal.dotProduct(f.Vertices[0].Position)), 10);
         }
 
         /// <summary>
