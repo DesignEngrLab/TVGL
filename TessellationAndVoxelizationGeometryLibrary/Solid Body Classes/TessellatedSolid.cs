@@ -159,6 +159,12 @@ namespace TVGL
         public PolygonalFace[] ConvexHullFaces { get; private set; }
 
         /// <summary>
+        ///     Gets whether the convex hull creation was successful.
+        /// </summary>
+        /// <value>The convex hull faces.</value>
+        public bool ConvexHullSuceeded { get; private set; }
+
+        /// <summary>
         ///     Gets the convex hull edges.
         /// </summary>
         /// <value>The convex hull edges.</value>
@@ -259,11 +265,11 @@ namespace TVGL
             {
                 MakeFaces(normals);
                 MakeVertices(vertsPerFace, faceToVertexIndices, out indicesOfDuplicates);
-                CreateConvexHull();
                 RemoveDuplicateFacesAndLinkToVertices(faceToVertexIndices);
                 RemoveVertices(indicesOfDuplicates);
-                DefineBoundingBoxAndCenter();
                 MakeEdges();
+                CreateConvexHull();
+                DefineBoundingBoxAndCenter();
                 DefineFaceCentersAndColors(colors);
                 ConnectConvexHullToObjects();
                 DefineVolumeAndAreas();
@@ -867,7 +873,11 @@ namespace TVGL
             var convexHull = ConvexHull.Create<Vertex, DefaultConvexFace<Vertex>>(Vertices);
             ConvexHullVertices = convexHull.Points.ToArray();
             var numCvxFaces = convexHull.Faces.Count();
-            if (numCvxFaces < 3) throw new Exception("Convex Hull Failed in MIConvexHull");
+            if (numCvxFaces < 3)
+            {
+                ConvexHullSuceeded = false;
+                return;
+            }
             ConvexHullFaces = new PolygonalFace[numCvxFaces];
             ConvexHullEdges = new Edge[3 * numCvxFaces / 2];
             var faceIndex = 0;
@@ -880,6 +890,7 @@ namespace TVGL
                 ConvexHullFaces[faceIndex++] = newFace;
             }
             ConvexHullEdges = MakeEdges(ConvexHullFaces, false);
+            ConvexHullSuceeded = true;
         }
 
 

@@ -542,7 +542,10 @@ namespace TVGL
             var fraction = (d1 - distOfPlane) / (d1 - d2);
             var position = new double[3];
             for (var i = 0; i < 3; i++)
+            {
                 position[i] = point2.Position[i] * fraction + point1.Position[i] * (1 - fraction);
+                if (double.IsNaN(position[i])) throw new Exception();
+            }
             return new Vertex(position);
         }
 
