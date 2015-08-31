@@ -362,6 +362,27 @@ namespace TVGL
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
+        public TessellatedSolid Duplicate()
+        {
+            var faces = new List<List<int>>();
+            var listDoubles = new List<double[]>();
+            for(var i = 0; i < Vertices.Count(); i++)
+            {
+                Vertices[i].IndexInList = i;
+                listDoubles.Add(Vertices[i].Position);
+            }
+            for(var i = 0; i < Faces.Count(); i++)
+            {
+                var face = new List<int>();
+                foreach (var vertex in Faces[i].Vertices)
+                {
+                    face.Add(vertex.IndexInList);
+                }
+                faces.Add(face);
+            }
+            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
+        }
+
         internal TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices)
         {
             Faces = faces.ToArray();

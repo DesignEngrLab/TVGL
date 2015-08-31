@@ -44,7 +44,10 @@ namespace TVGL.Boolean_Operations
             var distancesToPlane = new List<double>();
             List<PolygonalFace> inPlaneFaces;
             for (int i = 0; i < ts.NumberOfVertices; i++)
-                distancesToPlane.Add(ts.Vertices[i].Position.dotProduct(plane.Normal) - plane.DistanceToOrigin);
+            {
+                distancesToPlane.Add(ts.Vertices[i].Position.subtract(plane.Vertices[0].Position).dotProduct(plane.Normal));
+                ts.Vertices[i].IndexInList = i;
+            }  
             // **** GetContactElements is the first main function of this method. *****
             var contactElements = GetContactElements(plane, ts, distancesToPlane, out inPlaneFaces);
             // Now arrange contact elements into loops. This is what the following while-loop accomplishes
@@ -405,13 +408,12 @@ namespace TVGL.Boolean_Operations
                 for (int i = 0; i < numLoops; i++)
                 {
                     verticesOnPlane[i] = loopsOnThisSolid[i].Select(ce => ce.StartVertex).ToArray();
-                    points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal,true);
+                    points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal, true);
                 }
                 var patchTriangles = TriangulatePolygon.Run(points2D.ToList(),
                     loopsOnThisSolid.Select(l => l.IsPositive).ToArray());
                 foreach (var triangle in patchTriangles)
                     negativeFaceList.Add(new PolygonalFace(triangle, plane.Normal));
-                //Create a new negative side solid
                 negativeSideSolids.Add(
                     new TessellatedSolid(negativeFaceList,
                         negativeFaceList.SelectMany(f => f.Vertices).Distinct().OrderBy(v => v.IndexInList).ToList()));
@@ -484,7 +486,7 @@ namespace TVGL.Boolean_Operations
                 for (int i = 0; i < numLoops; i++)
                 {
                     verticesOnPlane[i] = loopsOnThisSolid[i].Select(ce => ce.DuplicateVertex).ToArray();
-                    points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal,true);
+                    points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal, true);
                 }
                 var patchTriangles = TriangulatePolygon.Run(points2D.ToList(),
                     loopsOnThisSolid.Select(l => l.IsPositive).ToArray());

@@ -125,7 +125,7 @@ namespace TVGL
         /// <param name="isClosed">is closed.</param>
         /// <param name="artificiallyClosed">is artificially closed.</param>
         /// <param name="b"></param>
-        internal Loop(ICollection<ContactElement> contactElements, double[] normal, bool isClosed, bool artificiallyClosed, bool enclosesInPlaneFace)
+        internal Loop(List<ContactElement> contactElements, double[] normal, bool isClosed, bool artificiallyClosed, bool enclosesInPlaneFace)
             : base(contactElements)
         {
             ArtificiallyClosed = artificiallyClosed;

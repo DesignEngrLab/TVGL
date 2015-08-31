@@ -90,19 +90,32 @@ namespace TVGL
             var point2 = randomPoints[1];
             var previousPoints = new List<Point>();
             var circle = new BoundingCircle(new List<Point> {point1, point2});
-            
-            for (var i = 0; i < randomPoints.Count; i++)
+            var bestCircle = circle;
+            var stallCounter = 0;
+            var i = 0;
+
+            while (i < randomPoints.Count && stallCounter < randomPoints.Count)
             {
                 var currentPoint = randomPoints[i];
                 //If the current point is part of the circle or inside the circle, go to the next iteration
-                if (circle.Points.Contains(currentPoint) || circle.Bounds(currentPoint)) continue;
+                if (circle.Points.Contains(currentPoint) || circle.Bounds(currentPoint))
+                {
+                    i++;
+                    continue;
+                }
 
                 //Else if the currentPoint is the previousPoint, increase dimension
                 if (previousPoints.Contains(currentPoint))
                 {
                     //Make a new circle from the current two-point circle and the current point
                     circle = new BoundingCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
+                    if(circle.SqRadius < bestCircle.SqRadius) 
+                    {
+                        bestCircle = circle;
+                        stallCounter =0;
+                    }
                     previousPoints.Remove(currentPoint);
+                    i++;
                 }
                 else
                 {
@@ -111,15 +124,19 @@ namespace TVGL
                     circle.Furthest(currentPoint, out furthestPoint, ref previousPoints);
                     //Make a new circle from the furthest point and current point
                     circle = new BoundingCircle(new List<Point> {currentPoint, furthestPoint});
+                    if(circle.SqRadius < bestCircle.SqRadius) 
+                    {
+                        bestCircle = circle;
+                        stallCounter =0;
+                    }
                     //Add previousPoints to the front of the list
                     foreach (var previousPoint in previousPoints)
                     {
                         randomPoints.Remove(previousPoint);
                         randomPoints.Insert(0, previousPoint);
-                        
                     }
                     //Restart the search
-                    i = -1;
+                    i = 0;
                 }
             }
 
@@ -248,7 +265,11 @@ namespace TVGL
             internal bool Bounds(Point point)
             {
                 //Distance between point and center is greate than radius, it is outside the circle
-                return !(Math.Pow(Center.X - point.X, 2) + Math.Pow(Center.Y - point.Y, 2) > SqRadius);
+                var distanceToPoint = Math.Sqrt(Math.Pow(Center.X - point.X, 2) + Math.Pow(Center.Y - point.Y, 2));
+                var radius = Math.Sqrt(SqRadius);
+                var bounded = true;
+                if (!distanceToPoint.IsPracticallySame(radius) && distanceToPoint < radius) bounded = false;
+                return bounded;
             }
 
             /// <summary>

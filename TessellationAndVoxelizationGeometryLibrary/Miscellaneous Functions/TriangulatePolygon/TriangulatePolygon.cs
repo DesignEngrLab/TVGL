@@ -30,14 +30,18 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public static List<Vertex[]> Run(List<Point[]> points2D, Boolean[] isPositive)
         {
-            //ASSUMPTION: NO lines intersect other lines or points they are not connected to && NO two points in any of the loops are the same (Except,
-            // it is ok if two positive loops share a point, because they are processed separately).
-            //SPECIAL CASES: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
-            //These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
+            //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
             //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
             //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.
-            //Ex 3) If a positive loop intersects itself, it should be two seperate positive loops
+            //Ex 3) If a positive loop intersects itself, it should be two seperate positive loops.
+
+            //ROBUST FEATURES:
+            // 1: Two positive loops may share a point, because they are processed separately.
+            // 2: Loops can be in given CW or CCW, because as long as the isPositive boolean is correct, 
+            // the code recognizes when the loop should be reversed.
+            // 3: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
+            // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
 
             //Create return variable
             var triangles = new List<Vertex[]>();
@@ -71,20 +75,48 @@ namespace TVGL
                     var negativeLoopCount = 0;
                     var positiveLoopCount = 0;
                     var pointCount = 0;
+                    var points2DCorrected = new List<Point[]>();
 
                     //Change point X and Y coordinates to be changed to random primary axis
                     var rnd = new Random();
-                    var theta = 0.15; //rnd.NextDouble();
-                    foreach (var loop in points2D)
+                    var theta = rnd.NextDouble();
+                    for(var j = 0; j < points2D.Count(); j++)
                     {
-                        foreach (var point in loop)
+                        var loop = points2D[j];
+                        var pHighest = double.NegativeInfinity;
+                        var index = 0;
+                        for (var k = 0; k < loop.Count(); k++ )
                         {
+                            var point = loop[k];
                             point.X = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
                             point.Y = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
+                            if (point.Y > pHighest)
+                            {
+                                pHighest = point.Y;
+                                index = k;
+                            }
                         }
+                        NodeType nodeType;
+                        if (index == 0)
+                        {
+                            nodeType = GetNodeType(loop.Last(), loop.First(), loop[1]);
+                        }
+                        else if (index == loop.Count() - 1)
+                        {
+                            nodeType = GetNodeType(loop[index-1], loop.Last(), loop.First());
+                        }
+                        else nodeType = GetNodeType(loop[index - 1], loop[index], loop[index+1]);
+
+                        //If node type is incorrect (loop is CW when it should be CCW or vice versa), 
+                        //reverse the order of the loop
+                        if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
+                        {
+                            loop = loop.Reverse().ToList().ToArray();
+                        }
+                        points2DCorrected.Add(loop);
                     }
 
-                    foreach (var loop in points2D)
+                    foreach (var loop in points2DCorrected)
                     {
                         var orderedLoop = new List<Node>();
                         //Count the number of points and add to total.
