@@ -109,11 +109,12 @@ namespace TVGL
                 {
                     //Make a new circle from the current two-point circle and the current point
                     circle = new BoundingCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
-                    if(circle.SqRadius < bestCircle.SqRadius) 
+                    if (circle.SqRadius < bestCircle.SqRadius)
                     {
                         bestCircle = circle;
-                        stallCounter =0;
+                        stallCounter = 0;
                     }
+                    else stallCounter++;
                     previousPoints.Remove(currentPoint);
                     i++;
                 }
@@ -129,6 +130,7 @@ namespace TVGL
                         bestCircle = circle;
                         stallCounter =0;
                     }
+                    else stallCounter++;
                     //Add previousPoints to the front of the list
                     foreach (var previousPoint in previousPoints)
                     {
@@ -264,11 +266,11 @@ namespace TVGL
             /// <returns></returns>
             internal bool Bounds(Point point)
             {
-                //Distance between point and center is greate than radius, it is outside the circle
+                //Distance between point and center is greater than radius, it is outside the circle
                 var distanceToPoint = Math.Sqrt(Math.Pow(Center.X - point.X, 2) + Math.Pow(Center.Y - point.Y, 2));
                 var radius = Math.Sqrt(SqRadius);
-                var bounded = true;
-                if (!distanceToPoint.IsPracticallySame(radius) && distanceToPoint < radius) bounded = false;
+                var bounded = false;
+                if (distanceToPoint.IsPracticallySame(radius) || distanceToPoint < radius) bounded = true;
                 return bounded;
             }
 
