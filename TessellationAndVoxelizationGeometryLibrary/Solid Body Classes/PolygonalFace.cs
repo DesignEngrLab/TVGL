@@ -59,6 +59,7 @@ namespace TVGL
             if (ConnectVerticesBackToFace)
                 foreach (var v in Vertices)
                     v.Faces.Add(this);
+            SetArea();
         }
 
         /// <summary>
@@ -118,6 +119,19 @@ namespace TVGL
                     else Normal = normals[0].multiply(-1);
                 }
             }
+            SetArea();
+        }
+
+        internal void SetArea()
+        {
+            // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
+            if (Vertices.Count == 3)
+            {
+                var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
+                var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
+                Area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
+            }
+            else throw new Exception("Not Implemented");
         }
 
         /// <summary>
@@ -165,7 +179,7 @@ namespace TVGL
         /// <value>
         /// The area.
         /// </value>
-        public double Area { get; set; }
+        public double Area { get;  set; }
 
         /// <summary>
         /// Gets or sets the color.

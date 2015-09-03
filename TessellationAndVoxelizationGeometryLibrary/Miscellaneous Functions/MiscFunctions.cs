@@ -139,6 +139,12 @@ namespace TVGL
             return Math.Min(AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]),
                 AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]));
         }
+        internal static double SmallerAngleBetweenEdges(Point a, Point b, Point c)
+        {
+            var edge1 = new[] { b.X - a.X, b.Y - a.Y };
+            var edge2 = new[] { c.X - b.X, c.Y - b.Y };
+            return Math.Acos(edge1.dotProduct(edge2)/(edge1.norm2()*edge2.norm2()));
+        }
         internal static double SmallerAngleBetweenEdges(double[] v0, double[] v1)
         {
             return Math.Min(AngleBetweenEdgesCW(v0, v1), AngleBetweenEdgesCCW(v0, v1));
@@ -970,7 +976,7 @@ namespace TVGL
                     if (face.Vertices.Contains(edge.To) && face.Vertices.Contains(edge.From) && face != edge.OwnedFace && face != edge.OtherFace) break;
                 }
                 
-                if (edge.Curvature == CurvatureType.Concave) throw new Exception();
+                if (edge.Curvature == CurvatureType.Concave) continue;
             }
             foreach (var edge in ts.Edges)
             {

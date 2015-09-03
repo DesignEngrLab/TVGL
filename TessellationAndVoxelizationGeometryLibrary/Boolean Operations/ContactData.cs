@@ -116,6 +116,14 @@ namespace TVGL
         /// Does the loop enclose a bunch of faces that lie in the plane?
         /// </summary>
         public readonly Boolean EnclosesInPlaneFace;
+        /// <summary>
+        /// Does the loop belong to the positive solids?
+        /// </summary>
+        public readonly Boolean OnPositiveSolids;
+        /// <summary>
+        /// Does the loop belong to the negative solids?
+        /// </summary>
+        public readonly Boolean OnNegativeSolids;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Loop" /> class.
@@ -125,12 +133,15 @@ namespace TVGL
         /// <param name="isClosed">is closed.</param>
         /// <param name="artificiallyClosed">is artificially closed.</param>
         /// <param name="b"></param>
-        internal Loop(List<ContactElement> contactElements, double[] normal, bool isClosed, bool artificiallyClosed, bool enclosesInPlaneFace)
+        internal Loop(List<ContactElement> contactElements, double[] normal, bool isClosed, bool artificiallyClosed, 
+            bool enclosesInPlaneFace, bool onNegativeSolids = true, bool onPositiveSolids = true)
             : base(contactElements)
         {
             ArtificiallyClosed = artificiallyClosed;
             IsClosed = isClosed;
             EnclosesInPlaneFace = enclosesInPlaneFace;
+            OnPositiveSolids = onPositiveSolids;
+            OnNegativeSolids = onNegativeSolids;
             if (!IsClosed) Debug.WriteLine("loop not closed!");
             var center = new double[3];
             foreach (var contactElement in contactElements)

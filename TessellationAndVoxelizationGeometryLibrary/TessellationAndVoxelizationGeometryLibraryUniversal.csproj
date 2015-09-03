@@ -38,6 +38,7 @@
     <Compile Include="Boolean Operations\ContactElement Classes.cs" />
     <Compile Include="Boolean Operations\ContactData.cs" />
     <Compile Include="Boolean Operations\Slice.cs" />
+    <Compile Include="Boolean Operations\Slice2.cs" />
     <Compile Include="Enclosure Operations\GaussianSphere.cs" />
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
     <Compile Include="InputOutput Operations\3mf.classes.cs" />

@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -49,6 +50,49 @@ namespace TVGL
                 SplitFacePositive = edge.OtherFace; // the reverse from above. The other face is above the flat
                 SplitFaceNegative = edge.OwnedFace;
                 ReverseDirection = true;
+            }
+        }
+        
+        //USED ONLY IN SLICE2
+        internal ContactElement(Edge edge, bool ownedFaceIsOutOfPlane, bool onPositiveSide) 
+        {
+            ContactType = ContactTypes.AlongEdge;
+            ContactEdge = edge;
+            if (ownedFaceIsOutOfPlane)
+            {
+                if (onPositiveSide)
+                {
+                    StartVertex = edge.From;
+                    EndVertex = edge.To;
+                    SplitFacePositive = edge.OwnedFace; // the owned face is "above the flat plane
+                    SplitFaceNegative = null; // the other face is on the plane and will be ignored
+                }
+                else
+                {
+                    StartVertex = edge.To;
+                    EndVertex = edge.From;
+                    SplitFacePositive = null; // the reverse from above. The other face is above the flat
+                    SplitFaceNegative = edge.OwnedFace;
+                    ReverseDirection = true;
+                }
+            }
+            else
+            {
+                if (onPositiveSide)
+                {
+                    StartVertex = edge.To;
+                    EndVertex = edge.From;
+                    SplitFacePositive = edge.OtherFace; // the owned face is "above the flat plane
+                    SplitFaceNegative = null; // the other face is on the plane and will be ignored
+                    ReverseDirection = true;
+                }
+                else
+                {
+                    StartVertex = edge.From;
+                    EndVertex = edge.To;
+                    SplitFacePositive = null; // the reverse from above. The other face is above the flat
+                    SplitFaceNegative = edge.OtherFace;
+               }
             }
         }
 

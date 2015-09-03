@@ -43,6 +43,7 @@ namespace TVGL
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
+            if (InternalAngle == double.NaN) throw new Exception();
         }
         /// <summary>
         ///     Initializes a new instance of the <see cref="Edge" /> class.
@@ -71,6 +72,7 @@ namespace TVGL
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
+            if (InternalAngle == double.NaN) throw new Exception();
         }
 
         #endregion
@@ -245,12 +247,17 @@ namespace TVGL
                     InternalAngle = Math.PI + Math.Acos(dot);
                     Curvature = CurvatureType.Concave;
                 }
-                else
+                else if (num > 0)
                 {
                     InternalAngle = Math.PI - Math.Acos(dot);
                     Curvature = CurvatureType.Convex;
                 }
+                else
+                {
+                    throw new Exception();
+                }
             }
+            if (InternalAngle == double.NaN) throw new Exception();
             //Debug.WriteLine("angle = " + (InternalAngle * (180 / Math.PI)).ToString() + "; " + SurfaceIs.ToString());
         }
         #endregion

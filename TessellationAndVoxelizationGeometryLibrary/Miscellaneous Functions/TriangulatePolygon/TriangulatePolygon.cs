@@ -55,8 +55,8 @@ namespace TVGL
             var attempts = 0;
             while (successful == false && attempts < 2)
             {
-                try
-                {
+                //try
+                //{
                     attempts++;
 
                     #region Preprocessing
@@ -79,7 +79,7 @@ namespace TVGL
 
                     //Change point X and Y coordinates to be changed to random primary axis
                     var rnd = new Random();
-                    var theta = rnd.NextDouble();
+                    var theta = 0.01; //rnd.NextDouble();
                     for(var j = 0; j < points2D.Count(); j++)
                     {
                         var loop = points2D[j];
@@ -598,12 +598,12 @@ namespace TVGL
                     //trianglesInQuestion.Clear();
                     #endregion
 
-                }
-                catch
-                {
-                    if (attempts == 1) Debug.WriteLine("First attempt at triangulation failed. Attempting again...");
-                    else throw new System.ArgumentException("Triangulation failed after two attempts");
-                }
+                //}
+                //catch
+                //{
+                //    if (attempts == 1) Debug.WriteLine("First attempt at triangulation failed. Attempting again...");
+                //    else throw new System.ArgumentException("Triangulation failed after two attempts");
+                //}
             }
             return triangles;
         }
@@ -900,8 +900,22 @@ namespace TVGL
                 if ((node.IsLeftChain == true && (scan.Last().IsLeftChain == false || scan[scan.Count - 2].IsLeftChain == false)) ||
                     (node.IsRightChain == true && (scan.Last().IsRightChain == false || scan[scan.Count - 2].IsRightChain == false)))
                 {
-                    while (scan.Count > 1)
+                    var exitBool = false;
+                    while (scan.Count > 1 && exitBool == false)
                     {
+                        
+                        //Skip if close to Math.PI, because that will yield a Negligible area triangle
+                        //Note: It does not matter which angle function is called
+                        var angle = MiscFunctions.SmallerAngleBetweenEdges(node.Point, scan[0].Point, scan[1].Point);
+                        if (Math.Abs(angle - Math.PI) < 0.00001)
+                        {
+                            //Make the node the new peak, and insert at the beginning of the list.
+                            node.IsLeftChain = true;
+                            node.IsRightChain = true;
+                            scan.Insert(0, node);
+                            exitBool = true;
+                            continue;
+                        }
                         triangles.Add(new Vertex[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain
@@ -923,7 +937,8 @@ namespace TVGL
                         var angle = (node.IsRightChain)
                             ? MiscFunctions.AngleBetweenEdgesCCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point)
                             : MiscFunctions.AngleBetweenEdgesCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point);
-                        if (angle >= Math.PI)
+                        //Skip if greater than OR close to Math.PI, because that will yield a Negligible area triangle
+                        if (angle > Math.PI || Math.Abs(angle - Math.PI) < 0.00001 ) 
                         {
                             exitBool = true;
                             continue;
@@ -940,6 +955,13 @@ namespace TVGL
             if (triangles.Count != sortedNodes.Count - 2)
             {
                 throw new System.ArgumentException("Incorrect number of triangles created in triangulate monotone polgon function");
+            }
+            foreach (var triangle in triangles)
+            {
+                var edge1 = triangle[1].Position.subtract(triangle[0].Position);
+                var edge2 = triangle[2].Position.subtract(triangle[0].Position);
+                var area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
+                if (area.IsNegligible()) throw new Exception();
             }
             return triangles;
         }

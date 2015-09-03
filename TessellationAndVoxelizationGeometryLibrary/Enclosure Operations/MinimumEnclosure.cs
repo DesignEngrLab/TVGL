@@ -1029,6 +1029,7 @@ namespace TVGL
             // A bit more complicated, since it needs to look past the zero index.
             var currentIndex = -1;
             var previousIndex = -1;
+            var stallCounter = 0;
             extremeIndices[0] = extremeIndices[1];
             do
             {
@@ -1036,7 +1037,8 @@ namespace TVGL
                 extremeIndices[0]--;
                 if (extremeIndices[0] < 0) { extremeIndices[0] = numCvxPoints - 1; }
                 previousIndex = extremeIndices[0];
-            } while (cvxPoints[currentIndex][0] >= cvxPoints[previousIndex][0]);
+                stallCounter++;
+            } while (cvxPoints[currentIndex][0] >= cvxPoints[previousIndex][0] && stallCounter < points.Count());
             extremeIndices[0]++;
             if (extremeIndices[0] > numCvxPoints - 1) { extremeIndices[0] = 0; }
 
