@@ -21,8 +21,9 @@ namespace TVGL
         /// <param name="doublyLinkedFaces"></param>
         /// <param name="doublyLinkedVertices"></param>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            Boolean doublyLinkedVertices = true)
+            Boolean doublyLinkedVertices = true, int edgeReference = 0)
         {
+            EdgeReference = edgeReference;
             From = fromVertex;
             To = toVertex;
             _ownedFace = ownedFace;
@@ -129,6 +130,15 @@ namespace TVGL
 
         private PolygonalFace _otherFace;
         private PolygonalFace _ownedFace;
+
+        /// <summary>
+        ///     Gets edge reference (checksum) value, which equals
+        ///     "From.IndexInList" + "To.IndexInList" (think strings)
+        /// </summary>
+        /// <value>
+        ///     To.
+        /// </value>
+        public int EdgeReference { get; set; }
 
         /// <summary>
         ///     Gets the owned face (the face in which the from-to direction makes sense

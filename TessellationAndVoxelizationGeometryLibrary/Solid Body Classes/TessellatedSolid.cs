@@ -362,26 +362,7 @@ namespace TVGL
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
-        public TessellatedSolid Duplicate()
-        {
-            var faces = new List<List<int>>();
-            var listDoubles = new List<double[]>();
-            for(var i = 0; i < Vertices.Count(); i++)
-            {
-                Vertices[i].IndexInList = i;
-                listDoubles.Add(Vertices[i].Position);
-            }
-            for(var i = 0; i < Faces.Count(); i++)
-            {
-                var face = new List<int>();
-                foreach (var vertex in Faces[i].Vertices)
-                {
-                    face.Add(vertex.IndexInList);
-                }
-                faces.Add(face);
-            }
-            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
-        }
+        
 
         internal TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices)
         {
@@ -404,8 +385,63 @@ namespace TVGL
             DefineVertexCurvature();
         }
 
-
+        internal TessellatedSolid(IList<PolygonalFace> polyFaces)
+        {
+            var vertices = new HashSet<Vertex>();
+            var listDoubles = new List<double[]>();
+            var index = 0;
+            foreach (var polyFace in polyFaces)
+            {
+                if (polyFace.Vertices.Count < 3) throw new Exception("This method only works for faces with defined vertices.");
+                foreach (var vertex in polyFace.Vertices)
+                {
+                    if(!vertices.Contains(vertex))
+                    {
+                        vertices.Add(vertex);
+                        vertex.IndexInList = index;
+                        listDoubles.Add(vertex.Position);
+                        //listDoubles.Add((double[])vertex.Position.Clone());
+                        index++;
+                    }
+                }
+            }
+            var faces = new List<List<int>>();
+            for (var i = 0; i < polyFaces.Count(); i++)
+            {
+                var face = new List<int>();
+                foreach (var vertex in polyFaces[i].Vertices)
+                {
+                    face.Add(vertex.IndexInList);
+                }
+                faces.Add(face);
+            }
+            new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
+        }
         #endregion
+        //Duplicate creates a new tesselated solid from old data. 
+        //All references are removed and new ones are created.
+        //However, the new vertices point to the same vertex positions as the old data.
+        public TessellatedSolid Duplicate()
+        {
+            var listDoubles = new List<double[]>();
+            for(var i = 0; i < Vertices.Count(); i++)
+            {
+                Vertices[i].IndexInList = i;
+                listDoubles.Add(Vertices[i].Position);
+                //listDoubles.Add((double[])Vertices[i].Position.Clone());
+            }
+            var faces = new List<List<int>>();
+            for(var i = 0; i < Faces.Count(); i++)
+            {
+                var face = new List<int>();
+                foreach (var vertex in Faces[i].Vertices)
+                {
+                    face.Add(vertex.IndexInList);
+                }
+                faces.Add(face);
+            }
+            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
+        }
 
         #region Make many elements (called from constructors)
         /// <summary>
@@ -502,7 +538,7 @@ namespace TVGL
                     }
                     else
                     {
-                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices);
+                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices, checksum);
                         alreadyDefinedEdges.Add(checksum, edge);
                     }
                 }

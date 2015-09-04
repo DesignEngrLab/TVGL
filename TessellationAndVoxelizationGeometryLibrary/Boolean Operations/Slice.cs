@@ -43,11 +43,10 @@ namespace TVGL.Boolean_Operations
             // calculating these distances multiple times, we first construct an array of distances.
             var distancesToPlane = new List<double>();
             List<PolygonalFace> inPlaneFaces;
+            var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
             for (int i = 0; i < ts.NumberOfVertices; i++)
             {
-                var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
                 distancesToPlane.Add(ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal));
-                //distancesToPlane.Add(ts.Vertices[i].Position.dotProduct(plane.Normal) - plane.DistanceToOrigin);
                 ts.Vertices[i].IndexInList = i;
             }  
             // **** GetContactElements is the first main function of this method. *****

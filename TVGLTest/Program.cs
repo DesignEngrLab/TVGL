@@ -174,7 +174,7 @@ namespace TVGL_Test
             var distToVLow = vLow.Position.dotProduct(dir);
             //try
             //{
-                Slice2.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
+                Slice.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
             //}

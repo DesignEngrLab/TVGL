@@ -10,6 +10,15 @@ namespace TVGL
 {
     public static class TriangulatePolygon
     {
+        public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal, Boolean[] isPositive = null)
+        {
+            var points2D = new List<Point[]>();
+            foreach(var loop in loops)
+            {
+                points2D.Add(MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, true));
+            }
+            return TriangulatePolygon.Run(points2D, isPositive);
+        }
         /// <summary>
         ///     Triangulates a Polygon into faces in O(n log n) time.
         /// </summary>    
