@@ -10,14 +10,14 @@ namespace TVGL
 {
     public static class TriangulatePolygon
     {
-        public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal, Boolean[] isPositive = null)
+        public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal)
         {
             var points2D = new List<Point[]>();
             foreach(var loop in loops)
             {
                 points2D.Add(MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, true));
             }
-            return TriangulatePolygon.Run(points2D, isPositive);
+            return TriangulatePolygon.Run(points2D, null);
         }
         /// <summary>
         ///     Triangulates a Polygon into faces in O(n log n) time.
@@ -49,14 +49,16 @@ namespace TVGL
             // 1: Two positive loops may share a point, because they are processed separately.
             // 2: Loops can be in given CW or CCW, because as long as the isPositive boolean is correct, 
             // the code recognizes when the loop should be reversed.
-            // 3: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
+            // 3: If isPositive == null, CW and CCW ordering for the loops is unknown. A prepocess step can build a new isPositive variable.
+            // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
             // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
+            // 5: If isPositive == null, then 
 
             //Create return variable
             var triangles = new List<Vertex[]>();
 
             //Check incomining lists
-            if (points2D.Count() != isPositive.Count())
+            if (isPositive != null && points2D.Count() != isPositive.Count())
             {
                 throw new System.ArgumentException("Inputs into 'TriangulatePolygon' are unbalanced");
             }
@@ -77,18 +79,15 @@ namespace TVGL
                     // 4)   Add nodes to an ordered loop (same as points2D except now Nodes) 
                     //      and a sorted loop (used for sweeping).
                     // 5) Get the number of positive and negative loops. 
-                    var i = 0; //i is the used to set the loop ID
                     var orderedLoops = new List<List<Node>>();
                     var sortedLoops = new List<List<Node>>();
-                    var listPositive = isPositive.ToList<bool>();
                     var negativeLoopCount = 0;
                     var positiveLoopCount = 0;
                     var pointCount = 0;
-                    var points2DCorrected = new List<Point[]>();
 
                     //Change point X and Y coordinates to be changed to random primary axis
                     var rnd = new Random();
-                    var theta = 0.01; //rnd.NextDouble();
+                    var theta = 0.0110002; //rnd.NextDouble();
                     for(var j = 0; j < points2D.Count(); j++)
                     {
                         var loop = points2D[j];
@@ -105,37 +104,20 @@ namespace TVGL
                                 index = k;
                             }
                         }
-                        NodeType nodeType;
-                        if (index == 0)
-                        {
-                            nodeType = GetNodeType(loop.Last(), loop.First(), loop[1]);
-                        }
-                        else if (index == loop.Count() - 1)
-                        {
-                            nodeType = GetNodeType(loop[index-1], loop.Last(), loop.First());
-                        }
-                        else nodeType = GetNodeType(loop[index - 1], loop[index], loop[index+1]);
-
-                        //If node type is incorrect (loop is CW when it should be CCW or vice versa), 
-                        //reverse the order of the loop
-                        if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
-                        {
-                            loop = loop.Reverse().ToList().ToArray();
-                        }
-                        points2DCorrected.Add(loop);
                     }
-
-                    foreach (var loop in points2DCorrected)
+                    var linesInLoops = new List<List<Line>>();
+                    var i = 0; //i is the used to set the loop ID
+                    foreach (var loop in points2D)
                     {
                         var orderedLoop = new List<Node>();
+                        var linesInLoop = new List<Line>();
                         //Count the number of points and add to total.
                         pointCount = pointCount + loop.Count();
 
                         //Create first node
                         //Note that getNodeType -> GetAngle functions works for both + and - loops without a reverse boolean.
                         //This is because the loops are ordered clockwise - and counterclockwise +.
-                        var nodeType = GetNodeType(loop.Last(), loop[0], loop[1]);
-                        var firstNode = new Node(loop[0], nodeType, i);
+                        var firstNode = new Node(loop[0], i);
                         var previousNode = firstNode;
                         orderedLoop.Add(firstNode);
 
@@ -143,12 +125,7 @@ namespace TVGL
                         for (var j = 1; j < loop.Count() - 1; j++)
                         {
                             //Create New Node
-                            nodeType = GetNodeType(loop[j - 1], loop[j], loop[j + 1]);
-                            var node = new Node(loop[j], nodeType, i);
-                            if (nodeType == NodeType.UpwardReflex)
-                            {
-                                nodeType = NodeType.UpwardReflex;
-                            }
+                            var node = new Node(loop[j], i);
 
                             //Add node to the ordered loop
                             orderedLoop.Add(node);
@@ -157,22 +134,185 @@ namespace TVGL
                             var line = new Line(previousNode, node);
                             previousNode.StartLine = line;
                             node.EndLine = line;
-
                             previousNode = node;
+                            linesInLoop.Add(line);
                         }
 
                         //Create last node
-                        nodeType = GetNodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0]);
-                        var lastNode = new Node(loop[loop.Count() - 1], nodeType, i);
+                        //nodeType = GetNodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0]);
+                        var lastNode = new Node(loop[loop.Count() - 1], i);
                         orderedLoop.Add(lastNode);
 
                         //Create both missing lines 
                         var line1 = new Line(previousNode, lastNode);
                         previousNode.StartLine = line1;
                         lastNode.EndLine = line1;
+                        linesInLoop.Insert(0, line1);
                         var line2 = new Line(lastNode, firstNode);
                         lastNode.StartLine = line2;
                         firstNode.EndLine = line2;
+                        linesInLoop.Add(line2);
+
+                        int precision = 15;
+                        var sortedLoop = orderedLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node => 
+                            Math.Round(node.X, precision)).ToList<Node>();
+                        orderedLoops.Add(orderedLoop);
+                        sortedLoops.Add(sortedLoop);
+                        linesInLoops.Add(linesInLoop);
+                        i++;
+                    }
+
+                    //If isPositive was not known, correct the CW / CCW ordering of the sortedLoops
+                    if (isPositive == null)
+                    {
+                        isPositive = new bool[sortedLoops.Count];
+                        //First, find the first node from each loop and then sort them. This determines the order the loops
+                        //will be visited in.
+                        var firstNodeFromEachLoop = new List<Node>();
+                        foreach(var sortedLoop in sortedLoops)
+                        {
+                            firstNodeFromEachLoop.Add(sortedLoop[0]);
+                        }
+                        int precision = 15;
+                        var sortedFirstNodes = firstNodeFromEachLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node => 
+                            Math.Round(node.X, precision)).ToList<Node>();
+                        //Use a red-black tree to track whether loops are inside other loops
+                        var tempSortedLoops = new List<List<Node>>(sortedLoops);
+                        while (tempSortedLoops.Any())
+                        {
+                            //Set the start loop and remove necessary information
+                            var startLoop = sortedLoops[sortedFirstNodes[0].LoopID];
+                            isPositive[sortedFirstNodes[0].LoopID] = true; //The first loop in the group must always be CCW positive
+                            sortedFirstNodes.RemoveAt(0);
+                            tempSortedLoops.Remove(startLoop);
+                            if (!sortedFirstNodes.Any()) continue; //Exit while loop
+                            var sortedGroup = new List<Node>(startLoop);
+
+                            //Add the remaining first points from each loop into sortedGroup.
+                            foreach (var firstNode in sortedFirstNodes)
+                            {
+                                InsertNodeInSortedList(sortedGroup, firstNode);
+                            }
+
+                            //inititallize lineList 
+                            var lineList = new List<Line>();
+                            for (var j = 0; j < sortedGroup.Count(); j++)
+                            {
+                                var node = sortedGroup[j];
+                                Line leftLine = null;
+                                Line rightLine = null;
+                                
+                                if (node == sortedFirstNodes[0]) //if first point in the sorted loop 
+                                {
+                                    bool isInside;
+                                    bool isOnLine;
+                                    //If remainder is not equal to 0, then it is odd.
+                                    //If both LinesToLeft and LinesToRight are odd, then it must be inside.
+                                    if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)  
+                                    {
+                                        if (LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0) isInside = true;
+                                        else isInside = false;
+                                    }
+                                    else isInside = false;
+                                    if(isInside) //Merge the loop into this one and remove from the tempList
+                                    {
+                                        isPositive[node.LoopID] = false; //This is a negative loop
+                                        sortedFirstNodes.Remove(node);
+                                        tempSortedLoops.Remove(sortedLoops[node.LoopID]);
+                                        if (!tempSortedLoops.Any()) break; //That was the last loop
+                                        MergeSortedListsOfNodes(sortedGroup, sortedLoops[node.LoopID], node);
+                                    }
+                                    else //remove the node from this group and continue
+                                    {
+                                        sortedGroup.Remove(node);
+                                        j--; //Pick the same index for the next iteration as the node which was just removed
+                                        continue;
+                                    }
+                                }
+
+                                //Add to or remove from Red-Black Tree
+                                if (lineList.Contains(node.StartLine))
+                                {
+                                    lineList.Remove(node.StartLine);
+                                }
+                                else
+                                {
+                                    lineList.Add(node.StartLine);
+                                }
+                                if (lineList.Contains(node.EndLine))
+                                {
+                                    lineList.Remove(node.EndLine);
+                                }
+                                else
+                                {
+                                    lineList.Add(node.EndLine);
+                                }
+                            }
+                        }
+                        //Check to make sure that all the directions are correct
+                        foreach (var direction in isPositive)
+                        {
+                            if (direction != true && direction != false) throw new Exception();
+                        }
+                    }
+
+                    //Check to see that the loops are ordered correctly to their isPositive boolean
+                    //If they are incorrectly ordered, reverse the order.
+                    //This is used to check situations whether isPositive == null or not.
+                    var nodesLoopsCorrected = new List<List<Node>>();
+                    for (var j = 0; j < orderedLoops.Count(); j++) 
+                    {
+                        var orderedLoop = orderedLoops[j];
+                        var index = orderedLoop.IndexOf(sortedLoops[j][0]); // index of first node in orderedLoop
+                        NodeType nodeType;
+                        if (index == 0)
+                        {
+                            nodeType = GetNodeType(orderedLoop.Last(), orderedLoop.First(), orderedLoop[1]);
+                        }
+                        else if (index == orderedLoop.Count() - 1)
+                        {
+                            nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop.Last(), orderedLoop.First());
+                        }
+                        else nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop[index], orderedLoop[index + 1]);
+                        //If node type is incorrect (loop is CW when it should be CCW or vice versa), 
+                        //reverse the order of the loop
+                        if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
+                        {
+                            orderedLoop.Reverse();
+                            //Also, reorder all the lines for these nodes
+                            foreach (var line in linesInLoops[j])
+                            {
+                                line.Reverse();
+                            }
+                            //And reorder all the node - line identifiers
+                            foreach (var node in orderedLoop)
+                            {
+                                var tempLine = node.EndLine;
+                                node.EndLine = node.StartLine;
+                                node.StartLine = tempLine;
+                            }
+                        }
+                        nodesLoopsCorrected.Add(orderedLoop);
+                    }
+                    orderedLoops = new List<List<Node>>(nodesLoopsCorrected);
+
+                    //Set the NodeTypes of every Node. This step is after "isPositive == null" fuction because
+                    //the CW/CCW order of the loops must be accurate.
+                    i = 0;
+                    foreach (var orderedLoop in orderedLoops)
+                    {
+                        //Set nodeType for the first node
+                        orderedLoop[0].Type = GetNodeType(orderedLoop.Last(), orderedLoop[0], orderedLoop[1]);
+
+                        //Set nodeTypes for other nodes
+                        for (var j = 1; j < orderedLoop.Count() - 1; j++)
+                        {
+                            orderedLoop[j].Type = GetNodeType(orderedLoop[j - 1], orderedLoop[j], orderedLoop[j + 1]);
+                        }
+
+                        //Set nodeType for the last node
+                        //Create last node
+                        orderedLoop[orderedLoop.Count() - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count() - 2], orderedLoop[orderedLoop.Count() - 1], orderedLoop[0]);
 
                         //Debug to see if the proper balance of point types has been used
                         var downwardReflexCount = 0;
@@ -201,19 +341,9 @@ namespace TVGL
                                 throw new System.ArgumentException("Incorrect balance of node types");
                             }
                         }
-
-                        //Sort nodes by descending Y, descending X
-                        //var direction1 = new[] { 0.0, -1.0, 0.0};
-                        //var direction2 = new[] { -1.0, 0.0, 0.0 }; //one of many
-                        //var directions = new[] { direction1, direction2 };
-                        int precision = 15;
-                        var sortedLoop = orderedLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node => Math.Round(node.X, precision)).ToList<Node>();
-                        //var sortedLoop = orderedLoop.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList<Node>();
-                        orderedLoops.Add(orderedLoop);
-                        sortedLoops.Add(sortedLoop);
                         i++;
                     }
-
+                                      
                     //Get the number of negative loops
                     for (var j = 0; j < isPositive.Count(); j++)
                     {
@@ -237,6 +367,7 @@ namespace TVGL
                     // 6)   If not inside, remove that nodes from the group list. 
                     // 7)      else remove the negative loop from orderedLoops and merge the negative loop with the group list.
                     // 8)   Continue with Trapezoidation
+                    var listPositive = isPositive.ToList<bool>();
                     var completeListSortedLoops = new List<List<Node>>(sortedLoops);
                     while (orderedLoops.Any())
                     {
@@ -279,37 +410,36 @@ namespace TVGL
                             //Similarly points2D is static.
                             if (node == completeListSortedLoops[node.LoopID][0] && isPositive[node.LoopID] == false) //if first point in the sorted loop and loop is negative 
                             {
+                                bool isInside;
                                 bool isOnLine;
-                                if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
+                                //If remainder is not equal to 0, then it is odd.
+                                //If both LinesToLeft and LinesToRight are odd, then it must be inside.
+                                if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)  
                                 {
-                                    if (LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0) //If remainder is not equal to 0, then it is odd. 
-                                    {
-                                        //NOTE: This node must be a reflex upward point by observation
-                                        //leftLine and rightLine are set in the two previous call and are now not null.
-
-                                        //Add remaining points from loop into sortedGroup.
-                                        MergeSortedListsOfNodes(sortedGroup, completeListSortedLoops[node.LoopID], node);
-
-                                        //Remove this loop from lists of loops and the boolean list
-                                        var loop = completeListSortedLoops[node.LoopID];
-                                        var k = sortedLoops.FindIndex(loop);
-                                        listPositive.RemoveAt(k);
-                                        orderedLoops.RemoveAt(k);
-                                        sortedLoops.RemoveAt(k);
-                                    }
-                                    else //Number of lines is even. Remove from group and go to next node
-                                    {
-                                        sortedGroup.Remove(node);
-                                        j--; //Pick the same index for the next iteration as the node which was just removed
-                                        continue;
-                                    }
+                                    if (LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0) isInside = true;
+                                    else isInside = false;
                                 }
-                                else //Number of lines is even. Remove from group and go to next node
+                                else isInside = false;
+                                if(isInside)
+                                {
+                                    //NOTE: This node must be a reflex upward point by observation
+                                    //leftLine and rightLine are set in the two previous call and are now not null.
+                                    //Add remaining points from loop into sortedGroup.
+                                    MergeSortedListsOfNodes(sortedGroup, completeListSortedLoops[node.LoopID], node);
+
+                                    //Remove this loop from lists of loops and the boolean list
+                                    var loop = completeListSortedLoops[node.LoopID];
+                                    var k = sortedLoops.FindIndex(loop);
+                                    listPositive.RemoveAt(k);
+                                    orderedLoops.RemoveAt(k);
+                                    sortedLoops.RemoveAt(k);
+                                }
+                                else
                                 {
                                     sortedGroup.Remove(node);
                                     j--; //Pick the same index for the next iteration as the node which was just removed
                                     continue;
-                                }
+                                } 
                             }
 
                             //Add to or remove from Red-Black Tree
@@ -622,9 +752,9 @@ namespace TVGL
         /// Gets the type of node for B.
         /// </summary>
         /// A, B, & C are counterclockwise ordered points.
-        internal static NodeType GetNodeType(Point a, Point b, Point c)
+        internal static NodeType GetNodeType(Node a, Node b, Node c)
         {
-            var angle = MiscFunctions.AngleBetweenEdgesCCW(a, b, c);
+            var angle = MiscFunctions.AngleBetweenEdgesCCW(a.Point, b.Point, c.Point);
             if (a.Y.IsPracticallySame(b.Y))
             {
                 if (c.Y.IsPracticallySame(b.Y))
@@ -826,10 +956,10 @@ namespace TVGL
         #endregion
 
         #region Merge Two Sorted Lists of Nodes
-        internal static void MergeSortedListsOfNodes(List<Node> sortedNodes, List<Node> negativeLoop, Node node)
+        internal static void MergeSortedListsOfNodes(List<Node> sortedNodes, List<Node> negativeLoop, Node startingNode)
         {
             //For each node in negativeLoop, minus the first node (which is already in the list)
-            var nodeId = sortedNodes.IndexOf(node);
+            var nodeId = sortedNodes.IndexOf(startingNode);
             for (var i = 1; i < negativeLoop.Count(); i++)
             {
                 var isInserted = false;

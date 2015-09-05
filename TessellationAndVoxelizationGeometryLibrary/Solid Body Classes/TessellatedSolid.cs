@@ -385,11 +385,12 @@ namespace TVGL
             DefineVertexCurvature();
         }
 
-        internal TessellatedSolid(IList<PolygonalFace> polyFaces)
+        public TessellatedSolid BuildNewFromOld(IList<PolygonalFace> polyFaces)
         {
             var vertices = new HashSet<Vertex>();
             var listDoubles = new List<double[]>();
             var index = 0;
+            //Get a list of all the vertices in the new tesselated solid
             foreach (var polyFace in polyFaces)
             {
                 if (polyFace.Vertices.Count < 3) throw new Exception("This method only works for faces with defined vertices.");
@@ -415,7 +416,7 @@ namespace TVGL
                 }
                 faces.Add(face);
             }
-            new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
+            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
         }
         #endregion
         //Duplicate creates a new tesselated solid from old data. 

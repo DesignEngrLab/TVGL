@@ -29,9 +29,9 @@ namespace TVGL_Test
         //"../../../TestFiles/mushroom.off",   //breaks in OFFFileData
         //"../../../TestFiles/ABF.STL",           
         //"../../../TestFiles/Pump-1repair.STL",
-        "../../../TestFiles/Pump-1.STL",
+        //"../../../TestFiles/Pump-1.STL",
         "../../../TestFiles/Beam_Clean.STL", 
-        //"../../../TestFiles/piston.stl", 
+        "../../../TestFiles/piston.stl", 
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
         //"../../../TestFiles/pump.stl", 
@@ -174,7 +174,7 @@ namespace TVGL_Test
             var distToVLow = vLow.Position.dotProduct(dir);
             //try
             //{
-                Slice.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
+                Slice2.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
             //}

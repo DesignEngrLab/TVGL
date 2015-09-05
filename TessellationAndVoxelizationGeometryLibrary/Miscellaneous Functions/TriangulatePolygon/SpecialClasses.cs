@@ -57,7 +57,7 @@ namespace TVGL
         /// <summary>
         /// Gets the type of  node.
         /// </summary>
-        internal NodeType Type { get; private set; }
+        internal NodeType Type { get;  set; }
 
         /// <summary>
         /// Gets the base class, Point of this node.
@@ -84,6 +84,15 @@ namespace TVGL
         {
             LoopID = loopID;
             Type = nodeType;
+            Point = currentPoint;
+            X = currentPoint.X;
+            Y = currentPoint.Y;
+            Z = currentPoint.Z;
+        }
+
+        internal Node(Point currentPoint, int loopID)
+        {
+            LoopID = loopID;
             Point = currentPoint;
             X = currentPoint.X;
             Y = currentPoint.Y;
@@ -303,6 +312,12 @@ namespace TVGL
             return (y - b) / m;
         }
 
+        internal void Reverse()
+        {
+            var tempNode = FromNode;
+            FromNode = ToNode;
+            ToNode = tempNode;
+        }
     }
     #endregion
 }

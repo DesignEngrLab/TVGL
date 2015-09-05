@@ -945,6 +945,46 @@ namespace TVGL
         }
         #endregion
 
+        #region Split Tesselated Solid into multiple solids if faces are disconnected 
+        public static List<TessellatedSolid> GetMultipleSolids(TessellatedSolid ts)
+        {
+            var solids = new List<TessellatedSolid>();
+            var seperateSolids = new List<List<PolygonalFace>>();
+            var unusedFaces = new List<PolygonalFace>(ts.Faces);
+            while (unusedFaces.Any())
+            {
+                var faces = new HashSet<PolygonalFace>();
+                var stack = new Stack<PolygonalFace>(new[] { unusedFaces[0] });
+                while (stack.Any())
+                {
+                    var face = stack.Pop();
+                    if (faces.Contains(face)) continue;
+                    faces.Add(face);
+                    unusedFaces.Remove(face);
+                    foreach (var adjacentFace in face.AdjacentFaces)
+                    {
+                        if (adjacentFace == null) throw new Exception();
+                        stack.Push(adjacentFace);
+                    }
+                }
+                seperateSolids.Add(faces.ToList());
+            }
+            var count = 0;
+            if (seperateSolids.Count() == 1)
+            {
+                solids.Add(ts);
+                return solids;
+            }
+            foreach (var seperateSolid in seperateSolids)
+            {
+                solids.Add(ts.BuildNewFromOld(seperateSolid));
+                count = count + seperateSolid.Count();
+            }
+            if (count != ts.Faces.Count()) throw new Exception();
+            return solids;
+        }
+        #endregion
+
         #region DEBUG: Is something broken in the stl file or convex hull?
         public static bool IsSomethingBroken(TessellatedSolid ts)
         {
