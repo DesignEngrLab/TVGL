@@ -40,6 +40,8 @@ namespace TVGL.Boolean_Operations
             //3. Triangulate that empty space and add to list 
             var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal);
             positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1))));
+            triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal);
+            negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal)));
             //4. Create a new tesselated solid. This solid may actually be multiple solids.
             //This step removes all previous relationships and rebuilds them.
             if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
@@ -48,9 +50,7 @@ namespace TVGL.Boolean_Operations
                 //5. Split the tesselated solid into multiple solids if necessary
                 positiveSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(positiveSideSolid));
 
-                //6. Repeat steps 3-5 for the negative side
-                triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal);
-                negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal)));
+                //6. Repeat steps 4-5 for the negative side
                 var negativeSideSolid = ts.BuildNewFromOld(negativeSideFaces);
                 negativeSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(negativeSideSolid));
             }
@@ -101,7 +101,7 @@ namespace TVGL.Boolean_Operations
             }
             
             //Categorize all the faces in the solid
-            var newOnPlaneEdges = new List<Edge>();
+            var newOnPlaneEdges = new List<Edge>(); //Place holder for debugging.
             foreach (var face in ts.Faces)
             {
                 

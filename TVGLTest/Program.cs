@@ -15,7 +15,7 @@ namespace TVGL_Test
     {
         private static string[] filenames = {    
         //"../../../TestFiles/Beam_Boss.STL",   
-        //"../../../TestFiles/Tetrahedron.STL",                                      
+        "../../../TestFiles/Tetrahedron.STL",                                      
         //"../../../TestFiles/off_axis_box.STL",
         //"../../../TestFiles/Wedge.STL",
         //"../../../TestFiles/amf_Cube.amf",
@@ -35,7 +35,7 @@ namespace TVGL_Test
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
         //"../../../TestFiles/pump.stl", 
-        "../../../TestFiles/bradley.stl", 
+        //"../../../TestFiles/bradley.stl", 
         //"../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
         //"../../../TestFiles/new/5.STL", 
         //"../../../TestFiles/new/2.stl", //Note that this is an assembly 
@@ -179,6 +179,14 @@ namespace TVGL_Test
             Slice2.OnFlat(ts, new Flat(distToVLow + length / 2, dir), out positiveSideSolids, out negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
+            foreach (var solid in negativeSideSolids)
+            {
+                MiscFunctions.IsSolidBroken(solid);
+            }
+            foreach (var solid in positiveSideSolids)
+            {
+                MiscFunctions.IsSolidBroken(solid);
+            }
             //}
             //catch (Exception)
             //{
