@@ -5,6 +5,9 @@ using StarMathLib;
 
 namespace TVGL
 {
+    /// <summary>
+    /// Miscellaneous Functions for TVGL
+    /// </summary>
     public static class MiscFunctions
     {
         #region Flatten to 2D
@@ -15,13 +18,13 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
-        /// <param name="MergeDuplicateReferences">The merge duplicate references.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
         public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction,
-            Boolean MergeDuplicateReferences = false)
+            Boolean mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction);
-            return Get2DProjectionPoints(vertices, transform, MergeDuplicateReferences);
+            return Get2DProjectionPoints(vertices, transform, mergeDuplicateReferences);
         }
 
         /// <summary>
@@ -32,13 +35,13 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
-        /// <param name="MergeDuplicateReferences">The merge duplicate references.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
         public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction, out double[,] backTransform,
-            Boolean MergeDuplicateReferences = false)
+            bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction, out backTransform);
-            return Get2DProjectionPoints(vertices, transform , MergeDuplicateReferences);
+            return Get2DProjectionPoints(vertices, transform , mergeDuplicateReferences);
         }
 
         /// <summary>
@@ -46,10 +49,10 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="transform">The transform.</param>
-        /// <param name="MergeDuplicateReferences">The merge duplicate references.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point[].</returns>
         public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[,] transform,
-            Boolean MergeDuplicateReferences = false)
+            bool mergeDuplicateReferences = false)
         {
             var points = new List<Point>();
             var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
@@ -60,7 +63,7 @@ namespace TVGL
                 pointAs4[2] = vertex.Position[2];
                 pointAs4 = transform.multiply(pointAs4);
                 var point2D = new[] { pointAs4[0], pointAs4[1]};
-                if (MergeDuplicateReferences)
+                if (mergeDuplicateReferences)
                 {
                     var sameIndex = points.FindIndex(p => p.Position2D.IsPracticallySame(point2D));
                     if (sameIndex >= 0)
@@ -208,22 +211,22 @@ namespace TVGL
         #endregion
 
         #region Intersection Method (between lines, planes, solids, etc.)
-        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, out double[] DirectionOfLine, out double[] PointOnLine)
+        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, out double[] directionOfLine, out double[] PointOnLine)
         {
-            DirectionOfLine = n1.crossProduct(n2).normalize();
-            LineIntersectingTwoPlanes(n1, d1, n2, d2, DirectionOfLine, out PointOnLine);
+            directionOfLine = n1.crossProduct(n2).normalize();
+            LineIntersectingTwoPlanes(n1, d1, n2, d2, directionOfLine, out PointOnLine);
         }
-        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, double[] DirectionOfLine, out double[] PointOnLine)
+        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, double[] directionOfLine, out double[] PointOnLine)
         {
             /* to find the point on the line...well a point on the line, it turns out that one has three unknowns (px, py, pz)
              * and only two equations. Let's put the point on the plane going through the origin. So this plane would have a normal 
              * of v (or DirectionOfLine). */
-            var A = new double[3, 3];
-            A.SetRow(0, n1);
-            A.SetRow(1, n2);
-            A.SetRow(2, DirectionOfLine);
+            var a = new double[3, 3];
+            a.SetRow(0, n1);
+            a.SetRow(1, n2);
+            a.SetRow(2, directionOfLine);
             var b = new[] { d1, d2, 0 };
-            PointOnLine = StarMath.solve(A, b);
+            PointOnLine = StarMath.solve(a, b);
         }
         internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2)
         {
@@ -261,9 +264,9 @@ namespace TVGL
             var a11 = -n2[0] * n2[0] - n2[1] * n2[1] - n2[2] * n2[2];
             var b0 = n1[0] * (p2[0] - p1[0]) + n1[1] * (p2[1] - p1[1]) + n1[2] * (p2[2] - p1[2]);
             var b1 = n2[0] * (p2[0] - p1[0]) + n2[1] * (p2[1] - p1[1]) + n2[2] * (p2[2] - p1[2]);
-            var A = new[,] { { a00, a01 }, { a10, a11 } };
+            var a = new[,] { { a00, a01 }, { a10, a11 } };
             var b = new[] { b0, b1 };
-            var t = StarMath.solve(A, b);
+            var t = StarMath.solve(a, b);
             t1 = t[0];
             t2 = t[1];
             interSect1 = new[] { p1[0] + n1[0] * t1, p1[1] + n1[1] * t1, p1[2] + n1[2] * t1 };
@@ -275,7 +278,7 @@ namespace TVGL
         internal static bool ArcArcIntersection(double[][] arc1Vectors, double[][] arc2Vectors, out double[][] intercepts)
         {
             intercepts = null;
-            var tolerance = 0.0001;
+            const double tolerance = 0.0001;
             //Create two planes given arc1 and arc2
             var norm1 = arc1Vectors[0].crossProduct(arc1Vectors[1]).normalize(); //unit normal
             var norm2 = arc2Vectors[0].crossProduct(arc2Vectors[1]).normalize(); //unit normal
@@ -302,7 +305,7 @@ namespace TVGL
                 l3 = Math.Acos(arc2Vectors[1].dotProduct(vertices[i]));
                 var total2 = l1 - l2 - l3;
                 if (!total1.IsNegligible() || !total2.IsNegligible()) continue;
-                intercepts[0] = vertices[i];
+                intercepts[0] = vertices[i];             
                 return true;
             }
             return false;
@@ -946,6 +949,12 @@ namespace TVGL
         #endregion
 
         #region Split Tesselated Solid into multiple solids if faces are disconnected 
+        /// <summary>
+        /// Gets all the individual solids from a tesselated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static List<TessellatedSolid> GetMultipleSolids(TessellatedSolid ts)
         {
             var solids = new List<TessellatedSolid>();
@@ -986,12 +995,20 @@ namespace TVGL
         #endregion
 
         #region DEBUG: Is something broken in the stl file or convex hull?
-        public static bool IsSomethingBroken(TessellatedSolid ts)
+        /// <summary>
+        /// Checks if convex hull is broken 
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        /// <exception>
+        ///     <cref>Exception</cref>
+        /// </exception>
+        public static bool IsConvexHullBroken(TessellatedSolid ts)
         {
             //Check if convex hull is water tight or multiple solids
             var faces = new HashSet<PolygonalFace>();
             var startFace = ts.ConvexHullFaces[0];
-            var stack = new Stack<PolygonalFace>(new[] { startFace });
+            var stack = new Stack<PolygonalFace>(new[] {startFace});
             while (stack.Any())
             {
                 var face = stack.Pop();
@@ -1008,20 +1025,39 @@ namespace TVGL
             //Check if the vertices of an edge belong to the two faces it is supposed to belong to
             foreach (var edge in ts.ConvexHullEdges)
             {
-                if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From)) throw new Exception();
-                //if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From)) throw new Exception();
+                if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From))
+                    throw new Exception();
+                if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From))
+                    throw new Exception();
                 //See if that edge should have been connected to a different face
-                foreach(var face in ts.ConvexHullFaces)
+                if (ts.ConvexHullFaces.Any(face => face.Vertices.Contains(edge.To) &&
+                                                   face.Vertices.Contains(edge.From) && face != edge.OwnedFace &&
+                                                   face != edge.OtherFace))
                 {
-                    if (face.Vertices.Contains(edge.To) && face.Vertices.Contains(edge.From) && face != edge.OwnedFace && face != edge.OtherFace) break;
+                    throw new Exception();
                 }
-                
-                if (edge.Curvature == CurvatureType.Concave) continue;
+                if (edge.Curvature == CurvatureType.Concave) throw new Exception();
             }
+            //Else, no exceptions have been hit.
+            return false;
+        }
+
+        /// <summary>
+        /// Checks if solid model is broken.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static bool IsSolidBroken(TessellatedSolid ts)
+        { 
             foreach (var edge in ts.Edges)
             {
                 if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From)) throw new Exception();
                 if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From)) throw new Exception();
+                if (edge.OwnedFace == null) throw new Exception();
+                if (edge.OtherFace == null) throw new Exception();
+                if (double.IsNaN(edge.InternalAngle)) throw new Exception();
+                if (edge.Curvature == CurvatureType.Undefined) throw new Exception();
             }
 
             //Check if any faces are without a normal vector
@@ -1030,12 +1066,17 @@ namespace TVGL
                 var face = ts.Faces[j];
                 var d = Math.Abs(face.Normal[0]) + Math.Abs(face.Normal[1]) + Math.Abs(face.Normal[2]);
                 if (d.IsNegligible()) throw new Exception();
+                if (double.IsNaN(face.Normal[0])) throw new Exception();
+                //If face area is Negligible, repair the tesselated solid by removing the face
+                if (face.Area.IsNegligible()) throw new Exception();
+                //Check for any null adjacent faces
+                if (face.AdjacentFaces.Any(adjFace => adjFace == null)) throw new Exception();
             }
 
             //Check if water tight or multiple solids
-            faces = new HashSet<PolygonalFace>();
-            startFace = ts.Faces[0];
-            stack = new Stack<PolygonalFace>(new[] { startFace });
+            var faces = new HashSet<PolygonalFace>();
+            var startFace = ts.Faces[0];
+            var stack = new Stack<PolygonalFace>(new[] { startFace });
             while (stack.Any())
             {
                 var face = stack.Pop();
@@ -1048,14 +1089,19 @@ namespace TVGL
                 }
             }
             if (ts.Faces.Count() - faces.Count()  > 3) throw new Exception("This is likely an assembly");
-            else if (ts.Faces.Count() -  faces.Count() > 0 ) throw new Exception("Solid is not water tight");
-
-            
+            if (ts.Faces.Count() -  faces.Count() > 0 ) throw new Exception("Solid is not water tight");
 
             //Passed all the debug criteria
-            return true;
+            return false;
         }
 
+        /// <summary>
+        /// Simple Check to determine if a part is not watertight 
+        /// (doesn't gaurantee it is watertight, but can guarantee it isn't)
+        /// </summary>
+        /// <param name="listFaces"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static bool IsWaterTight(List<PolygonalFace> listFaces)
         {
             var faces = new HashSet<PolygonalFace>();

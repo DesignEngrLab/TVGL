@@ -19,7 +19,7 @@ namespace TVGL_Test
         //"../../../TestFiles/off_axis_box.STL",
         //"../../../TestFiles/Wedge.STL",
         //"../../../TestFiles/amf_Cube.amf",
-        "../../../TestFiles/Mic_Holder_SW.stl",  
+        //"../../../TestFiles/Mic_Holder_SW.stl",  
         //"../../../TestFiles/Mic_Holder_JR.stl",
         //"../../../TestFiles/3_bananas.amf",
         //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
@@ -30,12 +30,12 @@ namespace TVGL_Test
         //"../../../TestFiles/ABF.STL",           
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/Beam_Clean.STL", 
-        "../../../TestFiles/piston.stl", 
+        //"../../../TestFiles/Beam_Clean.STL", 
+        //"../../../TestFiles/piston.stl", 
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
         //"../../../TestFiles/pump.stl", 
-        //"../../../TestFiles/bradley.stl", 
+        "../../../TestFiles/bradley.stl", 
         //"../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
         //"../../../TestFiles/new/5.STL", 
         //"../../../TestFiles/new/2.stl", //Note that this is an assembly 
@@ -64,7 +64,7 @@ namespace TVGL_Test
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
-                MiscFunctions.IsSomethingBroken(ts[0]);
+                //MiscFunctions.IsSolidBroken(ts[0]);
 
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
@@ -90,6 +90,7 @@ namespace TVGL_Test
             //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);\
+            MiscFunctions.IsConvexHullBroken(ts);
             var Flats = ListFunctions.FlatsFromPrimitives(ts);
             List<List<double[]>> VolumeData1;
             List<List<double[]>> VolumeData2;
@@ -166,7 +167,7 @@ namespace TVGL_Test
             //return;
             var now = DateTime.Now;
             Debug.WriteLine("start...");
-            var dir = new[] { 0.0, 1.0, 0.0 };
+            var dir = new[] { 1.0, 0.0, 0.0 };
             dir.normalize();
             Vertex vLow, vHigh;
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
@@ -174,7 +175,8 @@ namespace TVGL_Test
             var distToVLow = vLow.Position.dotProduct(dir);
             //try
             //{
-                Slice2.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
+            //distToVLow+length/2
+            Slice2.OnFlat(ts, new Flat(distToVLow + length / 2, dir), out positiveSideSolids, out negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
             //}

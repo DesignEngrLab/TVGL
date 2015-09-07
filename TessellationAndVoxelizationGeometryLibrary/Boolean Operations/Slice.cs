@@ -245,7 +245,7 @@ namespace TVGL.Boolean_Operations
 
         internal static PolygonalFace FindForwardStraddleFace(Flat plane, Vertex onPlaneVertex, List<double> vertexDistancesToPlane, out Edge edge)
         {
-            var tolerance = 0.00001;
+            const double tolerance = 0.00001;
             edge = null;
             foreach (var face in onPlaneVertex.Faces)
             {
@@ -263,7 +263,7 @@ namespace TVGL.Boolean_Operations
         }
         internal static PolygonalFace FindBackwardStraddleFace(Flat plane, Vertex onPlaneVertex, List<double> vertexDistancesToPlane, out Edge edge)
         {
-            var tolerance = 0.00001;
+            const double tolerance = 0.00001;
             edge = null;
             foreach (var face in onPlaneVertex.Faces)
             {
@@ -352,28 +352,6 @@ namespace TVGL.Boolean_Operations
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
-            //Check to make sure ts is ok.
-            foreach (var face in ts.Faces)
-            {
-                //If face area is Negligible, repair the tesselated solid by removing the face
-                if (face.Area.IsNegligible())
-                {
-                    throw new Exception();
-                }
-                if (face.Normal[0] == double.NaN) throw new Exception();
-                foreach (var adjFace in face.AdjacentFaces)
-                {
-                    if (adjFace == null) throw new Exception();
-                }
-            }
-            foreach (var edge in ts.Edges)
-            {
-                if (edge.OwnedFace == null) throw new Exception();
-                if (edge.OtherFace == null) throw new Exception();
-                if (edge.InternalAngle == double.NaN) throw new Exception();
-                if (edge.Curvature == CurvatureType.Undefined) throw new Exception();
-            }
-
             var contactData = DefineContact(plane, ts, false);
             if (!contactData.AllLoops.Any())
             {
