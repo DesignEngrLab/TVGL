@@ -1,6 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Media;
+using System.Threading.Tasks;
+using System.Timers;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
@@ -19,25 +24,48 @@ namespace TVGL_Helix_Presenter
         /// Shows the specified tessellated solid in a Helix toolkit window.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
-        public static void Show(TessellatedSolid tessellatedSolid)
+        /// <param name="seconds"></param>
+        public static void Show(TessellatedSolid tessellatedSolid, int seconds = 0)
         {
             var window = new MainWindow();
             window.view1.Children.Add(MakeModelVisual3D(tessellatedSolid));
             window.view1.ZoomExtentsWhenLoaded = true;
-            window.ShowDialog();
+            if (seconds > 0)
+            {
+                window.Show();
+                System.Threading.Thread.Sleep(seconds*1000);
+                window.Close();
+            }
+            else window.ShowDialog();
         }
+
         /// <summary>
         /// Shows the specified tessellated solids in a Helix toolkit window.
         /// </summary>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
-        public static void Show(IList<TessellatedSolid> tessellatedSolids)
+        /// <param name="seconds"></param>
+        public static void Show(IList<TessellatedSolid> tessellatedSolids, int seconds = 0)
         {
             var window = new MainWindow();
-
+            var models = new List<Visual3D>();
+            var timer = new Timer {Interval = (1000)*(1)};
+            
             foreach (var tessellatedSolid in tessellatedSolids)
-                window.view1.Children.Add(MakeModelVisual3D(tessellatedSolid));
+            {
+                var model = MakeModelVisual3D(tessellatedSolid);
+                models.Add(model);
+                window.view1.Children.Add(model);
+            }
             window.view1.ZoomExtentsWhenLoaded = true;
-            window.ShowDialog();
+            if (seconds > 0)
+            {
+                window.Show();
+                //timer.Elapsed += (o, e) => window.Close();
+                //timer.Start();
+                System.Threading.Thread.Sleep(seconds * 1000);
+                window.Close();
+            }
+            else window.ShowDialog();
         }
 
         private static Visual3D MakeModelVisual3D(TessellatedSolid ts)

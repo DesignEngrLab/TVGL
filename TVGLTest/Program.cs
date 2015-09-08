@@ -15,7 +15,7 @@ namespace TVGL_Test
     {
         private static string[] filenames = {    
         //"../../../TestFiles/Beam_Boss.STL",   
-        "../../../TestFiles/Tetrahedron.STL",                                      
+        //"../../../TestFiles/Tetrahedron.STL",                                      
         //"../../../TestFiles/off_axis_box.STL",
         //"../../../TestFiles/Wedge.STL",
         //"../../../TestFiles/amf_Cube.amf",
@@ -30,7 +30,7 @@ namespace TVGL_Test
         //"../../../TestFiles/ABF.STL",           
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
-        //"../../../TestFiles/Beam_Clean.STL", 
+        "../../../TestFiles/Beam_Clean.STL", 
         //"../../../TestFiles/piston.stl", 
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
@@ -167,7 +167,7 @@ namespace TVGL_Test
             //return;
             var now = DateTime.Now;
             Debug.WriteLine("start...");
-            var dir = new[] { 1.0, 0.0, 0.0 };
+            var dir = new[] { 0.0, 1.0, 0.0 };
             dir.normalize();
             Vertex vLow, vHigh;
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
@@ -176,9 +176,9 @@ namespace TVGL_Test
             //try
             //{
             //distToVLow+length/2
-            Slice2.OnFlat(ts, new Flat(distToVLow + length / 2, dir), out positiveSideSolids, out negativeSideSolids);
-                TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
-                TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
+            Slice2.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
+                TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids, 2);
+                TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids, 2);
             foreach (var solid in negativeSideSolids)
             {
                 MiscFunctions.IsSolidBroken(solid);
