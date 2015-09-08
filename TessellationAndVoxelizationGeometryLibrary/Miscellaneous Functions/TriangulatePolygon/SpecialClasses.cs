@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using MIConvexHull;
+﻿using System.Collections.Generic;
 using StarMathLib;
 
 namespace TVGL
@@ -76,10 +72,13 @@ namespace TVGL
         #endregion
 
         #region Constructor
+
         /// <summary>
         /// Create a new node from a given point
         /// /// </summary>
-        /// <param name="point"></param>
+        /// <param name="currentPoint"></param>
+        /// <param name="nodeType"></param>
+        /// <param name="loopID"></param>
         internal Node(Point currentPoint, NodeType nodeType, int loopID)
         {
             LoopID = loopID;
@@ -222,12 +221,13 @@ namespace TVGL
         #endregion
 
         #region Constructor
+
         /// <summary>
         /// Constructs a MonotonePolygon based on a list of nodes.
         /// </summary>
         /// <param name="leftChain"></param>
         /// <param name="rightChain"></param>
-        /// <param name="sortedMonotonePolyNodesChain"></param>
+        /// <param name="sortedNodes"></param>
         internal MonotonePolygon(List<Node> leftChain, List<Node> rightChain, List<Node> sortedNodes)
         {
             LeftChain = leftChain;

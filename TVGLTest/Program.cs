@@ -91,7 +91,7 @@ namespace TVGL_Test
             //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);\
             MiscFunctions.IsConvexHullBroken(ts);
-            var Flats = ListFunctions.FlatsFromPrimitives(ts);
+            var Flats = ListFunctions.Flats(ts);
             List<List<double[]>> VolumeData1;
             List<List<double[]>> VolumeData2;
             var obb = MinimumEnclosure.OrientedBoundingBox_Test(ts, out VolumeData1, out VolumeData2);

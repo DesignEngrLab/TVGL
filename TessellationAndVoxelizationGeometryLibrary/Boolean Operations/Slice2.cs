@@ -104,7 +104,6 @@ namespace TVGL.Boolean_Operations
             var newOnPlaneEdges = new List<Edge>(); //Place holder for debugging.
             foreach (var face in ts.Faces)
             {
-                
                 if (face.Vertices.Count() != 3) throw new Exception("This was written with triangles in mind, ONLY");
                 if (face.Edges.Count() != 3) throw new Exception("This was written with triangles in mind, ONLY");
                 //Categorize the vertices of the face

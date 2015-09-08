@@ -939,7 +939,6 @@ namespace TVGL
             ConvexHullFaces = new PolygonalFace[numCvxFaces];
             ConvexHullEdges = new Edge[3 * numCvxFaces / 2];
             var faceIndex = 0;
-            var edgeIndex = 0;
             foreach (var cvxFace in convexHull.Faces)
             {
                 var newFace = new PolygonalFace(cvxFace.Vertices.ToList(), cvxFace.Normal, false);

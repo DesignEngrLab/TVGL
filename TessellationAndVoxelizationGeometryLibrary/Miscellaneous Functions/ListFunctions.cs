@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml.Serialization;
 using StarMathLib;
 //using PrimitiveClassificationOfTessellatedSolids;
 
@@ -9,6 +10,11 @@ namespace TVGL
     public static class ListFunctions
     {
 
+        /// <summary>
+        /// Gets all the faces with distinct normals. NOT SURE THIS WORKS PROPERLY.
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <returns></returns>
         public static List<PolygonalFace> FacesWithDistinctNormals(List<PolygonalFace> faces)
         {
             var distinctList = new List<PolygonalFace>(faces);
@@ -29,44 +35,48 @@ namespace TVGL
             return distinctList;
         }
 
-        public static List<Flat> Flats(List<PolygonalFace> faces)
+        /// <summary>
+        /// Gets a list of flats, given a list of faces.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        public static List<Flat> Flats(TessellatedSolid ts)
         {
-            throw new Exception("These checksum values don't seem to be unique");
-            var tolerance = 0.002;
-            var n = faces.Count;
-            var checkSumMultipliers = new double[] { 1, 1e8, 1e16 };
-            var checkSums = new double[n];
-            for (var i = 0; i < n; i++)
-                checkSums[i] = (int)Math.Abs(checkSumMultipliers.dotProduct(faces[i].Normal));
-            var indices = StarMath.makeLinearProgression(n);
-            indices = indices.OrderBy(index => checkSums[index]).ToArray();
-
-            var listFaces = new List<PolygonalFace>() { faces[indices[n - 1]] };
-            var firstFlat = new Flat(listFaces);
-            var listFlats = new List<Flat>(){firstFlat};
-            var currentFlat = firstFlat;
-            for (var i = n - 1; i > 0; i--)
+            throw new Exception("Not Implemented Correctly, yet");
+            var faces = new List<PolygonalFace>(ts.Faces);
+            var listFaces = new List<PolygonalFace>(faces);
+            var listFlats = new List<Flat>();
+            while (listFaces.Any())
             {
-                var n1 = faces[indices[i]].Normal;
-                var n2 = faces[indices[i-1]].Normal;
-                if (currentFlat.IsNewMemberOf(faces[indices[i - 1]])) currentFlat.UpdateWith(faces[indices[i - 1]]);
-                else
+                var startFace = listFaces[0];
+                var stack = new Stack<PolygonalFace>();
+                stack.Push(startFace);
+                //Create new flat from start face
+                var flat = new Flat(new [] {startFace});
+                var hashFaces = new HashSet<PolygonalFace>(listFaces);
+                while (stack.Any())
                 {
-                    //Create a new flat and add to list
-                    listFaces[0] = faces[indices[i - 1]];
-                    var newFlat = new Flat(listFaces);
-                    listFlats.Add(newFlat);
-                    currentFlat = newFlat;
+                    var newFace = stack.Pop();
+                    if (hashFaces.Contains(newFace))
+                    {
+                        //Only visit once per iteration
+                        hashFaces.Remove(newFace);
+                        if (flat.IsNewMemberOf(newFace))
+                        {
+                            flat.UpdateWith(newFace);
+                            listFaces.Remove(newFace);
+                            foreach (var adjacentFace in newFace.AdjacentFaces)
+                            {
+                                stack.Push(adjacentFace);
+                            }
+                        }
+                    } 
                 }
+
+                //Criteria of whether it should be a flat should be inserted here.
+                listFlats.Add(flat);
             }
             return listFlats;
-        }
-
-        public static List<Flat> FlatsFromPrimitives(TessellatedSolid ts)
-        {
-            //var primitiveSurfaces = TesselationToPrimitives.Run(ts);
-            var flatFaces = new List<Flat>();
-            return flatFaces;
         }
     }
 }

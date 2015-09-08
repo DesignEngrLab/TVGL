@@ -30,8 +30,7 @@ namespace TVGL
         /// </summary>
         /// <param name="loops">The loops.</param>
         /// <param name="inPlaneFaces"></param>
-        /// <param name="additionalEdges">The additional edges.</param>
-        internal ContactData(List<Loop> loops, List<PolygonalFace> inPlaneFaces)
+        internal ContactData(IEnumerable<Loop> loops, List<PolygonalFace> inPlaneFaces)
         {
             InPlaneFaces = inPlaneFaces;
             PositiveLoops = new List<Loop>();
@@ -84,6 +83,9 @@ namespace TVGL
         /// </summary>
         public readonly double Area;
 
+        /// <summary>
+        /// List of In Plane Faces
+        /// </summary>
         public readonly List<PolygonalFace> InPlaneFaces;
     }
     /// <summary>
@@ -95,7 +97,7 @@ namespace TVGL
         /// <summary>
         /// Is the loop positive - meaning does it enclose material versus representing a hole
         /// </summary>
-        public readonly Boolean IsPositive;
+        public readonly bool IsPositive;
         /// <summary>
         /// The length of the loop.
         /// </summary>
@@ -107,11 +109,11 @@ namespace TVGL
         /// <summary>
         /// Is the loop closed?
         /// </summary>
-        public readonly Boolean IsClosed;
+        public readonly bool IsClosed;
         /// <summary>
         /// Was the loop closed by artificial ContactElements
         /// </summary>
-        public readonly Boolean ArtificiallyClosed;
+        public readonly bool ArtificiallyClosed;
         /// <summary>
         /// Does the loop enclose a bunch of faces that lie in the plane?
         /// </summary>
@@ -132,8 +134,10 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <param name="isClosed">is closed.</param>
         /// <param name="artificiallyClosed">is artificially closed.</param>
-        /// <param name="b"></param>
-        internal Loop(List<ContactElement> contactElements, double[] normal, bool isClosed, bool artificiallyClosed, 
+        /// <param name="enclosesInPlaneFace"></param>
+        /// <param name="onNegativeSolids"></param>
+        /// <param name="onPositiveSolids"></param>
+        internal Loop(ICollection<ContactElement> contactElements, IList<double> normal, bool isClosed, bool artificiallyClosed, 
             bool enclosesInPlaneFace, bool onNegativeSolids = true, bool onPositiveSolids = true)
             : base(contactElements)
         {
