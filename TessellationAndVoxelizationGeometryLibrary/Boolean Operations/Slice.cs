@@ -96,7 +96,7 @@ namespace TVGL.Boolean_Operations
             // and organize the edges (or vertices into the following three categories: edges that straddle the plane (straddleEdges),
             // edges that are on the plane (inPlaneEdges), and edges endpoints (or rather just the vertex in question) that are in the
             // plane.
-            var tolerance = 0.00001;
+            var tolerance = Constants.ErrorForFaceInSurface;
             var straddleEdges = new List<Edge>();
             var inPlaneEdges = new List<Edge>();
             var inPlaneVerticesHash = new HashSet<Vertex>();  //since these will be found multiple times, in the following loop, 

@@ -25,7 +25,7 @@ namespace TVGL.Boolean_Operations
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids, double offset = 0.001)
+            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids, double offset = 0.0)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -79,17 +79,36 @@ namespace TVGL.Boolean_Operations
         private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<Vertex> loopVertices,
             int isPositiveSide, double offset, double tolerance)
         {
+            var originalDistanceToOrigin = plane.DistanceToOrigin;
+            Vertex vLow, vHigh;
+            try
+            {
+                MinimumEnclosure.GetLengthAndExtremeVertices(plane.Normal, plane.Vertices, out vLow, out vHigh);
+                var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
+                var negOffset = -vLow.Position.subtract(pointOnPlane).dotProduct(plane.Normal);
+                var posOffset = vHigh.Position.subtract(pointOnPlane).dotProduct(plane.Normal);
+                if ((!negOffset.IsNegligible() && negOffset * Math.Sign(originalDistanceToOrigin) > 0) 
+                || (!posOffset.IsNegligible() && posOffset * Math.Sign(originalDistanceToOrigin) < 0)) throw new Exception();
+                if (isPositiveSide == 1) offset = posOffset;
+                else offset = negOffset;
+            }
+            catch
+            {
+                offset = 0.0; //Because minimum enclosure throws an error when length is 0.
+            }
+            
+            
             onSideFaces = new List<PolygonalFace>();
             var checkSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(ts.Faces.Count() * 2 + 2)) + 1);
             //Set the distance of every vertex in the solid to the plane, and reset the index in list
-            var originalDistanceToOrigin = plane.DistanceToOrigin;
-            var step = tolerance*1000;
+            var step = tolerance * 1000 * isPositiveSide * Math.Sign(originalDistanceToOrigin);
             var continueSearch = true;
             var distancesToPlane = new List<double>();
-            plane.DistanceToOrigin =  originalDistanceToOrigin + offset * isPositiveSide;
+            if (Math.Sign(step) != Math.Sign(offset) && !offset.IsNegligible()) throw new Exception();
+            plane.DistanceToOrigin =  originalDistanceToOrigin + offset;
             while (continueSearch)
             {
-                plane.DistanceToOrigin = plane.DistanceToOrigin + step * isPositiveSide;
+                plane.DistanceToOrigin = plane.DistanceToOrigin + step;
                 distancesToPlane = new List<double>();
                 var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
                 for (int i = 0; i < ts.NumberOfVertices; i++)

@@ -14,6 +14,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System.Diagnostics;
 
 namespace TVGL
 {
@@ -418,9 +419,11 @@ namespace TVGL
         {
             if (key == null)
                 throw new ArgumentNullException();
+            //Check to see if item is already in array.
             var num = Array.BinarySearch(keys, 0, _size, key, comparer);
-            if (num >= 0)throw new ArgumentException();
-            Insert(~num, key, value);
+            //"num" should be -1
+            if (num >= 0) Debug.WriteLine("Item is already contained in sorted list.");
+            else Insert(~num, key, value);
         }
 
         void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> keyValuePair)

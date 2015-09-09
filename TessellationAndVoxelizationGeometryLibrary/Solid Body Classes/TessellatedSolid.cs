@@ -400,8 +400,8 @@ namespace TVGL
                     {
                         vertices.Add(vertex);
                         vertex.IndexInList = index;
-                        listDoubles.Add(vertex.Position);
-                        //listDoubles.Add((double[])vertex.Position.Clone());
+                        //listDoubles.Add(vertex.Position);
+                        listDoubles.Add((double[])vertex.Position.Clone());
                         index++;
                     }
                 }

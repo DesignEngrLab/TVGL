@@ -142,7 +142,6 @@ namespace TVGL
                         }
 
                         //Create last node
-                        //nodeType = GetNodeType(loop[loop.Count() - 2], loop[loop.Count() - 1], loop[0]);
                         var lastNode = new Node(loop[loop.Count() - 1], i);
                         orderedLoop.Add(lastNode);
 
