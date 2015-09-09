@@ -166,7 +166,7 @@ namespace TVGL.Boolean_Operations
             foreach (var startingVertex in inPlaneVerticesHash)
             {
                 Edge otherEdge;
-                var straddleFace = FindForwardStraddleFace(plane, startingVertex, distancesToPlane, out otherEdge);
+                var straddleFace = FindForwardStraddleFace(plane, startingVertex, distancesToPlane, out otherEdge, tolerance);
                 if (straddleFace != null)
                 {
                     var connectingData = splitEdgeDict[otherEdge];
@@ -175,7 +175,7 @@ namespace TVGL.Boolean_Operations
                     // contact element is created for this straddle vertex.
                     connectingData.BackwardFace = straddleFace;
                 }
-                straddleFace = FindBackwardStraddleFace(plane, startingVertex, distancesToPlane, out otherEdge);
+                straddleFace = FindBackwardStraddleFace(plane, startingVertex, distancesToPlane, out otherEdge, tolerance);
                 if (straddleFace != null)
                 {
                     var connectingData = splitEdgeDict[otherEdge];
@@ -243,9 +243,8 @@ namespace TVGL.Boolean_Operations
             internal PolygonalFace ForwardFace;
         }
 
-        internal static PolygonalFace FindForwardStraddleFace(Flat plane, Vertex onPlaneVertex, List<double> vertexDistancesToPlane, out Edge edge)
+        internal static PolygonalFace FindForwardStraddleFace(Flat plane, Vertex onPlaneVertex, List<double> vertexDistancesToPlane, out Edge edge, double tolerance )
         {
-            const double tolerance = 0.00001;
             edge = null;
             foreach (var face in onPlaneVertex.Faces)
             {
@@ -261,9 +260,8 @@ namespace TVGL.Boolean_Operations
             }
             return null;
         }
-        internal static PolygonalFace FindBackwardStraddleFace(Flat plane, Vertex onPlaneVertex, List<double> vertexDistancesToPlane, out Edge edge)
+        internal static PolygonalFace FindBackwardStraddleFace(Flat plane, Vertex onPlaneVertex, List<double> vertexDistancesToPlane, out Edge edge, double tolerance )
         {
-            const double tolerance = 0.00001;
             edge = null;
             foreach (var face in onPlaneVertex.Faces)
             {
@@ -329,9 +327,9 @@ namespace TVGL.Boolean_Operations
                 {   // failed to find a loop. Let's move this start contact element to the end of the list 
                     // and try again.
                     throw new Exception();
-                    contactElements.RemoveAt(0);
-                    contactElements.Add(startCE);
-                    return null;
+                    //contactElements.RemoveAt(0);
+                    //contactElements.Add(startCE);
+                    //return null;
                 }
             } while (true);
         }

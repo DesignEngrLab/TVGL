@@ -40,9 +40,9 @@ namespace TVGL
         /// </summary>
         /// <param name="ts"></param>
         /// <returns></returns>
-        public static List<Flat> Flats(TessellatedSolid ts)
+        public static List<Flat> Flats(TessellatedSolid ts, double minSurfaceArea = 0.01)
         {
-            throw new Exception("Not Implemented Correctly, yet");
+            //throw new Exception("Not Implemented Correctly, yet");
             var faces = new List<PolygonalFace>(ts.Faces);
             var listFaces = new List<PolygonalFace>(faces);
             var listFlats = new List<Flat>();
@@ -50,9 +50,13 @@ namespace TVGL
             {
                 var startFace = listFaces[0];
                 var stack = new Stack<PolygonalFace>();
-                stack.Push(startFace);
+                foreach (var adjacentFace in startFace.AdjacentFaces)
+                {
+                    stack.Push(adjacentFace);
+                }
                 //Create new flat from start face
                 var flat = new Flat(new [] {startFace});
+                listFaces.Remove(startFace); 
                 var hashFaces = new HashSet<PolygonalFace>(listFaces);
                 while (stack.Any())
                 {
@@ -74,6 +78,8 @@ namespace TVGL
                 }
 
                 //Criteria of whether it should be a flat should be inserted here.
+                if (flat.Faces.Count < 2) continue;
+                if (flat.Area < minSurfaceArea) continue;
                 listFlats.Add(flat);
             }
             return listFlats;

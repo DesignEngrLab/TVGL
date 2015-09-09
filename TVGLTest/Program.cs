@@ -90,7 +90,7 @@ namespace TVGL_Test
             //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);\
-            MiscFunctions.IsConvexHullBroken(ts);
+            //MiscFunctions.IsConvexHullBroken(ts);
             var Flats = ListFunctions.Flats(ts);
             List<List<double[]>> VolumeData1;
             List<List<double[]>> VolumeData2;
@@ -130,23 +130,65 @@ namespace TVGL_Test
                 Math.Max((ts.Bounds[1][1] - ts.Bounds[0][1]) / maxSlices,
                     (ts.Bounds[1][2] - ts.Bounds[0][2]) / maxSlices));
             //Parallel.For(0, 3, i =>
+            var greatestDeltas = new List<double>();
+            var greatestDeltaLocations = new List<double>();
+            var areaData = new List<List<double[]>>();
             for (int i = 0; i < 3; i++)
             {
                 //var max = ts.Bounds[1][i];
                 //var min = ts.Bounds[0][i];
                 //var numSteps = (int)Math.Ceiling((max - min) / delta);
                 var coordValues = ts.Vertices.Select(v => v.Position[i]).Distinct().OrderBy(x => x).ToList();
+                var numValues = new List<double>();
+                var offset = 0.000000001;
+                foreach (var coordValue in coordValues)
+                {
+                    if (coordValues[0] == coordValue)
+                    {
+                        //Only Add increment forward
+                        numValues.Add(coordValue + offset);
+                    }
+                    else if (coordValues.Last() == coordValue)
+                    {
+                        //Only Add increment back
+                        numValues.Add(coordValue - offset);
+                    }
+                    else
+                    {
+                        //Add increment forward and back
+                        numValues.Add(coordValue + offset);
+                        numValues.Add(coordValue - offset);
+                    }
+                }
+                coordValues = numValues.OrderBy(x => x).ToList();
                 var numSteps = coordValues.Count;
                 var direction = new double[3];
                 direction[i] = 1.0;
                 crossAreas[i] = new double[numSteps, 2];
+                var greatestDelta = 0.0;
+                var previousArea = 0.0;
+                var greatestDeltaLocation = 0.0;
+                var dataPoints = new List<double[]>();
                 for (var j = 0; j < numSteps; j++)
                 {
                     var dist = crossAreas[i][j, 0] = coordValues[j];
                     //Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
-                    crossAreas[i][j, 1] = Slice.DefineContact(new Flat(dist, direction), ts, false).Area;
+                    var newArea = Slice.DefineContact(new Flat(dist, direction), ts, false).Area;
+                    crossAreas[i][j, 1] = newArea;
+                    if (j > 0 && Math.Abs(newArea - previousArea) > greatestDelta)
+                    {
+                        greatestDelta = Math.Abs(newArea - previousArea);
+                        greatestDeltaLocation = dist;
+                    }
+                    var dataPoint = new double[] {dist, newArea };
+                    dataPoints.Add(dataPoint);
+                    previousArea = newArea;
                 }
+                areaData.Add(dataPoints);
+                greatestDeltas.Add(greatestDelta);
+                greatestDeltaLocations.Add(greatestDeltaLocation);
             }//);
+            TVGLTest.ExcelInterface.CreateNewGraph(areaData, "Area Decomposition", "Distance From Origin", "Area");
             Debug.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
 
             //Console.ReadKey();
@@ -176,7 +218,7 @@ namespace TVGL_Test
             //try
             //{
             //distToVLow+length/2
-            Slice2.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
+            Slice3.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
                 TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids, 2);
                 TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids, 2);
             foreach (var solid in negativeSideSolids)

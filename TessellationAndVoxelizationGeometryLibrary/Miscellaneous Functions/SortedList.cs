@@ -419,8 +419,7 @@ namespace TVGL
             if (key == null)
                 throw new ArgumentNullException();
             var num = Array.BinarySearch(keys, 0, _size, key, comparer);
-            if (num >= 0)
-                throw new ArgumentException();
+            if (num >= 0)throw new ArgumentException();
             Insert(~num, key, value);
         }
 
