@@ -53,7 +53,7 @@ namespace TVGL
         /// <summary>
         ///     The error for face in surface
         /// </summary>
-        public const double ErrorForFaceInSurface = 0.02;
+        public const double ErrorForFaceInSurface = 0.002;
 
         /// <summary>
         ///     The maximum number edges per face
