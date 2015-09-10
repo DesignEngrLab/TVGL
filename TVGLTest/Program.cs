@@ -218,9 +218,13 @@ namespace TVGL_Test
             //try
             //{
             //distToVLow+length/2
-            Slice.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
-                TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
-                TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
+            Slice4.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
+            TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
+            foreach (var solid in positiveSideSolids)
+            {
+                TVGL_Helix_Presenter.HelixPresenter.Show(solid);
+            }
+            TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
             foreach (var solid in negativeSideSolids)
             {
                 MiscFunctions.IsSolidBroken(solid);

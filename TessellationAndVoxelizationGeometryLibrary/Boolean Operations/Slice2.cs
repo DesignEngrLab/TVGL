@@ -22,7 +22,7 @@ namespace TVGL.Boolean_Operations
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids, double tolerance = Constants.ErrorForFaceInSurface)
+            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids, double tolerance = 1E-15)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -77,14 +77,13 @@ namespace TVGL.Boolean_Operations
             positiveSideFaces = new List<PolygonalFace>();
             negativeSideFaces = new List<PolygonalFace>();
             var checkSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(ts.Faces.Count() * 2 + 2)) + 1);
-            //Set the distance of every vertex in the solid to the plane, and reset the index in list
+            //Set the distance of every vertex in the solid to the plane
             var distancesToPlane = new List<double>();
             var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
             for (int i = 0; i < ts.NumberOfVertices; i++)
             {
                 var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
                 distancesToPlane.Add(distance);
-                ts.Vertices[i].IndexInList = i;
             }
 
             //Find all the straddle edges and add the new intersect vertices to both the pos and nef loops.
@@ -119,7 +118,6 @@ namespace TVGL.Boolean_Operations
                 var onPlaneVerticesFromFace = new List<Vertex>();
                 foreach (var vertex in face.Vertices)
                 {
-                    if (vertex.IndexInList == 4) vertex.IndexInList = 4;
                     var distance = distancesToPlane[vertex.IndexInList];
                     if (Math.Abs(distance) < tolerance) onPlaneVerticesFromFace.Add(vertex);
                     else if (Math.Sign(distance) > 0) positiveSideVertices.Add(vertex);
@@ -225,7 +223,6 @@ namespace TVGL.Boolean_Operations
 
         private static List<List<Vertex>> FindLoops(IList<Vertex> onPlaneVertices, IEnumerable<PolygonalFace> onSideFaces)
         {
-            //Set a new reference index for each vertex, because some of the vertices are new (from straddle edges)
             var onPlaneEdges = new List<Edge>();
             var onPlaneEdgeHash = new HashSet<Edge>();
             var hashFaces = new HashSet<PolygonalFace>(onSideFaces);
@@ -233,7 +230,6 @@ namespace TVGL.Boolean_Operations
             for (var i = 0; i < onPlaneVertices.Count(); i++ )
             {
                 var vertex1 = onPlaneVertices[i];
-                vertex1.IndexInList = i;
                 foreach(var edge in vertex1.Edges)
                 {
                     var vertex2 = edge.OtherVertex(vertex1);
@@ -272,23 +268,6 @@ namespace TVGL.Boolean_Operations
                 do
                 {
                     var possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
-                    //if (possibleNextEdges.Count() < 1)
-                    //{
-                    //    //Could not find next edge. 
-                    //    if (reversed == true)
-                    //    {
-                    //        //Then, close start and end vertex.
-                    //        break;
-                    //    }
-                    //    else
-                    //    {
-                    //        //Reverse the current loop and continue. 
-                    //        reversed = true;
-                    //        loop.Reverse();
-                    //        startVertex = loop.First();
-                    //        newStartVertex = loop.Last();
-                    //    }
-                    //}
                     if (possibleNextEdges.Count() != 1) throw new Exception("Should always be == to 1");
                     else
                     {
