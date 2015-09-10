@@ -118,7 +118,7 @@ namespace TVGL
         /// <value>
         ///     The length.
         /// </value>
-        public readonly double Length;
+        public double Length { get; internal set; }
 
         /// <summary>
         ///     Gets the vector.
@@ -126,7 +126,7 @@ namespace TVGL
         /// <value>
         ///     The vector.
         /// </value>
-        public readonly double[] Vector;
+        public double[] Vector { get; internal set; }
 
         private PolygonalFace _otherFace;
         private PolygonalFace _ownedFace;
@@ -200,6 +200,20 @@ namespace TVGL
         /// </value>
         public Boolean PartofConvexHull { get; internal set; }
 
+        public void Update()
+        {
+            //Reset the vector, since vertices may have been moved.
+            Vector = new[]
+            {
+                (To.Position[0] - From.Position[0]),
+                (To.Position[1] - From.Position[1]),
+                (To.Position[2] - From.Position[2])
+            };
+            Length =
+                Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
+            DefineInternalEdgeAngle();
+            if (InternalAngle == double.NaN) throw new Exception();
+        }
 
         /// <summary>
         ///     Defines the edge angle.

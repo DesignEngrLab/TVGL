@@ -75,50 +75,8 @@ namespace TVGL
                 if (ConnectVerticesBackToFace)
                     v.Faces.Add(this);
             }
-            // now determine normal
-            var n = vertices.Count;
-            var edgeVectors = new double[n][];
-            edgeVectors[0] = vertices[0].Position.subtract(vertices[n - 1].Position);
-            for (var i = 1; i < n; i++)
-                edgeVectors[i] = vertices[i].Position.subtract(vertices[i - 1].Position);
-
-            var normals = new List<double[]>();
-            var tempCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
-            if (!tempCross.Any(double.IsNaN)) normals.Add(tempCross);
-            for (var i = 1; i < n; i++)
-            {
-                tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
-                if (!tempCross.Any(double.IsNaN))
-                    normals.Add(tempCross);
-            }
-            n = normals.Count;
-            if (n == 0)  // this would happen if the face collapse to a line.
-                Normal = new[] { double.NaN, double.NaN, double.NaN };
-            else
-            {
-                var dotProduct = new double[n];
-                dotProduct[0] = normals[0].dotProduct(normals[n - 1]);
-                for (var i = 1; i < n; i++) dotProduct[i] = normals[i].dotProduct(normals[i - 1]);
-                IsConvex = (dotProduct.All(x => x > 0));
-                Normal = new double[3];
-                if (IsConvex)
-                {
-                    Normal = normals.Aggregate(Normal, (current, c) => current.add(c));
-                    Normal = Normal.divide(normals.Count);
-                }
-                else
-                {
-                    var likeFirstNormal = true;
-                    var numLikeFirstNormal = 1;
-                    foreach (var d in dotProduct)
-                    {
-                        if (d < 0) likeFirstNormal = !likeFirstNormal;
-                        if (likeFirstNormal) numLikeFirstNormal++;
-                    }
-                    if (2 * numLikeFirstNormal >= normals.Count) Normal = normals[0];
-                    else Normal = normals[0].multiply(-1);
-                }
-            }
+            // now determine normal and area
+            SetNormal();
             SetArea();
         }
 
@@ -242,6 +200,14 @@ namespace TVGL
             };
         }
 
+        public void Update()
+        {
+            //Set new normal and area. 
+            //References are assumed to be the same.
+            SetNormal();
+            SetArea();
+        }
+
         internal Edge OtherEdge(Vertex thisVertex, Boolean willAcceptNullAnswer = false)
         {
             if (willAcceptNullAnswer)
@@ -254,6 +220,53 @@ namespace TVGL
             if (willAcceptNullAnswer)
                 return Vertices.FirstOrDefault(v => v != thisEdge.To && v != thisEdge.From);
             return Vertices.First(v => v != thisEdge.To && v != thisEdge.From);
+        }
+
+        internal void SetNormal()
+        {
+            var n = Vertices.Count;
+            var edgeVectors = new double[n][];
+            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
+            for (var i = 1; i < n; i++)
+                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
+
+            var normals = new List<double[]>();
+            var tempCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
+            if (!tempCross.Any(double.IsNaN)) normals.Add(tempCross);
+            for (var i = 1; i < n; i++)
+            {
+                tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
+                if (!tempCross.Any(double.IsNaN))
+                    normals.Add(tempCross);
+            }
+            n = normals.Count;
+            if (n == 0)  // this would happen if the face collapse to a line.
+                Normal = new[] { double.NaN, double.NaN, double.NaN };
+            else
+            {
+                var dotProduct = new double[n];
+                dotProduct[0] = normals[0].dotProduct(normals[n - 1]);
+                for (var i = 1; i < n; i++) dotProduct[i] = normals[i].dotProduct(normals[i - 1]);
+                IsConvex = (dotProduct.All(x => x > 0));
+                Normal = new double[3];
+                if (IsConvex)
+                {
+                    Normal = normals.Aggregate(Normal, (current, c) => current.add(c));
+                    Normal = Normal.divide(normals.Count);
+                }
+                else
+                {
+                    var likeFirstNormal = true;
+                    var numLikeFirstNormal = 1;
+                    foreach (var d in dotProduct)
+                    {
+                        if (d < 0) likeFirstNormal = !likeFirstNormal;
+                        if (likeFirstNormal) numLikeFirstNormal++;
+                    }
+                    if (2 * numLikeFirstNormal >= normals.Count) Normal = normals[0];
+                    else Normal = normals[0].multiply(-1);
+                }
+            }
         }
     }
 }

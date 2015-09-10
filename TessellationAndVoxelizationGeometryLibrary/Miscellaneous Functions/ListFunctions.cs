@@ -84,5 +84,62 @@ namespace TVGL
             }
             return listFlats;
         }
+
+        
+        /// <summary>
+        /// Flattens all the faces on a flat to be on exactly the same plane. 
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        public static void RepairFlats(ref TessellatedSolid ts, ref List<Flat> flats)
+        {
+            var allEdgesRequiringUpdate = new HashSet<Edge>();
+            var allFacesRequiringUpdate = new HashSet<PolygonalFace>();
+            foreach (var flat in flats)
+            {
+                //Adjust flat normals to be equal to whatever the flat normal is set to.
+                //and distance from origin to be equal to the flat's distance from origin.
+                foreach (var face in flat.Faces)
+                {
+                    var adjustedVertices = new HashSet<Vertex>();
+                    //Accomplish this, by adjusting all the vertices 
+                    foreach (var vertex in face.Vertices)
+                    {
+                        //Skip, if this vertex has already been adjusted.
+                        if (adjustedVertices.Contains(vertex)) continue;
+
+                        //Find distance from origin and check if it is a negligible difference
+                        var distanceToOrigin = vertex.Position.dotProduct(flat.Normal);
+                        var difference = flat.DistanceToOrigin - distanceToOrigin;
+                        if (difference.IsNegligible()) continue;
+                        
+                        //Else, move the vertex as necessary, along the direction of the normal
+                        List<Edge> edgesRequiringUpdate;
+                        List<PolygonalFace> facesRequiringUpdate;
+                        var moveVector = flat.Normal.multiply(difference);
+                        vertex.MoveByVector(moveVector, out edgesRequiringUpdate, out facesRequiringUpdate);
+                        distanceToOrigin = vertex.Position.dotProduct(flat.Normal);
+                        difference = flat.DistanceToOrigin - distanceToOrigin;
+                        if (Math.Abs(difference) > 1E-12) throw new Exception();
+                        foreach (var edgeRequiringUpdate in edgesRequiringUpdate)
+                        {
+                            if (!allEdgesRequiringUpdate.Contains(edgeRequiringUpdate)) allEdgesRequiringUpdate.Add(edgeRequiringUpdate);
+                        }
+                        foreach (var faceRequiringUpdate in facesRequiringUpdate)
+                        {
+                            if (!allFacesRequiringUpdate.Contains(faceRequiringUpdate)) allFacesRequiringUpdate.Add(faceRequiringUpdate);
+                        }
+                    }
+                }
+            }
+            foreach (var edge in allEdgesRequiringUpdate)
+            {
+                edge.Update();
+            }
+            foreach (var face in allFacesRequiringUpdate)
+            {
+                face.Update();
+            }
+        }
     }
 }

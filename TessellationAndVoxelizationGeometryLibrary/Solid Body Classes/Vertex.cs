@@ -14,6 +14,7 @@
 using System;
 using MIConvexHull;
 using System.Collections.Generic;
+using StarMathLib;
 
 
 namespace TVGL
@@ -129,6 +130,13 @@ namespace TVGL
                 Position = (double[])Position.Clone(),
                 IndexInList = IndexInList
             };
+        }
+
+        public void MoveByVector(double[] vector, out List<Edge> edgesRequiringUpdate, out List<PolygonalFace> facesRequiringUpdate)
+        {
+            Position = Position.add(vector);
+            edgesRequiringUpdate = Edges;
+            facesRequiringUpdate = Faces;
         }
     }
 
