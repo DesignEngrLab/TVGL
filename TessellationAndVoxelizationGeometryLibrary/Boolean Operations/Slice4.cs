@@ -63,6 +63,7 @@ namespace TVGL.Boolean_Operations
                     successful = false;
                 }
             }
+            if (contactElements.Count == 0) return new ContactData(loops, inPlaneFaces); ;
             if (!successful) throw new Exception();
             //ToDo: Remove next foreach loop after debug finished
             //Check to see all of the contactElements were referenced in the loops
@@ -136,6 +137,9 @@ namespace TVGL.Boolean_Operations
                 if (inPlaneEdge.Curvature == CurvatureType.Undefined) throw new Exception();
                 if ((Math.Abs(planeDistOwnedFOV) < tolerance || Math.Abs(planeDistOtherFOV) < tolerance) && inPlaneEdge.Curvature != CurvatureType.Concave)
                     continue;
+
+                //ToDo: Note that this currently creates contact elements that may be useless to us, 
+                //even though they form a loop. (ex. hole on a face)
                 if ((planeDistOwnedFOV * planeDistOtherFOV > 0) && Math.Abs(planeDistOwnedFOV) > tolerance && Math.Abs(planeDistOtherFOV) > tolerance) continue;
                 //if both distances have the same sign, then this is "knife-edge" on the plane - we don't need that
                 contactElements.Add(new ContactElement(inPlaneEdge, (planeDistOwnedFOV - planeDistOtherFOV) > 0));

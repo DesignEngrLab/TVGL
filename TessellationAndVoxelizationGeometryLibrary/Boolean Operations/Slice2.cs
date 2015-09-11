@@ -11,6 +11,7 @@ namespace TVGL.Boolean_Operations
     public static class Slice2
     {
         #region Define Contact at a Flat Plane
+
         /// <summary>
         /// Performs the slicing operation on the prescribed flat plane. This destructively alters
         /// the tessellated solid into one or more solids which are returned in the "out" parameter
@@ -21,8 +22,11 @@ namespace TVGL.Boolean_Operations
         /// <param name="positiveSideSolids">The solids that are on the positive side of the plane
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
+        /// <param name="tolerance"></param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids, double tolerance = 1E-15)
+            out List<TessellatedSolid> positiveSideSolids, 
+            out List<TessellatedSolid> negativeSideSolids, 
+            double tolerance = 1E-15)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -30,42 +34,37 @@ namespace TVGL.Boolean_Operations
             List<PolygonalFace> negativeSideFaces;
             List<Vertex> positiveSideLoopVertices;
             List<Vertex> negativeSideLoopVertices;
-            //MiscFunctions.IsSolidBroken(ts);
+            //ToDo: Remove this next function call, after debug is completed.
+            MiscFunctions.IsSolidBroken(ts);
             //1. Divide up the faces into either negative or positive. OnPlane faces are not used. 
             //Straddle faces are split into 2 or 3 new faces.
-            try
+            DivideUpFaces(ts, plane, out positiveSideFaces, out negativeSideFaces,
+                out positiveSideLoopVertices, out negativeSideLoopVertices, tolerance);
+            //2. Find loops to define the missing space on the plane
+            var positiveSideLoops = FindLoops(positiveSideLoopVertices, positiveSideFaces);
+            var negativeSideLoops = FindLoops(negativeSideLoopVertices, negativeSideFaces);
+            //3. Triangulate that empty space and add to list 
+            var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal);
+            positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1))));
+            triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal);
+            negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal)));
+            //4. Create a new tesselated solid. This solid may actually be multiple solids.
+            //This step removes all previous relationships and rebuilds them.
+            if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
             {
-                DivideUpFaces(ts, plane, out positiveSideFaces, out negativeSideFaces,
-                    out positiveSideLoopVertices, out negativeSideLoopVertices, tolerance);
-                //2. Find loops to define the missing space on the plane
-                var positiveSideLoops = FindLoops(positiveSideLoopVertices, positiveSideFaces);
-                var negativeSideLoops = FindLoops(negativeSideLoopVertices, negativeSideFaces);
-                //3. Triangulate that empty space and add to list 
-                var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal);
-                positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1))));
-                triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal);
-                negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal)));
-                //4. Create a new tesselated solid. This solid may actually be multiple solids.
-                //This step removes all previous relationships and rebuilds them.
-                if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
-                {
-                    var positiveSideSolid = ts.BuildNewFromOld(positiveSideFaces);
-                    //5. Split the tesselated solid into multiple solids if necessary
-                    positiveSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(positiveSideSolid));
+                var positiveSideSolid = ts.BuildNewFromOld(positiveSideFaces);
+                //5. Split the tesselated solid into multiple solids if necessary
+                positiveSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(positiveSideSolid));
 
-                    //6. Repeat steps 4-5 for the negative side
-                    var negativeSideSolid = ts.BuildNewFromOld(negativeSideFaces);
-                    negativeSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(negativeSideSolid));
-                }
-                else //There was no cut made. Return the original tesselated solid.
-                {
-                    if (positiveSideFaces.Count > 3) positiveSideSolids.Add(ts);
-                    else if (negativeSideFaces.Count > 3) negativeSideSolids.Add(ts);
-                    else throw new Exception("Error");
-                }
+                //6. Repeat steps 4-5 for the negative side
+                var negativeSideSolid = ts.BuildNewFromOld(negativeSideFaces);
+                negativeSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(negativeSideSolid));
             }
-            catch
+            else //There was no cut made. Return the original tesselated solid.
             {
+                if (positiveSideFaces.Count > 3) positiveSideSolids.Add(ts);
+                else if (negativeSideFaces.Count > 3) negativeSideSolids.Add(ts);
+                else throw new Exception("Error");
             }
             
         }

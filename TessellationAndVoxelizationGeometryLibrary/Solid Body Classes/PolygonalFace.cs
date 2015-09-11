@@ -89,6 +89,7 @@ namespace TVGL
                 var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
                 var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
                 Area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
+                if (Area < Constants.ErrorForFaceArea) throw new Exception();
             }
             else throw new Exception("Not Implemented");
         }

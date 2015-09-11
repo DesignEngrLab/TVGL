@@ -577,6 +577,10 @@ namespace TVGL
                 {
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
+                    //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
+                    vertex[0] = Math.Round(vertex[0], Constants.DecimalPlaceError);
+                    vertex[1] = Math.Round(vertex[1], Constants.DecimalPlaceError);
+                    vertex[2] = Math.Round(vertex[2], Constants.DecimalPlaceError);
                     var lookupString = vertex[0].ToString(Constants.LookUpStringFormat) + "|"
                                        + vertex[1].ToString(Constants.LookUpStringFormat) + "|"
                                        + vertex[2].ToString(Constants.LookUpStringFormat) + "|";
@@ -671,7 +675,7 @@ namespace TVGL
             foreach (var face in Faces)
             {
                 // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
-                face.Area = Math.Abs(face.Edges[0].Vector.crossProduct(face.Edges[1].Vector).norm2()) / 2;
+                face.SetArea();
                 SurfaceArea += face.Area;   // accumulate areas into surface area
                 /* the Center is not correct! It's merely the center of the bounding box, but it doesn't need to be the true center for
                  * the calculation of the volume. Each tetrahedron is added up - even if they are negative - to form the correct value for

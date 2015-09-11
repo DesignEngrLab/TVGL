@@ -41,11 +41,11 @@ namespace TVGL
                 (To.Position[1] - From.Position[1]),
                 (To.Position[2] - From.Position[2])
             };
-            Length =
-                Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
-            DefineInternalEdgeAngle();
+            Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             if (Math.Abs(Length) < Constants.Error) throw new Exception();
-            if (double.IsNaN(InternalAngle)) EdgeReference = 0;
+            if (OwnedFace == null || OtherFace == null) return; //No need for the next few functions
+            DefineInternalEdgeAngle();
+            if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
         /// <summary>
@@ -69,11 +69,9 @@ namespace TVGL
                 (To.Position[1] - From.Position[1]),
                 (To.Position[2] - From.Position[2])
             };
-            Length =
-                Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
-            DefineInternalEdgeAngle();
+            Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             if (Math.Abs(Length) < Constants.Error) throw new Exception();
-            if (double.IsNaN(InternalAngle)) throw new Exception();
+            //Since there are no faces yet, internal angle is not calculated.
         }
 
         #endregion
