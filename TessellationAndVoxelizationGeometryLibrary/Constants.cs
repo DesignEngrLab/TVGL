@@ -51,9 +51,22 @@ namespace TVGL
         /// </summary>
         public const string LookUpStringFormat = "F12";
         /// <summary>
+        ///     The error used in TVGL, primarily for STL files.
+        /// </summary>
+        public const int DecimalPlaceError = 12;
+        /// <summary>
+        ///     The error used in TVGL, primarily for STL files.
+        /// </summary>
+        public const double Error = 1E-12;
+        /// <summary>
+        ///     The error for area of a face. Sqrt of LookUpStringFormat decimal accuracy.
+        /// </summary>
+        public const double ErrorForFaceArea = 1E-6;
+        /// <summary>
         ///     The error for face in surface
         /// </summary>
         public const double ErrorForFaceInSurface = 0.002;
+        
 
         /// <summary>
         ///     The maximum number edges per face

@@ -47,7 +47,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices, double[] normal, Boolean ConnectVerticesBackToFace = true)
+        public PolygonalFace(IList<Vertex> vertices, double[] normal, bool ConnectVerticesBackToFace = true)
             : this()
         {
             Normal = normal;
@@ -66,7 +66,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices, Boolean ConnectVerticesBackToFace = true)
+        public PolygonalFace(IList<Vertex> vertices, bool ConnectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
@@ -76,8 +76,9 @@ namespace TVGL
                     v.Faces.Add(this);
             }
             // now determine normal and area
-            SetNormal();
             SetArea();
+            if (Area > Constants.ErrorForFaceArea) SetNormal();
+            else Normal = new[] { double.NaN, double.NaN, double.NaN };
         }
 
         internal void SetArea()
@@ -96,7 +97,7 @@ namespace TVGL
         /// Gets the is convex.
         /// </summary>
         /// <value>The is convex.</value>
-        public Boolean IsConvex { get; private set; }
+        public bool IsConvex { get; private set; }
 
         #endregion
 
@@ -118,6 +119,7 @@ namespace TVGL
         public List<Vertex> Vertices { get; internal set; }
         /// <summary>
         /// Gets the edges.
+        /// 
         /// </summary>
         /// <value>
         /// The edges.
@@ -158,7 +160,7 @@ namespace TVGL
         /// <value>
         ///   <c>true</c> if [it is part of the convex hull]; otherwise, <c>false</c>.
         /// </value>
-        public Boolean PartofConvexHull { get; internal set; }
+        public bool PartofConvexHull { get; internal set; }
 
         /// <summary>
         /// Gets the adjacent faces.
@@ -208,18 +210,23 @@ namespace TVGL
             SetArea();
         }
 
-        internal Edge OtherEdge(Vertex thisVertex, Boolean willAcceptNullAnswer = false)
+        internal Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
         {
             if (willAcceptNullAnswer)
                 return Edges.FirstOrDefault(e => e.To != thisVertex && e.From != thisVertex);
             return Edges.First(e => e.To != thisVertex && e.From != thisVertex);
         }
 
-        internal Vertex OtherVertex(Edge thisEdge, Boolean willAcceptNullAnswer = false)
+        internal Vertex OtherVertex(Edge thisEdge, bool willAcceptNullAnswer = false)
         {
-            if (willAcceptNullAnswer)
-                return Vertices.FirstOrDefault(v => v != thisEdge.To && v != thisEdge.From);
-            return Vertices.First(v => v != thisEdge.To && v != thisEdge.From);
+            return willAcceptNullAnswer ? Vertices.FirstOrDefault(v => v != thisEdge.To && 
+                v != thisEdge.From) : Vertices.First(v => v != thisEdge.To && v != thisEdge.From);
+        }
+
+        internal Vertex OtherVertex(Vertex v1, Vertex v2, bool willAcceptNullAnswer = false)
+        {
+            return willAcceptNullAnswer ? Vertices.FirstOrDefault(v => v != v1 && v != v2) : 
+                Vertices.First(v => v != v1 && v != v2);
         }
 
         internal void SetNormal()

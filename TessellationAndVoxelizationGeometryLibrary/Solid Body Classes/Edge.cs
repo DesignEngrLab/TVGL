@@ -18,18 +18,18 @@ namespace TVGL
         /// <param name="toVertex">To vertex.</param>
         /// <param name="ownedFace">The face.</param>
         /// <param name="otherFace">The other face.</param>
-        /// <param name="doublyLinkedFaces"></param>
         /// <param name="doublyLinkedVertices"></param>
+        /// <param name="edgeReference"></param>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            Boolean doublyLinkedVertices = true, int edgeReference = 0)
+            bool doublyLinkedVertices = true, int edgeReference = 0)
         {
             EdgeReference = edgeReference;
             From = fromVertex;
             To = toVertex;
             _ownedFace = ownedFace;
             _otherFace = otherFace;
-            if (_ownedFace != null) _ownedFace.Edges.Add(this);
-            if (_otherFace != null) _otherFace.Edges.Add(this);
+            _ownedFace?.Edges.Add(this);
+            _otherFace?.Edges.Add(this);
             if (doublyLinkedVertices)
             {
                 fromVertex.Edges.Add(this);
@@ -44,18 +44,17 @@ namespace TVGL
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
-            if (InternalAngle == double.NaN) throw new Exception();
+            if (Math.Abs(Length) < Constants.Error) throw new Exception();
+            if (double.IsNaN(InternalAngle)) EdgeReference = 0;
         }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Edge" /> class.
         /// </summary>
         /// <param name="fromVertex">From vertex.</param>
         /// <param name="toVertex">To vertex.</param>
-        /// <param name="ownedFace">The face.</param>
-        /// <param name="otherFace">The other face.</param>
-        /// <param name="doublyLinkedFaces"></param>
         /// <param name="doublyLinkedVertices"></param>
-        public Edge(Vertex fromVertex, Vertex toVertex, Boolean doublyLinkedVertices)
+        public Edge(Vertex fromVertex, Vertex toVertex, bool doublyLinkedVertices)
         {
             From = fromVertex;
             To = toVertex;
@@ -73,7 +72,8 @@ namespace TVGL
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
-            if (InternalAngle == double.NaN) throw new Exception();
+            if (Math.Abs(Length) < Constants.Error) throw new Exception();
+            if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
         #endregion
@@ -198,8 +198,12 @@ namespace TVGL
         /// <value>
         ///     <c>true</c> if [is part of the convex hull]; otherwise, <c>false</c>.
         /// </value>
-        public Boolean PartofConvexHull { get; internal set; }
+        public bool PartofConvexHull { get; internal set; }
 
+        /// <summary>
+        /// Updates the edge vector and length, if a vertex has been moved.
+        /// </summary>
+        /// <exception cref="Exception"></exception>
         public void Update()
         {
             //Reset the vector, since vertices may have been moved.
@@ -212,13 +216,12 @@ namespace TVGL
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
-            if (InternalAngle == double.NaN) throw new Exception();
+            if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
         /// <summary>
         ///     Defines the edge angle.
         /// </summary>
-        /// <param name="edges">The edges.</param>
         private void DefineInternalEdgeAngle()
         {
             /* this is a tricky function. What we need to do is take the dot-product of the normals.
@@ -281,7 +284,7 @@ namespace TVGL
                     throw new Exception();
                 }
             }
-            if (InternalAngle == double.NaN) throw new Exception();
+            if (double.IsNaN(InternalAngle)) throw new Exception();
             //Debug.WriteLine("angle = " + (InternalAngle * (180 / Math.PI)).ToString() + "; " + SurfaceIs.ToString());
         }
         #endregion
