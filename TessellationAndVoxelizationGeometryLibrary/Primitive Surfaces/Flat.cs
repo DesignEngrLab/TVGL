@@ -26,10 +26,11 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="Flat"/> class.
         /// </summary>
-        /// <param name="Faces">The faces.</param>
-        public Flat(IEnumerable<PolygonalFace> faces)
+        /// <param name="faces"></param>
+        public Flat(List<PolygonalFace> faces)
             : base(faces)
         {
+            Faces = faces;
             var normalSum = new double[3];
             normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
             Normal = normalSum.divide(Faces.Count);
@@ -89,11 +90,12 @@ namespace TVGL
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
-            if (Math.Abs(face.Normal.dotProduct(Normal) - 1.0) > Constants.ErrorForFaceInSurface) return false;
-            foreach (var v in face.Vertices)
-                if (Math.Abs(v.Position.dotProduct(Normal) - DistanceToOrigin) > Constants.ErrorForFaceInSurface * Math.Abs(DistanceToOrigin))
-                    return false;
-            return true;
+            if (Math.Abs(Math.Abs(face.Normal.dotProduct(Normal)) - 1.0) > 0.002) return false;
+            //Return true if all the vertices are within the tolerance 
+            //Note that the dotProduct term and distance to origin, must have the same sign, 
+            //so there is no additional need moth absolute value methods.
+            return face.Vertices.All(v => Math.Abs(Normal.dotProduct(v.Position) - DistanceToOrigin) <
+                0.002);
         }
 
         /// <summary>

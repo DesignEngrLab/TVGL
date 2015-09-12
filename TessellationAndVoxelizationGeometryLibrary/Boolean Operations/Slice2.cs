@@ -26,7 +26,7 @@ namespace TVGL.Boolean_Operations
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids, 
             out List<TessellatedSolid> negativeSideSolids, 
-            double tolerance = 1E-15)
+            double tolerance = Constants.Error)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -34,10 +34,8 @@ namespace TVGL.Boolean_Operations
             List<PolygonalFace> negativeSideFaces;
             List<Vertex> positiveSideLoopVertices;
             List<Vertex> negativeSideLoopVertices;
-            //ToDo: Remove this next function call, after debug is completed.
-            MiscFunctions.IsSolidBroken(ts);
             //1. Divide up the faces into either negative or positive. OnPlane faces are not used. 
-            //Straddle faces are split into 2 or 3 new faces.
+            //Straddle faces are split into 2 or 3 new faces that are added to the respective lists.
             DivideUpFaces(ts, plane, out positiveSideFaces, out negativeSideFaces,
                 out positiveSideLoopVertices, out negativeSideLoopVertices, tolerance);
             //2. Find loops to define the missing space on the plane
@@ -91,18 +89,18 @@ namespace TVGL.Boolean_Operations
             negativeSideLoopVertices = new List<Vertex>(); 
             foreach (var edge in ts.Edges)
             {
-                //Reset the checksum values, just in case.
-                edge.EdgeReference = GetCheckSum(edge.From, edge.To, checkSumMultiplier);
+                //Reset the checksum value, if needed.
+                if(edge.EdgeReference == 0) edge.EdgeReference = GetCheckSum(edge.From, edge.To, checkSumMultiplier);
                 var toDistance = distancesToPlane[edge.To.IndexInList];
                 var fromDistance = distancesToPlane[edge.From.IndexInList];
                 //Check for a straddle edge
-                if ((toDistance > tolerance && fromDistance < -tolerance) || (toDistance < -tolerance && fromDistance > tolerance))
-                {
-                    var straddleEdge = new StraddleEdge(edge, plane);
-                    straddleEdges.Add(straddleEdge);
-                    positiveSideLoopVertices.Add(straddleEdge.IntersectVertex);
-                    negativeSideLoopVertices.Add(straddleEdge.IntersectVertex);
-                }
+                if ((!(toDistance > tolerance) || !(fromDistance < -tolerance)) &&
+                    (!(toDistance < -tolerance) || !(fromDistance > tolerance))) continue;
+                //If it is a straddle edge
+                var straddleEdge = new StraddleEdge(edge, plane);
+                straddleEdges.Add(straddleEdge);
+                positiveSideLoopVertices.Add(straddleEdge.IntersectVertex);
+                negativeSideLoopVertices.Add(straddleEdge.IntersectVertex);
             }
             
             //Categorize all the faces in the solid

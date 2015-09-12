@@ -29,8 +29,8 @@ namespace TVGL_Test
         //"../../../TestFiles/mushroom.off",   //breaks in OFFFileData
         //"../../../TestFiles/ABF.STL",           
         //"../../../TestFiles/Pump-1repair.STL",
-        //"../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/Beam_Clean.STL", 
+        "../../../TestFiles/Pump-1.STL",
+        //"../../../TestFiles/Beam_Clean.STL", 
         //"../../../TestFiles/piston.stl", 
         //"../../../TestFiles/Z682.stl",   
         //"../../../TestFiles/sth2.stl", 
@@ -219,17 +219,32 @@ namespace TVGL_Test
             //{
             //distToVLow+length/2
             MiscFunctions.IsSolidBroken(ts);
-            Slice2.OnFlat(ts, new Flat(50, dir), out positiveSideSolids, out negativeSideSolids);
-            TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
-            TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
-            foreach (var solid in negativeSideSolids)
+            var flats = ListFunctions.Flats(ts, ts.SurfaceArea/100);
+            foreach (var flat in flats)
             {
-                MiscFunctions.IsSolidBroken(solid);
+                foreach (var face in flat.Faces)
+                {
+                    face.color = new Color(TVGL.KnownColors.DarkRed);
+                }
+                ts.HasUniformColor = false;
+                TVGL_Helix_Presenter.HelixPresenter.Show(ts);
+                Slice2.OnFlat(ts.Duplicate(), flat, out positiveSideSolids, out negativeSideSolids);
+                //TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
+                //TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
+                foreach (var solid in negativeSideSolids)
+                {
+                    MiscFunctions.IsSolidBroken(solid);
+                }
+                foreach (var solid in positiveSideSolids)
+                {
+                    MiscFunctions.IsSolidBroken(solid);
+                }
+                foreach (var face in flat.Faces)
+                {
+                    face.color = new Color(KnownColors.PaleGoldenrod);
+                }
             }
-            foreach (var solid in positiveSideSolids)
-            {
-                MiscFunctions.IsSolidBroken(solid);
-            }
+            
             //}
             //catch (Exception)
             //{
