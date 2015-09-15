@@ -513,12 +513,22 @@ namespace TVGL
                 if (edge.OwnedFace == null || edge.OtherFace == null)
                 {
                     badEdges.Add(edge);
-                    edge.OwnedFace = edge.OtherFace = edge.OwnedFace ?? edge.OtherFace;
-                    Debug.WriteLine("Edge found with only face (face normal = " +
-                                    edge.OwnedFace.Normal.MakePrintString()
-                                    + ", between vertices " + edge.From.Position.MakePrintString() + " & " +
-                                    edge.To.Position.MakePrintString());
+                    
                 }
+            if(badEdges.Count > 2)
+            {
+                //There is a chance, one or more faces is just missing. This can be repaired if the bad edges
+                //form a loop around the missing section, if the missing section if reletively flat.
+                var missingFaces = RepairMissingFacesFromEdges(ref badEdges);
+            }
+            if (badEdges.Count > 1)
+            {
+                foreach (var badEdge in badEdges)
+                {
+                    Debug.WriteLine("Edge found with only face. Edge Reference: " + badEdge.EdgeReference);
+                }
+                throw new Exception();
+            }
             NumberOfEdges = localEdges.GetLength(0);
             return localEdges;
         }
@@ -1216,6 +1226,123 @@ namespace TVGL
                 }
             }
         } 
+        #endregion
+
+        #region Repair Functions
+        public List<PolygonalFace> RepairMissingFacesFromEdges(ref List<Edge> remainingEdges)
+        {
+            var newFaces = new List<PolygonalFace>();
+            var loops = new List<List<Vertex>>();
+            var attempts = 0;
+            while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
+            {
+                var loop = new List<Vertex>();
+                var successfull = true;
+                var removedEdges = new List<Edge>();
+                //Since all the edges are owned by their other face, 
+                //the loop should be found starting with the To instead of from.
+                var startVertex = remainingEdges[0].To;
+                var newStartVertex = remainingEdges[0].From;
+                loop.Add(newStartVertex);
+                removedEdges.Add(remainingEdges[0]);
+                remainingEdges.RemoveAt(0);
+                do
+                {
+                    var possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
+                    if (possibleNextEdges.Count() != 1) successfull = false;
+                    else
+                    {
+                        newStartVertex = possibleNextEdges[0].OtherVertex(newStartVertex);
+                        loop.Add(newStartVertex);
+                        removedEdges.Add(possibleNextEdges[0]);
+                        remainingEdges.Remove(possibleNextEdges[0]);
+                    }
+                }
+                while (newStartVertex != startVertex && successfull);
+                if (successfull)
+                {
+                    loops.Add(loop);
+                    attempts = 0;
+                }
+                else
+                {
+                    remainingEdges.AddRange(removedEdges);                        
+                    attempts++;
+                }
+            }
+
+            foreach (var loop in loops)
+            {
+                //if a simple triangle, create a new face from vertices
+                if (loop.Count == 3)
+                {
+                    var newFace = new PolygonalFace(loop);
+                    newFaces.Add(newFace);
+                }
+                //Else, use the triangulate function
+                else if(loop.Count > 3)
+                {
+                    //First, get an average normal from all vertices, assuming CCW order.
+                    var normal = GetNormalForLoop(loop);
+                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>>{loop}, normal);
+                    foreach(var triangle in triangles)
+                    {
+                        var newFace = new PolygonalFace(triangle, normal);
+                        newFaces.Add(newFace);
+                    }
+                }
+            }
+            return newFaces;
+        }
+
+        internal double[] GetNormalForLoop(List<Vertex> loop)
+        {
+            var n = loop.Count;
+            var normal = new double[3];
+            var edgeVectors = new double[n][];
+            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
+            for (var i = 1; i < n; i++)
+                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
+
+            var normals = new List<double[]>();
+            var tempCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
+            if (!tempCross.Any(double.IsNaN)) normals.Add(tempCross);
+            for (var i = 1; i < n; i++)
+            {
+                tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
+                if (!tempCross.Any(double.IsNaN))
+                    normals.Add(tempCross);
+            }
+            n = normals.Count;
+            if (n == 0)  // this would happen if the face collapse to a line.
+                normal = new[] { double.NaN, double.NaN, double.NaN };
+            else
+            {
+                var dotProduct = new double[n];
+                dotProduct[0] = normals[0].dotProduct(normals[n - 1]);
+                for (var i = 1; i < n; i++) dotProduct[i] = normals[i].dotProduct(normals[i - 1]);
+                var isConvex = (dotProduct.All(x => x > 0));
+                normal = new double[3];
+                if (isConvex)
+                {
+                    normal = normals.Aggregate(normal, (current, c) => current.add(c));
+                    normal = normal.divide(normals.Count);
+                }
+                else
+                {
+                    var likeFirstNormal = true;
+                    var numLikeFirstNormal = 1;
+                    foreach (var d in dotProduct)
+                    {
+                        if (d < 0) likeFirstNormal = !likeFirstNormal;
+                        if (likeFirstNormal) numLikeFirstNormal++;
+                    }
+                    if (2 * numLikeFirstNormal >= normals.Count) normal = normals[0];
+                    else normal = normals[0].multiply(-1);
+                }
+            }
+            return normal;
+        }
         #endregion
     }
 }

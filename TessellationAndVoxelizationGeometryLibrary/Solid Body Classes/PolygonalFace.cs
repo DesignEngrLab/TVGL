@@ -77,8 +77,7 @@ namespace TVGL
             }
             // now determine normal and area
             SetArea();
-            if (Area > Constants.Error) SetNormal();
-            else Normal = new[] { double.NaN, double.NaN, double.NaN };
+            SetNormal();
         }
 
         internal void SetArea()

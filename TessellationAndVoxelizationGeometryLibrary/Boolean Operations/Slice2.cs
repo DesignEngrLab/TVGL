@@ -78,6 +78,8 @@ namespace TVGL.Boolean_Operations
             var distancesToPlane = new List<double>();
             var pointOnPlane = new double[3];
             var looserTolerance = Math.Sqrt(Math.Sqrt(tolerance)); //A looser tolerance is necessary to determine straddle edges
+            //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
+            //along direction of normal, and add a negative offset to move backward along normal.
             var offset = Math.Sqrt(looserTolerance) + looserTolerance; 
             plane.DistanceToOrigin = plane.DistanceToOrigin + offset;
             var successfull = false;
@@ -289,7 +291,6 @@ namespace TVGL.Boolean_Operations
                 loop.Add(newStartVertex);
                 removedEdges.Add(remainingEdges[0]);
                 remainingEdges.RemoveAt(0);
-                var reversed = false;
                 do
                 {
                     var possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
