@@ -257,6 +257,11 @@ namespace TVGL
                  * Requires 11 */
                 var task14 = Task.Factory.StartNew(DefineVertexCurvature);
                 Task.WaitAll(task14, task13);
+
+                /* Task 15 goes through all the references and makes sure they are cyclic.
+                 * Requires 2, 4, 6, 7 */
+                var task15 = Task.Factory.StartNew(CheckReferences);
+                Task.WaitAll(task15);
             }
             #endregion
             #region Series Approach
@@ -275,8 +280,8 @@ namespace TVGL
                 DefineVolumeAndAreas();
                 DefineFaceCurvature();
                 DefineVertexCurvature();
+                CheckReferences();
             }
-
             #endregion
 
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
@@ -338,6 +343,11 @@ namespace TVGL
                  * Requires 11 */
                 var task14 = Task.Factory.StartNew(DefineVertexCurvature);
                 Task.WaitAll(task13, task14, task10);
+
+                /* Task 15 goes through all the references and makes sure they are cyclic.
+                 * Requires 2, 4, 6, 7 */
+                var task15 = Task.Factory.StartNew(CheckReferences);
+                Task.WaitAll(task15);
             }
             else
             {
@@ -358,11 +368,10 @@ namespace TVGL
                 DefineVolumeAndAreas();
                 DefineFaceCurvature();
                 DefineVertexCurvature();
+                CheckReferences();
             }
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
-
-        
 
         internal TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices)
         {
@@ -383,7 +392,9 @@ namespace TVGL
             DefineVolumeAndAreas();
             DefineFaceCurvature();
             DefineVertexCurvature();
+            CheckReferences();
         }
+        #endregion
 
         public TessellatedSolid BuildNewFromOld(IList<PolygonalFace> polyFaces)
         {
@@ -418,7 +429,7 @@ namespace TVGL
             }
             return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
         }
-        #endregion
+        
         //Duplicate creates a new tesselated solid from old data. 
         //All references are removed and new ones are created.
         //However, the new vertices point to the same vertex positions as the old data.
@@ -1163,6 +1174,48 @@ namespace TVGL
             Edges = newEdges;
         }
         #endregion
+        #endregion
+
+        #region Check References
+        public void CheckReferences()
+        {
+            //Check if each face has cyclic references with each edge, vertex, and adjacent faces.
+            foreach (var face in Faces)
+            {
+                foreach (var edge in face.Edges)
+                {
+                    if (edge.OwnedFace != face && edge.OtherFace != face) throw new Exception();
+                }
+                foreach (var vertex in face.Vertices)
+                {
+                    if(!vertex.Faces.Contains(face)) throw new Exception();
+                }
+                foreach (var adjacentFace in face.AdjacentFaces)
+                {
+                    if (!adjacentFace.AdjacentFaces.Contains(face)) throw new Exception();
+                }
+            }
+            //Check if each edge has cyclic references with each vertex and each face.
+            foreach (var edge in Edges)
+            {
+                if (!edge.OwnedFace.Edges.Contains(edge)) throw new Exception();
+                if (!edge.OtherFace.Edges.Contains(edge)) throw new Exception();
+                if (!edge.To.Edges.Contains(edge)) throw new Exception();
+                if (!edge.From.Edges.Contains(edge)) throw new Exception();
+            }
+            //Check if each vertex has cyclic references with each edge and each face.
+            foreach (var vertex in Vertices)
+            {
+                foreach (var edge in vertex.Edges)
+                {
+                    if (edge.To != vertex && edge.From != vertex) throw new Exception();
+                }
+                foreach (var face in vertex.Faces)
+                {
+                    if (!face.Vertices.Contains(vertex)) throw new Exception();
+                }
+            }
+        } 
         #endregion
     }
 }

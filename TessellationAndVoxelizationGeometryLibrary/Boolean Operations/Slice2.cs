@@ -76,17 +76,35 @@ namespace TVGL.Boolean_Operations
             var checkSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(ts.Faces.Count() * 2 + 2)) + 1);
             //Set the distance of every vertex in the solid to the plane
             var distancesToPlane = new List<double>();
-            var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
-            for (int i = 0; i < ts.NumberOfVertices; i++)
+            var pointOnPlane = new double[3];
+            var looserTolerance = Math.Sqrt(Math.Sqrt(tolerance)); //A looser tolerance is necessary to determine straddle edges
+            var offset = Math.Sqrt(looserTolerance) + looserTolerance; 
+            plane.DistanceToOrigin = plane.DistanceToOrigin + offset;
+            var successfull = false;
+            while (!successfull)
             {
-                var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
-                distancesToPlane.Add(distance);
+                distancesToPlane = new List<double>();
+                plane.DistanceToOrigin = plane.DistanceToOrigin + looserTolerance;
+                pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
+                for (int i = 0; i < ts.NumberOfVertices; i++)
+                {
+                    var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
+                    if (Math.Abs(distance) < looserTolerance)
+                    {
+                        successfull = false;
+                        break;
+                    }
+                    distancesToPlane.Add(distance);
+                }
+                if(distancesToPlane.Count == ts.NumberOfVertices) successfull = true;
             }
+            
 
             //Find all the straddle edges and add the new intersect vertices to both the pos and nef loops.
             var straddleEdges = new List<StraddleEdge>();
             positiveSideLoopVertices = new List<Vertex>(); 
-            negativeSideLoopVertices = new List<Vertex>(); 
+            negativeSideLoopVertices = new List<Vertex>();
+            
             foreach (var edge in ts.Edges)
             {
                 //Reset the checksum value, if needed.
@@ -94,13 +112,15 @@ namespace TVGL.Boolean_Operations
                 var toDistance = distancesToPlane[edge.To.IndexInList];
                 var fromDistance = distancesToPlane[edge.From.IndexInList];
                 //Check for a straddle edge
-                if ((!(toDistance > tolerance) || !(fromDistance < -tolerance)) &&
-                    (!(toDistance < -tolerance) || !(fromDistance > tolerance))) continue;
-                //If it is a straddle edge
-                var straddleEdge = new StraddleEdge(edge, plane);
-                straddleEdges.Add(straddleEdge);
-                positiveSideLoopVertices.Add(straddleEdge.IntersectVertex);
-                negativeSideLoopVertices.Add(straddleEdge.IntersectVertex);
+                if (((toDistance > looserTolerance) && (fromDistance < -looserTolerance)) ||
+                    ((toDistance < -looserTolerance) && (fromDistance > looserTolerance)))
+                {
+                    //If it is a straddle edge
+                    var straddleEdge = new StraddleEdge(edge, plane);
+                    straddleEdges.Add(straddleEdge);
+                    positiveSideLoopVertices.Add(straddleEdge.IntersectVertex);
+                    negativeSideLoopVertices.Add(straddleEdge.IntersectVertex);
+                }
             }
             
             //Categorize all the faces in the solid
@@ -115,8 +135,9 @@ namespace TVGL.Boolean_Operations
                 var onPlaneVerticesFromFace = new List<Vertex>();
                 foreach (var vertex in face.Vertices)
                 {
+                    //if (vertex.IndexInList == 2323) vertex.IndexInList = 2323; //DEBUG Line for finding a particular vertex
                     var distance = distancesToPlane[vertex.IndexInList];
-                    if (Math.Abs(distance) < tolerance) onPlaneVerticesFromFace.Add(vertex);
+                    if (Math.Abs(distance) < looserTolerance) onPlaneVerticesFromFace.Add(vertex);
                     else if (Math.Sign(distance) > 0) positiveSideVertices.Add(vertex);
                     else if (Math.Sign(distance) < 0) negativeSideVertices.Add(vertex);
                     else throw new Exception("Error: one of the three options above must be true.");
@@ -127,6 +148,7 @@ namespace TVGL.Boolean_Operations
                 {
                     var numberOfNewVertices = positiveSideVertices.Count + negativeSideVertices.Count - 1;
                     //One vertex is on the positive side, one on the negative side, and one on the plane.
+                    //Since the onPlaneVertex has a positive and negative face, add to both loops if possible.
                     if (numberOfNewVertices == 1)
                     {
                         var checksum = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0], checkSumMultiplier);
@@ -135,6 +157,8 @@ namespace TVGL.Boolean_Operations
                         newOnPlaneEdges.Add(new Edge(onPlaneVerticesFromFace[0], newVertex, true));
                         positiveSideFaces.Add(new PolygonalFace(new [] {onPlaneVerticesFromFace[0], newVertex, positiveSideVertices[0] }, face.Normal));
                         negativeSideFaces.Add(new PolygonalFace(new [] {onPlaneVerticesFromFace[0], newVertex, negativeSideVertices[0] }, face.Normal));
+                        if (!positiveSideLoopVertices.Contains(onPlaneVerticesFromFace[0])) positiveSideLoopVertices.Add(onPlaneVerticesFromFace[0]);
+                        if (!negativeSideLoopVertices.Contains(onPlaneVerticesFromFace[0])) negativeSideLoopVertices.Add(onPlaneVerticesFromFace[0]);
                     } 
                     //Two vertices are on the positive side, and one is on the negative side.
                     else if (numberOfNewVertices == 2 && positiveSideVertices.Count == 2 ) 
@@ -253,28 +277,43 @@ namespace TVGL.Boolean_Operations
 
             //Every vertex that is on Plane is on a loop.
             var loops = new List<List<Vertex>>();
-            var remainingEdges = new List<Edge>(onPlaneEdges);
+            var remainingEdges = new List<Edge>(onPlaneEdges); 
+            var attempts = 0;
             while(remainingEdges.Count > 0)
             {
                 var loop = new List<Vertex>();
+                var successfull = true;
+                var removedEdges = new List<Edge>();
                 var startVertex = remainingEdges[0].From;
                 var newStartVertex = remainingEdges[0].To;
                 loop.Add(newStartVertex);
+                removedEdges.Add(remainingEdges[0]);
                 remainingEdges.RemoveAt(0);
                 var reversed = false;
                 do
                 {
                     var possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
-                    if (possibleNextEdges.Count() != 1) throw new Exception("Should always be == to 1");
+                    if (possibleNextEdges.Count() != 1)
+                    {
+                        successfull = false;
+                        attempts++;
+                        //throw new Exception("Should always be == to 1");
+                    }
                     else
                     {
                         newStartVertex = possibleNextEdges[0].OtherVertex(newStartVertex);
                         loop.Add(newStartVertex);
+                        removedEdges.Add(possibleNextEdges[0]);
                         remainingEdges.Remove(possibleNextEdges[0]);
                     }
                 }
-                while (newStartVertex != startVertex);
-                loops.Add(loop);
+                while (newStartVertex != startVertex && successfull);
+                if (attempts == 5) throw new Exception();
+                if (successfull) loops.Add(loop);
+                else
+                {
+                    remainingEdges.AddRange(removedEdges);
+                }
             }
             return loops;
         }

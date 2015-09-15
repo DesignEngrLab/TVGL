@@ -28,8 +28,8 @@ namespace TVGL
             To = toVertex;
             _ownedFace = ownedFace;
             _otherFace = otherFace;
-            _ownedFace?.Edges.Add(this);
-            _otherFace?.Edges.Add(this);
+            if (ownedFace != null) ownedFace.Edges.Add(this);
+            if (otherFace != null) otherFace.Edges.Add(this);
             if (doublyLinkedVertices)
             {
                 fromVertex.Edges.Add(this);

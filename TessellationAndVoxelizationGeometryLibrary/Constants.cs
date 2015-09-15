@@ -59,10 +59,6 @@ namespace TVGL
         /// </summary>
         public const double Error = 1E-12;
         /// <summary>
-        ///     The error for area of a face. Sqrt of LookUpStringFormat decimal accuracy.
-        /// </summary>
-        public const double ErrorForFaceArea = 1E-6;
-        /// <summary>
         ///     The error for face in surface
         /// </summary>
         public const double ErrorForFaceInSurface = 0.02;

@@ -77,7 +77,7 @@ namespace TVGL
             }
             // now determine normal and area
             SetArea();
-            if (Area > Constants.ErrorForFaceArea) SetNormal();
+            if (Area > Constants.Error) SetNormal();
             else Normal = new[] { double.NaN, double.NaN, double.NaN };
         }
 
@@ -89,7 +89,7 @@ namespace TVGL
                 var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
                 var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
                 Area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
-                if (Area < Constants.ErrorForFaceArea) throw new Exception();
+                if (Area.IsNegligible()) throw new Exception();
             }
             else throw new Exception("Not Implemented");
         }
