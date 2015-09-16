@@ -39,8 +39,8 @@ namespace TVGL.Boolean_Operations
             DivideUpFaces(ts, plane, out positiveSideFaces, out positiveSideLoopVertices, 1);
             DivideUpFaces(ts, plane, out negativeSideFaces, out negativeSideLoopVertices, -1);
             //2. Find loops to define the missing space on the plane
-            var positiveSideLoops = FindLoops(positiveSideLoopVertices, positiveSideFaces);
-            var negativeSideLoops = FindLoops(negativeSideLoopVertices, negativeSideFaces);
+            var positiveSideLoops = FindLoops(positiveSideLoopVertices);
+            var negativeSideLoops = FindLoops(negativeSideLoopVertices);
             //3. Triangulate that empty space and add to list 
             var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal);
             positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1))));
@@ -235,57 +235,22 @@ namespace TVGL.Boolean_Operations
             }
         }
 
-        private static List<List<Vertex>> FindLoops(IList<Vertex> onPlaneVertices, IEnumerable<PolygonalFace> onSideFaces)
+        private static List<List<Vertex>> FindLoops(IList<Vertex> onPlaneVertices)
         {
-            //Set a new reference index for each vertex, because some of the vertices are new (from straddle edges)
-            var onPlaneEdges = new List<Edge>();
-            var onPlaneEdgeHash = new HashSet<Edge>();
-            var hashFaces = new HashSet<PolygonalFace>(onSideFaces);
-            var onPlaneVerticesHash = new HashSet<Vertex>(onPlaneVertices);
-            for (var i = 0; i < onPlaneVertices.Count(); i++)
-            {
-                var vertex1 = onPlaneVertices[i];
-                vertex1.IndexInList = i;
-                foreach (var edge in vertex1.Edges)
-                {
-                    var vertex2 = edge.OtherVertex(vertex1);
-                    if (!onPlaneVerticesHash.Contains(vertex2)) continue;
-                    if (onPlaneEdgeHash.Contains(edge))
-                    {
-                        //keep any new edges (they will have a null reference)
-                        if (edge.OwnedFace == null || edge.OtherFace == null)
-                        {
-                            onPlaneEdges.Add(edge);
-                        }
-                        //Else, keep any edge that has ONLY one face on this side of plane
-                        else if ((hashFaces.Contains(edge.OwnedFace) && !hashFaces.Contains(edge.OtherFace)) ||
-                            (!hashFaces.Contains(edge.OwnedFace) && hashFaces.Contains(edge.OtherFace)))
-                        {
-                            onPlaneEdges.Add(edge);
-                        }
-                        onPlaneEdgeHash.Remove(edge);
-                    }
-                    else onPlaneEdgeHash.Add(edge);
-                }
-            }
-            if (onPlaneEdgeHash.Count != 0) throw new Exception("tempHash should be empty, since the edge should have come up twice");
-
             //Every vertex that is on Plane is on a loop.
             var loops = new List<List<Vertex>>();
-            var remainingEdges = new List<Edge>(onPlaneEdges);
-            var attempts = 0;
-            while (remainingEdges.Count > 0)
+            var vertices = new List<Vertex>(onPlaneVertices);
+            while (vertices.Any())
             {
+                var attempts = 0;
                 var loop = new List<Vertex>();
-                var successfull = true;
-                var removedEdges = new List<Edge>();
-                var currentEdge = remainingEdges[0];
-                var startVertex = currentEdge.From;
-                var newStartVertex = currentEdge.To;
+                var removedVertices = new List<Vertex>();
+                var startVertex = vertices[0];
+                var currentEdge = startVertex.Edges[0];
+                var newStartVertex = currentEdge.OtherVertex(startVertex);
+                //Update the lists for newStartVertex.
                 loop.Add(newStartVertex);
-                removedEdges.Add(currentEdge);
-                remainingEdges.RemoveAt(0);
-                var reversed = false;
+                vertices.Remove(newStartVertex);
                 do
                 {
                     Edge nextEdge = null;
@@ -298,20 +263,15 @@ namespace TVGL.Boolean_Operations
                             break;
                         }
                     }
-                    else throw new Exception("This should always happen with Slice3");//possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
+                    else throw new Exception("This should always happen with Slice3");
                     newStartVertex = nextEdge.OtherVertex(newStartVertex);
                     loop.Add(newStartVertex);
-                    removedEdges.Add(nextEdge);
-                    remainingEdges.Remove(nextEdge);
+                    vertices.Remove(newStartVertex);
                     currentEdge = nextEdge;
+                    attempts++;
                 }
-                while (newStartVertex != startVertex && successfull);
-                if (attempts == 5) throw new Exception();
-                if (successfull) loops.Add(loop);
-                else
-                {
-                    remainingEdges.AddRange(removedEdges);
-                }
+                while (newStartVertex != startVertex && attempts < onPlaneVertices.Count());
+                loops.Add(loop); 
             }
             return loops;
         }

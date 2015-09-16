@@ -326,56 +326,6 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid Copy()
         {
-            var copyOfFaces = new PolygonalFace[NumberOfFaces];
-            for (var i = 0; i < NumberOfFaces; i++)
-                copyOfFaces[i] = Faces[i].Copy();
-            var copyOfVertices = new Vertex[NumberOfVertices];
-            for (var i = 0; i < NumberOfVertices; i++)
-                copyOfVertices[i] = Vertices[i].Copy();
-            for (var fIndex = 0; fIndex < NumberOfFaces; fIndex++)
-            {
-                var thisFace = copyOfFaces[fIndex];
-                var oldFace = Faces[fIndex];
-                var vertexIndices = new List<int>();
-                foreach (var oldVertex in oldFace.Vertices)
-                {
-                    var vIndex = oldVertex.IndexInList;
-                    vertexIndices.Add(vIndex);
-                    var thisVertex = copyOfVertices[vIndex];
-                    thisFace.Vertices.Add(thisVertex);
-                    thisVertex.Faces.Add(thisFace);
-                }
-            }
-            Edge[] copyOfEdges = MakeEdges(copyOfFaces);
-            var copy = new TessellatedSolid
-            {
-                SurfaceArea = SurfaceArea,
-                Center = (double[])Center.Clone(),
-                Faces = copyOfFaces,
-                Vertices = copyOfVertices,
-                Edges = copyOfEdges,
-                Name = Name,
-                NumberOfFaces = NumberOfFaces,
-                NumberOfVertices = NumberOfVertices,
-                Volume = Volume,
-                XMax = XMax,
-                XMin = XMin,
-                YMax = YMax,
-                YMin = YMin,
-                ZMax = ZMax,
-                ZMin = ZMin
-            };
-            copy.CreateConvexHull();
-            copy.CheckReferences();
-            return copy;
-        }
-
-        /// <summary>
-        ///     Duplicates this instance.
-        /// </summary>
-        /// <returns>TessellatedSolid.</returns>
-        public TessellatedSolid Duplicate()
-        {
             var listDoubles = new List<double[]>();
             for(var i = 0; i < Vertices.Count(); i++)
             {
