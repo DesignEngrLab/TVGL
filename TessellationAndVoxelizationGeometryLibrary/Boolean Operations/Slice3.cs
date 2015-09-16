@@ -279,28 +279,31 @@ namespace TVGL.Boolean_Operations
                 var loop = new List<Vertex>();
                 var successfull = true;
                 var removedEdges = new List<Edge>();
-                var startVertex = remainingEdges[0].From;
-                var newStartVertex = remainingEdges[0].To;
+                var currentEdge = remainingEdges[0];
+                var startVertex = currentEdge.From;
+                var newStartVertex = currentEdge.To;
                 loop.Add(newStartVertex);
-                removedEdges.Add(remainingEdges[0]);
+                removedEdges.Add(currentEdge);
                 remainingEdges.RemoveAt(0);
                 var reversed = false;
                 do
                 {
-                    var possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
-                    if (possibleNextEdges.Count() != 1)
+                    Edge nextEdge = null;
+                    if (newStartVertex.Edges.Count == 2)
                     {
-                        successfull = false;
-                        attempts++;
-                        //throw new Exception("Should always be == to 1");
+                        foreach (var edge in newStartVertex.Edges)
+                        {
+                            if (edge == currentEdge) continue;
+                            nextEdge = edge;
+                            break;
+                        }
                     }
-                    else
-                    {
-                        newStartVertex = possibleNextEdges[0].OtherVertex(newStartVertex);
-                        loop.Add(newStartVertex);
-                        removedEdges.Add(possibleNextEdges[0]);
-                        remainingEdges.Remove(possibleNextEdges[0]);
-                    }
+                    else throw new Exception("This should always happen with Slice3");//possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
+                    newStartVertex = nextEdge.OtherVertex(newStartVertex);
+                    loop.Add(newStartVertex);
+                    removedEdges.Add(nextEdge);
+                    remainingEdges.Remove(nextEdge);
+                    currentEdge = nextEdge;
                 }
                 while (newStartVertex != startVertex && successfull);
                 if (attempts == 5) throw new Exception();

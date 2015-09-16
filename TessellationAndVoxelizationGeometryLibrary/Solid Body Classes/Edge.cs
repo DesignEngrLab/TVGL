@@ -218,6 +218,14 @@ namespace TVGL
             if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
+        public void Reverse()
+        {
+            var temp = From;
+            From = To;
+            To = temp;
+            Vector = Vector.multiply(-1);
+        }
+
         public void SetEdgeReference(int checkSumMultiplier)
         {
             var fromIndex = From.IndexInList;

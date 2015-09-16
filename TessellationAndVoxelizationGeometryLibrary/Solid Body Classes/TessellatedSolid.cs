@@ -295,7 +295,6 @@ namespace TVGL
             //Get a list of all the vertices in the new tesselated solid
             foreach (var polyFace in polyFaces)
             {
-                if (polyFace.Vertices.Count < 3) throw new Exception("This method only works for faces with defined vertices.");
                 foreach (var vertex in polyFace.Vertices)
                 {
                     if(!vertices.Contains(vertex))
@@ -445,8 +444,8 @@ namespace TVGL
                 {
                     faceVertices.Add(Vertices[vertexMatchingIndex]);
                 }
-                if (normal == null) listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices, checksum));
-                else listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices, checksum));
+                if (normal == null) listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices, CheckSumMultiplier, checksum));
+                else listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices, CheckSumMultiplier, checksum));
             }
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);
@@ -504,28 +503,27 @@ namespace TVGL
                     }
                     else
                     {
-                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices, checksum);
+                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices, CheckSumMultiplier, checksum);
                         partlyDefinedEdges.Add(checksum, edge);
                     }
                 }
             }
-
-            var badEdges = partlyDefinedEdges.Values.ToList();
-            if (badEdges.Count > 2)
+            var definedEdges = alreadyDefinedEdges.Values.ToList();
+            if (partlyDefinedEdges.Count > 2)
             {
                 //There is a chance, one or more faces is just missing. This can be repaired if the bad edges
                 //form a loop around the missing section, if the missing section if reletively flat.
-                RepairMissingFacesFromEdges(ref badEdges, doublyLinkToVertices);
+                RepairMissingFacesFromEdges(ref partlyDefinedEdges, ref definedEdges, doublyLinkToVertices);
             }
-            if (badEdges.Count > 0)
+            if (partlyDefinedEdges.Count > 0)
             {
-                foreach (var badEdge in badEdges)
+                foreach (var badEdge in partlyDefinedEdges.Values)
                 {
                     Debug.WriteLine("Edge found with only face. Edge Reference: " + badEdge.EdgeReference);
                 }
                 throw new Exception();
             }
-            return alreadyDefinedEdges.Values.ToArray();
+            return definedEdges.ToArray();
         }
 
         /// <summary>
@@ -633,12 +631,7 @@ namespace TVGL
             Vertices = new Vertex[NumberOfVertices];
             for (var i = 0; i < NumberOfVertices; i++)
                 Vertices[i] = new Vertex(listOfVertices[i], i);
-            CheckSumMultiplier = GetCheckSumMultiplier();
-        }
-
-        public int GetCheckSumMultiplier()
-        {
-            return (int)Math.Pow(10, (int)Math.Floor(Math.Log10(Vertices.Count())) + 1);
+            CheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(Vertices.Count())) + 1);
         }
         #endregion
 
@@ -1004,6 +997,7 @@ namespace TVGL
                 foreach (var adjacentFace in face.AdjacentFaces)
                 {
                     if (!adjacentFace.AdjacentFaces.Contains(face)) throw new Exception();
+                    if (face.Normal.dotProduct(adjacentFace.Normal).IsPracticallySame(-1.0)) throw new Exception();
                 }
             }
             //Check if each edge has cyclic references with each vertex and each face.
@@ -1030,11 +1024,12 @@ namespace TVGL
         #endregion
 
         #region Repair Functions
-        public void RepairMissingFacesFromEdges(ref List<Edge> remainingEdges, bool doublyLinkToVertices)
+        public void RepairMissingFacesFromEdges(ref Dictionary<int, Edge> partlyDefinedEdges, ref List<Edge> definedEdges, bool doublyLinkToVertices)
         {
             var newFaces = new List<PolygonalFace>();
             var loops = new List<List<Vertex>>();
             var attempts = 0;
+            var remainingEdges = partlyDefinedEdges.Values.ToList();
             while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
             {
                 var loop = new List<Vertex>();
@@ -1042,6 +1037,32 @@ namespace TVGL
                 var removedEdges = new List<Edge>();
                 //Since all the edges are owned by their other face, 
                 //the loop should be found starting with the To instead of from.
+                //But the edge direction is not confirmed until the other face is added.
+                //So we will perform an early check to make sure it is CCW for the owned face.
+                var remainingEdge = remainingEdges[0];
+                var ownedEdges = remainingEdges[0].OwnedFace.Edges;
+                //First, get all edge vectors on the face in the same direction.
+                if (ownedEdges.Count != 3) throw new Exception("This method was written for Trianglualal Faces ONLY");
+                for( var i = 0; i < 2; i ++ )
+                {
+                    if(ownedEdges[i] == remainingEdge) continue;
+                    //If the faces share the same owned face, they should be the same (CCW) direction.
+                    if(remainingEdge.OwnedFace == ownedEdges[i].OwnedFace)
+                    {
+                        if(remainingEdge.To != ownedEdges[i].From && remainingEdge.From != ownedEdges[i].To) remainingEdge.Reverse();
+                        //If ownedEdges[i] does not have an owned face, it was also a bad edge. 
+                        //Use the dot product and face normal to determine if direction was correct.
+                        throw new Exception("finish this implementation");
+                    }
+                    //Else, they should be in opposite directions.
+                    //Note that if the owned faces are not equal, then the other edge must be a good edge.
+                    else
+                    {
+                        if(remainingEdge.To != ownedEdges[i].To && remainingEdge.From != ownedEdges[i].From) remainingEdge.Reverse();
+                    }
+                    //should be CCW for its owned face now.
+                    break;
+                }
                 var startVertex = remainingEdges[0].To;
                 var newStartVertex = remainingEdges[0].From;
                 loop.Add(newStartVertex);
@@ -1097,11 +1118,10 @@ namespace TVGL
 
             //Find which edges need to be added and add those
             var edgeChecksums = new HashSet<int>();
-            foreach (var edge in Edges)
+            foreach (var edge in definedEdges)
             {
                 edgeChecksums.Add(edge.EdgeReference);
             }
-            var partlyDefinedEdges = new Dictionary<int, Edge>();
             var alreadyDefinedEdges = new Dictionary<int, Edge>();
             foreach (var face in newFaces)
             {
@@ -1133,14 +1153,14 @@ namespace TVGL
                     }
                     else
                     {
-                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices, checksum);
+                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices, CheckSumMultiplier, checksum);
                         partlyDefinedEdges.Add(checksum, edge);
                     }
                 }              
             }
             var badEdges = partlyDefinedEdges.Values.ToList();
             if (badEdges.Count > 0) throw new Exception("There should be no bad edges in this function, which is fixing bad edges");
-            AddEdges(alreadyDefinedEdges.Values.ToList());
+            definedEdges.AddRange(alreadyDefinedEdges.Values.ToList());
         }
 
         internal double[] GetNormalForLoop(List<Vertex> loop)

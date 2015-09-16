@@ -47,10 +47,10 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices, double[] normal,  bool ConnectVerticesBackToFace = true, long referenceIndex = 0)
+        public PolygonalFace(IList<Vertex> vertices, double[] normal,  bool ConnectVerticesBackToFace = true, int checkSumMultiplier = 0, long faceReference = 0)
             : this()
         {
-            ReferenceIndex = referenceIndex;
+            
             Normal = normal;
             var edge1 = vertices[1].Position.subtract(vertices[0].Position);
             var edge2 = vertices[2].Position.subtract(vertices[1].Position);
@@ -60,6 +60,8 @@ namespace TVGL
             if (ConnectVerticesBackToFace)
                 foreach (var v in Vertices)
                     v.Faces.Add(this);
+            if (faceReference == 0 && checkSumMultiplier != 0) SetFaceReference(checkSumMultiplier); 
+            else FaceReference = faceReference;
             SetArea();
             SetCenter();
         }
@@ -68,16 +70,17 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices,  bool ConnectVerticesBackToFace = true, long referenceIndex = 0)
+        public PolygonalFace(IList<Vertex> vertices, bool ConnectVerticesBackToFace = true, int checkSumMultiplier = 0, long faceReference = 0)
             : this()
         {
-            ReferenceIndex = referenceIndex;
             foreach (var v in vertices)
             {
                 Vertices.Add(v);
                 if (ConnectVerticesBackToFace)
                     v.Faces.Add(this);
             }
+            if (faceReference == 0 && checkSumMultiplier != 0) SetFaceReference(checkSumMultiplier);
+            else FaceReference = faceReference;
             // now determine normal and area
             SetArea();
             SetNormal();
@@ -170,7 +173,7 @@ namespace TVGL
         /// Gets or sets the reference index, which is made from the vertex.IndexValue's 
         /// in a sorted list (not CCW). This value is unique for each face.
         /// </summary>
-        public long ReferenceIndex { get; set; }
+        public long FaceReference { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether [it is part of the convex hull].
@@ -222,6 +225,7 @@ namespace TVGL
         {
             return new PolygonalFace
             {
+                FaceReference = FaceReference,
                 Area = Area,
                 Center = (double[])Center.Clone(),
                 Curvature = Curvature,
@@ -239,6 +243,25 @@ namespace TVGL
         {
             SetNormal();
             SetArea();
+        }
+
+        public void SetFaceReference(int CheckSumMultiplier)
+        {
+            var checksumMultiplier = new long[Constants.MaxNumberEdgesPerFace];
+            for (var i = 0; i < Constants.MaxNumberEdgesPerFace; i++)
+                checksumMultiplier[i] = (long)Math.Pow(CheckSumMultiplier, i);
+            double[] normal = null;
+            long checksum = 0;
+            var orderedIndices = new List<int>();
+            foreach (var vertex in Vertices)
+            {
+                orderedIndices.Add(vertex.IndexInList);
+            }
+            orderedIndices.Sort();
+            if (orderedIndices.Count != Constants.MaxNumberEdgesPerFace) throw new Exception();
+            for (var j = 0; j < orderedIndices.Count; j++)
+                checksum += orderedIndices[j] * checksumMultiplier[j];
+            FaceReference = checksum;
         }
 
         internal Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
