@@ -27,10 +27,10 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Flat"/> class.
         /// </summary>
         /// <param name="faces"></param>
-        public Flat(List<PolygonalFace> faces)
+        public Flat(IEnumerable<PolygonalFace> faces)
             : base(faces)
         {
-            Faces = faces;
+            Faces = faces.ToList();
             var normalSum = new double[3];
             normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
             Normal = normalSum.divide(Faces.Count);

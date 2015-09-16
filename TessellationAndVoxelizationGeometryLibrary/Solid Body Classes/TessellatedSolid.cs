@@ -430,31 +430,6 @@ namespace TVGL
             return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
         }
         
-        //Duplicate creates a new tesselated solid from old data. 
-        //All references are removed and new ones are created.
-        //However, the new vertices point to the same vertex positions as the old data.
-        public TessellatedSolid Duplicate()
-        {
-            var listDoubles = new List<double[]>();
-            for(var i = 0; i < Vertices.Count(); i++)
-            {
-                Vertices[i].IndexInList = i;
-                listDoubles.Add(Vertices[i].Position);
-                //listDoubles.Add((double[])Vertices[i].Position.Clone());
-            }
-            var faces = new List<List<int>>();
-            for(var i = 0; i < Faces.Count(); i++)
-            {
-                var face = new List<int>();
-                foreach (var vertex in Faces[i].Vertices)
-                {
-                    face.Add(vertex.IndexInList);
-                }
-                faces.Add(face);
-            }
-            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
-        }
-
         #region Make many elements (called from constructors)
         /// <summary>
         /// Makes the faces.
@@ -867,48 +842,26 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid Copy()
         {
-            var copyOfFaces = new PolygonalFace[NumberOfFaces];
-            for (var i = 0; i < NumberOfFaces; i++)
-                copyOfFaces[i] = Faces[i].Copy();
-            var copyOfVertices = new Vertex[NumberOfVertices];
-            for (var i = 0; i < NumberOfVertices; i++)
-                copyOfVertices[i] = Vertices[i].Copy();
-            for (var fIndex = 0; fIndex < NumberOfFaces; fIndex++)
+            var listDoubles = new List<double[]>();
+            for (var i = 0; i < Vertices.Count(); i++)
             {
-                var thisFace = copyOfFaces[fIndex];
-                var oldFace = Faces[fIndex];
-                var vertexIndices = new List<int>();
-                foreach (var oldVertex in oldFace.Vertices)
-                {
-                    var vIndex = oldVertex.IndexInList;
-                    vertexIndices.Add(vIndex);
-                    var thisVertex = copyOfVertices[vIndex];
-                    thisFace.Vertices.Add(thisVertex);
-                    thisVertex.Faces.Add(thisFace);
-                }
+                Vertices[i].IndexInList = i;
+                listDoubles.Add(Vertices[i].Position);
+                //listDoubles.Add((double[])Vertices[i].Position.Clone());
             }
-            Edge[] copyOfEdges = MakeEdges(copyOfFaces);
-            var copy = new TessellatedSolid
+            var faces = new List<List<int>>();
+            for (var i = 0; i < Faces.Count(); i++)
             {
-                SurfaceArea = SurfaceArea,
-                Center = (double[])Center.Clone(),
-                Faces = copyOfFaces,
-                Vertices = copyOfVertices,
-                Edges = copyOfEdges,
-                Name = Name,
-                NumberOfFaces = NumberOfFaces,
-                NumberOfVertices = NumberOfVertices,
-                Volume = Volume,
-                XMax = XMax,
-                XMin = XMin,
-                YMax = YMax,
-                YMin = YMin,
-                ZMax = ZMax,
-                ZMin = ZMin
-            };
-            copy.CreateConvexHull();
-            return copy;
+                var face = new List<int>();
+                foreach (var vertex in Faces[i].Vertices)
+                {
+                    face.Add(vertex.IndexInList);
+                }
+                faces.Add(face);
+            }
+            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
         }
+
 
         #endregion
 
