@@ -69,8 +69,8 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                TestSlice(ts[0]);
-                //TestOBB(ts[0],filename);
+                //TestSlice(ts[0]);
+                TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
                 //FileStream fileStream2 = File.OpenRead(filename2);
                 //var ts2= IO.Open(fileStream2, filename2, false);
@@ -228,7 +228,7 @@ namespace TVGL_Test
                 }
                 ts.HasUniformColor = false;
                 TVGL_Helix_Presenter.HelixPresenter.Show(ts);
-                Slice2.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
+                Slice3.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
                 foreach (var solid in negativeSideSolids)
