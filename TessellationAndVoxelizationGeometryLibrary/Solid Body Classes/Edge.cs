@@ -10,7 +10,6 @@ namespace TVGL
     public class Edge
     {
         #region Constructor
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="Edge" /> class.
         /// </summary>
@@ -21,11 +20,12 @@ namespace TVGL
         /// <param name="doublyLinkedVertices"></param>
         /// <param name="edgeReference"></param>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            bool doublyLinkedVertices = true, int edgeReference = 0)
+            bool doublyLinkedVertices = true, int checkSumMultiplier = 0, int edgeReference = 0)
         {
-            EdgeReference = edgeReference;
             From = fromVertex;
             To = toVertex;
+            if (edgeReference == 0 && checkSumMultiplier != 0) SetEdgeReference(checkSumMultiplier);
+            else EdgeReference = edgeReference;
             _ownedFace = ownedFace;
             _otherFace = otherFace;
             if (ownedFace != null) ownedFace.Edges.Add(this);
@@ -54,10 +54,11 @@ namespace TVGL
         /// <param name="fromVertex">From vertex.</param>
         /// <param name="toVertex">To vertex.</param>
         /// <param name="doublyLinkedVertices"></param>
-        public Edge(Vertex fromVertex, Vertex toVertex, bool doublyLinkedVertices)
+        public Edge(Vertex fromVertex, Vertex toVertex,  bool doublyLinkedVertices, int checkSumMultiplier = 0)
         {
             From = fromVertex;
             To = toVertex;
+            if (checkSumMultiplier != 0) SetEdgeReference(checkSumMultiplier);
             if (doublyLinkedVertices)
             {
                 fromVertex.Edges.Add(this);
@@ -217,6 +218,23 @@ namespace TVGL
             if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
+        public void Reverse()
+        {
+            var temp = From;
+            From = To;
+            To = temp;
+            Vector = Vector.multiply(-1);
+        }
+
+        public void SetEdgeReference(int checkSumMultiplier)
+        {
+            var fromIndex = From.IndexInList;
+            var toIndex = To.IndexInList;
+            if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+            EdgeReference = (fromIndex < toIndex)
+                    ? fromIndex + (checkSumMultiplier * toIndex)
+                    : toIndex + (checkSumMultiplier * fromIndex);
+        }
         /// <summary>
         ///     Defines the edge angle.
         /// </summary>

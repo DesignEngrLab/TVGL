@@ -12,8 +12,9 @@
 // <summary></summary>
 // ***********************************************************************
 using System;
-using MIConvexHull;
 using System.Collections.Generic;
+using System.Linq;
+using MIConvexHull;
 using StarMathLib;
 
 
@@ -86,17 +87,12 @@ namespace TVGL
         /// Gets the curvature at the point.
         /// </summary>
         /// <value>The point curvature.</value>
-        public CurvatureType PointCurvature { get; internal set; }
-        /// <summary>
-        /// Gets the curvature by considering the connecting edges.
-        /// </summary>
-        /// <value>The global curve.</value>
-        public CurvatureType EdgeCurvature { get; internal set; }
+        public CurvatureType VertexCurvature { get; internal set; }
         /// <summary>
         /// Gets a value indicating whether [it is part of the convex hull].
         /// </summary>
         /// <value><c>true</c> if [it is part of the convex hull]; otherwise, <c>false</c>.</value>
-        public Boolean PartofConvexHull { get; internal set; }
+        public bool PartofConvexHull { get; internal set; }
 
         /// <summary>
         /// Gets the index in list.
@@ -122,9 +118,8 @@ namespace TVGL
         {
             return new Vertex
             {
-                EdgeCurvature = EdgeCurvature,
+                VertexCurvature = VertexCurvature,
                 PartofConvexHull = PartofConvexHull,
-                PointCurvature = PointCurvature,
                 Edges = new List<Edge>(),
                 Faces = new List<PolygonalFace>(),
                 Position = (double[])Position.Clone(),
@@ -132,12 +127,18 @@ namespace TVGL
             };
         }
 
-        public void MoveByVector(double[] vector, out List<Edge> edgesRequiringUpdate, out List<PolygonalFace> facesRequiringUpdate)
+        public void DefineVertexCurvature()
         {
-            Position = Position.add(vector);
-            edgesRequiringUpdate = Edges;
-            facesRequiringUpdate = Faces;
-        }
+            var edges = new List<Edge>(Edges);
+            if (Edges.Any(e => e.Curvature == CurvatureType.Undefined))
+                VertexCurvature = CurvatureType.Undefined;
+            else if (!Edges.Any(e => e.Curvature != CurvatureType.SaddleOrFlat))
+                VertexCurvature = CurvatureType.SaddleOrFlat;
+            else if (Edges.Any(e => e.Curvature != CurvatureType.Convex))
+                VertexCurvature = CurvatureType.Concave;
+            else if (Edges.Any(e => e.Curvature != CurvatureType.Concave))
+                VertexCurvature = CurvatureType.Convex;
+            else VertexCurvature = CurvatureType.SaddleOrFlat;
+        } 
     }
-
 }

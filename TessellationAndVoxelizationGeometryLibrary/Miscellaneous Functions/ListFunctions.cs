@@ -117,7 +117,8 @@ namespace TVGL
                         List<Edge> edgesRequiringUpdate;
                         List<PolygonalFace> facesRequiringUpdate;
                         var moveVector = flat.Normal.multiply(difference);
-                        vertex.MoveByVector(moveVector, out edgesRequiringUpdate, out facesRequiringUpdate);
+                        throw new Exception("not yet implemented. Needs to create a NEW vertex. Taboo to move vertices.");
+                        //vertex.MoveByVector(moveVector, out edgesRequiringUpdate, out facesRequiringUpdate);
                         distanceToOrigin = vertex.Position.dotProduct(flat.Normal);
                         difference = flat.DistanceToOrigin - distanceToOrigin;
                         if (Math.Abs(difference) > 1E-12) throw new Exception();

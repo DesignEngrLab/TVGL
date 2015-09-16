@@ -43,13 +43,14 @@ namespace TVGL.IOFunctions
         ///     or
         ///     Cannot determine format from extension (not .stl, .3ds, .lwo, .obj, .objx, or .off.
         /// </exception>
-        public static List<TessellatedSolid> Open(Stream s, string filename, Boolean inParallel = true)
+        public static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = false)
         {
             var lastIndexOfDot = filename.LastIndexOf('.');
             if (lastIndexOfDot < 0 || lastIndexOfDot >= filename.Length - 1)
                 throw new Exception("Cannot open file without extension (e.g. f00.stl).");
             var extension = filename.Substring(lastIndexOfDot + 1, filename.Length - lastIndexOfDot - 1).ToLower();
             List<TessellatedSolid> tessellatedSolids;
+            if (inParallel) throw new Exception("This function has been recently removed.");
             switch (extension)
             {
                 case "stl":
@@ -75,7 +76,7 @@ namespace TVGL.IOFunctions
                 Debug.WriteLine("number of vertices = " + tessellatedSolid.NumberOfVertices);
                 Debug.WriteLine("number of edges = " + tessellatedSolid.NumberOfEdges);
                 Debug.WriteLine("number of faces = " + tessellatedSolid.NumberOfFaces);
-                Debug.WriteLine("Euler operator (should be 2) = " +
+                Debug.WriteLine("Euler operator (should be a small +/- value) = " +
                                 (tessellatedSolid.NumberOfVertices - tessellatedSolid.NumberOfEdges +
                                  tessellatedSolid.NumberOfFaces));
                 Debug.WriteLine("Edges / Faces (should be 1.5) = " +
@@ -91,7 +92,7 @@ namespace TVGL.IOFunctions
         /// <param name="s">The s.</param>
         /// <param name="inParallel">The in parallel.</param>
         /// <returns>TessellatedSolid.</returns>
-        private static List<TessellatedSolid> OpenSTL(Stream s, Boolean inParallel = true)
+        private static List<TessellatedSolid> OpenSTL(Stream s, bool inParallel = true)
         {
             var now = DateTime.Now;
             List<STLFileData> stlData;
@@ -119,7 +120,7 @@ namespace TVGL.IOFunctions
         }
 
 
-        private static List<TessellatedSolid> OpenOFF(Stream s, Boolean inParallel = true)
+        private static List<TessellatedSolid> OpenOFF(Stream s, bool inParallel = true)
         {
             var now = DateTime.Now;
             OFFFileData offData;
@@ -146,7 +147,7 @@ namespace TVGL.IOFunctions
             };
         }
 
-        private static List<TessellatedSolid> OpenAMF(Stream s, Boolean inParallel = true)
+        private static List<TessellatedSolid> OpenAMF(Stream s, bool inParallel = true)
         {
             var now = DateTime.Now;
             AMFFileData amfData;
@@ -283,8 +284,8 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <param name="expected">The expected.</param>
-        /// <returns>Boolean.</returns>
-        protected static Boolean ReadExpectedLine(StreamReader reader, string expected)
+        /// <returns>bool.</returns>
+        protected static bool ReadExpectedLine(StreamReader reader, string expected)
         {
             var startPosition = reader.BaseStream.Position;
             var line = ReadLine(reader);

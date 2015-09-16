@@ -46,23 +46,26 @@ namespace TVGL
         ///     The epsilon same angle
         /// </summary>
         public const double EpsilonSameAngle = 1e-15;
+
         /// <summary>
         ///     The look up string format
         /// </summary>
         public const string LookUpStringFormat = "F12";
+
         /// <summary>
         ///     The error used in TVGL, primarily for STL files.
         /// </summary>
         public const int DecimalPlaceError = 12;
+
         /// <summary>
         ///     The error used in TVGL, primarily for STL files.
         /// </summary>
         public const double Error = 1E-12;
+
         /// <summary>
         ///     The error for face in surface
         /// </summary>
         public const double ErrorForFaceInSurface = 0.02;
-        
 
         /// <summary>
         ///     The maximum number edges per face

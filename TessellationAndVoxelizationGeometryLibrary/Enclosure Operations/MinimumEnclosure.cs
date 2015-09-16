@@ -664,7 +664,7 @@ namespace TVGL
                 foreach (var angle in angleList)
                 {
                     //Find three rotation matrices (two are tests)
-                    for (var i = -1; i < 2; i++)
+                    for (var i = 0; i < 1; i++)
                     {
                         if (angleList.IndexOf(angle) == 0 && i == -1) continue;
                         if (angleList.IndexOf(angle) == angleList.Count() - 1 && i == 1) continue;
@@ -685,84 +685,84 @@ namespace TVGL
                         var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
                         var dataPoint = new double[] { angle, obb.Volume };
                         seriesData.Add(dataPoint);
-                        if (i == -1)
-                        {
-                            left2 = obb.Volume;
-                            if (angleList.IndexOf(angle) != 0)
-                            {
-                                //If not the first data point, check to make sure it has equivalent vertices as the last data point
-                                foreach (var vertex in obb.ExtremeVertices)
-                                {
-                                    if (vertex == obb.ExtremeVertices[0]) continue;
-                                    if (!obbVertices.Contains(vertex)) throw new Exception();
-                                }
-                                foreach (var vertex in obb.EdgeVertices)
-                                {
-                                    if (!obbVertices.Contains(vertex)) throw new Exception();
-                                }
-                            }
-                        }
-                        if (i == 0) dataPoint2 = new double[] { dataPoint[0], dataPoint[1] };
-                        if (i == 1)
-                        {
-                            right2 = obb.Volume;
-                            obbVertices = new List<Vertex>(obb.ExtremeVertices.ToList());
-                            obbVertices.RemoveAt(0); //remove the depth vertex 1, since new obb could choose the other vertex on the edge
-                            obbVertices.AddRange(obb.EdgeVertices);
-                        }
-                        if (obb.Volume < minVolume)
-                        {
-                            minBox = obb;
-                            minVolume = minBox.Volume;
-                        }
+                        //if (i == -1)
+                        //{
+                        //    left2 = obb.Volume;
+                        //    if (angleList.IndexOf(angle) != 0)
+                        //    {
+                        //        //If not the first data point, check to make sure it has equivalent vertices as the last data point
+                        //        foreach (var vertex in obb.ExtremeVertices)
+                        //        {
+                        //            if (vertex == obb.ExtremeVertices[0]) continue;
+                        //            if (!obbVertices.Contains(vertex)) throw new Exception();
+                        //        }
+                        //        foreach (var vertex in obb.EdgeVertices)
+                        //        {
+                        //            if (!obbVertices.Contains(vertex)) throw new Exception();
+                        //        }
+                        //    }
+                        //}
+                        //if (i == 0) dataPoint2 = new double[] { dataPoint[0], dataPoint[1] };
+                        //if (i == 1)
+                        //{
+                        //    right2 = obb.Volume;
+                        //    obbVertices = new List<Vertex>(obb.ExtremeVertices.ToList());
+                        //    obbVertices.RemoveAt(0); //remove the depth vertex 1, since new obb could choose the other vertex on the edge
+                        //    obbVertices.AddRange(obb.EdgeVertices);
+                        //}
+                        //if (obb.Volume < minVolume)
+                        //{
+                        //    minBox = obb;
+                        //    minVolume = minBox.Volume;
+                        //}
                     }
-                    if (right1 < dataPoint1[1] && left2 < dataPoint2[1] && dataPoint1[0] + stepSize > dataPoint2[0])
-                    {
-                        //Check for minimum from dataPoint1 to dataPoint2
-                        var decreasing = true;
-                        var newAngle = dataPoint1[0];
-                        var minimaAngle = dataPoint1[0];
-                        var localMinVolume = dataPoint1[1];
-                        while(decreasing = true)
-                        {
-                            if(newAngle >= dataPoint2[0]) throw new Exception("Should have started increasing by now");
-                            newAngle = newAngle + stepSize;
-                            var s = Math.Sin(newAngle);
-                            var c = Math.Cos(newAngle);
-                            var t = 1.0 - c;
-                            var rotMatrix3 = new[,]
-                            {
-                                {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
-                                {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
-                                {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
-                            };
-                            direction = rotMatrix3.multiply(n);
-                            if (double.IsNaN(direction[0])) throw new Exception();
+                    //if (right1 < dataPoint1[1] && left2 < dataPoint2[1] && dataPoint1[0] + stepSize > dataPoint2[0])
+                    //{
+                    //    //Check for minimum from dataPoint1 to dataPoint2
+                    //    var decreasing = true;
+                    //    var newAngle = dataPoint1[0];
+                    //    var minimaAngle = dataPoint1[0];
+                    //    var localMinVolume = dataPoint1[1];
+                    //    while(decreasing = true)
+                    //    {
+                    //        if(newAngle >= dataPoint2[0]) throw new Exception("Should have started increasing by now");
+                    //        newAngle = newAngle + stepSize;
+                    //        var s = Math.Sin(newAngle);
+                    //        var c = Math.Cos(newAngle);
+                    //        var t = 1.0 - c;
+                    //        var rotMatrix3 = new[,]
+                    //        {
+                    //            {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
+                    //            {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
+                    //            {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
+                    //        };
+                    //        direction = rotMatrix3.multiply(n);
+                    //        if (double.IsNaN(direction[0])) throw new Exception();
 
-                            //Find OBB along direction and save minimum bounding box
-                            var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
-                            if(obb.Volume < localMinVolume)
-                            {
-                                localMinVolume = obb.Volume;
-                                minimaAngle = newAngle;
-                                decreasing = true;
-                                if (obb.Volume < minVolume)
-                                {
-                                    minBox = obb;
-                                    minVolume = minBox.Volume;
-                                }  
-                            }
-                            else decreasing = false;
-                        }
-                        //Insert minimum into data series at correct location
-                        var dataPoint = new double[] { minimaAngle, localMinVolume };
-                        var index = seriesData.FindIndex(dataPoint2)-2;
-                        seriesData.Insert(index,dataPoint);
-                    }
-                    right1 = right2;
-                    left1 = left2;
-                    dataPoint1 = new double[] { dataPoint2[0], dataPoint2[1] };
-                    priorAngle = angle;
+                    //        //Find OBB along direction and save minimum bounding box
+                    //        var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction.normalize());
+                    //        if(obb.Volume < localMinVolume)
+                    //        {
+                    //            localMinVolume = obb.Volume;
+                    //            minimaAngle = newAngle;
+                    //            decreasing = true;
+                    //            if (obb.Volume < minVolume)
+                    //            {
+                    //                minBox = obb;
+                    //                minVolume = minBox.Volume;
+                    //            }  
+                    //        }
+                    //        else decreasing = false;
+                    //    }
+                    //    //Insert minimum into data series at correct location
+                    //    var dataPoint = new double[] { minimaAngle, localMinVolume };
+                    //    var index = seriesData.FindIndex(dataPoint2)-2;
+                    //    seriesData.Insert(index,dataPoint);
+                    //}
+                    //right1 = right2;
+                    //left1 = left2;
+                    //dataPoint1 = new double[] { dataPoint2[0], dataPoint2[1] };
+                    //priorAngle = angle;
                 }
                 if(angleList.Count > 0) volumeData.Add(seriesData);
                 #endregion

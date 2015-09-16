@@ -96,9 +96,8 @@
       <HintPath>..\packages\MIConvexHull.1.0.10.1045\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\Visual Studio 2013\Projects\Assembly Planner\packages\StarMath.2.0.15.9084\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="StarMath">
+      <HintPath>..\packages\StarMath.2.0.15.9084\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
