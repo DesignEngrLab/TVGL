@@ -228,7 +228,7 @@ namespace TVGL_Test
                 }
                 ts.HasUniformColor = false;
                 TVGL_Helix_Presenter.HelixPresenter.Show(ts);
-                Slice2.OnFlat(ts.Duplicate(), flat, out positiveSideSolids, out negativeSideSolids);
+                Slice2.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
                 foreach (var solid in negativeSideSolids)
