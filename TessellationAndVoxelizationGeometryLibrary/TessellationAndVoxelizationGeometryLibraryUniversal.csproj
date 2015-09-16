@@ -95,7 +95,7 @@
       <HintPath>..\MIConvexHull\MIConvexHull.dll</HintPath>
     </Reference>
     <Reference Include="StarMath">
-      <HintPath>..\packages\StarMath.2.0.15.0707\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+      <HintPath>..\packages\StarMath.2.0.15.9084\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
