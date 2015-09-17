@@ -257,8 +257,10 @@ namespace TVGL
             CreateConvexHull();
             DefineBoundingBoxAndCenter();
             MakeEdges();
-            DefineVolumeAndSurfaceArea();
             //2
+            RepairFaces();
+            //3
+            DefineVolumeAndSurfaceArea();
             ConnectConvexHullToObjects();
             DefineFaceCurvature();
             DefineVertexCurvature();
@@ -789,6 +791,18 @@ namespace TVGL
             Vertices = newVertices;
         }
 
+        internal void ReplaceVertex(Vertex removeVertex, Vertex newVertex)
+        {
+            ReplaceVertex(Vertices.FindIndex(removeVertex), newVertex);
+        }
+        internal void ReplaceVertex(int removeVIndex, Vertex newVertex)
+        {
+            newVertex.IndexInList = removeVIndex;
+            var newVertices = new Vertex[NumberOfVertices];
+            newVertices[removeVIndex] = newVertex;
+            Vertices = newVertices;
+        }
+
         internal void RemoveVertices(List<Vertex> removeVertices)
         {
             RemoveVertices(removeVertices.Select(Vertices.FindIndex).ToList());
@@ -835,6 +849,18 @@ namespace TVGL
         }
         internal void RemoveFace(PolygonalFace removeFace)
         {
+            //First. Remove all the references to each edge and vertex.
+            foreach (var vertex in removeFace.Vertices)
+            {
+                var index = vertex.Faces.IndexOf(removeFace);
+                if (index >= 0) vertex.Faces.RemoveAt(index);
+            }
+            foreach (var edge in removeFace.Edges)
+            {
+                if (removeFace == edge.OwnedFace) edge.OwnedFace = null;
+                if (removeFace == edge.OtherFace) edge.OwnedFace = null;
+            }
+            //Face adjacency is a method call, not an object reference. So it updates automatically.
             RemoveFace(Faces.FindIndex(removeFace));
         }
 
@@ -850,6 +876,21 @@ namespace TVGL
         }
         internal void RemoveFaces(List<PolygonalFace> removeFaces)
         {
+            //First. Remove all the references to each edge and vertex.
+            foreach (var face in removeFaces)
+            {
+                foreach (var vertex in face.Vertices)
+                {
+                    var index = vertex.Faces.IndexOf(face);
+                    if (index >= 0) vertex.Faces.RemoveAt(index);
+                }
+                foreach (var edge in face.Edges)
+                {
+                    if (face == edge.OwnedFace) edge.OwnedFace = null;
+                    if (face == edge.OtherFace) edge.OwnedFace = null;
+                }
+                //Face adjacency is a method call, not an object reference. So it updates automatically.
+            }
             RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList());
         }
 
@@ -909,6 +950,18 @@ namespace TVGL
         }
         internal void RemoveEdges(List<Edge> removeEdges)
         {
+            //First. Remove all the references to each edge and vertex.
+            foreach (var edge in removeEdges)
+            {
+                var index = edge.To.Edges.IndexOf(edge);
+                if (index >= 0) edge.To.Edges.RemoveAt(index);
+                index = edge.From.Edges.IndexOf(edge);
+                if (index >= 0) edge.From.Edges.RemoveAt(index);
+                index = edge.OwnedFace.Edges.IndexOf(edge);
+                if (index >= 0) edge.OwnedFace.Edges.RemoveAt(index);
+                index = edge.OtherFace.Edges.IndexOf(edge);
+                if (index >= 0) edge.OtherFace.Edges.RemoveAt(index);
+            }
             RemoveEdges(removeEdges.Select(Edges.FindIndex).ToList());
         }
 
@@ -974,10 +1027,150 @@ namespace TVGL
         #endregion
 
         #region Repair Functions
+        public void RepairFaces()
+        {
+            //First, get all the negligible area faces.
+            var negligibleFaces = new List<PolygonalFace>();
+            foreach (var face in Faces)
+            {
+                if (face.Area < 0.0000001) negligibleFaces.Add(face);
+            }
+            //Then, collapse each of them. Special care is taken if they are adjacent.
+            for (var i = 0; i < negligibleFaces.Count; i++ )
+            {
+                var negligibleGroup = new List<PolygonalFace> { negligibleFaces[i] };
+                var largestEdges = new List<Edge>{negligibleFaces[i].Edges.OrderByDescending(item => item.Length).First()};
+                foreach (var adjacentFace in negligibleFaces[i].AdjacentFaces)
+                {
+                    if (negligibleFaces.Contains(adjacentFace))
+                    {
+                        negligibleGroup.Add(adjacentFace);
+                        largestEdges.Add(adjacentFace.Edges.OrderByDescending(item => item.Length).First());
+                    }
+                }
+                for (var j = 0; j < negligibleGroup.Count; j++)
+                {
+                    var firstFace = negligibleGroup[i];
+                    var splitEdge = largestEdges[0];
+                    largestEdges.RemoveAt(0);
+                    //If the largest edge is shared, No new triangles are created. Just collapse both.
+                    if(largestEdges.Contains(splitEdge))
+                    {
+                        throw new Exception("Not Implemented");
+                    }
+                    else// collapse to middle of largest edge, and split the triangle sharing that edge.
+                    {
+                        #region Collapse negligible Triangle, by splitting its largest edge. 
+                        //FIRST: update vertex list
+                        //This has to be done now, so that the new vertex has an index to use for the faceReference and edgeReference properties.
+                        var otherVertex = firstFace.OtherVertex(splitEdge); //This vertex will be removed.
+                        var midPoint = splitEdge.From.Position.add(splitEdge.To.Position).divide(2.0);
+                        var midPointVertex = new Vertex(midPoint); //this vertex will be added.
+                        ReplaceVertex(otherVertex, midPointVertex);
+
+                        //Create all the new faces.
+                        var removeTheseFaces = new List<PolygonalFace>(firstFace.AdjacentFaces); //This gets all the faces to be removed (firstFace is added later)
+                        var newFaces = new List<PolygonalFace>();
+                        PolygonalFace toSideSplitFace = null;
+                        PolygonalFace fromSideSplitFace = null;
+                        foreach(var face in removeTheseFaces)
+                        {
+                            if(face.Edges.Contains(splitEdge))
+                            {
+                                //Split this face into two
+                                var thirdVertex = face.OtherVertex(splitEdge);
+                                toSideSplitFace = new PolygonalFace(new List<Vertex> { thirdVertex, midPointVertex, splitEdge.To}, 
+                                    face.Normal, true, this.CheckSumMultiplier);
+                                newFaces.Add(toSideSplitFace);
+
+                                fromSideSplitFace = new PolygonalFace(new List<Vertex>{thirdVertex, midPointVertex, splitEdge.From}, 
+                                    face.Normal, true, this.CheckSumMultiplier);
+                                newFaces.Add(fromSideSplitFace);
+                            }
+                            else
+                            {
+                                //Replace the vertices from this face. Keep the normal, or add guess bool. normalIsGuess.
+                                var newFaceVertexList = new List<Vertex>(face.Vertices);
+                                newFaceVertexList.Remove(otherVertex);
+                                newFaceVertexList.Add(midPointVertex);
+                                newFaces.Add(new PolygonalFace(newFaceVertexList, face.Normal, true, this.CheckSumMultiplier));
+                            }
+                        }
+                        removeTheseFaces.Add(firstFace); //Also remove the first face.
+
+                        //Create all the new edges.
+                        var removeTheseEdges = otherVertex.Edges; //All the edges connected to this vertex will be removed (splitEdge is added later)
+                        var newEdges = new List<Edge>(); //This is a list of all the new edges.
+                        foreach(var edge in removeTheseEdges)
+                        {
+                            var ownedFaceReference = edge.OwnedFace.FaceReference;
+                            var otherFaceReference = edge.OtherFace.FaceReference;
+                            Edge newEdge;
+                            if(otherVertex == edge.From) newEdge = new Edge(midPointVertex, edge.OtherVertex(otherVertex), true, this.CheckSumMultiplier);
+                            else newEdge = new Edge(edge.OtherVertex(otherVertex), midPointVertex, true, this.CheckSumMultiplier);
+                            //Owned and other are arbitrary for now. They are set properly, when both are attached to the edge.
+                            if (edge.OtherVertex(otherVertex) == splitEdge.To)
+                            {
+                                newEdge.OwnedFace = toSideSplitFace;
+                                if(edge.OwnedFace == firstFace) newEdge.OtherFace = newFaces.FirstOrDefault(face => face.FaceReference == otherFaceReference);
+                                else newEdge.OtherFace = newFaces.FirstOrDefault(face => face.FaceReference == ownedFaceReference);
+                            }
+                            else if (edge.OtherVertex(otherVertex) == splitEdge.From)
+                            {
+                                newEdge.OwnedFace = fromSideSplitFace;
+                                if(edge.OwnedFace == firstFace) newEdge.OtherFace = newFaces.FirstOrDefault(face => face.FaceReference == otherFaceReference);
+                                else newEdge.OtherFace = newFaces.FirstOrDefault(face => face.FaceReference == ownedFaceReference);
+                            }
+                            else
+                            {
+                                //else, the owned and other faces for the edges in this foreach loop have the same FaceReference 
+                                //as the edge being removed (based on checksum), because we REPLACED the vertex.
+                                newEdge.OwnedFace = newFaces.FirstOrDefault(face => face.FaceReference == ownedFaceReference);
+                                newEdge.OtherFace = newFaces.FirstOrDefault(face => face.FaceReference == otherFaceReference);  
+                            }
+                            if(newEdge != null) newEdges.Add(newEdge);
+                        }
+                        removeTheseEdges.Add(splitEdge); //Also remove the first edge.
+                        PolygonalFace splittingFace;
+                        if(firstFace == splitEdge.OtherFace) splittingFace = splitEdge.OwnedFace;
+                        else splittingFace = splitEdge.OtherFace;
+                        //Add the final new edge. It references the split faces.
+                        newEdges.Add(new Edge(splittingFace.OtherVertex(splitEdge), midPointVertex, 
+                            toSideSplitFace, fromSideSplitFace, true, this.CheckSumMultiplier));
+                        
+                        //Update all the edges that were on the outside of this reconstruction
+                        foreach (var face in removeTheseFaces)
+                        {
+                            if (face.Edges.Count != 3) throw new Exception();
+                            foreach (var edge in face.Edges)
+                            {
+                                if (removeTheseEdges.Contains(edge)) continue; //don't need to do anything, since it will be removed.
+                                if (face == edge.OwnedFace) edge.OwnedFace = newFaces.FirstOrDefault(f => f.FaceReference == face.FaceReference);
+                                else if (face == edge.OtherFace) edge.OtherFace = newFaces.FirstOrDefault(f => f.FaceReference == face.FaceReference);
+                                else throw new Exception();
+                            }
+                        }
+                        //Remove and then add all the new faces and edges.
+                        //The remove functions also remove any circular reference back to the face or edge.
+                        RemoveFaces(removeTheseFaces);
+                        RemoveEdges(removeTheseEdges);
+                        AddEdges(newEdges);
+                        AddFaces(newFaces);
+                        #endregion
+                    }
+                }
+                foreach (var face in negligibleGroup)
+                {
+                    negligibleFaces.Remove(face);
+                }
+            }
+        }
+
         public void RepairMissingFacesFromEdges(ref Dictionary<int, Edge> partlyDefinedEdges, ref List<Edge> definedEdges, bool doublyLinkToVertices)
         {
             var newFaces = new List<PolygonalFace>();
             var loops = new List<List<Vertex>>();
+            var loopNormals = new List<double[]>();
             var attempts = 0;
             var remainingEdges = partlyDefinedEdges.Values.ToList();
             while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
@@ -985,38 +1178,12 @@ namespace TVGL
                 var loop = new List<Vertex>();
                 var successfull = true;
                 var removedEdges = new List<Edge>();
-                //Since all the edges are owned by their other face, 
-                //the loop should be found starting with the To instead of from.
-                //But the edge direction is not confirmed until the other face is added.
-                //So we will perform an early check to make sure it is CCW for the owned face.
                 var remainingEdge = remainingEdges[0];
-                var ownedEdges = remainingEdges[0].OwnedFace.Edges;
-                //First, get all edge vectors on the face in the same direction.
-                if (ownedEdges.Count != 3) throw new Exception("This method was written for Trianglualal Faces ONLY");
-                for( var i = 0; i < 2; i ++ )
-                {
-                    if(ownedEdges[i] == remainingEdge) continue;
-                    //If the faces share the same owned face, they should be the same (CCW) direction.
-                    if(remainingEdge.OwnedFace == ownedEdges[i].OwnedFace)
-                    {
-                        if(remainingEdge.To != ownedEdges[i].From && remainingEdge.From != ownedEdges[i].To) remainingEdge.Reverse();
-                        //If ownedEdges[i] does not have an owned face, it was also a bad edge. 
-                        //Use the dot product and face normal to determine if direction was correct.
-                        throw new Exception("finish this implementation");
-                    }
-                    //Else, they should be in opposite directions.
-                    //Note that if the owned faces are not equal, then the other edge must be a good edge.
-                    else
-                    {
-                        if(remainingEdge.To != ownedEdges[i].To && remainingEdge.From != ownedEdges[i].From) remainingEdge.Reverse();
-                    }
-                    //should be CCW for its owned face now.
-                    break;
-                }
-                var startVertex = remainingEdges[0].To;
-                var newStartVertex = remainingEdges[0].From;
+                var startVertex = remainingEdge.From;
+                var newStartVertex = remainingEdge.To;
+                var normal = remainingEdge.OwnedFace.Normal;
                 loop.Add(newStartVertex);
-                removedEdges.Add(remainingEdges[0]);
+                removedEdges.Add(remainingEdge);
                 remainingEdges.RemoveAt(0);
                 do
                 {
@@ -1024,15 +1191,20 @@ namespace TVGL
                     if (possibleNextEdges.Count() != 1) successfull = false;
                     else
                     {
-                        newStartVertex = possibleNextEdges[0].OtherVertex(newStartVertex);
+                        var currentEdge = possibleNextEdges[0];
+                        normal = normal.multiply(loop.Count).add(currentEdge.OwnedFace.Normal).divide(loop.Count + 1);
+                        normal.normalizeInPlace();
+                        newStartVertex = currentEdge.OtherVertex(newStartVertex);
                         loop.Add(newStartVertex);
-                        removedEdges.Add(possibleNextEdges[0]);
-                        remainingEdges.Remove(possibleNextEdges[0]);
+                        removedEdges.Add(currentEdge);
+                        remainingEdges.Remove(currentEdge);
                     }
                 }
                 while (newStartVertex != startVertex && successfull);
                 if (successfull)
                 {
+                    //Average the normals from all the owned faces.
+                    loopNormals.Add(normal);
                     loops.Add(loop);
                     attempts = 0;
                 }
@@ -1043,23 +1215,22 @@ namespace TVGL
                 }
             }
 
-            foreach (var loop in loops)
+            for(var i = 0; i < loops.Count ; i++)
             {
                 //if a simple triangle, create a new face from vertices
-                if (loop.Count == 3)
+                if (loops[i].Count == 3)
                 {
-                    var newFace = new PolygonalFace(loop, doublyLinkToVertices);
+                    var newFace = new PolygonalFace(loops[i], loopNormals[i], doublyLinkToVertices);
                     newFaces.Add(newFace);
                 }
                 //Else, use the triangulate function
-                else if(loop.Count > 3)
+                else if(loops[i].Count > 3)
                 {
                     //First, get an average normal from all vertices, assuming CCW order.
-                    var normal = GetNormalForLoop(loop);
-                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>>{loop}, normal);
+                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>>{loops[i]}, loopNormals[i]);
                     foreach(var triangle in triangles)
                     {
-                        var newFace = new PolygonalFace(triangle, normal, doublyLinkToVertices);
+                        var newFace = new PolygonalFace(triangle, loopNormals[i], doublyLinkToVertices);
                         newFaces.Add(newFace);
                     }
                 }
@@ -1111,55 +1282,6 @@ namespace TVGL
             var badEdges = partlyDefinedEdges.Values.ToList();
             if (badEdges.Count > 0) throw new Exception("There should be no bad edges in this function, which is fixing bad edges");
             definedEdges.AddRange(alreadyDefinedEdges.Values.ToList());
-        }
-
-        internal double[] GetNormalForLoop(List<Vertex> loop)
-        {
-            var n = loop.Count;
-            var normal = new double[3];
-            var edgeVectors = new double[n][];
-            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
-            for (var i = 1; i < n; i++)
-                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
-
-            var normals = new List<double[]>();
-            var tempCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
-            if (!tempCross.Any(double.IsNaN)) normals.Add(tempCross);
-            for (var i = 1; i < n; i++)
-            {
-                tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
-                if (!tempCross.Any(double.IsNaN))
-                    normals.Add(tempCross);
-            }
-            n = normals.Count;
-            if (n == 0)  // this would happen if the face collapse to a line.
-                normal = new[] { double.NaN, double.NaN, double.NaN };
-            else
-            {
-                var dotProduct = new double[n];
-                dotProduct[0] = normals[0].dotProduct(normals[n - 1]);
-                for (var i = 1; i < n; i++) dotProduct[i] = normals[i].dotProduct(normals[i - 1]);
-                var isConvex = (dotProduct.All(x => x > 0));
-                normal = new double[3];
-                if (isConvex)
-                {
-                    normal = normals.Aggregate(normal, (current, c) => current.add(c));
-                    normal = normal.divide(normals.Count);
-                }
-                else
-                {
-                    var likeFirstNormal = true;
-                    var numLikeFirstNormal = 1;
-                    foreach (var d in dotProduct)
-                    {
-                        if (d < 0) likeFirstNormal = !likeFirstNormal;
-                        if (likeFirstNormal) numLikeFirstNormal++;
-                    }
-                    if (2 * numLikeFirstNormal >= normals.Count) normal = normals[0];
-                    else normal = normals[0].multiply(-1);
-                }
-            }
-            return normal;
         }
         #endregion
     }
