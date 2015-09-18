@@ -1025,12 +1025,12 @@ namespace TVGL
             for (var i = 2; i < sortedNodes.Count; i++)
             {
                 var node = sortedNodes[i];
-                //If the root, make the final triangle regardless of angle/area tolerance
-                if (i == sortedNodes.Count - 1 && scan.Count == 2)
-                {
-                    triangles.Add(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
-                    continue;
-                }
+                ////If the root, make the final triangle regardless of angle/area tolerance
+                //if (i == sortedNodes.Count - 1 && scan.Count == 2)
+                //{
+                //    triangles.Add(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
+                //    continue;
+                //}
                 //If the nodes is on the opposite chain from any other node (s). 
                 if ((node.IsLeftChain && (scan.Last().IsLeftChain == false || scan[scan.Count - 2].IsLeftChain == false)) ||
                     (node.IsRightChain && (scan.Last().IsRightChain == false || scan[scan.Count - 2].IsRightChain == false)))
@@ -1041,15 +1041,15 @@ namespace TVGL
                         //Skip if close to Math.PI, because that will yield a Negligible area triangle
                         //Note: It does not matter which angle function is called
                         var angle = MiscFunctions.SmallerAngleBetweenEdges(node.Point, scan[0].Point, scan[1].Point);
-                        if (Math.Abs(angle - Math.PI) < 1E-6)
-                        {
-                            //Make the node the new peak, and insert at the beginning of the list.
-                            node.IsLeftChain = true;
-                            node.IsRightChain = true;
-                            scan.Insert(0, node);
-                            exitBool = true;
-                            continue;
-                        }
+                        //if (Math.Abs(angle - Math.PI) < 1E-6)
+                        //{
+                        //    //Make the node the new peak, and insert at the beginning of the list.
+                        //    node.IsLeftChain = true;
+                        //    node.IsRightChain = true;
+                        //    scan.Insert(0, node);
+                        //    exitBool = true;
+                        //    continue;
+                        //}
                         triangles.Add(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain

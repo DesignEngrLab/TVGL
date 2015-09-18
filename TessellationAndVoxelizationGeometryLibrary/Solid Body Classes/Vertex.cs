@@ -48,6 +48,7 @@ namespace TVGL
             Position = position;
             Edges = new List<Edge>();
             Faces = new List<PolygonalFace>();
+            IndexInList = -1;
         }
         #endregion
 

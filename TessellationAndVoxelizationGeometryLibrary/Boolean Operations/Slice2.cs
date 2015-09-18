@@ -109,7 +109,7 @@ namespace TVGL.Boolean_Operations
             foreach (var edge in ts.Edges)
             {
                 //Reset the checksum value, if needed.
-                if(edge.EdgeReference == 0) edge.EdgeReference = GetCheckSum(edge.From, edge.To, ts.CheckSumMultiplier);
+                if(edge.EdgeReference == 0) edge.EdgeReference = GetCheckSum(edge.From, edge.To);
                 var toDistance = distancesToPlane[edge.To.IndexInList];
                 var fromDistance = distancesToPlane[edge.From.IndexInList];
                 //Check for a straddle edge
@@ -152,7 +152,7 @@ namespace TVGL.Boolean_Operations
                     //Since the onPlaneVertex has a positive and negative face, add to both loops if possible.
                     if (numberOfNewVertices == 1)
                     {
-                        var checksum = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0], ts.CheckSumMultiplier);
+                        var checksum = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0]);
                         var newVertex = straddleEdges.First(s => s.EdgeReference == checksum).IntersectVertex;
                         if (newVertex == null) throw new Exception();
                         newOnPlaneEdges.Add(new Edge(onPlaneVerticesFromFace[0], newVertex, true));
@@ -165,8 +165,8 @@ namespace TVGL.Boolean_Operations
                     else if (numberOfNewVertices == 2 && positiveSideVertices.Count == 2 ) 
                     {
                         //Find the straddle edge that contains both the positive[0] and negative[0] vertex
-                        var checksum1 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0], ts.CheckSumMultiplier);
-                        var checksum2 = GetCheckSum(positiveSideVertices[1], negativeSideVertices[0], ts.CheckSumMultiplier);
+                        var checksum1 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0]);
+                        var checksum2 = GetCheckSum(positiveSideVertices[1], negativeSideVertices[0]);
                         var newVertex1 = straddleEdges.First(s => s.EdgeReference == checksum1).IntersectVertex;
                         var newVertex2 = straddleEdges.First(s => s.EdgeReference == checksum2).IntersectVertex;
                         if (newVertex1 == null || newVertex2 == null) throw new Exception();
@@ -178,8 +178,8 @@ namespace TVGL.Boolean_Operations
                     //Two vertices are on the negative side, and one is on the positive side.
                     else if (numberOfNewVertices == 2 && negativeSideVertices.Count == 2 ) 
                     {
-                        var checksum1 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0], ts.CheckSumMultiplier);
-                        var checksum2 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[1], ts.CheckSumMultiplier);
+                        var checksum1 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0]);
+                        var checksum2 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[1]);
                         var newVertex1 = straddleEdges.First(s => s.EdgeReference == checksum1).IntersectVertex;
                         var newVertex2 = straddleEdges.First(s => s.EdgeReference == checksum2).IntersectVertex;
                         if (newVertex1 == null || newVertex2 == null) throw new Exception();
@@ -210,8 +210,9 @@ namespace TVGL.Boolean_Operations
             }
         }
 
-        internal static int GetCheckSum(Vertex vertex1, Vertex vertex2, int checkSumMultiplier)
+        internal static int GetCheckSum(Vertex vertex1, Vertex vertex2)
         {
+            var checkSumMultiplier = TessellatedSolid.CheckSumMultiplier;
             if (vertex1.IndexInList == vertex2.IndexInList) throw new Exception("edge to same vertices.");
             //Multiply larger value by checksum in case lower value == 0;
             var checksum = (vertex1.IndexInList < vertex2.IndexInList)

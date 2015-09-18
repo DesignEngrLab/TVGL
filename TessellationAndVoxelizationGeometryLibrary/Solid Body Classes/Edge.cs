@@ -20,11 +20,11 @@ namespace TVGL
         /// <param name="doublyLinkedVertices"></param>
         /// <param name="edgeReference"></param>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            bool doublyLinkedVertices = true, int checkSumMultiplier = 0, int edgeReference = 0)
+            bool doublyLinkedVertices = true, int edgeReference = 0)
         {
             From = fromVertex;
             To = toVertex;
-            if (edgeReference == 0 && checkSumMultiplier != 0) SetEdgeReference(checkSumMultiplier);
+            if (edgeReference == 0) SetEdgeReference();
             else EdgeReference = edgeReference;
             _ownedFace = ownedFace;
             _otherFace = otherFace;
@@ -54,11 +54,11 @@ namespace TVGL
         /// <param name="fromVertex">From vertex.</param>
         /// <param name="toVertex">To vertex.</param>
         /// <param name="doublyLinkedVertices"></param>
-        public Edge(Vertex fromVertex, Vertex toVertex,  bool doublyLinkedVertices, int checkSumMultiplier = 0)
+        public Edge(Vertex fromVertex, Vertex toVertex, bool doublyLinkedVertices, int edgeReference = 0)
         {
             From = fromVertex;
             To = toVertex;
-            if (checkSumMultiplier != 0) SetEdgeReference(checkSumMultiplier);
+            if (edgeReference == 0) SetEdgeReference();
             if (doublyLinkedVertices)
             {
                 fromVertex.Edges.Add(this);
@@ -226,14 +226,19 @@ namespace TVGL
             Vector = Vector.multiply(-1);
         }
 
-        public void SetEdgeReference(int checkSumMultiplier)
+        public void SetEdgeReference()
         {
+            var checkSumMultiplier = TessellatedSolid.CheckSumMultiplier;
             var fromIndex = From.IndexInList;
             var toIndex = To.IndexInList;
-            if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
-            EdgeReference = (fromIndex < toIndex)
-                    ? fromIndex + (checkSumMultiplier * toIndex)
-                    : toIndex + (checkSumMultiplier * fromIndex);
+            if (fromIndex == -1 || toIndex == -1) EdgeReference = -1;
+            else
+            {
+                if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+                EdgeReference = (fromIndex < toIndex)
+                        ? fromIndex + (checkSumMultiplier * toIndex)
+                        : toIndex + (checkSumMultiplier * fromIndex);
+            }
         }
         /// <summary>
         ///     Defines the edge angle.
