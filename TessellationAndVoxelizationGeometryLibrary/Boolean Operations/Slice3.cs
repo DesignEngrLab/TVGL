@@ -7,9 +7,10 @@ namespace TVGL.Boolean_Operations
 {
     /// <summary>
     /// The Slice class includes static functions for cutting a tessellated solid.
-    /// This slice function is based on Slice2, except that now it makes a seperate 
-    /// cut for the positive and negative side, at a specified offset in both directions.
-    /// It also gaurantees that all contact edges are straddle edges.
+    /// This slice function makes a seperate cut for the positive and negative side,
+    /// at a specified offset in both directions. It rebuilds straddle triangles, 
+    /// but only uses one of the two straddle edge intersection vertices to prevent
+    /// tiny triangles from being created.
     /// </summary>
     public static class Slice3
     {
@@ -25,7 +26,8 @@ namespace TVGL.Boolean_Operations
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
+            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids, 
+            double tolerance = Constants.Error)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -36,8 +38,8 @@ namespace TVGL.Boolean_Operations
             //MiscFunctions.IsSolidBroken(ts);
             //1. Offset positive and get the positive faces.
             //Straddle faces are split into 2 or 3 new faces.
-            DivideUpFaces(ts, plane, out positiveSideFaces, out positiveSideLoopVertices, 1);
-            DivideUpFaces(ts, plane, out negativeSideFaces, out negativeSideLoopVertices, -1);
+            DivideUpFaces(ts, plane, out positiveSideFaces, out positiveSideLoopVertices, 1, tolerance);
+            DivideUpFaces(ts, plane, out negativeSideFaces, out negativeSideLoopVertices, -1, tolerance);
             //2. Find loops to define the missing space on the plane
             var positiveSideLoops = FindLoops(positiveSideLoopVertices);
             var negativeSideLoops = FindLoops(negativeSideLoopVertices);
@@ -98,7 +100,7 @@ namespace TVGL.Boolean_Operations
                 if (distancesToPlane.Count == ts.NumberOfVertices) successfull = true;
             }
 
-            //Find all the straddle edges and add the new intersect vertices to both the pos and nef loops.
+            //Find all the straddle edges and add the new intersect vertices to both the pos and neg loops.
             var straddleEdges = new List<StraddleEdge>();
             loopVertices = new List<Vertex>();
             foreach (var edge in ts.Edges)

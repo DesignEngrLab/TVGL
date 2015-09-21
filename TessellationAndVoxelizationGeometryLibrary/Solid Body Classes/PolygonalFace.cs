@@ -47,19 +47,32 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices, double[] normal,  bool ConnectVerticesBackToFace = true, long faceReference = 0)
+        public PolygonalFace(IList<Vertex> vertices, double[] normal,  bool ConnectVerticesBackToFace = true, 
+            bool normalIsGuess = false, long faceReference = 0)
             : this()
         {
-            
-            Normal = normal;
-            var edge1 = vertices[1].Position.subtract(vertices[0].Position);
-            var edge2 = vertices[2].Position.subtract(vertices[1].Position);
-            if (Normal.dotProduct(edge1.crossProduct(edge2)) <= 0)
-                Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
-            else Vertices = new List<Vertex>(vertices);
-            if (ConnectVerticesBackToFace)
-                foreach (var v in Vertices)
-                    v.Faces.Add(this);
+            if (normalIsGuess) 
+            {
+                foreach (var v in vertices)
+                {
+                    Vertices.Add(v);
+                    if (ConnectVerticesBackToFace)
+                        v.Faces.Add(this);
+                }
+                SetNormal(normal);
+            }
+            else
+            {
+                Normal = normal;
+                var edge1 = vertices[1].Position.subtract(vertices[0].Position);
+                var edge2 = vertices[2].Position.subtract(vertices[1].Position);
+                if (Normal.dotProduct(edge1.crossProduct(edge2)) <= 0)
+                    Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
+                else Vertices = new List<Vertex>(vertices);
+                if (ConnectVerticesBackToFace)
+                    foreach (var v in Vertices)
+                        v.Faces.Add(this);
+            }
             SetArea();
             SetCenter();
             if (faceReference == 0) SetFaceReference();
@@ -289,7 +302,7 @@ namespace TVGL
                 Vertices.First(v => v != v1 && v != v2);
         }
 
-        internal void SetNormal()
+        internal void SetNormal(double[] guess = null)
         {
             var n = Vertices.Count;
             var edgeVectors = new double[n][];
@@ -323,15 +336,22 @@ namespace TVGL
                 }
                 else
                 {
-                    var likeFirstNormal = true;
-                    var numLikeFirstNormal = 1;
-                    foreach (var d in dotProduct)
+                    if (guess == null)
                     {
-                        if (d < 0) likeFirstNormal = !likeFirstNormal;
-                        if (likeFirstNormal) numLikeFirstNormal++;
+                        var likeFirstNormal = true;
+                        var numLikeFirstNormal = 1;
+                        foreach (var d in dotProduct)
+                        {
+                            if (d < 0) likeFirstNormal = !likeFirstNormal;
+                            if (likeFirstNormal) numLikeFirstNormal++;
+                        }
+                        if (2 * numLikeFirstNormal >= normals.Count) Normal = normals[0];
+                        else Normal = normals[0].multiply(-1);
                     }
-                    if (2 * numLikeFirstNormal >= normals.Count) Normal = normals[0];
-                    else Normal = normals[0].multiply(-1);
+                    else
+                    {
+                        if (Normal.dotProduct(guess) < 0.0) Normal = normals[0].multiply(-1);
+                    }
                 }
             }
         }
