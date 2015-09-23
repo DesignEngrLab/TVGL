@@ -69,8 +69,8 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                TestSlice(ts[0]);
-                //TestOBB(ts[0],filename);
+                //TestSlice(ts[0]);
+                TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
                 //FileStream fileStream2 = File.OpenRead(filename2);
                 //var ts2= IO.Open(fileStream2, filename2, false);
@@ -91,7 +91,6 @@ namespace TVGL_Test
             //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
             //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);\
             //MiscFunctions.IsConvexHullBroken(ts);
-            var Flats = ListFunctions.Flats(ts);
             List<List<double[]>> VolumeData1;
             List<List<double[]>> VolumeData2;
             var obb = MinimumEnclosure.OrientedBoundingBox_Test(ts, out VolumeData1, out VolumeData2);
@@ -219,7 +218,7 @@ namespace TVGL_Test
             //{
             //distToVLow+length/2
             MiscFunctions.IsSolidBroken(ts);
-            var flats = ListFunctions.Flats(ts, ts.SurfaceArea/100);
+            var flats = ListFunctions.Flats(ts.Faces, Constants.ErrorForFaceInSurface, ts.SurfaceArea/100);
             foreach (var flat in flats)
             {
                 foreach (var face in flat.Faces)

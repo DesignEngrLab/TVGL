@@ -741,7 +741,7 @@ namespace TVGL
                 ConvexHullFaceList.Add(newFace);
             }
             ConvexHullFaces = ConvexHullFaceList.ToArray(); //Now, convert to an array.
-            var ConvexHullEdges = MakeEdges(ConvexHullFaces, false);
+            ConvexHullEdges = MakeEdges(ConvexHullFaces, false);
             ConvexHullSuceeded = true;
         }
         #endregion

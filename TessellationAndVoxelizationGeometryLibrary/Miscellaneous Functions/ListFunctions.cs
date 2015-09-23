@@ -38,12 +38,11 @@ namespace TVGL
         /// <summary>
         /// Gets a list of flats, given a list of faces.
         /// </summary>
-        /// <param name="ts"></param>
+        /// <param name="faces"></param>
         /// <param name="minSurfaceArea"></param>
         /// <returns></returns>
-        public static List<Flat> Flats(TessellatedSolid ts, double minSurfaceArea = 0.01)
+        public static List<Flat> Flats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface, double minSurfaceArea = 0.01)
         {
-            var faces = new List<PolygonalFace>(ts.Faces);
             var listFaces = new List<PolygonalFace>(faces);
             var listFlats = new List<Flat>();
             while (listFaces.Any())
@@ -56,6 +55,7 @@ namespace TVGL
                 }
                 //Create new flat from start face
                 var flat = new Flat(new List<PolygonalFace>{startFace});
+                flat.Tolerance = tolerance;
                 listFaces.Remove(startFace); 
                 var hashFaces = new HashSet<PolygonalFace>(listFaces);
                 while (stack.Any())

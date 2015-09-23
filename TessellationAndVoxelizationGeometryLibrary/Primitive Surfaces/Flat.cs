@@ -82,6 +82,8 @@ namespace TVGL
         /// <value>The normal.</value>
         public double[] Normal { get; set; }
 
+        public double Tolerance { get; set; }
+
         /// <summary>
         /// Determines whether [is new member of] [the specified face].
         /// </summary>
@@ -89,13 +91,13 @@ namespace TVGL
         /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
         public override bool IsNewMemberOf(PolygonalFace face)
         {
+            if (Tolerance == 0.0) Tolerance = Constants.ErrorForFaceInSurface;
             if (Faces.Contains(face)) return false;
-            if (Math.Abs(Math.Abs(face.Normal.dotProduct(Normal)) - 1.0) > 0.002) return false;
+            if (Math.Abs(Math.Abs(face.Normal.dotProduct(Normal)) - 1.0) > Tolerance) return false;
             //Return true if all the vertices are within the tolerance 
             //Note that the dotProduct term and distance to origin, must have the same sign, 
             //so there is no additional need moth absolute value methods.
-            return face.Vertices.All(v => Math.Abs(Normal.dotProduct(v.Position) - DistanceToOrigin) <
-                0.002);
+            return face.Vertices.All(v => Math.Abs(Normal.dotProduct(v.Position) - DistanceToOrigin) <  Tolerance);
         }
 
         /// <summary>
