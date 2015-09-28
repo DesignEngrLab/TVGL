@@ -722,7 +722,15 @@ namespace TVGL
         /// </summary>
         private void CreateConvexHull()
         {
-            var convexHull = ConvexHull.Create<Vertex, DefaultConvexFace<Vertex>>(Vertices);
+            var config = new ConvexHullComputationConfig
+            {
+                PointTranslationType = PointTranslationType.TranslateInternal,
+                PlaneDistanceTolerance = 0.000001,
+                // the translation radius should be lower than PlaneDistanceTolerance / 2
+                PointTranslationGenerator = TriangulationComputationConfig.RandomShiftByRadius(0.0000001, 0)
+            };
+            var convexHull = ConvexHull.Create(Vertices, config);
+            //var convexHull = ConvexHull.Create<Vertex, DefaultConvexFace<Vertex>>(Vertices);
             ConvexHullVertices = convexHull.Points.ToArray();
             var numCvxFaces = convexHull.Faces.Count();
             if (numCvxFaces < 3)
