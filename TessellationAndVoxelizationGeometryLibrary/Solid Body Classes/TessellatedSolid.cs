@@ -290,7 +290,7 @@ namespace TVGL
         }
         #endregion
 
-        #region Build New from Portions of Old Solid, and the Copy and Duplicate Functions (one needs to be removed)
+        #region Build New from Portions of Old Solid and the Copy Function
         public TessellatedSolid BuildNewFromOld(IList<PolygonalFace> polyFaces)
         {
             var vertices = new HashSet<Vertex>();

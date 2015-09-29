@@ -53,33 +53,14 @@ namespace TVGL
         {
             if (normalIsGuess) 
             {
-                foreach (var v in vertices)
-                {
-                    Vertices.Add(v);
-                    if (ConnectVerticesBackToFace)
-                        v.Faces.Add(this);
-                }
+                Vertices = new List<Vertex>(vertices);
                 SetNormal();
                 //Now, make sure the normal is alligned with the guess. If not, change the normal and reverse the order of vertices.
-                if (normal != null)
+                if (normal != null && Normal.dotProduct(normal) < 0)
                 {
-                    if (Normal.dotProduct(normal) < 0.0)
-                    {
-                        Normal = Normal.multiply(-1);
-                        ////Reverse Vertex list
-                        //var tempVertices = new List<Vertex>();
-                        //for (var i = Vertices.Count-1; i >= 0; i--) 
-                        //{
-                        //    tempVertices.Add(Vertices[i]);
-                        //}
-                        //Vertices.Clear();
-                        //foreach (var v in tempVertices)
-                        //{
-                        //    Vertices.Add(v);
-                        //}
-                    }
+                    Normal = Normal.multiply(-1);
+                    Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
                 }
-                
             }
             else
             {
@@ -89,10 +70,11 @@ namespace TVGL
                 if (Normal.dotProduct(edge1.crossProduct(edge2)) <= 0)
                     Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
                 else Vertices = new List<Vertex>(vertices);
-                if (ConnectVerticesBackToFace)
-                    foreach (var v in Vertices)
-                        v.Faces.Add(this);
             }
+            if (ConnectVerticesBackToFace)
+                foreach (var v in Vertices)
+                    v.Faces.Add(this);
+            
             SetArea();
             SetCenter();
             if (faceReference == 0) SetFaceReference();
@@ -322,7 +304,7 @@ namespace TVGL
                 Vertices.First(v => v != v1 && v != v2);
         }
 
-        internal void SetNormal()
+        internal void SetNormal() //Assuming CCW order of vertices
         {
             var n = Vertices.Count;
             var edgeVectors = new double[n][];
