@@ -59,7 +59,27 @@ namespace TVGL
                     if (ConnectVerticesBackToFace)
                         v.Faces.Add(this);
                 }
-                SetNormal(normal);
+                SetNormal();
+                //Now, make sure the normal is alligned with the guess. If not, change the normal and reverse the order of vertices.
+                if (normal != null)
+                {
+                    if (Normal.dotProduct(normal) < 0.0)
+                    {
+                        Normal = Normal.multiply(-1);
+                        ////Reverse Vertex list
+                        //var tempVertices = new List<Vertex>();
+                        //for (var i = Vertices.Count-1; i >= 0; i--) 
+                        //{
+                        //    tempVertices.Add(Vertices[i]);
+                        //}
+                        //Vertices.Clear();
+                        //foreach (var v in tempVertices)
+                        //{
+                        //    Vertices.Add(v);
+                        //}
+                    }
+                }
+                
             }
             else
             {
@@ -302,7 +322,7 @@ namespace TVGL
                 Vertices.First(v => v != v1 && v != v2);
         }
 
-        internal void SetNormal(double[] guess = null)
+        internal void SetNormal()
         {
             var n = Vertices.Count;
             var edgeVectors = new double[n][];
@@ -336,22 +356,15 @@ namespace TVGL
                 }
                 else
                 {
-                    if (guess == null)
+                    var likeFirstNormal = true;
+                    var numLikeFirstNormal = 1;
+                    foreach (var d in dotProduct)
                     {
-                        var likeFirstNormal = true;
-                        var numLikeFirstNormal = 1;
-                        foreach (var d in dotProduct)
-                        {
-                            if (d < 0) likeFirstNormal = !likeFirstNormal;
-                            if (likeFirstNormal) numLikeFirstNormal++;
-                        }
-                        if (2 * numLikeFirstNormal >= normals.Count) Normal = normals[0];
-                        else Normal = normals[0].multiply(-1);
+                        if (d < 0) likeFirstNormal = !likeFirstNormal;
+                        if (likeFirstNormal) numLikeFirstNormal++;
                     }
-                    else
-                    {
-                        if (Normal.dotProduct(guess) < 0.0) Normal = normals[0].multiply(-1);
-                    }
+                    if (2 * numLikeFirstNormal >= normals.Count) Normal = normals[0];
+                    else Normal = normals[0].multiply(-1);
                 }
             }
         }

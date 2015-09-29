@@ -79,12 +79,12 @@ namespace TVGL.Boolean_Operations
             //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
             //along direction of normal, and add a negative offset to move backward along normal.
             var normal = plane.Normal.multiply(isPositiveSide);
-            var distanceToOrigin = (plane.DistanceToOrigin + tolerance) * isPositiveSide;
+            var distanceToOrigin = plane.DistanceToOrigin  * isPositiveSide + tolerance;
             var successfull = false;
             while (!successfull)
             {
                 distancesToPlane = new List<double>();
-                distanceToOrigin = distanceToOrigin + looserTolerance * isPositiveSide;
+                distanceToOrigin = distanceToOrigin + looserTolerance;
                 pointOnPlane = normal.multiply(distanceToOrigin);
                 for (int i = 0; i < ts.NumberOfVertices; i++)
                 {
@@ -208,6 +208,7 @@ namespace TVGL.Boolean_Operations
                         {
                             //Add the intersection vertex from the final straddle edge in this direction
                             vertexLoop.Add(straddleEdge.IntersectVertex);
+                            loopVertices.Add(straddleEdge.IntersectVertex);
                             flat = false;
                         }
                     } while (flat);
@@ -225,6 +226,10 @@ namespace TVGL.Boolean_Operations
                 foreach (var triangle in triangles)
                 {
                     onSideFaces.Add(new PolygonalFace(triangle, normal, true, true));
+                    //foreach(var vertex in triangle)
+                    //{
+                    //    if(loopVertices.Contains(vertex))
+                    //}
                 }
             }
         }

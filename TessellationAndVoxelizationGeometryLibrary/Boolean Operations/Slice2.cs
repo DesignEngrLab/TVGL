@@ -75,29 +75,13 @@ namespace TVGL.Boolean_Operations
             negativeSideFaces = new List<PolygonalFace>();
             //Set the distance of every vertex in the solid to the plane
             var distancesToPlane = new List<double>();
-            var pointOnPlane = new double[3];
+            var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
             var looserTolerance = Math.Sqrt(Math.Sqrt(tolerance)); //A looser tolerance is necessary to determine straddle edges
-            //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
-            //along direction of normal, and add a negative offset to move backward along normal.
-            var offset = Math.Sqrt(looserTolerance) + looserTolerance; 
-            plane.DistanceToOrigin = plane.DistanceToOrigin + offset;
-            var successfull = false;
-            while (!successfull)
+            //Determine distance from plane for eahc vertex, without offset.
+            for (int i = 0; i < ts.NumberOfVertices; i++)
             {
-                distancesToPlane = new List<double>();
-                plane.DistanceToOrigin = plane.DistanceToOrigin + looserTolerance;
-                pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
-                for (int i = 0; i < ts.NumberOfVertices; i++)
-                {
-                    var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
-                    if (Math.Abs(distance) < looserTolerance)
-                    {
-                        successfull = false;
-                        break;
-                    }
-                    distancesToPlane.Add(distance);
-                }
-                if(distancesToPlane.Count == ts.NumberOfVertices) successfull = true;
+                var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
+                distancesToPlane.Add(distance);
             }
             
 
@@ -123,7 +107,7 @@ namespace TVGL.Boolean_Operations
                     negativeSideLoopVertices.Add(straddleEdge.IntersectVertex);
                 }
             }
-            
+
             //Categorize all the faces in the solid
             var newOnPlaneEdges = new List<Edge>(); //Place holder for debugging.
             foreach (var face in ts.Faces)

@@ -161,12 +161,12 @@ namespace TVGL.Boolean_Operations
                         newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
                         if(isPositiveSide == 1)
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[0], positiveSideVertices[1], newVertex1 }, face.Normal));
-                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[1], newVertex1, newVertex2 }, face.Normal));
+                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[0], positiveSideVertices[1], newVertex1 }, face.Normal, false, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[1], newVertex1, newVertex2 }, face.Normal, false, true));
                         }
                         else 
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, negativeSideVertices[0] }, face.Normal));
+                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, negativeSideVertices[0] }, face.Normal, false, true));
                         }
                     }
                     //Two vertices are on the negative side, and one is on the positive side.
@@ -180,12 +180,12 @@ namespace TVGL.Boolean_Operations
                         newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
                         if (isPositiveSide == 1) 
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, positiveSideVertices[0] }, face.Normal));
+                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, positiveSideVertices[0] }, face.Normal, false, true));
                         }
                         else
                         {
-                             onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[0], negativeSideVertices[1], newVertex1 }, face.Normal));
-                             onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[1], newVertex1, newVertex2 }, face.Normal));
+                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[0], negativeSideVertices[1], newVertex1 }, face.Normal, false, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[1], newVertex1, newVertex2 }, face.Normal, false, true));
                         }
                     }
                     else throw new Exception("Error: one of the two options above must be true.");
