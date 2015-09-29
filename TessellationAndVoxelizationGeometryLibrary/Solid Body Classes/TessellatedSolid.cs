@@ -261,12 +261,14 @@ namespace TVGL
             RepairFaces();
             //3
             DefineVolumeAndSurfaceArea();
+            //DefineInertiaTensor();
             ConnectConvexHullToObjects();
             DefineFaceCurvature();
             DefineVertexCurvature();
             //3
             CheckReferences();
         }
+
 
         internal TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices)
         {
@@ -645,6 +647,39 @@ namespace TVGL
                 Volume += tetrahedronVolume;
             }
             Center = new[] { tempProductX / Volume, tempProductY / Volume, tempProductZ / Volume };
+        }
+
+
+        private void DefineInertiaTensor()
+        {
+            double tempProductX = 0;
+            double tempProductY = 0;
+            double tempProductZ = 0;
+            Center = StarMath.makeZeroVector(3);
+            double[,] inertiaTensor = StarMath.makeZero(3, 3);
+            double[,] translateMatrix = new double[3, 1];
+            double[,] matrixA = StarMath.makeZero(3, 3);
+            double[,] matrixC = StarMath.makeZero(3, 3);
+            double[,] matrixCtotal = StarMath.makeZero(3, 3);
+            double[,] matrixCprime = StarMath.makeZero(3, 3);
+            double[,] canonicalMatrix = new double[,] { { 0.0166, 0.0083, 0.0083 }, { 0.0083, 0.0166, 0.0083 }, { 0.0083, 0.0083, 0.0166 } };
+            foreach (var face in Faces)
+            {
+
+                matrixA.SetRow(0, new[] { face.Vertices[0].Position[0] - Center[0], face.Vertices[0].Position[1] - Center[1], face.Vertices[0].Position[2] - Center[2] });
+                matrixA.SetRow(1, new[] { face.Vertices[1].Position[0] - Center[0], face.Vertices[1].Position[1] - Center[1], face.Vertices[1].Position[2] - Center[2] });
+                matrixA.SetRow(2, new[] { face.Vertices[2].Position[0] - Center[0], face.Vertices[2].Position[1] - Center[1], face.Vertices[2].Position[2] - Center[2] });
+
+                matrixC = StarMath.multiply(matrixA, canonicalMatrix);
+                matrixC = StarMath.multiply(matrixC, matrixA.transpose()).multiply(matrixA.determinant());
+                matrixCtotal = matrixCtotal.add(matrixC);
+
+            }
+
+            translateMatrix = new double[,] { { this.Center[0] }, { this.Center[1] }, { this.Center[2] } };
+            matrixCprime = (StarMath.multiply(translateMatrix, translateMatrix.transpose())).multiply(Volume).multiply(3).add(matrixCtotal);
+            inertiaTensor = StarMath.makeIdentity(3).multiply(matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]).subtract(matrixCprime);
+
         }
 
         /// <summary>
