@@ -269,7 +269,7 @@ namespace TVGL
 
             var nextOwnedFaceVertex = _ownedFace.Vertices[ownedFaceNextIndex];
             var nextEdgeVector = nextOwnedFaceVertex.Position.subtract(To.Position);
-
+        
             if (Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal) < 0)
             {
                 /* then switch owned face and opposite face since the predicted normal
@@ -280,7 +280,7 @@ namespace TVGL
                 _ownedFace = _otherFace;
                 _otherFace = temp;
             }
-            var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
+                var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
             if (dot > 1.0 || Math.Abs(dot - 1.0) < 0.00001) //Five decimal place accuracy seemed like the breaking point
             {
                 InternalAngle = Math.PI;
