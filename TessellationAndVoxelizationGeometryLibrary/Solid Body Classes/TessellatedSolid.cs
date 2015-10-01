@@ -399,7 +399,7 @@ namespace TVGL
                     faceVertices.Add(Vertices[vertexMatchingIndex]);
                 }
                 if (normal == null) listOfFaces.Add(new PolygonalFace(faceVertices, doublyLinkToVertices, checksum));
-                else listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices, false, checksum));
+                else listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices, true, checksum));
             }
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);

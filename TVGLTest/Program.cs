@@ -14,8 +14,8 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {
-     //   "../../../TestFiles/TXT - C2 boitier batterie-1.STL",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        "../../../TestFiles/TXT - C2 boitier batterie-1.STL",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
         "../../../TestFiles/TXT - G5 support de carrosserie-2.STL",    
         //"../../../TestFiles/Beam_Boss.STL",   
         //"../../../TestFiles/Tetrahedron.STL",                                      
@@ -72,8 +72,8 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                //TestSlice(ts[0]);
-                TestOBB(ts[0],filename);
+                TestSlice(ts[0]);
+                //TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
                 //FileStream fileStream2 = File.OpenRead(filename2);
                 //var ts2= IO.Open(fileStream2, filename2, false);
@@ -230,7 +230,7 @@ namespace TVGL_Test
                 }
                 ts.HasUniformColor = false;
                 TVGL_Helix_Presenter.HelixPresenter.Show(ts);
-                Slice4.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
+                Slice2.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
                 foreach (var solid in negativeSideSolids)
