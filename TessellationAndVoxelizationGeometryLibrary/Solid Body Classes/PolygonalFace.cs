@@ -44,48 +44,12 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
+        /// Initializes a new instance of the <see cref="PolygonalFace" /> class.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices, double[] normal,  bool ConnectVerticesBackToFace = true, 
-            bool normalIsGuess = false, long faceReference = 0)
-            : this()
-        {
-            if (normalIsGuess) 
-            {
-                Vertices = new List<Vertex>(vertices);
-                SetNormal();
-                //Now, make sure the normal is alligned with the guess. If not, change the normal and reverse the order of vertices.
-                if (normal != null && Normal.dotProduct(normal) < 0)
-                {
-                    Normal = Normal.multiply(-1);
-                    Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
-                }
-            }
-            else
-            {
-                Normal = normal;
-                var edge1 = vertices[1].Position.subtract(vertices[0].Position);
-                var edge2 = vertices[2].Position.subtract(vertices[1].Position);
-                if (Normal.dotProduct(edge1.crossProduct(edge2)) <= 0)
-                    Vertices = new List<Vertex>(new[] { vertices[0], vertices[2], vertices[1] });
-                else Vertices = new List<Vertex>(vertices);
-            }
-            if (ConnectVerticesBackToFace)
-                foreach (var v in Vertices)
-                    v.Faces.Add(this);
-            
-            SetArea();
-            SetCenter();
-            if (faceReference == 0) SetFaceReference();
-            else FaceReference = faceReference;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PolygonalFace"/> class.
-        /// </summary>
-        /// <param name="vertices">The vertices.</param>
-        public PolygonalFace(IList<Vertex> vertices, bool ConnectVerticesBackToFace = true, long faceReference = 0)
+        /// <param name="normal">A guess for the normal vector.</param>
+        /// <param name="ConnectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
+        public PolygonalFace(IList<Vertex> vertices, double[] normal = null, bool ConnectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
@@ -94,32 +58,94 @@ namespace TVGL
                 if (ConnectVerticesBackToFace)
                     v.Faces.Add(this);
             }
-            SetArea();
-            SetNormal();
-            SetCenter();
-            if (faceReference == 0) SetFaceReference();
-            else FaceReference = faceReference;
-        }
-
-        public void SetArea()
-        {
-            // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
-            if (Vertices.Count == 3)
-            {
-                var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
-                var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
-                Area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
-                //if (Area.IsNegligible()) throw new Exception();
-            }
-            else throw new Exception("Not Implemented");
-        }
-
-        public void SetCenter()
-        {
+            Area = DetermineArea();
+            Normal = DetermineNormal(normal);
             var centerX = Vertices.Average(v => v.X);
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
             Center = new[] { centerX, centerY, centerZ };
+        }
+
+        internal double DetermineArea()
+        {
+            // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
+            if (Vertices.Count != 3)
+                throw new NotImplementedException("Determine Area currently only works for triangular faces.");
+            var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
+            var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
+            return Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
+        }
+        private double[] DetermineNormal(double[] normal = null) //Assuming CCW order of vertices
+        {
+            var n = Vertices.Count;
+            if (normal == null || normal.Contains(double.NaN) || normal.norm1() < 0.1) normal = new[] {0.0, 0.0, 0.0};
+            else normal.normalizeInPlace();
+            var edgeVectors = new double[n][];
+            var normals = new List<double[]>();
+            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
+            for (var i = 1; i < n; i++)
+            {
+                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
+                var tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
+                if (!tempCross.Any(double.IsNaN))
+                {
+                    if (!normals.Any())
+                    {   // a guess at the normal (usually from an STL file) may be passed
+                        // in to this function. If we find that the guess matches this first one
+                        // (it's first because normals is empty), then we simply exit with the provided
+                        // value.
+                        if (normal != null)
+                        {
+                            if (normal.IsPracticallySame(tempCross,Constants.SameFaceNormalDotTolerance)) return normal;
+                            else if (normal.multiply(-1).IsPracticallySame(tempCross, Constants.SameFaceNormalDotTolerance)) return normal.multiply(-1);
+                        }
+
+                    }
+                    normals.Add(tempCross);
+                }
+            }
+            var lastCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
+            if (!lastCross.Any(double.IsNaN)) normals.Add(lastCross);
+
+            n = normals.Count;
+            if (n == 0) // this would happen if the face collapse to a line.
+                return normal;
+            // before we just average these normals, let's check that they agree.
+            // the dotProductsOfNormals simply takes the dot product of adjacent
+            // normals. If they're all close to one, then we can average and return.
+            var dotProductsOfNormals = new List<double>();
+            dotProductsOfNormals.Add(normals[0].dotProduct(normals[n - 1]));
+            for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].dotProduct(normals[i - 1]));
+            // if all are close to one (or at least positive), then the face is a convex polygon. Now,
+            // we can simply average and return the answer.
+            IsConvex = (dotProductsOfNormals.All(x => x > 0));
+            if (IsConvex)
+            {
+                // it's okay to overwrite the guess. If it didn't work above, no reason it
+                // should make sense now. 
+                normal = normals.Aggregate((current, c) => current.add(c));
+                return normal.divide(normals.Count);
+            }
+            // now, the rare case in which the polygon face is not convex...
+            if (normal != null)
+            {
+                // well, here the guess may be useful. We'll insert it into the list of dotProducts
+                // and then do a tally
+                dotProductsOfNormals[0] = normal.dotProduct(normals[0]);
+                dotProductsOfNormals.Insert(0, normal.dotProduct(normals[n - 1]));
+            }
+            var likeFirstNormal = true;
+            var numLikeFirstNormal = 1;
+            foreach (var d in dotProductsOfNormals)
+            {   // this tricky little function keeps track of how many are in the same direction
+                // as the first one.
+                if (d < 0) likeFirstNormal = !likeFirstNormal;
+                if (likeFirstNormal) numLikeFirstNormal++;
+            }
+            // if the majority are like the first one, then use that one (which may have been the guess).
+            if (2 * numLikeFirstNormal >= normals.Count) return normals[0];
+            // otherwise, go with the opposite.
+            return normals[0].multiply(-1);
         }
 
         /// <summary>
@@ -154,7 +180,7 @@ namespace TVGL
         /// The edges.
         /// </value>
         public List<Edge> Edges { get; set; }
- 
+
         /// <summary>
         /// Gets the center.
         /// </summary>
@@ -168,7 +194,7 @@ namespace TVGL
         /// <value>
         /// The area.
         /// </value>
-        public double Area { get;  internal set; }
+        public double Area { get; internal set; }
 
         /// <summary>
         /// Gets or sets the color.
@@ -196,7 +222,7 @@ namespace TVGL
         /// in a sorted list (not CCW). This value is unique for each face.
         /// </summary>
         public long FaceReference { get; internal set; }
-        
+
         /// <summary>
         /// Gets the adjacent faces.
         /// </summary>
@@ -255,34 +281,8 @@ namespace TVGL
         //References are assumed to be the same.
         public void Update()
         {
-            SetNormal();
-            SetArea();
-        }
-
-        public void SetFaceReference()
-        {
-            var checkSumMultipliers = new long[Constants.MaxNumberEdgesPerFace];
-            for (var i = 0; i < Constants.MaxNumberEdgesPerFace; i++)
-                checkSumMultipliers[i] = (long)Math.Pow(TessellatedSolid.CheckSumMultiplier, i);
-            double[] normal = null;
-            long checksum = 0;
-            var orderedIndices = new List<int>();
-            foreach (var vertex in Vertices)
-            {
-                orderedIndices.Add(vertex.IndexInList);
-            }
-            orderedIndices.Sort();
-            if (orderedIndices[0] == -1) //A vertex index has not been set.
-            {
-                 FaceReference = -1; //set an impossible face reference value.
-            }
-            else
-            {
-                if (orderedIndices.Count != Constants.MaxNumberEdgesPerFace) throw new Exception();
-                for (var j = 0; j < orderedIndices.Count; j++)
-                    checksum += orderedIndices[j] * checkSumMultipliers[j];
-                FaceReference = checksum;
-            }
+            Normal = DetermineNormal();
+            Area = DetermineArea();
         }
 
         internal Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
@@ -294,61 +294,15 @@ namespace TVGL
 
         internal Vertex OtherVertex(Edge thisEdge, bool willAcceptNullAnswer = false)
         {
-            return willAcceptNullAnswer ? Vertices.FirstOrDefault(v => v != thisEdge.To && 
+            return willAcceptNullAnswer ? Vertices.FirstOrDefault(v => v != thisEdge.To &&
                 v != thisEdge.From) : Vertices.First(v => v != thisEdge.To && v != thisEdge.From);
         }
 
         internal Vertex OtherVertex(Vertex v1, Vertex v2, bool willAcceptNullAnswer = false)
         {
-            return willAcceptNullAnswer ? Vertices.FirstOrDefault(v => v != v1 && v != v2) : 
+            return willAcceptNullAnswer ? Vertices.FirstOrDefault(v => v != v1 && v != v2) :
                 Vertices.First(v => v != v1 && v != v2);
         }
 
-        internal void SetNormal() //Assuming CCW order of vertices
-        {
-            var n = Vertices.Count;
-            var edgeVectors = new double[n][];
-            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
-            for (var i = 1; i < n; i++)
-                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
-
-            var normals = new List<double[]>();
-            var tempCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
-            if (!tempCross.Any(double.IsNaN)) normals.Add(tempCross);
-            for (var i = 1; i < n; i++)
-            {
-                tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
-                if (!tempCross.Any(double.IsNaN))
-                    normals.Add(tempCross);
-            }
-            n = normals.Count;
-            if (n == 0)  // this would happen if the face collapse to a line.
-                Normal = new[] { double.NaN, double.NaN, double.NaN };
-            else
-            {
-                var dotProduct = new double[n];
-                dotProduct[0] = normals[0].dotProduct(normals[n - 1]);
-                for (var i = 1; i < n; i++) dotProduct[i] = normals[i].dotProduct(normals[i - 1]);
-                IsConvex = (dotProduct.All(x => x > 0));
-                Normal = new double[3];
-                if (IsConvex)
-                {
-                    Normal = normals.Aggregate(Normal, (current, c) => current.add(c));
-                    Normal = Normal.divide(normals.Count);
-                }
-                else
-                {
-                    var likeFirstNormal = true;
-                    var numLikeFirstNormal = 1;
-                    foreach (var d in dotProduct)
-                    {
-                        if (d < 0) likeFirstNormal = !likeFirstNormal;
-                        if (likeFirstNormal) numLikeFirstNormal++;
-                    }
-                    if (2 * numLikeFirstNormal >= normals.Count) Normal = normals[0];
-                    else Normal = normals[0].multiply(-1);
-                }
-            }
-        }
     }
 }

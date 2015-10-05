@@ -27,7 +27,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids,
-            double tolerance = Constants.Error)
+            double tolerance = Constants.MinimumEdgeLength)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -69,7 +69,7 @@ namespace TVGL.Boolean_Operations
         }
 
         private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<Vertex> loopVertices,
-            int isPositiveSide, double tolerance = Constants.Error)
+            int isPositiveSide, double tolerance = Constants.MinimumEdgeLength)
         {
             onSideFaces = new List<PolygonalFace>();
             //Set the distance of every vertex in the solid to the plane
@@ -79,7 +79,7 @@ namespace TVGL.Boolean_Operations
             //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
             //along direction of normal, and add a negative offset to move backward along normal.
             var normal = plane.Normal.multiply(isPositiveSide);
-            var distanceToOrigin = plane.DistanceToOrigin  * isPositiveSide + tolerance;
+            var distanceToOrigin = plane.DistanceToOrigin * isPositiveSide + tolerance;
             var successfull = false;
             while (!successfull)
             {
@@ -225,7 +225,7 @@ namespace TVGL.Boolean_Operations
                 //Create new faces from the triangles
                 foreach (var triangle in triangles)
                 {
-                    onSideFaces.Add(new PolygonalFace(triangle, normal, true, true));
+                    onSideFaces.Add(new PolygonalFace(triangle, normal));
                     //foreach(var vertex in triangle)
                     //{
                     //    if(loopVertices.Contains(vertex))
@@ -236,7 +236,7 @@ namespace TVGL.Boolean_Operations
 
         internal static int GetCheckSum(Vertex vertex1, Vertex vertex2)
         {
-            var checkSumMultiplier = TessellatedSolid.CheckSumMultiplier;
+            var checkSumMultiplier = TessellatedSolid.VertexCheckSumMultiplier;
             if (vertex1.IndexInList == vertex2.IndexInList) throw new Exception("edge to same vertices.");
             //Multiply larger value by checksum in case lower value == 0;
             var checksum = (vertex1.IndexInList < vertex2.IndexInList)

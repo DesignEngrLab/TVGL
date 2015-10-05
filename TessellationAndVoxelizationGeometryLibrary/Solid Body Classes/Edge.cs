@@ -42,7 +42,7 @@ namespace TVGL
                 (To.Position[2] - From.Position[2])
             };
             Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
-            if (Math.Abs(Length) < Constants.Error) throw new Exception();
+            if (Length.IsNegligible(Constants.MinimumEdgeLength)) throw new Exception();
             if (OwnedFace == null || OtherFace == null) return; //No need for the next few functions
             DefineInternalEdgeAngle();
             if (double.IsNaN(InternalAngle)) throw new Exception();
@@ -71,7 +71,7 @@ namespace TVGL
                 (To.Position[2] - From.Position[2])
             };
             Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
-            if (Math.Abs(Length) < Constants.Error) throw new Exception();
+            if (Length.IsNegligible(Constants.MinimumEdgeLength)) throw new Exception();
             //Since there are no faces yet, internal angle is not calculated.
         }
 
@@ -228,7 +228,7 @@ namespace TVGL
 
         public void SetEdgeReference()
         {
-            var checkSumMultiplier = TessellatedSolid.CheckSumMultiplier;
+            var checkSumMultiplier = TessellatedSolid.VertexCheckSumMultiplier;
             var fromIndex = From.IndexInList;
             var toIndex = To.IndexInList;
             if (fromIndex == -1 || toIndex == -1) EdgeReference = -1;
@@ -266,7 +266,6 @@ namespace TVGL
             }
             var ownedFaceToIndex = _ownedFace.Vertices.IndexOf(To);
             var ownedFaceNextIndex = (ownedFaceToIndex + 1 == _ownedFace.Vertices.Count) ? 0 : ownedFaceToIndex + 1;
-
             var nextOwnedFaceVertex = _ownedFace.Vertices[ownedFaceNextIndex];
             var nextEdgeVector = nextOwnedFaceVertex.Position.subtract(To.Position);
         

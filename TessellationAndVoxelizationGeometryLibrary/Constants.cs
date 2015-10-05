@@ -41,26 +41,16 @@ namespace TVGL
         /// </summary>
         public const NumberStyles NumberStyle =
             (NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign);
-
+        
         /// <summary>
-        ///     The epsilon same angle
+        ///     The error used in TVGL, primarily for STL files.
         /// </summary>
-        public const double EpsilonSameAngle = 1e-15;
-
-        /// <summary>
-        ///     The look up string format
-        /// </summary>
-        public const string LookUpStringFormat = "F12";
+        public const int VertexCoordinateDecimalPlaces = 12;
 
         /// <summary>
         ///     The error used in TVGL, primarily for STL files.
         /// </summary>
-        public const int DecimalPlaceError = 12;
-
-        /// <summary>
-        ///     The error used in TVGL, primarily for STL files.
-        /// </summary>
-        public const double Error = 1E-12;
+        public const double MinimumEdgeLength = 1E-12;
 
         /// <summary>
         ///     The error for face in surface
@@ -71,6 +61,11 @@ namespace TVGL
         ///     The maximum number edges per face
         /// </summary>
         public const int MaxNumberEdgesPerFace = 3;
+
+        /// <summary>
+        /// The tolerance for the same normal of a face when two are dot-producted.
+        /// </summary>
+        public const double SameFaceNormalDotTolerance = 1e-5;
 
         /// <summary>
         ///     Finds the index.

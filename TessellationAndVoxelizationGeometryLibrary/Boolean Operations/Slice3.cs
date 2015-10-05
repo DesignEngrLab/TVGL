@@ -26,8 +26,8 @@ namespace TVGL.Boolean_Operations
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids, 
-            double tolerance = Constants.Error)
+            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids,
+            double tolerance = Constants.MinimumEdgeLength)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -69,7 +69,7 @@ namespace TVGL.Boolean_Operations
         }
 
         private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<Vertex> loopVertices,
-            int isPositiveSide, double tolerance = Constants.Error)
+            int isPositiveSide, double tolerance = Constants.MinimumEdgeLength)
         {
             onSideFaces = new List<PolygonalFace>();
             //Set the distance of every vertex in the solid to the plane
@@ -85,7 +85,7 @@ namespace TVGL.Boolean_Operations
             while (!successfull)
             {
                 distancesToPlane = new List<double>();
-                plane.DistanceToOrigin = plane.DistanceToOrigin + looserTolerance*isPositiveSide;
+                plane.DistanceToOrigin = plane.DistanceToOrigin + looserTolerance * isPositiveSide;
                 pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
                 for (int i = 0; i < ts.NumberOfVertices; i++)
                 {
@@ -119,7 +119,7 @@ namespace TVGL.Boolean_Operations
                     loopVertices.Add(straddleEdge.IntersectVertex);
                 }
             }
-            
+
             //Categorize all the faces in the solid
             var newOnPlaneEdges = new List<Edge>(); //Place holder for debugging.
             foreach (var face in ts.Faces)
@@ -159,14 +159,14 @@ namespace TVGL.Boolean_Operations
                         var newVertex2 = straddleEdges.First(s => s.EdgeReference == checksum2).IntersectVertex;
                         if (newVertex1 == null || newVertex2 == null) throw new Exception();
                         newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
-                        if(isPositiveSide == 1)
+                        if (isPositiveSide == 1)
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[0], positiveSideVertices[1], newVertex1 }, face.Normal, false, true));
-                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[1], newVertex1, newVertex2 }, face.Normal, false, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[0], positiveSideVertices[1], newVertex1 }, face.Normal, false));
+                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[1], newVertex1, newVertex2 }, face.Normal, false));
                         }
-                        else 
+                        else
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, negativeSideVertices[0] }, face.Normal, false, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, negativeSideVertices[0] }, face.Normal, false));
                         }
                     }
                     //Two vertices are on the negative side, and one is on the positive side.
@@ -178,14 +178,14 @@ namespace TVGL.Boolean_Operations
                         var newVertex2 = straddleEdges.First(s => s.EdgeReference == checksum2).IntersectVertex;
                         if (newVertex1 == null || newVertex2 == null) throw new Exception();
                         newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
-                        if (isPositiveSide == 1) 
+                        if (isPositiveSide == 1)
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, positiveSideVertices[0] }, face.Normal, false, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, positiveSideVertices[0] }, face.Normal, false));
                         }
                         else
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[0], negativeSideVertices[1], newVertex1 }, face.Normal, false, true));
-                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[1], newVertex1, newVertex2 }, face.Normal, false, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[0], negativeSideVertices[1], newVertex1 }, face.Normal, false));
+                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[1], newVertex1, newVertex2 }, face.Normal, false));
                         }
                     }
                     else throw new Exception("Error: one of the two options above must be true.");
@@ -201,12 +201,12 @@ namespace TVGL.Boolean_Operations
                 //Else: Do nothing with On-Plane faces.
             }
             //Reset back to original
-             plane.DistanceToOrigin = originalDistanceToOrigin;
+            plane.DistanceToOrigin = originalDistanceToOrigin;
         }
 
         internal static int GetCheckSum(Vertex vertex1, Vertex vertex2)
         {
-            var checkSumMultiplier = TessellatedSolid.CheckSumMultiplier;
+            var checkSumMultiplier = TessellatedSolid.VertexCheckSumMultiplier;
             if (vertex1.IndexInList == vertex2.IndexInList) throw new Exception("edge to same vertices.");
             //Multiply larger value by checksum in case lower value == 0;
             var checksum = (vertex1.IndexInList < vertex2.IndexInList)
@@ -274,7 +274,7 @@ namespace TVGL.Boolean_Operations
                     attempts++;
                 }
                 while (newStartVertex != startVertex && attempts < onPlaneVertices.Count());
-                loops.Add(loop); 
+                loops.Add(loop);
             }
             return loops;
         }

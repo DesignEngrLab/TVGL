@@ -92,7 +92,7 @@ namespace TVGL
         {
             var axis = edge.OwnedFace.Normal.crossProduct(edge.OtherFace.Normal);
             var length = axis.norm2();
-            if (length < Constants.EpsilonSameAngle) throw new Exception("Edge used to define cylinder is flat.");
+            if (length.IsNegligible()) throw new Exception("Edge used to define cylinder is flat.");
             axis.normalizeInPlace();
             var v1 = edge.From;
             var v2 = edge.To;
