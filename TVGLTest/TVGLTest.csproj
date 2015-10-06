@@ -34,16 +34,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MIConvexHull, Version=1.0.10.1021, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\MIConvexHull\MIConvexHull.dll</HintPath>
+      <HintPath>..\packages\MIConvexHull.1.0.10.1045\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\StarMath.2.0.15.0707\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+      <HintPath>..\packages\StarMath.2.0.15.9091\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

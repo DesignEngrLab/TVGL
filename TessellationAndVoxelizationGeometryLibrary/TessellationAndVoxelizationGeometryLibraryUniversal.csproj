@@ -97,7 +97,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.15.9090\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+      <HintPath>..\packages\StarMath.2.0.15.9091\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>

@@ -52,6 +52,11 @@ namespace TVGL
         /// </summary>
         public const double MinimumEdgeLength = 1E-12;
 
+
+        /// <summary>
+        /// The angle tolerance used in the Oriented Bounding Box calculations
+        /// </summary>
+        public const double OBBAngleTolerance = 1e-5;
         /// <summary>
         ///     The error for face in surface
         /// </summary>

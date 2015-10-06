@@ -643,7 +643,7 @@ namespace TVGL
                  * the volume. The dot-product to the center gives the height, and 1/3 of the height times the area gives the volume.
                  * While, we're working on it, we  average the centers of the tetrahedrons and do a weighted sum to find the
                  * true center of mass.*/
-                var tetrahedronVolume = Math.Abs(face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(Center)))) / 3;
+                var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(Center))) / 3;
                 tempProductX += (face.Vertices[0].Position[0] + face.Vertices[1].Position[0] + face.Vertices[2].Position[0] + Center[0]) * tetrahedronVolume / 4;
                 tempProductY += (face.Vertices[0].Position[1] + face.Vertices[1].Position[1] + face.Vertices[2].Position[1] + Center[1]) * tetrahedronVolume / 4;
                 tempProductZ += (face.Vertices[0].Position[2] + face.Vertices[1].Position[2] + face.Vertices[2].Position[2] + Center[2]) * tetrahedronVolume / 4;

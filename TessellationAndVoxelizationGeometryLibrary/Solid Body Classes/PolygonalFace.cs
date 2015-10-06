@@ -78,7 +78,7 @@ namespace TVGL
         private double[] DetermineNormal(double[] normal = null) //Assuming CCW order of vertices
         {
             var n = Vertices.Count;
-            if (normal == null || normal.Contains(double.NaN) || normal.norm1() < 0.1) normal = new[] {0.0, 0.0, 0.0};
+            if (normal == null || normal.Contains(double.NaN) || normal.norm1() < 0.1) normal = new[] { 0.0, 0.0, 0.0 };
             else normal.normalizeInPlace();
             var edgeVectors = new double[n][];
             var normals = new List<double[]>();
@@ -96,7 +96,7 @@ namespace TVGL
                         // value.
                         if (normal != null)
                         {
-                            if (normal.IsPracticallySame(tempCross,Constants.SameFaceNormalDotTolerance)) return normal;
+                            if (normal.IsPracticallySame(tempCross, Constants.SameFaceNormalDotTolerance)) return normal;
                             else if (normal.multiply(-1).IsPracticallySame(tempCross, Constants.SameFaceNormalDotTolerance)) return normal.multiply(-1);
                         }
 

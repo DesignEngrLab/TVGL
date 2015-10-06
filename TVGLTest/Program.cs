@@ -14,9 +14,9 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {
-        "../../../TestFiles/TXT - C2 boitier batterie-1.STL",
+        //"../../../TestFiles/TXT - C2 boitier batterie-1.STL",
         //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        "../../../TestFiles/TXT - G5 support de carrosserie-2.STL",    
+        //"../../../TestFiles/TXT - G5 support de carrosserie-2.STL",    
         //"../../../TestFiles/Beam_Boss.STL",   
         //"../../../TestFiles/Tetrahedron.STL",                                      
         //"../../../TestFiles/off_axis_box.STL",
@@ -24,7 +24,7 @@ namespace TVGL_Test
         //"../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/Mic_Holder_SW.stl",  
         //"../../../TestFiles/Mic_Holder_JR.stl",
-        //"../../../TestFiles/3_bananas.amf",
+        "../../../TestFiles/3_bananas.amf",
         //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
         //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/Rook.amf",   
@@ -71,9 +71,9 @@ namespace TVGL_Test
 
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
-                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                TestSlice(ts[0]);
-                //TestOBB(ts[0],filename);
+                TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
+                //TestSlice(ts[0]);
+                TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
                 //FileStream fileStream2 = File.OpenRead(filename2);
                 //var ts2= IO.Open(fileStream2, filename2, false);

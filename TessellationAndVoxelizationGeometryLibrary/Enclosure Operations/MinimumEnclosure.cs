@@ -498,8 +498,6 @@ namespace TVGL
         /// </accuracy>
         private static BoundingBox Find_via_BM_ApproachTwo(TessellatedSolid ts, out List<List<double[]>> volumeData)
         {
-            //first, get the flats (unique normals since it is a convex hull)
-            var flats = ListFunctions.Flats(ts.ConvexHullFaces, StarMath.EqualityTolerance);
             volumeData = new List<List<double[]>>();
             var minBox = new BoundingBox();
             var minVolume = double.PositiveInfinity;
@@ -512,7 +510,7 @@ namespace TVGL
 
                 //Check for exceptions and special cases.
                 //Skip the edge if its internal angle is practically 0 or 180.
-                if (Math.Abs(internalAngle - Math.PI) < 0.0001 || Math.Round(internalAngle, 5).IsNegligible()) continue;
+                if (internalAngle.IsPracticallySame(Math.PI, Constants.OBBAngleTolerance) || internalAngle.IsPracticallySame(0.0,Constants.OBBAngleTolerance)) continue;
                 if (convexHullEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
                 //r cross owned face normal should point along the other face normal.
                 var r = convexHullEdge.Vector.normalize();
@@ -523,7 +521,7 @@ namespace TVGL
                 if (volumeData.Count == 68) debugDepth1 = true;
                 
                 //Find the angle between the two faces that form this edge
-                var maxTheta = Math.Acos(n.dotProduct(convexHullEdge.OtherFace.Normal));
+                var maxTheta = Math.PI - convexHullEdge.InternalAngle;
                 angleList.Add(0.0);
                 angleList.Add(maxTheta);
 
