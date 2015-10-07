@@ -301,10 +301,11 @@ namespace TVGL
                 }
                 else
                 {
-                    throw new Exception();
+                    InternalAngle = double.NaN;
+                    Curvature=CurvatureType.Undefined;
+                    //throw new Exception();
                 }
             }
-            if (double.IsNaN(InternalAngle)) throw new Exception();
             //Debug.WriteLine("angle = " + (InternalAngle * (180 / Math.PI)).ToString() + "; " + SurfaceIs.ToString());
         }
         #endregion

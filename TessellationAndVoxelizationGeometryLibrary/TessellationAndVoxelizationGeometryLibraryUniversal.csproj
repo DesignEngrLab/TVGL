@@ -77,6 +77,7 @@
     <Compile Include="Enclosure Operations\ConvexHull2D.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure.cs" />
     <Compile Include="Miscellaneous Functions\SortedList.cs" />
+    <Compile Include="Simplify Functions\SimplifyTessellation.cs" />
     <Compile Include="Solid Body Classes\Edge.cs" />
     <Compile Include="Solid Body Classes\PolygonalFace.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />

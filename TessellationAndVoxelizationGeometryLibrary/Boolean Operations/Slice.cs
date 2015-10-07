@@ -31,12 +31,12 @@ namespace TVGL.Boolean_Operations
         /// described by the returned ContactData object. This is a non-destructive function typically
         /// used to find the shape and size of 2D surface on the prescribed plane.
         /// </summary>
-        /// <param name="plane">The plane.</param>
         /// <param name="ts">The ts.</param>
+        /// <param name="plane">The plane.</param>
         /// <param name="artificiallyCloseOpenLoops">The artificially close open loops.</param>
         /// <returns>ContactData.</returns>
         /// <exception cref="System.Exception">Contact Edges found that are not contained in loop.</exception>
-        public static ContactData DefineContact(Flat plane, TessellatedSolid ts, bool artificiallyCloseOpenLoops = true)
+        public static ContactData DefineContact(this TessellatedSolid ts, Flat plane, bool artificiallyCloseOpenLoops = true)
         {
             // Contact elements are constructed and then later arranged into loops. Loops make up the returned object, ContactData.
             // Throughout the operations in this method, the distance a given vertex is from the plane is needed. In order to avoid 
@@ -350,7 +350,7 @@ namespace TVGL.Boolean_Operations
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
-            var contactData = DefineContact(plane, ts, false);
+            var contactData = DefineContact(ts, plane, false);
             if (!contactData.AllLoops.Any())
             {
                 Debug.WriteLine("Plane does not pass through solid.");

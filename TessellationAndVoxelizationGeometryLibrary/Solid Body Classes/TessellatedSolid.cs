@@ -424,8 +424,7 @@ namespace TVGL
                 {
                     faceVertices.Add(Vertices[vertexMatchingIndex]);
                 }
-                if (normal == null) listOfFaces.Add(new PolygonalFace(faceVertices, null, doublyLinkToVertices));
-                else listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices));
+                listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices));
             }
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);
