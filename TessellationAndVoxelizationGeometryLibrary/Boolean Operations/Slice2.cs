@@ -25,8 +25,7 @@ namespace TVGL.Boolean_Operations
         /// <param name="tolerance"></param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids,
-            out List<TessellatedSolid> negativeSideSolids,
-            double tolerance = Constants.MinimumEdgeLength)
+            out List<TessellatedSolid> negativeSideSolids)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -37,7 +36,7 @@ namespace TVGL.Boolean_Operations
             //1. Divide up the faces into either negative or positive. OnPlane faces are not used. 
             //Straddle faces are split into 2 or 3 new faces that are added to the respective lists.
             DivideUpFaces(ts, plane, out positiveSideFaces, out negativeSideFaces,
-                out positiveSideLoopVertices, out negativeSideLoopVertices, tolerance);
+                out positiveSideLoopVertices, out negativeSideLoopVertices, ts.sameTolerance);
             //2. Find loops to define the missing space on the plane
             var positiveSideLoops = FindLoops(positiveSideLoopVertices, positiveSideFaces);
             var negativeSideLoops = FindLoops(negativeSideLoopVertices, negativeSideFaces);

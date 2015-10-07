@@ -115,7 +115,7 @@ namespace TVGL.IOFunctions
             var results = new List<TessellatedSolid>();
             foreach (var stlFileData in stlData)
                 results.Add(new TessellatedSolid(stlFileData.Name, stlFileData.Normals, stlFileData.Vertices,
-                     (stlFileData.HasColorSpecified ? stlFileData.Colors : null), inParallel));
+                     (stlFileData.HasColorSpecified ? stlFileData.Colors : null)));
             return results;
         }
 
@@ -143,7 +143,7 @@ namespace TVGL.IOFunctions
             return new List<TessellatedSolid>
             {
                 new TessellatedSolid(offData.Name, offData.Vertices, offData.FaceToVertexIndices,
-                    (offData.HasColorSpecified ? offData.Colors : null), inParallel)
+                    (offData.HasColorSpecified ? offData.Colors : null))
             };
         }
 
@@ -188,7 +188,7 @@ namespace TVGL.IOFunctions
                 results.Add(new TessellatedSolid(amfData.Name,
                     amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
                     amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                    colors, inParallel));
+                    colors));
             }
             return results;
         }

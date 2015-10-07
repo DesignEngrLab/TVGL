@@ -41,16 +41,12 @@ namespace TVGL
         /// </summary>
         public const NumberStyles NumberStyle =
             (NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign);
-        
-        /// <summary>
-        ///     The error used in TVGL, primarily for STL files.
-        /// </summary>
-        public const int VertexCoordinateDecimalPlaces = 12;
+
 
         /// <summary>
-        ///     The error used in TVGL, primarily for STL files.
+        /// The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
-        public const double MinimumEdgeLength = 1E-12;
+        public const double BaseTolerance = 1E-7;
 
 
         /// <summary>

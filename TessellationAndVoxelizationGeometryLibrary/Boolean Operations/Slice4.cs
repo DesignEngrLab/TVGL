@@ -26,8 +26,7 @@ namespace TVGL.Boolean_Operations
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids,
-            double tolerance = Constants.MinimumEdgeLength)
+            out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
@@ -38,8 +37,8 @@ namespace TVGL.Boolean_Operations
             //MiscFunctions.IsSolidBroken(ts);
             //1. Offset positive and get the positive faces.
             //Straddle faces are split into 2 or 3 new faces.
-            DivideUpFaces(ts, plane, out positiveSideFaces, out positiveSideLoopVertices, 1, tolerance);
-            DivideUpFaces(ts, plane, out negativeSideFaces, out negativeSideLoopVertices, -1, tolerance);
+            DivideUpFaces(ts, plane, out positiveSideFaces, out positiveSideLoopVertices, 1);
+            DivideUpFaces(ts, plane, out negativeSideFaces, out negativeSideLoopVertices, -1);
             //2. Find loops to define the missing space on the plane
             var positiveSideLoops = FindLoops(positiveSideLoopVertices);
             var negativeSideLoops = FindLoops(negativeSideLoopVertices);
@@ -69,17 +68,17 @@ namespace TVGL.Boolean_Operations
         }
 
         private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<Vertex> loopVertices,
-            int isPositiveSide, double tolerance = Constants.MinimumEdgeLength)
+            int isPositiveSide)
         {
             onSideFaces = new List<PolygonalFace>();
             //Set the distance of every vertex in the solid to the plane
             var distancesToPlane = new List<double>();
             var pointOnPlane = new double[3];
-            var looserTolerance = Math.Sqrt(tolerance); //A looser tolerance is necessary to determine straddle edges
+            var looserTolerance = Math.Sqrt(ts.sameTolerance); //A looser tolerance is necessary to determine straddle edges
             //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
             //along direction of normal, and add a negative offset to move backward along normal.
             var normal = plane.Normal.multiply(isPositiveSide);
-            var distanceToOrigin = plane.DistanceToOrigin * isPositiveSide + tolerance;
+            var distanceToOrigin = plane.DistanceToOrigin * isPositiveSide + ts.sameTolerance;
             var successfull = false;
             while (!successfull)
             {

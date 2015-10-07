@@ -24,7 +24,7 @@ namespace TVGL_Test
         //"../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/Mic_Holder_SW.stl",  
         //"../../../TestFiles/Mic_Holder_JR.stl",
-        "../../../TestFiles/3_bananas.amf",
+        //"../../../TestFiles/3_bananas.amf",
         //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
         //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/Rook.amf",   

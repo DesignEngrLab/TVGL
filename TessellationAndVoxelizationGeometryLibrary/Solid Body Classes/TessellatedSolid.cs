@@ -192,6 +192,14 @@ namespace TVGL
         /// The solid color
         /// </summary>
         public Color SolidColor = new Color(Constants.DefaultColor);
+
+        /// <summary>
+        /// The tolerance is set during the initiation (constructor phase). This is based on the maximum
+        /// length of the axis-aligned bounding box times Constants.
+        /// </summary>
+        /// <value>The same tolerance.</value>
+        internal double sameTolerance { private set; get; }
+
         #endregion
 
         #region Constructors
@@ -204,21 +212,21 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class.
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
+        /// matches with the STL format.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="normals">The normals.</param>
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="colors">The colors.</param>
-        /// <param name="performInParallel">The perform in parallel.</param>
         public TessellatedSolid(string name, List<double[]> normals, List<List<double[]>> vertsPerFace,
-            List<Color> colors, bool inParallel = true)
+            List<Color> colors)
         {
             var now = DateTime.Now;
-
             //Begin Construction 
             Name = name;
             var faceToVertexIndices = new List<List<int>>();
+            DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFace.SelectMany(v => v));
             MakeVertices(vertsPerFace, out faceToVertexIndices);
             MakeFaces(faceToVertexIndices, normals);
             DefineFaceColors(colors);
@@ -229,50 +237,32 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class.
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This matches with formats
+        /// that use indices to the vertices (almost everything except STL).
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="vertices">The vertices.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="colors">The colors.</param>
-        /// <param name="performInParallel">if set to <c>true</c> [perform in parallel].</param>
         public TessellatedSolid(string name, List<double[]> vertices, List<List<int>> faceToVertexIndices,
-            List<Color> colors, bool inParallel = true)
+            List<Color> colors)
         {
             var now = DateTime.Now;
-
             //Begin Construction 
             Name = name;
+            DefineAxisAlignedBoundingBoxAndTolerance(vertices);
             MakeVertices(vertices, ref faceToVertexIndices);
             MakeFaces(faceToVertexIndices);
             DefineFaceColors(colors);
             //Complete Construction with Common Functions
-            this.CompleteInitiation();
+            CompleteInitiation();
 
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
 
-        internal void CompleteInitiation()
-        {
-            //1
-            CreateConvexHull();
-            DefineBoundingBoxAndCenter();
-            MakeEdges();
-            //2
-            RepairFaces();
-            //3
-            DefineVolumeAndSurfaceArea();
-            //DefineInertiaTensor();
-            ConnectConvexHullToObjects();
-            DefineFaceCurvature();
-            DefineVertexCurvature();
-            //3
-            CheckReferences();
-        }
-
-
         internal TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices)
         {
+            DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             Faces = faces.ToArray();
             NumberOfFaces = Faces.Count();
             Vertices = new Vertex[0];
@@ -286,9 +276,26 @@ namespace TVGL
 
             Edges = MakeEdges(Faces);
             CreateConvexHull();
-            DefineBoundingBoxAndCenter();
-            this.CompleteInitiation();
+            CompleteInitiation();
         }
+
+        internal void CompleteInitiation()
+        {
+            //1
+            CreateConvexHull();
+            MakeEdges();
+            //2
+            RepairFaces();
+            //3
+            DefineCenterVolumeAndSurfaceArea();
+            //DefineInertiaTensor();
+            ConnectConvexHullToObjects();
+            DefineFaceCurvature();
+            DefineVertexCurvature();
+            //3
+            CheckReferences();
+        }
+
         #endregion
 
         #region Build New from Portions of Old Solid and the Copy Function
@@ -322,7 +329,7 @@ namespace TVGL
                 }
                 faces.Add(face);
             }
-            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
+            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor });
         }
 
         /// <summary>
@@ -348,11 +355,29 @@ namespace TVGL
                 }
                 faces.Add(face);
             }
-            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor }, false);
+            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor });
         }
         #endregion
 
         #region Make many elements (called from constructors)
+
+        /// <summary>
+        /// Defines the axis aligned bounding box and tolerance. This is called first in the constructors
+        /// because the tolerance is used in making the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<double[]> vertices)
+        {
+            var taskXMin = Task.Factory.StartNew(() => XMin = vertices.Min(v => v[0]));
+            var taskXMax = Task.Factory.StartNew(() => XMax = vertices.Max(v => v[0]));
+            var taskYMin = Task.Factory.StartNew(() => YMin = vertices.Min(v => v[1]));
+            var taskYMax = Task.Factory.StartNew(() => YMax = vertices.Max(v => v[1]));
+            var taskZMin = Task.Factory.StartNew(() => ZMin = vertices.Min(v => v[2]));
+            var taskZMax = Task.Factory.StartNew(() => ZMax = vertices.Max(v => v[2]));
+            Task.WaitAll(taskXMin, taskXMax, taskYMin, taskYMax, taskZMin, taskZMax);
+            var longestDimension = Math.Max(XMax - XMin, Math.Max(YMax - YMin, ZMax - ZMin));
+            sameTolerance = longestDimension * Constants.BaseTolerance;
+        }
         /// <summary>
         /// Makes the faces, avoiding duplicates.
         /// </summary>
@@ -490,6 +515,9 @@ namespace TVGL
         /// <param name="indicesToRemove">The indices to remove.</param>
         private void MakeVertices(ICollection<List<double[]>> vertsPerFace, out List<List<int>> faceToVertexIndices)
         {
+            var numDecimalPoints = 0;
+            while (Math.Round(sameTolerance, numDecimalPoints) == 0.0) numDecimalPoints++;
+            numDecimalPoints++;
             /* vertexMatchingIndices will be used to speed up the linking of faces and edges to vertices
              * it  preserves the order of vertsPerFace (as read in from the file), and indicates where
              * you can find each vertex in the new array of vertices. This is essentially what is built in 
@@ -497,7 +525,7 @@ namespace TVGL
             faceToVertexIndices = new List<List<int>>();
             var listOfVertices = new List<double[]>();
             var simpleCompareDict = new Dictionary<string, int>();
-                    var stringformat = "F" + Constants.VertexCoordinateDecimalPlaces;
+            var stringformat = "F" + numDecimalPoints;
             //in order to reduce compare times we use a string comparer and dictionary
             foreach (var t in vertsPerFace)
             {
@@ -507,9 +535,9 @@ namespace TVGL
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
-                    vertex[0] = Math.Round(vertex[0], Constants.VertexCoordinateDecimalPlaces);
-                    vertex[1] = Math.Round(vertex[1], Constants.VertexCoordinateDecimalPlaces);
-                    vertex[2] = Math.Round(vertex[2], Constants.VertexCoordinateDecimalPlaces);
+                    vertex[0] = Math.Round(vertex[0], numDecimalPoints);
+                    vertex[1] = Math.Round(vertex[1], numDecimalPoints);
+                    vertex[2] = Math.Round(vertex[2], numDecimalPoints);
                     var lookupString = vertex[0].ToString(stringformat) + "|"
                                        + vertex[1].ToString(stringformat) + "|"
                                        + vertex[2].ToString(stringformat) + "|";
@@ -540,9 +568,12 @@ namespace TVGL
         /// <param name="indicesToRemove">The indices to remove.</param>
         private void MakeVertices(IList<double[]> vertices, ref List<List<int>> faceToVertexIndices)
         {
+            var numDecimalPoints = 0;
+            while (Math.Round(sameTolerance, numDecimalPoints) == 0.0) numDecimalPoints++;
+            numDecimalPoints++;
             var listOfVertices = new List<double[]>();
             var simpleCompareDict = new Dictionary<string, int>();
-                    var stringformat = "F" + Constants.VertexCoordinateDecimalPlaces;
+            var stringformat = "F" + numDecimalPoints;
             //in order to reduce compare times we use a string comparer and dictionary
             foreach (var faceToVertexIndex in faceToVertexIndices)
             {
@@ -553,9 +584,9 @@ namespace TVGL
                     /* given the low precision in files like STL, this should be a sufficient way to detect identical points. 
                      * I believe comparing these lookupStrings will be quicker than comparing two 3d points.*/
                     //First, round the vertices, then convert to a string. This will catch bidirectional tolerancing (+/-)
-                    vertex[0] = Math.Round(vertex[0], Constants.VertexCoordinateDecimalPlaces);
-                    vertex[1] = Math.Round(vertex[1], Constants.VertexCoordinateDecimalPlaces);
-                    vertex[2] = Math.Round(vertex[2], Constants.VertexCoordinateDecimalPlaces);
+                    vertex[0] = Math.Round(vertex[0], numDecimalPoints);
+                    vertex[1] = Math.Round(vertex[1], numDecimalPoints);
+                    vertex[2] = Math.Round(vertex[2], numDecimalPoints);
                     var lookupString = vertex[0].ToString(stringformat) + "|"
                                        + vertex[1].ToString(stringformat) + "|"
                                        + vertex[2].ToString(stringformat) + "|";
@@ -620,36 +651,42 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Defines the volume and areas.
+        /// Defines the center, the volume and the surface area.
         /// </summary>
-
-        /// <summary>
-        ///     Defines the volume and areas.
-        /// </summary>    
-        private void DefineVolumeAndSurfaceArea()
+        private void DefineCenterVolumeAndSurfaceArea()
         {
             Volume = 0;
             SurfaceArea = 0;
-            double tempProductX = 0;
-            double tempProductY = 0;
-            double tempProductZ = 0;
+            double centerX = 0;
+            double centerY = 0;
+            double centerZ = 0;
             foreach (var face in Faces)
             {
                 // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
-                if (face.Area.IsNegligible()) face.Area = face.DetermineArea();
+                if (face.Area.IsNegligible()) face.Area = face.DetermineArea(); //the area of the face was also determined in 
+                // one of the PolygonalFace constructors. In case it is zero, we will recalculate it here.
                 SurfaceArea += face.Area;   // accumulate areas into surface area
-                /* the Center is not correct! It's merely the center of the bounding box, but it doesn't need to be the true center for
-                 * the calculation of the volume. Each tetrahedron is added up - even if they are negative - to form the correct value for
-                 * the volume. The dot-product to the center gives the height, and 1/3 of the height times the area gives the volume.
-                 * While, we're working on it, we  average the centers of the tetrahedrons and do a weighted sum to find the
-                 * true center of mass.*/
+                var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position)) / 3;
+                // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
+                // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
+                // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
+                // on the volume.
+                Volume += tetrahedronVolume;
+                centerX += (face.Vertices[0].Position[0] + face.Vertices[1].Position[0] + face.Vertices[2].Position[0]) * tetrahedronVolume / 4;
+                centerY += (face.Vertices[0].Position[1] + face.Vertices[1].Position[1] + face.Vertices[2].Position[1]) * tetrahedronVolume / 4;
+                centerZ += (face.Vertices[0].Position[2] + face.Vertices[1].Position[2] + face.Vertices[2].Position[2]) * tetrahedronVolume / 4;
+                // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
+            }
+            Center = new[] { centerX / Volume, centerY / Volume, centerZ / Volume };
+
+            // theoretically, we are done, but practically there appears to be cases in which the volume can be off by a bit. This is happening as a result
+            // of long tetrahedra. In order to combat this the volume is done again about the newly found center and averaged with the volume found above.
+            foreach (var face in Faces)
+            {
                 var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(Center))) / 3;
-                tempProductX += (face.Vertices[0].Position[0] + face.Vertices[1].Position[0] + face.Vertices[2].Position[0] + Center[0]) * tetrahedronVolume / 4;
-                tempProductY += (face.Vertices[0].Position[1] + face.Vertices[1].Position[1] + face.Vertices[2].Position[1] + Center[1]) * tetrahedronVolume / 4;
-                tempProductZ += (face.Vertices[0].Position[2] + face.Vertices[1].Position[2] + face.Vertices[2].Position[2] + Center[2]) * tetrahedronVolume / 4;
                 Volume += tetrahedronVolume;
             }
-            Center = new[] { tempProductX / Volume, tempProductY / Volume, tempProductZ / Volume };
+            Volume /= 2.0;
         }
 
 
@@ -683,35 +720,6 @@ namespace TVGL
             matrixCprime = (StarMath.multiply(translateMatrix, translateMatrix.transpose())).multiply(Volume).multiply(3).add(matrixCtotal);
             inertiaTensor = StarMath.makeIdentity(3).multiply(matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]).subtract(matrixCprime);
 
-        }
-
-        /// <summary>
-        ///     Defines the bounding box and center.
-        /// </summary>
-        private void DefineBoundingBoxAndCenter()
-        {
-            XMax = double.NegativeInfinity;
-            YMax = double.NegativeInfinity;
-            ZMax = double.NegativeInfinity;
-            XMin = double.PositiveInfinity;
-            YMin = double.PositiveInfinity;
-            ZMin = double.PositiveInfinity;
-            double xSum = 0;
-            double ySum = 0;
-            double zSum = 0;
-            foreach (var v in Vertices)
-            {
-                xSum += v.Position[0];
-                ySum += v.Position[1];
-                zSum += v.Position[2];
-                if (XMax < v.Position[0]) XMax = v.Position[0];
-                if (YMax < v.Position[1]) YMax = v.Position[1];
-                if (ZMax < v.Position[2]) ZMax = v.Position[2];
-                if (XMin > v.Position[0]) XMin = v.Position[0];
-                if (YMin > v.Position[1]) YMin = v.Position[1];
-                if (ZMin > v.Position[2]) ZMin = v.Position[2];
-            }
-            Center = new[] { xSum / NumberOfVertices, ySum / NumberOfVertices, zSum / NumberOfVertices };
         }
         #endregion      
 
