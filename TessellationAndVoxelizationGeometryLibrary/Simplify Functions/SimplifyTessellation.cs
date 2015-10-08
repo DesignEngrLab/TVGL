@@ -13,9 +13,11 @@
 // ***********************************************************************
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
+using TVGL.Boolean_Operations;
 
 namespace TVGL
 {
@@ -32,19 +34,21 @@ namespace TVGL
         /// <param name="percentageToReduceBy">The percentage to reduce by.</param>
         public static void SimplifyByPercentage(this TessellatedSolid ts, double percentageToReduceBy)
         {
-            SimplifyToNFaces(ts, (int)(1 - percentageToReduceBy) * ts.NumberOfFaces);
+            SimplifyToNFaces(ts, (int)((1 - percentageToReduceBy) * ts.NumberOfFaces));
         }
 
         private static void SimplifyToNFaces(this TessellatedSolid ts, int numberOfFaces)
         {
             var numberToRemove = ts.NumberOfFaces - numberOfFaces;
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
-            var removedEdges = new List<Edge>();
-            var removedVertices = new List<Vertex>();
-            var removedFaces = new List<PolygonalFace>();
-            for (int i = 0; i < numberToRemove; i += 2)
+            var removedEdges = new HashSet<Edge>();
+            var removedVertices = new HashSet<Vertex>();
+            var removedFaces = new HashSet<PolygonalFace>();
+            var i = 0;
+            while (numberToRemove > 0)
             {
-                var edge = sortedEdges[i];
+                var edge = sortedEdges[i++];
+                if (removedEdges.Contains(edge)) continue;
                 Edge removedEdge1, removedEdge2;
                 PolygonalFace removedFace1, removedFace2;
                 Vertex removedVertex;
@@ -53,7 +57,9 @@ namespace TVGL
                 removedEdges.Add(removedEdge1);
                 removedEdges.Add(removedEdge2);
                 removedFaces.Add(removedFace1);
+                numberToRemove--;
                 removedFaces.Add(removedFace2);
+                numberToRemove--;
                 removedVertices.Add(removedVertex);
             }
             ts.RemoveEdges(removedEdges);
@@ -77,10 +83,12 @@ namespace TVGL
             var removedEdges = new List<Edge>();
             var removedVertices = new List<Vertex>();
             var removedFaces = new List<PolygonalFace>();
-            while (sortedEdges[0].Length <= tolerance)
+            var edge = sortedEdges[0];
+            var i = 0;
+            do
             {
-                var edge = sortedEdges.First();
-                sortedEdges.RemoveAt(0);
+                i++;
+                if (removedEdges.Contains(edge)) continue;
                 Edge removedEdge1, removedEdge2;
                 PolygonalFace removedFace1, removedFace2;
                 Vertex removedVertex;
@@ -91,7 +99,9 @@ namespace TVGL
                 removedFaces.Add(removedFace1);
                 removedFaces.Add(removedFace2);
                 removedVertices.Add(removedVertex);
+                edge = sortedEdges[i];
             }
+            while (edge.Length <= tolerance);
             ts.RemoveEdges(removedEdges);
             ts.RemoveFaces(removedFaces);
             ts.RemoveVertices(removedVertices);
@@ -106,6 +116,7 @@ namespace TVGL
             var rEdge2 = removedEdge2 = edge.OtherFace.Edges.First(e => e != edge && (e.To == edge.From || e.From == edge.From));
             removedFace1 = edge.OwnedFace;
             removedFace2 = edge.OtherFace;
+            // move edges connected to removeVertex to the keepVertex and let keepVertex link back to these edges
             foreach (var e in removedVertex.Edges)
             {
                 if (e == edge || e == removedEdge1 || e == removedEdge2) continue;
@@ -113,26 +124,48 @@ namespace TVGL
                 else e.To = keepVertex;
                 keepVertex.Edges.Add(e);
             }
+            // move faces connected to removeVertex to the keepVertex and let keepVertexlink back to these edges.
             foreach (var face in removedVertex.Faces)
             {
                 if (face == removedFace1 || face == removedFace2) continue;
-                face.Vertices.Remove(removedVertex);
-                face.Vertices.Add(keepVertex);
+                face.Vertices[face.Vertices.IndexOf(removedVertex)] = keepVertex;
                 keepVertex.Faces.Add(face);
             }
-            //todo: more bookkeeping here, but not
-            var keepedge = removedFace1.Edges.First(e => e != rEdge1 && e != edge);
-            var toFace = (keepedge.OwnedFace == removedFace1) ? keepedge.OtherFace : keepedge.OwnedFace;
+            // for the winged edges (removedEdge1 and removedEdge2) that are removed, connected their faces to 
+            // the new edge
+            // first on the "owned side of edge"
+            var keepedge1 = removedFace1.Edges.First(e => e != rEdge1 && e != edge);
             var fromFace = (removedEdge1.OwnedFace == removedFace1) ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
             var index = fromFace.Edges.IndexOf(removedEdge1);
-            fromFace.Edges[index] = keepedge;
+            fromFace.Edges[index] = keepedge1;
+            if (keepedge1.OwnedFace == removedFace1) keepedge1.OwnedFace = fromFace;
+            else keepedge1.OtherFace = fromFace;
+            // second on the "other side of edge"
+            var keepedge2 = removedFace2.Edges.First(e => e != rEdge2 && e != edge);
+            fromFace = (removedEdge2.OwnedFace == removedFace2) ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
+            index = fromFace.Edges.IndexOf(removedEdge2);
+            fromFace.Edges[index] = keepedge2;
+            if (keepedge2.OwnedFace == removedFace1) keepedge2.OwnedFace = fromFace;
+            else keepedge2.OtherFace = fromFace;
 
+            AdjustPositionOfKeptVertexAverage(keepVertex, removedVertex);
+            // AdjustPositionOfKeptVertexFourPlane(keepVertex, new List<PolygonalFace> { keepedge1.OwnedFace, keepedge1.OtherFace, keepedge2.OwnedFace, keepedge2.OtherFace});
+            foreach (var e in keepVertex.Edges)
+                e.Update();
+            foreach (var f in keepVertex.Faces)
+                f.Update();
+        }
 
-            if (keepedge.OwnedFace == removedFace1)
+        private static void AdjustPositionOfKeptVertexFourPlane(Vertex keepVertex, List<PolygonalFace> closestFaces)
+        {
+            throw new NotImplementedException();
+        }
 
-
-                keepedge = removedFace2.Edges.First(e => e != rEdge2 && e != edge);
-
+        private static void AdjustPositionOfKeptVertexAverage(Vertex keepVertex, Vertex removedVertex)
+        {
+            //average positions
+            var newPosition = keepVertex.Position.add(removedVertex.Position);
+            keepVertex.Position = newPosition.divide(2);
         }
     }
 }

@@ -215,7 +215,7 @@ namespace TVGL
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
-            if (double.IsNaN(InternalAngle)) throw new Exception();
+           // if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
         public void Reverse()
@@ -268,19 +268,17 @@ namespace TVGL
             var ownedFaceNextIndex = (ownedFaceToIndex + 1 == _ownedFace.Vertices.Count) ? 0 : ownedFaceToIndex + 1;
             var nextOwnedFaceVertex = _ownedFace.Vertices[ownedFaceNextIndex];
             var nextEdgeVector = nextOwnedFaceVertex.Position.subtract(To.Position);
-        
+
             if (Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal) < 0)
             {
                 /* then switch owned face and opposite face since the predicted normal
                  * is in the wrong direction. When OwnedFace and OppositeFace were defined
                  * it was arbitrary anyway - so this is another by-product of this method - 
                  * correct the owned and opposite faces. */
-                var temp = _ownedFace;
-                _ownedFace = _otherFace;
-                _otherFace = temp;
+          Reverse();
             }
-                var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
-            if (dot > 1.0 || Math.Abs(dot - 1.0) < 0.00001) //Five decimal place accuracy seemed like the breaking point
+            var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
+            if (dot > 1.0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance)) //Five decimal place accuracy seemed like the breaking point
             {
                 InternalAngle = Math.PI;
                 Curvature = CurvatureType.SaddleOrFlat;
@@ -302,7 +300,7 @@ namespace TVGL
                 else
                 {
                     InternalAngle = double.NaN;
-                    Curvature=CurvatureType.Undefined;
+                    Curvature = CurvatureType.Undefined;
                     //throw new Exception();
                 }
             }

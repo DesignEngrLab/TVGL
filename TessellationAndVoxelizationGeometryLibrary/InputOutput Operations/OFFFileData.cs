@@ -82,9 +82,9 @@ namespace TVGL.IOFunctions
             double[] point;
             if (TryParseDoubleArray(ReadLine(reader), out point))
             {
-                offData.NumVertices = (int) Math.Round(point[0], 0);
-                offData.NumFaces = (int) Math.Round(point[1], 0);
-                offData.NumEdges = (int) Math.Round(point[2], 0);
+                offData.NumVertices = (int)Math.Round(point[0], 0);
+                offData.NumFaces = (int)Math.Round(point[1], 0);
+                offData.NumEdges = (int)Math.Round(point[2], 0);
             }
             else return false;
 
@@ -111,20 +111,20 @@ namespace TVGL.IOFunctions
                 double[] numbers;
                 if (!TryParseDoubleArray(line, out numbers)) return false;
 
-                var numVerts = (int) Math.Round(numbers[0], 0);
+                var numVerts = (int)Math.Round(numbers[0], 0);
                 var vertIndices = new List<int>();
                 for (var j = 0; j < numVerts; j++)
-                    vertIndices.Add((int) Math.Round(numbers[1 + j], 0));
+                    vertIndices.Add((int)Math.Round(numbers[1 + j], 0));
                 offData.FaceToVertexIndices.Add(vertIndices);
 
                 if (numbers.GetLength(0) == 1 + numVerts + 3)
                 {
-                    var r = (float) numbers[1 + numVerts];
-                    var g = (float) numbers[2 + numVerts];
-                    var b = (float) numbers[3 + numVerts];
+                    var r = (float)numbers[1 + numVerts];
+                    var g = (float)numbers[2 + numVerts];
+                    var b = (float)numbers[3 + numVerts];
                     var currentColor = new Color(1f, r, g, b);
                     offData.HasColorSpecified = true;
-                    if (!offData._lastColor.Equals(currentColor))
+                    if (offData._lastColor == null || !offData._lastColor.Equals(currentColor))
                         offData._lastColor = currentColor;
                 }
                 offData.Colors.Add(offData._lastColor);

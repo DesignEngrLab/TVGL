@@ -225,13 +225,13 @@ namespace TVGL
             var now = DateTime.Now;
             //Begin Construction 
             Name = name;
-            var faceToVertexIndices = new List<List<int>>();
+            List<List<int>> faceToVertexIndices;
             DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFace.SelectMany(v => v));
             MakeVertices(vertsPerFace, out faceToVertexIndices);
+            //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, normals);
             DefineFaceColors(colors);
-            //Complete Construction with Common Functions
-            this.CompleteInitiation();
+            CompleteInitiation();
 
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
@@ -252,13 +252,14 @@ namespace TVGL
             Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices);
             MakeVertices(vertices, ref faceToVertexIndices);
+            //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices);
             DefineFaceColors(colors);
-            //Complete Construction with Common Functions
             CompleteInitiation();
 
             Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
         }
+
 
         internal TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices)
         {
@@ -279,13 +280,13 @@ namespace TVGL
             CompleteInitiation();
         }
 
-        internal void CompleteInitiation()
+        private void CompleteInitiation()
         {
             //1
             CreateConvexHull();
             MakeEdges();
             //2
-            RepairFaces();
+            //RepairFaces();
             //3
             DefineCenterVolumeAndSurfaceArea();
             //DefineInertiaTensor();
@@ -293,7 +294,7 @@ namespace TVGL
             DefineFaceCurvature();
             DefineVertexCurvature();
             //3
-            CheckReferences();
+            CheckModelIntegrity();
         }
 
         #endregion
@@ -375,8 +376,8 @@ namespace TVGL
             var taskZMin = Task.Factory.StartNew(() => ZMin = vertices.Min(v => v[2]));
             var taskZMax = Task.Factory.StartNew(() => ZMax = vertices.Max(v => v[2]));
             Task.WaitAll(taskXMin, taskXMax, taskYMin, taskYMax, taskZMin, taskZMax);
-            var longestDimension = Math.Max(XMax - XMin, Math.Max(YMax - YMin, ZMax - ZMin));
-            sameTolerance = longestDimension * Constants.BaseTolerance;
+            var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
+            sameTolerance = shortestDimension * Constants.BaseTolerance;
         }
         /// <summary>
         /// Makes the faces, avoiding duplicates.
@@ -388,46 +389,39 @@ namespace TVGL
             NumberOfFaces = faceToVertexIndices.Count;
             var listOfFaces = new List<PolygonalFace>(NumberOfFaces);
             var faceChecksums = new HashSet<long>();
-            var duplicates = new List<int>();
+            //var duplicates = new List<int>();
             var numberOfDegenerate = 0;
             var checksumMultiplier = new long[Constants.MaxNumberEdgesPerFace];
             for (var i = 0; i < Constants.MaxNumberEdgesPerFace; i++)
-                checksumMultiplier[i] = (long)Math.Pow(VertexCheckSumMultiplier, i);
+                checksumMultiplier[i] = (long)Math.Pow(NumberOfVertices, i);
             for (var i = 0; i < NumberOfFaces; i++)
             {
                 double[] normal = null;
-                long checksum = 0;
                 var orderedIndices = new List<int>(faceToVertexIndices[i].Select(index => Vertices[index].IndexInList));
                 orderedIndices.Sort();
-                if (orderedIndices.Count != Constants.MaxNumberEdgesPerFace
+                long checksum = orderedIndices.Select((index, j) => index * checksumMultiplier[j]).Sum();
+                if (faceChecksums.Contains(checksum) || orderedIndices.Count < 3
                     || ContainsDuplicateIndices(orderedIndices))
                 {
-                    duplicates.Add(i);
+                    //duplicates.Add(i);
                     numberOfDegenerate++;
                     continue;
                 }
-                for (var j = 0; j < orderedIndices.Count; j++)
-                    checksum += orderedIndices[j] * checksumMultiplier[j];
-                if (faceChecksums.Contains(checksum)) continue;
-                //Get the normal, if it was given.
-                if (normals != null)
-                {
-                    normal = normals[i].normalize();
-                    if (normal.Any(double.IsNaN)) normal = new double[3];
-                }
                 //Get the actual vertices to create a new face. 
-                //Creating a face this way doubly links the vertices and face.
                 faceChecksums.Add(checksum);
                 var faceVertices = new List<Vertex>();
-
                 foreach (var vertexMatchingIndex in faceToVertexIndices[i])
                 {
                     faceVertices.Add(Vertices[vertexMatchingIndex]);
                 }
+                //Get the normal, if it was given.
+                if (normals != null) normal = normals[i];
                 listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices));
             }
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);
+            if (numberOfDegenerate > 0)
+                Debug.WriteLine("{0} number of degenerate or duplicate faces found in the the file.", numberOfDegenerate);
         }
 
         internal static bool ContainsDuplicateIndices(List<int> orderedIndices)
@@ -454,6 +448,7 @@ namespace TVGL
         {
             var partlyDefinedEdges = new Dictionary<int, Edge>();
             var alreadyDefinedEdges = new Dictionary<int, Edge>();
+            var overUsedEdges = new Dictionary<int, Tuple<Edge, List<PolygonalFace>>>();
             foreach (var face in faces)
             {
                 var lastIndex = face.Vertices.Count - 1;
@@ -466,44 +461,63 @@ namespace TVGL
                     var toIndex = toVertex.IndexInList;
                     if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
                     var checksum = (fromIndex < toIndex)
-                            ? fromIndex + (VertexCheckSumMultiplier * toIndex)
-                            : toIndex + (VertexCheckSumMultiplier * fromIndex);
+                            ? fromIndex + (NumberOfVertices * toIndex)
+                            : toIndex + (NumberOfVertices * fromIndex);
                     #endregion
-                    if (partlyDefinedEdges.ContainsKey(checksum))
+
+                    if (overUsedEdges.ContainsKey(checksum))
+                    {
+                        overUsedEdges[checksum].Item2.Add(face);
+                    }
+                    else if (alreadyDefinedEdges.ContainsKey(checksum))
+                    {
+                        var edge = alreadyDefinedEdges[checksum];
+                        var facesConnectedToEdge = new List<PolygonalFace> { edge.OwnedFace, edge.OtherFace, face };
+                        overUsedEdges.Add(checksum, new Tuple<Edge, List<PolygonalFace>>(edge, facesConnectedToEdge));
+                        alreadyDefinedEdges.Remove(checksum);
+                    }
+                    else if (partlyDefinedEdges.ContainsKey(checksum))
                     {
                         //Finish creating edge.
                         var edge = partlyDefinedEdges[checksum];
-                        edge.EdgeReference = checksum;
+                        if (face.Area.IsNegligible(sameTolerance))
+                            face.Normal = (double[])edge.OwnedFace.Normal.Clone();
+                        if (edge.OwnedFace.Area.IsNegligible(sameTolerance))
+                            edge.OwnedFace.Normal = (double[])face.Normal.Clone();
                         edge.OtherFace = face;
                         face.Edges.Add(edge);
                         alreadyDefinedEdges.Add(checksum, edge);
                         partlyDefinedEdges.Remove(checksum);
                     }
-                    else if (!alreadyDefinedEdges.ContainsKey(checksum)) //If this edge doesn't already exist.
+                    else // this edge doesn't already exist.
                     {
                         var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices, checksum);
                         partlyDefinedEdges.Add(checksum, edge);
                     }
-                    //Else, for an edge to come up more than twice, something must be wrong.
-                    //else throw new Exception("Edge has already been created.");
                 }
             }
-            var definedEdges = alreadyDefinedEdges.Values.ToList();
-            if (partlyDefinedEdges.Count > 2)
+            if (overUsedEdges.Count > 0)
+            //foreach (var overUsedEdgeTuple in overUsedEdges)
             {
-                //There is a chance, one or more faces is just missing. This can be repaired if the bad edges
-                //form a loop around the missing section, if the missing section if reletively flat.
-                RepairMissingFacesFromEdges(ref partlyDefinedEdges, ref definedEdges, doublyLinkToVertices);
+                //overUsedEdgeTuple.Value.Item1;
+                Debug.WriteLine("{0} overused edges found. This is the number of faces per: ", overUsedEdges.Count);
+                Debug.WriteLine(overUsedEdges.Values.Select(p => p.Item2.Count).MakePrintString());
             }
             if (partlyDefinedEdges.Count > 0)
             {
-                foreach (var badEdge in partlyDefinedEdges.Values)
+                //There is a chance, one or more faces is just missing. This can be repaired if the bad edges
+                //form a loop around the missing section, if the missing section if reletively flat.
+                RepairMissingFacesFromEdges(ref partlyDefinedEdges, ref alreadyDefinedEdges, doublyLinkToVertices);
+                if (partlyDefinedEdges.Count > 0)
                 {
-                    Debug.WriteLine("Edge found with only face. Edge Reference: " + badEdge.EdgeReference);
+                    foreach (var badEdge in partlyDefinedEdges.Values)
+                    {
+                        Debug.WriteLine("Edge found with only face. Edge Reference: " + badEdge.EdgeReference);
+                    }
+                    // throw new Exception();
                 }
-                throw new Exception();
             }
-            return definedEdges.ToArray();
+            return alreadyDefinedEdges.Values.ToArray();
         }
 
         /// <summary>
@@ -619,7 +633,6 @@ namespace TVGL
             Vertices = new Vertex[NumberOfVertices];
             for (var i = 0; i < NumberOfVertices; i++)
                 Vertices[i] = new Vertex(listOfVertices[i], i);
-            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(Vertices.Count())) + 1);
         }
         #endregion
 
@@ -772,7 +785,7 @@ namespace TVGL
                 PointTranslationType = PointTranslationType.TranslateInternal,
                 PlaneDistanceTolerance = 0.000001,
                 // the translation radius should be lower than PlaneDistanceTolerance / 2
-                PointTranslationGenerator = TriangulationComputationConfig.RandomShiftByRadius(0.0000001, 0)
+                PointTranslationGenerator = ConvexHullComputationConfig.RandomShiftByRadius(0.0000001, 0)
             };
             var convexHull = ConvexHull.Create(Vertices, config);
             //var convexHull = ConvexHull.Create<Vertex, DefaultConvexFace<Vertex>>(Vertices);
@@ -786,7 +799,7 @@ namespace TVGL
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[Constants.MaxNumberEdgesPerFace];
             for (var i = 0; i < Constants.MaxNumberEdgesPerFace; i++)
-                checkSumMultipliers[i] = (long)Math.Pow(VertexCheckSumMultiplier, i);
+                checkSumMultipliers[i] = (long)Math.Pow(NumberOfVertices, i);
             var alreadyCreatedFaces = new HashSet<long>();
             foreach (var cvxFace in convexHull.Faces)
             {
@@ -864,7 +877,7 @@ namespace TVGL
             UpdateAllFaceAndEdgeReferenceValues();
         }
 
-        internal void RemoveVertices(List<Vertex> removeVertices)
+        internal void RemoveVertices(IEnumerable<Vertex> removeVertices)
         {
             RemoveVertices(removeVertices.Select(Vertices.FindIndex).ToList());
         }
@@ -952,7 +965,7 @@ namespace TVGL
             Faces = newFaces;
         }
 
-        internal void RemoveFaces(List<PolygonalFace> removeFaces)
+        internal void RemoveFaces(IEnumerable<PolygonalFace> removeFaces)
         {
             RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList());
         }
@@ -1031,7 +1044,7 @@ namespace TVGL
             Edges = newEdges;
         }
 
-        internal void RemoveEdges(List<Edge> removeEdges)
+        internal void RemoveEdges(IEnumerable<Edge> removeEdges)
         {
             RemoveEdges(removeEdges.Select(Edges.FindIndex).ToList());
         }
@@ -1085,45 +1098,63 @@ namespace TVGL
         #endregion
 
         #region Check References
-        public void CheckReferences()
+        public void CheckModelIntegrity()
         {
+            Debug.WriteLine("=============Model Integrity Check=============");
             //Check if each face has cyclic references with each edge, vertex, and adjacent faces.
+            var edgeDoesNotLinkBackToFace = 0;
+            var faceHasTwoEdges = 0;
+            var faceHasOneEdge = 0;
+            var faceHasTwoVerts = 0;
+            var faceHasOneVert = 0;
+            var vertDoesNotLinkBackToFace = 0;
+            var faceAreaNegligble = 0;
             foreach (var face in Faces)
             {
-                foreach (var edge in face.Edges)
-                {
-                    if (edge.OwnedFace != face && edge.OtherFace != face) throw new Exception();
-                }
-                foreach (var vertex in face.Vertices)
-                {
-                    if (!vertex.Faces.Contains(face)) throw new Exception();
-                }
-                foreach (var adjacentFace in face.AdjacentFaces)
-                {
-                    if (!adjacentFace.AdjacentFaces.Contains(face)) throw new Exception();
-                    if (face.Normal.dotProduct(adjacentFace.Normal).IsPracticallySame(-1.0)) throw new Exception();
-                }
+                if (face.Edges.Count == 1) faceHasOneEdge++;
+                if (face.Edges.Count == 2) faceHasTwoEdges++;
+                if (face.Vertices.Count == 1) faceHasOneVert++;
+                if (face.Vertices.Count == 2) faceHasTwoVerts++;
+                if (face.Area.IsNegligible(sameTolerance)) faceAreaNegligble++;
+                edgeDoesNotLinkBackToFace += face.Edges.Count(edge => edge.OwnedFace != face && edge.OtherFace != face);
+                vertDoesNotLinkBackToFace += face.Vertices.Count(vertex => !vertex.Faces.Contains(face));
             }
             //Check if each edge has cyclic references with each vertex and each face.
+            var faceDoesNotLinkBackToEdge = 0;
+            var vertDoesNotLinkBackToEdge = 0;
+            var edgeBadAngle = 0;
             foreach (var edge in Edges)
             {
-                if (!edge.OwnedFace.Edges.Contains(edge)) throw new Exception();
-                if (!edge.OtherFace.Edges.Contains(edge)) throw new Exception();
-                if (!edge.To.Edges.Contains(edge)) throw new Exception();
-                if (!edge.From.Edges.Contains(edge)) throw new Exception();
+
+                if (!edge.OwnedFace.Edges.Contains(edge)) faceDoesNotLinkBackToEdge++;
+                if (!edge.OtherFace.Edges.Contains(edge)) faceDoesNotLinkBackToEdge++;
+                if (!edge.To.Edges.Contains(edge)) vertDoesNotLinkBackToEdge++;
+                if (!edge.From.Edges.Contains(edge)) vertDoesNotLinkBackToEdge++;
+                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle.IsNegligible(sameTolerance)
+                    || edge.InternalAngle > 2*Math.PI) edgeBadAngle++;
             }
             //Check if each vertex has cyclic references with each edge and each face.
+            var faceDoesNotLinkBackToVertex = 0;
+            var edgeDoesNotLinkBackToVertex = 0;
+
             foreach (var vertex in Vertices)
             {
-                foreach (var edge in vertex.Edges)
-                {
-                    if (edge.To != vertex && edge.From != vertex) throw new Exception();
-                }
-                foreach (var face in vertex.Faces)
-                {
-                    if (!face.Vertices.Contains(vertex)) throw new Exception();
-                }
+                edgeDoesNotLinkBackToVertex += vertex.Edges.Count(edge => edge.To != vertex && edge.From != vertex);
+                faceDoesNotLinkBackToVertex += vertex.Faces.Count(face => !face.Vertices.Contains(vertex));
             }
+            if (edgeDoesNotLinkBackToFace > 0) Debug.WriteLine("==> {0} edges do not link back to face.", edgeDoesNotLinkBackToFace);
+            if (vertDoesNotLinkBackToFace > 0) Debug.WriteLine("==> {0} vertices do not link back to face.", vertDoesNotLinkBackToFace);
+            if (faceAreaNegligble>0) Debug.WriteLine("==> {0} faces have negligible area.", faceAreaNegligble);
+            if (faceHasOneVert > 0) Debug.WriteLine("==> {0} faces only have one vertex.", faceHasOneVert);
+            if (faceHasTwoVerts > 0) Debug.WriteLine("==> {0} faces only have two vertices.", faceHasTwoVerts);
+            if (faceHasOneEdge > 0) Debug.WriteLine("==> {0} faces only have one edge.", faceHasOneEdge);
+            if (faceHasTwoEdges > 0) Debug.WriteLine("==> {0} faces only have two edges.", faceHasTwoEdges);
+            if (edgeBadAngle > 0) Debug.WriteLine("==> {0} edges have a bad angle (0,2pi or Nan).", edgeBadAngle);
+            if (faceDoesNotLinkBackToEdge > 0) Debug.WriteLine("==> {0} faces do not link back to edge.", faceDoesNotLinkBackToEdge);
+            if (vertDoesNotLinkBackToEdge > 0) Debug.WriteLine("==> {0} vertices do not link back to edge.", vertDoesNotLinkBackToEdge);
+            if (faceDoesNotLinkBackToVertex > 0) Debug.WriteLine("==> {0} faces do not link back to vertex.", faceDoesNotLinkBackToVertex);
+            if (edgeDoesNotLinkBackToVertex > 0) Debug.WriteLine("==> {0} vertices do not link back to vertex.", edgeDoesNotLinkBackToVertex);
+            Debug.WriteLine("==> complete.=============");
         }
         #endregion
 
@@ -1136,27 +1167,18 @@ namespace TVGL
         //OR, they will simply be merged. 
         public void RepairFaces()
         {
-            var negligible = 0.00000001;
-            var completed = true;
+            // var negligible = 0.00000001;
+            bool completed;
             var badFaceCount = 0;
             do
             {
                 completed = true;
-                var negligibleFace = Faces.FirstOrDefault(f => f.Area < negligible);
+                var negligibleFace = Faces.FirstOrDefault(f => f.Area.IsNegligible(sameTolerance));
                 if (negligibleFace != null)
                 {
-                    if (negligibleFace.Area > negligible) throw new Exception();
                     var splittingEdge = negligibleFace.Edges.OrderByDescending(item => item.Length).First();
                     completed = false;
                     badFaceCount++;
-                    if (badFaceCount > 95) badFaceCount = badFaceCount;
-
-                    //Select the largest edge to be the splittingEdge
-                    PolygonalFace splittingFace = null;
-                    if (negligibleFace.Edges.Count() != 3) throw new Exception();
-                    if (splittingEdge.OwnedFace == negligibleFace) splittingFace = splittingEdge.OtherFace;
-                    else if (splittingEdge.OtherFace == negligibleFace) splittingFace = splittingEdge.OwnedFace;
-                    else throw new Exception();
 
                     //Get the vertex opposite the splitting edge
                     var otherVertex = negligibleFace.OtherVertex(splittingEdge);
@@ -1289,7 +1311,7 @@ namespace TVGL
             else if (badFaceCount > 1) Debug.WriteLine(badFaceCount + " negligible area faces have been fixed.");
         }
 
-        public void RepairMissingFacesFromEdges(ref Dictionary<int, Edge> partlyDefinedEdges, ref List<Edge> definedEdges, bool doublyLinkToVertices)
+        private void RepairMissingFacesFromEdges(ref Dictionary<int, Edge> partlyDefinedEdges, ref Dictionary<int, Edge> alreadyDefinedEdges, bool doublyLinkToVertices)
         {
             var newFaces = new List<PolygonalFace>();
             var loops = new List<List<Vertex>>();
@@ -1362,13 +1384,6 @@ namespace TVGL
             if (newFaces.Count == 1) Debug.WriteLine("1 missing face was fixed");
             if (newFaces.Count > 1) Debug.WriteLine(newFaces.Count + " missing faces were fixed");
 
-            //Find which edges need to be added and add those
-            var edgeChecksums = new HashSet<int>();
-            foreach (var edge in definedEdges)
-            {
-                edgeChecksums.Add(edge.EdgeReference);
-            }
-            var alreadyDefinedEdges = new Dictionary<int, Edge>();
             foreach (var face in newFaces)
             {
 
@@ -1381,13 +1396,12 @@ namespace TVGL
                     var toIndex = toVertex.IndexInList;
                     if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
                     var checksum = (fromIndex < toIndex)
-                            ? fromIndex + (VertexCheckSumMultiplier * toIndex)
-                            : toIndex + (VertexCheckSumMultiplier * fromIndex);
+                            ? fromIndex + (NumberOfVertices * toIndex)
+                            : toIndex + (NumberOfVertices * fromIndex);
                     #endregion
-                    if (edgeChecksums.Contains(checksum)) continue;
-                    if (partlyDefinedEdges.ContainsKey(checksum))
+                    if (alreadyDefinedEdges.ContainsKey(checksum)) throw new Exception("Edge has already been created.");
+                    else if (partlyDefinedEdges.ContainsKey(checksum))
                     {
-                        if (alreadyDefinedEdges.ContainsKey(checksum)) throw new Exception("Edge has already been created.");
                         //Finish creating edge.
                         var edge = partlyDefinedEdges[checksum];
                         edge.EdgeReference = checksum;
@@ -1395,7 +1409,6 @@ namespace TVGL
                         face.Edges.Add(edge);
                         alreadyDefinedEdges.Add(checksum, edge);
                         partlyDefinedEdges.Remove(checksum);
-                        edgeChecksums.Add(checksum);
                     }
                     else
                     {
@@ -1404,9 +1417,6 @@ namespace TVGL
                     }
                 }
             }
-            var badEdges = partlyDefinedEdges.Values.ToList();
-            if (badEdges.Count > 0) throw new Exception("There should be no bad edges in this function, which is fixing bad edges");
-            definedEdges.AddRange(alreadyDefinedEdges.Values.ToList());
         }
         #endregion
     }
