@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using StarMathLib;
 
 namespace TVGL
@@ -215,7 +216,7 @@ namespace TVGL
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
-           // if (double.IsNaN(InternalAngle)) throw new Exception();
+            // if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
         public void Reverse()
@@ -275,36 +276,66 @@ namespace TVGL
                  * is in the wrong direction. When OwnedFace and OppositeFace were defined
                  * it was arbitrary anyway - so this is another by-product of this method - 
                  * correct the owned and opposite faces. */
-          Reverse();
+                Reverse();
             }
             var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
-            if (dot > 1.0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance)) //Five decimal place accuracy seemed like the breaking point
+            if (dot > 1.0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance))
             {
                 InternalAngle = Math.PI;
                 Curvature = CurvatureType.SaddleOrFlat;
             }
+            else if (dot < -1.0 || dot.IsPracticallySame(-1.0, Constants.BaseTolerance))
+            {
+                // is it a crack or a point?
+                // in order to find out we look to the other two faces connected to each
+                // face to find out
+                var ownedNeighborAvgNormals = new double[3];
+                var numNeighbors = 0;
+                foreach (var face in _ownedFace.AdjacentFaces)
+                {
+                    if (face != null && face != _otherFace)
+                    {
+                        ownedNeighborAvgNormals = ownedNeighborAvgNormals.add(face.Normal);
+                        numNeighbors++;
+                    }
+                }
+                ownedNeighborAvgNormals = ownedNeighborAvgNormals.divide(numNeighbors);
+                var otherNeighborAvgNormals = new double[3];
+                numNeighbors = 0;
+                foreach (var face in _otherFace.AdjacentFaces)
+                {
+                    if (face != null && face != _ownedFace)
+                    {
+                        otherNeighborAvgNormals = otherNeighborAvgNormals.add(face.Normal);
+                        numNeighbors++;
+                    }
+                }
+                otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
+                if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector) < 0)
+                {
+                    InternalAngle = 2*Math.PI;
+                    Curvature = CurvatureType.Concave;
+                }
+                else
+                {
+                    InternalAngle = 0.0;
+                    Curvature = CurvatureType.Convex;
+                }
+            }
             else
             {
-                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal);
-                var num = cross.dotProduct(Vector);
-                if (num < 0)
+                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal).dotProduct(Vector);
+                if (cross < 0)
                 {
                     InternalAngle = Math.PI + Math.Acos(dot);
                     Curvature = CurvatureType.Concave;
                 }
-                else if (num > 0)
+                else //(cross > 0)
                 {
                     InternalAngle = Math.PI - Math.Acos(dot);
                     Curvature = CurvatureType.Convex;
                 }
-                else
-                {
-                    InternalAngle = double.NaN;
-                    Curvature = CurvatureType.Undefined;
-                    //throw new Exception();
-                }
             }
-            //Debug.WriteLine("angle = " + (InternalAngle * (180 / Math.PI)).ToString() + "; " + SurfaceIs.ToString());
         }
         #endregion
     }

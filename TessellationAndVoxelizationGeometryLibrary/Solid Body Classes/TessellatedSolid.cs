@@ -507,15 +507,16 @@ namespace TVGL
             {
                 //There is a chance, one or more faces is just missing. This can be repaired if the bad edges
                 //form a loop around the missing section, if the missing section if reletively flat.
-                RepairMissingFacesFromEdges(ref partlyDefinedEdges, ref alreadyDefinedEdges, doublyLinkToVertices);
-                if (partlyDefinedEdges.Count > 0)
-                {
-                    foreach (var badEdge in partlyDefinedEdges.Values)
-                    {
-                        Debug.WriteLine("Edge found with only face. Edge Reference: " + badEdge.EdgeReference);
-                    }
-                    // throw new Exception();
-                }
+                Debug.WriteLine("{0} single-sided edges found.");
+                //RepairMissingFacesFromEdges(ref partlyDefinedEdges, ref alreadyDefinedEdges, doublyLinkToVertices);
+                //if (partlyDefinedEdges.Count > 0)
+                //{
+                //    foreach (var badEdge in partlyDefinedEdges.Values)
+                //    {
+                //        Debug.WriteLine("Edge found with only face. Edge Reference: " + badEdge.EdgeReference);
+                //    }
+                //    // throw new Exception();
+                //}
             }
             return alreadyDefinedEdges.Values.ToArray();
         }
@@ -1130,8 +1131,7 @@ namespace TVGL
                 if (!edge.OtherFace.Edges.Contains(edge)) faceDoesNotLinkBackToEdge++;
                 if (!edge.To.Edges.Contains(edge)) vertDoesNotLinkBackToEdge++;
                 if (!edge.From.Edges.Contains(edge)) vertDoesNotLinkBackToEdge++;
-                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle.IsNegligible(sameTolerance)
-                    || edge.InternalAngle > 2*Math.PI) edgeBadAngle++;
+                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle<0|| edge.InternalAngle > 2*Math.PI) edgeBadAngle++;
             }
             //Check if each vertex has cyclic references with each edge and each face.
             var faceDoesNotLinkBackToVertex = 0;
