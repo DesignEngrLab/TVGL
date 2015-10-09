@@ -256,7 +256,7 @@ namespace TVGL.Boolean_Operations
             /// <summary>
             /// Original edge checksum reference
             /// </summary>
-            public int EdgeReference;
+            public long EdgeReference;
 
             public Vertex OnSideVertex;
 

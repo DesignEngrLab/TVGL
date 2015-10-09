@@ -24,7 +24,7 @@ namespace TVGL
     /// <summary>
     /// The Slice class includes static functions for cutting a tessellated solid.
     /// </summary>
-    public static class Simplify
+    public static class SimplifyTessellation
     {
         /// <summary>
         /// Simplifies by the percentage provided. For example, is ts has 100 triangles, then passing 
@@ -39,6 +39,9 @@ namespace TVGL
 
         private static void SimplifyToNFaces(this TessellatedSolid ts, int numberOfFaces)
         {
+            if (ts.Errors != null)
+                Debug.WriteLine("The model should be free of errors before running this routine. (Run TessellatedSolid.Repair()).");
+
             var numberToRemove = ts.NumberOfFaces - numberOfFaces;
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
             var removedEdges = new HashSet<Edge>();
@@ -67,7 +70,7 @@ namespace TVGL
             ts.RemoveVertices(removedVertices);
         }
 
-        public static void SimplifyBasic(this TessellatedSolid ts)
+        public static void Simplify(this TessellatedSolid ts)
         {
             SimplifyByTolerance(ts, ts.sameTolerance * 10);
         }

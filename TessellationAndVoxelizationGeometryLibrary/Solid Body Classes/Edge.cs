@@ -21,12 +21,11 @@ namespace TVGL
         /// <param name="doublyLinkedVertices"></param>
         /// <param name="edgeReference"></param>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            bool doublyLinkedVertices = true, int edgeReference = 0)
+            bool doublyLinkedVertices = true, long edgeReference = 0)
         {
             From = fromVertex;
             To = toVertex;
-            if (edgeReference == 0) SetEdgeReference();
-            else EdgeReference = edgeReference;
+            EdgeReference = edgeReference;
             _ownedFace = ownedFace;
             _otherFace = otherFace;
             if (ownedFace != null) ownedFace.Edges.Add(this);
@@ -55,11 +54,10 @@ namespace TVGL
         /// <param name="fromVertex">From vertex.</param>
         /// <param name="toVertex">To vertex.</param>
         /// <param name="doublyLinkedVertices"></param>
-        public Edge(Vertex fromVertex, Vertex toVertex, bool doublyLinkedVertices, int edgeReference = 0)
+        public Edge(Vertex fromVertex, Vertex toVertex, bool doublyLinkedVertices)
         {
             From = fromVertex;
             To = toVertex;
-            if (edgeReference == 0) SetEdgeReference();
             if (doublyLinkedVertices)
             {
                 fromVertex.Edges.Add(this);
@@ -138,7 +136,7 @@ namespace TVGL
         /// <value>
         ///     To.
         /// </value>
-        public int EdgeReference { get; set; }
+        internal long EdgeReference { get; set; }
 
         /// <summary>
         ///     Gets the owned face (the face in which the from-to direction makes sense
@@ -226,21 +224,6 @@ namespace TVGL
             To = temp;
             Vector = Vector.multiply(-1);
         }
-
-        public void SetEdgeReference()
-        {
-            var checkSumMultiplier = TessellatedSolid.VertexCheckSumMultiplier;
-            var fromIndex = From.IndexInList;
-            var toIndex = To.IndexInList;
-            if (fromIndex == -1 || toIndex == -1) EdgeReference = -1;
-            else
-            {
-                if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
-                EdgeReference = (fromIndex < toIndex)
-                        ? fromIndex + (checkSumMultiplier * toIndex)
-                        : toIndex + (checkSumMultiplier * fromIndex);
-            }
-        }
         /// <summary>
         ///     Defines the edge angle.
         /// </summary>
@@ -265,10 +248,11 @@ namespace TVGL
                 Curvature = CurvatureType.Undefined;
                 return;
             }
-            var ownedFaceToIndex = _ownedFace.Vertices.IndexOf(To);
-            var ownedFaceNextIndex = (ownedFaceToIndex + 1 == _ownedFace.Vertices.Count) ? 0 : ownedFaceToIndex + 1;
-            var nextOwnedFaceVertex = _ownedFace.Vertices[ownedFaceNextIndex];
-            var nextEdgeVector = nextOwnedFaceVertex.Position.subtract(To.Position);
+            // is this edge truly owned by the ownedFace? if not reverse
+            var faceToIndex = _ownedFace.Vertices.IndexOf(To);
+            var faceNextIndex = (faceToIndex + 1 == _ownedFace.Vertices.Count) ? 0 : faceToIndex + 1;
+            var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
+            var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
 
             if (Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal) < 0)
             {
@@ -278,6 +262,19 @@ namespace TVGL
                  * correct the owned and opposite faces. */
                 Reverse();
             }
+            // it would be messed up if both faces thought they owned this edge. If this is the 
+            // case, return the edge has no angle.
+            faceToIndex = _otherFace.Vertices.IndexOf(To);
+            faceNextIndex = (faceToIndex + 1 == _otherFace.Vertices.Count) ? 0 : faceToIndex + 1;
+            nextFaceVertex = _otherFace.Vertices[faceNextIndex];
+            nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
+            if (Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal) > 0)
+            // both faces appear to own the edge...must be something wrong
+            {
+                InternalAngle = double.NaN;
+                Curvature = CurvatureType.Undefined;
+                return;
+            }
             var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
             if (dot > 1.0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance))
             {
@@ -286,7 +283,7 @@ namespace TVGL
             }
             else if (dot < -1.0 || dot.IsPracticallySame(-1.0, Constants.BaseTolerance))
             {
-                // is it a crack or a point?
+                // is it a crack or a sharp edge?
                 // in order to find out we look to the other two faces connected to each
                 // face to find out
                 var ownedNeighborAvgNormals = new double[3];
@@ -313,7 +310,7 @@ namespace TVGL
                 otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
                 if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector) < 0)
                 {
-                    InternalAngle = 2*Math.PI;
+                    InternalAngle = 2 * Math.PI;
                     Curvature = CurvatureType.Concave;
                 }
                 else

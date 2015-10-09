@@ -77,7 +77,8 @@
     <Compile Include="Enclosure Operations\ConvexHull2D.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure.cs" />
     <Compile Include="Miscellaneous Functions\SortedList.cs" />
-    <Compile Include="Simplify Functions\SimplifyTessellation.cs" />
+    <Compile Include="Simplify and Repair\SimplifyTessellation.cs" />
+    <Compile Include="Simplify and Repair\TessellationError.cs" />
     <Compile Include="Solid Body Classes\Edge.cs" />
     <Compile Include="Solid Body Classes\PolygonalFace.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
@@ -88,9 +89,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Service References\" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MIConvexHull, Version=1.0.10.1021, Culture=neutral, processorArchitecture=MSIL">

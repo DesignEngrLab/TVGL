@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -27,6 +28,8 @@ namespace TVGL.Boolean_Operations
             out List<TessellatedSolid> positiveSideSolids,
             out List<TessellatedSolid> negativeSideSolids)
         {
+            if (ts.Errors != null)
+                Debug.WriteLine("The model should be free of errors before running this routine. (Run TessellatedSolid.Repair()).");
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
             List<PolygonalFace> positiveSideFaces;
@@ -216,7 +219,7 @@ namespace TVGL.Boolean_Operations
             /// <summary>
             /// Original edge checksum reference
             /// </summary>
-            public int EdgeReference;
+            public long EdgeReference;
 
             internal StraddleEdge(Edge edge, Flat plane)
             {

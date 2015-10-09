@@ -110,7 +110,7 @@ namespace TVGL
 
             n = normals.Count;
             if (n == 0) // this would happen if the face collapse to a line.
-                return normal;
+                return normal.normalize();
             // before we just average these normals, let's check that they agree.
             // the dotProductsOfNormals simply takes the dot product of adjacent
             // normals. If they're all close to one, then we can average and return.
@@ -125,7 +125,7 @@ namespace TVGL
                 // it's okay to overwrite the guess. If it didn't work above, no reason it
                 // should make sense now. 
                 normal = normals.Aggregate((current, c) => current.add(c));
-                return normal.divide(normals.Count);
+                return normal.normalize();
             }
             // now, the rare case in which the polygon face is not convex...
             if (normal != null)
@@ -144,9 +144,9 @@ namespace TVGL
                 if (likeFirstNormal) numLikeFirstNormal++;
             }
             // if the majority are like the first one, then use that one (which may have been the guess).
-            if (2 * numLikeFirstNormal >= normals.Count) return normals[0];
+            if (2 * numLikeFirstNormal >= normals.Count) return normals[0].normalize();
             // otherwise, go with the opposite.
-            return normals[0].multiply(-1);
+            return normals[0].normalize().multiply(-1);
         }
 
         /// <summary>

@@ -226,7 +226,7 @@ namespace TVGL.Boolean_Operations
             /// <summary>
             /// Original edge checksum reference
             /// </summary>
-            public int EdgeReference;
+            public long EdgeReference;
 
             internal StraddleEdge(Edge edge, Flat plane)
             {

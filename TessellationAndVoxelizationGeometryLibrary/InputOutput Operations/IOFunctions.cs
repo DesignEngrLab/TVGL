@@ -76,11 +76,6 @@ namespace TVGL.IOFunctions
                 Debug.WriteLine("number of vertices = " + tessellatedSolid.NumberOfVertices);
                 Debug.WriteLine("number of edges = " + tessellatedSolid.NumberOfEdges);
                 Debug.WriteLine("number of faces = " + tessellatedSolid.NumberOfFaces);
-                Debug.WriteLine("Euler operator (should be a small +/- value) = " +
-                                (tessellatedSolid.NumberOfVertices - tessellatedSolid.NumberOfEdges +
-                                 tessellatedSolid.NumberOfFaces));
-                Debug.WriteLine("Edges / Faces (should be 1.5) = " +
-                                (tessellatedSolid.NumberOfEdges / (double)tessellatedSolid.NumberOfFaces));
             }
             
             return tessellatedSolids;
