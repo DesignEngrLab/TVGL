@@ -211,6 +211,31 @@ namespace TVGL
         #endregion
 
         #region Intersection Method (between lines, planes, solids, etc.)
+
+        /// <summary>
+        /// Find the point common to three planes.
+        /// </summary>
+        /// <param name="n1">The n1.</param>
+        /// <param name="d1">The d1.</param>
+        /// <param name="n2">The n2.</param>
+        /// <param name="d2">The d2.</param>
+        /// <param name="n3">The n3.</param>
+        /// <param name="d3">The d3.</param>
+        /// <returns>System.Double[].</returns>
+        public static double[] PointCommonToThreePlanes(double[] n1, double d1, double[] n2, double d2, double[] n3,
+            double d3)
+        {
+            var matrixOfNormals = new[,] {{n1[0], n1[1], n1[2]}, {n2[0], n2[1], n2[2]}, {n3[0], n3[1], n3[2]}};
+            var distances = new[] {d1, d2, d3};
+            try
+            {
+                return StarMath.solve(matrixOfNormals, distances);
+            }
+            catch
+            {
+                return new[] {double.NaN, double.NaN, double.NaN};
+            }
+        }
         internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, out double[] directionOfLine, out double[] PointOnLine)
         {
             directionOfLine = n1.crossProduct(n2).normalize();

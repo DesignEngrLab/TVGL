@@ -197,6 +197,7 @@ namespace TVGL
         ///     <c>true</c> if [is part of the convex hull]; otherwise, <c>false</c>.
         /// </value>
         public bool PartofConvexHull { get; internal set; }
+        public int IndexInList { get; internal set; }
 
         /// <summary>
         /// Updates the edge vector and length, if a vertex has been moved.

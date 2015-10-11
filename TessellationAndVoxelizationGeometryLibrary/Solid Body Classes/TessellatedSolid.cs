@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using MIConvexHull;
@@ -419,6 +420,8 @@ namespace TVGL
             }
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);
+            for (int i = 0; i < NumberOfFaces; i++)
+                Faces[i].IndexInList = i;
         }
 
         internal static bool ContainsDuplicateIndices(List<int> orderedIndices)
@@ -438,6 +441,8 @@ namespace TVGL
             NumberOfEdges = 3 * NumberOfFaces / 2;
             var localEdges = MakeEdges(localFaces, true);
             NumberOfEdges = localEdges.GetLength(0);
+            for (int i = 0; i < NumberOfEdges; i++)
+                localEdges[i].IndexInList = i;
             return localEdges;
         }
 
@@ -485,6 +490,7 @@ namespace TVGL
             if (overUsedEdges.Count > 0) TessellationError.StoreOverusedEdges(this, overUsedEdges.Values);
             if (partlyDefinedEdges.Count > 0) TessellationError.StoreSingleSidedEdges(this, partlyDefinedEdges.Values);
             return alreadyDefinedEdges.Values.ToArray();
+            
         }
         /// <summary>
         /// Makes the vertices.
@@ -942,7 +948,10 @@ namespace TVGL
             for (int i = 0; i < removeFaceIndex; i++)
                 newFaces[i] = Faces[i];
             for (int i = removeFaceIndex; i < NumberOfFaces; i++)
+            {
                 newFaces[i] = Faces[i + 1];
+                newFaces[i].IndexInList = i;
+            }
             Faces = newFaces;
         }
 
@@ -967,6 +976,7 @@ namespace TVGL
                 while (offset < numToRemove && (i + offset) == removeIndices[offset])
                     offset++;
                 newFaces[i] = Faces[i + offset];
+                newFaces[i].IndexInList = i;
             }
             Faces = newFaces;
         }
@@ -1021,7 +1031,10 @@ namespace TVGL
             for (int i = 0; i < removeEdgeIndex; i++)
                 newEdges[i] = Edges[i];
             for (int i = removeEdgeIndex; i < NumberOfEdges; i++)
+            {
                 newEdges[i] = Edges[i + 1];
+                newEdges[i].IndexInList = i;
+            }
             Edges = newEdges;
         }
 
@@ -1046,6 +1059,7 @@ namespace TVGL
                 while (offset < numToRemove && (i + offset) == removeIndices[offset])
                     offset++;
                 newEdges[i] = Edges[i + offset];
+                newEdges[i].IndexInList = i;
             }
             Edges = newEdges;
         }

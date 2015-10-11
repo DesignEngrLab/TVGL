@@ -14,33 +14,33 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {
-        "../../../TestFiles/TXT - C2 boitier batterie-1.STL",
-        "../../../TestFiles/Mc Cormik-D326 - Rear Light-1.STL",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        "../../../TestFiles/TXT - G5 support de carrosserie-2.STL",
-        "../../../TestFiles/Beam_Boss.STL",
-        "../../../TestFiles/Tetrahedron.STL",
-        "../../../TestFiles/off_axis_box.STL",
-        "../../../TestFiles/Wedge.STL",
-        "../../../TestFiles/amf_Cube.amf",
-        "../../../TestFiles/Mic_Holder_SW.stl",
-        "../../../TestFiles/Mic_Holder_JR.stl",
-        "../../../TestFiles/3_bananas.amf",
-        "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-        "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-        "../../../TestFiles/Rook.amf",
+        //"../../../TestFiles/TXT - C2 boitier batterie-1.STL",
+        //"../../../TestFiles/Mc Cormik-D326 - Rear Light-1.STL",
+       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-2.STL",
+        //"../../../TestFiles/Beam_Boss.STL",
+        //"../../../TestFiles/Tetrahedron.STL",
+        //"../../../TestFiles/off_axis_box.STL",
+        //"../../../TestFiles/Wedge.STL",
+        //"../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/Mic_Holder_SW.stl",
+        //"../../../TestFiles/Mic_Holder_JR.stl",
+        //"../../../TestFiles/3_bananas.amf",
+        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+        //"../../../TestFiles/Rook.amf",
        // "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
        // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
-        "../../../TestFiles/ABF.STL",
-        "../../../TestFiles/Pump-1repair.STL",
-        "../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/Beam_Clean.STL",
-        "../../../TestFiles/piston.stl",
-        "../../../TestFiles/Z682.stl",
-        "../../../TestFiles/sth2.stl",
-        "../../../TestFiles/pump.stl",
-        "../../../TestFiles/bradley.stl",
-        "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
+       // "../../../TestFiles/ABF.STL",
+        //"../../../TestFiles/Pump-1repair.STL",
+        //"../../../TestFiles/Pump-1.STL",
+        //"../../../TestFiles/Beam_Clean.STL",
+        //"../../../TestFiles/piston.stl",
+        //"../../../TestFiles/Z682.stl",
+        //"../../../TestFiles/sth2.stl",
+        //"../../../TestFiles/pump.stl",
+        //"../../../TestFiles/bradley.stl",
+        //"../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
         "../../../TestFiles/new/5.STL",
         "../../../TestFiles/new/2.stl", //Note that this is an assembly 
         "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
@@ -72,8 +72,8 @@ namespace TVGL_Test
 
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
-              //  TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-               // TestSimplify(ts[0]);
+                TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
+                TestSimplify(ts[0]);
                 //TestSlice(ts[0]);
                 // TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
@@ -87,7 +87,10 @@ namespace TVGL_Test
 
         private static void TestSimplify(TessellatedSolid ts)
         {
-            ts.SimplifyByPercentage(.25);
+            ts.SimplifyByPercentage(.5);
+            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             TVGL_Helix_Presenter.HelixPresenter.Show(ts);
         }
 

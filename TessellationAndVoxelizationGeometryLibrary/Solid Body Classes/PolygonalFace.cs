@@ -217,13 +217,7 @@ namespace TVGL
         ///   <c>true</c> if [it is part of the convex hull]; otherwise, <c>false</c>.
         /// </value>
         public bool PartofConvexHull { get; internal set; }
-
-        /// <summary>
-        /// Gets or sets the reference index, which is made from the vertex.IndexValue's 
-        /// in a sorted list (not CCW). This value is unique for each face.
-        /// </summary>
-        public long FaceReference { get; internal set; }
-
+        
         /// <summary>
         /// Gets the adjacent faces.
         /// </summary>
@@ -242,6 +236,8 @@ namespace TVGL
                 return adjacentFaces;
             }
         }
+
+        public int IndexInList { get; internal set; }
 
         #endregion
         /// <summary>
@@ -266,7 +262,6 @@ namespace TVGL
         {
             return new PolygonalFace
             {
-                FaceReference = FaceReference,
                 Area = Area,
                 Center = (double[])Center.Clone(),
                 Curvature = Curvature,
