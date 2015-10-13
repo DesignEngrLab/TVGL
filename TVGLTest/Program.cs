@@ -16,7 +16,7 @@ namespace TVGL_Test
         private static string[] filenames = {
         //"../../../TestFiles/TXT - C2 boitier batterie-1.STL",
         //"../../../TestFiles/Mc Cormik-D326 - Rear Light-1.STL",
-       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
         //"../../../TestFiles/TXT - G5 support de carrosserie-2.STL",
         //"../../../TestFiles/Beam_Boss.STL",
         //"../../../TestFiles/Tetrahedron.STL",

@@ -60,7 +60,9 @@ namespace TVGL
                     v.Faces.Add(this);
             }
             Area = DetermineArea();
-            Normal = DetermineNormal(normal);
+            bool reverseVertexOrder;
+            Normal = DetermineNormal(out reverseVertexOrder,  normal);
+            if (reverseVertexOrder)  Vertices.Reverse();
             var centerX = Vertices.Average(v => v.X);
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
@@ -76,11 +78,12 @@ namespace TVGL
             var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
             return Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
         }
-        private double[] DetermineNormal(double[] normal = null) //Assuming CCW order of vertices
+        private double[] DetermineNormal(out bool reverseVertexOrder, double[] normal = null) //Assuming CCW order of vertices
         {
+            reverseVertexOrder = false;
             var n = Vertices.Count;
-            if (normal == null || normal.Contains(double.NaN) || normal.norm1() < 0.1) normal = new[] { 0.0, 0.0, 0.0 };
-            else normal.normalizeInPlace();
+            if (normal != null && normal.Contains(double.NaN)) normal = null;
+            else if (normal != null) normal.normalizeInPlace();
             var edgeVectors = new double[n][];
             var normals = new List<double[]>();
             edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
@@ -97,8 +100,12 @@ namespace TVGL
                         // value.
                         if (normal != null)
                         {
-                            if (normal.IsPracticallySame(tempCross, Constants.SameFaceNormalDotTolerance)) return normal;
-                            else if (normal.multiply(-1).IsPracticallySame(tempCross, Constants.SameFaceNormalDotTolerance)) return normal.multiply(-1);
+                            if (tempCross.IsPracticallySame(normal, Constants.SameFaceNormalDotTolerance)) return normal;
+                            if (tempCross.multiply(-1).IsPracticallySame(normal, Constants.SameFaceNormalDotTolerance))
+                            {
+                                reverseVertexOrder = true;
+                                return normal.multiply(-1);
+                            }
                         }
 
                     }
@@ -120,6 +127,67 @@ namespace TVGL
             // if all are close to one (or at least positive), then the face is a convex polygon. Now,
             // we can simply average and return the answer.
             IsConvex = (dotProductsOfNormals.All(x => x > 0));
+            if (IsConvex)
+            {
+                // it's okay to overwrite the guess. If it didn't work above, no reason it
+                // should make sense now. 
+                normal = normals.Aggregate((current, c) => current.add(c));
+                return normal.normalize();
+            }
+            // now, the rare case in which the polygon face is not convex...
+            if (normal != null)
+            {
+                // well, here the guess may be useful. We'll insert it into the list of dotProducts
+                // and then do a tally
+                dotProductsOfNormals[0] = normal.dotProduct(normals[0]);
+                dotProductsOfNormals.Insert(0, normal.dotProduct(normals[n - 1]));
+            }
+            var likeFirstNormal = true;
+            var numLikeFirstNormal = 1;
+            foreach (var d in dotProductsOfNormals)
+            {   // this tricky little function keeps track of how many are in the same direction
+                // as the first one.
+                if (d < 0) likeFirstNormal = !likeFirstNormal;
+                if (likeFirstNormal) numLikeFirstNormal++;
+            }
+            // if the majority are like the first one, then use that one (which may have been the guess).
+            if (2 * numLikeFirstNormal >= normals.Count) return normals[0].normalize();
+            // otherwise, go with the opposite (so long as there isn't an original guess)
+            if (normal==null) return normals[0].normalize().multiply(-1);
+            //finally, assume the original guess is right, and reverse the order
+            reverseVertexOrder = true;
+            return normals[0].normalize();
+
+        }
+        private double[] DetermineNormal() //Assuming CCW order of vertices
+        {
+            var n = Vertices.Count;
+            var edgeVectors = new double[n][];
+            var normals = new List<double[]>();
+            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
+            for (var i = 1; i < n; i++)
+            {
+                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
+                var tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
+                if (!tempCross.Any(double.IsNaN))
+                    normals.Add(tempCross);
+            }
+            var lastCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
+            if (!lastCross.Any(double.IsNaN)) normals.Add(lastCross);
+
+            n = normals.Count;
+            if (n == 0) // this would happen if the face collapse to a line.
+                return new[] { 0.0, 0.0, 0.0 };
+            // before we just average these normals, let's check that they agree.
+            // the dotProductsOfNormals simply takes the dot product of adjacent
+            // normals. If they're all close to one, then we can average and return.
+            var dotProductsOfNormals = new List<double>();
+            dotProductsOfNormals.Add(normals[0].dotProduct(normals[n - 1]));
+            for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].dotProduct(normals[i - 1]));
+            // if all are close to one (or at least positive), then the face is a convex polygon. Now,
+            // we can simply average and return the answer.
+            IsConvex = (dotProductsOfNormals.All(x => x > 0));
+            var normal = new[] { 0.0, 0.0, 0.0 };
             if (IsConvex)
             {
                 // it's okay to overwrite the guess. If it didn't work above, no reason it
@@ -217,7 +285,7 @@ namespace TVGL
         ///   <c>true</c> if [it is part of the convex hull]; otherwise, <c>false</c>.
         /// </value>
         public bool PartofConvexHull { get; internal set; }
-        
+
         /// <summary>
         /// Gets the adjacent faces.
         /// </summary>

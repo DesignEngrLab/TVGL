@@ -28,11 +28,16 @@ namespace TVGL
         public double EdgeFaceRatio { get; private set; } = Double.NaN;
 
         #region Check Model Integrity
-        public static void CheckModelIntegrity(TessellatedSolid ts)
+        /// <summary>
+        /// Checks the model integrity.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="RepairAutomatically">The repair automatically.</param>
+        public static void CheckModelIntegrity(TessellatedSolid ts, bool RepairAutomatically = false)
         {
             Debug.WriteLine("Model Integrity Check...");
             var edgeFaceRatio = ts.NumberOfEdges / (double)ts.NumberOfFaces;
-            if (!edgeFaceRatio.IsPracticallySame(1.5)) storeEdgeFaceRatio(ts,edgeFaceRatio);
+            if (!edgeFaceRatio.IsPracticallySame(1.5)) storeEdgeFaceRatio(ts, edgeFaceRatio);
             //Check if each face has cyclic references with each edge, vertex, and adjacent faces.
             foreach (var face in ts.Faces)
             {
@@ -68,8 +73,23 @@ namespace TVGL
                     if (!face.Vertices.Contains(vertex)) storeFaceDoesNotLinkBackToVertex(ts, vertex, face);
             }
             if (ts.Errors == null)
+            {
                 Debug.WriteLine("** Model contains no errors.");
-            else ts.Errors.Report();
+                return;
+            }
+            if (RepairAutomatically)
+            {
+                Debug.WriteLine("Some error found. Attempting to Repair...");
+                var success = ts.Errors.Repair(ts);
+                if (success)
+                {
+                    ts.Errors = null;
+                    Debug.WriteLine("Repair successfully fixed the model.");
+                    return;
+                }
+                Debug.WriteLine("Repair did not successfully fix all the problems.");
+            }
+            ts.Errors.Report();
         }
 
         public void Report()
@@ -113,7 +133,7 @@ namespace TVGL
             if (FacesThatDoNotLinkBackToVertex != null)
                 Debug.WriteLine("==> {0} faces that do not link back to vertices that link to them.",
                     EdgesThatDoNotLinkBackToFace.Count);
-        }
+           }
 
 
         #endregion
@@ -418,7 +438,7 @@ namespace TVGL
             }
             if (index > 0)
             {
-                Debug.WriteLine("{0} negligible area faces remain unfixable.");
+                Debug.WriteLine("{0} negligible area faces remain unfixable.", index);
                 return false;
             }
             return true;

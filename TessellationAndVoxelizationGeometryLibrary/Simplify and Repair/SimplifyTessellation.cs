@@ -192,7 +192,7 @@ namespace TVGL
 
 
             //AdjustPositionOfKeptVertexAverage(keepVertex, removedVertex);
-            AdjustPositionOfKeptVertex(keepVertex, removedVertex, new List<PolygonalFace> { keepEdge1.OwnedFace, keepEdge1.OtherFace, keepEdge2.OwnedFace, keepEdge2.OtherFace });
+            AdjustPositionOfKeptVertex(keepVertex, removedVertex);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)
@@ -202,42 +202,30 @@ namespace TVGL
             removedEdge2Out = removedEdge2;
             return true;
         }
+        private static void AdjustPositionOfKeptVertex(Vertex keepVertex, Vertex removedVertex)
+        {
+            //average positions
+            var newPosition = keepVertex.Position.add(removedVertex.Position);
+            keepVertex.Position = newPosition.divide(2);
+        }
 
-        private static void AdjustPositionOfKeptVertex(Vertex keepVertex, Vertex removedVertex, List<PolygonalFace> closestFaces)
+        private static void AdjustPositionOfKeptVertexExperimental(Vertex keepVertex, Vertex removedVertex, PolygonalFace removeFace1, PolygonalFace removeFace2)
         {
             //average positions
             var newPosition = keepVertex.Position.add(removedVertex.Position);
             var radius = keepVertex.Position.subtract(removedVertex.Position).norm2() / 2.0;
             keepVertex.Position = newPosition.divide(2);
-            return;
-            var distances = closestFaces.Select(f => f.Normal.dotProduct(f.OtherEdge(keepVertex).To.Position)).ToList();
-            var points = new double[4][];
-            points[0] = MiscFunctions.PointCommonToThreePlanes(closestFaces[1].Normal, distances[1],
-               closestFaces[2].Normal, distances[2], closestFaces[3].Normal, distances[3]);
-            points[1] = MiscFunctions.PointCommonToThreePlanes(closestFaces[0].Normal, distances[0],
-                closestFaces[2].Normal, distances[2], closestFaces[3].Normal, distances[3]);
-            points[2] = MiscFunctions.PointCommonToThreePlanes(closestFaces[0].Normal, distances[0],
-                closestFaces[1].Normal, distances[1], closestFaces[3].Normal, distances[3]);
-            points[3] = MiscFunctions.PointCommonToThreePlanes(closestFaces[0].Normal, distances[0],
-                closestFaces[1].Normal, distances[1], closestFaces[2].Normal, distances[2]);
-            var pointSum = new double[3];
-            var numValid = 0;
-            for (int i = 0; i < 4; i++)
-            {
-                if (points[i].Contains(double.NaN)) continue;
-                pointSum = pointSum.add(points[i]);
-                numValid++;
-            }
-            if (numValid == 0) return;
-            var targetPoint = pointSum.divide(numValid);
-            if (targetPoint.subtract(keepVertex.Position).norm2() <= radius)
-                keepVertex.Position = targetPoint;
-            else
-                keepVertex.Position = keepVertex.Position.add(targetPoint.subtract(keepVertex.Position).normalize().multiply(radius));
+            var avgNormal = removeFace1.Normal.add(removeFace2.Normal).normalize();
+            var otherVertexAvgDistanceToEdgePlane =
+                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.dotProduct(avgNormal)).Sum()/
+                ((double) (keepVertex.Edges.Count - 1));
+            var distanceOfEdgePlane = keepVertex.Position.dotProduct(avgNormal);
+
+            // use a sigmoid function to determine how far out to move the vertex
+            var x = 0.05*(distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane)/radius;
+            var length = 2*radius*x/Math.Sqrt(1 + x*x) - radius;
+            keepVertex.Position = keepVertex.Position.add(avgNormal.multiply(length));
         }
 
-        private static void AdjustPositionOfKeptVertexAverage(Vertex keepVertex, Vertex removedVertex)
-        {
-        }
     }
 }
