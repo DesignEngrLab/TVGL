@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using amf;
 
@@ -54,17 +55,17 @@ namespace TVGL.IOFunctions
             switch (extension)
             {
                 case "stl":
-                    tessellatedSolids = OpenSTL(s, inParallel); // Standard Tessellation or StereoLithography
+                    tessellatedSolids = STLFileData.Open(s, inParallel); // Standard Tessellation or StereoLithography
                     break;
                 //case "3ds": return IO.Open3DS(s);   //3D Studio
                 //case "lwo": return IO.OpenLWO(s);  //Lightwave
                 //case "obj": return IO.OpenOBJ(s); //Wavefront
                 //case "objx": return IO.OpenOBJX(s);  //Wavefront
                 case "amf":
-                    tessellatedSolids = OpenAMF(s, inParallel);
+                    tessellatedSolids = AMFFileData.Open(s, inParallel);
                     break;
                 case "off":
-                    tessellatedSolids = OpenOFF(s, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    tessellatedSolids = OFFFileData.Open(s, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
                 default:
                     throw new Exception(
@@ -77,115 +78,8 @@ namespace TVGL.IOFunctions
                 Debug.WriteLine("number of edges = " + tessellatedSolid.NumberOfEdges);
                 Debug.WriteLine("number of faces = " + tessellatedSolid.NumberOfFaces);
             }
-            
+
             return tessellatedSolids;
-        }
-
-        /// <summary>
-        ///     Opens the STL.
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="inParallel">The in parallel.</param>
-        /// <returns>TessellatedSolid.</returns>
-        private static List<TessellatedSolid> OpenSTL(Stream s, bool inParallel = true)
-        {
-            var now = DateTime.Now;
-            List<STLFileData> stlData;
-            // Try to read in BINARY format
-            if (STLFileData.TryReadBinary(s, out stlData))
-                Debug.WriteLine("Successfully read in binary STL file (" + (DateTime.Now - now) + ").");
-            else
-            {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                if (STLFileData.TryReadAscii(s, out stlData))
-                    Debug.WriteLine("Successfully read in ASCII STL file (" + (DateTime.Now - now) + ").");
-                else
-                {
-                    Debug.WriteLine("Unable to read in STL file (" + (DateTime.Now - now) + ").");
-                    return null;
-                }
-            }
-            var results = new List<TessellatedSolid>();
-            foreach (var stlFileData in stlData)
-                results.Add(new TessellatedSolid(stlFileData.Name, stlFileData.Normals, stlFileData.Vertices,
-                     (stlFileData.HasColorSpecified ? stlFileData.Colors : null)));
-            return results;
-        }
-
-
-        private static List<TessellatedSolid> OpenOFF(Stream s, bool inParallel = true)
-        {
-            var now = DateTime.Now;
-            OFFFileData offData;
-            // Try to read in BINARY format
-            if (OFFFileData.TryReadBinary(s, out offData))
-                Debug.WriteLine("Successfully read in binary OFF file (" + (DateTime.Now - now) + ").");
-            else
-            {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                if (OFFFileData.TryReadAscii(s, out offData))
-                    Debug.WriteLine("Successfully read in ASCII OFF file (" + (DateTime.Now - now) + ").");
-                else
-                {
-                    Debug.WriteLine("Unable to read in OFF file (" + (DateTime.Now - now) + ").");
-                    return null;
-                }
-            }
-            return new List<TessellatedSolid>
-            {
-                new TessellatedSolid(offData.Name, offData.Vertices, offData.FaceToVertexIndices,
-                    (offData.HasColorSpecified ? offData.Colors : null))
-            };
-        }
-
-        private static List<TessellatedSolid> OpenAMF(Stream s, bool inParallel = true)
-        {
-            var now = DateTime.Now;
-            AMFFileData amfData;
-            // Try to read in BINARY format
-            if (AMFFileData.TryUnzippedXMLRead(s, out amfData))
-                Debug.WriteLine("Successfully read in AMF file (" + (DateTime.Now - now) + ").");
-            else
-            {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                //if (amf.TryZippedXMLRead(s, out amfData))
-                //    Debug.WriteLine("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").");
-                //else
-                //{
-                //    Debug.WriteLine("Unable to read in AMF file (" + (DateTime.Now - now) + ").");
-                //    return null;
-                //}
-            }
-            var results = new List<TessellatedSolid>();
-            foreach (var amfObject in amfData.Objects)
-            {
-                List<Color> colors = null;
-                if (amfObject.mesh.volume.color != null)
-                {
-                    colors = new List<Color>();
-                    var solidColor = new Color(amfObject.mesh.volume.color);
-                    foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add((amfTriangle.color != null) ? new Color(amfTriangle.color) : solidColor);
-                }
-                else if (amfObject.mesh.volume.Triangles.Any(t => t.color != null))
-                {
-                    colors = new List<Color>();
-                    var solidColor = new Color(Constants.DefaultColor);
-                    foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add((amfTriangle.color != null) ? new Color(amfTriangle.color) : solidColor);
-                }
-                results.Add(new TessellatedSolid(amfData.Name,
-                    amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
-                    amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                    colors));
-            }
-            return results;
         }
 
         /// <summary>
@@ -262,11 +156,11 @@ namespace TVGL.IOFunctions
                 doubles = null;
                 return false;
             }
-            doubles = new double[match.Groups.Count-1];
+            doubles = new double[match.Groups.Count - 1];
             for (var i = 0; i < doubles.GetLength(0); i++)
             {
                 if (!double.TryParse(match.Groups[i + 1].Value, out doubles[i]))
-              return false;
+                    return false;
             }
             return true;
         }
@@ -315,62 +209,20 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="fileType">Type of the file.</param>
-        public static void Save(Stream stream, FileType fileType)
+        public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType)
         {
-            /*
-                 if (fileType == FileType.Text)
-                 {
-                     using (StreamWriter writer = new StreamWriter(stream, Encoding.ASCII))
-                     {
-                         //Write the header.
-                         writer.WriteLine(this.ToString());
-
-                         //Write each facet.
-                         foreach (var o in Facets)
-                             o.Write(writer);
-
-                         //Write the footer.
-                         writer.Write("end " + this.ToString());
-                     }
-                 }
-                 else
-                 {
-
-                     using (BinaryWriter writer = new BinaryWriter(stream, Encoding.ASCII, true))
-                     {
-                         byte[] header = Encoding.ASCII.GetBytes("Binary STL generated by STLdotNET. QuantumConceptsCorp.com");
-                         byte[] headerFull = new byte[80];
-
-                         Buffer.BlockCopy(header, 0, headerFull, 0, Math.Min(header.Length, headerFull.Length));
-
-                         //Write the header and facet count.
-                         writer.Write(headerFull);
-                         writer.Write((UInt32)this.Facets.Count);
-
-                         //Write each facet.
-                         foreach (var o in Facets)
-                             o.Write(writer);
-                     }
-                 }
-             * */
+            switch (fileType)
+            {
+                case FileType.STL_ASCII: return STLFileData.SaveASCII(stream, solids);
+                case FileType.STL_Binary: return STLFileData.SaveBinary(stream, solids);
+                case FileType.AMF: return AMFFileData.Save(stream, solids);
+                case FileType.ThreeMF: return ThreeMFFileData.Save(stream, solids);
+                case FileType.OFF: return OFFFileData.Save(stream, solids);
+                case FileType.PLY: return PLYFileData.Save(stream, solids);
+                default: return false;
+            }
         }
 
-
-        /// <summary>
-        ///     Saves the specified path.
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <param name="fileType">Type of the file.</param>
-        public static void Save(string path, FileType fileType)
-        {
-            //if (string.IsNullOrWhiteSpace(path))
-            //    throw new ArgumentNullException("path");
-
-            //Directory.CreateDirectory(Path.GetDirectoryName(path));
-
-            //using (Stream stream = File.Create(path))
-            //    Save(stream, fileType);
-        }
 
 
         /// <summary>

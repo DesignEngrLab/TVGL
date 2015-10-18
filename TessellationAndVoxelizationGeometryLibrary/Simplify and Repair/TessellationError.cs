@@ -11,8 +11,8 @@ namespace TVGL
     {
         public List<Tuple<Edge, List<PolygonalFace>>> OverusedEdges { get; private set; }
         public List<Edge> SingledSidedEdges { get; private set; }
-        public List<List<int>> DegenerateFaces { get; private set; }
-        public List<List<int>> DuplicateFaces { get; private set; }
+        public List<int[]> DegenerateFaces { get; private set; }
+        public List<int[]> DuplicateFaces { get; private set; }
         public List<PolygonalFace> FacesWithOneVertex { get; private set; }
         public List<PolygonalFace> FacesWithOneEdge { get; private set; }
         public List<PolygonalFace> FacesWithTwoVertices { get; private set; }
@@ -98,7 +98,7 @@ namespace TVGL
             Debug.WriteLine("======================");
 
             if (!double.IsNaN(EdgeFaceRatio))
-                Debug.WriteLine("Edges / Faces = {0}, but it should be 1.5." + EdgeFaceRatio);
+                Debug.WriteLine("Edges / Faces = {0}, but it should be 1.5.", EdgeFaceRatio);
             if (OverusedEdges != null)
             {
                 Debug.WriteLine("==> {0} overused edges.", OverusedEdges.Count);
@@ -120,20 +120,20 @@ namespace TVGL
                     EdgesThatDoNotLinkBackToFace.Count);
             if (EdgesThatDoNotLinkBackToVertex != null)
                 Debug.WriteLine("==> {0} edges that do not link back to vertices that link to them.",
-                    EdgesThatDoNotLinkBackToFace.Count);
+                    EdgesThatDoNotLinkBackToVertex.Count);
             if (VertsThatDoNotLinkBackToFace != null)
                 Debug.WriteLine("==> {0} vertices that do not link back to faces that link to them.",
-                    EdgesThatDoNotLinkBackToFace.Count);
+                    VertsThatDoNotLinkBackToFace.Count);
             if (VertsThatDoNotLinkBackToEdge != null)
                 Debug.WriteLine("==> {0} vertices that do not link back to edges that link to them.",
-                    EdgesThatDoNotLinkBackToFace.Count);
+                    VertsThatDoNotLinkBackToEdge.Count);
             if (FacesThatDoNotLinkBackToEdge != null)
                 Debug.WriteLine("==> {0} faces that do not link back to edges that link to them.",
-                    EdgesThatDoNotLinkBackToFace.Count);
+                    FacesThatDoNotLinkBackToEdge.Count);
             if (FacesThatDoNotLinkBackToVertex != null)
                 Debug.WriteLine("==> {0} faces that do not link back to vertices that link to them.",
-                    EdgesThatDoNotLinkBackToFace.Count);
-           }
+                    FacesThatDoNotLinkBackToVertex.Count);
+        }
 
 
         #endregion
@@ -254,17 +254,17 @@ namespace TVGL
         }
 
 
-        internal static void StoreDegenerateFace(TessellatedSolid ts, List<int> faceVertexIndices)
+        internal static void StoreDegenerateFace(TessellatedSolid ts, int[] faceVertexIndices)
         {
             if (ts.Errors == null) ts.Errors = new TessellationError();
-            if (ts.Errors.DegenerateFaces == null) ts.Errors.DegenerateFaces = new List<List<int>> { faceVertexIndices };
+            if (ts.Errors.DegenerateFaces == null) ts.Errors.DegenerateFaces = new List<int[]> { faceVertexIndices };
             else ts.Errors.DegenerateFaces.Add(faceVertexIndices);
         }
 
-        internal static void StoreDuplicateFace(TessellatedSolid ts, List<int> faceVertexIndices)
+        internal static void StoreDuplicateFace(TessellatedSolid ts, int[] faceVertexIndices)
         {
             if (ts.Errors == null) ts.Errors = new TessellationError();
-            if (ts.Errors.DuplicateFaces == null) ts.Errors.DuplicateFaces = new List<List<int>> { faceVertexIndices };
+            if (ts.Errors.DuplicateFaces == null) ts.Errors.DuplicateFaces = new List<int[]> { faceVertexIndices };
             else ts.Errors.DuplicateFaces.Add(faceVertexIndices);
         }
         #endregion

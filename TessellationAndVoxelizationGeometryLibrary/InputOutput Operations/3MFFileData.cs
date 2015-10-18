@@ -13,26 +13,26 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using amf;
+using ClassesFor_3mf_Files;
 
 namespace TVGL.IOFunctions
 {
     /// <summary>
-    ///     Class AMFFileData.
+    ///     Class ThreeMFFileData.
     /// </summary>
-    [XmlRoot("amf")]
-     #if help
-    internal class AMFFileData : IO
-#else                   
-    public class AMFFileData : IO
+    [XmlRoot("threeMF")]
+#if help
+    internal class ThreeMFFileData : IO
+#else
+    public class ThreeMFFileData : IO
 #endif
     {
         /// <summary>
-        ///     Initializes a new instance of the <see cref="AMFFileData" /> class.
+        ///     Initializes a new instance of the <see cref="ThreeMFFileData" /> class.
         /// </summary>
-        public AMFFileData()
+        public ThreeMFFileData()
         {
-            Objects = new List<AMF_Object>();
+            Objects = new List<CT_Object>();
         }
 
         /// <summary>
@@ -40,20 +40,7 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The objects.</value>
         [XmlElement("object")]
-        public List<AMF_Object> Objects { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the textures.
-        /// </summary>
-        /// <value>The textures.</value>
-        [XmlElement("texture")]
-        internal List<AMF_Texture> Textures { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the unit.
-        /// </summary>
-        /// <value>The unit.</value>
-        public AMF_Unit unit { get; set; }
+        public List<CT_Object> Objects { get; set; }
 
         /// <summary>
         ///     Gets or sets a value indicating whether [unit specified].
@@ -92,45 +79,30 @@ namespace TVGL.IOFunctions
         internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
         {
             var now = DateTime.Now;
-            AMFFileData amfData;
+            ThreeMFFileData threeMFData;
             // Try to read in BINARY format
-            if (AMFFileData.TryUnzippedXMLRead(s, out amfData))
-                Debug.WriteLine("Successfully read in AMF file (" + (DateTime.Now - now) + ").");
+            if (ThreeMFFileData.TryUnzippedXMLRead(s, out threeMFData))
+                Debug.WriteLine("Successfully read in ThreeMF file (" + (DateTime.Now - now) + ").");
             else
             {
                 // Reset position of stream
                 s.Position = 0;
                 // Read in ASCII format
-                //if (amf.TryZippedXMLRead(s, out amfData))
+                //if (threeMF.TryZippedXMLRead(s, out threeMFData))
                 //    Debug.WriteLine("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").");
                 //else
                 //{
-                //    Debug.WriteLine("Unable to read in AMF file (" + (DateTime.Now - now) + ").");
+                //    Debug.WriteLine("Unable to read in ThreeMF file (" + (DateTime.Now - now) + ").");
                 //    return null;
                 //}
             }
             var results = new List<TessellatedSolid>();
-            foreach (var amfObject in amfData.Objects)
+            foreach (var threeMFObject in threeMFData.Objects)
             {
-                List<Color> colors = null;
-                if (amfObject.mesh.volume.color != null)
-                {
-                    colors = new List<Color>();
-                    var solidColor = new Color(amfObject.mesh.volume.color);
-                    foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add((amfTriangle.color != null) ? new Color(amfTriangle.color) : solidColor);
-                }
-                else if (amfObject.mesh.volume.Triangles.Any(t => t.color != null))
-                {
-                    colors = new List<Color>();
-                    var solidColor = new Color(Constants.DefaultColor);
-                    foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add((amfTriangle.color != null) ? new Color(amfTriangle.color) : solidColor);
-                }
-                results.Add(new TessellatedSolid(amfData.Name,
-                    amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
-                    amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                    colors));
+                results.Add(new TessellatedSolid(threeMFData.Name,
+                    threeMFObject.mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList(),
+                    threeMFObject.mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(),
+                    null));
             }
             return results;
         }
@@ -139,21 +111,21 @@ namespace TVGL.IOFunctions
         ///     Tries the unzipped XML read.
         /// </summary>
         /// <param name="stream">The stream.</param>
-        /// <param name="amfFileData">The amf file data.</param>
+        /// <param name="threeMFFileData">The threeMF file data.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool TryUnzippedXMLRead(Stream stream, out AMFFileData amfFileData)
+        internal static bool TryUnzippedXMLRead(Stream stream, out ThreeMFFileData threeMFFileData)
         {
-            amfFileData = null;
+            threeMFFileData = null;
             try
             {
                 var streamReader = new StreamReader(stream);
-                var amfDeserializer = new XmlSerializer(typeof (AMFFileData));
-                amfFileData = (AMFFileData) amfDeserializer.Deserialize(streamReader);
-                amfFileData.Name = getNameFromStream(stream);
+                var threeMFDeserializer = new XmlSerializer(typeof(ThreeMFFileData));
+                threeMFFileData = (ThreeMFFileData)threeMFDeserializer.Deserialize(streamReader);
+                threeMFFileData.Name = getNameFromStream(stream);
             }
             catch (Exception exception)
             {
-                Debug.WriteLine("Unable to read AMF file:" + exception);
+                Debug.WriteLine("Unable to read ThreeMF file:" + exception);
                 return false;
             }
             return true;
@@ -163,10 +135,10 @@ namespace TVGL.IOFunctions
         ///     Tries the zipped XML read.
         /// </summary>
         /// <param name="stream">The stream.</param>
-        /// <param name="amfFileData">The amf file data.</param>
+        /// <param name="threeMFFileData">The threeMF file data.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="System.NotImplementedException"></exception>
-        internal static bool TryZippedXMLRead(Stream stream, out AMFFileData amfFileData)
+        internal static bool TryZippedXMLRead(Stream stream, out ThreeMFFileData threeMFFileData)
         {
             throw new NotImplementedException();
         }

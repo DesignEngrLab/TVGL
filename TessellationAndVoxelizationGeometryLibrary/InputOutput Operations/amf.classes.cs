@@ -117,9 +117,9 @@ namespace amf
         ///     Gets the vertex indices.
         /// </summary>
         /// <value>The vertex indices.</value>
-        public List<int> VertexIndices
+        public int[] VertexIndices
         {
-            get { return new List<int> {v1, v2, v3}; }
+            get { return new [] {v1, v2, v3}; }
         }
     }
 

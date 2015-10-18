@@ -139,14 +139,12 @@ namespace TVGL
     /// </summary>
     public enum FileType
     {
-        /// <summary>
-        ///     The file is text.
-        /// </summary>
-        Text,
-        /// <summary>
-        /// The file is binary.
-        /// </summary>
-        Binary
+        STL_ASCII,
+        STL_Binary,
+        ThreeMF,
+        AMF,
+        OFF,
+        PLY
     }
 
     /// <summary>

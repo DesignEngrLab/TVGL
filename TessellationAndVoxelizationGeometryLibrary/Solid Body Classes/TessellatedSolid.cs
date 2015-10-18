@@ -221,13 +221,13 @@ namespace TVGL
         /// <param name="normals">The normals.</param>
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="colors">The colors.</param>
-        public TessellatedSolid(string name, List<double[]> normals, List<List<double[]>> vertsPerFace,
-            List<Color> colors)
+        public TessellatedSolid(string name, IList<double[]> normals, IList<List<double[]>> vertsPerFace,
+            IList<Color> colors)
         {
             var now = DateTime.Now;
             //Begin Construction 
             Name = name;
-            List<List<int>> faceToVertexIndices;
+            List<int[]> faceToVertexIndices;
             DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFace.SelectMany(v => v));
             MakeVertices(vertsPerFace, out faceToVertexIndices);
             //Complete Construction with Common Functions
@@ -246,8 +246,8 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="colors">The colors.</param>
-        public TessellatedSolid(string name, List<double[]> vertices, List<List<int>> faceToVertexIndices,
-            List<Color> colors)
+        public TessellatedSolid(string name, IList<double[]> vertices, IList<int[]> faceToVertexIndices,
+            IList<Color> colors)
         {
             var now = DateTime.Now;
             //Begin Construction 
@@ -322,16 +322,9 @@ namespace TVGL
                     }
                 }
             }
-            var faces = new List<List<int>>();
+            var faces = new List<int[]>();
             for (var i = 0; i < polyFaces.Count(); i++)
-            {
-                var face = new List<int>();
-                foreach (var vertex in polyFaces[i].Vertices)
-                {
-                    face.Add(vertex.IndexInList);
-                }
-                faces.Add(face);
-            }
+                faces.Add(polyFaces[i].Vertices.Select(vertex => vertex.IndexInList).ToArray());
             return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor });
         }
 
@@ -348,16 +341,10 @@ namespace TVGL
                 listDoubles.Add(Vertices[i].Position);
                 //listDoubles.Add((double[])Vertices[i].Position.Clone());
             }
-            var faces = new List<List<int>>();
+            var faces = new List<int[]>();
             for (var i = 0; i < Faces.Count(); i++)
-            {
-                var face = new List<int>();
-                foreach (var vertex in Faces[i].Vertices)
-                {
-                    face.Add(vertex.IndexInList);
-                }
-                faces.Add(face);
-            }
+                faces.Add(Faces[i].Vertices.Select(vertex => vertex.IndexInList).ToArray());
+
             return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor });
         }
         #endregion
@@ -385,7 +372,7 @@ namespace TVGL
         /// Makes the faces, avoiding duplicates.
         /// </summary>
         /// <param name="normals">The normals.</param>
-        private void MakeFaces(List<List<int>> faceToVertexIndices,
+        private void MakeFaces(IList<int[]> faceToVertexIndices,
             IList<double[]> normals = null, bool doublyLinkToVertices = true)
         {
             NumberOfFaces = faceToVertexIndices.Count;
@@ -459,7 +446,7 @@ namespace TVGL
                     var fromVertex = face.Vertices[j];
                     var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
                     long checksum = SetEdgeChecksum(fromVertex, toVertex, NumberOfVertices);
-               
+
                     if (overUsedEdges.ContainsKey(checksum))
                         overUsedEdges[checksum].Item2.Add(face);
                     else if (alreadyDefinedEdges.ContainsKey(checksum))
@@ -490,7 +477,7 @@ namespace TVGL
             if (overUsedEdges.Count > 0) TessellationError.StoreOverusedEdges(this, overUsedEdges.Values);
             if (partlyDefinedEdges.Count > 0) TessellationError.StoreSingleSidedEdges(this, partlyDefinedEdges.Values);
             return alreadyDefinedEdges.Values.ToArray();
-            
+
         }
         /// <summary>
         /// Makes the vertices.
@@ -498,7 +485,7 @@ namespace TVGL
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="indicesToRemove">The indices to remove.</param>
-        private void MakeVertices(ICollection<List<double[]>> vertsPerFace, out List<List<int>> faceToVertexIndices)
+        private void MakeVertices(ICollection<List<double[]>> vertsPerFace, out List<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints) == 0.0) numDecimalPoints++;
@@ -507,7 +494,7 @@ namespace TVGL
              * it  preserves the order of vertsPerFace (as read in from the file), and indicates where
              * you can find each vertex in the new array of vertices. This is essentially what is built in 
              * the remainder of this method. */
-            faceToVertexIndices = new List<List<int>>();
+            faceToVertexIndices = new List<int[]>();
             var listOfVertices = new List<double[]>();
             var simpleCompareDict = new Dictionary<string, int>();
             var stringformat = "F" + numDecimalPoints;
@@ -539,7 +526,7 @@ namespace TVGL
                         locationIndices.Add(newIndex);
                     }
                 }
-                faceToVertexIndices.Add(locationIndices);
+                faceToVertexIndices.Add(locationIndices.ToArray());
             }
             //Make vertices from the double arrays
             MakeVertices(listOfVertices);
@@ -551,7 +538,7 @@ namespace TVGL
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="indicesToRemove">The indices to remove.</param>
-        private void MakeVertices(IList<double[]> vertices, ref List<List<int>> faceToVertexIndices)
+        private void MakeVertices(IList<double[]> vertices, ref IList<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints) == 0.0) numDecimalPoints++;
@@ -562,7 +549,7 @@ namespace TVGL
             //in order to reduce compare times we use a string comparer and dictionary
             foreach (var faceToVertexIndex in faceToVertexIndices)
             {
-                for (var i = 0; i < faceToVertexIndex.Count; i++)
+                for (var i = 0; i < faceToVertexIndex.Length; i++)
                 {
                     //Get vertex from un-updated list of vertices
                     var vertex = vertices[faceToVertexIndex[i]];
@@ -612,7 +599,7 @@ namespace TVGL
         /// <summary>
         ///     Defines the face centers.
         /// </summary>
-        private void DefineFaceColors(List<Color> colors = null)
+        private void DefineFaceColors(IList<Color> colors = null)
         {
             HasUniformColor = true;
             if (colors == null) SolidColor = new Color(Constants.DefaultColor);
@@ -897,7 +884,7 @@ namespace TVGL
         }
         internal long SetEdgeChecksum(Edge edge, int checkSumMultiplier)
         {
-            var checksum= SetEdgeChecksum(edge.From, edge.To, checkSumMultiplier);
+            var checksum = SetEdgeChecksum(edge.From, edge.To, checkSumMultiplier);
             edge.EdgeReference = checksum;
             return checksum;
         }

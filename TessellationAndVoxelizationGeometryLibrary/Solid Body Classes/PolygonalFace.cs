@@ -104,7 +104,7 @@ namespace TVGL
                             if (tempCross.multiply(-1).IsPracticallySame(normal, Constants.SameFaceNormalDotTolerance))
                             {
                                 reverseVertexOrder = true;
-                                return normal.multiply(-1);
+                                return normal;
                             }
                         }
 

@@ -207,17 +207,17 @@ namespace ClassesFor_3mf_Files
         /// Gets or sets the v1.
         /// </summary>
         /// <value>The v1.</value>
-        public string v1 { get; set; }
+        public int v1 { get; set; }
         /// <summary>
         /// Gets or sets the v2.
         /// </summary>
         /// <value>The v2.</value>
-        public string v2 { get; set; }
+        public int v2 { get; set; }
         /// <summary>
         /// Gets or sets the v3.
         /// </summary>
         /// <value>The v3.</value>
-        public string v3 { get; set; }
+        public int v3 { get; set; }
         /// <summary>
         /// Gets or sets the p1.
         /// </summary>
@@ -359,6 +359,8 @@ namespace ClassesFor_3mf_Files
         /// </summary>
         /// <value>The name.</value>
         public string name { get; set; }
+
+        public CT_Mesh mesh { get; set; }
     }
 
     /// <summary>
