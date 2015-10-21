@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using TVGL;
+using MIConvexHull;
 
 namespace TVGL_Helix_Presenter
 {

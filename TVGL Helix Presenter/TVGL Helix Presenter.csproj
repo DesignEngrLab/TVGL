@@ -61,6 +61,9 @@
       <HintPath>..\packages\HelixToolkit.Wpf.2015.1.629\lib\net45\HelixToolkit.Wpf.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="MIConvexHull">
+      <HintPath>..\TessellationAndVoxelizationGeometryLibrary\bin\Debug\MIConvexHull.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
