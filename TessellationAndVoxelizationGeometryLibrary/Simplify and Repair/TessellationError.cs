@@ -13,6 +13,7 @@ namespace TVGL
         public List<Edge> SingledSidedEdges { get; private set; }
         public List<int[]> DegenerateFaces { get; private set; }
         public List<int[]> DuplicateFaces { get; private set; }
+        public List<PolygonalFace> NonTriangularFaces { get; private set; }
         public List<PolygonalFace> FacesWithOneVertex { get; private set; }
         public List<PolygonalFace> FacesWithOneEdge { get; private set; }
         public List<PolygonalFace> FacesWithTwoVertices { get; private set; }
@@ -25,7 +26,7 @@ namespace TVGL
         public List<Tuple<Edge, PolygonalFace>> FacesThatDoNotLinkBackToEdge { get; private set; }
         public List<Tuple<Vertex, PolygonalFace>> FacesThatDoNotLinkBackToVertex { get; private set; }
         public List<Edge> EdgesWithBadAngle { get; private set; }
-        public double EdgeFaceRatio { get; private set; } = Double.NaN;
+        public double EdgeFaceRatio { get; private set; } = double.NaN;
 
         #region Check Model Integrity
         /// <summary>
@@ -33,11 +34,12 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="RepairAutomatically">The repair automatically.</param>
-        public static void CheckModelIntegrity(TessellatedSolid ts, bool RepairAutomatically = false)
+        public static void CheckModelIntegrity(TessellatedSolid ts, bool RepairAutomatically = true)
         {
             Debug.WriteLine("Model Integrity Check...");
+            if (ts.MostPolygonSides > 3) storeHigherThanTriFaces(ts);
             var edgeFaceRatio = ts.NumberOfEdges / (double)ts.NumberOfFaces;
-            if (!edgeFaceRatio.IsPracticallySame(1.5)) storeEdgeFaceRatio(ts, edgeFaceRatio);
+            if (ts.MostPolygonSides == 3 && !edgeFaceRatio.IsPracticallySame(1.5)) storeEdgeFaceRatio(ts, edgeFaceRatio);
             //Check if each face has cyclic references with each edge, vertex, and adjacent faces.
             foreach (var face in ts.Faces)
             {
@@ -79,7 +81,7 @@ namespace TVGL
             }
             if (RepairAutomatically)
             {
-                Debug.WriteLine("Some error found. Attempting to Repair...");
+                Debug.WriteLine("Some errors found. Attempting to Repair...");
                 var success = ts.Errors.Repair(ts);
                 if (success)
                 {
@@ -96,9 +98,10 @@ namespace TVGL
         {
             Debug.WriteLine("Errors found in model:");
             Debug.WriteLine("======================");
-
+            if (NonTriangularFaces != null)
+                Debug.WriteLine("==> {0} faces are polygons with more than 3 sides.", NonTriangularFaces.Count);
             if (!double.IsNaN(EdgeFaceRatio))
-                Debug.WriteLine("Edges / Faces = {0}, but it should be 1.5.", EdgeFaceRatio);
+                Debug.WriteLine("==> Edges / Faces = {0}, but it should be 1.5.", EdgeFaceRatio);
             if (OverusedEdges != null)
             {
                 Debug.WriteLine("==> {0} overused edges.", OverusedEdges.Count);
@@ -138,13 +141,20 @@ namespace TVGL
 
         #endregion
         #region Error Storing
-
+        private static void storeHigherThanTriFaces(TessellatedSolid ts)
+        {
+            if (ts.Errors == null) ts.Errors = new TessellationError();
+            if (ts.Errors.NonTriangularFaces == null)
+                ts.Errors.NonTriangularFaces = new List<PolygonalFace>();
+            foreach (var face in ts.Faces)
+                if (face.Vertices.Count > 3)
+                    ts.Errors.NonTriangularFaces.Add(face);
+        }
         private static void storeEdgeFaceRatio(TessellatedSolid ts, double edgeFaceRatio)
         {
             if (ts.Errors == null) ts.Errors = new TessellationError();
             ts.Errors.EdgeFaceRatio = edgeFaceRatio;
         }
-
 
         private static void storeFaceDoesNotLinkBackToVertex(TessellatedSolid ts, Vertex vertex, PolygonalFace face)
         {
@@ -273,14 +283,155 @@ namespace TVGL
         internal bool Repair(TessellatedSolid ts)
         {
             var completelyRepaired = true;
-            if (FacesWithNegligibleArea != null)
-                completelyRepaired = completelyRepaired && RepairNeglibleAreaFaces(ts);
+            if (NonTriangularFaces != null)
+                completelyRepaired = completelyRepaired && DivideUpNonTriangularFaces(ts);
             if (SingledSidedEdges != null) //what about faces with only one or two edges?
                 completelyRepaired = completelyRepaired && RepairMissingFacesFromEdges(ts);
+            if (FacesWithNegligibleArea != null)
+                completelyRepaired = completelyRepaired && RepairNeglibleAreaFaces(ts);
 
             return completelyRepaired;
         }
 
+        private bool DivideUpNonTriangularFaces(TessellatedSolid ts)
+        {
+            var newFaces = new List<PolygonalFace>();
+            var singleSidedEdges = new HashSet<Edge>();
+            foreach (var nonTriangularFace in ts.Errors.NonTriangularFaces)
+            {
+                //First, get an average normal from all vertices, assuming CCW order.
+                var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { nonTriangularFace.Vertices }, nonTriangularFace.Normal);
+                foreach (var triangle in triangles)
+                {
+                    var newFace = new PolygonalFace(triangle, nonTriangularFace.Normal);
+                    newFaces.Add(newFace);
+                }
+                foreach (var edge in nonTriangularFace.Edges)
+                {
+                    if (singleSidedEdges.Contains(edge)) singleSidedEdges.Remove(edge);
+                    else singleSidedEdges.Add(edge);
+                }
+            }
+            ts.RemoveFaces(ts.Errors.NonTriangularFaces);
+            ts.Errors.SingledSidedEdges = singleSidedEdges.ToList();
+            return LinkUpNewFaces(newFaces, ts);
+        }
+
+        private bool RepairMissingFacesFromEdges(TessellatedSolid ts)
+        {
+            var newFaces = new List<PolygonalFace>();
+            var loops = new List<List<Vertex>>();
+            var loopNormals = new List<double[]>();
+            var attempts = 0;
+            var remainingEdges = new List<Edge>(ts.Errors.SingledSidedEdges);
+            while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
+            {
+                var loop = new List<Vertex>();
+                var successful = true;
+                var removedEdges = new List<Edge>();
+                var remainingEdge = remainingEdges[0];
+                var startVertex = remainingEdge.From;
+                var newStartVertex = remainingEdge.To;
+                var normal = remainingEdge.OwnedFace.Normal;
+                loop.Add(newStartVertex);
+                removedEdges.Add(remainingEdge);
+                remainingEdges.RemoveAt(0);
+                do
+                {
+                    var possibleNextEdges =
+                        remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
+                    if (possibleNextEdges.Count() != 1) successful = false;
+                    else
+                    {
+                        var currentEdge = possibleNextEdges[0];
+                        normal = normal.multiply(loop.Count).add(currentEdge.OwnedFace.Normal).divide(loop.Count + 1);
+                        normal.normalizeInPlace();
+                        newStartVertex = currentEdge.OtherVertex(newStartVertex);
+                        loop.Add(newStartVertex);
+                        removedEdges.Add(currentEdge);
+                        remainingEdges.Remove(currentEdge);
+                    }
+                } while (newStartVertex != startVertex && successful);
+                if (successful)
+                {
+                    //Average the normals from all the owned faces.
+                    loopNormals.Add(normal);
+                    loops.Add(loop);
+                    attempts = 0;
+                }
+                else
+                {
+                    remainingEdges.AddRange(removedEdges);
+                    attempts++;
+                }
+            }
+
+            for (var i = 0; i < loops.Count; i++)
+            {
+                //if a simple triangle, create a new face from vertices
+                if (loops[i].Count == 3)
+                {
+                    var newFace = new PolygonalFace(loops[i], loopNormals[i]);
+                    newFaces.Add(newFace);
+                }
+                //Else, use the triangulate function
+                else if (loops[i].Count > 3)
+                {
+                    //First, get an average normal from all vertices, assuming CCW order.
+                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { loops[i] }, loopNormals[i]);
+                    foreach (var triangle in triangles)
+                    {
+                        var newFace = new PolygonalFace(triangle, loopNormals[i]);
+                        newFaces.Add(newFace);
+                    }
+                }
+            }
+            return LinkUpNewFaces(newFaces, ts);
+            if (newFaces.Count == 1) Debug.WriteLine("1 missing face was fixed");
+            if (newFaces.Count > 1) Debug.WriteLine(newFaces.Count + " missing faces were fixed");
+        }
+
+        private bool LinkUpNewFaces(List<PolygonalFace> newFaces, TessellatedSolid ts)
+        {
+            ts.AddFaces(newFaces);
+            var completedEdges = new Dictionary<long, Edge>();
+            var partlyDefinedEdges = new Dictionary<long, Edge>();
+            foreach (var edge in SingledSidedEdges)
+                partlyDefinedEdges.Add(ts.SetEdgeChecksum(edge, ts.NumberOfVertices), edge);
+            ts.UpdateAllEdgeCheckSums();
+
+            foreach (var face in newFaces)
+            {
+                for (var j = 0; j < 3; j++)
+                {
+                    var fromVertex = face.Vertices[j];
+                    var toVertex = face.Vertices[(j == 2) ? 0 : j + 1];
+                    var checksum = ts.SetEdgeChecksum(fromVertex, toVertex, ts.NumberOfVertices);
+                    
+                    if (partlyDefinedEdges.ContainsKey(checksum))
+                    {
+                        //Finish creating edge.
+                        var edge = partlyDefinedEdges[checksum];
+                        edge.EdgeReference = checksum;
+                        edge.OtherFace = face;
+                        face.Edges.Add(edge);
+                        completedEdges.Add(checksum, edge);
+                        partlyDefinedEdges.Remove(checksum);
+                    }
+                    else
+                    {
+                        var edge = new Edge(fromVertex, toVertex, face, null, true, checksum);
+                        partlyDefinedEdges.Add(checksum, edge);
+                    }
+                }
+            }
+            ts.AddEdges(completedEdges.Values.ToArray());
+            foreach (var edge in completedEdges.Values)
+                ts.Errors.SingledSidedEdges.Remove(edge);
+            if (ts.Errors.SingledSidedEdges.Any()) return false;
+            ts.Errors.SingledSidedEdges = null;
+            return true;
+        }
         //This function repairs all the negligible area faces in the solid. 
         //For each negligible triangle, the longest edge and smallest edge are found.
         //The triangle is then collapsed to the vertex that both those edges share.
@@ -444,123 +595,6 @@ namespace TVGL
             return true;
         }
 
-        private bool RepairMissingFacesFromEdges(TessellatedSolid ts)
-        {
-            var newFaces = new List<PolygonalFace>();
-            var loops = new List<List<Vertex>>();
-            var loopNormals = new List<double[]>();
-            var attempts = 0;
-            var remainingEdges = new List<Edge>(ts.Errors.SingledSidedEdges);
-            while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
-            {
-                var loop = new List<Vertex>();
-                var successful = true;
-                var removedEdges = new List<Edge>();
-                var remainingEdge = remainingEdges[0];
-                var startVertex = remainingEdge.From;
-                var newStartVertex = remainingEdge.To;
-                var normal = remainingEdge.OwnedFace.Normal;
-                loop.Add(newStartVertex);
-                removedEdges.Add(remainingEdge);
-                remainingEdges.RemoveAt(0);
-                do
-                {
-                    var possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
-                    if (possibleNextEdges.Count() != 1) successful = false;
-                    else
-                    {
-                        var currentEdge = possibleNextEdges[0];
-                        normal = normal.multiply(loop.Count).add(currentEdge.OwnedFace.Normal).divide(loop.Count + 1);
-                        normal.normalizeInPlace();
-                        newStartVertex = currentEdge.OtherVertex(newStartVertex);
-                        loop.Add(newStartVertex);
-                        removedEdges.Add(currentEdge);
-                        remainingEdges.Remove(currentEdge);
-                    }
-                }
-                while (newStartVertex != startVertex && successful);
-                if (successful)
-                {
-                    //Average the normals from all the owned faces.
-                    loopNormals.Add(normal);
-                    loops.Add(loop);
-                    attempts = 0;
-                }
-                else
-                {
-                    remainingEdges.AddRange(removedEdges);
-                    attempts++;
-                }
-            }
-
-            for (var i = 0; i < loops.Count; i++)
-            {
-                //if a simple triangle, create a new face from vertices
-                if (loops[i].Count == 3)
-                {
-                    var newFace = new PolygonalFace(loops[i], loopNormals[i]);
-                    newFaces.Add(newFace);
-                }
-                //Else, use the triangulate function
-                else if (loops[i].Count > 3)
-                {
-                    //First, get an average normal from all vertices, assuming CCW order.
-                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { loops[i] }, loopNormals[i]);
-                    foreach (var triangle in triangles)
-                    {
-                        var newFace = new PolygonalFace(triangle, loopNormals[i]);
-                        newFaces.Add(newFace);
-                    }
-                }
-            }
-            ts.AddFaces(newFaces);
-            if (newFaces.Count == 1) Debug.WriteLine("1 missing face was fixed");
-            if (newFaces.Count > 1) Debug.WriteLine(newFaces.Count + " missing faces were fixed");
-
-            var completedEdges = new Dictionary<long, Edge>();
-            var partlyDefinedEdges = new Dictionary<long, Edge>();
-            foreach (var edge in SingledSidedEdges)
-                partlyDefinedEdges.Add(ts.SetEdgeChecksum(edge, ts.NumberOfVertices), edge);
-            ts.UpdateAllEdgeCheckSums();
-            var previouslyDefinedEdges = new Dictionary<long, Edge>();
-            foreach (var edge in ts.Edges)
-                previouslyDefinedEdges.Add(edge.EdgeReference, edge);
-
-
-            foreach (var face in newFaces)
-            {
-                for (var j = 0; j < 3; j++)
-                {
-                    var fromVertex = face.Vertices[j];
-                    var toVertex = face.Vertices[(j == 2) ? 0 : j + 1];
-                    var checksum = ts.SetEdgeChecksum(fromVertex, toVertex, ts.NumberOfVertices);
-
-                    if (previouslyDefinedEdges.ContainsKey(checksum) || completedEdges.ContainsKey(checksum))
-                        continue; //Edge has already been created.
-                    if (partlyDefinedEdges.ContainsKey(checksum))
-                    {
-                        //Finish creating edge.
-                        var edge = partlyDefinedEdges[checksum];
-                        edge.EdgeReference = checksum;
-                        edge.OtherFace = face;
-                        face.Edges.Add(edge);
-                        completedEdges.Add(checksum, edge);
-                        partlyDefinedEdges.Remove(checksum);
-                    }
-                    else
-                    {
-                        var edge = new Edge(fromVertex, toVertex, face, null, true, checksum);
-                        partlyDefinedEdges.Add(checksum, edge);
-                    }
-                }
-            }
-            ts.AddEdges(completedEdges.Values.ToArray());
-            foreach (var edge in completedEdges.Values)
-                ts.Errors.SingledSidedEdges.Remove(edge);
-            if (ts.Errors.SingledSidedEdges.Any()) return false;
-            ts.Errors.SingledSidedEdges = null;
-            return true;
-        }
         #endregion
     }
 }

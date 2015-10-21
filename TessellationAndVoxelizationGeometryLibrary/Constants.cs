@@ -59,11 +59,6 @@ namespace TVGL
         public const double ErrorForFaceInSurface = 0.002;
 
         /// <summary>
-        ///     The maximum number edges per face
-        /// </summary>
-        public const int MaxNumberEdgesPerFace = 3;
-
-        /// <summary>
         /// The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-5;

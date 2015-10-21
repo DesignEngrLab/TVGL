@@ -14,10 +14,7 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {
-        //"../../../TestFiles/TXT - C2 boitier batterie-1.STL",
-        //"../../../TestFiles/Mc Cormik-D326 - Rear Light-1.STL",
         //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        //"../../../TestFiles/TXT - G5 support de carrosserie-2.STL",
         //"../../../TestFiles/Beam_Boss.STL",
         //"../../../TestFiles/Tetrahedron.STL",
         //"../../../TestFiles/off_axis_box.STL",
@@ -30,7 +27,7 @@ namespace TVGL_Test
         //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/Rook.amf",
        // "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
-       // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
+        "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
        // "../../../TestFiles/ABF.STL",
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",

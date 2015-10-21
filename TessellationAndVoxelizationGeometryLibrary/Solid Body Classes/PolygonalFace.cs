@@ -59,24 +59,27 @@ namespace TVGL
                 if (ConnectVerticesBackToFace)
                     v.Faces.Add(this);
             }
-            Area = DetermineArea();
-            bool reverseVertexOrder;
-            Normal = DetermineNormal(out reverseVertexOrder,  normal);
-            if (reverseVertexOrder)  Vertices.Reverse();
             var centerX = Vertices.Average(v => v.X);
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
             Center = new[] { centerX, centerY, centerZ };
+            bool reverseVertexOrder;
+            Normal = DetermineNormal(out reverseVertexOrder, normal);
+            if (reverseVertexOrder) Vertices.Reverse();
+            Area = DetermineArea();
         }
 
         internal double DetermineArea()
         {
-            // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
-            if (Vertices.Count != 3)
-                throw new NotImplementedException("Determine Area currently only works for triangular faces.");
+            var area = 0.0;
+            for (int i = 2; i < Vertices.Count; i++)
+            {
             var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
             var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
-            return Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
+            // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
+            area+= Math.Abs(edge1.crossProduct(edge2).dotProduct(this.Normal)) / 2;
+            }
+            return area;
         }
         private double[] DetermineNormal(out bool reverseVertexOrder, double[] normal = null) //Assuming CCW order of vertices
         {
@@ -129,14 +132,18 @@ namespace TVGL
             IsConvex = (dotProductsOfNormals.All(x => x > 0));
             if (IsConvex)
             {
-                // it's okay to overwrite the guess. If it didn't work above, no reason it
-                // should make sense now. 
-                normal = normals.Aggregate((current, c) => current.add(c));
-                return normal.normalize();
+                var newNormal = normals.Aggregate((current, c) => current.add(c)).normalize();
+                // even though the normal provide was wrong above (or nonexistent)
+                // we still check it to see if this is the correct direction.
+                if (normal == null || newNormal.dotProduct(normal) >= 0) return newNormal;
+                // else reverse the order 
+                reverseVertexOrder = true;
+                return newNormal.multiply(-1);
             }
-            // now, the rare case in which the polygon face is not convex...
+            // now, the rare case in which the polygon face is not convex, the only .
             if (normal != null)
             {
+                //
                 // well, here the guess may be useful. We'll insert it into the list of dotProducts
                 // and then do a tally
                 dotProductsOfNormals[0] = normal.dotProduct(normals[0]);
@@ -153,7 +160,7 @@ namespace TVGL
             // if the majority are like the first one, then use that one (which may have been the guess).
             if (2 * numLikeFirstNormal >= normals.Count) return normals[0].normalize();
             // otherwise, go with the opposite (so long as there isn't an original guess)
-            if (normal==null) return normals[0].normalize().multiply(-1);
+            if (normal == null) return normals[0].normalize().multiply(-1);
             //finally, assume the original guess is right, and reverse the order
             reverseVertexOrder = true;
             return normals[0].normalize();

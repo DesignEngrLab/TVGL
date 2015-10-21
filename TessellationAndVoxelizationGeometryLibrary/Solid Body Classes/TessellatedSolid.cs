@@ -201,6 +201,11 @@ namespace TVGL
         /// <value>The same tolerance.</value>
         internal double sameTolerance { private set; get; }
         internal TessellationError Errors { get; set; }
+        /// <summary>
+        /// Gets the largest number of sides on a polygon in this model.
+        /// </summary>
+        /// <value>The largest polygon.</value>
+        public int MostPolygonSides { get; private set; }
 
         #endregion
 
@@ -380,14 +385,14 @@ namespace TVGL
             var faceChecksums = new HashSet<long>();
             //var duplicates = new List<int>();
             var numberOfDegenerate = 0;
-            var checksumMultiplier = new long[Constants.MaxNumberEdgesPerFace];
-            for (var i = 0; i < Constants.MaxNumberEdgesPerFace; i++)
-                checksumMultiplier[i] = (long)Math.Pow(NumberOfVertices, i);
+            var checksumMultiplier = new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices };
             for (var i = 0; i < NumberOfFaces; i++)
             {
                 double[] normal = null;
                 var orderedIndices = new List<int>(faceToVertexIndices[i].Select(index => Vertices[index].IndexInList));
                 orderedIndices.Sort();
+                while (orderedIndices.Count > checksumMultiplier.Count)
+                    checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
                 long checksum = orderedIndices.Select((index, j) => index * checksumMultiplier[j]).Sum();
                 if (faceChecksums.Contains(checksum)) TessellationError.StoreDuplicateFace(this, faceToVertexIndices[i]);
                 else if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices))
@@ -407,6 +412,7 @@ namespace TVGL
             }
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);
+            MostPolygonSides = checksumMultiplier.Count;
             for (int i = 0; i < NumberOfFaces; i++)
                 Faces[i].IndexInList = i;
         }
@@ -756,8 +762,8 @@ namespace TVGL
                 return;
             }
             var convexHullFaceList = new List<PolygonalFace>();
-            var checkSumMultipliers = new long[Constants.MaxNumberEdgesPerFace];
-            for (var i = 0; i < Constants.MaxNumberEdgesPerFace; i++)
+            var checkSumMultipliers = new long[3];
+            for (var i = 0; i < 3; i++)
                 checkSumMultipliers[i] = (long)Math.Pow(NumberOfVertices, i);
             var alreadyCreatedFaces = new HashSet<long>();
             foreach (var cvxFace in convexHull.Faces)

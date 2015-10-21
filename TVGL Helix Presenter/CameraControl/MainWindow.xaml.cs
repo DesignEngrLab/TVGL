@@ -3,7 +3,8 @@
 //   http://helixtoolkit.codeplex.com, license: MIT
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
-    using System.Windows;
+
+using System.Windows;
 namespace TVGL_Helix_Presenter
 {
 
@@ -14,6 +15,16 @@ namespace TVGL_Helix_Presenter
         public MainWindow()
         {
             InitializeComponent();
+            ShowGridLinesMenuItem.IsChecked = true;
+        }
+
+        private void GridLines_OnChecked(object sender, RoutedEventArgs e)
+        {
+            GridLines.Visible = true;
+        }
+        private void GridLines_OnUnChecked(object sender, RoutedEventArgs e)
+        {
+            GridLines.Visible = false;
         }
     }
 }
