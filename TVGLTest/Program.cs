@@ -38,20 +38,22 @@ namespace TVGL_Test
         //"../../../TestFiles/pump.stl",
         //"../../../TestFiles/bradley.stl",
         //"../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
-        "../../../TestFiles/new/5.STL",
-        "../../../TestFiles/new/2.stl", //Note that this is an assembly 
-        "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
-       "../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
-        "../../../TestFiles/radiobox.stl",
-        "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
-        "../../../TestFiles/box.stl", //not water tight, may be an assembly //breaks in slice at 1/2 Z direction
-        "../../../TestFiles/G0.stl",
-        "../../../TestFiles/GKJ0.stl",
-        "../../../TestFiles/SCS12UU.stl", //Broken in slice because 3 triangles share the same edge at 1/2 Z direction
-        "../../../TestFiles/testblock2.stl",
-        "../../../TestFiles/Z665.stl",
-        "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
-        "../../../TestFiles/mendel_extruder.stl"
+       // "../../../TestFiles/new/5.STL",
+       // "../../../TestFiles/new/2.stl", //Note that this is an assembly 
+       // "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
+       //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
+       // "../../../TestFiles/radiobox.stl",
+       // "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
+       // "../../../TestFiles/box.stl", //not water tight, may be an assembly //breaks in slice at 1/2 Z direction
+       // "../../../TestFiles/G0.stl",
+       // "../../../TestFiles/GKJ0.stl",
+       // "../../../TestFiles/SCS12UU.stl", //Broken in slice because 3 triangles share the same edge at 1/2 Z direction
+       // "../../../TestFiles/testblock2.stl",
+       // "../../../TestFiles/Z665.stl",
+       // "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
+       // "../../../TestFiles/mendel_extruder.stl"
+        "../../../TestFiles/Square Support.STL",
+        "../../../TestFiles/Aerospace_Beam.STL",
         };
 
         [STAThread]

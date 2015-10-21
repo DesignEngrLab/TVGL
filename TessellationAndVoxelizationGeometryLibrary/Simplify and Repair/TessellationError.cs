@@ -28,6 +28,7 @@ namespace TVGL
         public List<Edge> EdgesWithBadAngle { get; private set; }
         public double EdgeFaceRatio { get; private set; } = double.NaN;
 
+
         #region Check Model Integrity
         /// <summary>
         /// Checks the model integrity.
