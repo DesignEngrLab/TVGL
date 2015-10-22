@@ -65,7 +65,7 @@
             <MenuItem Header="Lighting">
                 <Grid>
                     <StackPanel HorizontalAlignment="Left" Width="400">
-                        <pt:HeaderedEntrySlider Header="Altitude (deg):" Value="{Binding Altitude, ElementName=sunLight}" Minimum="0" Maximum="90"/>
+                        <pt:HeaderedEntrySlider Header="Altitude (deg):" Value="{Binding Altitude, ElementName=sunLight}" Minimum="-90" Maximum="90"/>
                         <pt:HeaderedEntrySlider Header="Azimuth (deg):" Value="{Binding Azimuth, ElementName=sunLight}" Minimum="0" Maximum="360"/>
                         <pt:HeaderedEntrySlider Header="Brightness:" Value="{Binding Brightness, ElementName=sunLight}" Minimum="0" Maximum="1"/>
                         <pt:HeaderedEntrySlider Header="Ambient:" Value="{Binding Ambient, ElementName=sunLight}" Minimum="0" Maximum="1"/>

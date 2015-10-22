@@ -26,7 +26,7 @@ namespace TVGL
         public List<Tuple<Edge, PolygonalFace>> FacesThatDoNotLinkBackToEdge { get; private set; }
         public List<Tuple<Vertex, PolygonalFace>> FacesThatDoNotLinkBackToVertex { get; private set; }
         public List<Edge> EdgesWithBadAngle { get; private set; }
-        public double EdgeFaceRatio { get; private set; } = double.NaN;
+        public double EdgeFaceRatio { get; private set; }
 
 
         #region Check Model Integrity

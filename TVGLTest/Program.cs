@@ -27,7 +27,7 @@ namespace TVGL_Test
         //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/Rook.amf",
        // "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
-        "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
+        //"../../../TestFiles/mushroom.off",   //breaks in OFFFileData
        // "../../../TestFiles/ABF.STL",
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
@@ -52,7 +52,7 @@ namespace TVGL_Test
        // "../../../TestFiles/Z665.stl",
        // "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
        // "../../../TestFiles/mendel_extruder.stl"
-        "../../../TestFiles/Square Support.STL",
+        //"../../../TestFiles/Square Support.STL",
         "../../../TestFiles/Aerospace_Beam.STL",
         };
 
