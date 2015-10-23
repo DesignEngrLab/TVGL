@@ -9,6 +9,7 @@ namespace TVGL
 {
     class TessellationError
     {
+        private double _edgeFaceRatio = double.NaN;
         public List<Tuple<Edge, List<PolygonalFace>>> OverusedEdges { get; private set; }
         public List<Edge> SingledSidedEdges { get; private set; }
         public List<int[]> DegenerateFaces { get; private set; }
@@ -26,8 +27,12 @@ namespace TVGL
         public List<Tuple<Edge, PolygonalFace>> FacesThatDoNotLinkBackToEdge { get; private set; }
         public List<Tuple<Vertex, PolygonalFace>> FacesThatDoNotLinkBackToVertex { get; private set; }
         public List<Edge> EdgesWithBadAngle { get; private set; }
-        public double EdgeFaceRatio { get; private set; }
 
+        public double EdgeFaceRatio
+        {
+            get { return _edgeFaceRatio; }
+            private set { _edgeFaceRatio = value; }
+        }
 
         #region Check Model Integrity
         /// <summary>
@@ -297,14 +302,13 @@ namespace TVGL
         private bool DivideUpNonTriangularFaces(TessellatedSolid ts)
         {
             var newFaces = new List<PolygonalFace>();
-            var edgesToRemove = new List<Edge>();
             var singleSidedEdges = new HashSet<Edge>();
             foreach (var nonTriangularFace in ts.Errors.NonTriangularFaces)
             {
                 foreach (var edge in nonTriangularFace.Edges)
                 {
-                    if (!singleSidedEdges.Contains(edge))  singleSidedEdges.Add(edge);
-                    }
+                    if (!singleSidedEdges.Contains(edge)) singleSidedEdges.Add(edge);
+                }
                 var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { nonTriangularFace.Vertices }, nonTriangularFace.Normal);
                 foreach (var triangle in triangles)
                 {
@@ -388,9 +392,9 @@ namespace TVGL
                     }
                 }
             }
-            return LinkUpNewFaces(newFaces, ts);
             if (newFaces.Count == 1) Debug.WriteLine("1 missing face was fixed");
             if (newFaces.Count > 1) Debug.WriteLine(newFaces.Count + " missing faces were fixed");
+            return LinkUpNewFaces(newFaces, ts);
         }
 
         private bool LinkUpNewFaces(List<PolygonalFace> newFaces, TessellatedSolid ts)
@@ -410,13 +414,13 @@ namespace TVGL
                     var fromVertex = face.Vertices[j];
                     var toVertex = face.Vertices[(j == 2) ? 0 : j + 1];
                     var checksum = ts.SetEdgeChecksum(fromVertex, toVertex, ts.NumberOfVertices);
-                    
+
                     if (partlyDefinedEdges.ContainsKey(checksum))
                     {
                         //Finish creating edge.
                         var edge = partlyDefinedEdges[checksum];
                         if (edge.OwnedFace == null) edge.OwnedFace = face;
-                        else if (edge.OtherFace == null)  edge.OtherFace = face;
+                        else if (edge.OtherFace == null) edge.OtherFace = face;
                         face.Edges.Add(edge);
                         //completedEdges.Add(edge);
                         //partlyDefinedEdges.Remove(checksum);
@@ -432,7 +436,7 @@ namespace TVGL
             ts.AddEdges(newEdges);
             foreach (var edge in partlyDefinedEdges.Values)
                 ts.Errors.SingledSidedEdges.Remove(edge);
-            CheckModelIntegrity(ts,false);
+            if (!ts.Errors.SingledSidedEdges.Any()) ts.Errors.SingledSidedEdges = null;
             return true;
         }
         //This function repairs all the negligible area faces in the solid. 
