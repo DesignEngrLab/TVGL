@@ -205,7 +205,7 @@ namespace TVGL
         /// Gets the largest number of sides on a polygon in this model.
         /// </summary>
         /// <value>The largest polygon.</value>
-        public int MostPolygonSides { get; private set; }
+        public int MostPolygonSides { get; internal set; }
 
         #endregion
 
@@ -978,14 +978,11 @@ namespace TVGL
         {
             var face = Faces[removeFaceIndex];
             foreach (var vertex in face.Vertices)
-            {
-                var index = vertex.Faces.IndexOf(face);
-                if (index >= 0) vertex.Faces.RemoveAt(index);
-            }
+                vertex.Faces.Remove(face);
             foreach (var edge in face.Edges)
             {
                 if (face == edge.OwnedFace) edge.OwnedFace = null;
-                if (face == edge.OtherFace) edge.OwnedFace = null;
+                if (face == edge.OtherFace) edge.OtherFace = null;
             }
             //Face adjacency is a method call, not an object reference. So it updates automatically.
         }

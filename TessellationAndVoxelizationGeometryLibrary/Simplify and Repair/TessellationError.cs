@@ -297,23 +297,24 @@ namespace TVGL
         private bool DivideUpNonTriangularFaces(TessellatedSolid ts)
         {
             var newFaces = new List<PolygonalFace>();
+            var edgesToRemove = new List<Edge>();
             var singleSidedEdges = new HashSet<Edge>();
             foreach (var nonTriangularFace in ts.Errors.NonTriangularFaces)
             {
-                //First, get an average normal from all vertices, assuming CCW order.
+                foreach (var edge in nonTriangularFace.Edges)
+                {
+                    if (!singleSidedEdges.Contains(edge))  singleSidedEdges.Add(edge);
+                    }
                 var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { nonTriangularFace.Vertices }, nonTriangularFace.Normal);
                 foreach (var triangle in triangles)
                 {
                     var newFace = new PolygonalFace(triangle, nonTriangularFace.Normal);
                     newFaces.Add(newFace);
                 }
-                foreach (var edge in nonTriangularFace.Edges)
-                {
-                    if (singleSidedEdges.Contains(edge)) singleSidedEdges.Remove(edge);
-                    else singleSidedEdges.Add(edge);
-                }
             }
             ts.RemoveFaces(ts.Errors.NonTriangularFaces);
+            ts.Errors.NonTriangularFaces = null;
+            ts.MostPolygonSides = 3;
             ts.Errors.SingledSidedEdges = singleSidedEdges.ToList();
             return LinkUpNewFaces(newFaces, ts);
         }
@@ -395,7 +396,8 @@ namespace TVGL
         private bool LinkUpNewFaces(List<PolygonalFace> newFaces, TessellatedSolid ts)
         {
             ts.AddFaces(newFaces);
-            var completedEdges = new Dictionary<long, Edge>();
+            //var completedEdges = new List<Edge>();
+            var newEdges = new List<Edge>();
             var partlyDefinedEdges = new Dictionary<long, Edge>();
             foreach (var edge in SingledSidedEdges)
                 partlyDefinedEdges.Add(ts.SetEdgeChecksum(edge, ts.NumberOfVertices), edge);
@@ -413,24 +415,24 @@ namespace TVGL
                     {
                         //Finish creating edge.
                         var edge = partlyDefinedEdges[checksum];
-                        edge.EdgeReference = checksum;
-                        edge.OtherFace = face;
+                        if (edge.OwnedFace == null) edge.OwnedFace = face;
+                        else if (edge.OtherFace == null)  edge.OtherFace = face;
                         face.Edges.Add(edge);
-                        completedEdges.Add(checksum, edge);
-                        partlyDefinedEdges.Remove(checksum);
+                        //completedEdges.Add(edge);
+                        //partlyDefinedEdges.Remove(checksum);
                     }
                     else
                     {
                         var edge = new Edge(fromVertex, toVertex, face, null, true, checksum);
+                        newEdges.Add(edge);
                         partlyDefinedEdges.Add(checksum, edge);
                     }
                 }
             }
-            ts.AddEdges(completedEdges.Values.ToArray());
-            foreach (var edge in completedEdges.Values)
+            ts.AddEdges(newEdges);
+            foreach (var edge in partlyDefinedEdges.Values)
                 ts.Errors.SingledSidedEdges.Remove(edge);
-            if (ts.Errors.SingledSidedEdges.Any()) return false;
-            ts.Errors.SingledSidedEdges = null;
+            CheckModelIntegrity(ts,false);
             return true;
         }
         //This function repairs all the negligible area faces in the solid. 
