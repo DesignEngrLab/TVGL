@@ -57,6 +57,9 @@ namespace TVGL.IOFunctions
                 case "stl":
                     tessellatedSolids = STLFileData.Open(s, inParallel); // Standard Tessellation or StereoLithography
                     break;
+                case "ply":
+                    tessellatedSolids = PLYFileData.Open(s, inParallel); // Standard Tessellation or StereoLithography
+                    break;
                 //case "3ds": return IO.Open3DS(s);   //3D Studio
                 //case "lwo": return IO.OpenLWO(s);  //Lightwave
                 //case "obj": return IO.OpenOBJ(s); //Wavefront
@@ -69,7 +72,7 @@ namespace TVGL.IOFunctions
                     break;
                 default:
                     throw new Exception(
-                        "Cannot determine format from extension (not .stl, .3ds, .lwo, .obj, .objx, or .off.");
+                        "Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");
             }
             Debug.WriteLine("number of solids = " + tessellatedSolids.Count);
             foreach (var tessellatedSolid in tessellatedSolids)

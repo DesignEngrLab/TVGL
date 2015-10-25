@@ -142,6 +142,12 @@ namespace TVGL
         PLY
     }
 
+    internal enum ShapeElement
+    {
+        Vertex, Edge, Face
+    }
+    internal enum ColorElements
+    { Red, Green, Blue, Opacity }
     /// <summary>
     ///     A comparer for optimization that can be used for either
     ///     minimization or maximization.

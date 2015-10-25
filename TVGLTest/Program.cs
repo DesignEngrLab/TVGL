@@ -14,6 +14,7 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {
+        "../../../TestFiles/airplane.ply",
         //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
         //"../../../TestFiles/Beam_Boss.STL",
         //"../../../TestFiles/Tetrahedron.STL",

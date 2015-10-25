@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using StarMathLib;
 
 namespace TVGL.IOFunctions
@@ -36,6 +37,7 @@ namespace TVGL.IOFunctions
         /// <value>The has color specified.</value>
         public Boolean HasColorSpecified { get; private set; }
 
+        private bool ColorIsFloat;
         /// <summary>
         ///     Gets or sets the colors.
         /// </summary>
@@ -60,34 +62,26 @@ namespace TVGL.IOFunctions
         /// <value>The header.</value>
         public string Name { get; private set; }
 
+        public List<string> Comments { get; private set; }
+        private List<ShapeElement> ReadInOrder;
+        private List<ColorElements> ColorDescriptor;
+
         public int NumVertices { get; private set; }
         public int NumFaces { get; private set; }
         public int NumEdges { get; private set; }
-        public Boolean ContainsHomogeneousCoordinates { get; private set; }
-        public Boolean ContainsTextureCoordinates { get; private set; }
-        public Boolean ContainsColors { get; private set; }
-        public Boolean ContainsNormals { get; private set; }
 
 
         internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
         {
             var now = DateTime.Now;
             PLYFileData plyData;
-            // Try to read in BINARY format
-            if (PLYFileData.TryReadBinary(s, out plyData))
-                Debug.WriteLine("Successfully read in binary PLY file (" + (DateTime.Now - now) + ").");
+            // Read in ASCII format
+            if (PLYFileData.TryReadAscii(s, out plyData))
+                Debug.WriteLine("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").");
             else
             {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                if (PLYFileData.TryReadAscii(s, out plyData))
-                    Debug.WriteLine("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").");
-                else
-                {
-                    Debug.WriteLine("Unable to read in PLY file (" + (DateTime.Now - now) + ").");
-                    return null;
-                }
+                Debug.WriteLine("Unable to read in PLY file (" + (DateTime.Now - now) + ").");
+                return null;
             }
             return new List<TessellatedSolid>
             {
@@ -95,6 +89,7 @@ namespace TVGL.IOFunctions
                     (plyData.HasColorSpecified ? plyData.Colors : null))
             };
         }
+
         internal static bool TryReadAscii(Stream stream, out PLYFileData plyData)
         {
             var reader = new StreamReader(stream);
@@ -102,78 +97,158 @@ namespace TVGL.IOFunctions
             var line = ReadLine(reader);
             if (!line.Contains("ply") && !line.Contains("PLY"))
                 return false;
-            plyData.ContainsNormals = line.Contains("N");
-            plyData.ContainsColors = line.Contains("C");
-            plyData.ContainsTextureCoordinates = line.Contains("ST");
-            plyData.ContainsHomogeneousCoordinates = line.Contains("4");
-
-            double[] point;
-            if (TryParseDoubleArray(ReadLine(reader), out point))
+            plyData.ReadHeader(reader);
+            foreach (var shapeElement in plyData.ReadInOrder)
             {
-                plyData.NumVertices = (int)Math.Round(point[0], 0);
-                plyData.NumFaces = (int)Math.Round(point[1], 0);
-                plyData.NumEdges = (int)Math.Round(point[2], 0);
-            }
-            else return false;
-
-            for (var i = 0; i < plyData.NumVertices; i++)
-            {
-                line = ReadLine(reader);
-                if (TryParseDoubleArray(line, out point))
+                bool successful;
+                switch (shapeElement)
                 {
-                    if (plyData.ContainsHomogeneousCoordinates
-                        && !point[3].IsNegligible())
-                        plyData.Vertices.Add(new[]
-                        {
-                            point[0]/point[3],
-                            point[1]/point[3],
-                            point[2]/point[3]
-                        });
-                    else plyData.Vertices.Add(point);
+                    case ShapeElement.Vertex:
+                        successful = plyData.ReadVertices(reader);
+                        break;
+                    case ShapeElement.Face:
+                        successful = plyData.ReadFaces(reader);
+                        break;
+                    case ShapeElement.Edge:
+                        successful = plyData.ReadEdges(reader);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
-                else return false;
+                if (!successful) return false;
             }
-            for (var i = 0; i < plyData.NumFaces; i++)
+            plyData.Name = getNameFromStream(stream);
+            return true;
+        }
+
+        private bool ReadEdges(StreamReader reader)
+        {
+            for (var i = 0; i < NumEdges; i++)
+                ReadLine(reader);
+            return true;
+        }
+
+        private bool ReadFaces(StreamReader reader)
+        {
+            for (var i = 0; i < NumFaces; i++)
             {
-                line = ReadLine(reader);
+                var line = ReadLine(reader);
                 double[] numbers;
                 if (!TryParseDoubleArray(line, out numbers)) return false;
 
                 var numVerts = (int)Math.Round(numbers[0], 0);
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)
-                    vertIndices[j]=(int)Math.Round(numbers[1 + j], 0);
-                plyData.FaceToVertexIndices.Add(vertIndices);
+                    vertIndices[j] = (int)Math.Round(numbers[1 + j], 0);
+                FaceToVertexIndices.Add(vertIndices);
 
-                if (numbers.GetLength(0) == 1 + numVerts + 3)
+                if (numbers.GetLength(0) == 1 + numVerts + ColorDescriptor.Count)
                 {
-                    var r = (float)numbers[1 + numVerts];
-                    var g = (float)numbers[2 + numVerts];
-                    var b = (float)numbers[3 + numVerts];
+                    float a = 0, r = 0, g = 0, b = 0;
+                    for (int index = 0; index < ColorDescriptor.Count; index++)
+                    {
+                        var colorElements = ColorDescriptor[index];
+                        float value = (float)numbers[1 + numVerts + i];
+                        switch (colorElements)
+                        {
+                            case ColorElements.Red:
+                                r = (ColorIsFloat) ? value : value / 255f;
+                                break;
+                            case ColorElements.Green:
+                                g = (ColorIsFloat) ? value : value / 255f;
+                                break;
+                            case ColorElements.Blue:
+                                b = (ColorIsFloat) ? value : value / 255f;
+                                break;
+                            case ColorElements.Opacity:
+                                a = (ColorIsFloat) ? value : value / 255f;
+                                break;
+                        }
+
+                    }
                     var currentColor = new Color(1f, r, g, b);
-                    plyData.HasColorSpecified = true;
-                    if (plyData._lastColor == null || !plyData._lastColor.Equals(currentColor))
-                        plyData._lastColor = currentColor;
+                    HasColorSpecified = true;
+                    if (_lastColor == null || !_lastColor.Equals(currentColor))
+                        _lastColor = currentColor;
                 }
-                plyData.Colors.Add(plyData._lastColor);
+                Colors.Add(_lastColor);
             }
-            plyData.Name = getNameFromStream(stream);
             return true;
         }
 
-        /// <summary>
-        ///     Tries the read binary.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="plyData">The ply data.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="System.NotImplementedException"></exception>
-        /// <exception cref="System.IO.EndOfStreamException">Incomplete file</exception>
-        internal static bool TryReadBinary(Stream stream, out PLYFileData plyData)
+        private bool ReadVertices(StreamReader reader)
         {
-            plyData = null;
-            return false;
-            throw new NotImplementedException();
+            for (var i = 0; i < NumVertices; i++)
+            {
+                var line = ReadLine(reader);
+                double[] point;
+                if (TryParseDoubleArray(line, out point))
+                    Vertices.Add(point);
+                else return false;
+            }
+            return true;
+        }
+
+        private void ReadHeader(StreamReader reader)
+        {
+            ReadInOrder = new List<ShapeElement>();
+            ColorDescriptor = new List<ColorElements>();
+            string line;
+            do
+            {
+                line = ReadLine(reader);
+                string id, values;
+                ParseLine(line, out id, out values);
+                if (id.Equals("comment")) Comments.Add(values);
+                else if (id.Equals("element"))
+                {
+                    string numberString;
+                    ParseLine(values, out id, out numberString);
+                    int numberInt;
+                    var successfulParse = int.TryParse(numberString, out numberInt);
+                    if (!successfulParse) continue;
+                    if (id.Equals("vertex"))
+                    {
+                        ReadInOrder.Add(ShapeElement.Vertex);
+                        NumVertices = numberInt;
+                    }
+                    else if (id.Equals("face"))
+                    {
+                        ReadInOrder.Add(ShapeElement.Face);
+                        NumFaces = numberInt;
+                    }
+                    else if (id.Equals("edge"))
+                    {
+                        ReadInOrder.Add(ShapeElement.Edge);
+                        NumEdges = numberInt;
+                    }
+                }
+                else if (id.Equals("property") && ReadInOrder.Last() == ShapeElement.Face)
+                {
+                    string typeString, restString;
+                    ParseLine(values, out typeString, out restString);
+                    // doesn't seem like much point in checking this, it comes in many
+                    // varieties like uint8 int32 vertex_indices, but it'll read in just fine
+                    //if (typeString.Equals("list") && restString.Contains("uchar int vertex_index"))
+                    //    expectingFaceToHaveListOfVertices = true;
+                    if (restString.Equals("red", StringComparison.OrdinalIgnoreCase)
+                        || restString.Equals("r", StringComparison.OrdinalIgnoreCase))
+                        ColorDescriptor.Add(ColorElements.Red);
+                    else if (restString.Equals("blue", StringComparison.OrdinalIgnoreCase)
+                             || restString.Equals("b", StringComparison.OrdinalIgnoreCase))
+                        ColorDescriptor.Add(ColorElements.Blue);
+                    else if (restString.Equals("green", StringComparison.OrdinalIgnoreCase)
+                             || restString.Equals("g", StringComparison.OrdinalIgnoreCase))
+                        ColorDescriptor.Add(ColorElements.Green);
+                    else if (restString.Equals("opacity", StringComparison.OrdinalIgnoreCase)
+                             || restString.StartsWith("transp", StringComparison.OrdinalIgnoreCase)
+                             || restString.Equals("a", StringComparison.OrdinalIgnoreCase))
+                        ColorDescriptor.Add(ColorElements.Opacity);
+                    else continue;
+                    ColorIsFloat = typeString.Equals("float", StringComparison.OrdinalIgnoreCase)
+                                   || typeString.Equals("double", StringComparison.OrdinalIgnoreCase);
+                }
+            } while (!line.Equals("end_header"));
         }
 
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
