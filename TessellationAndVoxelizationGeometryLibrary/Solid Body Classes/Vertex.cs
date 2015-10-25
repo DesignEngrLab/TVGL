@@ -45,7 +45,9 @@ namespace TVGL
         /// <param name="position">The position.</param>
         public Vertex(double[] position)
         {
-            Position = position;
+            if (position.Length == 3) Position = position;
+            else if (position.Length > 3) Position = position.Take(3).ToArray();
+            else throw new ArgumentException("Vertex constructor given a position array with fewer than 3 values (all vertices must be 3D).");
             Edges = new List<Edge>();
             Faces = new List<PolygonalFace>();
             IndexInList = -1;
@@ -140,6 +142,6 @@ namespace TVGL
             else if (Edges.Any(e => e.Curvature != CurvatureType.Concave))
                 VertexCurvature = CurvatureType.Convex;
             else VertexCurvature = CurvatureType.SaddleOrFlat;
-        } 
+        }
     }
 }

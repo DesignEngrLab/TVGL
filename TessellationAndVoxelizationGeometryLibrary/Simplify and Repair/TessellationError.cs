@@ -93,6 +93,7 @@ namespace TVGL
                 {
                     ts.Errors = null;
                     Debug.WriteLine("Repair successfully fixed the model.");
+            CheckModelIntegrity(ts, false);
                     return;
                 }
                 Debug.WriteLine("Repair did not successfully fix all the problems.");
@@ -301,10 +302,11 @@ namespace TVGL
 
         private bool DivideUpNonTriangularFaces(TessellatedSolid ts)
         {
-            var newFaces = new List<PolygonalFace>();
+            var allNewFaces = new List<PolygonalFace>();
             var singleSidedEdges = new HashSet<Edge>();
             foreach (var nonTriangularFace in ts.Errors.NonTriangularFaces)
             {
+                var newFaces = new List<PolygonalFace>();
                 foreach (var edge in nonTriangularFace.Edges)
                 {
                     if (!singleSidedEdges.Contains(edge)) singleSidedEdges.Add(edge);
@@ -312,15 +314,17 @@ namespace TVGL
                 var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { nonTriangularFace.Vertices }, nonTriangularFace.Normal);
                 foreach (var triangle in triangles)
                 {
-                    var newFace = new PolygonalFace(triangle, nonTriangularFace.Normal);
+                    var newFace = new PolygonalFace(triangle, nonTriangularFace.Normal) { color = nonTriangularFace.color };
                     newFaces.Add(newFace);
                 }
+                ts.AddPrimitive(new Flat(newFaces));
+                allNewFaces.AddRange(newFaces);
             }
             ts.RemoveFaces(ts.Errors.NonTriangularFaces);
             ts.Errors.NonTriangularFaces = null;
             ts.MostPolygonSides = 3;
             ts.Errors.SingledSidedEdges = singleSidedEdges.ToList();
-            return LinkUpNewFaces(newFaces, ts);
+            return LinkUpNewFaces(allNewFaces, ts);
         }
 
         private bool RepairMissingFacesFromEdges(TessellatedSolid ts)

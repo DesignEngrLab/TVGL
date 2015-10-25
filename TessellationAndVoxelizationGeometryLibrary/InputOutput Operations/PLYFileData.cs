@@ -142,36 +142,39 @@ namespace TVGL.IOFunctions
                     vertIndices[j] = (int)Math.Round(numbers[1 + j], 0);
                 FaceToVertexIndices.Add(vertIndices);
 
-                if (numbers.GetLength(0) == 1 + numVerts + ColorDescriptor.Count)
+                if (ColorDescriptor.Any())
                 {
-                    float a = 0, r = 0, g = 0, b = 0;
-                    for (int index = 0; index < ColorDescriptor.Count; index++)
+                    if (numbers.GetLength(0) >= 1 + numVerts + ColorDescriptor.Count)
                     {
-                        var colorElements = ColorDescriptor[index];
-                        float value = (float)numbers[1 + numVerts + i];
-                        switch (colorElements)
+                        float a = 0, r = 0, g = 0, b = 0;
+                        for (int j = 0; j < ColorDescriptor.Count; j++)
                         {
-                            case ColorElements.Red:
-                                r = (ColorIsFloat) ? value : value / 255f;
-                                break;
-                            case ColorElements.Green:
-                                g = (ColorIsFloat) ? value : value / 255f;
-                                break;
-                            case ColorElements.Blue:
-                                b = (ColorIsFloat) ? value : value / 255f;
-                                break;
-                            case ColorElements.Opacity:
-                                a = (ColorIsFloat) ? value : value / 255f;
-                                break;
-                        }
+                            var colorElements = ColorDescriptor[j];
+                            float value = (float)numbers[1 + numVerts + j];
+                            switch (colorElements)
+                            {
+                                case ColorElements.Red:
+                                    r = (ColorIsFloat) ? value : value / 255f;
+                                    break;
+                                case ColorElements.Green:
+                                    g = (ColorIsFloat) ? value : value / 255f;
+                                    break;
+                                case ColorElements.Blue:
+                                    b = (ColorIsFloat) ? value : value / 255f;
+                                    break;
+                                case ColorElements.Opacity:
+                                    a = (ColorIsFloat) ? value : value / 255f;
+                                    break;
+                            }
 
+                        }
+                        var currentColor = new Color(a, r, g, b);
+                        HasColorSpecified = true;
+                        if (_lastColor == null || !_lastColor.Equals(currentColor))
+                            _lastColor = currentColor;
                     }
-                    var currentColor = new Color(1f, r, g, b);
-                    HasColorSpecified = true;
-                    if (_lastColor == null || !_lastColor.Equals(currentColor))
-                        _lastColor = currentColor;
+                    if (_lastColor != null) Colors.Add(_lastColor);
                 }
-                Colors.Add(_lastColor);
             }
             return true;
         }
@@ -199,7 +202,11 @@ namespace TVGL.IOFunctions
                 line = ReadLine(reader);
                 string id, values;
                 ParseLine(line, out id, out values);
-                if (id.Equals("comment")) Comments.Add(values);
+                if (id.Equals("comment"))
+                {
+                    if (Comments == null) Comments = new List<string>();
+                    Comments.Add(values);
+                }
                 else if (id.Equals("element"))
                 {
                     string numberString;
@@ -245,8 +252,8 @@ namespace TVGL.IOFunctions
                              || restString.Equals("a", StringComparison.OrdinalIgnoreCase))
                         ColorDescriptor.Add(ColorElements.Opacity);
                     else continue;
-                    ColorIsFloat = typeString.Equals("float", StringComparison.OrdinalIgnoreCase)
-                                   || typeString.Equals("double", StringComparison.OrdinalIgnoreCase);
+                    ColorIsFloat = typeString.StartsWith("float", StringComparison.OrdinalIgnoreCase)
+                                   || typeString.StartsWith("double", StringComparison.OrdinalIgnoreCase);
                 }
             } while (!line.Equals("end_header"));
         }

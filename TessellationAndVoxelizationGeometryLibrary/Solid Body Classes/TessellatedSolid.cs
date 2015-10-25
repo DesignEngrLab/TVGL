@@ -206,7 +206,7 @@ namespace TVGL
         /// </summary>
         /// <value>The largest polygon.</value>
         public int MostPolygonSides { get; internal set; }
-
+        public List<PrimitiveSurface> Primitives { get; private set; }
         #endregion
 
         #region Constructors
@@ -608,7 +608,7 @@ namespace TVGL
         private void DefineFaceColors(IList<Color> colors = null)
         {
             HasUniformColor = true;
-            if (colors == null) SolidColor = new Color(Constants.DefaultColor);
+            if (colors == null || !colors.Any()) SolidColor = new Color(Constants.DefaultColor);
             else if (colors.Count == 1) SolidColor = colors[0];
             else HasUniformColor = false;
             for (int i = 0; i < Faces.Length; i++)
@@ -1080,6 +1080,17 @@ namespace TVGL
             }
         }
         #endregion
+
+        /// <summary>
+        /// Adds the primitive.
+        /// </summary>
+        /// <param name="p">The p.</param>
+        public void AddPrimitive(PrimitiveSurface p)
+        {
+            if (Primitives == null) Primitives = new List<PrimitiveSurface>();
+            Primitives.Add(p);
+        }
+
         #endregion
 
         /// <summary>
@@ -1097,6 +1108,5 @@ namespace TVGL
             if (success) Errors = null;
             return success;
         }
-
     }
 }

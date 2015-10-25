@@ -14,6 +14,8 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {
+        "../../../TestFiles/bun000.ply",
+        "../../../TestFiles/cube.ply",
         "../../../TestFiles/airplane.ply",
         //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
         //"../../../TestFiles/Beam_Boss.STL",
@@ -73,7 +75,7 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
                 TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-                TestSimplify(ts[0]);
+               // TestSimplify(ts[0]);
                 //TestSlice(ts[0]);
                 // TestOBB(ts[0],filename);
                 //var filename2 = filenames[i+1];
