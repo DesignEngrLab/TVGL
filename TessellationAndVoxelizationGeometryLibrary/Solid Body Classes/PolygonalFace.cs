@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -297,16 +296,15 @@ namespace TVGL
         /// Gets the adjacent faces.
         /// </summary>
         /// <value>The adjacent faces.</value>
-        public PolygonalFace[] AdjacentFaces
+        public List<PolygonalFace> AdjacentFaces
         {
             get
             {
-                var adjacentFaces = new PolygonalFace[3];
-                var i = 0;
+                var adjacentFaces = new List<PolygonalFace>();
                 foreach (var e in Edges)
                 {
-                    if (e == null) adjacentFaces[i++] = null;
-                    else adjacentFaces[i++] = (this == e.OwnedFace) ? e.OtherFace : e.OwnedFace;
+                    if (e == null) adjacentFaces.Add(null);
+                    else adjacentFaces.Add((this == e.OwnedFace) ? e.OtherFace : e.OwnedFace);
                 }
                 return adjacentFaces;
             }

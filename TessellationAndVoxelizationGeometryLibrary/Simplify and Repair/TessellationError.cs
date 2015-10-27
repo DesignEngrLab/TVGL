@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using StarMathLib;
 
 namespace TVGL
@@ -71,6 +70,8 @@ namespace TVGL
                 if (!edge.From.Edges.Contains(edge)) storeVertDoesNotLinkBackToEdge(ts, edge, edge.From);
                 if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2 * Math.PI)
                     storeEdgeHasBadAngle(ts, edge);
+                if (edge.To.PartofConvexHull && edge.From.PartofConvexHull && edge.InternalAngle > Math.PI)
+                    storeEdgeWithConcaveAngle(ts, edge);
             }
             //Check if each vertex has cyclic references with each edge and each face.
             foreach (var vertex in ts.Vertices)
@@ -93,13 +94,14 @@ namespace TVGL
                 {
                     ts.Errors = null;
                     Debug.WriteLine("Repair successfully fixed the model.");
-            CheckModelIntegrity(ts, false);
-                    return;
                 }
-                Debug.WriteLine("Repair did not successfully fix all the problems.");
+                else Debug.WriteLine("Repair did not successfully fix all the problems.");
+                CheckModelIntegrity(ts, false);
+                return;
             }
             ts.Errors.Report();
         }
+
 
         public void Report()
         {
@@ -284,12 +286,22 @@ namespace TVGL
             if (ts.Errors.DuplicateFaces == null) ts.Errors.DuplicateFaces = new List<int[]> { faceVertexIndices };
             else ts.Errors.DuplicateFaces.Add(faceVertexIndices);
         }
+        internal static void storeEdgeWithConcaveAngle(TessellatedSolid ts, Edge edge)
+        {
+            if (ts.Errors == null) ts.Errors = new TessellationError();
+            if (ts.Errors.EdgesWithBadAngle == null) ts.Errors.EdgesWithBadAngle = new List<Edge> { edge };
+            else ts.Errors.EdgesWithBadAngle.Add(edge);
+        }
+
+
         #endregion
         #region Repair Functions
 
         internal bool Repair(TessellatedSolid ts)
         {
             var completelyRepaired = true;
+            if (EdgesWithBadAngle != null)
+                completelyRepaired = completelyRepaired && FlipFacesBasedOnBadAngles(ts);
             if (NonTriangularFaces != null)
                 completelyRepaired = completelyRepaired && DivideUpNonTriangularFaces(ts);
             if (SingledSidedEdges != null) //what about faces with only one or two edges?
@@ -299,6 +311,40 @@ namespace TVGL
 
             return completelyRepaired;
         }
+
+        private bool FlipFacesBasedOnBadAngles(TessellatedSolid ts)
+        {
+            var edgesWithBadAngles = new HashSet<Edge>(ts.Errors.EdgesWithBadAngle);
+            var facesToConsider = new HashSet<PolygonalFace>(
+                edgesWithBadAngles.SelectMany(e => new[] { e.OwnedFace, e.OtherFace }).Distinct());
+            var allEdgesToUpdate = new HashSet<Edge>();
+            foreach (var face in facesToConsider)
+            {
+                var edgesToUpdate = new List<Edge>();
+                foreach (var edge in face.Edges)
+                {
+                    if (edgesWithBadAngles.Contains(edge)) edgesToUpdate.Add(edge);
+                    else if (facesToConsider.Contains((edge.OwnedFace == face) ? edge.OtherFace : edge.OwnedFace))
+                        edgesToUpdate.Add(edge);
+                    else break;
+                }
+                if (edgesToUpdate.Count < face.Edges.Count) continue;
+                face.Normal = face.Normal.multiply(-1);
+                face.Edges.Reverse();
+                face.Vertices.Reverse();
+                foreach (var edge in edgesToUpdate)
+                    if (!allEdgesToUpdate.Contains(edge)) allEdgesToUpdate.Add(edge);
+            }
+            foreach (var edge in allEdgesToUpdate)
+            {
+                edge.Update();
+                ts.Errors.EdgesWithBadAngle.Remove(edge);
+            }
+            if (ts.Errors.EdgesWithBadAngle.Any()) return false;
+            ts.Errors.EdgesWithBadAngle = null;
+            return true;
+        }
+
 
         private bool DivideUpNonTriangularFaces(TessellatedSolid ts)
         {
@@ -514,7 +560,7 @@ namespace TVGL
                 {
                     if (face == negligibleFace || face == secondFace)
                         continue; //We don't need to do anything with these faces for now.
-                    //Replace the vertices from this face. Keep the normal, or add guess bool. normalIsGuess.
+                                  //Replace the vertices from this face. Keep the normal, or add guess bool. normalIsGuess.
                     var newFaceVertexList = new List<Vertex>(face.Vertices);
                     newFaceVertexList.Remove(otherVertex);
                     newFaceVertexList.Add(collapseToVertex);

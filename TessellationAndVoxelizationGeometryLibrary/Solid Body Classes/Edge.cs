@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using StarMathLib;
 
 namespace TVGL
@@ -197,6 +195,10 @@ namespace TVGL
         ///     <c>true</c> if [is part of the convex hull]; otherwise, <c>false</c>.
         /// </value>
         public bool PartofConvexHull { get; internal set; }
+        /// <summary>
+        /// Gets the index in list.
+        /// </summary>
+        /// <value>The index in list.</value>
         public int IndexInList { get; internal set; }
 
         /// <summary>
@@ -217,14 +219,7 @@ namespace TVGL
             DefineInternalEdgeAngle();
             // if (double.IsNaN(InternalAngle)) throw new Exception();
         }
-
-        public void Reverse()
-        {
-            var temp = From;
-            From = To;
-            To = temp;
-            Vector = Vector.multiply(-1);
-        }
+        
         /// <summary>
         ///     Defines the edge angle.
         /// </summary>
@@ -261,7 +256,10 @@ namespace TVGL
                  * is in the wrong direction. When OwnedFace and OppositeFace were defined
                  * it was arbitrary anyway - so this is another by-product of this method - 
                  * correct the owned and opposite faces. */
-                Reverse();
+                var temp = From;
+                From = To;
+                To = temp;
+                Vector = Vector.multiply(-1);
             }
             // it would be messed up if both faces thought they owned this edge. If this is the 
             // case, return the edge has no angle.
