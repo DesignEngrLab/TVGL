@@ -54,9 +54,25 @@ namespace TVGL
             return boundingBox2;
         }
 
+        /// <summary>
+        /// Finds the minimum bounding box.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
         {
-            return Find_via_PCA_Approach(ts);
+            return Find_via_PCA_Approach(ts.ConvexHullVertices, ts.ConvexHullFaces);
+        }
+
+        /// <summary>
+        /// Finds the minimum bounding box.
+        /// </summary>
+        /// <param name="convexHullVertices">The convex hull vertices.</param>
+        /// <param name="convexHullFaces">The convex hull faces.</param>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingBox OrientedBoundingBox(IList<Vertex> convexHullVertices, IEnumerable<PolygonalFace> convexHullFaces)
+        {
+            return Find_via_PCA_Approach(convexHullVertices, convexHullFaces);
         }
 
         /// <summary>
@@ -116,10 +132,10 @@ namespace TVGL
         /// Ex. Dimitrov showed in 2009 that continuous PCA yeilds a volume 4x optimal for a octahedron
         /// http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
         /// </accuracy>
-        private static BoundingBox Find_via_PCA_Approach(TessellatedSolid ts)
+        private static BoundingBox Find_via_PCA_Approach(IList<Vertex> convexHullVertices, IEnumerable<PolygonalFace> convexHullFaces)
         {
             //Find a continuous set of 3 dimensional vextors with constant density
-            var triangles = new List<PolygonalFace>(ts.ConvexHullFaces);
+            var triangles = new List<PolygonalFace>(convexHullFaces);
             var totalArea = 0.0;
             var minVolume = double.PositiveInfinity;
             //Set the area for each triangle and its center vertex 
@@ -182,7 +198,7 @@ namespace TVGL
             //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
-                var OBB = FindOBBAlongDirection(ts.ConvexHullVertices, eigenVector.normalize());
+                var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize());
                 if (OBB.Volume < minVolume)
                 {
                     minVolume = OBB.Volume;
