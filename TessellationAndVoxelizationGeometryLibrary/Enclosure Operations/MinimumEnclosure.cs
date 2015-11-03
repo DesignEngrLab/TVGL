@@ -39,18 +39,27 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox_Test(TessellatedSolid ts, out List<List<double[]>> volumeData1, out List<List<double[]>> volumeData2)
+        public static BoundingBox OrientedBoundingBox_Test(TessellatedSolid ts, out List<List<double[]>> volumeData1)//, out List<List<double[]>> volumeData2)
         {
             volumeData1 = null;
-            volumeData2 = null;
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
             var now = DateTime.Now;
             Debug.WriteLine("Beginning OBB Test");
-            var boundingBox1 = Find_via_MC_ApproachOne(ts, out volumeData1);
-            Debug.WriteLine("Time Elapsed for MC Approach One = " + (DateTime.Now - now));
+            var boundingBox1 = OrientedBoundingBox(ts);
+            Debug.WriteLine("Time Elapsed for PCA Approach = " + (DateTime.Now - now));
+            Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
             now = DateTime.Now;
-            var boundingBox2 = Find_via_BM_ApproachTwo(ts, out volumeData2);
-            Debug.WriteLine("Time Elapsed for BM Approach Two = " + (DateTime.Now - now));
+            var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts);
+            Debug.WriteLine("Time Elapsed for ChanTan Approach = " + (DateTime.Now - now));
+            Debug.WriteLine("Volume for ChanTan Approach = " + boundingBox2.Volume);
+            //now = DateTime.Now;
+            //Debug.WriteLine("Beginning OBB Test");
+            //var boundingBox1 = Find_via_MC_ApproachOne(ts, out volumeData1);
+            //Debug.WriteLine("Time Elapsed for MC Approach One = " + (DateTime.Now - now));
+            //now = DateTime.Now;
+            //var boundingBox2 = Find_via_BM_ApproachTwo(ts, out volumeData2);
+            //Debug.WriteLine("Time Elapsed for BM Approach Two = " + (DateTime.Now - now));
+
             return boundingBox2;
         }
 
@@ -90,26 +99,26 @@ namespace TVGL
         #region ChanTan AABB Approach
         private static BoundingBox Find_via_ChanTan_AABB_Approach(TessellatedSolid ts)
         {
-            //Find OBB along x axis <1,0,0>.
-            var direction1 = new [] {1.0, 0.0, 0.0};
-            var previousObb = FindOBBAlongDirection(ts.ConvexHullVertices, direction1);
-            var continueBool = true;
-            //While improvement is being made,
-            while (continueBool)
+            var minOBB = new BoundingBox()
             {
-                continueBool = false;
+                Volume = double.PositiveInfinity,
+                Directions = new[] { new[] { 1.0, 0.0, 0.0 }, new[] { 0.0, 1.0, 0.0 }, new[] { 0.0, 0.0, 1.0 } }
+            };
+            bool improvementFound;
+            do
+            {
+                improvementFound = false;
                 //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
                 for (var i = 1; i < 3; i++)
                 {
-                    var newObb = FindOBBAlongDirection(ts.ConvexHullVertices, previousObb.Directions[i]);
-                    if (newObb.Volume < previousObb.Volume)
-                    {
-                        previousObb = newObb;
-                        continueBool = true;
-                    }
+                    var newObb = FindOBBAlongDirection(ts.ConvexHullVertices, minOBB.Directions[i]);
+                    if (newObb.Volume >= minOBB.Volume) continue;
+                    minOBB = newObb;
+                    improvementFound = true;
+                    break;
                 }
-            }
-            return previousObb;
+            } while (improvementFound);
+            return minOBB;
         }
         #endregion
 
@@ -154,7 +163,7 @@ namespace TVGL
             }
 
             //Calculate the center of gravity of combined triangles
-            var c = new [] { 0.0, 0.0, 0.0 };
+            var c = new[] { 0.0, 0.0, 0.0 };
             foreach (var triangle in triangles)
             {
                 //Find the triangle weight based proportional to area
@@ -312,11 +321,11 @@ namespace TVGL
                 var r = convexHullEdge.Vector.normalize();
                 var n = convexHullEdge.OwnedFace.Normal;
                 var internalAngle = convexHullEdge.InternalAngle;
-                
+
                 //Check for exceptions and special cases.
                 //Skip the edge if its internal angle is practically 0 or 180 since.
-                if( Math.Abs(internalAngle - Math.PI) < 0.0001 || Math.Round(internalAngle, 5).IsNegligible()) continue;
-                if (convexHullEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition"); 
+                if (Math.Abs(internalAngle - Math.PI) < 0.0001 || Math.Round(internalAngle, 5).IsNegligible()) continue;
+                if (convexHullEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
                 //r cross owned face normal should point along the other face normal.
                 if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0) throw new Exception();
 
@@ -326,7 +335,7 @@ namespace TVGL
 
                 //Set the sampling parameters
                 var numSamples = (int)Math.Ceiling((Math.PI - internalAngle) / MaxDeltaAngle);
-                if (numSamples < 20 ) numSamples = 20; //At minimum, take tewnty samples
+                if (numSamples < 20) numSamples = 20; //At minimum, take tewnty samples
                 var deltaAngle = (Math.PI - internalAngle) / numSamples;
                 if (Math.Round(internalAngle, 5).IsNegligible()) continue;
 
@@ -358,7 +367,7 @@ namespace TVGL
                         var c = Math.Cos(angleChange);
                         var t = 1.0 - c;
                         //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
-                        var rotMatrix = new [,]
+                        var rotMatrix = new[,]
                         {
                             {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
                             {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
@@ -367,10 +376,10 @@ namespace TVGL
                         direction = rotMatrix.multiply(n).normalize();
                     }
                     if (double.IsNaN(direction[0])) throw new Exception();
-                 
+
                     if (debugDepth1 && seriesData.Count == 15) debugDepth1 = true;
                     var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction);
-                    
+
 
                     #region Test for computing OBB volume when vertices are constant
                     if (obb.ExtremeVertices[1] == vertex1)
@@ -390,14 +399,14 @@ namespace TVGL
                     if (obb.ExtremeVertices[2] == vertex3 && obb.ExtremeVertices[3] == vertex4 &&
                         obb.ExtremeVertices[4] == vertex5 && obb.ExtremeVertices[5] == vertex6 &&
                         obb.EdgeVertices[0] == edgeVertex1 && obb.EdgeVertices[1] == edgeVertex2)
-                    {   
+                    {
                         //Calculate new area, given that the edge from rotating calipers and all the extreme vertices are the same
                         var direction1 = rotatingCaliperEdgeVector.crossProduct(direction);
                         var direction2 = direction1.crossProduct(direction);
                         Vertex vLow, vHigh;
                         var length = GetLengthAndExtremeVertices(direction1, vertexList, out vLow, out vHigh);
                         var width = GetLengthAndExtremeVertices(direction2, vertexList, out vLow, out vHigh);
-                        var area = length * width;                     
+                        var area = length * width;
                         //if (Math.Abs(area - obb.Area) > tolerance) throw new Exception("equation incorrect");
                     }
                     else //Update the vertices
@@ -432,18 +441,18 @@ namespace TVGL
         /// This golden section search finds the minimum between two angles, with the assumption that only one minimum exists, 
         /// and that both angle (data points) decrease in volume as they near the minimum (negative slopes).
         /// </summary>
-        private static BoundingBox FindMinimumBetweenTwoAngles_GoldenSections(IList<Vertex> convexHullVertices, double minAngle, 
+        private static BoundingBox FindMinimumBetweenTwoAngles_GoldenSections(IList<Vertex> convexHullVertices, double minAngle,
             double maxAngle, double[] faceNormal, double[] axisOfRotation, out double[] dataPoint)
         {
             dataPoint = new double[2];
-            var goldenRatio = (Math.Sqrt(5)-1)/2;
+            var goldenRatio = (Math.Sqrt(5) - 1) / 2;
             var tolerance = 1e-6;
             //Set x values
             var a = minAngle;
             var b = maxAngle;
             var c = b - goldenRatio * (b - a);
             var d = a + goldenRatio * (b - a);
-            
+
             //Perform golden section search
             while (Math.Abs(c - d) > tolerance)
             {
@@ -462,8 +471,8 @@ namespace TVGL
                     d = a + goldenRatio * (b - a);
                 }
             }
-            var minObb = OBBAlongDirectionFromAngle(faceNormal, axisOfRotation, (b+a)/2, convexHullVertices);
-            dataPoint[0] = (b+a)/2;
+            var minObb = OBBAlongDirectionFromAngle(faceNormal, axisOfRotation, (b + a) / 2, convexHullVertices);
+            dataPoint[0] = (b + a) / 2;
             dataPoint[1] = minObb.Volume;
             return minObb;
         }
@@ -524,7 +533,7 @@ namespace TVGL
 
                 //Check for exceptions and special cases.
                 //Skip the edge if its internal angle is practically 0 or 180.
-                if (internalAngle.IsPracticallySame(Math.PI, Constants.OBBAngleTolerance) || internalAngle.IsPracticallySame(0.0,Constants.OBBAngleTolerance)) continue;
+                if (internalAngle.IsPracticallySame(Math.PI, Constants.OBBAngleTolerance) || internalAngle.IsPracticallySame(0.0, Constants.OBBAngleTolerance)) continue;
                 if (convexHullEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
                 //r cross owned face normal should point along the other face normal.
                 var r = convexHullEdge.Vector.normalize();
@@ -533,7 +542,7 @@ namespace TVGL
                 //DEBUG STOP
                 var debugDepth1 = false;
                 if (volumeData.Count == 68) debugDepth1 = true;
-                
+
                 //Find the angle between the two faces that form this edge
                 var maxTheta = Math.PI - convexHullEdge.InternalAngle;
                 angleList.Add(0.0);
@@ -543,18 +552,18 @@ namespace TVGL
                 var xp = n;
                 var zp = convexHullEdge.Vector.normalize();
                 var yp = zp.crossProduct(xp).normalize();
-                var rotMatrix1 = new [,]
+                var rotMatrix1 = new[,]
                         {
                             {xp[0], xp[1], xp[2]},
                             {yp[0], yp[1], yp[2]},
                             {zp[0], zp[1], zp[2]}
-                        }; 
-                
+                        };
+
                 //Determine the sign of maxTheta
                 //If the new y value is pointing in the positive y direction, the rotation is positive (CCW around z)
                 var n2 = rotMatrix1.multiply(convexHullEdge.OtherFace.Normal);
                 var rotationDirection = Math.Sign(n2[1]); //CCW +
-                     
+
                 //Debug
                 var n1 = rotMatrix1.multiply(n);
                 if (!n1[0].IsPracticallySame(1.0)) throw new Exception(); //Should be pointing along x axis
@@ -595,7 +604,7 @@ namespace TVGL
                         }
                         //Make adjustment to bound rotAngle between 0 and 180
                         if (Math.Sign(rotAngle) < 0) rotAngle = Math.PI + rotAngle;
-                        
+
                         //Add angle to list if it is within the bounds
                         if (rotAngle > 0.0 && rotAngle < maxTheta) angleList.Add(rotAngle);
                     }
@@ -605,12 +614,12 @@ namespace TVGL
                     //Check whether this edge changes the rear extreme vertex 
                     //First, it will have a to/from position on both sides of the XY plane
                     //Or the one or both of the positions will be on the XY plane
-                    if ( positions[0][2].IsNegligible() || positions[1][2].IsNegligible() || Math.Sign(positions[0][2]) * Math.Sign(positions[1][2]) < 0 ) 
+                    if (positions[0][2].IsNegligible() || positions[1][2].IsNegligible() || Math.Sign(positions[0][2]) * Math.Sign(positions[1][2]) < 0)
                     {
-                        var arc1 = new[] {n1,n2};
+                        var arc1 = new[] { n1, n2 };
                         var arc2 = new[] { positions[0], positions[1] };
                         List<Vertex> intersections;
-                        if (!ArcGreatCircleIntersection(arc1, arc2, out intersections)) continue ; //if no intersection, continue
+                        if (!ArcGreatCircleIntersection(arc1, arc2, out intersections)) continue; //if no intersection, continue
                         foreach (var intersection in intersections)
                         {
                             //Get rotation angle to the intersection
@@ -629,7 +638,7 @@ namespace TVGL
                 var stepSize = 1E-8;
                 var priorAngle = double.NegativeInfinity;
                 //Remove Duplicate Angles
-                for (var i = 0; i < angleList.Count(); i++) 
+                for (var i = 0; i < angleList.Count(); i++)
                 {
                     var angle = angleList[i];
                     //if (Math.Abs(angle - priorAngle) < stepSize) 
@@ -643,7 +652,7 @@ namespace TVGL
                 double[] dataPoint1 = new double[] { 0.0, 0.0 };
                 double[] dataPoint2 = new double[] { 0.0, 0.0 };
                 double left1 = double.PositiveInfinity;
-                double right1 = double.PositiveInfinity; 
+                double right1 = double.PositiveInfinity;
                 double left2 = double.PositiveInfinity;
                 double right2 = double.PositiveInfinity;
                 var obbVertices = new List<Vertex>(); //Reset list
@@ -679,7 +688,7 @@ namespace TVGL
                     dataPoint1 = new double[] { dataPoint2[0], dataPoint2[1] };
                     priorAngle = angle;
                 }
-                if(angleList.Count > 0) volumeData.Add(seriesData);
+                if (angleList.Count > 0) volumeData.Add(seriesData);
                 #endregion
             }
             return minBox;
@@ -696,7 +705,7 @@ namespace TVGL
             {
                 //Create great circle one (GC1) along direction of arc.
                 //Intersections on this great circle will determine changes in length.
-                var greatCircle1 = new GreatCircleAlongArc(gaussianSphere, arc.Nodes[0].Vector, arc.Nodes[1].Vector,arc);
+                var greatCircle1 = new GreatCircleAlongArc(gaussianSphere, arc.Nodes[0].Vector, arc.Nodes[1].Vector, arc);
 
                 //Create great circle two (GC2) orthoganal to the current normal (n1).
                 //GC2 contains an arc list of all the arcs it intersects
@@ -705,7 +714,7 @@ namespace TVGL
                 //vector 2 is + 90 degrees in the direction of the arc.
                 var vector2 = vector1.crossProduct(arc.Nodes[0].Vector);
                 var greatCircle2 = new GreatCircleOrthogonalToArc(gaussianSphere, vector1, vector2, arc);
-                
+
                 //List intersections from GC1 and nodes from GC2 based on angle of rotation to each.
                 var delta = 0.0;
                 var totalChange = 0.0;
@@ -717,7 +726,7 @@ namespace TVGL
                     if (boundingBox.Volume < minVolume) minVolume = boundingBox.Volume;
 
                     //Set delta, where delta is the angle from the original orientation to the next intersection
-                    delta =+ delta;//+ intersections[0].angle
+                    delta = +delta;//+ intersections[0].angle
 
                     while (totalChange <= delta) //Optimize the volume based on changes is projection of the 2D Bounding Box.;
                     {
@@ -746,7 +755,7 @@ namespace TVGL
             }
             return minBox;
         }
-        #endregion   
+        #endregion
 
         #region Bounding Rectangle Corners (DELETE IF UNUSED IN DETERMINING MAX AREA)
         //private static void BoundingRectangleCorners(double[][] directions, List<Vertex> extremeVertices, Vertex vertexOnPlane, out List<Vertex> corners)
@@ -776,7 +785,7 @@ namespace TVGL
         //    }
         //}
         #endregion
-        
+
         #region ArcGreatCircleIntersection
         internal static bool ArcGreatCircleIntersection(double[][] arc1Vectors, double[][] arc2Vectors, out List<Vertex> intersections)
         {
@@ -824,10 +833,10 @@ namespace TVGL
                 if (dot2 < -1.0) dot2 = -1.0;
                 var l1 = Math.Acos(dot1);
                 var l2 = Math.Acos(dot2);
-                var total = (arc2Length - l1 - l2); 
+                var total = (arc2Length - l1 - l2);
                 if (Math.Abs(total) < 1e-6) //Needed more leniancy because of multiple Acos functions. 
                 {
-                    intersections.Add(new Vertex(vertices[i])); 
+                    intersections.Add(new Vertex(vertices[i]));
                 }
                 if (i == 1 && intersections.Count != 1) throw new Exception(); //must have 1 intersection
             }
@@ -865,16 +874,16 @@ namespace TVGL
             var v3High = boundingRectangle.PointPairs[1][1].References[0];
 
             //Get the direction vectors from rotating caliper and projection.
-            var tempDirection = new []
+            var tempDirection = new[]
             {
-                boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1], 
+                boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1],
                 boundingRectangle.Directions[0][2], 1.0
             };
             tempDirection = backTransform.multiply(tempDirection);
-            var direction2 = new [] {tempDirection[0], tempDirection[1], tempDirection[2]};
-            tempDirection = new []
+            var direction2 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            tempDirection = new[]
             {
-                boundingRectangle.Directions[1][0], boundingRectangle.Directions[1][1], 
+                boundingRectangle.Directions[1][0], boundingRectangle.Directions[1][1],
                 boundingRectangle.Directions[1][2], 1.0
             };
             tempDirection = backTransform.multiply(tempDirection);
@@ -884,8 +893,8 @@ namespace TVGL
             //todo: Fix Get2DProjectionPoints, which seems to be transforming the points to 2D, but not normal to
             //the given direction vector. If it was normal, direction1 should equal direction or its direction.inverse.
 
-            return new BoundingBox(depth, boundingRectangle.Area, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High},
-                new[] { direction1, direction2, direction3}, boundingRectangle.EdgeVertices);
+            return new BoundingBox(depth, boundingRectangle.Area, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High },
+                new[] { direction1, direction2, direction3 }, boundingRectangle.EdgeVertices);
         }
         #endregion
 
@@ -928,7 +937,7 @@ namespace TVGL
             var numCvxPoints = cvxPoints.Count;
             var extremeIndices = new int[4];
 
-           //        extremeIndices[3] => max-Y
+            //        extremeIndices[3] => max-Y
             extremeIndices[3] = cvxPoints.Count - 1;
             //Check if first point has a higher y value (only when point is both min-x and max-Y)
             if (cvxPoints[0][1] > cvxPoints[extremeIndices[3]][1]) extremeIndices[3] = 0;
@@ -1004,12 +1013,12 @@ namespace TVGL
                 }
                 var delta = deltaAngles.Min();
                 angle = delta;
-                if (angle > Math.PI / 2 && !angle.IsPracticallySame( Math.PI / 2))
+                if (angle > Math.PI / 2 && !angle.IsPracticallySame(Math.PI / 2))
                 {
                     flag = true; //Exit while
                     continue;
                 }
-                    
+
                 deltaToUpdateIndex = deltaAngles.FindIndex(delta);
                 #endregion
 
@@ -1032,8 +1041,8 @@ namespace TVGL
                 var angleVector1 = new[] { -direction[1], direction[0] };
                 var width = Math.Abs(vectorWidth.dotProduct(angleVector1));
                 var vectorHeight = new[]
-                { 
-                    cvxPoints[extremeIndices[3]][0] - cvxPoints[extremeIndices[1]][0], 
+                {
+                    cvxPoints[extremeIndices[3]][0] - cvxPoints[extremeIndices[1]][0],
                     cvxPoints[extremeIndices[3]][1] - cvxPoints[extremeIndices[1]][1]
                 };
                 var angleVector2 = new[] { direction[0], direction[1] };
@@ -1045,10 +1054,10 @@ namespace TVGL
                 {
                     minArea = tempArea;
                     bestAngle = angle;
-                    pointPair1 = new [] { cvxPoints[extremeIndices[2]], cvxPoints[extremeIndices[0]]};
-                    pointPair2 = new [] { cvxPoints[extremeIndices[3]], cvxPoints[extremeIndices[1]] };
-                    direction1 = new [] { angleVector1[0], angleVector1[1], 0.0};
-                    direction2 = new [] { angleVector2[0], angleVector2[1], 0.0 };
+                    pointPair1 = new[] { cvxPoints[extremeIndices[2]], cvxPoints[extremeIndices[0]] };
+                    pointPair2 = new[] { cvxPoints[extremeIndices[3]], cvxPoints[extremeIndices[1]] };
+                    direction1 = new[] { angleVector1[0], angleVector1[1], 0.0 };
+                    direction2 = new[] { angleVector2[0], angleVector2[1], 0.0 };
                     edgeVertex1 = previousPoint.References[0];
                     edgeVertex2 = currentPoint.References[0];
                 }
@@ -1058,10 +1067,10 @@ namespace TVGL
             if (bestAngle.IsPracticallySame(Math.PI / 2)) { bestAngle = 0.0; }
             #endregion
 
-            var directions = new List<double[]>{direction1, direction2};
-            var extremePoints = new List<Point[]> {pointPair1, pointPair2};
+            var directions = new List<double[]> { direction1, direction2 };
+            var extremePoints = new List<Point[]> { pointPair1, pointPair2 };
             if (pointPair1 == null) minArea = 0.0;
-            var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints, new []{edgeVertex1, edgeVertex2});
+            var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints, new[] { edgeVertex1, edgeVertex2 });
             return boundingRectangle;
         }
         #endregion

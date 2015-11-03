@@ -73,10 +73,10 @@ namespace TVGL
             var area = 0.0;
             for (int i = 2; i < Vertices.Count; i++)
             {
-            var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
-            var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
-            // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-            area+= Math.Abs(edge1.crossProduct(edge2).dotProduct(this.Normal)) / 2;
+                var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
+                var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
+                // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
+                area += Math.Abs(edge1.crossProduct(edge2).dotProduct(this.Normal)) / 2;
             }
             return area;
         }
@@ -119,7 +119,7 @@ namespace TVGL
 
             n = normals.Count;
             if (n == 0) // this would happen if the face collapse to a line.
-                return normal.normalize();
+                return new[] { double.NaN, double.NaN, double.NaN};
             // before we just average these normals, let's check that they agree.
             // the dotProductsOfNormals simply takes the dot product of adjacent
             // normals. If they're all close to one, then we can average and return.
@@ -165,64 +165,6 @@ namespace TVGL
             return normals[0].normalize();
 
         }
-        private double[] DetermineNormal() //Assuming CCW order of vertices
-        {
-            var n = Vertices.Count;
-            var edgeVectors = new double[n][];
-            var normals = new List<double[]>();
-            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
-            for (var i = 1; i < n; i++)
-            {
-                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
-                var tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
-                if (!tempCross.Any(double.IsNaN))
-                    normals.Add(tempCross);
-            }
-            var lastCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
-            if (!lastCross.Any(double.IsNaN)) normals.Add(lastCross);
-
-            n = normals.Count;
-            if (n == 0) // this would happen if the face collapse to a line.
-                return new[] { 0.0, 0.0, 0.0 };
-            // before we just average these normals, let's check that they agree.
-            // the dotProductsOfNormals simply takes the dot product of adjacent
-            // normals. If they're all close to one, then we can average and return.
-            var dotProductsOfNormals = new List<double>();
-            dotProductsOfNormals.Add(normals[0].dotProduct(normals[n - 1]));
-            for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].dotProduct(normals[i - 1]));
-            // if all are close to one (or at least positive), then the face is a convex polygon. Now,
-            // we can simply average and return the answer.
-            IsConvex = (dotProductsOfNormals.All(x => x > 0));
-            var normal = new[] { 0.0, 0.0, 0.0 };
-            if (IsConvex)
-            {
-                // it's okay to overwrite the guess. If it didn't work above, no reason it
-                // should make sense now. 
-                normal = normals.Aggregate((current, c) => current.add(c));
-                return normal.normalize();
-            }
-            // now, the rare case in which the polygon face is not convex...
-            if (normal != null)
-            {
-                // well, here the guess may be useful. We'll insert it into the list of dotProducts
-                // and then do a tally
-                dotProductsOfNormals[0] = normal.dotProduct(normals[0]);
-                dotProductsOfNormals.Insert(0, normal.dotProduct(normals[n - 1]));
-            }
-            var likeFirstNormal = true;
-            var numLikeFirstNormal = 1;
-            foreach (var d in dotProductsOfNormals)
-            {   // this tricky little function keeps track of how many are in the same direction
-                // as the first one.
-                if (d < 0) likeFirstNormal = !likeFirstNormal;
-                if (likeFirstNormal) numLikeFirstNormal++;
-            }
-            // if the majority are like the first one, then use that one (which may have been the guess).
-            if (2 * numLikeFirstNormal >= normals.Count) return normals[0].normalize();
-            // otherwise, go with the opposite.
-            return normals[0].normalize().multiply(-1);
-        }
-
         /// <summary>
         /// Gets the is convex.
         /// </summary>
@@ -350,7 +292,9 @@ namespace TVGL
         //References are assumed to be the same.
         public void Update()
         {
-            Normal = DetermineNormal();
+            bool reverseVertexOrder;
+            Normal = DetermineNormal(out reverseVertexOrder, Normal);
+            if (reverseVertexOrder) Vertices.Reverse();
             Area = DetermineArea();
         }
 

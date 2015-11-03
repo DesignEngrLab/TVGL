@@ -18,7 +18,7 @@ namespace TVGLTest
         /// <param name="yAxis"></param>
         /// <param name="headers"></param>
         public static void CreateNewGraph(List<List<double[]>> values, string graphTitle = "", 
-             string xAxis = "", string yAxis = "", List<string> headers = null)
+             string xAxis = "", string yAxis = "", IList<string> headers = null)
         {
             //Create a new excel workbook and sheet
             Excel.Application xlApp;
