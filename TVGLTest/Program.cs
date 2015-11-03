@@ -65,27 +65,27 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
-            TestOBB("../../../TestFiles/");
+            TestOBB("../../../TestFiles/new");
             return;
-                for (var i = 0; i < filenames.Count(); i++)
-            {
-                var filename = filenames[i];
-                Console.WriteLine("Attempting: " + filename);
-                FileStream fileStream = File.OpenRead(filename);
-                var ts = IO.Open(fileStream, filename, false);
-                //MiscFunctions.IsSolidBroken(ts[0]);
+            //    for (var i = 0; i < filenames.Count(); i++)
+            //{
+            //    var filename = filenames[i];
+            //    Console.WriteLine("Attempting: " + filename);
+            //    FileStream fileStream = File.OpenRead(filename);
+            //    var ts = IO.Open(fileStream, filename, false);
+            //    //MiscFunctions.IsSolidBroken(ts[0]);
 
-                //TestClassification(ts[0]);
-                //TestXSections(ts[0]);
-                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-               // TestSimplify(ts[0]);
-                //TestSlice(ts[0]);
-                 TestOBB(ts[0],filename);
-                //var filename2 = filenames[i+1];
-                //FileStream fileStream2 = File.OpenRead(filename2);
-                //var ts2= IO.Open(fileStream2, filename2, false);
-                //TestInsideSolid(ts[0], ts2[0]);
-            }
+            //    //TestClassification(ts[0]);
+            //    //TestXSections(ts[0]);
+            //    //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
+            //   // TestSimplify(ts[0]);
+            //    //TestSlice(ts[0]);
+            //     TestOBB(ts[0],filename);
+            //    //var filename2 = filenames[i+1];
+            //    //FileStream fileStream2 = File.OpenRead(filename2);
+            //    //var ts2= IO.Open(fileStream2, filename2, false);
+            //    //TestInsideSolid(ts[0], ts2[0]);
+            //}
             Console.WriteLine("Completed.");
             Console.ReadKey();
         }
@@ -94,14 +94,21 @@ namespace TVGL_Test
         {
             var di = new DirectoryInfo(InputDir);
             var fis = di.EnumerateFiles();
+            var numVertices = new List<int>();
+            List<List<double[]>> VolumeData1 = new List<List<double[]>>();
             foreach (var fileInfo in fis)
             {
                 var ts = IO.Open(fileInfo.Open(FileMode.Open), fileInfo.Name);
-                List<List<double[]>> VolumeData1;
                 foreach (var tessellatedSolid in ts)
-                MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out VolumeData1);//, out VolumeData2);
-
+                {
+                  var nv= tessellatedSolid.ConvexHullVertices.Count();
+                    List<double> times, volumes;
+                    MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
+                    VolumeData1.Add(new List<double[]> { new[] { nv, times[0] }, new[] { nv, times[1] } });
+                }
             }
+           // TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
+            TVGLTest.ExcelInterface.CreateNewGraph(VolumeData1, "", "Methods", "Volume", new[] { "PCA", "ChanTan" });
         }
 
         private static void TestSimplify(TessellatedSolid ts)
@@ -118,19 +125,19 @@ namespace TVGL_Test
         //    TesselationToPrimitives.Run(ts);
         //}
 
-        private static void TestOBB(TessellatedSolid ts, string filename)
-        {
-            //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
-            //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
-            //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);\
-            //MiscFunctions.IsConvexHullBroken(ts);
-            List<List<double[]>> VolumeData1;
-          //  List<List<double[]>> VolumeData2;
-            var obb = MinimumEnclosure.OrientedBoundingBox_Test(ts, out VolumeData1);//, out VolumeData2);
-            //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
-            //TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
-        //   TVGLTest.ExcelInterface.CreateNewGraph(VolumeData1, "", "Methods", "Volume", new []{"PCA", "ChanTan"});
-        }
+        //private static void TestOBB(TessellatedSolid ts, string filename)
+        //{
+        //    //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
+        //    //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
+        //    //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);\
+        //    //MiscFunctions.IsConvexHullBroken(ts);
+        //    List<List<double[]>> VolumeData1;
+        //  //  List<List<double[]>> VolumeData2;
+        //    var obb = MinimumEnclosure.OrientedBoundingBox_Test(ts, out VolumeData1);//, out VolumeData2);
+        //    //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
+        //    //TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
+        ////   TVGLTest.ExcelInterface.CreateNewGraph(VolumeData1, "", "Methods", "Volume", new []{"PCA", "ChanTan"});
+        //}
 
         private static void TestInsideSolid(TessellatedSolid ts1, TessellatedSolid ts2)
         {

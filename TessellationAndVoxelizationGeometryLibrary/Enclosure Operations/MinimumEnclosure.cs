@@ -39,17 +39,22 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox_Test(TessellatedSolid ts, out List<List<double[]>> volumeData1)//, out List<List<double[]>> volumeData2)
+        public static BoundingBox OrientedBoundingBox_Test(TessellatedSolid ts, out List<double> times, out List<double> volumes)//, out List<List<double[]>> volumeData2)
         {
-            volumeData1 = null;
+            times = new List<double>();
+            volumes = new List<double>();
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
             var now = DateTime.Now;
             Debug.WriteLine("Beginning OBB Test");
             var boundingBox1 = OrientedBoundingBox(ts);
-            Debug.WriteLine("Time Elapsed for PCA Approach = " + (DateTime.Now - now));
-            Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
+            times.Add((DateTime.Now - now).TotalMilliseconds);
+            volumes.Add(boundingBox1.Volume);
+            //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
+            //Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
             now = DateTime.Now;
             var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts);
+            times.Add((DateTime.Now - now).TotalMilliseconds);
+            volumes.Add(boundingBox2.Volume);
             Debug.WriteLine("Time Elapsed for ChanTan Approach = " + (DateTime.Now - now));
             Debug.WriteLine("Volume for ChanTan Approach = " + boundingBox2.Volume);
             //now = DateTime.Now;
