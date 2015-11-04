@@ -17,7 +17,7 @@ namespace TVGLTest
         /// <param name="xAxis"></param>
         /// <param name="yAxis"></param>
         /// <param name="headers"></param>
-        public static void CreateNewGraph(List<List<double[]>> values, string graphTitle = "", 
+        public static void CreateNewGraph(IList<List<double[]>> values, string graphTitle = "", 
              string xAxis = "", string yAxis = "", IList<string> headers = null)
         {
             //Create a new excel workbook and sheet
@@ -36,23 +36,24 @@ namespace TVGLTest
             {
                 for (var i = 0; i < headers.Count; i++)
                 {
-                    xlWorksheet.Cells[1, i].Value = headers[i];
+                    xlWorksheet.Cells[2, i+1].Value = headers[i];
                 }
             }
-            
+
             //Set data
             //Find number of columns required
-            
+            var row = 2;
             for (var i = 0; i < values.Count; i++) //Column
             {
                 for (var j = 0; j < values[i].Count; j++) //Row
                 {
                     for (var k = 0; k < values[i][j].Count(); k++) //Column offset for items in double[]
                     {
-                        var row = j+2; //+1 for excel, +1 for headers
-                        var column = i + k + 1;
+                      //  var row = i +j+2; //+1 for excel, +1 for headers
+                        var column =  k + 1;
                         xlWorksheet.Cells[row, column] = values[i][j][k];
                     }  
+                row++;
                 }
             }
             

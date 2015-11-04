@@ -65,7 +65,7 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
-            TestOBB("../../../TestFiles/new");
+            TestOBB("../../../TestFiles/");
             return;
             //    for (var i = 0; i < filenames.Count(); i++)
             //{
@@ -95,20 +95,23 @@ namespace TVGL_Test
             var di = new DirectoryInfo(InputDir);
             var fis = di.EnumerateFiles();
             var numVertices = new List<int>();
-            List<List<double[]>> VolumeData1 = new List<List<double[]>>();
+            var data = new List<double[]>();
             foreach (var fileInfo in fis)
             {
-                var ts = IO.Open(fileInfo.Open(FileMode.Open), fileInfo.Name);
-                foreach (var tessellatedSolid in ts)
+                try
                 {
-                  var nv= tessellatedSolid.ConvexHullVertices.Count();
-                    List<double> times, volumes;
-                    MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
-                    VolumeData1.Add(new List<double[]> { new[] { nv, times[0] }, new[] { nv, times[1] } });
+                    var ts = IO.Open(fileInfo.Open(FileMode.Open), fileInfo.Name);
+                    foreach (var tessellatedSolid in ts)
+                    {
+                        List<double> times, volumes;
+                        MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
+                        data.Add(new[] { tessellatedSolid.ConvexHullVertices.Count(), tessellatedSolid.Volume, times[0], times[1], volumes[0], volumes[1] });
+                    }
                 }
+                catch { }
             }
-           // TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
-            TVGLTest.ExcelInterface.CreateNewGraph(VolumeData1, "", "Methods", "Volume", new[] { "PCA", "ChanTan" });
+            // TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
+            TVGLTest.ExcelInterface.CreateNewGraph(new[] { data }, "", "Methods", "Volume", new[] { "PCA", "ChanTan" });
         }
 
         private static void TestSimplify(TessellatedSolid ts)
