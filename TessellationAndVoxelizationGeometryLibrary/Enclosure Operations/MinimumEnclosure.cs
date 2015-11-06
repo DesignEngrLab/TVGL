@@ -46,13 +46,21 @@ namespace TVGL
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
             var now = DateTime.Now;
             Debug.WriteLine("Beginning OBB Test");
-            var boundingBox1 = OrientedBoundingBox(ts);
+            var boundingBox1 = Find_via_PCA_ApproachBM(ts.ConvexHullVertices, ts.ConvexHullFaces);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox1.Volume);
             //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
             //Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
             now = DateTime.Now;
-            var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts);
+            Debug.WriteLine("Beginning OBB Test");
+
+            var boundingBox12 = Find_via_PCA_ApproachNR(ts.ConvexHullVertices);
+            times.Add((DateTime.Now - now).TotalMilliseconds);
+            volumes.Add(boundingBox12.Volume);
+            //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
+            //Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
+            now = DateTime.Now;
+            var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts.ConvexHullVertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox2.Volume);
             Debug.WriteLine("Time Elapsed for ChanTan Approach = " + (DateTime.Now - now));
@@ -75,7 +83,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
         {
-            return Find_via_PCA_Approach(ts.ConvexHullVertices, ts.ConvexHullFaces);
+            return Find_via_ChanTan_AABB_Approach(ts.ConvexHullVertices);
         }
 
         /// <summary>
@@ -84,9 +92,9 @@ namespace TVGL
         /// <param name="convexHullVertices">The convex hull vertices.</param>
         /// <param name="convexHullFaces">The convex hull faces.</param>
         /// <returns>BoundingBox.</returns>
-        public static BoundingBox OrientedBoundingBox(IList<Vertex> convexHullVertices, IEnumerable<PolygonalFace> convexHullFaces)
+        public static BoundingBox OrientedBoundingBox(IList<Vertex> convexHullVertices)
         {
-            return Find_via_PCA_Approach(convexHullVertices, convexHullFaces);
+            return Find_via_ChanTan_AABB_Approach(convexHullVertices);
         }
 
         /// <summary>
@@ -102,7 +110,7 @@ namespace TVGL
         }
 
         #region ChanTan AABB Approach
-        private static BoundingBox Find_via_ChanTan_AABB_Approach(TessellatedSolid ts)
+        private static BoundingBox Find_via_ChanTan_AABB_Approach(IList<Vertex> convexHullVertices)
         {
             var minOBB = new BoundingBox()
             {
@@ -116,7 +124,7 @@ namespace TVGL
                 //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
                 for (var i = 1; i < 3; i++)
                 {
-                    var newObb = FindOBBAlongDirection(ts.ConvexHullVertices, minOBB.Directions[i]);
+                    var newObb = FindOBBAlongDirection(convexHullVertices, minOBB.Directions[i]);
                     if (newObb.Volume >= minOBB.Volume) continue;
                     minOBB = newObb;
                     improvementFound = true;
@@ -146,26 +154,64 @@ namespace TVGL
         /// Ex. Dimitrov showed in 2009 that continuous PCA yeilds a volume 4x optimal for a octahedron
         /// http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
         /// </accuracy>
-        private static BoundingBox Find_via_PCA_Approach(IList<Vertex> convexHullVertices, IEnumerable<PolygonalFace> convexHullFaces)
+        private static BoundingBox Find_via_PCA_ApproachNR(IList<Vertex> convexHullVertices)
+        {
+            var m = new double[3];
+            // loop over the points to find the mean point location
+            foreach (var point in convexHullVertices)
+                m = m.add(point.Position);
+            m = m.divide(convexHullVertices.Count);
+            var C = new double[3, 3];
+            var m00 = m[0] * m[0];
+            var m01 = m[0] * m[1];
+            var m02 = m[0] * m[2];
+            var m11 = m[1] * m[1];
+            var m12 = m[1] * m[2];
+            var m22 = m[2] * m[2];
+            // loop over the points again to build the covariance matrix.  
+            // Note that we only have to build terms for the upper 
+            // triangular portion since the matrix is symmetric
+            double cxx = 0.0, cxy = 0.0, cxz = 0.0, cyy = 0.0, cyz = 0.0, czz = 0.0;
+            foreach (var p in convexHullVertices.Select(point => point.Position))
+            {
+                cxx += p[0] * p[0] - m00;
+                cxy += p[0] * p[1] - m01;
+                cxz += p[0] * p[2] - m02;
+                cyy += p[1] * p[1] - m11;
+                cyz += p[1] * p[2] - m12;
+                czz += p[2] * p[2] - m22;
+            }
+            // now build the covariance matrix
+            C[0, 0] = cxx;
+            C[1, 1] = cyy;
+            C[2, 2] = czz;
+            C[0, 1] = C[1, 0] = cxy;
+            C[0, 2] = C[2, 0] = cxz;
+            C[1, 2] = C[2, 1] = cyz;
+            //Find eigenvalues of covariance matrix
+            double[][] eigenVectors;
+            C.GetEigenValuesAndVectors(out eigenVectors);
+
+            var bestOBB = new BoundingBox();
+            var minVolume = double.PositiveInfinity;
+            //Perform a 2D caliper along each eigenvector. 
+            foreach (var eigenVector in eigenVectors)
+            {
+                var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize());
+                if (OBB.Volume < minVolume)
+                {
+                    minVolume = OBB.Volume;
+                    bestOBB = OBB;
+                }
+            }
+            return bestOBB;
+        }
+        private static BoundingBox Find_via_PCA_ApproachBM(IList<Vertex> convexHullVertices, IEnumerable<PolygonalFace> convexHullFaces)
         {
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(convexHullFaces);
-            var totalArea = 0.0;
+            var totalArea = triangles.Sum(t => t.Area);
             var minVolume = double.PositiveInfinity;
-            //Set the area for each triangle and its center vertex 
-            //Also, aggregate to get the surface area of the convex hull
-            foreach (var triangle in triangles)
-            {
-                var vector1 = triangle.Vertices[0].Position.subtract(triangle.Vertices[1].Position);
-                var vector2 = triangle.Vertices[0].Position.subtract(triangle.Vertices[2].Position);
-                var cross = vector1.crossProduct(vector2);
-                triangle.Area = 0.5 * (Math.Sqrt(cross[0] * cross[0] + cross[1] * cross[1] + cross[2] * cross[2]));
-                totalArea = totalArea + triangle.Area;
-                var xAve = (triangle.Vertices[0].X + triangle.Vertices[1].X + triangle.Vertices[2].X) / 3;
-                var yAve = (triangle.Vertices[0].Y + triangle.Vertices[1].Y + triangle.Vertices[2].Y) / 3;
-                var zAve = (triangle.Vertices[0].Z + triangle.Vertices[1].Z + triangle.Vertices[2].Z) / 3;
-                triangle.Center = new[] { xAve, yAve, zAve };
-            }
 
             //Calculate the center of gravity of combined triangles
             var c = new[] { 0.0, 0.0, 0.0 };

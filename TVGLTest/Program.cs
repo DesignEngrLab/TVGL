@@ -105,7 +105,8 @@ namespace TVGL_Test
                     {
                         List<double> times, volumes;
                         MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
-                        data.Add(new[] { tessellatedSolid.ConvexHullVertices.Count(), tessellatedSolid.Volume, times[0], times[1], volumes[0], volumes[1] });
+                        data.Add(new[] { tessellatedSolid.ConvexHullVertices.Count(), tessellatedSolid.Volume,
+                            times[0], times[1],times[2], volumes[0],  volumes[1], volumes[2] });
                     }
                 }
                 catch { }
