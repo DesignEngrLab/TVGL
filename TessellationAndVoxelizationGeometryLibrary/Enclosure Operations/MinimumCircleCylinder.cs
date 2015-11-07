@@ -19,46 +19,6 @@ using StarMathLib;
 
 namespace TVGL
 {
-    
-    /// <summary>
-    /// Public circle structure, given a center point and radius
-    /// </summary>
-    public struct Circle
-    {
-        /// <summary>
-        /// Center Point of circle
-        /// </summary>
-        public Point Center;
-
-        /// <summary>
-        /// Radius of circle
-        /// </summary>
-        public double Radius;
-
-        /// <summary>
-        /// Area of circle
-        /// </summary>
-        public double Area;
-
-        /// <summary>
-        /// Circumference of circle
-        /// </summary>
-        public double Circumference;
-
-        /// <summary>
-        /// Creates a circle, given a radius. Center point is optional
-        /// </summary>
-        /// <param name="radius"></param>
-        /// <param name="center"></param>
-        public Circle(double radius, Point center = null)
-        {
-            Center = center;
-            Radius = radius;
-            Area = Math.PI*radius*radius;
-            Circumference = 2*Math.PI*radius;
-        }
-    }
-
     /// <summary>
     /// The MinimumEnclosure class includes static functions for defining smallest enclosures for a 
     /// tessellated solid. For example: convex hull, minimum bounding box, or minimum bounding sphere.
@@ -68,28 +28,28 @@ namespace TVGL
         /// <summary>
         /// Minimums the circle.
         /// </summary>
+        /// <param name="points">The points.</param>
+        /// <returns>System.Double.</returns>
         /// <references>
-        /// Based on Emo Welzl?s "move-to-front hueristic" and this paper (algorithm 1).
+        /// Based on Emo Welzl's "move-to-front hueristic" and this paper (algorithm 1).
         /// http://www.inf.ethz.ch/personal/gaertner/texts/own_work/esa99_final.pdf
         /// This algorithm runs in near linear time. Visiting most points just a few times.
         /// Though a linear algorithm was found by Meggido, this algorithm is more robust
         /// (doesn't care about multiple points on a line and fewer rounding functions)
         /// and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
-        /// <param name="points"></param>
-        /// <returns>System.Double.</returns>
-        public static Circle MinimumCircle(List<Point> points)
+        public static BoundingCircle MinimumCircle(IList<Point> points)
         {
             //Randomize the list of points
             var r = new Random();
             var randomPoints = new List<Point>(points.OrderBy(p=>r.Next()));
            
-            if (randomPoints.Count < 2) return new Circle(0.0, points[0]);
+            if (randomPoints.Count < 2) return new BoundingCircle(0.0, points[0]);
             //Get any two points in the list points.
             var point1 = randomPoints[0];
             var point2 = randomPoints[1];
             var previousPoints = new List<Point>();
-            var circle = new BoundingCircle(new List<Point> {point1, point2});
+            var circle = new InternalCircle(new List<Point> {point1, point2});
             var bestCircle = circle;
             var stallCounter = 0;
             var i = 0;
@@ -98,7 +58,7 @@ namespace TVGL
             {
                 var currentPoint = randomPoints[i];
                 //If the current point is part of the circle or inside the circle, go to the next iteration
-                if (circle.Points.Contains(currentPoint) || circle.Bounds(currentPoint))
+                if (circle.Points.Contains(currentPoint) || circle.IsPointInsideCircle(currentPoint))
                 {
                     i++;
                     continue;
@@ -108,7 +68,7 @@ namespace TVGL
                 if (previousPoints.Contains(currentPoint))
                 {
                     //Make a new circle from the current two-point circle and the current point
-                    circle = new BoundingCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
+                    circle = new InternalCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
                     if (circle.SqRadius < bestCircle.SqRadius)
                     {
                         bestCircle = circle;
@@ -124,7 +84,7 @@ namespace TVGL
                     Point furthestPoint;
                     circle.Furthest(currentPoint, out furthestPoint, ref previousPoints);
                     //Make a new circle from the furthest point and current point
-                    circle = new BoundingCircle(new List<Point> {currentPoint, furthestPoint});
+                    circle = new InternalCircle(new List<Point> {currentPoint, furthestPoint});
                     if(circle.SqRadius < bestCircle.SqRadius) 
                     {
                         bestCircle = circle;
@@ -144,10 +104,60 @@ namespace TVGL
 
             //Return information about minimum circle
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
-            return new Circle(radius, circle.Center);
+            return new BoundingCircle(radius, circle.Center);
         }
+        
+        public static BoundingBox MinimumBoundingCylinder(IList<Vertex> convexHullVertices)
+        {
+            // here we create 13 directions. just like for bounding box
+            var directions = new List<double[]>();
+            for (int i = -1; i <= 1; i++)
+                for (int j = -1; j <= 1; j++)
+                    directions.Add(new[] { 1.0, i, j });
+            directions.Add(new[] { 0.0, 0, 1 });
+            directions.Add(new[] { 0.0, 1, 0 });
+            directions.Add(new[] { 0.0, 1, 1 });
+            directions.Add(new[] { 0.0, -1, 1 });
 
-        internal class BoundingCircle
+            var boxes = directions.Select(v => new BoundingBox
+            {
+                Volume = double.PositiveInfinity,
+                Directions = new[] { v, null, null }
+            }).ToList();
+            for (int i = 0; i < 13; i++)
+            {
+                boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
+                for (int j = 0; j < 3; j++)
+                {
+                    var pointsOnFace_i = MiscFunctions.Get2DProjectionPoints(convexHullVertices, boxes[i].Directions[j]);
+                    boxes[i].Width
+                }
+            }
+            var minVol = boxes.Min(box => box.Volume);
+            return boxes.First(box => box.Volume == minVol);
+        }
+        
+        private static BoundingBox AdjustOrthogonalRotations(IList<Vertex> convexHullVertices, BoundingBox minOBB)
+        {
+            var failedConsecutiveRotations = 0;
+            var k = 0;
+            var i = 0;
+            do
+            {
+                //Find new OBB along OBB.direction2 and OBB.direction3, keeping the best OBB.
+                var newObb = FindOBBAlongDirection(convexHullVertices, minOBB.Directions[i++]);
+                if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
+                {
+                    minOBB = newObb;
+                    failedConsecutiveRotations = 0;
+                }
+                else failedConsecutiveRotations++;
+                if (i == 3) i = 0;
+                k++;
+            } while (failedConsecutiveRotations < 3 && k < MaxRotationsForOBB);
+            return minOBB;
+        }
+        internal class InternalCircle
         {
             #region Properties
             /// <summary>
@@ -171,7 +181,7 @@ namespace TVGL
             /// Create a new circle from either 2 or 3 points
             /// /// </summary>
             /// <param name="points"></param>
-            internal BoundingCircle(IEnumerable<Point> points)
+            internal InternalCircle(IEnumerable<Point> points)
             {
                 Center = null;
                 SqRadius = 0;
@@ -264,14 +274,11 @@ namespace TVGL
             /// </summary>
             /// <param name="point"></param>
             /// <returns></returns>
-            internal bool Bounds(Point point)
+            internal bool IsPointInsideCircle(Point point)
             {
                 //Distance between point and center is greater than radius, it is outside the circle
-                var distanceToPoint = Math.Sqrt(Math.Pow(Center.X - point.X, 2) + Math.Pow(Center.Y - point.Y, 2));
-                var radius = Math.Sqrt(SqRadius);
-                var bounded = false;
-                if (distanceToPoint.IsPracticallySame(radius) || distanceToPoint < radius) bounded = true;
-                return bounded;
+                var distanceToPoint = (Center.X - point.X)*(Center.X - point.X)  + (Center.Y - point.Y)*(Center.Y - point.Y);
+                return distanceToPoint <= SqRadius;
             }
 
             /// <summary>

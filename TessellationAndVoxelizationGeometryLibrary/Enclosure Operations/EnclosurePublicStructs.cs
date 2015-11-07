@@ -172,4 +172,51 @@ namespace TVGL
             EdgeVector = EdgeVertices[1].Position.subtract(EdgeVertices[0].Position);
         }
     }
+
+
+    /// <summary>
+    /// Public circle structure, given a center point and radius
+    /// </summary>
+    public struct BoundingCircle
+    {
+        /// <summary>
+        /// Center Point of circle
+        /// </summary>
+        public Point Center;
+
+        /// <summary>
+        /// Radius of circle
+        /// </summary>
+        public double Radius;
+
+        /// <summary>
+        /// Area of circle
+        /// </summary>
+        public double Area;
+
+        /// <summary>
+        /// Circumference of circle
+        /// </summary>
+        public double Circumference;
+
+        /// <summary>
+        /// Creates a circle, given a radius. Center point is optional
+        /// </summary>
+        /// <param name="radius"></param>
+        /// <param name="center"></param>
+        public BoundingCircle(double radius, Point center = null)
+        {
+            Center = center;
+            Radius = radius;
+            Area = Math.PI * radius * radius;
+            Circumference = 2 * Math.PI * radius;
+        }
+    }
+    public struct BoundingCylder
+    {
+        public double[] Axis;
+        public BoundingCircle CenterCircle;
+        public double HalfLength;
+        public double Volume;
+    }
 }

@@ -213,7 +213,7 @@ namespace TVGL
                      * other applications though. In the condition below, any signed distance that is negative is outside of the
                      * original polygon. It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
-                    if (StarMath.crossProduct2(StarMath.GetRow(j, edgeUnitVectors), b) > 0) continue;
+                    if (StarMath.crossProduct2(StarMath.GetRow(j, edgeUnitVectors), b) >= 0) continue;
                     hullCands[j].Add(StarMath.GetRow(j, edgeUnitVectors).dotProduct(b, 2), remainingPoints[i]);
                     break;
                 }

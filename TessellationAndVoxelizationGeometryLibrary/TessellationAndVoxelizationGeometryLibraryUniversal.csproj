@@ -44,6 +44,7 @@
     <Compile Include="Boolean Operations\Slice4.cs" />
     <Compile Include="Enclosure Operations\GaussianSphere.cs" />
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
+    <Compile Include="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
     <Compile Include="InputOutput Operations\3mf.classes.cs" />
     <Compile Include="InputOutput Operations\amf.classes.cs" />
     <Compile Include="InputOutput Operations\3MFFileData.cs" />
@@ -75,7 +76,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Enclosure Operations\BoundingBox.cs" />
+    <Compile Include="Enclosure Operations\EnclosurePublicStructs.cs" />
     <Compile Include="Enclosure Operations\ConvexHull2D.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure.cs" />
     <Compile Include="Miscellaneous Functions\SortedList.cs" />
