@@ -130,7 +130,7 @@ namespace TVGL
                 for (int j = 0; j < 3; j++)
                 {
                     var pointsOnFace_i = MiscFunctions.Get2DProjectionPoints(convexHullVertices, boxes[i].Directions[j]);
-                    boxes[i].Width
+                  
                 }
             }
             var minVol = boxes.Min(box => box.Volume);

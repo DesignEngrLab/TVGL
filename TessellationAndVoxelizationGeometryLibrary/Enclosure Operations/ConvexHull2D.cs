@@ -181,13 +181,7 @@ namespace TVGL
                                   edgeUnitVectors[last, 1] * edgeUnitVectors[last, 1]);
             edgeUnitVectors[last, 0] /= magnitude;
             edgeUnitVectors[last, 1] /= magnitude;
-
-            /* Originally, I was storing all the distances from the vertices to the convex hull points
-             * in a big 3D matrix. This is not necessary and the storage may be difficult to handle for large
-             * sets. However, I have kept these lines of code here because they could be useful in establishing
-             * the voronoi sets. */
-            //var signedDists = new double[2, origVNum, cvxVNum];
-
+            
             /* An array of sorted dictionaries! As we find new candidate convex points, we store them here. The second
              * part of the tuple (Item2 is a double) is the "positionAlong" - this is used to order the nodes that
              * are found for a particular side (More on this in 23 lines). */
@@ -206,12 +200,8 @@ namespace TVGL
                         remainingPoints[i][0] - convexHullCCW[j][0],
                         remainingPoints[i][1] - convexHullCCW[j][1]
                     };
-                    //signedDists[0, k, i] = signedDistance(convexVectInfo[i, 0], convexVectInfo[i, 1], bX, bY, convexVectInfo[i, 2]);
-                    //signedDists[1, k, i] = positionAlong(convexVectInfo[i, 0], convexVectInfo[i, 1], bX, bY, convexVectInfo[i, 2]);
-                    //if (signedDists[0, k, i] <= 0)
-                    /* Again, these lines are commented because the signedDists has been removed. This data may be useful in 
-                     * other applications though. In the condition below, any signed distance that is negative is outside of the
-                     * original polygon. It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
+                    /* In the condition below, any signed distance that is negative is outside of the original polygon. 
+                     * It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
                     if (StarMath.crossProduct2(StarMath.GetRow(j, edgeUnitVectors), b) >= 0) continue;
                     hullCands[j].Add(StarMath.GetRow(j, edgeUnitVectors).dotProduct(b, 2), remainingPoints[i]);

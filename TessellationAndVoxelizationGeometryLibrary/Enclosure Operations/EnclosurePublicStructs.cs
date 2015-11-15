@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using StarMathLib;
 
 
@@ -30,22 +31,9 @@ namespace TVGL
         /// The volume of the bounding box.
         /// </summary>
         public double Volume;
-        /// <summary>
-        /// The area normal along the depth on the bounding box.
-        /// </summary>
-        public double Area;
-        /// <summary>
-        /// The depth of the bounding box.
-        /// </summary>
-        public double Depth;
-        /// <summary>
-        /// The length of the bounding box / bounding rectangle.
-        /// </summary>
-        public double Length;
-        /// <summary>
-        /// The width of the bounding box / bounding rectangle..
-        /// </summary>
-        public double Width;
+
+        public double[] Dimensions;
+
         /// <summary>
         /// The extreme vertices which are vertices of the tessellated solid that are on the faces
         /// of the bounding box. These are not the corners of the bounding box.
@@ -60,17 +48,12 @@ namespace TVGL
         /// <summary>
         /// The corner points
         /// </summary>
-        public Vertex[] CornerVertices;
+        public Point[] CornerVertices;
+        internal Vertex FifthVertex;
+        internal int FifthVertexSideIndex;
+        internal Vertex SixthVertex;
+        internal int SixthVertexSideIndex;
 
-        /// <summary>
-        /// Vertices that correspond to edge from rotating calipers
-        /// </summary>
-        public Vertex[] EdgeVertices;
-
-        /// <summary>
-        /// Vector directions of the edge from rotating calipers
-        /// </summary>
-        public double[] EdgeVector;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BoundingBox"/> class.
@@ -78,23 +61,20 @@ namespace TVGL
         /// <param name="volume">The volume.</param>
         /// <param name="extremeVertices">The extreme vertices.</param>
         /// <param name="directions"></param>
-        internal BoundingBox(double depth, double area, Vertex[] extremeVertices, double[][] directions, Vertex[] edgeVertices = null)
+        internal BoundingBox(double[] dimensions,double[][] directions, Vertex[] extremeVertices, 
+            Vertex fifthVertex , int fifthVertexIndex, Vertex sixthVertex, int sixthVertexIndex)
         {
-            EdgeVertices = edgeVertices;
-            EdgeVector = EdgeVertices[1].Position.subtract(EdgeVertices[0].Position);
-            CornerVertices = new Vertex[8];
-            Area = area;
-            Depth = depth;
-            Volume = depth*area;
-            Directions = new[] { directions[0].normalize(), directions[1].normalize(), directions[2].normalize() };
+            Dimensions = dimensions;
+            Volume = dimensions[0]*dimensions[1]*dimensions[2];
+            Directions = directions.Select(d=>d.normalize()).ToArray();
             ExtremeVertices = extremeVertices; //list of vertices in order of pairs with the directions
-            var lengthVector = extremeVertices[3].Position.subtract(extremeVertices[2].Position);
-            Length = Math.Abs(lengthVector.dotProduct(Directions[1]));
-            var widthVector = extremeVertices[5].Position.subtract(extremeVertices[4].Position);
-            Width = Math.Abs(widthVector.dotProduct(Directions[2]));
-            if (Math.Abs(Area-Length*Width) > 1E-8) throw new Exception();
+            FifthVertex = fifthVertex;
+            FifthVertexSideIndex = fifthVertexIndex;
+            SixthVertex = sixthVertex;
+            SixthVertexSideIndex= sixthVertexIndex;
 
             //Find Corners
+            CornerVertices = new Point[8] ;
             var normalMatrix = new[,] {{Directions[0][0],Directions[1][0],Directions[2][0]}, 
                                         {Directions[0][1],Directions[1][1],Directions[2][1]},
                                         {Directions[0][2],Directions[1][2],Directions[2][2]}};
@@ -114,7 +94,7 @@ namespace TVGL
                         var offAxisPosition = new[] {xPrime, yPrime, zPrime };
                         //Rotate back into primary coordinates
                         var position = normalMatrix.multiply(offAxisPosition);
-                        CornerVertices[count] = new Vertex(position);
+                        CornerVertices[count] = new Point(position);
                         count++;
                     }
                 }
@@ -137,40 +117,17 @@ namespace TVGL
         /// <summary>
         /// The point pairs that define the bounding rectangle limits
         /// </summary>
-        public List<Point[]> PointPairs;
-
-        /// <summary>
-        /// The angle that this bounding box was is rotated in the xy plane. 
-        /// </summary>
-        public double BestAngle;
-
+        public Point[] PointPairs;
+        
         /// <summary>
         /// Vector directions of length and width of rectangle
         /// </summary>
-        public List<double[]> Directions;
-
-        /// <summary>
-        /// Vertices that correspond to edge from rotating calipers
-        /// </summary>
-        public Vertex[] EdgeVertices;
-
-        /// <summary>
-        /// Vector directions of the edge from rotating calipers
-        /// </summary>
-        public double[] EdgeVector;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
-        /// </summary>
-        internal BoundingRectangle(double area, double bestAngle, List<double[]> directions, List<Point[]> pointPairs, Vertex[] edgeVertices)
-        {
-            Area = area;
-            PointPairs = pointPairs;
-            BestAngle = bestAngle;
-            Directions = directions;
-            EdgeVertices = edgeVertices;
-            EdgeVector = EdgeVertices[1].Position.subtract(EdgeVertices[0].Position);
-        }
+        public double[][] Directions;
+        public double[] Dimensions;
+        
+        
+        public Point FifthVertex { get; set; }
+        public int FifthSideIndex { get; set; }
     }
 
 

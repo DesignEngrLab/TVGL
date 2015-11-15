@@ -5,6 +5,41 @@ using StarMathLib;
 
 namespace TVGL.Enclosure_Operations
 {
+    internal class GaussSphereArc
+    {
+        internal Edge Edge;
+        internal PolygonalFace FromFace;
+        internal PolygonalFace ToFace;
+        internal double Xeffective;
+        internal double Yeffective;
+
+        internal GaussSphereArc(Edge edge, double[] posDir, double ownedX, double otherX)
+        {
+            var ownedY = edge.OwnedFace.Normal.dotProduct(posDir);
+            var otherY = edge.OtherFace.Normal.dotProduct(posDir);
+            var slope = (otherY - ownedY) / (otherX - ownedX);
+            var offset = ownedY - slope * ownedX;
+
+            if ( (ownedX <= 0 && otherX >= 0 && offset>=0)
+                || (ownedX > 0 && otherX < 0 && offset < 0))
+            {
+                Edge = edge;
+                FromFace = edge.OwnedFace;
+                ToFace = edge.OtherFace;
+                Xeffective = otherX;
+                Yeffective = otherY;
+                }
+            else if ((ownedX <= 0 && otherX >= 0 && offset < 0 )
+                     || (ownedX > 0 && otherX < 0 && offset >= 0))
+            {
+                Edge = edge;
+                FromFace = edge.OtherFace;
+                ToFace = edge.OwnedFace;
+                Xeffective = ownedX;
+                Yeffective = ownedY;
+                }
+        }
+    }
     /// <summary>
     /// Gaussian Sphere for a polyhedron
     /// </summary>
@@ -35,8 +70,8 @@ namespace TVGL.Enclosure_Operations
             var referenceIndices = new List<int[]>();
             foreach (var triangle in ts.ConvexHullFaces)
             {
-                var sameIndex = Nodes.FindIndex(p => Math.Abs(p.Vector[0] - triangle.Normal[0]) < 0.0001 && 
-                    Math.Abs(p.Vector[1] - triangle.Normal[1]) < 0.0001 && 
+                var sameIndex = Nodes.FindIndex(p => Math.Abs(p.Vector[0] - triangle.Normal[0]) < 0.0001 &&
+                    Math.Abs(p.Vector[1] - triangle.Normal[1]) < 0.0001 &&
                     Math.Abs(p.Vector[2] - triangle.Normal[2]) < 0.0001);
                 if (sameIndex >= 0) //If the normal already exists, 
                 {
@@ -73,7 +108,7 @@ namespace TVGL.Enclosure_Operations
                         var j = Nodes.FindIndex(p => Math.Abs(p.Vector[0] - otherNormal[0]) < 0.0001 &&
                             Math.Abs(p.Vector[1] - otherNormal[1]) < 0.0001 &&
                             Math.Abs(p.Vector[2] - otherNormal[2]) < 0.0001);
-                        var referenceIndex = new [] { i, j };
+                        var referenceIndex = new[] { i, j };
                         ReferenceEdges.Add(edge);
                         referenceIndices.Add(referenceIndex);
                     }
@@ -86,7 +121,7 @@ namespace TVGL.Enclosure_Operations
             {
                 var edge = ReferenceEdges[i];
                 var referenceIndex = referenceIndices[i];
-                var arc = new Arc(Nodes[referenceIndex[0]],Nodes[referenceIndex[1]],edge);
+                var arc = new Arc(Nodes[referenceIndex[0]], Nodes[referenceIndex[1]], edge);
                 Nodes[referenceIndex[0]].AddArcReference(arc);
                 Arcs.Add(arc);
             }
@@ -101,13 +136,13 @@ namespace TVGL.Enclosure_Operations
         internal double Z;
         internal double Theta;
         internal double Phi;
-        internal List<Arc> Arcs; 
+        internal List<Arc> Arcs;
         internal List<PolygonalFace> ReferenceFaces;
         internal List<Edge> ReferenceEdges;
         internal List<Vertex> ReferenceVertices;
         internal Node(PolygonalFace triangle)
         {
-            ReferenceFaces = new List<PolygonalFace>{triangle};
+            ReferenceFaces = new List<PolygonalFace> { triangle };
             ReferenceEdges = triangle.Edges.ToList();
             ReferenceVertices = new List<Vertex>(); //Create a null list, to build up later.
             Vector = triangle.Normal; //Set unit normal as location on sphere
@@ -115,16 +150,16 @@ namespace TVGL.Enclosure_Operations
             Y = triangle.Normal[1];
             Z = triangle.Normal[2];
             Arcs = new List<Arc>();
-            
+
             //bound azimuthal angle (theta) to 0 <= θ <= 360
             Theta = 0.0;
             if (triangle.Normal[0] < 0) //If both negative or just x, add 180 (Q2 and Q3)
             {
-                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + Math.PI; 
+                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + Math.PI;
             }
             else if (triangle.Normal[1] < 0) //If only y is negative, add 360 (Q4)
             {
-                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + 2*Math.PI;
+                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + 2 * Math.PI;
             }
             else //Everything is positive (Q1).
             {
@@ -133,7 +168,7 @@ namespace TVGL.Enclosure_Operations
 
             //Calculate polar angle.  Note that Acos is bounded 0 <= φ <= 180. 
             //Aslo, note that r = 1, so this calculation is simpler that usual.
-            Phi = Math.Acos(triangle.Normal[2]); 
+            Phi = Math.Acos(triangle.Normal[2]);
         }
 
         internal void AddArcReference(Arc arc)
@@ -151,9 +186,9 @@ namespace TVGL.Enclosure_Operations
         internal double[] Direction;
         internal Arc(Node node1, Node node2, Edge edge)
         {
-            Nodes = new List<Node>{node1,node2};
+            Nodes = new List<Node> { node1, node2 };
             ReferenceEdge = edge;
-            ReferenceVertices = new List<Vertex>{edge.To,edge.From};
+            ReferenceVertices = new List<Vertex> { edge.To, edge.From };
             //Calculate arc length. Base on the following answer, where r = 1 for our unit circle.
             //http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
             //Note that the arc length must be the smaller of the two directions around the sphere. Acos will take care of this.
@@ -166,29 +201,31 @@ namespace TVGL.Enclosure_Operations
             if (azimuthal > Math.PI) azimuthal = azimuthal - 2 * Math.PI;
             if (azimuthal <= -Math.PI) azimuthal = azimuthal + 2 * Math.PI;
             var polar = node2.Phi - node1.Phi;
-            Direction = new []{azimuthal,polar};
+            Direction = new[] { azimuthal, polar };
         }
 
         internal bool Intersect(Arc arc1, Arc arc2, out Vertex intersection)
         {
-            intersection = null; 
+            intersection = null;
             //Create two planes given arc1 and arc2
             var norm1 = arc1.Nodes[0].Vector.crossProduct(arc1.Nodes[1].Vector); //unit normal
             var norm2 = arc2.Nodes[0].Vector.crossProduct(arc2.Nodes[1].Vector);
             //Check whether the planes are the same. 
             if (Math.Abs(norm1[0] - norm2[0]) < 0.0001 && Math.Abs(norm1[1] - norm2[1]) < 0.0001
-                && Math.Abs(norm1[2] - norm2[2]) < 0.0001) return true; //All points intersect
+                && Math.Abs(norm1[2] - norm2[2]) < 0.0001)
+                return true; //All points intersect
             if (Math.Abs(norm1[0] + norm2[0]) < 0.0001 && Math.Abs(norm1[1] + norm2[1]) < 0.0001
-                && Math.Abs(norm1[2] + norm2[2]) < 0.0001) return true; //All points intersect
+                && Math.Abs(norm1[2] + norm2[2]) < 0.0001)
+                return true; //All points intersect
             //if (norm1[0].IsPracticallySame(norm2[0]) && norm1[1].IsPracticallySame(norm2[1]) &&
             //   norm1[2].IsPracticallySame(norm2[2])) return true; 
             //Check whether the planes are the same, but built with opposite normals.
             //if (norm1[0].IsPracticallySame(-norm2[0]) && norm1[1].IsPracticallySame(-norm2[1]) &&
             //    norm1[2].IsPracticallySame(-norm2[2])) return true; //All points intersect
             //Find points of intersection between two planes
-            var position1 = norm1.crossProduct(norm2).normalize(); 
-            var position2 = new [] {-position1[0], -position1[1], -position1[2]};
-            var vertices = new []{new Vertex(position1) , new Vertex(position2), };
+            var position1 = norm1.crossProduct(norm2).normalize();
+            var position2 = new[] { -position1[0], -position1[1], -position1[2] };
+            var vertices = new[] { new Vertex(position1), new Vertex(position2), };
             //Check to see if the intersections are on the arcs
             for (var i = 0; i < 2; i++)
             {
@@ -245,7 +282,7 @@ namespace TVGL.Enclosure_Operations
             var antiPoint1 = new[] { -referenceArc.Nodes[0].X, -referenceArc.Nodes[0].Y, -referenceArc.Nodes[0].Z };
             //var antiPoint2 = new[] { -referenceArc.Nodes[1].X, -referenceArc.Nodes[1].Y, -referenceArc.Nodes[1].Z };
             ArcList = new List<Arc>();
-            Intersections= new List<Intersection>();
+            Intersections = new List<Intersection>();
             var tempIntersections = new List<Intersection>();
             ReferenceVertices = new List<Vertex>();
             Normal = vector1.crossProduct(vector2);
@@ -257,9 +294,11 @@ namespace TVGL.Enclosure_Operations
                 var norm2 = arc.Nodes[0].Vector.crossProduct(arc.Nodes[1].Vector).normalize();
                 //Check whether the planes are the same. 
                 if (Math.Abs(Normal[0] - norm2[0]) < 0.0001 && Math.Abs(Normal[1] - norm2[1]) < 0.0001
-                    && Math.Abs(Normal[2] - norm2[2]) < 0.0001) segmentBool = true; //All points intersect
+                    && Math.Abs(Normal[2] - norm2[2]) < 0.0001)
+                    segmentBool = true; //All points intersect
                 if (Math.Abs(Normal[0] + norm2[0]) < 0.0001 && Math.Abs(Normal[1] + norm2[1]) < 0.0001
-                    && Math.Abs(Normal[2] + norm2[2]) < 0.0001) segmentBool = true; //All points intersect
+                    && Math.Abs(Normal[2] + norm2[2]) < 0.0001)
+                    segmentBool = true; //All points intersect
                 //if (Normal[0].IsPracticallySame(norm2[0]) && Normal[1].IsPracticallySame(norm2[1]) &&
                 //    Normal[2].IsPracticallySame(norm2[2])) segmentBool = true; //All points intersect
                 //Check whether the planes are the same, but built with opposite normals.
@@ -269,17 +308,17 @@ namespace TVGL.Enclosure_Operations
                 double[][] vertices;
                 if (segmentBool)
                 {
-                    vertices = new [] {arc.Nodes[0].Vector, arc.Nodes[1].Vector };
+                    vertices = new[] { arc.Nodes[0].Vector, arc.Nodes[1].Vector };
                 }
                 else
                 {
                     //Find points of intersection between two planes
                     var position1 = Normal.crossProduct(norm2).normalize();
                     var position2 = new[] { -position1[0], -position1[1], -position1[2] };
-                    vertices = new [] {position1, position2};
+                    vertices = new[] { position1, position2 };
                 }
-                
-                
+
+
                 for (var i = 0; i < 2; i++)
                 {
                     double l1;
@@ -320,7 +359,7 @@ namespace TVGL.Enclosure_Operations
                     //Case 3: Inbetween antiPoint1 and antiPoint2 
                     //Case 4: Inbetween antiPoint2 and Point1
                     intersection = new Intersection(intersectionVertex, 2 * Math.PI - l3, arc);
-                    tempIntersections.Add(intersection); 
+                    tempIntersections.Add(intersection);
 
                     //Only one intersection is possible per arc, since the case of multiple intersections is captured above.
                     break;
@@ -335,8 +374,8 @@ namespace TVGL.Enclosure_Operations
                 if (Math.Abs(intersection1.SphericalDistance - intersection2.SphericalDistance) > 0.00001)
                 {
                     Intersections.Add(intersection1);
-                    
-                }  
+
+                }
                 //Add the last intersection to the list if it was no the same as the current
                 if (i == tempIntersections2.Count - 2)
                 {
@@ -382,9 +421,11 @@ namespace TVGL.Enclosure_Operations
                 var norm2 = arc.Nodes[0].Vector.crossProduct(arc.Nodes[1].Vector);
                 //Check whether the planes are the same. 
                 if (Math.Abs(Normal[0] - norm2[0]) < 0.0001 && Math.Abs(Normal[1] - norm2[1]) < 0.0001
-                    && Math.Abs(Normal[2] - norm2[2]) < 0.0001) segmentBool = true; //All points intersect
+                    && Math.Abs(Normal[2] - norm2[2]) < 0.0001)
+                    segmentBool = true; //All points intersect
                 if (Math.Abs(Normal[0] + norm2[0]) < 0.0001 && Math.Abs(Normal[1] + norm2[1]) < 0.0001
-                    && Math.Abs(Normal[2] + norm2[2]) < 0.0001) segmentBool = true; //All points intersect
+                    && Math.Abs(Normal[2] + norm2[2]) < 0.0001)
+                    segmentBool = true; //All points intersect
                 //if (Normal[0].IsPracticallySame(norm2[0]) && Normal[1].IsPracticallySame(norm2[1]) &&
                 //    Normal[2].IsPracticallySame(norm2[2])) segmentBool = true; //All points intersect
                 //Check whether the planes are the same, but built with opposite normals.
@@ -393,7 +434,7 @@ namespace TVGL.Enclosure_Operations
                 if (segmentBool)
                 {
                     //The arc should be on the arc list.
-                     ArcList.Add(arc);
+                    ArcList.Add(arc);
                 }
 
                 //Find points of intersection between two planes
@@ -405,11 +446,11 @@ namespace TVGL.Enclosure_Operations
                 {
                     var l1 = arc.ArcLength;
                     var l2 = ArcLength(arc.Nodes[0].Vector, vertices[i]);
-                    var l3 = ArcLength(arc.Nodes[1].Vector,vertices[i]);
+                    var l3 = ArcLength(arc.Nodes[1].Vector, vertices[i]);
                     var total = l1 - l2 - l3;
                     if (Math.Abs(total) > 0.00001) continue;
                     var node = arc.NextNodeAlongRotation(referenceArc.Direction);
-                    
+
                     //todo: NEED spherical distance along rotation. Below is an attempt
                     //Subtract the reference arc direction vector from the node and determine where it intersects the great circle
                     var theta = referenceArc.Direction[0] - node.Theta;
@@ -417,7 +458,7 @@ namespace TVGL.Enclosure_Operations
                     var x = Math.Cos(theta) * Math.Sin(phi);
                     var y = Math.Sin(theta) * Math.Sin(phi);
                     var z = Math.Cos(phi);
-                    var point = new [] {x, y, z};
+                    var point = new[] { x, y, z };
                     //Create two planes given the great circle and this new temporary arc
                     var tempNorm = point.crossProduct(node.Vector);
                     //Find points of intersection between two planes
@@ -501,4 +542,3 @@ namespace TVGL.Enclosure_Operations
     }
 }
 
-    

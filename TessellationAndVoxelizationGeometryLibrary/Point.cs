@@ -126,6 +126,13 @@ namespace TVGL
             Y = y;
             Z = z;
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Point"/> class.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        public Point(double[] coordinates) :this(null, coordinates[0], coordinates[1], coordinates[2])
+        { }
         public double this[int index]
         {
             get { return Position[index]; }

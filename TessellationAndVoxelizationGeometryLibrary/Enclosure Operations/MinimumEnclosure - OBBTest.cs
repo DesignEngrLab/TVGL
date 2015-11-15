@@ -75,9 +75,9 @@ namespace TVGL
 
             return boundingBox2;
         }
-        
 
-        #region PCA Approach
+
+        #region PCA Approaches
         /// <summary>
         /// Finds the minimum bounding box using a direct approach called PCA.
         /// Variants include All-PCA, Min-PCA, Max-PCA, and continuous PCA [http://dl.acm.org/citation.cfm?id=2019641]
@@ -96,7 +96,7 @@ namespace TVGL
         /// Ex. Dimitrov showed in 2009 that continuous PCA yeilds a volume 4x optimal for a octahedron
         /// http://page.mi.fu-berlin.de/rote/Papers/pdf/Bounds+on+the+quality+of+the+PCA+bounding+boxes.pdf
         /// </accuracy>
-              private static BoundingBox Find_via_PCA_ApproachNR(IList<Vertex> convexHullVertices)
+        private static BoundingBox Find_via_PCA_ApproachNR(IList<Vertex> convexHullVertices)
         {
             var m = new double[3];
             // loop over the points to find the mean point location
@@ -314,20 +314,50 @@ namespace TVGL
             //var faces = ListFunctions.FacesWithDistinctNormals(ts.ConvexHullFaces.ToList());
             //var flats = ListFunctions.Flats(ts.ConvexHullFaces.ToList());
 
-            foreach (var convexHullEdge in ts.ConvexHullEdges)
+            foreach (var rotateEdge in ts.ConvexHullEdges)
             {
                 //Initialize variables
-                var seriesData = new List<double[]>();
-                var r = convexHullEdge.Vector.normalize();
-                var n = convexHullEdge.OwnedFace.Normal;
-                var internalAngle = convexHullEdge.InternalAngle;
+                var rotatorVector = rotateEdge.Vector.normalize();
+                var startDir = rotateEdge.OtherFace.Normal;
+                var endDir = rotateEdge.OwnedFace.Normal;
+                var posYDir = startDir.crossProduct(rotatorVector);
+                var internalAngle = rotateEdge.InternalAngle;
+                var startingDots = ts.ConvexHullFaces.Select(f => f.Normal.dotProduct(startDir)).ToArray();
+                var endingDots = ts.ConvexHullFaces.Select(f => f.Normal.dotProduct(endDir)).ToArray();
+                var orthGaussSphereArcs = new List<GaussSphereArc>();
+                var remainingEdges = new List<GaussSphereArc>();
+                foreach (var edge in ts.ConvexHullEdges)
+                {
+                    var ownedX = startingDots[edge.OwnedFace.IndexInList];
+                    var otherX = startingDots[edge.OtherFace.IndexInList];
+                    if (otherX * ownedX <= 0)
+                        orthGaussSphereArcs.Add(new GaussSphereArc(edge, posYDir, ownedX, otherX));
+                    else
+                    {
+                        ownedX = endingDots[edge.OwnedFace.IndexInList];
+                        otherX = endingDots[edge.OtherFace.IndexInList];
+                        if (otherX * ownedX <= 0)
+                            remainingEdges.Add(new GaussSphereArc(edge, posYDir, ownedX, otherX));
+                    }
+                }
+                var direction = startDir;
+                var angle = 0;
+                var backVertexChanged = false;
+                while (angle <= internalAngle)
+                {
+                    var vertices = orthGaussSphereArcs.SelectMany(arc => new[] { arc.Edge.From, arc.Edge.To }).Distinct().ToList();
+                    var points = MiscFunctions.Get2DProjectionPoints(vertices, direction);
+                    var tempBoundingRect = BoundingRectangle(points, false);
+                    if (backVertexChanged sameBoundingRectMembers(tempBoundingRect, lastBoundingRect))
+
+                }
 
                 //Check for exceptions and special cases.
                 //Skip the edge if its internal angle is practically 0 or 180 since.
                 if (Math.Abs(internalAngle - Math.PI) < 0.0001 || Math.Round(internalAngle, 5).IsNegligible()) continue;
-                if (convexHullEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
+                if (rotateEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
                 //r cross owned face normal should point along the other face normal.
-                if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0) throw new Exception();
+                if (r.crossProduct(n).dotProduct(rotateEdge.OtherFace.Normal) < 0) throw new Exception();
 
                 //DEBUG STOP
                 var debugDepth1 = false;
@@ -392,13 +422,13 @@ namespace TVGL
                     {
                         vertex1 = obb.ExtremeVertices[1];
                         double[] pointOnLine;
-                        extremeDepth = MiscFunctions.DistancePointToLine(vertex1.Position, convexHullEdge.From.Position, convexHullEdge.Vector, out pointOnLine);
+                        extremeDepth = MiscFunctions.DistancePointToLine(vertex1.Position, rotateEdge.From.Position, rotateEdge.Vector, out pointOnLine);
                         depthOrtho = vertex1.Position.subtract(pointOnLine).normalize();
                     }
 
                     if (obb.ExtremeVertices[2] == vertex3 && obb.ExtremeVertices[3] == vertex4 &&
-                        obb.ExtremeVertices[4] == vertex5 && obb.ExtremeVertices[5] == vertex6 &&
-                        obb.EdgeVertices[0] == edgeVertex1 && obb.EdgeVertices[1] == edgeVertex2)
+                        obb.ExtremeVertices[4] == vertex5 && obb.ExtremeVertices[5] == vertex6)
+                    // &&  obb.EdgeVertices[0] == edgeVertex1 && obb.EdgeVertices[1] == edgeVertex2)
                     {
                         //Calculate new area, given that the edge from rotating calipers and all the extreme vertices are the same
                         var direction1 = rotatingCaliperEdgeVector.crossProduct(direction);
@@ -848,6 +878,6 @@ namespace TVGL
             return false;
         }
         #endregion
-        
+
     }
 }

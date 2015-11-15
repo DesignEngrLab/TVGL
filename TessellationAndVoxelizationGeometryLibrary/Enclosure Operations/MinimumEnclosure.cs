@@ -120,18 +120,21 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="System.Exception"></exception>
-        public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction)
+        public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction, Vertex vDir1 = null, Vertex vDir2 = null)
         {
-            Vertex v1Low, v1High;
+            Vertex v1Low, v1High, v1Other;
+            var direction1 = direction.normalize();
             var depth = GetLengthAndExtremeVertices(direction, vertices, out v1Low, out v1High);
+            if (v1Low == vDir1) v1Other = vDir2;
+            else v1Other = vDir1;
             double[,] backTransform;
             var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
             //Get reference vertices from boundingRectangle
-            var v2Low = boundingRectangle.PointPairs[0][0].References[0];
-            var v2High = boundingRectangle.PointPairs[0][1].References[0];
-            var v3Low = boundingRectangle.PointPairs[1][0].References[0];
-            var v3High = boundingRectangle.PointPairs[1][1].References[0];
+            var v2Low = boundingRectangle.PointPairs[0].References[0];
+            var v2High = boundingRectangle.PointPairs[2].References[0];
+            var v3Low = boundingRectangle.PointPairs[1].References[0];
+            var v3High = boundingRectangle.PointPairs[3].References[0];
 
             //Get the direction vectors from rotating caliper and projection.
             var tempDirection = new[]
@@ -148,13 +151,11 @@ namespace TVGL
             };
             tempDirection = backTransform.multiply(tempDirection);
             var direction3 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
-            var direction1 = direction2.crossProduct(direction3);
-            depth = GetLengthAndExtremeVertices(direction1, vertices, out v1Low, out v1High);
-            //todo: Fix Get2DProjectionPoints, which seems to be transforming the points to 2D, but not normal to
-            //the given direction vector. If it was normal, direction1 should equal direction or its direction.inverse.
-
-            return new BoundingBox(depth, boundingRectangle.Area, new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High },
-                new[] { direction1, direction2, direction3 }, boundingRectangle.EdgeVertices);
+            return new BoundingBox
+                (new[] { depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
+                new[] { direction1, direction2, direction3 },
+                new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High },  
+                v1Other, 0,boundingRectangle.FifthVertex.References[0], boundingRectangle.FifthSideIndex + 2);
         }
         #endregion
 
@@ -197,31 +198,27 @@ namespace TVGL
             var numCvxPoints = cvxPoints.Count;
             var extremeIndices = new int[4];
 
-            //        extremeIndices[3] => max-Y
+            // extremeIndices[3] => max-Y
             extremeIndices[3] = cvxPoints.Count - 1;
             //Check if first point has a higher y value (only when point is both min-x and max-Y)
             if (cvxPoints[0][1] > cvxPoints[extremeIndices[3]][1]) extremeIndices[3] = 0;
             else
             {
-                while (extremeIndices[3] >= 1 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1])
+                while (extremeIndices[3] > 0 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1])
                     extremeIndices[3]--;
             }
-
-            //        extremeIndices[2] => max-X
+            // extremeIndices[2] => max-X
             extremeIndices[2] = extremeIndices[3];
-            while (extremeIndices[2] >= 1 && cvxPoints[extremeIndices[2]][0] <= cvxPoints[extremeIndices[2] - 1][0])
+            while (extremeIndices[2] > 0 && cvxPoints[extremeIndices[2]][0] <= cvxPoints[extremeIndices[2] - 1][0])
                 extremeIndices[2]--;
-
-
-            //        extremeIndices[1] => min-Y
+            // extremeIndices[1] => min-Y
             extremeIndices[1] = extremeIndices[2];
-            while (extremeIndices[1] >= 1 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
+            while (extremeIndices[1] > 0 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
                 extremeIndices[1]--;
-
-            //        extremeIndices[0] => min-X 
+            // extremeIndices[0] => min-X 
             // A bit more complicated, since it needs to look past the zero index.
-            var currentIndex = -1;
-            var previousIndex = -1;
+            int currentIndex;
+            int previousIndex;
             var stallCounter = 0;
             extremeIndices[0] = extremeIndices[1];
             do
@@ -238,20 +235,10 @@ namespace TVGL
             #endregion
 
             #region Cycle through 90-degrees
-            var angle = 0.0;
-            var bestAngle = double.NegativeInfinity;
-            var direction1 = new double[3];
-            var direction2 = new double[3];
             var deltaToUpdateIndex = -1;
             var deltaAngles = new double[4];
             var offsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
-            Point[] pointPair1 = null;
-            Point[] pointPair2 = null;
-            Vertex edgeVertex1 = null;
-            Vertex edgeVertex2 = null;
-            var minArea = double.PositiveInfinity;
-            var flag = false;
-            var cons = Math.PI / 2;
+            BoundingRectangle bestRectangle = new BoundingRectangle { Area = double.PositiveInfinity };
             do
             {
                 #region update the deltaAngles from the current orientation
@@ -271,15 +258,10 @@ namespace TVGL
                         if (deltaAngles[i] < 0) { deltaAngles[i] = 2 * Math.PI; }
                     }
                 }
-                var delta = deltaAngles.Min();
-                angle = delta;
-                if (angle > Math.PI / 2 && !angle.IsPracticallySame(Math.PI / 2))
-                {
-                    flag = true; //Exit while
-                    continue;
-                }
-
-                deltaToUpdateIndex = deltaAngles.FindIndex(delta);
+                var angle = deltaAngles.Min();
+                if (angle.IsGreaterThanNonNegligible(Math.PI / 2))
+                    break;
+                deltaToUpdateIndex = deltaAngles.FindIndex(angle);
                 #endregion
 
                 var currentPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
@@ -310,28 +292,20 @@ namespace TVGL
                 var tempArea = height * width;
                 #endregion
 
-                if (minArea > tempArea)
+                if (bestRectangle.Area > tempArea)
                 {
-                    minArea = tempArea;
-                    bestAngle = angle;
-                    pointPair1 = new[] { cvxPoints[extremeIndices[2]], cvxPoints[extremeIndices[0]] };
-                    pointPair2 = new[] { cvxPoints[extremeIndices[3]], cvxPoints[extremeIndices[1]] };
-                    direction1 = new[] { angleVector1[0], angleVector1[1], 0.0 };
-                    direction2 = new[] { angleVector2[0], angleVector2[1], 0.0 };
-                    edgeVertex1 = previousPoint.References[0];
-                    edgeVertex2 = currentPoint.References[0];
+                    bestRectangle.Area = tempArea;
+                    bestRectangle.Dimensions = new[] { width, height };
+                    bestRectangle.FifthVertex = currentPoint;
+                    bestRectangle.FifthSideIndex = deltaToUpdateIndex;
+                    bestRectangle.Directions = new[]
+                    {new[] {angleVector1[0], angleVector1[1], 0.0}, new[] {angleVector2[0], angleVector2[1], 0.0}};
+                    bestRectangle.PointPairs = extremeIndices.Select(index => cvxPoints[index]).ToArray();
                 }
 
-            } while (!flag || angle.IsPracticallySame(Math.PI / 2)); //Don't check beyond a 90 degree angle.
-                                                                     //If best angle is 90 degrees, then don't bother to rotate. 
-            if (bestAngle.IsPracticallySame(Math.PI / 2)) { bestAngle = 0.0; }
+            } while (true); //process will end on its own by the break statement in line 263
             #endregion
-
-            var directions = new List<double[]> { direction1, direction2 };
-            var extremePoints = new List<Point[]> { pointPair1, pointPair2 };
-            if (pointPair1 == null) minArea = 0.0;
-            var boundingRectangle = new BoundingRectangle(minArea, bestAngle, directions, extremePoints, new[] { edgeVertex1, edgeVertex2 });
-            return boundingRectangle;
+            return bestRectangle;
         }
         #endregion
     }
