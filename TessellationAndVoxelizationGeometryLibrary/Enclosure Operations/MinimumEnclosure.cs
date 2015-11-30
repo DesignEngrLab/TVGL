@@ -154,8 +154,43 @@ namespace TVGL
             return new BoundingBox
                 (new[] { depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
                 new[] { direction1, direction2, direction3 },
-                new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High },  
-                v1Other, 0,boundingRectangle.FifthVertex.References[0], boundingRectangle.FifthSideIndex + 2);
+                new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High },
+                v1Other, 0, boundingRectangle.FifthVertex.References[0], boundingRectangle.FifthSideIndex + 2);
+        }
+        public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction, Vertex vDir1, Vertex vDir2,
+            Vertex backVertex)
+        {
+            var direction1 = direction.normalize();
+            var depth = direction.dotProduct(vDir1.Position.subtract(vDir2.Position));
+            double[,] backTransform;
+            var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, false);
+            var boundingRectangle = RotatingCalipers2DMethod(points);
+            //Get reference vertices from boundingRectangle
+            var v2Low = boundingRectangle.PointPairs[0].References[0];
+            var v2High = boundingRectangle.PointPairs[2].References[0];
+            var v3Low = boundingRectangle.PointPairs[1].References[0];
+            var v3High = boundingRectangle.PointPairs[3].References[0];
+
+            //Get the direction vectors from rotating caliper and projection.
+            var tempDirection = new[]
+            {
+                boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1],
+                boundingRectangle.Directions[0][2], 1.0
+            };
+            tempDirection = backTransform.multiply(tempDirection);
+            var direction2 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            tempDirection = new[]
+            {
+                boundingRectangle.Directions[1][0], boundingRectangle.Directions[1][1],
+                boundingRectangle.Directions[1][2], 1.0
+            };
+            tempDirection = backTransform.multiply(tempDirection);
+            var direction3 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            return new BoundingBox
+                (new[] { depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
+                new[] { direction1, direction2, direction3 },
+                new[] { vDir1, backVertex, v2Low, v2High, v3Low, v3High },
+                vDir2, 0, boundingRectangle.FifthVertex.References[0], boundingRectangle.FifthSideIndex + 2);
         }
         #endregion
 

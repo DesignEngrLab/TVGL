@@ -215,7 +215,6 @@ namespace TVGL
         {
         }
 
-
         /// <summary>
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
         /// matches with the STL format.
@@ -266,8 +265,15 @@ namespace TVGL
         }
 
 
-        internal TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
+       /// for cases in which the faces and vertices are already defined.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="faceToVertexIndices">The face to ver
+        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices, string name="")
         {
+            Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             Faces = faces.ToArray();
             NumberOfFaces = Faces.Count();

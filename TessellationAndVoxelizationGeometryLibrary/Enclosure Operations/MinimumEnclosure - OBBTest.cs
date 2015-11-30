@@ -316,154 +316,150 @@ namespace TVGL
 
             foreach (var rotateEdge in ts.ConvexHullEdges)
             {
-                //Initialize variables
+                #region Initialize variables
                 var rotatorVector = rotateEdge.Vector.normalize();
                 var startDir = rotateEdge.OtherFace.Normal;
+                var direction = startDir;
                 var endDir = rotateEdge.OwnedFace.Normal;
-                var posYDir = startDir.crossProduct(rotatorVector);
-                var internalAngle = rotateEdge.InternalAngle;
+                var origPosYDir = rotatorVector.crossProduct(startDir).normalize();
+                var posYDir = origPosYDir;
+                var totalAngle = Math.PI - rotateEdge.InternalAngle;
                 var startingDots = ts.ConvexHullFaces.Select(f => f.Normal.dotProduct(startDir)).ToArray();
-                var endingDots = ts.ConvexHullFaces.Select(f => f.Normal.dotProduct(endDir)).ToArray();
+                var angle = 0.0;
+                var deltaAngleToBackChange = 0.0;
+                var deltaAngleOrthSet = 0.0;
+
+                #region Set up orthogonal arcs and vertices
                 var orthGaussSphereArcs = new List<GaussSphereArc>();
-                var remainingEdges = new List<GaussSphereArc>();
                 foreach (var edge in ts.ConvexHullEdges)
                 {
                     var ownedX = startingDots[edge.OwnedFace.IndexInList];
                     var otherX = startingDots[edge.OtherFace.IndexInList];
                     if (otherX * ownedX <= 0)
                         orthGaussSphereArcs.Add(new GaussSphereArc(edge, posYDir, ownedX, otherX));
-                    else
-                    {
-                        ownedX = endingDots[edge.OwnedFace.IndexInList];
-                        otherX = endingDots[edge.OtherFace.IndexInList];
-                        if (otherX * ownedX <= 0)
-                            remainingEdges.Add(new GaussSphereArc(edge, posYDir, ownedX, otherX));
-                    }
                 }
-                var direction = startDir;
-                var angle = 0;
-                var backVertexChanged = false;
-                while (angle <= internalAngle)
-                {
-                    var vertices = orthGaussSphereArcs.SelectMany(arc => new[] { arc.Edge.From, arc.Edge.To }).Distinct().ToList();
-                    var points = MiscFunctions.Get2DProjectionPoints(vertices, direction);
-                    var tempBoundingRect = BoundingRectangle(points, false);
-                    if (backVertexChanged sameBoundingRectMembers(tempBoundingRect, lastBoundingRect))
-
-                }
-
-                //Check for exceptions and special cases.
-                //Skip the edge if its internal angle is practically 0 or 180 since.
-                if (Math.Abs(internalAngle - Math.PI) < 0.0001 || Math.Round(internalAngle, 5).IsNegligible()) continue;
-                if (rotateEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
-                //r cross owned face normal should point along the other face normal.
-                if (r.crossProduct(n).dotProduct(rotateEdge.OtherFace.Normal) < 0) throw new Exception();
-
-                //DEBUG STOP
-                var debugDepth1 = false;
-                if (volumeData.Count == 68) debugDepth1 = true;
-
-                //Set the sampling parameters
-                var numSamples = (int)Math.Ceiling((Math.PI - internalAngle) / MaxDeltaAngle);
-                if (numSamples < 20) numSamples = 20; //At minimum, take tewnty samples
-                var deltaAngle = (Math.PI - internalAngle) / numSamples;
-                if (Math.Round(internalAngle, 5).IsNegligible()) continue;
-
-                #region Initialize Variables
-                Vertex vertex1 = null;
-                Vertex vertex3 = null;
-                Vertex vertex4 = null;
-                Vertex vertex5 = null;
-                Vertex vertex6 = null;
-                Vertex edgeVertex1 = null;
-                Vertex edgeVertex2 = null;
-                var vertexList = new List<Vertex>();
-                var extremeDepth = 0.0;
-                double[] depthOrtho = null;
-                double[] direction = null;
-                double[] rotatingCaliperEdgeVector = null;
-                //var tolerance = 0.0001;
+                var orthVertices = orthGaussSphereArcs.SelectMany(arc => new[] { arc.Edge.From, arc.Edge.To }).Distinct().ToList();
                 #endregion
-
-                for (var i = 0; i < numSamples + 1; i++)
+                #region find back vertex
+                Vertex backVertex = null;
+                Edge backEdge = null;
+                var maxDistance = double.NegativeInfinity;
+                foreach (var v in ts.ConvexHullVertices)
                 {
-                    var angleChange = 0.0;
-                    if (i == 0) direction = n;
-                    else
+                    var distance = v.Position.subtract(rotateEdge.From.Position).dotProduct(startDir);
+                    if (distance > maxDistance)
                     {
-                        if (i == numSamples) angleChange = Math.PI - internalAngle;
-                        else angleChange = i * deltaAngle;
-                        var s = Math.Sin(angleChange);
-                        var c = Math.Cos(angleChange);
-                        var t = 1.0 - c;
-                        //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
-                        var rotMatrix = new[,]
-                        {
-                            {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
-                            {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
-                            {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
-                        };
-                        direction = rotMatrix.multiply(n).normalize();
-                    }
-                    if (double.IsNaN(direction[0])) throw new Exception();
-
-                    if (debugDepth1 && seriesData.Count == 15) debugDepth1 = true;
-                    var obb = FindOBBAlongDirection(ts.ConvexHullVertices, direction);
-
-
-                    #region Test for computing OBB volume when vertices are constant
-                    if (obb.ExtremeVertices[1] == vertex1)
-                    {
-                        //Check if length function is correct
-                        double depth = -extremeDepth * depthOrtho.dotProduct(direction);
-                        //if (Math.Abs(depth - obb.Depth) > tolerance) throw new Exception("equation incorrect");
-                    }
-                    else //Update the vertices and find the smallest vector from the edge to v1High
-                    {
-                        vertex1 = obb.ExtremeVertices[1];
-                        double[] pointOnLine;
-                        extremeDepth = MiscFunctions.DistancePointToLine(vertex1.Position, rotateEdge.From.Position, rotateEdge.Vector, out pointOnLine);
-                        depthOrtho = vertex1.Position.subtract(pointOnLine).normalize();
-                    }
-
-                    if (obb.ExtremeVertices[2] == vertex3 && obb.ExtremeVertices[3] == vertex4 &&
-                        obb.ExtremeVertices[4] == vertex5 && obb.ExtremeVertices[5] == vertex6)
-                    // &&  obb.EdgeVertices[0] == edgeVertex1 && obb.EdgeVertices[1] == edgeVertex2)
-                    {
-                        //Calculate new area, given that the edge from rotating calipers and all the extreme vertices are the same
-                        var direction1 = rotatingCaliperEdgeVector.crossProduct(direction);
-                        var direction2 = direction1.crossProduct(direction);
-                        Vertex vLow, vHigh;
-                        var length = GetLengthAndExtremeVertices(direction1, vertexList, out vLow, out vHigh);
-                        var width = GetLengthAndExtremeVertices(direction2, vertexList, out vLow, out vHigh);
-                        var area = length * width;
-                        //if (Math.Abs(area - obb.Area) > tolerance) throw new Exception("equation incorrect");
-                    }
-                    else //Update the vertices
-                    {
-                        vertex3 = obb.ExtremeVertices[2];
-                        vertex4 = obb.ExtremeVertices[3];
-                        vertex5 = obb.ExtremeVertices[4];
-                        vertex6 = obb.ExtremeVertices[5];
-                        edgeVertex1 = obb.EdgeVertices[0];
-                        edgeVertex2 = obb.EdgeVertices[1];
-                        vertexList = new List<Vertex> { vertex3, vertex4, vertex5, vertex6 };
-                        rotatingCaliperEdgeVector = obb.EdgeVector.normalize();
-                    }
-                    #endregion
-
-                    var dataPoint = new double[] { angleChange, obb.Volume };
-                    seriesData.Add(dataPoint);
-                    if (obb.Volume < minVolume)
-                    {
-                        minBox = obb;
-                        minVolume = minBox.Volume;
+                        distance = maxDistance;
+                        backVertex = v;
                     }
                 }
-                if (numSamples > 0) volumeData.Add(seriesData);
+                #endregion
+                #endregion
+                List<BoundingBoxData> boundingBoxes = new List<BoundingBoxData>();
+                do
+                {
+                    boundingBoxes.Add(new BoundingBoxData
+                    {
+                        angle = angle,
+                        direction = direction,
+                        box = FindOBBAlongDirection(orthVertices, direction, rotateEdge.From, rotateEdge.To)
+                    });
+                    if (deltaAngleToBackChange <= 0)
+                        deltaAngleToBackChange = UpdateBackAngle(direction, rotatorVector, posYDir, ref backVertex, ref backEdge);
+                    if (deltaAngleOrthSet <= 0)
+                        deltaAngleOrthSet = UpdateOrthAngle(direction, ref orthGaussSphereArcs, ref orthVertices);
+                    var angleStep = Math.Min(deltaAngleOrthSet, deltaAngleToBackChange);
+                    angle += angleStep; deltaAngleToBackChange -= angleStep; deltaAngleOrthSet -= angleStep;
+                    if (angle < totalAngle)
+                    {
+                        direction = UpdateDirection(startDir, rotatorVector, origPosYDir, angle);
+                        posYDir = rotatorVector.crossProduct(direction).normalize();
+                        UpdateSlopes(direction, posYDir, orthGaussSphereArcs);
+                    }
+                    else
+                        boundingBoxes.Add(new BoundingBoxData
+                        {
+                            angle = totalAngle,
+                            direction = endDir,
+                            box = FindOBBAlongDirection(orthVertices, endDir, rotateEdge.From, rotateEdge.To)
+                        });
+                } while (angle < totalAngle);
+                //todo: need to check here if the adjacent bb's are the same signature. If not you need to check in between
             }
-            return minBox;
+            //todo: save best from each and check it with the best found so far.
+            return new BoundingBox();
         }
+
+        private static void UpdateSlopes(double[] direction, double[] posYDir, List<GaussSphereArc> orthGaussSphereArcs)
+        {
+            foreach (var arc in orthGaussSphereArcs)
+            {
+                arc.Xeffective = direction.dotProduct(arc.ToFace.Normal);
+                arc.Yeffective = posYDir.dotProduct(arc.ToFace.Normal);
+            }
+        }
+        
+        private static double UpdateOrthAngle(double[] direction, ref List<GaussSphereArc> orthGaussSphereArcs, ref List<Vertex> orthVertices)
+        {
+            GaussSphereArc arcToRemove = null;
+            var minSlope = double.PositiveInfinity;
+            foreach (var arc in orthGaussSphereArcs)
+            {
+                var tempSlope = arc.Yeffective / arc.Xeffective;
+                if (tempSlope < minSlope)
+                {
+                    minSlope = tempSlope;
+                    arcToRemove = arc;
+                }
+            }
+            var edgesAtJunction = new List<Edge>(arcToRemove.ToFace.Edges);
+            for (int i = orthGaussSphereArcs.Count - 1; i >= 0; i--)
+            {
+                var index = edgesAtJunction.FindIndex(orthGaussSphereArcs[i].Edge);
+                if (index >= 0)
+                {
+                    orthGaussSphereArcs.RemoveAt(i);
+                    orthVertices.Remove(edgesAtJunction[index].From);
+                    orthVertices.Remove(edgesAtJunction[index].To);
+                    edgesAtJunction.RemoveAt(index);
+                }
+            }
+            foreach (var edge in edgesAtJunction)
+            {
+                if (!orthVertices.Contains(edge.From)) orthVertices.Add(edge.From);
+                if (!orthVertices.Contains(edge.To)) orthVertices.Add(edge.To);
+                orthGaussSphereArcs.Add(new GaussSphereArc(edge, arcToRemove.ToFace, (edge.OwnedFace == arcToRemove.ToFace)
+                    ? edge.OtherFace : edge.OwnedFace));
+            }
+            return Math.Atan(minSlope);
+        }
+
+        private static double[] UpdateDirection(double[] startDir, double[] rotator, double[] posYDir, double angle)
+        {
+            var A = new double[3, 3];
+            A.SetRow(0, rotator); A.SetRow(1, startDir); A.SetRow(2, posYDir);
+            var b = new[] { 0.0, Math.Cos(angle), Math.Cos(angle + Math.PI / 2) };
+            return StarMath.solve(A, b);
+        }
+
+        private static double UpdateBackAngle(double[] direction, double[] rotator, double[] posYDir, ref Vertex backVertex, ref Edge backEdge)
+        {
+            Edge nextEdge = null;
+            var yDotWithOtherFace = double.NegativeInfinity;
+            foreach (var edge in backVertex.Edges)
+            {
+                if (rotator.dotProduct(edge.From.Position) * rotator.dotProduct(edge.To.Position) <= 0)
+                {
+                    if (edge != backEdge && edge.OtherVertex(backVertex).Position.dotProduct(posYDir) > yDotWithOtherFace)
+                        nextEdge = edge;
+                }
+            }
+            var positionVector = (new[] { nextEdge.Vector.dotProduct(direction), nextEdge.Vector.dotProduct(posYDir) }).normalize();
+            backVertex = nextEdge.OtherVertex(backVertex);
+            backEdge = nextEdge;
+            return Math.Acos(positionVector.dotProduct(posYDir));
+        }
+
         #endregion
 
         #region Find Minimum OBB Between Two Angles via Golden Sections
@@ -531,353 +527,12 @@ namespace TVGL
         }
         #endregion
 
-        #region BM ApproachTwo
-        /// <summary>
-        /// The BM_ApproachTwo intelligently finds all the potential changes in vertices of the OBB
-        /// when rotated around each edge in the convex hull. This forms a discrete selection of angles
-        /// to check between the two face normals that form an edge.
-        /// All of these angles are then computed with FindOBBAlongDirection.
-        /// </summary>
-        /// <timeDomain>
-        /// Visiting each edge pair takes O(n^2) time. Then the number of additional linear operations is based on 
-        /// how often the vertices change. Worst case, we assume near O(n). Together, with a O(n) convex hull, 
-        /// this second portion is then O(n^3) time which dominates the first portion O(n^2),
-        /// making the total time approximately O(n^3) in worst case.
-        /// The algorithm can be improved to very near O(n^2) if the OBB function is removed, and instead we track the 
-        /// 2d convex hull and furthest point from the gaussian sphere.
-        /// </timeDomain>
-        /// <accuracy>
-        /// Garantees the optimial orientation.
-        /// </accuracy>
-        private static BoundingBox Find_via_BM_ApproachTwo(TessellatedSolid ts, out List<List<double[]>> volumeData)
+        private struct BoundingBoxData
         {
-            volumeData = new List<List<double[]>>();
-            var minBox = new BoundingBox();
-            var minVolume = double.PositiveInfinity;
-            foreach (var convexHullEdge in ts.ConvexHullEdges)
-            {
-                var n = convexHullEdge.OwnedFace.Normal;
-                var internalAngle = convexHullEdge.InternalAngle;
-                var seriesData = new List<double[]>();
-                var angleList = new List<double>();
-
-                //Check for exceptions and special cases.
-                //Skip the edge if its internal angle is practically 0 or 180.
-                if (internalAngle.IsPracticallySame(Math.PI, Constants.OBBAngleTolerance) || internalAngle.IsPracticallySame(0.0, Constants.OBBAngleTolerance)) continue;
-                if (convexHullEdge.Curvature == CurvatureType.Concave) throw new Exception("Error in internal angle definition");
-                //r cross owned face normal should point along the other face normal.
-                var r = convexHullEdge.Vector.normalize();
-                if (r.crossProduct(n).dotProduct(convexHullEdge.OtherFace.Normal) < 0) throw new Exception();
-
-                //DEBUG STOP
-                var debugDepth1 = false;
-                if (volumeData.Count == 68) debugDepth1 = true;
-
-                //Find the angle between the two faces that form this edge
-                var maxTheta = Math.PI - convexHullEdge.InternalAngle;
-                angleList.Add(0.0);
-                angleList.Add(maxTheta);
-
-                //Build rotation matrix to align the edge.OwnedFace.Normal along the primary axis.
-                var xp = n;
-                var zp = convexHullEdge.Vector.normalize();
-                var yp = zp.crossProduct(xp).normalize();
-                var rotMatrix1 = new[,]
-                        {
-                            {xp[0], xp[1], xp[2]},
-                            {yp[0], yp[1], yp[2]},
-                            {zp[0], zp[1], zp[2]}
-                        };
-
-                //Determine the sign of maxTheta
-                //If the new y value is pointing in the positive y direction, the rotation is positive (CCW around z)
-                var n2 = rotMatrix1.multiply(convexHullEdge.OtherFace.Normal);
-                var rotationDirection = Math.Sign(n2[1]); //CCW +
-
-                //Debug
-                var n1 = rotMatrix1.multiply(n);
-                if (!n1[0].IsPracticallySame(1.0)) throw new Exception(); //Should be pointing along x axis
-                if (!n2[2].IsNegligible()) throw new Exception(); //Should be in XY plane
-
-                //Find all the changes in visible vertices along rotation from face to face
-                //In addition, find whenever the rear extreme vertex changes
-                foreach (var otherConvexHullEdge in ts.ConvexHullEdges)
-                {
-                    //Rotate face normal to a new position on the theoretical gaussian sphere\
-                    var positions = new List<double[]>();
-                    //if (debugDepth1 && otherConvexHullEdge.EdgeReference == 10860440) positions = new List<double[]>();
-                    //Check both owned and other since not all faces are owned (necessarily)
-                    positions.Add(rotMatrix1.multiply(otherConvexHullEdge.OtherFace.Normal).normalize());
-                    positions.Add(rotMatrix1.multiply(otherConvexHullEdge.OwnedFace.Normal).normalize());
-
-                    #region Get Rotation Angle
-                    foreach (var position in positions)
-                    {
-                        //Find the angle of the new position with respect to the direction of rotation in z
-                        var rotAngle = 0.0;
-                        if (Math.Abs(position[0]).IsPracticallySame(1)) //Check if on new x axis 
-                        {
-                            //Regardless of which direction, it is at a change of 90 degrees.
-                            rotAngle = Math.PI / 2;
-                        }
-                        else if (Math.Abs(position[1]).IsPracticallySame(1)) //Check if on new y axis
-                        {
-                            rotAngle = 0.0; //Don't add angle to list. 
-                        }
-                        else if (Math.Abs(position[2]).IsPracticallySame(1)) //Check if on new z axis
-                        {
-                            continue; //Skip to next. 
-                        }
-                        else
-                        {
-                            rotAngle = -rotationDirection * Math.Atan(position[0] / position[1]);
-                        }
-                        //Make adjustment to bound rotAngle between 0 and 180
-                        if (Math.Sign(rotAngle) < 0) rotAngle = Math.PI + rotAngle;
-
-                        //Add angle to list if it is within the bounds
-                        if (rotAngle > 0.0 && rotAngle < maxTheta) angleList.Add(rotAngle);
-                    }
-                    #endregion
-
-                    #region Check if this edge changes the rear extreme vertex
-                    //Check whether this edge changes the rear extreme vertex 
-                    //First, it will have a to/from position on both sides of the XY plane
-                    //Or the one or both of the positions will be on the XY plane
-                    if (positions[0][2].IsNegligible() || positions[1][2].IsNegligible() || Math.Sign(positions[0][2]) * Math.Sign(positions[1][2]) < 0)
-                    {
-                        var arc1 = new[] { n1, n2 };
-                        var arc2 = new[] { positions[0], positions[1] };
-                        List<Vertex> intersections;
-                        if (!ArcGreatCircleIntersection(arc1, arc2, out intersections)) continue; //if no intersection, continue
-                        foreach (var intersection in intersections)
-                        {
-                            //Get rotation angle to the intersection
-                            var rotAngle = rotationDirection * Math.Atan(intersections[0].Y / intersections[0].X);
-                            if (rotAngle > 0.0 && rotAngle < maxTheta) angleList.Add(rotAngle);
-                        }
-                    }
-                    #endregion
-                }
-
-                #region Find OBB along direction at each angle of change
-                //sort the angles. Not strictly necessary, but useful for debugging.
-                //Debug: ToDo: Remove sort when finished.
-                angleList.Sort();
-                double[] direction;
-                var stepSize = 1E-8;
-                var priorAngle = double.NegativeInfinity;
-                //Remove Duplicate Angles
-                for (var i = 0; i < angleList.Count(); i++)
-                {
-                    var angle = angleList[i];
-                    //if (Math.Abs(angle - priorAngle) < stepSize) 
-                    if (angle.IsPracticallySame(priorAngle))
-                    {
-                        angleList.Remove(angle);
-                        i--;
-                    }
-                    priorAngle = angle;
-                }
-                double[] dataPoint1 = new double[] { 0.0, 0.0 };
-                double[] dataPoint2 = new double[] { 0.0, 0.0 };
-                double left1 = double.PositiveInfinity;
-                double right1 = double.PositiveInfinity;
-                double left2 = double.PositiveInfinity;
-                double right2 = double.PositiveInfinity;
-                var obbVertices = new List<Vertex>(); //Reset list
-                foreach (var angle in angleList)
-                {
-                    //Find three rotation matrices (two are tests)
-                    for (var i = -1; i < 2; i++)
-                    {
-                        if (angleList.IndexOf(angle) == 0 && i == -1) continue; //Don't add left data to first data point
-                        if (angleList.IndexOf(angle) == angleList.Count() - 1 && i == 1) continue; //Don't add right data to last data point
-                        var angleChange = angle + stepSize * i;
-                        var obb = OBBAlongDirectionFromAngle(n, r, angleChange, ts.ConvexHullVertices);
-                        var dataPoint = new double[] { angleChange, obb.Volume };
-                        seriesData.Add(dataPoint);
-                        if (i == -1) left2 = obb.Volume;
-                        if (i == 0) dataPoint2 = new double[] { dataPoint[0], dataPoint[1] };
-                        if (i == 1) right2 = obb.Volume;
-                        if (obb.Volume < minVolume)
-                        {
-                            minBox = obb;
-                            minVolume = minBox.Volume;
-                        }
-                    }
-                    if (right1 < dataPoint1[1] && left2 < dataPoint2[1] && dataPoint1[0] + stepSize < dataPoint2[0])
-                    {
-                        var dataPoint = new double[2];
-                        var obb = FindMinimumBetweenTwoAngles_GoldenSections(ts.ConvexHullVertices, dataPoint1[0], dataPoint2[0], n, r, out dataPoint);
-                        var index = seriesData.Count - 2;
-                        seriesData.Insert(index, dataPoint);
-                    }
-                    right1 = right2;
-                    left1 = left2;
-                    dataPoint1 = new double[] { dataPoint2[0], dataPoint2[1] };
-                    priorAngle = angle;
-                }
-                if (angleList.Count > 0) volumeData.Add(seriesData);
-                #endregion
-            }
-            return minBox;
+            public BoundingBox box;
+            public double[] direction;
+            public double angle;
         }
-        #endregion
-
-        #region BM ApproachOne
-        private static BoundingBox Find_via_BM_ApproachOne(TessellatedSolid ts)
-        {
-            var gaussianSphere = new GaussianSphere(ts);
-            var minBox = new BoundingBox();
-            var minVolume = double.PositiveInfinity;
-            foreach (var arc in gaussianSphere.Arcs)
-            {
-                //Create great circle one (GC1) along direction of arc.
-                //Intersections on this great circle will determine changes in length.
-                var greatCircle1 = new GreatCircleAlongArc(gaussianSphere, arc.Nodes[0].Vector, arc.Nodes[1].Vector, arc);
-
-                //Create great circle two (GC2) orthoganal to the current normal (n1).
-                //GC2 contains an arc list of all the arcs it intersects
-                //The intersections and perspective determine the cross sectional area.
-                var vector1 = arc.Nodes[0].Vector.crossProduct(arc.Nodes[1].Vector);
-                //vector 2 is + 90 degrees in the direction of the arc.
-                var vector2 = vector1.crossProduct(arc.Nodes[0].Vector);
-                var greatCircle2 = new GreatCircleOrthogonalToArc(gaussianSphere, vector1, vector2, arc);
-
-                //List intersections from GC1 and nodes from GC2 based on angle of rotation to each.
-                var delta = 0.0;
-                var totalChange = 0.0;
-                var maxChange = arc.ArcLength;
-                var intersections = new List<Intersection>();
-                do
-                {
-                    var boundingBox = FindOBBAlongDirection(greatCircle2.ReferenceVertices, greatCircle2.Normal);
-                    if (boundingBox.Volume < minVolume) minVolume = boundingBox.Volume;
-
-                    //Set delta, where delta is the angle from the original orientation to the next intersection
-                    delta = +delta;//+ intersections[0].angle
-
-                    while (totalChange <= delta) //Optimize the volume based on changes is projection of the 2D Bounding Box.;
-                    {
-                        //If the 2D bounding box changes vertices with the projection, then we will need RotatingCalipers
-                        //Else, project the same four'ish vertices and recalculate area.  
-                        if (boundingBox.Volume < minVolume) minVolume = boundingBox.Volume;
-                    }
-
-                    //After delta is reached, update the volume parameters of either length or cross sectional area (convex hull points).
-                    //If the closest intersection is on GC1, recalculate length.
-                    if (greatCircle1.Intersections[0].SphericalDistance < greatCircle2.Intersections[0].SphericalDistance)
-                    {
-                        var vector = arc.Nodes[0].Vector.subtract(intersections[0].Node.Vector);
-                    }
-                    else
-                    {
-                        var node = intersections[0].Node;
-                        foreach (var intersectedArc in node.Arcs)
-                        {
-                            if (greatCircle2.ArcList.Contains(intersectedArc))
-                                greatCircle2.ArcList.Remove(intersectedArc);
-                            else greatCircle2.ArcList.Add(intersectedArc);
-                        }
-                    }
-                } while (delta <= maxChange);
-            }
-            return minBox;
-        }
-        #endregion
-
-        #region Bounding Rectangle Corners (DELETE IF UNUSED IN DETERMINING MAX AREA)
-        //private static void BoundingRectangleCorners(double[][] directions, List<Vertex> extremeVertices, Vertex vertexOnPlane, out List<Vertex> corners)
-        //{
-        //    //Check if conditions are satisfied
-        //    if (directions.Count() != 3) throw new Exception("Incorrect number of directions. Should be three directions (the first is normal to the Bounding Rectangle)");
-        //    if (directions[0].Count() != 3) throw new Exception("Incorrect dimension of directions. The directions must be a 3D vector.");
-        //    if (extremeVertices.Count != 4) throw new Exception("Incorrect number of points. Should be four");
-
-        //    corners = new List<Vertex>();
-        //    var normalMatrix = new[,] {{directions[0][0],directions[0][1],directions[0][2]}, 
-        //                                {directions[1][0],directions[1][1],directions[1][2]},
-        //                                {directions[2][0],directions[2][1],directions[2][2]}};
-        //    var count = 0;
-        //    var xPrime = vertexOnPlane.Position.dotProduct(directions[0].normalize());
-        //    for (var i = 0; i < 2; i++)
-        //    {
-        //        var yPrime = extremeVertices[i].Position.dotProduct(directions[1]);
-        //        for (var j = 0; j < 2; j++)
-        //        {
-        //            var zPrime = extremeVertices[j + 2].Position.dotProduct(directions[2]);
-        //            var offAxisPosition = new[] { xPrime, yPrime, zPrime };
-        //            var position = normalMatrix.transpose().multiply(offAxisPosition);
-        //            corners.Add(new Vertex(position));
-        //            count++;
-        //        }
-        //    }
-        //}
-        #endregion
-
-        #region ArcGreatCircleIntersection
-        internal static bool ArcGreatCircleIntersection(double[][] arc1Vectors, double[][] arc2Vectors, out List<Vertex> intersections)
-        {
-            intersections = new List<Vertex>();
-            var tolerance = StarMath.EqualityTolerance;
-            //Get the arc across the great circle from arc1.
-            var antipodalArc = new double[][] { arc1Vectors[0].multiply(-1), arc1Vectors[1].multiply(-1) };
-            //Create two planes given arc1 and arc2
-            var arc1Length = Math.Acos(arc1Vectors[0].dotProduct(arc1Vectors[1]));
-            var dot3 = arc2Vectors[0].dotProduct(arc2Vectors[1]);
-            if (Math.Abs(dot3).IsPracticallySame(1.0) || double.IsNaN(dot3)) return false;
-            var arc2Length = Math.Acos(dot3);
-            if (arc2Length.IsNegligible() || double.IsNaN(arc2Length)) return false;
-            var norm1 = arc1Vectors[0].crossProduct(arc1Vectors[1]).normalize(); //unit normal
-            var norm2 = arc2Vectors[0].crossProduct(arc2Vectors[1]).normalize(); //unit normal
-
-            //Find the intersection points
-            if (arc2Vectors[0][2].IsNegligible() || arc2Vectors[0][1].IsNegligible())
-            {
-                //One or both of arc2's vectors lay on the great circle. The vector(s) is/are the intersection point(s)
-                //Case 1: One, Both, or none of arc2's points intersect the antipodal arc
-                for (var i = 0; i < 2; i++)
-                {
-                    var l1 = Math.Acos(antipodalArc[0].dotProduct(arc2Vectors[i]));
-                    var l2 = Math.Acos(antipodalArc[1].dotProduct(arc2Vectors[i]));
-                    var total = arc1Length - l1 - l2;
-                    if (!total.IsNegligible()) continue;
-                    intersections.Add(new Vertex(arc2Vectors[i])); //0-2 intersections are possible
-                }
-                if (intersections.Count < 1) return false; //no intersections found
-                return true;
-            }
-            //Case 2: If none of the vectors intersect the great circle, there must be 1 new intersection.
-            //First, get the two possible intersections with the great circle.
-            var position1 = norm1.crossProduct(norm2).normalize();
-            var vertices = new[] { position1, position1.multiply(-1) };
-            //Check to see if the intersections are on arc 2. 
-            for (var i = 0; i < 2; i++)
-            {
-                var dot1 = arc2Vectors[0].dotProduct(vertices[i]);
-                if (dot1 > 1.0) dot1 = 1.0;
-                if (dot1 < -1.0) dot1 = -1.0;
-                var dot2 = arc2Vectors[1].dotProduct(vertices[i]);
-                if (dot2 > 1.0) dot2 = 1.0;
-                if (dot2 < -1.0) dot2 = -1.0;
-                var l1 = Math.Acos(dot1);
-                var l2 = Math.Acos(dot2);
-                var total = (arc2Length - l1 - l2);
-                if (Math.Abs(total) < 1e-6) //Needed more leniancy because of multiple Acos functions. 
-                {
-                    intersections.Add(new Vertex(vertices[i]));
-                }
-                if (i == 1 && intersections.Count != 1) throw new Exception(); //must have 1 intersection
-            }
-            //Then check to see if the intersection is on the antipodal arc.
-            var l3 = Math.Acos(antipodalArc[0].dotProduct(intersections[0].Position));
-            var l4 = Math.Acos(antipodalArc[1].dotProduct(intersections[0].Position));
-            var total2 = arc1Length - l3 - l4;
-            if (Math.Abs(total2) < 1e-6) return true;
-            return false;
-        }
-        #endregion
 
     }
 }

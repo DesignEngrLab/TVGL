@@ -13,13 +13,20 @@ namespace TVGL.Enclosure_Operations
         internal double Xeffective;
         internal double Yeffective;
 
+        internal GaussSphereArc(Edge edge, PolygonalFace fromFace, PolygonalFace toFace)
+        {
+            Edge = edge;
+            FromFace = fromFace;
+            ToFace = toFace;
+        }
+
         internal GaussSphereArc(Edge edge, double[] posDir, double ownedX, double otherX)
         {
             var ownedY = edge.OwnedFace.Normal.dotProduct(posDir);
             var otherY = edge.OtherFace.Normal.dotProduct(posDir);
             var slope = (otherY - ownedY) / (otherX - ownedX);
             var offset = ownedY - slope * ownedX;
-
+            //todo: check these conditions - a change was made in how direction and posYDir were visualized
             if ( (ownedX <= 0 && otherX >= 0 && offset>=0)
                 || (ownedX > 0 && otherX < 0 && offset < 0))
             {
