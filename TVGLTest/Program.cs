@@ -14,12 +14,12 @@ namespace TVGL_Test
     internal partial class Program
     {
         private static string[] filenames = {
-        "../../../TestFiles/shark.ply",
-        "../../../TestFiles/bunnySmall.ply",
-        "../../../TestFiles/cube.ply",
-        "../../../TestFiles/airplane.ply",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        "../../../TestFiles/Beam_Boss.STL",
+        //"../../../TestFiles/shark.ply",
+        //"../../../TestFiles/bunnySmall.ply",
+        //"../../../TestFiles/cube.ply",
+        //"../../../TestFiles/airplane.ply",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        //"../../../TestFiles/Beam_Boss.STL",
         "../../../TestFiles/Tetrahedron.STL",
         "../../../TestFiles/off_axis_box.STL",
         "../../../TestFiles/Wedge.STL",
@@ -65,27 +65,28 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
-            TestOBB("../../../TestFiles/");
-            return;
-            //    for (var i = 0; i < filenames.Count(); i++)
-            //{
-            //    var filename = filenames[i];
-            //    Console.WriteLine("Attempting: " + filename);
-            //    FileStream fileStream = File.OpenRead(filename);
-            //    var ts = IO.Open(fileStream, filename, false);
-            //    //MiscFunctions.IsSolidBroken(ts[0]);
-
-            //    //TestClassification(ts[0]);
-            //    //TestXSections(ts[0]);
-            //    //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
-            //   // TestSimplify(ts[0]);
-            //    //TestSlice(ts[0]);
-            //     TestOBB(ts[0],filename);
-            //    //var filename2 = filenames[i+1];
-            //    //FileStream fileStream2 = File.OpenRead(filename2);
-            //    //var ts2= IO.Open(fileStream2, filename2, false);
-            //    //TestInsideSolid(ts[0], ts2[0]);
-            //}
+            //TestOBB("../../../TestFiles/");
+            //return;
+            for (var i = 0; i < filenames.Count(); i++)
+            {
+                var filename = filenames[i];
+                Console.WriteLine("Attempting: " + filename);
+                FileStream fileStream = File.OpenRead(filename);
+                var ts = IO.Open(fileStream, filename, false);
+                //MiscFunctions.IsSolidBroken(ts[0]);
+                ts[0] = new TessellatedSolid(ts[0].Faces, ts[0].Vertices);
+                MinimumEnclosure.OrientedBoundingBox(ts[0]);
+                //TestClassification(ts[0]);
+                //TestXSections(ts[0]);
+                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
+                // TestSimplify(ts[0]);
+                //TestSlice(ts[0]);
+                //TestOBB(ts[0], filename);
+                //var filename2 = filenames[i+1];
+                //FileStream fileStream2 = File.OpenRead(filename2);
+                //var ts2= IO.Open(fileStream2, filename2, false);
+                //TestInsideSolid(ts[0], ts2[0]);
+            }
             Console.WriteLine("Completed.");
             Console.ReadKey();
         }

@@ -60,7 +60,7 @@ namespace TVGL
         public static BoundingBox OrientedBoundingBox(IList<Vertex> convexHullVertices)
         {
             // here we create 13 directions. Why 13? basically it is all ternary combinations of x,y,and z.
-            // skipping symmetric and 0,0,0. Another way to think of it is to make a direction from a cube with
+            // skipping symmetric and 0,0,0. Another way to think of it is to make a Direction from a cube with
             // vectors emanating from every vertex, edge, and face. that would be 8+12+6 = 26. And since there
             // is no need to do mirror image directions this is 26/2 or 13.
             var directions = new List<double[]>();
@@ -72,11 +72,8 @@ namespace TVGL
             directions.Add(new[] { 0.0, 1, 1 });
             directions.Add(new[] { 0.0, -1, 1 });
 
-            var boxes = directions.Select(v => new BoundingBox
-            {
-                Volume = double.PositiveInfinity,
-                Directions = new[] { v, null, null }
-            }).ToList();
+            var boxes = directions.Select(v => new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
+                new[] { v }, null)).ToList();
             for (int i = 0; i < 13; i++)
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
             var minVol = boxes.Min(box => box.Volume);
@@ -112,12 +109,12 @@ namespace TVGL
         #region Find OBB Along Direction
         /// <summary>
         /// Finds the minimum oriented bounding rectangle (2D). The 3D points of a tessellated solid
-        /// are projected to the plane defined by "direction". This returns a BoundingBox structure
-        /// where the first direction is the same as the prescribed direction and the other two are
+        /// are projected to the plane defined by "Direction". This returns a BoundingBox structure
+        /// where the first Direction is the same as the prescribed Direction and the other two are
         /// in-plane unit vectors.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
+        /// <param name="direction">The Direction.</param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="System.Exception"></exception>
         public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction, Vertex vDir1 = null, Vertex vDir2 = null)
@@ -130,13 +127,8 @@ namespace TVGL
             double[,] backTransform;
             var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
-            //Get reference vertices from boundingRectangle
-            var v2Low = boundingRectangle.PointPairs[0].References[0];
-            var v2High = boundingRectangle.PointPairs[2].References[0];
-            var v3Low = boundingRectangle.PointPairs[1].References[0];
-            var v3High = boundingRectangle.PointPairs[3].References[0];
 
-            //Get the direction vectors from rotating caliper and projection.
+            //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new[]
             {
                 boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1],
@@ -151,52 +143,62 @@ namespace TVGL
             };
             tempDirection = backTransform.multiply(tempDirection);
             var direction3 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            var pointsOnFaces = new List<List<Vertex>>
+            {
+                new List<Vertex> {v1Low,v1Other},
+                new List<Vertex> {v1High},
+                boundingRectangle.PointsOnSides[0].SelectMany(p => p.References).ToList(),
+                boundingRectangle.PointsOnSides[1].SelectMany(p => p.References).ToList(),
+                boundingRectangle.PointsOnSides[2].SelectMany(p => p.References).ToList(),
+                boundingRectangle.PointsOnSides[3].SelectMany(p => p.References).ToList()
+            };
             return new BoundingBox
                 (new[] { depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
-                new[] { direction1, direction2, direction3 },
-                new[] { v1Low, v1High, v2Low, v2High, v3Low, v3High },
-                v1Other, 0, boundingRectangle.FifthVertex.References[0], boundingRectangle.FifthSideIndex + 2);
+                    new[] { direction1, direction2, direction3 },
+                    pointsOnFaces.ToArray());
         }
-        public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction, Vertex vDir1, Vertex vDir2,
-            Vertex backVertex)
+
+        private static void FindOBBAlongDirection(BoundingBoxData boxData)
         {
-            var direction1 = direction.normalize();
-            var depth = direction.dotProduct(vDir1.Position.subtract(vDir2.Position));
+            boxData.Direction = boxData.box.Directions[0] = boxData.Direction.normalize();
+            boxData.box.Dimensions[0] = boxData.Direction.dotProduct(boxData.rotatorEdge.From.Position.subtract(boxData.backVertex.Position));
             double[,] backTransform;
-            var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, false);
+            var points = MiscFunctions.Get2DProjectionPoints(boxData.orthVertices, boxData.Direction, out backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
             //Get reference vertices from boundingRectangle
-            var v2Low = boundingRectangle.PointPairs[0].References[0];
-            var v2High = boundingRectangle.PointPairs[2].References[0];
-            var v3Low = boundingRectangle.PointPairs[1].References[0];
-            var v3High = boundingRectangle.PointPairs[3].References[0];
 
-            //Get the direction vectors from rotating caliper and projection.
+            //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new[]
             {
                 boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1],
                 boundingRectangle.Directions[0][2], 1.0
             };
             tempDirection = backTransform.multiply(tempDirection);
-            var direction2 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            boxData.box.Directions[1] = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
             tempDirection = new[]
             {
                 boundingRectangle.Directions[1][0], boundingRectangle.Directions[1][1],
                 boundingRectangle.Directions[1][2], 1.0
             };
             tempDirection = backTransform.multiply(tempDirection);
-            var direction3 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
-            return new BoundingBox
-                (new[] { depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
-                new[] { direction1, direction2, direction3 },
-                new[] { vDir1, backVertex, v2Low, v2High, v3Low, v3High },
-                vDir2, 0, boundingRectangle.FifthVertex.References[0], boundingRectangle.FifthSideIndex + 2);
+            boxData.box.Directions[2] = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            boxData.box.PointsOnFaces = new[]
+            {
+                new List<Vertex> { boxData.rotatorEdge.From,boxData.rotatorEdge.To},
+                new List<Vertex> { boxData.backVertex },
+                boundingRectangle.PointsOnSides[0].SelectMany(p => p.References).ToList(),
+                boundingRectangle.PointsOnSides[1].SelectMany(p => p.References).ToList(),
+                boundingRectangle.PointsOnSides[2].SelectMany(p => p.References).ToList(),
+                boundingRectangle.PointsOnSides[3].SelectMany(p => p.References).ToList()
+            };
+            boxData.box.Dimensions[1] = boundingRectangle.Dimensions[0];
+            boxData.box.Dimensions[2] = boundingRectangle.Dimensions[1];
         }
         #endregion
 
         #region Get Length And Extreme Vertices
         /// <summary>
-        /// Given a direction, dir, this function returns the maximum length along this direction
+        /// Given a Direction, dir, this function returns the maximum length along this Direction
         /// for the provided vertices as well as the two vertices that represent the extremes.
         /// </summary>
         /// <param name="dir">The dir.</param>
@@ -250,65 +252,43 @@ namespace TVGL
             extremeIndices[1] = extremeIndices[2];
             while (extremeIndices[1] > 0 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
                 extremeIndices[1]--;
-            // extremeIndices[0] => min-X 
-            // A bit more complicated, since it needs to look past the zero index.
-            int currentIndex;
-            int previousIndex;
-            var stallCounter = 0;
-            extremeIndices[0] = extremeIndices[1];
-            do
-            {
-                currentIndex = extremeIndices[0];
-                extremeIndices[0]--;
-                if (extremeIndices[0] < 0) { extremeIndices[0] = numCvxPoints - 1; }
-                previousIndex = extremeIndices[0];
-                stallCounter++;
-            } while (cvxPoints[currentIndex][0] >= cvxPoints[previousIndex][0] && stallCounter < points.Count());
-            extremeIndices[0]++;
-            if (extremeIndices[0] > numCvxPoints - 1) { extremeIndices[0] = 0; }
-
+            // extrememIndices[0] => min-X, this time count up from 0. The answers likely 0 but in case there are ties.
+            extremeIndices[0] = 0;
+            while (cvxPoints[extremeIndices[0]][0] >= cvxPoints[extremeIndices[0] + 1][0])
+                extremeIndices[0]++;
             #endregion
 
             #region Cycle through 90-degrees
-            var deltaToUpdateIndex = -1;
+
             var deltaAngles = new double[4];
             var offsetAngles = new[] { Math.PI / 2, Math.PI, -Math.PI / 2, 0.0 };
-            BoundingRectangle bestRectangle = new BoundingRectangle { Area = double.PositiveInfinity };
+            var bestRectangle = new BoundingRectangle { Area = double.PositiveInfinity };
             do
             {
                 #region update the deltaAngles from the current orientation
                 //For each of the 4 supporting points (those forming the rectangle),
                 for (var i = 0; i < 4; i++)
                 {
-                    //Update all angles on first pass. For each additional pass, only update one deltaAngle.
-                    if (deltaToUpdateIndex == -1 || i == deltaToUpdateIndex)
-                    {
-                        var index = extremeIndices[i];
-                        var prev = (index == 0) ? numCvxPoints - 1 : index - 1;
-                        var tempDelta = Math.Atan2(cvxPoints[prev][1] - cvxPoints[index][1],
-                             cvxPoints[prev][0] - cvxPoints[index][0]);
-                        deltaAngles[i] = offsetAngles[i] - tempDelta;
-                        //If the angle has rotated beyond the 90 degree bounds, it will be negative
-                        //And should never be chosen from then on.
-                        if (deltaAngles[i] < 0) { deltaAngles[i] = 2 * Math.PI; }
-                    }
+                    var index = extremeIndices[i];
+                    var prev = (index == 0) ? numCvxPoints - 1 : index - 1;
+                    var tempDelta = Math.Atan2(cvxPoints[prev][1] - cvxPoints[index][1],
+                         cvxPoints[prev][0] - cvxPoints[index][0]);
+                    deltaAngles[i] = offsetAngles[i] - tempDelta;
+                    //If the angle has rotated beyond the 90 degree bounds, it will be negative
+                    //And should never be chosen from then on.
+                    if (deltaAngles[i] < 0) { deltaAngles[i] = 2 * Math.PI; }
                 }
                 var angle = deltaAngles.Min();
                 if (angle.IsGreaterThanNonNegligible(Math.PI / 2))
                     break;
-                deltaToUpdateIndex = deltaAngles.FindIndex(angle);
+                var refIndex = deltaAngles.FindIndex(angle);
                 #endregion
-
-                var currentPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
-                extremeIndices[deltaToUpdateIndex]--;
-                if (extremeIndices[deltaToUpdateIndex] < 0) { extremeIndices[deltaToUpdateIndex] = numCvxPoints - 1; }
-                var previousPoint = cvxPoints[extremeIndices[deltaToUpdateIndex]];
 
                 #region find area
                 //Get unit normal for current edge
-                var direction = previousPoint.Position2D.subtract(currentPoint.Position2D).normalize();
-                //If point type = 1 or 3, then use inversed direction
-                if (deltaToUpdateIndex == 1 || deltaToUpdateIndex == 3) { direction = new[] { -direction[1], direction[0] }; }
+                var direction = cvxPoints[extremeIndices[refIndex]].Position2D.subtract(cvxPoints[extremeIndices[refIndex] - 1].Position2D).normalize();
+                //If point type = 1 or 3, then use inversed Direction
+                if (refIndex == 1 || refIndex == 3) { direction = new[] { -direction[1], direction[0] }; }
                 var vectorWidth = new[]
                 {
                     cvxPoints[extremeIndices[2]][0] - cvxPoints[extremeIndices[0]][0],
@@ -324,18 +304,30 @@ namespace TVGL
                 };
                 var angleVector2 = new[] { direction[0], direction[1] };
                 var height = Math.Abs(vectorHeight.dotProduct(angleVector2));
-                var tempArea = height * width;
+                var area = height * width;
                 #endregion
 
-                if (bestRectangle.Area > tempArea)
+                if (bestRectangle.Area > area)
                 {
-                    bestRectangle.Area = tempArea;
+                    var xDir = new[] { angleVector1[0], angleVector1[1], 0.0 };
+                    var yDir = new[] { angleVector2[0], angleVector2[1], 0.0 };
+                    var pointsOnSides = new List<Point>[4];
+                    for (int i = 0; i < 4; i++)
+                    {
+                        pointsOnSides[i] = new List<Point>();
+                        var dir = (i % 2 == 0) ? xDir : yDir;
+                        var distance = cvxPoints[extremeIndices[i]].Position2D.dotProduct(dir);
+                        pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
+                        while (distance.IsPracticallySame(cvxPoints[extremeIndices[i] - 1].Position2D.dotProduct(dir)))
+                        {
+                            extremeIndices[i] = (extremeIndices[i] == 0) ? numCvxPoints - 1 : extremeIndices[i] - 1;
+                            pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
+                        }
+                    }
+                    bestRectangle.PointsOnSides = pointsOnSides;
+                    bestRectangle.Area = area;
                     bestRectangle.Dimensions = new[] { width, height };
-                    bestRectangle.FifthVertex = currentPoint;
-                    bestRectangle.FifthSideIndex = deltaToUpdateIndex;
-                    bestRectangle.Directions = new[]
-                    {new[] {angleVector1[0], angleVector1[1], 0.0}, new[] {angleVector2[0], angleVector2[1], 0.0}};
-                    bestRectangle.PointPairs = extremeIndices.Select(index => cvxPoints[index]).ToArray();
+                    bestRectangle.Directions = new[] { xDir, yDir };
                 }
 
             } while (true); //process will end on its own by the break statement in line 263

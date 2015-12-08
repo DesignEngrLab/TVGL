@@ -27,13 +27,13 @@ namespace TVGL
     {
 
         /// <summary>
-        /// Returns the 2D convex hull for the 3D vertices within the plane defined by the normal, direction.
+        /// Returns the 2D convex hull for the 3D vertices within the plane defined by the normal, Direction.
         /// The returned points are a List of points (3D double array) that represent the points as they have been
         /// converted to the 2D plane. The vertices are not altered by this function. This is a simple two-line function
         /// that first call the non-destructive "Get2DProjectionPoints" and then the overload of "ConvexHull2D".
         /// </summary>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="direction">The direction.</param>
+        /// <param name="direction">The Direction.</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<Point> ConvexHull2D(IList<Vertex> vertices, double[] direction)
         {
@@ -52,10 +52,10 @@ namespace TVGL
             var totalArea = 0.0;
 
             //Find area of triangle between first point and every triangle that can be formed from the first point.
-            for (var i = 1; i < convexHullPoints2D.Count-1; i++)
+            for (var i = 1; i < convexHullPoints2D.Count - 1; i++)
             {
                 var point2 = convexHullPoints2D[i];
-                var point3 = convexHullPoints2D[i+1];
+                var point3 = convexHullPoints2D[i + 1];
                 //Reference: <http://www.mathopenref.com/coordtrianglearea.html>
                 var triangleArea = 0.5 * Math.Abs(point1.X * (point2.Y - point3.Y) + point2.X * (point3.Y - point1.Y) + point3.X * (point1.Y - point2.Y));
                 totalArea = totalArea + triangleArea;
@@ -64,7 +64,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the 2D convex hull for the 3D vertices within the plane defined by the normal, direction.
+        /// Returns the 2D convex hull for the 3D vertices within the plane defined by the normal, Direction.
         /// The returned points are a List of points (3D double array) that represent the points as they have been
         /// converted to the 2D plane. The vertices are not altered by this function. This is a simple two-line function
         /// that first call the non-destructive "Get2DProjectionPoints" and then the overload of "ConvexHull2D".
@@ -93,12 +93,19 @@ namespace TVGL
             for (var i = 0; i < origVNum; i++)
             {
                 var pt = points[i];
+                if (pt[0] == minX && pt[1] < points[extremePointsIndices[0]][1])
+                    extremePointsIndices[0] = i;
+                // this previous condition is a subtle point to put the first element
+                // in the return list at that lowest Y-value of those that share the
+                // lowest X-value. This is mainly to provide some consistency in the 
+                // results & expectations, and directly helps with the rotating calipers
+                // method.
                 if (pt[0] < minX)
                 {
                     extremePointsIndices[0] = i;
                     minX = pt[0];
                 }
-                if ((pt[0] + pt[1]) < minSum)
+                if (pt[0] + pt[1] < minSum)
                 {
                     extremePointsIndices[1] = i;
                     minSum = pt[0] + pt[1];
@@ -108,7 +115,7 @@ namespace TVGL
                     extremePointsIndices[2] = i;
                     minY = pt[1];
                 }
-                if ((pt[0] - pt[1]) > maxDiff)
+                if (pt[0] - pt[1] > maxDiff)
                 {
                     extremePointsIndices[3] = i;
                     maxDiff = pt[0] - pt[1];
@@ -118,7 +125,7 @@ namespace TVGL
                     extremePointsIndices[4] = i;
                     maxX = pt[0];
                 }
-                if ((pt[0] + pt[1]) > maxSum)
+                if (pt[0] + pt[1] > maxSum)
                 {
                     extremePointsIndices[5] = i;
                     maxSum = pt[0] + pt[1];
@@ -128,12 +135,13 @@ namespace TVGL
                     extremePointsIndices[6] = i;
                     maxY = pt[1];
                 }
-                if ((pt[0] - pt[1]) >= minDiff) continue;
-                extremePointsIndices[7] = i;
-                minDiff = pt[0] - pt[1];
+                if (pt[0] - pt[1] < minDiff)
+                {
+                    extremePointsIndices[7] = i;
+                    minDiff = pt[0] - pt[1];
+                }
             }
-
-            /* convexHullCCW is the result of this function. It is a list of 
+            /* convexHullCCW is the list return at the end of this function. It is a list of 
              * vertices found in the original vertices and ordered to make a
              * counter-clockwise loop beginning with the leftmost (minimum
              * value of X) IVertexConvHull. */
@@ -147,15 +155,12 @@ namespace TVGL
 
             /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
              * steamline the code, these are established. */
-            var cvxVNum = extremePointsIndices.GetLength(0);
+            var cvxVNum = convexHullCCW.Count;
             origVNum -= cvxVNum;
             var last = cvxVNum - 1;
             var remainingPoints = new List<Point>(points);
-            for (var i = 0; i < extremePointsIndices.GetLength(0); i++)
-            {
-                var point = points[extremePointsIndices[i]];
+            foreach (var point in convexHullCCW)
                 remainingPoints.Remove(point);
-            }
 
             #region Step 2 : Find Signed-Distance to each convex edge
 
@@ -164,51 +169,51 @@ namespace TVGL
              * The first column corresponds to the X-value,and  the second column to the Y-value. Calculating this 
              * should not take long since there are only 3 to 8 members currently in hull, and it will save time 
              * comparing to all the result vertices. */
-            var edgeUnitVectors = new double[cvxVNum, 2];
+            var edgeUnitVectors = new double[cvxVNum][];
             double magnitude;
             for (var i = 0; i < last; i++)
             {
-                edgeUnitVectors[i, 0] = (convexHullCCW[i + 1][0] - convexHullCCW[i][0]);
-                edgeUnitVectors[i, 1] = (convexHullCCW[i + 1][1] - convexHullCCW[i][1]);
-                magnitude = Math.Sqrt(edgeUnitVectors[i, 0] * edgeUnitVectors[i, 0] +
-                                      edgeUnitVectors[i, 1] * edgeUnitVectors[i, 1]);
-                edgeUnitVectors[i, 0] /= magnitude;
-                edgeUnitVectors[i, 1] /= magnitude;
+                edgeUnitVectors[i] = new[] { convexHullCCW[i + 1][0] - convexHullCCW[i][0],
+                    convexHullCCW[i + 1][1] - convexHullCCW[i][1] };
+                magnitude = Math.Sqrt(edgeUnitVectors[i][0] * edgeUnitVectors[i][0] +
+                                      edgeUnitVectors[i][1] * edgeUnitVectors[i][1]);
+                edgeUnitVectors[i][0] /= magnitude;
+                edgeUnitVectors[i][1] /= magnitude;
             }
-            edgeUnitVectors[last, 0] = convexHullCCW[0][0] - convexHullCCW[last][0];
-            edgeUnitVectors[last, 1] = convexHullCCW[0][1] - convexHullCCW[last][1];
-            magnitude = Math.Sqrt(edgeUnitVectors[last, 0] * edgeUnitVectors[last, 0] +
-                                  edgeUnitVectors[last, 1] * edgeUnitVectors[last, 1]);
-            edgeUnitVectors[last, 0] /= magnitude;
-            edgeUnitVectors[last, 1] /= magnitude;
-            
-            /* An array of sorted dictionaries! As we find new candidate convex points, we store them here. The second
-             * part of the tuple (Item2 is a double) is the "positionAlong" - this is used to order the nodes that
+            edgeUnitVectors[last] = new[] { convexHullCCW[0][0] - convexHullCCW[last][0],
+                convexHullCCW[0][1] - convexHullCCW[last][1] };
+            magnitude = Math.Sqrt(edgeUnitVectors[last][0] * edgeUnitVectors[last][0] +
+                                  edgeUnitVectors[last][1] * edgeUnitVectors[last][1]);
+            edgeUnitVectors[last][0] /= magnitude;
+            edgeUnitVectors[last][1] /= magnitude;
+
+            /* An array of sorted lists! As we find new candidate convex points, we store them here. The key is
+             * the "positionAlong" - this is used to order the nodes that
              * are found for a particular side (More on this in 23 lines). */
-            var hullCands = new SortedList<double, Point>[cvxVNum];
+            var hullCands = new List<PointAlong>[cvxVNum];
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
-            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, Point>();
+            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new List<PointAlong>();
 
             /* Now a big loop. For each of the original vertices, check them with the 3 to 8 edges to see if they 
              * are inside or out. If they are out, add them to the proper row of the hullCands array. */
             for (var i = 0; i < origVNum; i++)
             {
+                var point = remainingPoints[i];
                 for (var j = 0; j < cvxVNum; j++)
                 {
                     var b = new[]
                     {
-                        remainingPoints[i][0] - convexHullCCW[j][0],
-                        remainingPoints[i][1] - convexHullCCW[j][1]
+                        point[0] - convexHullCCW[j][0],
+                        point[1] - convexHullCCW[j][1]
                     };
                     /* In the condition below, any signed distance that is negative is outside of the original polygon. 
                      * It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
-                    if (StarMath.crossProduct2(StarMath.GetRow(j, edgeUnitVectors), b) >= 0) continue;
-                    hullCands[j].Add(StarMath.GetRow(j, edgeUnitVectors).dotProduct(b, 2), remainingPoints[i]);
+                    if (StarMath.crossProduct2(edgeUnitVectors[j], b) >= 0) continue;
+                    hullCands[j].Add(new PointAlong { distanceAlong = edgeUnitVectors[j].dotProduct(b, 2), point = point });
                     break;
                 }
             }
-
             #endregion
 
             #region Step 3: now check the remaining hull candidates
@@ -219,7 +224,7 @@ namespace TVGL
             {
                 if (hullCands[j - 1].Count == 1)
                     /* If there is one and only one candidate, it must be in the convex hull. Add it now. */
-                    convexHullCCW.InsertRange(j, hullCands[j - 1].Values);
+                    convexHullCCW.Insert(j, hullCands[j - 1][0].point);
                 else if (hullCands[j - 1].Count > 1)
                 {
                     /* If there's more than one than...Well, now comes the tricky part. Here is where the
@@ -227,7 +232,8 @@ namespace TVGL
                      * were all linear). The above octagon trick was to conquer and divide the candidates. */
 
                     /* a renaming for compactness and clarity */
-                    var hc = new List<Point>(hullCands[j - 1].Values);
+                    var hc = hullCands[j - 1].OrderBy(pointAlong => pointAlong.distanceAlong)
+                        .Select(pointAlong => pointAlong.point).ToList();
 
                     /* put the known starting IVertexConvHull as the beginning of the list. No need for the "positionAlong"
                      * anymore since the list is now sorted. At any rate, the positionAlong is zero. */
@@ -265,8 +271,18 @@ namespace TVGL
 
             #endregion
 
-            if (convexHullCCW.Count > points.Count) convexHullCCW.Remove(convexHullCCW.Last());
+            if (convexHullCCW.Count > points.Count)
+            {
+                convexHullCCW.Remove(convexHullCCW.Last());
+                throw new Exception("more points in cvx hull than intial points. what's up with that?");
+            }
             return convexHullCCW;
+        }
+        struct PointAlong
+        {
+            internal Point point;
+            internal double distanceAlong;
+
         }
     }
 }
