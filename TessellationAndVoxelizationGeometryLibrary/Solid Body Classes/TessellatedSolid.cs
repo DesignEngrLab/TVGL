@@ -602,6 +602,8 @@ namespace TVGL
             Vertices = new Vertex[NumberOfVertices];
             for (var i = 0; i < NumberOfVertices; i++)
                 Vertices[i] = new Vertex(listOfVertices[i], i);
+            //Set the checksum
+            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(Vertices.Count())) + 1);
         }
         #endregion
 
@@ -892,18 +894,19 @@ namespace TVGL
             foreach (var edge in Edges)
                 SetEdgeChecksum(edge, NumberOfVertices);
         }
-        internal long SetEdgeChecksum(Edge edge, int checkSumMultiplier)
+        internal long SetEdgeChecksum(Edge edge, int numberOfVertices)
         {
-            var checksum = SetEdgeChecksum(edge.From, edge.To, checkSumMultiplier);
+            var checksum = SetEdgeChecksum(edge.From, edge.To, numberOfVertices);
             edge.EdgeReference = checksum;
             return checksum;
         }
-        internal long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex, int checkSumMultiplier)
+        internal long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex, int numberOfVertices)
         {
             var fromIndex = fromVertex.IndexInList;
             var toIndex = toVertex.IndexInList;
             if (fromIndex == -1 || toIndex == -1) return -1;
             if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+            var checkSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(numberOfVertices)) + 1);
             return (fromIndex < toIndex)
                 ? fromIndex + (checkSumMultiplier * toIndex)
                 : toIndex + (checkSumMultiplier * fromIndex);
