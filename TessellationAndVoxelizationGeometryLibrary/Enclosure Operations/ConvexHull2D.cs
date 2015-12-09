@@ -141,15 +141,19 @@ namespace TVGL
                     minDiff = pt[0] - pt[1];
                 }
             }
-            /* convexHullCCW is the list return at the end of this function. It is a list of 
+            /* convexHullCCW is the list returnED at the end of this function. It is a list of 
              * vertices found in the original vertices and ordered to make a
              * counter-clockwise loop beginning with the leftmost (minimum
-             * value of X) IVertexConvHull. */
+             * value of X) IVertexConvHull. The extremePoints have already been ordered in 
+             * the clockwise direction. In some cases, neighboring extremes will be identical
+             * vertices, such as the lowest is also the lower-rightmost. This is why we check
+             * to see that we are not adding the same point twice. Oh, the first one in the list
+             * may match the last one or two, hence the double condition. This seems a little slap-dash,
+             * but it is efficient to evaluate. */
             var convexHullCCW = new List<Point> { points[extremePointsIndices[0]] };
             for (var i = 1; i < 8; i++)
-                if (extremePointsIndices[i] != extremePointsIndices[i - 1])
+                if (extremePointsIndices[i] != extremePointsIndices[i - 1] && extremePointsIndices[i] != extremePointsIndices[0])
                     convexHullCCW.Add(points[extremePointsIndices[i]]);
-            extremePointsIndices = extremePointsIndices.Distinct().OrderByDescending(x => x).ToArray();
 
             #endregion
 
@@ -270,15 +274,10 @@ namespace TVGL
             }
 
             #endregion
-
-            if (convexHullCCW.Count > points.Count)
-            {
-                convexHullCCW.Remove(convexHullCCW.Last());
-                throw new Exception("more points in cvx hull than intial points. what's up with that?");
-            }
             return convexHullCCW;
         }
-        struct PointAlong
+
+        private struct PointAlong
         {
             internal Point point;
             internal double distanceAlong;

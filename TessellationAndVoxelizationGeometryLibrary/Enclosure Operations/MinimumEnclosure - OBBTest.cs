@@ -227,11 +227,11 @@ namespace TVGL
         /// <accuracy>
         /// Garantees the optimial orientation is within MaxDeltaAngle error.
         /// </accuracy>
-        private static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts)
+        private static BoundingBox OrientedBoundingBox(Vertex[] convexHullVertices, Edge[] convexHullEdges, PolygonalFace[] convexHullFaces)
         {
             BoundingBox minBox = new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
                 null, null);
-            foreach (var rotateEdge in ts.ConvexHullEdges)
+            foreach (var rotateEdge in convexHullEdges)
             {
                 #region Initialize variables
                 //Initialize variables
@@ -247,12 +247,6 @@ namespace TVGL
                 //, which is the orthogonal is the y Direction
                 var origPosYDir = rotatorVector.crossProduct(startDir).normalize();
                 var totalAngle = Math.PI - rotateEdge.InternalAngle;
-                // make arrays of the dotproducts with start and end directions (x-values) to help subsequent
-                // foreach loop which will look up faces multiple times.
-                var startingDots = ts.ConvexHullFaces.Select(f => f.Normal.dotProduct(startDir)).ToArray();
-                var angle = 0.0;
-                var deltaAngleToBackChange = 0.0;
-                var deltaAngleOrthSet = 0.0;
                 #endregion
                 #region Set up orthogonal arcs and vertices
 
@@ -264,7 +258,10 @@ namespace TVGL
                     rotatorVector = rotatorVector,
                     orthGaussSphereArcs = new List<GaussSphereArc>()
                 };
-                foreach (var edge in ts.ConvexHullEdges)
+                // make arrays of the dotproducts with start and end directions (x-values) to help subsequent
+                // foreach loop which will look up faces multiple times.
+                var startingDots = convexHullFaces.Select(f => f.Normal.dotProduct(startDir)).ToArray();
+                foreach (var edge in convexHullEdges)
                 {
                     var ownedX = startingDots[edge.OwnedFace.IndexInList];
                     var otherX = startingDots[edge.OtherFace.IndexInList];
@@ -275,7 +272,7 @@ namespace TVGL
                 #endregion
                 #region find back vertex
                 var maxDistance = double.NegativeInfinity;
-                foreach (var v in ts.ConvexHullVertices)
+                foreach (var v in convexHullVertices)
                 {
                     var distance = v.Position.subtract(rotateEdge.From.Position).dotProduct(startDir);
                     if (distance > maxDistance)
@@ -287,6 +284,9 @@ namespace TVGL
                 #endregion
                 FindOBBAlongDirection(thisBoxData);
                 if (thisBoxData.Volume < minBox.Volume) minBox = thisBoxData.box;
+                var angle = 0.0;
+                var deltaAngleToBackChange = 0.0;
+                var deltaAngleOrthSet = 0.0;
                 do
                 {
                     var nextBoxData = thisBoxData.Copy();
@@ -294,17 +294,41 @@ namespace TVGL
                         deltaAngleToBackChange = UpdateBackAngle(nextBoxData);
                     if (deltaAngleOrthSet <= 0)
                         deltaAngleOrthSet = UpdateOrthAngle(nextBoxData);
-                    var angleStep = Math.Min(deltaAngleOrthSet, deltaAngleToBackChange);
-                    // the problem is that the nextBoxData reflects both of these adjustments
-                    // and should only see one (either backVertex and backEdge change OR
-                    // orthVertices changes
-                    angle += angleStep; deltaAngleToBackChange -= angleStep; deltaAngleOrthSet -= angleStep;
-                    if (angle < totalAngle)
+                    if (deltaAngleOrthSet < deltaAngleToBackChange)
+                    {
+                        deltaAngleToBackChange -= deltaAngleOrthSet;
+                        angle += deltaAngleOrthSet;
+                        deltaAngleOrthSet = 0;
+                        nextBoxData.backVertex = thisBoxData.backVertex;
+                        nextBoxData.backEdge = thisBoxData.backEdge;
+                    }
+                    else if (deltaAngleToBackChange < deltaAngleOrthSet)
+                    {
+                        deltaAngleOrthSet -= deltaAngleToBackChange;
+                        angle += deltaAngleToBackChange;
+                        deltaAngleToBackChange = 0;
+                        nextBoxData.orthVertices = thisBoxData.orthVertices;
+                    }
+                    else // then equal to each other
+                    {
+                        angle += deltaAngleToBackChange;
+                        deltaAngleOrthSet= deltaAngleToBackChange = 0;
+                    }
+                    if (angle > totalAngle)
+                    {
+                        nextBoxData.angle = totalAngle;
+                        nextBoxData.Direction = endDir;
+                    }
+                    else
+                    {
+                        nextBoxData.angle = angle;
                         nextBoxData.Direction = UpdateDirection(startDir, rotatorVector, origPosYDir, angle);
-                    else nextBoxData.Direction = endDir;
+                    }
                     nextBoxData.posYDir = nextBoxData.rotatorVector.crossProduct(nextBoxData.Direction).normalize();
                     UpdateSlopes(nextBoxData);
+                    /****************/
                     FindOBBAlongDirection(nextBoxData);
+                    /****************/
                     if (DifferentMembershipInExtrema(thisBoxData, nextBoxData))
                     {
                         var lowerBox = thisBoxData;

@@ -255,10 +255,10 @@ namespace TVGL_Test
             Debug.WriteLine("start...");
             var dir = new[] { 0.0, 1.0, 0.0 };
             dir.normalize();
-            Vertex vLow, vHigh;
+            List<Vertex> vLow, vHigh;
             List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
             var length = MinimumEnclosure.GetLengthAndExtremeVertices(dir, ts.Vertices, out vLow, out vHigh);
-            var distToVLow = vLow.Position.dotProduct(dir);
+            var distToVLow = vLow[0].Position.dotProduct(dir);
             //try
             //{
             //distToVLow+length/2

@@ -49,6 +49,7 @@ namespace TVGL
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
         {
             return OrientedBoundingBox(ts.ConvexHullVertices);
+            //return OrientedBoundingBox(ts.ConvexHullVertices, ts.ConvexHullEdges, ts.ConvexHullFaces);
         }
 
         /// <summary>
@@ -119,11 +120,10 @@ namespace TVGL
         /// <exception cref="System.Exception"></exception>
         public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction, Vertex vDir1 = null, Vertex vDir2 = null)
         {
-            Vertex v1Low, v1High, v1Other;
+            List<Vertex> bottomVertices, topVertices;
             var direction1 = direction.normalize();
-            var depth = GetLengthAndExtremeVertices(direction, vertices, out v1Low, out v1High);
-            if (v1Low == vDir1) v1Other = vDir2;
-            else v1Other = vDir1;
+            var depth = GetLengthAndExtremeVertices(direction, vertices, out bottomVertices, out topVertices);
+
             double[,] backTransform;
             var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
@@ -145,8 +145,7 @@ namespace TVGL
             var direction3 = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
             var pointsOnFaces = new List<List<Vertex>>
             {
-                new List<Vertex> {v1Low,v1Other},
-                new List<Vertex> {v1High},
+                bottomVertices,topVertices,
                 boundingRectangle.PointsOnSides[0].SelectMany(p => p.References).ToList(),
                 boundingRectangle.PointsOnSides[1].SelectMany(p => p.References).ToList(),
                 boundingRectangle.PointsOnSides[2].SelectMany(p => p.References).ToList(),
@@ -206,17 +205,33 @@ namespace TVGL
         /// <param name="vLow">The v low.</param>
         /// <param name="vHigh">The v high.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(double[] direction, IList<Vertex> vertices, out Vertex vLow, out Vertex vHigh)
+        public static double GetLengthAndExtremeVertices(double[] direction, IList<Vertex> vertices, out List<Vertex> bottomVertices,
+            out List<Vertex> topVertices)
         {
             var dir = direction.normalize();
-            var dotProducts = new double[vertices.Count];
+            var min_d = double.PositiveInfinity;
+            bottomVertices = new List<Vertex>();
+            topVertices = new List<Vertex>();
+            var max_d = double.NegativeInfinity;
             var i = 0;
             foreach (var v in vertices)
-                dotProducts[i++] = dir.dotProduct(v.Position);
-            var min_d = dotProducts.Min();
-            var max_d = dotProducts.Max();
-            vLow = vertices[dotProducts.FindIndex(min_d)];
-            vHigh = vertices[dotProducts.FindIndex(max_d)];
+            {
+                var distance = dir.dotProduct(v.Position);
+                if (distance.IsPracticallySame(min_d, Constants.BaseTolerance))
+                    bottomVertices.Add(v);
+                else if (distance < min_d)
+                {
+                    bottomVertices.Clear(); bottomVertices.Add(v);
+                    min_d = distance;
+                }
+                if (distance.IsPracticallySame(max_d, Constants.BaseTolerance))
+                    bottomVertices.Add(v);
+                else if (distance > max_d)
+                {
+                    topVertices.Clear(); topVertices.Add(v);
+                    max_d = distance;
+                }
+            }
             return max_d - min_d;
         }
         #endregion
@@ -276,7 +291,7 @@ namespace TVGL
                     deltaAngles[i] = offsetAngles[i] - tempDelta;
                     //If the angle has rotated beyond the 90 degree bounds, it will be negative
                     //And should never be chosen from then on.
-                    if (deltaAngles[i] < 0) { deltaAngles[i] = 2 * Math.PI; }
+                    if (deltaAngles[i] < 0) deltaAngles[i] = double.PositiveInfinity;
                 }
                 var angle = deltaAngles.Min();
                 if (angle.IsGreaterThanNonNegligible(Math.PI / 2))
@@ -286,7 +301,8 @@ namespace TVGL
 
                 #region find area
                 //Get unit normal for current edge
-                var direction = cvxPoints[extremeIndices[refIndex]].Position2D.subtract(cvxPoints[extremeIndices[refIndex] - 1].Position2D).normalize();
+                var otherIndex = (extremeIndices[refIndex] == 0) ? numCvxPoints - 1 : extremeIndices[refIndex] - 1;
+                var direction = cvxPoints[extremeIndices[refIndex]].Position2D.subtract(cvxPoints[otherIndex].Position2D).normalize();
                 //If point type = 1 or 3, then use inversed Direction
                 if (refIndex == 1 || refIndex == 3) { direction = new[] { -direction[1], direction[0] }; }
                 var vectorWidth = new[]
@@ -307,23 +323,25 @@ namespace TVGL
                 var area = height * width;
                 #endregion
 
+                var xDir = new[] { angleVector1[0], angleVector1[1], 0.0 };
+                var yDir = new[] { angleVector2[0], angleVector2[1], 0.0 };
+                var pointsOnSides = new List<Point>[4];
+                for (int i = 0; i < 4; i++)
+                {
+                    pointsOnSides[i] = new List<Point>();
+                    var dir = (i % 2 == 0) ? xDir : yDir;
+                    var distance = cvxPoints[extremeIndices[i]].Position.dotProduct(dir);
+                    var prevIndex = extremeIndices[i];
+                    do
+                    {
+                        extremeIndices[i] = prevIndex;
+                        pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
+                        prevIndex = (extremeIndices[i] == 0) ? numCvxPoints - 1 : extremeIndices[i] - 1;
+                    } while (distance.IsPracticallySame(cvxPoints[prevIndex].Position.dotProduct(dir), Constants.BaseTolerance));
+                }
+
                 if (bestRectangle.Area > area)
                 {
-                    var xDir = new[] { angleVector1[0], angleVector1[1], 0.0 };
-                    var yDir = new[] { angleVector2[0], angleVector2[1], 0.0 };
-                    var pointsOnSides = new List<Point>[4];
-                    for (int i = 0; i < 4; i++)
-                    {
-                        pointsOnSides[i] = new List<Point>();
-                        var dir = (i % 2 == 0) ? xDir : yDir;
-                        var distance = cvxPoints[extremeIndices[i]].Position2D.dotProduct(dir);
-                        pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
-                        while (distance.IsPracticallySame(cvxPoints[extremeIndices[i] - 1].Position2D.dotProduct(dir)))
-                        {
-                            extremeIndices[i] = (extremeIndices[i] == 0) ? numCvxPoints - 1 : extremeIndices[i] - 1;
-                            pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
-                        }
-                    }
                     bestRectangle.PointsOnSides = pointsOnSides;
                     bestRectangle.Area = area;
                     bestRectangle.Dimensions = new[] { width, height };
