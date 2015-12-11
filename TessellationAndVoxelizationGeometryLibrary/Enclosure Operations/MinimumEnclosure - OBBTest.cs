@@ -134,7 +134,11 @@ namespace TVGL
             double[][] eigenVectors;
             C.GetEigenValuesAndVectors(out eigenVectors);
 
-            var minOBB = new BoundingBox(null, eigenVectors, null);
+            var minOBB = new BoundingBox
+            {
+                Directions = eigenVectors,
+                Volume = double.PositiveInfinity
+            };
 
             //Perform a 2D caliper along each eigenvector. 
             for (int i = 0; i < 3; i++)
@@ -150,7 +154,6 @@ namespace TVGL
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(convexHullFaces);
             var totalArea = triangles.Sum(t => t.Area);
-            var minVolume = double.PositiveInfinity;
 
             //Calculate the center of gravity of combined triangles
             var c = new[] { 0.0, 0.0, 0.0 };
@@ -193,24 +196,24 @@ namespace TVGL
             double[][] eigenVectors;
             covariance.GetEigenValuesAndVectors(out eigenVectors);
 
-            var bestOBB = new BoundingBox(null, null, null);
+            var bestOBB = new BoundingBox { Volume = double.PositiveInfinity };
             //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
                 var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize());
-                if (OBB.Volume < minVolume)
-                {
-                    minVolume = OBB.Volume;
+                if (OBB.Volume < bestOBB.Volume)
                     bestOBB = OBB;
-                }
             }
             return bestOBB;
         }
         #endregion
         private static BoundingBox Find_via_ChanTan_AABB_Approach(IList<Vertex> convexHullVertices)
         {
-            return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox(null,
-            new[] { new[] { 1.0, 0.0, 0.0 }, new[] { 0.0, 1.0, 0.0 }, new[] { 0.0, 0.0, 1.0 } }, null));
+            return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox
+            {
+                Directions = new[] { new[] { 1.0, 0.0, 0.0 }, new[] { 0.0, 1.0, 0.0 }, new[] { 0.0, 0.0, 1.0 } },
+                Volume = double.PositiveInfinity
+            });
         }
 
         #region MC ApproachOne
@@ -227,10 +230,10 @@ namespace TVGL
         /// <accuracy>
         /// Garantees the optimial orientation is within MaxDeltaAngle error.
         /// </accuracy>
-        private static BoundingBox OrientedBoundingBox(Vertex[] convexHullVertices, Edge[] convexHullEdges, PolygonalFace[] convexHullFaces)
+        private static BoundingBox OrientedBoundingBox(TVGLConvexHull convexHull)
         {
-            BoundingBox minBox = new BoundingBox(null, null, null);
-            foreach (var rotateEdge in convexHullEdges)
+            BoundingBox minBox = new BoundingBox { Volume = double.PositiveInfinity };
+            foreach (var rotateEdge in convexHull.Edges)
             {
                 #region Initialize variables
                 //Initialize variables
@@ -259,14 +262,14 @@ namespace TVGL
                 };
                 // make arrays of the dotproducts with start and end directions (x-values) to help subsequent
                 // foreach loop which will look up faces multiple times.
-                double[] startingDots = new double[convexHullFaces.Length];
-                for (int i = 0; i < convexHullFaces.Length; i++)
+                double[] startingDots = new double[convexHull.Faces.Length];
+                for (int i = 0; i < convexHull.Faces.Length; i++)
                 {
-                    var face = convexHullFaces[i];
+                    var face = convexHull.Faces[i];
                     face.IndexInList = i;
                     startingDots[i] = face.Normal.dotProduct(startDir);
                 }
-                foreach (var edge in convexHullEdges)
+                foreach (var edge in convexHull.Edges)
                 {
                     var ownedX = startingDots[edge.OwnedFace.IndexInList];
                     var otherX = startingDots[edge.OtherFace.IndexInList];
@@ -277,7 +280,7 @@ namespace TVGL
                 #endregion
                 #region find back vertex
                 var maxDistance = double.NegativeInfinity;
-                foreach (var v in convexHullVertices)
+                foreach (var v in convexHull.Vertices)
                 {
                     var distance = rotateEdge.From.Position.subtract(v.Position).dotProduct(startDir);
                     if (distance > maxDistance)
@@ -467,8 +470,14 @@ namespace TVGL
                     angle = angle,
                     backVertex = backVertex,
                     backEdge = backEdge,
-                    box = new BoundingBox((double[])box.Dimensions.Clone(), (double[][])box.Directions.Clone(),
-                            (List<Vertex>[])box.PointsOnFaces.Clone()),
+                    box = new BoundingBox
+                    {
+                        CornerVertices = (Point[])box.CornerVertices.Clone(),
+                        Dimensions = (double[])box.Dimensions.Clone(),
+                        Directions = (double[][])box.Directions.Clone(),
+                        PointsOnFaces = (List<Vertex>[])box.PointsOnFaces.Clone(),
+                        Volume = box.Volume
+                    },
                     Direction = (double[])Direction.Clone(),
                     orthGaussSphereArcs = new List<GaussSphereArc>(orthGaussSphereArcs),
                     orthVertices = new List<Vertex>(orthVertices),

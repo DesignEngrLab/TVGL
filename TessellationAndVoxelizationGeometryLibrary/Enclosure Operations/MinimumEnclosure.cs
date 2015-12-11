@@ -48,8 +48,8 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
         {
-            return OrientedBoundingBox(ts.ConvexHull.Vertices);
-            //return OrientedBoundingBox(ts.ConvexHullVertices, ts.ConvexHullEdges, ts.ConvexHullFaces);
+            return AddInCornerVertices(OrientedBoundingBox(ts.ConvexHull.Vertices));
+            //return AddInCornerVertices(OrientedBoundingBox(ts.ConvexHull));
         }
 
         /// <summary>
@@ -72,7 +72,11 @@ namespace TVGL
             directions.Add(new[] { 0.0, 1, 1 });
             directions.Add(new[] { 0.0, -1, 1 });
 
-            var boxes = directions.Select(v => new BoundingBox(null, new[] { v }, null)).ToList();
+            var boxes = directions.Select(v => new BoundingBox
+            {
+                Directions = new[] { v },
+                Volume = double.PositiveInfinity
+            }).ToList();
             for (int i = 0; i < 13; i++)
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
             var minVol = boxes.Min(box => box.Volume);
@@ -150,9 +154,12 @@ namespace TVGL
                 boundingRectangle.PointsOnSides[3].SelectMany(p => p.References).ToList()
             };
             return new BoundingBox
-                (new[] { depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
-                    new[] { direction1, direction2, direction3 },
-                    pointsOnFaces.ToArray());
+            {
+                Dimensions = new[] { depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
+                Directions = new[] { direction1, direction2, direction3 },
+                PointsOnFaces = pointsOnFaces.ToArray(),
+                Volume = depth * boundingRectangle.Dimensions[0] * boundingRectangle.Dimensions[1]
+            };
         }
 
         private static void FindOBBAlongDirection(ref BoundingBoxData boxData)
@@ -178,9 +185,11 @@ namespace TVGL
             };
             var direction2 = backTransform.multiply(tempDirection).Take(3).ToArray();
             boxData.box =
-                new BoundingBox(new[] { height, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
-                    new[] { direction0, direction1, direction2 }, 
-                    new[]
+                new BoundingBox
+                {
+                    Dimensions = new[] { height, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
+                    Directions = new[] { direction0, direction1, direction2 },
+                    PointsOnFaces = new[]
                     {
                         new List<Vertex> {boxData.rotatorEdge.From, boxData.rotatorEdge.To},
                         new List<Vertex> {boxData.backVertex},
@@ -188,8 +197,11 @@ namespace TVGL
                         boundingRectangle.PointsOnSides[1].SelectMany(p => p.References).ToList(),
                         boundingRectangle.PointsOnSides[2].SelectMany(p => p.References).ToList(),
                         boundingRectangle.PointsOnSides[3].SelectMany(p => p.References).ToList()
-                    });
+                    },
+                    Volume = height * boundingRectangle.Dimensions[0] * boundingRectangle.Dimensions[1]
+                };
         }
+
         #endregion
 
         #region Get Length And Extreme Vertices
@@ -350,5 +362,70 @@ namespace TVGL
             return bestRectangle;
         }
         #endregion
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
+        /// </summary>
+        /// <param name="volume">The volume.</param>
+        /// <param name="extremeVertices">The extreme vertices.</param>
+        /// <param name="directions"></param>
+        private static BoundingBox MakeBoundingBox(IList<double> dimensions, IList<double[]> directions,
+            IList<List<Vertex>> pointsOnFaces)
+        {
+            var volume = double.PositiveInfinity;
+            if (dimensions == null)
+                dimensions = new double[3];
+            else volume = dimensions[0] * dimensions[1] * dimensions[2];
+
+            if (directions == null) directions = new double[3][];
+            else directions = directions.Select(d => d.normalize()).ToArray();
+
+            if (pointsOnFaces == null)
+                pointsOnFaces = new List<Vertex>[6];
+            return new BoundingBox
+            {
+                Dimensions = dimensions.ToArray(),
+                Directions = directions.ToArray(),
+                PointsOnFaces = pointsOnFaces.ToArray(),
+                Volume = volume
+            };
+        }
+        private static BoundingBox AddInCornerVertices(BoundingBox bb)
+        {
+            if (bb.CornerVertices != null) return bb;
+            var cornerVertices = new Point[8];
+            var normalMatrix = new[,] {{bb.Directions[0][0],bb.Directions[1][0],bb.Directions[2][0]},
+                                        {bb.Directions[0][1],bb.Directions[1][1],bb.Directions[2][1]},
+                                        {bb.Directions[0][2],bb.Directions[1][2],bb.Directions[2][2]}};
+            var count = 0;
+            for (var i = 0; i < 2; i++)
+            {
+                var tempVect = normalMatrix.transpose().multiply(bb.PointsOnFaces[i][0].Position);
+                var xPrime = tempVect[0];
+                for (var j = 0; j < 2; j++)
+                {
+                    tempVect = normalMatrix.transpose().multiply(bb.PointsOnFaces[j + 2][0].Position);
+                    var yPrime = tempVect[1];
+                    for (var k = 0; k < 2; k++)
+                    {
+                        tempVect = normalMatrix.transpose().multiply(bb.PointsOnFaces[k + 4][0].Position);
+                        var zPrime = tempVect[2];
+                        var offAxisPosition = new[] { xPrime, yPrime, zPrime };
+                        //Rotate back into primary coordinates
+                        var position = normalMatrix.multiply(offAxisPosition);
+                        cornerVertices[count] = new Point(position);
+                        count++;
+                    }
+                }
+            }
+            return new BoundingBox
+            {
+                CornerVertices = cornerVertices,
+                Dimensions = bb.Dimensions,
+                Directions = bb.Directions,
+                PointsOnFaces = bb.PointsOnFaces,
+                Volume = bb.Volume
+            };
+        }
     }
 }

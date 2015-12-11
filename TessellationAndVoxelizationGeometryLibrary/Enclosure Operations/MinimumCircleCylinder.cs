@@ -119,8 +119,11 @@ namespace TVGL
             directions.Add(new[] { 0.0, 1, 1 });
             directions.Add(new[] { 0.0, -1, 1 });
 
-            var boxes = directions.Select(v => new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
-                new[] { v, null, null }, null)).ToList();
+            var boxes = directions.Select(v => new BoundingBox
+            {
+                Directions = new[] { v },
+                Volume = double.PositiveInfinity
+            }).ToList();
             for (int i = 0; i < 13; i++)
             {
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);

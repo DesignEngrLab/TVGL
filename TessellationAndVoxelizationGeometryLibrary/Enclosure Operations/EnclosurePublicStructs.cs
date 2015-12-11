@@ -30,87 +30,30 @@ namespace TVGL
         /// <summary>
         /// The volume of the bounding box.
         /// </summary>
-        public double Volume { get; internal set; }
+        public double Volume;
 
         /// <summary>
         /// The dimensions of the bounding box. The 3 values correspond to the 3 direction.
         /// </summary>
-        public double[] Dimensions { get; internal set; }
+        public double[] Dimensions;
 
         /// <summary>
         /// The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid that are on the faces
         /// of the bounding box. These are not the corners of the bounding box. They are in the order of direction1-low,
         /// direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
         /// </summary>
-        public List<Vertex>[] PointsOnFaces { get; internal set; }
+        public List<Vertex>[] PointsOnFaces;
 
         /// <summary>
         /// The Directions normal are the three unit vectors that describe the orientation of the box.
         /// </summary>
-        public double[][] Directions { get; internal set; }
-        
+        public double[][] Directions;
+
         /// <summary>
         /// The corner points
         /// </summary>
-        public Point[] CornerVertices { get; internal set; }
-
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
-        /// </summary>
-        /// <param name="volume">The volume.</param>
-        /// <param name="extremeVertices">The extreme vertices.</param>
-        /// <param name="directions"></param>
-        public BoundingBox(double[] dimensions, double[][] directions, List<Vertex>[] pointsOnFaces)
-        {
-            if (dimensions == null)
-            {
-                Dimensions = new double[3];
-                Volume = double.PositiveInfinity;
-            }
-            else
-            {
-                Dimensions = dimensions;
-                Volume = dimensions[0] * dimensions[1] * dimensions[2];
-            }
-            if (directions == null) Directions = new double[3][];
-            else Directions = directions.Select(d => d.normalize()).ToArray();
-           
-            if (pointsOnFaces == null)
-            {
-                PointsOnFaces = new List<Vertex>[6];
-                CornerVertices = new Point[8];
-                return;
-            }
-            PointsOnFaces = pointsOnFaces;
-            //Find Corners
-            CornerVertices = new Point[8];
-            var normalMatrix = new[,] {{Directions[0][0],Directions[1][0],Directions[2][0]},
-                                        {Directions[0][1],Directions[1][1],Directions[2][1]},
-                                        {Directions[0][2],Directions[1][2],Directions[2][2]}};
-            var count = 0;
-            for (var i = 0; i < 2; i++)
-            {
-                var tempVect = normalMatrix.transpose().multiply(PointsOnFaces[i][0].Position);
-                var xPrime = tempVect[0];
-                for (var j = 0; j < 2; j++)
-                {
-                    tempVect = normalMatrix.transpose().multiply(PointsOnFaces[j + 2][0].Position);
-                    var yPrime = tempVect[1];
-                    for (var k = 0; k < 2; k++)
-                    {
-                        tempVect = normalMatrix.transpose().multiply(PointsOnFaces[k + 4][0].Position);
-                        var zPrime = tempVect[2];
-                        var offAxisPosition = new[] { xPrime, yPrime, zPrime };
-                        //Rotate back into primary coordinates
-                        var position = normalMatrix.multiply(offAxisPosition);
-                        CornerVertices[count] = new Point(position);
-                        count++;
-                    }
-                }
-            }
-        }
-    }
+        public Point[] CornerVertices;
+ }
 
 
 
@@ -175,7 +118,7 @@ namespace TVGL
             Circumference = 2 * Math.PI * radius;
         }
     }
-    public struct BoundingCylder
+    public struct BoundingCylinder
     {
         public double[] Axis;
         public BoundingCircle CenterCircle;
