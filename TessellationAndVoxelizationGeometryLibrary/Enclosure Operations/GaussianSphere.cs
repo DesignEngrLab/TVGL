@@ -75,7 +75,7 @@ namespace TVGL.Enclosure_Operations
             Arcs = new List<Arc>();
             ReferenceEdges = new List<Edge>();
             var referenceIndices = new List<int[]>();
-            foreach (var triangle in ts.ConvexHullFaces)
+            foreach (var triangle in ts.ConvexHull.Faces)
             {
                 var sameIndex = Nodes.FindIndex(p => Math.Abs(p.Vector[0] - triangle.Normal[0]) < 0.0001 &&
                     Math.Abs(p.Vector[1] - triangle.Normal[1]) < 0.0001 &&

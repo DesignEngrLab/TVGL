@@ -25,39 +25,34 @@ namespace TVGL
     /// or 3D prismatic rectangle. It simply includes the orientation as three unit vectors in 
     /// "Directions", the extreme vertices, and the volume.
     /// </summary>
-    public class BoundingBox
+    public struct BoundingBox
     {
         /// <summary>
         /// The volume of the bounding box.
         /// </summary>
-        public double Volume;
+        public double Volume { get; internal set; }
 
         /// <summary>
         /// The dimensions of the bounding box. The 3 values correspond to the 3 direction.
         /// </summary>
-        public double[] Dimensions;
+        public double[] Dimensions { get; internal set; }
 
         /// <summary>
         /// The PointsOnFaces is an array of 6 lists which are vertices of the tessellated solid that are on the faces
         /// of the bounding box. These are not the corners of the bounding box. They are in the order of direction1-low,
         /// direction1-high, direction2-low, direction2-high, direction3-low, direction3-high.
         /// </summary>
-        public List<Vertex>[] PointsOnFaces;
+        public List<Vertex>[] PointsOnFaces { get; internal set; }
 
         /// <summary>
         /// The Directions normal are the three unit vectors that describe the orientation of the box.
         /// </summary>
-        public double[][] Directions;
-
-
-        public BoundingBox()
-        {
-        }
-
+        public double[][] Directions { get; internal set; }
+        
         /// <summary>
         /// The corner points
         /// </summary>
-        public Point[] CornerVertices;
+        public Point[] CornerVertices { get; internal set; }
 
 
         /// <summary>
@@ -66,17 +61,31 @@ namespace TVGL
         /// <param name="volume">The volume.</param>
         /// <param name="extremeVertices">The extreme vertices.</param>
         /// <param name="directions"></param>
-        internal BoundingBox(double[] dimensions,double[][] directions, List<Vertex>[] pointsOnFaces)
+        public BoundingBox(double[] dimensions, double[][] directions, List<Vertex>[] pointsOnFaces)
         {
-            Dimensions = dimensions;
-            Volume = dimensions[0]*dimensions[1]*dimensions[2];
-            if (directions!=null)
-            Directions = directions.Select(d=>d.normalize()).ToArray();
+            if (dimensions == null)
+            {
+                Dimensions = new double[3];
+                Volume = double.PositiveInfinity;
+            }
+            else
+            {
+                Dimensions = dimensions;
+                Volume = dimensions[0] * dimensions[1] * dimensions[2];
+            }
+            if (directions == null) Directions = new double[3][];
+            else Directions = directions.Select(d => d.normalize()).ToArray();
+           
+            if (pointsOnFaces == null)
+            {
+                PointsOnFaces = new List<Vertex>[6];
+                CornerVertices = new Point[8];
+                return;
+            }
             PointsOnFaces = pointsOnFaces;
-            if (pointsOnFaces == null) return;
             //Find Corners
-            CornerVertices = new Point[8] ;
-            var normalMatrix = new[,] {{Directions[0][0],Directions[1][0],Directions[2][0]}, 
+            CornerVertices = new Point[8];
+            var normalMatrix = new[,] {{Directions[0][0],Directions[1][0],Directions[2][0]},
                                         {Directions[0][1],Directions[1][1],Directions[2][1]},
                                         {Directions[0][2],Directions[1][2],Directions[2][2]}};
             var count = 0;
@@ -92,7 +101,7 @@ namespace TVGL
                     {
                         tempVect = normalMatrix.transpose().multiply(PointsOnFaces[k + 4][0].Position);
                         var zPrime = tempVect[2];
-                        var offAxisPosition = new[] {xPrime, yPrime, zPrime };
+                        var offAxisPosition = new[] { xPrime, yPrime, zPrime };
                         //Rotate back into primary coordinates
                         var position = normalMatrix.multiply(offAxisPosition);
                         CornerVertices[count] = new Point(position);
@@ -103,7 +112,7 @@ namespace TVGL
         }
     }
 
-    
+
 
     /// <summary>
     /// Bounding rectangle information based on area and point pairs.
@@ -119,7 +128,7 @@ namespace TVGL
         /// The point pairs that define the bounding rectangle limits
         /// </summary>
         public List<Point>[] PointsOnSides;
-        
+
         /// <summary>
         /// Vector directions of length and width of rectangle
         /// </summary>

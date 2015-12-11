@@ -46,7 +46,7 @@ namespace TVGL
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
             var now = DateTime.Now;
             Debug.WriteLine("Beginning OBB Test");
-            var boundingBox1 = OrientedBoundingBox(ts.ConvexHullVertices);
+            var boundingBox1 = OrientedBoundingBox(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox1.Volume);
             //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
@@ -54,13 +54,13 @@ namespace TVGL
             now = DateTime.Now;
             Debug.WriteLine("Beginning OBB Test");
 
-            var boundingBox12 = Find_via_PCA_ApproachNR(ts.ConvexHullVertices);
+            var boundingBox12 = Find_via_PCA_ApproachNR(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox12.Volume);
             //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
             //Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
             now = DateTime.Now;
-            var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts.ConvexHullVertices);
+            var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox2.Volume);
             Debug.WriteLine("Time Elapsed for ChanTan Approach = " + (DateTime.Now - now));
@@ -134,7 +134,7 @@ namespace TVGL
             double[][] eigenVectors;
             C.GetEigenValuesAndVectors(out eigenVectors);
 
-            var minOBB = new BoundingBox(new[] { double.PositiveInfinity, 1, 1 }, eigenVectors, null);
+            var minOBB = new BoundingBox(null, eigenVectors, null);
 
             //Perform a 2D caliper along each eigenvector. 
             for (int i = 0; i < 3; i++)
@@ -193,7 +193,7 @@ namespace TVGL
             double[][] eigenVectors;
             covariance.GetEigenValuesAndVectors(out eigenVectors);
 
-            var bestOBB = new BoundingBox(new[] { Double.PositiveInfinity, 1, 1 }, null, null);
+            var bestOBB = new BoundingBox(null, null, null);
             //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
@@ -209,7 +209,7 @@ namespace TVGL
         #endregion
         private static BoundingBox Find_via_ChanTan_AABB_Approach(IList<Vertex> convexHullVertices)
         {
-            return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
+            return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox(null,
             new[] { new[] { 1.0, 0.0, 0.0 }, new[] { 0.0, 1.0, 0.0 }, new[] { 0.0, 0.0, 1.0 } }, null));
         }
 
@@ -229,8 +229,7 @@ namespace TVGL
         /// </accuracy>
         private static BoundingBox OrientedBoundingBox(Vertex[] convexHullVertices, Edge[] convexHullEdges, PolygonalFace[] convexHullFaces)
         {
-            BoundingBox minBox = new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
-                null, null);
+            BoundingBox minBox = new BoundingBox(null, null, null);
             foreach (var rotateEdge in convexHullEdges)
             {
                 #region Initialize variables
@@ -260,7 +259,13 @@ namespace TVGL
                 };
                 // make arrays of the dotproducts with start and end directions (x-values) to help subsequent
                 // foreach loop which will look up faces multiple times.
-                var startingDots = convexHullFaces.Select(f => f.Normal.dotProduct(startDir)).ToArray();
+                double[] startingDots = new double[convexHullFaces.Length];
+                for (int i = 0; i < convexHullFaces.Length; i++)
+                {
+                    var face = convexHullFaces[i];
+                    face.IndexInList = i;
+                    startingDots[i] = face.Normal.dotProduct(startDir);
+                }
                 foreach (var edge in convexHullEdges)
                 {
                     var ownedX = startingDots[edge.OwnedFace.IndexInList];
@@ -274,7 +279,7 @@ namespace TVGL
                 var maxDistance = double.NegativeInfinity;
                 foreach (var v in convexHullVertices)
                 {
-                    var distance = v.Position.subtract(rotateEdge.From.Position).dotProduct(startDir);
+                    var distance = rotateEdge.From.Position.subtract(v.Position).dotProduct(startDir);
                     if (distance > maxDistance)
                     {
                         maxDistance = distance;
@@ -282,7 +287,7 @@ namespace TVGL
                     }
                 }
                 #endregion
-                FindOBBAlongDirection(thisBoxData);
+                FindOBBAlongDirection(ref thisBoxData);
                 if (thisBoxData.Volume < minBox.Volume) minBox = thisBoxData.box;
                 var angle = 0.0;
                 var deltaAngleToBackChange = 0.0;
@@ -312,7 +317,7 @@ namespace TVGL
                     else // then equal to each other
                     {
                         angle += deltaAngleToBackChange;
-                        deltaAngleOrthSet= deltaAngleToBackChange = 0;
+                        deltaAngleOrthSet = deltaAngleToBackChange = 0;
                     }
                     if (angle > totalAngle)
                     {
@@ -327,7 +332,7 @@ namespace TVGL
                     nextBoxData.posYDir = nextBoxData.rotatorVector.crossProduct(nextBoxData.Direction).normalize();
                     UpdateSlopes(nextBoxData);
                     /****************/
-                    FindOBBAlongDirection(nextBoxData);
+                    FindOBBAlongDirection(ref nextBoxData);
                     /****************/
                     if (DifferentMembershipInExtrema(thisBoxData, nextBoxData))
                     {
@@ -338,7 +343,7 @@ namespace TVGL
                         {
                             midBox.Direction = lowerBox.Direction.add(upperBox.Direction).divide(2).normalize();
                             midBox.angle = (lowerBox.angle + upperBox.angle) / 2.0;
-                            FindOBBAlongDirection(midBox);
+                            FindOBBAlongDirection(ref midBox);
                             if (midBox.Volume > lowerBox.Volume && midBox.Volume > upperBox.Volume) break;
                             if (!DifferentMembershipInExtrema(lowerBox, midBox))
                                 lowerBox = midBox;
@@ -457,9 +462,21 @@ namespace TVGL
 
             public BoundingBoxData Copy()
             {
-                throw new NotImplementedException();
+                return new BoundingBoxData
+                {
+                    angle = angle,
+                    backVertex = backVertex,
+                    backEdge = backEdge,
+                    box = new BoundingBox((double[])box.Dimensions.Clone(), (double[][])box.Directions.Clone(),
+                            (List<Vertex>[])box.PointsOnFaces.Clone()),
+                    Direction = (double[])Direction.Clone(),
+                    orthGaussSphereArcs = new List<GaussSphereArc>(orthGaussSphereArcs),
+                    orthVertices = new List<Vertex>(orthVertices),
+                    posYDir = (double[])posYDir.Clone(),
+                    rotatorVector = (double[])rotatorVector.Clone(),
+                    rotatorEdge = rotatorEdge
+                };
             }
         }
-
     }
 }

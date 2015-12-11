@@ -48,7 +48,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
         {
-            return OrientedBoundingBox(ts.ConvexHullVertices);
+            return OrientedBoundingBox(ts.ConvexHull.Vertices);
             //return OrientedBoundingBox(ts.ConvexHullVertices, ts.ConvexHullEdges, ts.ConvexHullFaces);
         }
 
@@ -56,7 +56,6 @@ namespace TVGL
         /// Finds the minimum bounding box.
         /// </summary>
         /// <param name="convexHullVertices">The convex hull vertices.</param>
-        /// <param name="convexHullFaces">The convex hull faces.</param>
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(IList<Vertex> convexHullVertices)
         {
@@ -73,8 +72,7 @@ namespace TVGL
             directions.Add(new[] { 0.0, 1, 1 });
             directions.Add(new[] { 0.0, -1, 1 });
 
-            var boxes = directions.Select(v => new BoundingBox(new[] { double.PositiveInfinity, 1, 1 },
-                new[] { v }, null)).ToList();
+            var boxes = directions.Select(v => new BoundingBox(null, new[] { v }, null)).ToList();
             for (int i = 0; i < 13; i++)
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
             var minVol = boxes.Min(box => box.Volume);
@@ -157,12 +155,12 @@ namespace TVGL
                     pointsOnFaces.ToArray());
         }
 
-        private static void FindOBBAlongDirection(BoundingBoxData boxData)
+        private static void FindOBBAlongDirection(ref BoundingBoxData boxData)
         {
-            boxData.Direction = boxData.box.Directions[0] = boxData.Direction.normalize();
-            boxData.box.Dimensions[0] = boxData.Direction.dotProduct(boxData.rotatorEdge.From.Position.subtract(boxData.backVertex.Position));
+            var direction0 = boxData.Direction = boxData.Direction.normalize();
+            var height = direction0.dotProduct(boxData.rotatorEdge.From.Position.subtract(boxData.backVertex.Position));
             double[,] backTransform;
-            var points = MiscFunctions.Get2DProjectionPoints(boxData.orthVertices, boxData.Direction, out backTransform, false);
+            var points = MiscFunctions.Get2DProjectionPoints(boxData.orthVertices, direction0, out backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
             //Get reference vertices from boundingRectangle
 
@@ -172,26 +170,25 @@ namespace TVGL
                 boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1],
                 boundingRectangle.Directions[0][2], 1.0
             };
-            tempDirection = backTransform.multiply(tempDirection);
-            boxData.box.Directions[1] = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
+            var direction1 = backTransform.multiply(tempDirection).Take(3).ToArray();
             tempDirection = new[]
             {
                 boundingRectangle.Directions[1][0], boundingRectangle.Directions[1][1],
                 boundingRectangle.Directions[1][2], 1.0
             };
-            tempDirection = backTransform.multiply(tempDirection);
-            boxData.box.Directions[2] = new[] { tempDirection[0], tempDirection[1], tempDirection[2] };
-            boxData.box.PointsOnFaces = new[]
-            {
-                new List<Vertex> { boxData.rotatorEdge.From,boxData.rotatorEdge.To},
-                new List<Vertex> { boxData.backVertex },
-                boundingRectangle.PointsOnSides[0].SelectMany(p => p.References).ToList(),
-                boundingRectangle.PointsOnSides[1].SelectMany(p => p.References).ToList(),
-                boundingRectangle.PointsOnSides[2].SelectMany(p => p.References).ToList(),
-                boundingRectangle.PointsOnSides[3].SelectMany(p => p.References).ToList()
-            };
-            boxData.box.Dimensions[1] = boundingRectangle.Dimensions[0];
-            boxData.box.Dimensions[2] = boundingRectangle.Dimensions[1];
+            var direction2 = backTransform.multiply(tempDirection).Take(3).ToArray();
+            boxData.box =
+                new BoundingBox(new[] { height, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
+                    new[] { direction0, direction1, direction2 }, 
+                    new[]
+                    {
+                        new List<Vertex> {boxData.rotatorEdge.From, boxData.rotatorEdge.To},
+                        new List<Vertex> {boxData.backVertex},
+                        boundingRectangle.PointsOnSides[0].SelectMany(p => p.References).ToList(),
+                        boundingRectangle.PointsOnSides[1].SelectMany(p => p.References).ToList(),
+                        boundingRectangle.PointsOnSides[2].SelectMany(p => p.References).ToList(),
+                        boundingRectangle.PointsOnSides[3].SelectMany(p => p.References).ToList()
+                    });
         }
         #endregion
 
@@ -260,11 +257,11 @@ namespace TVGL
                     extremeIndices[3]--;
             }
             // extremeIndices[2] => max-X
-            extremeIndices[2] = extremeIndices[3];
+            extremeIndices[2] = extremeIndices[3] == 0 ? cvxPoints.Count - 1 : extremeIndices[3];
             while (extremeIndices[2] > 0 && cvxPoints[extremeIndices[2]][0] <= cvxPoints[extremeIndices[2] - 1][0])
                 extremeIndices[2]--;
             // extremeIndices[1] => min-Y
-            extremeIndices[1] = extremeIndices[2];
+            extremeIndices[1] = extremeIndices[2] == 0 ? cvxPoints.Count - 1 : extremeIndices[2];
             while (extremeIndices[1] > 0 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
                 extremeIndices[1]--;
             // extrememIndices[0] => min-X, this time count up from 0. The answers likely 0 but in case there are ties.
