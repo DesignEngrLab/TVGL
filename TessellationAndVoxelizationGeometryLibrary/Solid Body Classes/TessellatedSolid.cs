@@ -1130,7 +1130,7 @@ namespace TVGL
         /// <value>The convex hull edges.</value>
         public readonly Edge[] Edges;
 
-        internal TVGLConvexHull(IList<Vertex> allVertices)
+        public TVGLConvexHull(IList<Vertex> allVertices)
         {
             var convexHull = ConvexHull.Create(allVertices);
             Vertices = convexHull.Points.ToArray();
