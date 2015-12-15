@@ -162,16 +162,14 @@ namespace TVGL
             };
         }
 
-        private static void FindOBBAlongDirection(ref BoundingBoxData boxData)
+        private static void FindOBBAlongDirection(BoundingBoxData boxData)
         {
             var direction0 = boxData.Direction = boxData.Direction.normalize();
             var height = direction0.dotProduct(boxData.rotatorEdge.From.Position.subtract(boxData.backVertex.Position));
             double[,] backTransform;
             var points = MiscFunctions.Get2DProjectionPoints(boxData.orthVertices, direction0, out backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
-            //Get reference vertices from boundingRectangle
-
-            //Get the Direction vectors from rotating caliper and projection.
+           //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new[]
             {
                 boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1],

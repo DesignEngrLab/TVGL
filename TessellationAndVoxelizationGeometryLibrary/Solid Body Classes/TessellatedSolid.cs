@@ -1169,11 +1169,42 @@ namespace TVGL
                 convexHullFaceList.Add(new PolygonalFace(vertices, cvxFace.Normal, false));
             }
             Faces = convexHullFaceList.ToArray();
-            IEnumerable<Tuple<Edge, List<PolygonalFace>>> overusedEdges;
-            IEnumerable<Edge> partlyDefinedEdges;
-            Edges = TessellatedSolid.MakeEdges(Faces, false,Vertices.Length,out overusedEdges,out partlyDefinedEdges);
+            Edges = MakeEdges(Faces, Vertices);
             Succeeded = true;
             TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+        }
+
+        private Edge[] MakeEdges(IList<PolygonalFace> faces, IList<Vertex> vertices)
+        {
+            var numVertices = vertices.Count;
+            var vertexIndices  = new Dictionary<Vertex,int>();
+            for (int i = 0; i < vertices.Count; i++)
+            vertexIndices.Add(vertices[i],i);
+            var edgeDictionary = new Dictionary<long, Edge>();
+            foreach (var face in faces)
+            {
+                var lastIndex = face.Vertices.Count - 1;
+                for (var j = 0; j <= lastIndex; j++)
+                {
+                    var fromVertex = face.Vertices[j];
+                    var fromVertexIndex = vertexIndices[fromVertex];
+                    var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
+                    var toVertexIndex = vertexIndices[toVertex];
+                    long checksum = (fromVertexIndex<toVertexIndex)
+                        ? fromVertexIndex+ numVertices*toVertexIndex:
+                        toVertexIndex + numVertices * fromVertexIndex;
+
+                    if (edgeDictionary.ContainsKey(checksum))
+                    {
+                        var edge = edgeDictionary[checksum];
+                        edge.OtherFace = face;
+                        face.Edges.Add(edge);
+                    }
+                    else edgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, face, null, false, checksum));
+                 
+                }
+            }
+            return edgeDictionary.Values.ToArray();
         }
     }
 

@@ -74,7 +74,6 @@ namespace TVGL_Test
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
                 //MiscFunctions.IsSolidBroken(ts[0]);
-                ts[0] = new TessellatedSolid(ts[0].Faces, ts[0].Vertices);
                 MinimumEnclosure.OrientedBoundingBox(ts[0]);
                 //TestClassification(ts[0]);
                 //TestXSections(ts[0]);
