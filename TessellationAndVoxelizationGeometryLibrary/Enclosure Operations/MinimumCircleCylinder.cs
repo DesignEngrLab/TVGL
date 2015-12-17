@@ -121,8 +121,8 @@ namespace TVGL
 
             var boxes = directions.Select(v => new BoundingBox
             {
-                Volume = double.PositiveInfinity,
-                Directions = new[] { v, null, null }
+                Directions = new[] { v },
+                Volume = double.PositiveInfinity
             }).ToList();
             for (int i = 0; i < 13; i++)
             {

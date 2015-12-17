@@ -34,7 +34,7 @@ namespace TVGL
         private const double MaxDeltaAngle = Math.PI / 180.0;
 
         /// <summary>
-        ///  Finds the minimum bounding box oriented along a particular direction.
+        ///  Finds the minimum bounding box oriented along a particular Direction.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>BoundingBox.</returns>
@@ -46,7 +46,7 @@ namespace TVGL
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
             var now = DateTime.Now;
             Debug.WriteLine("Beginning OBB Test");
-            var boundingBox1 = OrientedBoundingBox(ts.ConvexHullVertices);
+            var boundingBox1 = OrientedBoundingBox(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox1.Volume);
             //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
@@ -54,13 +54,13 @@ namespace TVGL
             now = DateTime.Now;
             Debug.WriteLine("Beginning OBB Test");
 
-            var boundingBox12 = Find_via_PCA_ApproachNR(ts.ConvexHullVertices);
+            var boundingBox12 = Find_via_PCA_ApproachNR(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox12.Volume);
             //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
             //Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
             now = DateTime.Now;
-            var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts.ConvexHullVertices);
+            var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox2.Volume);
             Debug.WriteLine("Time Elapsed for ChanTan Approach = " + (DateTime.Now - now));
@@ -136,9 +136,10 @@ namespace TVGL
 
             var minOBB = new BoundingBox
             {
-                Volume = double.PositiveInfinity,
-                Directions = eigenVectors
+                Directions = eigenVectors,
+                Volume = double.PositiveInfinity
             };
+
             //Perform a 2D caliper along each eigenvector. 
             for (int i = 0; i < 3; i++)
             {
@@ -153,7 +154,6 @@ namespace TVGL
             //Find a continuous set of 3 dimensional vextors with constant density
             var triangles = new List<PolygonalFace>(convexHullFaces);
             var totalArea = triangles.Sum(t => t.Area);
-            var minVolume = double.PositiveInfinity;
 
             //Calculate the center of gravity of combined triangles
             var c = new[] { 0.0, 0.0, 0.0 };
@@ -196,100 +196,25 @@ namespace TVGL
             double[][] eigenVectors;
             covariance.GetEigenValuesAndVectors(out eigenVectors);
 
-            var bestOBB = new BoundingBox();
+            var bestOBB = new BoundingBox { Volume = double.PositiveInfinity };
             //Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
                 var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize());
-                if (OBB.Volume < minVolume)
-                {
-                    minVolume = OBB.Volume;
+                if (OBB.Volume < bestOBB.Volume)
                     bestOBB = OBB;
-                }
             }
             return bestOBB;
         }
         #endregion
         private static BoundingBox Find_via_ChanTan_AABB_Approach(IList<Vertex> convexHullVertices)
         {
-            return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox()
+            return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox
             {
-                Volume = double.PositiveInfinity,
-                Directions = new[] { new[] { 1.0, 0.0, 0.0 }, new[] { 0.0, 1.0, 0.0 }, new[] { 0.0, 0.0, 1.0 } }
+                Directions = new[] { new[] { 1.0, 0.0, 0.0 }, new[] { 0.0, 1.0, 0.0 }, new[] { 0.0, 0.0, 1.0 } },
+                Volume = double.PositiveInfinity
             });
         }
-        #region ORourke Approach
-        /// <summary>
-        /// Finds the minimum bounding box using a brute force method based on the 2D Caliper Approach 
-        /// Based on: O'Rourke. "Finding Minimal Enclosing Boxes." 1985.
-        /// http://cs.smith.edu/~orourke/Papers/MinVolBox.pdf
-        /// Difficult implementation (5/5)
-        /// </summary>
-        /// <timeDomain>
-        /// (n^3) time
-        /// </timeDomain>
-        /// <accuracy>
-        /// Gaurantees and optimal solution.
-        /// </accuracy>
-        private static BoundingBox Find_via_ORourke_Approach(TessellatedSolid ts)
-        {
-            //todo: Create a Gausian sphere from the vertices and faces in the convexHull
-            //for each face normal, create a vertex on the unit sphere 
-            //for every edge, create an arc connecting the two faces adjacent to the edge
-
-            //for all pairs of edges e1 and e2: completed in O(n^2) time
-            var edges = new List<Edge>();
-            var minVolume = double.PositiveInfinity;
-            for (var i = 0; i < edges.Count - 1; i++)
-            {
-                for (var j = i + 1; j < edges.Count; j++)
-                {
-                    var edge1 = edges[i];
-                    var edge2 = edges[j];
-
-                    //Find the three normals defined by the two edges being flush with two adjacent faces
-                    //Note that the three normals are dependent on one another based on lemma #3 in O'Rourke
-                    //Now use the Gaussian sphere to pick values for n1. (Difficult)
-                    //todo: While....
-                    double theta = 0.0; //todo: Find theta?
-                    double phi = 0.0;   //Find phi?
-                    var e1 = new[] { 0.0, 0.0, 1.0 };
-                    var e2 = new[] { 0.0, Math.Cos(phi), Math.Sin(phi) };
-                    var normal1 = new[] { Math.Cos(theta), Math.Sin(theta), 0 };
-                    var R = Math.Sqrt(Math.Pow(Math.Cos(theta), 2) +
-                                      Math.Pow(Math.Sin(theta), 2) *
-                                      Math.Pow(Math.Sin(phi), 2));
-                    var x2 = -Math.Sign(Math.Sin(phi)) * Math.Sin(phi) * Math.Sin(theta) * Math.Sin(phi) / R;
-                    var y2 = Math.Sign(Math.Sin(phi)) * Math.Sin(phi) * Math.Cos(theta) * Math.Sin(phi) / R;
-                    var z2 = -Math.Cos(theta) * Math.Cos(phi) / R;
-                    var normal2 = new[] { x2, y2, z2 };
-                    var normal3 = normal1.crossProduct(normal2);
-                    var normals = new double[][] { normal1, normal2, normal3 };
-
-
-                    //actually, only do this portion once.
-                    //The gaussian sphere determines the new contacts
-                    //Now search along the normals to find the furthest point and get the minimum volume.
-                    var lengths = new List<double>();
-                    foreach (var normal in normals)
-                    {
-                        Vertex vLow;
-                        Vertex vHigh;
-                        var length = GetLengthAndExtremeVertices(normal, ts.ConvexHullVertices, out vLow, out vHigh);
-                        lengths.Add(length);
-                    }
-                    var volume = lengths[0] * lengths[1] * lengths[2];
-                    if (volume < minVolume)
-                    {
-                        minVolume = volume;
-                    }
-
-                    //End while
-                }
-            }
-            throw new NotImplementedException();
-        }
-        #endregion
 
         #region MC ApproachOne
         /// <summary>
@@ -305,134 +230,188 @@ namespace TVGL
         /// <accuracy>
         /// Garantees the optimial orientation is within MaxDeltaAngle error.
         /// </accuracy>
-        private static BoundingBox Find_via_MC_ApproachOne(TessellatedSolid ts, out List<List<double[]>> volumeData)
+        private static BoundingBox OrientedBoundingBox(TVGLConvexHull convexHull)
         {
-            volumeData = new List<List<double[]>>();
-            BoundingBox minBox = new BoundingBox();
-            var minVolume = double.PositiveInfinity;
-            //Get a list of flats
-            //var faces = ListFunctions.FacesWithDistinctNormals(ts.ConvexHullFaces.ToList());
-            //var flats = ListFunctions.Flats(ts.ConvexHullFaces.ToList());
-
-            foreach (var rotateEdge in ts.ConvexHullEdges)
+            BoundingBox minBox = new BoundingBox { Volume = double.PositiveInfinity };
+            foreach (var rotateEdge in convexHull.Edges)
             {
                 #region Initialize variables
+                //Initialize variables
+                //rotatorVector is basically the edge in question - the vector that is being rotated about
                 var rotatorVector = rotateEdge.Vector.normalize();
+                // startDir is the starting Direction - based on the OtherFace
                 var startDir = rotateEdge.OtherFace.Normal;
-                var direction = startDir;
+                // endDir is the OwnedFace final Direction - we go from Other to Owned since in order to be about
+                // the positive Direction of the rotatorVector
                 var endDir = rotateEdge.OwnedFace.Normal;
+                // posYDir is the vector for the positive y-Direction. Well, this is a simplification of the 
+                //gauss sphere to a 2D circle. The Direction (such as startDir) represents the x-axis and this
+                //, which is the orthogonal is the y Direction
                 var origPosYDir = rotatorVector.crossProduct(startDir).normalize();
-                var posYDir = origPosYDir;
                 var totalAngle = Math.PI - rotateEdge.InternalAngle;
-                var startingDots = ts.ConvexHullFaces.Select(f => f.Normal.dotProduct(startDir)).ToArray();
+                var thisBoxData = new BoundingBoxData(startDir, origPosYDir, rotateEdge, rotatorVector, convexHull);
+                #endregion
+                FindOBBAlongDirection(thisBoxData);
+                if (thisBoxData.Volume < minBox.Volume) minBox = thisBoxData.box;
                 var angle = 0.0;
                 var deltaAngleToBackChange = 0.0;
                 var deltaAngleOrthSet = 0.0;
-
-                #region Set up orthogonal arcs and vertices
-                var orthGaussSphereArcs = new List<GaussSphereArc>();
-                foreach (var edge in ts.ConvexHullEdges)
-                {
-                    var ownedX = startingDots[edge.OwnedFace.IndexInList];
-                    var otherX = startingDots[edge.OtherFace.IndexInList];
-                    if (otherX * ownedX <= 0)
-                        orthGaussSphereArcs.Add(new GaussSphereArc(edge, posYDir, ownedX, otherX));
-                }
-                var orthVertices = orthGaussSphereArcs.SelectMany(arc => new[] { arc.Edge.From, arc.Edge.To }).Distinct().ToList();
-                #endregion
-                #region find back vertex
-                Vertex backVertex = null;
-                Edge backEdge = null;
-                var maxDistance = double.NegativeInfinity;
-                foreach (var v in ts.ConvexHullVertices)
-                {
-                    var distance = v.Position.subtract(rotateEdge.From.Position).dotProduct(startDir);
-                    if (distance > maxDistance)
-                    {
-                        distance = maxDistance;
-                        backVertex = v;
-                    }
-                }
-                #endregion
-                #endregion
-                List<BoundingBoxData> boundingBoxes = new List<BoundingBoxData>();
+                BoundingBoxData backChangeBox = null;
+                BoundingBoxData sideChangeBox = null;
                 do
                 {
-                    boundingBoxes.Add(new BoundingBoxData
-                    {
-                        angle = angle,
-                        direction = direction,
-                        box = FindOBBAlongDirection(orthVertices, direction, rotateEdge.From, rotateEdge.To)
-                    });
                     if (deltaAngleToBackChange <= 0)
-                        deltaAngleToBackChange = UpdateBackAngle(direction, rotatorVector, posYDir, ref backVertex, ref backEdge);
-                    if (deltaAngleOrthSet <= 0)
-                        deltaAngleOrthSet = UpdateOrthAngle(direction, ref orthGaussSphereArcs, ref orthVertices);
-                    var angleStep = Math.Min(deltaAngleOrthSet, deltaAngleToBackChange);
-                    angle += angleStep; deltaAngleToBackChange -= angleStep; deltaAngleOrthSet -= angleStep;
-                    if (angle < totalAngle)
                     {
-                        direction = UpdateDirection(startDir, rotatorVector, origPosYDir, angle);
-                        posYDir = rotatorVector.crossProduct(direction).normalize();
-                        UpdateSlopes(direction, posYDir, orthGaussSphereArcs);
+                        backChangeBox = thisBoxData.Copy();
+                        deltaAngleToBackChange = UpdateBackAngle(backChangeBox);
+                    }
+                    if (deltaAngleOrthSet <= 0)
+                    {
+                        sideChangeBox = thisBoxData.Copy();
+                        deltaAngleOrthSet = UpdateOrthAngle(sideChangeBox);
+                    }
+                    BoundingBoxData nextBoxData;
+                    if (deltaAngleOrthSet < deltaAngleToBackChange)
+                    {
+                        deltaAngleToBackChange -= deltaAngleOrthSet;
+                        angle += deltaAngleOrthSet;
+                        deltaAngleOrthSet = 0;
+                        nextBoxData = sideChangeBox;
+                    }
+                    else if (deltaAngleToBackChange < deltaAngleOrthSet)
+                    {
+                        deltaAngleOrthSet -= deltaAngleToBackChange;
+                        angle += deltaAngleToBackChange;
+                        deltaAngleToBackChange = 0;
+                        nextBoxData = backChangeBox;
+                    }
+                    else // if they are equal to each other
+                    {
+                        angle += deltaAngleToBackChange;
+                        deltaAngleOrthSet = deltaAngleToBackChange = 0;
+                        nextBoxData = backChangeBox;
+                    }
+                    if (angle > totalAngle)
+                    {
+                       // nextBoxData = new BoundingBoxData(endDir, rotatorVector.crossProduct(endDir).normalize(), rotateEdge, rotatorVector, convexHull);
+                        nextBoxData.angle = totalAngle;
+                        nextBoxData.Direction = endDir;
                     }
                     else
-                        boundingBoxes.Add(new BoundingBoxData
-                        {
-                            angle = totalAngle,
-                            direction = endDir,
-                            box = FindOBBAlongDirection(orthVertices, endDir, rotateEdge.From, rotateEdge.To)
-                        });
-                } while (angle < totalAngle);
-                //todo: need to check here if the adjacent bb's are the same signature. If not you need to check in between
-            }
-            //todo: save best from each and check it with the best found so far.
-            return new BoundingBox();
-        }
+                    {
+                        nextBoxData.angle = angle;
+                        nextBoxData.Direction = UpdateDirection(startDir, rotatorVector, origPosYDir, angle);
+                    }
+                    nextBoxData.posYDir = nextBoxData.rotatorVector.crossProduct(nextBoxData.Direction).normalize();
 
-        private static void UpdateSlopes(double[] direction, double[] posYDir, List<GaussSphereArc> orthGaussSphereArcs)
-        {
-            foreach (var arc in orthGaussSphereArcs)
-            {
-                arc.Xeffective = direction.dotProduct(arc.ToFace.Normal);
-                arc.Yeffective = posYDir.dotProduct(arc.ToFace.Normal);
+                    /****************/
+                    FindOBBAlongDirection(nextBoxData);
+                    /****************/
+                    if (DifferentMembershipInExtrema(thisBoxData, nextBoxData))
+                    {
+                        var lowerBox = thisBoxData;
+                        var upperBox = nextBoxData;
+                        var midBox = thisBoxData.Copy();
+                        while (lowerBox.angle.IsPracticallySame(upperBox.angle, Constants.OBBAngleTolerance))
+                        {
+                            midBox.Direction = lowerBox.Direction.add(upperBox.Direction).divide(2).normalize();
+                            midBox.angle = (lowerBox.angle + upperBox.angle) / 2.0;
+                            FindOBBAlongDirection(midBox);
+                            if (midBox.Volume > lowerBox.Volume && midBox.Volume > upperBox.Volume) break;
+                            if (!DifferentMembershipInExtrema(lowerBox, midBox))
+                                lowerBox = midBox;
+                            else if (!DifferentMembershipInExtrema(upperBox, midBox))
+                                upperBox = midBox;
+                            else throw new Exception("new midbox is different from BOTH neighbors!");
+                        }
+                        if (thisBoxData.Volume < minBox.Volume) minBox = midBox.box;
+                    }
+                    thisBoxData = nextBoxData;
+                    if (thisBoxData.Volume < minBox.Volume) minBox = thisBoxData.box;
+                } while (angle < totalAngle);
             }
+            return minBox;
         }
-        
-        private static double UpdateOrthAngle(double[] direction, ref List<GaussSphereArc> orthGaussSphereArcs, ref List<Vertex> orthVertices)
+        private static double UpdateOrthAngle(BoundingBoxData boxData)
         {
             GaussSphereArc arcToRemove = null;
             var minSlope = double.PositiveInfinity;
-            foreach (var arc in orthGaussSphereArcs)
+            boxData.posYDir = boxData.rotatorVector.crossProduct(boxData.Direction).normalize();
+            foreach (var arc in boxData.orthGaussSphereArcs)
             {
-                var tempSlope = arc.Yeffective / arc.Xeffective;
+                var x = boxData.Direction.dotProduct(arc.ToFace.Normal);
+                var y = boxData.posYDir.dotProduct(arc.ToFace.Normal);
+                if (y == 0.0) continue;
+                var tempSlope = -x / y;
                 if (tempSlope < minSlope)
                 {
                     minSlope = tempSlope;
                     arcToRemove = arc;
                 }
             }
+            if (minSlope < 0) return double.PositiveInfinity;
             var edgesAtJunction = new List<Edge>(arcToRemove.ToFace.Edges);
-            for (int i = orthGaussSphereArcs.Count - 1; i >= 0; i--)
+            for (int i = boxData.orthGaussSphereArcs.Count - 1; i >= 0; i--)
             {
-                var index = edgesAtJunction.FindIndex(orthGaussSphereArcs[i].Edge);
+                var index = edgesAtJunction.FindIndex(boxData.orthGaussSphereArcs[i].Edge);
                 if (index >= 0)
                 {
-                    orthGaussSphereArcs.RemoveAt(i);
-                    orthVertices.Remove(edgesAtJunction[index].From);
-                    orthVertices.Remove(edgesAtJunction[index].To);
+                    boxData.orthGaussSphereArcs.RemoveAt(i);
+                    boxData.orthVertices.Remove(edgesAtJunction[index].From);
+                    boxData.orthVertices.Remove(edgesAtJunction[index].To);
                     edgesAtJunction.RemoveAt(index);
                 }
             }
             foreach (var edge in edgesAtJunction)
             {
-                if (!orthVertices.Contains(edge.From)) orthVertices.Add(edge.From);
-                if (!orthVertices.Contains(edge.To)) orthVertices.Add(edge.To);
-                orthGaussSphereArcs.Add(new GaussSphereArc(edge, arcToRemove.ToFace, (edge.OwnedFace == arcToRemove.ToFace)
+                if (!boxData.orthVertices.Contains(edge.From)) boxData.orthVertices.Add(edge.From);
+                if (!boxData.orthVertices.Contains(edge.To)) boxData.orthVertices.Add(edge.To);
+                boxData.orthGaussSphereArcs.Add(new GaussSphereArc(edge, (edge.OwnedFace == arcToRemove.ToFace)
                     ? edge.OtherFace : edge.OwnedFace));
             }
             return Math.Atan(minSlope);
         }
+
+        private static double UpdateBackAngle(BoundingBoxData boxData)
+        {
+            Edge nextEdge = null;
+            var yDir = boxData.rotatorVector.crossProduct(boxData.Direction);
+            var minSlope = double.PositiveInfinity;
+            foreach (var edge in boxData.backVertex.Edges)
+            {
+                var otherVertex = edge.OtherVertex(boxData.backVertex);
+                var vector = otherVertex.Position.subtract(boxData.backVertex.Position);
+                var y = yDir.dotProduct(vector);
+                if (y < 0)
+                {
+                    // the x-value is boxData.Direction.dotProduct(vector) and it's positive for all edges since it's the back vertex
+                    var slope = -boxData.Direction.dotProduct(vector) / y;
+                    if (slope < minSlope)
+                    {
+                        minSlope = slope;
+                        nextEdge = edge;
+                    }
+                }
+            }
+            if (minSlope < 0) return double.PositiveInfinity;
+            boxData.backVertex = nextEdge.OtherVertex(boxData.backVertex);
+            boxData.backEdge = nextEdge;
+            return Math.Atan(minSlope);
+        }
+
+
+        private static bool DifferentMembershipInExtrema(BoundingBoxData boxDataA, BoundingBoxData boxDataB)
+        {
+            var boxASides = boxDataA.box.PointsOnFaces.Skip(2);
+            var boxBSides = boxDataB.box.PointsOnFaces.Skip(2).ToList();
+            foreach (var boxASide in boxASides)
+            {
+                if (!boxBSides.Any(boxBSide => boxASide.Intersect(boxBSide).Any()))
+                    return true;
+            }
+            return false;
+        }
+
 
         private static double[] UpdateDirection(double[] startDir, double[] rotator, double[] posYDir, double angle)
         {
@@ -442,97 +421,91 @@ namespace TVGL
             return StarMath.solve(A, b);
         }
 
-        private static double UpdateBackAngle(double[] direction, double[] rotator, double[] posYDir, ref Vertex backVertex, ref Edge backEdge)
+        #endregion
+
+        private class BoundingBoxData
         {
-            Edge nextEdge = null;
-            var yDotWithOtherFace = double.NegativeInfinity;
-            foreach (var edge in backVertex.Edges)
+            internal BoundingBoxData()
             {
-                if (rotator.dotProduct(edge.From.Position) * rotator.dotProduct(edge.To.Position) <= 0)
+            }
+
+            internal BoundingBoxData(double[] startDir, double[] yDir, Edge rotatorEdge, double[] rotatorVector, TVGLConvexHull convexHull)
+            {
+                Direction = startDir;
+                posYDir = yDir;
+                this.rotatorEdge = rotatorEdge;
+                this.rotatorVector = rotatorVector;
+                orthGaussSphereArcs = new List<GaussSphereArc>();
+                // make arrays of the dotproducts with start and end directions (x-values) to help subsequent
+                // foreach loop which will look up faces multiple times.
+                double[] startingDots = new double[convexHull.Faces.Length];
+                for (int i = 0; i < convexHull.Faces.Length; i++)
                 {
-                    if (edge != backEdge && edge.OtherVertex(backVertex).Position.dotProduct(posYDir) > yDotWithOtherFace)
-                        nextEdge = edge;
+                    var face = convexHull.Faces[i];
+                    face.IndexInList = i;
+                    startingDots[i] = face.Normal.dotProduct(startDir);
+                }
+                foreach (var edge in convexHull.Edges)
+                {
+                    var ownedX = startingDots[edge.OwnedFace.IndexInList];
+                    var otherX = startingDots[edge.OtherFace.IndexInList];
+                    if (otherX * ownedX <= 0)
+                    {
+                        var ownedY = edge.OwnedFace.Normal.dotProduct(yDir);
+                        var otherY = edge.OtherFace.Normal.dotProduct(yDir);
+                        if ((ownedX < 0 && ownedY > 0) || (ownedX > 0 && ownedY < 0))
+                            orthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OwnedFace));
+                        else if ((otherX < 0 && otherY > 0) || (otherX > 0 && otherY < 0))
+                            orthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OtherFace));
+                    }
+                }
+                orthVertices = orthGaussSphereArcs.SelectMany(arc => new[] { arc.Edge.From, arc.Edge.To }).Distinct().ToList();
+                var maxDistance = double.NegativeInfinity;
+                foreach (var v in convexHull.Vertices)
+                {
+                    var distance = rotatorEdge.From.Position.subtract(v.Position).dotProduct(startDir);
+                    if (distance > maxDistance)
+                    {
+                        maxDistance = distance;
+                        backVertex = v;
+                    }
                 }
             }
-            var positionVector = (new[] { nextEdge.Vector.dotProduct(direction), nextEdge.Vector.dotProduct(posYDir) }).normalize();
-            backVertex = nextEdge.OtherVertex(backVertex);
-            backEdge = nextEdge;
-            return Math.Acos(positionVector.dotProduct(posYDir));
-        }
 
-        #endregion
+            public BoundingBox box { get; set; }
+            public double[] Direction { get; set; }
+            public double angle { get; set; }
+            public List<Vertex> orthVertices { get; set; }
+            public List<GaussSphereArc> orthGaussSphereArcs { get; set; }
+            public Vertex backVertex { get; set; }
+            public Edge backEdge { get; set; }
+            public double[] posYDir { get; set; }
+            public double[] rotatorVector { get; set; }
+            public Edge rotatorEdge { get; set; }
 
-        #region Find Minimum OBB Between Two Angles via Golden Sections
-        /// <summary>
-        /// This golden section search finds the minimum between two angles, with the assumption that only one minimum exists, 
-        /// and that both angle (data points) decrease in volume as they near the minimum (negative slopes).
-        /// </summary>
-        private static BoundingBox FindMinimumBetweenTwoAngles_GoldenSections(IList<Vertex> convexHullVertices, double minAngle,
-            double maxAngle, double[] faceNormal, double[] axisOfRotation, out double[] dataPoint)
-        {
-            dataPoint = new double[2];
-            var goldenRatio = (Math.Sqrt(5) - 1) / 2;
-            var tolerance = 1e-6;
-            //Set x values
-            var a = minAngle;
-            var b = maxAngle;
-            var c = b - goldenRatio * (b - a);
-            var d = a + goldenRatio * (b - a);
-
-            //Perform golden section search
-            while (Math.Abs(c - d) > tolerance)
+            public BoundingBoxData Copy()
             {
-                var fc = OBBAlongDirectionFromAngle(faceNormal, axisOfRotation, c, convexHullVertices).Volume;
-                var fd = OBBAlongDirectionFromAngle(faceNormal, axisOfRotation, d, convexHullVertices).Volume;
-                if (fc < fd)
+                return new BoundingBoxData
                 {
-                    b = d;
-                    d = c;
-                    c = b - goldenRatio * (b - a);
-                }
-                else
-                {
-                    a = c;
-                    c = d;
-                    d = a + goldenRatio * (b - a);
-                }
+                    angle = angle,
+                    backVertex = backVertex,
+                    backEdge = backEdge,
+                    box = new BoundingBox
+                    {
+                        CornerVertices = box.CornerVertices != null ? (Point[])box.CornerVertices.Clone() : null,
+                        Dimensions = box.Dimensions != null ? (double[])box.Dimensions.Clone() : null,
+                        Directions = box.Directions != null ? (double[][])box.Directions.Clone() : null,
+                        PointsOnFaces = box.PointsOnFaces != null ? (List<Vertex>[])box.PointsOnFaces.Clone() : null,
+                        Volume = box.Volume
+                    },
+                    Direction = (double[])Direction.Clone(),
+                    orthGaussSphereArcs = new List<GaussSphereArc>(orthGaussSphereArcs),
+                    orthVertices = new List<Vertex>(orthVertices),
+                    posYDir = (double[])posYDir.Clone(),
+                    rotatorVector = (double[])rotatorVector.Clone(),
+                    rotatorEdge = rotatorEdge
+                };
             }
-            var minObb = OBBAlongDirectionFromAngle(faceNormal, axisOfRotation, (b + a) / 2, convexHullVertices);
-            dataPoint[0] = (b + a) / 2;
-            dataPoint[1] = minObb.Volume;
-            return minObb;
         }
-        #endregion
-
-        #region Find OBB Along a Direction from given angle change
-        private static BoundingBox OBBAlongDirectionFromAngle(double[] faceNormal, double[] axisOfRotation, double angleChange, IList<Vertex> convexHullVertices)
-        {
-            var s = Math.Sin(angleChange);
-            var c = Math.Cos(angleChange);
-            var t = 1.0 - c;
-            var n = faceNormal;
-            var r = axisOfRotation;
-            //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
-            var rotMatrix = new[,]
-                            {
-                                {t*r[0]*r[0]+c, t*r[0]*r[1]-s*r[2], t*r[0]*r[2]+s*r[1]},
-                                {t*r[0]*r[1]+s*r[2], t*r[1]*r[1]+c, t*r[1]*r[2]-s*r[0]},
-                                {t*r[0]*r[2]-s*r[1], t*r[1]*r[2]+s*r[0], t*r[2]*r[2]+c}
-                            };
-            var direction = rotMatrix.multiply(n);
-            if (double.IsNaN(direction[0])) throw new Exception();
-
-            //Find OBB along direction and save minimum bounding box
-            return FindOBBAlongDirection(convexHullVertices, direction.normalize());
-        }
-        #endregion
-
-        private struct BoundingBoxData
-        {
-            public BoundingBox box;
-            public double[] direction;
-            public double angle;
-        }
-
     }
 }

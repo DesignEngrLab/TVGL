@@ -24,6 +24,10 @@ namespace TVGL
     /// </summary>
     public static class Constants
     {
+        /// <summary>
+        /// The convex hull radius for robustness. This is only used when ConvexHull fails on the model.    
+        /// </summary>
+        internal const double ConvexHullRadiusForRobustness = 0.0000001;
         internal const KnownColors DefaultColor = KnownColors.PaleGoldenrod;
 
         /// <summary>

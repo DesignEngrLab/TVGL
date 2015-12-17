@@ -1032,7 +1032,7 @@ namespace TVGL
         {
             //Check if convex hull is water tight or multiple solids
             var faces = new HashSet<PolygonalFace>();
-            var startFace = ts.ConvexHullFaces[0];
+            var startFace = ts.ConvexHull.Faces[0];
             var stack = new Stack<PolygonalFace>(new[] {startFace});
             while (stack.Any())
             {
@@ -1045,17 +1045,17 @@ namespace TVGL
                     stack.Push(adjacentFace);
                 }
             }
-            if (faces.Count() != ts.ConvexHullFaces.Count()) throw new Exception();
+            if (faces.Count() != ts.ConvexHull.Faces.Count()) throw new Exception();
 
             //Check if the vertices of an edge belong to the two faces it is supposed to belong to
-            foreach (var edge in ts.ConvexHullEdges)
+            foreach (var edge in ts.ConvexHull.Edges)
             {
                 if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From))
                     throw new Exception();
                 if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From))
                     throw new Exception();
                 //See if that edge should have been connected to a different face
-                if (ts.ConvexHullFaces.Any(face => face.Vertices.Contains(edge.To) &&
+                if (ts.ConvexHull.Faces.Any(face => face.Vertices.Contains(edge.To) &&
                                                    face.Vertices.Contains(edge.From) && face != edge.OwnedFace &&
                                                    face != edge.OtherFace))
                 {

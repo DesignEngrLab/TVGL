@@ -7,44 +7,13 @@ namespace TVGL.Enclosure_Operations
 {
     internal class GaussSphereArc
     {
-        internal Edge Edge;
-        internal PolygonalFace FromFace;
-        internal PolygonalFace ToFace;
-        internal double Xeffective;
-        internal double Yeffective;
+        internal readonly Edge Edge;
+        internal readonly PolygonalFace ToFace;
 
-        internal GaussSphereArc(Edge edge, PolygonalFace fromFace, PolygonalFace toFace)
+        internal GaussSphereArc(Edge edge, PolygonalFace toFace)
         {
             Edge = edge;
-            FromFace = fromFace;
             ToFace = toFace;
-        }
-
-        internal GaussSphereArc(Edge edge, double[] posDir, double ownedX, double otherX)
-        {
-            var ownedY = edge.OwnedFace.Normal.dotProduct(posDir);
-            var otherY = edge.OtherFace.Normal.dotProduct(posDir);
-            var slope = (otherY - ownedY) / (otherX - ownedX);
-            var offset = ownedY - slope * ownedX;
-            //todo: check these conditions - a change was made in how direction and posYDir were visualized
-            if ( (ownedX <= 0 && otherX >= 0 && offset>=0)
-                || (ownedX > 0 && otherX < 0 && offset < 0))
-            {
-                Edge = edge;
-                FromFace = edge.OwnedFace;
-                ToFace = edge.OtherFace;
-                Xeffective = otherX;
-                Yeffective = otherY;
-                }
-            else if ((ownedX <= 0 && otherX >= 0 && offset < 0 )
-                     || (ownedX > 0 && otherX < 0 && offset >= 0))
-            {
-                Edge = edge;
-                FromFace = edge.OtherFace;
-                ToFace = edge.OwnedFace;
-                Xeffective = ownedX;
-                Yeffective = ownedY;
-                }
         }
     }
     /// <summary>
@@ -75,7 +44,7 @@ namespace TVGL.Enclosure_Operations
             Arcs = new List<Arc>();
             ReferenceEdges = new List<Edge>();
             var referenceIndices = new List<int[]>();
-            foreach (var triangle in ts.ConvexHullFaces)
+            foreach (var triangle in ts.ConvexHull.Faces)
             {
                 var sameIndex = Nodes.FindIndex(p => Math.Abs(p.Vector[0] - triangle.Normal[0]) < 0.0001 &&
                     Math.Abs(p.Vector[1] - triangle.Normal[1]) < 0.0001 &&
