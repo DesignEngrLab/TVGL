@@ -30,6 +30,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal)
         {
+            //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, true)).ToList();
             return Run(points2D, null);
         }

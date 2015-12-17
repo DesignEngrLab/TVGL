@@ -267,12 +267,22 @@ namespace TVGL
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
-       /// for cases in which the faces and vertices are already defined.
+        /// for cases in which the faces and vertices are already defined.
         /// </summary>
+        /// <param name="faces"></param>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="faceToVertexIndices">The face to ver
-        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices, string name="")
+        /// <param name="name"></param>
+        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, string name = "")
         {
+            //Get vertices if null
+            if (vertices == null)
+            {
+                vertices = new List<Vertex>();
+                foreach (var vertex in faces.SelectMany(face => face.Vertices.Where(vertex => !vertices.Contains(vertex))))
+                {
+                    vertices.Add(vertex);
+                }
+            }
             Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             Faces = faces.ToArray();
@@ -285,9 +295,6 @@ namespace TVGL
             foreach (var vertex in Vertices)
                 vertex.Edges.Clear();
             DefineFaceColors();
-
-            Edges = MakeEdges(Faces);
-            CreateConvexHull();
             CompleteInitiation();
         }
 
@@ -313,6 +320,7 @@ namespace TVGL
         #region Build New from Portions of Old Solid and the Copy Function
         public TessellatedSolid BuildNewFromOld(IList<PolygonalFace> polyFaces)
         {
+
             var vertices = new HashSet<Vertex>();
             var listDoubles = new List<double[]>();
             var index = 0;
@@ -375,7 +383,7 @@ namespace TVGL
             var taskZMax = Task.Factory.StartNew(() => ZMax = vertices.Max(v => v[2]));
             Task.WaitAll(taskXMin, taskXMax, taskYMin, taskYMax, taskZMin, taskZMax);
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
-            sameTolerance = shortestDimension * Constants.BaseTolerance;
+            sameTolerance = shortestDimension * Constants.BaseTolerance / 1000000;
         }
         /// <summary>
         /// Makes the faces, avoiding duplicates.

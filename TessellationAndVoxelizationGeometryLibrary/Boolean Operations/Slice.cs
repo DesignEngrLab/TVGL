@@ -703,7 +703,7 @@ namespace TVGL.Boolean_Operations
             foreach (var ce in allContactElements)
             {
                 var negVertex = ce.StartVertex;
-                var posVertex = negVertex.Copy();
+                var posVertex = negVertex.Copy(true);
                 var negFaces = new List<PolygonalFace>(new[] { ce.SplitFaceNegative });
                 var negEdges = new List<Edge>();
                 var thisNegFace = ce.SplitFaceNegative;

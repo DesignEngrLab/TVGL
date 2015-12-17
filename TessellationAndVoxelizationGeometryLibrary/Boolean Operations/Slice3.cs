@@ -40,8 +40,8 @@ namespace TVGL.Boolean_Operations
             DivideUpFaces(ts, plane, out positiveSideFaces, out positiveSideLoopVertices, 1);
             DivideUpFaces(ts, plane, out negativeSideFaces, out negativeSideLoopVertices, -1);
             //2. Find loops to define the missing space on the plane
-            var positiveSideLoops = FindLoops(positiveSideLoopVertices);
-            var negativeSideLoops = FindLoops(negativeSideLoopVertices);
+            var positiveSideLoops = FindLoops(positiveSideLoopVertices, positiveSideFaces);
+            var negativeSideLoops = FindLoops(negativeSideLoopVertices, negativeSideFaces);
             //3. Triangulate that empty space and add to list 
             var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal);
             positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1))));
@@ -74,22 +74,19 @@ namespace TVGL.Boolean_Operations
             //Set the distance of every vertex in the solid to the plane
             var distancesToPlane = new List<double>();
             var pointOnPlane = new double[3];
-            var looserTolerance = Math.Sqrt(Math.Sqrt(ts.sameTolerance)); //A looser tolerance is necessary to determine straddle edges
+            var looserTolerance = Math.Sqrt((ts.sameTolerance)); //A looser tolerance is necessary to determine straddle edges
             //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
             //along direction of normal, and add a negative offset to move backward along normal.
-            var offset = Math.Sqrt(looserTolerance) + looserTolerance;
-            plane.DistanceToOrigin = plane.DistanceToOrigin + offset * isPositiveSide;
             var successfull = false;
             var originalDistanceToOrigin = plane.DistanceToOrigin;
             while (!successfull)
             {
                 distancesToPlane = new List<double>();
-                plane.DistanceToOrigin = plane.DistanceToOrigin + looserTolerance * isPositiveSide;
                 pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
                 for (int i = 0; i < ts.NumberOfVertices; i++)
                 {
                     var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
-                    if (Math.Abs(distance) < looserTolerance)
+                    if (Math.Abs(distance) < ts.sameTolerance)
                     {
                         successfull = false;
                         break;
@@ -97,6 +94,7 @@ namespace TVGL.Boolean_Operations
                     distancesToPlane.Add(distance);
                 }
                 if (distancesToPlane.Count == ts.NumberOfVertices) successfull = true;
+                plane.DistanceToOrigin = plane.DistanceToOrigin + looserTolerance * isPositiveSide;
             }
 
             //Find all the straddle edges and add the new intersect vertices to both the pos and neg loops.
@@ -108,15 +106,62 @@ namespace TVGL.Boolean_Operations
                 if (edge.EdgeReference == 0) edge.EdgeReference = GetCheckSum(edge.From, edge.To);
                 var toDistance = distancesToPlane[edge.To.IndexInList];
                 var fromDistance = distancesToPlane[edge.From.IndexInList];
-                //Check for a straddle edge
-                if (((toDistance > looserTolerance) && (fromDistance < -looserTolerance)) ||
-                    ((toDistance < -looserTolerance) && (fromDistance > looserTolerance)))
+                //Check for a straddle edge (Signs are different)
+                if (Math.Sign(toDistance) == Math.Sign(fromDistance)) continue;
                 {
                     //If it is a straddle edge
                     var straddleEdge = new StraddleEdge(edge, plane);
                     straddleEdges.Add(straddleEdge);
                     loopVertices.Add(straddleEdge.IntersectVertex);
                 }
+            }
+
+            //Check to make sure no new vertices are too close, correct them if they are.
+            foreach (var face in ts.Faces)
+            {
+                //Categorize the vertices of the face
+                var positiveSideVertices = new List<Vertex>();
+                var negativeSideVertices = new List<Vertex>();
+                var onPlaneVerticesFromFace = new List<Vertex>();
+                foreach (var vertex in face.Vertices)
+                {
+                    var distance = distancesToPlane[vertex.IndexInList];
+                    if (Math.Abs(distance).IsNegligible(Constants.BaseTolerance)) onPlaneVerticesFromFace.Add(vertex);
+                    else if (Math.Sign(distance) > 0) positiveSideVertices.Add(vertex);
+                    else if (Math.Sign(distance) < 0) negativeSideVertices.Add(vertex);
+                    else throw new Exception("Error: one of the three options above must be true.");
+                }
+                //If a straddle face 
+                if (positiveSideVertices.Count <= 0 || negativeSideVertices.Count <= 0) continue;
+                var numberOfNewVertices = positiveSideVertices.Count + negativeSideVertices.Count - 1;
+                //Two vertices are on the positive side, and one is on the negative side.
+                var checksum1 = 0;
+                var checksum2 = 0;
+                if (numberOfNewVertices == 2 && positiveSideVertices.Count == 2 && isPositiveSide == 1)
+                {
+                    //Find the straddle edge that contains both the positive[0] and negative[0] vertex
+                    checksum1 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0]);
+                    checksum2 = GetCheckSum(positiveSideVertices[1], negativeSideVertices[0]);
+                }
+                //Two vertices are on the negative side, and one is on the positive side.
+                else if (numberOfNewVertices == 2 && negativeSideVertices.Count == 2 && isPositiveSide == -1)
+                {
+                    checksum1 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0]);
+                    checksum2 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[1]);
+                }
+                else continue;
+                
+                var straddleEdge1 = straddleEdges.First(s => s.EdgeReference == checksum1);
+                var straddleEdge2 = straddleEdges.First(s => s.EdgeReference == checksum2);
+                var newVertex1 = straddleEdge1.IntersectVertex;
+                var newVertex2 = straddleEdge2.IntersectVertex;
+                if (newVertex1 == null || newVertex2 == null) throw new Exception();
+                var length = Math.Abs(MiscFunctions.DistancePointToPoint(newVertex1.Position, newVertex2.Position));
+                if (length < Math.Sqrt(Constants.BaseTolerance))
+                {
+                    loopVertices.Remove(newVertex2);
+                    straddleEdge2.IntersectVertex = newVertex1;
+                }     
             }
 
             //Categorize all the faces in the solid
@@ -131,9 +176,8 @@ namespace TVGL.Boolean_Operations
                 var onPlaneVerticesFromFace = new List<Vertex>();
                 foreach (var vertex in face.Vertices)
                 {
-                    //if (vertex.IndexInList == 2323) vertex.IndexInList = 2323; //DEBUG Line for finding a particular vertex
                     var distance = distancesToPlane[vertex.IndexInList];
-                    if (Math.Abs(distance) < looserTolerance) onPlaneVerticesFromFace.Add(vertex);
+                    if (Math.Abs(distance).IsNegligible(Constants.BaseTolerance)) onPlaneVerticesFromFace.Add(vertex);
                     else if (Math.Sign(distance) > 0) positiveSideVertices.Add(vertex);
                     else if (Math.Sign(distance) < 0) negativeSideVertices.Add(vertex);
                     else throw new Exception("Error: one of the three options above must be true.");
@@ -143,13 +187,8 @@ namespace TVGL.Boolean_Operations
                 if (positiveSideVertices.Count > 0 && negativeSideVertices.Count > 0)
                 {
                     var numberOfNewVertices = positiveSideVertices.Count + negativeSideVertices.Count - 1;
-                    //One vertex is on the positive side, one on the negative side, and one on the plane.
-                    if (numberOfNewVertices < 2)
-                    {
-                        throw new Exception("There should be NO vertices on the plane");
-                    }
                     //Two vertices are on the positive side, and one is on the negative side.
-                    else if (numberOfNewVertices == 2 && positiveSideVertices.Count == 2)
+                    if (numberOfNewVertices == 2 && positiveSideVertices.Count == 2)
                     {
                         //Find the straddle edge that contains both the positive[0] and negative[0] vertex
                         var checksum1 = GetCheckSum(positiveSideVertices[0], negativeSideVertices[0]);
@@ -157,15 +196,20 @@ namespace TVGL.Boolean_Operations
                         var newVertex1 = straddleEdges.First(s => s.EdgeReference == checksum1).IntersectVertex;
                         var newVertex2 = straddleEdges.First(s => s.EdgeReference == checksum2).IntersectVertex;
                         if (newVertex1 == null || newVertex2 == null) throw new Exception();
-                        newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
-                        if (isPositiveSide == 1)
+                        if (isPositiveSide == 1 && newVertex1 == newVertex2)
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[0], positiveSideVertices[1], newVertex1 }, face.Normal, false));
-                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[1], newVertex1, newVertex2 }, face.Normal, false));
+                            onSideFaces.Add( new PolygonalFace(new[] {positiveSideVertices[0], positiveSideVertices[1], newVertex1},face.Normal));
+                        }
+                        else if(isPositiveSide ==1)
+                        {
+                            newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[0], positiveSideVertices[1], newVertex1 }, face.Normal));
+                            onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[1], newVertex1, newVertex2 }, face.Normal));
                         }
                         else
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, negativeSideVertices[0] }, face.Normal, false));
+                            newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, negativeSideVertices[0] }, face.Normal));
                         }
                     }
                     //Two vertices are on the negative side, and one is on the positive side.
@@ -176,15 +220,20 @@ namespace TVGL.Boolean_Operations
                         var newVertex1 = straddleEdges.First(s => s.EdgeReference == checksum1).IntersectVertex;
                         var newVertex2 = straddleEdges.First(s => s.EdgeReference == checksum2).IntersectVertex;
                         if (newVertex1 == null || newVertex2 == null) throw new Exception();
-                        newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
                         if (isPositiveSide == 1)
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, positiveSideVertices[0] }, face.Normal, false));
+                            newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, positiveSideVertices[0] }, face.Normal));
+                        }
+                        else if (newVertex1 == newVertex2)
+                        {
+                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[0], negativeSideVertices[1], newVertex1 }, face.Normal));
                         }
                         else
                         {
-                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[0], negativeSideVertices[1], newVertex1 }, face.Normal, false));
-                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[1], newVertex1, newVertex2 }, face.Normal, false));
+                            newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
+                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[0], negativeSideVertices[1], newVertex1 }, face.Normal));
+                            onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[1], newVertex1, newVertex2 }, face.Normal));
                         }
                     }
                     else throw new Exception("Error: one of the two options above must be true.");
@@ -192,10 +241,18 @@ namespace TVGL.Boolean_Operations
                 else if (isPositiveSide == 1 && positiveSideVertices.Count > 0)
                 {
                     onSideFaces.Add(face);
+                    foreach (var vertex in onPlaneVerticesFromFace)
+                    {
+                        if (!loopVertices.Contains(vertex)) loopVertices.Add(vertex);
+                    }
                 }
                 else if (isPositiveSide == -1 && negativeSideVertices.Count > 0)
                 {
                     onSideFaces.Add(face);
+                    foreach (var vertex in onPlaneVerticesFromFace)
+                    {
+                        if (!loopVertices.Contains(vertex)) loopVertices.Add(vertex);
+                    }
                 }
                 //Else: Do nothing with On-Plane faces.
             }
@@ -237,43 +294,77 @@ namespace TVGL.Boolean_Operations
             }
         }
 
-        private static List<List<Vertex>> FindLoops(IList<Vertex> onPlaneVertices)
+        private static List<List<Vertex>> FindLoops(IList<Vertex> onPlaneVertices, IEnumerable<PolygonalFace> onSideFaces)
         {
+            var onPlaneEdges = new List<Edge>();
+            var onPlaneEdgeHash = new HashSet<Edge>();
+            var hashFaces = new HashSet<PolygonalFace>(onSideFaces);
+            var onPlaneVerticesHash = new HashSet<Vertex>(onPlaneVertices);
+            for (var i = 0; i < onPlaneVertices.Count(); i++)
+            {
+                var vertex1 = onPlaneVertices[i];
+                foreach (var edge in vertex1.Edges)
+                {
+                    var vertex2 = edge.OtherVertex(vertex1);
+                    if (!onPlaneVerticesHash.Contains(vertex2)) continue;
+                    if (onPlaneEdgeHash.Contains(edge))
+                    {
+                        //keep any new edges (they will have a null reference)
+                        if (edge.OwnedFace == null || edge.OtherFace == null)
+                        {
+                            onPlaneEdges.Add(edge);
+                        }
+                        //Else, keep any edge that has ONLY one face on this side of plane
+                        else if ((hashFaces.Contains(edge.OwnedFace) && !hashFaces.Contains(edge.OtherFace)) ||
+                            (!hashFaces.Contains(edge.OwnedFace) && hashFaces.Contains(edge.OtherFace)))
+                        {
+                            onPlaneEdges.Add(edge);
+                        }
+                        onPlaneEdgeHash.Remove(edge);
+                    }
+                    else onPlaneEdgeHash.Add(edge);
+                }
+            }
+            if (onPlaneEdgeHash.Count != 0) throw new Exception("tempHash should be empty, since the edge should have come up twice");
+
             //Every vertex that is on Plane is on a loop.
             var loops = new List<List<Vertex>>();
-            var vertices = new List<Vertex>(onPlaneVertices);
-            while (vertices.Any())
+            var remainingEdges = new List<Edge>(onPlaneEdges);
+            var attempts = 0;
+            while (remainingEdges.Count > 0)
             {
-                var attempts = 0;
                 var loop = new List<Vertex>();
-                var removedVertices = new List<Vertex>();
-                var startVertex = vertices[0];
-                var currentEdge = startVertex.Edges[0];
-                var newStartVertex = currentEdge.OtherVertex(startVertex);
-                //Update the lists for newStartVertex.
+                var successfull = true;
+                var removedEdges = new List<Edge>();
+                var startVertex = remainingEdges[0].From;
+                var newStartVertex = remainingEdges[0].To;
                 loop.Add(newStartVertex);
-                vertices.Remove(newStartVertex);
+                removedEdges.Add(remainingEdges[0]);
+                remainingEdges.RemoveAt(0);
                 do
                 {
-                    Edge nextEdge = null;
-                    if (newStartVertex.Edges.Count == 2)
+                    var possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
+                    if (possibleNextEdges.Count() != 1)
                     {
-                        foreach (var edge in newStartVertex.Edges)
-                        {
-                            if (edge == currentEdge) continue;
-                            nextEdge = edge;
-                            break;
-                        }
+                        successfull = false;
+                        attempts++;
+                        throw new Exception("Should always be == to 1");
                     }
-                    else throw new Exception("This should always happen with Slice3");
-                    newStartVertex = nextEdge.OtherVertex(newStartVertex);
-                    loop.Add(newStartVertex);
-                    vertices.Remove(newStartVertex);
-                    currentEdge = nextEdge;
-                    attempts++;
+                    else
+                    {
+                        newStartVertex = possibleNextEdges[0].OtherVertex(newStartVertex);
+                        loop.Add(newStartVertex);
+                        removedEdges.Add(possibleNextEdges[0]);
+                        remainingEdges.Remove(possibleNextEdges[0]);
+                    }
                 }
-                while (newStartVertex != startVertex && attempts < onPlaneVertices.Count());
-                loops.Add(loop);
+                while (newStartVertex != startVertex && successfull);
+                if (attempts == 5) throw new Exception();
+                if (successfull) loops.Add(loop);
+                else
+                {
+                    remainingEdges.AddRange(removedEdges);
+                }
             }
             return loops;
         }

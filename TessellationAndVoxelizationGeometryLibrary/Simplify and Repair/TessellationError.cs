@@ -38,14 +38,15 @@ namespace TVGL
         /// Checks the model integrity.
         /// </summary>
         /// <param name="ts">The ts.</param>
-        /// <param name="RepairAutomatically">The repair automatically.</param>
-        public static void CheckModelIntegrity(TessellatedSolid ts, bool RepairAutomatically = true)
+        /// <param name="repairAutomatically">The repair automatically.</param>
+        public static void CheckModelIntegrity(TessellatedSolid ts, bool repairAutomatically = true)
         {
             Debug.WriteLine("Model Integrity Check...");
             if (ts.MostPolygonSides > 3) storeHigherThanTriFaces(ts);
             var edgeFaceRatio = ts.NumberOfEdges / (double)ts.NumberOfFaces;
             if (ts.MostPolygonSides == 3 && !edgeFaceRatio.IsPracticallySame(1.5)) storeEdgeFaceRatio(ts, edgeFaceRatio);
             //Check if each face has cyclic references with each edge, vertex, and adjacent faces.
+            var facesWithMissingAdjacency = new List<PolygonalFace>();
             foreach (var face in ts.Faces)
             {
                 if (face.Vertices.Count == 1) storeFaceWithOneVertex(ts, face);
@@ -57,6 +58,7 @@ namespace TVGL
                     if (edge.OwnedFace != face && edge.OtherFace != face) storeEdgeDoesNotLinkBackToFace(ts, face, edge);
                 foreach (var vertex in face.Vertices)
                     if (!vertex.Faces.Contains(face)) storeVertexDoesNotLinkBackToFace(ts, face, vertex);
+                facesWithMissingAdjacency.AddRange(from adjacentFace in face.AdjacentFaces where adjacentFace == null select face);
             }
             //Check if each edge has cyclic references with each vertex and each face.
             var faceDoesNotLinkBackToEdge = 0;
@@ -86,7 +88,7 @@ namespace TVGL
                 Debug.WriteLine("** Model contains no errors.");
                 return;
             }
-            if (RepairAutomatically)
+            if (repairAutomatically)
             {
                 Debug.WriteLine("Some errors found. Attempting to Repair...");
                 var success = ts.Errors.Repair(ts);
@@ -594,6 +596,7 @@ namespace TVGL
                     edge.OtherFace = null;
                     foreach (var face in allAffectedFaces)
                     {
+                        if (face.Edges.Count() != 3 || face.Vertices.Count() != 3) goto errorWithFace;
                         if (face.Vertices.Contains(edge.To) && face.Vertices.Contains(edge.From))
                         {
                             if (edge.OwnedFace == null) edge.OwnedFace = face;
