@@ -252,7 +252,7 @@ namespace TVGL
                 var thisBoxData = new BoundingBoxData(startDir, origPosYDir, rotateEdge, rotatorVector, convexHull);
                 #endregion
                 FindOBBAlongDirection(thisBoxData);
-                if (thisBoxData.Volume < minBox.Volume) minBox = thisBoxData.box;
+                if (thisBoxData.box.Volume < minBox.Volume) minBox = thisBoxData.box;
                 var angle = 0.0;
                 var deltaAngleToBackChange = 0.0;
                 var deltaAngleOrthSet = 0.0;
@@ -317,17 +317,17 @@ namespace TVGL
                             midBox.Direction = lowerBox.Direction.add(upperBox.Direction).divide(2).normalize();
                             midBox.angle = (lowerBox.angle + upperBox.angle) / 2.0;
                             FindOBBAlongDirection(midBox);
-                            if (midBox.Volume > lowerBox.Volume && midBox.Volume > upperBox.Volume) break;
+                            if (midBox.box.Volume > lowerBox.box.Volume && midBox.box.Volume > upperBox.box.Volume) break;
                             if (!DifferentMembershipInExtrema(lowerBox, midBox))
                                 lowerBox = midBox;
                             else if (!DifferentMembershipInExtrema(upperBox, midBox))
                                 upperBox = midBox;
                             else throw new Exception("new midbox is different from BOTH neighbors!");
                         }
-                        if (thisBoxData.Volume < minBox.Volume) minBox = midBox.box;
+                        if (thisBoxData.box.Volume < minBox.Volume) minBox = midBox.box;
                     }
                     thisBoxData = nextBoxData;
-                    if (thisBoxData.Volume < minBox.Volume) minBox = thisBoxData.box;
+                    if (thisBoxData.box.Volume < minBox.Volume) minBox = thisBoxData.box;
                 } while (angle < totalAngle);
             }
             return minBox;
