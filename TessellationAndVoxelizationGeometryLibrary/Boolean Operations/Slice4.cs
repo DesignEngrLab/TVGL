@@ -369,7 +369,7 @@ namespace TVGL.Boolean_Operations
             //Make an extra edge if the first new face
             if (!newEdges.Any())
             {
-                var newEdge = new Edge(st1.OnSideVertex, st1.IntersectVertex, true);
+                var newEdge = new Edge(st1.IntersectVertex, st1.OnSideVertex,  true);
                 newEdges.Add(newEdge);
             }
 
@@ -381,7 +381,7 @@ namespace TVGL.Boolean_Operations
                         sharedFace.Normal);
                 newEdges.Last().OtherFace = newFace;
                 if (!lastNewFace)
-                    newEdges.Add(new Edge(st2.OnSideVertex, st1.IntersectVertex, true) {OwnedFace = newFace});
+                    newEdges.Add(new Edge(st1.IntersectVertex, st2.OnSideVertex, true) {OwnedFace = newFace});
                 else newEdges.First().OwnedFace = newFace;
 
                 //Set ownership for boundary edge.
@@ -404,11 +404,11 @@ namespace TVGL.Boolean_Operations
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace1;
                 //Create new edges and update their ownership 
-                var newEdge1 = new Edge(st1.IntersectVertex, st2.IntersectVertex, true) { OwnedFace = newFace1, OtherFace = newFace2};
-                var newEdge2 = new Edge(st1.OnSideVertex, st2.IntersectVertex, true) { OwnedFace = newFace1 };
+                var newEdge1 = new Edge(st1.IntersectVertex, st2.IntersectVertex, true) { OwnedFace = newFace1};
+                var newEdge2 = new Edge(st1.OnSideVertex, st2.IntersectVertex, true) { OwnedFace = newFace2, OtherFace = newFace1};
                 newEdges.AddRange(new List<Edge> { newEdge1, newEdge2});
                 //Create the last edge, if this is not the last new face
-                if (!lastNewFace) newEdges.Add(new Edge(st2.OnSideVertex, st2.IntersectVertex, true) { OwnedFace = newFace2});
+                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, true) { OwnedFace = newFace2});
                 else newEdges.First().OwnedFace = newFace2;
                 
                 //Set ownership for boundary edge.
@@ -429,7 +429,7 @@ namespace TVGL.Boolean_Operations
                 newEdges.Last().OtherFace = newFace;
                 //Create new edges and update their ownership 
                 newEdges.Add(new Edge(st1.IntersectVertex, st2.IntersectVertex, true) { OwnedFace = newFace });
-                if (!lastNewFace) newEdges.Add(new Edge(st1.OnSideVertex, st2.IntersectVertex, true){ OwnedFace = newFace });
+                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st1.OnSideVertex, true){ OwnedFace = newFace });
                 else newEdges.First().OwnedFace = newFace;
                 return new List<PolygonalFace> { newFace };
             }

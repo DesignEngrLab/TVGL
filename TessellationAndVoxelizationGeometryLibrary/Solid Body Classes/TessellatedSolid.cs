@@ -181,7 +181,7 @@ namespace TVGL
         /// </summary>
         /// <value>The same tolerance.</value>
         internal double sameTolerance { private set; get; }
-        internal TessellationError Errors { get; set; }
+        public TessellationError Errors { get; set; }
         /// <summary>
         /// Gets the largest number of sides on a polygon in this model.
         /// </summary>
@@ -273,8 +273,11 @@ namespace TVGL
             Vertices = new Vertex[0];
             AddVertices(vertices);
             NumberOfVertices = Vertices.GetLength(0);
-            foreach (var face in Faces)
-                face.Edges.Clear();
+            for (var i = 0; i < Faces.Count(); i++)
+            {
+                Faces[i].Edges.Clear();
+                Faces[i].IndexInList = i;
+            }  
             foreach (var vertex in Vertices)
                 vertex.Edges.Clear();
             DefineFaceColors();

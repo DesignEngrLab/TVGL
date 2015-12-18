@@ -6,7 +6,7 @@ using StarMathLib;
 
 namespace TVGL
 {
-    class TessellationError
+    public class TessellationError
     {
         private double _edgeFaceRatio = double.NaN;
         public List<Tuple<Edge, List<PolygonalFace>>> OverusedEdges { get; private set; }
@@ -70,7 +70,7 @@ namespace TVGL
                 if (!edge.OtherFace.Edges.Contains(edge)) storeFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
                 if (!edge.To.Edges.Contains(edge)) storeVertDoesNotLinkBackToEdge(ts, edge, edge.To);
                 if (!edge.From.Edges.Contains(edge)) storeVertDoesNotLinkBackToEdge(ts, edge, edge.From);
-                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2 * Math.PI)
+                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2*Math.PI)  
                     storeEdgeHasBadAngle(ts, edge);
                 if (edge.To.PartofConvexHull && edge.From.PartofConvexHull && edge.InternalAngle > Math.PI)
                     storeEdgeWithConcaveAngle(ts, edge);
@@ -189,7 +189,7 @@ namespace TVGL
         {
             if (ts.Errors == null) ts.Errors = new TessellationError();
             if (ts.Errors.EdgesWithBadAngle == null) ts.Errors.EdgesWithBadAngle = new List<Edge> { edge };
-            else ts.Errors.EdgesWithBadAngle.Add(edge);
+            else if (!ts.Errors.EdgesWithBadAngle.Contains(edge)) ts.Errors.EdgesWithBadAngle.Add(edge);
         }
 
         private static void storeVertDoesNotLinkBackToEdge(TessellatedSolid ts, Edge edge, Vertex vert)

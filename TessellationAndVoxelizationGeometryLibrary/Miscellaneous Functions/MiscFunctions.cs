@@ -1011,7 +1011,7 @@ namespace TVGL
             }
             foreach (var seperateSolid in seperateSolids)
             {
-                solids.Add(ts.BuildNewFromOld(seperateSolid));
+                solids.Add(new TessellatedSolid(seperateSolid));
                 count = count + seperateSolid.Count();
             }
             if (count != ts.Faces.Count()) throw new Exception();

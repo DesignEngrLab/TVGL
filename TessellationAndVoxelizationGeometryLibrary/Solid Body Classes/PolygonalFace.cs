@@ -48,14 +48,14 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">A guess for the normal vector.</param>
-        /// <param name="ConnectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IList<Vertex> vertices, double[] normal = null, bool ConnectVerticesBackToFace = true)
+        /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
+        public PolygonalFace(IList<Vertex> vertices, double[] normal = null, bool connectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
             {
                 Vertices.Add(v);
-                if (ConnectVerticesBackToFace)
+                if (connectVerticesBackToFace)
                     v.Faces.Add(this);
             }
             var centerX = Vertices.Average(v => v.X);
