@@ -198,132 +198,109 @@ namespace TVGL.Boolean_Operations
             //This is the brains of this function. It loops through the straddle edges to 
             //create new faces. This function avoids creating two new points that are 
             //extremely close together, which should avoid neglible edges and faces.
-            //It also keeps track of how many new faces and vertices should be created.
-            var newVertexIndex = ts.NumberOfVertices;
+            //It also keeps track of how many new vertices should be created.
+            var newVertexIndex = ts.NumberOfVertices -1;
             var newFaces = new List<PolygonalFace>();
             var newEdges = new List<Edge>();
-            var properFaceCount = 0;
-            var properVertexCount = 0;
-            var vertexCount = 0;
+            var tolerance = Math.Sqrt(Constants.BaseTolerance);
             foreach (var loopOfStraddleEdges in loopsOfStraddleEdges)
             {
-                properFaceCount += loopOfStraddleEdges.Count();
-                properVertexCount += loopOfStraddleEdges.Count();
                 var loopOfVertices = new List<Vertex>();
-                var firstStraddleEdge =
-                    loopOfStraddleEdges.First(
-                        s => s.Edge.Curvature == CurvatureType.Concave || s.Edge.Curvature == CurvatureType.Convex);
-                var previousStraddleEdges = new List<StraddleEdge>{firstStraddleEdge};
-                var previousIntersectVertex = firstStraddleEdge.IntersectVertex;
-                var previousEdgeIsFlat = false;
-                var previousOffSideVertex = firstStraddleEdge.OffSideVertex;
-                var index = loopOfStraddleEdges.FindIndex(firstStraddleEdge);
-                StraddleEdge straddleEdge2 = null;
+                //Find a good starting edge. One with an intersect vertex far enough away from other intersection vertices.
+                var k = 0; 
+                var length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges.Last().IntersectVertex.Position,
+                            loopOfStraddleEdges[k].IntersectVertex.Position);
+                while (length1.IsNegligible(tolerance) && k + 1 != loopOfStraddleEdges.Count() - 1)
+                {
+                    k++;   
+                    length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges[k-1].IntersectVertex.Position,
+                        loopOfStraddleEdges[k].IntersectVertex.Position);
+                }
+                if (k +1 == loopOfStraddleEdges.Count()-1) throw new Exception("No good starting edge found");
+                var firstStraddleEdge = loopOfStraddleEdges[k];
+                var previousStraddleEdge = firstStraddleEdge;
                 successfull = false;
                 do 
                 {
-                    index++; //Update the index
-                    if (index > loopOfStraddleEdges.Count() - 1) index = 0; //Set back to start if necessary
-                    var straddleEdge = loopOfStraddleEdges[index];
-                    var offSideVertex = straddleEdge.OffSideVertex;
-                    if (offSideVertex != previousOffSideVertex)//Different
-                    {
-                        var length = MiscFunctions.DistancePointToPoint(previousIntersectVertex.Position,
-                            straddleEdge.IntersectVertex.Position);
-                        //If too close, collapse into one edge.
-                        if (length.IsNegligible(0.0001))
-                        {
-                            properVertexCount--;
-                            properFaceCount --;
-                            var previousStraddleEdge = previousStraddleEdges.Last();
-                            //Update face relationships
-                            if (previousStraddleEdge.OwnedFace == straddleEdge.OwnedFace) previousStraddleEdge.OwnedFace = straddleEdge.OtherFace;
-                            else if (previousStraddleEdge.OwnedFace == straddleEdge.OtherFace) previousStraddleEdge.OwnedFace = straddleEdge.OwnedFace;
-                            else if (previousStraddleEdge.OtherFace == straddleEdge.OwnedFace) previousStraddleEdge.OtherFace = straddleEdge.OtherFace;
-                            else if (previousStraddleEdge.OtherFace == straddleEdge.OtherFace) previousStraddleEdge.OtherFace = straddleEdge.OwnedFace;
-                            else throw new Exception("No shared face exists between these two straddle edges");
-                            previousOffSideVertex = offSideVertex;
-                            previousStraddleEdge.OffSideVertex = offSideVertex;
-                        }
-                        else
-                        {
-                            //Close Previous
-                            previousIntersectVertex.IndexInList = newVertexIndex;
-                            newVertexIndex++;
-                            loopOfVertices.Add(previousIntersectVertex);
-                            foreach (var previousStraddleEdge in previousStraddleEdges)
-                            {
-                                previousStraddleEdge.IntersectVertex = previousIntersectVertex;
-                                if (straddleEdge2 != null)
-                                {
-                                    newFaces.AddRange(NewFace(straddleEdge2, previousStraddleEdge, ref newEdges));
-                                }
-                                straddleEdge2 = previousStraddleEdge;
-                            }
-                            //Set Current to Previous
-                            previousStraddleEdges = new List<StraddleEdge> { straddleEdge };
-                            previousIntersectVertex = straddleEdge.IntersectVertex;
-                            previousOffSideVertex = offSideVertex;
-                        }
-                        previousEdgeIsFlat = straddleEdge.Edge.Curvature == CurvatureType.SaddleOrFlat;
-                    }
-                    else //if (offSideVertex == previousOffSideVertex &&
-                         //    straddleEdge.Edge.Curvature != CurvatureType.SaddleOrFlat) //Same and not flat
-                    {
-                        //If previous edge was not flat, close previous
-                        var length = MiscFunctions.DistancePointToPoint(previousIntersectVertex.Position,
-                            straddleEdge.IntersectVertex.Position);
-                        //if (!previousEdgeIsFlat && length.IsNegligible(0.0001)) length = length;
-                        if (!previousEdgeIsFlat && !length.IsNegligible(0.0001))
-                        {
-                            properFaceCount ++;
-                            previousIntersectVertex.IndexInList = newVertexIndex;
-                            newVertexIndex++;
-                            loopOfVertices.Add(previousIntersectVertex);
-                            foreach (var previousStraddleEdge in previousStraddleEdges)
-                            {
-                                previousStraddleEdge.IntersectVertex = previousIntersectVertex;
-                                if (straddleEdge2 != null)
-                                {
-                                    newFaces.AddRange(NewFace(straddleEdge2, previousStraddleEdge, ref newEdges));
-                                }
-                                straddleEdge2 = previousStraddleEdge;
-                            }
-                            previousStraddleEdges = new List<StraddleEdge> {straddleEdge};
-                        }
-                        //Set Current to Previous
-                        else
-                        {
-                            previousStraddleEdges.Add(straddleEdge);
-                            properVertexCount --;
-                        }
-                        previousOffSideVertex = offSideVertex;
-                        previousIntersectVertex = straddleEdge.IntersectVertex;
-                        previousEdgeIsFlat = false;
-                    }
-                    //else 
-                    //{
-                    //    previousStraddleEdges.Add(straddleEdge); //Same and flat
-                    //    properVertexCount --;
-                    //}
-
+                    k++; //Update the index
+                    if (k > loopOfStraddleEdges.Count() - 1) k = 0; //Set back to start if necessary
+                    var currentStraddleEdge = loopOfStraddleEdges[k];
+                    var length = MiscFunctions.DistancePointToPoint(currentStraddleEdge.IntersectVertex.Position,
+                            previousStraddleEdge.IntersectVertex.Position);
+                    
                     //If finished, then create the final face and end
-                    if (straddleEdge == firstStraddleEdge)
+                    if (currentStraddleEdge == firstStraddleEdge)
                     {
-                        foreach (var previousStraddleEdge in previousStraddleEdges)
+                        if (length.IsNegligible(tolerance)) throw new Exception("pick a different starting edge");
+                        if (loopOfVertices.Last() != previousStraddleEdge.IntersectVertex)
                         {
-                            previousStraddleEdge.IntersectVertex = firstStraddleEdge.IntersectVertex;
-                            newFaces.AddRange(NewFace(straddleEdge2, previousStraddleEdge, ref newEdges, previousStraddleEdge == previousStraddleEdges.Last()));     
-                            straddleEdge2 = previousStraddleEdge; 
-                        }                       
+                            previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
+                            loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
+                        }
+                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge , ref newEdges, true));                   
                         successfull = true;
                     }
+                    //If too close together for a good triangle
+                    else if (length.IsNegligible(tolerance))
+                    {
+                        currentStraddleEdge.IntersectVertex = previousStraddleEdge.IntersectVertex;
+                        if (!loopOfVertices.Any() || loopOfVertices.Last() != previousStraddleEdge.IntersectVertex)
+                        {
+                            previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
+                            loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
+                        }
+                        if (currentStraddleEdge.OnSideVertex == previousStraddleEdge.OnSideVertex)
+                        {
+                            PolygonalFace sharedFace;
+                            if (currentStraddleEdge.OwnedFace == previousStraddleEdge.OwnedFace)
+                                previousStraddleEdge.OwnedFace = currentStraddleEdge.OtherFace;
+                            else if (currentStraddleEdge.OwnedFace == previousStraddleEdge.OtherFace) 
+                                previousStraddleEdge.OtherFace = currentStraddleEdge.OtherFace;
+                            else if (currentStraddleEdge.OtherFace == previousStraddleEdge.OwnedFace)
+                                previousStraddleEdge.OwnedFace = currentStraddleEdge.OwnedFace;
+                            else if(currentStraddleEdge.OtherFace == previousStraddleEdge.OtherFace) 
+                                previousStraddleEdge.OtherFace = currentStraddleEdge.OwnedFace;
+                            else throw new Exception("No shared face exists between these two straddle edges");
+                            previousStraddleEdge.OffSideVertex = currentStraddleEdge.OffSideVertex;
+                        }
+                        else
+                        {
+                            newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges)); 
+                            previousStraddleEdge = currentStraddleEdge;
+                        }
+                    }
+                    else
+                    {
+                        if (!loopOfVertices.Any() || loopOfVertices.Last() != previousStraddleEdge.IntersectVertex)
+                        {
+                            previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
+                            loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
+                        }
+                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges)); 
+                        previousStraddleEdge = currentStraddleEdge;
+                    }
                 } while (!successfull);
-                vertexCount += loopOfVertices.Count();
                 loops.Add(loopOfVertices);
             }
-            if (properFaceCount != newFaces.Count()) throw new Exception("Incorrect number of faces have been created");
-            if (properVertexCount != vertexCount) throw new Exception("Incorrect number of vertices have been created");
+            
+            foreach (var face1 in newFaces)
+            {
+                foreach (var face2 in newFaces)
+                {
+                    var duplicate = false;
+                    if (face1 == face2) continue;
+                    foreach (var vertex in face1.Vertices)
+                    {
+                        if (!face2.Vertices.Contains(vertex))
+                        {
+                            duplicate = false;
+                            break; 
+                        }
+                        duplicate = true;
+                    }
+                    if (duplicate) throw new Exception();
+                }
+            }
 
             //Check to make sure all adjacency is up to date
             foreach (var face in onSideFaces)

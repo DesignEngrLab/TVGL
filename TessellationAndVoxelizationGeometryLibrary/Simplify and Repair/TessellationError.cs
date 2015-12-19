@@ -59,6 +59,18 @@ namespace TVGL
                 foreach (var vertex in face.Vertices)
                     if (!vertex.Faces.Contains(face)) storeVertexDoesNotLinkBackToFace(ts, face, vertex);
                 facesWithMissingAdjacency.AddRange(from adjacentFace in face.AdjacentFaces where adjacentFace == null select face);
+                //Try to repair missing adjacency 
+                //foreach (var face1 in facesWithMissingAdjacency)
+                //{
+                //    foreach (var face2 in facesWithMissingAdjacency)
+                //    {
+                //        if (face1 == face2) continue;
+                //        foreach (var edge in face1.Edges)
+                //        {
+                //            if (face2.Edges.Contains(edge))
+                //        }
+                //    }
+                //}
             }
             //Check if each edge has cyclic references with each vertex and each face.
             var faceDoesNotLinkBackToEdge = 0;
@@ -72,8 +84,6 @@ namespace TVGL
                 if (!edge.From.Edges.Contains(edge)) storeVertDoesNotLinkBackToEdge(ts, edge, edge.From);
                 if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2*Math.PI)  
                     storeEdgeHasBadAngle(ts, edge);
-                if (edge.To.PartofConvexHull && edge.From.PartofConvexHull && edge.InternalAngle > Math.PI)
-                    storeEdgeWithConcaveAngle(ts, edge);
             }
             //Check if each vertex has cyclic references with each edge and each face.
             foreach (var vertex in ts.Vertices)
@@ -288,15 +298,8 @@ namespace TVGL
             if (ts.Errors.DuplicateFaces == null) ts.Errors.DuplicateFaces = new List<int[]> { faceVertexIndices };
             else ts.Errors.DuplicateFaces.Add(faceVertexIndices);
         }
-        internal static void storeEdgeWithConcaveAngle(TessellatedSolid ts, Edge edge)
-        {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
-            if (ts.Errors.EdgesWithBadAngle == null) ts.Errors.EdgesWithBadAngle = new List<Edge> { edge };
-            else ts.Errors.EdgesWithBadAngle.Add(edge);
-        }
-
-
         #endregion
+
         #region Repair Functions
 
         internal bool Repair(TessellatedSolid ts)
@@ -543,11 +546,10 @@ namespace TVGL
                 }
 
                 //Find the second face to be collapsed and the third vertices from the two faces to be collapsed
+                //We don't want the negligible face.
                 PolygonalFace secondFace = null;
-                foreach (var face in removeTheseFaces)
+                foreach (var face in removeTheseFaces.Where(face => face != negligibleFace))
                 {
-                    if (face == negligibleFace)
-                        continue; //This also meets the criteria below, but we don't want this face.
                     if (!face.Vertices.Contains(collapseToVertex)) continue;
                     //If it already contains the new vertex, then it must be the secondFace we are going to collapse
                     if (secondFace != null) goto errorWithFace; // new Exception("this condition can only happen once");
@@ -582,9 +584,9 @@ namespace TVGL
                     if ((edge.From == otherVertex && edge.To == thirdVertexOfNegligibleFace ||
                          edge.To == thirdVertexOfSecondFace))
                         continue; //We don't need this edge
-                    if (otherVertex == edge.From)
-                        newEdges.Add(new Edge(collapseToVertex, edge.OtherVertex(otherVertex), true));
-                    else newEdges.Add(new Edge(edge.OtherVertex(otherVertex), collapseToVertex, true));
+                    newEdges.Add(otherVertex == edge.From
+                        ? new Edge(collapseToVertex, edge.OtherVertex(otherVertex), true)
+                        : new Edge(edge.OtherVertex(otherVertex), collapseToVertex, true));
                 }
                 allAffectedEdges.AddRange(newEdges);
 
@@ -594,21 +596,15 @@ namespace TVGL
                     //Reset the owned and other.
                     edge.OwnedFace = null;
                     edge.OtherFace = null;
-                    foreach (var face in allAffectedFaces)
+                    foreach (var face in allAffectedFaces.Where(face => face.Vertices.Contains(edge.To) && face.Vertices.Contains(edge.From)))
                     {
-                        if (face.Edges.Count() != 3 || face.Vertices.Count() != 3) goto errorWithFace;
-                        if (face.Vertices.Contains(edge.To) && face.Vertices.Contains(edge.From))
-                        {
-                            if (edge.OwnedFace == null) edge.OwnedFace = face;
-                            else if (edge.OtherFace == null) edge.OtherFace = face;
-                            else if (edge.OwnedFace == edge.OtherFace)
-                                edge.OtherFace = face; //A mistake was made. Fix it.
-                            else throw new Exception();
-                        }
+                        if(!face.Edges.Contains(edge)) face.Edges.Add(edge); //Update the edge list for this face
+                        if (edge.OwnedFace == null) edge.OwnedFace = face;
+                        else if (edge.OtherFace == null) edge.OtherFace = face;
+                        else if (edge.OwnedFace == edge.OtherFace)
+                            edge.OtherFace = face; //A mistake was made. Fix it.
+                        else throw new Exception();
                     }
-                    //Update the edge list for all the faces     
-                    if (!edge.OwnedFace.Edges.Contains(edge)) edge.OwnedFace.Edges.Add(edge);
-                    if (!edge.OtherFace.Edges.Contains(edge)) edge.OtherFace.Edges.Add(edge);
                 }
 
                 //Brief check to make sure everything was set properly
@@ -617,9 +613,9 @@ namespace TVGL
                     if (edge.OwnedFace == null || edge.OtherFace == null) goto errorWithFace;
                     if (edge.OwnedFace == edge.OtherFace) goto errorWithFace;
                 }
-                foreach (var face in newFaces)
+                foreach (var face in newFaces.Where(face => face.Edges.Count() != 3 || face.Vertices.Count() != 3))
                 {
-                    if (face.Edges.Count() != 3 || face.Vertices.Count() != 3) goto errorWithFace;
+                    goto errorWithFace;
                 }
 
                 //Remove and then add all the new faces and edges.
@@ -647,12 +643,9 @@ namespace TVGL
                 errorWithFace:
                 index++;
             }
-            if (index > 0)
-            {
-                Debug.WriteLine("{0} negligible area faces remain unfixable.", index);
-                return false;
-            }
-            return true;
+            if (index <= 0) return true;
+            Debug.WriteLine("{0} negligible area faces remain unfixable.", index);
+            return false;
         }
 
         #endregion

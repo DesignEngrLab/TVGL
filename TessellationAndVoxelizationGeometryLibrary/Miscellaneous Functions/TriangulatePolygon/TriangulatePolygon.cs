@@ -197,7 +197,7 @@ namespace TVGL
                             {
                                 var node = sortedGroup[j];
 
-                                if (node == sortedFirstNodes[0]) //if first point in the sorted loop 
+                                if (sortedFirstNodes.Contains(node)) //if first point in the sorted loop 
                                 {
                                     bool isInside;
                                     bool isOnLine;
@@ -822,7 +822,7 @@ namespace TVGL
                 {
                     
                     counter++;
-                    if (Math.Abs(xdif - xleft) < StarMath.EqualityTolerance * 100) // if approximately equal
+                    if (xdif.IsPracticallySame(xleft)) // if approximately equal
                     {
                         //Find the shared node
                         Node nodeOnLine;
@@ -876,7 +876,7 @@ namespace TVGL
                 if (xdif > 0 && !xdif.IsNegligible())//Moved to the right by some tolerance
                 {
                     counter++;
-                    if (Math.Abs(xdif-xright) < StarMath.EqualityTolerance*100) // if approximately equal
+                    if (xdif.IsPracticallySame(xright)) // if approximately equal
                     {
                         //Choose whichever line has the right most other node
                         //Note that this condition will only occur when line and

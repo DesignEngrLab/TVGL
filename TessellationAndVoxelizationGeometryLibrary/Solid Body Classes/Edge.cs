@@ -332,6 +332,7 @@ namespace TVGL
                     Curvature = CurvatureType.Convex;
                 }
             }
+            if (InternalAngle > Math.PI*2) throw new Exception("not possible");
         }
         #endregion
     }
