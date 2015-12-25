@@ -293,7 +293,7 @@ namespace TVGL
             //RepairFaces();
             //3
             DefineCenterVolumeAndSurfaceArea();
-            //DefineInertiaTensor();
+            DefineInertiaTensor();
             ConnectConvexHullToObjects();
             DefineFaceCurvature();
             DefineVertexCurvature();
@@ -698,7 +698,7 @@ namespace TVGL
             double tempProductX = 0;
             double tempProductY = 0;
             double tempProductZ = 0;
-            Center = StarMath.makeZeroVector(3);
+            //Center = StarMath.makeZeroVector(3);
             double[,] inertiaTensor = StarMath.makeZero(3, 3);
             double[,] translateMatrix = new double[3, 1];
             double[,] matrixA = StarMath.makeZero(3, 3);
@@ -713,16 +713,18 @@ namespace TVGL
                 matrixA.SetRow(1, new[] { face.Vertices[1].Position[0] - Center[0], face.Vertices[1].Position[1] - Center[1], face.Vertices[1].Position[2] - Center[2] });
                 matrixA.SetRow(2, new[] { face.Vertices[2].Position[0] - Center[0], face.Vertices[2].Position[1] - Center[1], face.Vertices[2].Position[2] - Center[2] });
 
-                matrixC = StarMath.multiply(matrixA, canonicalMatrix);
-                matrixC = StarMath.multiply(matrixC, matrixA.transpose()).multiply(matrixA.determinant());
+                matrixC = StarMath.multiply(matrixA.transpose(), canonicalMatrix);
+                matrixC = StarMath.multiply(matrixC, matrixA).multiply(matrixA.determinant());
                 matrixCtotal = matrixCtotal.add(matrixC);
 
             }
 
-            translateMatrix = new double[,] { { this.Center[0] }, { this.Center[1] }, { this.Center[2] } };
-            matrixCprime = (StarMath.multiply(translateMatrix, translateMatrix.transpose())).multiply(Volume).multiply(3).add(matrixCtotal);
-            inertiaTensor = StarMath.makeIdentity(3).multiply(matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]).subtract(matrixCprime);
-
+            translateMatrix = new double[,] { { 0  }, { 0  }, { 0 } };
+            matrixCprime = StarMath.multiply(translateMatrix.multiply(-1), translateMatrix.transpose()).add(StarMath.multiply(translateMatrix, translateMatrix.multiply(-1).transpose())).add(StarMath.multiply(translateMatrix.multiply(-1), translateMatrix.multiply(-1).transpose())).multiply(Volume);
+            matrixCprime = matrixCprime.add(matrixCtotal);
+            //matrixCprime = (StarMath.multiply(translateMatrix, translateMatrix.transpose())).multiply(Volume).multiply(3).add(matrixCtotal);
+            inertiaTensor = StarMath.makeIdentity(3).multiply(matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
+            inertiaTensor = inertiaTensor.subtract(matrixCprime);
         }
         #endregion
 
