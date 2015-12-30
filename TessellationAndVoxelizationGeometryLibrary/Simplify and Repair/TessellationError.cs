@@ -78,6 +78,7 @@ namespace TVGL
             var edgeBadAngle = 0;
             foreach (var edge in ts.Edges)
             {
+                if (edge.EdgeReference != TessellatedSolid.SetEdgeChecksum(edge.From, edge.To)) throw new Exception();
                 if (!edge.OwnedFace.Edges.Contains(edge)) storeFaceDoesNotLinkBackToEdge(ts, edge, edge.OwnedFace);
                 if (!edge.OtherFace.Edges.Contains(edge)) storeFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
                 if (!edge.To.Edges.Contains(edge)) storeVertDoesNotLinkBackToEdge(ts, edge, edge.To);
@@ -313,7 +314,6 @@ namespace TVGL
                 completelyRepaired = completelyRepaired && RepairMissingFacesFromEdges(ts);
             if (FacesWithNegligibleArea != null)
                 completelyRepaired = completelyRepaired && RepairNeglibleAreaFaces(ts);
-
             return completelyRepaired;
         }
 
@@ -457,9 +457,7 @@ namespace TVGL
             ts.AddFaces(newFaces);
             //var completedEdges = new List<Edge>();
             var newEdges = new List<Edge>();
-            var partlyDefinedEdges = new Dictionary<long, Edge>();
-            foreach (var edge in SingledSidedEdges)
-                partlyDefinedEdges.Add(ts.SetEdgeChecksum(edge, ts.NumberOfVertices), edge);
+            var partlyDefinedEdges = SingledSidedEdges.ToDictionary(ts.SetEdgeChecksum);
             ts.UpdateAllEdgeCheckSums();
 
             foreach (var face in newFaces)
@@ -468,7 +466,7 @@ namespace TVGL
                 {
                     var fromVertex = face.Vertices[j];
                     var toVertex = face.Vertices[(j == 2) ? 0 : j + 1];
-                    var checksum =TessellatedSolid.SetEdgeChecksum(fromVertex, toVertex, ts.NumberOfVertices);
+                    var checksum =TessellatedSolid.SetEdgeChecksum(fromVertex, toVertex);
 
                     if (partlyDefinedEdges.ContainsKey(checksum))
                     {
@@ -500,9 +498,8 @@ namespace TVGL
         //Note that this removes 2 triangles, 3 edges, and 1 vertex from the model.
         //The new triangles, will either be flattened (if they had different normals)
         //OR, they will simply be merged. 
-        private bool RepairNeglibleAreaFaces(TessellatedSolid ts)
+        private static bool RepairNeglibleAreaFaces(TessellatedSolid ts)
         {
-            var badFaceCount = 0;
             var index = 0;
             while (index < ts.Errors.FacesWithNegligibleArea.Count)
             {
@@ -517,13 +514,11 @@ namespace TVGL
 
                 //Use the same vertex which already exists, rather that creating a new one.
                 //This method will simplify the model by 2 triangles.
-                Vertex collapseToVertex = null;
                 var newEdges = new List<Edge>();
                 var newFaces = new List<PolygonalFace>();
-                var negligibleEdge = negligibleFace.Edges.OrderBy(item => item.Length).First();
                 //Get the smallest edge of the negligible face.
-                if (negligibleEdge.To == otherVertex) collapseToVertex = negligibleEdge.From;
-                else collapseToVertex = negligibleEdge.To;
+                var negligibleEdge = negligibleFace.Edges.OrderBy(item => item.Length).First();
+                var collapseToVertex = negligibleEdge.To == otherVertex ? negligibleEdge.From : negligibleEdge.To;
 
 
                 //Get the outer edges and faces
@@ -531,17 +526,11 @@ namespace TVGL
                 var allAffectedFaces = new List<PolygonalFace>();
                 foreach (var face in removeTheseFaces)
                 {
-                    foreach (var edge in face.Edges)
+                    if (!ts.Faces.Contains(face)) throw new Exception();
+                    foreach (var edge in face.Edges.Where(edge => !removeTheseEdges.Contains(edge)))
                     {
-                        if (removeTheseEdges.Contains(edge))
-                            continue; //don't need to do anything, since it will be removed.
                         allAffectedEdges.Add(edge); //Add this outer edge
-                        if (edge.OwnedFace == face)
-                            allAffectedFaces.Add(edge.OtherFace);
-                        //Add the other face (its edges will need to be updated)
-                        else
-                            allAffectedFaces.Add(edge.OwnedFace);
-                        //Add the owned face (its edges will need to be updated)
+                        allAffectedFaces.Add(edge.OwnedFace == face ? edge.OtherFace : edge.OwnedFace);
                     }
                 }
 
@@ -568,16 +557,14 @@ namespace TVGL
                     var newFaceVertexList = new List<Vertex>(face.Vertices);
                     newFaceVertexList.Remove(otherVertex);
                     newFaceVertexList.Add(collapseToVertex);
-                    PolygonalFace newFace;
-                    newFace = new PolygonalFace(newFaceVertexList, face.Normal);
+                    var newFace = new PolygonalFace(newFaceVertexList, face.Normal);
                     newFaces.Add(newFace);
                 }
                 allAffectedFaces.AddRange(newFaces);
 
                 //Create new edges to replace the ones being removed. 
-                foreach (var edge in removeTheseEdges)
+                foreach (var edge in removeTheseEdges.Where(edge => edge != negligibleEdge))
                 {
-                    if (edge == negligibleEdge) continue; //We don't need this edge
                     if ((edge.To == otherVertex && edge.From == thirdVertexOfNegligibleFace ||
                          edge.From == thirdVertexOfSecondFace))
                         continue; //We don't need this edge
@@ -639,6 +626,21 @@ namespace TVGL
                 //since we removed a vertex at the start of this function.
                 ts.RemoveVertex(otherVertex, true);
                 ts.Errors.FacesWithNegligibleArea.RemoveAt(index);
+                //Check if any of the other negligible area faces were part of this repair. If so, remove them from the error list.
+                foreach (var face in allAffectedFaces.Where(face => ts.Errors.FacesWithNegligibleArea.Contains(face)))
+                {
+                    ts.Errors.FacesWithNegligibleArea.Remove(face);
+                    if(face.Area.IsNegligible()) ts.Errors.FacesWithNegligibleArea.Add(face);
+                }
+                foreach (var face in removeTheseFaces.Where(face => ts.Errors.FacesWithNegligibleArea.Contains(face)))
+                {
+                    ts.Errors.FacesWithNegligibleArea.Remove(face);
+                }
+                foreach (var face in newFaces.Where(face => face.Area.IsNegligible()))
+                {
+                    ts.Errors.FacesWithNegligibleArea.Add(face);
+                }
+                
                 continue;
                 errorWithFace:
                 index++;

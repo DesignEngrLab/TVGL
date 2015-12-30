@@ -996,6 +996,7 @@ namespace TVGL
             var leftChain = monotonePolygon.LeftChain;
             var rightChain = monotonePolygon.RightChain;
             var sortedNodes = monotonePolygon.SortedNodes;
+            
 
             //For each node other than the start and finish, add a chain affiliation.
             //Note that this is updated each time the triangulate function is called, 
@@ -1012,10 +1013,11 @@ namespace TVGL
                 node.IsRightChain = true;
                 node.IsLeftChain = false;
             }
-            //The start and end nodes belong to both chains
+            //The start node belongs to both chains
             var startNode = sortedNodes[0];
             startNode.IsRightChain = true;
             startNode.IsLeftChain = true;
+            //The end node belongs to both chains
             var endNode = sortedNodes.Last();
             endNode.IsRightChain = true;
             endNode.IsLeftChain = true;
@@ -1041,18 +1043,8 @@ namespace TVGL
                     var exitBool = false;
                     while (scan.Count > 1 && exitBool == false)
                     {
-                        //Skip if close to Math.PI, because that will yield a Negligible area triangle
-                        //Note: It does not matter which angle function is called
-                        var angle = Math.Abs(MiscFunctions.SmallerAngleBetweenEdges(node.Point, scan[0].Point, scan[1].Point));
-                        if (Math.Abs(angle - Math.PI) < 1E-6) 
-                        {
-                            //Make the node the new peak, and insert at the beginning of the list.
-                            node.IsLeftChain = true;
-                            node.IsRightChain = true;
-                            scan.Insert(0, node);
-                            exitBool = true;
-                            continue;
-                        }
+                        //Do not skip, even if angle is close to Math.PI, because skipping could break the algorithm (create incorrect triangles)
+                        //Better to output negligible triangles.
                         triangles.Add(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain
@@ -1061,7 +1053,7 @@ namespace TVGL
                         scan[0].IsLeftChain = true;
                         scan[0].IsRightChain = true;
                     }
-                    //add node to end of scan list
+                    //If we haven't added the node to the list, add node to end of scan list
                     scan.Add(node);
                 }
                 else
@@ -1098,7 +1090,7 @@ namespace TVGL
                 var edge1 = triangle[1].Position.subtract(triangle[0].Position);
                 var edge2 = triangle[2].Position.subtract(triangle[0].Position);
                 var area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
-                if (area.IsNegligible()) throw new Exception(); //CANNOT output a 0.0 area triangle. It will break other functions!
+                if (area.IsNegligible()) Debug.WriteLine("Neglible Area Traingle Created"); //CANNOT output a 0.0 area triangle. It will break other functions!
                 //Could collapse whichever edge vector is giving 0 area and ignore this triangle. 
             }
             return triangles;

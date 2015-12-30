@@ -76,13 +76,17 @@ namespace TVGL
             ts.RemoveVertices(removedVertices.Keys.ToList());
         }
 
+        /// <summary>
+        /// Simplifies the model by merging the vertices that are closest together
+        /// </summary>
+        /// <param name="ts"></param>
         public static void Simplify(this TessellatedSolid ts)
         {
             SimplifyByTolerance(ts, ts.sameTolerance * 10);
         }
 
         /// <summary>
-        /// Simplifies by a tolerance whereby vertices within the specified lenght will be merged.
+        /// Simplifies by a tolerance whereby vertices within the specified length will be merged.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="tolerance">The tolerance.</param>

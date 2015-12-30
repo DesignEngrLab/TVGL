@@ -38,6 +38,7 @@ namespace TVGL
         /// (doesn't care about multiple points on a line and fewer rounding functions)
         /// and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
+
         public static BoundingCircle MinimumCircle(IList<Point> points)
         {
             //Randomize the list of points
@@ -50,11 +51,10 @@ namespace TVGL
             var point2 = randomPoints[1];
             var previousPoints = new List<Point>();
             var circle = new InternalCircle(new List<Point> {point1, point2});
-            var bestCircle = circle;
             var stallCounter = 0;
             var i = 0;
 
-            while (i < randomPoints.Count && stallCounter < randomPoints.Count)
+            while (i < randomPoints.Count && stallCounter < points.Count)
             {
                 var currentPoint = randomPoints[i];
                 //If the current point is part of the circle or inside the circle, go to the next iteration
@@ -64,17 +64,11 @@ namespace TVGL
                     continue;
                 }
 
-                //Else if the currentPoint is the previousPoint, increase dimension
+                //Else if the currentPoint is a previousPoint, increase dimension
                 if (previousPoints.Contains(currentPoint))
                 {
                     //Make a new circle from the current two-point circle and the current point
                     circle = new InternalCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
-                    if (circle.SqRadius < bestCircle.SqRadius)
-                    {
-                        bestCircle = circle;
-                        stallCounter = 0;
-                    }
-                    else stallCounter++;
                     previousPoints.Remove(currentPoint);
                     i++;
                 }
@@ -85,12 +79,6 @@ namespace TVGL
                     circle.Furthest(currentPoint, out furthestPoint, ref previousPoints);
                     //Make a new circle from the furthest point and current point
                     circle = new InternalCircle(new List<Point> {currentPoint, furthestPoint});
-                    if(circle.SqRadius < bestCircle.SqRadius) 
-                    {
-                        bestCircle = circle;
-                        stallCounter =0;
-                    }
-                    else stallCounter++;
                     //Add previousPoints to the front of the list
                     foreach (var previousPoint in previousPoints)
                     {
@@ -98,11 +86,14 @@ namespace TVGL
                         randomPoints.Insert(0, previousPoint);
                     }
                     //Restart the search
+                    stallCounter++;
+                    if (stallCounter == points.Count) stallCounter =0;
                     i = 0;
                 }
             }
 
             //Return information about minimum circle
+            if (stallCounter == points.Count) throw new Exception("Bounding circle failed to converge");
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
             return new BoundingCircle(radius, circle.Center);
         }
@@ -198,68 +189,81 @@ namespace TVGL
                     double x;
                     double y;
                     //Check for special cases of vertical or horizintal lines
-                    if (Math.Abs(rise1) < 1E-15) //If rise is approximately zero, x can be found directly
+                    if (rise1.IsNegligible(1E-30)) //If rise is zero, x can be found directly
                     {
-                        x = (Points[0].X + Points[1].X)/2;
+                        x = (Points[0].X + Points[1].X) / 2;
                         //If run of other line is approximately zero as well, y can be found directly
-                        if (Math.Abs(run2) < 1E-15) //If run is approximately zero, y can be found directly
+                        if (run2.IsNegligible(1E-30)) //If run is approximately zero, y can be found directly
                         {
-                            y = (Points[1].Y + Points[2].Y)/2;
-                            Center = new Point(new Vertex(new[] {x, y,0.0}));
+                            y = (Points[1].Y + Points[2].Y) / 2;
+                            Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                         }
                         else
                         {
-                            var mPerp = (Points[1].X - Points[2].X)/(Points[2].Y - Points[1].Y);
-                            y = (Points[1].Y + Points[2].Y)/2 + mPerp*(x - (Points[1].X + Points[2].X)/2);
-                            Center = new Point(new Vertex(new[] {x, y,0.0}));
+                            //Find perpendical slope, and midpoint of line 2. 
+                            //Then use the midpoint to find "b" and solve y = mx+b
+                            //This is condensed into a single line because VS rounds the numbers 
+                            //during division.
+                            y = (Points[1].Y + Points[2].Y) / 2 + (-run2 / rise2) * (x - (Points[1].X + Points[2].X) / 2);
+                            Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                         }
                     }
-                    else if (Math.Abs(rise2) < 1E-15) //If rise is approximately zero, x can be found directly
+                    else if (rise2.IsNegligible(1E-30)) //If rise is approximately zero, x can be found directly
                     {
-                        x = (Points[1].X + Points[2].X)/2;
+                        x = (Points[1].X + Points[2].X) / 2;
                         //If run of other line is approximately zero as well, y can be found directly
-                        if (Math.Abs(run1) < 1E-15) //If run is approximately zero, y can be found directly
+                        if (run1.IsNegligible(1E-30)) //If run is approximately zero, y can be found directly
                         {
-                            y = (Points[0].Y + Points[1].Y)/2;
-                            Center = new Point(new Vertex(new[] {x, y,0.0}));
+                            y = (Points[0].Y + Points[1].Y) / 2;
+                            Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                         }
                         else
                         {
-                            var mPerp = (Points[0].X - Points[1].X)/(Points[1].Y - Points[0].Y);
-                            y = (Points[0].Y + Points[1].Y)/2 + mPerp*(x - (Points[0].X + Points[1].X)/2);
-                            Center = new Point(new Vertex(new[] {x, y,0.0}));
+                            //Find perpendical slope, and midpoint of line 2. 
+                            //Then use the midpoint to find "b" and solve y = mx+b
+                            //This is condensed into a single line because VS rounds the numbers 
+                            //during division.
+                            y = (Points[0].Y + Points[1].Y) / 2 + (-run1 / rise1) * (x - (Points[0].X + Points[1].X) / 2);
+                            Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                         }
                     }
-                    else if (Math.Abs(run1) < 1E-15) //If run is approximately zero, y can be found directly
+                    else if (run1.IsNegligible(1E-30)) //If run is approximately zero, y can be found directly
                     {
-                        y = (Points[0].Y + Points[1].Y)/2;
-                        var mPerp = (Points[1].X - Points[2].X)/(Points[2].Y - Points[1].Y);
-                        x = (y - (Points[1].Y + Points[2].Y)/2 - mPerp*(Points[1].X + Points[2].X)/2)/mPerp;
-                        Center = new Point(new Vertex(new[] {x, y,0.0}));
+                        y = (Points[0].Y + Points[1].Y) / 2;
+                        //Find perpendical slope, and midpoint of line 2. 
+                        //Then use the midpoint to find "b" and solve y = mx+b
+                        //This is condensed into a single line because VS rounds the numbers 
+                        //during division.
+                        x = (y - ((Points[1].Y + Points[2].Y) / 2 - (-run2 / rise2) * 
+                            (Points[1].X + Points[2].X) / 2)) / (-run2 / rise2);
+                        Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                     }
-                    else if (Math.Abs(run2) < 1E-15) //If run is approximately zero, y can be found directly
+                    else if (run2.IsNegligible(1E-30)) //If run is approximately zero, y can be found directly
                     {
-                        y = (Points[1].Y + Points[2].Y)/2;
-                        var mPerp = (Points[0].X - Points[1].X)/(Points[1].Y - Points[0].Y);
-                        x = (y - (Points[0].Y + Points[1].Y)/2 - mPerp*(Points[0].X + Points[1].X)/2)/mPerp;
-                        Center = new Point(new Vertex(new[] {x, y,0.0}));
+                        y = (Points[1].Y + Points[2].Y) / 2;
+                        //Find perpendical slope, and midpoint of line 2. 
+                        //Then use the midpoint to find "b" and solve y = mx+b
+                        //This is condensed into a single line because VS rounds the numbers 
+                        //during division.
+                        x = (y - ((Points[1].Y + Points[0].Y) / 2 - (-run1 / rise1) * 
+                            (Points[1].X + Points[0].X) / 2)) / (-run1 / rise1);
+                        Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                     }
                     else
                     {
-                        var m1 = rise1/run1;
-                        var m2 = rise2/run2;
-                        x = (m1*m2*(Points[2].Y - Points[0].Y) + m1*(Points[1].X + Points[2].X) -
-                             m2*(Points[0].X + Points[1].X))/(2*(m1 - m2));
-                        y = -(1/m1)*(x - (Points[0].X + Points[1].X)/2) + (Points[0].Y + Points[1].Y)/2;
-                        Center = new Point(new Vertex(new double[] {x, y,0.0}));
+                        //Didn't solve for slopes first because of rounding error in division
+                        x = ((rise1 / run1) * (rise2 / run2) * (Points[2].Y - Points[0].Y) + (rise1 / run1) * (Points[1].X + Points[2].X) -
+                             (rise2 / run2) * (Points[0].X + Points[1].X)) / (2 * ((rise1 / run1) - (rise2 / run2)));
+                        y = -(1 / (rise1 / run1)) * (x - (Points[0].X + Points[1].X) / 2) + (Points[0].Y + Points[1].Y) / 2;
+                        Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                     }
                     SqRadius = Math.Pow(Center.X - Points[0].X, 2) + Math.Pow(Center.Y - Points[0].Y, 2);
                 }
                 else if (Points.Count == 2)
                 {
                     var vector = Points[0].Position2D.subtract(Points[1].Position2D);
-                    Center = new Point(new Vertex(new[] {Points[1].X + vector[0]/2, Points[1].Y + vector[1]/2,0.0}));
-                    SqRadius = Math.Pow(vector[0]/2, 2) + Math.Pow(vector[1]/2, 2);
+                    Center = new Point(new Vertex(new[] { Points[1].X + vector[0] / 2, Points[1].Y + vector[1] / 2, 0.0 }));
+                    SqRadius = Math.Pow(vector[0] / 2, 2) + Math.Pow(vector[1] / 2, 2);
                 }
                 else //1 point
                 {
@@ -278,7 +282,8 @@ namespace TVGL
             {
                 //Distance between point and center is greater than radius, it is outside the circle
                 var distanceToPoint = (Center.X - point.X)*(Center.X - point.X)  + (Center.Y - point.Y)*(Center.Y - point.Y);
-                return distanceToPoint <= SqRadius;
+                if (distanceToPoint.IsPracticallySame(SqRadius)) return true;
+                return distanceToPoint < SqRadius;
             }
 
             /// <summary>

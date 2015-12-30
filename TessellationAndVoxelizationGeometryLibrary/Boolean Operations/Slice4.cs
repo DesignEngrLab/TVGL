@@ -199,12 +199,14 @@ namespace TVGL.Boolean_Operations
             //create new faces. This function avoids creating two new points that are 
             //extremely close together, which should avoid neglible edges and faces.
             //It also keeps track of how many new vertices should be created.
-            var newVertexIndex = ts.NumberOfVertices -1;
-            var newFaces = new List<PolygonalFace>();
-            var newEdges = new List<Edge>();
+            var newVertexIndex = ts.NumberOfVertices;
+            var allNewFaces = new List<PolygonalFace>();
+            var allNewEdges = new List<Edge>();
             var tolerance = Math.Sqrt(Constants.BaseTolerance);
             foreach (var loopOfStraddleEdges in loopsOfStraddleEdges)
             {
+                var newFaces = new List<PolygonalFace>();
+                var newEdges = new List<Edge>();
                 var loopOfVertices = new List<Vertex>();
                 //Find a good starting edge. One with an intersect vertex far enough away from other intersection vertices.
                 var k = 0; 
@@ -281,11 +283,13 @@ namespace TVGL.Boolean_Operations
                     }
                 } while (!successfull);
                 loops.Add(loopOfVertices);
+                allNewFaces.AddRange(newFaces);
+                allNewEdges.AddRange(newEdges);
             }
             
-            foreach (var face1 in newFaces)
+            foreach (var face1 in allNewFaces)
             {
-                foreach (var face2 in newFaces)
+                foreach (var face2 in allNewFaces)
                 {
                     var duplicate = false;
                     if (face1 == face2) continue;
@@ -310,7 +314,7 @@ namespace TVGL.Boolean_Operations
                     throw new Exception("Edge has not been found");
                 }
             }
-            onSideFaces.AddRange(newFaces);
+            onSideFaces.AddRange(allNewFaces);
             //Reset orginal plane distance
             plane.DistanceToOrigin = originalDistanceToOrigin;
         }
@@ -358,7 +362,7 @@ namespace TVGL.Boolean_Operations
                         sharedFace.Normal);
                 newEdges.Last().OtherFace = newFace;
                 if (!lastNewFace)
-                    newEdges.Add(new Edge(st1.IntersectVertex, st2.OnSideVertex, true) {OwnedFace = newFace});
+                    newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, true) {OwnedFace = newFace});
                 else newEdges.First().OwnedFace = newFace;
 
                 //Set ownership for boundary edge.
@@ -406,7 +410,7 @@ namespace TVGL.Boolean_Operations
                 newEdges.Last().OtherFace = newFace;
                 //Create new edges and update their ownership 
                 newEdges.Add(new Edge(st1.IntersectVertex, st2.IntersectVertex, true) { OwnedFace = newFace });
-                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st1.OnSideVertex, true){ OwnedFace = newFace });
+                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, true){ OwnedFace = newFace });
                 else newEdges.First().OwnedFace = newFace;
                 return new List<PolygonalFace> { newFace };
             }

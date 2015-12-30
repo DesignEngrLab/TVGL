@@ -255,7 +255,7 @@ namespace TVGL
         /// <param name="faces"></param>
         /// <param name="vertices"></param>
         /// <param name="name"></param>
-        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, string name = "")
+        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, string name = "", List<Color> colors = null)
         {
             //Get vertices if null
             if (vertices == null)
@@ -271,16 +271,33 @@ namespace TVGL
             Faces = faces.ToArray();
             NumberOfFaces = Faces.Length;
             Vertices = new Vertex[0];
-            AddVertices(vertices);
-            NumberOfVertices = Vertices.GetLength(0);
+            //Clear information from the vertices and update their index. The Face will still reference
+            //the correct vertex because the object did not change.
+            Vertices = vertices.ToArray();
+            NumberOfVertices = Vertices.Count();
+            for (var i = 0; i < Vertices.Count(); i++)
+            {
+                var vertex = Vertices[i];
+                vertex.Edges.Clear();
+                vertex.Faces.Clear();
+                vertex.PartofConvexHull = false;
+                vertex.ReferenceIndex = 0;
+                vertex.IndexInList = i;
+            }
+            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(NumberOfVertices)) + 1);
+            //Clear information from the faces and update their index.
             for (var i = 0; i < Faces.Count(); i++)
             {
-                Faces[i].Edges.Clear();
-                Faces[i].IndexInList = i;
-            }  
-            foreach (var vertex in Vertices)
-                vertex.Edges.Clear();
-            DefineFaceColors();
+                var face = Faces[i];
+                face.Edges.Clear();
+                face.PartofConvexHull = false;
+                face.IndexInList = i;
+                foreach (var vertex in face.Vertices)
+                {
+                    vertex.Faces.Add(face);
+                }
+            }
+            DefineFaceColors(colors);
             CompleteInitiation();
         }
 
@@ -427,12 +444,11 @@ namespace TVGL
             Edges = MakeEdges(Faces);
         }
 
-        private Edge[] MakeEdges(PolygonalFace[] localFaces)
+        private Edge[] MakeEdges(IList<PolygonalFace> localFaces)
         {
-            NumberOfEdges = 3 * NumberOfFaces / 2;
             var localEdges = MakeEdges(localFaces, true);
             NumberOfEdges = localEdges.GetLength(0);
-            for (int i = 0; i < NumberOfEdges; i++)
+            for (var i = 0; i < NumberOfEdges; i++)
                 localEdges[i].IndexInList = i;
             return localEdges;
         }
@@ -443,11 +459,12 @@ namespace TVGL
             IEnumerable<Tuple<Edge, List<PolygonalFace>>> overUsedEdges;
             var edges = MakeEdges(faces, doublyLinkToVertices, NumberOfVertices, out overUsedEdges,
                 out partlyDefinedEdges);
-            if (overUsedEdges.Count() > 0) TessellationError.StoreOverusedEdges(this, overUsedEdges);
-            if (partlyDefinedEdges.Count() > 0) TessellationError.StoreSingleSidedEdges(this, partlyDefinedEdges);
+            if (overUsedEdges.Any()) TessellationError.StoreOverusedEdges(this, overUsedEdges);
+            if (partlyDefinedEdges.Any()) TessellationError.StoreSingleSidedEdges(this, partlyDefinedEdges);
             return edges;
         }
 
+        //Primary make edges function
         internal static Edge[] MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices, int numberOfVertices,
             out IEnumerable<Tuple<Edge, List<PolygonalFace>>> overusedEdges,
         out IEnumerable<Edge> partlyDefinedEdges)
@@ -462,7 +479,7 @@ namespace TVGL
                 {
                     var fromVertex = face.Vertices[j];
                     var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
-                    long checksum = SetEdgeChecksum(fromVertex, toVertex, numberOfVertices);
+                    var checksum = SetEdgeChecksum(fromVertex, toVertex);
 
                     if (overUsedEdgesDictionary.ContainsKey(checksum))
                         overUsedEdgesDictionary[checksum].Item2.Add(face);
@@ -695,9 +712,6 @@ namespace TVGL
 
         private void DefineInertiaTensor()
         {
-            double tempProductX = 0;
-            double tempProductY = 0;
-            double tempProductZ = 0;
             //Center = StarMath.makeZeroVector(3);
             double[,] inertiaTensor = StarMath.makeZero(3, 3);
             double[,] translateMatrix = new double[3, 1];
@@ -708,7 +722,6 @@ namespace TVGL
             double[,] canonicalMatrix = new double[,] { { 0.0166, 0.0083, 0.0083 }, { 0.0083, 0.0166, 0.0083 }, { 0.0083, 0.0083, 0.0166 } };
             foreach (var face in Faces)
             {
-
                 matrixA.SetRow(0, new[] { face.Vertices[0].Position[0] - Center[0], face.Vertices[0].Position[1] - Center[1], face.Vertices[0].Position[2] - Center[2] });
                 matrixA.SetRow(1, new[] { face.Vertices[1].Position[0] - Center[0], face.Vertices[1].Position[1] - Center[1], face.Vertices[1].Position[2] - Center[2] });
                 matrixA.SetRow(2, new[] { face.Vertices[2].Position[0] - Center[0], face.Vertices[2].Position[1] - Center[1], face.Vertices[2].Position[2] - Center[2] });
@@ -716,7 +729,6 @@ namespace TVGL
                 matrixC = StarMath.multiply(matrixA.transpose(), canonicalMatrix);
                 matrixC = StarMath.multiply(matrixC, matrixA).multiply(matrixA.determinant());
                 matrixCtotal = matrixCtotal.add(matrixC);
-
             }
 
             translateMatrix = new double[,] { { 0  }, { 0  }, { 0 } };
@@ -864,7 +876,7 @@ namespace TVGL
             UpdateAllEdgeCheckSums();
         }
 
-        private void RemoveReferencesToVertex(Vertex vertex)
+        private static void RemoveReferencesToVertex(Vertex vertex)
         {
             foreach (var face in vertex.Faces)
             {
@@ -881,24 +893,23 @@ namespace TVGL
         internal void UpdateAllEdgeCheckSums()
         {
             foreach (var edge in Edges)
-                SetEdgeChecksum(edge, NumberOfVertices);
+                SetEdgeChecksum(edge);
         }
-        internal long SetEdgeChecksum(Edge edge, int numberOfVertices)
+        internal long SetEdgeChecksum(Edge edge)
         {
-            var checksum = SetEdgeChecksum(edge.From, edge.To, numberOfVertices);
+            var checksum = SetEdgeChecksum(edge.From, edge.To);
             edge.EdgeReference = checksum;
             return checksum;
         }
-        internal static long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex, int numberOfVertices)
+        internal static long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
         {
             var fromIndex = fromVertex.IndexInList;
             var toIndex = toVertex.IndexInList;
             if (fromIndex == -1 || toIndex == -1) return -1;
             if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
-            var checkSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(numberOfVertices)) + 1);
             return (fromIndex < toIndex)
-                ? fromIndex + (checkSumMultiplier * toIndex)
-                : toIndex + (checkSumMultiplier * fromIndex);
+                ? fromIndex + (VertexCheckSumMultiplier * toIndex)
+                : toIndex + (VertexCheckSumMultiplier * fromIndex);
         }
 
         #endregion
@@ -1184,6 +1195,7 @@ namespace TVGL
                 alreadyCreatedFaces.Add(checksum);
                 convexHullFaceList.Add(new PolygonalFace(vertices, cvxFace.Normal, false));
             }
+            //ToDo: It seems sometimes the edges angles are undefined because of either incorrect ordering of vertices or incorrect normals.
             Faces = convexHullFaceList.ToArray();
             Edges = MakeEdges(Faces, Vertices);
             Succeeded = true;

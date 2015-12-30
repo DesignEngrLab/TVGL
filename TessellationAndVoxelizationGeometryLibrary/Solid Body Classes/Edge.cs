@@ -249,30 +249,47 @@ namespace TVGL
             var faceNextIndex = (faceToIndex + 1 == _ownedFace.Vertices.Count) ? 0 : faceToIndex + 1;
             var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
             var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
-
-            if (Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal) < 0)
+            var dotOfCross = Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal);
+            if (dotOfCross <= 0)
             {
-                /* then switch owned face and opposite face since the predicted normal
-                 * is in the wrong direction. When OwnedFace and OppositeFace were defined
-                 * it was arbitrary anyway - so this is another by-product of this method - 
-                 * correct the owned and opposite faces. */
+                /* then switch the direction of the edge to match the ownership.
+                 * When OwnedFace and OppositeFace were defined it was arbitrary anyway
+                 * so this is another by-product of this method */
                 var temp = From;
                 From = To;
                 To = temp;
                 Vector = Vector.multiply(-1);
+                // it would be messed up if both faces thought they owned this edge. If this is the 
+                // case, return the edge has no angle.
+                faceToIndex = _otherFace.Vertices.IndexOf(To);
+                faceNextIndex = (faceToIndex + 1 == _otherFace.Vertices.Count) ? 0 : faceToIndex + 1;
+                nextFaceVertex = _otherFace.Vertices[faceNextIndex];
+                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
+                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
+                if (dotOfCross2 < 0)
+                // neither faces appear to own the edge...must be something wrong
+                {
+                    InternalAngle = double.NaN;
+                    Curvature = CurvatureType.Undefined;
+                    return;
+                }
             }
-            // it would be messed up if both faces thought they owned this edge. If this is the 
-            // case, return the edge has no angle.
-            faceToIndex = _otherFace.Vertices.IndexOf(To);
-            faceNextIndex = (faceToIndex + 1 == _otherFace.Vertices.Count) ? 0 : faceToIndex + 1;
-            nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-            nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
-            if (Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal) > 0)
-            // both faces appear to own the edge...must be something wrong
+            else
             {
-                InternalAngle = double.NaN;
-                Curvature = CurvatureType.Undefined;
-                return;
+                // it would be messed up if both faces thought they owned this edge. If this is the 
+                // case, return the edge has no angle.
+                faceToIndex = _otherFace.Vertices.IndexOf(To);
+                faceNextIndex = (faceToIndex + 1 == _otherFace.Vertices.Count) ? 0 : faceToIndex + 1;
+                nextFaceVertex = _otherFace.Vertices[faceNextIndex];
+                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
+                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
+                if (dotOfCross2 > 0)
+                // both faces appear to own the edge...must be something wrong
+                {
+                    InternalAngle = double.NaN;
+                    Curvature = CurvatureType.Undefined;
+                    return;
+                }
             }
             var dot = _ownedFace.Normal.dotProduct(_otherFace.Normal, 3);
             if (dot > 1.0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance))
