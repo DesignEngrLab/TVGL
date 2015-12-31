@@ -42,58 +42,118 @@ namespace TVGL
         public static BoundingCircle MinimumCircle(IList<Point> points)
         {
             //Randomize the list of points
-            var r = new Random();
-            var randomPoints = new List<Point>(points.OrderBy(p=>r.Next()));
+            //var r = new Random();
+            //var randomPoints = new List<Point>(points.OrderBy(p=>r.Next()));
            
-            if (randomPoints.Count < 2) return new BoundingCircle(0.0, points[0]);
-            //Get any two points in the list points.
-            var point1 = randomPoints[0];
-            var point2 = randomPoints[1];
-            var previousPoints = new List<Point>();
-            var circle = new InternalCircle(new List<Point> {point1, point2});
-            var stallCounter = 0;
-            var i = 0;
+            //if (randomPoints.Count < 2) return new BoundingCircle(0.0, points[0]);
+            ////Get any two points in the list points.
+            //var point1 = randomPoints[0];
+            //var point2 = randomPoints[1];
+            //var previousPoints = new List<Point>();
+            //var circle = new InternalCircle(new List<Point> {point1, point2});
+            //var stallCounter = 0;
+            //var i = 0;
 
-            while (i < randomPoints.Count && stallCounter < points.Count)
+            //Algorithm 1
+            //while (i < randomPoints.Count && stallCounter < points.Count * 2)
+            //{
+            //    var currentPoint = randomPoints[i];
+            //    //If the current point is part of the circle or inside the circle, go to the next iteration
+            //    if (circle.Points.Contains(currentPoint) || circle.IsPointInsideCircle(currentPoint))
+            //    {
+            //        i++;
+            //        continue;
+            //    }
+
+            //    //Else if the currentPoint is a previousPoint, increase dimension
+            //    if (previousPoints.Contains(currentPoint))
+            //    {
+            //        //Make a new circle from the current two-point circle and the current point
+            //        circle = new InternalCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
+            //        previousPoints.Remove(currentPoint);
+            //        i++;
+            //    }
+            //    else
+            //    {
+            //        //Find the point in the circle furthest from new point. 
+            //        Point furthestPoint;
+            //        circle.Furthest(currentPoint, out furthestPoint, ref previousPoints);
+            //        //Make a new circle from the furthest point and current point
+            //        circle = new InternalCircle(new List<Point> {currentPoint, furthestPoint});
+            //        //Add previousPoints to the front of the list
+            //        foreach (var previousPoint in previousPoints)
+            //        {
+            //            randomPoints.Remove(previousPoint);
+            //            randomPoints.Insert(0, previousPoint);
+            //        }
+            //        //Restart the search
+            //        stallCounter++;
+            //        i = 0;
+            //    }
+            //}
+
+            //Algorithm 2
+            var listPoints = new List<Point>(points);
+            var point1 = listPoints.First();
+            var point2 = listPoints[listPoints.Count / 2];
+            var circle = new InternalCircle(new List<Point> { point1, point2 });
+            var stallCounter = 0;
+            var previousPoints = new List<Point>();
+            var successful = false;
+
+            while (!successful  && stallCounter < listPoints.Count * 3 )
             {
-                var currentPoint = randomPoints[i];
-                //If the current point is part of the circle or inside the circle, go to the next iteration
-                if (circle.Points.Contains(currentPoint) || circle.IsPointInsideCircle(currentPoint))
+                //Find the furthest point from the center point
+                var maxDistance = circle.SqRadius;
+                Point nextPoint = null;
+                var create3PointCircle = false;
+                foreach (var point in listPoints)
                 {
-                    i++;
+                    if (previousPoints.Contains(point) && !circle.IsPointInsideCircle(point))
+                    {
+                        create3PointCircle = true;
+                        nextPoint = point;
+                        break;
+                    }
+                    if (circle.Points.Contains(point)) continue; //Check if point is already part of the circle
+                    var sqaureDistanceToPoint = (circle.Center.X - point.X) * (circle.Center.X - point.X) + (circle.Center.Y - point.Y) * (circle.Center.Y - point.Y);
+                    if (sqaureDistanceToPoint <= maxDistance) continue; //Beginning with the circle's square radius
+                    maxDistance = sqaureDistanceToPoint;
+                    nextPoint = point;
+                }
+                if (nextPoint == null)
+                {
+                    successful = true;
                     continue;
                 }
 
-                //Else if the currentPoint is a previousPoint, increase dimension
-                if (previousPoints.Contains(currentPoint))
+                //Create a new circle of either 2 or 3 points
+                //if the currentPoint is a previousPoint, increase dimension
+                if (create3PointCircle)
                 {
                     //Make a new circle from the current two-point circle and the current point
-                    circle = new InternalCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
-                    previousPoints.Remove(currentPoint);
-                    i++;
+                    circle = new InternalCircle(new List<Point> {circle.Points[0], circle.Points[1], nextPoint});
+                    previousPoints.Remove(nextPoint);
                 }
                 else
                 {
                     //Find the point in the circle furthest from new point. 
                     Point furthestPoint;
-                    circle.Furthest(currentPoint, out furthestPoint, ref previousPoints);
+                    circle.Furthest(nextPoint, out furthestPoint, ref previousPoints);
                     //Make a new circle from the furthest point and current point
-                    circle = new InternalCircle(new List<Point> {currentPoint, furthestPoint});
+                    circle = new InternalCircle(new List<Point> {nextPoint, furthestPoint});
                     //Add previousPoints to the front of the list
                     foreach (var previousPoint in previousPoints)
                     {
-                        randomPoints.Remove(previousPoint);
-                        randomPoints.Insert(0, previousPoint);
+                        listPoints.Remove(previousPoint);
+                        listPoints.Insert(0, previousPoint);
                     }
-                    //Restart the search
-                    stallCounter++;
-                    if (stallCounter == points.Count) stallCounter = 0;
-                    i = 0;
                 }
+                stallCounter++;
             }
 
             //Return information about minimum circle
-            if (stallCounter == points.Count) throw new Exception("Bounding circle failed to converge");
+            if (stallCounter == points.Count * 3) throw new Exception("Bounding circle failed to converge");
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
             return new BoundingCircle(radius, circle.Center);
         }
@@ -306,14 +366,11 @@ namespace TVGL
                 //Distance between point and center is greate than radius, it is outside the circle
                 foreach (var containedPoint in Points)
                 {
-
                     var squareDistance = Math.Pow(containedPoint.X - point.X, 2) +
                                          Math.Pow(containedPoint.Y - point.Y, 2);
-                    if (squareDistance > maxSquareDistance)
-                    {
-                        maxSquareDistance = squareDistance;
-                        furthestPoint = containedPoint;
-                    }
+                    if (squareDistance <= maxSquareDistance) continue;
+                    maxSquareDistance = squareDistance;
+                    furthestPoint = containedPoint;
                 }
                 previousPoints.Remove(furthestPoint);
             }
