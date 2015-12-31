@@ -64,7 +64,7 @@ namespace TVGL
             var triangles = new List<Vertex[]>();
 
             //Check incomining lists
-            if (isPositive != null && points2D.Count() != isPositive.Count())
+            if (isPositive != null && points2D.Count != isPositive.Length)
             {
                 throw new Exception("Inputs into 'TriangulatePolygon' are unbalanced");
             }
@@ -92,13 +92,11 @@ namespace TVGL
                     //Change point X and Y coordinates to be changed to random primary axis
                     var rnd = new Random();
                     var theta = rnd.NextDouble();
-                    for(var j = 0; j < points2D.Count(); j++)
+                    foreach (var loop in points2D)
                     {
-                        var loop = points2D[j];
                         var pHighest = double.NegativeInfinity;
-                        for (var k = 0; k < loop.Count(); k++ )
+                        foreach (var point in loop)
                         {
-                            var point = loop[k];
                             point.X = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
                             point.Y = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
                             if (point.Y > pHighest)
@@ -114,7 +112,7 @@ namespace TVGL
                         var orderedLoop = new List<Node>();
                         var linesInLoop = new List<Line>();
                         //Count the number of points and add to total.
-                        pointCount = pointCount + loop.Count();
+                        pointCount = pointCount + loop.Length;
 
                         //Create first node
                         //Note that getNodeType -> GetAngle functions works for both + and - loops without a reverse boolean.
@@ -124,7 +122,7 @@ namespace TVGL
                         orderedLoop.Add(firstNode);
 
                         //Create other nodes
-                        for (var j = 1; j < loop.Count() - 1; j++)
+                        for (var j = 1; j < loop.Length - 1; j++)
                         {
                             //Create New Node
                             var node = new Node(loop[j], i);
@@ -141,7 +139,7 @@ namespace TVGL
                         }
 
                         //Create last node
-                        var lastNode = new Node(loop[loop.Count() - 1], i);
+                        var lastNode = new Node(loop[loop.Length - 1], i);
                         orderedLoop.Add(lastNode);
 
                         //Create both missing lines 
@@ -193,7 +191,7 @@ namespace TVGL
 
                             //inititallize lineList 
                             var lineList = new List<Line>();
-                            for (var j = 0; j < sortedGroup.Count(); j++)
+                            for (var j = 0; j < sortedGroup.Count; j++)
                             {
                                 var node = sortedGroup[j];
 
@@ -245,18 +243,13 @@ namespace TVGL
                                 }
                             }
                         }
-                        //Check to make sure that all the directions are correct
-                        foreach (var direction in isPositive)
-                        {
-                            if (direction != true && direction) throw new Exception();
-                        }
                     }
 
                     //Check to see that the loops are ordered correctly to their isPositive boolean
                     //If they are incorrectly ordered, reverse the order.
                     //This is used to check situations whether isPositive == null or not.
                     var nodesLoopsCorrected = new List<List<Node>>();
-                    for (var j = 0; j < orderedLoops.Count(); j++) 
+                    for (var j = 0; j < orderedLoops.Count; j++) 
                     {
                         var orderedLoop = orderedLoops[j];
                         var index = orderedLoop.IndexOf(sortedLoops[j][0]); // index of first node in orderedLoop
@@ -265,7 +258,7 @@ namespace TVGL
                         {
                             nodeType = GetNodeType(orderedLoop.Last(), orderedLoop.First(), orderedLoop[1]);
                         }
-                        else if (index == orderedLoop.Count() - 1)
+                        else if (index == orderedLoop.Count - 1)
                         {
                             nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop.Last(), orderedLoop.First());
                         }
@@ -301,14 +294,14 @@ namespace TVGL
                         orderedLoop[0].Type = GetNodeType(orderedLoop.Last(), orderedLoop[0], orderedLoop[1]);
 
                         //Set nodeTypes for other nodes
-                        for (var j = 1; j < orderedLoop.Count() - 1; j++)
+                        for (var j = 1; j < orderedLoop.Count - 1; j++)
                         {
                             orderedLoop[j].Type = GetNodeType(orderedLoop[j - 1], orderedLoop[j], orderedLoop[j + 1]);
                         }
 
                         //Set nodeType for the last node
                         //Create last node
-                        orderedLoop[orderedLoop.Count() - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count() - 2], orderedLoop[orderedLoop.Count() - 1], orderedLoop[0]);
+                        orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2], orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
 
                         //Debug to see if the proper balance of point types has been used
                         var downwardReflexCount = 0;
@@ -341,16 +334,10 @@ namespace TVGL
                     }
                                       
                     //Get the number of negative loops
-                    for (var j = 0; j < isPositive.Count(); j++)
+                    foreach (var boolean in isPositive) 
                     {
-                        if (isPositive[j])
-                        {
-                            positiveLoopCount++;
-                        }
-                        else
-                        {
-                            negativeLoopCount++;
-                        }
+                        if (boolean) positiveLoopCount++;
+                        else negativeLoopCount++;
                     }
                     #endregion
 
@@ -376,7 +363,7 @@ namespace TVGL
                         sortedLoops.RemoveAt(i);
 
                         //Insert the first node from all the negative loops remaining into the group list in the correct sorted order.
-                        for (var j = 0; j < orderedLoops.Count(); j++)
+                        for (var j = 0; j < orderedLoops.Count; j++)
                         {
                             if (listPositive[j] == false)
                             {
@@ -394,7 +381,7 @@ namespace TVGL
 
                         //Use the red-black tree to determine if the first node from a negative loop is inside the polygon.
                         //for each node in sortedNodes, update the lineList. Note that at this point each node only has two edges.
-                        for (var j = 0; j < sortedGroup.Count(); j++)
+                        for (var j = 0; j < sortedGroup.Count; j++)
                         {
                             var node = sortedGroup[j];
                             Line leftLine = null;
@@ -411,8 +398,7 @@ namespace TVGL
                                 //If both LinesToLeft and LinesToRight are odd, then it must be inside.
                                 if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)  
                                 {
-                                    if (LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0) isInside = true;
-                                    else isInside = false;
+                                    isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                                 }
                                 else isInside = false;
                                 if(isInside)
@@ -750,7 +736,7 @@ namespace TVGL
         /// <summary>
         /// Gets the type of node for B.
         /// </summary>
-        /// A, B, & C are counterclockwise ordered points.
+        /// A, B, and C are counterclockwise ordered points.
         internal static NodeType GetNodeType(Node a, Node b, Node c)
         {
             var angle = MiscFunctions.AngleBetweenEdgesCCW(a.Point, b.Point, c.Point);
@@ -894,14 +880,7 @@ namespace TVGL
                         else throw new Exception("Rounding Error");
 
                         //Choose whichever line has the right most other node
-                        if (nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X) //if approximately equal
-                        {
-                            rightLine = nodeOnLine.StartLine;
-                        }
-                        else
-                        {
-                            rightLine = nodeOnLine.EndLine;
-                        }
+                        rightLine = nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X ? nodeOnLine.StartLine : nodeOnLine.EndLine;
                     }
                     else if (xdif <= xright) //If less than
                     {
@@ -925,7 +904,7 @@ namespace TVGL
         internal static int InsertNodeInSortedList(List<Node> sortedNodes, Node node)
         {
             //Search for insertion location starting from the first element in the list.
-            for (var i = 0; i < sortedNodes.Count(); i++)
+            for (var i = 0; i < sortedNodes.Count; i++)
             {
                 if (node.Y.IsPracticallySame(sortedNodes[i].Y)  && node.X.IsPracticallySame(sortedNodes[i].X)) //Descending X
                 {
@@ -945,7 +924,7 @@ namespace TVGL
 
             //If not greater than any elements in the list, add the element to the end of the list
             sortedNodes.Add(node);
-            return sortedNodes.Count() - 1;
+            return sortedNodes.Count - 1;
         }
         #endregion
 
@@ -954,7 +933,7 @@ namespace TVGL
         {
             //For each node in negativeLoop, minus the first node (which is already in the list)
             var nodeId = sortedNodes.IndexOf(startingNode);
-            for (var i = 1; i < negativeLoop.Count(); i++)
+            for (var i = 1; i < negativeLoop.Count; i++)
             {
                 var isInserted = false;
                 //Starting from after the nodeID, search for an insertion location
@@ -1001,13 +980,13 @@ namespace TVGL
             //For each node other than the start and finish, add a chain affiliation.
             //Note that this is updated each time the triangulate function is called, 
             //thus allowing a node to be part of multiple monotone polygons
-            for (var i = 1; i < leftChain.Count(); i++)
+            for (var i = 1; i < leftChain.Count; i++)
             {
                 var node = leftChain[i];
                 node.IsRightChain = false;
                 node.IsLeftChain = true;
             }
-            for (var i = 1; i < rightChain.Count(); i++)
+            for (var i = 1; i < rightChain.Count; i++)
             {
                 var node = rightChain[i];
                 node.IsRightChain = true;
@@ -1040,8 +1019,7 @@ namespace TVGL
                 if ((node.IsLeftChain && (scan.Last().IsLeftChain == false || scan[scan.Count - 2].IsLeftChain == false)) ||
                     (node.IsRightChain && (scan.Last().IsRightChain == false || scan[scan.Count - 2].IsRightChain == false)))
                 {
-                    var exitBool = false;
-                    while (scan.Count > 1 && exitBool == false)
+                    while (scan.Count > 1)
                     {
                         //Do not skip, even if angle is close to Math.PI, because skipping could break the algorithm (create incorrect triangles)
                         //Better to output negligible triangles.
@@ -1059,7 +1037,7 @@ namespace TVGL
                 else
                 {
                     var exitBool = false;
-                    while (scan.Count() > 1 && exitBool == false)
+                    while (scan.Count > 1 && exitBool == false)
                     {
                         //Check to see if the angle is concave (Strictly less than PI). Exit if it is convex.
                         //Note that if the chain is the right chain, the order of nodes will be backwards 
