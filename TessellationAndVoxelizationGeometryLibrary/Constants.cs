@@ -138,11 +138,36 @@ namespace TVGL
     /// </summary>
     public enum FileType
     {
+        /// <summary>
+        /// Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
         STL_ASCII,
+
+        /// <summary>
+        /// Stereolithography (STL) Binary 
+        /// </summary>
+        // ReSharper disable once InconsistentNaming
         STL_Binary,
+
+        /// <summary>
+        /// Mobile MultiModal Framework
+        /// </summary>
         ThreeMF,
+
+        /// <summary>
+        /// Additive Manufacturing File Format
+        /// </summary>
         AMF,
+
+        /// <summary>
+        /// Object File Format
+        /// </summary>
         OFF,
+
+        /// <summary>
+        /// Polygon File Format
+        /// </summary>
         PLY
     }
 

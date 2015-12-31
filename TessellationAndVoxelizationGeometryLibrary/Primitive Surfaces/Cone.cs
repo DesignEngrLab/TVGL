@@ -39,6 +39,12 @@ namespace TVGL
         public double[] Axis { get; internal set; }
 
 
+        /// <summary>
+        /// Checks if face should be added to cone
+        /// </summary>
+        /// <param name="face"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             return false;
@@ -46,10 +52,20 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Updates cone with face
+        /// </summary>
+        /// <param name="face"></param>
         public override void UpdateWith(PolygonalFace face)
         {
             base.UpdateWith(face);
         }
+        /// <summary>
+        /// Cone 
+        /// </summary>
+        /// <param name="facesAll"></param>
+        /// <param name="axis"></param>
+        /// <param name="aperture"></param>
         public Cone(List<PolygonalFace> facesAll, double[] axis, double aperture)
             : base(facesAll)
         {

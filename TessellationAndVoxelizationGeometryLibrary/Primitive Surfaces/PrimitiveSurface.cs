@@ -97,17 +97,24 @@ namespace TVGL
         /// </value>
         public List<Vertex> Vertices { get; internal set; }
 
-        public abstract Boolean IsNewMemberOf(PolygonalFace face);
+        /// <summary>
+        /// Checks if face should be a member of this surface
+        /// </summary>
+        /// <param name="face"></param>
+        /// <returns></returns>
+        public abstract bool IsNewMemberOf(PolygonalFace face);
 
+        /// <summary>
+        /// Updates surface by adding face
+        /// </summary>
+        /// <param name="face"></param>
         public virtual void UpdateWith(PolygonalFace face)
         {
             Area += face.Area;
-            foreach (var v in face.Vertices)
-                if (!Vertices.Contains(v))
-                    Vertices.Add(v);
-            foreach (var e in face.Edges)
+            foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
+                Vertices.Add(v);
+            foreach (var e in face.Edges.Where(e => !InnerEdges.Contains(e)))
             {
-                if (InnerEdges.Contains(e)) continue; //throw new Exception("edge of new face is already an inner edge of surface, WTF?!");
                 if (OuterEdges.Contains(e))
                 {
                     OuterEdges.Remove(e);

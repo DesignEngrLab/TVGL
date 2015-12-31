@@ -87,7 +87,7 @@ namespace TVGL
                     }
                     //Restart the search
                     stallCounter++;
-                    if (stallCounter == points.Count) stallCounter =0;
+                    if (stallCounter == points.Count) stallCounter = 0;
                     i = 0;
                 }
             }
@@ -98,6 +98,11 @@ namespace TVGL
             return new BoundingCircle(radius, circle.Center);
         }
         
+        /// <summary>
+        /// Gets the minimum bounding cylinder using 13 guesses for the depth direction
+        /// </summary>
+        /// <param name="convexHullVertices"></param>
+        /// <returns></returns>
         public static BoundingBox MinimumBoundingCylinder(IList<Vertex> convexHullVertices)
         {
             // here we create 13 directions. just like for bounding box

@@ -21,7 +21,7 @@ namespace TVGL
         public PolygonalFace(double[] normal, Color color)
             : this(normal)
         {
-            this.color = color;
+            Color = color;
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">A guess for the normal vector.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IList<Vertex> vertices, double[] normal = null, bool connectVerticesBackToFace = true)
+        public PolygonalFace(IEnumerable<Vertex> vertices, double[] normal = null, bool connectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
@@ -71,12 +71,12 @@ namespace TVGL
         internal double DetermineArea()
         {
             var area = 0.0;
-            for (int i = 2; i < Vertices.Count; i++)
+            for (var i = 2; i < Vertices.Count; i++)
             {
                 var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
                 var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
                 // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-                area += Math.Abs(edge1.crossProduct(edge2).dotProduct(this.Normal)) / 2;
+                area += Math.Abs(edge1.crossProduct(edge2).dotProduct(Normal)) / 2;
             }
             return area;
         }
@@ -217,7 +217,8 @@ namespace TVGL
         /// Gets or sets the color.
         /// </summary>
         /// <value>The color.</value>
-        public Color color { get; set; }
+        public Color Color { get; set; }
+
         /// <summary>
         /// Gets the curvature.
         /// </summary>
@@ -252,9 +253,13 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        /// Index of the face in the tesselated solid face list
+        /// </summary>
         public int IndexInList { get; internal set; }
 
         #endregion
+
         /// <summary>
         ///     Defines the face curvature. Depends on DefineEdgeAngle
         /// </summary>
@@ -280,7 +285,7 @@ namespace TVGL
                 Area = Area,
                 Center = (double[])Center.Clone(),
                 Curvature = Curvature,
-                color = new Color(color.A, color.R, color.G, color.B),
+                Color = new Color(Color.A, Color.R, Color.G, Color.B),
                 PartofConvexHull = PartofConvexHull,
                 Edges = new List<Edge>(),
                 Normal = (double[])Normal.Clone(),
@@ -290,6 +295,9 @@ namespace TVGL
 
         //Set new normal and area. 
         //References are assumed to be the same.
+        /// <summary>
+        /// Updates normal, vertex order, and area
+        /// </summary>
         public void Update()
         {
             bool reverseVertexOrder;

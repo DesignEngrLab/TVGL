@@ -7,9 +7,6 @@
 using System.Windows;
 namespace TVGL_Helix_Presenter
 {
-
-
-
     public partial class MainWindow : Window
     {
         public MainWindow()

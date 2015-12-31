@@ -20,7 +20,8 @@ namespace TVGL.Enclosure_Operations
     /// Gaussian Sphere for a polyhedron
     /// </summary>
     /// NOTE: Using spherical coordinates from mathematics (r, θ, φ), since it follows the right hand rule.
-    /// Where r is the radial distance (r = 1 for the unit circle), θ is the azimuthal angle (XY && 0 <= θ <= 360), and φ is the polar angle (From Z axis && 0 <= φ <= 180). 
+    /// Where r is the radial distance (r = 1 for the unit circle), θ is the azimuthal angle (XY and θ equal to or between 0 and 360), 
+    /// and φ is the polar angle (From Z axis and φ is equal to or between 0 and 180). 
     public struct GaussianSphere
     {
         /// <summary>

@@ -16,9 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL.Enclosure_Operations;
-using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace TVGL
 {
@@ -64,8 +61,8 @@ namespace TVGL
             // vectors emanating from every vertex, edge, and face. that would be 8+12+6 = 26. And since there
             // is no need to do mirror image directions this is 26/2 or 13.
             var directions = new List<double[]>();
-            for (int i = -1; i <= 1; i++)
-                for (int j = -1; j <= 1; j++)
+            for (var i = -1; i <= 1; i++)
+                for (var j = -1; j <= 1; j++)
                     directions.Add(new[] { 1.0, i, j });
             directions.Add(new[] { 0.0, 0, 1 });
             directions.Add(new[] { 0.0, 1, 0 });
@@ -77,15 +74,22 @@ namespace TVGL
                 Directions = new[] { v },
                 Volume = double.PositiveInfinity
             }).ToList();
-            for (int i = 0; i < 13; i++)
+            for (var i = 0; i < 13; i++)
                 boxes[i] = Find_via_ChanTan_AABB_Approach(convexHullVertices, boxes[i]);
-            var minVol = boxes.Min(box => box.Volume);
-            return boxes.First(box => box.Volume == minVol);
+            var minVolume = double.PositiveInfinity;
+            var minBox = boxes[0];
+
+            foreach (var box in boxes)
+            {
+                if (box.Volume >= minVolume) continue;
+                minVolume = box.Volume;
+                minBox = box;
+            }
+            return minBox;
         }
 
 
         #region ChanTan AABB Approach
-
         private static BoundingBox Find_via_ChanTan_AABB_Approach(IList<Vertex> convexHullVertices, BoundingBox minOBB)
         {
             var failedConsecutiveRotations = 0;
@@ -110,6 +114,7 @@ namespace TVGL
 
 
         #region Find OBB Along Direction
+
         /// <summary>
         /// Finds the minimum oriented bounding rectangle (2D). The 3D points of a tessellated solid
         /// are projected to the plane defined by "Direction". This returns a BoundingBox structure
@@ -118,6 +123,8 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The Direction.</param>
+        /// <param name="vDir1"></param>
+        /// <param name="vDir2"></param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="System.Exception"></exception>
         public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction, Vertex vDir1 = null, Vertex vDir2 = null)
@@ -165,9 +172,9 @@ namespace TVGL
         private static void FindOBBAlongDirection(BoundingBoxData boxData)
         {
             var direction0 = boxData.Direction = boxData.Direction.normalize();
-            var height = direction0.dotProduct(boxData.rotatorEdge.From.Position.subtract(boxData.backVertex.Position));
+            var height = direction0.dotProduct(boxData.RotatorEdge.From.Position.subtract(boxData.BackVertex.Position));
             double[,] backTransform;
-            var points = MiscFunctions.Get2DProjectionPoints(boxData.orthVertices, direction0, out backTransform, false);
+            var points = MiscFunctions.Get2DProjectionPoints(boxData.OrthVertices, direction0, out backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
            //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new[]
@@ -182,15 +189,15 @@ namespace TVGL
                 boundingRectangle.Directions[1][2], 1.0
             };
             var direction2 = backTransform.multiply(tempDirection).Take(3).ToArray();
-            boxData.box =
+            boxData.Box =
                 new BoundingBox
                 {
                     Dimensions = new[] { height, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
                     Directions = new[] { direction0, direction1, direction2 },
                     PointsOnFaces = new[]
                     {
-                        new List<Vertex> {boxData.rotatorEdge.From, boxData.rotatorEdge.To},
-                        new List<Vertex> {boxData.backVertex},
+                        new List<Vertex> {boxData.RotatorEdge.From, boxData.RotatorEdge.To},
+                        new List<Vertex> {boxData.BackVertex},
                         boundingRectangle.PointsOnSides[0].SelectMany(p => p.References).ToList(),
                         boundingRectangle.PointsOnSides[1].SelectMany(p => p.References).ToList(),
                         boundingRectangle.PointsOnSides[2].SelectMany(p => p.References).ToList(),
@@ -203,43 +210,43 @@ namespace TVGL
         #endregion
 
         #region Get Length And Extreme Vertices
+
         /// <summary>
         /// Given a Direction, dir, this function returns the maximum length along this Direction
         /// for the provided vertices as well as the two vertices that represent the extremes.
         /// </summary>
-        /// <param name="dir">The dir.</param>
+        /// <param name="direction"></param>
         /// <param name="vertices">The vertices.</param>
-        /// <param name="vLow">The v low.</param>
-        /// <param name="vHigh">The v high.</param>
+        /// <param name="bottomVertices"></param>
+        /// <param name="topVertices"></param>
         /// <returns>System.Double.</returns>
         public static double GetLengthAndExtremeVertices(double[] direction, IList<Vertex> vertices, out List<Vertex> bottomVertices,
             out List<Vertex> topVertices)
         {
             var dir = direction.normalize();
-            var min_d = double.PositiveInfinity;
+            var minD = double.PositiveInfinity;
             bottomVertices = new List<Vertex>();
             topVertices = new List<Vertex>();
-            var max_d = double.NegativeInfinity;
-            var i = 0;
+            var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
                 var distance = dir.dotProduct(v.Position);
-                if (distance.IsPracticallySame(min_d, Constants.BaseTolerance))
+                if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomVertices.Add(v);
-                else if (distance < min_d)
+                else if (distance < minD)
                 {
                     bottomVertices.Clear(); bottomVertices.Add(v);
-                    min_d = distance;
+                    minD = distance;
                 }
-                if (distance.IsPracticallySame(max_d, Constants.BaseTolerance))
+                if (distance.IsPracticallySame(maxD, Constants.BaseTolerance))
                     bottomVertices.Add(v);
-                else if (distance > max_d)
+                else if (distance > maxD)
                 {
                     topVertices.Clear(); topVertices.Add(v);
-                    max_d = distance;
+                    maxD = distance;
                 }
             }
-            return max_d - min_d;
+            return maxD - minD;
         }
         #endregion
 
@@ -361,33 +368,6 @@ namespace TVGL
         }
         #endregion
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BoundingBox"/> class.
-        /// </summary>
-        /// <param name="volume">The volume.</param>
-        /// <param name="extremeVertices">The extreme vertices.</param>
-        /// <param name="directions"></param>
-        private static BoundingBox MakeBoundingBox(IList<double> dimensions, IList<double[]> directions,
-            IList<List<Vertex>> pointsOnFaces)
-        {
-            var volume = double.PositiveInfinity;
-            if (dimensions == null)
-                dimensions = new double[3];
-            else volume = dimensions[0] * dimensions[1] * dimensions[2];
-
-            if (directions == null) directions = new double[3][];
-            else directions = directions.Select(d => d.normalize()).ToArray();
-
-            if (pointsOnFaces == null)
-                pointsOnFaces = new List<Vertex>[6];
-            return new BoundingBox
-            {
-                Dimensions = dimensions.ToArray(),
-                Directions = directions.ToArray(),
-                PointsOnFaces = pointsOnFaces.ToArray(),
-                Volume = volume
-            };
-        }
         private static BoundingBox AddInCornerVertices(BoundingBox bb)
         {
             if (bb.CornerVertices != null) return bb;

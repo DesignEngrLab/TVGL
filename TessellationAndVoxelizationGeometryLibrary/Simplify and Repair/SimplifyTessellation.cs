@@ -82,7 +82,7 @@ namespace TVGL
         /// <param name="ts"></param>
         public static void Simplify(this TessellatedSolid ts)
         {
-            SimplifyByTolerance(ts, ts.sameTolerance * 10);
+            SimplifyByTolerance(ts, ts.SameTolerance * 10);
         }
 
         /// <summary>

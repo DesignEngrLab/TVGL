@@ -8,12 +8,11 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 
-
 namespace TVGL_Test
 {
-    internal partial class Program
+    internal class Program
     {
-        private static string[] filenames = {
+        private static readonly string[] FileNames = {
         //"../../../TestFiles/shark.ply",
         //"../../../TestFiles/bunnySmall.ply",
         //"../../../TestFiles/cube.ply",
@@ -69,9 +68,9 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             //TestOBB("../../../TestFiles/");
             //return;
-            for (var i = 0; i < filenames.Count(); i++)
+            for (var i = 0; i < FileNames.Count(); i++)
             {
-                var filename = filenames[i];
+                var filename = FileNames[i];
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
@@ -257,7 +256,6 @@ namespace TVGL_Test
             var dir = new[] { 0.0, 1.0, 0.0 };
             dir.normalize();
             List<Vertex> vLow, vHigh;
-            List<TessellatedSolid> positiveSideSolids, negativeSideSolids;
             var length = MinimumEnclosure.GetLengthAndExtremeVertices(dir, ts.Vertices, out vLow, out vHigh);
             var distToVLow = vLow[0].Position.dotProduct(dir);
             //try
@@ -269,10 +267,12 @@ namespace TVGL_Test
             {
                 foreach (var face in flat.Faces)
                 {
-                    face.color = new Color(TVGL.KnownColors.DarkRed);
+                    face.Color = new Color(KnownColors.DarkRed);
                 }
                 ts.HasUniformColor = false;
                 TVGL_Helix_Presenter.HelixPresenter.Show(ts);
+                List<TessellatedSolid> positiveSideSolids;
+                List<TessellatedSolid> negativeSideSolids;
                 Slice2.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
@@ -286,7 +286,7 @@ namespace TVGL_Test
                 }
                 foreach (var face in flat.Faces)
                 {
-                    face.color = new Color(KnownColors.PaleGoldenrod);
+                    face.Color = new Color(KnownColors.PaleGoldenrod);
                 }
             }
 

@@ -422,7 +422,7 @@ namespace TVGL
             //Check to see if item is already in array.
             var num = Array.BinarySearch(keys, 0, _size, key, comparer);
             //"num" should be -1
-            if (num >= 0) ;// Debug.WriteLine("Item is already contained in sorted list.");
+            if (num >= 0) Debug.WriteLine("Item is already contained in sorted list.");
             else Insert(~num, key, value);
         }
 

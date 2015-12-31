@@ -74,7 +74,6 @@ namespace TVGL.Boolean_Operations
             loops = new List<List<Vertex>>();
             //Set the distance of every vertex in the solid to the plane
             var distancesToPlane = new List<double>();
-            var pointOnPlane = new double[3];
             //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
             //along direction of normal, and add a negative offset to move backward along normal.
             var successfull = false;
@@ -82,15 +81,11 @@ namespace TVGL.Boolean_Operations
             while (!successfull)
             {
                 distancesToPlane = new List<double>();
-                pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
+                var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
                 for (int i = 0; i < ts.NumberOfVertices; i++)
                 {
                     var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
-                    if (Math.Abs(distance) < Constants.BaseTolerance)
-                    {
-                        successfull = false;
-                        break;
-                    }
+                    if (Math.Abs(distance) < Constants.BaseTolerance) break;
                     distancesToPlane.Add(distance);
                 }
                 if (distancesToPlane.Count == ts.NumberOfVertices) successfull = true;
@@ -158,7 +153,7 @@ namespace TVGL.Boolean_Operations
 
             //Get loops of straddleEdges 
             var loopsOfStraddleEdges = new List<List<StraddleEdge>>();
-            var maxCount = straddleEdges.Count()/3;
+            var maxCount = straddleEdges.Count/3;
             var attempts = 0;
             while (straddleEdges.Any() && attempts < maxCount)
             {
@@ -182,7 +177,7 @@ namespace TVGL.Boolean_Operations
                     }
                     
                     //Only two straddle edges are possible per face, and the other has already been removed from straddleEdges.
-                    if (possibleStraddleEdges.Count() != 1) throw new Exception();
+                    if (possibleStraddleEdges.Count != 1) throw new Exception();
                     straddleEdge = possibleStraddleEdges[0];
                     loopOfStraddleEdges.Add(straddleEdge);
                     straddleEdges.Remove(straddleEdge);
@@ -201,7 +196,6 @@ namespace TVGL.Boolean_Operations
             //It also keeps track of how many new vertices should be created.
             var newVertexIndex = ts.NumberOfVertices;
             var allNewFaces = new List<PolygonalFace>();
-            var allNewEdges = new List<Edge>();
             var tolerance = Math.Sqrt(Constants.BaseTolerance);
             foreach (var loopOfStraddleEdges in loopsOfStraddleEdges)
             {
@@ -212,20 +206,20 @@ namespace TVGL.Boolean_Operations
                 var k = 0; 
                 var length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges.Last().IntersectVertex.Position,
                             loopOfStraddleEdges[k].IntersectVertex.Position);
-                while (length1.IsNegligible(tolerance) && k + 1 != loopOfStraddleEdges.Count() - 1)
+                while (length1.IsNegligible(tolerance) && k + 1 != loopOfStraddleEdges.Count - 1)
                 {
                     k++;   
                     length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges[k-1].IntersectVertex.Position,
                         loopOfStraddleEdges[k].IntersectVertex.Position);
                 }
-                if (k +1 == loopOfStraddleEdges.Count()-1) throw new Exception("No good starting edge found");
+                if (k +1 == loopOfStraddleEdges.Count-1) throw new Exception("No good starting edge found");
                 var firstStraddleEdge = loopOfStraddleEdges[k];
                 var previousStraddleEdge = firstStraddleEdge;
                 successfull = false;
                 do 
                 {
                     k++; //Update the index
-                    if (k > loopOfStraddleEdges.Count() - 1) k = 0; //Set back to start if necessary
+                    if (k > loopOfStraddleEdges.Count - 1) k = 0; //Set back to start if necessary
                     var currentStraddleEdge = loopOfStraddleEdges[k];
                     var length = MiscFunctions.DistancePointToPoint(currentStraddleEdge.IntersectVertex.Position,
                             previousStraddleEdge.IntersectVertex.Position);
@@ -253,7 +247,6 @@ namespace TVGL.Boolean_Operations
                         }
                         if (currentStraddleEdge.OnSideVertex == previousStraddleEdge.OnSideVertex)
                         {
-                            PolygonalFace sharedFace;
                             if (currentStraddleEdge.OwnedFace == previousStraddleEdge.OwnedFace)
                                 previousStraddleEdge.OwnedFace = currentStraddleEdge.OtherFace;
                             else if (currentStraddleEdge.OwnedFace == previousStraddleEdge.OtherFace) 
@@ -284,7 +277,6 @@ namespace TVGL.Boolean_Operations
                 } while (!successfull);
                 loops.Add(loopOfVertices);
                 allNewFaces.AddRange(newFaces);
-                allNewEdges.AddRange(newEdges);
             }
             
             foreach (var face1 in allNewFaces)
@@ -307,12 +299,9 @@ namespace TVGL.Boolean_Operations
             }
 
             //Check to make sure all adjacency is up to date
-            foreach (var face in onSideFaces)
+            if (onSideFaces.Any(face => face.AdjacentFaces.Any(adjacentFace => adjacentFace == null)))
             {
-                if (face.AdjacentFaces.Any(adjacentFace => adjacentFace == null))
-                {
-                    throw new Exception("Edge has not been found");
-                }
+                throw new Exception("Edge has not been found");
             }
             onSideFaces.AddRange(allNewFaces);
             //Reset orginal plane distance
@@ -337,7 +326,6 @@ namespace TVGL.Boolean_Operations
         /// <param name="st1"></param>
         /// <param name="st2"></param>
         /// <param name="newEdges"></param>
-        /// <param name="firstNewFace"></param>
         /// <param name="lastNewFace"></param>
         /// <returns></returns>
         public static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, ref List<Edge> newEdges, bool lastNewFace = false )

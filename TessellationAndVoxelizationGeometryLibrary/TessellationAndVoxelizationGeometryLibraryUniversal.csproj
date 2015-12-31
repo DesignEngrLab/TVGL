@@ -51,7 +51,6 @@
     <Compile Include="InputOutput Operations\PLYFileData.cs" />
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
-    <Compile Include="Miscellaneous Functions\2DOffset.cs" />
     <Compile Include="Miscellaneous Functions\ListFunctions.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -91,6 +90,7 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

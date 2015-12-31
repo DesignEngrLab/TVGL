@@ -29,8 +29,6 @@ namespace TVGL
     /// </summary>
     public class Point : IVertex
     {
-        private IVertex v;
-
         #region Properties
 
         /// <summary>
@@ -68,9 +66,7 @@ namespace TVGL
             {
                 X = value[0];
                 Y = value[1];
-                if (value.GetLength(0) > 2)
-                    Z = value[2];
-                else Z = 0.0;
+                Z = value.GetLength(0) > 2 ? value[2] : 0.0;
             }
         }
 
@@ -87,7 +83,7 @@ namespace TVGL
                 Y = value[1];
                 if (value.GetLength(0) > 2)
                     throw new Exception("Cannot set the value of a point with an array with more than 2 values.");
-                 Z = 0.0;
+                Z = 0.0;
             }
         }
 
@@ -131,10 +127,16 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Point"/> class.
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
-        public Point(double[] coordinates) :this(null, coordinates[0], coordinates[1], coordinates[2])
+        public Point(IList<double> coordinates) :this(null, coordinates[0], coordinates[1], coordinates[2])
         { }
+
+        /// <summary>
+        /// this point
+        /// </summary>
+        /// <param name="index"></param>
         public double this[int index]
         {
+            // ReSharper disable once ConvertPropertyToExpressionBody
             get { return Position[index]; }
         }
 

@@ -14,9 +14,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using StarMathLib;
-
 
 namespace TVGL
 {
@@ -55,8 +52,6 @@ namespace TVGL
         public Point[] CornerVertices;
  }
 
-
-
     /// <summary>
     /// Bounding rectangle information based on area and point pairs.
     /// </summary>
@@ -76,6 +71,10 @@ namespace TVGL
         /// Vector directions of length and width of rectangle
         /// </summary>
         public double[][] Directions;
+
+        /// <summary>
+        /// Length and Width of Bounding Rectangle
+        /// </summary>
         public double[] Dimensions;
     }
 
@@ -118,11 +117,29 @@ namespace TVGL
             Circumference = 2 * Math.PI * radius;
         }
     }
+    /// <summary>
+    /// Public cylinder structure
+    /// </summary>
     public struct BoundingCylinder
     {
+        /// <summary>
+        /// Center axis along depth
+        /// </summary>
         public double[] Axis;
-        public BoundingCircle CenterCircle;
-        public double HalfLength;
+
+        /// <summary>
+        /// Bounding Circle on one end of the cylinder
+        /// </summary>
+        public BoundingCircle BoundingCircle;
+
+        /// <summary>
+        /// Height of cylinder
+        /// </summary>
+        public double Height;
+
+        /// <summary>
+        /// Volume
+        /// </summary>
         public double Volume;
     }
 }

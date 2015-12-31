@@ -105,9 +105,9 @@ namespace TVGL_Helix_Presenter
                 for (var i = 0; i < 3; i++)
                     vOrder.Add(new Point3D(f.Vertices[i].X, f.Vertices[i].Y, f.Vertices[i].Z));
 
-                var c = (f.color == null)
+                var c = (f.Color == null)
                     ? defaultMaterial
-                    : MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = f.color.A, B = f.color.B, G = f.color.G, R = f.color.R });
+                    : MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = f.Color.A, B = f.Color.B, G = f.Color.G, R = f.Color.R });
                 result.Children.Add(new ModelVisual3D
                 {
                     Content =

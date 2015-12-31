@@ -209,6 +209,7 @@ namespace TVGL.IOFunctions
         ///     Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
+        /// <param name="solids"></param>
         /// <param name="fileType">Type of the file.</param>
         public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType)
         {
@@ -224,14 +225,12 @@ namespace TVGL.IOFunctions
             }
         }
 
-
-
         /// <summary>
         ///     Writes the coordinates.
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
         /// <param name="writer">The writer.</param>
-        private static void WriteCoordinates(double[] coordinates, StreamWriter writer)
+        private static void WriteCoordinates(IList<double> coordinates, StreamWriter writer)
         {
             writer.WriteLine("\t\t\t" + coordinates[0] + " " + coordinates[1] + " " + coordinates[2]);
         }

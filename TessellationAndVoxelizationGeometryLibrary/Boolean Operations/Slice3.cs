@@ -51,12 +51,12 @@ namespace TVGL.Boolean_Operations
             //This step removes all previous relationships and rebuilds them.
             if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
             {
-                var positiveSideSolid = ts.BuildNewFromOld(positiveSideFaces);
+                var positiveSideSolid = new TessellatedSolid(positiveSideFaces);
                 //5. Split the tesselated solid into multiple solids if necessary
                 positiveSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(positiveSideSolid));
 
                 //6. Repeat steps 4-5 for the negative side
-                var negativeSideSolid = ts.BuildNewFromOld(negativeSideFaces);
+                var negativeSideSolid = new TessellatedSolid(negativeSideFaces);
                 negativeSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(negativeSideSolid));
             }
             else //There was no cut made. Return the original tesselated solid.
@@ -73,8 +73,7 @@ namespace TVGL.Boolean_Operations
             onSideFaces = new List<PolygonalFace>();
             //Set the distance of every vertex in the solid to the plane
             var distancesToPlane = new List<double>();
-            var pointOnPlane = new double[3];
-            var looserTolerance = Math.Sqrt((ts.sameTolerance)); //A looser tolerance is necessary to determine straddle edges
+            var looserTolerance = Math.Sqrt((ts.SameTolerance)); //A looser tolerance is necessary to determine straddle edges
             //Because of the way distance to origin is found in relation to the normal, always add a positive offset to move further 
             //along direction of normal, and add a negative offset to move backward along normal.
             var successfull = false;
@@ -82,15 +81,11 @@ namespace TVGL.Boolean_Operations
             while (!successfull)
             {
                 distancesToPlane = new List<double>();
-                pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
-                for (int i = 0; i < ts.NumberOfVertices; i++)
+                var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
+                for (var i = 0; i < ts.NumberOfVertices; i++)
                 {
                     var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
-                    if (Math.Abs(distance) < ts.sameTolerance)
-                    {
-                        successfull = false;
-                        break;
-                    }
+                    if (Math.Abs(distance) < ts.SameTolerance) break;
                     distancesToPlane.Add(distance);
                 }
                 if (distancesToPlane.Count == ts.NumberOfVertices) successfull = true;
@@ -122,12 +117,11 @@ namespace TVGL.Boolean_Operations
                 //Categorize the vertices of the face
                 var positiveSideVertices = new List<Vertex>();
                 var negativeSideVertices = new List<Vertex>();
-                var onPlaneVerticesFromFace = new List<Vertex>();
                 foreach (var vertex in face.Vertices)
                 {
                     var distance = distancesToPlane[vertex.IndexInList];
-                    if (Math.Abs(distance).IsNegligible(Constants.BaseTolerance)) onPlaneVerticesFromFace.Add(vertex);
-                    else if (Math.Sign(distance) > 0) positiveSideVertices.Add(vertex);
+                    if (Math.Abs(distance).IsNegligible(Constants.BaseTolerance)) continue;
+                    if (Math.Sign(distance) > 0) positiveSideVertices.Add(vertex);
                     else if (Math.Sign(distance) < 0) negativeSideVertices.Add(vertex);
                     else throw new Exception("Error: one of the three options above must be true.");
                 }
@@ -135,8 +129,8 @@ namespace TVGL.Boolean_Operations
                 if (positiveSideVertices.Count <= 0 || negativeSideVertices.Count <= 0) continue;
                 var numberOfNewVertices = positiveSideVertices.Count + negativeSideVertices.Count - 1;
                 //Two vertices are on the positive side, and one is on the negative side.
-                var checksum1 = 0;
-                var checksum2 = 0;
+                int checksum1;
+                int checksum2;
                 if (numberOfNewVertices == 2 && positiveSideVertices.Count == 2 && isPositiveSide == 1)
                 {
                     //Find the straddle edge that contains both the positive[0] and negative[0] vertex
@@ -165,11 +159,10 @@ namespace TVGL.Boolean_Operations
             }
 
             //Categorize all the faces in the solid
-            var newOnPlaneEdges = new List<Edge>(); //Place holder for debugging.
             foreach (var face in ts.Faces)
             {
-                if (face.Vertices.Count() != 3) throw new Exception("This was written with triangles in mind, ONLY");
-                if (face.Edges.Count() != 3) throw new Exception("This was written with triangles in mind, ONLY");
+                if (face.Vertices.Count != 3) throw new Exception("This was written with triangles in mind, ONLY");
+                if (face.Edges.Count != 3) throw new Exception("This was written with triangles in mind, ONLY");
                 //Categorize the vertices of the face
                 var positiveSideVertices = new List<Vertex>();
                 var negativeSideVertices = new List<Vertex>();
@@ -202,13 +195,11 @@ namespace TVGL.Boolean_Operations
                         }
                         else if(isPositiveSide ==1)
                         {
-                            newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
                             onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[0], positiveSideVertices[1], newVertex1 }, face.Normal));
                             onSideFaces.Add(new PolygonalFace(new[] { positiveSideVertices[1], newVertex1, newVertex2 }, face.Normal));
                         }
                         else
                         {
-                            newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
                             onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, negativeSideVertices[0] }, face.Normal));
                         }
                     }
@@ -222,7 +213,6 @@ namespace TVGL.Boolean_Operations
                         if (newVertex1 == null || newVertex2 == null) throw new Exception();
                         if (isPositiveSide == 1)
                         {
-                            newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
                             onSideFaces.Add(new PolygonalFace(new[] { newVertex1, newVertex2, positiveSideVertices[0] }, face.Normal));
                         }
                         else if (newVertex1 == newVertex2)
@@ -231,7 +221,6 @@ namespace TVGL.Boolean_Operations
                         }
                         else
                         {
-                            newOnPlaneEdges.Add(new Edge(newVertex1, newVertex2, true));
                             onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[0], negativeSideVertices[1], newVertex1 }, face.Normal));
                             onSideFaces.Add(new PolygonalFace(new[] { negativeSideVertices[1], newVertex1, newVertex2 }, face.Normal));
                         }
@@ -300,9 +289,8 @@ namespace TVGL.Boolean_Operations
             var onPlaneEdgeHash = new HashSet<Edge>();
             var hashFaces = new HashSet<PolygonalFace>(onSideFaces);
             var onPlaneVerticesHash = new HashSet<Vertex>(onPlaneVertices);
-            for (var i = 0; i < onPlaneVertices.Count(); i++)
+            foreach (var vertex1 in onPlaneVertices)
             {
-                var vertex1 = onPlaneVertices[i];
                 foreach (var edge in vertex1.Edges)
                 {
                     var vertex2 = edge.OtherVertex(vertex1);
@@ -316,7 +304,7 @@ namespace TVGL.Boolean_Operations
                         }
                         //Else, keep any edge that has ONLY one face on this side of plane
                         else if ((hashFaces.Contains(edge.OwnedFace) && !hashFaces.Contains(edge.OtherFace)) ||
-                            (!hashFaces.Contains(edge.OwnedFace) && hashFaces.Contains(edge.OtherFace)))
+                                 (!hashFaces.Contains(edge.OwnedFace) && hashFaces.Contains(edge.OtherFace)))
                         {
                             onPlaneEdges.Add(edge);
                         }
@@ -344,11 +332,10 @@ namespace TVGL.Boolean_Operations
                 do
                 {
                     var possibleNextEdges = remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
-                    if (possibleNextEdges.Count() != 1)
+                    if (possibleNextEdges.Count != 1)
                     {
                         successfull = false;
                         attempts++;
-                        throw new Exception("Should always be == to 1");
                     }
                     else
                     {

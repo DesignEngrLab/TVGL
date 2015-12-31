@@ -26,12 +26,14 @@ namespace TVGL
         /// Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         public double X { get; private set; }
 
         /// <summary>
         /// Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         public double Y { get; private set; }
 
         /// <summary>
@@ -255,7 +257,11 @@ namespace TVGL
         /// </summary>
         internal Node FromNode { get; private set; }
 
+        // ReSharper disable once InconsistentNaming
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         internal double m { get; private set; }
+        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
+        // ReSharper disable once InconsistentNaming
         internal double b { get; private set; }
 
         /// <summary>

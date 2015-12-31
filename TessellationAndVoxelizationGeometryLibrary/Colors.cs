@@ -751,16 +751,17 @@ namespace TVGL
             return (byte)(value * 255f);
         }
 
+        /// <summary>
+        /// Checks if color is equal to another color
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (obj == null) return false;
-            if (obj is Color)
-            {
-                var otherColor = (Color) obj;
-                return A == otherColor.A && B == otherColor.B
-                       && G == otherColor.G && R == otherColor.R;
-            }
-            return false;
+            if (!(obj is Color)) return false;
+            var otherColor = (Color) obj;
+            return A == otherColor.A && B == otherColor.B
+                   && G == otherColor.G && R == otherColor.R;
         }
     }
 }

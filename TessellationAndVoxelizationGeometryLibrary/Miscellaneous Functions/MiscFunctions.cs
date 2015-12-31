@@ -78,6 +78,12 @@ namespace TVGL
             return points.ToArray();
         }
 
+        /// <summary>
+        /// Gets the 2D projectsion points of vertices
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="direction"></param>
+        /// <returns></returns>
         public static double[][] Get2DProjectionPoints(IList<double[]> vertices, double[] direction)
         {
             var transform = TransformToXYPlane(direction);
@@ -93,12 +99,14 @@ namespace TVGL
             }
             return points;
         }
-        private static double[,] TransformToXYPlane(double[] direction)
+
+        private static double[,] TransformToXYPlane(IList<double> direction)
         {
             double[,] backTransformStandIn;
             return TransformToXYPlane(direction, out backTransformStandIn);
         }
-        private static double[,] TransformToXYPlane(double[] direction, out double[,] backTransform)
+
+        private static double[,] TransformToXYPlane(IList<double> direction, out double[,] backTransform)
         {
             var xDir = direction[0];
             var yDir = direction[1];
@@ -152,40 +160,48 @@ namespace TVGL
         {
             return Math.Min(AngleBetweenEdgesCW(v0, v1), AngleBetweenEdgesCCW(v0, v1));
         }
+        
         internal static double AngleBetweenEdgesCW(Edge edge1, Edge edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
             return AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]);
         }
+
         internal static double AngleBetweenEdgesCCW(Edge edge1, Edge edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
             return AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]);
         }
+        
         internal static double AngleBetweenEdgesCW(double[] edge1, double[] edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
             return AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]);
         }
+        
         internal static double AngleBetweenEdgesCCW(double[] edge1, double[] edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
             return AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]);
         }
+        
         internal static double AngleBetweenEdgesCW(Point a, Point b, Point c)
         {
             return AngleBetweenEdgesCW(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
+        
         internal static double AngleBetweenEdgesCCW(Point a, Point b, Point c)
         {
             return AngleBetweenEdgesCCW(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
+        
         internal static double AngleBetweenEdgesCW(double[] v0, double[] v1)
         {
             return 2 * Math.PI - AngleBetweenEdgesCCW(v0, v1);
         }
         //Gets the angle between edges that are ordered in a CCW list. 
         //NOTE: This is opposite from getting the CCW angle from v0 and v1.
+        
         internal static double AngleBetweenEdgesCCW(double[] v0, double[] v1)
         {
             #region Law of Cosines Approach (Commented Out)
@@ -236,12 +252,12 @@ namespace TVGL
                 return new[] {double.NaN, double.NaN, double.NaN};
             }
         }
-        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, out double[] directionOfLine, out double[] PointOnLine)
+        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, out double[] directionOfLine, out double[] pointOnLine)
         {
             directionOfLine = n1.crossProduct(n2).normalize();
-            LineIntersectingTwoPlanes(n1, d1, n2, d2, directionOfLine, out PointOnLine);
+            LineIntersectingTwoPlanes(n1, d1, n2, d2, directionOfLine, out pointOnLine);
         }
-        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, double[] directionOfLine, out double[] PointOnLine)
+        internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2, double[] directionOfLine, out double[] pointOnLine)
         {
             /* to find the point on the line...well a point on the line, it turns out that one has three unknowns (px, py, pz)
              * and only two equations. Let's put the point on the plane going through the origin. So this plane would have a normal 
@@ -251,7 +267,7 @@ namespace TVGL
             a.SetRow(1, n2);
             a.SetRow(2, directionOfLine);
             var b = new[] { d1, d2, 0 };
-            PointOnLine = StarMath.solve(a, b);
+            pointOnLine = StarMath.solve(a, b);
         }
         internal static double SkewedLineIntersection(double[] p1, double[] n1, double[] p2, double[] n2)
         {
@@ -300,9 +316,9 @@ namespace TVGL
             return DistancePointToPoint(interSect1, interSect2);
         }
 
-        internal static bool ArcArcIntersection(double[][] arc1Vectors, double[][] arc2Vectors, out double[][] intercepts)
+        internal static bool ArcArcIntersection(double[][] arc1Vectors, double[][] arc2Vectors, out List<double[]> intercepts)
         {
-            intercepts = null;
+            intercepts = new List<double[]>();
             const double tolerance = 0.0001;
             //Create two planes given arc1 and arc2
             var norm1 = arc1Vectors[0].crossProduct(arc1Vectors[1]).normalize(); //unit normal
@@ -330,7 +346,7 @@ namespace TVGL
                 l3 = Math.Acos(arc2Vectors[1].dotProduct(vertices[i]));
                 var total2 = l1 - l2 - l3;
                 if (!total1.IsNegligible() || !total2.IsNegligible()) continue;
-                intercepts[0] = vertices[i];             
+                intercepts.Add(vertices[i]);             
                 return true;
             }
             return false;
@@ -646,7 +662,7 @@ namespace TVGL
             foreach (var vertex in vertices)
             {
                 //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
-                switch (directions.Count())
+                switch (directions.Length)
                 {
                     case 1:
                     {
@@ -673,13 +689,13 @@ namespace TVGL
                     }
                         break;
                     default:
-                        throw new System.ArgumentException("Must provide between 1 to 3 direction vectors");
+                        throw new Exception("Must provide between 1 to 3 direction vectors");
                 }
             }
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
             var sortedPoints =
-                points.OrderBy(point => point.X).ThenBy(point => point.Y).ThenBy(point => point.Z).ToList<Point>();
+                points.OrderBy(point => point.X).ThenBy(point => point.Y).ThenBy(point => point.Z).ToList();
 
 
             //Linear operation to locate duplicates and convert back to a list of vertices
@@ -688,7 +704,7 @@ namespace TVGL
             sortedVertices.Add(sortedPoints[0].References[0]);
             var counter=0;
             int[] intRange;
-            switch (directions.Count())
+            switch (directions.Length)
             {
                 case 1:
                 {
@@ -775,7 +791,7 @@ namespace TVGL
                 }
                     break;
                 default:
-                    throw new System.ArgumentException("Must provide between 1 to 3 direction vectors");
+                    throw new Exception("Must provide between 1 to 3 direction vectors");
             }
         }
         #endregion
@@ -804,7 +820,7 @@ namespace TVGL
         /// <exception cref="ArgumentException"></exception>
         public static bool IsPointInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion, bool onBoundaryIsInside = true)
         {
-            if (vertices.Count != 3) throw new System.ArgumentException("Incorrect number of points in traingle");
+            if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
             var p = vertexInQuestion.Position;
             var a = vertices[0].Position;
             var b = vertices[1].Position;
@@ -859,37 +875,35 @@ namespace TVGL
                     //Note that if t == 0, then it is on the face
                     //else, find the intersection point and determine if it is inside the polygon (face)
                     var newVertex = t.IsNegligible() ? vertexInQuestion : new Vertex(vertexInQuestion.Position.add(direction.multiply(t)));
-                    if (MiscFunctions.IsPointInsideTriangle(face, newVertex, true))
+                    if (!IsPointInsideTriangle(face, newVertex)) continue;
+                    //If the distance between the vertex and a plane is neglible and the vertex is inside that face
+                    if (t.IsNegligible())
                     {
-                        //If the distance between the vertex and a plane is neglible and the vertex is inside that face
-                        if (t.IsNegligible())
+                        return onBoundaryIsInside;
+                    }
+                    if (t > 0.0) //Face is higher on Z axis than vertex.
+                    {
+                        //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes 
+                        //through an edge).
+                        var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesAbove.Contains(adjacentFace));
+                        //Else, inconclusive (e.g., corners of cresent moon) 
+                        if (!onAdjacentFace) facesAbove.Add(face);
+                        else
                         {
-                            return onBoundaryIsInside;
+                            inconclusive = true;
+                            break;
                         }
-                        if (t > 0.0) //Face is higher on Z axis than vertex.
+                    }
+                    else //Face is lower on Z axis than vertex.
+                    {
+                        //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes 
+                        //through an edge).
+                        var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesBelow.Contains(adjacentFace));
+                        if (!onAdjacentFace) facesBelow.Add(face);
+                        else //Else, inconclusive (e.g., corners of cresent moon) 
                         {
-                            //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes 
-                            //through an edge).
-                            var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesAbove.Contains(adjacentFace));
-                            //Else, inconclusive (e.g., corners of cresent moon) 
-                            if (!onAdjacentFace) facesAbove.Add(face);
-                            else
-                            {
-                                inconclusive = true;
-                                break;
-                            }
-                        }
-                        else //Face is lower on Z axis than vertex.
-                        {
-                            //Check to make sure no adjacent faces were already added to list (e.g., the projected vertex goes 
-                            //through an edge).
-                            var onAdjacentFace = face.AdjacentFaces.Any(adjacentFace => facesBelow.Contains(adjacentFace));
-                            if (!onAdjacentFace) facesBelow.Add(face);
-                            else //Else, inconclusive (e.g., corners of cresent moon) 
-                            {
-                                inconclusive = true;
-                                break;
-                            }
+                            inconclusive = true;
+                            break;
                         }
                     }
                 }
@@ -914,24 +928,21 @@ namespace TVGL
             //Create nodes and add them to a list
             var nodes = points.Select(point => new Node(point, 0, 0)).ToList();
 
-            //Add first line to list and update nodes with information
-            var lines = new List<Line>();
+            //Create first line and update nodes with information
             var line = new Line(nodes.Last(), nodes[0]);
-            lines.Add(line);
             nodes.Last().StartLine = line;
             nodes[0].EndLine = line;
-            //Create all other lines and add them to the list
+            //Create all other lines 
             for (var i = 1; i < points.Count; i++)
             {
                 line = new Line(nodes[i - 1], nodes[i]);
-                lines.Add(line);
                 nodes[i - 1].StartLine = line;
                 nodes[i].EndLine = line;
             }
 
             //sort points by descending y, then descending x
             nodes.Add(new Node(pointInQuestion, 0, 0));
-            var sortedNodes = nodes.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList<Node>();
+            var sortedNodes = nodes.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
             var lineList = new List<Line>();
 
             //Use red-black tree sweep to determine which lines should be tested for intersection
@@ -969,7 +980,7 @@ namespace TVGL
                 }
             }
             //If not returned, throw error
-            throw new System.ArgumentException("Failed to return intercept information");
+            throw new Exception("Failed to return intercept information");
         }
         #endregion
 
@@ -1004,7 +1015,7 @@ namespace TVGL
                 seperateSolids.Add(faces.ToList());
             }
             var count = 0;
-            if (seperateSolids.Count() == 1)
+            if (seperateSolids.Count == 1)
             {
                 solids.Add(ts);
                 return solids;
@@ -1012,9 +1023,9 @@ namespace TVGL
             foreach (var seperateSolid in seperateSolids)
             {
                 solids.Add(new TessellatedSolid(seperateSolid));
-                count = count + seperateSolid.Count();
+                count = count + seperateSolid.Count;
             }
-            if (count != ts.Faces.Count()) throw new Exception();
+            if (count != ts.Faces.Length) throw new Exception();
             return solids;
         }
         #endregion
@@ -1045,7 +1056,7 @@ namespace TVGL
                     stack.Push(adjacentFace);
                 }
             }
-            if (faces.Count() != ts.ConvexHull.Faces.Count()) throw new Exception();
+            if (faces.Count != ts.ConvexHull.Faces.Length) throw new Exception();
 
             //Check if the vertices of an edge belong to the two faces it is supposed to belong to
             foreach (var edge in ts.ConvexHull.Edges)
@@ -1086,9 +1097,8 @@ namespace TVGL
             }
 
             //Check if any faces are without a normal vector
-            for (var j = 0; j < ts.Faces.Count(); j++)
+            foreach (var face in ts.Faces)
             {
-                var face = ts.Faces[j];
                 var d = Math.Abs(face.Normal[0]) + Math.Abs(face.Normal[1]) + Math.Abs(face.Normal[2]);
                 if (d.IsNegligible()) throw new Exception();
                 if (double.IsNaN(face.Normal[0])) throw new Exception();
@@ -1113,8 +1123,8 @@ namespace TVGL
                     stack.Push(adjacentFace);
                 }
             }
-            if (ts.Faces.Count() - faces.Count()  > 3) throw new Exception("This is likely an assembly");
-            if (ts.Faces.Count() -  faces.Count() > 0 ) throw new Exception("Solid is not water tight");
+            if (ts.Faces.Length - faces.Count > 3) throw new Exception("This is likely an assembly");
+            if (ts.Faces.Length -  faces.Count > 0 ) throw new Exception("Solid is not water tight");
 
             //Passed all the debug criteria
             return false;
@@ -1143,7 +1153,7 @@ namespace TVGL
                     stack.Push(adjacentFace);
                 }
             }
-            if (faces.Count() != listFaces.Count()) throw new Exception("Solid is not water tight");
+            if (faces.Count != listFaces.Count) throw new Exception("Solid is not water tight");
             //Passed all the debug criteria
             return true;
         }

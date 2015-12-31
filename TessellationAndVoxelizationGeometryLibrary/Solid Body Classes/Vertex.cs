@@ -142,12 +142,14 @@ namespace TVGL
            
         }
 
+        /// <summary>
+        /// Defines vertex curvature
+        /// </summary>
         public void DefineVertexCurvature()
         {
-            var edges = new List<Edge>(Edges);
             if (Edges.Any(e => e.Curvature == CurvatureType.Undefined))
                 VertexCurvature = CurvatureType.Undefined;
-            else if (!Edges.Any(e => e.Curvature != CurvatureType.SaddleOrFlat))
+            else if (Edges.All(e => e.Curvature == CurvatureType.SaddleOrFlat))
                 VertexCurvature = CurvatureType.SaddleOrFlat;
             else if (Edges.Any(e => e.Curvature != CurvatureType.Convex))
                 VertexCurvature = CurvatureType.Concave;

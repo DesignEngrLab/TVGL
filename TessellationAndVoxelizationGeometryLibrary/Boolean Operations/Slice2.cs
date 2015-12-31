@@ -23,7 +23,6 @@ namespace TVGL.Boolean_Operations
         /// <param name="positiveSideSolids">The solids that are on the positive side of the plane
         /// This means that are on the side that the normal faces.</param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
-        /// <param name="tolerance"></param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids,
             out List<TessellatedSolid> negativeSideSolids)

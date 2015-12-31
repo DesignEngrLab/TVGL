@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using Microsoft.Office.Core;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace TVGLTest
@@ -58,13 +56,11 @@ namespace TVGLTest
             }
             
             //Create Chart
-            Excel.Range chartRange;
-            Excel.Range range;
-            Excel.ChartObjects xlCharts = (Excel.ChartObjects)xlWorksheet.ChartObjects(Type.Missing);
-            Excel.ChartObject myChart = (Excel.ChartObject)xlCharts.Add(200, 30, 400, 300);
-            Excel.Chart chart = myChart.Chart;
+            var xlCharts = (Excel.ChartObjects)xlWorksheet.ChartObjects(Type.Missing);
+            var myChart = xlCharts.Add(200, 30, 400, 300);
+            var chart = myChart.Chart;
             chart.ChartType = Excel.XlChartType.xlXYScatterLines;
-            Excel.SeriesCollection seriesCollection = (Excel.SeriesCollection)chart.SeriesCollection();
+            var seriesCollection = (Excel.SeriesCollection)chart.SeriesCollection();
             
             for (var i = 0; i < values.Count; i++) //For each series
             {
@@ -90,13 +86,16 @@ namespace TVGLTest
             System.Runtime.InteropServices.Marshal.ReleaseComObject(xlWorkbook);
             System.Runtime.InteropServices.Marshal.ReleaseComObject(xlApp);
         }
+
         /// <summary>
         /// Creates a new graph in a new excel workbook. Values is a list of data series, where a series is a list of X,Y value pairs.
         /// </summary>
-        /// <param name="graphTitle"></param>
+        /// <param name="dataSet2"></param>
+        /// <param name="seriesTitle"></param>
         /// <param name="xAxis"></param>
         /// <param name="yAxis"></param>
         /// <param name="headers"></param>
+        /// <param name="dataSet1"></param>
         public static void PlotDataSets(List<List<double[]>> dataSet1, List<List<double[]>> dataSet2, string seriesTitle = "",
              string xAxis = "", string yAxis = "", List<string> headers = null)
         {
@@ -111,16 +110,13 @@ namespace TVGLTest
             xlWorksheet = xlWorkbook.Worksheets.get_Item(1);
 
             //Create Chart
-            Excel.Range chartRange;
-            Excel.Range range;
-            Excel.ChartObjects xlCharts = (Excel.ChartObjects)xlWorksheet.ChartObjects(Type.Missing);
-            var offset = 0;
+            var xlCharts = (Excel.ChartObjects)xlWorksheet.ChartObjects(Type.Missing);
 
             for (var i = 0; i < dataSet1.Count; i++) //For each series in dataSet1
             {
                 //Create a new chart and offset from previous                
-                offset = 300 * (i);
-                Excel.ChartObject myChart = (Excel.ChartObject)xlCharts.Add(200, 30 + offset, 400, 300);
+                var offset = 300 * (i);
+                Excel.ChartObject myChart = xlCharts.Add(200, 30 + offset, 400, 300);
                 Excel.Chart chart = myChart.Chart;
                 chart.ChartType = Excel.XlChartType.xlXYScatterLines;
                 Excel.SeriesCollection seriesCollection = (Excel.SeriesCollection)chart.SeriesCollection();
@@ -167,7 +163,7 @@ namespace TVGLTest
         /// Creates a new graph in a new excel workbook. Values is a list of data series, where a series is a list of X,Y value pairs.
         /// </summary>
         /// <param name="values"></param>
-        /// <param name="graphTitle"></param>
+        /// <param name="seriesTitle"></param>
         /// <param name="xAxis"></param>
         /// <param name="yAxis"></param>
         /// <param name="headers"></param>
@@ -195,10 +191,7 @@ namespace TVGLTest
             }
             
             //Create Chart
-            Excel.Range chartRange;
-            Excel.Range range;
             Excel.ChartObjects xlCharts = (Excel.ChartObjects)xlWorksheet.ChartObjects(Type.Missing);
-            var offset = 0;
 
             for (var i = 0; i < values.Count; i++) //For each series
             {
@@ -211,8 +204,8 @@ namespace TVGLTest
                 }
 
                 //Create a new chart and offset from previous                
-                offset =  300 * (i);
-                Excel.ChartObject myChart = (Excel.ChartObject)xlCharts.Add(200, 30 + offset, 400, 300 );
+                var offset = 300 * (i);
+                Excel.ChartObject myChart = xlCharts.Add(200, 30 + offset, 400, 300 );
                 Excel.Chart chart = myChart.Chart;
                 chart.ChartType = Excel.XlChartType.xlXYScatterLines;
                 Excel.SeriesCollection seriesCollection = (Excel.SeriesCollection)chart.SeriesCollection();

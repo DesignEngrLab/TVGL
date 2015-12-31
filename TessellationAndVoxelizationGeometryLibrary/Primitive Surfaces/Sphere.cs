@@ -11,6 +11,10 @@ namespace TVGL
     public class Sphere : PrimitiveSurface
     {
         #region Constructor
+        /// <summary>
+        /// Primitive Sphere
+        /// </summary>
+        /// <param name="facesAll"></param>
         public Sphere(IEnumerable<PolygonalFace> facesAll)
             : base(facesAll)
         {
@@ -62,6 +66,8 @@ namespace TVGL
         }
 
         #endregion                   
+
+        #region Public Properties
         /// <summary>
         /// Is the sphere positive? (false is negative)
         /// </summary>
@@ -80,6 +86,13 @@ namespace TVGL
         /// The radius.
         /// </value>
         public double Radius { get; internal set; }
+        #endregion
+
+        /// <summary>
+        /// Checks if the face is a member of the sphere
+        /// </summary>
+        /// <param name="face"></param>
+        /// <returns></returns>
         public override Boolean IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
@@ -92,13 +105,17 @@ namespace TVGL
             return true;
         }
 
+        /// <summary>
+        /// Adds face to sphere
+        /// </summary>
+        /// <param name="face"></param>
         public override void UpdateWith(PolygonalFace face)
         {
             double[] pointOnLine;
             var distance = MiscFunctions.DistancePointToLine(Center, face.Center, face.Normal, out pointOnLine);
             var fractionToMove = 1 / Faces.Count;
-            var MoveVector = pointOnLine.subtract(Center);
-            Center = Center.add(new[] { MoveVector[0] * fractionToMove * distance, MoveVector[1] * fractionToMove * distance, MoveVector[2] * fractionToMove * distance });
+            var moveVector = pointOnLine.subtract(Center);
+            Center = Center.add(new[] { moveVector[0] * fractionToMove * distance, moveVector[1] * fractionToMove * distance, moveVector[2] * fractionToMove * distance });
 
 
             var totalOfRadii = Vertices.Sum(v => MiscFunctions.DistancePointToPoint(Center, v.Position));
