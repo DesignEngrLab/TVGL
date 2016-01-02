@@ -78,7 +78,8 @@ namespace TVGL
                 // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
                 area += Math.Abs(edge1.crossProduct(edge2).dotProduct(Normal)) / 2;
             }
-            return area;
+            //If not a number, the triangle is actually a straight line. Set the area = 0, and let repair function fix this.
+            return double.IsNaN(area) ? 0.0 : area;
         }
         private double[] DetermineNormal(out bool reverseVertexOrder, double[] normal = null) //Assuming CCW order of vertices
         {
@@ -236,6 +237,14 @@ namespace TVGL
         public bool PartofConvexHull { get; internal set; }
 
         /// <summary>
+        /// Gets the normal.
+        /// </summary>
+        /// <value>
+        /// The normal.
+        /// </value>
+        public string CreatedInFunction { get; set; }
+
+        /// <summary>
         /// Gets the adjacent faces.
         /// </summary>
         /// <value>The adjacent faces.</value>
@@ -323,6 +332,13 @@ namespace TVGL
         {
             return willAcceptNullAnswer ? Vertices.FirstOrDefault(v => v != v1 && v != v2) :
                 Vertices.First(v => v != v1 && v != v2);
+        }
+
+        internal Vertex NextVertexCCW(Vertex v1)
+        {
+            var index = Vertices.IndexOf(v1);
+            if (index < 0) return null; //Vertex is not part of this face
+            return index == Vertices.Count ? Vertices[0] : Vertices[index + 1];
         }
 
     }

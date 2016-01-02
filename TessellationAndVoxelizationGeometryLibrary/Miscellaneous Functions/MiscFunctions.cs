@@ -194,6 +194,12 @@ namespace TVGL
         {
             return AngleBetweenEdgesCCW(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
+
+        internal static double ProjectedAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
+        {
+            var points = Get2DProjectionPoints(new List<Vertex> {a, b, c}, positiveNormal);
+            return AngleBetweenEdgesCCW(new[] { points[1].X - points[0].X, points[1].Y - points[0].Y }, new[] { points[2].X - points[1].X, points[2].Y - points[1].Y });
+        }
         
         internal static double AngleBetweenEdgesCW(double[] v0, double[] v1)
         {

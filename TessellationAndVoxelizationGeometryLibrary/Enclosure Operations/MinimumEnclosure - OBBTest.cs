@@ -202,6 +202,7 @@ namespace TVGL
             return bestOBB;
         }
         #endregion
+
         private static BoundingBox Find_via_ChanTan_AABB_Approach(IList<Vertex> convexHullVertices)
         {
             return Find_via_ChanTan_AABB_Approach(convexHullVertices, new BoundingBox

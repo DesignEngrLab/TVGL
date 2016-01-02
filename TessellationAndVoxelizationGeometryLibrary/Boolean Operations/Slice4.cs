@@ -44,9 +44,9 @@ namespace TVGL.Boolean_Operations
 
             //3. Triangulate that empty space and add to list 
             var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal);
-            positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1))));
+            positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1)){CreatedInFunction = "Slice4: Triangulation"}));
             triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal);
-            negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal)));
+            negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal){CreatedInFunction = "Slice4: Triangulation"}));
             //4. Create a new tesselated solid. This solid may actually be multiple solids.
             //This step removes all previous relationships and rebuilds them.
             if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
@@ -85,11 +85,11 @@ namespace TVGL.Boolean_Operations
                 for (int i = 0; i < ts.NumberOfVertices; i++)
                 {
                     var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
-                    if (Math.Abs(distance) < Constants.BaseTolerance) break;
+                    if (Math.Abs(distance) < ts.SameTolerance) break;
                     distancesToPlane.Add(distance);
                 }
                 if (distancesToPlane.Count == ts.NumberOfVertices) successfull = true;
-                plane.DistanceToOrigin = plane.DistanceToOrigin + Constants.BaseTolerance * isPositiveSide;
+                plane.DistanceToOrigin = plane.DistanceToOrigin + ts.SameTolerance * isPositiveSide;
             }
 
             //Find all the straddle edges and add the new intersect vertices to both the pos and nef loops.
@@ -196,7 +196,7 @@ namespace TVGL.Boolean_Operations
             //It also keeps track of how many new vertices should be created.
             var newVertexIndex = ts.NumberOfVertices;
             var allNewFaces = new List<PolygonalFace>();
-            var tolerance = Math.Sqrt(Constants.BaseTolerance);
+            var tolerance = Math.Sqrt(ts.SameTolerance);
             foreach (var loopOfStraddleEdges in loopsOfStraddleEdges)
             {
                 var newFaces = new List<PolygonalFace>();
@@ -281,6 +281,7 @@ namespace TVGL.Boolean_Operations
             
             foreach (var face1 in allNewFaces)
             {
+                face1.CreatedInFunction = "Slice4: Divide up faces";
                 foreach (var face2 in allNewFaces)
                 {
                     var duplicate = false;

@@ -300,6 +300,7 @@ namespace TVGL
             }
             VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(NumberOfVertices)) + 1);
             //Clear information from the faces and update their index.
+            //Keep "CreatedInFunction" to help with debug
             for (var i = 0; i < Faces.Length; i++)
             {
                 var face = Faces[i];
@@ -369,7 +370,7 @@ namespace TVGL
             var taskZMax = Task.Factory.StartNew(() => ZMax = vertices.Max(v => v[2]));
             Task.WaitAll(taskXMin, taskXMax, taskYMin, taskYMax, taskZMin, taskZMax);
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
-            SameTolerance = shortestDimension * Constants.BaseTolerance / 1000000;
+            SameTolerance = shortestDimension * Constants.BaseTolerance;
         }
 
         /// <summary>
@@ -891,6 +892,7 @@ namespace TVGL
             for (int i = 0; i < NumberOfFaces; i++)
                 newFaces[i] = Faces[i];
             newFaces[NumberOfFaces] = newFace;
+            newFace.IndexInList = NumberOfFaces;
             Faces = newFaces;
             NumberOfFaces++;
         }
@@ -901,7 +903,10 @@ namespace TVGL
             for (int i = 0; i < NumberOfFaces; i++)
                 newFaces[i] = Faces[i];
             for (int i = 0; i < numToAdd; i++)
+            {
                 newFaces[NumberOfFaces + i] = facesToAdd[i];
+                newFaces[NumberOfFaces + i].IndexInList = NumberOfFaces + i;
+            }     
             Faces = newFaces;
             NumberOfFaces += numToAdd;
         }
@@ -972,6 +977,8 @@ namespace TVGL
             for (int i = 0; i < NumberOfEdges; i++)
                 newEdges[i] = Edges[i];
             newEdges[NumberOfEdges] = newEdge;
+            if (newEdge.EdgeReference == null) SetEdgeChecksum(newEdge);
+            newEdge.IndexInList = NumberOfEdges;
             Edges = newEdges;
             NumberOfEdges++;
         }
@@ -982,7 +989,11 @@ namespace TVGL
             for (var i = 0; i < NumberOfEdges; i++)
                 newEdges[i] = Edges[i];
             for (var i = 0; i < numToAdd; i++)
+            {
                 newEdges[NumberOfEdges + i] = edgesToAdd[i];
+                if (newEdges[NumberOfEdges + i].EdgeReference == null) SetEdgeChecksum(newEdges[NumberOfEdges + i]);
+                newEdges[NumberOfEdges + i].IndexInList = NumberOfEdges;
+            }
             Edges = newEdges;
             NumberOfEdges += numToAdd;
         }
