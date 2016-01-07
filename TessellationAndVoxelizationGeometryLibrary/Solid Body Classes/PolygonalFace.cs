@@ -338,7 +338,7 @@ namespace TVGL
         {
             var index = Vertices.IndexOf(v1);
             if (index < 0) return null; //Vertex is not part of this face
-            return index == Vertices.Count ? Vertices[0] : Vertices[index + 1];
+            return index == Vertices.Count-1 ? Vertices[0] : Vertices[index + 1];
         }
 
     }

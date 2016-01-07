@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using StarMathLib;
 
 namespace TVGL
@@ -43,6 +44,7 @@ namespace TVGL
             //if (Length.IsNegligible(Constants.BaseTolerance)) throw new Exception();
             if (OwnedFace == null || OtherFace == null) return; //No need for the next few functions
             DefineInternalEdgeAngle();
+            Vertices = new List<Vertex> { From, To };
             if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
@@ -68,6 +70,7 @@ namespace TVGL
                 (To.Position[2] - From.Position[2])
             };
             Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
+            Vertices = new List<Vertex> { From, To };
             //if (Length.IsNegligible(Constants.BaseTolerance)) throw new Exception();
             //Since there are no faces yet, internal angle is not calculated.
         }
@@ -123,6 +126,11 @@ namespace TVGL
         ///     The vector.
         /// </value>
         public double[] Vector { get; internal set; }
+
+        /// <summary>
+        ///     Gets the two vertices that make up an edge.
+        /// </summary>
+        public List<Vertex> Vertices { get; internal set; }
 
         private PolygonalFace _otherFace;
         private PolygonalFace _ownedFace;

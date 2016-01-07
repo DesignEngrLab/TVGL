@@ -53,7 +53,7 @@ namespace TVGL
         /// <summary>
         /// Faces with negligible area
         /// </summary>
-        public List<PolygonalFace> FacesWithNegligibleArea { get; private set; }
+        //public List<PolygonalFace> FacesWithNegligibleArea { get; private set; }
         /// <summary>
         /// Edges that do not link back to faces that link to them
         /// </summary>
@@ -117,7 +117,7 @@ namespace TVGL
                 if (face.Vertices.Count == 2) StoreFaceWithTwoVertices(ts, face);
                 if (face.Edges.Count == 1) StoreFaceWithOneEdge(ts, face);
                 if (face.Edges.Count == 2) StoreFaceWithOTwoEdges(ts, face);
-                if (face.Area.IsNegligible(ts.SameTolerance)) StoreFaceWithNegligibleArea(ts, face);
+                //if (face.Area.IsNegligible(ts.SameTolerance)) StoreFaceWithNegligibleArea(ts, face);
                 foreach (var edge in face.Edges.Where(edge => edge.OwnedFace != face && edge.OtherFace != face))
                     StoreEdgeDoesNotLinkBackToFace(ts, face, edge);
                 foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
@@ -191,7 +191,7 @@ namespace TVGL
             if (FacesWithOneEdge != null) Debug.WriteLine("==> {0} faces with only one edge.", FacesWithOneEdge.Count);
             if (FacesWithTwoVertices != null) Debug.WriteLine("==> {0}  faces with only two vertices.", FacesWithTwoVertices.Count);
             if (FacesWithTwoEdges != null) Debug.WriteLine("==> {0}  faces with only two edges.", FacesWithTwoEdges.Count);
-            if (FacesWithNegligibleArea != null) Debug.WriteLine("==> {0}  faces with negligible area.", FacesWithNegligibleArea.Count);
+            //if (FacesWithNegligibleArea != null) Debug.WriteLine("==> {0}  faces with negligible area.", FacesWithNegligibleArea.Count);
             if (EdgesWithBadAngle != null) Debug.WriteLine("==> {0} edges with bad angles.", EdgesWithBadAngle.Count);
             if (EdgesThatDoNotLinkBackToFace != null)
                 Debug.WriteLine("==> {0} edges that do not link back to faces that link to them.",
@@ -292,12 +292,12 @@ namespace TVGL
             else ts.Errors.EdgesThatDoNotLinkBackToFace.Add(new Tuple<PolygonalFace, Edge>(face, edge));
         }
 
-        private static void StoreFaceWithNegligibleArea(TessellatedSolid ts, PolygonalFace face)
-        {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
-            if (ts.Errors.FacesWithNegligibleArea == null) ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> { face };
-            else ts.Errors.FacesWithNegligibleArea.Add(face);
-        }
+        //private static void StoreFaceWithNegligibleArea(TessellatedSolid ts, PolygonalFace face)
+        //{
+        //    if (ts.Errors == null) ts.Errors = new TessellationError();
+        //    if (ts.Errors.FacesWithNegligibleArea == null) ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> { face };
+        //    else ts.Errors.FacesWithNegligibleArea.Add(face);
+        //}
 
         private static void StoreFaceWithOTwoEdges(TessellatedSolid ts, PolygonalFace face)
         {
@@ -372,8 +372,8 @@ namespace TVGL
                 completelyRepaired = completelyRepaired && DivideUpNonTriangularFaces(ts);
             if (SingledSidedEdges != null) //what about faces with only one or two edges?
                 completelyRepaired = completelyRepaired && RepairMissingFacesFromEdges(ts);
-            if (FacesWithNegligibleArea != null)
-                completelyRepaired = completelyRepaired && RepairNeglibleAreaFaces(ts);
+            //if (FacesWithNegligibleArea != null)
+                //completelyRepaired = completelyRepaired && RepairNeglibleAreaFaces(ts);
             return completelyRepaired;
         }
 
@@ -422,6 +422,7 @@ namespace TVGL
                 {
                     if (!singleSidedEdges.Contains(edge)) singleSidedEdges.Add(edge);
                 }
+                //Using Triangulate Polygon guarantees that even if the face has concave edges, it will triangulate properly.
                 var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { nonTriangularFace.Vertices }, nonTriangularFace.Normal);
                 foreach (var triangle in triangles)
                 {
@@ -558,330 +559,435 @@ namespace TVGL
         //Note that this removes 2 triangles, 3 edges, and 1 vertex from the model.
         //The new triangles, will either be flattened (if they had different normals)
         //OR, they will simply be merged. 
-        private static bool RepairNeglibleAreaFaces(TessellatedSolid ts)
-        {
-            var index = 0;
-            while (index < ts.Errors.FacesWithNegligibleArea.Count)
-            {
-                //It shouldn't matter, but go ahead and start with the smallest faces
-                var negligibleFaces = new List<PolygonalFace>(ts.Errors.FacesWithNegligibleArea).OrderBy(f => f.Area).ToList();
-                var negligibleFace = negligibleFaces[index];
-                var splittingEdge = negligibleFace.Edges.OrderByDescending(item => item.Length).First();
-                //Get the vertex opposite the splitting edge
-                var otherVertex = negligibleFace.OtherVertex(splittingEdge);
-                //Get the faces to be removed
-                var removeTheseFaces = new List<PolygonalFace>(otherVertex.Faces);
-                //Get the edges to be removed.
-                var removeTheseEdges = new List<Edge>(otherVertex.Edges);
+        //private static bool RepairNeglibleAreaFaces(TessellatedSolid ts)
+        //{
+        //    var index = 0;
+        //    while (index < ts.Errors.FacesWithNegligibleArea.Count)
+        //    {
+        //        //It shouldn't matter, but go ahead and start with the smallest faces
+        //        var negligibleFaces = new List<PolygonalFace>(ts.Errors.FacesWithNegligibleArea).OrderBy(f => f.Area).ToList();
+        //        var negligibleFace = negligibleFaces[index];
+        //        var splittingEdge = negligibleFace.Edges.OrderByDescending(item => item.Length).First();
+        //        //Get the vertex opposite the splitting edge
+        //        var centerVertex = negligibleFace.OtherVertex(splittingEdge);
+        //        //Get the faces to be removed
+        //        var removeTheseFaces = new List<PolygonalFace>(centerVertex.Faces);
+        //        //Get the edges to be removed.
+        //        var removeTheseEdges = new List<Edge>(centerVertex.Edges);
 
-                //Use the same vertex which already exists, rather that creating a new one.
-                //This method will simplify the model by 2 triangles.
-                var newEdges = new List<Edge>();
-                //var newFaces = new List<PolygonalFace>();
-                //Get the smallest edge of the negligible face.
-                var negligibleEdge = negligibleFace.Edges.OrderBy(item => item.Length).First();
-                var collapseToVertex = negligibleEdge.To == otherVertex ? negligibleEdge.From : negligibleEdge.To;
+        //        //Use the same vertex which already exists, rather that creating a new one.
+        //        //This method will simplify the model by 2 triangles.
+        //        var newEdges = new List<Edge>();
+        //        //var newFaces = new List<PolygonalFace>();
+        //        //Get the smallest edge of the negligible face.
+        //        var negligibleEdge = negligibleFace.Edges.OrderBy(item => item.Length).First();
+        //        var collapseToVertex = negligibleEdge.To == centerVertex ? negligibleEdge.From : negligibleEdge.To;
 
-                //Get the outer edges and faces
-                var allAffectedEdges = new List<Edge>();
-                var allAffectedFaces = new List<PolygonalFace>();
-                foreach (var face in removeTheseFaces)
-                {
-                    if (!ts.Faces.Contains(face)) throw new Exception();
-                    foreach (var edge in face.Edges.Where(edge => !removeTheseEdges.Contains(edge)))
-                    {
-                        allAffectedEdges.Add(edge); //Add this outer edge
-                        allAffectedFaces.Add(edge.OwnedFace == face ? edge.OtherFace : edge.OwnedFace);
-                    }
-                }
+        //        //Get the outer edges and faces
+        //        var allAffectedEdges = new List<Edge>();
+        //        var allAffectedFaces = new List<PolygonalFace>();
+        //        foreach (var face in removeTheseFaces)
+        //        {
+        //            if (!ts.Faces.Contains(face)) throw new Exception();
+        //            foreach (var edge in face.Edges.Where(edge => !removeTheseEdges.Contains(edge)))
+        //            {
+        //                allAffectedEdges.Add(edge); //Add this outer edge
+        //                allAffectedFaces.Add(edge.OwnedFace == face ? edge.OtherFace : edge.OwnedFace);
+        //            }
+        //        }
                 
-                //Find the second face to be collapsed and the third vertices from the two faces to be collapsed
-                //We don't want the negligible face.
-                PolygonalFace secondFace = null;
-                foreach (var face in removeTheseFaces.Where(face => face != negligibleFace))
-                {
-                    if (!face.Vertices.Contains(collapseToVertex)) continue;
-                    //If it already contains the new vertex, then it must be the secondFace we are going to collapse
-                    if (secondFace != null) goto errorWithFace; // new Exception("this condition can only happen once");
-                    secondFace = face;
-                }
-                if (secondFace == null) goto errorWithFace; // new Exception("this face must be set");
-                var thirdVertexOfSecondFace = negligibleFace.OtherVertex(negligibleEdge);
-                var thirdVertexOfNegligibleFace = secondFace.OtherVertex(negligibleEdge);
+        //        //Find the second face to be collapsed and the third vertices from the two faces to be collapsed
+        //        //We don't want the negligible face.
+        //        PolygonalFace secondFace = null;
+        //        foreach (var face in removeTheseFaces.Where(face => face != negligibleFace))
+        //        {
+        //            if (!face.Vertices.Contains(collapseToVertex)) continue;
+        //            //If it already contains the new vertex, then it must be the secondFace we are going to collapse
+        //            if (secondFace != null) goto errorWithFace; // new Exception("this condition can only happen once");
+        //            secondFace = face;
+        //        }
+        //        if (secondFace == null) goto errorWithFace; // new Exception("this face must be set");
+        //        var thirdVertexOfSecondFace = negligibleFace.OtherVertex(negligibleEdge);
+        //        var thirdVertexOfNegligibleFace = secondFace.OtherVertex(negligibleEdge);
 
-                //Get an ordered list of the outer vertices
-                //Starting with the negligible face, move clockwise around the affected area
-                var currentFace = negligibleFace;
-                var innerFaces = new List<PolygonalFace>(removeTheseFaces);
-                var firstVertex = currentFace.NextVertexCCW(otherVertex);
-                var secondVertex = currentFace.NextVertexCCW(firstVertex);
-                var orderedOuterVertices = new List<Vertex> ();
-                innerFaces.Remove(negligibleFace);
-                do
-                {
-                    //Add the second vertex to the ordered list
-                    orderedOuterVertices.Add(secondVertex);
+        //        //Get an ordered list of the outer vertices
+        //        //Starting with the negligible face, move clockwise around the affected area
+        //        var currentFace = negligibleFace;
+        //        var innerFaces = new List<PolygonalFace>(removeTheseFaces);
+        //        var firstVertex = currentFace.NextVertexCCW(centerVertex);
+        //        var secondVertex = currentFace.NextVertexCCW(firstVertex);
+        //        var orderedOuterVertices = new List<Vertex>{firstVertex}; //Start by adding the first vertex
+        //        do
+        //        {
+        //            //Add the second vertex to the ordered list
+        //            innerFaces.Remove(currentFace);
+        //            orderedOuterVertices.Add(secondVertex);
 
-                    //Find the next face, using the vertices and set to current
-                    currentFace = innerFaces.FirstOrDefault(face => face.Vertices.Contains(secondVertex));
-                    if (currentFace == null) throw new Exception();
-                    firstVertex = secondVertex;
-                    secondVertex = currentFace.NextVertexCCW(firstVertex);
-                    if(secondVertex == otherVertex) throw new Exception("The list of vertices for this face is incorrect");
-                } while (secondVertex != orderedOuterVertices[0]);
-                //Set a reference index to show a local ordered index
-                for (var j = 0; j < orderedOuterVertices.Count; j++)
-                {
-                    orderedOuterVertices[j].ReferenceIndex = j;
-                }
+        //            //Find the next face, using the vertices and set to current
+        //            currentFace = innerFaces.FirstOrDefault(face => face.Vertices.Contains(secondVertex));
+        //            if (currentFace == null) throw new Exception();
+        //            firstVertex = secondVertex;
+        //            secondVertex = currentFace.NextVertexCCW(firstVertex);
+        //            if(secondVertex == centerVertex) throw new Exception("The list of vertices for this face is incorrect");
+        //        } while (secondVertex != orderedOuterVertices[0]);
+        //        //Set a reference index to show a local ordered index
+        //        for (var j = 0; j < orderedOuterVertices.Count; j++)
+        //        {
+        //            orderedOuterVertices[j].ReferenceIndex = j;
+        //        }
 
-                #region Build Convex Polygons
+        //        //Build convex polygons to be converted into triangles
+        //        //Check for concave angles between sets of points
+        //        //Whenever a loop with a concave edge is identified,  
+        //        //determine where to close that loop. Remove all vertices
+        //        //inside the loop. This is a recursive call in case concave
+        //        //edges are nested in the smaller loops.
+        //        //Once a loop is solved/closed step out 1 in the recursion and
+        //        //repeat that level.
+        //        var convexPolygons = new List<List<Vertex>>();
+        //        BuildConvexPolygons(ref convexPolygons, centerVertex, orderedOuterVertices, innerFaces,
+        //            allAffectedEdges, removeTheseEdges);
 
-                //Build convex polygons to be converted into triangles
-                var convexPolygons = new List<List<Vertex>>();
-                do
-                {
-                    var startVertex = orderedOuterVertices[0];
-                    var convexPolygon = new List<Vertex>{startVertex};
-                    var removedVertices = new List<Vertex>();
-                    var successful = false;
-                    var j = 0;
-                    do
-                    {
-                        if (j == orderedOuterVertices.Count) j = 0;
-                        var v1 = orderedOuterVertices[j];
-                        if (v1 == startVertex && convexPolygon.Any())
-                        {
-                            successful = true;
-                            continue;
-                        }
-                        Vertex v2;
-                        Vertex v3;
-                        if (j == orderedOuterVertices.Count - 1)
-                        {
-                            v2 = orderedOuterVertices[0];
-                            v3 = orderedOuterVertices[1];
-                        }
-                        else if (j == orderedOuterVertices.Count - 2)
-                        {
-                            v2 = orderedOuterVertices[j + 1];
-                            v3 = orderedOuterVertices[0];
-                        }
-                        else
-                        {
-                            v2 = orderedOuterVertices[j + 1];
-                            v3 = orderedOuterVertices[j + 2];
-                        }
+        //        #region Create New Faces from the Convex Polygons
+        //        //Create new faces to replace the ones being removed.
+        //        var newFaces  = new List<PolygonalFace>();
+        //        foreach (var convexPolygon in convexPolygons)
+        //        {
+        //            if (convexPolygon.Count < 3) throw new Exception();
+        //            if (convexPolygon.Count == 3)
+        //            {
+        //                newFaces.Add(new PolygonalFace(convexPolygon) { CreatedInFunction = "Negligible Face Repair: New Face" });
+        //            }
+        //            else
+        //            {
+        //                if (!convexPolygon.Contains(collapseToVertex)) throw new Exception();
+        //                var j = convexPolygon.IndexOf(collapseToVertex);
+        //                for (var k = 1; k < convexPolygon.Count - 1; k++)
+        //                {
+        //                    Vertex v2;
+        //                    Vertex v3;
+        //                    if (j + k == convexPolygon.Count)
+        //                    {
+        //                        v2 = convexPolygon[0];
+        //                        v3 = convexPolygon[1];
+        //                    }
+        //                    else if (j + 1 + k == convexPolygon.Count)
+        //                    {
+        //                        v2 = convexPolygon[j + k];
+        //                        v3 = convexPolygon[0];
+        //                    }
+        //                    else
+        //                    {
+        //                        v2 = convexPolygon[j + k];
+        //                        v3 = convexPolygon[j + 1 + k];
+        //                    }
+        //                    newFaces.Add(new PolygonalFace(new List<Vertex>{collapseToVertex, v2, v3}) { CreatedInFunction = "Negligible Face Repair: New Face" });
+        //                }
+        //            }
+        //        }
+        //        #endregion
 
-                        //To get the correct angle to determine whether the section in concave or convex
-                        //1) Get normals of both faces (v1, v2, otherVertex && v2, v3, otherVertex)
-                        //Since these are ordered CCW, we don't need to guess a normal.
-                        //2) Get the internal angle between the two faces (along the v2, otherVertex edge)
-                        //3) Rotate face2 by PI minus the internal angle, to bring it into the same plane as face1
-                        //4) Get the angle using the projected 2D along face1's normal
-                        var face1 = new PolygonalFace(new List<Vertex> {v1, v2, otherVertex}, null, false);
-                        var face2 = new PolygonalFace(new List<Vertex> {v2, v3, otherVertex}, null, false);
-                        var edge = new Edge(v2, otherVertex, face1, face2, false);
-                        var theta = Math.PI - edge.InternalAngle;
-                        var s = Math.Sin(theta);
-                        var c = Math.Cos(theta);
-                        var t = 1.0 - c;
-                        var r = edge.Vector;
-                        //Source http://math.kennesaw.edu/~plaval/math4490/rotgen.pdf
-                        var rotMatrix = new[,]
-                        {
-                            {t*r[0]*r[0] + c, t*r[0]*r[1] - s*r[2], t*r[0]*r[2] + s*r[1]},
-                            {t*r[0]*r[1] + s*r[2], t*r[1]*r[1] + c, t*r[1]*r[2] - s*r[0]},
-                            {t*r[0]*r[2] - s*r[1], t*r[1]*r[2] + s*r[0], t*r[2]*r[2] + c}
-                        };
-                        var newPoint = new Vertex(rotMatrix.multiply(v3.Position));
-                        var angle = MiscFunctions.ProjectedAngleBetweenVerticesCCW(v1, v2, newPoint, face1.Normal);
-                        if (angle < Math.PI)
-                        {
-                            convexPolygon.Add(v3);
-                            j++; //Only increment if successful (keeps the same v1 and v2)
-                        }
-                        else
-                        {
-                            orderedOuterVertices.Remove(v3);
-                            removedVertices.Add(v3);
-                        }
-                    } while (!successful);
+        //        //Create new faces to replace the ones being removed.
+        //        //foreach (var face in removeTheseFaces)
+        //        //{
+        //        //    if (face == negligibleFace || face == secondFace)
+        //        //        continue; //We don't need to do anything with these faces for now.
+        //        //                  //Replace the vertices from this face. Keep the normal, or add guess bool. normalIsGuess.
+        //        //    var newFaceVertexList = new List<Vertex>(face.Vertices);
+        //        //    newFaceVertexList.Remove(otherVertex);
+        //        //    newFaceVertexList.Add(collapseToVertex);
+        //        //    var newFace = new PolygonalFace(newFaceVertexList, face.Normal){CreatedInFunction = "Negligible Face Repair: New Face"};
+        //        //    newFaces.Add(newFace);
+        //        //}
+        //        //allAffectedFaces.AddRange(newFaces);
 
-                    //Rebuild the ordered outer vertices list
-                    if (removedVertices.Any())
-                    {
-                        var partiallyCompletedVertices = new List<Vertex> ();
-                        //Remove all vertices that had both outer edges used
-                        foreach (var vertex in orderedOuterVertices)
-                        {
-                            foreach (var edge in vertex.Edges.Where(edge => allAffectedEdges.Contains(edge)))
-                            {
-                                if (!convexPolygon.Contains(edge.OtherVertex(vertex))) continue;
-                                if (!partiallyCompletedVertices.Contains(vertex))
-                                    partiallyCompletedVertices.Add(vertex);
-                                else
-                                {
-                                    partiallyCompletedVertices.Remove(vertex);
-                                    orderedOuterVertices.Remove(vertex);
-                                }
-                            }
-                        }
-                        //Add back in all the vertices that were removed during the convex polygon creation
-                        orderedOuterVertices.AddRange(removedVertices);
-                        //Order the vertices by the reference index
-                        orderedOuterVertices = orderedOuterVertices.OrderBy(v => v.ReferenceIndex).ToList();
-                    }
+        //        //Create new edges to replace the ones being removed. 
+        //        foreach (var edge in removeTheseEdges.Where(edge => edge != negligibleEdge))
+        //        {
+        //            if (edge.To == centerVertex && 
+        //                (edge.From == thirdVertexOfNegligibleFace || edge.From == thirdVertexOfSecondFace))
+        //                continue; //We don't need this edge
+        //            if (edge.From == centerVertex && 
+        //                (edge.To == thirdVertexOfNegligibleFace || edge.To == thirdVertexOfSecondFace))
+        //                continue; //We don't need this edge
+        //            newEdges.Add(centerVertex == edge.From
+        //                ? new Edge(collapseToVertex, edge.OtherVertex(centerVertex), true)
+        //                : new Edge(edge.OtherVertex(centerVertex), collapseToVertex, true));
+        //        }
+        //        allAffectedEdges.AddRange(newEdges);
 
-                    convexPolygons.Add(convexPolygon);
+        //        //Set the owned and other faces of the affected edges. All new edges's faces are in newFaces
+        //        foreach (var edge in allAffectedEdges)
+        //        {
+        //            //Reset the owned and other.
+        //            edge.OwnedFace = null;
+        //            edge.OtherFace = null;
+        //            foreach (var face in allAffectedFaces.Where(face => face.Vertices.Contains(edge.To) && face.Vertices.Contains(edge.From)))
+        //            {
+        //                if(!face.Edges.Contains(edge)) face.Edges.Add(edge); //Update the edge list for this face
+        //                if (edge.OwnedFace == null) edge.OwnedFace = face;
+        //                else if (edge.OtherFace == null) edge.OtherFace = face;
+        //                else if (edge.OwnedFace == edge.OtherFace)
+        //                    edge.OtherFace = face; //A mistake was made. Fix it.
+        //                else throw new Exception();
+        //            }
+        //        }
 
-                } while (orderedOuterVertices.Any());
-
-                #endregion
-
-                #region Create New Faces from the Convex Polygons
-                //Create new faces to replace the ones being removed.
-                var newFaces  = new List<PolygonalFace>();
-                foreach (var convexPolygon in convexPolygons)
-                {
-                    if (convexPolygon.Count < 3) throw new Exception();
-                    if (convexPolygon.Count == 3)
-                    {
-                        newFaces.Add(new PolygonalFace(convexPolygon) { CreatedInFunction = "Negligible Face Repair: New Face" });
-                    }
-                    else
-                    {
-                        if (!convexPolygon.Contains(collapseToVertex)) throw new Exception();
-                        var j = convexPolygon.IndexOf(collapseToVertex);
-                        for (var k = 0; k < convexPolygon.Count - 2; k++)
-                        {
-                            Vertex v2;
-                            Vertex v3;
-                            if (j + k == convexPolygon.Count)
-                            {
-                                v2 = convexPolygon[0];
-                                v3 = convexPolygon[1];
-                            }
-                            else if (j + 1 + k == convexPolygon.Count)
-                            {
-                                v2 = convexPolygon[j + k];
-                                v3 = convexPolygon[0];
-                            }
-                            else
-                            {
-                                v2 = convexPolygon[j + k];
-                                v3 = convexPolygon[j + 1 + k];
-                            }
-                            newFaces.Add(new PolygonalFace(new List<Vertex>{collapseToVertex, v2, v3}) { CreatedInFunction = "Negligible Face Repair: New Face" });
-                        }
-                    }
-                }
-                #endregion
-
-                //Create new faces to replace the ones being removed.
-                //foreach (var face in removeTheseFaces)
-                //{
-                //    if (face == negligibleFace || face == secondFace)
-                //        continue; //We don't need to do anything with these faces for now.
-                //                  //Replace the vertices from this face. Keep the normal, or add guess bool. normalIsGuess.
-                //    var newFaceVertexList = new List<Vertex>(face.Vertices);
-                //    newFaceVertexList.Remove(otherVertex);
-                //    newFaceVertexList.Add(collapseToVertex);
-                //    var newFace = new PolygonalFace(newFaceVertexList, face.Normal){CreatedInFunction = "Negligible Face Repair: New Face"};
-                //    newFaces.Add(newFace);
-                //}
-                //allAffectedFaces.AddRange(newFaces);
-
-                //Create new edges to replace the ones being removed. 
-                foreach (var edge in removeTheseEdges.Where(edge => edge != negligibleEdge))
-                {
-                    if (edge.To == otherVertex && 
-                        (edge.From == thirdVertexOfNegligibleFace || edge.From == thirdVertexOfSecondFace))
-                        continue; //We don't need this edge
-                    if (edge.From == otherVertex && 
-                        (edge.To == thirdVertexOfNegligibleFace || edge.To == thirdVertexOfSecondFace))
-                        continue; //We don't need this edge
-                    newEdges.Add(otherVertex == edge.From
-                        ? new Edge(collapseToVertex, edge.OtherVertex(otherVertex), true)
-                        : new Edge(edge.OtherVertex(otherVertex), collapseToVertex, true));
-                }
-                allAffectedEdges.AddRange(newEdges);
-
-                //Set the owned and other faces of the affected edges. All new edges's faces are in newFaces
-                foreach (var edge in allAffectedEdges)
-                {
-                    //Reset the owned and other.
-                    edge.OwnedFace = null;
-                    edge.OtherFace = null;
-                    foreach (var face in allAffectedFaces.Where(face => face.Vertices.Contains(edge.To) && face.Vertices.Contains(edge.From)))
-                    {
-                        if(!face.Edges.Contains(edge)) face.Edges.Add(edge); //Update the edge list for this face
-                        if (edge.OwnedFace == null) edge.OwnedFace = face;
-                        else if (edge.OtherFace == null) edge.OtherFace = face;
-                        else if (edge.OwnedFace == edge.OtherFace)
-                            edge.OtherFace = face; //A mistake was made. Fix it.
-                        else throw new Exception();
-                    }
-                }
-
-                //Brief check to make sure everything was set properly
-                foreach (var edge in allAffectedEdges)
-                {
-                    if (edge.OwnedFace == null || edge.OtherFace == null) goto errorWithFace;
-                    if (edge.OwnedFace == edge.OtherFace) goto errorWithFace;
-                    if (edge.Curvature == CurvatureType.Undefined || edge.InternalAngle == Double.NaN) goto errorWithFace;
-                }
-                if(newFaces.Any(face => face.Edges.Count() != 3 || face.Vertices.Count() != 3))
-                    goto errorWithFace;
+        //        //Brief check to make sure everything was set properly
+        //        foreach (var edge in allAffectedEdges)
+        //        {
+        //            if (edge.OwnedFace == null || edge.OtherFace == null) goto errorWithFace;
+        //            if (edge.OwnedFace == edge.OtherFace) goto errorWithFace;
+        //            if (edge.Curvature == CurvatureType.Undefined || edge.InternalAngle == Double.NaN) goto errorWithFace;
+        //        }
+        //        if(newFaces.Any(face => face.Edges.Count() != 3 || face.Vertices.Count() != 3))
+        //            goto errorWithFace;
                
-                //Remove and then add all the new faces and edges.
-                //The remove functions also remove any circular reference back to the face or edge.
-                ts.RemoveFaces(removeTheseFaces);
-                ts.RemoveEdges(removeTheseEdges);
-                ts.AddEdges(newEdges);
-                ts.AddFaces(newFaces);
+        //        //Remove and then add all the new faces and edges.
+        //        //The remove functions also remove any circular reference back to the face or edge.
+        //        ts.RemoveFaces(removeTheseFaces);
+        //        ts.RemoveEdges(removeTheseEdges);
+        //        ts.AddEdges(newEdges);
+        //        ts.AddFaces(newFaces);
 
-                //Check the normals of the new faces.
-                foreach (var face in newFaces)
-                {
-                    foreach (var adjacentFace in face.AdjacentFaces)
-                    {
-                        if (!adjacentFace.AdjacentFaces.Contains(face)) goto errorWithFace;
-                        if (face.Normal.dotProduct(adjacentFace.Normal).IsPracticallySame(-1.0)) goto errorWithFace;
-                    }
-                }
+        //        //Check the normals of the new faces.
+        //        foreach (var face in newFaces)
+        //        {
+        //            foreach (var adjacentFace in face.AdjacentFaces)
+        //            {
+        //                if (!adjacentFace.AdjacentFaces.Contains(face)) goto errorWithFace;
+        //                if (face.Normal.dotProduct(adjacentFace.Normal).IsPracticallySame(-1.0)) goto errorWithFace;
+        //            }
+        //        }
 
-                //lastly, remove the unused vertex and re-update all the edge and face references,
-                //since we removed a vertex at the start of this function.
-                ts.RemoveVertex(otherVertex);
-                ts.Errors.FacesWithNegligibleArea.RemoveAt(index);
-                //Check if any of the other negligible area faces were part of this repair. If so, remove them from the error list.
-                foreach (var face in allAffectedFaces)
-                {
-                    if (ts.Errors.FacesWithNegligibleArea.Contains(face)) ts.Errors.FacesWithNegligibleArea.Remove(face);
-                    if (face.Area.IsNegligible(ts.SameTolerance)) ts.Errors.FacesWithNegligibleArea.Add(face);
-                }
-                foreach (var face in removeTheseFaces.Where(face => ts.Errors.FacesWithNegligibleArea.Contains(face)))
-                {
-                    ts.Errors.FacesWithNegligibleArea.Remove(face);
-                }
+        //        //lastly, remove the unused vertex and re-update all the edge and face references,
+        //        //since we removed a vertex at the start of this function.
+        //        ts.RemoveVertex(centerVertex);
+        //        ts.Errors.FacesWithNegligibleArea.RemoveAt(index);
+        //        //Check if any of the other negligible area faces were part of this repair. If so, remove them from the error list.
+        //        foreach (var face in allAffectedFaces)
+        //        {
+        //            if (ts.Errors.FacesWithNegligibleArea.Contains(face)) ts.Errors.FacesWithNegligibleArea.Remove(face);
+        //            if (face.Area.IsNegligible(ts.SameTolerance)) ts.Errors.FacesWithNegligibleArea.Add(face);
+        //        }
+        //        foreach (var face in removeTheseFaces.Where(face => ts.Errors.FacesWithNegligibleArea.Contains(face)))
+        //        {
+        //            ts.Errors.FacesWithNegligibleArea.Remove(face);
+        //        }
                 
-                continue;
-                errorWithFace:
-                Debug.WriteLine("Error within negligible face repair");
-                index++;
-                foreach (var face in allAffectedFaces)
-                {
-                    face.Color = new Color(KnownColors.DarkRed);
-                }
-            }
-            if (index <= 0) return true;
-            Debug.WriteLine("{0} negligible area faces remain unfixable.", index);
+        //        continue;
+        //        errorWithFace:
+        //        Debug.WriteLine("Error within negligible face repair");
+        //        index++;
+        //        foreach (var face in allAffectedFaces)
+        //        {
+        //            face.Color = new Color(KnownColors.DarkRed);
+        //        }
+        //    }
+        //    if (index <= 0) return true;
+        //    Debug.WriteLine("{0} negligible area faces remain unfixable.", index);
             
             
-            return false;
-        }
+        //    return false;
+        //}
 
+        //private static bool BuildConvexPolygons(ref List<List<Vertex>> convexPolygons, Vertex centerVertex, IList<Vertex> orderedVertices, 
+        //    List<PolygonalFace> innerFaces, List<Edge> outerEdges, List<Edge> innerEdges)
+        //{
+            
+        //    var startVertex = orderedVertices[0];
+        //    var convexPolygon = new List<Vertex>();
+        //    var successful = false;
+        //    var j = 0;
+        //    do
+        //    {
+        //        if (j == orderedVertices.Count) j = 0;
+        //        var v1 = orderedVertices[j];
+        //        //If the loop has successfully reached its beginning again, then exit the while loop
+        //        if (v1 == startVertex && convexPolygon.Count > 1)
+        //        {
+        //            successful = true;
+        //            continue;
+        //        }
+        //        Vertex v2;
+        //        Vertex v3;
+        //        if (j == orderedVertices.Count - 1)
+        //        {
+        //            v2 = orderedVertices[0];
+        //            v3 = orderedVertices[1];
+        //        }
+        //        else if (j == orderedVertices.Count - 2)
+        //        {
+        //            v2 = orderedVertices[j + 1];
+        //            v3 = orderedVertices[0];
+        //        }
+        //        else
+        //        {
+        //            v2 = orderedVertices[j + 1];
+        //            v3 = orderedVertices[j + 2];
+        //        }
+        //        //Check if either of the outer edges in question is a new edge that closed a 
+        //        //concave loop. If this happens, the angles are gauranteed to be convex because
+        //        //the next vertex must see the otherVertex through the new edge.
+        //        //Note that this only occurs when recursively calling the BuildConvexPolygon function
+        //        //with a unknownConcavityPolygon.
+        //        if (
+        //            outerEdges.Any(
+        //                edge =>
+        //                    edge.Vertices.Contains(v2) && (edge.Vertices.Contains(v1) || edge.Vertices.Contains(v3))))
+        //        {
+        //            convexPolygon.Add(v3);
+        //            continue;
+        //        }
+        //        var baseFace =
+        //            innerFaces.FirstOrDefault(
+        //                f => f.Vertices.Contains(v1) && f.Vertices.Contains(v2) && f.Vertices.Contains(centerVertex));
+        //        var baseEdge = innerEdges.FirstOrDefault(e => e.Vertices.Contains(v2));
+        //        if (baseFace == null || baseEdge == null) throw new Exception();
+        //        var edgeStack = new Stack<Edge>();
+        //        edgeStack.Push(baseEdge);
+        //        var rotatedVertex = RotateToBaseFace(edgeStack, v3, centerVertex);
+        //        var tempFace = new PolygonalFace(new List<Vertex> {v2, rotatedVertex, centerVertex}, null, false);
+        //        var angle = MiscFunctions.ProjectedAngleBetweenVerticesCCW(v1, v2, rotatedVertex, baseFace.Normal);
+        //        var dot =
+        //            baseFace.Normal.dotProduct(
+        //                v2.Position.subtract(v1.Position).crossProduct(rotatedVertex.Position.subtract(v2.Position)));
+        //        if (Math.Sign(dot) > 0)
+        //        {
+        //            convexPolygon.Add(v3);
+        //            j++; //Only increment if successful (keeps the same v1 and v2)
+        //            continue;
+        //        }
+        //        //Else, the edges formed a concave angle. Create an unknownConcavityPolygon, then rinse and repeat.
+        //        //These unknownConcavityPolygons need to be done recursively because they are not guaranteed to be
+        //        //convex.
+        //        var unknownConcavityPolygon = new List<Vertex> {v2, v3};
+        //        while (dot < 0)
+        //        {
+        //            var nextEdge = innerEdges.FirstOrDefault(edge => edge.Vertices.Contains(v3));
+        //            if (nextEdge == null) throw new Exception();
+        //            edgeStack.Push(nextEdge);
+        //            //Get the next vertex in the list
+        //            var index = orderedVertices.IndexOf(v3);
+        //            v3 = index == orderedVertices.Count() - 1 ? orderedVertices[0] : orderedVertices[index + 1];
+        //            unknownConcavityPolygon.Add(v3);
+        //            dot =
+        //                baseFace.Normal.dotProduct(
+        //                    v2.Position.subtract(v1.Position)
+        //                        .crossProduct(rotatedVertex.Position.subtract(v2.Position)));
+        //        }
+        //        BuildConvexPolygons(ref convexPolygons, centerVertex, unknownConcavityPolygon, innerFaces,
+        //            outerEdges, innerEdges);
+
+        //        //For every vertex not including the first and last
+        //        //Get updated lists of the inner faces, inner edges, and outer edges
+        //        var newInnerFaces = new List<PolygonalFace>(innerFaces);
+        //        var newInnerEdges = new List<Edge>(innerEdges);
+        //        var newOuterEdges = new List<Edge>(outerEdges);
+        //        for (var i = 1; i < unknownConcavityPolygon.Count() - 1; i++)
+        //        {
+        //            var removedVertex = unknownConcavityPolygon[i];
+        //            orderedVertices.Remove(removedVertex);
+        //            foreach (var face in innerFaces.Where(face => face.Vertices.Contains(removedVertex)))
+        //            {
+        //                face.Edges.Clear();
+        //                newInnerFaces.Remove(face);
+        //            }
+        //            foreach (var edge in innerEdges.Where(edge => edge.Vertices.Contains(removedVertex)))
+        //            {
+        //                newInnerEdges.Remove(edge);
+        //            }
+        //            foreach (var edge in outerEdges.Where(edge => edge.Vertices.Contains(removedVertex)))
+        //            {
+        //                newOuterEdges.Remove(edge);
+        //            }
+        //        }
+        //        //Also, create one new face to replace those being removed
+        //        var newFace = new PolygonalFace(new List<Vertex> {v2, v3, centerVertex}, null, false);
+        //        var edgeToUpdate1 = newInnerEdges.FirstOrDefault(edge => edge.Vertices.Contains(v2));
+        //        var edgeToUpdate2 = newInnerEdges.FirstOrDefault(edge => edge.Vertices.Contains(v3));
+        //        if (edgeToUpdate1 == null || edgeToUpdate2 == null) throw new Exception();
+        //        if (edgeToUpdate1.OwnedFace == null) edgeToUpdate1.OwnedFace = newFace;
+        //        else if (edgeToUpdate1.OtherFace == null) edgeToUpdate1.OtherFace = newFace;
+        //        else throw new Exception();
+        //        if (edgeToUpdate2.OwnedFace == null) edgeToUpdate2.OwnedFace = newFace;
+        //        else if (edgeToUpdate2.OtherFace == null) edgeToUpdate2.OtherFace = newFace;
+        //        else throw new Exception();
+        //        newFace.Edges.Add(edgeToUpdate1);
+        //        newFace.Edges.Add(edgeToUpdate2);
+
+        //        BuildConvexPolygons(ref convexPolygons, centerVertex, orderedVertices, newInnerFaces,
+        //            newOuterEdges, newInnerEdges);
+
+        //        successful = true;
+
+        //    } while (!successful);
+
+        //    convexPolygons.Add(convexPolygon);
+
+        //    return true;
+        //}
+
+        //private static Vertex RotateToBaseFace(Stack<Edge> edgeStack, Vertex v3, Vertex centerVertex )
+        //{   
+        //    //The reason for this is so that we can compare the internal angle between three vertices on the same plane
+        //    //Simply projecting to a 2D surface is only acceptable in some cases, while this method should 
+        //    //work regardless.
+
+        //    //To get the correct angle to determine whether the section in concave or convex
+        //    //Given a stack of internal edges, that all connect to the centerVertex
+        //    //1) If we rotate the given vertex around each edge, we will put it into the plane 
+        //    //of the next triangle of that edge.
+        //    //2) To make sure we rotated it the correct direction, check whether the tempory face
+        //    //has a normal that is in line with the base face of each rotation.
+        //    //3) Choose whichever rotation was correct, then repeat the process for while
+        //    //edges remain on the stack.
+        //    var rotatedVertex = v3;
+        //    PolygonalFace baseFace;
+        //    var tempEdge = edgeStack.Peek();
+        //    if (tempEdge.OtherFace.Vertices.Contains(v3)) baseFace = tempEdge.OwnedFace;
+        //    else if (tempEdge.OwnedFace.Vertices.Contains(v3)) baseFace = tempEdge.OtherFace;
+        //    else throw new Exception();
+
+        //    while (edgeStack.Any())
+        //    {
+        //        var edge = edgeStack.Pop();
+        //        if (tempEdge != edge)
+        //        {
+        //            if (baseFace == edge.OwnedFace) baseFace = edge.OtherFace;
+        //            else if (baseFace == edge.OtherFace) baseFace = edge.OwnedFace;
+        //            else throw new Exception();
+        //        }
+        //        double theta;
+        //        if (baseFace == edge.OwnedFace) theta = Math.PI - edge.InternalAngle;
+        //        else theta = -(Math.PI - edge.InternalAngle);
+        //        var sin = Math.Sin(theta);
+        //        var cos = Math.Cos(theta);
+        //        var t = 1.0 - cos;
+        //        var a = edge.From.X;
+        //        var b = edge.From.Y;
+        //        var c = edge.From.Z;
+        //        var r = edge.Vector.normalize();
+        //        var u = r[0];
+        //        var v = r[1];
+        //        var w = r[2];
+        //        var x = rotatedVertex.X;
+        //        var y = rotatedVertex.Y;
+        //        var z = rotatedVertex.Z;
+        //        //Source http://inside.mines.edu/fs_home/gmurray/ArbitraryAxisRotation/
+        //        var point4 = new[,]
+        //        {
+        //            {(a*(v*v + w*w) - u*(b*v + c*w - u*x - v*y - w*z))*t + x*cos + (-c*v + b*w - w*y + v*z)*sin},
+        //            {(b*(u*u + w*w) - v*(a*u + c*w - u*x - v*y - w*z))*t + y*cos + (c*u - a*w + w*x - u*z)*sin},
+        //            {(c*(u*u + v*v) - w*(a*u + b*v - u*x - v*y - w*z))*t + z*cos + (-b*u + a*v - v*x + u*y)*sin}
+        //        };
+        //        rotatedVertex = new Vertex(new[] { point4[0, 0], point4[1, 0], point4[2, 0] });
+        //        var tempFace = new PolygonalFace(new List<Vertex> { centerVertex, edge.OtherVertex(centerVertex), rotatedVertex }, null, false);
+        //        var dot = tempFace.Normal.dotProduct(baseFace.Normal);
+        //        if (!dot.IsPracticallySame(1.0, 1E-9)) throw new Exception();
+        //    }
+        //    return rotatedVertex;
+        //}
         #endregion
     }
 }
