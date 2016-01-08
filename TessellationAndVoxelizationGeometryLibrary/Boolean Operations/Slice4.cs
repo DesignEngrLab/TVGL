@@ -70,6 +70,7 @@ namespace TVGL.Boolean_Operations
         private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<List<Vertex>> loops,
             int isPositiveSide)
         {
+            //ToDo: Find distance to offset more intelligently and also offset new points back to the original cutting plane.
             onSideFaces = new List<PolygonalFace>();
             loops = new List<List<Vertex>>();
             //Set the distance of every vertex in the solid to the plane

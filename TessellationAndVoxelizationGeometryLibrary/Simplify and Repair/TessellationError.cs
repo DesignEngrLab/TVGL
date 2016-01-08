@@ -51,6 +51,10 @@ namespace TVGL
         /// </summary>
         public List<PolygonalFace> FacesWithTwoEdges { get; private set; }
         /// <summary>
+        /// Faces with negligible area (which is not necessarily an error)
+        /// </summary>
+        public List<PolygonalFace> FacesWithNegligibleArea { get; private set; }
+        /// <summary>
         /// Edges that do not link back to faces that link to them
         /// </summary>
         public List<Tuple<PolygonalFace, Edge>> EdgesThatDoNotLinkBackToFace { get; private set; }
@@ -91,6 +95,10 @@ namespace TVGL
             get { return _edgeFaceRatio; }
             private set { _edgeFaceRatio = value; }
         }
+        /// <summary>
+        /// Whether ts.Errors contains any errors that need to be resolved
+        /// </summary>
+        public bool NoErrors { get; private set; }
 
         #endregion
 
@@ -102,6 +110,8 @@ namespace TVGL
         /// <param name="repairAutomatically">The repair automatically.</param>
         public static void CheckModelIntegrity(TessellatedSolid ts, bool repairAutomatically = true)
         {
+            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = true;
             Debug.WriteLine("Model Integrity Check...");
             if (ts.MostPolygonSides > 3) StoreHigherThanTriFaces(ts);
             var edgeFaceRatio = ts.NumberOfEdges / (double)ts.NumberOfFaces;
@@ -113,7 +123,7 @@ namespace TVGL
                 if (face.Vertices.Count == 2) StoreFaceWithTwoVertices(ts, face);
                 if (face.Edges.Count == 1) StoreFaceWithOneEdge(ts, face);
                 if (face.Edges.Count == 2) StoreFaceWithOTwoEdges(ts, face);
-                //if (face.Area.IsNegligible(ts.SameTolerance)) StoreFaceWithNegligibleArea(ts, face);
+                if (face.Area.IsNegligible(ts.SameTolerance)) StoreFaceWithNegligibleArea(ts, face);
                 foreach (var edge in face.Edges.Where(edge => edge.OwnedFace != face && edge.OtherFace != face))
                     StoreEdgeDoesNotLinkBackToFace(ts, face, edge);
                 foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
@@ -124,7 +134,6 @@ namespace TVGL
             //Check if each edge has cyclic references with each vertex and each face.
             foreach (var edge in ts.Edges)
             {
-                if (edge.EdgeReference != TessellatedSolid.SetEdgeChecksum(edge.From, edge.To)) throw new Exception();
                 if (!edge.OwnedFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OwnedFace);
                 if (!edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
                 if (!edge.To.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.To);
@@ -140,7 +149,7 @@ namespace TVGL
                 foreach (var face in vertex.Faces.Where(face => !face.Vertices.Contains(vertex)))
                     StoreFaceDoesNotLinkBackToVertex(ts, vertex, face);
             }
-            if (ts.Errors == null)
+            if (ts.Errors.NoErrors)
             {
                 Debug.WriteLine("** Model contains no errors.");
                 return;
@@ -167,6 +176,7 @@ namespace TVGL
         /// </summary>
         public void Report()
         {
+            //Note that negligible faces are not truly errors.
             Debug.WriteLine("Errors found in model:");
             Debug.WriteLine("======================");
             if (NonTriangularFaces != null)
@@ -214,7 +224,7 @@ namespace TVGL
         #region Error Storing
         private static void StoreHigherThanTriFaces(TessellatedSolid ts)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.NonTriangularFaces == null)
                 ts.Errors.NonTriangularFaces = new List<PolygonalFace>();
             foreach (var face in ts.Faces.Where(face => face.Vertices.Count > 3))
@@ -222,13 +232,13 @@ namespace TVGL
         }
         private static void StoreEdgeFaceRatio(TessellatedSolid ts, double edgeFaceRatio)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             ts.Errors.EdgeFaceRatio = edgeFaceRatio;
         }
 
         private static void StoreFaceDoesNotLinkBackToVertex(TessellatedSolid ts, Vertex vertex, PolygonalFace face)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.FacesThatDoNotLinkBackToVertex == null)
                 ts.Errors.FacesThatDoNotLinkBackToVertex
                     = new List<Tuple<Vertex, PolygonalFace>> { new Tuple<Vertex, PolygonalFace>(vertex, face) };
@@ -237,7 +247,7 @@ namespace TVGL
 
         private static void StoreEdgeDoesNotLinkBackToVertex(TessellatedSolid ts, Vertex vertex, Edge edge)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.EdgesThatDoNotLinkBackToVertex == null)
                 ts.Errors.EdgesThatDoNotLinkBackToVertex
                     = new List<Tuple<Vertex, Edge>> { new Tuple<Vertex, Edge>(vertex, edge) };
@@ -246,14 +256,14 @@ namespace TVGL
 
         private static void StoreEdgeHasBadAngle(TessellatedSolid ts, Edge edge)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.EdgesWithBadAngle == null) ts.Errors.EdgesWithBadAngle = new List<Edge> { edge };
             else if (!ts.Errors.EdgesWithBadAngle.Contains(edge)) ts.Errors.EdgesWithBadAngle.Add(edge);
         }
 
         private static void StoreVertDoesNotLinkBackToEdge(TessellatedSolid ts, Edge edge, Vertex vert)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.VertsThatDoNotLinkBackToEdge == null)
                 ts.Errors.VertsThatDoNotLinkBackToEdge
                     = new List<Tuple<Edge, Vertex>> { new Tuple<Edge, Vertex>(edge, vert) };
@@ -262,16 +272,24 @@ namespace TVGL
 
         private static void StoreFaceDoesNotLinkBackToEdge(TessellatedSolid ts, Edge edge, PolygonalFace face)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.FacesThatDoNotLinkBackToEdge == null)
                 ts.Errors.FacesThatDoNotLinkBackToEdge
                     = new List<Tuple<Edge, PolygonalFace>> { new Tuple<Edge, PolygonalFace>(edge, face) };
             else ts.Errors.FacesThatDoNotLinkBackToEdge.Add(new Tuple<Edge, PolygonalFace>(edge, face));
         }
 
+        private static void StoreFaceWithNegligibleArea(TessellatedSolid ts, PolygonalFace face)
+        {
+            //This is not truly an error, to don't change the NoErrors boolean.
+            if (ts.Errors.FacesWithNegligibleArea == null)
+                ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> {face};
+            else if(!ts.Errors.FacesWithNegligibleArea.Contains(face)) ts.Errors.FacesWithNegligibleArea.Add(face);
+        }
+
         private static void StoreVertexDoesNotLinkBackToFace(TessellatedSolid ts, PolygonalFace face, Vertex vertex)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.VertsThatDoNotLinkBackToFace == null)
                 ts.Errors.VertsThatDoNotLinkBackToFace
                     = new List<Tuple<PolygonalFace, Vertex>> { new Tuple<PolygonalFace, Vertex>(face, vertex) };
@@ -280,7 +298,7 @@ namespace TVGL
 
         private static void StoreEdgeDoesNotLinkBackToFace(TessellatedSolid ts, PolygonalFace face, Edge edge)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.EdgesThatDoNotLinkBackToFace == null)
                 ts.Errors.EdgesThatDoNotLinkBackToFace
                     = new List<Tuple<PolygonalFace, Edge>> { new Tuple<PolygonalFace, Edge>(face, edge) };
@@ -289,61 +307,61 @@ namespace TVGL
 
         private static void StoreFaceWithOTwoEdges(TessellatedSolid ts, PolygonalFace face)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.FacesWithTwoEdges == null) ts.Errors.FacesWithTwoEdges = new List<PolygonalFace> { face };
             else ts.Errors.FacesWithTwoEdges.Add(face);
         }
 
         private static void StoreFaceWithTwoVertices(TessellatedSolid ts, PolygonalFace face)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.FacesWithTwoVertices == null) ts.Errors.FacesWithTwoVertices = new List<PolygonalFace> { face };
             else ts.Errors.FacesWithTwoVertices.Add(face);
         }
 
         private static void StoreFaceWithOneEdge(TessellatedSolid ts, PolygonalFace face)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.FacesWithOneEdge == null) ts.Errors.FacesWithOneEdge = new List<PolygonalFace> { face };
             else ts.Errors.FacesWithOneEdge.Add(face);
         }
 
         private static void StoreFaceWithOneVertex(TessellatedSolid ts, PolygonalFace face)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.FacesWithOneVertex == null) ts.Errors.FacesWithOneVertex = new List<PolygonalFace> { face };
             else ts.Errors.FacesWithOneVertex.Add(face);
         }
 
         private static void StoreFaceWithMissingAdjacency(TessellatedSolid ts, PolygonalFace face)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.FacesWithMissingAdjacency == null) ts.Errors.FacesWithMissingAdjacency = new List<PolygonalFace> { face };
             else ts.Errors.FacesWithMissingAdjacency.Add(face);
         }
 
         internal static void StoreOverusedEdges(TessellatedSolid ts, IEnumerable<Tuple<Edge, List<PolygonalFace>>> edgeFaceTuples)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             ts.Errors.OverusedEdges = edgeFaceTuples.ToList();
         }
         internal static void StoreSingleSidedEdges(TessellatedSolid ts, IEnumerable<Edge> singledSidedEdges)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             ts.Errors.SingledSidedEdges = singledSidedEdges.ToList();
         }
 
 
         internal static void StoreDegenerateFace(TessellatedSolid ts, int[] faceVertexIndices)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.DegenerateFaces == null) ts.Errors.DegenerateFaces = new List<int[]> { faceVertexIndices };
             else ts.Errors.DegenerateFaces.Add(faceVertexIndices);
         }
 
         internal static void StoreDuplicateFace(TessellatedSolid ts, int[] faceVertexIndices)
         {
-            if (ts.Errors == null) ts.Errors = new TessellationError();
+            ts.Errors.NoErrors = false;
             if (ts.Errors.DuplicateFaces == null) ts.Errors.DuplicateFaces = new List<int[]> { faceVertexIndices };
             else ts.Errors.DuplicateFaces.Add(faceVertexIndices);
         }
@@ -360,6 +378,7 @@ namespace TVGL
                 completelyRepaired = completelyRepaired && DivideUpNonTriangularFaces(ts);
             if (SingledSidedEdges != null) //what about faces with only one or two edges?
                 completelyRepaired = completelyRepaired && RepairMissingFacesFromEdges(ts);
+            //Note that negligible faces are not truly errors, so they are not repaired
             return completelyRepaired;
         }
 
