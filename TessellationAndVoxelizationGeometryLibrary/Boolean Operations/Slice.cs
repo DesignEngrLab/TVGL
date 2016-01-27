@@ -75,17 +75,17 @@ namespace TVGL.Boolean_Operations
             }
             //ToDo: Remove next foreach loop after debug finished
             //Check to see all of the contactElements were referenced in the loops
-            foreach (var ce in contactElements)
-            {
-                var flag = true;
-                var i = 0;
-                while (flag && i < loops.Count())
-                {
-                    if (loops[i].Contains(ce)) flag = false;
-                    i++;
-                }
-                if (flag) throw new Exception("No Loop is referencing this contact element");
-            }
+            //foreach (var ce in contactElements)
+            //{
+            //    var flag = true;
+            //    var i = 0;
+            //    while (flag && i < loops.Count())
+            //    {
+            //        if (loops[i].Contains(ce)) flag = false;
+            //        i++;
+            //    }
+            //    if (flag) throw new Exception("No Loop is referencing this contact element");
+            //}
             if (numberOfTries > 0) Debug.WriteLine("{0} Contact Elements found that are not contained in loop.", contactElements.Count);
             return new ContactData(loops, inPlaneFaces);
         }
@@ -326,10 +326,11 @@ namespace TVGL.Boolean_Operations
                 else
                 {   // failed to find a loop. Let's move this start contact element to the end of the list 
                     // and try again.
-                    throw new Exception();
+                   // throw new Exception();
                     //contactElements.RemoveAt(0);
-                    //contactElements.Add(startCE);
-                    //return null;
+                    //if (contactElements.Any())
+                    //    contactElements.Add(startCE);
+                    return null;
                 }
             } while (true);
         }

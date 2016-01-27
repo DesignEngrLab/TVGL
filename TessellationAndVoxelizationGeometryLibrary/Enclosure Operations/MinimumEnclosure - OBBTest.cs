@@ -308,7 +308,7 @@ namespace TVGL
                         var lowerBox = thisBoxData;
                         var upperBox = nextBoxData;
                         var midBox = thisBoxData.Copy();
-                        while (lowerBox.Angle.IsPracticallySame(upperBox.Angle, Constants.OBBAngleTolerance))
+                        while (!lowerBox.Angle.IsPracticallySame(upperBox.Angle, Constants.OBBAngleTolerance))
                         {
                             midBox.Direction = lowerBox.Direction.add(upperBox.Direction).divide(2).normalize();
                             midBox.Angle = (lowerBox.Angle + upperBox.Angle) / 2.0;
@@ -447,9 +447,13 @@ namespace TVGL
                     {
                         var ownedY = edge.OwnedFace.Normal.dotProduct(yDir);
                         var otherY = edge.OtherFace.Normal.dotProduct(yDir);
-                        if ((ownedX < 0 && ownedY > 0) || (ownedX > 0 && ownedY < 0))
+                        //if ((ownedX < 0 && ownedY > 0) || (ownedX > 0 && ownedY < 0))
+                        //    OrthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OwnedFace));
+                        //else if ((otherX < 0 && otherY > 0) || (otherX > 0 && otherY < 0))
+                        //    OrthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OtherFace));
+                        if ((ownedX <= 0 && ownedY > 0) || (ownedX >= 0 && ownedY < 0))
                             OrthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OwnedFace));
-                        else if ((otherX < 0 && otherY > 0) || (otherX > 0 && otherY < 0))
+                        else if ((otherX <= 0 && otherY > 0) || (otherX >= 0 && otherY < 0))
                             OrthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OtherFace));
                     }
                 }
