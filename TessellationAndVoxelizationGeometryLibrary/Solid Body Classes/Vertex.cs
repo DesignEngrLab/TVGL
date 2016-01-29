@@ -113,33 +113,20 @@ namespace TVGL
         /// </summary>
         private Vertex() { }
         /// <summary>
-        /// Copies this instance.
+        /// Copies this instance. Does not include reference lists.
         /// </summary>
         /// <returns>Vertex.</returns>
-        public Vertex Copy(bool partial = false)
+        public Vertex Copy()
         {
-            if (partial)
-            {
-                 return new Vertex
-                {
-                    VertexCurvature = VertexCurvature,
-                    PartofConvexHull = PartofConvexHull,
-                    Edges = new List<Edge>(),
-                    Faces = new List<PolygonalFace>(),
-                    Position = (double[])Position.Clone(),
-                    IndexInList = IndexInList
-                };
-            }
             return new Vertex
             {
                 VertexCurvature = VertexCurvature,
                 PartofConvexHull = PartofConvexHull,
-                Edges = Edges,
-                Faces = Faces,
+                Edges = new List<Edge>(),
+                Faces = new List<PolygonalFace>(),
                 Position = (double[])Position.Clone(),
                 IndexInList = IndexInList
-            };
-           
+            }; 
         }
 
         /// <summary>

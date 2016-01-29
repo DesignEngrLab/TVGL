@@ -284,7 +284,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Copies this instance.
+        /// Copies this instance. Does not include reference lists.
         /// </summary>
         /// <returns>PolygonalFace.</returns>
         public PolygonalFace Copy()
@@ -294,7 +294,7 @@ namespace TVGL
                 Area = Area,
                 Center = (double[])Center.Clone(),
                 Curvature = Curvature,
-                Color = new Color(Color.A, Color.R, Color.G, Color.B),
+                Color = Color,
                 PartofConvexHull = PartofConvexHull,
                 Edges = new List<Edge>(),
                 Normal = (double[])Normal.Clone(),

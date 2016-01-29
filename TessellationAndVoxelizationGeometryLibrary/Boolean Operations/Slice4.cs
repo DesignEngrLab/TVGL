@@ -7,18 +7,18 @@ namespace TVGL.Boolean_Operations
 {
     /// <summary>
     /// The Slice class includes static functions for cutting a tessellated solid.
-    /// This slice function makes a seperate cut for the positive and negative side,
-    /// at a specified offset in both directions. It rebuilds straddle triangles, 
-    /// but only uses one of the two straddle edge intersection vertices to prevent
-    /// tiny triangles from being created.
+    /// Slice4 Performs the slicing operation on the prescribed flat plane. This is a NON-Destructive
+    /// operation, and returns two of more new tessellated solids  in the "out" parameter
+    /// lists.
     /// </summary>
     public static class Slice4
     {
         #region Define Contact at a Flat Plane
         /// <summary>
-        /// Performs the slicing operation on the prescribed flat plane. This destructively alters
-        /// the tessellated solid into one or more solids which are returned in the "out" parameter
-        /// lists.
+        /// This slice function makes a seperate cut for the positive and negative side,
+        /// at a specified offset in both directions. It rebuilds straddle triangles, 
+        /// but only uses one of the two straddle edge intersection vertices to prevent
+        /// tiny triangles from being created.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="plane">The plane.</param>
@@ -39,16 +39,16 @@ namespace TVGL.Boolean_Operations
             //Straddle faces are split into 2 or 3 new faces.
             //Note that this ensures that the loops are made from all new vertices
             //and are unique for the positive and negative sides.
-            DivideUpFaces(ts, plane, out positiveSideFaces, out positiveSideLoops, 1);
+            var isSuccessful = DivideUpFaces(ts, plane, out positiveSideFaces, out positiveSideLoops, 1);
+            if (!isSuccessful) return; //End with both lists of children empty;
             DivideUpFaces(ts, plane, out negativeSideFaces, out negativeSideLoops, -1);
 
             //3. Triangulate that empty space and add to list 
             var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal);
-            positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1)){CreatedInFunction = "Slice4: Triangulation"}));
+            positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1), false){CreatedInFunction = "Slice4: Triangulation"}));
             triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal);
-            negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal){CreatedInFunction = "Slice4: Triangulation"}));
+            negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal, false){CreatedInFunction = "Slice4: Triangulation"}));
             //4. Create a new tesselated solid. This solid may actually be multiple solids.
-            //This step removes all previous relationships and rebuilds them.
             if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
             {
                 var positiveSideSolid = new TessellatedSolid(positiveSideFaces);
@@ -59,15 +59,10 @@ namespace TVGL.Boolean_Operations
                 var negativeSideSolid = new TessellatedSolid(negativeSideFaces);
                 negativeSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(negativeSideSolid));
             }
-            else //There was no cut made. Return the original tesselated solid.
-            {
-                if (positiveSideFaces.Count > 3) positiveSideSolids.Add(ts);
-                else if (negativeSideFaces.Count > 3) negativeSideSolids.Add(ts);
-                else throw new Exception("Error");
-            }
+            //Else, there was no cut made. 
         }
 
-        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<List<Vertex>> loops,
+        private static bool DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<List<Vertex>> loops,
             int isPositiveSide)
         {
             //ToDo: Find distance to offset more intelligently and also offset new points back to the original cutting plane.
@@ -83,7 +78,7 @@ namespace TVGL.Boolean_Operations
             {
                 distancesToPlane = new List<double>();
                 var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
-                for (int i = 0; i < ts.NumberOfVertices; i++)
+                for (var i = 0; i < ts.NumberOfVertices; i++)
                 {
                     var distance = ts.Vertices[i].Position.subtract(pointOnPlane).dotProduct(plane.Normal);
                     if (Math.Abs(distance) < ts.SameTolerance) break;
@@ -92,6 +87,26 @@ namespace TVGL.Boolean_Operations
                 if (distancesToPlane.Count == ts.NumberOfVertices) successfull = true;
                 plane.DistanceToOrigin = plane.DistanceToOrigin + ts.SameTolerance * isPositiveSide;
             }
+            //Check if the plane is actually cutting the solid into two.
+            //Note that we only need to do this for one side (we chose the positive side)
+            if (isPositiveSide == 1)
+            {
+                var isOnSide = false;
+                var isOffSide = false;
+                var isCuttingPart = false;
+                foreach (var distance in distancesToPlane)
+                {
+                    if (Math.Sign(distance) > 0) isOnSide = true;
+                    if (Math.Sign(distance) < 0) isOffSide = true;
+                    if (isOnSide && isOffSide)
+                    {
+                        isCuttingPart = true;
+                        break;
+                    }
+                }
+                if(!isCuttingPart) return false;
+            }
+            
 
             //Find all the straddle edges and add the new intersect vertices to both the pos and nef loops.
             //Also, find which faces are on the current side of the plane, by using edges.
@@ -146,12 +161,12 @@ namespace TVGL.Boolean_Operations
                 {
                     boundaryEdges.Add(edge);
                 }
-                foreach (var vertex in face.Vertices.Where(vertex => vertex.Faces.Contains(face)))
-                {
-                    vertex.Faces.Remove(face);
-                }
+                //foreach (var vertex in face.Vertices.Where(vertex => vertex.Faces.Contains(face)))
+                //{
+                //    vertex.Faces.Remove(face);
+                //}
             }
-
+            //
             //Get loops of straddleEdges 
             var loopsOfStraddleEdges = new List<List<StraddleEdge>>();
             var maxCount = straddleEdges.Count/3;
@@ -299,15 +314,10 @@ namespace TVGL.Boolean_Operations
                     if (duplicate) throw new Exception();
                 }
             }
-
-            //Check to make sure all adjacency is up to date
-            if (onSideFaces.Any(face => face.AdjacentFaces.Any(adjacentFace => adjacentFace == null)))
-            {
-                throw new Exception("Edge has not been found");
-            }
             onSideFaces.AddRange(allNewFaces);
             //Reset orginal plane distance
             plane.DistanceToOrigin = originalDistanceToOrigin;
+            return true;
         }
 
         internal static int GetCheckSum(Vertex vertex1, Vertex vertex2)
@@ -340,7 +350,7 @@ namespace TVGL.Boolean_Operations
             //Make an extra edge if the first new face
             if (!newEdges.Any())
             {
-                var newEdge = new Edge(st1.IntersectVertex, st1.OnSideVertex,  true);
+                var newEdge = new Edge(st1.IntersectVertex, st1.OnSideVertex,  false);
                 newEdges.Add(newEdge);
             }
 
@@ -349,62 +359,62 @@ namespace TVGL.Boolean_Operations
                 //Make one new edge and one new face. Set the ownership of this edge.
                 var newFace =
                     new PolygonalFace(new List<Vertex> {st1.OnSideVertex, st1.IntersectVertex, st2.OnSideVertex},
-                        sharedFace.Normal);
+                        sharedFace.Normal, false);
                 newEdges.Last().OtherFace = newFace;
                 if (!lastNewFace)
-                    newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, true) {OwnedFace = newFace});
+                    newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) {OwnedFace = newFace});
                 else newEdges.First().OwnedFace = newFace;
 
                 //Set ownership for boundary edge.
-                var checksum = GetCheckSum(st1.OnSideVertex, st2.OnSideVertex);
-                var edge = sharedFace.Edges.First(e => e.EdgeReference == checksum);
-                if (edge.OwnedFace == sharedFace) edge.OwnedFace = newFace;
-                else if (edge.OtherFace == sharedFace) edge.OtherFace = newFace;
-                else throw new Exception("Edge should have been connected to sharedFace");
+                //var checksum = GetCheckSum(st1.OnSideVertex, st2.OnSideVertex);
+                //var edge = sharedFace.Edges.First(e => e.EdgeReference == checksum);
+                //if (edge.OwnedFace == sharedFace) edge.OwnedFace = newFace;
+                //else if (edge.OtherFace == sharedFace) edge.OtherFace = newFace;
+                //else throw new Exception("Edge should have been connected to sharedFace");
                 return new List<PolygonalFace> {newFace};
             }
-            else if (st1.OffSideVertex == st2.OffSideVertex || st1.OriginalOffSideVertex == st2.OffSideVertex || st1.OffSideVertex == st2.OriginalOffSideVertex) //If not the same intersect vertex, then the same offSideVertex denotes two Consecutive curved edges, so this creates two new faces
+            if (st1.OffSideVertex == st2.OffSideVertex || st1.OriginalOffSideVertex == st2.OffSideVertex || st1.OffSideVertex == st2.OriginalOffSideVertex) //If not the same intersect vertex, then the same offSideVertex denotes two Consecutive curved edges, so this creates two new faces
             {
                 //Create two new faces
                 var newFace1 =
                     new PolygonalFace(new List<Vertex> {st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex},
-                        sharedFace.Normal);
+                        sharedFace.Normal, false); 
                 var newFace2 =
                     new PolygonalFace(new List<Vertex> {st1.OnSideVertex, st2.IntersectVertex, st2.OnSideVertex},
-                        sharedFace.Normal);
+                        sharedFace.Normal, false); 
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace1;
                 //Create new edges and update their ownership 
-                var newEdge1 = new Edge(st1.IntersectVertex, st2.IntersectVertex, true) { OwnedFace = newFace1};
-                var newEdge2 = new Edge(st1.OnSideVertex, st2.IntersectVertex, true) { OwnedFace = newFace2, OtherFace = newFace1};
+                var newEdge1 = new Edge(st1.IntersectVertex, st2.IntersectVertex, false) { OwnedFace = newFace1};
+                var newEdge2 = new Edge(st1.OnSideVertex, st2.IntersectVertex, false) { OwnedFace = newFace2, OtherFace = newFace1};
                 newEdges.AddRange(new List<Edge> { newEdge1, newEdge2});
                 //Create the last edge, if this is not the last new face
-                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, true) { OwnedFace = newFace2});
+                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) { OwnedFace = newFace2});
                 else newEdges.First().OwnedFace = newFace2;
                 
                 //Set ownership for boundary edge.
-                var checksum = GetCheckSum(st1.OnSideVertex, st2.OnSideVertex);
-                var edge = sharedFace.Edges.First(e => e.EdgeReference == checksum);
-                if (edge.OwnedFace == sharedFace) edge.OwnedFace = newFace2;
-                else if (edge.OtherFace == sharedFace) edge.OtherFace = newFace2;
-                else throw new Exception("Edge should have been connected to sharedFace");
+                //var checksum = GetCheckSum(st1.OnSideVertex, st2.OnSideVertex);
+                //var edge = sharedFace.Edges.First(e => e.EdgeReference == checksum);
+                //if (edge.OwnedFace == sharedFace) edge.OwnedFace = newFace2;
+                //else if (edge.OtherFace == sharedFace) edge.OtherFace = newFace2;
+                //else throw new Exception("Edge should have been connected to sharedFace");
                 return new List<PolygonalFace> {newFace1, newFace2};
             }
-            else if (st1.OnSideVertex == st2.OnSideVertex)
+            if (st1.OnSideVertex == st2.OnSideVertex)
             {
                 //Make two new edges and one new face. Set the ownership of the edges.
                 var newFace =
                     new PolygonalFace(new List<Vertex> {st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex},
-                        sharedFace.Normal);
+                        sharedFace.Normal, false);
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace;
                 //Create new edges and update their ownership 
-                newEdges.Add(new Edge(st1.IntersectVertex, st2.IntersectVertex, true) { OwnedFace = newFace });
-                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, true){ OwnedFace = newFace });
+                newEdges.Add(new Edge(st1.IntersectVertex, st2.IntersectVertex, false) { OwnedFace = newFace });
+                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) { OwnedFace = newFace }); 
                 else newEdges.First().OwnedFace = newFace;
                 return new List<PolygonalFace> { newFace };
             }
-            else throw new Exception("Error, the straddle edges do not match up at a common vertex");
+            throw new Exception("Error, the straddle edges do not match up at a common vertex");
         }
 
         /// <summary>

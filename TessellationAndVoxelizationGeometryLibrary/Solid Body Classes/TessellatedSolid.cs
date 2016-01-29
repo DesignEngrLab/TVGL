@@ -271,10 +271,12 @@ namespace TVGL
         /// <param name="colors"></param>
         public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, string name = "", IList<Color> colors = null)
         {
+            Name = name;
             //Get vertices if null
             if (vertices == null)
             {
                 vertices = new List<Vertex>();
+                //ToDo: Can we rewrite this to call "list.Contains" less.
                 foreach (var vertex in faces.SelectMany(face => face.Vertices.Where(vertex => !vertices.Contains(vertex))))
                 {
                     vertices.Add(vertex);
@@ -282,36 +284,44 @@ namespace TVGL
             }
             Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
-            Faces = faces.ToArray();
-            NumberOfFaces = Faces.Length;
-            Vertices = new Vertex[0];
-            //Clear information from the vertices and update their index. The Face will still reference
-            //the correct vertex because the object did not change.
-            Vertices = vertices.ToArray();
-            NumberOfVertices = Vertices.Length;
-            for (var i = 0; i < Vertices.Length; i++)
+            
+            //Create a copy of the vertex and face (This is NON-Destructive!)
+            
+            var newVertices = new List<Vertex>();
+            var simpleCompareDict = new Dictionary<Vertex, Vertex>();
+            for (var i = 0; i < vertices.Count; i++)
             {
-                var vertex = Vertices[i];
-                vertex.Edges.Clear();
-                vertex.Faces.Clear();
-                vertex.PartofConvexHull = false;
+                var vertex = vertices[i].Copy();
                 vertex.ReferenceIndex = 0;
                 vertex.IndexInList = i;
+                newVertices.Add(vertex);
+                simpleCompareDict.Add(vertices[i],vertex);
             }
-            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(NumberOfVertices)) + 1);
-            //Clear information from the faces and update their index.
-            //Keep "CreatedInFunction" to help with debug
-            for (var i = 0; i < Faces.Length; i++)
+            Vertices = new Vertex[0];
+            Vertices = newVertices.ToArray();
+            NumberOfVertices = Vertices.Length;
+
+            var newFaces = new List<PolygonalFace>();
+            for (var i = 0; i < faces.Count; i++)
             {
-                var face = Faces[i];
-                face.Edges.Clear();
+                //Keep "CreatedInFunction" to help with debug
+                var face = faces[i].Copy();
                 face.PartofConvexHull = false;
                 face.IndexInList = i;
-                foreach (var vertex in face.Vertices)
+                var faceVertices = new List<Vertex>();
+                foreach (var vertex in faces[i].Vertices)
                 {
-                    vertex.Faces.Add(face);
+                    var newVertex = simpleCompareDict[vertex];
+                    faceVertices.Add(newVertex);
+                    newVertex.Faces.Add(face);
                 }
+                face.Vertices = faceVertices;
+                newFaces.Add(face);
             }
+            Faces = new PolygonalFace[0];
+            Faces = newFaces.ToArray();
+            NumberOfFaces = Faces.Length;
+            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(NumberOfVertices)) + 1);
             DefineFaceColors(colors);
             CompleteInitiation();
         }
