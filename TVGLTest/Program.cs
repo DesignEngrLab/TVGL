@@ -56,8 +56,8 @@ namespace TVGL_Test
        // "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
        // "../../../TestFiles/mendel_extruder.stl",
        // "../../../TestFiles/Square Support.STL",
-       // "../../../TestFiles/Aerospace_Beam.STL",
-       "../../../TestFiles/MV-Test files/holding-device.STL",
+        "../../../TestFiles/Aerospace_Beam.STL",
+       //"../../../TestFiles/MV-Test files/holding-device.STL",
        //"../../../TestFiles/MV-Test files/gear.STL"
         };
 
@@ -77,8 +77,8 @@ namespace TVGL_Test
                 //MiscFunctions.IsSolidBroken(ts[0]);
                 MinimumEnclosure.OrientedBoundingBox(ts[0]);
                 //TestClassification(ts[0]);
-                //TestXSections(ts[0]);
-                //TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
+                TestXSections(ts[0]);
+                TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 //TestSimplify(ts[0]);
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0], filename);
