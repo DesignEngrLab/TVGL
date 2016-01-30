@@ -275,12 +275,8 @@ namespace TVGL
             //Get vertices if null
             if (vertices == null)
             {
-                vertices = new List<Vertex>();
-                //ToDo: Can we rewrite this to call "list.Contains" less.
-                foreach (var vertex in faces.SelectMany(face => face.Vertices.Where(vertex => !vertices.Contains(vertex))))
-                {
-                    vertices.Add(vertex);
-                }
+                vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
+
             }
             Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
