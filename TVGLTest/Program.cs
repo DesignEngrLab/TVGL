@@ -273,7 +273,7 @@ namespace TVGL_Test
                 TVGL_Helix_Presenter.HelixPresenter.Show(ts);
                 List<TessellatedSolid> positiveSideSolids;
                 List<TessellatedSolid> negativeSideSolids;
-                Slice2.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
+                Slice4.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
                 //TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
                 foreach (var solid in negativeSideSolids)
