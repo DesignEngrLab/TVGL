@@ -105,6 +105,12 @@ namespace TVGL
         public double Volume { get; private set; }
 
         /// <summary>
+        ///     Gets and sets the mass.
+        /// </summary>
+        /// <value>The mass.</value>
+        public double Mass { get; set; }
+
+        /// <summary>
         ///     Gets the surface area.
         /// </summary>
         /// <value>The surface area.</value>

@@ -229,6 +229,12 @@ namespace TVGL
         public CurvatureType Curvature { get; internal set; }
 
         /// <summary>
+        /// Gets or sets the unique ID.
+        /// </summary>
+        /// <value>The ID.</value>
+        public string ID { get; set; }
+
+        /// <summary>
         /// Gets a value indicating whether [it is part of the convex hull].
         /// </summary>
         /// <value>
