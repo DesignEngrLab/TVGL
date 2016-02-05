@@ -74,6 +74,7 @@ namespace TVGL_Test
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
+                Primitive_Classification.Run(ts[0]);
                 //MiscFunctions.IsSolidBroken(ts[0]);
                 MinimumEnclosure.OrientedBoundingBox(ts[0]);
                 //TestClassification(ts[0]);

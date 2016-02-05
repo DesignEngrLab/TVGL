@@ -67,6 +67,10 @@
     <Compile Include="Primitive Surfaces\Flat.cs" />
     <Compile Include="Primitive Surfaces\Sphere.cs" />
     <Compile Include="Primitive Surfaces\PrimitiveSurface.cs" />
+    <Compile Include="Primitive Classification\ClassificationConstants.cs" />
+    <Compile Include="Primitive Classification\FaceWithScores.cs" />
+    <Compile Include="Primitive Classification\PlanningSurface.cs" />
+    <Compile Include="Primitive Classification\Primitive_Classification.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -107,6 +111,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />
+    <EmbeddedResource Include="Primitive Classification\NewFaRules.csv" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

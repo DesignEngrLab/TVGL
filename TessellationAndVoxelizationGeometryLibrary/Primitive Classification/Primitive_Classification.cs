@@ -3,18 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
-using TVGL;
 
-namespace PrimitiveClassificationOfTessellatedSolids
+namespace TVGL
 {
-
-    public static class TesselationToPrimitives
+    public static partial class Primitive_Classification
     {
         private static List<double> listOfLimitsABN, listOfLimitsMCM, listOfLimitsSM;
         private static List<List<int>> edgeRules, faceRules;
         private static double maxFaceArea;
         private static double primitivesBeforeFiltering;
-        public static string CSVPath;
 
         private static void InitializeFuzzinessRules()
         {
@@ -26,6 +23,11 @@ namespace PrimitiveClassificationOfTessellatedSolids
             Debug.WriteLine("Edges and faces' rules have been read from the corresonding .csv files");
         }
 
+        /// <summary>
+        /// Runs the specified tessellated solid through the primitive classification method.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <returns>List&lt;PrimitiveSurface&gt;.</returns>
         public static List<PrimitiveSurface> Run(TessellatedSolid ts)
         {
             if (listOfLimitsABN == null || listOfLimitsMCM == null | listOfLimitsSM == null || edgeRules == null || faceRules == null)
@@ -916,7 +918,7 @@ namespace PrimitiveClassificationOfTessellatedSolids
         {
             foreach (var f in ts.Faces)
             {
-                f.color = new Color(KnownColors.Yellow);
+                f.Color = new Color(KnownColors.Yellow);
             }
             var i = 0;
             foreach (var primitiveSurface in primitives)
@@ -927,22 +929,22 @@ namespace PrimitiveClassificationOfTessellatedSolids
                     if (i == 5)
                     {
                         foreach (var f in primitiveSurface.Faces)
-                            f.color = new Color(KnownColors.Red);
+                            f.Color = new Color(KnownColors.Red);
                     }
                 }
 
                 if (primitiveSurface is Cone)
                     foreach (var f in primitiveSurface.Faces)
-                        f.color = new Color(KnownColors.Pink);
+                        f.Color = new Color(KnownColors.Pink);
                 else if (primitiveSurface is Sphere)
                     foreach (var f in primitiveSurface.Faces)
-                        f.color = new Color(KnownColors.Blue);
+                        f.Color = new Color(KnownColors.Blue);
                 else if (primitiveSurface is Flat)
                     foreach (var f in primitiveSurface.Faces)
-                        f.color = new Color(KnownColors.Green);
+                        f.Color = new Color(KnownColors.Green);
                 else if (primitiveSurface is DenseRegion)
                     foreach (var f in primitiveSurface.Faces)
-                        f.color = new Color(KnownColors.Black);
+                        f.Color = new Color(KnownColors.Black);
             }
         }
         private static void ReportStats(List<PrimitiveSurface> primitives)
@@ -963,6 +965,16 @@ namespace PrimitiveClassificationOfTessellatedSolids
         }
         #endregion
 
+        internal enum PrimitiveSurfaceType
+        {
+            Unknown = 0,
+            Dense = 123456789,
+            Flat = 500,
+            Cylinder = 501,
+            Sphere = 502,
+            Flat_to_Curve = 503,
+            Sharp = 504
+        }
     }
 
 }
