@@ -23,12 +23,32 @@ namespace TVGL
     /// </summary>
     public class Cylinder : PrimitiveSurface
     {
+        #region Properties
         /// <summary>
         /// Is the cylinder positive? (false is negative)
         /// </summary>
         public Boolean IsPositive;
+        
+        /// <summary>
+        /// Gets the anchor.
+        /// </summary>
+        /// <value>The anchor.</value>
+        public double[] Anchor { get; internal set; }
 
+        /// <summary>
+        /// Gets the direction.
+        /// </summary>
+        /// <value>The direction.</value>
+        public double[] Axis { get; internal set; }
 
+        /// <summary>
+        /// Gets the radius.
+        /// </summary>
+        /// <value>The radius.</value>
+        public double Radius { get; internal set; }
+        #endregion
+
+        #region Constructors
         /// <summary>
         /// Initializes a new instance of the <see cref="Cylinder"/> class.
         /// </summary>
@@ -37,6 +57,7 @@ namespace TVGL
         public Cylinder(IEnumerable<PolygonalFace> facesAll, double[] axis)
             : base(facesAll)
         {
+            Type = PrimitiveSurfaceType.Cylinder;
             var faces = ListFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
             var centers = new List<double[]>();
@@ -90,6 +111,7 @@ namespace TVGL
         internal Cylinder(Edge edge)
             : base(new List<PolygonalFace>(new[] { edge.OwnedFace, edge.OtherFace }))
         {
+            Type = PrimitiveSurfaceType.Cylinder;
             var axis = edge.OwnedFace.Normal.crossProduct(edge.OtherFace.Normal);
             var length = axis.norm2();
             if (length.IsNegligible()) throw new Exception("Edge used to define cylinder is flat.");
@@ -131,24 +153,7 @@ namespace TVGL
             IsPositive = isPositive;
             Radius = averageRadius;
         }
-
-        /// <summary>
-        /// Gets the anchor.
-        /// </summary>
-        /// <value>The anchor.</value>
-        public double[] Anchor { get; internal set; }
-
-        /// <summary>
-        /// Gets the direction.
-        /// </summary>
-        /// <value>The direction.</value>
-        public double[] Axis { get; internal set; }
-
-        /// <summary>
-        /// Gets the radius.
-        /// </summary>
-        /// <value>The radius.</value>
-        public double Radius { get; internal set; }
+        #endregion
 
         /// <summary>
         /// Determines whether [is new member of] [the specified face].

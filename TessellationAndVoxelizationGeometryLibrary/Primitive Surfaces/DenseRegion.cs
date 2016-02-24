@@ -48,6 +48,7 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         public DenseRegion(List<PolygonalFace> faces) : base(faces)
         {
+            Type = PrimitiveSurfaceType.Dense;
         }
     }
 }

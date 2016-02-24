@@ -69,8 +69,9 @@ namespace TVGL
         public Cone(List<PolygonalFace> facesAll, double[] axis, double aperture)
             : base(facesAll)
         {
-            this.Axis = axis;
-            this.Aperture = aperture;
+            Type = PrimitiveSurfaceType.Cone;
+            Axis = axis;
+            Aperture = aperture;
             var faces = ListFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
             var axisRefPoints = new List<double[]>();

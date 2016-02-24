@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel;
 
 namespace TVGL
 {
@@ -17,6 +18,7 @@ namespace TVGL
         /// <param name="faces">The faces.</param>
         protected PrimitiveSurface(IEnumerable<PolygonalFace> faces)
         {
+            Type = PrimitiveSurfaceType.Unknown;
             Faces = faces.ToList();
             Area = Faces.Sum(f => f.Area);
 
@@ -47,6 +49,11 @@ namespace TVGL
         protected PrimitiveSurface()
         {
         }
+
+        /// <summary>
+        /// Gets the Type of primitive surface
+        /// </summary>
+        public PrimitiveSurfaceType Type { get; internal set; }
 
         /// <summary>
         /// Gets the area.

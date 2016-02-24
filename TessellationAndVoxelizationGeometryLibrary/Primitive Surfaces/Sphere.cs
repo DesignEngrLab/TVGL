@@ -18,6 +18,7 @@ namespace TVGL
         public Sphere(IEnumerable<PolygonalFace> facesAll)
             : base(facesAll)
         {
+            Type = PrimitiveSurfaceType.Sphere;
             var faces = ListFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
             var centers = new List<double[]>();
@@ -63,6 +64,7 @@ namespace TVGL
         internal Sphere(Edge edge)
             : this(new List<PolygonalFace>(new[] {edge.OwnedFace, edge.OtherFace}))
         {
+            Type = PrimitiveSurfaceType.Sphere;
         }
 
         #endregion                   

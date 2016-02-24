@@ -22,6 +22,7 @@ namespace TVGL
     /// </summary>
     public class Flat : PrimitiveSurface
     {
+        #region Constructors
         /// <summary>
         /// Initializes a new instance of the <see cref="Flat"/> class.
         /// </summary>
@@ -29,6 +30,7 @@ namespace TVGL
         public Flat(IEnumerable<PolygonalFace> faces)
             : base(faces)
         {
+            Type = PrimitiveSurfaceType.Flat;
             Faces = faces.ToList();
             var normalSum = new double[3];
             normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
@@ -43,6 +45,7 @@ namespace TVGL
         public Flat()
             : base()
         {
+            Type = PrimitiveSurfaceType.Flat;
         }
 
         /// <summary>
@@ -52,6 +55,7 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         public Flat(double distanceToOrigin, double[] normal)
         {
+            Type = PrimitiveSurfaceType.Flat;
             Normal = normal.normalize();
             DistanceToOrigin = distanceToOrigin;
         }
@@ -62,9 +66,11 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         public Flat(double[] pointOnPlane, double[] normal)
         {
+            Type = PrimitiveSurfaceType.Flat;
             Normal = normal.normalize();
             DistanceToOrigin = Normal.dotProduct(pointOnPlane);
         }
+        #endregion
 
         /// <summary>
         /// Gets or sets the anchor.
