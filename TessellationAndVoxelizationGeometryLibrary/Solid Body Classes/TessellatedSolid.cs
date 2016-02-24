@@ -406,21 +406,18 @@ namespace TVGL
                 while (orderedIndices.Count > checksumMultiplier.Count)
                     checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
                 long checksum = orderedIndices.Select((index, j) => index * checksumMultiplier[j]).Sum();
-                if (faceChecksums.Contains(checksum)) TessellationError.StoreDuplicateFace(this, faceToVertexIndices[i]);
-                else if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices))
-                    TessellationError.StoreDegenerateFace(this, faceToVertexIndices[i]);
-                else
-                {
-                    //Get the actual vertices to create a new face. 
-                    faceChecksums.Add(checksum);
-                    var faceVertices = new List<Vertex>();
-                    foreach (var vertexMatchingIndex in faceToVertexIndices[i])
-                        faceVertices.Add(Vertices[vertexMatchingIndex]);
+                if (faceChecksums.Contains(checksum)) continue; //Duplicate face. Do not create
+                if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue;//Error. Skip
+                //Else
+                //Get the actual vertices to create a new face. 
+                faceChecksums.Add(checksum);
+                var faceVertices = new List<Vertex>();
+                foreach (var vertexMatchingIndex in faceToVertexIndices[i])
+                    faceVertices.Add(Vertices[vertexMatchingIndex]);
 
-                    //Get the normal, if it was given.
-                    if (normals != null) normal = normals[i];
-                    listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices));
-                }
+                //Get the normal, if it was given.
+                if (normals != null) normal = normals[i];
+                listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices));
             }
             Faces = listOfFaces.ToArray();
             NumberOfFaces = Faces.GetLength(0);
