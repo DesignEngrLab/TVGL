@@ -49,6 +49,7 @@
     <Compile Include="InputOutput Operations\PLYFileData.cs" />
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
+    <Compile Include="Miscellaneous Functions\AreaDecomposition.cs" />
     <Compile Include="Miscellaneous Functions\ListFunctions.cs">
       <SubType>Code</SubType>
     </Compile>
