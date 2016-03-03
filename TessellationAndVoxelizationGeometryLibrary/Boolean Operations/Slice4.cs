@@ -50,9 +50,10 @@ namespace TVGL.Boolean_Operations
             DivideUpFaces(ts,new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces, out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
 
             //3. Triangulate that empty space and add to list 
-            var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal);
+            List<List<Vertex[]>> triangleFaceList;
+            var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal, out triangleFaceList);
             positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1), false){CreatedInFunction = "Slice4: Triangulation"}));
-            triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal);
+            triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal, out triangleFaceList);
             negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal, false){CreatedInFunction = "Slice4: Triangulation"}));
             //4. Create a new tesselated solid. This solid may actually be multiple solids.
             if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)

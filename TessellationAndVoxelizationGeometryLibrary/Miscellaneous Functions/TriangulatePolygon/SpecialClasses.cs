@@ -20,7 +20,7 @@ namespace TVGL
         /// <summary>
         /// Gets the loop ID that this node belongs to.
         /// </summary>
-        internal int LoopID { get; private set; }
+        internal int LoopID { get; set; }
 
         /// <summary>
         /// Gets or sets the x.

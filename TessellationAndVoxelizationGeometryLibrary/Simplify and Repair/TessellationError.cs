@@ -428,7 +428,8 @@ namespace TVGL
                     if (!singleSidedEdges.Contains(edge)) singleSidedEdges.Add(edge);
                 }
                 //Using Triangulate Polygon guarantees that even if the face has concave edges, it will triangulate properly.
-                var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { nonTriangularFace.Vertices }, nonTriangularFace.Normal);
+                List<List<Vertex[]>> triangleFaceList;
+                var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { nonTriangularFace.Vertices }, nonTriangularFace.Normal, out triangleFaceList);
                 foreach (var triangle in triangles)
                 {
                     var newFace = new PolygonalFace(triangle, nonTriangularFace.Normal) { Color = nonTriangularFace.Color };
@@ -505,7 +506,8 @@ namespace TVGL
                 else if (loops[i].Count > 3)
                 {
                     //First, get an average normal from all vertices, assuming CCW order.
-                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { loops[i] }, loopNormals[i]);
+                    List<List<Vertex[]>> triangleFaceList;
+                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { loops[i] }, loopNormals[i], out triangleFaceList);
                     foreach (var triangle in triangles)
                     {
                         var newFace = new PolygonalFace(triangle, loopNormals[i]);

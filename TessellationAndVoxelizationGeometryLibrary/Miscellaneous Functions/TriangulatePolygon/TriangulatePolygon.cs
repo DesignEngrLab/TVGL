@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
 using System.Diagnostics;
+using System.Runtime.Serialization.Json;
 
 namespace TVGL
 {
@@ -27,23 +28,28 @@ namespace TVGL
         /// </summary>
         /// <param name="loops"></param>
         /// <param name="normal"></param>
+        /// <param name="ignoreNegativeSpace"></param>
         /// <returns></returns>
-        public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal)
+        public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, true)).ToList();
-            return Run(points2D, null);
+            return Run(points2D, null, out triangleFaceList, ignoreNegativeSpace);
         }
 
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
+        /// Ignoring the negative space, fills in holes. DO NOT USE this 
+        /// parameter for watertight geometry.
         /// </summary>
         /// <param name="points2D"></param>
         /// <param name="isPositive"></param>
+        /// <param name="triangleFaceList"></param>
+        /// <param name="ignoreNegativeSpace"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<Vertex[]> Run(List<Point[]> points2D, bool[] isPositive)
+        public static List<Vertex[]> Run(List<Point[]> points2D, bool[] isPositive, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -60,8 +66,9 @@ namespace TVGL
             // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
             // 5: If isPositive == null, then 
 
-            //Create return variable
+            //Create return variables
             var triangles = new List<Vertex[]>();
+            triangleFaceList = new List<List<Vertex[]>>();
 
             //Check incomining lists
             if (isPositive != null && points2D.Count != isPositive.Length)
@@ -284,6 +291,62 @@ namespace TVGL
                         nodesLoopsCorrected.Add(orderedLoop);
                     }
                     orderedLoops = new List<List<Node>>(nodesLoopsCorrected);
+
+                    #region Ignore Negative Space Alterations
+                    //If we are to ignore the negative space, we need to get rid of any loops that are inside other loops.
+                    //All negative loops must be inside, so remove them.
+                    //Some positive loops may be nested inside a negative then a postive, and therefore they are inside a positive. Remove them.
+                    //Note that sorted groups were modifies earlier with this bool.
+                    if (ignoreNegativeSpace)
+                    {
+                        var listOfLoopIDsToKeep = new List<int>();
+                        foreach (var positiveLoop1 in orderedLoops)
+                        {
+                            //If its a negative loop, continue
+                            if (!isPositive[positiveLoop1.First().LoopID]) continue;
+                            var isInside = false;
+                            foreach (var positiveLoop2 in orderedLoops)
+                            {
+                                if (!isPositive[positiveLoop2.First().LoopID]) continue; //Only concerned about positive loops
+                                if (positiveLoop1 == positiveLoop2) continue;
+                                //If any point (just check the first one) is NOT inside positive loop 2, then keep positive loop 1
+                                //Note: If this occues, any loops inside loop 1 will also be inside loop 2, so no information is lost.
+                                if (!MiscFunctions.IsPointInsidePolygon(points2D[positiveLoop2.First().LoopID].ToList(),
+                                    positiveLoop1.First().Point, false)) continue;
+                                isInside = true;
+                                break;
+                            }
+                            //Only keep it if its not inside other loops
+                            if (!isInside) listOfLoopIDsToKeep.Add(positiveLoop1.First().LoopID);
+                        }
+                        
+                        //Rewrite the lists 
+                        var tempOrderedLoops = new List<List<Node>>();
+                        var tempSortedLoops = new List<List<Node>>();
+                        foreach (var index in listOfLoopIDsToKeep)
+                        {
+                            tempOrderedLoops.Add(orderedLoops[index]);
+                            tempSortedLoops.Add(sortedLoops[index]);
+                        }
+                        orderedLoops = new List<List<Node>>(tempOrderedLoops);
+                        sortedLoops = new List<List<Node>>(tempSortedLoops);
+
+                        //Create a new bool list and update the loop IDs and point count.
+                        isPositive = new bool[orderedLoops.Count];
+                        pointCount = 0;
+                        for (var j = 0; j < orderedLoops.Count; j++)
+                        {
+                            isPositive[j] = true;
+                            //Update the LoopID's. Note that the nodes in the 
+                            //sorted loops are the same nodes.
+                            pointCount = pointCount + orderedLoops[j].Count;
+                            foreach (var node in orderedLoops[j])
+                            {
+                                node.LoopID = j;
+                            }
+                        }
+                    }
+                    #endregion
 
                     //Set the NodeTypes of every Node. This step is after "isPositive == null" fuction because
                     //the CW/CCW order of the loops must be accurate.
@@ -648,8 +711,11 @@ namespace TVGL
 
                         #region Triangulate Monotone Polygons
                         //Triangulates the monotone polygons
+                        var newTriangles = new List<Vertex[]>();
                         foreach (var monotonePolygon2 in monotonePolygons)
-                            triangles.AddRange(Triangulate(monotonePolygon2));
+                            newTriangles.AddRange(Triangulate(monotonePolygon2));
+                        triangles.AddRange(newTriangles);
+                        triangleFaceList.Add(newTriangles);
                         #endregion
                     }
                     //Check to see if the proper number of triangles were created from this set of loops

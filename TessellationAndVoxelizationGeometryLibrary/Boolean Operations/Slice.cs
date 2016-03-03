@@ -434,8 +434,9 @@ namespace TVGL.Boolean_Operations
                     verticesOnPlane[i] = loopsOnThisSolid[i].Select(ce => ce.StartVertex).ToArray();
                     points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal, true);
                 }
+                List<List<Vertex[]>> triangleFaceList;
                 var patchTriangles = TriangulatePolygon.Run(points2D.ToList(),
-                    loopsOnThisSolid.Select(l => l.IsPositive).ToArray());
+                    loopsOnThisSolid.Select(l => l.IsPositive).ToArray(), out triangleFaceList);
                 foreach (var triangle in patchTriangles)
                     negativeFaceList.Add(new PolygonalFace(triangle, plane.Normal));
                 negativeSideSolids.Add(
@@ -512,8 +513,9 @@ namespace TVGL.Boolean_Operations
                     verticesOnPlane[i] = loopsOnThisSolid[i].Select(ce => ce.DuplicateVertex).ToArray();
                     points2D[i] = MiscFunctions.Get2DProjectionPoints(verticesOnPlane[i], plane.Normal, true);
                 }
+                List<List<Vertex[]>> triangleFaceList;
                 var patchTriangles = TriangulatePolygon.Run(points2D.ToList(),
-                    loopsOnThisSolid.Select(l => l.IsPositive).ToArray());
+                    loopsOnThisSolid.Select(l => l.IsPositive).ToArray(), out triangleFaceList);
                 foreach (var triangle in patchTriangles)
                     positiveFaceList.Add(new PolygonalFace(triangle, plane.Normal.multiply(-1)));
                 positiveSideSolids.Add(

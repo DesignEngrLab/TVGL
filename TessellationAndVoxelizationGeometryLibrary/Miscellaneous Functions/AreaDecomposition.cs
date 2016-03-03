@@ -20,10 +20,17 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="axis"></param>
         /// <param name="stepSize"></param>
+        /// <param name="individualFaceAreas"></param>
         /// <param name="minOffset"></param>
+        /// <param name="ignoreNegativeSpace"></param>
+        /// <param name="convexHull2DDecompositon"></param>
         /// <returns></returns>
-        public static List<double[]> Run(TessellatedSolid ts, double[] axis, double stepSize, double minOffset = double.NaN)
+        /// public static List<double[]> Run(TessellatedSolid ts, double[] axis, double stepSize, out List<List<double[]>> individualFaceAreas, 
+        ///   double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false)
+        public static List<double[]> Run(TessellatedSolid ts, double[] axis, double stepSize, 
+            double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false)
         {
+            //individualFaceAreas = new List<List<double[]>>(); //Plot changes for the area of each flat that makes up a slice. (e.g. 2 positive loop areas)
             var outputData = new List<double[]>();
             if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
             if(stepSize <= minOffset*2) throw new Exception("step size must be at least 2x as large as the min offset");
@@ -45,15 +52,25 @@ namespace TVGL
                     //Determine cross sectional area for section right after previous vertex
                     var distance = previousVertexDistance + minOffset; //X value (distance along axis) 
                     var cuttingPlane = new Flat(distance, axis);
-                    var area = CrossSectionalArea(new List<Edge>(edgeList), cuttingPlane); //Y value (area)
+                    List<List<Edge>> outputEdgeLoops = null;
+                    var inputEdgeLoops = new List<List<Edge>>();
+                    var area = 0.0;
+                    if (convexHull2DDecompositon) area = ConvexHull2DArea(new List<Edge>(edgeList), cuttingPlane);
+                    else area = CrossSectionalArea(new List<Edge>(edgeList), cuttingPlane, out outputEdgeLoops, inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
                     outputData.Add(new []{distance, area}); 
 
                     //If the difference is far enough, add another data point right before the current vertex
+                    //Use the vertex loops provided from the first pass above
                     if (difference1 > 3*minOffset)
                     {
                         distance = distanceAlongAxis - minOffset; //X value (distance along axis) 
                         cuttingPlane = new Flat(distance, axis);
-                        area = CrossSectionalArea(edgeList, cuttingPlane); //Y value (area)
+                        if (convexHull2DDecompositon) area = ConvexHull2DArea(new List<Edge>(edgeList), cuttingPlane);
+                        else 
+                        {
+                            inputEdgeLoops = outputEdgeLoops;
+                            area = CrossSectionalArea(new List<Edge>(edgeList), cuttingPlane, out outputEdgeLoops, inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
+                        }
                         outputData.Add(new []{distance, area}); 
                     }
                     
@@ -79,53 +96,62 @@ namespace TVGL
             return outputData;
         }
 
-        private static double CrossSectionalArea(IList<Edge> edgeList, Flat cuttingPlane)
+        private static double CrossSectionalArea(IList<Edge> edgeList, Flat cuttingPlane, 
+            out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops, bool ignoreNegativeSpace = false)
         {
             var edgeLoops = new List<List<Edge>>();
-            while (edgeList.Any())
+            if (intputEdgeLoops.Any())
             {
-                var startEdge = edgeList[0];
-                var edgeLoop = new List<Edge>{startEdge};
-                edgeList.RemoveAt(0);
-                var startFace = startEdge.OwnedFace;
-                var currentFace = startFace;
-                var endFace = startEdge.OtherFace; 
-                var nextEdgeFound = false;
-                Edge nextEdge = null;
-                do
-                {
-                    foreach (var edge in edgeList)
-                    {
-                        if (edge.OtherFace == currentFace)
-                        {
-                            currentFace = edge.OwnedFace;
-                            nextEdgeFound = true;
-                            nextEdge = edge;
-                            break;
-                        }
-                        if (edge.OwnedFace == currentFace)
-                        {
-                            currentFace = edge.OtherFace;
-                            nextEdgeFound = true;
-                            nextEdge = edge;
-                            break;
-                        }
-                    }
-                    if (nextEdgeFound)
-                    {
-                        edgeLoop.Add(nextEdge);
-                        edgeList.Remove(nextEdge);
-                    }
-                    else throw new Exception("Loop did not complete");
-                } while (currentFace != endFace);
-                edgeLoops.Add(edgeLoop);
+                edgeLoops = intputEdgeLoops;
             }
+            else
+            {
+                while (edgeList.Any())
+                {
+                    var startEdge = edgeList[0];
+                    var edgeLoop = new List<Edge>{startEdge};
+                    edgeList.RemoveAt(0);
+                    var startFace = startEdge.OwnedFace;
+                    var currentFace = startFace;
+                    var endFace = startEdge.OtherFace; 
+                    var nextEdgeFound = false;
+                    Edge nextEdge = null;
+                    do
+                    {
+                        foreach (var edge in edgeList)
+                        {
+                            if (edge.OtherFace == currentFace)
+                            {
+                                currentFace = edge.OwnedFace;
+                                nextEdgeFound = true;
+                                nextEdge = edge;
+                                break;
+                            }
+                            if (edge.OwnedFace == currentFace)
+                            {
+                                currentFace = edge.OtherFace;
+                                nextEdgeFound = true;
+                                nextEdge = edge;
+                                break;
+                            }
+                        }
+                        if (nextEdgeFound)
+                        {
+                            edgeLoop.Add(nextEdge);
+                            edgeList.Remove(nextEdge);
+                        }
+                        else throw new Exception("Loop did not complete");
+                    } while (currentFace != endFace);
+                    edgeLoops.Add(edgeLoop);
+                }
+            }
+            outputEdgeLoops = edgeLoops;
 
             //Now create a list of vertices from the edgeLoops
             var loops = new List<List<Vertex>>();
             foreach (var edgeLoop in edgeLoops)
             {
-                var loop = new  List<Vertex>();
+                var loop = new List<Vertex>();
                 foreach (var edge in edgeLoop)
                 {
                     var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.To, edge.From);
@@ -133,32 +159,40 @@ namespace TVGL
                 }
                 loops.Add(loop);
             }
-            var triangles = TriangulatePolygon.Run(loops, cuttingPlane.Normal);
+
+            List<List<Vertex[]>> triangleFaceList;
+            var triangles = TriangulatePolygon.Run(loops, cuttingPlane.Normal, out triangleFaceList, ignoreNegativeSpace);
             //ToDo: Could instead write a PolgygonArea function that does not need to triangulate.
             //ToDo: It would be faster. Just determine which loops are positive and negative. 
             //ToDo: Add the positive loop polygon areas and subtract the negative loop polygon areas. 
             //You can determine +/- loops from a line sweep along a random direction.
-            var area = 0.0;
-            foreach (var triangle in triangles)
+            var totalArea = 0.0;
+            var areaList = new List<double>();
+            foreach (var faceList in triangleFaceList)
             {
-                //Reference: http://www.mathopenref.com/coordtrianglearea.html
-                var a = triangle[0];
-                var b = triangle[1];
-                var c = triangle[2];
-                area += Math.Abs(a.X*(b.Y-c.Y)+b.X*(c.Y-a.Y)+c.X*(a.Y-b.Y))/2;
+                var area = 0.0;
+                foreach (var triangle in faceList)
+                {
+                    var edge1 = triangle[1].Position.subtract(triangle[0].Position);
+                    var edge2 = triangle[2].Position.subtract(triangle[0].Position);
+                    // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
+                    area += Math.Abs(edge1.crossProduct(edge2).dotProduct(cuttingPlane.Normal)) / 2;
+                }
+                areaList.Add(area);
+                totalArea += area;
+                //ToDo: need to figure out how to track which area belong to which edge loops
             }
-            return area;
+
+            return totalArea;
         }
 
-        private static double ConvexHull2DArea(List<Edge> edgeList, Flat cuttingPlane)
+        private static double ConvexHull2DArea(IEnumerable<Edge> edgeList, Flat cuttingPlane)
         {
-            throw new NotImplementedException();
             //Don't bother with loops. Just get all the intercept vertices, project to 2d and run 2dConvexHull
-            while (edgeList.Any())
-            {
-                
-            }
-            
+            var vertices = edgeList.Select(edge => MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.To, edge.From)).ToList();
+            var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
+            var area = MinimumEnclosure.ConvexHull2DArea(MinimumEnclosure.ConvexHull2D(points));
+            return area;
         }
     }
 }
