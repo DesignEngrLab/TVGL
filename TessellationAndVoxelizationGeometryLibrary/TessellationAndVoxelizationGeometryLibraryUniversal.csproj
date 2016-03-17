@@ -43,6 +43,7 @@
     <Compile Include="Enclosure Operations\GaussianSphere.cs" />
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
+    <Compile Include="Boolean Operations\PolygonOperations.cs" />
     <Compile Include="InputOutput Operations\3mf.classes.cs" />
     <Compile Include="InputOutput Operations\amf.classes.cs" />
     <Compile Include="InputOutput Operations\3MFFileData.cs" />
