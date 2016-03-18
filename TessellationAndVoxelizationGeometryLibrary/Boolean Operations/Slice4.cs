@@ -39,8 +39,7 @@ namespace TVGL.Boolean_Operations
             //Straddle faces are split into 2 or 3 new faces.
             //Note that this ensures that the loops are made from all new vertices
             //and are unique for the positive and negative sides.
-            var distancesToPlane = new List<double>();
-            var originalPlaneDistance = plane.DistanceToOrigin;
+            List<double> distancesToPlane;
             double posPlaneShift;
             double negPlaneShift;
             var isSuccessful = ShiftPlaneForRobustCut(ts, plane, out distancesToPlane, out posPlaneShift,

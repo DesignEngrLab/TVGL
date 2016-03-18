@@ -100,15 +100,21 @@ namespace TVGL
             out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops, bool ignoreNegativeSpace = false)
         {
             var edgeLoops = new List<List<Edge>>();
+            var loops = new List<List<Vertex>>();
             if (intputEdgeLoops.Any())
             {
-                edgeLoops = intputEdgeLoops;
+                edgeLoops = intputEdgeLoops; //Note that edge loops should all be ordered correctly
+                loops.AddRange(edgeLoops.Select(edgeLoop => edgeLoop.Select(edge => 
+                    MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.To, edge.From)).ToList()));
             }
             else
             {
                 while (edgeList.Any())
                 {
                     var startEdge = edgeList[0];
+                    var loop = new List<Vertex>();
+                    var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, startEdge.To, startEdge.From);
+                    loop.Add(intersectVertex);
                     var edgeLoop = new List<Edge>{startEdge};
                     edgeList.RemoveAt(0);
                     var startFace = startEdge.OwnedFace;
@@ -116,10 +122,14 @@ namespace TVGL
                     var endFace = startEdge.OtherFace; 
                     var nextEdgeFound = false;
                     Edge nextEdge = null;
+                    var correctDirection = 0;
+                    var reverseDirection = 0;
                     do
                     {
-                        foreach (var edge in edgeList)
+                        var index = 0;
+                        for (index = 0; index < edgeList.Count; index++)
                         {
+                            var edge = edgeList[index];
                             if (edge.OtherFace == currentFace)
                             {
                                 currentFace = edge.OwnedFace;
@@ -137,53 +147,76 @@ namespace TVGL
                         }
                         if (nextEdgeFound)
                         {
+                            //For the first set of edges, check to make sure this list is going in the proper direction
+                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, nextEdge.To, nextEdge.From);
+                            var vector = intersectVertex.Position.subtract(loop.Last().Position);
+                            var dot = cuttingPlane.Normal.crossProduct(currentFace.Normal).dotProduct(vector);
+                            loop.Add(intersectVertex);
                             edgeLoop.Add(nextEdge);
-                            edgeList.Remove(nextEdge);
-                        }
+                            edgeList.RemoveAt(index); //Note that removing at an index is FASTER than removing a object.
+                            if (Math.Sign(dot) >= 0) correctDirection++;
+                            else reverseDirection++;
+                        }   
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
+                    if (reverseDirection > correctDirection)
+                    {
+                        loop.Reverse();
+                        edgeLoop.Reverse();
+                    }
+                    loops.Add(loop);
                     edgeLoops.Add(edgeLoop);
+                    //if (reverseDirection > 10 && correctDirection > 10) throw new Exception("Inconsistent Ordering");
                 }
             }
             outputEdgeLoops = edgeLoops;
 
             //Now create a list of vertices from the edgeLoops
-            var loops = new List<List<Vertex>>();
-            foreach (var edgeLoop in edgeLoops)
-            {
-                var loop = new List<Vertex>();
-                foreach (var edge in edgeLoop)
-                {
-                    var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.To, edge.From);
-                    loop.Add(intersectVertex);
-                }
-                loops.Add(loop);
-            }
+            //var loops = new List<List<Vertex>>();
+            //foreach (var edgeLoop in edgeLoops)
+            //{
+            //    var loop = new List<Vertex>();
+            //    foreach (var edge in edgeLoop)
+            //    {
+            //        var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.To, edge.From);
+            //        loop.Add(intersectVertex);
+            //    }
+            //    loops.Add(loop);
+            //}
 
-            List<List<Vertex[]>> triangleFaceList;
-            var triangles = TriangulatePolygon.Run(loops, cuttingPlane.Normal, out triangleFaceList, ignoreNegativeSpace);
-            //ToDo: Could instead write a PolgygonArea function that does not need to triangulate.
-            //ToDo: It would be faster. Just determine which loops are positive and negative. 
-            //ToDo: Add the positive loop polygon areas and subtract the negative loop polygon areas. 
-            //You can determine +/- loops from a line sweep along a random direction.
-            var totalArea = 0.0;
-            var areaList = new List<double>();
-            foreach (var faceList in triangleFaceList)
+            //var totalArea = 0.0;
+            var totalArea2 = 0.0;
+            foreach (var loop in loops)
             {
-                var area = 0.0;
-                foreach (var triangle in faceList)
-                {
-                    var edge1 = triangle[1].Position.subtract(triangle[0].Position);
-                    var edge2 = triangle[2].Position.subtract(triangle[0].Position);
-                    // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-                    area += Math.Abs(edge1.crossProduct(edge2).dotProduct(cuttingPlane.Normal)) / 2;
-                }
-                areaList.Add(area);
-                totalArea += area;
-                //ToDo: need to figure out how to track which area belong to which edge loops
+                //ToDo: The loops must be ordered correctly!!!!!!!!!!!! Currently, they are not.
+                //var points = MiscFunctions.Get2DProjectionPoints(loop, cuttingPlane.Normal, true);
+                //The area function returns negative values for negative loops and positive values for positive loops
+                //totalArea += MiscFunctions.AreaOfPolygon(points);
+                //totalArea2 += MiscFunctions.AreaOf3DPolygon(loop, cuttingPlane.Normal);
             }
+            //var totalAreaDifference = totalArea - totalArea2;
 
-            return totalArea;
+            //List<List<Vertex[]>> triangleFaceList;
+            //var triangles = TriangulatePolygon.Run(loops, cuttingPlane.Normal, out triangleFaceList, ignoreNegativeSpace);
+            ////You can determine +/- loops from a line sweep along a random direction.
+            //var totalArea = 0.0;
+            //var areaList = new List<double>();
+            //foreach (var faceList in triangleFaceList)
+            //{
+            //    var area = 0.0;
+            //    foreach (var triangle in faceList)
+            //    {
+            //        var edge1 = triangle[1].Position.subtract(triangle[0].Position);
+            //        var edge2 = triangle[2].Position.subtract(triangle[0].Position);
+            //        // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
+            //        area += Math.Abs(edge1.crossProduct(edge2).dotProduct(cuttingPlane.Normal)) / 2;
+            //    }
+            //    areaList.Add(area);
+            //    totalArea += area;
+            //    //ToDo: need to figure out how to track which area belong to which edge loops
+            //}
+
+            return totalArea2;
         }
 
         private static double ConvexHull2DArea(IEnumerable<Edge> edgeList, Flat cuttingPlane)
