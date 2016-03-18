@@ -192,7 +192,7 @@ namespace TVGL
                 //var points = MiscFunctions.Get2DProjectionPoints(loop, cuttingPlane.Normal, true);
                 //The area function returns negative values for negative loops and positive values for positive loops
                 //totalArea += MiscFunctions.AreaOfPolygon(points);
-                //totalArea2 += MiscFunctions.AreaOf3DPolygon(loop, cuttingPlane.Normal);
+                totalArea2 += MiscFunctions.AreaOf3DPolygon(loop, cuttingPlane.Normal);
             }
             //var totalAreaDifference = totalArea - totalArea2;
 

@@ -802,6 +802,112 @@ namespace TVGL
         }
         #endregion
 
+        /// <summary>
+        /// Calculate the area of any non-intersecting polygon. 
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
+        /// <reference>
+        /// Method 1: http://www.mathopenref.com/coordpolygonarea2.html
+        /// Faster Method: http://geomalgorithms.com/a01-_area.html
+        /// </reference>
+        public static double AreaOfPolygon(Point[] polygon)
+        {
+            #region Method 1
+            //Method 1
+            //var area = 0.0;
+            //var j = polygon.Length - 1; //Previous to the first vertex
+            //for (var i =0; i < polygon.Length; i++)
+            //{
+            //    area += (polygon[j].X + polygon[i].X)*(polygon[j].Y - polygon[i].Y);
+            //    j = i; //Previous to i
+            //}
+            //area = -area/2;
+            #endregion
+
+            //Faster Method
+            var area = 0.0;
+            var n = polygon.Length;
+            for (var i = 1; i < n - 1; i++)
+            {
+                area += (polygon[i].X) * (polygon[i + 1].Y - polygon[i - 1].Y);
+            }
+            //Final wrap around terms
+            area += (polygon[0].X) * (polygon[1].Y - polygon[n - 1].Y);
+            area += (polygon[n - 1].X) * (polygon[0].Y - polygon[n - 2].Y);
+            area = area / 2;
+            return area;
+        }
+
+        /// <summary>
+        /// Calculate the area of any non-intersecting polygon in 3D space 
+        /// This is faster than projecting to a 2D surface first in a seperate function.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <param name="normal"></param>
+        /// <returns></returns>
+        /// <references>http://geomalgorithms.com/a01-_area.html </references>
+        public static double AreaOf3DPolygon(List<Vertex> polygon, double[] normal)
+        {
+            var ax = Math.Abs(normal[0]);
+            var ay = Math.Abs(normal[1]);
+            var az = Math.Abs(normal[2]);
+            var vertices = new List<Vertex>(polygon) { polygon.First() };
+
+            //Chosse the largest abs coordinate to ignore for projections
+            var coord = 3; //ignore z-coord
+            if (ax > ay) coord = 1; //ignore x-coord
+            else if (ay > az) coord = 2; //ignore y-coord
+
+            // compute area of the 2D projection
+            var n = polygon.Count;
+            var i = 1;
+            var area = 0.0;
+            switch (coord)
+            {
+                case 1:
+                    for (i = 1; i < n; i++)
+                        area += (vertices[i].Y * (vertices[i + 1].Z - vertices[i - 1].Z));
+                    break;
+                case 2:
+                    for (i = 1; i < n; i++)
+                        area += (vertices[i].Z * (vertices[i + 1].X - vertices[i - 1].X));
+                    break;
+                case 3:
+                    for (i = 1; i < n; i++)
+                        area += (vertices[i].X * (vertices[i + 1].Y - vertices[i - 1].Y));
+                    break;
+            }
+            switch (coord)
+            {
+                case 1:
+                    area += (vertices[n].Y * (vertices[1].Z - vertices[n - 1].Z));
+                    break;
+                case 2:
+                    area += (vertices[n].Z * (vertices[1].X - vertices[n - 1].X));
+                    break;
+                case 3:
+                    area += (vertices[n].X * (vertices[1].Y - vertices[n - 1].Y));
+                    break;
+            }
+
+            // scale to get area before projection
+            var an = Math.Sqrt(ax * ax + ay * ay + az * az); // length of normal vector
+            switch (coord)
+            {
+                case 1:
+                    area *= (an / (2 * normal[0]));
+                    break;
+                case 2:
+                    area *= (an / (2 * normal[1]));
+                    break;
+                case 3:
+                    area *= (an / (2 * normal[2]));
+                    break;
+            }
+            return area;
+        }
+
         #region isInside Methods (is 2D point inside polygon, vertex inside solid, ect.)
         /// <summary>
         /// Returns whether a vertex lies on a triangle. User can specify whether the edges of the 
