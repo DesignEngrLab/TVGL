@@ -159,9 +159,9 @@ namespace TVGL.Boolean_Operations
             //Also, find which faces are on the current side of the plane, by using edges.
             //Every face should have either 2 or 0 straddle edges, but never just 1.
             var straddleEdges = new List<StraddleEdge>();
-            var straddleFaces = new List<PolygonalFace>();
-            var tempOnSideFaces = new List<PolygonalFace>();
-            var listEdges = new List<Edge>();
+            var straddleFaces = new Dictionary<int, PolygonalFace>();
+            var tempOnSideFaces = new HashSet<int>();
+            var listEdges = new Dictionary<int, Edge>();
             foreach (var edge in ts.Edges)
             {
                 var toDistance = distancesToPlane[edge.To.IndexInList];
@@ -174,18 +174,17 @@ namespace TVGL.Boolean_Operations
                         for (var i = 0; i < 2; i++)
                         {
                             var face = i == 0 ? edge.OwnedFace : edge.OtherFace;
-                            if (onSideFaces.Contains(face)) throw new Exception();//Debug line
-                            if (tempOnSideFaces.Contains(face))
+                            if(tempOnSideFaces.Contains(face.IndexInList))
                             {
                                 onSideFaces.Add(face);
-                                tempOnSideFaces.Remove(face);
+                                tempOnSideFaces.Remove(face.IndexInList);
                             }
-                            else if (straddleFaces.Contains(face))
+                            else if (straddleFaces.ContainsKey(face.IndexInList))
                             {
-                                tempOnSideFaces.Add(face);
-                                straddleFaces.Remove(face);
+                                tempOnSideFaces.Add(face.IndexInList);
+                                straddleFaces.Remove(face.IndexInList);
                             }
-                            else straddleFaces.Add(face);
+                            else straddleFaces.Add(face.IndexInList, face);
                         }
                     }
                     continue;
@@ -195,25 +194,19 @@ namespace TVGL.Boolean_Operations
                 if (isPositiveSide == 1) offSideVertex = toDistance > 0 ? edge.From : edge.To;
                 else offSideVertex = toDistance > 0 ? edge.To : edge.From;
                 straddleEdges.Add(new StraddleEdge(edge, plane, offSideVertex));
-                listEdges.Add(edge);
+                listEdges.Add(edge.IndexInList, edge);
             }
             if(tempOnSideFaces.Any()) throw new Exception("Every face should have either 2 or 0 straddle edges, but never just 1.");
 
-            //1. Get all the edges that make up the boundary being kept
-            //2. Remove vertex references to the straddle faces
-            var boundaryEdges = new List<Edge>();
-            foreach (var face in straddleFaces)
+            //Get all the edges that make up the boundary being kept
+            var boundaryEdges = new Dictionary<int, Edge>();
+            foreach (var face in straddleFaces.Values)
             {
-                foreach (var edge in face.Edges.Where(edge => !listEdges.Contains(edge) && !boundaryEdges.Contains(edge)))
+                foreach (var edge in face.Edges.Where(edge => !listEdges.ContainsKey(edge.IndexInList) && !boundaryEdges.ContainsKey(edge.IndexInList)))
                 {
-                    boundaryEdges.Add(edge);
+                    boundaryEdges.Add(edge.IndexInList, edge);
                 }
-                //foreach (var vertex in face.Vertices.Where(vertex => vertex.Faces.Contains(face)))
-                //{
-                //    vertex.Faces.Remove(face);
-                //}
             }
-            //
             //Get loops of straddleEdges 
             var loopsOfStraddleEdges = new List<List<StraddleEdge>>();
             var maxCount = straddleEdges.Count/3;
@@ -354,7 +347,8 @@ namespace TVGL.Boolean_Operations
                     if (face1 == face2) continue;
                     foreach (var vertex in face1.Vertices)
                     {
-                        if (!face2.Vertices.Contains(vertex))
+                        //Note that this next line is faster than using the contains function
+                        if (face2.Vertices[0] != vertex && face2.Vertices[1] != vertex && face2.Vertices[2] != vertex)
                         {
                             duplicate = false;
                             break; 

@@ -44,36 +44,87 @@ namespace TVGL
             return Get2DProjectionPoints(vertices, transform , mergeDuplicateReferences);
         }
 
+        ///// <summary>
+        ///// Get2s the d projection points.
+        ///// </summary>
+        ///// <param name="vertices">The vertices.</param>
+        ///// <param name="transform">The transform.</param>
+        ///// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        ///// <returns>Point[].</returns>
+        //public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[,] transform,
+        //    bool mergeDuplicateReferences = false)
+        //{
+        //    var points = new List<Point>();
+        //    var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
+        //    foreach (var vertex in vertices)
+        //    {
+        //        pointAs4[0] = vertex.Position[0];
+        //        pointAs4[1] = vertex.Position[1];
+        //        pointAs4[2] = vertex.Position[2];
+        //        pointAs4 = transform.multiply(pointAs4);
+        //        var point2D = new[] { pointAs4[0], pointAs4[1]};
+        //        if (mergeDuplicateReferences)
+        //        {
+        //            var sameIndex = points.FindIndex(p => p.Position2D.IsPracticallySame(point2D));
+        //            if (sameIndex >= 0)
+        //            {
+        //                //Add reference and move to the next vertex.
+        //                points[sameIndex].References.Add(vertex);
+        //                continue;
+        //            }
+        //        }
+        //        points.Add(new Point(vertex, pointAs4[0], pointAs4[1]));
+        //    }
+        //    return points.ToArray();
+        //}
+
         /// <summary>
         /// Get2s the d projection points.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="transform">The transform.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        /// <param name="sameTolerance"></param>
         /// <returns>Point[].</returns>
         public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[,] transform,
-            bool mergeDuplicateReferences = false)
+            bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Point>();
             var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
+            var simpleCompareDict = new Dictionary<string, Point>();
+            var numDecimalPoints = 0;
+            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            var stringformat = "F" + numDecimalPoints;
             foreach (var vertex in vertices)
             {
                 pointAs4[0] = vertex.Position[0];
                 pointAs4[1] = vertex.Position[1];
                 pointAs4[2] = vertex.Position[2];
                 pointAs4 = transform.multiply(pointAs4);
-                var point2D = new[] { pointAs4[0], pointAs4[1]};
-                if (mergeDuplicateReferences)
+                if (!mergeDuplicateReferences)
                 {
-                    var sameIndex = points.FindIndex(p => p.Position2D.IsPracticallySame(point2D));
-                    if (sameIndex >= 0)
+                    points.Add(new Point(vertex, pointAs4[0], pointAs4[1]));
+                }
+                else
+                {
+                    pointAs4[0] = Math.Round(pointAs4[0], numDecimalPoints);
+                    pointAs4[1] = Math.Round(pointAs4[1], numDecimalPoints);
+                    var lookupString = pointAs4[0].ToString(stringformat) + "|"
+                                       + pointAs4[1].ToString(stringformat);
+                    if (simpleCompareDict.ContainsKey(lookupString))
                     {
-                        //Add reference and move to the next vertex.
-                        points[sameIndex].References.Add(vertex);
-                        continue;
+                        /* if it's in the dictionary, Add reference and move to the next vertex */
+                        simpleCompareDict[lookupString].References.Add(vertex);
+                    }
+                    else
+                    {
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
+                        * the position in the locationIndices. */
+                        var point2D = new Point(vertex, pointAs4[0], pointAs4[1]);
+                        simpleCompareDict.Add(lookupString, point2D);
+                        points.Add(point2D);
                     }
                 }
-                points.Add(new Point(vertex, pointAs4[0], pointAs4[1]));
             }
             return points.ToArray();
         }
@@ -1107,17 +1158,17 @@ namespace TVGL
         {
             var solids = new List<TessellatedSolid>();
             var seperateSolids = new List<List<PolygonalFace>>();
-            var unusedFaces = new List<PolygonalFace>(ts.Faces);
+            var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
             while (unusedFaces.Any())
             {
                 var faces = new HashSet<PolygonalFace>();
-                var stack = new Stack<PolygonalFace>(new[] { unusedFaces[0] });
+                var stack = new Stack<PolygonalFace>(new[] { unusedFaces.ElementAt(0).Value });
                 while (stack.Any())
                 {
                     var face = stack.Pop();
                     if (faces.Contains(face)) continue;
                     faces.Add(face);
-                    unusedFaces.Remove(face);
+                    unusedFaces.Remove(face.IndexInList);
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
                         if (adjacentFace == null) throw new Exception();

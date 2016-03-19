@@ -33,7 +33,7 @@ namespace TVGL
         public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
-            var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, true)).ToList();
+            var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
             return Run(points2D, null, out triangleFaceList, ignoreNegativeSpace);
         }
 
