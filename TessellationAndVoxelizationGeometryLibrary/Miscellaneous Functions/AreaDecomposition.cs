@@ -55,23 +55,24 @@ namespace TVGL
                     List<List<Edge>> outputEdgeLoops = null;
                     var inputEdgeLoops = new List<List<Edge>>();
                     var area = 0.0;
-                    if (convexHull2DDecompositon) ConvexHull2DArea(out area, edgeListDictionary, cuttingPlane);
-                    else CrossSectionalArea(out area, edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
+                    if (convexHull2DDecompositon) area = ConvexHull2DArea(edgeListDictionary, cuttingPlane);
+                    else area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
                     outputData.Add(new []{distance, area}); 
 
                     //If the difference is far enough, add another data point right before the current vertex
                     //Use the vertex loops provided from the first pass above
-                    if (difference1 > 3*minOffset)
+                    if (difference2 > 3*minOffset)
                     {
-                        distance = distanceAlongAxis - minOffset; //X value (distance along axis) 
-                        cuttingPlane = new Flat(distance, axis);
-                        if (convexHull2DDecompositon) ConvexHull2DArea(out area, edgeListDictionary, cuttingPlane);
+                        var distance2 = distanceAlongAxis - minOffset; //X value (distance along axis) 
+                        if(distance2 < distance) throw new Exception();
+                        cuttingPlane = new Flat(distance2, axis);
+                        if (convexHull2DDecompositon) area = ConvexHull2DArea(edgeListDictionary, cuttingPlane);
                         else 
                         {
                             inputEdgeLoops = outputEdgeLoops;
-                            CrossSectionalArea(out area, edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
+                            area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
                         }
-                        outputData.Add(new []{distance, area}); 
+                        outputData.Add(new []{distance2, area}); 
                     }
                     
                     //Update the previous distance used to make a data point
@@ -93,10 +94,14 @@ namespace TVGL
                 //Update the previous distance of the vertex checked
                 previousVertexDistance = distanceAlongAxis;
             }
+            for (var i = 1; i < outputData.Count; i++)
+            {
+                if (outputData[i][0] < outputData[i - 1][0]) throw new Exception();
+            }
             return outputData;
         }
 
-        private static void CrossSectionalArea(out double area, Dictionary<int, Edge> edgeList, Flat cuttingPlane, 
+        private static double CrossSectionalArea(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane, 
             out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops, bool ignoreNegativeSpace = false)
         {
             var edgeLoops = new List<List<Edge>>();
@@ -109,6 +114,8 @@ namespace TVGL
             }
             else
             {
+                //Build an edge list that we can modify, without ruining the original
+                var edgeList = edgeListDictionary.ToDictionary(element => element.Key, element => element.Value);
                 while (edgeList.Any())
                 {
                     var startEdge = edgeList.ElementAt(0).Value;
@@ -182,17 +189,14 @@ namespace TVGL
             //    loops.Add(loop);
             //}
 
-            //var totalArea = 0.0;
             var totalArea2 = 0.0;
             foreach (var loop in loops)
             {
-                //ToDo: The loops must be ordered correctly!!!!!!!!!!!! Currently, they are not.
                 //var points = MiscFunctions.Get2DProjectionPoints(loop, cuttingPlane.Normal, true);
                 //The area function returns negative values for negative loops and positive values for positive loops
                 //totalArea += MiscFunctions.AreaOfPolygon(points);
                 totalArea2 += MiscFunctions.AreaOf3DPolygon(loop, cuttingPlane.Normal);
             }
-            //var totalAreaDifference = totalArea - totalArea2;
 
             //List<List<Vertex[]>> triangleFaceList;
             //var triangles = TriangulatePolygon.Run(loops, cuttingPlane.Normal, out triangleFaceList, ignoreNegativeSpace);
@@ -201,28 +205,30 @@ namespace TVGL
             //var areaList = new List<double>();
             //foreach (var faceList in triangleFaceList)
             //{
-            //    var area = 0.0;
+            //    var faceArea = 0.0;
             //    foreach (var triangle in faceList)
             //    {
             //        var edge1 = triangle[1].Position.subtract(triangle[0].Position);
             //        var edge2 = triangle[2].Position.subtract(triangle[0].Position);
             //        // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-            //        area += Math.Abs(edge1.crossProduct(edge2).dotProduct(cuttingPlane.Normal)) / 2;
+            //        faceArea += Math.Abs(edge1.crossProduct(edge2).dotProduct(cuttingPlane.Normal)) / 2;
             //    }
-            //    areaList.Add(area);
-            //    totalArea += area;
+            //    areaList.Add(faceArea);
+            //    totalArea += faceArea;
             //    //ToDo: need to figure out how to track which area belong to which edge loops
             //}
+            //var difference = Math.Abs(totalArea - totalArea2);
+            //if(difference > 1) throw new Exception();
 
-            area = totalArea2;
+            return totalArea2;
         }
 
-        private static void ConvexHull2DArea(out double area, Dictionary<int, Edge> edgeList, Flat cuttingPlane)
+        private static double ConvexHull2DArea(Dictionary<int, Edge> edgeList, Flat cuttingPlane)
         {
             //Don't bother with loops. Just get all the intercept vertices, project to 2d and run 2dConvexHull
             var vertices = edgeList.Select(edge => MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
             var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
-            area = MinimumEnclosure.ConvexHull2DArea(MinimumEnclosure.ConvexHull2D(points));
+            return MinimumEnclosure.ConvexHull2DArea(MinimumEnclosure.ConvexHull2D(points));
         }
     }
 }

@@ -792,6 +792,7 @@ namespace TVGL
                         Debug.WriteLine("Triangulation failed after " + attempts + " attempts.");
                         throw new Exception();
                     }
+                    isPositive = null;
                     attempts++;
                 }
             }
