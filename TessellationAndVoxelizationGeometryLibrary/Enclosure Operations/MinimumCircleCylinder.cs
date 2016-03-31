@@ -41,6 +41,7 @@ namespace TVGL
 
         public static BoundingCircle MinimumCircle(IList<Point> points)
         {
+            #region Algorithm 1
             //Randomize the list of points
             //var r = new Random();
             //var randomPoints = new List<Point>(points.OrderBy(p=>r.Next()));
@@ -91,7 +92,9 @@ namespace TVGL
             //        i = 0;
             //    }
             //}
+            #endregion
 
+            #region Algorithm 2: Furthest Point
             //Algorithm 2
             var listPoints = new List<Point>(points);
             var point1 = listPoints.First();
@@ -151,13 +154,62 @@ namespace TVGL
                 }
                 stallCounter++;
             }
+            #endregion
+
+            #region Algorithm 3: Meggiddo's Linear-Time Algorithm
+            //Pair up points into n/2 pairs. 
+            //If an odd number of points.....
+
+            //Construct a bisecting line for each pair of points. This sets their slope.
+
+            //Order the slopes.
+            //Find the median (halfway in the set) slope of the bisector lines 
+
+
+
+
+            #endregion
 
             //Return information about minimum circle
             if (stallCounter == points.Count * 3) throw new Exception("Bounding circle failed to converge");
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
             return new BoundingCircle(radius, circle.Center);
         }
-        
+
+        internal class Bisector
+        {
+            #region Properties
+            internal double Slope { get; private set; }
+            #endregion
+
+            #region Constructor
+            internal Bisector(Point point1, Point point2)
+            {
+                
+            }
+            #endregion
+        }
+        /// <summary>
+        /// Takes a set of elements and a metric for comparing them pairwise, and returns the median of the elements.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <returns></returns>
+        public static Point Median(List<Point> points)
+        {
+            return points[0];
+        }
+
+        /// <summary>
+        /// Takes a set of points and a line, and determines which side of the line the center of the MEC of  the points lies on.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="line"></param>
+        /// <returns></returns>
+        public static bool MEC_Center(List<Point> points, double[] line)
+        {
+            return false;
+        }
+
         /// <summary>
         /// Gets the minimum bounding cylinder using 13 guesses for the depth direction
         /// </summary>

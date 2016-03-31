@@ -6,7 +6,7 @@
     <members>
         <member name="T:StarMathLib.StarMath">
             <summary>
-            The one and only class in the StarMathLib. All functions are static
+            The main class in the StarMathLib. All functions are static
             functions located here.
             </summary>
         </member>
@@ -1134,57 +1134,57 @@
             <param name="B">2D double Array, A</param>
             <returns>System.Double[].</returns>
         </member>
-        <member name="F:StarMathLib.StarMath.CellWidth">
+        <member name="P:StarMathLib.StarMath.PrintCellWidth">
             <summary>
                 The cell width
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.NumDecimals">
+        <member name="P:StarMathLib.StarMath.PrintNumDecimals">
             <summary>
                 The number decimals
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.MaxErrorForUsingGaussSeidel">
+        <member name="P:StarMathLib.StarMath.MaxErrorForUsingGaussSeidel">
             <summary>
                 The maximum error for using gauss seidel
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.GaussSeidelMaxError">
+        <member name="P:StarMathLib.StarMath.GaussSeidelMaxError">
             <summary>
                 The gauss seidel maximum error
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.GaussSeidelDiagonalDominanceRatio">
+        <member name="P:StarMathLib.StarMath.GaussSeidelDiagonalDominanceRatio">
             <summary>
                 The gauss seidel diagonal dominance ratio
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.GaussSeidelMinimumMatrixSize">
+        <member name="P:StarMathLib.StarMath.GaussSeidelMinimumMatrixSize">
             <summary>
                 The gauss seidel minimum matrix size
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.GaussSeidelMaxIterationFactor">
+        <member name="P:StarMathLib.StarMath.GaussSeidelMaxIterationFactor">
             <summary>
                 The gauss seidel maximum iteration factor
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.GaussSeidelRelaxationOmega">
+        <member name="P:StarMathLib.StarMath.GaussSeidelRelaxationOmega">
             <summary>
                 The gauss seidel relaxation omega
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.MaxSvDiter">
+        <member name="P:StarMathLib.StarMath.MaxSvDiter">
             <summary>
                 The maximum sv diter
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.StartingCarolSeed">
+        <member name="P:StarMathLib.StarMath.StartingCarolSeed">
             <summary>
                 The starting carol seed
             </summary>
         </member>
-        <member name="F:StarMathLib.StarMath.EqualityTolerance">
+        <member name="P:StarMathLib.StarMath.EqualityTolerance">
             <summary>
                 Gets or sets the  tolerance for the equality functions: IsPracticallySame, IsNegligible, IsGreaterThanNonNegligible
                 IsLessThanNonNegligible.
@@ -1887,6 +1887,7 @@
             Inverses the with lu result.
             </summary>
             <param name="B">The b.</param>
+            <param name="permute">The permute.</param>
             <param name="length">The length.</param>
             <returns>System.Double[].</returns>
         </member>
@@ -1897,8 +1898,9 @@
             <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
             <param name="L">The L matrix is output where the diagonal elements are included and not (necessarily) equal to one.</param>
             <param name="U">The U matrix is output where the diagonal elements are all equal to one.</param>
-            <exception cref="T:System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
+            <param name="permute">The permute.</param>
             <exception cref="T:System.ArithmeticException">Matrix cannot be inverted. Can only invert sqyare matrices.</exception>
+            <exception cref="T:System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         </member>
         <member name="M:StarMathLib.StarMath.LUDecomposition(System.Double[0:,0:],System.Int32[]@,System.Int32,System.Boolean,System.Int32[])">
             <summary>
@@ -1923,6 +1925,7 @@
             <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
             <param name="L">The L matrix is output where the diagonal elements are included and not (necessarily) equal to one.</param>
             <param name="U">The U matrix is output where the diagonal elements are all equal to one.</param>
+            <param name="permute">The permute.</param>
             <exception cref="T:System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
             <exception cref="T:System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         </member>
@@ -1948,9 +1951,10 @@
             the diagonals are the D matrix in the L-D-LT formulation. To get the L-LT format.
             </summary>
             <param name="A">The matrix to invert. This matrix is unchanged by this function.</param>
+            <param name="NoSeparateDiagonal">if set to <c>true</c> [no separate diagonal].</param>
             <returns>System.Double[].</returns>
             <exception cref="T:System.ArithmeticException">Matrix cannot be inverted. Can only invert square matrices.</exception>
-            <exception cref="T:System.ArithmeticException">Cholesky Decomposition can only be determined for square matrices.</exception>
+            <exception cref="T:System.ArithmeticException">Matrix cannot be inverted. Can only invert square matrices.</exception>
         </member>
         <member name="M:StarMathLib.StarMath.CholeskyDecomposition(System.Int32[0:,0:],System.Boolean)">
             <summary>
@@ -3050,6 +3054,14 @@
             </summary>
             <returns>System.Double[].</returns>
         </member>
+        <member name="M:StarMathLib.StarMath.SumRow(System.Double[0:,0:],System.Int32)">
+            <summary>
+            Sums the row of the matrix.
+            </summary>
+            <param name="A">a.</param>
+            <param name="index">The index.</param>
+            <returns>System.Double.</returns>
+        </member>
         <member name="M:StarMathLib.StarMath.SumRow(System.Double[0:,0:],System.Int32,System.Int32)">
             <summary>
             Sums the values of a specified row.
@@ -3069,7 +3081,6 @@
             </summary>
             <param name="A">a.</param>
             <param name="index">The index.</param>
-            <param name="numRows">The number rows.</param>
             <returns>System.Double[].</returns>
         </member>
         <member name="M:StarMathLib.StarMath.SumColumn(System.Double[0:,0:],System.Int32,System.Int32)">
@@ -3253,6 +3264,213 @@
             <param name="potentialIndices">The potential indices.</param>
             <returns>System.Int32[].</returns>
         </member>
+        <member name="M:StarMathLib.CSparse.CompressedColumnStorage.Resize(System.Int32)">
+            <summary>
+                Change the max # of entries sparse matrix
+            </summary>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="T:StarMathLib.CSparse.SymbolicColumnStorage">
+            <summary>
+                Represents the nonzero pattern of a column-compressed matrix.
+            </summary>
+            <remarks>
+                Used for ordering and symbolic factorization.
+            </remarks>
+        </member>
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.Resize(System.Int32)">
+            <summary>
+                Change the max # of entries sparse matrix
+            </summary>
+            <param name="size"></param>
+            <returns></returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.Transpose">
+            <summary>
+                Computes the transpose of a sparse matrix, C = A';
+            </summary>
+            <returns>Transposed matrix, C = A'</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.CumulativeSum(System.Int32[],System.Int32[],System.Int32)">
+            <summary>
+                Cumulative sum of given array.
+            </summary>
+            <param name="sum">Output: cumulative sum of counts</param>
+            <param name="counts">input array, overwritten with sum</param>
+            <param name="size">length of counts</param>
+            <returns>sum[size] (non-zeros)</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.Add(StarMathLib.CSparse.SymbolicColumnStorage)">
+            <summary>
+                Symbolic sum C = A + B
+            </summary>
+            <param name="other">column-compressed matrix</param>
+            <returns>Sum C = A + B</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.Scatter(System.Int32,System.Int32[],System.Int32,System.Int32[],System.Int32)">
+            <summary>
+                Scatters and sums a sparse vector A(:,j) into a dense vector, x = x + beta * A(:,j).
+            </summary>
+            <param name="j">the column of A to use</param>
+            <param name="work">size m, node i is marked if w[i] = mark</param>
+            <param name="mark">mark value of w</param>
+            <param name="ci">pattern of x accumulated in ci</param>
+            <param name="nz">pattern of x placed in C starting at C.i[nz]</param>
+            <returns>new value of nz</returns>
+        </member>
+        <member name="T:StarMathLib.CSparse.ApproximateMinimumDegree">
+            <summary>
+                Approximate Minimum Degree ordering.
+            </summary>
+        </member>
+        <member name="M:StarMathLib.CSparse.ApproximateMinimumDegree.Generate(StarMathLib.CSparse.CompressedColumnStorage)">
+            <summary>
+                Generate minimum degree ordering of A+A' (if A is symmetric) or A'A.
+            </summary>
+            <param name="A">Column-compressed matrix</param>
+            <returns>
+                amd(A+A') if A is symmetric, or amd(A'A) otherwise, null on
+                error or for natural ordering
+            </returns>
+            <remarks>
+                See Chapter 7.1 (Fill-reducing orderings: Minimum degree ordering) in
+                "Direct Methods for Sparse Linear Systems" by Tim Davis.
+            </remarks>
+        </member>
+        <member name="M:StarMathLib.CSparse.ApproximateMinimumDegree.Reach(System.Int32[],System.Int32[],System.Int32[],System.Int32[],System.Int32,System.Int32,System.Int32[],System.Int32[])">
+            <summary>
+            Reaches the specified gp.
+            </summary>
+            <param name="Gp">The gp.</param>
+            <param name="Gi">The gi.</param>
+            <param name="Bp">The bp.</param>
+            <param name="Bi">The bi.</param>
+            <param name="n">The n.</param>
+            <param name="k">The k.</param>
+            <param name="xi">The xi.</param>
+            <param name="pinv">The pinv.</param>
+            <returns>System.Int32.</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.ApproximateMinimumDegree.DepthFirstSearch(System.Int32,System.Int32[],System.Int32[],System.Int32,System.Int32[],System.Int32[],System.Int32,System.Int32[])">
+            <summary>
+            Depth-first-search of the graph of a matrix, starting at node j.
+            </summary>
+            <param name="j">starting node</param>
+            <param name="Gp">graph to search (modified, then restored)</param>
+            <param name="Gi">graph to search</param>
+            <param name="top">stack[top..n-1] is used on input</param>
+            <param name="xi">size n, stack containing nodes traversed</param>
+            <param name="pstack">size n, work array</param>
+            <param name="offset">the index of the first element in array pstack</param>
+            <param name="pinv">mapping of rows to columns of G, ignored if null</param>
+            <returns>new value of top, -1 on error</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.ApproximateMinimumDegree.TreeDepthFirstSearch(System.Int32,System.Int32,System.Int32[],System.Int32[],System.Int32[],System.Int32[])">
+            <summary>
+            Depth-first search and postorder of a tree rooted at node j
+            </summary>
+            <param name="j">postorder of a tree rooted at node j</param>
+            <param name="k">number of nodes ordered so far</param>
+            <param name="head">head[i] is first child of node i; -1 on output</param>
+            <param name="next">next[i] is next sibling of i or -1 if none</param>
+            <param name="post">postordering</param>
+            <param name="stack">size n, work array</param>
+            <returns>new value of k, -1 on error</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.SolveLower(StarMathLib.CSparse.CompressedColumnStorage,System.Double[])">
+            <summary>
+            Solve a lower triangular system by forward elimination, Lx=b.
+            </summary>
+            <param name="L">The l.</param>
+            <param name="x">The x.</param>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.SolveUpper(StarMathLib.CSparse.CompressedColumnStorage,System.Double[])">
+            <summary>
+            Solve an upper triangular system by backward elimination, Ux=b.
+            </summary>
+            <param name="U">The u.</param>
+            <param name="x">The x.</param>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.FactorizeLU(StarMathLib.CSparse.CompressedColumnStorage,System.Int32[],StarMathLib.CSparse.CompressedColumnStorage@,StarMathLib.CSparse.CompressedColumnStorage@,System.Int32[]@)">
+            <summary>
+            [L,U,pinv] = lu(A, [q lnz unz]). lnz and unz can be guess.
+            </summary>
+            <param name="A">a.</param>
+            <param name="columnPermutation">The column permutation.</param>
+            <param name="L">The l.</param>
+            <param name="U">The u.</param>
+            <param name="pinv">The pinv.</param>
+            <exception cref="T:System.Exception">No pivot element found.</exception>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.SolveSp(StarMathLib.CSparse.CompressedColumnStorage,StarMathLib.CSparse.CompressedColumnStorage,System.Int32,System.Int32[],System.Double[],System.Int32[],System.Boolean)">
+            <summary>
+            Solve Gx=b(:,k), where G is either upper (lo=false) or lower (lo=true)
+            triangular.
+            </summary>
+            <param name="G">lower or upper triangular matrix in column-compressed form</param>
+            <param name="B">right hand side, b=B(:,k)</param>
+            <param name="k">use kth column of B as right hand side</param>
+            <param name="xi">size 2*n, nonzero pattern of x in xi[top..n-1]</param>
+            <param name="x">size n, x in x[xi[top..n-1]]</param>
+            <param name="pinv">mapping of rows to columns of G, ignored if null</param>
+            <param name="lo">true if lower triangular, false if upper</param>
+            <returns>top, -1 in error</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.SymbolicAnalysisLDL(StarMathLib.CSparse.CompressedColumnStorage)">
+            <summary>
+            Symbolics the analysis LDL.
+            </summary>
+            <param name="A">a.</param>
+            <returns>SymbolicFactorization.</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.FactorizeLDL(StarMathLib.CSparse.CompressedColumnStorage,StarMathLib.CSparse.SymbolicFactorization,System.Double[]@,StarMathLib.CSparse.CompressedColumnStorage@)">
+            <summary>
+            Compute the numeric LDL' factorization of PAP'.
+            </summary>
+            <param name="A">The matrix, A.</param>
+            <param name="S">The symobolic factorization.</param>
+            <param name="D">The diagonals of LDL.</param>
+            <param name="L">The lower triangular matrix.</param>
+            <exception cref="T:System.Exception">Diagonal element is zero.</exception>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.SolveLDL(System.Collections.Generic.IList{System.Double},StarMathLib.CSparse.CompressedColumnStorage,System.Double[],System.Int32[])">
+            <summary>
+            Solves a linear system Ax=b, where A is symmetric positive definite.
+            </summary>
+            <param name="b">The b.</param>
+            <param name="L">The lower triangular matrix.</param>
+            <param name="D">The diagonals.</param>
+            <param name="inversePermute">The inverse permute.</param>
+            <returns>System.Double[].</returns>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.ApplyPermute(System.Int32[],System.Collections.Generic.IList{System.Double},System.Int32)">
+            <summary>
+            Permutes a vector, x=P*b.
+            </summary>
+            <param name="p">Permutation vector.</param>
+            <param name="b">Input vector.</param>
+            <param name="n">Length of p, b and x.</param>
+            <returns>System.Double[].</returns>
+            <remarks>p = null denotes identity.</remarks>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.ApplyInversePermute(System.Int32[],System.Collections.Generic.IList{System.Double},System.Int32)">
+            <summary>
+            Permutes a vector, x = P'b.
+            </summary>
+            <param name="p">Permutation vector.</param>
+            <param name="b">Input vector.</param>
+            <param name="n">Length of p, b, and x.</param>
+            <returns>System.Double[].</returns>
+            <remarks>p = null denotes identity.</remarks>
+        </member>
+        <member name="M:StarMathLib.CSparse.Main.Invert(System.Int32[])">
+            <summary>
+            Inverts a permutation vector.
+            </summary>
+            <param name="p">A permutation vector.</param>
+            <returns>Returns pinv[i] = k if p[k] = i on input.</returns>
+        </member>
         <member name="T:StarMathLib.SparseMatrix">
             <summary>
             Class SparseMatrix.
@@ -3317,6 +3535,12 @@
             <param name="A">a.</param>
             <returns>System.Double[].</returns>
             <exception cref="T:System.NotImplementedException"></exception>
+        </member>
+        <member name="M:StarMathLib.SparseMatrix.SumAllElements">
+            <summary>
+            Sums all elements.
+            </summary>
+            <returns>System.Double.</returns>
         </member>
         <member name="M:StarMathLib.SparseMatrix.SumAllRows">
             <summary>
@@ -3430,19 +3654,21 @@
             <param name="numRows">The number rows.</param>
             <param name="numCols">The number cols.</param>
         </member>
+        <member name="M:StarMathLib.SparseMatrix.#ctor(System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Double},System.Int32,System.Int32,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:StarMathLib.SparseMatrix"/> class.
+            </summary>
+            <param name="indices">The row by row indices.</param>
+            <param name="values">The values.</param>
+            <param name="numRows">The number rows.</param>
+            <param name="numCols">The number cols.</param>
+            <param name="InRowOrder">The in row order.</param>
+        </member>
         <member name="M:StarMathLib.SparseMatrix.#ctor(System.Collections.Generic.Dictionary{System.Int32[],System.Double},System.Int32,System.Int32)">
             <summary>
             Initializes a new instance of the <see cref="T:StarMathLib.SparseMatrix"/> class.
             </summary>
             <param name="cellDictionary">The cell dictionary with keys as [i,j] pairs.</param>
-            <param name="numRows">The number rows.</param>
-            <param name="numCols">The number cols.</param>
-        </member>
-        <member name="M:StarMathLib.SparseMatrix.#ctor(System.Collections.Generic.Dictionary{System.Int32,System.Double},System.Int32,System.Int32)">
-            <summary>
-            Initializes a new instance of the <see cref="T:StarMathLib.SparseMatrix"/> class.
-            </summary>
-            <param name="cellDictionary">The cell dictionary with keys as single row-by-row indices.</param>
             <param name="numRows">The number rows.</param>
             <param name="numCols">The number cols.</param>
         </member>
@@ -3453,13 +3679,21 @@
             <param name="numRows">The number rows.</param>
             <param name="numCols">The number cols.</param>
         </member>
-        <member name="M:StarMathLib.SparseMatrix.FillInSparseMatrix(StarMathLib.SparseMatrix,System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Double})">
+        <member name="M:StarMathLib.SparseMatrix.UpdateValues(System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Double})">
             <summary>
-            Fills the in sparse matrix.
+            Updates the values.
             </summary>
-            <param name="newMatrix">The new matrix.</param>
+            <param name="rowIndices">The row indices.</param>
+            <param name="colIndices">The col indices.</param>
+            <param name="values">The values.</param>
+        </member>
+        <member name="M:StarMathLib.SparseMatrix.UpdateValues(System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Double},System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:StarMathLib.SparseMatrix" /> class.
+            </summary>
             <param name="rowByRowIndices">The row by row indices.</param>
-            <param name="rowByRowValues">The row by row values.</param>
+            <param name="values">The values.</param>
+            <param name="InRowOrder">The in row order.</param>
         </member>
         <member name="M:StarMathLib.SparseMatrix.ConvertSparseToDenseMatrix">
             <summary>
@@ -3548,7 +3782,6 @@
             <param name="IsASymmetric">if set to <c>true</c> [a is symmetric].</param>
             <param name="potentialDiagonals">The potential diagonals.</param>
             <returns>System.Double[].</returns>
-            <exception cref="T:System.NotImplementedException"></exception>
         </member>
         <member name="M:StarMathLib.SparseMatrix.CholeskyDecomposition">
             <summary>
@@ -3559,12 +3792,11 @@
             <exception cref="T:System.ArithmeticException">Cholesky Decomposition can only be determined for square matrices.</exception>
             <exception cref="T:System.ArithmeticException">Cholesky Decomposition can only be determined for square matrices.</exception>
         </member>
-        <member name="M:StarMathLib.SparseMatrix.solveFromCholeskyFactorization(System.Collections.Generic.IList{System.Double},System.Int32)">
+        <member name="M:StarMathLib.SparseMatrix.solveFromCholeskyFactorization(System.Collections.Generic.IList{System.Double})">
             <summary>
             Solves from cholesky factorization.
             </summary>
             <param name="b">The b.</param>
-            <param name="length">The length.</param>
             <returns>System.Double[].</returns>
         </member>
         <member name="M:StarMathLib.SparseMatrix.AddCellToTheLeftOfAndBelow(StarMathLib.SparseCell,StarMathLib.SparseCell,System.Int32,System.Int32,System.Double)">
@@ -3588,37 +3820,6 @@
             <param name="colI">The col i.</param>
             <param name="value">The value.</param>
             <returns>SparseCell.</returns>
-        </member>
-        <member name="M:StarMathLib.SparseMatrix.findPotentialDiagonals(System.Collections.Generic.List{System.Int32}[]@,System.Int32,System.Double)">
-            <summary>
-            Finds the potential diagonals.
-            </summary>
-            <param name="potentialDiagonals">The potential diagonals.</param>
-            <param name="length">The length.</param>
-            <param name="minimalConsideration">The minimal consideration.</param>
-            <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-            <exception cref="T:System.NotImplementedException"></exception>
-        </member>
-        <member name="M:StarMathLib.SparseMatrix.isGaussSeidelAppropriate(System.Collections.Generic.IList{System.Double},System.Collections.Generic.List{System.Int32}[]@,System.Collections.Generic.IList{System.Double}@)">
-            <summary>
-            Determines whether [is gauss seidel appropriate] [the specified b].
-            </summary>
-            <param name="b">The b.</param>
-            <param name="potentialDiagonals">The potential diagonals.</param>
-            <param name="initialGuess">The initial guess.</param>
-            <returns><c>true</c> if [is gauss seidel appropriate] [the specified b]; otherwise, <c>false</c>.</returns>
-            <exception cref="T:System.NotImplementedException"></exception>
-        </member>
-        <member name="M:StarMathLib.SparseMatrix.solveIteratively(System.Collections.Generic.IList{System.Double},System.Collections.Generic.IList{System.Double},System.Collections.Generic.List{System.Int32}[])">
-            <summary>
-            Solves the system of equations iteratively.
-            </summary>
-            <param name="b">The b.</param>
-            <param name="initialGuess">The initial guess.</param>
-            <param name="potentialDiagonals">The potential diagonals.</param>
-            <returns>System.Double[].</returns>
-            <exception cref="T:System.NotImplementedException"></exception>
-            <exception cref="T:System.NotImplementedException"></exception>
         </member>
         <member name="T:StarMathLib.SparseCell">
             <summary>

@@ -115,6 +115,7 @@ namespace TVGL.Boolean_Operations
                 while (difference < 2 * minimumShift)
                 {
                     i++;
+                    if (i == distancesToPosPlane.Count) return false; //This plane is essentially on an outer face. Don't pursue.
                     difference = distancesToPosPlane[i] - distancesToPosPlane[i - 1];
                 }
                 //i will be greater than 1 since the first difference must be less than ts.SameTolerance
@@ -130,6 +131,7 @@ namespace TVGL.Boolean_Operations
                 while (difference < 2 * minimumShift)
                 {
                     i++;
+                    if (i == distancesToNegPlane.Count) return false; //This plane is essentially on an outer face. Don't pursue.
                     difference = distancesToNegPlane[i] - distancesToNegPlane[i - 1];
                 }
                 //Subtract the distance to plane and minimum shift to make a negative shift to the plane
