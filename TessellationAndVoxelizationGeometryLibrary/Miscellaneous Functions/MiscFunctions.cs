@@ -278,7 +278,6 @@ namespace TVGL
             var angleChange = Math.PI - (angleV1 - angleV0);
             if (angleChange > 2 * Math.PI) return angleChange - 2 * Math.PI;
             if (angleChange < 0) return angleChange + 2 * Math.PI;
-            //if (Math.Abs(angle - angleChange) > 0.001) throw new Exception();
             return angleChange;
         }
         #endregion
@@ -651,7 +650,7 @@ namespace TVGL
             for (var i = 0; i < 3; i++)
             {
                 position[i] = point2.Position[i] * fraction + point1.Position[i] * (1 - fraction);
-                if (double.IsNaN(position[i])) throw new Exception();
+                if (double.IsNaN(position[i])) throw new Exception("This should never occur. Prevent this from happening");
             }
             return new Vertex(position);
         }
@@ -1171,7 +1170,7 @@ namespace TVGL
                     unusedFaces.Remove(face.IndexInList);
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
-                        if (adjacentFace == null) throw new Exception();
+                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
                         stack.Push(adjacentFace);
                     }
                 }
@@ -1188,138 +1187,8 @@ namespace TVGL
                 solids.Add(new TessellatedSolid(seperateSolid));
                 count = count + seperateSolid.Count;
             }
-            if (count != ts.Faces.Length) throw new Exception();
             return solids;
         }
         #endregion
-
-        #region DEBUG: Is something broken in the stl file or convex hull?
-        /// <summary>
-        /// Checks if convex hull is broken 
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <returns></returns>
-        /// <exception>
-        ///     <cref>Exception</cref>
-        /// </exception>
-        public static bool IsConvexHullBroken(TessellatedSolid ts)
-        {
-            //Check if convex hull is water tight or multiple solids
-            var faces = new HashSet<PolygonalFace>();
-            var startFace = ts.ConvexHull.Faces[0];
-            var stack = new Stack<PolygonalFace>(new[] {startFace});
-            while (stack.Any())
-            {
-                var face = stack.Pop();
-                if (faces.Contains(face)) continue;
-                faces.Add(face);
-                foreach (var adjacentFace in face.AdjacentFaces)
-                {
-                    if (adjacentFace == null) throw new Exception();
-                    stack.Push(adjacentFace);
-                }
-            }
-            if (faces.Count != ts.ConvexHull.Faces.Length) throw new Exception();
-
-            //Check if the vertices of an edge belong to the two faces it is supposed to belong to
-            foreach (var edge in ts.ConvexHull.Edges)
-            {
-                if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From))
-                    throw new Exception();
-                if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From))
-                    throw new Exception();
-                //See if that edge should have been connected to a different face
-                if (ts.ConvexHull.Faces.Any(face => face.Vertices.Contains(edge.To) &&
-                                                   face.Vertices.Contains(edge.From) && face != edge.OwnedFace &&
-                                                   face != edge.OtherFace))
-                {
-                    throw new Exception();
-                }
-                if (edge.Curvature == CurvatureType.Concave) throw new Exception();
-            }
-            //Else, no exceptions have been hit.
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if solid model is broken.
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static bool IsSolidBroken(TessellatedSolid ts)
-        { 
-            foreach (var edge in ts.Edges)
-            {
-                if (!edge.OwnedFace.Vertices.Contains(edge.To) || !edge.OwnedFace.Vertices.Contains(edge.From)) throw new Exception();
-                if (!edge.OtherFace.Vertices.Contains(edge.To) || !edge.OtherFace.Vertices.Contains(edge.From)) throw new Exception();
-                if (edge.OwnedFace == null) throw new Exception();
-                if (edge.OtherFace == null) throw new Exception();
-                if (double.IsNaN(edge.InternalAngle)) throw new Exception();
-                if (edge.Curvature == CurvatureType.Undefined) throw new Exception();
-            }
-
-            //Check if any faces are without a normal vector
-            foreach (var face in ts.Faces)
-            {
-                var d = Math.Abs(face.Normal[0]) + Math.Abs(face.Normal[1]) + Math.Abs(face.Normal[2]);
-                if (d.IsNegligible()) throw new Exception();
-                if (double.IsNaN(face.Normal[0])) throw new Exception();
-                //If face area is Negligible, repair the tesselated solid by removing the face
-                if (face.Area.IsNegligible()) throw new Exception();
-                //Check for any null adjacent faces
-                if (face.AdjacentFaces.Any(adjFace => adjFace == null)) throw new Exception();
-            }
-
-            //Check if water tight or multiple solids
-            var faces = new HashSet<PolygonalFace>();
-            var startFace = ts.Faces[0];
-            var stack = new Stack<PolygonalFace>(new[] { startFace });
-            while (stack.Any())
-            {
-                var face = stack.Pop();
-                if (faces.Contains(face)) continue;
-                faces.Add(face);
-                foreach (var adjacentFace in face.AdjacentFaces)
-                {
-                    if (adjacentFace == null) throw new Exception();
-                    stack.Push(adjacentFace);
-                }
-            }
-            if (ts.Faces.Length - faces.Count > 3) throw new Exception("This is likely an assembly");
-            if (ts.Faces.Length -  faces.Count > 0 ) throw new Exception("Solid is not water tight");
-
-            //Passed all the debug criteria
-            return false;
-        }
-
-        /// <summary>
-        /// Simple Check to determine if a part is not watertight 
-        /// (doesn't gaurantee it is watertight, but can guarantee it isn't)
-        /// </summary>
-        /// <param name="listFaces"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static bool IsWaterTight(List<PolygonalFace> listFaces)
-        {
-            var faces = new HashSet<PolygonalFace>();
-            var startFace = listFaces[0];
-            var stack = new Stack<PolygonalFace>(new[] { startFace });
-            while (stack.Any())
-            {
-                var face = stack.Pop();
-                if (faces.Contains(face)) continue;
-                faces.Add(face);
-                foreach (var adjacentFace in face.AdjacentFaces)
-                {
-                    if (adjacentFace == null) throw new Exception();
-                    stack.Push(adjacentFace);
-                }
-            }
-            if (faces.Count != listFaces.Count) throw new Exception("Solid is not water tight");
-            //Passed all the debug criteria
-            return true;
-        }
-        #endregion
-    }
+   }
 }

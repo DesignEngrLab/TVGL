@@ -10,6 +10,7 @@ namespace TVGL.Boolean_Operations
     /// Slice4 Performs the slicing operation on the prescribed flat plane. This is a NON-Destructive
     /// operation, and returns two of more new tessellated solids  in the "out" parameter
     /// lists.
+    /// However, it does reference the solid's faces. So this may conflict with parallel processing.
     /// </summary>
     public static class Slice4
     {
@@ -235,14 +236,14 @@ namespace TVGL.Boolean_Operations
                     }
                     
                     //Only two straddle edges are possible per face, and the other has already been removed from straddleEdges.
-                    if (possibleStraddleEdges.Count != 1) throw new Exception();
+                    if (possibleStraddleEdges.Count != 1) throw new Exception("This should never happen and will cause errors down the line. Prevent it.");
                     straddleEdge = possibleStraddleEdges[0];
                     loopOfStraddleEdges.Add(straddleEdge);
                     straddleEdges.Remove(straddleEdge);
                     var currentFace = newStartFace;
                     newStartFace = straddleEdge.NextFace(currentFace);
                 } while (newStartFace != startFace);
-                if (loopOfStraddleEdges.Count < 3) throw new Exception();
+                if (loopOfStraddleEdges.Count < 3) continue; //Ignore this loop, since it seems to be a knife edge 
                 loopsOfStraddleEdges.Add(loopOfStraddleEdges);
             }
             if(straddleEdges.Any()) throw new Exception("While loop was unable to complete.");
@@ -271,7 +272,7 @@ namespace TVGL.Boolean_Operations
                     length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges[k-1].IntersectVertex.Position,
                         loopOfStraddleEdges[k].IntersectVertex.Position);
                 }
-                if (k +1 == loopOfStraddleEdges.Count-1) throw new Exception("No good starting edge found");
+                if (k +1 == loopOfStraddleEdges.Count-1) throw new Exception("No good starting edge found. Rewrite the function to find a better edge");
                 var firstStraddleEdge = loopOfStraddleEdges[k];
                 var previousStraddleEdge = firstStraddleEdge;
                 successfull = false;
@@ -335,30 +336,14 @@ namespace TVGL.Boolean_Operations
                         previousStraddleEdge = currentStraddleEdge;
                     }
                 } while (!successfull);
-                if (loopOfVertices.Count < 3) throw new Exception();
+                if (loopOfVertices.Count < 3) throw new Exception("This could be a knife edge. But this error will likely cause errors down the line");
                 loops.Add(loopOfVertices);
                 allNewFaces.AddRange(newFaces);
             }
             
-            foreach (var face1 in allNewFaces)
+            foreach (var face in allNewFaces)
             {
-                face1.CreatedInFunction = "Slice4: Divide up faces";
-                foreach (var face2 in allNewFaces)
-                {
-                    var duplicate = false;
-                    if (face1 == face2) continue;
-                    foreach (var vertex in face1.Vertices)
-                    {
-                        //Note that this next line is faster than using the contains function
-                        if (face2.Vertices[0] != vertex && face2.Vertices[1] != vertex && face2.Vertices[2] != vertex)
-                        {
-                            duplicate = false;
-                            break; 
-                        }
-                        duplicate = true;
-                    }
-                    if (duplicate) throw new Exception();
-                }
+                face.CreatedInFunction = "Slice4: Divide up faces";
             }
             onSideFaces.AddRange(allNewFaces);
         }
