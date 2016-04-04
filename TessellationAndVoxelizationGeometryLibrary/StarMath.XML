@@ -3644,7 +3644,7 @@
             The number rows
             </summary>
         </member>
-        <member name="M:StarMathLib.SparseMatrix.#ctor(System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Double},System.Int32,System.Int32,System.Boolean)">
+        <member name="M:StarMathLib.SparseMatrix.#ctor(System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Double},System.Int32,System.Int32)">
             <summary>
             Initializes a new instance of the <see cref="T:StarMathLib.SparseMatrix" /> class.
             </summary>
@@ -3658,7 +3658,7 @@
             <summary>
             Initializes a new instance of the <see cref="T:StarMathLib.SparseMatrix"/> class.
             </summary>
-            <param name="rowByRowIndices">The row by row indices.</param>
+            <param name="indices">The row by row indices.</param>
             <param name="values">The values.</param>
             <param name="numRows">The number rows.</param>
             <param name="numCols">The number cols.</param>
@@ -3678,14 +3678,6 @@
             </summary>
             <param name="numRows">The number rows.</param>
             <param name="numCols">The number cols.</param>
-        </member>
-        <member name="M:StarMathLib.SparseMatrix.FillInSparseMatrix(System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Double})">
-            <summary>
-            Fills the in sparse matrix.
-            </summary>
-            <param name="newMatrix">The new matrix.</param>
-            <param name="rowByRowIndices">The row by row indices.</param>
-            <param name="rowByRowValues">The row by row values.</param>
         </member>
         <member name="M:StarMathLib.SparseMatrix.UpdateValues(System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Int32},System.Collections.Generic.IList{System.Double})">
             <summary>
