@@ -246,57 +246,5 @@ namespace TVGL_Test
             //    }
             //}
         }
-        private static void TestSlice(TessellatedSolid ts)
-        {
-            //var a= ContactData.Divide(new Flat { DistanceToOrigin = 40 , Normal = new []{0,1.0,0} }, ts).Area;
-            //                          Debug.WriteLine(a);
-            //Console.ReadKey();
-            //return;
-            var now = DateTime.Now;
-            Debug.WriteLine("start...");
-            var dir = new[] { 0.0, 1.0, 0.0 };
-            dir.normalize();
-            List<Vertex> vLow, vHigh;
-            var length = MinimumEnclosure.GetLengthAndExtremeVertices(dir, ts.Vertices, out vLow, out vHigh);
-            var distToVLow = vLow[0].Position.dotProduct(dir);
-            //try
-            //{
-            //distToVLow+length/2
-            MiscFunctions.IsSolidBroken(ts);
-            var flats = ListFunctions.Flats(ts.Faces, Constants.ErrorForFaceInSurface, ts.SurfaceArea / 100);
-            foreach (var flat in flats)
-            {
-                foreach (var face in flat.Faces)
-                {
-                    face.Color = new Color(KnownColors.DarkRed);
-                }
-                ts.HasUniformColor = false;
-                TVGL_Helix_Presenter.HelixPresenter.Show(ts);
-                List<TessellatedSolid> positiveSideSolids;
-                List<TessellatedSolid> negativeSideSolids;
-                Slice4.OnFlat(ts.Copy(), flat, out positiveSideSolids, out negativeSideSolids);
-                //TVGL_Helix_Presenter.HelixPresenter.Show(negativeSideSolids);
-                //TVGL_Helix_Presenter.HelixPresenter.Show(positiveSideSolids);
-                foreach (var solid in negativeSideSolids)
-                {
-                    MiscFunctions.IsSolidBroken(solid);
-                }
-                foreach (var solid in positiveSideSolids)
-                {
-                    MiscFunctions.IsSolidBroken(solid);
-                }
-                foreach (var face in flat.Faces)
-                {
-                    face.Color = new Color(KnownColors.PaleGoldenrod);
-                }
-            }
-
-            //}
-            //catch (Exception)
-            //{
-            //    Console.WriteLine("Failed to slice: {0}", ts.Name);
-            //}
-
-        }
     }
 }
