@@ -63,11 +63,11 @@ namespace TVGL
             var directions = new List<double[]>();
             for (var i = -1; i <= 1; i++)
                 for (var j = -1; j <= 1; j++)
-                    directions.Add(new[] { 1.0, i, j });
-            directions.Add(new[] { 0.0, 0, 1 });
-            directions.Add(new[] { 0.0, 1, 0 });
-            directions.Add(new[] { 0.0, 1, 1 });
-            directions.Add(new[] { 0.0, -1, 1 });
+                    directions.Add(new[] { 1.0, i, j }.normalize());
+            directions.Add(new[] { 0.0, 0, 1 }.normalize());
+            directions.Add(new[] { 0.0, 1, 0 }.normalize());
+            directions.Add(new[] { 0.0, 1, 1 }.normalize());
+            directions.Add(new[] { 0.0, -1, 1 }.normalize());
 
             var boxes = directions.Select(v => new BoundingBox
             {
@@ -160,12 +160,14 @@ namespace TVGL
                 boundingRectangle.PointsOnSides[2].SelectMany(p => p.References).ToList(),
                 boundingRectangle.PointsOnSides[3].SelectMany(p => p.References).ToList()
             };
+            if((depth * boundingRectangle.Dimensions[0] * boundingRectangle.Dimensions[1]).IsNegligible()) throw new Exception("Volume should never be negligible, unless the input data is bad");
             return new BoundingBox
             {
                 Dimensions = new[] { depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1] },
                 Directions = new[] { direction1, direction2, direction3 },
                 PointsOnFaces = pointsOnFaces.ToArray(),
                 Volume = depth * boundingRectangle.Dimensions[0] * boundingRectangle.Dimensions[1]
+                
             };
         }
 
@@ -364,6 +366,9 @@ namespace TVGL
 
             } while (true); //process will end on its own by the break statement in line 263
             #endregion
+
+            if (bestRectangle.Area.IsNegligible())
+                throw new Exception("Area should never be negligilbe unless data is messed up.");
             return bestRectangle;
         }
         #endregion
