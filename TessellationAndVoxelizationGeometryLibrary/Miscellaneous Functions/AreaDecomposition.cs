@@ -186,7 +186,7 @@ namespace TVGL
             //Don't bother with loops. Just get all the intercept vertices, project to 2d and run 2dConvexHull
             var vertices = edgeList.Select(edge => MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
             var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
-            return MinimumEnclosure.ConvexHull2DArea(MinimumEnclosure.ConvexHull2D(points));
+            return MinimumEnclosure.ConvexHull2DArea(MinimumEnclosure.ConvexHull2DMinimal(points));
         }
     }
 }

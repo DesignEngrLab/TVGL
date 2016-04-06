@@ -254,7 +254,7 @@ namespace TVGL
 
         #region 2D Rotating Calipers
         /// <summary>
-        /// Rotating the calipers2 d method.
+        /// Rotating the calipers 2D method.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="pointsAreConvexHull"></param>
@@ -262,19 +262,21 @@ namespace TVGL
         private static BoundingRectangle RotatingCalipers2DMethod(IList<Point> points, bool pointsAreConvexHull = false)
         {
             #region Initialization
-            var cvxPoints = pointsAreConvexHull ? points : ConvexHull2D(points);
+            var cvxPoints = pointsAreConvexHull ? points : ConvexHull2DMinimal(points);
+            /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point */
             var numCvxPoints = cvxPoints.Count;
             var extremeIndices = new int[4];
 
             // extremeIndices[3] => max-Y
             extremeIndices[3] = cvxPoints.Count - 1;
-            //Check if first point has a higher y value (only when point is both min-x and max-Y)
+            // this is likely rare, but first we check if thefirst point has a higher y value (only when point is both min-x and max-Y)
             if (cvxPoints[0][1] > cvxPoints[extremeIndices[3]][1]) extremeIndices[3] = 0;
             else
             {
                 while (extremeIndices[3] > 0 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1])
                     extremeIndices[3]--;
             }
+            /* at this point, the max-Y point has been established. Next we walk backwards in the list until we hit the max-X point */
             // extremeIndices[2] => max-X
             extremeIndices[2] = extremeIndices[3] == 0 ? cvxPoints.Count - 1 : extremeIndices[3];
             while (extremeIndices[2] > 0 && cvxPoints[extremeIndices[2]][0] <= cvxPoints[extremeIndices[2] - 1][0])
@@ -364,7 +366,7 @@ namespace TVGL
                     bestRectangle.Directions = new[] { xDir, yDir };
                 }
 
-            } while (true); //process will end on its own by the break statement in line 263
+            } while (true); //process will end on its own by the break statement in line 314
             #endregion
 
             if (bestRectangle.Area.IsNegligible())
