@@ -76,10 +76,10 @@ namespace TVGL.IOFunctions
             PLYFileData plyData;
             // Read in ASCII format
             if (PLYFileData.TryReadAscii(s, out plyData))
-                Debug.WriteLine("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").");
+                Message.output("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").",3);
             else
             {
-                Debug.WriteLine("Unable to read in PLY file (" + (DateTime.Now - now) + ").");
+                Message.output("Unable to read in PLY file (" + (DateTime.Now - now) + ").",1);
                 return null;
             }
             return new List<TessellatedSolid>

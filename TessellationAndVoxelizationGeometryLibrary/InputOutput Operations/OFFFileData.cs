@@ -75,17 +75,17 @@ namespace TVGL.IOFunctions
             OFFFileData offData;
             // Try to read in BINARY format
             if (OFFFileData.TryReadBinary(s, out offData))
-                Debug.WriteLine("Successfully read in binary OFF file (" + (DateTime.Now - now) + ").");
+                Message.output("Successfully read in binary OFF file (" + (DateTime.Now - now) + ").",3);
             else
             {
                 // Reset position of stream
                 s.Position = 0;
                 // Read in ASCII format
                 if (OFFFileData.TryReadAscii(s, out offData))
-                    Debug.WriteLine("Successfully read in ASCII OFF file (" + (DateTime.Now - now) + ").");
+                    Message.output("Successfully read in ASCII OFF file (" + (DateTime.Now - now) + ").",3);
                 else
                 {
-                    Debug.WriteLine("Unable to read in OFF file (" + (DateTime.Now - now) + ").");
+                    Message.output("Unable to read in OFF file (" + (DateTime.Now - now) + ").",1);
                     return null;
                 }
             }

@@ -41,33 +41,33 @@ namespace TVGL
             volumes = new List<double>();
             //var flats = ListFunctions.Flats(ts.Faces.ToList());
             var now = DateTime.Now;
-            Debug.WriteLine("Beginning OBB Test");
+            Message.output("Beginning OBB Test",2);
             var boundingBox1 = OrientedBoundingBox(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox1.Volume);
-            //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
-            //Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
+            //Message.output("Time Elapsed for PCA Approach = " ,4);
+            //Message.output("Volume for PCA Approach= " + boundingBox1.Volume,4);
             now = DateTime.Now;
-            Debug.WriteLine("Beginning OBB Test");
+            Message.output("Beginning OBB Test",2);
 
             var boundingBox12 = Find_via_PCA_ApproachNR(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox12.Volume);
-            //Debug.WriteLine("Time Elapsed for PCA Approach = " + );
-            //Debug.WriteLine("Volume for PCA Approach= " + boundingBox1.Volume);
+            //Message.output("Time Elapsed for PCA Approach = " ,4 );
+            //Message.output("Volume for PCA Approach= " + boundingBox1.Volume);
             now = DateTime.Now;
             var boundingBox2 = Find_via_ChanTan_AABB_Approach(ts.ConvexHull.Vertices);
             times.Add((DateTime.Now - now).TotalMilliseconds);
             volumes.Add(boundingBox2.Volume);
-            Debug.WriteLine("Time Elapsed for ChanTan Approach = " + (DateTime.Now - now));
-            Debug.WriteLine("Volume for ChanTan Approach = " + boundingBox2.Volume);
+            Message.output("Time Elapsed for ChanTan Approach = " + (DateTime.Now - now),4);
+            Message.output("Volume for ChanTan Approach = " + boundingBox2.Volume,4);
             //now = DateTime.Now;
-            //Debug.WriteLine("Beginning OBB Test");
+            //Message.output("Beginning OBB Test");
             //var boundingBox1 = Find_via_MC_ApproachOne(ts, out volumeData1);
-            //Debug.WriteLine("Time Elapsed for MC Approach One = " + (DateTime.Now - now));
+            //Message.output("Time Elapsed for MC Approach One = " + (DateTime.Now - now),4);
             //now = DateTime.Now;
             //var boundingBox2 = Find_via_BM_ApproachTwo(ts, out volumeData2);
-            //Debug.WriteLine("Time Elapsed for BM Approach Two = " + (DateTime.Now - now));
+            //Message.output("Time Elapsed for BM Approach Two = " + (DateTime.Now - now),4);
 
             return boundingBox2;
         }

@@ -38,7 +38,7 @@ namespace TVGL
         private static void SimplifyToNFaces(this TessellatedSolid ts, int numberOfFaces)
         {
             if (ts.Errors != null)
-                Debug.WriteLine("** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).");
+                Message.output("** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",1);
 
             var numberToRemove = ts.NumberOfFaces - numberOfFaces;
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
@@ -93,7 +93,7 @@ namespace TVGL
         public static void SimplifyByTolerance(this TessellatedSolid ts, double tolerance)
         {
             if (ts.Errors != null)
-                Debug.WriteLine("** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).");
+                Message.output("** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",1);
 
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
             var removedEdges = new List<Edge>();

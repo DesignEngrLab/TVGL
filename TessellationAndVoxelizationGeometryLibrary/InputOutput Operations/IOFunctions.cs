@@ -72,12 +72,12 @@ namespace TVGL.IOFunctions
                     throw new Exception(
                         "Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");
             }
-            Debug.WriteLine("number of solids = " + tessellatedSolids.Count);
+            Message.output("number of solids = " + tessellatedSolids.Count,3);
             foreach (var tessellatedSolid in tessellatedSolids)
             {
-                Debug.WriteLine("number of vertices = " + tessellatedSolid.NumberOfVertices);
-                Debug.WriteLine("number of edges = " + tessellatedSolid.NumberOfEdges);
-                Debug.WriteLine("number of faces = " + tessellatedSolid.NumberOfFaces);
+                Message.output("number of vertices = " + tessellatedSolid.NumberOfVertices,4);
+                Message.output("number of edges = " + tessellatedSolid.NumberOfEdges,4);
+                Message.output("number of faces = " + tessellatedSolid.NumberOfFaces,4);
             }
 
             return tessellatedSolids;

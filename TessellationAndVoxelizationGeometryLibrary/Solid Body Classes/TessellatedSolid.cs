@@ -239,7 +239,7 @@ namespace TVGL
             DefineFaceColors(colors);
             CompleteInitiation();
 
-            Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
+            Message.output("File opened in: " + (DateTime.Now - now).ToString(),4);
         }
 
         /// <summary>
@@ -263,7 +263,7 @@ namespace TVGL
             DefineFaceColors(colors);
             CompleteInitiation();
 
-            Debug.WriteLine("File opened in: " + (DateTime.Now - now).ToString());
+            Message.output("File opened in: " + (DateTime.Now - now).ToString(),4);
         }
 
 
@@ -1099,7 +1099,7 @@ namespace TVGL
         {
             if (Errors == null)
             {
-                Debug.WriteLine("No errors to fix!");
+                Message.output("No errors to fix!",4);
                 return true;
             }
             var success = Errors.Repair(this);

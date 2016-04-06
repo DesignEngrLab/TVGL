@@ -146,7 +146,7 @@ namespace TVGL
             EnclosesInPlaneFace = enclosesInPlaneFace;
             OnPositiveSolids = onPositiveSolids;
             OnNegativeSolids = onNegativeSolids;
-            if (!IsClosed) Debug.WriteLine("loop not closed!");
+            if (!IsClosed) Message.output("loop not closed!",3);
             var center = new double[3];
             foreach (var contactElement in contactElements)
             {

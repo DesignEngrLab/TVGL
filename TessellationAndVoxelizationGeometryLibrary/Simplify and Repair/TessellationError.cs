@@ -112,7 +112,7 @@ namespace TVGL
         {
             if (ts.Errors == null) ts.Errors = new TessellationError();
             ts.Errors.NoErrors = true;
-            Debug.WriteLine("Model Integrity Check...");
+            Message.output("Model Integrity Check...", 3);
             if (ts.MostPolygonSides > 3) StoreHigherThanTriFaces(ts);
             var edgeFaceRatio = ts.NumberOfEdges / (double)ts.NumberOfFaces;
             if (ts.MostPolygonSides == 3 && !edgeFaceRatio.IsPracticallySame(1.5)) StoreEdgeFaceRatio(ts, edgeFaceRatio);
@@ -151,19 +151,19 @@ namespace TVGL
             }
             if (ts.Errors.NoErrors)
             {
-                Debug.WriteLine("** Model contains no errors.");
+                Message.output("** Model contains no errors.",3);
                 return;
             }
             if (repairAutomatically)
             {
-                Debug.WriteLine("Some errors found. Attempting to Repair...");
+                Message.output("Some errors found. Attempting to Repair...",2);
                 var success = ts.Errors.Repair(ts);
                 if (success)
                 {
                     ts.Errors = null;
-                    Debug.WriteLine("Repair successfully fixed the model.");
+                    Message.output("Repair successfully fixed the model.",2);
                 }
-                else Debug.WriteLine("Repair did not successfully fix all the problems.");
+                else Message.output("Repair did not successfully fix all the problems.",1);
                 CheckModelIntegrity(ts, false);
                 return;
             }
@@ -176,45 +176,46 @@ namespace TVGL
         /// </summary>
         public void Report()
         {
+            if (3 > (int)Message.Verbosity) return;
             //Note that negligible faces are not truly errors.
-            Debug.WriteLine("Errors found in model:");
-            Debug.WriteLine("======================");
+            Message.output("Errors found in model:");
+            Message.output("======================");
             if (NonTriangularFaces != null)
-                Debug.WriteLine("==> {0} faces are polygons with more than 3 sides.", NonTriangularFaces.Count);
+                Message.output("==> {0} faces are polygons with more than 3 sides.", NonTriangularFaces.Count);
             if (!double.IsNaN(EdgeFaceRatio))
-                Debug.WriteLine("==> Edges / Faces = {0}, but it should be 1.5.", EdgeFaceRatio);
+                Message.output("==> Edges / Faces = {0}, but it should be 1.5.", EdgeFaceRatio);
             if (OverusedEdges != null)
             {
-                Debug.WriteLine("==> {0} overused edges.", OverusedEdges.Count);
-                Debug.WriteLine("    The number of faces per overused edge: " +
+                Message.output("==> {0} overused edges.", OverusedEdges.Count);
+                Message.output("    The number of faces per overused edge: " +
                                 OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
             }
-            if (SingledSidedEdges != null) Debug.WriteLine("==> {0} single-sided edges.", SingledSidedEdges.Count);
-            if (DegenerateFaces != null) Debug.WriteLine("==> {0} degenerate faces in file.", DegenerateFaces.Count);
-            if (DuplicateFaces != null) Debug.WriteLine("==> {0} duplicate faces in file.", DuplicateFaces.Count);
+            if (SingledSidedEdges != null) Message.output("==> {0} single-sided edges.", SingledSidedEdges.Count);
+            if (DegenerateFaces != null) Message.output("==> {0} degenerate faces in file.", DegenerateFaces.Count);
+            if (DuplicateFaces != null) Message.output("==> {0} duplicate faces in file.", DuplicateFaces.Count);
             if (FacesWithOneVertex != null)
-                Debug.WriteLine("==> {0} faces with only one vertex.", FacesWithOneVertex.Count);
-            if (FacesWithOneEdge != null) Debug.WriteLine("==> {0} faces with only one edge.", FacesWithOneEdge.Count);
-            if (FacesWithTwoVertices != null) Debug.WriteLine("==> {0}  faces with only two vertices.", FacesWithTwoVertices.Count);
-            if (FacesWithTwoEdges != null) Debug.WriteLine("==> {0}  faces with only two edges.", FacesWithTwoEdges.Count);
-            if (EdgesWithBadAngle != null) Debug.WriteLine("==> {0} edges with bad angles.", EdgesWithBadAngle.Count);
+                Message.output("==> {0} faces with only one vertex.", FacesWithOneVertex.Count);
+            if (FacesWithOneEdge != null) Message.output("==> {0} faces with only one edge.", FacesWithOneEdge.Count);
+            if (FacesWithTwoVertices != null) Message.output("==> {0}  faces with only two vertices.", FacesWithTwoVertices.Count);
+            if (FacesWithTwoEdges != null) Message.output("==> {0}  faces with only two edges.", FacesWithTwoEdges.Count);
+            if (EdgesWithBadAngle != null) Message.output("==> {0} edges with bad angles.", EdgesWithBadAngle.Count);
             if (EdgesThatDoNotLinkBackToFace != null)
-                Debug.WriteLine("==> {0} edges that do not link back to faces that link to them.",
+                Message.output("==> {0} edges that do not link back to faces that link to them.",
                     EdgesThatDoNotLinkBackToFace.Count);
             if (EdgesThatDoNotLinkBackToVertex != null)
-                Debug.WriteLine("==> {0} edges that do not link back to vertices that link to them.",
+                Message.output("==> {0} edges that do not link back to vertices that link to them.",
                     EdgesThatDoNotLinkBackToVertex.Count);
             if (VertsThatDoNotLinkBackToFace != null)
-                Debug.WriteLine("==> {0} vertices that do not link back to faces that link to them.",
+                Message.output("==> {0} vertices that do not link back to faces that link to them.",
                     VertsThatDoNotLinkBackToFace.Count);
             if (VertsThatDoNotLinkBackToEdge != null)
-                Debug.WriteLine("==> {0} vertices that do not link back to edges that link to them.",
+                Message.output("==> {0} vertices that do not link back to edges that link to them.",
                     VertsThatDoNotLinkBackToEdge.Count);
             if (FacesThatDoNotLinkBackToEdge != null)
-                Debug.WriteLine("==> {0} faces that do not link back to edges that link to them.",
+                Message.output("==> {0} faces that do not link back to edges that link to them.",
                     FacesThatDoNotLinkBackToEdge.Count);
             if (FacesThatDoNotLinkBackToVertex != null)
-                Debug.WriteLine("==> {0} faces that do not link back to vertices that link to them.",
+                Message.output("==> {0} faces that do not link back to vertices that link to them.",
                     FacesThatDoNotLinkBackToVertex.Count);
         }
 
@@ -515,8 +516,8 @@ namespace TVGL
                     }
                 }
             }
-            if (newFaces.Count == 1) Debug.WriteLine("1 missing face was fixed");
-            if (newFaces.Count > 1) Debug.WriteLine(newFaces.Count + " missing faces were fixed");
+            if (newFaces.Count == 1) Message.output("1 missing face was fixed",3);
+            if (newFaces.Count > 1) Message.output(newFaces.Count + " missing faces were fixed",3);
             return LinkUpNewFaces(newFaces, ts);
         }
 

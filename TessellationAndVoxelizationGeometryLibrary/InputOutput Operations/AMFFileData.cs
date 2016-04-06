@@ -95,17 +95,17 @@ namespace TVGL.IOFunctions
             AMFFileData amfData;
             // Try to read in BINARY format
             if (AMFFileData.TryUnzippedXMLRead(s, out amfData))
-                Debug.WriteLine("Successfully read in AMF file (" + (DateTime.Now - now) + ").");
+                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").",3);
             else
             {
                 // Reset position of stream
                 s.Position = 0;
                 // Read in ASCII format
                 //if (amf.TryZippedXMLRead(s, out amfData))
-                //    Debug.WriteLine("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").");
+                //    Message.output("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").",3);
                 //else
                 //{
-                //    Debug.WriteLine("Unable to read in AMF file (" + (DateTime.Now - now) + ").");
+                //    Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").",1);
                 //    return null;
                 //}
             }
@@ -153,7 +153,7 @@ namespace TVGL.IOFunctions
             }
             catch (Exception exception)
             {
-                Debug.WriteLine("Unable to read AMF file:" + exception);
+                Message.output("Unable to read AMF file:" + exception,1);
                 return false;
             }
             return true;

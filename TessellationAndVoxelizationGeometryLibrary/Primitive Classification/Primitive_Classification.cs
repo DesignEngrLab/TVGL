@@ -20,7 +20,7 @@ namespace TVGL
             listOfLimitsSM = ClassificationConstants.MakingListOfLimSMbeta2();
             edgeRules = ClassificationConstants.readingEdgesRules2();
             faceRules = ClassificationConstants.readingFacesRules();
-            Debug.WriteLine("Edges and faces' rules have been read from the corresonding .csv files");
+            Message.output("Edges and faces' rules have been read from the corresonding .csv files", 4);
         }
 
         /// <summary>
@@ -54,18 +54,18 @@ namespace TVGL
             // Filter out faces and edges 
             //SparseAndDenseClustering.Run(unassignedEdges, unassignedFaces, filteredOutEdges, filteredOutFaces);
             FilterOutBadFaces(unassignedEdges, unassignedFaces, filteredOutEdges, filteredOutFaces);
-            Debug.WriteLine("Filtering is complete.");
+            Message.output("Filtering is complete.", 5);
 
             // Classify Edges
             foreach (var e in unassignedEdges)
                 EdgeFuzzyClassification(e);
-            Debug.WriteLine("Edge classification is complete.");
+            Message.output("Edge classification is complete.", 5);
 
             // Classify Faces
             //unassignedFaces.RemoveWhere(f => f.Face.Edges.Count < 3);
             foreach (var eachFace in unassignedFaces)
                 FaceFuzzyClassification(eachFace, allEdgeWithScores);
-            Debug.WriteLine("Face classification is complete.");
+            Message.output("Face classification is complete.", 5);
 
             //Now, for each face, take the combination with highest probability. 
             // UnassignedFaces.OrderByDescending(a => (a.FaceCat.Values.ToList()[0] - a.FaceCat.Values.ToList()[1]));
@@ -82,7 +82,7 @@ namespace TVGL
             maxFaceArea = unassignedFaces.Max(a => a.Face.Area);
             while (unassignedFaces.Count > 0)
             {
-                Debug.WriteLine("# unassigned faces: " + unassignedFaces.Count);
+                Message.output("# unassigned faces: " + unassignedFaces.Count, 5);
                 var topUnassignedFace = unassignedFaces.First();
                 unassignedFaces.Remove(topUnassignedFace);
                 var newSurfaces = groupFacesIntoPlanningSurfaces(topUnassignedFace, allFacesWithScores);
@@ -680,7 +680,7 @@ namespace TVGL
                 }
                 candidatePatches.Add(primitive);
             }
-            Debug.WriteLine("new patches: " + candidatePatches.Count + " -- comprised of #faces: " + candidatePatches.SelectMany(cp => cp.Faces).Distinct().Count());
+            Message.output("new patches: " + candidatePatches.Count + " -- comprised of #faces: " + candidatePatches.SelectMany(cp => cp.Faces).Distinct().Count(), 5);
             return candidatePatches;
         }
 
@@ -757,7 +757,7 @@ namespace TVGL
 
             while (plannedSurfaces.Any())
             {
-                Debug.WriteLine("# primitives to make: " + plannedSurfaces.Count);
+                Message.output("# primitives to make: " + plannedSurfaces.Count, 5);
                 var topPlannedSurface = plannedSurfaces[0];
                 plannedSurfaces.RemoveAt(0);
                 if (topPlannedSurface.Faces.Count < 1)
@@ -949,25 +949,25 @@ namespace TVGL
         }
         private static void ReportStats(List<PrimitiveSurface> primitives)
         {
-            Debug.WriteLine("**************** RESULTS *******************");
-            Debug.WriteLine("Number of Primitives = " + primitives.Count);
-            Debug.WriteLine("Number of Primitives Before Filtering= " + primitivesBeforeFiltering);
-            Debug.WriteLine("Number of Flats = " + primitives.Count(p => p is Flat));
-            Debug.WriteLine("Number of Cones = " + primitives.Count(p => p is Cone));
-            Debug.WriteLine("Number of Cylinders = " + primitives.Count(p => p is Cylinder));
-            Debug.WriteLine("Number of Spheres = " + primitives.Count(p => p is Sphere));
-            Debug.WriteLine("Number of Torii = " + primitives.Count(p => p is Torus));
-            Debug.WriteLine("Primitive Max Faces = " + primitives.Max(p => p.Faces.Count));
+            Message.output("**************** RESULTS *******************", 4);
+            Message.output("Number of Primitives = " + primitives.Count, 4);
+            Message.output("Number of Primitives Before Filtering= " + primitivesBeforeFiltering, 4);
+            Message.output("Number of Flats = " + primitives.Count(p => p is Flat), 4);
+            Message.output("Number of Cones = " + primitives.Count(p => p is Cone), 4);
+            Message.output("Number of Cylinders = " + primitives.Count(p => p is Cylinder), 4);
+            Message.output("Number of Spheres = " + primitives.Count(p => p is Sphere), 4);
+            Message.output("Number of Torii = " + primitives.Count(p => p is Torus), 4);
+            Message.output("Primitive Max Faces = " + primitives.Max(p => p.Faces.Count), 4);
             var minFaces = primitives.Min(p => p.Faces.Count);
-            Debug.WriteLine("Primitive Min Faces = " + minFaces);
-            Debug.WriteLine("Number of with min faces = " + primitives.Count(p => p.Faces.Count == minFaces));
-            Debug.WriteLine("Primitive Avg. Faces = " + primitives.Average(p => p.Faces.Count));
+            Message.output("Primitive Min Faces = " + minFaces, 4);
+            Message.output("Number of with min faces = " + primitives.Count(p => p.Faces.Count == minFaces), 4);
+            Message.output("Primitive Avg. Faces = " + primitives.Average(p => p.Faces.Count), 4);
         }
         #endregion
 
-       
-    } 
-    
+
+    }
+
     public enum PrimitiveSurfaceType
     {
         Unknown = 0,

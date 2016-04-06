@@ -789,7 +789,7 @@ namespace TVGL
                 {
                     if (attempts >= 4)
                     {
-                        Debug.WriteLine("Triangulation failed after " + attempts + " attempts.");
+                        Message.output("Triangulation failed after " + attempts + " attempts.",1);
                         throw new Exception();
                     }
                     isPositive = null;
@@ -1136,7 +1136,7 @@ namespace TVGL
                 var edge1 = triangle[1].Position.subtract(triangle[0].Position);
                 var edge2 = triangle[2].Position.subtract(triangle[0].Position);
                 var area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
-                if (area.IsNegligible()) Debug.WriteLine("Neglible Area Traingle Created"); //CANNOT output a 0.0 area triangle. It will break other functions!
+                if (area.IsNegligible()) Message.output("Neglible Area Traingle Created",2); //CANNOT output a 0.0 area triangle. It will break other functions!
                 //Could collapse whichever edge vector is giving 0 area and ignore this triangle. 
             }
             return triangles;

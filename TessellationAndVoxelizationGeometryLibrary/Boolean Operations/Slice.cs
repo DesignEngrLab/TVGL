@@ -61,7 +61,7 @@ namespace TVGL.Boolean_Operations
                 var loop = FindLoop(ref contactElements, plane, distancesToPlane, artificiallyCloseOpenLoops);
                 if (loop != null)
                 {
-                    Debug.WriteLine(loops.Count + ": " + loop.MakeDebugContactString() + "  ");
+                    Message.output(loops.Count + ": " + loop.MakeDebugContactString() + "  ", 5);
                     loops.Add(loop);
                     numberOfTries = 0;
                 }
@@ -86,7 +86,7 @@ namespace TVGL.Boolean_Operations
             //    }
             //    if (flag) throw new Exception("No Loop is referencing this contact element");
             //}
-            if (numberOfTries > 0) Debug.WriteLine("{0} Contact Elements found that are not contained in loop.", contactElements.Count);
+            if (numberOfTries > 0) Message.output(contactElements.Count + " Contact Elements found that are not contained in loop.", 5);
             return new ContactData(loops, inPlaneFaces);
         }
 
@@ -326,7 +326,7 @@ namespace TVGL.Boolean_Operations
                 else
                 {   // failed to find a loop. Let's move this start contact element to the end of the list 
                     // and try again.
-                   // throw new Exception();
+                    // throw new Exception();
                     //contactElements.RemoveAt(0);
                     //if (contactElements.Any())
                     //    contactElements.Add(startCE);
@@ -354,7 +354,7 @@ namespace TVGL.Boolean_Operations
             var contactData = DefineContact(ts, plane, false);
             if (!contactData.AllLoops.Any())
             {
-                Debug.WriteLine("Plane does not pass through solid.");
+                Message.output("Plane does not pass through solid.",2);
                 negativeSideSolids = new List<TessellatedSolid>();
                 positiveSideSolids = new List<TessellatedSolid>();
                 if (ts.Center.dotProduct(plane.Normal) > plane.DistanceToOrigin)

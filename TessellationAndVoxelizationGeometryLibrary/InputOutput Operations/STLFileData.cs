@@ -96,7 +96,7 @@ namespace TVGL.IOFunctions
                     typeString = "ASCII STL";
                 else
                 {
-                    Debug.WriteLine("Unable to read in STL file called {0}", getNameFromStream(s));
+                    Message.output("Unable to read in STL file called {0}", getNameFromStream(s),1);
                     return null;
                 }
             }
@@ -104,8 +104,8 @@ namespace TVGL.IOFunctions
             foreach (var stlFileData in stlData)
                 results.Add(new TessellatedSolid(stlFileData.Name, stlFileData.Normals, stlFileData.Vertices,
                      (stlFileData.HasColorSpecified ? stlFileData.Colors : null)));
-            Debug.WriteLine("Successfully read in {0} file called {1} in {2} seconds.", typeString,
-                getNameFromStream(s), (DateTime.Now - now).TotalSeconds);
+            Message.output("Successfully read in {0} file called {1} in {2} seconds.", typeString,
+                getNameFromStream(s), (DateTime.Now - now).TotalSeconds,4);
             return results;
         }
 

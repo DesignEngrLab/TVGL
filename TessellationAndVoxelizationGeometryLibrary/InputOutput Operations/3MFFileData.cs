@@ -82,17 +82,17 @@ namespace TVGL.IOFunctions
             ThreeMFFileData threeMFData;
             // Try to read in BINARY format
             if (ThreeMFFileData.TryUnzippedXMLRead(s, out threeMFData))
-                Debug.WriteLine("Successfully read in ThreeMF file (" + (DateTime.Now - now) + ").");
+                Message.output("Successfully read in ThreeMF file (" + (DateTime.Now - now) + ").",3);
             else
             {
                 // Reset position of stream
                 s.Position = 0;
                 // Read in ASCII format
                 //if (threeMF.TryZippedXMLRead(s, out threeMFData))
-                //    Debug.WriteLine("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").");
+                //    Message.output("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").",3);
                 //else
                 //{
-                //    Debug.WriteLine("Unable to read in ThreeMF file (" + (DateTime.Now - now) + ").");
+                //    Message.output("Unable to read in ThreeMF file (" + (DateTime.Now - now) + ").",1);
                 //    return null;
                 //}
             }
@@ -125,7 +125,7 @@ namespace TVGL.IOFunctions
             }
             catch (Exception exception)
             {
-                Debug.WriteLine("Unable to read ThreeMF file:" + exception);
+                Message.output("Unable to read ThreeMF file:" + exception,1);
                 return false;
             }
             return true;
