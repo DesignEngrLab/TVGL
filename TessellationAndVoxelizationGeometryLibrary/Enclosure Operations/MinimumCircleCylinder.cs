@@ -103,10 +103,16 @@ namespace TVGL
             var stallCounter = 0;
             var previousPoints = new List<Point>();
             var successful = false;
+            var stallLimit = listPoints.Count*3;
+            if (stallLimit < 100) stallLimit = 100;
 
-            while (!successful  && stallCounter < listPoints.Count * 3 )
+            while (!successful  && stallCounter < stallLimit)
             {
                 //Find the furthest point from the center point
+                //If stallCounter is getting big, add a bit extra to the circle radius to ensure convergence
+                if (stallCounter > stallLimit/2) circle.SqRadius = circle.SqRadius + Constants.BaseTolerance * circle.SqRadius;
+                //Add it a second time if stallCounter is even bigger
+                if (stallCounter > stallLimit*2/3) circle.SqRadius = circle.SqRadius + Constants.BaseTolerance * circle.SqRadius;
                 var maxDistance = circle.SqRadius;
                 Point nextPoint = null;
                 var create3PointCircle = false;
@@ -121,6 +127,7 @@ namespace TVGL
                     if (circle.Points.Contains(point)) continue; //Check if point is already part of the circle
                     var sqaureDistanceToPoint = (circle.Center.X - point.X) * (circle.Center.X - point.X) + (circle.Center.Y - point.Y) * (circle.Center.Y - point.Y);
                     if (sqaureDistanceToPoint <= maxDistance) continue; //Beginning with the circle's square radius
+                    
                     maxDistance = sqaureDistanceToPoint;
                     nextPoint = point;
                 }
@@ -173,7 +180,7 @@ namespace TVGL
             #endregion
 
             //Return information about minimum circle
-            if (stallCounter == points.Count * 3) throw new Exception("Bounding circle failed to converge");
+            if (stallCounter == stallLimit) throw new Exception("Bounding circle failed to converge");
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
             return new BoundingCircle(radius, circle.Center);
         }
@@ -283,7 +290,7 @@ namespace TVGL
             /// <summary>
             /// Gets one point of the circle.
             /// </summary>
-            internal double SqRadius { get; private set; }
+            internal double SqRadius { get; set; }
             #endregion
 
             #region Constructor
@@ -308,11 +315,11 @@ namespace TVGL
                     double x;
                     double y;
                     //Check for special cases of vertical or horizintal lines
-                    if (rise1.IsNegligible(1E-30)) //If rise is zero, x can be found directly
+                    if (rise1.IsNegligible()) //If rise is zero, x can be found directly
                     {
                         x = (Points[0].X + Points[1].X) / 2;
                         //If run of other line is approximately zero as well, y can be found directly
-                        if (run2.IsNegligible(1E-30)) //If run is approximately zero, y can be found directly
+                        if (run2.IsNegligible()) //If run is approximately zero, y can be found directly
                         {
                             y = (Points[1].Y + Points[2].Y) / 2;
                             Center = new Point(new Vertex(new[] { x, y, 0.0 }));
@@ -327,11 +334,11 @@ namespace TVGL
                             Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                         }
                     }
-                    else if (rise2.IsNegligible(1E-30)) //If rise is approximately zero, x can be found directly
+                    else if (rise2.IsNegligible()) //If rise is approximately zero, x can be found directly
                     {
                         x = (Points[1].X + Points[2].X) / 2;
                         //If run of other line is approximately zero as well, y can be found directly
-                        if (run1.IsNegligible(1E-30)) //If run is approximately zero, y can be found directly
+                        if (run1.IsNegligible()) //If run is approximately zero, y can be found directly
                         {
                             y = (Points[0].Y + Points[1].Y) / 2;
                             Center = new Point(new Vertex(new[] { x, y, 0.0 }));
@@ -346,7 +353,7 @@ namespace TVGL
                             Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                         }
                     }
-                    else if (run1.IsNegligible(1E-30)) //If run is approximately zero, y can be found directly
+                    else if (run1.IsNegligible()) //If run is approximately zero, y can be found directly
                     {
                         y = (Points[0].Y + Points[1].Y) / 2;
                         //Find perpendical slope, and midpoint of line 2. 
@@ -357,7 +364,7 @@ namespace TVGL
                             (Points[1].X + Points[2].X) / 2)) / (-run2 / rise2);
                         Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                     }
-                    else if (run2.IsNegligible(1E-30)) //If run is approximately zero, y can be found directly
+                    else if (run2.IsNegligible()) //If run is approximately zero, y can be found directly
                     {
                         y = (Points[1].Y + Points[2].Y) / 2;
                         //Find perpendical slope, and midpoint of line 2. 
@@ -371,6 +378,7 @@ namespace TVGL
                     else
                     {
                         //Didn't solve for slopes first because of rounding error in division
+                        //ToDo: This does not always find a good center. Figure out why.
                         x = ((rise1 / run1) * (rise2 / run2) * (Points[2].Y - Points[0].Y) + (rise1 / run1) * (Points[1].X + Points[2].X) -
                              (rise2 / run2) * (Points[0].X + Points[1].X)) / (2 * ((rise1 / run1) - (rise2 / run2)));
                         y = -(1 / (rise1 / run1)) * (x - (Points[0].X + Points[1].X) / 2) + (Points[0].Y + Points[1].Y) / 2;
