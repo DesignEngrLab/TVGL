@@ -315,11 +315,11 @@ namespace TVGL
                     double x;
                     double y;
                     //Check for special cases of vertical or horizintal lines
-                    if (rise1.IsNegligible()) //If rise is zero, x can be found directly
+                    if (rise1.IsNegligible(Constants.BaseTolerance)) //If rise is zero, x can be found directly
                     {
                         x = (Points[0].X + Points[1].X) / 2;
                         //If run of other line is approximately zero as well, y can be found directly
-                        if (run2.IsNegligible()) //If run is approximately zero, y can be found directly
+                        if (run2.IsNegligible(Constants.BaseTolerance)) //If run is approximately zero, y can be found directly
                         {
                             y = (Points[1].Y + Points[2].Y) / 2;
                             Center = new Point(new Vertex(new[] { x, y, 0.0 }));
@@ -334,11 +334,11 @@ namespace TVGL
                             Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                         }
                     }
-                    else if (rise2.IsNegligible()) //If rise is approximately zero, x can be found directly
+                    else if (rise2.IsNegligible(Constants.BaseTolerance)) //If rise is approximately zero, x can be found directly
                     {
                         x = (Points[1].X + Points[2].X) / 2;
                         //If run of other line is approximately zero as well, y can be found directly
-                        if (run1.IsNegligible()) //If run is approximately zero, y can be found directly
+                        if (run1.IsNegligible(Constants.BaseTolerance)) //If run is approximately zero, y can be found directly
                         {
                             y = (Points[0].Y + Points[1].Y) / 2;
                             Center = new Point(new Vertex(new[] { x, y, 0.0 }));
@@ -353,7 +353,7 @@ namespace TVGL
                             Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                         }
                     }
-                    else if (run1.IsNegligible()) //If run is approximately zero, y can be found directly
+                    else if (run1.IsNegligible(Constants.BaseTolerance)) //If run is approximately zero, y can be found directly
                     {
                         y = (Points[0].Y + Points[1].Y) / 2;
                         //Find perpendical slope, and midpoint of line 2. 
@@ -364,7 +364,7 @@ namespace TVGL
                             (Points[1].X + Points[2].X) / 2)) / (-run2 / rise2);
                         Center = new Point(new Vertex(new[] { x, y, 0.0 }));
                     }
-                    else if (run2.IsNegligible()) //If run is approximately zero, y can be found directly
+                    else if (run2.IsNegligible(Constants.BaseTolerance)) //If run is approximately zero, y can be found directly
                     {
                         y = (Points[1].Y + Points[2].Y) / 2;
                         //Find perpendical slope, and midpoint of line 2. 
