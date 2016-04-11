@@ -853,6 +853,26 @@ namespace TVGL
         #endregion
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
+        public static double Perimeter(List<Point> polygon)
+        {
+            var listWithStartPointAtEnd = new List<Point>(polygon) {polygon.First()};
+            double perimeter = 0;
+            for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
+            {
+                perimeter = perimeter +
+                            DistancePointToPoint(listWithStartPointAtEnd[i - 1].Position2D,
+                                listWithStartPointAtEnd[i].Position2D);
+            }
+            return perimeter;
+        }
+
+
+
+        /// <summary>
         /// Calculate the area of any non-intersecting polygon. 
         /// </summary>
         /// <param name="polygon"></param>
