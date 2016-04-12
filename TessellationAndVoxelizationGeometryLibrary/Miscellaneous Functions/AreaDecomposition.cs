@@ -33,7 +33,12 @@ namespace TVGL
             //individualFaceAreas = new List<List<double[]>>(); //Plot changes for the area of each flat that makes up a slice. (e.g. 2 positive loop areas)
             var outputData = new List<double[]>();
             if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
-            if(stepSize <= minOffset*2) throw new Exception("step size must be at least 2x as large as the min offset");
+            if (stepSize <= minOffset*2)
+            {
+                //"step size must be at least 2x as large as the min offset");
+                //Change it rather that throwing an exception
+                stepSize = minOffset*2 + ts.SameTolerance;
+            }
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             List<Vertex> sortedVertices;
             List<int[]> duplicateRanges;
