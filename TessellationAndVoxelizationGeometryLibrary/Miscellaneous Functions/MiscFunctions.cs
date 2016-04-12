@@ -602,6 +602,7 @@ namespace TVGL
         {
             var dX = p1[0] - p2[0];
             var dY = p1[1] - p2[1];
+            if (p1.Length == 2) return Math.Sqrt(dX*dX + dY*dY);
             var dZ = p1[2] - p2[2];
             return Math.Sqrt(dX * dX + dY * dY + dZ * dZ);
         }
@@ -870,6 +871,27 @@ namespace TVGL
             return perimeter;
         }
 
+        /// <summary>
+        /// A secondary volume calculation, since the primary volume calculation in the tesselated solid creation seems to be broken
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        public static double Volume(TessellatedSolid ts)
+        {
+            var normal = new[] {1.0, 0.0, 0.0}; //Direction is irrellevant
+            var stepSize = 0.01;
+            var volume = 0.0;
+            var areas = AreaDecomposition.Run(ts, normal, stepSize);
+            //Trapezoidal approximation. This should be accurate since the lines betweens data points are linear
+            for (var i = 1; i < areas.Count; i++)
+            {
+                var deltaX = areas[i][0] - areas[i-1][0];
+                var deltaY = areas[i][1] + areas[i-1][1];
+                if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
+                volume = volume + .5* deltaY * deltaX;
+            }
+            return volume;
+        }
 
 
         /// <summary>

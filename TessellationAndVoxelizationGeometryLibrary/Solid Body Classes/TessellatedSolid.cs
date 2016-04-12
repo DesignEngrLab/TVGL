@@ -649,10 +649,21 @@ namespace TVGL
             double[] center;
             double volume;
             double surfaceArea;
-            DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea);
+            DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea); //This lost in every comparison to Trapezoidal Approximation of volume
             Center = center;
             Volume = volume;
+            RecalculateVolume(); 
+            //if (Volume > ConvexHull.Volume || Volume < 0) RecalculateVolume();
             SurfaceArea = surfaceArea;
+        }
+
+        /// <summary>
+        /// This function recalculates the volume, since the original method of finding the volume is broken.
+        /// Note also that the current "Center" function might also be broken, but I haven't any need for it yet.
+        /// </summary>
+        public void RecalculateVolume()
+        {
+            Volume = MiscFunctions.Volume(this);
         }
 
         /// <summary>
