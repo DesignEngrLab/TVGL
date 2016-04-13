@@ -126,17 +126,19 @@ namespace TVGL
                     edgeList.Remove(startEdge.IndexInList);
                     var startFace = startEdge.OwnedFace;
                     var currentFace = startFace;
+                    var previousFace = startFace; //This will be set again before its used.
                     var endFace = startEdge.OtherFace; 
                     var nextEdgeFound = false;
                     Edge nextEdge = null;
-                    var correctDirection = 0;
-                    var reverseDirection = 0;
+                    var correctDirection = 0.0;
+                    var reverseDirection = 0.0;
                     do
                     {
                         foreach (var edge in edgeList.Values)
                         {
                             if (edge.OtherFace == currentFace)
                             {
+                                previousFace = edge.OtherFace;
                                 currentFace = edge.OwnedFace;
                                 nextEdgeFound = true;
                                 nextEdge = edge;
@@ -144,6 +146,7 @@ namespace TVGL
                             }
                             if (edge.OwnedFace == currentFace)
                             {
+                                previousFace = edge.OwnedFace;
                                 currentFace = edge.OtherFace;
                                 nextEdgeFound = true;
                                 nextEdge = edge;
@@ -155,12 +158,13 @@ namespace TVGL
                             //For the first set of edges, check to make sure this list is going in the proper direction
                             intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, nextEdge.To, nextEdge.From);
                             var vector = intersectVertex.Position.subtract(loop.Last().Position);
-                            var dot = cuttingPlane.Normal.crossProduct(currentFace.Normal).dotProduct(vector);
+                            //Use the previous face, since that is the one that contains both of the edges that are in use.
+                            var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector);
                             loop.Add(intersectVertex);
                             edgeLoop.Add(nextEdge);
                             edgeList.Remove(nextEdge.IndexInList); //Note that removing at an index is FASTER than removing a object.
-                            if (Math.Sign(dot) >= 0) correctDirection++;
-                            else reverseDirection++;
+                            if (Math.Sign(dot) >= 0) correctDirection ++;
+                            else reverseDirection ++;
                         }   
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
