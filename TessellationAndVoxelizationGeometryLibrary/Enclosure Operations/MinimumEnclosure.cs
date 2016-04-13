@@ -375,7 +375,13 @@ namespace TVGL
         }
         #endregion
 
-        private static BoundingBox AddInCornerVertices(BoundingBox bb)
+        /// <summary>
+        /// Adds the corner vertices (actually 3d points) to the bounding box
+        /// </summary>
+        /// <param name="bb"></param>
+        /// <returns></returns>
+        //ToDo: Fix this function. It does not currently give the correct vertices
+        public static BoundingBox AddInCornerVertices(BoundingBox bb)
         {
             if (bb.CornerVertices != null) return bb;
             var cornerVertices = new Point[8];
@@ -405,6 +411,7 @@ namespace TVGL
             }
             return new BoundingBox
             {
+                //ToDo: Actually return vertices instead of 3d points
                 CornerVertices = cornerVertices,
                 Dimensions = bb.Dimensions,
                 Directions = bb.Directions,
