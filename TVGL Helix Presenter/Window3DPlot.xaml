@@ -1,8 +1,7 @@
-﻿<Window x:Class="TVGL_Helix_Presenter.MainWindow"
+﻿<Window x:Class="TVGL_Presenter.Window3DPlot"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
           xmlns:pt="clr-namespace:PropertyTools.Wpf;assembly=PropertyTools.Wpf"        
-
         xmlns:helix="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf" 
         Title="CameraControlDemo" Height="480" Width="640">
     <DockPanel>

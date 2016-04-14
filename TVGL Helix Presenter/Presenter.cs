@@ -1,30 +1,32 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using HelixToolkit.Wpf;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Media;
-using System.Threading.Tasks;
-using System.Timers;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using HelixToolkit.Wpf;
 using TVGL;
-using MIConvexHull;
 
-namespace TVGL_Helix_Presenter
+namespace TVGL_Presenter
 {
     /// <summary>
     /// The Class HelixPresenter is the only class within the TVGL Helix Presenter
-    /// project (TVGL_Helix_Presenter.dll). It is a simple static class with one main
+    /// project (TVGL_Presenter.dll). It is a simple static class with one main
     /// function, "Show".
     /// </summary>
-    public static class HelixPresenter
+    public static class Presenter
     {
+
+        public static void Show(IList<Point> points, string title)
+        {
+            var window = new Window2DPlot();
+            window.Title = title;
+
+            window.Points = points.Select(p => new OxyPlot.DataPoint(p.X, p.Y)).ToList();
+            window.ShowDialog();
+        }
+        public static void Show(IList<Vertex> vertices, double[] direction, string title)
+        {
+            Show(MiscFunctions.Get2DProjectionPoints(vertices, direction, false), title);
+        }
         /// <summary>
         /// Shows the specified tessellated solid in a Helix toolkit window.
         /// </summary>
@@ -32,7 +34,7 @@ namespace TVGL_Helix_Presenter
         /// <param name="seconds"></param>
         public static void Show(TessellatedSolid tessellatedSolid, int seconds = 0)
         {
-            var window = new MainWindow();
+            var window = new Window3DPlot();
             window.view1.Children.Add(MakeModelVisual3D(tessellatedSolid));
             window.view1.ZoomExtentsWhenLoaded = true;
             if (seconds > 0)
@@ -51,7 +53,7 @@ namespace TVGL_Helix_Presenter
         /// <param name="seconds"></param>
         public static void Show(IList<TessellatedSolid> tessellatedSolids, int seconds = 0)
         {
-            var window = new MainWindow();
+            var window = new Window3DPlot();
             var models = new List<Visual3D>();
            
             foreach (var tessellatedSolid in tessellatedSolids)
@@ -79,7 +81,7 @@ namespace TVGL_Helix_Presenter
         public static void ShowSequentially(IList<TessellatedSolid> tessellatedSolids, int seconds = 1)
         {
             //var models = new List<Visual3D>();
-            var window = new MainWindow();
+            var window = new Window3DPlot();
             var models = new ObservableCollection<Visual3D>();
             var startLocation = window.WindowStartupLocation;
 

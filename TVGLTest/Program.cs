@@ -74,12 +74,13 @@ namespace TVGL_Test
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
+                TVGL_Presenter.Presenter.Show(ts[0].Vertices, new[] { 1.0, 0, 0 }, "");
+
                 Primitive_Classification.Run(ts[0]);
                 //MiscFunctions.IsSolidBroken(ts[0]);
                 MinimumEnclosure.OrientedBoundingBox(ts[0]);
                 //TestClassification(ts[0]);
                 TestXSections(ts[0]);
-                TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 //TestSimplify(ts[0]);
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0], filename);
@@ -123,7 +124,7 @@ namespace TVGL_Test
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL_Helix_Presenter.HelixPresenter.Show(ts);
+            TVGL_Presenter.Presenter.Show(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)
