@@ -1,4 +1,4 @@
-﻿// ***********************************************************************
+﻿﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
 // Author           : Matt
 // Created          : 04-17-2015
@@ -21,7 +21,7 @@ namespace TVGL
 {
     public static partial class MinimumEnclosure
     {
-        
+
         /// <summary>
         /// Finds the area of the convex hull region, given a set of convex hull points.
         /// </summary>
@@ -81,41 +81,57 @@ namespace TVGL
                 // lowest X-value. This is mainly to provide some consistency in the 
                 // results & expectations, and directly helps with the rotating calipers
                 // method.
+                // Actually this turns out to be important for all extrema. Problems were found then many
+                // points had a x equal to xMax. The order of these points would be incorrect.
                 if (pt[0] < minX)
                 {
                     extremePointsIndices[0] = i;
                     minX = pt[0];
                 }
+                if (pt[0] + pt[1] == minSum && pt[1] < points[extremePointsIndices[1]][1])
+                    extremePointsIndices[1] = i;
                 if (pt[0] + pt[1] < minSum)
                 {
                     extremePointsIndices[1] = i;
                     minSum = pt[0] + pt[1];
                 }
+                if (pt[1] == minY && pt[0] > points[extremePointsIndices[2]][0])
+                    extremePointsIndices[2] = i;
                 if (pt[1] < minY)
                 {
                     extremePointsIndices[2] = i;
                     minY = pt[1];
                 }
+                if (pt[0] - pt[1] == maxDiff && pt[0] > points[extremePointsIndices[3]][0])
+                    extremePointsIndices[3] = i;
                 if (pt[0] - pt[1] > maxDiff)
                 {
                     extremePointsIndices[3] = i;
                     maxDiff = pt[0] - pt[1];
                 }
+                if (pt[0] == maxX && pt[1] > points[extremePointsIndices[4]][1])
+                    extremePointsIndices[4] = i;
                 if (pt[0] > maxX)
                 {
                     extremePointsIndices[4] = i;
                     maxX = pt[0];
                 }
+                if (pt[0] + pt[1] == maxSum && pt[1] > points[extremePointsIndices[5]][1])
+                    extremePointsIndices[5] = i;
                 if (pt[0] + pt[1] > maxSum)
                 {
                     extremePointsIndices[5] = i;
                     maxSum = pt[0] + pt[1];
                 }
+                if (pt[1] == maxY && pt[0] < points[extremePointsIndices[6]][0])
+                    extremePointsIndices[6] = i;
                 if (pt[1] > maxY)
                 {
                     extremePointsIndices[6] = i;
                     maxY = pt[1];
                 }
+                if (pt[0] - pt[1] == minDiff && pt[0] < points[extremePointsIndices[7]][0])
+                    extremePointsIndices[7] = i;
                 if (pt[0] - pt[1] < minDiff)
                 {
                     extremePointsIndices[7] = i;
@@ -264,7 +280,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the MAXIMMAL 2D convex hull for given list of points. This only works on the x and y coordinates of the
+        /// Returns the MINIMAL 2D convex hull for given list of points. This only works on the x and y coordinates of the
         /// points. It is commonly used in conjunction with "Get2DProjectionPoints" as it is done in the overload which
         /// takes a normal of the plane to "flatten" the points on.
         /// </summary>
@@ -299,41 +315,57 @@ namespace TVGL
                 // lowest X-value. This is mainly to provide some consistency in the 
                 // results & expectations, and directly helps with the rotating calipers
                 // method.
+                // Actually this turns out to be important for all extrema. Problems were found then many
+                // points had a x equal to xMax. The order of these points would be incorrect.
                 if (pt[0] < minX)
                 {
                     extremePointsIndices[0] = i;
                     minX = pt[0];
                 }
+                if (pt[0] + pt[1] == minSum && pt[1] < points[extremePointsIndices[1]][1])
+                    extremePointsIndices[1] = i;
                 if (pt[0] + pt[1] < minSum)
                 {
                     extremePointsIndices[1] = i;
                     minSum = pt[0] + pt[1];
                 }
+                if (pt[1] == minY && pt[0] > points[extremePointsIndices[2]][0])
+                    extremePointsIndices[2] = i;
                 if (pt[1] < minY)
                 {
                     extremePointsIndices[2] = i;
                     minY = pt[1];
                 }
+                if (pt[0] - pt[1] == maxDiff && pt[0] > points[extremePointsIndices[3]][0])
+                    extremePointsIndices[3] = i;
                 if (pt[0] - pt[1] > maxDiff)
                 {
                     extremePointsIndices[3] = i;
                     maxDiff = pt[0] - pt[1];
                 }
+                if (pt[0] == maxX && pt[1] > points[extremePointsIndices[4]][1])
+                    extremePointsIndices[4] = i;
                 if (pt[0] > maxX)
                 {
                     extremePointsIndices[4] = i;
                     maxX = pt[0];
                 }
+                if (pt[0] + pt[1] == maxSum && pt[1] > points[extremePointsIndices[5]][1])
+                    extremePointsIndices[5] = i;
                 if (pt[0] + pt[1] > maxSum)
                 {
                     extremePointsIndices[5] = i;
                     maxSum = pt[0] + pt[1];
                 }
+                if (pt[1] == maxY && pt[0] < points[extremePointsIndices[6]][0])
+                    extremePointsIndices[6] = i;
                 if (pt[1] > maxY)
                 {
                     extremePointsIndices[6] = i;
                     maxY = pt[1];
                 }
+                if (pt[0] - pt[1] == minDiff && pt[0] < points[extremePointsIndices[7]][0])
+                    extremePointsIndices[7] = i;
                 if (pt[0] - pt[1] < minDiff)
                 {
                     extremePointsIndices[7] = i;
