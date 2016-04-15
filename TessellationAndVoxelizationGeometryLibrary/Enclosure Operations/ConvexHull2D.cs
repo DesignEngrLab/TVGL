@@ -47,8 +47,9 @@ namespace TVGL
 
         /// <summary>
         /// Returns the MAXIMMAL 2D convex hull for given list of points. This only works on the x and y coordinates of the
-        /// points. It is commonly used in conjunction with "Get2DProjectionPoints" as it is done in the overload which
-        /// takes a normal of the plane to "flatten" the points on.
+        /// points. The term maximal refers to the fact that all points that lie on the convex hull are included in the result.
+        /// This is useful if one if trying to identify such points. Otherwise, if the shape is what is important than the
+        /// minimal approach is preferred.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>List&lt;Point&gt;.</returns>
@@ -200,7 +201,7 @@ namespace TVGL
             for (var i = 0; i < origVNum; i++)
             {
                 var point = remainingPoints[i];
-                for (var j = 0; j < cvxVNum; j++)
+                for (var j = cvxVNum - 1; j >= 0; j--)
                 {
                     var b = new[]
                     {
@@ -213,6 +214,7 @@ namespace TVGL
                      * It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
                     if (StarMath.crossProduct2(edgeUnitVectors[j], b) > 0) continue;
+                    if (StarMath.dotProduct(edgeUnitVectors[j], b) < 0) continue;
                     hullCands[j].Add(new PointAlong { distanceAlong = edgeUnitVectors[j].dotProduct(b, 2), point = point });
                     break;
                 }
@@ -281,8 +283,9 @@ namespace TVGL
 
         /// <summary>
         /// Returns the MINIMAL 2D convex hull for given list of points. This only works on the x and y coordinates of the
-        /// points. It is commonly used in conjunction with "Get2DProjectionPoints" as it is done in the overload which
-        /// takes a normal of the plane to "flatten" the points on.
+        /// points. The term minimal refers to the fact that only the necessary points that define the convex hull are included
+        /// in the result. This is useful if one if trying to identify the shape of the hull. It is slightly faster than the maximal
+        /// approach and it will likely lead to less exceptions in other methods (such as bounding box).
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>List&lt;Point&gt;.</returns>
@@ -322,13 +325,13 @@ namespace TVGL
                     extremePointsIndices[0] = i;
                     minX = pt[0];
                 }
-                if (pt[0] + pt[1] == minSum && pt[1] < points[extremePointsIndices[1]][1])
-                    extremePointsIndices[1] = i;
-                if (pt[0] + pt[1] < minSum)
-                {
-                    extremePointsIndices[1] = i;
-                    minSum = pt[0] + pt[1];
-                }
+                //if (pt[0] + pt[1] == minSum && pt[1] < points[extremePointsIndices[1]][1])
+                //    extremePointsIndices[1] = i;
+                //if (pt[0] + pt[1] < minSum)
+                //{
+                //    extremePointsIndices[1] = i;
+                //    minSum = pt[0] + pt[1];
+                //}
                 if (pt[1] == minY && pt[0] > points[extremePointsIndices[2]][0])
                     extremePointsIndices[2] = i;
                 if (pt[1] < minY)
@@ -336,13 +339,13 @@ namespace TVGL
                     extremePointsIndices[2] = i;
                     minY = pt[1];
                 }
-                if (pt[0] - pt[1] == maxDiff && pt[0] > points[extremePointsIndices[3]][0])
-                    extremePointsIndices[3] = i;
-                if (pt[0] - pt[1] > maxDiff)
-                {
-                    extremePointsIndices[3] = i;
-                    maxDiff = pt[0] - pt[1];
-                }
+                //if (pt[0] - pt[1] == maxDiff && pt[0] > points[extremePointsIndices[3]][0])
+                //    extremePointsIndices[3] = i;
+                //if (pt[0] - pt[1] > maxDiff)
+                //{
+                //    extremePointsIndices[3] = i;
+                //    maxDiff = pt[0] - pt[1];
+                //}
                 if (pt[0] == maxX && pt[1] > points[extremePointsIndices[4]][1])
                     extremePointsIndices[4] = i;
                 if (pt[0] > maxX)
@@ -350,13 +353,13 @@ namespace TVGL
                     extremePointsIndices[4] = i;
                     maxX = pt[0];
                 }
-                if (pt[0] + pt[1] == maxSum && pt[1] > points[extremePointsIndices[5]][1])
-                    extremePointsIndices[5] = i;
-                if (pt[0] + pt[1] > maxSum)
-                {
-                    extremePointsIndices[5] = i;
-                    maxSum = pt[0] + pt[1];
-                }
+                //if (pt[0] + pt[1] == maxSum && pt[1] > points[extremePointsIndices[5]][1])
+                //    extremePointsIndices[5] = i;
+                //if (pt[0] + pt[1] > maxSum)
+                //{
+                //    extremePointsIndices[5] = i;
+                //    maxSum = pt[0] + pt[1];
+                //}
                 if (pt[1] == maxY && pt[0] < points[extremePointsIndices[6]][0])
                     extremePointsIndices[6] = i;
                 if (pt[1] > maxY)
@@ -364,15 +367,16 @@ namespace TVGL
                     extremePointsIndices[6] = i;
                     maxY = pt[1];
                 }
-                if (pt[0] - pt[1] == minDiff && pt[0] < points[extremePointsIndices[7]][0])
-                    extremePointsIndices[7] = i;
-                if (pt[0] - pt[1] < minDiff)
-                {
-                    extremePointsIndices[7] = i;
-                    minDiff = pt[0] - pt[1];
-                }
+                //if (pt[0] - pt[1] == minDiff && pt[0] < points[extremePointsIndices[7]][0])
+                //    extremePointsIndices[7] = i;
+                //if (pt[0] - pt[1] < minDiff)
+                //{
+                //    extremePointsIndices[7] = i;
+                //    minDiff = pt[0] - pt[1];
+                //}
             }
-            /* convexHullCCW is the list returnED at the end of this function. It is a list of 
+            // ******* remove duplicates and set up return list...
+            /* convexHullCCW is the list returned at the end of this function. It is a list of 
              * vertices found in the original vertices and ordered to make a
              * counter-clockwise loop beginning with the leftmost (minimum
              * value of X) IVertexConvHull. The extremePoints have already been ordered in 
@@ -382,8 +386,8 @@ namespace TVGL
              * may match the last one or two, hence the double condition. This seems a little slap-dash,
              * but it is efficient to evaluate. */
             var convexHullCCW = new List<Point> { points[extremePointsIndices[0]] };
-            for (var i = 1; i < 8; i++)
-                if (extremePointsIndices[i] != extremePointsIndices[i - 1] && extremePointsIndices[i] != extremePointsIndices[0])
+            for (var i = 2; i < 8; i=i+2)
+                if (extremePointsIndices[i] != extremePointsIndices[i - 2] && extremePointsIndices[i] != extremePointsIndices[0])
                     convexHullCCW.Add(points[extremePointsIndices[i]]);
 
             #endregion
@@ -434,7 +438,7 @@ namespace TVGL
             for (var i = 0; i < origVNum; i++)
             {
                 var point = remainingPoints[i];
-                for (var j = 0; j < cvxVNum; j++)
+                for (var j = cvxVNum - 1; j >= 0; j--)
                 {
                     var b = new[]
                     {
@@ -446,7 +450,9 @@ namespace TVGL
                      *** for the minimal shape, we do not want to include collinear points so a zero means reject the point. ***
                      * It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
-                    if (StarMath.crossProduct2(edgeUnitVectors[j], b) >= 0) continue;
+                    if (StarMath.crossProduct2(edgeUnitVectors[j], b) > - Constants.BaseTolerance) continue;
+                    var dot = StarMath.dotProduct(edgeUnitVectors[j], b.normalize());
+                    if (dot <= 0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance) ) continue;
                     hullCands[j].Add(new PointAlong { distanceAlong = edgeUnitVectors[j].dotProduct(b, 2), point = point });
                     break;
                 }
@@ -480,14 +486,14 @@ namespace TVGL
                     if (j == cvxVNum) hc.Add(convexHullCCW[0]);
                     else hc.Add(convexHullCCW[j]);
 
-                    /* Now starting from second from end, work backwards looks for places where the angle 
+                    /* Now starting from second from end, work backwards looking for places where the angle 
                      * between the vertices is concave (which would produce a negative value of z). */
                     var i = hc.Count - 2;
                     while (i > 0)
                     {
                         var zValue = StarMath.crossProduct2(hc[i].Position.subtract(hc[i - 1].Position, 2),
                             hc[i + 1].Position.subtract(hc[i].Position, 2));
-                        if (zValue <= 0)
+                        if (zValue <= 100*Constants.BaseTolerance)
                         {
                             /* remove any vertices that create concave angles. 
                              *** This is second of the two places where Convex2DHullMaximal differs from ConvexHull2DMinimal. ***
@@ -506,6 +512,57 @@ namespace TVGL
                      * since all are inserted @ i, the previous inserts are pushed up to i+1, i+2, etc. */
                     for (i = hc.Count - 2; i > 0; i--)
                         convexHullCCW.Insert(j, hc[i]);
+                }
+
+                //Remove nearly duplicate points.
+                var tempCCW = new List<Point>(convexHullCCW);
+                tempCCW.Insert(0, convexHullCCW.Last());
+                for (var k = 1; k < tempCCW.Count; k++)
+                {
+                    if (
+                        tempCCW[k].Position2D.subtract(tempCCW[k - 1].Position2D)
+                            .norm2()
+                            .IsNegligible(Constants.BaseTolerance))
+                    {
+                        convexHullCCW.Remove(tempCCW[k - 1]);
+                    }
+                    if (k == tempCCW.Count - 1)
+                        //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
+                    {
+                        if (tempCCW[k].X < convexHullCCW.First().X ||
+                            (tempCCW[k].X == convexHullCCW.First().X && tempCCW[k].Y < convexHullCCW.First().Y))
+                        {
+                            convexHullCCW.Insert(0, tempCCW[k]);
+                            convexHullCCW.RemoveAt(convexHullCCW.Count - 1);
+                        }
+                    }
+                }
+
+                //Remove midpoints on nearly straight lines
+                tempCCW = new List<Point>(convexHullCCW);
+                //Modify the list to make it easy to iterate
+                tempCCW.Insert(0, convexHullCCW.Last()); //Add last point to start
+                tempCCW.Add(convexHullCCW[1]); //Add the original first point to the end. 
+                for (var k = 1; k < tempCCW.Count-1; k++)
+                {
+                    var vector1 = tempCCW[k].Position2D.subtract(tempCCW[k - 1].Position2D).normalize();
+                    var vector2 = tempCCW[k+1].Position2D.subtract(tempCCW[k].Position2D).normalize();
+                    var dot = StarMath.dotProduct(vector1, vector2); 
+                    if (dot.IsPracticallySame(1.0, Constants.BaseTolerance))
+                    {
+                        convexHullCCW.Remove(tempCCW[k]);
+                    }
+                    if(dot == double.NaN) throw new Exception();
+                    if (k == tempCCW.Count - 2)
+                    //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
+                    {
+                        if (tempCCW[k].X < convexHullCCW.First().X ||
+                            (tempCCW[k].X == convexHullCCW.First().X && tempCCW[k].Y < convexHullCCW.First().Y))
+                        {
+                            convexHullCCW.Insert(0, tempCCW[k]);
+                            convexHullCCW.RemoveAt(convexHullCCW.Count - 1);
+                        }
+                    }
                 }
             }
 
