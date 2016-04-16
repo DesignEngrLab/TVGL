@@ -649,17 +649,22 @@ namespace TVGL
             double[] center;
             double volume;
             double surfaceArea;
-            DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea); //This lost in every comparison to Trapezoidal Approximation of volume
+            if (DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea))
+            {
+                Volume = volume;
+            }
+            else
+            {
+                RecalculateVolume();
+            }
             Center = center;
-            Volume = volume;
+            
             //Message.output(Bounds[0].MakePrintString());
             //Message.output(Bounds[1].MakePrintString());
             //Message.output("center = " + center.MakePrintString());
             //var dims = Bounds[1].subtract(Bounds[0]);
             //Message.output(dims[0] * dims[1] * dims[2]);
             //Message.output("vol = " + volume);
-            //RecalculateVolume();
-            //if (Volume > ConvexHull.Volume || Volume < 0) RecalculateVolume();
             SurfaceArea = surfaceArea;
         }
 
@@ -676,7 +681,7 @@ namespace TVGL
         /// <summary>
         /// Defines the center, the volume and the surface area.
         /// </summary>
-        internal static void DefineCenterVolumeAndSurfaceArea( IList<PolygonalFace> faces, out double[] center, out double volume, out double surfaceArea)
+        internal static bool DefineCenterVolumeAndSurfaceArea( IList<PolygonalFace> faces, out double[] center, out double volume, out double surfaceArea)
         {
             surfaceArea = 0;
             foreach (var face in faces)
@@ -700,6 +705,8 @@ namespace TVGL
 
             double oldVolume;
             volume = 0;
+            var converged = true;
+            var count = 0;
             do
             {
                 oldVolume = volume;
@@ -720,7 +727,10 @@ namespace TVGL
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
                 center = center.divide(volume);
-            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance);
+                count++;
+            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && count < 10);
+            if (count == 10) converged = false;
+            return converged;
         }
 
 
