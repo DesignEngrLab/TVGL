@@ -412,19 +412,21 @@ namespace TVGL
             double magnitude;
             for (var i = 0; i < last; i++)
             {
-                edgeUnitVectors[i] = new[] { convexHullCCW[i + 1][0] - convexHullCCW[i][0],
-                    convexHullCCW[i + 1][1] - convexHullCCW[i][1] };
-                magnitude = Math.Sqrt(edgeUnitVectors[i][0] * edgeUnitVectors[i][0] +
-                                      edgeUnitVectors[i][1] * edgeUnitVectors[i][1]);
-                edgeUnitVectors[i][0] /= magnitude;
-                edgeUnitVectors[i][1] /= magnitude;
+                edgeUnitVectors[i] = convexHullCCW[i + 1].Position2D.subtract(convexHullCCW[i].Position2D).normalize();
+                //edgeUnitVectors[i] = new[] { convexHullCCW[i + 1][0] - convexHullCCW[i][0],
+                //    convexHullCCW[i + 1][1] - convexHullCCW[i][1] };
+                //magnitude = Math.Sqrt(edgeUnitVectors[i][0] * edgeUnitVectors[i][0] +
+                //                      edgeUnitVectors[i][1] * edgeUnitVectors[i][1]);
+                //edgeUnitVectors[i][0] /= magnitude;
+                //edgeUnitVectors[i][1] /= magnitude;
             }
-            edgeUnitVectors[last] = new[] { convexHullCCW[0][0] - convexHullCCW[last][0],
-                convexHullCCW[0][1] - convexHullCCW[last][1] };
-            magnitude = Math.Sqrt(edgeUnitVectors[last][0] * edgeUnitVectors[last][0] +
-                                  edgeUnitVectors[last][1] * edgeUnitVectors[last][1]);
-            edgeUnitVectors[last][0] /= magnitude;
-            edgeUnitVectors[last][1] /= magnitude;
+            edgeUnitVectors[last] = convexHullCCW[0].Position2D.subtract(convexHullCCW[last].Position2D).normalize();
+            //edgeUnitVectors[last] = new[] { convexHullCCW[0][0] - convexHullCCW[last][0],
+            //    convexHullCCW[0][1] - convexHullCCW[last][1] };
+            //magnitude = Math.Sqrt(edgeUnitVectors[last][0] * edgeUnitVectors[last][0] +
+            //                      edgeUnitVectors[last][1] * edgeUnitVectors[last][1]);
+            //edgeUnitVectors[last][0] /= magnitude;
+            //edgeUnitVectors[last][1] /= magnitude;
 
             /* An array of sorted lists! As we find new candidate convex points, we store them here. The key is
              * the "positionAlong" - this is used to order the nodes that
@@ -440,20 +442,24 @@ namespace TVGL
                 var point = remainingPoints[i];
                 for (var j = cvxVNum - 1; j >= 0; j--)
                 {
-                    var b = new[]
-                    {
-                        point[0] - convexHullCCW[j][0],
-                        point[1] - convexHullCCW[j][1]
-                    };
+                    //From the extrema toward the point.
+                    var b = point.Position2D.subtract(convexHullCCW[j].Position2D);
+
                     /* In the condition below, the cross product tells us if the vector, b, is inside the initial polygon.
                      *** This is one of the two places where Convex2DHullMaximal differs from ConvexHull2DMinimal. Here, ***
                      *** for the minimal shape, we do not want to include collinear points so a zero means reject the point. ***
                      * It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
                     if (StarMath.crossProduct2(edgeUnitVectors[j], b) > - Constants.BaseTolerance) continue;
-                    var dot = StarMath.dotProduct(edgeUnitVectors[j], b.normalize());
-                    if (dot <= 0 || dot.IsPracticallySame(1.0, Constants.BaseTolerance) ) continue;
-                    hullCands[j].Add(new PointAlong { distanceAlong = edgeUnitVectors[j].dotProduct(b, 2), point = point });
+                    
+                    //ToDo: remove these next two lines later, if everything is fixed
+                    // var dot = StarMath.dotProduct(edgeUnitVectors[j], b.normalize());
+                    //if (dot <= 0) continue; //|| dot.IsPracticallySame(1.0, Constants.BaseTolerance) ) continue;
+                    hullCands[j].Add(new PointAlong()
+                    {
+                        distanceAlong = edgeUnitVectors[j].dotProduct(b, 2),
+                        point = point
+                    });
                     break;
                 }
             }
@@ -465,11 +471,13 @@ namespace TVGL
              * the current convex hull points s.t. any additions will not confuse our for-loop indexers. */
             for (var j = cvxVNum; j > 0; j--)
             {
-                if (hullCands[j - 1].Count == 1)
-                    /* If there is one and only one candidate, it must be in the convex hull. Add it now. */
-                    convexHullCCW.Insert(j, hullCands[j - 1][0].point);
-                else if (hullCands[j - 1].Count > 1)
+                var lop = 0;
+                if (hullCands[j - 1].Any())
                 {
+                    if (hullCands[j - 1].Count == 1) lop = 1;
+                    /* If there is one and only one candidate, it must be in the convex hull. Add it now. */
+                    //convexHullCCW.Insert(j, hullCands[j - 1][0].point);
+                    //
                     /* If there's more than one than...Well, now comes the tricky part. Here is where the
                      * most time is spent for large sets. this is the O(N*logN) part (the previous steps
                      * were all linear). The above octagon trick was to conquer and divide the candidates. */
@@ -493,7 +501,8 @@ namespace TVGL
                     {
                         var zValue = StarMath.crossProduct2(hc[i].Position.subtract(hc[i - 1].Position, 2),
                             hc[i + 1].Position.subtract(hc[i].Position, 2));
-                        if (zValue <= 100*Constants.BaseTolerance)
+                        //If the cross product is negative, or basically 0 don't keep it.
+                        if (zValue <= Constants.BaseTolerance)
                         {
                             /* remove any vertices that create concave angles. 
                              *** This is second of the two places where Convex2DHullMaximal differs from ConvexHull2DMinimal. ***
@@ -513,55 +522,55 @@ namespace TVGL
                     for (i = hc.Count - 2; i > 0; i--)
                         convexHullCCW.Insert(j, hc[i]);
                 }
+            }
 
-                //Remove nearly duplicate points.
-                var tempCCW = new List<Point>(convexHullCCW);
-                tempCCW.Insert(0, convexHullCCW.Last());
-                for (var k = 1; k < tempCCW.Count; k++)
+            //Remove nearly duplicate points.
+            var tempCCW = new List<Point>(convexHullCCW);
+            tempCCW.Insert(0, convexHullCCW.Last());
+            for (var k = 1; k < tempCCW.Count; k++)
+            {
+                if (
+                    tempCCW[k].Position2D.subtract(tempCCW[k - 1].Position2D)
+                        .norm2()
+                        .IsNegligible(Constants.BaseTolerance))
                 {
-                    if (
-                        tempCCW[k].Position2D.subtract(tempCCW[k - 1].Position2D)
-                            .norm2()
-                            .IsNegligible(Constants.BaseTolerance))
+                    convexHullCCW.Remove(tempCCW[k - 1]);
+                }
+                if (k == tempCCW.Count - 1)
+                //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
+                {
+                    if (tempCCW[k].X < convexHullCCW.First().X ||
+                        (tempCCW[k].X == convexHullCCW.First().X && tempCCW[k].Y < convexHullCCW.First().Y))
                     {
-                        convexHullCCW.Remove(tempCCW[k - 1]);
-                    }
-                    if (k == tempCCW.Count - 1)
-                        //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
-                    {
-                        if (tempCCW[k].X < convexHullCCW.First().X ||
-                            (tempCCW[k].X == convexHullCCW.First().X && tempCCW[k].Y < convexHullCCW.First().Y))
-                        {
-                            convexHullCCW.Insert(0, tempCCW[k]);
-                            convexHullCCW.RemoveAt(convexHullCCW.Count - 1);
-                        }
+                        convexHullCCW.Insert(0, tempCCW[k]);
+                        convexHullCCW.RemoveAt(convexHullCCW.Count - 1);
                     }
                 }
+            }
 
-                //Remove midpoints on nearly straight lines
-                tempCCW = new List<Point>(convexHullCCW);
-                //Modify the list to make it easy to iterate
-                tempCCW.Insert(0, convexHullCCW.Last()); //Add last point to start
-                tempCCW.Add(convexHullCCW[1]); //Add the original first point to the end. 
-                for (var k = 1; k < tempCCW.Count-1; k++)
+            //Remove midpoints on nearly straight lines
+            tempCCW = new List<Point>(convexHullCCW);
+            //Modify the list to make it easy to iterate
+            tempCCW.Insert(0, convexHullCCW.Last()); //Add last point to start
+            tempCCW.Add(convexHullCCW[1]); //Add the original first point to the end. 
+            for (var k = 1; k < tempCCW.Count - 1; k++)
+            {
+                var vector1 = tempCCW[k].Position2D.subtract(tempCCW[k - 1].Position2D).normalize();
+                var vector2 = tempCCW[k + 1].Position2D.subtract(tempCCW[k].Position2D).normalize();
+                var dot = StarMath.dotProduct(vector1, vector2);
+                if (dot.IsPracticallySame(1.0, Constants.BaseTolerance))
                 {
-                    var vector1 = tempCCW[k].Position2D.subtract(tempCCW[k - 1].Position2D).normalize();
-                    var vector2 = tempCCW[k+1].Position2D.subtract(tempCCW[k].Position2D).normalize();
-                    var dot = StarMath.dotProduct(vector1, vector2); 
-                    if (dot.IsPracticallySame(1.0, Constants.BaseTolerance))
+                    convexHullCCW.Remove(tempCCW[k]);
+                }
+                if (dot == double.NaN) throw new Exception();
+                if (k == tempCCW.Count - 2)
+                //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
+                {
+                    if (tempCCW[k].X < convexHullCCW.First().X ||
+                        (tempCCW[k].X == convexHullCCW.First().X && tempCCW[k].Y < convexHullCCW.First().Y))
                     {
-                        convexHullCCW.Remove(tempCCW[k]);
-                    }
-                    if(dot == double.NaN) throw new Exception();
-                    if (k == tempCCW.Count - 2)
-                    //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
-                    {
-                        if (tempCCW[k].X < convexHullCCW.First().X ||
-                            (tempCCW[k].X == convexHullCCW.First().X && tempCCW[k].Y < convexHullCCW.First().Y))
-                        {
-                            convexHullCCW.Insert(0, tempCCW[k]);
-                            convexHullCCW.RemoveAt(convexHullCCW.Count - 1);
-                        }
+                        convexHullCCW.Insert(0, tempCCW[k]);
+                        convexHullCCW.RemoveAt(convexHullCCW.Count - 1);
                     }
                 }
             }
