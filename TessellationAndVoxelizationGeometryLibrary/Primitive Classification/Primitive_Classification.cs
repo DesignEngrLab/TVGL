@@ -8,8 +8,8 @@ namespace TVGL
 {
     public static partial class Primitive_Classification
     {
-        private static List<double> listOfLimitsABN, listOfLimitsMCM, listOfLimitsSM;
-        private static List<List<int>> edgeRules, faceRules;
+        private static double[] listOfLimitsABN, listOfLimitsMCM, listOfLimitsSM;
+        private static int[,] edgeRules, faceRules;
 
         private static void InitializeFuzzinessRules()
         {
@@ -300,7 +300,7 @@ namespace TVGL
 
 
         private static int EdgeClassifier2(double[] ABNProbs, double[] MCMProbs, double[] SMProbs,
-            List<List<int>> rulesArray, out double prob)
+            int[,] rulesArray, out double prob)
         {
             // go to the rules and and return an int corresponding to each region.
             // This function must be rewrited. It's crazy!!!!!!!!!
@@ -313,30 +313,30 @@ namespace TVGL
             do
             {
                 probabilityNotFound = false;
-                if (rulesArray[0][t] == ABN && rulesArray[1][t] == 10 && rulesArray[2][t] == 10)
+                if (rulesArray[0,t] == ABN && rulesArray[1,t] == 10 && rulesArray[2,t] == 10)
                     prob = ABNProbs[1];
-                else if (rulesArray[1][t] == MCM && rulesArray[0][t] == 10 && rulesArray[2][t] == 10)
+                else if (rulesArray[1,t] == MCM && rulesArray[0,t] == 10 && rulesArray[2,t] == 10)
                     prob = MCMProbs[1];
-                else if (rulesArray[2][t] == SM && rulesArray[0][t] == 10 && rulesArray[1][t] == 10)
+                else if (rulesArray[2,t] == SM && rulesArray[0,t] == 10 && rulesArray[1,t] == 10)
                     prob = SMProbs[1];
-                else if (rulesArray[0][t] == ABN && rulesArray[1][t] == MCM && rulesArray[2][t] == 10)
+                else if (rulesArray[0,t] == ABN && rulesArray[1,t] == MCM && rulesArray[2,t] == 10)
                     prob = Math.Min(ABNProbs[1], MCMProbs[1]);
-                else if (rulesArray[0][t] == ABN && rulesArray[1][t] == 10 && rulesArray[2][t] == SM)
+                else if (rulesArray[0,t] == ABN && rulesArray[1,t] == 10 && rulesArray[2,t] == SM)
                     prob = Math.Min(ABNProbs[1], SMProbs[1]);
-                else if (rulesArray[0][t] == 10 && rulesArray[1][t] == MCM && rulesArray[2][t] == SM)
+                else if (rulesArray[0,t] == 10 && rulesArray[1,t] == MCM && rulesArray[2,t] == SM)
                     prob = Math.Min(MCMProbs[1], SMProbs[1]);
-                else if (rulesArray[0][t] == ABN && rulesArray[1][t] == MCM && rulesArray[2][t] == SM)
+                else if (rulesArray[0,t] == ABN && rulesArray[1,t] == MCM && rulesArray[2,t] == SM)
                 {
                     var m = Math.Min(ABNProbs[1], MCMProbs[1]);
                     prob = Math.Min(m, SMProbs[1]);
                 }
                 else probabilityNotFound = true;
-            } while (probabilityNotFound && ++t < rulesArray[0].Count);
+            } while (probabilityNotFound && ++t < rulesArray.GetLength(1));
             if (probabilityNotFound) return 0;  // t would exceed the limit, so we return 0
-            return rulesArray[3][t];
+            return rulesArray[3,t];
         }
 
-        private static List<double[]> CatAndProbFinder(double metric, List<double> listOfLimits)
+        private static List<double[]> CatAndProbFinder(double metric, double[] listOfLimits)
         {
             var CatAndProb = new List<double[]>();
             //Case 1
@@ -478,7 +478,7 @@ namespace TVGL
 
         }
 
-        private static PrimitiveSurfaceType FaceClassifier(int[] bestCombination, List<List<int>> faceRules)
+        private static PrimitiveSurfaceType FaceClassifier(int[] bestCombination, int[,] faceRules)
         {
             var intToString = new Dictionary<int, PrimitiveSurfaceType>();
             intToString.Add(200, PrimitiveSurfaceType.Flat);
@@ -488,12 +488,12 @@ namespace TVGL
             intToString.Add(204, PrimitiveSurfaceType.Dense);
             intToString.Add(205, PrimitiveSurfaceType.Unknown);
             var sortedCom = bestCombination.OrderBy(n => n).ToArray();
-            for (var i = 0; i < faceRules[0].Count; i++)
+            for (var i = 0; i < faceRules.GetLength(1); i++)
             {
-                var arrayOfRule = new[] { faceRules[0][i], faceRules[1][i], faceRules[2][i] };
+                var arrayOfRule = new[] { faceRules[0,i], faceRules[1,i], faceRules[2,i] };
                 var sortedAofR = arrayOfRule.OrderBy(n => n).ToArray();
                 if (sortedCom[0] == sortedAofR[0] && sortedCom[1] == sortedAofR[1] && sortedCom[2] == sortedAofR[2])
-                    return intToString[faceRules[3][i]];
+                    return intToString[faceRules[3,i]];
             }
             return PrimitiveSurfaceType.Unknown;
         }
@@ -537,13 +537,13 @@ namespace TVGL
 
         #endregion
         #region EdgesLeadToDesiredFaceCatFinder
-        private static void EdgesLeadToDesiredFaceCatFinder(FaceWithScores face, PrimitiveSurfaceType p, List<List<int>> faceRules)
+        private static void EdgesLeadToDesiredFaceCatFinder(FaceWithScores face, PrimitiveSurfaceType p, int[,] faceRules)
         {
             // This function takes a face and a possible category and returns 
             // edges which lead to that category
             // We need to define some rules. for example, if the p is  F, with
             // combination of F F SE, then return edges of F and F. 
-            //eltc = [faceRules[4][i],faceRules[5][i],faceRules[6][i]];
+            //eltc = [faceRules[4,i],faceRules[5,i],faceRules[6,i]];
             var edges = new List<Edge>();
             var com = face.CatToCom[p];
             var edgesFD = new Edge[3];
@@ -580,9 +580,9 @@ namespace TVGL
             }
             /////////////////////////////////////////////////////////////////////
 
-            for (var i = 0; i < faceRules[0].Count; i++)
+            for (var i = 0; i < faceRules.GetLength(1); i++)
             {
-                var arrayOfRule = new[] { faceRules[0][i], faceRules[1][i], faceRules[2][i] };
+                var arrayOfRule = new[] { faceRules[0,i], faceRules[1,i], faceRules[2,i] };
                 /*var q = from a in com
                         join b in arrayOfRule on a equals b
                         select a;
@@ -610,7 +610,7 @@ namespace TVGL
                 arrayOfRule.OrderBy(n => n).ToArray();
                 if (@equals)
                 {
-                    var EdgesLead = new[] { faceRules[4][i], faceRules[5][i], faceRules[6][i] };
+                    var EdgesLead = new[] { faceRules[4,i], faceRules[5,i], faceRules[6,i] };
                     var SortedEL = EdgesLead.OrderBy(n => n).ToArray();
                     for (var t = 0; t < 3; t++)
                     //foreach (var EL in SortedEL.Where(a => a != 1000))
