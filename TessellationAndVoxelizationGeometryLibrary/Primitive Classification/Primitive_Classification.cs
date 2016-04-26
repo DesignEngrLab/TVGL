@@ -10,8 +10,6 @@ namespace TVGL
     {
         private static List<double> listOfLimitsABN, listOfLimitsMCM, listOfLimitsSM;
         private static List<List<int>> edgeRules, faceRules;
-        private static double maxFaceArea;
-        private static double primitivesBeforeFiltering;
 
         private static void InitializeFuzzinessRules()
         {
@@ -79,7 +77,7 @@ namespace TVGL
                 }
             }
             var plannedSurfaces = new List<PlanningSurface>();
-            maxFaceArea = unassignedFaces.Max(a => a.Face.Area);
+            var maxFaceArea = unassignedFaces.Max(a => a.Face.Area);
             while (unassignedFaces.Count > 0)
             {
                 Message.output("# unassigned faces: " + unassignedFaces.Count, 5);
@@ -88,17 +86,17 @@ namespace TVGL
                 var newSurfaces = groupFacesIntoPlanningSurfaces(topUnassignedFace, allFacesWithScores);
                 plannedSurfaces.AddRange(DecideOnOverlappingPatches(newSurfaces, unassignedFaces));
             }
-            var primitives = MakeSurfaces(plannedSurfaces.OrderByDescending(s => s.Metric).ToList());
+            var primitives = MakeSurfaces(plannedSurfaces.OrderByDescending(s => s.Metric).ToList(), maxFaceArea);
+            var primitivesBeforeFiltering = primitives.Count;
             primitives = MinorCorrections(primitives, allEdgeWithScores);
             PaintSurfaces(primitives, ts);
-            ReportStats(primitives);
+            ReportStats(primitives, primitivesBeforeFiltering);
             return primitives;
         }
 
         private static List<PrimitiveSurface> MinorCorrections(List<PrimitiveSurface> primitives, List<EdgeWithScores> allEdgeWithScores)
         {
             //foreach (var primitive in primitives.Where(a => a.Faces.Count == 1 && a is Sphere))
-            primitivesBeforeFiltering = primitives.Count;
             for (var i = 0; i < primitives.Count; i++)
             {
                 var primitive = primitives[i];
@@ -751,7 +749,7 @@ namespace TVGL
 
         #endregion
         #region Make Primitives
-        private static List<PrimitiveSurface> MakeSurfaces(List<PlanningSurface> plannedSurfaces)
+        private static List<PrimitiveSurface> MakeSurfaces(List<PlanningSurface> plannedSurfaces, double maxFaceArea)
         {
             var completeSurfaces = new List<PrimitiveSurface>();
 
@@ -947,7 +945,7 @@ namespace TVGL
                         f.Color = new Color(KnownColors.Black);
             }
         }
-        private static void ReportStats(List<PrimitiveSurface> primitives)
+        private static void ReportStats(List<PrimitiveSurface> primitives, double primitivesBeforeFiltering)
         {
             Message.output("**************** RESULTS *******************", 4);
             Message.output("Number of Primitives = " + primitives.Count, 4);
