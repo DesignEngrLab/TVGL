@@ -374,13 +374,12 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<double[]> vertices)
         {
-            var taskXMin = Task.Factory.StartNew(() => XMin = vertices.Min(v => v[0]));
-            var taskXMax = Task.Factory.StartNew(() => XMax = vertices.Max(v => v[0]));
-            var taskYMin = Task.Factory.StartNew(() => YMin = vertices.Min(v => v[1]));
-            var taskYMax = Task.Factory.StartNew(() => YMax = vertices.Max(v => v[1]));
-            var taskZMin = Task.Factory.StartNew(() => ZMin = vertices.Min(v => v[2]));
-            var taskZMax = Task.Factory.StartNew(() => ZMax = vertices.Max(v => v[2]));
-            Task.WaitAll(taskXMin, taskXMax, taskYMin, taskYMax, taskZMin, taskZMax);
+            XMin = vertices.Min(v => v[0]);
+            XMax = vertices.Max(v => v[0]);
+            YMin = vertices.Min(v => v[1]);
+            YMax = vertices.Max(v => v[1]);
+            ZMin = vertices.Min(v => v[2]);
+            ZMax = vertices.Max(v => v[2]);
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
             SameTolerance = shortestDimension * Constants.BaseTolerance;
         }
