@@ -535,7 +535,7 @@ namespace TVGL
                 {
                     var fromVertex = face.Vertices[j];
                     var toVertex = face.Vertices[(j == 2) ? 0 : j + 1];
-                    var checksum =TessellatedSolid.SetEdgeChecksum(fromVertex, toVertex);
+                    var checksum = ts.SetEdgeChecksum(fromVertex, toVertex);
 
                     if (partlyDefinedEdges.ContainsKey(checksum))
                     {

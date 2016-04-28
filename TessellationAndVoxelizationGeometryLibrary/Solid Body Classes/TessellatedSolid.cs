@@ -156,7 +156,7 @@ namespace TVGL
         ///     Gets the checksum multiplier to be used for face and edge references. Set at end of "Make Vertices".
         /// </summary>
         /// <value>The number of vertices.</value>
-        public static int VertexCheckSumMultiplier { get; private set; }
+        public int VertexCheckSumMultiplier { get; private set; }
 
         /// <summary>
         ///     Gets the number of edges.
@@ -453,7 +453,7 @@ namespace TVGL
         }
 
         //Primary make edges function
-        internal static Edge[] MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices, int numberOfVertices)
+        internal Edge[] MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices, int numberOfVertices)
         {
             //No need to store partly defined edges and overused edges because the ERROR function will catch them.
             var partlyDefinedEdgeDictionary = new Dictionary<long, Edge>();
@@ -915,7 +915,7 @@ namespace TVGL
             edge.EdgeReference = checksum;
             return checksum;
         }
-        internal static long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
+        internal long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
         {
             var fromIndex = fromVertex.IndexInList;
             var toIndex = toVertex.IndexInList;

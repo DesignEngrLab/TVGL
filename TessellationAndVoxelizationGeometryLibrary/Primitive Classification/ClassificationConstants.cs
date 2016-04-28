@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace TVGL
@@ -40,10 +41,10 @@ namespace TVGL
             internal const double SmHs2 = 2;
             internal const double MinConeGaussPlaneOffset = 0.1; // sine of 1 degrees 0.1
 
-            internal static List<double> MakingListOfLimABNbeta2()
+            internal static double[] MakingListOfLimABNbeta2()
             {
 
-                var listOfLimits = new List<double>
+                var listOfLimits = new double[]
                 {
                     AbnLe1,
                     AbnLe2,
@@ -57,9 +58,9 @@ namespace TVGL
                 return listOfLimits;
             }
 
-            internal static List<double> MakingListOfLimMCMbeta2()
+            internal static double[] MakingListOfLimMCMbeta2()
             {
-                var listOfLimits = new List<double>
+                var listOfLimits = new double[]
                 {
                     McmLe1,
                     McmLe2,
@@ -73,9 +74,9 @@ namespace TVGL
                 return listOfLimits;
             }
 
-            internal static List<double> MakingListOfLimSMbeta2()
+            internal static double[] MakingListOfLimSMbeta2()
             {
-                var listOfLimits = new List<double>
+                var listOfLimits = new double[]
                 {
                     SmLe1,
                     SmLe2,
@@ -89,69 +90,23 @@ namespace TVGL
                 return listOfLimits;
             }
 
-            internal static List<List<int>> readingEdgesRules2()
+            internal static int[,] readingEdgesRules2()
             {
                 var assembly = Assembly.GetExecutingAssembly();
                 var resourceName = "TVGL.Primitive_Classification.NewEdgeRules.csv";
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
-                using (var reader = new StreamReader(stream))
                 {
-                    var Lists = new List<List<int>>();
-                    bool blocker = true;
-                    while (!reader.EndOfStream)
-                    {
-                        var line = reader.ReadLine();
-                        var values = line.Split(',');
-                        var i = 0;
-                        if (blocker)
-                        {
-                            for (int j = 0; j < 4; j++)
-                            {
-                                var ini = new List<int>();
-                                Lists.Add(ini);
-                            }
-                            blocker = false;
-                        }
-                        while (i < 4)
-                        {
-                            Lists[i].Add(Convert.ToInt32(values[i]));
-                            i++;
-                        }
-                    }
-                    return Lists;
+                    return ReadIntMatrix(stream, 4);
                 }
             }
 
-            internal static List<List<int>> readingFacesRules()
+            internal static int[,] readingFacesRules()
             {
                 var assembly = Assembly.GetExecutingAssembly();
                 var resourceName = "TVGL.Primitive_Classification.NewFaRules.csv";
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
-                using (var reader = new StreamReader(stream))
                 {
-                    List<List<int>> Lists = new List<List<int>>();
-                    bool blocker = true;
-                    while (!reader.EndOfStream)
-                    {
-                        var line = reader.ReadLine();
-                        var values = line.Split(',');
-                        var i = 0;
-                        if (blocker)
-                        {
-                            for (int j = 0; j < 7; j++)
-                            {
-                                var ini = new List<int>();
-                                Lists.Add(ini);
-                            }
-                            blocker = false;
-                        }
-                        while (i < 7)
-                        {
-                            Lists[i].Add(Convert.ToInt32(values[i]));
-                            i++;
-                        }
-                    }
-                    return Lists;
+                    return ReadIntMatrix(stream, 7);
                 }
             }
 
@@ -164,7 +119,37 @@ namespace TVGL
                 return null;
             }
 
+            private static int[,] ReadIntMatrix(Stream stream, int numColumns)
+            {
+                using (var reader = new StreamReader(stream))
+                {
+                    // First read all lines to know how many there are
+                    var lines = new List<int[]>();
+                    while (!reader.EndOfStream)
+                    {
+                        var line = reader.ReadLine()
+                            .Split(',')
+                            .Take(numColumns)
+                            .Select((str) => Convert.ToInt32(str))
+                            .ToArray();
 
+                        lines.Add(line);
+                    }
+
+                    // Now convert to native matrix
+                    var result = new int[numColumns, lines.Count];
+
+                    for (var i = 0; i < numColumns; i++)
+                    {
+                        for (var j = 0; j < lines.Count; j++)
+                        {
+                            result[i, j] = lines[j][i];
+                        }
+                    }
+
+                    return result;
+                }
+            }
         }
     }
 }
