@@ -643,6 +643,21 @@ namespace TVGL
         /// <summary>
         /// Initializes a new instance of the <see cref="Color"/> struct.
         /// </summary>
+        /// <param name="r">The r.</param>
+        /// <param name="g">The g.</param>
+        /// <param name="b">The b.</param>
+        public Color(float r, float g, float b)
+        {
+
+            A = 1;
+            R = Convert(r);
+            G = Convert(g);
+            B = Convert(b);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Color"/> struct.
+        /// </summary>
         /// <param name="a">a.</param>
         /// <param name="r">The r.</param>
         /// <param name="g">The g.</param>

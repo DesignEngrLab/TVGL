@@ -51,6 +51,7 @@
     <Compile Include="InputOutput Operations\PLYFileData.cs" />
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
+    <Compile Include="InputOutput Operations\SHELLFileData.cs" />
     <Compile Include="Miscellaneous Functions\AreaDecomposition.cs" />
     <Compile Include="Miscellaneous Functions\ListFunctions.cs">
       <SubType>Code</SubType>
@@ -113,11 +114,11 @@
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
     <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />
     <EmbeddedResource Include="Primitive Classification\NewFaRules.csv" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

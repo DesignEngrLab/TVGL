@@ -13,6 +13,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+        "../../../TestFiles/DxTopLevel.shell",
         //"../../../TestFiles/shark.ply",
         //"../../../TestFiles/bunnySmall.ply",
         //"../../../TestFiles/cube.ply",
@@ -42,7 +43,7 @@ namespace TVGL_Test
        // "../../../TestFiles/bradley.stl",
        // "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
        // "../../../TestFiles/new/5.STL",
-       // "../../../TestFiles/new/2.stl", //Note that this is an assembly 
+       //"../../../TestFiles/new/2.stl", //Note that this is an assembly 
        // "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
        //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
        // "../../../TestFiles/radiobox.stl",
@@ -66,6 +67,7 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
+            Message.Verbosity = VerbosityLevels.Everything;
             //TestOBB("../../../TestFiles/");
             //return;
             for (var i = 0; i < FileNames.Count(); i++)
@@ -74,12 +76,16 @@ namespace TVGL_Test
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
-                Primitive_Classification.Run(ts[0]);
+                foreach (var tessellatedSolid in ts)
+                {
+                    TessellationError.CheckModelIntegrity(tessellatedSolid);
+                    TVGL_Helix_Presenter.HelixPresenter.Show(tessellatedSolid);
+                }
+                //Primitive_Classification.Run(ts[0]);
                 //MiscFunctions.IsSolidBroken(ts[0]);
-                MinimumEnclosure.OrientedBoundingBox(ts[0]);
+                //MinimumEnclosure.OrientedBoundingBox(ts[0]);
                 //TestClassification(ts[0]);
-                TestXSections(ts[0]);
-                TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
+                //TestXSections(ts[0]);
                 //TestSimplify(ts[0]);
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0], filename);

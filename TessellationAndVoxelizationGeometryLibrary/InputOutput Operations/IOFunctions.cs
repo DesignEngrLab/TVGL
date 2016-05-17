@@ -68,6 +68,9 @@ namespace TVGL.IOFunctions
                 case "off":
                     tessellatedSolids = OFFFileData.Open(s, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
+                case "shell":
+                    tessellatedSolids = ShellFileData.Open(s, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    break;
                 default:
                     throw new Exception(
                         "Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");

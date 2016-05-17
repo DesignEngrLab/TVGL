@@ -129,7 +129,7 @@ namespace TVGL
                 foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
                     StoreVertexDoesNotLinkBackToFace(ts, face, vertex);
                 if (face.AdjacentFaces.Any(adjacentFace => adjacentFace == null))
-                    StoreFaceWithMissingAdjacency(ts, face);    
+                    StoreFaceWithMissingAdjacency(ts, face);
             }
             //Check if each edge has cyclic references with each vertex and each face.
             foreach (var edge in ts.Edges)
@@ -138,7 +138,7 @@ namespace TVGL
                 if (!edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
                 if (!edge.To.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.To);
                 if (!edge.From.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.From);
-                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2*Math.PI)  
+                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2 * Math.PI)
                     StoreEdgeHasBadAngle(ts, edge);
             }
             //Check if each vertex has cyclic references with each edge and each face.
@@ -151,19 +151,19 @@ namespace TVGL
             }
             if (ts.Errors.NoErrors)
             {
-                Message.output("** Model contains no errors.",3);
+                Message.output("** Model contains no errors.", 3);
                 return;
             }
             if (repairAutomatically)
             {
-                Message.output("Some errors found. Attempting to Repair...",2);
+                Message.output("Some errors found. Attempting to Repair...", 2);
                 var success = ts.Errors.Repair(ts);
                 if (success)
                 {
                     ts.Errors = null;
-                    Message.output("Repair successfully fixed the model.",2);
+                    Message.output("Repair successfully fixed the model.", 2);
                 }
-                else Message.output("Repair did not successfully fix all the problems.",1);
+                else Message.output("Repair did not successfully fix all the problems.", 1);
                 CheckModelIntegrity(ts, false);
                 return;
             }
@@ -181,42 +181,36 @@ namespace TVGL
             Message.output("Errors found in model:");
             Message.output("======================");
             if (NonTriangularFaces != null)
-                Message.output("==> {0} faces are polygons with more than 3 sides.", NonTriangularFaces.Count);
+                Message.output("==> " + NonTriangularFaces.Count + " faces are polygons with more than 3 sides.");
             if (!double.IsNaN(EdgeFaceRatio))
-                Message.output("==> Edges / Faces = {0}, but it should be 1.5.", EdgeFaceRatio);
+                Message.output("==> Edges / Faces = " + EdgeFaceRatio + ", but it should be 1.5.");
             if (OverusedEdges != null)
             {
-                Message.output("==> {0} overused edges.", OverusedEdges.Count);
+                Message.output("==> "+OverusedEdges.Count+" overused edges.");
                 Message.output("    The number of faces per overused edge: " +
                                 OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
             }
-            if (SingledSidedEdges != null) Message.output("==> {0} single-sided edges.", SingledSidedEdges.Count);
-            if (DegenerateFaces != null) Message.output("==> {0} degenerate faces in file.", DegenerateFaces.Count);
-            if (DuplicateFaces != null) Message.output("==> {0} duplicate faces in file.", DuplicateFaces.Count);
+            if (SingledSidedEdges != null) Message.output("==> " + SingledSidedEdges.Count + " single-sided edges.");
+            if (DegenerateFaces != null) Message.output("==> " + DegenerateFaces.Count + " degenerate faces in file.");
+            if (DuplicateFaces != null) Message.output("==> " + DuplicateFaces.Count + " duplicate faces in file.");
             if (FacesWithOneVertex != null)
-                Message.output("==> {0} faces with only one vertex.", FacesWithOneVertex.Count);
-            if (FacesWithOneEdge != null) Message.output("==> {0} faces with only one edge.", FacesWithOneEdge.Count);
-            if (FacesWithTwoVertices != null) Message.output("==> {0}  faces with only two vertices.", FacesWithTwoVertices.Count);
-            if (FacesWithTwoEdges != null) Message.output("==> {0}  faces with only two edges.", FacesWithTwoEdges.Count);
-            if (EdgesWithBadAngle != null) Message.output("==> {0} edges with bad angles.", EdgesWithBadAngle.Count);
+                Message.output("==> " + FacesWithOneVertex.Count + " faces with only one vertex.");
+            if (FacesWithOneEdge != null) Message.output("==> " + FacesWithOneEdge.Count + " faces with only one edge.");
+            if (FacesWithTwoVertices != null) Message.output("==> " + FacesWithTwoVertices.Count + "  faces with only two vertices.");
+            if (FacesWithTwoEdges != null) Message.output("==> " + FacesWithTwoEdges.Count + " faces with only two edges.");
+            if (EdgesWithBadAngle != null) Message.output("==> " + EdgesWithBadAngle.Count + " edges with bad angles.");
             if (EdgesThatDoNotLinkBackToFace != null)
-                Message.output("==> {0} edges that do not link back to faces that link to them.",
-                    EdgesThatDoNotLinkBackToFace.Count);
+                Message.output("==> " + EdgesThatDoNotLinkBackToFace.Count + " edges that do not link back to faces that link to them.");
             if (EdgesThatDoNotLinkBackToVertex != null)
-                Message.output("==> {0} edges that do not link back to vertices that link to them.",
-                    EdgesThatDoNotLinkBackToVertex.Count);
+                Message.output("==> " + EdgesThatDoNotLinkBackToVertex.Count + " edges that do not link back to vertices that link to them.");
             if (VertsThatDoNotLinkBackToFace != null)
-                Message.output("==> {0} vertices that do not link back to faces that link to them.",
-                    VertsThatDoNotLinkBackToFace.Count);
+                Message.output("==> " + VertsThatDoNotLinkBackToFace.Count + " vertices that do not link back to faces that link to them.");
             if (VertsThatDoNotLinkBackToEdge != null)
-                Message.output("==> {0} vertices that do not link back to edges that link to them.",
-                    VertsThatDoNotLinkBackToEdge.Count);
+                Message.output("==> " + VertsThatDoNotLinkBackToEdge.Count + " vertices that do not link back to edges that link to them.");
             if (FacesThatDoNotLinkBackToEdge != null)
-                Message.output("==> {0} faces that do not link back to edges that link to them.",
-                    FacesThatDoNotLinkBackToEdge.Count);
+                Message.output("==> " + FacesThatDoNotLinkBackToEdge.Count + " faces that do not link back to edges that link to them.");
             if (FacesThatDoNotLinkBackToVertex != null)
-                Message.output("==> {0} faces that do not link back to vertices that link to them.",
-                    FacesThatDoNotLinkBackToVertex.Count);
+                Message.output("==> " + FacesThatDoNotLinkBackToVertex.Count + " faces that do not link back to vertices that link to them.");
         }
 
 
@@ -284,8 +278,8 @@ namespace TVGL
         {
             //This is not truly an error, to don't change the NoErrors boolean.
             if (ts.Errors.FacesWithNegligibleArea == null)
-                ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> {face};
-            else if(!ts.Errors.FacesWithNegligibleArea.Contains(face)) ts.Errors.FacesWithNegligibleArea.Add(face);
+                ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> { face };
+            else if (!ts.Errors.FacesWithNegligibleArea.Contains(face)) ts.Errors.FacesWithNegligibleArea.Add(face);
         }
 
         private static void StoreVertexDoesNotLinkBackToFace(TessellatedSolid ts, PolygonalFace face, Vertex vertex)
@@ -516,8 +510,8 @@ namespace TVGL
                     }
                 }
             }
-            if (newFaces.Count == 1) Message.output("1 missing face was fixed",3);
-            if (newFaces.Count > 1) Message.output(newFaces.Count + " missing faces were fixed",3);
+            if (newFaces.Count == 1) Message.output("1 missing face was fixed", 3);
+            if (newFaces.Count > 1) Message.output(newFaces.Count + " missing faces were fixed", 3);
             return LinkUpNewFaces(newFaces, ts);
         }
 
@@ -561,7 +555,7 @@ namespace TVGL
             if (!ts.Errors.SingledSidedEdges.Any()) ts.Errors.SingledSidedEdges = null;
             return true;
         }
-       
+
         #endregion
     }
 }

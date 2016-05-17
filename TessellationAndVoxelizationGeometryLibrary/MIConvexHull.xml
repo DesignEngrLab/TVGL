@@ -1,0 +1,1204 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MIConvexHull</name>
+    </assembly>
+    <members>
+        <member name="T:MIConvexHull.PointTranslationType">
+            <summary>
+            Determines the type of the point translation to use.
+            
+            This is useful for handling "degenerate" data (i.e. uniform grids of points).
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.PointTranslationType.None">
+            <summary>
+            Nothing happens.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.PointTranslationType.TranslateInternal">
+            <summary>
+            The points are only translated internally, the vertexes in the result 
+            retain their original coordinates.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.ConvexHullComputationConfig">
+            <summary>
+            Configuration of the convex hull computation.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.ConvexHullComputationConfig.PlaneDistanceTolerance">
+            <summary>
+            This value is used to determine which vertexes are eligible 
+            to be part of the convex hull.
+            
+            As an example, imagine a line with 3 points:
+            
+                         A ---- C ---- B
+            
+            Points A and B were already determined to be on the hull.
+            Now, the point C would need to be at least 'PlaneDistanceTolerance'
+            away from the line determined by A and B to be also considered
+            a hull point.
+            
+            Default = 0.00001
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.ConvexHullComputationConfig.PointTranslationType">
+            <summary>
+            Determines what method to use for point translation.
+            This helps with handling "degenerate" data such as uniform grids.
+            
+            Default = None
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.ConvexHullComputationConfig.PointTranslationGenerator">
+            <summary>
+            A function used to generate translation direction.
+            
+            This function is called for each coordinate of each point as
+            Position[i] -> Position[i] + PointTranslationGenerator()
+            
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            From my testing the function should be set up so that the 
+            translation magnitude is lower than the PlaneDistanceTolerance. 
+            Otherwise, flat faces in triangulation could be created as a result.
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            
+            An example of the translation function that would shift each coordinate 
+            in 0.0000005 in either direction is:
+            var rnd = new Random(0); // use the same seed for each computation
+            f = () => 0.000001 * rnd.NextDouble() - 0.0000005;
+            
+            This is implemented by the 
+            ConvexHullComputationConfig.RandomShiftByRadius function.
+            
+            Default = null
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullComputationConfig.#ctor">
+            <summary>
+            Create the config with default values set.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullComputationConfig.RandomShiftByRadius(System.Double,System.Nullable{System.Int32})">
+            <summary>
+            Creates values in range (-radius / 2, radius / 2)
+            </summary>
+            <param name="radius"></param>
+            <param name="randomSeed">If null, initialized to random default System.Random value</param>
+            <returns></returns>
+        </member>
+        <member name="T:MIConvexHull.TriangulationComputationConfig">
+            <summary>
+            Configuration of the triangulation computation.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.TriangulationComputationConfig.ZeroCellVolumeTolerance">
+            <summary>
+            If using PointTranslationType.TranslateInternal, this value is
+            used to determine which boundary cells have zero volume after the
+            points get "translated back".
+            
+            Default value is 0.00001.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.TriangulationComputationConfig.#ctor">
+            <summary>
+            Create the config with default values set.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.SimpleList`1">
+            <summary>
+            A more lightweight alternative to List of T.
+            On clear, only resets the count and does not clear the references 
+              => this works because of the ObjectManager.
+            Includes a stack functionality.
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+        <member name="P:MIConvexHull.SimpleList`1.Item(System.Int32)">
+            <summary>
+            Get the i-th element.
+            </summary>
+            <param name="i"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.SimpleList`1.EnsureCapacity">
+            <summary>
+            Size matters.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.SimpleList`1.Add(`0)">
+            <summary>
+            Adds a vertex to the buffer.
+            </summary>
+            <param name="item"></param>
+        </member>
+        <member name="M:MIConvexHull.SimpleList`1.Push(`0)">
+            <summary>
+            Pushes the value to the back of the list.
+            </summary>
+            <param name="item"></param>
+        </member>
+        <member name="M:MIConvexHull.SimpleList`1.Pop">
+            <summary>
+            Pops the last value from the list.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.SimpleList`1.Clear">
+            <summary>
+            Sets the Count to 0, otherwise does nothing.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.IndexBuffer">
+            <summary>
+            A fancy name for a list of integers.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.FaceList">
+            <summary>
+            A priority based linked list.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.FaceList.First">
+            <summary>
+            Get the first element.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.FaceList.AddFirst(MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Adds the element to the beginning.
+            </summary>
+            <param name="face"></param>
+        </member>
+        <member name="M:MIConvexHull.FaceList.Add(MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Adds a face to the list.
+            </summary>
+            <param name="face"></param>
+        </member>
+        <member name="M:MIConvexHull.FaceList.Remove(MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Removes the element from the list.
+            </summary>
+            <param name="face"></param>
+        </member>
+        <member name="T:MIConvexHull.ConnectorList">
+            <summary>
+            Connector list.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.ConnectorList.First">
+            <summary>
+            Get the first element.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConnectorList.AddFirst(MIConvexHull.FaceConnector)">
+            <summary>
+            Adds the element to the beginning.
+            </summary>
+            <param name="connector"></param>
+        </member>
+        <member name="M:MIConvexHull.ConnectorList.Add(MIConvexHull.FaceConnector)">
+            <summary>
+            Adds a face to the list.
+            </summary>
+            <param name="element"></param>
+        </member>
+        <member name="M:MIConvexHull.ConnectorList.Remove(MIConvexHull.FaceConnector)">
+            <summary>
+            Removes the element from the list.
+            </summary>
+            <param name="connector"></param>
+        </member>
+        <member name="T:MIConvexHull.ConvexFace`2">
+            <summary>
+            A convex face representation containing adjacency information.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.ConvexFace`2.Adjacency">
+            <summary>
+            Adjacency. Array of length "dimension".
+            If F = Adjacency[i] then the vertices shared with F are Vertices[j] where j != i.
+            In the context of triangulation, can be null (indicates the cell is at boundary).
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.ConvexFace`2.Vertices">
+            <summary>
+            The vertices stored in clockwise order for dimensions 2 - 4, in higher dimensions the order is arbitrary.
+            Unless I accidentally switch some index somewhere in which case the order is CCW. Either way, it is consistent.
+            3D Normal = (V[1] - V[0]) x (V[2] - V[1]).
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.ConvexFace`2.Normal">
+            <summary>
+            The normal vector of the face. Null if used in triangulation.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.DefaultConvexFace`1">
+            <summary>
+            A default convex face representation.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+        </member>
+        <member name="T:MIConvexHull.DeferredFace">
+            <summary>
+            For deferred face addition.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.DeferredFace.Face">
+            <summary>
+            The faces.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.DeferredFace.Pivot">
+            <summary>
+            The faces.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.DeferredFace.OldFace">
+            <summary>
+            The faces.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.DeferredFace.FaceIndex">
+            <summary>
+            The indices.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.DeferredFace.PivotIndex">
+            <summary>
+            The indices.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.FaceConnector">
+            <summary>
+            A helper class used to connect faces.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.FaceConnector.Face">
+            <summary>
+            The face.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.FaceConnector.EdgeIndex">
+            <summary>
+            The edge to be connected.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.FaceConnector.Vertices">
+            <summary>
+            The vertex indices.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.FaceConnector.HashCode">
+            <summary>
+            The hash code computed from indices.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.FaceConnector.Previous">
+            <summary>
+            Prev node in the list.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.FaceConnector.Next">
+            <summary>
+            Next node in the list.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.FaceConnector.#ctor(System.Int32)">
+            <summary>
+            Ctor.
+            </summary>
+            <param name="dimension"></param>
+        </member>
+        <member name="M:MIConvexHull.FaceConnector.Update(MIConvexHull.ConvexFaceInternal,System.Int32,System.Int32)">
+            <summary>
+            Updates the connector.
+            </summary>
+            <param name="face"></param>
+            <param name="edgeIndex"></param>
+            <param name="dim"></param>
+        </member>
+        <member name="M:MIConvexHull.FaceConnector.AreConnectable(MIConvexHull.FaceConnector,MIConvexHull.FaceConnector,System.Int32)">
+            <summary>
+            Can two faces be connected.
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <param name="dim"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.FaceConnector.Connect(MIConvexHull.FaceConnector,MIConvexHull.FaceConnector)">
+            <summary>
+            Connect two faces.
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+        </member>
+        <member name="T:MIConvexHull.ConvexFaceInternal">
+            <summary>
+            This internal class manages the faces of the convex hull. It is a 
+            separate class from the desired user class.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexFaceInternal.#ctor(System.Int32,System.Int32,MIConvexHull.IndexBuffer)">
+            <summary>
+            Initializes a new instance of the <see cref="T:MIConvexHull.ConvexFaceInternal"/> class.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.Index">
+            <summary>
+            Index of the face inside the pool.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.AdjacentFaces">
+            <summary>
+            Gets or sets the adjacent face data.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.VerticesBeyond">
+            <summary>
+            Gets or sets the vertices beyond.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.FurthestVertex">
+            <summary>
+            The furthest vertex.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.Vertices">
+            <summary>
+            Gets or sets the vertices.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.Normal">
+            <summary>
+            Gets or sets the normal vector.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.IsNormalFlipped">
+            <summary>
+            Is the normal flipped?
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.Offset">
+            <summary>
+            Face plane constant element.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.Tag">
+            <summary>
+            Used to traverse affected faces and create the Delaunay representation.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.Previous">
+            <summary>
+            Prev node in the list.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.Next">
+            <summary>
+            Next node in the list.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexFaceInternal.InList">
+            <summary>
+            Is it present in the list.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.ConvexHull">
+            <summary>
+            Factory class for computing convex hulls.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHull.Create``2(System.Collections.Generic.IList{``0},MIConvexHull.ConvexHullComputationConfig)">
+            <summary>
+            Creates a convex hull of the input data.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TFace"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHull.Create``1(System.Collections.Generic.IList{``0},MIConvexHull.ConvexHullComputationConfig)">
+            <summary>
+            Creates a convex hull of the input data.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHull.Create(System.Collections.Generic.IList{System.Double[]},MIConvexHull.ConvexHullComputationConfig)">
+            <summary>
+            Creates a convex hull of the input data.
+            </summary>
+            <param name="data"></param>
+            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="T:MIConvexHull.ConvexHull`2">
+            <summary>
+            Representation of a convex hull.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TFace"></typeparam>
+        </member>
+        <member name="P:MIConvexHull.ConvexHull`2.Points">
+            <summary>
+            Points of the convex hull.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.ConvexHull`2.Faces">
+            <summary>
+            Faces of the convex hull.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHull`2.Create(System.Collections.Generic.IList{`0},MIConvexHull.ConvexHullComputationConfig)">
+            <summary>
+            Creates the convex hull.
+            </summary>
+            <param name="data"></param>
+            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHull`2.#ctor">
+            <summary>
+            Can only be created using a factory method.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.TagAffectedFaces(MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Tags all faces seen from the current vertex with 1.
+            </summary>
+            <param name="currentFace"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.TraverseAffectedFaces(System.Int32)">
+            <summary>
+            Recursively traverse all the relevant faces.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.MakeDeferredFace(MIConvexHull.ConvexFaceInternal,System.Int32,MIConvexHull.ConvexFaceInternal,System.Int32,MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Creates a new deferred face.
+            </summary>
+            <param name="face"></param>
+            <param name="faceIndex"></param>
+            <param name="pivot"></param>
+            <param name="pivotIndex"></param>
+            <param name="oldFace"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.ConnectFace(MIConvexHull.FaceConnector)">
+            <summary>
+            Connect faces using a connector.
+            </summary>
+            <param name="connector"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.CreateCone">
+            <summary>
+            Removes the faces "covered" by the current vertex and adds the newly created ones.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.CommitCone">
+            <summary>
+            Commits a cone and adds a vertex to the convex hull.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.IsBeyond(MIConvexHull.ConvexFaceInternal,MIConvexHull.IndexBuffer,System.Int32)">
+            <summary>
+            Check whether the vertex v is beyond the given face. If so, add it to beyondVertices.
+            </summary>
+            <param name="face"></param>
+            <param name="beyondVertices"></param>
+            <param name="v"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.FindBeyondVertices(MIConvexHull.ConvexFaceInternal,MIConvexHull.IndexBuffer,MIConvexHull.IndexBuffer)">
+            <summary>
+            Used by update faces.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.UpdateCenter">
+            <summary>
+            Recalculates the centroid of the current hull.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.RollbackCenter">
+            <summary>
+            Removes the last vertex from the center.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.HandleSingular">
+            <summary>
+            Handles singular vertex.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.FindConvexHull">
+            <summary>
+            Fins the convex hull.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.GetConvexHull``2(System.Collections.Generic.IList{``0},MIConvexHull.ConvexHullComputationConfig)">
+            <summary>
+            This is called by the "ConvexHull" class.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TFace"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default ConvexHullComputationConfig.GetDefault() is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.GetConvexFaces``2">
+            <summary>
+            Finds the convex hull and creates the TFace objects.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TFace"></typeparam>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.#ctor(MIConvexHull.IVertex[],System.Boolean,MIConvexHull.ConvexHullComputationConfig)">
+            <summary>
+            Wraps the vertices and determines the dimension if it's unknown.
+            </summary>
+            <param name="vertices"></param>
+            <param name="lift"></param>
+            <param name="config"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.DetermineDimension">
+            <summary>
+            Check the dimensionality of the input data.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.CreateInitialHull">
+            <summary>
+            Create the first faces from (dimension + 1) vertices.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.UpdateAdjacency(MIConvexHull.ConvexFaceInternal,MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Check if 2 faces are adjacent and if so, update their AdjacentFaces array.
+            </summary>
+            <param name="l"></param>
+            <param name="r"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.InitSingle">
+            <summary>
+            Init the hull if Vertices.Length == Dimension.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.InitConvexHull">
+            <summary>
+            Find the (dimension+1) initial points and create the simplexes.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.FindBeyondVertices(MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Used in the "initialization" code.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.FindInitialPoints(System.Collections.Generic.List{System.Int32})">
+            <summary>
+            Finds (dimension + 1) initial points.
+            </summary>
+            <param name="extremes"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.GetSquaredDistanceSum(System.Int32,System.Collections.Generic.List{System.Int32})">
+            <summary>
+            Computes the sum of square distances to the initial points.
+            </summary>
+            <param name="pivot"></param>
+            <param name="initialPoints"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.FindExtremes">
+            <summary>
+            Finds the extremes in all dimensions.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.ThrowSingular">
+            <summary>
+            The exception thrown if singular input data detected.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.Dimension">
+            <summary>
+            Corresponds to the dimension of the data.
+            
+            When the "lifted" hull is computed, Dimension is automatically incremented by one.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.IsLifted">
+            <summary>
+            Are we on a paraboloid?
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.PlaneDistanceTolerance">
+            <summary>
+            Explained in ConvexHullComputationConfig.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.ConvexHull">
+            <summary>
+            A list of vertices that form the convex hull.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.UnprocessedFaces">
+            <summary>
+            A list of faces that that are not a part of the final convex hull and still need to be processed.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.ConvexFaces">
+            <summary>
+            A list of faces that form the convex hull.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.CurrentVertex">
+            <summary>
+            The vertex that is currently being processed.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.MaxDistance">
+            <summary>
+            A helper variable to determine the furthest vertex for a particular convex face.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.FurthestVertex">
+            <summary>
+            A helper variable to help determine the index of the vertex that is furthest from the face that is currently being processed.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.Center">
+            <summary>
+            The centroid of the currently computed hull.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.TraverseStack">
+            <summary>
+            Used to determine which faces need to be updated at each step of the algorithm.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.EmptyBuffer">
+            <summary>
+            Used for VerticesBeyond for faces that are on the convex hull.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.BeyondBuffer">
+            <summary>
+            Used to determine which vertices are "above" (or "beyond") a face
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.AffectedFaceBuffer">
+            <summary>
+            Stores faces that are visible from the current vertex.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.ConeFaceBuffer">
+            <summary>
+            Stores faces that form a "cone" created by adding new vertex.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.SingularVertices">
+            <summary>
+            Stores a list of "singular" (or "generate", "planar", etc.) vertices that cannot be part of the hull.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.ConnectorTable">
+            <summary>
+            The connector table helps to determine the adjacency of convex faces.
+            Hashing is used instead of pairwise comparison. This significantly speeds up the computations,
+            especially for higher dimensions.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.ObjectManager">
+            <summary>
+            Manages the memory allocations and storage of unused objects.
+            Saves the garbage collector a lot of work.
+            </summary>
+        </member>
+        <member name="F:MIConvexHull.ConvexHullInternal.MathHelper">
+            <summary>
+            Helper class for handling math related stuff.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.InitializeData(MIConvexHull.ConvexHullComputationConfig)">
+            <summary>
+            Initialize buffers and lists.
+            </summary>
+            <param name="config"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.InitializePositions(MIConvexHull.ConvexHullComputationConfig)">
+            <summary>
+            Initialize the vertex positions based on the translation type from config.
+            </summary>
+            <param name="config"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.GetCoordinate(System.Int32,System.Int32)">
+            <summary>
+            Get a vertex coordinate. Only used in the initialize functions,
+            in other places it part v * Dimension + i is inlined.
+            </summary>
+            <param name="v"></param>
+            <param name="i"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.AddConvexVertex(System.Int32)">
+            <summary>
+            Check if the vertex was already added and if not, add it.
+            </summary>
+            <param name="i"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.GetDelaunayTriangulation``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Computes the Delaunay triangulation.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+            <param name="data"></param>
+            <param name="config"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.PostProcessTriangulation(MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Remove the upper faces from the hull.
+            Remove empty boundary cells if shifting was used.
+            </summary>
+            <param name="config"></param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.RemoveUpperFaces">
+            <summary>
+            Removes up facing Tetrahedrons from the triangulation.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullInternal.RemoveEmptyBoundaryCells(System.Double)">
+            <summary>
+            Removes the empty boundary cells that might have been created using PointTranslationType.TranslateInternal.
+            </summary>
+            <param name="tolerance"></param>
+        </member>
+        <member name="T:MIConvexHull.IVertex">
+            <summary>
+            An interface for a structure with nD position.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.IVertex.Position">
+            <summary>
+            Position of the vertex.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.DefaultVertex">
+            <summary>
+            "Default" vertex.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.DefaultVertex.Position">
+            <summary>
+            Position of the vertex.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.MathHelper">
+            <summary>
+            A helper class mostly for normal computation. If convex hulls are computed
+            in higher dimensions, it might be a good idea to add a specific
+            FindNormalVectorND function.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.LengthSquared(System.Double[])">
+            <summary>
+            Squared length of the vector.
+            </summary>
+            <param name="x"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.SubtractFast(System.Int32,System.Int32,System.Double[])">
+            <summary>
+            Subtracts vectors x and y and stores the result to target.
+            </summary>
+            <param name="x"></param>
+            <param name="y"></param>
+            <param name="target"></param>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.FindNormalVector4D(System.Int32[],System.Double[])">
+            <summary>
+            Finds 4D normal vector.
+            </summary>
+            <param name="vertices"></param>
+            <param name="normal"></param>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.FindNormalVector3D(System.Int32[],System.Double[])">
+            <summary>
+            Finds 3D normal vector.
+            </summary>
+            <param name="vertices"></param>
+            <param name="normal"></param>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.FindNormalVector2D(System.Int32[],System.Double[])">
+            <summary>
+            Finds 2D normal vector.
+            </summary>
+            <param name="vertices"></param>
+            <param name="normal"></param>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.FindNormalVector(System.Int32[],System.Double[])">
+            <summary>
+            Finds normal vector of a hyper-plane given by vertices.
+            Stores the results to normalData.
+            </summary>
+            <param name="vertices"></param>
+            <param name="normalData"></param>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.CalculateFacePlane(MIConvexHull.ConvexFaceInternal,System.Double[])">
+            <summary>
+            Calculates the normal and offset of the hyper-plane given by the face's vertices.
+            </summary>
+            <param name="face"></param>
+            <param name="center"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.GetVertexDistance(System.Int32,MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Check if the vertex is "visible" from the face.
+            The vertex is "over face" if the return value is > Constants.PlaneDistanceTolerance.
+            </summary>
+            <param name="v"></param>
+            <param name="f"></param>
+            <returns>The vertex is "over face" if the result is positive.</returns>
+        </member>
+        <member name="T:MIConvexHull.MathHelper.SimplexVolumeBuffer">
+            <summary>
+            Helper class with "buffers" for computing simplex volume.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.GetSimplexVolume(MIConvexHull.ConvexFaceInternal,System.Collections.Generic.IList{MIConvexHull.IVertex},MIConvexHull.MathHelper.SimplexVolumeBuffer)">
+            <summary>
+            Computes the volume of an n-dimensional simplex.
+            Buffer needs to be array of shape Dimension x Dimension.
+            </summary>
+            <param name="cell"></param>
+            <param name="vertices"></param>
+            <param name="buffer">Helper for the calculation to avoid unnecessary allocations.</param>
+            <returns></returns>
+        </member>
+        <member name="T:MIConvexHull.ObjectManager">
+            <summary>
+            A helper class for object allocation/storage. 
+            This helps the GC a lot as it prevents the creation of about 75% of 
+            new face objects (in the case of ConvexFaceInternal). In the case of
+            FaceConnectors and DefferedFaces, the difference is even higher (in most
+            cases O(1) vs O(number of created faces)). 
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.DepositFace(System.Int32)">
+            <summary>
+            Return the face to the pool for later use.
+            </summary>
+            <param name="faceIndex"></param>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.ReallocateFacePool">
+            <summary>
+            Reallocate the face pool, including the AffectedFaceFlags
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.CreateFace">
+            <summary>
+            Create a new face and put it in the pool.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.GetFace">
+            <summary>
+            Return index of an unused face or creates a new one.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.DepositConnector(MIConvexHull.FaceConnector)">
+            <summary>
+            Store a face connector in the "embedded" linked list.
+            </summary>
+            <param name="connector"></param>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.GetConnector">
+            <summary>
+            Get an unused face connector. If none is available, create it.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.DepositVertexBuffer(MIConvexHull.IndexBuffer)">
+            <summary>
+            Deposit the index buffer.
+            </summary>
+            <param name="buffer"></param>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.GetVertexBuffer">
+            <summary>
+            Get a store index buffer or create a new instance.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.DepositDeferredFace(MIConvexHull.DeferredFace)">
+            <summary>
+            Deposit the deferred face.
+            </summary>
+            <param name="face"></param>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.GetDeferredFace">
+            <summary>
+            Get the deferred face.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ObjectManager.#ctor(MIConvexHull.ConvexHullInternal)">
+            <summary>
+            Create the manager.
+            </summary>
+            <param name="hull"></param>
+        </member>
+        <member name="T:MIConvexHull.DelaunayTriangulation`2">
+            <summary>
+            Calculation and representation of Delaunay triangulation.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+        </member>
+        <member name="P:MIConvexHull.DelaunayTriangulation`2.Cells">
+            <summary>
+            Cells of the triangulation.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.DelaunayTriangulation`2.Create(System.Collections.Generic.IList{`0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Creates the Delaunay triangulation of the input data.
+            </summary>
+            <param name="data"></param>
+            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.DelaunayTriangulation`2.#ctor">
+            <summary>
+            Can only be created using a factory method.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.ITriangulation`2">
+            <summary>
+            Simple interface to unify different types of triangulations in the future.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+        </member>
+        <member name="P:MIConvexHull.ITriangulation`2.Cells">
+            <summary>
+            Triangulation simplexes. For 2D - triangles, 3D - tetrahedrons, etc ...
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.Triangulation">
+            <summary>
+            Factory class for creating triangulations.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``1(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Creates the Delaunay triangulation of the input data.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay(System.Collections.Generic.IList{System.Double[]},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Creates the Delaunay triangulation of the input data.
+            </summary>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Creates the Delaunay triangulation of the input data.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TFace"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``3(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create the voronoi mesh.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+            <typeparam name="TEdge"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``1(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create the voronoi mesh.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi(System.Collections.Generic.IList{System.Double[]},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create the voronoi mesh.
+            </summary>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create the voronoi mesh.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="T:MIConvexHull.TriangulationCell`2">
+            <summary>
+            Representation of the triangulation cell. Pretty much the same as ConvexFace,
+            just wanted to distinguish the two.
+            To declare your own face type, use class Face : DelaunayFace(of Vertex, of Face)
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+        </member>
+        <member name="T:MIConvexHull.DefaultTriangulationCell`1">
+            <summary>
+            Default triangulation cell.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+        </member>
+        <member name="T:MIConvexHull.VoronoiEdge`2">
+            <summary>
+            A class representing an (undirected) edge of the Voronoi graph.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+        </member>
+        <member name="P:MIConvexHull.VoronoiEdge`2.Source">
+            <summary>
+            Source of the edge.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.VoronoiEdge`2.Target">
+            <summary>
+            Target of the edge.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.VoronoiEdge`2.Equals(System.Object)">
+            <summary>
+            ...
+            </summary>
+            <param name="obj"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.VoronoiEdge`2.GetHashCode">
+            <summary>
+            ...
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.VoronoiEdge`2.#ctor">
+            <summary>
+            Create an instance of the edge.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.VoronoiEdge`2.#ctor(`1,`1)">
+            <summary>
+            Create an instance of the edge.
+            </summary>
+        </member>
+        <member name="T:MIConvexHull.VoronoiMesh">
+            <summary>
+            A factory class for creating a Voronoi mesh.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.VoronoiMesh.Create``3(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create the voronoi mesh.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+            <typeparam name="TEdge"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.VoronoiMesh.Create``1(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create the voronoi mesh.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.VoronoiMesh.Create(System.Collections.Generic.IList{System.Double[]},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create the voronoi mesh.
+            </summary>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.VoronoiMesh.Create``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create the voronoi mesh.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+            <returns></returns>
+        </member>
+        <member name="T:MIConvexHull.VoronoiMesh`3">
+            <summary>
+            A representation of a voronoi mesh.
+            </summary>
+            <typeparam name="TVertex"></typeparam>
+            <typeparam name="TCell"></typeparam>
+            <typeparam name="TEdge"></typeparam>
+        </member>
+        <member name="T:MIConvexHull.VoronoiMesh`3.EdgeComparer">
+            <summary>
+            This is probably not needed, but might make things a tiny bit faster.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.VoronoiMesh`3.Vertices">
+            <summary>
+            Vertices of the diagram.
+            </summary>
+        </member>
+        <member name="P:MIConvexHull.VoronoiMesh`3.Edges">
+            <summary>
+            Edges connecting the cells. 
+            The same information can be retrieved Cells' Adjacency.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.VoronoiMesh`3.Create(System.Collections.Generic.IList{`0},MIConvexHull.TriangulationComputationConfig)">
+            <summary>
+            Create a Voronoi diagram of the input data.
+            </summary>
+            <param name="data"></param>
+            <param name="config">If null, default TriangulationComputationConfig is used.</param>
+        </member>
+        <member name="M:MIConvexHull.VoronoiMesh`3.#ctor">
+            <summary>
+            Can only be created using a factory method.
+            </summary>
+        </member>
+    </members>
+</doc>
