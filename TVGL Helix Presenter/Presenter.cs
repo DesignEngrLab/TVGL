@@ -1,8 +1,11 @@
-﻿using HelixToolkit.Wpf;
+﻿using System;
+using HelixToolkit.Wpf;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Media.Media3D;
+using OxyPlot.Axes;
+using OxyPlot.Series;
 using TVGL;
 
 namespace TVGL_Presenter
@@ -14,13 +17,27 @@ namespace TVGL_Presenter
     /// </summary>
     public static class Presenter
     {
-
+        const double bufferRatio2D = 0.75;
         public static void Show(IList<Point> points, string title)
         {
             var window = new Window2DPlot();
             window.Title = title;
-
-            window.Points = points.Select(p => new OxyPlot.DataPoint(p.X, p.Y)).ToList();
+            var series = new ScatterSeries();
+            series.Points.AddRange(points.Select(p => new ScatterPoint(p.X, p.Y, 1, 1)));
+            var xMin = points.Min(pt => pt.X);
+            var xMax = points.Max(pt => pt.X);
+            var width = xMax - xMin;
+            var yMin = points.Min(pt => pt.Y);
+            var yMax = points.Max(pt => pt.Y);
+            var height = yMax - yMin;
+            var buffer = bufferRatio2D * Math.Min(width, height);
+            xMin -= buffer;
+            xMax += buffer;
+            yMin -= buffer;
+            yMax += buffer;
+            window.Plot.Series.Add(series);
+            window.Plot.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Minimum = xMin, Maximum = xMax });
+            window.Plot.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Minimum = yMin, Maximum = yMax });
             window.ShowDialog();
         }
         public static void Show(IList<Vertex> vertices, double[] direction, string title)
@@ -40,10 +57,10 @@ namespace TVGL_Presenter
             if (seconds > 0)
             {
                 window.Show();
-                System.Threading.Thread.Sleep(seconds*1000);
+                System.Threading.Thread.Sleep(seconds * 1000);
                 window.Close();
             }
-            else window.ShowDialog();
+            else window.Show();
         }
 
         /// <summary>
@@ -55,7 +72,7 @@ namespace TVGL_Presenter
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
-           
+
             foreach (var tessellatedSolid in tessellatedSolids)
             {
                 var model = MakeModelVisual3D(tessellatedSolid);
@@ -69,7 +86,7 @@ namespace TVGL_Presenter
                 System.Threading.Thread.Sleep(seconds * 1000);
                 window.Close();
             }
-            else window.ShowDialog();
+            else window.Show();
         }
 
         /// <summary>
@@ -77,7 +94,7 @@ namespace TVGL_Presenter
         /// </summary>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
         /// <param name="seconds"></param>
-        
+
         public static void ShowSequentially(IList<TessellatedSolid> tessellatedSolids, int seconds = 1)
         {
             //var models = new List<Visual3D>();
@@ -105,7 +122,7 @@ namespace TVGL_Presenter
                 //window.Arrange(new Rect(new System.Windows.Point(0, 0), size));
             }
             window.Close();
-            
+
         }
 
         private static Visual3D MakeModelVisual3D(TessellatedSolid ts)

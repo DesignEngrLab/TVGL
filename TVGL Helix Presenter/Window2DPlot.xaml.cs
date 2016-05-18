@@ -25,6 +25,8 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+using OxyPlot.Series;
+
 namespace TVGL_Presenter
 {
     using System.Windows;
@@ -35,7 +37,7 @@ namespace TVGL_Presenter
     {
         public string Title { get; internal set; }
 
-        public IList<DataPoint> Points { get; internal set; }
+        public IList<ScatterPoint> Points { get; internal set; }
 
 
         public Window2DPlot()
