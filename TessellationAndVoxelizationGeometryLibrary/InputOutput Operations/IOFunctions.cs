@@ -58,10 +58,10 @@ namespace TVGL.IOFunctions
                 case "ply":
                     tessellatedSolids = PLYFileData.Open(s, inParallel); // Standard Tessellation or StereoLithography
                     break;
-                //case "3ds": return IO.Open3DS(s);   //3D Studio
-                //case "lwo": return IO.OpenLWO(s);  //Lightwave
-                //case "obj": return IO.OpenOBJ(s); //Wavefront
-                //case "objx": return IO.OpenOBJX(s);  //Wavefront
+                case "3mf":
+                case "model":
+                    tessellatedSolids = ThreeMFFileData.Open(s, inParallel);
+                    break;
                 case "amf":
                     tessellatedSolids = AMFFileData.Open(s, inParallel);
                     break;

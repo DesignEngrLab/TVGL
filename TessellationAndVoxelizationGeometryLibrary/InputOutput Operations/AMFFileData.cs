@@ -173,7 +173,27 @@ namespace TVGL.IOFunctions
 
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
-            throw new NotImplementedException();
+            var fileData = new AMFFileData();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            var amfWriter = new StreamWriter(stream);
+            var amfSerializer = new XmlSerializer(typeof(AMFFileData));
+            amfSerializer.Serialize(amfWriter, fileData);
+            amfWriter.Dispose();
+           
         }
     }
 }
