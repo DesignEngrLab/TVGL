@@ -59,8 +59,10 @@ namespace TVGL.IOFunctions
                     tessellatedSolids = PLYFileData.Open(s, inParallel); // Standard Tessellation or StereoLithography
                     break;
                 case "3mf":
+                    tessellatedSolids = ThreeMFFileData.Open3MF(s, inParallel);
+                    break;
                 case "model":
-                    tessellatedSolids = ThreeMFFileData.Open(s, inParallel);
+                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, inParallel);
                     break;
                 case "amf":
                     tessellatedSolids = AMFFileData.Open(s, inParallel);

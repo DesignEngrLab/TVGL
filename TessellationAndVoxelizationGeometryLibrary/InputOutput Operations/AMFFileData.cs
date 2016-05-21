@@ -9,7 +9,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
@@ -92,24 +91,21 @@ namespace TVGL.IOFunctions
         internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
         {
             var now = DateTime.Now;
-            AMFFileData amfData;
-            // Try to read in BINARY format
-            if (AMFFileData.TryUnzippedXMLRead(s, out amfData))
-                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").",3);
-            else
+            AMFFileData amfData = null;
+            try
             {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                //if (amf.TryZippedXMLRead(s, out amfData))
-                //    Message.output("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").",3);
-                //else
-                //{
-                //    Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").",1);
-                //    return null;
-                //}
+                var streamReader = new StreamReader(s);
+                var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
+                amfData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
+                amfData.Name = getNameFromStream(s);
+                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").",3);
             }
-            var results = new List<TessellatedSolid>();
+            catch (Exception exception)
+            {
+                Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").", 1);
+                return null;
+            }
+        var results = new List<TessellatedSolid>();
             foreach (var amfObject in amfData.Objects)
             {
                 List<Color> colors = null;
@@ -188,12 +184,11 @@ namespace TVGL.IOFunctions
 
 
 
-
             var amfWriter = new StreamWriter(stream);
             var amfSerializer = new XmlSerializer(typeof(AMFFileData));
             amfSerializer.Serialize(amfWriter, fileData);
             amfWriter.Dispose();
-           
+            return true;
         }
     }
 }
