@@ -127,8 +127,28 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="Point"/> class.
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
-        public Point(IList<double> coordinates) :this(null, coordinates[0], coordinates[1], coordinates[2])
+        public Point(IList<double> coordinates) : this(null, coordinates[0], coordinates[1], coordinates[2])
         { }
+
+        public Point(double x, double y, double z = 0.0)
+        {
+            X = x;
+            Y = y;
+            Z = z;
+        }
+
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Point"/> class.
+        /// </summary>
+        /// <param name="other">The other.</param>
+        public Point(Point other)
+        {
+            X = other.X;
+            Y = other.Y;
+            Z = other.Z;
+            References = new List<Vertex>(other.References);
+        }
 
         /// <summary>
         /// this point
