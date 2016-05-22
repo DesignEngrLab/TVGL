@@ -127,30 +127,7 @@ namespace TVGL.IOFunctions
             }
             return results;
         }
-
-        /// <summary>
-        ///     Tries the unzipped XML read.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="threeMFFileData">The threeMF file data.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool TryUnzippedXMLRead(Stream stream, out ThreeMFFileData threeMFFileData)
-        {
-            threeMFFileData = null;
-            try
-            {
-                var streamReader = new StreamReader(stream);
-                var threeMFDeserializer = new XmlSerializer(typeof(ThreeMFFileData));
-                threeMFFileData = (ThreeMFFileData)threeMFDeserializer.Deserialize(streamReader);
-                threeMFFileData.Name = getNameFromStream(stream);
-            }
-            catch (Exception exception)
-            {
-                Message.output("Unable to read ThreeMF file:" + exception, 1);
-                return false;
-            }
-            return true;
-        }
+        
 
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {

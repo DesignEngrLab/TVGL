@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 
 namespace TVGL.IOFunctions
@@ -302,9 +303,10 @@ namespace TVGL.IOFunctions
             Stream inStream;
             if (_zfe.Method == Compression.Store)
                 inStream = this.ZipFileStream;
+            else if (_zfe.Method == Compression.Deflate)
+                inStream = new DeflateStream(this.ZipFileStream, CompressionMode.Decompress, true);
             else
                 return false;
-
             // Buffered copy
             byte[] buffer = new byte[16384];
             this.ZipFileStream.Seek(_zfe.FileOffset, SeekOrigin.Begin);

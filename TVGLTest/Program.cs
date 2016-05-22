@@ -14,6 +14,8 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+        //   "C:/Users/Matt/3D Objects/Gift Box/3D/3dmodel.model",
+            "C:/Users/Matt/3D Objects/Wedge Shape.3mf",
         "../../../TestFiles/DxTopLevel.shell",
         //"../../../TestFiles/shark.ply",
         //"../../../TestFiles/bunnySmall.ply",
@@ -76,6 +78,20 @@ namespace TVGL_Test
                 var filename = FileNames[i];
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
+                var result = new List<TessellatedSolid>();
+                var zipStorer = ZipStorer.Open(fileStream, FileAccess.Read);
+                var dir = zipStorer.ReadCentralDir();
+                var modelFiles = dir.Where(f => f.FilenameInZip.EndsWith(".model"));
+                foreach (var modelFile in modelFiles)
+                {
+                    var s = new MemoryStream();
+                    zipStorer.ExtractFile(modelFile, s);
+                    var txt = s.ToString();
+                }
+
+
+
+
                 var ts = IO.Open(fileStream, filename, false);
                 foreach (var tessellatedSolid in ts)
                 {

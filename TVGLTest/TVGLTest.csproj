@@ -68,6 +68,7 @@
     <Compile Include="ExcelInterface.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="zipstore.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
