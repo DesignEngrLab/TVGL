@@ -135,9 +135,9 @@ namespace TVGL.Boolean_Operations
             contactDataForEachSolid = new List<ContactData>();
             //Determine positive or negative for each loop 
             //Also determine which positive loop each negative loop belongs to. 
-            //Try to avoid first section of triangulate polygon function (which does this in 2D).
+            //Lines 172-254 in the triangulate polygon function can determine this.
+            //Writing a new function for 3D space would be time consuming and adds another untested function. 
             var orderedLoops = new List<Loop>();
-            //ToDo: Write function to order loops in 3D space
         
             while(orderedLoops.Any()) 
             {

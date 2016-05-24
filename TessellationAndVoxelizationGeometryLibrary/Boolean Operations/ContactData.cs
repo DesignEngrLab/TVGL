@@ -20,8 +20,8 @@ namespace TVGL
 {
     /// <summary>
     /// A ContactData object represents a 2D path on the surface of the tessellated solid. 
-    /// It is notably comprised of loops (both positive and negative) and loops are comprised
-    /// of contact elements).
+    /// It is notably comprised of loops (both positive and negative). Each subvolume
+    /// created from a slice has its own contact data.
     /// </summary>
     public class ContactData
     {
@@ -30,9 +30,9 @@ namespace TVGL
         /// </summary>
         /// <param name="loops">The loops.</param>
         /// <param name="inPlaneFaces"></param>
-        internal ContactData(IEnumerable<Loop> loops, List<PolygonalFace> inPlaneFaces)
+        internal ContactData(IEnumerable<Loop> loops, List<PolygonalFace> onSideFaces)
         {
-            InPlaneFaces = inPlaneFaces;
+            OnSideFaces = onSideFaces;
             PositiveLoops = new List<Loop>();
             NegativeLoops = new List<Loop>();
             foreach (var loop in loops)
@@ -69,11 +69,6 @@ namespace TVGL
                 return allLoops;
             }
         }
-
-        /// <summary>
-        /// The number of new vertices
-        /// </summary>
-        public readonly int NumberOfNewVertices;
         /// <summary>
         /// The combined perimeter of the 2D loops defined with the Contact Data.
         /// </summary>
@@ -86,18 +81,28 @@ namespace TVGL
         /// <summary>
         /// List of In Plane Faces
         /// </summary>
-        public readonly List<PolygonalFace> InPlaneFaces;
+        public readonly List<PolygonalFace> OnSideFaces;
     }
+    
     /// <summary>
     /// The Loop class is basically a list of ContactElements that form a path. Usually, this path
     /// is closed, hence the name "loop", but it may be used and useful for open paths as well.
     /// </summary>
-    public class Loop : List<ContactElement>
+    public class Loop
     {
+        /// <summary>
+        /// The vertices making up this loop
+        /// </summary>
+        public readonly List<Vertex> VertexLoop;
+        /// <summary>
+        /// The faces that were formed on-side for this loop. About 2/3 s
+        /// of these faces should have one negligible adjacent face. 
+        /// </summary>
+        public readonly List<PolygonalFace> OnSideContactFaces;
         /// <summary>
         /// Is the loop positive - meaning does it enclose material versus representing a hole
         /// </summary>
-        public readonly bool IsPositive;
+        public bool IsPositive;
         /// <summary>
         /// Negative loops must always be inside positive loops. This is a place to store all
         /// the pos/neg loop dependency.
@@ -115,89 +120,20 @@ namespace TVGL
         /// Is the loop closed?
         /// </summary>
         public readonly bool IsClosed;
-        /// <summary>
-        /// Was the loop closed by artificial ContactElements
-        /// </summary>
-        public readonly bool ArtificiallyClosed;
-        /// <summary>
-        /// Does the loop enclose a bunch of faces that lie in the plane?
-        /// </summary>
-        public readonly Boolean EnclosesInPlaneFace;
-        /// <summary>
-        /// Does the loop belong to the positive solids?
-        /// </summary>
-        public readonly Boolean OnPositiveSolids;
-        /// <summary>
-        /// Does the loop belong to the negative solids?
-        /// </summary>
-        public readonly Boolean OnNegativeSolids;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Loop" /> class.
         /// </summary>
-        /// <param name="contactElements">The contact elements.</param>
         /// <param name="normal">The normal.</param>
         /// <param name="isClosed">is closed.</param>
-        /// <param name="artificiallyClosed">is artificially closed.</param>
-        /// <param name="enclosesInPlaneFace"></param>
-        /// <param name="onNegativeSolids"></param>
-        /// <param name="onPositiveSolids"></param>
-        internal Loop(ICollection<ContactElement> contactElements, IList<double> normal, bool isClosed, bool artificiallyClosed, 
-            bool enclosesInPlaneFace, bool onNegativeSolids = true, bool onPositiveSolids = true)
-            : base(contactElements)
+        internal Loop(List<Vertex> vertexLoop, List<PolygonalFace> onSideContactFaces, IList<double> normal, bool isClosed = true)
         {
-            ArtificiallyClosed = artificiallyClosed;
-            IsClosed = isClosed;
-            EnclosesInPlaneFace = enclosesInPlaneFace;
-            OnPositiveSolids = onPositiveSolids;
-            OnNegativeSolids = onNegativeSolids;
             if (!IsClosed) Message.output("loop not closed!",3);
-            var center = new double[3];
-            foreach (var contactElement in contactElements)
-            {
-                Perimeter += contactElement.ContactEdge.Length;
-                if (contactElement.ReverseDirection)
-                    center = center.add(contactElement.ContactEdge.To.Position);
-                else center = center.add(contactElement.ContactEdge.From.Position);
-            }
-            center = center.divide(contactElements.Count);
-            foreach (var contactElement in contactElements)
-            {
-                var radial = (contactElement.ReverseDirection)
-                    ? contactElement.ContactEdge.To.Position.subtract(center)
-                    : contactElement.ContactEdge.From.Position.subtract(center);
-                var areaVector = radial.crossProduct(contactElement.ContactEdge.Vector);
-                if (contactElement.ReverseDirection) areaVector = areaVector.multiply(-1);
-                Area += areaVector.dotProduct(normal) / 2.0;
-            }
-            IsPositive = (Area >= 0);
+            VertexLoop = vertexLoop;
+            OnSideContactFaces = onSideContactFaces;
+            IsClosed = isClosed;
+            //ToDo: Determine Perimeter and Area if necessary
         }
-
-        internal string MakeDebugContactString()
-        {
-            var result = "";
-            foreach (var ce in this)
-            {
-                switch (ce.ContactType)
-                {
-                    case ContactTypes.Artificial:
-                        result += "a";
-                        break;
-                    case ContactTypes.ThroughFace:
-                        result += "|";
-                        break;
-                    case ContactTypes.ThroughVertex:
-                        result += ".";
-                        break;
-                    case ContactTypes.AlongEdge:
-                        result += "_";
-                        break;
-                }
-            }
-            return result;
-        }
-
-
     }
 }
 
