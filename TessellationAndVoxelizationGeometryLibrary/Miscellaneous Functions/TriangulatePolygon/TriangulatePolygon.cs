@@ -96,9 +96,10 @@ namespace TVGL
                     var positiveLoopCount = 0;
                     var pointCount = 0;
 
-                    //Change point X and Y coordinates to be changed to random primary axis
-                    var rnd = new Random();
-                    var theta = rnd.NextDouble();
+                    //Change point X and Y coordinates to be changed to mostly random primary axis
+                    //Removed random value to make function repeatable for debugging.
+                    var values = new List<double>() { 0.82348, 0.13905, 0.78932, 0.37510 };
+                    var theta = values[attempts - 1];
                     foreach (var loop in points2D)
                     {
                         var pHighest = double.NegativeInfinity;

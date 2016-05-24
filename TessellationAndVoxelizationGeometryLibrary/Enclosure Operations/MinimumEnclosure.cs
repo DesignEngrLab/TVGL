@@ -254,7 +254,7 @@ namespace TVGL
 
         #region 2D Rotating Calipers
         /// <summary>
-        /// Rotating the calipers 2D method.
+        /// Rotating the calipers 2D method. Convex hull must be a counter clockwise loop.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="pointsAreConvexHull"></param>
@@ -264,12 +264,45 @@ namespace TVGL
             #region Initialization
             var cvxPoints = pointsAreConvexHull ? points : ConvexHull2DMinimal(points);
             /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point */
+            //First, check to make sure the given convex hull has the min x-value at 0.
+            var minX = cvxPoints[0].X;
             var numCvxPoints = cvxPoints.Count;
+            var startIndex = 0;
+            for (var i = 1; i < numCvxPoints; i++)
+            {
+                if (!(cvxPoints[i].X < minX)) continue;
+                minX = cvxPoints[i].X;
+                startIndex = i;
+            }
+            //Reorder if necessary
+            var tempList = new List<Point>();
+            if (startIndex != 0)
+            {
+                for (var i = startIndex; i < numCvxPoints; i++)
+                {
+                    tempList.Add(cvxPoints[i]);
+                }
+                for (var i = 0; i < startIndex; i++)
+                {
+                    tempList.Add(cvxPoints[i]);
+                }
+            }
+            
             var extremeIndices = new int[4];
 
-            // extremeIndices[3] => max-Y
+            //Good picture of extreme vertices in the following link
+            //http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.155.5671&rep=rep1&type=pdf
+            //Godfried Toussaint: Solving Geometric Problems with the Rotating Calipers
+            //Note that while these points are ordered counter clockwise, we are rotating the calipers in reverse (clockwise),
+            //Which is why the points are directed this way.
+            //Point0 = min X, with max Y for ties
+            //Point1 = min Y, with min X for ties
+            //Point2 = max X, with min Y for ties
+            //Point3 = max Y, with max X for ties
+
+            // extremeIndices[3] => max-Y, with max X for ties
             extremeIndices[3] = cvxPoints.Count - 1;
-            // this is likely rare, but first we check if thefirst point has a higher y value (only when point is both min-x and max-Y)
+            // this is likely rare, but first we check if the first point has a higher y value (only when point is both min-x and max-Y)
             if (cvxPoints[0][1] > cvxPoints[extremeIndices[3]][1]) extremeIndices[3] = 0;
             else
             {
@@ -277,18 +310,100 @@ namespace TVGL
                     extremeIndices[3]--;
             }
             /* at this point, the max-Y point has been established. Next we walk backwards in the list until we hit the max-X point */
-            // extremeIndices[2] => max-X
+            // extremeIndices[2] => max-X, with min Y for ties
             extremeIndices[2] = extremeIndices[3] == 0 ? cvxPoints.Count - 1 : extremeIndices[3];
             while (extremeIndices[2] > 0 && cvxPoints[extremeIndices[2]][0] <= cvxPoints[extremeIndices[2] - 1][0])
                 extremeIndices[2]--;
-            // extremeIndices[1] => min-Y
+            // extremeIndices[1] => min-Y, with min X for ties 
             extremeIndices[1] = extremeIndices[2] == 0 ? cvxPoints.Count - 1 : extremeIndices[2];
             while (extremeIndices[1] > 0 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
                 extremeIndices[1]--;
-            // extrememIndices[0] => min-X, this time count up from 0. The answers likely 0 but in case there are ties.
-            extremeIndices[0] = 0;
-            while (cvxPoints[extremeIndices[0]][0] >= cvxPoints[extremeIndices[0] + 1][0])
-                extremeIndices[0]++;
+            // extrememIndices[0] => min-X, with max Y for ties
+            // First we check if the last point has an eqaully small x value, if it does we will need to walk backwards.
+            if (cvxPoints.Last()[0] > cvxPoints[0][0]) extremeIndices[0] = 0;
+            else
+            {
+                extremeIndices[0] = cvxPoints.Count - 1;
+                while (cvxPoints[extremeIndices[0]][0] >= cvxPoints[extremeIndices[0] - 1][0])
+                    extremeIndices[0]--;
+            }
+
+            //Check code: this validates the extreme vertices and the convex hull.
+            var extremeIndicesValidation = new int[4];
+            extremeIndicesValidation[0] = 0; //This was minX from the intitialization
+            var minY = double.PositiveInfinity;
+            var maxX = double.NegativeInfinity;
+            var maxY = double.NegativeInfinity;
+            for (var i = 0; i < numCvxPoints; i++)
+            {
+                //Point0 = min X
+                if (cvxPoints[i][0] < minX)
+                {
+                    minX = cvxPoints[i][0];
+                    extremeIndicesValidation[0] = i;
+                }
+                else if (cvxPoints[i][0] == minX)
+                {
+                    //with max Y for ties
+                    if (cvxPoints[i][1] > cvxPoints[extremeIndicesValidation[0]][1])
+                    {
+                         minX = cvxPoints[i][0];
+                        extremeIndicesValidation[0] = i;
+                    }
+                }
+                //Point1 = min Y
+                if (cvxPoints[i][1] < minY)
+                {
+                    minY = cvxPoints[i][1];
+                    extremeIndicesValidation[1] = i;
+                }
+                else if (cvxPoints[i][1] == minY)
+                {
+                    //with min X for ties
+                    if (cvxPoints[i][0] < cvxPoints[extremeIndicesValidation[1]][0])
+                    {
+                        minY = cvxPoints[i][1];
+                        extremeIndicesValidation[1] = i;
+                    }
+                }
+
+                //Point2 = max X
+                if (cvxPoints[i][0] > maxX)
+                {
+                    maxX = cvxPoints[i][0];
+                    extremeIndicesValidation[2] = i;
+                }
+                else if (cvxPoints[i][0] == maxX)
+                { 
+                    //with min Y for ties
+                    if (cvxPoints[i][1] < cvxPoints[extremeIndicesValidation[2]][1])
+                    {
+                        maxX = cvxPoints[i][0];
+                        extremeIndicesValidation[2] = i;
+                    }
+                }
+
+                //Point3 = max Y
+                if (cvxPoints[i][1] > maxY)
+                {
+                    maxY = cvxPoints[i][1];
+                    extremeIndicesValidation[3] = i;
+                }
+                else if (cvxPoints[i][1] == maxY)
+                { 
+                    //with max X for ties
+                    if (cvxPoints[i][0] > cvxPoints[extremeIndicesValidation[3]][0])
+                    {
+                        maxY = cvxPoints[i][1];
+                        extremeIndicesValidation[3] = i;
+                    }
+                }
+            }
+
+            for (var i = 0; i < 4; i++)
+            {
+                if (extremeIndices[i] != extremeIndicesValidation[i]) throw new Exception();
+            }
             #endregion
 
             #region Cycle through 90-degrees
@@ -375,7 +490,13 @@ namespace TVGL
         }
         #endregion
 
-        private static BoundingBox AddInCornerVertices(BoundingBox bb)
+        /// <summary>
+        /// Adds the corner vertices (actually 3d points) to the bounding box
+        /// </summary>
+        /// <param name="bb"></param>
+        /// <returns></returns>
+        //ToDo: Fix this function. It does not currently give the correct vertices
+        public static BoundingBox AddInCornerVertices(BoundingBox bb)
         {
             if (bb.CornerVertices != null) return bb;
             var cornerVertices = new Point[8];
@@ -405,6 +526,7 @@ namespace TVGL
             }
             return new BoundingBox
             {
+                //ToDo: Actually return vertices instead of 3d points
                 CornerVertices = cornerVertices,
                 Dimensions = bb.Dimensions,
                 Directions = bb.Directions,

@@ -348,18 +348,6 @@ namespace TVGL.Boolean_Operations
             onSideFaces.AddRange(allNewFaces);
         }
 
-        internal static int GetCheckSum(Vertex vertex1, Vertex vertex2)
-        {
-            var checkSumMultiplier = TessellatedSolid.VertexCheckSumMultiplier;
-            if (vertex1.IndexInList == -1 || vertex2.IndexInList == -1) return -1; 
-            if (vertex1.IndexInList == vertex2.IndexInList) throw new Exception("edge to same vertices.");
-            //Multiply larger value by checksum in case lower value == 0;
-            var checksum = (vertex1.IndexInList < vertex2.IndexInList)
-                ? vertex1.IndexInList + (checkSumMultiplier * (vertex2.IndexInList))
-                : vertex2.IndexInList + (checkSumMultiplier * (vertex1.IndexInList));
-            return checksum;
-        }
-
         /// <summary>
         /// Creates a new face given two straddle edges
         /// </summary>

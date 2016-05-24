@@ -62,8 +62,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\StarMath.2.0.16.0312\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+      <HintPath>..\packages\StarMath.2.0.16.0423\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -82,9 +82,9 @@
       <Project>{e3489019-d590-46a8-b2c2-e3481e8db77c}</Project>
       <Name>TessellationAndVoxelizationGeometryLibraryUniversal</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TVGL Helix Presenter\TVGL Helix Presenter.csproj">
+    <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj">
       <Project>{8c1364cc-908a-4174-b62c-21ec4839584d}</Project>
-      <Name>TVGL Helix Presenter</Name>
+      <Name>TVGL Presenter</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -1,5 +1,5 @@
 // ***********************************************************************
-// Assembly         : TVGL_Helix_Presenter
+// Assembly         : TVGL Presenter
 // Author           : Matt
 // Created          : 05-20-2016
 //
@@ -14,11 +14,8 @@
 
 using System.Windows;
 
-/// <summary>
-/// The TVGL_Presenter namespace.
-/// </summary>
 
-namespace TVGL_Presenter
+namespace TVGL
 {
     /// <summary>
     ///     Class Window3DPlot.

@@ -1,5 +1,5 @@
 ﻿// ***********************************************************************
-// Assembly         : TVGL_Helix_Presenter
+// Assembly         : TVGL Presenter
 // Author           : Matt
 // Created          : 05-20-2016
 //
@@ -19,14 +19,8 @@ using System.Threading;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
-using TVGL;
-using Color = System.Windows.Media.Color;
 
-/// <summary>
-/// The TVGL_Presenter namespace.
-/// </summary>
-
-namespace TVGL_Presenter
+namespace TVGL
 {
     /// <summary>
     ///     The Class HelixPresenter is the only class within the TVGL Helix Presenter
@@ -372,7 +366,7 @@ namespace TVGL_Presenter
         private static Visual3D MakeModelVisual3D(TessellatedSolid ts)
         {
             var defaultMaterial = MaterialHelper.CreateMaterial(
-                new Color
+                new System.Windows.Media.Color
                 {
                     A = ts.SolidColor.A,
                     B = ts.SolidColor.B,
@@ -410,8 +404,8 @@ namespace TVGL_Presenter
 
                 var c = f.Color == null
                     ? defaultMaterial
-                    : MaterialHelper.CreateMaterial(new Color
-                    {
+                    : MaterialHelper.CreateMaterial(new System.Windows.Media.Color
+                {
                         A = f.Color.A,
                         B = f.Color.B,
                         G = f.Color.G,

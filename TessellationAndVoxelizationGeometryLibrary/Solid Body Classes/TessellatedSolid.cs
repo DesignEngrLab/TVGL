@@ -156,7 +156,7 @@ namespace TVGL
         ///     Gets the checksum multiplier to be used for face and edge references. Set at end of "Make Vertices".
         /// </summary>
         /// <value>The number of vertices.</value>
-        public static int VertexCheckSumMultiplier { get; private set; }
+        public int VertexCheckSumMultiplier { get; private set; }
 
         /// <summary>
         ///     Gets the number of edges.
@@ -374,13 +374,12 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<double[]> vertices)
         {
-            var taskXMin = Task.Factory.StartNew(() => XMin = vertices.Min(v => v[0]));
-            var taskXMax = Task.Factory.StartNew(() => XMax = vertices.Max(v => v[0]));
-            var taskYMin = Task.Factory.StartNew(() => YMin = vertices.Min(v => v[1]));
-            var taskYMax = Task.Factory.StartNew(() => YMax = vertices.Max(v => v[1]));
-            var taskZMin = Task.Factory.StartNew(() => ZMin = vertices.Min(v => v[2]));
-            var taskZMax = Task.Factory.StartNew(() => ZMax = vertices.Max(v => v[2]));
-            Task.WaitAll(taskXMin, taskXMax, taskYMin, taskYMax, taskZMin, taskZMax);
+            XMin = vertices.Min(v => v[0]);
+            XMax = vertices.Max(v => v[0]);
+            YMin = vertices.Min(v => v[1]);
+            YMax = vertices.Max(v => v[1]);
+            ZMin = vertices.Min(v => v[2]);
+            ZMax = vertices.Max(v => v[2]);
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
             SameTolerance = shortestDimension * Constants.BaseTolerance;
         }
@@ -454,7 +453,7 @@ namespace TVGL
         }
 
         //Primary make edges function
-        internal static Edge[] MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices, int numberOfVertices)
+        internal Edge[] MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices, int numberOfVertices)
         {
             //No need to store partly defined edges and overused edges because the ERROR function will catch them.
             var partlyDefinedEdgeDictionary = new Dictionary<long, Edge>();
@@ -676,7 +675,7 @@ namespace TVGL
         /// <summary>
         /// Defines the center, the volume and the surface area.
         /// </summary>
-        internal static void DefineCenterVolumeAndSurfaceArea( IList<PolygonalFace> faces, out double[] center, out double volume, out double surfaceArea)
+        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out double[] center, out double volume, out double surfaceArea)
         {
             surfaceArea = 0;
             foreach (var face in faces)
@@ -687,7 +686,8 @@ namespace TVGL
                 surfaceArea += face.Area;   // accumulate areas into surface area
             }
 
-            double[] oldCenter = new double[3];
+            double[] oldCenter1 = new double[3];
+            double[] oldCenter2 = new double[3];
             center = new double[3];
             foreach (var face in faces)
             {
@@ -700,27 +700,31 @@ namespace TVGL
 
             double oldVolume;
             volume = 0;
+            var iterations = 0;
             do
             {
                 oldVolume = volume;
-                oldCenter[0] = center[0]; oldCenter[1] = center[1]; oldCenter[2] = center[2];
+                oldCenter2[0] = oldCenter1[0]; oldCenter2[1] = oldCenter1[1]; oldCenter2[2] = oldCenter1[2];
+                oldCenter1[0] = center[0]; oldCenter1[1] = center[1]; oldCenter1[2] = center[2];
                 volume = 0;
                 center[0] = 0.0; center[1] = 0.0; center[2] = 0.0;
                 foreach (var face in faces)
                 {
-                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter))) / 3;
+                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1))) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
                     // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                     // on the volume.
                     volume += tetrahedronVolume;
-                    center[0] += (oldCenter[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4;
-                    center[1] += (oldCenter[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4;
-                    center[2] += (oldCenter[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
+                    center[0] += (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4;
+                    center[1] += (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4;
+                    center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
-                center = center.divide(volume);
-            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance);
+                if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2).divide(2);
+                else center = center.divide(volume);
+                iterations++;
+            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance || iterations <= 20);
         }
 
 
@@ -911,7 +915,7 @@ namespace TVGL
             edge.EdgeReference = checksum;
             return checksum;
         }
-        internal static long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
+        internal long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
         {
             var fromIndex = fromVertex.IndexInList;
             var toIndex = toVertex.IndexInList;

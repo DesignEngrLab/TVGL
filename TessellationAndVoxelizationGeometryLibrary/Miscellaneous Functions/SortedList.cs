@@ -26,8 +26,6 @@ namespace TVGL
     /// <typeparam name="TValue">The type of values in the collection.</typeparam>
     internal class SortedList<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary
     {
-        private static readonly TKey[] emptyKeys = new TKey[0];
-        private static readonly TValue[] emptyValues = new TValue[0];
         private readonly IComparer<TKey> comparer;
         private int _size;
         private object _syncRoot;
@@ -47,8 +45,8 @@ namespace TVGL
         /// </summary>
         internal SortedList()
         {
-            keys = emptyKeys;
-            values = emptyValues;
+            keys = new TKey[0];
+            values = new TValue[0];
             _size = 0;
             comparer = Comparer<TKey>.Default;
         }
@@ -184,8 +182,8 @@ namespace TVGL
                 }
                 else
                 {
-                    keys = emptyKeys;
-                    values = emptyValues;
+                    keys = new TKey[0];
+                    values = new TValue[0];
                 }
             }
         }

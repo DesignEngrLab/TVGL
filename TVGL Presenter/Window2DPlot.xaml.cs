@@ -1,5 +1,5 @@
 ﻿// ***********************************************************************
-// Assembly         : TVGL_Helix_Presenter
+// Assembly         : TVGL Presenter
 // Author           : Matt
 // Created          : 05-20-2016
 //
@@ -38,13 +38,8 @@ using System.Collections.Generic;
 using System.Windows;
 using OxyPlot;
 using OxyPlot.Series;
-using Point = TVGL.Point;
 
-/// <summary>
-/// The TVGL_Presenter namespace.
-/// </summary>
-
-namespace TVGL_Presenter
+namespace TVGL
 {
     /// <summary>
     ///     Enum Plot2DType
