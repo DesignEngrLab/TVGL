@@ -77,6 +77,7 @@ namespace TVGL.IOFunctions
         internal static List<TessellatedSolid> Open3MF(Stream originalStream, bool inParallel = true)
         {
             var result = new List<TessellatedSolid>();
+            /*
             var zipStorer = ZipStorer.Open(originalStream);
             var dir = zipStorer.ReadCentralDir();
             var modelFiles = dir.Where(f => f.FilenameInZip.EndsWith(".model"));
@@ -85,7 +86,7 @@ namespace TVGL.IOFunctions
                 var s = new MemoryStream();
                 zipStorer.ExtractFile(modelFile, s);
                 result.AddRange(OpenModelFile(s, inParallel));
-            }
+            }*/
             return result;
         }
 
