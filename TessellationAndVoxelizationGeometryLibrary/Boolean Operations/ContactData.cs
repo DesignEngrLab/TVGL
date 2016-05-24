@@ -99,6 +99,11 @@ namespace TVGL
         /// </summary>
         public readonly bool IsPositive;
         /// <summary>
+        /// Negative loops must always be inside positive loops. This is a place to store all
+        /// the pos/neg loop dependency.
+        /// </summary>
+        public List<Loop> DependentLoops;
+        /// <summary>
         /// The length of the loop.
         /// </summary>
         public readonly double Perimeter;

@@ -15,6 +15,7 @@ namespace TVGL.Boolean_Operations
     public static class Slice4
     {
         #region Define Contact at a Flat Plane
+
         /// <summary>
         /// This slice function makes a seperate cut for the positive and negative side,
         /// at a specified offset in both directions. It rebuilds straddle triangles, 
@@ -35,6 +36,32 @@ namespace TVGL.Boolean_Operations
             List<PolygonalFace> negativeSideFaces;
             List<List<Vertex>> positiveSideLoops;
             List<List<Vertex>> negativeSideLoops;
+            var isSuccessful = GetLoops(ts, plane, out positiveSideFaces, out negativeSideFaces, out positiveSideLoops, out negativeSideLoops);
+            if (!isSuccessful) return;
+            MakeSolids(plane, positiveSideFaces, negativeSideFaces, positiveSideLoops, negativeSideLoops, out positiveSideSolids, out negativeSideSolids);
+        }
+
+        /// <summary>
+        /// This function returns the loops from slicing a solid along a plane. In addition,
+        /// it returns the negative and positive side faces. This function does not return
+        /// watertight solids. To get watertight solids, send the outputs from GetLoops to 
+        /// MakeSolids, or simply call OnFlat which does both.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="plane"></param>
+        /// <param name="isSuccessful"></param>
+        /// <param name="positiveSideFaces"></param>
+        /// <param name="negativeSideFaces"></param>
+        /// <param name="positiveSideLoops"></param>
+        /// <param name="negativeSideLoops"></param>
+        public static bool GetLoops(TessellatedSolid ts, Flat plane, 
+            out List<PolygonalFace> positiveSideFaces, out List<PolygonalFace> negativeSideFaces, 
+            out List<List<Vertex>> positiveSideLoops, out List<List<Vertex>> negativeSideLoops)
+        {
+            positiveSideFaces = new List<PolygonalFace>();
+            negativeSideFaces = new List<PolygonalFace>();
+            positiveSideLoops = new List<List<Vertex>>();
+            negativeSideLoops = new List<List<Vertex>>();
             //MiscFunctions.IsSolidBroken(ts);
             //1. Offset positive and get the positive faces.
             //Straddle faces are split into 2 or 3 new faces.
@@ -45,10 +72,34 @@ namespace TVGL.Boolean_Operations
             double negPlaneShift;
             var isSuccessful = ShiftPlaneForRobustCut(ts, plane, out distancesToPlane, out posPlaneShift,
                 out negPlaneShift);
-            if (!isSuccessful) return; //End with both lists of children empty;
-            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal), out positiveSideFaces, out positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift);
-            DivideUpFaces(ts,new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces, out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
+            if (!isSuccessful)
+            {
+                return false; //End with both lists of children empty;
+            }
+            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal), out positiveSideFaces,
+                out positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift);
+            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces,
+                out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
+            return true;
+        }
 
+        /// <summary>
+        /// Takes the loops and faces from GetLoops and outputs watertight solids.
+        /// </summary>
+        /// <param name="plane"></param>
+        /// <param name="positiveSideFaces"></param>
+        /// <param name="negativeSideFaces"></param>
+        /// <param name="positiveSideLoops"></param>
+        /// <param name="negativeSideLoops"></param>
+        /// <param name="positiveSideSolids"></param>
+        /// <param name="negativeSideSolids"></param>
+        public static void MakeSolids(Flat plane, List<PolygonalFace> positiveSideFaces, 
+            List<PolygonalFace> negativeSideFaces, List<List<Vertex>> positiveSideLoops, 
+            List<List<Vertex>> negativeSideLoops, out List<TessellatedSolid> positiveSideSolids, 
+            out List<TessellatedSolid> negativeSideSolids)
+        {
+            positiveSideSolids = new List<TessellatedSolid>();
+            negativeSideSolids = new List<TessellatedSolid>();
             //3. Triangulate that empty space and add to list 
             List<List<Vertex[]>> triangleFaceList;
             var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal, out triangleFaceList);
@@ -67,6 +118,48 @@ namespace TVGL.Boolean_Operations
                 negativeSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(negativeSideSolid));
             }
             //Else, there was no cut made. 
+        }
+
+        /// <summary>
+        /// Seperates the loops into multiple solids prior to making solids by using
+        /// loop information and face wrapping to identify which loops belong together.
+        /// The direction of each loop is not necessary as it can be inferred.
+        /// </summary>
+        /// <param name="onSideLoops"></param>
+        /// <param name="onSideFaces"></param>
+        /// <param name="contactDataForEachSolid"></param>
+        /// <returns></returns>
+        private static bool SeperateLoopsForEachSolid(List<List<Vertex>> onSideLoops, List<PolygonalFace> onSideFaces, 
+            out List<ContactData> contactDataForEachSolid)
+        {
+            contactDataForEachSolid = new List<ContactData>();
+            //Determine positive or negative for each loop 
+            //Also determine which positive loop each negative loop belongs to. 
+            //Try to avoid first section of triangulate polygon function (which does this in 2D).
+            var orderedLoops = new List<Loop>();
+            //ToDo: Write function to order loops in 3D space
+        
+            while(orderedLoops.Any()) 
+            {
+                //Get the first positive loop. 
+                var posLoop = orderedLoops.First();
+                var negLoops = posLoop.DependentLoops;
+                if (!posLoop.IsPositive) throw new Exception("First loop in this function should always be positive. Likely the ordering and pairing of loops is incorrect" );
+                //Perform face wrapping (using adjacency to build up a list of all the faces on a solid) -- Similar to 'GetMultipleSolids'
+                //ToDo: Get contact faces into this fuction (Contact Data should connect loops to faces)
+                var posFaces = new List<PolygonalFace>();
+
+                //If the wrapping contained any faces with null adjacency references, find the loop they are from 
+                //and remove that loop from onSideLoops and negLoops - if it's dependentLoop is the current posLoop. 
+
+                //The next step is required for blind pockets and holes (If the positive loop had any negative 
+                //loops that belonged to it that were not found by wrapping).
+                while (negLoops.Any())
+                {
+                    //remove them one at a time and perform face wrapping on each to add additional faces.
+                }               
+            } 
+            return true;
         }
 
         private static bool ShiftPlaneForRobustCut(TessellatedSolid ts, Flat plane, out List<double> distancesToPlane, out double posPlaneShift, out double negPlaneShift)
@@ -140,7 +233,6 @@ namespace TVGL.Boolean_Operations
             }
             return true;
         }
-
 
         private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<List<Vertex>> loops,
             int isPositiveSide, IList<double> distancesToPlane, double planeOffset = double.NaN)
