@@ -41,6 +41,18 @@
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
+    <Reference Include="OxyPlot, Version=1.0.0.0, Culture=neutral, PublicKeyToken=638079a8f0bd61e9, processorArchitecture=MSIL">
+      <HintPath>..\packages\OxyPlot.Core.1.0.0-unstable2100\lib\net45\OxyPlot.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="OxyPlot.Wpf, Version=1.0.0.0, Culture=neutral, PublicKeyToken=75e952ba404cdbb0, processorArchitecture=MSIL">
+      <HintPath>..\packages\OxyPlot.Wpf.1.0.0-unstable2100\lib\net45\OxyPlot.Wpf.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="OxyPlot.Xps, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\OxyPlot.Wpf.1.0.0-unstable2100\lib\net45\OxyPlot.Xps.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="PropertyTools, Version=2015.2.0.0, Culture=neutral, PublicKeyToken=ea0c9f2b460934d0, processorArchitecture=MSIL">
       <HintPath>..\packages\PropertyTools.Wpf.2015.2.0\lib\net45\PropertyTools.dll</HintPath>
       <Private>True</Private>
@@ -70,9 +82,9 @@
       <Project>{e3489019-d590-46a8-b2c2-e3481e8db77c}</Project>
       <Name>TessellationAndVoxelizationGeometryLibraryUniversal</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TVGL Helix Presenter\TVGL Helix Presenter.csproj">
+    <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj">
       <Project>{8c1364cc-908a-4174-b62c-21ec4839584d}</Project>
-      <Name>TVGL Helix Presenter</Name>
+      <Name>TVGL Presenter</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
