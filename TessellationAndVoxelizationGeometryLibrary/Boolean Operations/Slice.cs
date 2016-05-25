@@ -12,7 +12,7 @@ namespace TVGL.Boolean_Operations
     /// lists.
     /// However, it does reference the solid's faces. So this may conflict with parallel processing.
     /// </summary>
-    public static class Slice4
+    public static class Slice
     {
         #region Define Contact at a Flat Plane
 
