@@ -181,45 +181,37 @@ namespace TVGL
             Message.output("Errors found in model:");
             Message.output("======================");
             if (NonTriangularFaces != null)
-                Message.output("==> {0} faces are polygons with more than 3 sides.", NonTriangularFaces.Count);
+                Message.output("==> " + NonTriangularFaces.Count + " faces are polygons with more than 3 sides.");
             if (!double.IsNaN(EdgeFaceRatio))
-                Message.output("==> Edges / Faces = {0}, but it should be 1.5.", EdgeFaceRatio);
+                Message.output("==> Edges / Faces = " + EdgeFaceRatio + ", but it should be 1.5.");
             if (OverusedEdges != null)
             {
-                Message.output("==> {0} overused edges.", OverusedEdges.Count);
+                Message.output("==> " + OverusedEdges.Count + " overused edges.");
                 Message.output("    The number of faces per overused edge: " +
                                 OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
             }
-            if (SingledSidedEdges != null) Message.output("==> {0} single-sided edges.", SingledSidedEdges.Count);
-            if (DegenerateFaces != null) Message.output("==> {0} degenerate faces in file.", DegenerateFaces.Count);
-            if (DuplicateFaces != null) Message.output("==> {0} duplicate faces in file.", DuplicateFaces.Count);
+            if (SingledSidedEdges != null) Message.output("==> " + SingledSidedEdges.Count + " single-sided edges.");
+            if (DegenerateFaces != null) Message.output("==> " + DegenerateFaces.Count + " degenerate faces in file.");
+            if (DuplicateFaces != null) Message.output("==> " + DuplicateFaces.Count + " duplicate faces in file.");
             if (FacesWithOneVertex != null)
-                Message.output("==> {0} faces with only one vertex.", FacesWithOneVertex.Count);
-            if (FacesWithOneEdge != null) Message.output("==> {0} faces with only one edge.", FacesWithOneEdge.Count);
-            if (FacesWithTwoVertices != null) Message.output("==> {0}  faces with only two vertices.", FacesWithTwoVertices.Count);
-            if (FacesWithTwoEdges != null) Message.output("==> {0}  faces with only two edges.", FacesWithTwoEdges.Count);
-            if (EdgesWithBadAngle != null) Message.output("==> {0} edges with bad angles.", EdgesWithBadAngle.Count);
+                Message.output("==> " + FacesWithOneVertex.Count + " faces with only one vertex.");
+            if (FacesWithOneEdge != null) Message.output("==> " + FacesWithOneEdge.Count + " faces with only one edge.");
+            if (FacesWithTwoVertices != null) Message.output("==> " + FacesWithTwoVertices.Count + "  faces with only two vertices.");
+            if (FacesWithTwoEdges != null) Message.output("==> " + FacesWithTwoEdges.Count + " faces with only two edges.");
+            if (EdgesWithBadAngle != null) Message.output("==> " + EdgesWithBadAngle.Count + " edges with bad angles.");
             if (EdgesThatDoNotLinkBackToFace != null)
-                Message.output("==> {0} edges that do not link back to faces that link to them.",
-                    EdgesThatDoNotLinkBackToFace.Count);
+                Message.output("==> " + EdgesThatDoNotLinkBackToFace.Count + " edges that do not link back to faces that link to them.");
             if (EdgesThatDoNotLinkBackToVertex != null)
-                Message.output("==> {0} edges that do not link back to vertices that link to them.",
-                    EdgesThatDoNotLinkBackToVertex.Count);
+                Message.output("==> " + EdgesThatDoNotLinkBackToVertex.Count + " edges that do not link back to vertices that link to them.");
             if (VertsThatDoNotLinkBackToFace != null)
-                Message.output("==> {0} vertices that do not link back to faces that link to them.",
-                    VertsThatDoNotLinkBackToFace.Count);
+                Message.output("==> " + VertsThatDoNotLinkBackToFace.Count + " vertices that do not link back to faces that link to them.");
             if (VertsThatDoNotLinkBackToEdge != null)
-                Message.output("==> {0} vertices that do not link back to edges that link to them.",
-                    VertsThatDoNotLinkBackToEdge.Count);
+                Message.output("==> " + VertsThatDoNotLinkBackToEdge.Count + " vertices that do not link back to edges that link to them.");
             if (FacesThatDoNotLinkBackToEdge != null)
-                Message.output("==> {0} faces that do not link back to edges that link to them.",
-                    FacesThatDoNotLinkBackToEdge.Count);
+                Message.output("==> " + FacesThatDoNotLinkBackToEdge.Count + " faces that do not link back to edges that link to them.");
             if (FacesThatDoNotLinkBackToVertex != null)
-                Message.output("==> {0} faces that do not link back to vertices that link to them.",
-                    FacesThatDoNotLinkBackToVertex.Count);
+                Message.output("==> " + FacesThatDoNotLinkBackToVertex.Count + " faces that do not link back to vertices that link to them.");
         }
-
-
         #endregion
 
         #region Error Storing
