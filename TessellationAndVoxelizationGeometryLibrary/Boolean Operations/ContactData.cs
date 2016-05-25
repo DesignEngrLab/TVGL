@@ -30,15 +30,14 @@ namespace TVGL
         /// </summary>
         /// <param name="loops">The loops.</param>
         /// <param name="onSideFaces"></param>
-        internal ContactData(IEnumerable<Loop> loops, List<PolygonalFace> onSideFaces)
+        internal ContactData(List<Loop> loops, List<PolygonalFace> onSideFaces)
         {
             OnSideFaces = onSideFaces;
             PositiveLoops = new List<Loop>();
             NegativeLoops = new List<Loop>();
             foreach (var loop in loops)
             {
-                //Perimeter += loop.Perimeter;
-                //Area += loop.Area;
+                Area += loop.Area;
                 if (loop.IsPositive) PositiveLoops.Add(loop);
                 else NegativeLoops.Add(loop);
             }
@@ -69,14 +68,11 @@ namespace TVGL
                 return allLoops;
             }
         }
-        /// <summary>
-        /// The combined perimeter of the 2D loops defined with the Contact Data.
-        /// </summary>
-        //public readonly double Perimeter;
+
         /// <summary>
         /// The combined area of the 2D loops defined with the Contact Data
         /// </summary>
-        //public readonly double Area;
+        public readonly double Area;
 
         /// <summary>
         /// List of In Plane Faces
@@ -111,11 +107,11 @@ namespace TVGL
         /// <summary>
         /// The length of the loop.
         /// </summary>
-        //public readonly double Perimeter;
+        public readonly double Perimeter;
         /// <summary>
         /// The area of the loop
         /// </summary>
-        //public readonly double Area;
+        public readonly double Area;
         /// <summary>
         /// Is the loop closed?
         /// </summary>
@@ -126,15 +122,15 @@ namespace TVGL
         /// </summary>
         /// <param name="normal">The normal.</param>
         /// <param name="isClosed">is closed.</param>
-        internal Loop(List<Vertex> vertexLoop, List<PolygonalFace> onSideContactFaces, IList<double> normal, bool isClosed = true)
+        internal Loop(List<Vertex> vertexLoop, List<PolygonalFace> onSideContactFaces, double[] normal, bool isClosed = true)
         {
             if (!IsClosed) Message.output("loop not closed!",3);
             VertexLoop = vertexLoop;
             OnSideContactFaces = onSideContactFaces;
-            IsClosed = isClosed;    
+            IsClosed = isClosed;
+            Area = MiscFunctions.AreaOf3DPolygon(vertexLoop, normal);
+            Perimeter = MiscFunctions.Perimeter(vertexLoop);
         }
-
-        //ToDo: Add functions to determine Perimeter and Area if necessary
     }
 }
 

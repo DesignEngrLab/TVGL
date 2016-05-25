@@ -853,8 +853,9 @@ namespace TVGL
         }
         #endregion
 
+        #region Perimeter
         /// <summary>
-        /// 
+        /// Gets the perimeter for a 2D set of points.
         /// </summary>
         /// <param name="polygon"></param>
         /// <returns></returns>
@@ -870,6 +871,25 @@ namespace TVGL
             }
             return perimeter;
         }
+
+        /// <summary>
+        /// Gets the Perimeter (length of a loop) of a 3D set of Vertices.
+        /// </summary>
+        /// <param name="polygon3D"></param>
+        /// <returns></returns>
+        public static double Perimeter(List<Vertex> polygon3D)
+        {
+            var listWithStartPointAtEnd = new List<Vertex>(polygon3D) { polygon3D.First() };
+            double perimeter = 0;
+            for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
+            {
+                perimeter = perimeter +
+                            DistancePointToPoint(listWithStartPointAtEnd[i - 1].Position,
+                                listWithStartPointAtEnd[i].Position);
+            }
+            return perimeter;
+        }
+        #endregion
 
         /// <summary>
         /// A secondary volume calculation, since the primary volume calculation in the tesselated solid creation seems to be broken
