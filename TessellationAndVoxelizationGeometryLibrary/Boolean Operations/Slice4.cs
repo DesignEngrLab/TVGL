@@ -49,7 +49,6 @@ namespace TVGL.Boolean_Operations
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="plane"></param>
-        /// <param name="isSuccessful"></param>
         /// <param name="positiveSideFaces"></param>
         /// <param name="negativeSideFaces"></param>
         /// <param name="positiveSideLoops"></param>

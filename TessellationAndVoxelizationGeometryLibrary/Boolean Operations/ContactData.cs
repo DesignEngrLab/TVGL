@@ -29,7 +29,7 @@ namespace TVGL
         /// Initializes a new instance of the <see cref="ContactData" /> class.
         /// </summary>
         /// <param name="loops">The loops.</param>
-        /// <param name="inPlaneFaces"></param>
+        /// <param name="onSideFaces"></param>
         internal ContactData(IEnumerable<Loop> loops, List<PolygonalFace> onSideFaces)
         {
             OnSideFaces = onSideFaces;
@@ -37,8 +37,8 @@ namespace TVGL
             NegativeLoops = new List<Loop>();
             foreach (var loop in loops)
             {
-                Perimeter += loop.Perimeter;
-                Area += loop.Area;
+                //Perimeter += loop.Perimeter;
+                //Area += loop.Area;
                 if (loop.IsPositive) PositiveLoops.Add(loop);
                 else NegativeLoops.Add(loop);
             }
@@ -72,11 +72,11 @@ namespace TVGL
         /// <summary>
         /// The combined perimeter of the 2D loops defined with the Contact Data.
         /// </summary>
-        public readonly double Perimeter;
+        //public readonly double Perimeter;
         /// <summary>
         /// The combined area of the 2D loops defined with the Contact Data
         /// </summary>
-        public readonly double Area;
+        //public readonly double Area;
 
         /// <summary>
         /// List of In Plane Faces
@@ -111,11 +111,11 @@ namespace TVGL
         /// <summary>
         /// The length of the loop.
         /// </summary>
-        public readonly double Perimeter;
+        //public readonly double Perimeter;
         /// <summary>
         /// The area of the loop
         /// </summary>
-        public readonly double Area;
+        //public readonly double Area;
         /// <summary>
         /// Is the loop closed?
         /// </summary>
@@ -131,9 +131,10 @@ namespace TVGL
             if (!IsClosed) Message.output("loop not closed!",3);
             VertexLoop = vertexLoop;
             OnSideContactFaces = onSideContactFaces;
-            IsClosed = isClosed;
-            //ToDo: Determine Perimeter and Area if necessary
+            IsClosed = isClosed;    
         }
+
+        //ToDo: Add functions to determine Perimeter and Area if necessary
     }
 }
 
