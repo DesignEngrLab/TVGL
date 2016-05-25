@@ -257,11 +257,11 @@ namespace TVGL
         {
             var window = new Window3DPlot();
             window.view1.Children.Add(MakeModelVisual3D(tessellatedSolid));
-            window.view1.ZoomExtentsWhenLoaded = true;
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             if (seconds > 0)
             {
                 window.Show();
-                Thread.Sleep(seconds*1000);
+                Thread.Sleep(seconds * 1000);
                 window.Close();
             }
             else window.Show();
@@ -275,7 +275,7 @@ namespace TVGL
         {
             var window = new Window3DPlot();
             window.view1.Children.Add(MakeModelVisual3D(tessellatedSolid));
-            window.view1.ZoomExtentsWhenLoaded = true;
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
 
@@ -295,11 +295,11 @@ namespace TVGL
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
-            window.view1.ZoomExtentsWhenLoaded = true;
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             if (seconds > 0)
             {
                 window.Show();
-                Thread.Sleep(seconds*1000);
+                Thread.Sleep(seconds * 1000);
                 window.Close();
             }
             else window.Show();
@@ -320,7 +320,7 @@ namespace TVGL
                 models.Add(model);
                 window.view1.Children.Add(model);
             }
-            window.view1.ZoomExtentsWhenLoaded = true;
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
 
@@ -340,10 +340,10 @@ namespace TVGL
             {
                 var model = MakeModelVisual3D(tessellatedSolid);
                 window.view1.Children.Add(model);
-                window.view1.ZoomExtentsWhenLoaded = true;
+                window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
                 window.WindowStartupLocation = startLocation;
                 window.Show();
-                Thread.Sleep(seconds*1000);
+                Thread.Sleep(seconds * 1000);
                 window.Hide();
                 //var size = new Size(400, 400);
                 window.InvalidateVisual();
@@ -405,7 +405,7 @@ namespace TVGL
                 var c = f.Color == null
                     ? defaultMaterial
                     : MaterialHelper.CreateMaterial(new System.Windows.Media.Color
-                {
+                    {
                         A = f.Color.A,
                         B = f.Color.B,
                         G = f.Color.G,
@@ -416,7 +416,7 @@ namespace TVGL
                     Content =
                         new GeometryModel3D
                         {
-                            Geometry = new MeshGeometry3D {Positions = vOrder},
+                            Geometry = new MeshGeometry3D { Positions = vOrder },
                             Material = c
                         }
                 });

@@ -28,7 +28,6 @@ namespace TVGL
         public Window3DPlot()
         {
             InitializeComponent();
-            ShowGridLinesMenuItem.IsChecked = true;
         }
 
         /// <summary>

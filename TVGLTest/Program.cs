@@ -13,52 +13,52 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        //"../../../TestFiles/shark.ply",
-        //"../../../TestFiles/bunnySmall.ply",
-        //"../../../TestFiles/cube.ply",
-        //"../../../TestFiles/airplane.ply",
-        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        //"../../../TestFiles/Beam_Boss.STL",
-       // "../../../TestFiles/Tetrahedron.STL",
-       // "../../../TestFiles/off_axis_box.STL",
-       // "../../../TestFiles/Wedge.STL",
-       // "../../../TestFiles/amf_Cube.amf",
-       // "../../../TestFiles/Mic_Holder_SW.stl",
-       // "../../../TestFiles/Mic_Holder_JR.stl",
-       // "../../../TestFiles/3_bananas.amf",
-       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-       // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-       // "../../../TestFiles/Rook.amf",
-       // "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
-       // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
-       // "../../../TestFiles/ABF.STL",
-       // "../../../TestFiles/Pump-1repair.STL",
-       // "../../../TestFiles/Pump-1.STL",
-       // "../../../TestFiles/Beam_Clean.STL",
-       // "../../../TestFiles/piston.stl",
-       // "../../../TestFiles/Z682.stl",
-       // "../../../TestFiles/sth2.stl",
-       // "../../../TestFiles/pump.stl",
-       // "../../../TestFiles/bradley.stl",
-       // "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
-       // "../../../TestFiles/new/5.STL",
-       // "../../../TestFiles/new/2.stl", //Note that this is an assembly 
-       // "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
-       //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
-       // "../../../TestFiles/radiobox.stl",
-       // "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
-       // "../../../TestFiles/box.stl", //not water tight, may be an assembly //breaks in slice at 1/2 Z direction
-       // "../../../TestFiles/G0.stl",
-       // "../../../TestFiles/GKJ0.stl",
-       // "../../../TestFiles/SCS12UU.stl", //Broken in slice because 3 triangles share the same edge at 1/2 Z direction
-       // "../../../TestFiles/testblock2.stl",
-       // "../../../TestFiles/Z665.stl",
-       // "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
-       // "../../../TestFiles/mendel_extruder.stl",
-       // "../../../TestFiles/Square Support.STL",
+        "../../../TestFiles/shark.ply",
+        "../../../TestFiles/bunnySmall.ply",
+        "../../../TestFiles/cube.ply",
+        "../../../TestFiles/airplane.ply",
+        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        "../../../TestFiles/Beam_Boss.STL",
+        "../../../TestFiles/Tetrahedron.STL",
+        "../../../TestFiles/off_axis_box.STL",
+        "../../../TestFiles/Wedge.STL",
+        "../../../TestFiles/amf_Cube.amf",
+        "../../../TestFiles/Mic_Holder_SW.stl",
+        "../../../TestFiles/Mic_Holder_JR.stl",
+        "../../../TestFiles/3_bananas.amf",
+        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+        "../../../TestFiles/Rook.amf",
+        "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
+        "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
+        "../../../TestFiles/ABF.STL",
+        "../../../TestFiles/Pump-1repair.STL",
+        "../../../TestFiles/Pump-1.STL",
+        "../../../TestFiles/Beam_Clean.STL",
+        "../../../TestFiles/piston.stl",
+        "../../../TestFiles/Z682.stl",
+        "../../../TestFiles/sth2.stl",
+        "../../../TestFiles/pump.stl",
+        "../../../TestFiles/bradley.stl",
+        "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
+        "../../../TestFiles/new/5.STL",
+        "../../../TestFiles/new/2.stl", //Note that this is an assembly 
+        "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
+       "../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
+        "../../../TestFiles/radiobox.stl",
+        "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
+        "../../../TestFiles/box.stl", //not water tight, may be an assembly //breaks in slice at 1/2 Z direction
+        "../../../TestFiles/G0.stl",
+        "../../../TestFiles/GKJ0.stl",
+        "../../../TestFiles/SCS12UU.stl", //Broken in slice because 3 triangles share the same edge at 1/2 Z direction
+        "../../../TestFiles/testblock2.stl",
+        "../../../TestFiles/Z665.stl",
+        "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
+        "../../../TestFiles/mendel_extruder.stl",
+        "../../../TestFiles/Square Support.STL",
         "../../../TestFiles/Aerospace_Beam.STL",
-       //"../../../TestFiles/MV-Test files/holding-device.STL",
-       //"../../../TestFiles/MV-Test files/gear.STL"
+       "../../../TestFiles/MV-Test files/holding-device.STL",
+       "../../../TestFiles/MV-Test files/gear.STL"
         };
 
         [STAThread]
@@ -74,12 +74,12 @@ namespace TVGL_Test
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
-                Primitive_Classification.Run(ts[0]);
+                //Primitive_Classification.Run(ts[0]);
                 //MiscFunctions.IsSolidBroken(ts[0]);
                 MinimumEnclosure.OrientedBoundingBox(ts[0]);
                 //TestClassification(ts[0]);
-                TestXSections(ts[0]);
-                TVGL.Presenter.Show(ts[0]);
+               // TestXSections(ts[0]);
+                TVGL.Presenter.Show(ts);
                 //TestSimplify(ts[0]);
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0], filename);
