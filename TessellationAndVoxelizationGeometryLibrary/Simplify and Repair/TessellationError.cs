@@ -21,7 +21,7 @@ namespace TVGL
         /// <summary>
         /// Edges that only have one face
         /// </summary>
-        public List<Edge> SingledSidedEdges { get; private set; }
+        public List<Tuple <Edge,bool>> SingledSidedEdges { get; private set; }
         /// <summary>
         /// Faces with errors
         /// </summary>
@@ -131,6 +131,12 @@ namespace TVGL
                 if (face.AdjacentFaces.Any(adjacentFace => adjacentFace == null))
                     StoreFaceWithMissingAdjacency(ts, face);    
             }
+            foreach (var face in ts.Errors.FacesWithMissingAdjacency)
+            {
+                var adjFaces = face.AdjacentFaces;
+                for (int i = 0; i < adjFaces.Count; i++)
+                    if (adjFaces[i] == null) StoreSingleSidedEdges(ts, face.Edges[i], (face.Edges[i].OwnedFace == null));
+            }
             //Check if each edge has cyclic references with each vertex and each face.
             foreach (var edge in ts.Edges)
             {
@@ -170,14 +176,12 @@ namespace TVGL
             ts.Errors.Report();
         }
 
-
         /// <summary>
         /// Report out any errors
         /// </summary>
         public void Report()
         {
             if (3 > (int)Message.Verbosity) return;
-            //Note that negligible faces are not truly errors.
             Message.output("Errors found in model:");
             Message.output("======================");
             if (NonTriangularFaces != null)
@@ -198,6 +202,8 @@ namespace TVGL
             if (FacesWithOneEdge != null) Message.output("==> " + FacesWithOneEdge.Count + " faces with only one edge.");
             if (FacesWithTwoVertices != null) Message.output("==> " + FacesWithTwoVertices.Count + "  faces with only two vertices.");
             if (FacesWithTwoEdges != null) Message.output("==> " + FacesWithTwoEdges.Count + " faces with only two edges.");
+            if (FacesWithMissingAdjacency != null) Message.output("==> " + FacesWithMissingAdjacency.Count + " faces with missing adjacency.");
+            if (FacesWithNegligibleArea != null) Message.output("==> " + FacesWithNegligibleArea.Count + " faces with negligible area.");
             if (EdgesWithBadAngle != null) Message.output("==> " + EdgesWithBadAngle.Count + " edges with bad angles.");
             if (EdgesThatDoNotLinkBackToFace != null)
                 Message.output("==> " + EdgesThatDoNotLinkBackToFace.Count + " edges that do not link back to faces that link to them.");
@@ -338,10 +344,11 @@ namespace TVGL
             ts.Errors.NoErrors = false;
             ts.Errors.OverusedEdges = edgeFaceTuples.ToList();
         }
-        internal static void StoreSingleSidedEdges(TessellatedSolid ts, IEnumerable<Edge> singledSidedEdges)
+        internal static void StoreSingleSidedEdges(TessellatedSolid ts, Edge singledSidedEdge, bool ownedIsMissing)
         {
             ts.Errors.NoErrors = false;
-            ts.Errors.SingledSidedEdges = singledSidedEdges.ToList();
+            if (ts.Errors.SingledSidedEdges == null) ts.Errors.SingledSidedEdges = new List<Tuple<Edge, bool>> ();
+            ts.Errors.SingledSidedEdges.Add(new Tuple<Edge, bool>(singledSidedEdge,ownedIsMissing));
         }
 
 
@@ -434,6 +441,7 @@ namespace TVGL
             ts.RemoveFaces(ts.Errors.NonTriangularFaces);
             ts.Errors.NonTriangularFaces = null;
             ts.MostPolygonSides = 3;
+            // todo: whoa! why make the singledsidedEdges here?! why not just repair
             ts.Errors.SingledSidedEdges = singleSidedEdges.ToList();
             return LinkUpNewFaces(allNewFaces, ts);
         }
