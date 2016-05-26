@@ -26,14 +26,12 @@ namespace TVGL
         /// Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         public double X { get; private set; }
 
         /// <summary>
         /// Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
-        // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         public double Y { get; private set; }
 
         /// <summary>

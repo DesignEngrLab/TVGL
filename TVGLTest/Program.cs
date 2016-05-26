@@ -80,7 +80,7 @@ namespace TVGL_Test
                 //TestClassification(ts[0]);
                // TestXSections(ts[0]);
                 TVGL.Presenter.ShowAndHang(ts);
-                //TestSimplify(ts[0]);
+                TestSimplify(ts[0]);
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0], filename);
                 //var filename2 = filenames[i + 1];
@@ -119,7 +119,7 @@ namespace TVGL_Test
 
         private static void TestSimplify(TessellatedSolid ts)
         {
-            ts.SimplifyByPercentage(.5);
+            ts.SimplifyByPercentage(.9);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
