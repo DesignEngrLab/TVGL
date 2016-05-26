@@ -79,17 +79,12 @@ namespace TVGL
         /// </summary>
         public List<Tuple<Vertex, PolygonalFace>> FacesThatDoNotLinkBackToVertex { get; private set; }
         /// <summary>
-        /// Faces that are missing adjacency to other faces
-        /// </summary>
-        public List<PolygonalFace> FacesWithMissingAdjacency { get; private set; }
-        /// <summary>
         /// Edges with bad angles
         /// </summary>
         public List<Edge> EdgesWithBadAngle { get; private set; }
         /// <summary>
         /// Edges to face ratio 
         /// </summary>
-        // ReSharper disable once ConvertToAutoProperty
         public double EdgeFaceRatio
         {
             get { return _edgeFaceRatio; }
@@ -124,12 +119,13 @@ namespace TVGL
                 if (face.Edges.Count == 1) StoreFaceWithOneEdge(ts, face);
                 if (face.Edges.Count == 2) StoreFaceWithOTwoEdges(ts, face);
                 if (face.Area.IsNegligible(ts.SameTolerance)) StoreFaceWithNegligibleArea(ts, face);
-                foreach (var edge in face.Edges.Where(edge => edge.OwnedFace != face && edge.OtherFace != face))
-                    StoreEdgeDoesNotLinkBackToFace(ts, face, edge);
+                foreach (var edge in face.Edges)
+                {
+                    if(edge.OwnedFace == null || edge.OtherFace == null) StoreSingleSidedEdge(ts, edge);
+                    if(edge.OwnedFace != face && edge.OtherFace != face) StoreEdgeDoesNotLinkBackToFace(ts, face, edge);
+                }
                 foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
                     StoreVertexDoesNotLinkBackToFace(ts, face, vertex);
-                if (face.AdjacentFaces.Any(adjacentFace => adjacentFace == null))
-                    StoreFaceWithMissingAdjacency(ts, face);    
             }
             //Check if each edge has cyclic references with each vertex and each face.
             foreach (var edge in ts.Edges)
@@ -138,7 +134,7 @@ namespace TVGL
                 if (!edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
                 if (!edge.To.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.To);
                 if (!edge.From.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.From);
-                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2*Math.PI)  
+                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2 * Math.PI)
                     StoreEdgeHasBadAngle(ts, edge);
             }
             //Check if each vertex has cyclic references with each edge and each face.
@@ -151,19 +147,19 @@ namespace TVGL
             }
             if (ts.Errors.NoErrors)
             {
-                Message.output("** Model contains no errors.",3);
+                Message.output("** Model contains no errors.", 3);
                 return;
             }
             if (repairAutomatically)
             {
-                Message.output("Some errors found. Attempting to Repair...",2);
+                Message.output("Some errors found. Attempting to Repair...", 2);
                 var success = ts.Errors.Repair(ts);
                 if (success)
                 {
                     ts.Errors = null;
-                    Message.output("Repair successfully fixed the model.",2);
+                    Message.output("Repairs functions completed successfully (errors may still occur).", 2);
                 }
-                else Message.output("Repair did not successfully fix all the problems.",1);
+                else Message.output("Repair did not successfully fix all the problems.", 1);
                 CheckModelIntegrity(ts, false);
                 return;
             }
@@ -212,6 +208,8 @@ namespace TVGL
             if (FacesThatDoNotLinkBackToVertex != null)
                 Message.output("==> " + FacesThatDoNotLinkBackToVertex.Count + " faces that do not link back to vertices that link to them.");
         }
+
+
         #endregion
 
         #region Error Storing
@@ -276,8 +274,8 @@ namespace TVGL
         {
             //This is not truly an error, to don't change the NoErrors boolean.
             if (ts.Errors.FacesWithNegligibleArea == null)
-                ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> {face};
-            else if(!ts.Errors.FacesWithNegligibleArea.Contains(face)) ts.Errors.FacesWithNegligibleArea.Add(face);
+                ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> { face };
+            else if (!ts.Errors.FacesWithNegligibleArea.Contains(face)) ts.Errors.FacesWithNegligibleArea.Add(face);
         }
 
         private static void StoreVertexDoesNotLinkBackToFace(TessellatedSolid ts, PolygonalFace face, Vertex vertex)
@@ -326,22 +324,16 @@ namespace TVGL
             else ts.Errors.FacesWithOneVertex.Add(face);
         }
 
-        private static void StoreFaceWithMissingAdjacency(TessellatedSolid ts, PolygonalFace face)
-        {
-            ts.Errors.NoErrors = false;
-            if (ts.Errors.FacesWithMissingAdjacency == null) ts.Errors.FacesWithMissingAdjacency = new List<PolygonalFace> { face };
-            else ts.Errors.FacesWithMissingAdjacency.Add(face);
-        }
-
         internal static void StoreOverusedEdges(TessellatedSolid ts, IEnumerable<Tuple<Edge, List<PolygonalFace>>> edgeFaceTuples)
         {
             ts.Errors.NoErrors = false;
             ts.Errors.OverusedEdges = edgeFaceTuples.ToList();
         }
-        internal static void StoreSingleSidedEdges(TessellatedSolid ts, IEnumerable<Edge> singledSidedEdges)
+        internal static void StoreSingleSidedEdge(TessellatedSolid ts, Edge singledSidedEdge)
         {
             ts.Errors.NoErrors = false;
-            ts.Errors.SingledSidedEdges = singledSidedEdges.ToList();
+            if (ts.Errors.SingledSidedEdges == null) ts.Errors.SingledSidedEdges = new List<Edge> { singledSidedEdge };
+            else ts.Errors.SingledSidedEdges.Add(singledSidedEdge);
         }
 
 
@@ -417,9 +409,7 @@ namespace TVGL
             {
                 var newFaces = new List<PolygonalFace>();
                 foreach (var edge in nonTriangularFace.Edges)
-                {
                     if (!singleSidedEdges.Contains(edge)) singleSidedEdges.Add(edge);
-                }
                 //Using Triangulate Polygon guarantees that even if the face has concave edges, it will triangulate properly.
                 List<List<Vertex[]>> triangleFaceList;
                 var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { nonTriangularFace.Vertices }, nonTriangularFace.Normal, out triangleFaceList);
@@ -434,8 +424,7 @@ namespace TVGL
             ts.RemoveFaces(ts.Errors.NonTriangularFaces);
             ts.Errors.NonTriangularFaces = null;
             ts.MostPolygonSides = 3;
-            ts.Errors.SingledSidedEdges = singleSidedEdges.ToList();
-            return LinkUpNewFaces(allNewFaces, ts);
+            return LinkUpNewFaces(allNewFaces, ts, singleSidedEdges.ToList());
         }
 
         private bool RepairMissingFacesFromEdges(TessellatedSolid ts)
@@ -508,17 +497,16 @@ namespace TVGL
                     }
                 }
             }
-            if (newFaces.Count == 1) Message.output("1 missing face was fixed",3);
-            if (newFaces.Count > 1) Message.output(newFaces.Count + " missing faces were fixed",3);
-            return LinkUpNewFaces(newFaces, ts);
+            if (newFaces.Count == 1) Message.output("1 missing face was fixed", 3);
+            if (newFaces.Count > 1) Message.output(newFaces.Count + " missing faces were fixed", 3);
+            return LinkUpNewFaces(newFaces, ts, ts.Errors.SingledSidedEdges);
         }
 
-        private bool LinkUpNewFaces(List<PolygonalFace> newFaces, TessellatedSolid ts)
+        private bool LinkUpNewFaces(List<PolygonalFace> newFaces, TessellatedSolid ts, List<Edge> singledSidedEdges)
         {
             ts.AddFaces(newFaces);
-            //var completedEdges = new List<Edge>();
             var newEdges = new List<Edge>();
-            var partlyDefinedEdges = SingledSidedEdges.ToDictionary(ts.SetEdgeChecksum);
+            var partlyDefinedEdges = singledSidedEdges.ToDictionary(ts.SetEdgeChecksum);
             ts.UpdateAllEdgeCheckSums();
 
             foreach (var face in newFaces)
@@ -549,11 +537,10 @@ namespace TVGL
             }
             ts.AddEdges(newEdges);
             foreach (var edge in partlyDefinedEdges.Values)
-                ts.Errors.SingledSidedEdges.Remove(edge);
-            if (!ts.Errors.SingledSidedEdges.Any()) ts.Errors.SingledSidedEdges = null;
-            return true;
+                singledSidedEdges.Remove(edge);
+            return !singledSidedEdges.Any();
         }
-       
+
         #endregion
     }
 }

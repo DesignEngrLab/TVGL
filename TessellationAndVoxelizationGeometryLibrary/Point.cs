@@ -136,7 +136,6 @@ namespace TVGL
         /// <param name="index"></param>
         public double this[int index]
         {
-            // ReSharper disable once ConvertPropertyToExpressionBody
             get { return Position[index]; }
         }
 

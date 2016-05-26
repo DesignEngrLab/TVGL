@@ -242,13 +242,8 @@ namespace TVGL
         /// </value>
         public bool PartofConvexHull { get; internal set; }
 
-        /// <summary>
-        /// Gets the normal.
-        /// </summary>
-        /// <value>
-        /// The normal.
-        /// </value>
-        public string CreatedInFunction { get; set; }
+  
+        internal string CreatedInFunction { get; set; }
 
         /// <summary>
         /// Gets the adjacent faces.
