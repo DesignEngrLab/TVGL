@@ -34,8 +34,8 @@ namespace TVGL.Boolean_Operations
             negativeSideSolids = new List<TessellatedSolid>();
             List<PolygonalFace> positiveSideFaces;
             List<PolygonalFace> negativeSideFaces;
-            List<List<Vertex>> positiveSideLoops;
-            List<List<Vertex>> negativeSideLoops;
+            List<Loop> positiveSideLoops;
+            List<Loop> negativeSideLoops;
             var isSuccessful = GetLoops(ts, plane, out positiveSideFaces, out negativeSideFaces, out positiveSideLoops, out negativeSideLoops);
             if (!isSuccessful) return;
             MakeSolids(plane, positiveSideFaces, negativeSideFaces, positiveSideLoops, negativeSideLoops, out positiveSideSolids, out negativeSideSolids);
@@ -55,12 +55,12 @@ namespace TVGL.Boolean_Operations
         /// <param name="negativeSideLoops"></param>
         public static bool GetLoops(TessellatedSolid ts, Flat plane, 
             out List<PolygonalFace> positiveSideFaces, out List<PolygonalFace> negativeSideFaces, 
-            out List<List<Vertex>> positiveSideLoops, out List<List<Vertex>> negativeSideLoops)
+            out List<Loop> positiveSideLoops, out List<Loop> negativeSideLoops)
         {
             positiveSideFaces = new List<PolygonalFace>();
             negativeSideFaces = new List<PolygonalFace>();
-            positiveSideLoops = new List<List<Vertex>>();
-            negativeSideLoops = new List<List<Vertex>>();
+            positiveSideLoops = new List<Loop>();
+            negativeSideLoops = new List<Loop>();
             //MiscFunctions.IsSolidBroken(ts);
             //1. Offset positive and get the positive faces.
             //Straddle faces are split into 2 or 3 new faces.
@@ -93,17 +93,22 @@ namespace TVGL.Boolean_Operations
         /// <param name="positiveSideSolids"></param>
         /// <param name="negativeSideSolids"></param>
         public static void MakeSolids(Flat plane, List<PolygonalFace> positiveSideFaces, 
-            List<PolygonalFace> negativeSideFaces, List<List<Vertex>> positiveSideLoops, 
-            List<List<Vertex>> negativeSideLoops, out List<TessellatedSolid> positiveSideSolids, 
+            List<PolygonalFace> negativeSideFaces, List<Loop> positiveSideLoops,
+            List<Loop> negativeSideLoops, out List<TessellatedSolid> positiveSideSolids, 
             out List<TessellatedSolid> negativeSideSolids)
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
             //3. Triangulate that empty space and add to list 
             List<List<Vertex[]>> triangleFaceList;
-            var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal, out triangleFaceList);
+            var positiveSideVertexLoops = new List<List<Vertex>>();
+            positiveSideVertexLoops.AddRange(positiveSideLoops.Select(n => n.VertexLoop));
+            var triangles = TriangulatePolygon.Run(positiveSideVertexLoops, plane.Normal, out triangleFaceList);
             positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1), false){CreatedInFunction = "Slice4: Triangulation"}));
-            triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal, out triangleFaceList);
+
+            var negativeSideVertexLoops = new List<List<Vertex>>();
+            negativeSideVertexLoops.AddRange(negativeSideLoops.Select(n => n.VertexLoop));
+            triangles = TriangulatePolygon.Run(negativeSideVertexLoops, plane.Normal, out triangleFaceList);
             negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal, false){CreatedInFunction = "Slice4: Triangulation"}));
             //4. Create a new tesselated solid. This solid may actually be multiple solids.
             if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
@@ -233,11 +238,13 @@ namespace TVGL.Boolean_Operations
             return true;
         }
 
-        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<List<Vertex>> loops,
+        ///Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the 
+        /// halves of the straddle faces that are on this side.
+        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<Loop> loops,
             int isPositiveSide, IList<double> distancesToPlane, double planeOffset = double.NaN)
         {
             onSideFaces = new List<PolygonalFace>();
-            loops = new List<List<Vertex>>();
+            loops = new List<Loop>();
 
             //If offset exists, go ahead and make offset
             if (!double.IsNaN(planeOffset))
@@ -346,10 +353,9 @@ namespace TVGL.Boolean_Operations
             //It also keeps track of how many new vertices should be created.
             var newVertexIndex = ts.NumberOfVertices;
             var allNewFaces = new List<PolygonalFace>();
-            var successfull = false;
             var tolerance = Math.Sqrt(ts.SameTolerance);
             foreach (var loopOfStraddleEdges in loopsOfStraddleEdges)
-            {
+            {   
                 var newFaces = new List<PolygonalFace>();
                 var newEdges = new List<Edge>();
                 var loopOfVertices = new List<Vertex>();
@@ -366,7 +372,7 @@ namespace TVGL.Boolean_Operations
                 if (k +1 == loopOfStraddleEdges.Count-1) throw new Exception("No good starting edge found. Rewrite the function to find a better edge");
                 var firstStraddleEdge = loopOfStraddleEdges[k];
                 var previousStraddleEdge = firstStraddleEdge;
-                successfull = false;
+                var successfull = false;
                 do 
                 {
                     //ToDo: this function allows loops of two vertices if created vertices are too close together
@@ -428,7 +434,7 @@ namespace TVGL.Boolean_Operations
                     }
                 } while (!successfull);
                 if (loopOfVertices.Count < 3) throw new Exception("This could be a knife edge. But this error will likely cause errors down the line");
-                loops.Add(loopOfVertices);
+                loops.Add(new Loop(loopOfVertices, newFaces, plane.Normal));
                 allNewFaces.AddRange(newFaces);
             }
             

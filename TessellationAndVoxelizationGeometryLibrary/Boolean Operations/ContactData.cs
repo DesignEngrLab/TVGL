@@ -1,17 +1,4 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
-// Created          : 03-05-2015
-//
-// Last Modified By : Matt Campbell
-// Last Modified On : 03-18-2015
-// ***********************************************************************
-// <copyright file="ContactData.cs" company="">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using StarMathLib;
@@ -27,6 +14,7 @@ namespace TVGL
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ContactData" /> class.
+        /// Loop directionality must be set prior to initiallizing a new instance.
         /// </summary>
         /// <param name="loops">The loops.</param>
         /// <param name="onSideFaces"></param>
