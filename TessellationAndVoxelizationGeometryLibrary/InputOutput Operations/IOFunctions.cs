@@ -1,12 +1,12 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 03-06-2015
+// Last Modified On : 05-28-2016
 // ***********************************************************************
-// <copyright file="IOFunctions.cs" company="">
+// <copyright file="IOFunctions.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
@@ -14,7 +14,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -22,9 +21,9 @@ using System.Text.RegularExpressions;
 namespace TVGL.IOFunctions
 {
     /// <summary>
-    ///  The IO or input/output class contains static functions for saving and loading files in common formats.
-    ///  Note that as a Portable class library, these IO functions cannot interact with your file system. In order
-    ///  to load or save, the filename is not enough. One needs to provide the stream. 
+    ///     The IO or input/output class contains static functions for saving and loading files in common formats.
+    ///     Note that as a Portable class library, these IO functions cannot interact with your file system. In order
+    ///     to load or save, the filename is not enough. One needs to provide the stream.
     /// </summary>
     public class IO
     {
@@ -37,6 +36,13 @@ namespace TVGL.IOFunctions
         /// <param name="filename">The filename.</param>
         /// <param name="inParallel">The in parallel.</param>
         /// <returns>TessellatedSolid.</returns>
+        /// <exception cref="Exception">
+        ///     Cannot open file without extension (e.g. f00.stl).
+        ///     or
+        ///     This function has been recently removed.
+        ///     or
+        ///     Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.
+        /// </exception>
         /// <exception cref="System.Exception">
         ///     Cannot open file without extension (e.g. f00.stl).
         ///     or
@@ -66,25 +72,26 @@ namespace TVGL.IOFunctions
                     tessellatedSolids = AMFFileData.Open(s, inParallel);
                     break;
                 case "off":
-                    tessellatedSolids = OFFFileData.Open(s, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    tessellatedSolids = OFFFileData.Open(s, inParallel);
+                        // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
                 default:
                     throw new Exception(
                         "Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");
             }
-            Message.output("number of solids = " + tessellatedSolids.Count,3);
+            Message.output("number of solids = " + tessellatedSolids.Count, 3);
             foreach (var tessellatedSolid in tessellatedSolids)
             {
-                Message.output("number of vertices = " + tessellatedSolid.NumberOfVertices,4);
-                Message.output("number of edges = " + tessellatedSolid.NumberOfEdges,4);
-                Message.output("number of faces = " + tessellatedSolid.NumberOfFaces,4);
+                Message.output("number of vertices = " + tessellatedSolid.NumberOfVertices, 4);
+                Message.output("number of edges = " + tessellatedSolid.NumberOfEdges, 4);
+                Message.output("number of faces = " + tessellatedSolid.NumberOfFaces, 4);
             }
 
             return tessellatedSolids;
         }
 
         /// <summary>
-        /// Gets the name from stream.
+        ///     Gets the name from stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <returns>System.String.</returns>
@@ -92,10 +99,10 @@ namespace TVGL.IOFunctions
         {
             var type = stream.GetType();
             var namePropertyInfo = type.GetProperty("Name");
-            var name = (string)namePropertyInfo.GetValue(stream, null);
+            var name = (string) namePropertyInfo.GetValue(stream, null);
             var lastDirectorySeparator = name.LastIndexOf("\\");
             var fileExtensionIndex = name.LastIndexOf(".");
-            return (lastDirectorySeparator < fileExtensionIndex)
+            return lastDirectorySeparator < fileExtensionIndex
                 ? name.Substring(lastDirectorySeparator + 1, fileExtensionIndex - lastDirectorySeparator - 1)
                 : name.Substring(lastDirectorySeparator + 1, name.Length - lastDirectorySeparator - 1);
         }
@@ -124,7 +131,7 @@ namespace TVGL.IOFunctions
 
 
         /// <summary>
-        /// Tries to parse a vertex from a string.
+        ///     Tries to parse a vertex from a string.
         /// </summary>
         /// <param name="line">The input string.</param>
         /// <param name="doubles">The vertex point.</param>
@@ -196,8 +203,9 @@ namespace TVGL.IOFunctions
             do
             {
                 line = reader.ReadLine();
-            } while (string.IsNullOrWhiteSpace(line) || line.StartsWith("\0") || line.StartsWith("#") || line.StartsWith("!")
-                                      || line.StartsWith("$"));
+            } while (string.IsNullOrWhiteSpace(line) || line.StartsWith("\0") || line.StartsWith("#") ||
+                     line.StartsWith("!")
+                     || line.StartsWith("$"));
             return line.Trim(' ');
         }
 
@@ -209,19 +217,27 @@ namespace TVGL.IOFunctions
         ///     Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
-        /// <param name="solids"></param>
+        /// <param name="solids">The solids.</param>
         /// <param name="fileType">Type of the file.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType)
         {
             switch (fileType)
             {
-                case FileType.STL_ASCII: return STLFileData.SaveASCII(stream, solids);
-                case FileType.STL_Binary: return STLFileData.SaveBinary(stream, solids);
-                case FileType.AMF: return AMFFileData.Save(stream, solids);
-                case FileType.ThreeMF: return ThreeMFFileData.Save(stream, solids);
-                case FileType.OFF: return OFFFileData.Save(stream, solids);
-                case FileType.PLY: return PLYFileData.Save(stream, solids);
-                default: return false;
+                case FileType.STL_ASCII:
+                    return STLFileData.SaveASCII(stream, solids);
+                case FileType.STL_Binary:
+                    return STLFileData.SaveBinary(stream, solids);
+                case FileType.AMF:
+                    return AMFFileData.Save(stream, solids);
+                case FileType.ThreeMF:
+                    return ThreeMFFileData.Save(stream, solids);
+                case FileType.OFF:
+                    return OFFFileData.Save(stream, solids);
+                case FileType.PLY:
+                    return PLYFileData.Save(stream, solids);
+                default:
+                    return false;
             }
         }
 

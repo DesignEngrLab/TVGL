@@ -1,15 +1,19 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
+// Last Modified On : 05-28-2016
+// ***********************************************************************
+// <copyright file="AMFFileData.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
 // ***********************************************************************
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
@@ -21,9 +25,9 @@ namespace TVGL.IOFunctions
     ///     Class AMFFileData.
     /// </summary>
     [XmlRoot("amf")]
-     #if help
+#if help
     internal class AMFFileData : IO
-#else                   
+#else
     public class AMFFileData : IO
 #endif
     {
@@ -88,14 +92,19 @@ namespace TVGL.IOFunctions
         public string Name { get; set; }
 
 
-
+        /// <summary>
+        ///     Opens the specified s.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
         {
             var now = DateTime.Now;
             AMFFileData amfData;
             // Try to read in BINARY format
-            if (AMFFileData.TryUnzippedXMLRead(s, out amfData))
-                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").",3);
+            if (TryUnzippedXMLRead(s, out amfData))
+                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
             else
             {
                 // Reset position of stream
@@ -118,14 +127,14 @@ namespace TVGL.IOFunctions
                     colors = new List<Color>();
                     var solidColor = new Color(amfObject.mesh.volume.color);
                     foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add((amfTriangle.color != null) ? new Color(amfTriangle.color) : solidColor);
+                        colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
                 }
                 else if (amfObject.mesh.volume.Triangles.Any(t => t.color != null))
                 {
                     colors = new List<Color>();
                     var solidColor = new Color(Constants.DefaultColor);
                     foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add((amfTriangle.color != null) ? new Color(amfTriangle.color) : solidColor);
+                        colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
                 }
                 results.Add(new TessellatedSolid(amfData.Name,
                     amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
@@ -153,7 +162,7 @@ namespace TVGL.IOFunctions
             }
             catch (Exception exception)
             {
-                Message.output("Unable to read AMF file:" + exception,1);
+                Message.output("Unable to read AMF file:" + exception, 1);
                 return false;
             }
             return true;
@@ -165,12 +174,20 @@ namespace TVGL.IOFunctions
         /// <param name="stream">The stream.</param>
         /// <param name="amfFileData">The amf file data.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="System.NotImplementedException"></exception>
         internal static bool TryZippedXMLRead(Stream stream, out AMFFileData amfFileData)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        ///     Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
             throw new NotImplementedException();

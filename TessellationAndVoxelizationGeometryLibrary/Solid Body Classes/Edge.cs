@@ -1,4 +1,18 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : Design Engineering Lab
+// Created          : 04-18-2016
+//
+// Last Modified By : Design Engineering Lab
+// Last Modified On : 04-18-2016
+// ***********************************************************************
+// <copyright file="Edge.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+
+using System;
 using System.Collections.Generic;
 using StarMathLib;
 
@@ -9,7 +23,29 @@ namespace TVGL
     /// </summary>
     public class Edge
     {
+        /// <summary>
+        ///     Prevents a default instance of the <see cref="Edge" /> class from being created.
+        /// </summary>
+        private Edge()
+        {
+        }
+
+        /// <summary>
+        ///     Others the vertex.
+        /// </summary>
+        /// <param name="v">The v.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">OtherVertex: Vertex thought to connect to edge, but it doesn't.</exception>
+        /// <exception cref="System.Exception">OtherVertex: Vertex thought to connect to edge, but it doesn't.</exception>
+        public Vertex OtherVertex(Vertex v)
+        {
+            if (v == To) return From;
+            if (v == From) return To;
+            throw new Exception("OtherVertex: Vertex thought to connect to edge, but it doesn't.");
+        }
+
         #region Constructor
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="Edge" /> class.
         /// </summary>
@@ -17,8 +53,9 @@ namespace TVGL
         /// <param name="toVertex">To vertex.</param>
         /// <param name="ownedFace">The face.</param>
         /// <param name="otherFace">The other face.</param>
-        /// <param name="doublyLinkedVertices"></param>
-        /// <param name="edgeReference"></param>
+        /// <param name="doublyLinkedVertices">if set to <c>true</c> [doubly linked vertices].</param>
+        /// <param name="edgeReference">The edge reference.</param>
+        /// <exception cref="Exception"></exception>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
             bool doublyLinkedVertices = true, long edgeReference = 0)
         {
@@ -36,15 +73,15 @@ namespace TVGL
             }
             Vector = new[]
             {
-                (To.Position[0] - From.Position[0]),
-                (To.Position[1] - From.Position[1]),
-                (To.Position[2] - From.Position[2])
+                To.Position[0] - From.Position[0],
+                To.Position[1] - From.Position[1],
+                To.Position[2] - From.Position[2]
             };
-            Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
+            Length = Math.Sqrt(Vector[0]*Vector[0] + Vector[1]*Vector[1] + Vector[2]*Vector[2]);
             //if (Length.IsNegligible(Constants.BaseTolerance)) throw new Exception();
             if (OwnedFace == null || OtherFace == null) return; //No need for the next few functions
             DefineInternalEdgeAngle();
-            Vertices = new List<Vertex> { From, To };
+            Vertices = new List<Vertex> {From, To};
             if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
@@ -53,7 +90,7 @@ namespace TVGL
         /// </summary>
         /// <param name="fromVertex">From vertex.</param>
         /// <param name="toVertex">To vertex.</param>
-        /// <param name="doublyLinkedVertices"></param>
+        /// <param name="doublyLinkedVertices">if set to <c>true</c> [doubly linked vertices].</param>
         public Edge(Vertex fromVertex, Vertex toVertex, bool doublyLinkedVertices)
         {
             From = fromVertex;
@@ -65,92 +102,72 @@ namespace TVGL
             }
             Vector = new[]
             {
-                (To.Position[0] - From.Position[0]),
-                (To.Position[1] - From.Position[1]),
-                (To.Position[2] - From.Position[2])
+                To.Position[0] - From.Position[0],
+                To.Position[1] - From.Position[1],
+                To.Position[2] - From.Position[2]
             };
-            Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
-            Vertices = new List<Vertex> { From, To };
+            Length = Math.Sqrt(Vector[0]*Vector[0] + Vector[1]*Vector[1] + Vector[2]*Vector[2]);
+            Vertices = new List<Vertex> {From, To};
             //if (Length.IsNegligible(Constants.BaseTolerance)) throw new Exception();
             //Since there are no faces yet, internal angle is not calculated.
         }
 
         #endregion
 
-        private Edge()
-        {
-        }
-        /// <summary>
-        ///     Others the vertex.
-        /// </summary>
-        /// <param name="v">The v.</param>
-        /// <returns>Vertex.</returns>
-        /// <exception cref="System.Exception">OtherVertex: Vertex thought to connect to edge, but it doesn't.</exception>
-        public Vertex OtherVertex(Vertex v)
-        {
-            if (v == To) return From;
-            if (v == From) return To;
-            throw new Exception("OtherVertex: Vertex thought to connect to edge, but it doesn't.");
-        }
-
         #region Properties
 
         /// <summary>
         ///     Gets the From Vertex.
         /// </summary>
-        /// <value>
-        ///     From.
-        /// </value>
+        /// <value>From.</value>
         public Vertex From { get; internal set; }
 
         /// <summary>
         ///     Gets the To Vertex.
         /// </summary>
-        /// <value>
-        ///     To.
-        /// </value>
+        /// <value>To.</value>
         public Vertex To { get; internal set; }
 
         /// <summary>
         ///     Gets the length.
         /// </summary>
-        /// <value>
-        ///     The length.
-        /// </value>
+        /// <value>The length.</value>
         public double Length { get; internal set; }
 
         /// <summary>
         ///     Gets the vector.
         /// </summary>
-        /// <value>
-        ///     The vector.
-        /// </value>
+        /// <value>The vector.</value>
         public double[] Vector { get; internal set; }
 
         /// <summary>
         ///     Gets the two vertices that make up an edge.
         /// </summary>
+        /// <value>The vertices.</value>
         public List<Vertex> Vertices { get; internal set; }
 
+        /// <summary>
+        ///     The _other face
+        /// </summary>
         private PolygonalFace _otherFace;
+
+        /// <summary>
+        ///     The _owned face
+        /// </summary>
         private PolygonalFace _ownedFace;
 
         /// <summary>
         ///     Gets edge reference (checksum) value, which equals
         ///     "From.IndexInList" + "To.IndexInList" (think strings)
         /// </summary>
-        /// <value>
-        ///     To.
-        /// </value>
+        /// <value>To.</value>
         internal long EdgeReference { get; set; }
 
         /// <summary>
         ///     Gets the owned face (the face in which the from-to direction makes sense
         ///     - that is, produces the proper cross-product normal).
         /// </summary>
-        /// <value>
-        ///     The owned face.
-        /// </value>
+        /// <value>The owned face.</value>
         public PolygonalFace OwnedFace
         {
             get { return _ownedFace; }
@@ -166,9 +183,7 @@ namespace TVGL
         ///     Gets the other face (the face in which the from-to direction doesn not
         ///     make sense- that is, produces the negative cross-product normal).
         /// </summary>
-        /// <value>
-        ///     The other face.
-        /// </value>
+        /// <value>The other face.</value>
         public PolygonalFace OtherFace
         {
             get { return _otherFace; }
@@ -183,34 +198,29 @@ namespace TVGL
         /// <summary>
         ///     Gets the internal angle in radians.
         /// </summary>
-        /// <value>
-        ///     The internal angle.
-        /// </value>
+        /// <value>The internal angle.</value>
         public double InternalAngle { get; private set; }
 
         /// <summary>
         ///     Gets the curvature of the surface.
         /// </summary>
-        /// <value>
-        ///     The curvature of the surface.
-        /// </value>
+        /// <value>The curvature of the surface.</value>
         public CurvatureType Curvature { get; private set; }
 
         /// <summary>
         ///     Gets a value indicating whether [is part of the convex hull].
         /// </summary>
-        /// <value>
-        ///     <c>true</c> if [is part of the convex hull]; otherwise, <c>false</c>.
-        /// </value>
+        /// <value><c>true</c> if [is part of the convex hull]; otherwise, <c>false</c>.</value>
         public bool PartofConvexHull { get; internal set; }
+
         /// <summary>
-        /// Gets the index in list.
+        ///     Gets the index in list.
         /// </summary>
         /// <value>The index in list.</value>
         public int IndexInList { get; internal set; }
 
         /// <summary>
-        /// Updates the edge vector and length, if a vertex has been moved.
+        ///     Updates the edge vector and length, if a vertex has been moved.
         /// </summary>
         /// <exception cref="Exception"></exception>
         public void Update()
@@ -218,19 +228,20 @@ namespace TVGL
             //Reset the vector, since vertices may have been moved.
             Vector = new[]
             {
-                (To.Position[0] - From.Position[0]),
-                (To.Position[1] - From.Position[1]),
-                (To.Position[2] - From.Position[2])
+                To.Position[0] - From.Position[0],
+                To.Position[1] - From.Position[1],
+                To.Position[2] - From.Position[2]
             };
             Length =
-                Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
+                Math.Sqrt(Vector[0]*Vector[0] + Vector[1]*Vector[1] + Vector[2]*Vector[2]);
             DefineInternalEdgeAngle();
             // if (double.IsNaN(InternalAngle)) throw new Exception();
         }
-        
+
         /// <summary>
         ///     Defines the edge angle.
         /// </summary>
+        /// <exception cref="Exception">not possible</exception>
         private void DefineInternalEdgeAngle()
         {
             /* this is a tricky function. What we need to do is take the dot-product of the normals.
@@ -254,7 +265,7 @@ namespace TVGL
             }
             // is this edge truly owned by the ownedFace? if not reverse
             var faceToIndex = _ownedFace.Vertices.IndexOf(To);
-            var faceNextIndex = (faceToIndex + 1 == _ownedFace.Vertices.Count) ? 0 : faceToIndex + 1;
+            var faceNextIndex = faceToIndex + 1 == _ownedFace.Vertices.Count ? 0 : faceToIndex + 1;
             var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
             var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
             var dotOfCross = Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal);
@@ -270,12 +281,12 @@ namespace TVGL
                 // it would be messed up if both faces thought they owned this edge. If this is the 
                 // case, return the edge has no angle.
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
-                faceNextIndex = (faceToIndex + 1 == _otherFace.Vertices.Count) ? 0 : faceToIndex + 1;
+                faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
                 nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
                 var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
                 if (dotOfCross2 < 0)
-                // neither faces appear to own the edge...must be something wrong
+                    // neither faces appear to own the edge...must be something wrong
                 {
                     InternalAngle = double.NaN;
                     Curvature = CurvatureType.Undefined;
@@ -287,12 +298,12 @@ namespace TVGL
                 // it would be messed up if both faces thought they owned this edge. If this is the 
                 // case, return the edge has no angle.
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
-                faceNextIndex = (faceToIndex + 1 == _otherFace.Vertices.Count) ? 0 : faceToIndex + 1;
+                faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
                 nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
                 var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
                 if (dotOfCross2 > 0)
-                // both faces appear to own the edge...must be something wrong
+                    // both faces appear to own the edge...must be something wrong
                 {
                     InternalAngle = double.NaN;
                     Curvature = CurvatureType.Undefined;
@@ -334,7 +345,7 @@ namespace TVGL
                 otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
                 if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector) < 0)
                 {
-                    InternalAngle = 2 * Math.PI;
+                    InternalAngle = 2*Math.PI;
                     Curvature = CurvatureType.Concave;
                 }
                 else
@@ -359,6 +370,7 @@ namespace TVGL
             }
             if (InternalAngle > Math.PI*2) throw new Exception("not possible");
         }
+
         #endregion
     }
 }

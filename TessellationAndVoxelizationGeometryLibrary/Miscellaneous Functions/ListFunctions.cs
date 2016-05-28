@@ -1,4 +1,18 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : Design Engineering Lab
+// Created          : 04-18-2016
+//
+// Last Modified By : Design Engineering Lab
+// Last Modified On : 04-18-2016
+// ***********************************************************************
+// <copyright file="ListFunctions.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
@@ -6,21 +20,20 @@ using StarMathLib;
 namespace TVGL
 {
     /// <summary>
-    /// Miscilaneous list functions
+    ///     Miscilaneous list functions
     /// </summary>
     public static class ListFunctions
     {
-
         /// <summary>
-        /// Gets all the faces with distinct normals. NOT SURE THIS WORKS PROPERLY.
+        ///     Gets all the faces with distinct normals. NOT SURE THIS WORKS PROPERLY.
         /// </summary>
-        /// <param name="faces"></param>
-        /// <returns></returns>
+        /// <param name="faces">The faces.</param>
+        /// <returns>List&lt;PolygonalFace&gt;.</returns>
         public static List<PolygonalFace> FacesWithDistinctNormals(List<PolygonalFace> faces)
         {
             var distinctList = new List<PolygonalFace>(faces);
             var n = faces.Count;
-            var checkSumMultipliers = new [] { 1, 1e8, 1e16 };
+            var checkSumMultipliers = new[] {1, 1e8, 1e16};
             var checkSums = new double[n];
             for (var i = 0; i < n; i++)
                 checkSums[i] = Math.Abs(checkSumMultipliers.dotProduct(faces[i].Normal));
@@ -29,7 +42,7 @@ namespace TVGL
             for (var i = n - 1; i > 0; i--)
             {
                 if (faces[indices[i]].Normal.subtract(faces[indices[i - 1]].Normal).IsNegligible()
-                    || faces[indices[i]].Normal.subtract(faces[indices[i - 1]].Normal.multiply(-1)).IsNegligible()) 
+                    || faces[indices[i]].Normal.subtract(faces[indices[i - 1]].Normal.multiply(-1)).IsNegligible())
                     distinctList[indices[i]] = null;
             }
             distinctList.RemoveAll(v => v == null);
@@ -37,13 +50,14 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets a list of flats, given a list of faces.
+        ///     Gets a list of flats, given a list of faces.
         /// </summary>
-        /// <param name="faces"></param>
-        /// <param name="tolerance"></param>
-        /// <param name="minSurfaceArea"></param>
-        /// <returns></returns>
-        public static List<Flat> Flats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface, double minSurfaceArea = 0.01)
+        /// <param name="faces">The faces.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="minSurfaceArea">The minimum surface area.</param>
+        /// <returns>List&lt;Flat&gt;.</returns>
+        public static List<Flat> Flats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+            double minSurfaceArea = 0.01)
         {
             var listFaces = new List<PolygonalFace>(faces);
             var listFlats = new List<Flat>();
@@ -57,7 +71,7 @@ namespace TVGL
                 }
                 //Create new flat from start face
                 var flat = new Flat(new List<PolygonalFace> {startFace}) {Tolerance = tolerance};
-                listFaces.Remove(startFace); 
+                listFaces.Remove(startFace);
                 var hashFaces = new HashSet<PolygonalFace>(listFaces);
                 while (stack.Any())
                 {
@@ -75,7 +89,7 @@ namespace TVGL
                                 stack.Push(adjacentFace);
                             }
                         }
-                    } 
+                    }
                 }
 
                 //Criteria of whether it should be a flat should be inserted here.

@@ -1,15 +1,19 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
+// Last Modified On : 05-28-2016
+// ***********************************************************************
+// <copyright file="3MFFileData.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
 // ***********************************************************************
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
@@ -75,14 +79,19 @@ namespace TVGL.IOFunctions
         public string Name { get; set; }
 
 
-
+        /// <summary>
+        ///     Opens the specified s.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
         {
             var now = DateTime.Now;
             ThreeMFFileData threeMFData;
             // Try to read in BINARY format
-            if (ThreeMFFileData.TryUnzippedXMLRead(s, out threeMFData))
-                Message.output("Successfully read in ThreeMF file (" + (DateTime.Now - now) + ").",3);
+            if (TryUnzippedXMLRead(s, out threeMFData))
+                Message.output("Successfully read in ThreeMF file (" + (DateTime.Now - now) + ").", 3);
             else
             {
                 // Reset position of stream
@@ -100,8 +109,8 @@ namespace TVGL.IOFunctions
             foreach (var threeMFObject in threeMFData.Objects)
             {
                 results.Add(new TessellatedSolid(threeMFData.Name,
-                    threeMFObject.mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList(),
-                    threeMFObject.mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(),
+                    threeMFObject.mesh.vertices.Select(v => new[] {v.x, v.y, v.z}).ToList(),
+                    threeMFObject.mesh.triangles.Select(t => new[] {t.v1, t.v2, t.v3}).ToList(),
                     null));
             }
             return results;
@@ -119,13 +128,13 @@ namespace TVGL.IOFunctions
             try
             {
                 var streamReader = new StreamReader(stream);
-                var threeMFDeserializer = new XmlSerializer(typeof(ThreeMFFileData));
-                threeMFFileData = (ThreeMFFileData)threeMFDeserializer.Deserialize(streamReader);
+                var threeMFDeserializer = new XmlSerializer(typeof (ThreeMFFileData));
+                threeMFFileData = (ThreeMFFileData) threeMFDeserializer.Deserialize(streamReader);
                 threeMFFileData.Name = getNameFromStream(stream);
             }
             catch (Exception exception)
             {
-                Message.output("Unable to read ThreeMF file:" + exception,1);
+                Message.output("Unable to read ThreeMF file:" + exception, 1);
                 return false;
             }
             return true;
@@ -137,12 +146,20 @@ namespace TVGL.IOFunctions
         /// <param name="stream">The stream.</param>
         /// <param name="threeMFFileData">The threeMF file data.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="System.NotImplementedException"></exception>
         internal static bool TryZippedXMLRead(Stream stream, out ThreeMFFileData threeMFFileData)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        ///     Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
             throw new NotImplementedException();

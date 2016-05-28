@@ -1,33 +1,43 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : Design Engineering Lab
+// Created          : 04-18-2016
+//
+// Last Modified By : Design Engineering Lab
+// Last Modified On : 05-25-2016
+// ***********************************************************************
+// <copyright file="AreaDecomposition.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using StarMathLib;
 
 namespace TVGL
 {
     /// <summary>
-    /// Outputs cross sectional area along a given axis
+    ///     Outputs cross sectional area along a given axis
     /// </summary>
     public static class AreaDecomposition
     {
         /// <summary>
-        /// Outputs cross sectional area along a given axis. Use a smallar step size for 
-        /// densly triangluated parts. Min offset is used to ensure all edges are straddle 
-        /// edges, and can be a very small value.
+        ///     Runs the specified ts.
         /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="axis"></param>
-        /// <param name="stepSize"></param>
-        /// <param name="minOffset"></param>
-        /// <param name="ignoreNegativeSpace"></param>
-        /// <param name="convexHull2DDecompositon"></param>
-        /// <returns></returns>
-        /// public static List<double[]> Run(TessellatedSolid ts, double[] axis, double stepSize, out List<List<double[]>> individualFaceAreas, 
-        ///   double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false)
+        /// <param name="ts">The ts.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="minOffset">The minimum offset.</param>
+        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
+        /// <param name="convexHull2DDecompositon">if set to <c>true</c> [convex hull2 d decompositon].</param>
+        /// <param name="boundingRectangleArea">if set to <c>true</c> [bounding rectangle area].</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
         public static List<double[]> Run(TessellatedSolid ts, double[] axis, double stepSize,
-            double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false, bool boundingRectangleArea = false)
+            double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false,
+            bool boundingRectangleArea = false)
         {
             List<double[]> pointsOfInterestForFeasability;
             const double maxArea = double.PositiveInfinity;
@@ -36,26 +46,27 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Outputs cross sectional area along a given axis. Use a smallar step size for 
-        /// densly triangluated parts. Min offset is used to ensure all edges are straddle 
-        /// edges, and can be a very small value.
+        ///     Runs the specified ts.
         /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="axis"></param>
-        /// <param name="maxArea"></param>
-        /// <param name="stepSize"></param>
-        /// <param name="minOffset"></param>
-        /// <param name="ignoreNegativeSpace"></param>
-        /// <param name="convexHull2DDecompositon"></param>
-        /// <param name="pointsOfInterestForFeasability"></param>
-        /// <returns></returns>
-        /// public static List<double[]> Run(TessellatedSolid ts, double[] axis, double stepSize, out List<List<double[]>> individualFaceAreas, 
-        ///   double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false)
-        public static List<double[]> Run(TessellatedSolid ts, double[] axis, out List<double[]> pointsOfInterestForFeasability, double maxArea, double stepSize,
-            double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false, bool boundingRectangleArea = false)
+        /// <param name="ts">The ts.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="pointsOfInterestForFeasability">The points of interest for feasability.</param>
+        /// <param name="maxArea">The maximum area.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="minOffset">The minimum offset.</param>
+        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
+        /// <param name="convexHull2DDecompositon">if set to <c>true</c> [convex hull2 d decompositon].</param>
+        /// <param name="boundingRectangleArea">if set to <c>true</c> [bounding rectangle area].</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
+        /// <exception cref="Exception">Pick one or the other. Can't do both at the same time</exception>
+        public static List<double[]> Run(TessellatedSolid ts, double[] axis,
+            out List<double[]> pointsOfInterestForFeasability, double maxArea, double stepSize,
+            double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false,
+            bool boundingRectangleArea = false)
         {
             //individualFaceAreas = new List<List<double[]>>(); //Plot changes for the area of each flat that makes up a slice. (e.g. 2 positive loop areas)
-            if(convexHull2DDecompositon && boundingRectangleArea) throw new Exception("Pick one or the other. Can't do both at the same time");
+            if (convexHull2DDecompositon && boundingRectangleArea)
+                throw new Exception("Pick one or the other. Can't do both at the same time");
             pointsOfInterestForFeasability = new List<double[]>();
             var outputData = new List<double[]>();
             if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
@@ -68,7 +79,7 @@ namespace TVGL
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             List<Vertex> sortedVertices;
             List<int[]> duplicateRanges;
-            MiscFunctions.SortAlongDirection(new[] {axis}, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges );
+            MiscFunctions.SortAlongDirection(new[] {axis}, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
 
             var edgeListDictionary = new Dictionary<int, Edge>();
             var previousDistanceAlongAxis = axis.dotProduct(sortedVertices[0].Position); //This value can be negative
@@ -88,8 +99,10 @@ namespace TVGL
                     var area = 0.0;
                     if (convexHull2DDecompositon) area = ConvexHull2DArea(edgeListDictionary, cuttingPlane);
                     else if (boundingRectangleArea) area = BoundingRectangleArea(edgeListDictionary, cuttingPlane);
-                    else area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
-                    outputData.Add(new []{distance, area}); 
+                    else
+                        area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops,
+                            ignoreNegativeSpace); //Y value (area)
+                    outputData.Add(new[] {distance, area});
 
                     //If the difference is far enough, add another data point right before the current vertex
                     //Use the vertex loops provided from the first pass above
@@ -99,14 +112,15 @@ namespace TVGL
                         cuttingPlane = new Flat(distance2, axis);
                         if (convexHull2DDecompositon) area = ConvexHull2DArea(edgeListDictionary, cuttingPlane);
                         else if (boundingRectangleArea) area = BoundingRectangleArea(edgeListDictionary, cuttingPlane);
-                        else 
+                        else
                         {
                             inputEdgeLoops = outputEdgeLoops;
-                            area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
+                            area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops,
+                                inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
                         }
-                        outputData.Add(new []{distance2, area}); 
+                        outputData.Add(new[] {distance2, area});
                     }
-                    
+
                     //Update the previous distance used to make a data point
                     previousDistanceAlongAxis = distanceAlongAxis;
                 }
@@ -131,38 +145,32 @@ namespace TVGL
 
 
         /// <summary>
-        /// Outputs cross sectional area along a given axis. Use a smallar step size for 
-        /// densly triangluated parts. Min offset is used to ensure all edges are straddle 
-        /// edges, and can be a very small value.
+        ///     Runs the rectangle restricted.
         /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="axis"></param>
-        /// <param name="maxArea"></param>
-        /// <param name="stepSize"></param>
-        /// <param name="minOffset"></param>
-        /// <param name="ignoreNegativeSpace"></param>
-        /// <param name="convexHull2DDecompositon"></param>
-        /// <param name="pointsOfInterestForFeasability"></param>
-        /// <returns></returns>
-        /// public static List<double[]> Run(TessellatedSolid ts, double[] axis, double stepSize, out List<List<double[]>> individualFaceAreas, 
-        ///   double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false)
-        public static List<double[]> RunRectangleRestricted(TessellatedSolid ts, double[] axis, double maxArea, double stepSize,
+        /// <param name="ts">The ts.</param>
+        /// <param name="axis">The axis.</param>
+        /// <param name="maxArea">The maximum area.</param>
+        /// <param name="stepSize">Size of the step.</param>
+        /// <param name="minOffset">The minimum offset.</param>
+        /// <returns>List&lt;System.Double[]&gt;.</returns>
+        public static List<double[]> RunRectangleRestricted(TessellatedSolid ts, double[] axis, double maxArea,
+            double stepSize,
             double minOffset = double.NaN)
         {
             //individualFaceAreas = new List<List<double[]>>(); //Plot changes for the area of each flat that makes up a slice. (e.g. 2 positive loop areas)
             var outputData = new List<double[]>();
-            
+
             if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
-            if (stepSize <= minOffset * 2)
+            if (stepSize <= minOffset*2)
             {
                 //"step size must be at least 2x as large as the min offset");
                 //Change it rather that throwing an exception
-                stepSize = minOffset * 2 + ts.SameTolerance;
+                stepSize = minOffset*2 + ts.SameTolerance;
             }
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             List<Vertex> sortedVertices;
             List<int[]> duplicateRanges;
-            MiscFunctions.SortAlongDirection(new[] { axis }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+            MiscFunctions.SortAlongDirection(new[] {axis}, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
 
             var convexHull2D = new List<Point>();
             var edgeListDictionary = new Dictionary<int, Edge>();
@@ -182,7 +190,7 @@ namespace TVGL
                     var inputEdgeLoops = new List<List<Edge>>();
                     var area = 0.0;
                     area = BoundingRectangleArea(edgeListDictionary, cuttingPlane, ref convexHull2D);
-                    outputData.Add(new[] { distance, area });
+                    outputData.Add(new[] {distance, area});
 
                     //The rate of change of area is not necessarily linear because of the convexHull2D
                     //It would be linear as long as the edges that are causing the convex hull don't change,
@@ -194,21 +202,19 @@ namespace TVGL
                     {
                         cuttingPlane = new Flat(currentDistance, axis);
                         area = BoundingRectangleArea(edgeListDictionary, cuttingPlane, ref convexHull2D);
-                        outputData.Add(new[] { currentDistance, area });
+                        outputData.Add(new[] {currentDistance, area});
                         currentDistance += stepSize;
                     }
 
 
-
-
                     //If the difference is far enough, add another data point right before the current vertex
                     //Use the vertex loops provided from the first pass above
-                    if (difference2 > 3 * minOffset)
+                    if (difference2 > 3*minOffset)
                     {
                         var distance2 = distanceAlongAxis - minOffset; //X value (distance along axis) 
                         cuttingPlane = new Flat(distance2, axis);
                         area = BoundingRectangleArea(edgeListDictionary, cuttingPlane, ref convexHull2D);
-                        outputData.Add(new[] { distance2, area });
+                        outputData.Add(new[] {distance2, area});
                     }
 
                     //Update the previous distance used to make a data point
@@ -233,7 +239,17 @@ namespace TVGL
             return outputData;
         }
 
-        private static double CrossSectionalArea(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane, 
+        /// <summary>
+        ///     Crosses the sectional area.
+        /// </summary>
+        /// <param name="edgeListDictionary">The edge list dictionary.</param>
+        /// <param name="cuttingPlane">The cutting plane.</param>
+        /// <param name="outputEdgeLoops">The output edge loops.</param>
+        /// <param name="intputEdgeLoops">The intput edge loops.</param>
+        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
+        /// <returns>System.Double.</returns>
+        /// <exception cref="Exception">Loop did not complete</exception>
+        private static double CrossSectionalArea(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane,
             out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops, bool ignoreNegativeSpace = false)
         {
             var edgeLoops = new List<List<Edge>>();
@@ -241,8 +257,9 @@ namespace TVGL
             if (intputEdgeLoops.Any())
             {
                 edgeLoops = intputEdgeLoops; //Note that edge loops should all be ordered correctly
-                loops.AddRange(edgeLoops.Select(edgeLoop => edgeLoop.Select(edge => 
-                    MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.To, edge.From)).ToList()));
+                loops.AddRange(edgeLoops.Select(edgeLoop => edgeLoop.Select(edge =>
+                    MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin,
+                        edge.To, edge.From)).ToList()));
             }
             else
             {
@@ -252,14 +269,15 @@ namespace TVGL
                 {
                     var startEdge = edgeList.ElementAt(0).Value;
                     var loop = new List<Vertex>();
-                    var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, startEdge.To, startEdge.From);
+                    var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
+                        cuttingPlane.DistanceToOrigin, startEdge.To, startEdge.From);
                     loop.Add(intersectVertex);
-                    var edgeLoop = new List<Edge>{startEdge};
+                    var edgeLoop = new List<Edge> {startEdge};
                     edgeList.Remove(startEdge.IndexInList);
                     var startFace = startEdge.OwnedFace;
                     var currentFace = startFace;
                     var previousFace = startFace; //This will be set again before its used.
-                    var endFace = startEdge.OtherFace; 
+                    var endFace = startEdge.OtherFace;
                     var nextEdgeFound = false;
                     Edge nextEdge = null;
                     var correctDirection = 0.0;
@@ -288,16 +306,18 @@ namespace TVGL
                         if (nextEdgeFound)
                         {
                             //For the first set of edges, check to make sure this list is going in the proper direction
-                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, nextEdge.To, nextEdge.From);
+                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
+                                cuttingPlane.DistanceToOrigin, nextEdge.To, nextEdge.From);
                             var vector = intersectVertex.Position.subtract(loop.Last().Position);
                             //Use the previous face, since that is the one that contains both of the edges that are in use.
                             var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector);
                             loop.Add(intersectVertex);
                             edgeLoop.Add(nextEdge);
-                            edgeList.Remove(nextEdge.IndexInList); //Note that removing at an index is FASTER than removing a object.
+                            edgeList.Remove(nextEdge.IndexInList);
+                                //Note that removing at an index is FASTER than removing a object.
                             if (Math.Sign(dot) >= 0) correctDirection ++;
                             else reverseDirection ++;
-                        }   
+                        }
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
                     if (reverseDirection > correctDirection)
@@ -322,27 +342,59 @@ namespace TVGL
             return totalArea;
         }
 
+        /// <summary>
+        ///     Convexes the hull2 d area.
+        /// </summary>
+        /// <param name="edgeList">The edge list.</param>
+        /// <param name="cuttingPlane">The cutting plane.</param>
+        /// <returns>System.Double.</returns>
         private static double ConvexHull2DArea(Dictionary<int, Edge> edgeList, Flat cuttingPlane)
         {
             //Don't bother with loops. Just get all the intercept vertices, project to 2d and run 2dConvexHull
-            var vertices = edgeList.Select(edge => MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
+            var vertices =
+                edgeList.Select(
+                    edge =>
+                        MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
+                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
             var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
             return MinimumEnclosure.ConvexHull2DArea(MinimumEnclosure.ConvexHull2DMinimal(points));
         }
 
+        /// <summary>
+        ///     Boundings the rectangle area.
+        /// </summary>
+        /// <param name="edgeList">The edge list.</param>
+        /// <param name="cuttingPlane">The cutting plane.</param>
+        /// <returns>System.Double.</returns>
         private static double BoundingRectangleArea(Dictionary<int, Edge> edgeList, Flat cuttingPlane)
         {
             //Don't bother with loops. Just get all the intercept vertices, project to 2d and run 2dConvexHull
-            var vertices = edgeList.Select(edge => MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
+            var vertices =
+                edgeList.Select(
+                    edge =>
+                        MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
+                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
             var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
             var boundingRectangle = MinimumEnclosure.BoundingRectangle(points, false);
             return boundingRectangle.Area;
         }
 
-        private static double BoundingRectangleArea(Dictionary<int, Edge> edgeList, Flat cuttingPlane, ref List<Point> convexHull2D)
+        /// <summary>
+        ///     Boundings the rectangle area.
+        /// </summary>
+        /// <param name="edgeList">The edge list.</param>
+        /// <param name="cuttingPlane">The cutting plane.</param>
+        /// <param name="convexHull2D">The convex hull2 d.</param>
+        /// <returns>System.Double.</returns>
+        private static double BoundingRectangleArea(Dictionary<int, Edge> edgeList, Flat cuttingPlane,
+            ref List<Point> convexHull2D)
         {
             //Don't bother with loops. Just get all the intercept vertices, project to 2d and run 2dConvexHull
-            var vertices = edgeList.Select(edge => MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
+            var vertices =
+                edgeList.Select(
+                    edge =>
+                        MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
+                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
             var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true).ToList();
             points.AddRange(convexHull2D);
             convexHull2D = MinimumEnclosure.ConvexHull2DMinimal(points);

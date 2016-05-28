@@ -1,12 +1,12 @@
-﻿﻿// ***********************************************************************
+﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt
+// Author           : Design Engineering Lab
 // Created          : 04-17-2015
 //
 // Last Modified By : Matt
 // Last Modified On : 04-17-2015
 // ***********************************************************************
-// <copyright file="ConvexHull2D.cs" company="">
+// <copyright file="ConvexHull2D.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
@@ -21,9 +21,8 @@ namespace TVGL
 {
     public static partial class MinimumEnclosure
     {
-
         /// <summary>
-        /// Finds the area of the convex hull region, given a set of convex hull points.
+        ///     Finds the area of the convex hull region, given a set of convex hull points.
         /// </summary>
         /// <param name="convexHullPoints2D"></param>
         /// <returns></returns>
@@ -39,23 +38,26 @@ namespace TVGL
                 var point2 = convexHullPoints2D[i];
                 var point3 = convexHullPoints2D[i + 1];
                 //Reference: <http://www.mathopenref.com/coordtrianglearea.html>
-                var triangleArea = 0.5 * Math.Abs(point1.X * (point2.Y - point3.Y) + point2.X * (point3.Y - point1.Y) + point3.X * (point1.Y - point2.Y));
+                var triangleArea = 0.5*
+                                   Math.Abs(point1.X*(point2.Y - point3.Y) + point2.X*(point3.Y - point1.Y) +
+                                            point3.X*(point1.Y - point2.Y));
                 totalArea = totalArea + triangleArea;
             }
             return totalArea;
         }
 
         /// <summary>
-        /// Returns the MAXIMMAL 2D convex hull for given list of points. This only works on the x and y coordinates of the
-        /// points. The term maximal refers to the fact that all points that lie on the convex hull are included in the result.
-        /// This is useful if one if trying to identify such points. Otherwise, if the shape is what is important than the
-        /// minimal approach is preferred.
+        ///     Returns the MAXIMMAL 2D convex hull for given list of points. This only works on the x and y coordinates of the
+        ///     points. The term maximal refers to the fact that all points that lie on the convex hull are included in the result.
+        ///     This is useful if one if trying to identify such points. Otherwise, if the shape is what is important than the
+        ///     minimal approach is preferred.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>List&lt;Point&gt;.</returns>
         public static List<Point> ConvexHull2DMaximal(IList<Point> points)
         {
             var origVNum = points.Count;
+
             #region Step 1 : Define Convex Octogon
 
             /* The first step is to quickly identify the three to eight vertices based on the
@@ -148,9 +150,10 @@ namespace TVGL
              * to see that we are not adding the same point twice. Oh, the first one in the list
              * may match the last one or two, hence the double condition. This seems a little slap-dash,
              * but it is efficient to evaluate. */
-            var convexHullCCW = new List<Point> { points[extremePointsIndices[0]] };
+            var convexHullCCW = new List<Point> {points[extremePointsIndices[0]]};
             for (var i = 1; i < 8; i++)
-                if (extremePointsIndices[i] != extremePointsIndices[i - 1] && extremePointsIndices[i] != extremePointsIndices[0])
+                if (extremePointsIndices[i] != extremePointsIndices[i - 1] &&
+                    extremePointsIndices[i] != extremePointsIndices[0])
                     convexHullCCW.Add(points[extremePointsIndices[i]]);
 
             #endregion
@@ -175,17 +178,23 @@ namespace TVGL
             double magnitude;
             for (var i = 0; i < last; i++)
             {
-                edgeUnitVectors[i] = new[] { convexHullCCW[i + 1][0] - convexHullCCW[i][0],
-                    convexHullCCW[i + 1][1] - convexHullCCW[i][1] };
-                magnitude = Math.Sqrt(edgeUnitVectors[i][0] * edgeUnitVectors[i][0] +
-                                      edgeUnitVectors[i][1] * edgeUnitVectors[i][1]);
+                edgeUnitVectors[i] = new[]
+                {
+                    convexHullCCW[i + 1][0] - convexHullCCW[i][0],
+                    convexHullCCW[i + 1][1] - convexHullCCW[i][1]
+                };
+                magnitude = Math.Sqrt(edgeUnitVectors[i][0]*edgeUnitVectors[i][0] +
+                                      edgeUnitVectors[i][1]*edgeUnitVectors[i][1]);
                 edgeUnitVectors[i][0] /= magnitude;
                 edgeUnitVectors[i][1] /= magnitude;
             }
-            edgeUnitVectors[last] = new[] { convexHullCCW[0][0] - convexHullCCW[last][0],
-                convexHullCCW[0][1] - convexHullCCW[last][1] };
-            magnitude = Math.Sqrt(edgeUnitVectors[last][0] * edgeUnitVectors[last][0] +
-                                  edgeUnitVectors[last][1] * edgeUnitVectors[last][1]);
+            edgeUnitVectors[last] = new[]
+            {
+                convexHullCCW[0][0] - convexHullCCW[last][0],
+                convexHullCCW[0][1] - convexHullCCW[last][1]
+            };
+            magnitude = Math.Sqrt(edgeUnitVectors[last][0]*edgeUnitVectors[last][0] +
+                                  edgeUnitVectors[last][1]*edgeUnitVectors[last][1]);
             edgeUnitVectors[last][0] /= magnitude;
             edgeUnitVectors[last][1] /= magnitude;
 
@@ -214,11 +223,12 @@ namespace TVGL
                      * It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
                     if (StarMath.crossProduct2(edgeUnitVectors[j], b) > 0) continue;
-                    if (StarMath.dotProduct(edgeUnitVectors[j], b) < 0) continue;
-                    hullCands[j].Add(new PointAlong { distanceAlong = edgeUnitVectors[j].dotProduct(b, 2), point = point });
+                    if (edgeUnitVectors[j].dotProduct(b) < 0) continue;
+                    hullCands[j].Add(new PointAlong {distanceAlong = edgeUnitVectors[j].dotProduct(b, 2), point = point});
                     break;
                 }
             }
+
             #endregion
 
             #region Step 3: now check the remaining hull candidates
@@ -278,20 +288,23 @@ namespace TVGL
             }
 
             #endregion
+
             return convexHullCCW;
         }
 
         /// <summary>
-        /// Returns the MINIMAL 2D convex hull for given list of points. This only works on the x and y coordinates of the
-        /// points. The term minimal refers to the fact that only the necessary points that define the convex hull are included
-        /// in the result. This is useful if one if trying to identify the shape of the hull. It is slightly faster than the maximal
-        /// approach and it will likely lead to less exceptions in other methods (such as bounding box).
+        ///     Returns the MINIMAL 2D convex hull for given list of points. This only works on the x and y coordinates of the
+        ///     points. The term minimal refers to the fact that only the necessary points that define the convex hull are included
+        ///     in the result. This is useful if one if trying to identify the shape of the hull. It is slightly faster than the
+        ///     maximal
+        ///     approach and it will likely lead to less exceptions in other methods (such as bounding box).
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>List&lt;Point&gt;.</returns>
         public static List<Point> ConvexHull2DMinimal(IList<Point> points)
         {
             var origVNum = points.Count;
+
             #region Step 1 : Define Convex Octogon
 
             /* The first step is to quickly identify the three to eight vertices based on the
@@ -385,9 +398,10 @@ namespace TVGL
              * to see that we are not adding the same point twice. Oh, the first one in the list
              * may match the last one or two, hence the double condition. This seems a little slap-dash,
              * but it is efficient to evaluate. */
-            var convexHullCCW = new List<Point> { points[extremePointsIndices[0]] };
-            for (var i = 2; i < 8; i=i+2)
-                if (extremePointsIndices[i] != extremePointsIndices[i - 2] && extremePointsIndices[i] != extremePointsIndices[0])
+            var convexHullCCW = new List<Point> {points[extremePointsIndices[0]]};
+            for (var i = 2; i < 8; i = i + 2)
+                if (extremePointsIndices[i] != extremePointsIndices[i - 2] &&
+                    extremePointsIndices[i] != extremePointsIndices[0])
                     convexHullCCW.Add(points[extremePointsIndices[i]]);
 
             #endregion
@@ -450,12 +464,12 @@ namespace TVGL
                      *** for the minimal shape, we do not want to include collinear points so a zero means reject the point. ***
                      * It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
                      * add it, we break out of the inner loop (gotta save time where we can!). */
-                    if (StarMath.crossProduct2(edgeUnitVectors[j], b) > - Constants.BaseTolerance) continue;
-                    
+                    if (StarMath.crossProduct2(edgeUnitVectors[j], b) > -Constants.BaseTolerance) continue;
+
                     //ToDo: remove these next two lines later, if everything is fixed
                     // var dot = StarMath.dotProduct(edgeUnitVectors[j], b.normalize());
                     //if (dot <= 0) continue; //|| dot.IsPracticallySame(1.0, Constants.BaseTolerance) ) continue;
-                    hullCands[j].Add(new PointAlong()
+                    hullCands[j].Add(new PointAlong
                     {
                         distanceAlong = edgeUnitVectors[j].dotProduct(b, 2),
                         point = point
@@ -463,6 +477,7 @@ namespace TVGL
                     break;
                 }
             }
+
             #endregion
 
             #region Step 3: now check the remaining hull candidates
@@ -537,7 +552,7 @@ namespace TVGL
                     convexHullCCW.Remove(tempCCW[k - 1]);
                 }
                 if (k == tempCCW.Count - 1)
-                //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
+                    //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
                 {
                     if (tempCCW[k].X < convexHullCCW.First().X ||
                         (tempCCW[k].X == convexHullCCW.First().X && tempCCW[k].Y < convexHullCCW.First().Y))
@@ -557,14 +572,14 @@ namespace TVGL
             {
                 var vector1 = tempCCW[k].Position2D.subtract(tempCCW[k - 1].Position2D).normalize();
                 var vector2 = tempCCW[k + 1].Position2D.subtract(tempCCW[k].Position2D).normalize();
-                var dot = StarMath.dotProduct(vector1, vector2);
+                var dot = vector1.dotProduct(vector2);
                 if (dot.IsPracticallySame(1.0, Constants.BaseTolerance))
                 {
                     convexHullCCW.Remove(tempCCW[k]);
                 }
                 if (dot == double.NaN) throw new Exception();
                 if (k == tempCCW.Count - 2)
-                //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
+                    //If this is the last vertex, we will need to check is the lowest X, lowest Y value changed
                 {
                     if (tempCCW[k].X < convexHullCCW.First().X ||
                         (tempCCW[k].X == convexHullCCW.First().X && tempCCW[k].Y < convexHullCCW.First().Y))
@@ -576,6 +591,7 @@ namespace TVGL
             }
 
             #endregion
+
             return convexHullCCW;
         }
 
@@ -583,7 +599,6 @@ namespace TVGL
         {
             internal Point point;
             internal double distanceAlong;
-
         }
     }
 }

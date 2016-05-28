@@ -1,44 +1,78 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : Design Engineering Lab
+// Created          : 04-18-2016
+//
+// Last Modified By : Design Engineering Lab
+// Last Modified On : 04-18-2016
+// ***********************************************************************
+// <copyright file="GaussianSphere.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
 
 namespace TVGL.Enclosure_Operations
 {
+    /// <summary>
+    ///     Class GaussSphereArc.
+    /// </summary>
     internal class GaussSphereArc
     {
+        /// <summary>
+        ///     The edge
+        /// </summary>
         internal readonly Edge Edge;
+
+        /// <summary>
+        ///     To face
+        /// </summary>
         internal readonly PolygonalFace ToFace;
 
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="GaussSphereArc" /> class.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="toFace">To face.</param>
         internal GaussSphereArc(Edge edge, PolygonalFace toFace)
         {
             Edge = edge;
             ToFace = toFace;
         }
     }
+
     /// <summary>
-    /// Gaussian Sphere for a polyhedron
+    ///     Gaussian Sphere for a polyhedron
     /// </summary>
     /// NOTE: Using spherical coordinates from mathematics (r, θ, φ), since it follows the right hand rule.
-    /// Where r is the radial distance (r = 1 for the unit circle), θ is the azimuthal angle (XY and θ equal to or between 0 and 360), 
-    /// and φ is the polar angle (From Z axis and φ is equal to or between 0 and 180). 
+    /// Where r is the radial distance (r = 1 for the unit circle), θ is the azimuthal angle (XY and θ equal to or between 0 and 360),
+    /// and φ is the polar angle (From Z axis and φ is equal to or between 0 and 180).
     public struct GaussianSphere
     {
         /// <summary>
-        /// The volume of the bounding box.
+        ///     The volume of the bounding box.
         /// </summary>
         internal List<Node> Nodes;
 
         /// <summary>
-        /// The Directions are the three unit vectors that describe the orientation of the box.
+        ///     The Directions are the three unit vectors that describe the orientation of the box.
         /// </summary>
         internal List<Arc> Arcs;
 
+        /// <summary>
+        ///     The reference edges
+        /// </summary>
         internal List<Edge> ReferenceEdges;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="GaussianSphere"/> class.
+        ///     Initializes a new instance of the <see cref="GaussianSphere" /> class.
         /// </summary>
+        /// <param name="ts">The ts.</param>
         internal GaussianSphere(TessellatedSolid ts)
         {
             Nodes = new List<Node>();
@@ -48,8 +82,8 @@ namespace TVGL.Enclosure_Operations
             foreach (var triangle in ts.ConvexHull.Faces)
             {
                 var sameIndex = Nodes.FindIndex(p => Math.Abs(p.Vector[0] - triangle.Normal[0]) < 0.0001 &&
-                    Math.Abs(p.Vector[1] - triangle.Normal[1]) < 0.0001 &&
-                    Math.Abs(p.Vector[2] - triangle.Normal[2]) < 0.0001);
+                                                     Math.Abs(p.Vector[1] - triangle.Normal[1]) < 0.0001 &&
+                                                     Math.Abs(p.Vector[2] - triangle.Normal[2]) < 0.0001);
                 if (sameIndex >= 0) //If the normal already exists, 
                 {
                     var node = Nodes[sameIndex];
@@ -83,9 +117,9 @@ namespace TVGL.Enclosure_Operations
                     {
                         var otherNormal = edge.OtherFace.Normal;
                         var j = Nodes.FindIndex(p => Math.Abs(p.Vector[0] - otherNormal[0]) < 0.0001 &&
-                            Math.Abs(p.Vector[1] - otherNormal[1]) < 0.0001 &&
-                            Math.Abs(p.Vector[2] - otherNormal[2]) < 0.0001);
-                        var referenceIndex = new[] { i, j };
+                                                     Math.Abs(p.Vector[1] - otherNormal[1]) < 0.0001 &&
+                                                     Math.Abs(p.Vector[2] - otherNormal[2]) < 0.0001);
+                        var referenceIndex = new[] {i, j};
                         ReferenceEdges.Add(edge);
                         referenceIndices.Add(referenceIndex);
                     }
@@ -105,21 +139,68 @@ namespace TVGL.Enclosure_Operations
         }
     }
 
+    /// <summary>
+    ///     Class Node.
+    /// </summary>
     internal class Node
     {
-        internal double[] Vector;
-        internal double X;
-        internal double Y;
-        internal double Z;
-        internal double Theta;
-        internal double Phi;
+        /// <summary>
+        ///     The arcs
+        /// </summary>
         internal List<Arc> Arcs;
-        internal List<PolygonalFace> ReferenceFaces;
+
+        /// <summary>
+        ///     The phi
+        /// </summary>
+        internal double Phi;
+
+        /// <summary>
+        ///     The reference edges
+        /// </summary>
         internal List<Edge> ReferenceEdges;
+
+        /// <summary>
+        ///     The reference faces
+        /// </summary>
+        internal List<PolygonalFace> ReferenceFaces;
+
+        /// <summary>
+        ///     The reference vertices
+        /// </summary>
         internal List<Vertex> ReferenceVertices;
+
+        /// <summary>
+        ///     The theta
+        /// </summary>
+        internal double Theta;
+
+        /// <summary>
+        ///     The vector
+        /// </summary>
+        internal double[] Vector;
+
+        /// <summary>
+        ///     The x
+        /// </summary>
+        internal double X;
+
+        /// <summary>
+        ///     The y
+        /// </summary>
+        internal double Y;
+
+        /// <summary>
+        ///     The z
+        /// </summary>
+        internal double Z;
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Node" /> class.
+        /// </summary>
+        /// <param name="triangle">The triangle.</param>
         internal Node(PolygonalFace triangle)
         {
-            ReferenceFaces = new List<PolygonalFace> { triangle };
+            ReferenceFaces = new List<PolygonalFace> {triangle};
             ReferenceEdges = triangle.Edges.ToList();
             ReferenceVertices = new List<Vertex>(); //Create a null list, to build up later.
             Vector = triangle.Normal; //Set unit normal as location on sphere
@@ -132,15 +213,15 @@ namespace TVGL.Enclosure_Operations
             Theta = 0.0;
             if (triangle.Normal[0] < 0) //If both negative or just x, add 180 (Q2 and Q3)
             {
-                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + Math.PI;
+                Theta = Math.Atan(triangle.Normal[1]/triangle.Normal[0]) + Math.PI;
             }
             else if (triangle.Normal[1] < 0) //If only y is negative, add 360 (Q4)
             {
-                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]) + 2 * Math.PI;
+                Theta = Math.Atan(triangle.Normal[1]/triangle.Normal[0]) + 2*Math.PI;
             }
             else //Everything is positive (Q1).
             {
-                Theta = Math.Atan(triangle.Normal[1] / triangle.Normal[0]);
+                Theta = Math.Atan(triangle.Normal[1]/triangle.Normal[0]);
             }
 
             //Calculate polar angle.  Note that Acos is bounded 0 <= φ <= 180. 
@@ -148,24 +229,57 @@ namespace TVGL.Enclosure_Operations
             Phi = Math.Acos(triangle.Normal[2]);
         }
 
+        /// <summary>
+        ///     Adds the arc reference.
+        /// </summary>
+        /// <param name="arc">The arc.</param>
         internal void AddArcReference(Arc arc)
         {
             Arcs.Add(arc);
         }
     }
 
+    /// <summary>
+    ///     Class Arc.
+    /// </summary>
     internal class Arc
     {
+        /// <summary>
+        ///     The arc length
+        /// </summary>
         internal double ArcLength;
-        internal List<Node> Nodes;
-        internal List<Vertex> ReferenceVertices;
-        internal Edge ReferenceEdge;
+
+        /// <summary>
+        ///     The direction
+        /// </summary>
         internal double[] Direction;
+
+        /// <summary>
+        ///     The nodes
+        /// </summary>
+        internal List<Node> Nodes;
+
+        /// <summary>
+        ///     The reference edge
+        /// </summary>
+        internal Edge ReferenceEdge;
+
+        /// <summary>
+        ///     The reference vertices
+        /// </summary>
+        internal List<Vertex> ReferenceVertices;
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Arc" /> class.
+        /// </summary>
+        /// <param name="node1">The node1.</param>
+        /// <param name="node2">The node2.</param>
+        /// <param name="edge">The edge.</param>
         internal Arc(Node node1, Node node2, Edge edge)
         {
-            Nodes = new List<Node> { node1, node2 };
+            Nodes = new List<Node> {node1, node2};
             ReferenceEdge = edge;
-            ReferenceVertices = new List<Vertex> { edge.To, edge.From };
+            ReferenceVertices = new List<Vertex> {edge.To, edge.From};
             //Calculate arc length. Base on the following answer, where r = 1 for our unit circle.
             //http://math.stackexchange.com/questions/231221/great-arc-distance-between-two-points-on-a-unit-sphere
             //Note that the arc length must be the smaller of the two directions around the sphere. Acos will take care of this.
@@ -175,12 +289,19 @@ namespace TVGL.Enclosure_Operations
             //Set the direction of the arc (θ, φ), based on the azimuthal angle and the polar angle respectively.
             //Direction based on node1 to node2. 
             var azimuthal = node2.Theta - node1.Theta;
-            if (azimuthal > Math.PI) azimuthal = azimuthal - 2 * Math.PI;
-            if (azimuthal <= -Math.PI) azimuthal = azimuthal + 2 * Math.PI;
+            if (azimuthal > Math.PI) azimuthal = azimuthal - 2*Math.PI;
+            if (azimuthal <= -Math.PI) azimuthal = azimuthal + 2*Math.PI;
             var polar = node2.Phi - node1.Phi;
-            Direction = new[] { azimuthal, polar };
+            Direction = new[] {azimuthal, polar};
         }
 
+        /// <summary>
+        ///     Intersects the specified arc1.
+        /// </summary>
+        /// <param name="arc1">The arc1.</param>
+        /// <param name="arc2">The arc2.</param>
+        /// <param name="intersection">The intersection.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal bool Intersect(Arc arc1, Arc arc2, out Vertex intersection)
         {
             intersection = null;
@@ -201,8 +322,8 @@ namespace TVGL.Enclosure_Operations
             //    norm1[2].IsPracticallySame(-norm2[2])) return true; //All points intersect
             //Find points of intersection between two planes
             var position1 = norm1.crossProduct(norm2).normalize();
-            var position2 = new[] { -position1[0], -position1[1], -position1[2] };
-            var vertices = new[] { new Vertex(position1), new Vertex(position2), };
+            var position2 = new[] {-position1[0], -position1[1], -position1[2]};
+            var vertices = new[] {new Vertex(position1), new Vertex(position2)};
             //Check to see if the intersections are on the arcs
             for (var i = 0; i < 2; i++)
             {
@@ -225,6 +346,11 @@ namespace TVGL.Enclosure_Operations
         //Rotation is given in polar coordinates with (delta_azimuthal, delta_polar)
         //θ is the azimuthal angle (in XY plane, measured CCW from positive X axis && 0 <= θ <= 360), 
         //and φ is the polar angle (From positive Z axis && 0 <= φ <= 180).
+        /// <summary>
+        ///     Nexts the node along rotation.
+        /// </summary>
+        /// <param name="rotation">The rotation.</param>
+        /// <returns>Node.</returns>
         internal Node NextNodeAlongRotation(double[] rotation)
         {
             //If dot product is positive, it matches the arc's direction which was based on node1 to node2.
@@ -233,6 +359,11 @@ namespace TVGL.Enclosure_Operations
         }
 
         //Given the used node and an arc, get the other node
+        /// <summary>
+        ///     Nexts the node.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <returns>Node.</returns>
         internal Node NextNode(Node node)
         {
             var nextNode = Nodes[0] == node ? Nodes[1] : Nodes[0];
@@ -241,22 +372,37 @@ namespace TVGL.Enclosure_Operations
     }
 
     /// <summary>
-    /// Great Circle based on a gaussian sphere. 
+    ///     Great Circle based on a gaussian sphere.
     /// </summary>
     public class GreatCircleAlongArc
     {
-        internal List<Arc> ArcList;
-        internal List<Intersection> Intersections;
-        internal List<Vertex> ReferenceVertices;
-        internal double[] Normal { get; set; }
         /// <summary>
-        /// The volume of the bounding box. 
-        /// Note that antipodal points would result in an infinite number of great circles, but can
-        /// be ignored since we are assuming the thickness of this solid is greater than 0.
+        ///     The arc list
         /// </summary>
+        internal List<Arc> ArcList;
+
+        /// <summary>
+        ///     The intersections
+        /// </summary>
+        internal List<Intersection> Intersections;
+
+        /// <summary>
+        ///     The reference vertices
+        /// </summary>
+        internal List<Vertex> ReferenceVertices;
+
+        /// <summary>
+        ///     The volume of the bounding box.
+        ///     Note that antipodal points would result in an infinite number of great circles, but can
+        ///     be ignored since we are assuming the thickness of this solid is greater than 0.
+        /// </summary>
+        /// <param name="gaussianSphere">The gaussian sphere.</param>
+        /// <param name="vector1">The vector1.</param>
+        /// <param name="vector2">The vector2.</param>
+        /// <param name="referenceArc">The reference arc.</param>
         internal GreatCircleAlongArc(GaussianSphere gaussianSphere, double[] vector1, double[] vector2, Arc referenceArc)
         {
-            var antiPoint1 = new[] { -referenceArc.Nodes[0].X, -referenceArc.Nodes[0].Y, -referenceArc.Nodes[0].Z };
+            var antiPoint1 = new[] {-referenceArc.Nodes[0].X, -referenceArc.Nodes[0].Y, -referenceArc.Nodes[0].Z};
             //var antiPoint2 = new[] { -referenceArc.Nodes[1].X, -referenceArc.Nodes[1].Y, -referenceArc.Nodes[1].Z };
             ArcList = new List<Arc>();
             Intersections = new List<Intersection>();
@@ -285,14 +431,14 @@ namespace TVGL.Enclosure_Operations
                 double[][] vertices;
                 if (segmentBool)
                 {
-                    vertices = new[] { arc.Nodes[0].Vector, arc.Nodes[1].Vector };
+                    vertices = new[] {arc.Nodes[0].Vector, arc.Nodes[1].Vector};
                 }
                 else
                 {
                     //Find points of intersection between two planes
                     var position1 = Normal.crossProduct(norm2).normalize();
-                    var position2 = new[] { -position1[0], -position1[1], -position1[2] };
-                    vertices = new[] { position1, position2 };
+                    var position2 = new[] {-position1[0], -position1[1], -position1[2]};
+                    vertices = new[] {position1, position2};
                 }
 
 
@@ -311,7 +457,8 @@ namespace TVGL.Enclosure_Operations
                         //Check to see if the intersection is on the arc. We already know it is on the great circle.
                         //It is ok if the vertex == the node.Vector.
                         var total = l1 - l2 - l3;
-                        if ((l2.IsNegligible() && l3.IsNegligible()) || Math.Abs(total) > 0.00001) continue; //Go to next.
+                        if ((l2.IsNegligible() && l3.IsNegligible()) || Math.Abs(total) > 0.00001)
+                            continue; //Go to next.
                     }
                     var intersectionVertex = new Vertex(vertices[i]);
 
@@ -335,7 +482,7 @@ namespace TVGL.Enclosure_Operations
                     }
                     //Case 3: Inbetween antiPoint1 and antiPoint2 
                     //Case 4: Inbetween antiPoint2 and Point1
-                    intersection = new Intersection(intersectionVertex, 2 * Math.PI - l3, arc);
+                    intersection = new Intersection(intersectionVertex, 2*Math.PI - l3, arc);
                     tempIntersections.Add(intersection);
 
                     //Only one intersection is possible per arc, since the case of multiple intersections is captured above.
@@ -351,7 +498,6 @@ namespace TVGL.Enclosure_Operations
                 if (Math.Abs(intersection1.SphericalDistance - intersection2.SphericalDistance) > 0.00001)
                 {
                     Intersections.Add(intersection1);
-
                 }
                 //Add the last intersection to the list if it was no the same as the current
                 if (i == tempIntersections2.Count - 2)
@@ -361,6 +507,18 @@ namespace TVGL.Enclosure_Operations
             }
         }
 
+        /// <summary>
+        ///     Gets or sets the normal.
+        /// </summary>
+        /// <value>The normal.</value>
+        internal double[] Normal { get; set; }
+
+        /// <summary>
+        ///     Arcs the length.
+        /// </summary>
+        /// <param name="double1">The double1.</param>
+        /// <param name="double2">The double2.</param>
+        /// <returns>System.Double.</returns>
         internal double ArcLength(double[] double1, double[] double2)
         {
             var arcLength = Math.Acos(double1.dotProduct(double2));
@@ -371,20 +529,36 @@ namespace TVGL.Enclosure_Operations
 
 
     /// <summary>
-    /// Great Circle based on a gaussian sphere. 
+    ///     Great Circle based on a gaussian sphere.
     /// </summary>
     public class GreatCircleOrthogonalToArc
     {
-        internal List<Arc> ArcList;
-        internal List<Intersection> Intersections;
-        internal List<Vertex> ReferenceVertices;
-        internal double[] Normal { get; set; }
         /// <summary>
-        /// The volume of the bounding box. 
-        /// Note that antipodal points would result in an infinite number of great circles, but can
-        /// be ignored since we are assuming the thickness of this solid is greater than 0.
+        ///     The arc list
         /// </summary>
-        internal GreatCircleOrthogonalToArc(GaussianSphere gaussianSphere, double[] vector1, double[] vector2, Arc referenceArc)
+        internal List<Arc> ArcList;
+
+        /// <summary>
+        ///     The intersections
+        /// </summary>
+        internal List<Intersection> Intersections;
+
+        /// <summary>
+        ///     The reference vertices
+        /// </summary>
+        internal List<Vertex> ReferenceVertices;
+
+        /// <summary>
+        ///     The volume of the bounding box.
+        ///     Note that antipodal points would result in an infinite number of great circles, but can
+        ///     be ignored since we are assuming the thickness of this solid is greater than 0.
+        /// </summary>
+        /// <param name="gaussianSphere">The gaussian sphere.</param>
+        /// <param name="vector1">The vector1.</param>
+        /// <param name="vector2">The vector2.</param>
+        /// <param name="referenceArc">The reference arc.</param>
+        internal GreatCircleOrthogonalToArc(GaussianSphere gaussianSphere, double[] vector1, double[] vector2,
+            Arc referenceArc)
         {
             ArcList = new List<Arc>();
             Intersections = new List<Intersection>();
@@ -416,8 +590,8 @@ namespace TVGL.Enclosure_Operations
 
                 //Find points of intersection between two planes
                 var position1 = Normal.crossProduct(norm2).normalize();
-                var position2 = new[] { -position1[0], -position1[1], -position1[2] };
-                var vertices = new[] { position1, position2 };
+                var position2 = new[] {-position1[0], -position1[1], -position1[2]};
+                var vertices = new[] {position1, position2};
                 //Check to see if the intersection is on the arc. We already know it is on the great circle.
                 for (var i = 0; i < 2; i++)
                 {
@@ -432,16 +606,16 @@ namespace TVGL.Enclosure_Operations
                     //Subtract the reference arc direction vector from the node and determine where it intersects the great circle
                     var theta = referenceArc.Direction[0] - node.Theta;
                     var phi = referenceArc.Direction[1] - node.Phi;
-                    var x = Math.Cos(theta) * Math.Sin(phi);
-                    var y = Math.Sin(theta) * Math.Sin(phi);
+                    var x = Math.Cos(theta)*Math.Sin(phi);
+                    var y = Math.Sin(theta)*Math.Sin(phi);
                     var z = Math.Cos(phi);
-                    var point = new[] { x, y, z };
+                    var point = new[] {x, y, z};
                     //Create two planes given the great circle and this new temporary arc
                     var tempNorm = point.crossProduct(node.Vector);
                     //Find points of intersection between two planes
                     var position3 = Normal.crossProduct(tempNorm).normalize();
-                    var position4 = new[] { -position3[0], -position3[1], -position3[2] };
-                    var vertices2 = new[] { position3, position4 };
+                    var position4 = new[] {-position3[0], -position3[1], -position3[2]};
+                    var vertices2 = new[] {position3, position4};
                     for (var j = 0; j < 2; j++)
                     {
                         var tempL1 = ArcLength(node.Vector, point);
@@ -484,6 +658,18 @@ namespace TVGL.Enclosure_Operations
             }
         }
 
+        /// <summary>
+        ///     Gets or sets the normal.
+        /// </summary>
+        /// <value>The normal.</value>
+        internal double[] Normal { get; set; }
+
+        /// <summary>
+        ///     Arcs the length.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>System.Double.</returns>
         internal double ArcLength(double[] a, double[] b)
         {
             var arcLength = Math.Acos(a.dotProduct(b));
@@ -493,15 +679,36 @@ namespace TVGL.Enclosure_Operations
     }
 
     /// <summary>
-    /// Intersection Class retains information about the type of arc intersection
+    ///     Intersection Class retains information about the type of arc intersection
     /// </summary>
     internal class Intersection
     {
+        /// <summary>
+        ///     The node
+        /// </summary>
         internal Node Node;
-        internal double SphericalDistance;
-        internal Vertex Vertex;
+
+        /// <summary>
+        ///     The reference arc
+        /// </summary>
         internal Arc ReferenceArc;
 
+        /// <summary>
+        ///     The spherical distance
+        /// </summary>
+        internal double SphericalDistance;
+
+        /// <summary>
+        ///     The vertex
+        /// </summary>
+        internal Vertex Vertex;
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Intersection" /> class.
+        /// </summary>
+        /// <param name="node">The node.</param>
+        /// <param name="sphericalDistance">The spherical distance.</param>
+        /// <param name="referenceArc">The reference arc.</param>
         internal Intersection(Node node, double sphericalDistance, Arc referenceArc)
         {
             Node = node;
@@ -509,6 +716,13 @@ namespace TVGL.Enclosure_Operations
             ReferenceArc = referenceArc;
             Vertex = null;
         }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Intersection" /> class.
+        /// </summary>
+        /// <param name="vertex">The vertex.</param>
+        /// <param name="sphericalDistance">The spherical distance.</param>
+        /// <param name="referenceArc">The reference arc.</param>
         internal Intersection(Vertex vertex, double sphericalDistance, Arc referenceArc)
         {
             Node = null;
@@ -518,4 +732,3 @@ namespace TVGL.Enclosure_Operations
         }
     }
 }
-
