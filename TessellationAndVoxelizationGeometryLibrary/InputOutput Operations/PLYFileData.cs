@@ -80,12 +80,6 @@ namespace TVGL.IOFunctions
         public List<int[]> FaceToVertexIndices { get; }
 
         /// <summary>
-        ///     Gets the file header.
-        /// </summary>
-        /// <value>The header.</value>
-        public string Name { get; private set; }
-
-        /// <summary>
         ///     Gets the comments.
         /// </summary>
         /// <value>The comments.</value>
@@ -111,12 +105,13 @@ namespace TVGL.IOFunctions
 
 
         /// <summary>
-        ///     Opens the specified s.
+        /// Opens the specified s.
         /// </summary>
         /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
         /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
+        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
             var now = DateTime.Now;
             PLYFileData plyData;
@@ -130,7 +125,7 @@ namespace TVGL.IOFunctions
             }
             return new List<TessellatedSolid>
             {
-                new TessellatedSolid(plyData.Name, plyData.Vertices, plyData.FaceToVertexIndices,
+                new TessellatedSolid(filename, plyData.Vertices, plyData.FaceToVertexIndices,
                     plyData.HasColorSpecified ? plyData.Colors : null)
             };
         }
@@ -169,7 +164,6 @@ namespace TVGL.IOFunctions
                 }
                 if (!successful) return false;
             }
-            plyData.Name = getNameFromStream(stream);
             return true;
         }
 

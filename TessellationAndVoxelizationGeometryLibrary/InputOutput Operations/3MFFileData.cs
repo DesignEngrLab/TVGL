@@ -71,21 +71,15 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The language.</value>
         public string lang { get; set; }
-
+        
         /// <summary>
-        ///     Gets or sets the name.
-        /// </summary>
-        /// <value>The name.</value>
-        public string Name { get; set; }
-
-
-        /// <summary>
-        ///     Opens the specified s.
+        /// Opens the specified s.
         /// </summary>
         /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
         /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
+        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
             var now = DateTime.Now;
             ThreeMFFileData threeMFData;
@@ -108,7 +102,7 @@ namespace TVGL.IOFunctions
             var results = new List<TessellatedSolid>();
             foreach (var threeMFObject in threeMFData.Objects)
             {
-                results.Add(new TessellatedSolid(threeMFData.Name,
+                results.Add(new TessellatedSolid(filename,
                     threeMFObject.mesh.vertices.Select(v => new[] {v.x, v.y, v.z}).ToList(),
                     threeMFObject.mesh.triangles.Select(t => new[] {t.v1, t.v2, t.v3}).ToList(),
                     null));
@@ -130,7 +124,6 @@ namespace TVGL.IOFunctions
                 var streamReader = new StreamReader(stream);
                 var threeMFDeserializer = new XmlSerializer(typeof (ThreeMFFileData));
                 threeMFFileData = (ThreeMFFileData) threeMFDeserializer.Deserialize(streamReader);
-                threeMFFileData.Name = getNameFromStream(stream);
             }
             catch (Exception exception)
             {

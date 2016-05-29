@@ -65,12 +65,6 @@ namespace TVGL.IOFunctions
         public List<int[]> FaceToVertexIndices { get; }
 
         /// <summary>
-        ///     Gets the file header.
-        /// </summary>
-        /// <value>The header.</value>
-        public string Name { get; private set; }
-
-        /// <summary>
         ///     Gets the number vertices.
         /// </summary>
         /// <value>The number vertices.</value>
@@ -114,12 +108,13 @@ namespace TVGL.IOFunctions
 
 
         /// <summary>
-        ///     Opens the specified s.
+        /// Opens the specified s.
         /// </summary>
         /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
         /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
+        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
             var now = DateTime.Now;
             OFFFileData offData;
@@ -141,7 +136,7 @@ namespace TVGL.IOFunctions
             }
             return new List<TessellatedSolid>
             {
-                new TessellatedSolid(offData.Name, offData.Vertices, offData.FaceToVertexIndices,
+                new TessellatedSolid(filename, offData.Vertices, offData.FaceToVertexIndices,
                     offData.HasColorSpecified ? offData.Colors : null)
             };
         }
@@ -167,9 +162,9 @@ namespace TVGL.IOFunctions
             double[] point;
             if (TryParseDoubleArray(ReadLine(reader), out point))
             {
-                offData.NumVertices = (int) Math.Round(point[0], 0);
-                offData.NumFaces = (int) Math.Round(point[1], 0);
-                offData.NumEdges = (int) Math.Round(point[2], 0);
+                offData.NumVertices = (int)Math.Round(point[0], 0);
+                offData.NumFaces = (int)Math.Round(point[1], 0);
+                offData.NumEdges = (int)Math.Round(point[2], 0);
             }
             else return false;
 
@@ -196,17 +191,17 @@ namespace TVGL.IOFunctions
                 double[] numbers;
                 if (!TryParseDoubleArray(line, out numbers)) return false;
 
-                var numVerts = (int) Math.Round(numbers[0], 0);
+                var numVerts = (int)Math.Round(numbers[0], 0);
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = (int) Math.Round(numbers[1 + j], 0);
+                    vertIndices[j] = (int)Math.Round(numbers[1 + j], 0);
                 offData.FaceToVertexIndices.Add(vertIndices);
 
                 if (numbers.GetLength(0) == 1 + numVerts + 3)
                 {
-                    var r = (float) numbers[1 + numVerts];
-                    var g = (float) numbers[2 + numVerts];
-                    var b = (float) numbers[3 + numVerts];
+                    var r = (float)numbers[1 + numVerts];
+                    var g = (float)numbers[2 + numVerts];
+                    var b = (float)numbers[3 + numVerts];
                     var currentColor = new Color(1f, r, g, b);
                     offData.HasColorSpecified = true;
                     if (offData._lastColor == null || !offData._lastColor.Equals(currentColor))
@@ -214,7 +209,6 @@ namespace TVGL.IOFunctions
                 }
                 offData.Colors.Add(offData._lastColor);
             }
-            offData.Name = getNameFromStream(stream);
             return true;
         }
 

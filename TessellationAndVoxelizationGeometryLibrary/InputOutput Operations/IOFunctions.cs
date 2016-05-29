@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace TVGL.IOFunctions
 {
@@ -59,20 +60,16 @@ namespace TVGL.IOFunctions
             switch (extension)
             {
                 case "stl":
-                    tessellatedSolids = STLFileData.Open(s, inParallel); // Standard Tessellation or StereoLithography
+                    tessellatedSolids = STLFileData.Open(s,filename, inParallel); // Standard Tessellation or StereoLithography
                     break;
                 case "ply":
-                    tessellatedSolids = PLYFileData.Open(s, inParallel); // Standard Tessellation or StereoLithography
+                    tessellatedSolids = PLYFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
                     break;
-                //case "3ds": return IO.Open3DS(s);   //3D Studio
-                //case "lwo": return IO.OpenLWO(s);  //Lightwave
-                //case "obj": return IO.OpenOBJ(s); //Wavefront
-                //case "objx": return IO.OpenOBJX(s);  //Wavefront
                 case "amf":
-                    tessellatedSolids = AMFFileData.Open(s, inParallel);
+                    tessellatedSolids = AMFFileData.Open(s,filename, inParallel);
                     break;
                 case "off":
-                    tessellatedSolids = OFFFileData.Open(s, inParallel);
+                    tessellatedSolids = OFFFileData.Open(s, filename, inParallel);
                         // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
                 default:
@@ -88,23 +85,6 @@ namespace TVGL.IOFunctions
             }
 
             return tessellatedSolids;
-        }
-
-        /// <summary>
-        ///     Gets the name from stream.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <returns>System.String.</returns>
-        protected static string getNameFromStream(Stream stream)
-        {
-            var type = stream.GetType();
-            var namePropertyInfo = type.GetProperty("Name");
-            var name = (string) namePropertyInfo.GetValue(stream, null);
-            var lastDirectorySeparator = name.LastIndexOf("\\");
-            var fileExtensionIndex = name.LastIndexOf(".");
-            return lastDirectorySeparator < fileExtensionIndex
-                ? name.Substring(lastDirectorySeparator + 1, fileExtensionIndex - lastDirectorySeparator - 1)
-                : name.Substring(lastDirectorySeparator + 1, name.Length - lastDirectorySeparator - 1);
         }
 
         /// <summary>

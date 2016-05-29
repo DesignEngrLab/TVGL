@@ -183,9 +183,9 @@ namespace TVGL.IOFunctions
         /// <param name="stream">The stream.</param>
         /// <param name="stlData">The STL data.</param>
         /// <returns>True if the model was loaded successfully.</returns>
-        internal static bool TryReadAscii(Stream stream, out List<STLFileData> stlData)
+        internal static bool TryReadAscii(Stream stream,string filename, out List<STLFileData> stlData)
         {
-            var defaultName = getNameFromStream(stream) + "_";
+            var defaultName = filename + "_";
             var solidNum = 0;
             var reader = new StreamReader(stream);
             stlData = new List<STLFileData>();
@@ -223,7 +223,7 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="EndOfStreamException">Incomplete file</exception>
         /// <exception cref="System.IO.EndOfStreamException">Incomplete file</exception>
-        internal static bool TryReadBinary(Stream stream, out List<STLFileData> stlData)
+        internal static bool TryReadBinary(Stream stream,string filename, out List<STLFileData> stlData)
         {
             var length = stream.Length;
             stlData = null;
@@ -238,10 +238,10 @@ namespace TVGL.IOFunctions
             stlSolid1.Name = decoder.GetString(reader.ReadBytes(80), 0, 80).Trim(' ');
             stlSolid1.Name = stlSolid1.Name.Replace("solid", "").Trim(' ');
             if (string.IsNullOrWhiteSpace(stlSolid1.Name))
-                stlSolid1.Name = getNameFromStream(stream);
+                stlSolid1.Name = filename;
             var numberTriangles = ReadUInt32(reader);
 
-            if (length - 84 != numberTriangles*50)
+            if (length - 84 != numberTriangles * 50)
             {
                 return false;
             }
@@ -253,36 +253,37 @@ namespace TVGL.IOFunctions
             {
                 stlSolid1.ReadTriangle(reader);
             }
-            stlData = new List<STLFileData>(new[] {stlSolid1});
+            stlData = new List<STLFileData>(new[] { stlSolid1 });
             return true;
         }
 
         #region STL Binary Reading Functions
 
         /// <summary>
-        ///     Opens the STL.
+        /// Opens the specified s.
         /// </summary>
         /// <param name="s">The s.</param>
-        /// <param name="inParallel">The in parallel.</param>
-        /// <returns>TessellatedSolid.</returns>
-        internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
+        /// <param name="filename">The filename.</param>
+        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
             var typeString = "";
             var now = DateTime.Now;
             List<STLFileData> stlData;
             // Try to read in BINARY format
-            if (TryReadBinary(s, out stlData))
+            if (TryReadBinary(s, filename, out stlData))
                 typeString = "binary STL";
             else
             {
                 // Reset position of stream
                 s.Position = 0;
                 // Read in ASCII format
-                if (TryReadAscii(s, out stlData))
+                if (TryReadAscii(s, filename, out stlData))
                     typeString = "ASCII STL";
                 else
                 {
-                    Message.output("Unable to read in STL file called {0}", getNameFromStream(s), 1);
+                    Message.output("Unable to read in STL file called {0}", filename, 1);
                     return null;
                 }
             }
@@ -291,7 +292,7 @@ namespace TVGL.IOFunctions
                 results.Add(new TessellatedSolid(stlFileData.Name, stlFileData.Normals, stlFileData.Vertices,
                     stlFileData.HasColorSpecified ? stlFileData.Colors : null));
             Message.output(
-                "Successfully read in " + typeString + " file called " + getNameFromStream(s) + " in " +
+                "Successfully read in " + typeString + " file called " + filename + " in " +
                 (DateTime.Now - now).TotalSeconds + " seconds.", 4);
             return results;
         }
@@ -306,22 +307,22 @@ namespace TVGL.IOFunctions
             var nj = ReadFloatToDouble(reader);
             var nk = ReadFloatToDouble(reader);
 
-            var n = new[] {ni, nj, nk};
+            var n = new[] { ni, nj, nk };
 
             var x1 = ReadFloatToDouble(reader);
             var y1 = ReadFloatToDouble(reader);
             var z1 = ReadFloatToDouble(reader);
-            var v1 = new[] {x1, y1, z1};
+            var v1 = new[] { x1, y1, z1 };
 
             var x2 = ReadFloatToDouble(reader);
             var y2 = ReadFloatToDouble(reader);
             var z2 = ReadFloatToDouble(reader);
-            var v2 = new[] {x2, y2, z2};
+            var v2 = new[] { x2, y2, z2 };
 
             var x3 = ReadFloatToDouble(reader);
             var y3 = ReadFloatToDouble(reader);
             var z3 = ReadFloatToDouble(reader);
-            var v3 = new[] {x3, y3, z3};
+            var v3 = new[] { x3, y3, z3 };
 
             var attrib = Convert.ToString(ReadUInt16(reader), 2).PadLeft(16, '0').ToCharArray();
             var hasColor = attrib[0].Equals('1');
@@ -333,21 +334,21 @@ namespace TVGL.IOFunctions
                 blue = attrib[13].Equals('1') ? blue + 4 : blue;
                 blue = attrib[12].Equals('1') ? blue + 8 : blue;
                 blue = attrib[11].Equals('1') ? blue + 16 : blue;
-                var b = blue*8;
+                var b = blue * 8;
 
                 var green = attrib[10].Equals('1') ? 1 : 0;
                 green = attrib[9].Equals('1') ? green + 2 : green;
                 green = attrib[8].Equals('1') ? green + 4 : green;
                 green = attrib[7].Equals('1') ? green + 8 : green;
                 green = attrib[6].Equals('1') ? green + 16 : green;
-                var g = green*8;
+                var g = green * 8;
 
                 var red = attrib[5].Equals('1') ? 1 : 0;
                 red = attrib[4].Equals('1') ? red + 2 : red;
                 red = attrib[3].Equals('1') ? red + 4 : red;
                 red = attrib[2].Equals('1') ? red + 8 : red;
                 red = attrib[1].Equals('1') ? red + 16 : red;
-                var r = red*8;
+                var r = red * 8;
 
                 var currentColor = new Color(Convert.ToByte(r), Convert.ToByte(g), Convert.ToByte(b));
                 HasColorSpecified = true;
@@ -356,7 +357,7 @@ namespace TVGL.IOFunctions
             }
             Colors.Add(_lastColor);
             Normals.Add(n);
-            Vertices.Add(new List<double[]> {v1, v2, v3});
+            Vertices.Add(new List<double[]> { v1, v2, v3 });
         }
 
         /// <summary>

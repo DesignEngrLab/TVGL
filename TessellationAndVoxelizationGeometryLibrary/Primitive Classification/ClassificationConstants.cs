@@ -226,7 +226,8 @@ namespace TVGL
             /// <returns>System.Int32[].</returns>
             internal static int[,] readingEdgesRules2()
             {
-                var assembly = Assembly.GetExecutingAssembly();
+                var assembly = typeof (Primitive_Classification).GetTypeInfo().Assembly;
+                    //Assembly.GetExecutingAssembly();
                 var resourceName = "TVGL.Primitive_Classification.NewEdgeRules.csv";
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
                 {
@@ -240,7 +241,8 @@ namespace TVGL
             /// <returns>System.Int32[].</returns>
             internal static int[,] readingFacesRules()
             {
-                var assembly = Assembly.GetExecutingAssembly();
+                var assembly = typeof(Primitive_Classification).GetTypeInfo().Assembly;
+                //var assembly = Assembly.GetExecutingAssembly();
                 var resourceName = "TVGL.Primitive_Classification.NewFaRules.csv";
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
                 {
