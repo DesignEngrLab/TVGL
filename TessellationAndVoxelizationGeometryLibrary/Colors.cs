@@ -1,632 +1,811 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
+// Last Modified On : 05-26-2016
 // ***********************************************************************
-// <copyright file="Colors.cs" company="">
+// <copyright file="Colors.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
-
-using amf;
-
 namespace TVGL
 {
     /// <summary>
-    /// Enum KnownColors
+    ///     Enum KnownColors
     /// </summary>
     public enum KnownColors : uint
     {
         /// <summary>
-        /// The unknown color
+        ///     The unknown color
         /// </summary>
         UnknownColor = 1U,
+
         /// <summary>
-        /// The transparent
+        ///     The transparent
         /// </summary>
         Transparent = 16777215U,
+
         /// <summary>
-        /// The black
+        ///     The black
         /// </summary>
         Black = 4278190080U,
+
         /// <summary>
-        /// The navy
+        ///     The navy
         /// </summary>
         Navy = 4278190208U,
+
         /// <summary>
-        /// The dark blue
+        ///     The dark blue
         /// </summary>
         DarkBlue = 4278190219U,
+
         /// <summary>
-        /// The medium blue
+        ///     The medium blue
         /// </summary>
         MediumBlue = 4278190285U,
+
         /// <summary>
-        /// The blue
+        ///     The blue
         /// </summary>
         Blue = 4278190335U,
+
         /// <summary>
-        /// The dark green
+        ///     The dark green
         /// </summary>
         DarkGreen = 4278215680U,
+
         /// <summary>
-        /// The green
+        ///     The green
         /// </summary>
         Green = 4278222848U,
+
         /// <summary>
-        /// The teal
+        ///     The teal
         /// </summary>
         Teal = 4278222976U,
+
         /// <summary>
-        /// The dark cyan
+        ///     The dark cyan
         /// </summary>
         DarkCyan = 4278225803U,
+
         /// <summary>
-        /// The deep sky blue
+        ///     The deep sky blue
         /// </summary>
         DeepSkyBlue = 4278239231U,
+
         /// <summary>
-        /// The dark turquoise
+        ///     The dark turquoise
         /// </summary>
         DarkTurquoise = 4278243025U,
+
         /// <summary>
-        /// The medium spring green
+        ///     The medium spring green
         /// </summary>
         MediumSpringGreen = 4278254234U,
+
         /// <summary>
-        /// The lime
+        ///     The lime
         /// </summary>
         Lime = 4278255360U,
+
         /// <summary>
-        /// The spring green
+        ///     The spring green
         /// </summary>
         SpringGreen = 4278255487U,
+
         /// <summary>
-        /// The aqua
+        ///     The aqua
         /// </summary>
         Aqua = 4278255615U,
+
         /// <summary>
-        /// The cyan
+        ///     The cyan
         /// </summary>
         Cyan = 4278255615U,
+
         /// <summary>
-        /// The midnight blue
+        ///     The midnight blue
         /// </summary>
         MidnightBlue = 4279834992U,
+
         /// <summary>
-        /// The dodger blue
+        ///     The dodger blue
         /// </summary>
         DodgerBlue = 4280193279U,
+
         /// <summary>
-        /// The light sea green
+        ///     The light sea green
         /// </summary>
         LightSeaGreen = 4280332970U,
+
         /// <summary>
-        /// The forest green
+        ///     The forest green
         /// </summary>
         ForestGreen = 4280453922U,
+
         /// <summary>
-        /// The sea green
+        ///     The sea green
         /// </summary>
         SeaGreen = 4281240407U,
+
         /// <summary>
-        /// The dark slate gray
+        ///     The dark slate gray
         /// </summary>
         DarkSlateGray = 4281290575U,
+
         /// <summary>
-        /// The lime green
+        ///     The lime green
         /// </summary>
         LimeGreen = 4281519410U,
+
         /// <summary>
-        /// The medium sea green
+        ///     The medium sea green
         /// </summary>
         MediumSeaGreen = 4282168177U,
+
         /// <summary>
-        /// The turquoise
+        ///     The turquoise
         /// </summary>
         Turquoise = 4282441936U,
+
         /// <summary>
-        /// The royal blue
+        ///     The royal blue
         /// </summary>
         RoyalBlue = 4282477025U,
+
         /// <summary>
-        /// The steel blue
+        ///     The steel blue
         /// </summary>
         SteelBlue = 4282811060U,
+
         /// <summary>
-        /// The dark slate blue
+        ///     The dark slate blue
         /// </summary>
         DarkSlateBlue = 4282924427U,
+
         /// <summary>
-        /// The medium turquoise
+        ///     The medium turquoise
         /// </summary>
         MediumTurquoise = 4282962380U,
+
         /// <summary>
-        /// The indigo
+        ///     The indigo
         /// </summary>
         Indigo = 4283105410U,
+
         /// <summary>
-        /// The dark olive green
+        ///     The dark olive green
         /// </summary>
         DarkOliveGreen = 4283788079U,
+
         /// <summary>
-        /// The cadet blue
+        ///     The cadet blue
         /// </summary>
         CadetBlue = 4284456608U,
+
         /// <summary>
-        /// The cornflower blue
+        ///     The cornflower blue
         /// </summary>
         CornflowerBlue = 4284782061U,
+
         /// <summary>
-        /// The medium aquamarine
+        ///     The medium aquamarine
         /// </summary>
         MediumAquamarine = 4284927402U,
+
         /// <summary>
-        /// The dim gray
+        ///     The dim gray
         /// </summary>
         DimGray = 4285098345U,
+
         /// <summary>
-        /// The slate blue
+        ///     The slate blue
         /// </summary>
         SlateBlue = 4285160141U,
+
         /// <summary>
-        /// The olive drab
+        ///     The olive drab
         /// </summary>
         OliveDrab = 4285238819U,
+
         /// <summary>
-        /// The slate gray
+        ///     The slate gray
         /// </summary>
         SlateGray = 4285563024U,
+
         /// <summary>
-        /// The light slate gray
+        ///     The light slate gray
         /// </summary>
         LightSlateGray = 4286023833U,
+
         /// <summary>
-        /// The medium slate blue
+        ///     The medium slate blue
         /// </summary>
         MediumSlateBlue = 4286277870U,
+
         /// <summary>
-        /// The lawn green
+        ///     The lawn green
         /// </summary>
         LawnGreen = 4286381056U,
+
         /// <summary>
-        /// The chartreuse
+        ///     The chartreuse
         /// </summary>
         Chartreuse = 4286578432U,
+
         /// <summary>
-        /// The aquamarine
+        ///     The aquamarine
         /// </summary>
         Aquamarine = 4286578644U,
+
         /// <summary>
-        /// The maroon
+        ///     The maroon
         /// </summary>
         Maroon = 4286578688U,
+
         /// <summary>
-        /// The purple
+        ///     The purple
         /// </summary>
         Purple = 4286578816U,
+
         /// <summary>
-        /// The olive
+        ///     The olive
         /// </summary>
         Olive = 4286611456U,
+
         /// <summary>
-        /// The gray
+        ///     The gray
         /// </summary>
         Gray = 4286611584U,
+
         /// <summary>
-        /// The sky blue
+        ///     The sky blue
         /// </summary>
         SkyBlue = 4287090411U,
+
         /// <summary>
-        /// The light sky blue
+        ///     The light sky blue
         /// </summary>
         LightSkyBlue = 4287090426U,
+
         /// <summary>
-        /// The blue violet
+        ///     The blue violet
         /// </summary>
         BlueViolet = 4287245282U,
+
         /// <summary>
-        /// The dark red
+        ///     The dark red
         /// </summary>
         DarkRed = 4287299584U,
+
         /// <summary>
-        /// The dark magenta
+        ///     The dark magenta
         /// </summary>
         DarkMagenta = 4287299723U,
+
         /// <summary>
-        /// The saddle brown
+        ///     The saddle brown
         /// </summary>
         SaddleBrown = 4287317267U,
+
         /// <summary>
-        /// The dark sea green
+        ///     The dark sea green
         /// </summary>
         DarkSeaGreen = 4287609999U,
+
         /// <summary>
-        /// The light green
+        ///     The light green
         /// </summary>
         LightGreen = 4287688336U,
+
         /// <summary>
-        /// The medium purple
+        ///     The medium purple
         /// </summary>
         MediumPurple = 4287852763U,
+
         /// <summary>
-        /// The dark violet
+        ///     The dark violet
         /// </summary>
         DarkViolet = 4287889619U,
+
         /// <summary>
-        /// The pale green
+        ///     The pale green
         /// </summary>
         PaleGreen = 4288215960U,
+
         /// <summary>
-        /// The dark orchid
+        ///     The dark orchid
         /// </summary>
         DarkOrchid = 4288230092U,
+
         /// <summary>
-        /// The yellow green
+        ///     The yellow green
         /// </summary>
         YellowGreen = 4288335154U,
+
         /// <summary>
-        /// The sienna
+        ///     The sienna
         /// </summary>
         Sienna = 4288696877U,
+
         /// <summary>
-        /// The brown
+        ///     The brown
         /// </summary>
         Brown = 4289014314U,
+
         /// <summary>
-        /// The dark gray
+        ///     The dark gray
         /// </summary>
         DarkGray = 4289309097U,
+
         /// <summary>
-        /// The light blue
+        ///     The light blue
         /// </summary>
         LightBlue = 4289583334U,
+
         /// <summary>
-        /// The green yellow
+        ///     The green yellow
         /// </summary>
         GreenYellow = 4289593135U,
+
         /// <summary>
-        /// The pale turquoise
+        ///     The pale turquoise
         /// </summary>
         PaleTurquoise = 4289720046U,
+
         /// <summary>
-        /// The light steel blue
+        ///     The light steel blue
         /// </summary>
         LightSteelBlue = 4289774814U,
+
         /// <summary>
-        /// The powder blue
+        ///     The powder blue
         /// </summary>
         PowderBlue = 4289781990U,
+
         /// <summary>
-        /// The firebrick
+        ///     The firebrick
         /// </summary>
         Firebrick = 4289864226U,
+
         /// <summary>
-        /// The dark goldenrod
+        ///     The dark goldenrod
         /// </summary>
         DarkGoldenrod = 4290283019U,
+
         /// <summary>
-        /// The medium orchid
+        ///     The medium orchid
         /// </summary>
         MediumOrchid = 4290401747U,
+
         /// <summary>
-        /// The rosy brown
+        ///     The rosy brown
         /// </summary>
         RosyBrown = 4290547599U,
+
         /// <summary>
-        /// The dark khaki
+        ///     The dark khaki
         /// </summary>
         DarkKhaki = 4290623339U,
+
         /// <summary>
-        /// The silver
+        ///     The silver
         /// </summary>
         Silver = 4290822336U,
+
         /// <summary>
-        /// The medium violet red
+        ///     The medium violet red
         /// </summary>
         MediumVioletRed = 4291237253U,
+
         /// <summary>
-        /// The indian red
+        ///     The indian red
         /// </summary>
         IndianRed = 4291648604U,
+
         /// <summary>
-        /// The peru
+        ///     The peru
         /// </summary>
         Peru = 4291659071U,
+
         /// <summary>
-        /// The chocolate
+        ///     The chocolate
         /// </summary>
         Chocolate = 4291979550U,
+
         /// <summary>
-        /// The tan
+        ///     The tan
         /// </summary>
         Tan = 4291998860U,
+
         /// <summary>
-        /// The light gray
+        ///     The light gray
         /// </summary>
         LightGray = 4292072403U,
+
         /// <summary>
-        /// The thistle
+        ///     The thistle
         /// </summary>
         Thistle = 4292394968U,
+
         /// <summary>
-        /// The orchid
+        ///     The orchid
         /// </summary>
         Orchid = 4292505814U,
+
         /// <summary>
-        /// The goldenrod
+        ///     The goldenrod
         /// </summary>
         Goldenrod = 4292519200U,
+
         /// <summary>
-        /// The pale violet red
+        ///     The pale violet red
         /// </summary>
         PaleVioletRed = 4292571283U,
+
         /// <summary>
-        /// The crimson
+        ///     The crimson
         /// </summary>
         Crimson = 4292613180U,
+
         /// <summary>
-        /// The gainsboro
+        ///     The gainsboro
         /// </summary>
         Gainsboro = 4292664540U,
+
         /// <summary>
-        /// The plum
+        ///     The plum
         /// </summary>
         Plum = 4292714717U,
+
         /// <summary>
-        /// The burly wood
+        ///     The burly wood
         /// </summary>
         BurlyWood = 4292786311U,
+
         /// <summary>
-        /// The light cyan
+        ///     The light cyan
         /// </summary>
         LightCyan = 4292935679U,
+
         /// <summary>
-        /// The lavender
+        ///     The lavender
         /// </summary>
         Lavender = 4293322490U,
+
         /// <summary>
-        /// The dark salmon
+        ///     The dark salmon
         /// </summary>
         DarkSalmon = 4293498490U,
+
         /// <summary>
-        /// The violet
+        ///     The violet
         /// </summary>
         Violet = 4293821166U,
+
         /// <summary>
-        /// The pale goldenrod
+        ///     The pale goldenrod
         /// </summary>
         PaleGoldenrod = 4293847210U,
+
         /// <summary>
-        /// The light coral
+        ///     The light coral
         /// </summary>
         LightCoral = 4293951616U,
+
         /// <summary>
-        /// The khaki
+        ///     The khaki
         /// </summary>
         Khaki = 4293977740U,
+
         /// <summary>
-        /// The alice blue
+        ///     The alice blue
         /// </summary>
         AliceBlue = 4293982463U,
+
         /// <summary>
-        /// The honeydew
+        ///     The honeydew
         /// </summary>
         Honeydew = 4293984240U,
+
         /// <summary>
-        /// The azure
+        ///     The azure
         /// </summary>
         Azure = 4293984255U,
+
         /// <summary>
-        /// The sandy brown
+        ///     The sandy brown
         /// </summary>
         SandyBrown = 4294222944U,
+
         /// <summary>
-        /// The wheat
+        ///     The wheat
         /// </summary>
         Wheat = 4294303411U,
+
         /// <summary>
-        /// The beige
+        ///     The beige
         /// </summary>
         Beige = 4294309340U,
+
         /// <summary>
-        /// The white smoke
+        ///     The white smoke
         /// </summary>
         WhiteSmoke = 4294309365U,
+
         /// <summary>
-        /// The mint cream
+        ///     The mint cream
         /// </summary>
         MintCream = 4294311930U,
+
         /// <summary>
-        /// The ghost white
+        ///     The ghost white
         /// </summary>
         GhostWhite = 4294506751U,
+
         /// <summary>
-        /// The salmon
+        ///     The salmon
         /// </summary>
         Salmon = 4294606962U,
+
         /// <summary>
-        /// The antique white
+        ///     The antique white
         /// </summary>
         AntiqueWhite = 4294634455U,
+
         /// <summary>
-        /// The linen
+        ///     The linen
         /// </summary>
         Linen = 4294635750U,
+
         /// <summary>
-        /// The light goldenrod yellow
+        ///     The light goldenrod yellow
         /// </summary>
         LightGoldenrodYellow = 4294638290U,
+
         /// <summary>
-        /// The old lace
+        ///     The old lace
         /// </summary>
         OldLace = 4294833638U,
+
         /// <summary>
-        /// The red
+        ///     The red
         /// </summary>
         Red = 4294901760U,
+
         /// <summary>
-        /// The fuchsia
+        ///     The fuchsia
         /// </summary>
         Fuchsia = 4294902015U,
+
         /// <summary>
-        /// The magenta
+        ///     The magenta
         /// </summary>
         Magenta = 4294902015U,
+
         /// <summary>
-        /// The deep pink
+        ///     The deep pink
         /// </summary>
         DeepPink = 4294907027U,
+
         /// <summary>
-        /// The orange red
+        ///     The orange red
         /// </summary>
         OrangeRed = 4294919424U,
+
         /// <summary>
-        /// The tomato
+        ///     The tomato
         /// </summary>
         Tomato = 4294927175U,
+
         /// <summary>
-        /// The hot pink
+        ///     The hot pink
         /// </summary>
         HotPink = 4294928820U,
+
         /// <summary>
-        /// The coral
+        ///     The coral
         /// </summary>
         Coral = 4294934352U,
+
         /// <summary>
-        /// The dark orange
+        ///     The dark orange
         /// </summary>
         DarkOrange = 4294937600U,
+
         /// <summary>
-        /// The light salmon
+        ///     The light salmon
         /// </summary>
         LightSalmon = 4294942842U,
+
         /// <summary>
-        /// The orange
+        ///     The orange
         /// </summary>
         Orange = 4294944000U,
+
         /// <summary>
-        /// The light pink
+        ///     The light pink
         /// </summary>
         LightPink = 4294948545U,
+
         /// <summary>
-        /// The pink
+        ///     The pink
         /// </summary>
         Pink = 4294951115U,
+
         /// <summary>
-        /// The gold
+        ///     The gold
         /// </summary>
         Gold = 4294956800U,
+
         /// <summary>
-        /// The peach puff
+        ///     The peach puff
         /// </summary>
         PeachPuff = 4294957753U,
+
         /// <summary>
-        /// The navajo white
+        ///     The navajo white
         /// </summary>
         NavajoWhite = 4294958765U,
+
         /// <summary>
-        /// The moccasin
+        ///     The moccasin
         /// </summary>
         Moccasin = 4294960309U,
+
         /// <summary>
-        /// The bisque
+        ///     The bisque
         /// </summary>
         Bisque = 4294960324U,
+
         /// <summary>
-        /// The misty rose
+        ///     The misty rose
         /// </summary>
         MistyRose = 4294960353U,
+
         /// <summary>
-        /// The blanched almond
+        ///     The blanched almond
         /// </summary>
         BlanchedAlmond = 4294962125U,
+
         /// <summary>
-        /// The papaya whip
+        ///     The papaya whip
         /// </summary>
         PapayaWhip = 4294963157U,
+
         /// <summary>
-        /// The lavender blush
+        ///     The lavender blush
         /// </summary>
         LavenderBlush = 4294963445U,
+
         /// <summary>
-        /// The sea shell
+        ///     The sea shell
         /// </summary>
         SeaShell = 4294964718U,
+
         /// <summary>
-        /// The cornsilk
+        ///     The cornsilk
         /// </summary>
         Cornsilk = 4294965468U,
+
         /// <summary>
-        /// The lemon chiffon
+        ///     The lemon chiffon
         /// </summary>
         LemonChiffon = 4294965965U,
+
         /// <summary>
-        /// The floral white
+        ///     The floral white
         /// </summary>
         FloralWhite = 4294966000U,
+
         /// <summary>
-        /// The snow
+        ///     The snow
         /// </summary>
         Snow = 4294966010U,
+
         /// <summary>
-        /// The yellow
+        ///     The yellow
         /// </summary>
         Yellow = 4294967040U,
+
         /// <summary>
-        /// The light yellow
+        ///     The light yellow
         /// </summary>
         LightYellow = 4294967264U,
+
         /// <summary>
-        /// The ivory
+        ///     The ivory
         /// </summary>
         Ivory = 4294967280U,
+
         /// <summary>
-        /// The white
+        ///     The white
         /// </summary>
-        White = 4294967295U,
+        White = 4294967295U
     }
 
     /// <summary>
-    /// Struct Color
+    ///     Struct Color
     /// </summary>
     public class Color
     {
+        /// <summary>
+        ///     Converts the specified value.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>System.Single.</returns>
+        private static float Convert(byte value)
+        {
+            return value/255f;
+        }
+
+        /// <summary>
+        ///     Converts the specified value.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <returns>System.Byte.</returns>
+        private static byte Convert(float value)
+        {
+            if (value < 0.0f)
+                return 0;
+            if (value > 1.0f)
+                return 255;
+            return (byte) (value*255f);
+        }
+
+        /// <summary>
+        ///     Checks if color is equal to another color
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns><c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Color)) return false;
+            var otherColor = (Color) obj;
+            return A == otherColor.A && B == otherColor.B
+                   && G == otherColor.G && R == otherColor.R;
+        }
+
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Color"/> struct.
+        ///     Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
         /// <param name="knownColor">Color of the known.</param>
         public Color(KnownColors knownColor)
-            : this((uint)knownColor)
+            : this((uint) knownColor)
         {
         }
 
-        internal Color(AMF_Color amfColor)
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Color" /> class.
+        /// </summary>
+        /// <param name="amfColor">Color of the amf.</param>
+        internal Color(amf.AMF_Color amfColor)
             : this(amfColor.a, amfColor.r, amfColor.g, amfColor.b)
         {
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Color"/> struct.
+        ///     Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
         /// <param name="argb">The ARGB.</param>
         public Color(uint argb)
         {
-            A = (byte)((argb & 0xff000000) >> 24);
-            R = (byte)((argb & 0x00ff0000) >> 16);
-            G = (byte)((argb & 0x0000ff00) >> 8);
-            B = (byte)(argb & 0x000000ff);
+            A = (byte) ((argb & 0xff000000) >> 24);
+            R = (byte) ((argb & 0x00ff0000) >> 16);
+            G = (byte) ((argb & 0x0000ff00) >> 8);
+            B = (byte) (argb & 0x000000ff);
         }
 
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Color"/> struct.
+        ///     Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
         /// <param name="a">a.</param>
         /// <param name="r">The r.</param>
@@ -641,7 +820,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Color"/> struct.
+        ///     Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
         /// <param name="r">The r.</param>
         /// <param name="g">The g.</param>
@@ -664,47 +843,54 @@ namespace TVGL
         /// <param name="b">The b.</param>
         public Color(byte a, byte r, byte g, byte b)
         {
-            R = r; G = g; B = b; A = a;
+            R = r;
+            G = g;
+            B = b;
+            A = a;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Color"/> struct.
+        ///     Initializes a new instance of the <see cref="Color" /> struct.
         /// </summary>
         /// <param name="r">The r.</param>
         /// <param name="g">The g.</param>
         /// <param name="b">The b.</param>
         public Color(byte r, byte g, byte b)
-            : this(0xff, r, g, b) { }
+            : this(0xff, r, g, b)
+        {
+        }
 
         #endregion Constructors
 
         #region Public Properties
 
         /// <summary>
-        /// A
+        ///     A
         /// </summary>
         public byte A;
 
         /// <summary>
-        /// A
+        ///     A
         /// </summary>
         public byte B;
 
         /// <summary>
-        /// A
+        ///     A
         /// </summary>
         public byte R;
 
         /// <summary>
-        /// A
+        ///     A
         /// </summary>
         public byte G;
 
         /// <summary>
-        /// Gets or sets the af.
+        ///     Gets or sets the af.
         /// </summary>
-        /// <value>The Alpha channel as a float whose range is [0..1].
-        /// the value is allowed to be out of range</value>
+        /// <value>
+        ///     The Alpha channel as a float whose range is [0..1].
+        ///     the value is allowed to be out of range
+        /// </value>
         public float Af
         {
             get { return Convert(A); }
@@ -712,7 +898,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the rf.
+        ///     Gets or sets the rf.
         /// </summary>
         /// <value>The rf.</value>
         public float Rf
@@ -722,7 +908,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the gf.
+        ///     Gets or sets the gf.
         /// </summary>
         /// <value>The gf.</value>
         public float Gf
@@ -732,7 +918,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets or sets the bf.
+        ///     Gets or sets the bf.
         /// </summary>
         /// <value>The bf.</value>
         public float Bf
@@ -742,41 +928,5 @@ namespace TVGL
         }
 
         #endregion Public Properties
-        /// <summary>
-        /// Converts the specified value.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>System.Single.</returns>
-        static float Convert(byte value)
-        {
-            return value / 255f;
-        }
-
-        /// <summary>
-        /// Converts the specified value.
-        /// </summary>
-        /// <param name="value">The value.</param>
-        /// <returns>System.Byte.</returns>
-        static byte Convert(float value)
-        {
-            if (value < 0.0f)
-                return 0;
-            if (value > 1.0f)
-                return 255;
-            return (byte)(value * 255f);
-        }
-
-        /// <summary>
-        /// Checks if color is equal to another color
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public override bool Equals(object obj)
-        {
-            if (!(obj is Color)) return false;
-            var otherColor = (Color) obj;
-            return A == otherColor.A && B == otherColor.B
-                   && G == otherColor.G && R == otherColor.R;
-        }
     }
 }

@@ -1,10 +1,15 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
+// Last Modified On : 05-28-2016
+// ***********************************************************************
+// <copyright file="3MFFileData.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
 // ***********************************************************************
 
 using System;
@@ -67,10 +72,11 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The language.</value>
         public string lang { get; set; }
-
+        
         /// <summary>
-        ///     Gets or sets the name.
+        /// Opens the specified s.
         /// </summary>
+<<<<<<< HEAD
         /// <value>The name.</value>
         public string Name { get; set; }
 
@@ -88,6 +94,41 @@ namespace TVGL.IOFunctions
                 result.AddRange(OpenModelFile(s, inParallel));
             }*/
             return result;
+=======
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
+        {
+            var now = DateTime.Now;
+            ThreeMFFileData threeMFData;
+            // Try to read in BINARY format
+            if (TryUnzippedXMLRead(s, out threeMFData))
+                Message.output("Successfully read in ThreeMF file (" + (DateTime.Now - now) + ").", 3);
+            else
+            {
+                // Reset position of stream
+                s.Position = 0;
+                // Read in ASCII format
+                //if (threeMF.TryZippedXMLRead(s, out threeMFData))
+                //    Message.output("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").",3);
+                //else
+                //{
+                //    Message.output("Unable to read in ThreeMF file (" + (DateTime.Now - now) + ").",1);
+                //    return null;
+                //}
+            }
+            var results = new List<TessellatedSolid>();
+            foreach (var threeMFObject in threeMFData.Objects)
+            {
+                results.Add(new TessellatedSolid(filename,
+                    threeMFObject.mesh.vertices.Select(v => new[] {v.x, v.y, v.z}).ToList(),
+                    threeMFObject.mesh.triangles.Select(t => new[] {t.v1, t.v2, t.v3}).ToList(),
+                    null));
+            }
+            return results;
+>>>>>>> master
         }
 
         internal static List<TessellatedSolid> OpenModelFile(Stream s, bool inParallel)
@@ -96,6 +137,7 @@ namespace TVGL.IOFunctions
             ThreeMFFileData threeMFData;
             try
             {
+<<<<<<< HEAD
                 var streamReader = new StreamReader(s);
                 var threeMFDeserializer = new XmlSerializer(typeof(ThreeMFFileData));
                 threeMFData = (ThreeMFFileData)threeMFDeserializer.Deserialize(streamReader);
@@ -127,9 +169,41 @@ namespace TVGL.IOFunctions
                    new [] { color}));
             }
             return results;
+=======
+                var streamReader = new StreamReader(stream);
+                var threeMFDeserializer = new XmlSerializer(typeof (ThreeMFFileData));
+                threeMFFileData = (ThreeMFFileData) threeMFDeserializer.Deserialize(streamReader);
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to read ThreeMF file:" + exception, 1);
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        ///     Tries the zipped XML read.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="threeMFFileData">The threeMF file data.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        /// <exception cref="System.NotImplementedException"></exception>
+        internal static bool TryZippedXMLRead(Stream stream, out ThreeMFFileData threeMFFileData)
+        {
+            throw new NotImplementedException();
+>>>>>>> master
         }
         
 
+        /// <summary>
+        ///     Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
             throw new NotImplementedException();

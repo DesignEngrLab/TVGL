@@ -1,12 +1,12 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
 // Last Modified On : 03-07-2015
 // ***********************************************************************
-// <copyright file="TessellatedSolid.cs" company="">
+// <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
@@ -14,22 +14,59 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using MIConvexHull;
 using StarMathLib;
 
 namespace TVGL
 {
     /// <summary>
-    /// Class TessellatedSolid.
+    ///     Class TessellatedSolid.
     /// </summary>
     /// <tags>help</tags>
-    /// <remarks>This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid, and
-    /// all interesting operations work on the TessellatedSolid.</remarks>
+    /// <remarks>
+    ///     This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid,
+    ///     and
+    ///     all interesting operations work on the TessellatedSolid.
+    /// </remarks>
     public class TessellatedSolid
     {
+        #region Copy Function
+
+        /// <summary>
+        ///     Copies this instance.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
+        public TessellatedSolid Copy()
+        {
+            var listDoubles = new List<double[]>();
+            foreach (var vertex in Vertices)
+            {
+                if (vertex.IndexInList == -1) throw new Exception("Need to fix ts.Copy function if it ever comes up");
+                listDoubles.Add((double[]) vertex.Position.Clone());
+            }
+            var faces = Faces.Select(t => t.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList();
+            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> {SolidColor});
+        }
+
+        #endregion
+
+        /// <summary>
+        ///     Repairs this instance.
+        /// </summary>
+        /// <returns><c>true</c> if this solid is now free of errors, <c>false</c> if errors remain.</returns>
+        public bool Repair()
+        {
+            if (Errors == null)
+            {
+                Message.output("No errors to fix!", 4);
+                return true;
+            }
+            var success = Errors.Repair(this);
+            if (success) Errors = null;
+            return success;
+        }
+
         #region Fields and Properties
 
         /// <summary>
@@ -91,8 +128,8 @@ namespace TVGL
                     return
                         _bounds;
                 _bounds = new double[2][];
-                _bounds[0] = new[] { XMin, YMin, ZMin };
-                _bounds[1] = new[] { XMax, YMax, ZMax };
+                _bounds[0] = new[] {XMin, YMin, ZMin};
+                _bounds[1] = new[] {XMax, YMax, ZMax};
                 return
                     _bounds;
             }
@@ -165,51 +202,53 @@ namespace TVGL
         public int NumberOfEdges { get; private set; }
 
         /// <summary>
-        /// Gets the convex hull.
+        ///     Gets the convex hull.
         /// </summary>
         /// <value>The convex hull.</value>
         public TVGLConvexHull ConvexHull { get; private set; }
 
         /// <summary>
-        /// The has uniform color
+        ///     The has uniform color
         /// </summary>
-        public Boolean HasUniformColor = true;
+        public bool HasUniformColor = true;
 
         /// <summary>
-        /// The has uniform color
+        ///     The has uniform color
         /// </summary>
         public double[,] InertiaTensor { get; private set; }
 
         /// <summary>
-        /// The solid color
+        ///     The solid color
         /// </summary>
         public Color SolidColor = new Color(Constants.DefaultColor);
 
         /// <summary>
-        /// The tolerance is set during the initiation (constructor phase). This is based on the maximum
-        /// length of the axis-aligned bounding box times Constants.
+        ///     The tolerance is set during the initiation (constructor phase). This is based on the maximum
+        ///     length of the axis-aligned bounding box times Constants.
         /// </summary>
         /// <value>The same tolerance.</value>
         internal double SameTolerance { private set; get; }
 
         /// <summary>
-        /// Errors in the tesselated solid
+        ///     Errors in the tesselated solid
         /// </summary>
         public TessellationError Errors { get; set; }
 
         /// <summary>
-        /// Gets the largest number of sides on a polygon in this model.
+        ///     Gets the largest number of sides on a polygon in this model.
         /// </summary>
         /// <value>The largest polygon.</value>
         public int MostPolygonSides { get; internal set; }
 
         /// <summary>
-        /// Gets or sets the primitive objects that make up the solid
+        ///     Gets or sets the primitive objects that make up the solid
         /// </summary>
         public List<PrimitiveSurface> Primitives { get; private set; }
+
         #endregion
 
         #region Constructors
+
         /// <summary>
         ///     Prevents a default instance of the <see cref="TessellatedSolid" /> class from being created.
         /// </summary>
@@ -218,8 +257,8 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
-        /// matches with the STL format.
+        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
+        ///     matches with the STL format.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="normals">The normals.</param>
@@ -239,12 +278,12 @@ namespace TVGL
             DefineFaceColors(colors);
             CompleteInitiation();
 
-            Message.output("File opened in: " + (DateTime.Now - now).ToString(), 4);
+            Message.output("File opened in: " + (DateTime.Now - now), 4);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This matches with formats
-        /// that use indices to the vertices (almost everything except STL).
+        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This matches with formats
+        ///     that use indices to the vertices (almost everything except STL).
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="vertices">The vertices.</param>
@@ -263,26 +302,26 @@ namespace TVGL
             DefineFaceColors(colors);
             CompleteInitiation();
 
-            Message.output("File opened in: " + (DateTime.Now - now).ToString(), 4);
+            Message.output("File opened in: " + (DateTime.Now - now), 4);
         }
 
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
-        /// for cases in which the faces and vertices are already defined.
+        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
+        ///     for cases in which the faces and vertices are already defined.
         /// </summary>
         /// <param name="faces"></param>
         /// <param name="vertices"></param>
         /// <param name="name"></param>
         /// <param name="colors"></param>
-        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, string name = "", IList<Color> colors = null)
+        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, string name = "",
+            IList<Color> colors = null)
         {
             Name = name;
             //Get vertices if null
             if (vertices == null)
             {
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
-
             }
             Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
@@ -323,7 +362,7 @@ namespace TVGL
             Faces = new PolygonalFace[0];
             Faces = newFaces.ToArray();
             NumberOfFaces = Faces.Length;
-            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(NumberOfVertices)) + 1);
+            VertexCheckSumMultiplier = (int) Math.Pow(10, (int) Math.Floor(Math.Log10(NumberOfVertices)) + 1);
             DefineFaceColors(colors);
             CompleteInitiation();
         }
@@ -347,29 +386,11 @@ namespace TVGL
 
         #endregion
 
-        #region Copy Function
-        /// <summary>
-        ///     Copies this instance.
-        /// </summary>
-        /// <returns>TessellatedSolid.</returns>
-        public TessellatedSolid Copy()
-        {
-            var listDoubles = new List<double[]>();
-            foreach (var vertex in Vertices)
-            {
-                if (vertex.IndexInList == -1) throw new Exception("Need to fix ts.Copy function if it ever comes up");
-                listDoubles.Add((double[])vertex.Position.Clone());
-            }
-            var faces = Faces.Select(t => t.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList();
-            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor });
-        }
-        #endregion
-
         #region Make many elements (called from constructors)
 
         /// <summary>
-        /// Defines the axis aligned bounding box and tolerance. This is called first in the constructors
-        /// because the tolerance is used in making the vertices.
+        ///     Defines the axis aligned bounding box and tolerance. This is called first in the constructors
+        ///     because the tolerance is used in making the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         private void DefineAxisAlignedBoundingBoxAndTolerance(IEnumerable<double[]> vertices)
@@ -381,11 +402,11 @@ namespace TVGL
             ZMin = vertices.Min(v => v[2]);
             ZMax = vertices.Max(v => v[2]);
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
-            SameTolerance = shortestDimension * Constants.BaseTolerance;
+            SameTolerance = shortestDimension*Constants.BaseTolerance;
         }
 
         /// <summary>
-        /// Makes the faces, avoiding duplicates.
+        ///     Makes the faces, avoiding duplicates.
         /// </summary>
         /// <param name="faceToVertexIndices"></param>
         /// <param name="normals">The normals.</param>
@@ -396,17 +417,17 @@ namespace TVGL
             NumberOfFaces = faceToVertexIndices.Count;
             var listOfFaces = new List<PolygonalFace>(NumberOfFaces);
             var faceChecksums = new HashSet<long>();
-            var checksumMultiplier = new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices };
+            var checksumMultiplier = new List<long> {1, NumberOfVertices, NumberOfVertices*NumberOfVertices};
             for (var i = 0; i < NumberOfFaces; i++)
             {
                 double[] normal = null;
                 var orderedIndices = new List<int>(faceToVertexIndices[i].Select(index => Vertices[index].IndexInList));
                 orderedIndices.Sort();
                 while (orderedIndices.Count > checksumMultiplier.Count)
-                    checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
-                long checksum = orderedIndices.Select((index, j) => index * checksumMultiplier[j]).Sum();
+                    checksumMultiplier.Add((long) Math.Pow(NumberOfVertices, checksumMultiplier.Count));
+                var checksum = orderedIndices.Select((index, j) => index*checksumMultiplier[j]).Sum();
                 if (faceChecksums.Contains(checksum)) continue; //Duplicate face. Do not create
-                if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue;//Error. Skip
+                if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue; //Error. Skip
                 //Else
                 //Get the actual vertices to create a new face. 
                 faceChecksums.Add(checksum);
@@ -465,7 +486,7 @@ namespace TVGL
                 for (var j = 0; j <= lastIndex; j++)
                 {
                     var fromVertex = face.Vertices[j];
-                    var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
+                    var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
                     var checksum = SetEdgeChecksum(fromVertex, toVertex);
 
                     if (overUsedEdgesDictionary.ContainsKey(checksum))
@@ -473,16 +494,18 @@ namespace TVGL
                     else if (alreadyDefinedEdges.ContainsKey(checksum))
                     {
                         var edge = alreadyDefinedEdges[checksum];
-                        var facesConnectedToEdge = new List<PolygonalFace> { edge.OwnedFace, edge.OtherFace, face };
-                        overUsedEdgesDictionary.Add(checksum, new Tuple<Edge, List<PolygonalFace>>(edge, facesConnectedToEdge));
+                        var facesConnectedToEdge = new List<PolygonalFace> {edge.OwnedFace, edge.OtherFace, face};
+                        overUsedEdgesDictionary.Add(checksum,
+                            new Tuple<Edge, List<PolygonalFace>>(edge, facesConnectedToEdge));
                         alreadyDefinedEdges.Remove(checksum);
                     }
                     else if (partlyDefinedEdgeDictionary.ContainsKey(checksum))
                     {
                         //Finish creating edge.
                         var edge = partlyDefinedEdgeDictionary[checksum];
-                        if (face.Normal.Contains(double.NaN)) face.Normal = (double[])edge.OwnedFace.Normal.Clone();
-                        if (edge.OwnedFace.Normal.Contains(double.NaN)) edge.OwnedFace.Normal = (double[])face.Normal.Clone();
+                        if (face.Normal.Contains(double.NaN)) face.Normal = (double[]) edge.OwnedFace.Normal.Clone();
+                        if (edge.OwnedFace.Normal.Contains(double.NaN))
+                            edge.OwnedFace.Normal = (double[]) face.Normal.Clone();
                         edge.OtherFace = face;
                         face.Edges.Add(edge);
                         alreadyDefinedEdges.Add(checksum, edge);
@@ -499,7 +522,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Makes the vertices.
+        ///     Makes the vertices.
         /// </summary>
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
@@ -551,7 +574,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Makes the vertices.
+        ///     Makes the vertices.
         /// </summary>
         /// <param name="vertices"></param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
@@ -610,11 +633,13 @@ namespace TVGL
             for (var i = 0; i < NumberOfVertices; i++)
                 Vertices[i] = new Vertex(listOfVertices[i], i);
             //Set the checksum
-            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(Vertices.Length)) + 1);
+            VertexCheckSumMultiplier = (int) Math.Pow(10, (int) Math.Floor(Math.Log10(Vertices.Length)) + 1);
         }
+
         #endregion
 
         #region Define Additional Characteristics of Faces, Edges and Vertices
+
         /// <summary>
         ///     Defines the face centers.
         /// </summary>
@@ -624,7 +649,7 @@ namespace TVGL
             if (colors == null || !colors.Any()) SolidColor = new Color(Constants.DefaultColor);
             else if (colors.Count == 1) SolidColor = colors[0];
             else HasUniformColor = false;
-            for (int i = 0; i < Faces.Length; i++)
+            for (var i = 0; i < Faces.Length; i++)
             {
                 var face = Faces[i];
                 if (face.Color != null && !face.Color.Equals(SolidColor)) HasUniformColor = false;
@@ -633,7 +658,7 @@ namespace TVGL
                     if (colors == null || !colors.Any()) face.Color = SolidColor;
                     else
                     {
-                        var j = (i < colors.Count - 1) ? i : colors.Count - 1;
+                        var j = i < colors.Count - 1 ? i : colors.Count - 1;
                         face.Color = colors[j];
                     }
                 }
@@ -641,14 +666,15 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Defines the center, the volume and the surface area.
+        ///     Defines the center, the volume and the surface area.
         /// </summary>
         private void DefineCenterVolumeAndSurfaceArea()
         {
             double[] center;
             double volume;
             double surfaceArea;
-            DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea); //This lost in every comparison to Trapezoidal Approximation of volume
+            DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea);
+                //This lost in every comparison to Trapezoidal Approximation of volume
             Center = center;
             Volume = volume;
             //Message.output(Bounds[0].MakePrintString());
@@ -663,8 +689,8 @@ namespace TVGL
         }
 
         /// <summary>
-        /// This function recalculates the volume, since the original method of finding the volume is broken.
-        /// Note also that the current "Center" function might also be broken, but I haven't any need for it yet.
+        ///     This function recalculates the volume, since the original method of finding the volume is broken.
+        ///     Note also that the current "Center" function might also be broken, but I haven't any need for it yet.
         /// </summary>
         public void RecalculateVolume()
         {
@@ -673,21 +699,23 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Defines the center, the volume and the surface area.
+        ///     Defines the center, the volume and the surface area.
         /// </summary>
-        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out double[] center, out double volume, out double surfaceArea)
+        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out double[] center,
+            out double volume, out double surfaceArea)
         {
             surfaceArea = 0;
             foreach (var face in faces)
             {
                 // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
-                if (face.Area.IsNegligible()) face.Area = face.DetermineArea(); //the area of the face was also determined in 
+                if (face.Area.IsNegligible())
+                    face.Area = face.DetermineArea(); //the area of the face was also determined in 
                 // one of the PolygonalFace constructors. In case it is zero, we will recalculate it here.
-                surfaceArea += face.Area;   // accumulate areas into surface area
+                surfaceArea += face.Area; // accumulate areas into surface area
             }
 
-            double[] oldCenter1 = new double[3];
-            double[] oldCenter2 = new double[3];
+            var oldCenter1 = new double[3];
+            var oldCenter2 = new double[3];
             center = new double[3];
             foreach (var face in faces)
             {
@@ -704,21 +732,31 @@ namespace TVGL
             do
             {
                 oldVolume = volume;
-                oldCenter2[0] = oldCenter1[0]; oldCenter2[1] = oldCenter1[1]; oldCenter2[2] = oldCenter1[2];
-                oldCenter1[0] = center[0]; oldCenter1[1] = center[1]; oldCenter1[2] = center[2];
+                oldCenter2[0] = oldCenter1[0];
+                oldCenter2[1] = oldCenter1[1];
+                oldCenter2[2] = oldCenter1[2];
+                oldCenter1[0] = center[0];
+                oldCenter1[1] = center[1];
+                oldCenter1[2] = center[2];
                 volume = 0;
-                center[0] = 0.0; center[1] = 0.0; center[2] = 0.0;
+                center[0] = 0.0;
+                center[1] = 0.0;
+                center[2] = 0.0;
                 foreach (var face in faces)
                 {
-                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1))) / 3;
+                    var tetrahedronVolume = face.Area*
+                                            face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1))/3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
                     // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
                     // on the volume.
                     volume += tetrahedronVolume;
-                    center[0] += (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4;
-                    center[1] += (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4;
-                    center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
+                    center[0] += (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X)*
+                                 tetrahedronVolume/4;
+                    center[1] += (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y)*
+                                 tetrahedronVolume/4;
+                    center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z)*
+                                 tetrahedronVolume/4;
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
                 if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2).divide(2);
@@ -733,28 +771,51 @@ namespace TVGL
             //Center = StarMath.makeZeroVector(3);
             var matrixA = StarMath.makeZero(3, 3);
             var matrixCtotal = StarMath.makeZero(3, 3);
-            var canonicalMatrix = new[,] { { 0.0166, 0.0083, 0.0083 }, { 0.0083, 0.0166, 0.0083 }, { 0.0083, 0.0083, 0.0166 } };
+            var canonicalMatrix = new[,] {{0.0166, 0.0083, 0.0083}, {0.0083, 0.0166, 0.0083}, {0.0083, 0.0083, 0.0166}};
             foreach (var face in Faces)
             {
-                matrixA.SetRow(0, new[] { face.Vertices[0].Position[0] - Center[0], face.Vertices[0].Position[1] - Center[1], face.Vertices[0].Position[2] - Center[2] });
-                matrixA.SetRow(1, new[] { face.Vertices[1].Position[0] - Center[0], face.Vertices[1].Position[1] - Center[1], face.Vertices[1].Position[2] - Center[2] });
-                matrixA.SetRow(2, new[] { face.Vertices[2].Position[0] - Center[0], face.Vertices[2].Position[1] - Center[1], face.Vertices[2].Position[2] - Center[2] });
+                matrixA.SetRow(0,
+                    new[]
+                    {
+                        face.Vertices[0].Position[0] - Center[0], face.Vertices[0].Position[1] - Center[1],
+                        face.Vertices[0].Position[2] - Center[2]
+                    });
+                matrixA.SetRow(1,
+                    new[]
+                    {
+                        face.Vertices[1].Position[0] - Center[0], face.Vertices[1].Position[1] - Center[1],
+                        face.Vertices[1].Position[2] - Center[2]
+                    });
+                matrixA.SetRow(2,
+                    new[]
+                    {
+                        face.Vertices[2].Position[0] - Center[0], face.Vertices[2].Position[1] - Center[1],
+                        face.Vertices[2].Position[2] - Center[2]
+                    });
 
                 var matrixC = matrixA.transpose().multiply(canonicalMatrix);
                 matrixC = matrixC.multiply(matrixA).multiply(matrixA.determinant());
                 matrixCtotal = matrixCtotal.add(matrixC);
             }
 
-            var translateMatrix = new double[,] { { 0 }, { 0 }, { 0 } };
-            var matrixCprime = translateMatrix.multiply(-1).multiply(translateMatrix.transpose()).add(translateMatrix.multiply(translateMatrix.multiply(-1).transpose())).add(translateMatrix.multiply(-1).multiply(translateMatrix.multiply(-1).transpose())).multiply(Volume);
+            var translateMatrix = new double[,] {{0}, {0}, {0}};
+            var matrixCprime =
+                translateMatrix.multiply(-1)
+                    .multiply(translateMatrix.transpose())
+                    .add(translateMatrix.multiply(translateMatrix.multiply(-1).transpose()))
+                    .add(translateMatrix.multiply(-1).multiply(translateMatrix.multiply(-1).transpose()))
+                    .multiply(Volume);
             matrixCprime = matrixCprime.add(matrixCtotal);
             //matrixCprime = (StarMath.multiply(translateMatrix, translateMatrix.transpose())).multiply(Volume).multiply(3).add(matrixCtotal);
-            var inertiaTensor = StarMath.makeIdentity(3).multiply(matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
+            var inertiaTensor =
+                StarMath.makeIdentity(3).multiply(matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
             InertiaTensor = inertiaTensor.subtract(matrixCprime);
         }
+
         #endregion
 
         #region Curvatures
+
         /// <summary>
         ///     Defines the vertex curvature.
         /// </summary>
@@ -776,9 +837,11 @@ namespace TVGL
                 face.DefineFaceCurvature();
             }
         }
+
         #endregion
 
         #region Convex Hull
+
         /// <summary>
         ///     Connects the convex hull to objects.
         /// </summary>
@@ -801,27 +864,31 @@ namespace TVGL
         {
             ConvexHull = new TVGLConvexHull(Vertices);
         }
+
         #endregion
 
         #region Add or Remove Items
+
         #region Vertices - the important thing about these is updating the IndexInList property of the vertices
+
         internal void AddVertex(Vertex newVertex)
         {
             var newVertices = new Vertex[NumberOfVertices + 1];
-            for (int i = 0; i < NumberOfVertices; i++)
+            for (var i = 0; i < NumberOfVertices; i++)
                 newVertices[i] = Vertices[i];
             newVertices[NumberOfVertices] = newVertex;
             newVertex.IndexInList = NumberOfVertices;
             Vertices = newVertices;
             NumberOfVertices++;
         }
+
         internal void AddVertices(IList<Vertex> verticesToAdd)
         {
             var numToAdd = verticesToAdd.Count;
             var newVertices = new Vertex[NumberOfVertices + numToAdd];
-            for (int i = 0; i < NumberOfVertices; i++)
+            for (var i = 0; i < NumberOfVertices; i++)
                 newVertices[i] = Vertices[i];
-            for (int i = 0; i < numToAdd; i++)
+            for (var i = 0; i < numToAdd; i++)
             {
                 var newVertex = verticesToAdd[i];
                 newVertices[NumberOfVertices + i] = newVertex;
@@ -835,6 +902,7 @@ namespace TVGL
         {
             ReplaceVertex(Vertices.FindIndex(removeVertex), newVertex, removeReferecesToVertex);
         }
+
         internal void ReplaceVertex(int removeVIndex, Vertex newVertex, bool removeReferecesToVertex = true)
         {
             if (removeReferecesToVertex) RemoveReferencesToVertex(Vertices[removeVIndex]);
@@ -846,14 +914,15 @@ namespace TVGL
         {
             RemoveVertex(Vertices.FindIndex(removeVertex), removeReferecesToVertex);
         }
+
         internal void RemoveVertex(int removeVIndex, bool removeReferecesToVertex = true)
         {
             if (removeReferecesToVertex) RemoveReferencesToVertex(Vertices[removeVIndex]);
             NumberOfVertices--;
             var newVertices = new Vertex[NumberOfVertices];
-            for (int i = 0; i < removeVIndex; i++)
+            for (var i = 0; i < removeVIndex; i++)
                 newVertices[i] = Vertices[i];
-            for (int i = removeVIndex; i < NumberOfVertices; i++)
+            for (var i = removeVIndex; i < NumberOfVertices; i++)
             {
                 var v = Vertices[i + 1];
                 v.IndexInList--;
@@ -867,6 +936,7 @@ namespace TVGL
         {
             RemoveVertices(removeVertices.Select(Vertices.FindIndex).ToList());
         }
+
         internal void RemoveVertices(List<int> removeIndices)
         {
             foreach (var vertexIndex in removeIndices)
@@ -878,9 +948,9 @@ namespace TVGL
             removeIndices.Sort();
             NumberOfVertices -= numToRemove;
             var newVertices = new Vertex[NumberOfVertices];
-            for (int i = 0; i < NumberOfVertices; i++)
+            for (var i = 0; i < NumberOfVertices; i++)
             {
-                while (offset < numToRemove && (i + offset) == removeIndices[offset])
+                while (offset < numToRemove && i + offset == removeIndices[offset])
                     offset++;
                 var v = Vertices[i + offset];
                 v.IndexInList = i;
@@ -909,42 +979,47 @@ namespace TVGL
             foreach (var edge in Edges)
                 SetEdgeChecksum(edge);
         }
+
         internal long SetEdgeChecksum(Edge edge)
         {
             var checksum = SetEdgeChecksum(edge.From, edge.To);
             edge.EdgeReference = checksum;
             return checksum;
         }
+
         internal long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
         {
             var fromIndex = fromVertex.IndexInList;
             var toIndex = toVertex.IndexInList;
             if (fromIndex == -1 || toIndex == -1) return -1;
             if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
-            return (fromIndex < toIndex)
-                ? fromIndex + (VertexCheckSumMultiplier * toIndex)
-                : toIndex + (VertexCheckSumMultiplier * fromIndex);
+            return fromIndex < toIndex
+                ? fromIndex + VertexCheckSumMultiplier*toIndex
+                : toIndex + VertexCheckSumMultiplier*fromIndex;
         }
 
         #endregion
+
         #region Faces
+
         internal void AddFace(PolygonalFace newFace)
         {
             var newFaces = new PolygonalFace[NumberOfFaces + 1];
-            for (int i = 0; i < NumberOfFaces; i++)
+            for (var i = 0; i < NumberOfFaces; i++)
                 newFaces[i] = Faces[i];
             newFaces[NumberOfFaces] = newFace;
             newFace.IndexInList = NumberOfFaces;
             Faces = newFaces;
             NumberOfFaces++;
         }
+
         internal void AddFaces(IList<PolygonalFace> facesToAdd)
         {
             var numToAdd = facesToAdd.Count;
             var newFaces = new PolygonalFace[NumberOfFaces + numToAdd];
-            for (int i = 0; i < NumberOfFaces; i++)
+            for (var i = 0; i < NumberOfFaces; i++)
                 newFaces[i] = Faces[i];
-            for (int i = 0; i < numToAdd; i++)
+            for (var i = 0; i < numToAdd; i++)
             {
                 newFaces[NumberOfFaces + i] = facesToAdd[i];
                 newFaces[NumberOfFaces + i].IndexInList = NumberOfFaces + i;
@@ -957,15 +1032,16 @@ namespace TVGL
         {
             RemoveFace(Faces.FindIndex(removeFace));
         }
+
         internal void RemoveFace(int removeFaceIndex)
         {
             //First. Remove all the references to each edge and vertex.
             RemoveReferencesToFace(removeFaceIndex);
             NumberOfFaces--;
             var newFaces = new PolygonalFace[NumberOfFaces];
-            for (int i = 0; i < removeFaceIndex; i++)
+            for (var i = 0; i < removeFaceIndex; i++)
                 newFaces[i] = Faces[i];
-            for (int i = removeFaceIndex; i < NumberOfFaces; i++)
+            for (var i = removeFaceIndex; i < NumberOfFaces; i++)
             {
                 newFaces[i] = Faces[i + 1];
                 newFaces[i].IndexInList = i;
@@ -977,6 +1053,7 @@ namespace TVGL
         {
             RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList());
         }
+
         internal void RemoveFaces(List<int> removeIndices)
         {
             //First. Remove all the references to each edge and vertex.
@@ -989,9 +1066,9 @@ namespace TVGL
             removeIndices.Sort();
             NumberOfFaces -= numToRemove;
             var newFaces = new PolygonalFace[NumberOfFaces];
-            for (int i = 0; i < NumberOfFaces; i++)
+            for (var i = 0; i < NumberOfFaces; i++)
             {
-                while (offset < numToRemove && (i + offset) == removeIndices[offset])
+                while (offset < numToRemove && i + offset == removeIndices[offset])
                     offset++;
                 newFaces[i] = Faces[i + offset];
                 newFaces[i].IndexInList = i;
@@ -1011,12 +1088,15 @@ namespace TVGL
             }
             //Face adjacency is a method call, not an object reference. So it updates automatically.
         }
+
         #endregion
+
         #region Edges
+
         internal void AddEdge(Edge newEdge)
         {
             var newEdges = new Edge[NumberOfEdges + 1];
-            for (int i = 0; i < NumberOfEdges; i++)
+            for (var i = 0; i < NumberOfEdges; i++)
                 newEdges[i] = Edges[i];
             newEdges[NumberOfEdges] = newEdge;
             if (newEdge.EdgeReference == null) SetEdgeChecksum(newEdge);
@@ -1024,6 +1104,7 @@ namespace TVGL
             Edges = newEdges;
             NumberOfEdges++;
         }
+
         internal void AddEdges(IList<Edge> edgesToAdd)
         {
             var numToAdd = edgesToAdd.Count;
@@ -1044,6 +1125,7 @@ namespace TVGL
         {
             RemoveEdge(Edges.FindIndex(removeEdge));
         }
+
         internal void RemoveEdge(int removeEdgeIndex)
         {
             RemoveReferencesToEdge(removeEdgeIndex);
@@ -1063,6 +1145,7 @@ namespace TVGL
         {
             RemoveEdges(removeEdges.Select(Edges.FindIndex).ToList());
         }
+
         internal void RemoveEdges(List<int> removeIndices)
         {
             //First. Remove all the references to each edge and vertex.
@@ -1077,7 +1160,7 @@ namespace TVGL
             var newEdges = new Edge[NumberOfEdges];
             for (var i = 0; i < NumberOfEdges; i++)
             {
-                while (offset < numToRemove && (i + offset) == removeIndices[offset])
+                while (offset < numToRemove && i + offset == removeIndices[offset])
                     offset++;
                 newEdges[i] = Edges[i + offset];
                 newEdges[i].IndexInList = i;
@@ -1110,10 +1193,11 @@ namespace TVGL
                 if (index >= 0) edge.OtherFace.Edges.RemoveAt(index);
             }
         }
+
         #endregion
 
         /// <summary>
-        /// Adds the primitive.
+        ///     Adds the primitive.
         /// </summary>
         /// <param name="p">The p.</param>
         public void AddPrimitive(PrimitiveSurface p)
@@ -1123,73 +1207,15 @@ namespace TVGL
         }
 
         #endregion
-
-        /// <summary>
-        /// Repairs this instance.
-        /// </summary>
-        /// <returns><c>true</c> if this solid is now free of errors, <c>false</c> if errors remain.</returns>
-        public bool Repair()
-        {
-            if (Errors == null)
-            {
-                Message.output("No errors to fix!", 4);
-                return true;
-            }
-            var success = Errors.Repair(this);
-            if (success) Errors = null;
-            return success;
-        }
     }
 
     /// <summary>
-    /// The Convex Hull of a Tesselated Solid
+    ///     The Convex Hull of a Tesselated Solid
     /// </summary>
     public class TVGLConvexHull
     {
-        #region Public Properties
-
         /// <summary>
-        /// The surface area
-        /// </summary>
-        public readonly double SurfaceArea;
-
-        /// <summary>
-        /// The center
-        /// </summary>
-        public readonly double[] Center;
-
-        /// <summary>
-        /// The volume of the Convex Hull.
-        /// </summary>
-        public readonly double Volume;
-
-        /// <summary>
-        /// The vertices of the ConvexHull
-        /// </summary>
-        public readonly Vertex[] Vertices;
-
-        /// <summary>
-        ///     Gets the convex hull faces.
-        /// </summary>
-        /// <value>The convex hull faces.</value>
-        public readonly PolygonalFace[] Faces;
-
-        /// <summary>
-        ///     Gets whether the convex hull creation was successful.
-        /// </summary>
-        /// <value>The convex hull faces.</value>
-        public readonly bool Succeeded;
-
-        /// <summary>
-        ///     Gets the convex hull edges.
-        /// </summary>
-        /// <value>The convex hull edges.</value>
-        public readonly Edge[] Edges;
-
-        #endregion
-
-        /// <summary>
-        /// Gets the convex hull, given a list of vertices
+        ///     Gets the convex hull, given a list of vertices
         /// </summary>
         /// <param name="allVertices"></param>
         public TVGLConvexHull(IList<Vertex> allVertices)
@@ -1204,7 +1230,8 @@ namespace TVGL
                     PointTranslationType = PointTranslationType.TranslateInternal,
                     PlaneDistanceTolerance = Constants.ConvexHullRadiusForRobustness,
                     // the translation radius should be lower than PlaneDistanceTolerance / 2
-                    PointTranslationGenerator = ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness)
+                    PointTranslationGenerator =
+                        ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness)
                 };
                 convexHull = ConvexHull.Create(allVertices, config);
                 Vertices = convexHull.Points.ToArray();
@@ -1218,14 +1245,14 @@ namespace TVGL
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[3];
             for (var i = 0; i < 3; i++)
-                checkSumMultipliers[i] = (long)Math.Pow(allVertices.Count, i);
+                checkSumMultipliers[i] = (long) Math.Pow(allVertices.Count, i);
             var alreadyCreatedFaces = new HashSet<long>();
             foreach (var cvxFace in convexHull.Faces)
             {
                 var vertices = cvxFace.Vertices;
                 var orderedIndices = vertices.Select(v => v.IndexInList).ToList();
                 orderedIndices.Sort();
-                var checksum = orderedIndices.Select((t, j) => t * checkSumMultipliers[j]).Sum();
+                var checksum = orderedIndices.Select((t, j) => t*checkSumMultipliers[j]).Sum();
                 if (alreadyCreatedFaces.Contains(checksum)) continue;
                 alreadyCreatedFaces.Add(checksum);
                 convexHullFaceList.Add(new PolygonalFace(vertices, cvxFace.Normal, false));
@@ -1251,11 +1278,11 @@ namespace TVGL
                 {
                     var fromVertex = face.Vertices[j];
                     var fromVertexIndex = vertexIndices[fromVertex];
-                    var toVertex = face.Vertices[(j == lastIndex) ? 0 : j + 1];
+                    var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
                     var toVertexIndex = vertexIndices[toVertex];
-                    long checksum = (fromVertexIndex < toVertexIndex)
-                        ? fromVertexIndex + numVertices * toVertexIndex :
-                        toVertexIndex + numVertices * fromVertexIndex;
+                    long checksum = fromVertexIndex < toVertexIndex
+                        ? fromVertexIndex + numVertices*toVertexIndex
+                        : toVertexIndex + numVertices*fromVertexIndex;
 
                     if (edgeDictionary.ContainsKey(checksum))
                     {
@@ -1264,11 +1291,51 @@ namespace TVGL
                         face.Edges.Add(edge);
                     }
                     else edgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, face, null, false, checksum));
-
                 }
             }
             return edgeDictionary.Values.ToArray();
         }
-    }
 
+        #region Public Properties
+
+        /// <summary>
+        ///     The surface area
+        /// </summary>
+        public readonly double SurfaceArea;
+
+        /// <summary>
+        ///     The center
+        /// </summary>
+        public readonly double[] Center;
+
+        /// <summary>
+        ///     The volume of the Convex Hull.
+        /// </summary>
+        public readonly double Volume;
+
+        /// <summary>
+        ///     The vertices of the ConvexHull
+        /// </summary>
+        public readonly Vertex[] Vertices;
+
+        /// <summary>
+        ///     Gets the convex hull faces.
+        /// </summary>
+        /// <value>The convex hull faces.</value>
+        public readonly PolygonalFace[] Faces;
+
+        /// <summary>
+        ///     Gets whether the convex hull creation was successful.
+        /// </summary>
+        /// <value>The convex hull faces.</value>
+        public readonly bool Succeeded;
+
+        /// <summary>
+        ///     Gets the convex hull edges.
+        /// </summary>
+        /// <value>The convex hull edges.</value>
+        public readonly Edge[] Edges;
+
+        #endregion
+    }
 }

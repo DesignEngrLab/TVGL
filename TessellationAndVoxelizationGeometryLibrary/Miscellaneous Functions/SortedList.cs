@@ -14,7 +14,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
-using System.Diagnostics;
 
 namespace TVGL
 {
@@ -26,18 +25,12 @@ namespace TVGL
     /// <typeparam name="TValue">The type of values in the collection.</typeparam>
     internal class SortedList<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary
     {
-        private readonly IComparer<TKey> comparer;
-        private int _size;
         private object _syncRoot;
         private KeyList keyList;
         private TKey[] keys;
         private ValueList valueList;
         private TValue[] values;
         private int version;
-
-        static SortedList()
-        {
-        }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:System.Collections.Generic.SortedList`2" /> class that is empty, has
@@ -47,8 +40,8 @@ namespace TVGL
         {
             keys = new TKey[0];
             values = new TValue[0];
-            _size = 0;
-            comparer = Comparer<TKey>.Default;
+            Count = 0;
+            Comparer = Comparer<TKey>.Default;
         }
 
         /// <summary>
@@ -66,7 +59,7 @@ namespace TVGL
                 throw new ArgumentOutOfRangeException();
             keys = new TKey[capacity];
             values = new TValue[capacity];
-            comparer = Comparer<TKey>.Default;
+            Comparer = Comparer<TKey>.Default;
         }
 
         /// <summary>
@@ -82,7 +75,7 @@ namespace TVGL
         {
             if (comparer == null)
                 return;
-            this.comparer = comparer;
+            Comparer = comparer;
         }
 
         /// <summary>
@@ -145,7 +138,7 @@ namespace TVGL
             dictionary.Keys.CopyTo(keys, 0);
             dictionary.Values.CopyTo(values, 0);
             // Array.Sort<TKey, TValue>(this.keys, this.values, comparer);
-            _size = dictionary.Count;
+            Count = dictionary.Count;
         }
 
         /// <summary>
@@ -166,16 +159,16 @@ namespace TVGL
             {
                 if (value == keys.Length)
                     return;
-                if (value < _size)
+                if (value < Count)
                     throw new ArgumentOutOfRangeException();
                 if (value > 0)
                 {
                     var keyArray = new TKey[value];
                     var objArray = new TValue[value];
-                    if (_size > 0)
+                    if (Count > 0)
                     {
-                        Array.Copy(keys, 0, keyArray, 0, _size);
-                        Array.Copy(values, 0, objArray, 0, _size);
+                        Array.Copy(keys, 0, keyArray, 0, Count);
+                        Array.Copy(values, 0, objArray, 0, Count);
                     }
                     keys = keyArray;
                     values = objArray;
@@ -194,10 +187,7 @@ namespace TVGL
         /// <returns>
         ///     The <see cref="T:System.IComparable`1" /> for the current <see cref="T:System.Collections.Generic.SortedList`2" />.
         /// </returns>
-        internal IComparer<TKey> Comparer
-        {
-            get { return comparer; }
-        }
+        internal IComparer<TKey> Comparer { get; }
 
         /// <summary>
         ///     Gets a collection containing the keys in the <see cref="T:System.Collections.Generic.SortedList`2" />.
@@ -345,10 +335,7 @@ namespace TVGL
         /// <returns>
         ///     The number of key/value pairs contained in the <see cref="T:System.Collections.Generic.SortedList`2" />.
         /// </returns>
-        public int Count
-        {
-            get { return _size; }
-        }
+        public int Count { get; private set; }
 
         ICollection<TKey> IDictionary<TKey, TValue>.Keys
         {
@@ -392,7 +379,7 @@ namespace TVGL
             {
                 if (key == null)
                     throw new ArgumentNullException();
-                var index = Array.BinarySearch(keys, 0, _size, key, comparer);
+                var index = Array.BinarySearch(keys, 0, Count, key, Comparer);
                 if (index >= 0)
                 {
                     values[index] = value;
@@ -418,9 +405,9 @@ namespace TVGL
             if (key == null)
                 throw new ArgumentNullException();
             //Check to see if item is already in array.
-            var num = Array.BinarySearch(keys, 0, _size, key, comparer);
+            var num = Array.BinarySearch(keys, 0, Count, key, Comparer);
             //"num" should be -1
-            if (num >= 0) Message.output("Item is already contained in sorted list.",1);
+            if (num >= 0) Message.output("Item is already contained in sorted list.", 1);
             else Insert(~num, key, value);
         }
 
@@ -450,9 +437,9 @@ namespace TVGL
         public void Clear()
         {
             ++version;
-            Array.Clear(keys, 0, _size);
-            Array.Clear(values, 0, _size);
-            _size = 0;
+            Array.Clear(keys, 0, Count);
+            Array.Clear(values, 0, Count);
+            Count = 0;
         }
 
         /// <summary>
@@ -575,7 +562,7 @@ namespace TVGL
 
         private TValue GetByIndex(int index)
         {
-            if (index < 0 || index >= _size)
+            if (index < 0 || index >= Count)
                 throw new ArgumentOutOfRangeException();
             return values[index];
         }
@@ -595,7 +582,7 @@ namespace TVGL
 
         private TKey GetKey(int index)
         {
-            if (index < 0 || index >= _size)
+            if (index < 0 || index >= Count)
                 throw new ArgumentOutOfRangeException();
             return keys[index];
         }
@@ -614,7 +601,7 @@ namespace TVGL
         {
             if (key == null)
                 throw new ArgumentNullException();
-            var num = Array.BinarySearch(keys, 0, _size, key, comparer);
+            var num = Array.BinarySearch(keys, 0, Count, key, Comparer);
             if (num < 0)
                 return -1;
             return num;
@@ -634,21 +621,21 @@ namespace TVGL
         /// </param>
         internal int IndexOfValue(TValue value)
         {
-            return Array.IndexOf(values, value, 0, _size);
+            return Array.IndexOf(values, value, 0, Count);
         }
 
         private void Insert(int index, TKey key, TValue value)
         {
-            if (_size == keys.Length)
-                EnsureCapacity(_size + 1);
-            if (index < _size)
+            if (Count == keys.Length)
+                EnsureCapacity(Count + 1);
+            if (index < Count)
             {
-                Array.Copy(keys, index, keys, index + 1, _size - index);
-                Array.Copy(values, index, values, index + 1, _size - index);
+                Array.Copy(keys, index, keys, index + 1, Count - index);
+                Array.Copy(values, index, values, index + 1, Count - index);
             }
             keys[index] = key;
             values[index] = value;
-            ++_size;
+            ++Count;
             ++version;
         }
 
@@ -663,16 +650,16 @@ namespace TVGL
         /// </exception>
         internal void RemoveAt(int index)
         {
-            if (index < 0 || index >= _size)
+            if (index < 0 || index >= Count)
                 throw new ArgumentOutOfRangeException();
-            --_size;
-            if (index < _size)
+            --Count;
+            if (index < Count)
             {
-                Array.Copy(keys, index + 1, keys, index, _size - index);
-                Array.Copy(values, index + 1, values, index, _size - index);
+                Array.Copy(keys, index + 1, keys, index, Count - index);
+                Array.Copy(values, index + 1, values, index, Count - index);
             }
-            keys[_size] = default(TKey);
-            values[_size] = default(TValue);
+            keys[Count] = default(TKey);
+            values[Count] = default(TValue);
             ++version;
         }
 
@@ -682,9 +669,9 @@ namespace TVGL
         /// </summary>
         internal void TrimExcess()
         {
-            if (_size >= (int) (keys.Length*0.9))
+            if (Count >= (int) (keys.Length*0.9))
                 return;
-            Capacity = _size;
+            Capacity = Count;
         }
 
         private static bool IsCompatibleKey(object key)
@@ -829,7 +816,7 @@ namespace TVGL
 
             public int Count
             {
-                get { return _dict._size; }
+                get { return _dict.Count; }
             }
 
             public bool IsReadOnly
@@ -882,7 +869,7 @@ namespace TVGL
             {
                 if (key == null)
                     throw new ArgumentNullException();
-                var num = Array.BinarySearch(_dict.keys, 0, _dict.Count, key, _dict.comparer);
+                var num = Array.BinarySearch(_dict.keys, 0, _dict.Count, key, _dict.Comparer);
                 if (num >= 0)
                     return num;
                 return -1;
@@ -903,7 +890,6 @@ namespace TVGL
         {
             private readonly SortedList<TKey, TValue> _sortedList;
             private readonly int version;
-            private TKey currentKey;
             private int index;
 
             internal SortedListKeyEnumerator(SortedList<TKey, TValue> sortedList)
@@ -912,10 +898,7 @@ namespace TVGL
                 version = sortedList.version;
             }
 
-            public TKey Current
-            {
-                get { return currentKey; }
-            }
+            public TKey Current { get; private set; }
 
             object IEnumerator.Current
             {
@@ -923,14 +906,14 @@ namespace TVGL
                 {
                     if (index == 0 || index == _sortedList.Count + 1)
                         throw new InvalidOperationException();
-                    return currentKey;
+                    return Current;
                 }
             }
 
             public void Dispose()
             {
                 index = 0;
-                currentKey = default(TKey);
+                Current = default(TKey);
             }
 
             public bool MoveNext()
@@ -939,12 +922,12 @@ namespace TVGL
                     throw new InvalidOperationException();
                 if ((uint) index < (uint) _sortedList.Count)
                 {
-                    currentKey = _sortedList.keys[index];
+                    Current = _sortedList.keys[index];
                     ++index;
                     return true;
                 }
                 index = _sortedList.Count + 1;
-                currentKey = default(TKey);
+                Current = default(TKey);
                 return false;
             }
 
@@ -953,7 +936,7 @@ namespace TVGL
                 if (version != _sortedList.version)
                     throw new InvalidOperationException();
                 index = 0;
-                currentKey = default(TKey);
+                Current = default(TKey);
             }
         }
 
@@ -961,7 +944,6 @@ namespace TVGL
         {
             private readonly SortedList<TKey, TValue> _sortedList;
             private readonly int version;
-            private TValue currentValue;
             private int index;
 
             internal SortedListValueEnumerator(SortedList<TKey, TValue> sortedList)
@@ -970,10 +952,7 @@ namespace TVGL
                 version = sortedList.version;
             }
 
-            public TValue Current
-            {
-                get { return currentValue; }
-            }
+            public TValue Current { get; private set; }
 
             object IEnumerator.Current
             {
@@ -981,14 +960,14 @@ namespace TVGL
                 {
                     if (index == 0 || index == _sortedList.Count + 1)
                         throw new InvalidOperationException();
-                    return currentValue;
+                    return Current;
                 }
             }
 
             public void Dispose()
             {
                 index = 0;
-                currentValue = default(TValue);
+                Current = default(TValue);
             }
 
             public bool MoveNext()
@@ -997,12 +976,12 @@ namespace TVGL
                     throw new InvalidOperationException();
                 if ((uint) index < (uint) _sortedList.Count)
                 {
-                    currentValue = _sortedList.values[index];
+                    Current = _sortedList.values[index];
                     ++index;
                     return true;
                 }
                 index = _sortedList.Count + 1;
-                currentValue = default(TValue);
+                Current = default(TValue);
                 return false;
             }
 
@@ -1011,7 +990,7 @@ namespace TVGL
                 if (version != _sortedList.version)
                     throw new InvalidOperationException();
                 index = 0;
-                currentValue = default(TValue);
+                Current = default(TValue);
             }
         }
 
@@ -1050,7 +1029,7 @@ namespace TVGL
 
             public int Count
             {
-                get { return _dict._size; }
+                get { return _dict.Count; }
             }
 
             public bool IsReadOnly

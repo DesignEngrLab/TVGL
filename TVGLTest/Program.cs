@@ -14,6 +14,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+<<<<<<< HEAD
         //   "C:/Users/Matt/3D Objects/Gift Box/3D/3dmodel.model",
             "C:/Users/Matt/3D Objects/Wedge Shape.3mf",
         "../../../TestFiles/DxTopLevel.shell",
@@ -23,6 +24,15 @@ namespace TVGL_Test
         //"../../../TestFiles/airplane.ply",
         //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
         //"../../../TestFiles/Beam_Boss.STL",
+=======
+        "../../../TestFiles/SimplifyFails.ply",
+       // "../../../TestFiles/shark.ply",
+       // "../../../TestFiles/bunnySmall.ply",
+       // "../../../TestFiles/cube.ply",
+       // "../../../TestFiles/airplane.ply",
+       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+       // "../../../TestFiles/Beam_Boss.STL",
+>>>>>>> master
        // "../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
@@ -30,8 +40,8 @@ namespace TVGL_Test
        // "../../../TestFiles/Mic_Holder_SW.stl",
        // "../../../TestFiles/Mic_Holder_JR.stl",
        // "../../../TestFiles/3_bananas.amf",
-       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-       // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+       // //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+       // //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
        // "../../../TestFiles/Rook.amf",
        // "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
        // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
@@ -60,7 +70,7 @@ namespace TVGL_Test
        // "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
        // "../../../TestFiles/mendel_extruder.stl",
        // "../../../TestFiles/Square Support.STL",
-        "../../../TestFiles/Aerospace_Beam.STL",
+       // "../../../TestFiles/Aerospace_Beam.STL",
        //"../../../TestFiles/MV-Test files/holding-device.STL",
        //"../../../TestFiles/MV-Test files/gear.STL"
         };
@@ -70,9 +80,13 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
+<<<<<<< HEAD
             Message.Verbosity = VerbosityLevels.Everything;
             //TestOBB("../../../TestFiles/");
             //return;
+=======
+            TVGL.Message.Verbosity=VerbosityLevels.AboveNormal;
+>>>>>>> master
             for (var i = 0; i < FileNames.Count(); i++)
             {
                 var filename = FileNames[i];
@@ -93,17 +107,26 @@ namespace TVGL_Test
 
 
                 var ts = IO.Open(fileStream, filename, false);
+<<<<<<< HEAD
                 foreach (var tessellatedSolid in ts)
                 {
                     TessellationError.CheckModelIntegrity(tessellatedSolid);
                     TVGL_Helix_Presenter.HelixPresenter.Show(tessellatedSolid);
                 }
+=======
+>>>>>>> master
                 //Primitive_Classification.Run(ts[0]);
                 //MiscFunctions.IsSolidBroken(ts[0]);
                 //MinimumEnclosure.OrientedBoundingBox(ts[0]);
                 //TestClassification(ts[0]);
+<<<<<<< HEAD
                 //TestXSections(ts[0]);
                 //TestSimplify(ts[0]);
+=======
+               // TestXSections(ts[0]);
+                TVGL.Presenter.ShowAndHang(ts);
+                TestSimplify(ts[0]);
+>>>>>>> master
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0], filename);
                 //var filename2 = filenames[i + 1];
@@ -142,11 +165,11 @@ namespace TVGL_Test
 
         private static void TestSimplify(TessellatedSolid ts)
         {
-            ts.SimplifyByPercentage(.5);
+            ts.SimplifyByPercentage(.9);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL_Helix_Presenter.HelixPresenter.Show(ts);
+            TVGL.Presenter.Show(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)

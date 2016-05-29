@@ -1,16 +1,17 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
 // Last Modified On : 03-15-2015
 // ***********************************************************************
-// <copyright file="Flat.cs" company="">
+// <copyright file="Flat.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
@@ -18,78 +19,29 @@ using StarMathLib;
 namespace TVGL
 {
     /// <summary>
-    /// Class Flat.
+    ///     Class Flat.
     /// </summary>
     public class Flat : PrimitiveSurface
     {
-        #region Constructors
         /// <summary>
-        /// Initializes a new instance of the <see cref="Flat"/> class.
-        /// </summary>
-        /// <param name="faces"></param>
-        public Flat(IEnumerable<PolygonalFace> faces)
-            : base(faces)
-        {
-            Type = PrimitiveSurfaceType.Flat;
-            Faces = faces.ToList();
-            var normalSum = new double[3];
-            normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
-            Normal = normalSum.divide(Faces.Count);
-            Normal = Normal.normalize();
-            DistanceToOrigin = Faces.Average(f => Normal.dotProduct(f.Vertices[0].Position));
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Flat"/> class.
-        /// </summary>
-        public Flat()
-            : base()
-        {
-            Type = PrimitiveSurfaceType.Flat;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Flat"/> class.
-        /// </summary>
-        /// <param name="distanceToOrigin">The distance to origin.</param>
-        /// <param name="normal">The normal.</param>
-        public Flat(double distanceToOrigin, double[] normal)
-        {
-            Type = PrimitiveSurfaceType.Flat;
-            Normal = normal.normalize();
-            DistanceToOrigin = distanceToOrigin;
-        }
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Flat"/> class.
-        /// </summary>
-        /// <param name="pointOnPlane">a point on plane.</param>
-        /// <param name="normal">The normal.</param>
-        public Flat(double[] pointOnPlane, double[] normal)
-        {
-            Type = PrimitiveSurfaceType.Flat;
-            Normal = normal.normalize();
-            DistanceToOrigin = Normal.dotProduct(pointOnPlane);
-        }
-        #endregion
-
-        /// <summary>
-        /// Gets or sets the anchor.
+        ///     Gets or sets the anchor.
         /// </summary>
         /// <value>The anchor.</value>
         public double DistanceToOrigin { get; set; }
+
         /// <summary>
-        /// Gets or sets the normal.
+        ///     Gets or sets the normal.
         /// </summary>
         /// <value>The normal.</value>
         public double[] Normal { get; set; }
 
         /// <summary>
-        /// Tolerance used to determine whether faces shoud be part of this flat
+        ///     Tolerance used to determine whether faces shoud be part of this flat
         /// </summary>
         public double Tolerance { get; set; }
 
         /// <summary>
-        /// Determines whether [is new member of] [the specified face].
+        ///     Determines whether [is new member of] [the specified face].
         /// </summary>
         /// <param name="face">The face.</param>
         /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
@@ -105,7 +57,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Updates the with.
+        ///     Updates the with.
         /// </summary>
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
@@ -119,8 +71,60 @@ namespace TVGL
                 newVerts.Add(v);
                 newDistanceToPlane += v.Position.dotProduct(Normal);
             }
-            DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + newVerts.Count);
+            DistanceToOrigin = (Vertices.Count*DistanceToOrigin + newDistanceToPlane)/(Vertices.Count + newVerts.Count);
             base.UpdateWith(face);
         }
+
+        #region Constructors
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Flat" /> class.
+        /// </summary>
+        /// <param name="faces"></param>
+        public Flat(IEnumerable<PolygonalFace> faces)
+            : base(faces)
+        {
+            Type = PrimitiveSurfaceType.Flat;
+            Faces = faces.ToList();
+            var normalSum = new double[3];
+            normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
+            Normal = normalSum.divide(Faces.Count);
+            Normal = Normal.normalize();
+            DistanceToOrigin = Faces.Average(f => Normal.dotProduct(f.Vertices[0].Position));
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Flat" /> class.
+        /// </summary>
+        public Flat()
+        {
+            Type = PrimitiveSurfaceType.Flat;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Flat" /> class.
+        /// </summary>
+        /// <param name="distanceToOrigin">The distance to origin.</param>
+        /// <param name="normal">The normal.</param>
+        public Flat(double distanceToOrigin, double[] normal)
+        {
+            Type = PrimitiveSurfaceType.Flat;
+            Normal = normal.normalize();
+            DistanceToOrigin = distanceToOrigin;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Flat" /> class.
+        /// </summary>
+        /// <param name="pointOnPlane">a point on plane.</param>
+        /// <param name="normal">The normal.</param>
+        public Flat(double[] pointOnPlane, double[] normal)
+        {
+            Type = PrimitiveSurfaceType.Flat;
+            Normal = normal.normalize();
+            DistanceToOrigin = Normal.dotProduct(pointOnPlane);
+        }
+
+        #endregion
     }
 }

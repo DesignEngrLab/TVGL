@@ -1,28 +1,38 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
 // Last Modified On : 02-18-2015
 // ***********************************************************************
-// <copyright file="DenseRegion.cs" company="">
+// <copyright file="DenseRegion.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+
 using System;
 using System.Collections.Generic;
 
 namespace TVGL
 {
     /// <summary>
-    /// Class DenseRegion.
+    ///     Class DenseRegion.
     /// </summary>
     public class DenseRegion : PrimitiveSurface
     {
         /// <summary>
-        /// Determines whether [is new member of] [the specified face].
+        ///     Initializes a new instance of the <see cref="DenseRegion" /> class.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        public DenseRegion(List<PolygonalFace> faces) : base(faces)
+        {
+            Type = PrimitiveSurfaceType.Dense;
+        }
+
+        /// <summary>
+        ///     Determines whether [is new member of] [the specified face].
         /// </summary>
         /// <param name="face">The face.</param>
         /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
@@ -33,22 +43,13 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Updates the with.
+        ///     Updates the with.
         /// </summary>
         /// <param name="face">The face.</param>
         /// <exception cref="System.NotImplementedException"></exception>
         public override void UpdateWith(PolygonalFace face)
         {
             throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DenseRegion"/> class.
-        /// </summary>
-        /// <param name="faces">The faces.</param>
-        public DenseRegion(List<PolygonalFace> faces) : base(faces)
-        {
-            Type = PrimitiveSurfaceType.Dense;
         }
     }
 }
