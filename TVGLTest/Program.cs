@@ -13,6 +13,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+        "../../../TestFiles/wedge.3mf",
         "../../../TestFiles/shark.ply",
         "../../../TestFiles/bunnySmall.ply",
         "../../../TestFiles/cube.ply",

@@ -61,6 +61,14 @@
       <HintPath>..\packages\OxyPlot.Wpf.1.0.0-unstable2100\lib\net45\OxyPlot.Xps.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="PropertyTools, Version=2015.2.0.0, Culture=neutral, PublicKeyToken=ea0c9f2b460934d0, processorArchitecture=MSIL">
+      <HintPath>..\packages\PropertyTools.Wpf.2015.2.0\lib\net45\PropertyTools.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="PropertyTools.Wpf, Version=2015.2.0.0, Culture=neutral, PublicKeyToken=ea0c9f2b460934d0, processorArchitecture=MSIL">
+      <HintPath>..\packages\PropertyTools.Wpf.2015.2.0\lib\net45\PropertyTools.Wpf.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net45+wp8+win8\StarMath.dll</HintPath>
       <Private>True</Private>
