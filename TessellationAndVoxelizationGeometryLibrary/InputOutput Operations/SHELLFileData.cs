@@ -87,12 +87,12 @@ namespace TVGL.IOFunctions
           }
         }
         
-        internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
+        internal static List<TessellatedSolid> Open(Stream s,string filename, bool inParallel = true)
         {
             var now = DateTime.Now;
             List<ShellFileData> shellData;
             // Read in ASCII format
-            if (ShellFileData.TryReadAscii(s, out shellData))
+            if (ShellFileData.TryReadAscii(s,filename, out shellData))
                 Message.output("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").",3);
             else
             {
@@ -109,15 +109,15 @@ namespace TVGL.IOFunctions
                 if (shell.Vertices.Any() && shell.FaceToVertexIndices.Any())
                 results.Add(new TessellatedSolid(shell.Name + "_" + shell.Material.materialName, shell.Vertices,
                     shell.FaceToVertexIndices, shell.Colors));
-            Message.output("Successfully read in SHELL file called " + getNameFromStream(s) + " in " + (DateTime.Now - now).TotalSeconds + " seconds.", 4);
+            Message.output("Successfully read in SHELL file called " + filename + " in " + (DateTime.Now - now).TotalSeconds + " seconds.", 4);
             return results;
         }
 
 
         
-        internal static bool TryReadAscii(Stream stream, out List<ShellFileData> shellData)
+        internal static bool TryReadAscii(Stream stream,string filename, out List<ShellFileData> shellData)
         {
-            var defaultName = getNameFromStream(stream) + "_";
+            var defaultName = filename + "_";
             var solidNum = 0;
             var reader = new StreamReader(stream);
             shellData = new List<ShellFileData>();

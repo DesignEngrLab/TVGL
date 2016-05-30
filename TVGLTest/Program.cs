@@ -1,10 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
@@ -14,25 +13,13 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-<<<<<<< HEAD
-        //   "C:/Users/Matt/3D Objects/Gift Box/3D/3dmodel.model",
-            "C:/Users/Matt/3D Objects/Wedge Shape.3mf",
-        "../../../TestFiles/DxTopLevel.shell",
-        //"../../../TestFiles/shark.ply",
-        //"../../../TestFiles/bunnySmall.ply",
-        //"../../../TestFiles/cube.ply",
-        //"../../../TestFiles/airplane.ply",
-        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        //"../../../TestFiles/Beam_Boss.STL",
-=======
-        "../../../TestFiles/SimplifyFails.ply",
-       // "../../../TestFiles/shark.ply",
-       // "../../../TestFiles/bunnySmall.ply",
-       // "../../../TestFiles/cube.ply",
-       // "../../../TestFiles/airplane.ply",
-       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-       // "../../../TestFiles/Beam_Boss.STL",
->>>>>>> master
+        "../../../TestFiles/shark.ply",
+        "../../../TestFiles/bunnySmall.ply",
+        "../../../TestFiles/cube.ply",
+        "../../../TestFiles/airplane.ply",
+        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        "../../../TestFiles/Beam_Boss.STL",
+
        // "../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
@@ -80,53 +67,16 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
-<<<<<<< HEAD
-            Message.Verbosity = VerbosityLevels.Everything;
-            //TestOBB("../../../TestFiles/");
-            //return;
-=======
             TVGL.Message.Verbosity=VerbosityLevels.AboveNormal;
->>>>>>> master
             for (var i = 0; i < FileNames.Count(); i++)
             {
                 var filename = FileNames[i];
                 Console.WriteLine("Attempting: " + filename);
                 FileStream fileStream = File.OpenRead(filename);
-                var result = new List<TessellatedSolid>();
-                var zipStorer = ZipStorer.Open(fileStream, FileAccess.Read);
-                var dir = zipStorer.ReadCentralDir();
-                var modelFiles = dir.Where(f => f.FilenameInZip.EndsWith(".model"));
-                foreach (var modelFile in modelFiles)
-                {
-                    var s = new MemoryStream();
-                    zipStorer.ExtractFile(modelFile, s);
-                    var txt = s.ToString();
-                }
-
-
-
-
                 var ts = IO.Open(fileStream, filename, false);
-<<<<<<< HEAD
-                foreach (var tessellatedSolid in ts)
-                {
-                    TessellationError.CheckModelIntegrity(tessellatedSolid);
-                    TVGL_Helix_Presenter.HelixPresenter.Show(tessellatedSolid);
-                }
-=======
->>>>>>> master
-                //Primitive_Classification.Run(ts[0]);
-                //MiscFunctions.IsSolidBroken(ts[0]);
-                //MinimumEnclosure.OrientedBoundingBox(ts[0]);
-                //TestClassification(ts[0]);
-<<<<<<< HEAD
-                //TestXSections(ts[0]);
-                //TestSimplify(ts[0]);
-=======
-               // TestXSections(ts[0]);
                 TVGL.Presenter.ShowAndHang(ts);
                 TestSimplify(ts[0]);
->>>>>>> master
+
                 //TestSlice(ts[0]);
                 //TestOBB(ts[0], filename);
                 //var filename2 = filenames[i + 1];

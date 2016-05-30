@@ -24,11 +24,6 @@ namespace TVGL
     /// </summary>
     public class TessellationError
     {
-        /// <summary>
-        ///     The _edge face ratio
-        /// </summary>
-        private double _edgeFaceRatio = double.NaN;
-
         #region Puplic Properties
 
         /// <summary>
@@ -137,11 +132,7 @@ namespace TVGL
         ///     Edges to face ratio
         /// </summary>
         /// <value>The edge face ratio.</value>
-        public double EdgeFaceRatio
-        {
-            get { return _edgeFaceRatio; }
-            private set { _edgeFaceRatio = value; }
-        }
+        public double EdgeFaceRatio { get; private set; } = double.NaN;
 
         /// <summary>
         ///     Whether ts.Errors contains any errors that need to be resolved
@@ -183,11 +174,6 @@ namespace TVGL
                 }
                 foreach (var vertex in face.Vertices.Where(vertex => !vertex.Faces.Contains(face)))
                     StoreVertexDoesNotLinkBackToFace(ts, face, vertex);
-<<<<<<< HEAD
-                if (face.AdjacentFaces.Any(adjacentFace => adjacentFace == null))
-                    StoreFaceWithMissingAdjacency(ts, face);
-=======
->>>>>>> master
             }
             //Check if each edge has cyclic references with each vertex and each face.
             foreach (var edge in ts.Edges)
@@ -196,11 +182,7 @@ namespace TVGL
                 if (!edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
                 if (!edge.To.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.To);
                 if (!edge.From.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.From);
-<<<<<<< HEAD
-                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2 * Math.PI)
-=======
                 if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2*Math.PI)
->>>>>>> master
                     StoreEdgeHasBadAngle(ts, edge);
             }
             //Check if each vertex has cyclic references with each edge and each face.
@@ -223,11 +205,7 @@ namespace TVGL
                 if (success)
                 {
                     ts.Errors = null;
-<<<<<<< HEAD
-                    Message.output("Repair successfully fixed the model.", 2);
-=======
                     Message.output("Repairs functions completed successfully (errors may still occur).", 2);
->>>>>>> master
                 }
                 else Message.output("Repair did not successfully fix all the problems.", 1);
                 CheckModelIntegrity(ts, false);
@@ -251,12 +229,8 @@ namespace TVGL
             if (!double.IsNaN(EdgeFaceRatio))
                 Message.output("==> Edges / Faces = " + EdgeFaceRatio + ", but it should be 1.5.");
             if (OverusedEdges != null)
-            {
-<<<<<<< HEAD
-                Message.output("==> "+OverusedEdges.Count+" overused edges.");
-=======
+            { 
                 Message.output("==> " + OverusedEdges.Count + " overused edges.");
->>>>>>> master
                 Message.output("    The number of faces per overused edge: " +
                                OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
             }
@@ -265,24 +239,6 @@ namespace TVGL
             if (DuplicateFaces != null) Message.output("==> " + DuplicateFaces.Count + " duplicate faces in file.");
             if (FacesWithOneVertex != null)
                 Message.output("==> " + FacesWithOneVertex.Count + " faces with only one vertex.");
-<<<<<<< HEAD
-            if (FacesWithOneEdge != null) Message.output("==> " + FacesWithOneEdge.Count + " faces with only one edge.");
-            if (FacesWithTwoVertices != null) Message.output("==> " + FacesWithTwoVertices.Count + "  faces with only two vertices.");
-            if (FacesWithTwoEdges != null) Message.output("==> " + FacesWithTwoEdges.Count + " faces with only two edges.");
-            if (EdgesWithBadAngle != null) Message.output("==> " + EdgesWithBadAngle.Count + " edges with bad angles.");
-            if (EdgesThatDoNotLinkBackToFace != null)
-                Message.output("==> " + EdgesThatDoNotLinkBackToFace.Count + " edges that do not link back to faces that link to them.");
-            if (EdgesThatDoNotLinkBackToVertex != null)
-                Message.output("==> " + EdgesThatDoNotLinkBackToVertex.Count + " edges that do not link back to vertices that link to them.");
-            if (VertsThatDoNotLinkBackToFace != null)
-                Message.output("==> " + VertsThatDoNotLinkBackToFace.Count + " vertices that do not link back to faces that link to them.");
-            if (VertsThatDoNotLinkBackToEdge != null)
-                Message.output("==> " + VertsThatDoNotLinkBackToEdge.Count + " vertices that do not link back to edges that link to them.");
-            if (FacesThatDoNotLinkBackToEdge != null)
-                Message.output("==> " + FacesThatDoNotLinkBackToEdge.Count + " faces that do not link back to edges that link to them.");
-            if (FacesThatDoNotLinkBackToVertex != null)
-                Message.output("==> " + FacesThatDoNotLinkBackToVertex.Count + " faces that do not link back to vertices that link to them.");
-=======
             if (FacesWithOneEdge != null)
                 Message.output("==> " + FacesWithOneEdge.Count + " faces with only one edge.");
             if (FacesWithTwoVertices != null)
@@ -308,7 +264,6 @@ namespace TVGL
             if (FacesThatDoNotLinkBackToVertex != null)
                 Message.output("==> " + FacesThatDoNotLinkBackToVertex.Count +
                                " faces that do not link back to vertices that link to them.");
->>>>>>> master
         }
 
         #endregion
@@ -420,11 +375,7 @@ namespace TVGL
         {
             //This is not truly an error, to don't change the NoErrors boolean.
             if (ts.Errors.FacesWithNegligibleArea == null)
-<<<<<<< HEAD
-                ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> { face };
-=======
                 ts.Errors.FacesWithNegligibleArea = new List<PolygonalFace> {face};
->>>>>>> master
             else if (!ts.Errors.FacesWithNegligibleArea.Contains(face)) ts.Errors.FacesWithNegligibleArea.Add(face);
         }
 
@@ -729,11 +680,7 @@ namespace TVGL
             }
             if (newFaces.Count == 1) Message.output("1 missing face was fixed", 3);
             if (newFaces.Count > 1) Message.output(newFaces.Count + " missing faces were fixed", 3);
-<<<<<<< HEAD
-            return LinkUpNewFaces(newFaces, ts);
-=======
             return LinkUpNewFaces(newFaces, ts, ts.Errors.SingledSidedEdges);
->>>>>>> master
         }
 
         /// <summary>

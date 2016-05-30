@@ -60,29 +60,26 @@ namespace TVGL.IOFunctions
             switch (extension)
             {
                 case "stl":
-                    tessellatedSolids = STLFileData.Open(s,filename, inParallel); // Standard Tessellation or StereoLithography
+                    tessellatedSolids = STLFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
                     break;
                 case "ply":
                     tessellatedSolids = PLYFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
                     break;
-<<<<<<< HEAD
                 case "3mf":
-                    tessellatedSolids = ThreeMFFileData.Open3MF(s, inParallel);
+                    tessellatedSolids = ThreeMFFileData.Open(s, filename, inParallel);
                     break;
                 case "model":
-                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, inParallel);
+                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, inParallel);
                     break;
-=======
->>>>>>> master
                 case "amf":
-                    tessellatedSolids = AMFFileData.Open(s,filename, inParallel);
+                    tessellatedSolids = AMFFileData.Open(s, filename, inParallel);
                     break;
                 case "off":
                     tessellatedSolids = OFFFileData.Open(s, filename, inParallel);
-                        // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
                 case "shell":
-                    tessellatedSolids = ShellFileData.Open(s, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    tessellatedSolids = ShellFileData.Open(s, filename, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
                 default:
                     throw new Exception(

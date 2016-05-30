@@ -85,7 +85,12 @@ namespace TVGL.IOFunctions
         /// <value>The language.</value>
         public string lang { get; set; }
 
-    
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        public string Name { get; set; }
+
         /// <summary>
         /// Opens the specified s.
         /// </summary>
@@ -96,29 +101,21 @@ namespace TVGL.IOFunctions
         internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
             var now = DateTime.Now;
-<<<<<<< HEAD
             AMFFileData amfData = null;
             try
             {
                 var streamReader = new StreamReader(s);
                 var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
                 amfData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
-                amfData.Name = getNameFromStream(s);
-                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").",3);
+                amfData.Name = filename;
+                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
             }
             catch (Exception exception)
-=======
-            AMFFileData amfData;
-            // Try to read in BINARY format
-            if (TryUnzippedXMLRead(s, out amfData))
-                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
-            else
->>>>>>> master
             {
                 Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").", 1);
                 return null;
             }
-        var results = new List<TessellatedSolid>();
+            var results = new List<TessellatedSolid>();
             foreach (var amfObject in amfData.Objects)
             {
                 List<Color> colors = null;
@@ -156,8 +153,8 @@ namespace TVGL.IOFunctions
             try
             {
                 var streamReader = new StreamReader(stream);
-                var amfDeserializer = new XmlSerializer(typeof (AMFFileData));
-                amfFileData = (AMFFileData) amfDeserializer.Deserialize(streamReader);
+                var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
+                amfFileData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
             }
             catch (Exception exception)
             {
