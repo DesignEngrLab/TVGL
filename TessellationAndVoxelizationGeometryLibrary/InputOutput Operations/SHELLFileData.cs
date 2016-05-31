@@ -28,7 +28,7 @@ namespace TVGL.IOFunctions
         private static bool startofFacets = false;
         private static bool endofFacets = false;
 
-        public ShellFileData()
+        internal ShellFileData()
         {
             Vertices = new List<double[]>();
             FaceToVertexIndices = new List<int[]>();
@@ -39,48 +39,48 @@ namespace TVGL.IOFunctions
         ///     Gets the has color specified.
         /// </summary>
         /// <value>The has color specified.</value>
-        public Boolean HasColorSpecified { get; private set; }
+        internal Boolean HasColorSpecified { get; private set; }
 
         private bool ColorIsFloat;
         /// <summary>
         ///     Gets or sets the colors.
         /// </summary>
         /// <value>The colors.</value>
-        public List<Color> Colors { get; private set; }
+        internal List<Color> Colors { get; private set; }
 
         /// <summary>
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        public  List<double[]> Vertices { get; private set; }
+        internal  List<double[]> Vertices { get; private set; }
 
         /// <summary>
         ///     Gets the face to vertex indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
-        public  List<int[]> FaceToVertexIndices { get; private set; }
+        internal  List<int[]> FaceToVertexIndices { get; private set; }
 
         /// <summary>
         ///     Gets the file header.
         /// </summary>
         /// <value>The header.</value>
-        public string Name { get; private set; }
+        internal string Name { get; private set; }
 
-        public List<string> Comments { get; private set; }
+        internal List<string> Comments { get; private set; }
         private List<ShapeElement> ReadInOrder;
         private List<ColorElements> ColorDescriptor;
 
-        public int NumVertices { get; private set; }
-        public int NumFaces { get; private set; }
-        public int NumEdges { get; private set; }
-        public ShellMaterial Material { get; private set; }
+        internal int NumVertices { get; private set; }
+        internal int NumFaces { get; private set; }
+        internal int NumEdges { get; private set; }
+        internal ShellMaterial Material { get; private set; }
 
-        public struct ShellMaterial
+        internal struct ShellMaterial
         {
-          public string materialName;
-          public Color materialColor;
+          internal string materialName;
+          internal Color materialColor;
 
-          public ShellMaterial(string name, Color color)
+          internal ShellMaterial(string name, Color color)
           {
               materialName = name;
               materialColor = color;

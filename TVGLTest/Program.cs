@@ -13,7 +13,10 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        "../../../TestFiles/wedge.3mf",
+        //"../../../TestFiles/Candy.shell",
+        //"../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/wedge.model",
+        "../../../TestFiles/train.3mf",
         "../../../TestFiles/shark.ply",
         "../../../TestFiles/bunnySmall.ply",
         "../../../TestFiles/cube.ply",
@@ -24,7 +27,6 @@ namespace TVGL_Test
        // "../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
-       // "../../../TestFiles/amf_Cube.amf",
        // "../../../TestFiles/Mic_Holder_SW.stl",
        // "../../../TestFiles/Mic_Holder_JR.stl",
        // "../../../TestFiles/3_bananas.amf",
@@ -77,13 +79,6 @@ namespace TVGL_Test
                 var ts = IO.Open(fileStream, filename, false);
                 TVGL.Presenter.ShowAndHang(ts);
                 TestSimplify(ts[0]);
-
-                //TestSlice(ts[0]);
-                //TestOBB(ts[0], filename);
-                //var filename2 = filenames[i + 1];
-                //FileStream fileStream2 = File.OpenRead(filename2);
-                //var ts2 = IO.Open(fileStream2, filename2, false);
-                //TestInsideSolid(ts[0], ts2[0]);
             }
             Console.WriteLine("Completed.");
             Console.ReadKey();

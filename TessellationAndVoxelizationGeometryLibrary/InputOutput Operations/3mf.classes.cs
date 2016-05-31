@@ -5,188 +5,181 @@
 //  </auto-generated>
 // ------------------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Net.Http;
 using System.Xml;
 using System.Xml.Serialization;
+using StarMathLib;
 
 
-namespace ClassesFor_3mf_Files
+namespace TVGL.IOFunctions.threemfclasses
 {
     /// <summary>
-    /// Class CT_Model.
+    /// Class Item - is used in the build section.
     /// </summary>
-   #if help
-    internal class CT_Model
+#if help
+    internal class Item
 #else
-    public class CT_Model
-#endif
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Model"/> class.
-        /// </summary>
-        public CT_Model()
-        {
-            build = new CT_Build();
-            resources = new CT_Resources();
-            metadata = new List<CT_Metadata>();
-            unit = ST_Unit.millimeter;
-        }
-
-        /// <summary>
-        /// Gets or sets the metadata.
-        /// </summary>
-        /// <value>The metadata.</value>
-        public List<CT_Metadata> metadata { get; set; }
-        /// <summary>
-        /// Gets or sets the resources.
-        /// </summary>
-        /// <value>The resources.</value>
-        public CT_Resources resources { get; set; }
-        /// <summary>
-        /// Gets or sets the build.
-        /// </summary>
-        /// <value>The build.</value>
-        public CT_Build build { get; set; }
-
-        /// <summary>
-        /// Gets or sets the unit.
-        /// </summary>
-        /// <value>The unit.</value>
-        [DefaultValue(ST_Unit.millimeter)]
-        public ST_Unit unit { get; set; }
-
-        /// <summary>
-        /// Gets or sets the language.
-        /// </summary>
-        /// <value>The language.</value>
-        public string lang { get; set; }
-        /// <summary>
-        /// Gets or sets the requiredextensions.
-        /// </summary>
-        /// <value>The requiredextensions.</value>
-        public string requiredextensions { get; set; }
-    }
-
-    /// <summary>
-    /// Class CT_Metadata.
-    /// </summary>
-    #if help
-    internal class CT_Metadata
-#else
-    public class CT_Metadata
-#endif 
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Metadata"/> class.
-        /// </summary>
-        public CT_Metadata()
-        {
-            Text = new List<string>();
-        }
-
-        /// <summary>
-        /// Gets or sets the name.
-        /// </summary>
-        /// <value>The name.</value>
-        public XmlQualifiedName name { get; set; }
-
-        /// <summary>
-        /// Gets or sets the text.
-        /// </summary>
-        /// <value>The text.</value>
-        [XmlText]
-        public List<string> Text { get; set; }
-    }
-
-    /// <summary>
-    /// Class CT_Item.
-    /// </summary>
-     #if help
-    internal class CT_Item
-#else
-    public class CT_Item
+    public class Item
 #endif
     {
         /// <summary>
         /// Gets or sets the objectid.
         /// </summary>
         /// <value>The objectid.</value>
-        public string objectid { get; set; }
+        [XmlAttribute]
+        public int objectid { get; set; }
+
         /// <summary>
         /// Gets or sets the transform.
         /// </summary>
         /// <value>The transform.</value>
+        [XmlAttribute]
         public string transform { get; set; }
+
         /// <summary>
         /// Gets or sets the itemref.
         /// </summary>
+        [XmlAttribute]
         /// <value>The itemref.</value>
         public string itemref { get; set; }
+
+        internal double[] transformArray
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(transform)) return null;
+                var stringTerms = transform.Trim().Split(' ', ',');
+                var num = stringTerms.Length;
+                var result = new double[num];
+                for (int i = 0; i < num; i++)
+                {
+                    double term;
+                    if (double.TryParse(stringTerms[i], out term))
+                        result[i] = term;
+                    else result[i] = double.NaN;
+                }
+                return result;
+            }
+        }
+
+        internal double[,] transformMatrix
+        {
+            get
+            {
+                if (transformArray == null || (transformArray.Length != 3 && transformArray.Length != 12)) return null;
+                var result = StarMath.makeIdentity(4);
+                if (transformArray.Length == 3)
+                {
+                    result[0, 3] = transformArray[0];
+                    result[1, 3] = transformArray[1];
+                    result[2, 3] = transformArray[2];
+                    return result;
+                }
+                result[0, 0] = transformArray[0];
+                result[1, 0] = transformArray[1];
+                result[2, 0] = transformArray[2];
+                result[0, 1] = transformArray[3];
+                result[1, 1] = transformArray[4];
+                result[2, 1] = transformArray[5];
+                result[0, 2] = transformArray[6];
+                result[1, 2] = transformArray[7];
+                result[2, 2] = transformArray[8];
+                result[0, 3] = transformArray[9];
+                result[1, 3] = transformArray[10];
+                result[2, 3] = transformArray[11];
+                return result;
+            }
+        }
     }
 
     /// <summary>
-    /// Class CT_Build.
+    ///     Class Metadata is used in the header and potentially other places.
     /// </summary>
-     #if help
-    internal class CT_Build
+#if help
+    internal class Metadata
 #else
-    public class CT_Build
+    public class Metadata
 #endif
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Build"/> class.
+        ///     The type
         /// </summary>
-        public CT_Build()
+        [XmlAttribute("name")] public string type;
+
+        /// <summary>
+        ///     The value
+        /// </summary>
+        [XmlText] public string Value;
+    }
+
+    /// <summary>
+    /// Class Build is a major categoy usually following resources.
+    /// </summary>
+#if help
+    internal class Build
+#else
+    public class Build
+#endif
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Build"/> class.
+        /// </summary>
+        public Build()
         {
-            item = new List<CT_Item>();
+            Items = new List<Item>();
         }
 
         /// <summary>
         /// Gets or sets the item.
         /// </summary>
         /// <value>The item.</value>
-        public List<CT_Item> item { get; set; }
+        [XmlElement("item")]
+        public List<Item> Items { get; set; }
     }
 
     /// <summary>
-    /// Class CT_Components.
+    /// Class Components is a list of type Component (see next class). These are subtly similar to meshes and build, but
+    /// are about the final ("as assembled") positions.
     /// </summary>
-     #if help
-    internal class CT_Components
+#if help
+    internal class Components
 #else
-    public class CT_Components
-#endif 
+    public class Components
+#endif
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Components"/> class.
+        /// Initializes a new instance of the <see cref="Components"/> class.
         /// </summary>
-        public CT_Components()
+        public Components()
         {
-            component = new List<CT_Component>();
+            component = new List<Component>();
         }
 
         /// <summary>
         /// Gets or sets the component.
         /// </summary>
         /// <value>The component.</value>
-        public List<CT_Component> component { get; set; }
+        public List<Component> component { get; set; }
     }
 
     /// <summary>
-    /// Class CT_Component.
+    /// Class Component.
     /// </summary>
-     #if help
-    internal class CT_Component
+#if help
+    internal class Component
 #else
-    public class CT_Component
-#endif  
+    public class Component
+#endif
     {
         /// <summary>
         /// Gets or sets the objectid.
         /// </summary>
         /// <value>The objectid.</value>
         public string objectid { get; set; }
+
         /// <summary>
         /// Gets or sets the transform.
         /// </summary>
@@ -197,91 +190,105 @@ namespace ClassesFor_3mf_Files
     /// <summary>
     /// Class CT_Triangle.
     /// </summary>
-   #if help
-    internal class CT_Triangle
+#if help
+    internal class Triangle
 #else
-    public class CT_Triangle
-#endif     
+    public class Triangle
+#endif
     {
         /// <summary>
         /// Gets or sets the v1.
         /// </summary>
         /// <value>The v1.</value>
+        [XmlAttribute]
         public int v1 { get; set; }
+
         /// <summary>
         /// Gets or sets the v2.
         /// </summary>
         /// <value>The v2.</value>
+        [XmlAttribute]
         public int v2 { get; set; }
+
         /// <summary>
         /// Gets or sets the v3.
         /// </summary>
         /// <value>The v3.</value>
+        [XmlAttribute]
         public int v3 { get; set; }
+
         /// <summary>
         /// Gets or sets the p1.
         /// </summary>
         /// <value>The p1.</value>
-        public string p1 { get; set; }
+        public int p1 { get; set; }
+
         /// <summary>
         /// Gets or sets the p2.
         /// </summary>
         /// <value>The p2.</value>
-        public string p2 { get; set; }
+        public int p2 { get; set; }
+
         /// <summary>
         /// Gets or sets the p3.
         /// </summary>
         /// <value>The p3.</value>
-        public string p3 { get; set; }
+        public int p3 { get; set; }
+
         /// <summary>
         /// Gets or sets the pid.
         /// </summary>
         /// <value>The pid.</value>
-        public string pid { get; set; }
+        public int pid { get; set; }
     }
 
     /// <summary>
     /// Class CT_Vertex.
     /// </summary>
-   #if help
-    internal class CT_Vertex
+#if help
+    internal class Vertex
 #else
-    public class CT_Vertex
-#endif 
+    public class Vertex
+#endif
     {
         /// <summary>
         /// Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
+        [XmlAttribute]
         public double x { get; set; }
+
         /// <summary>
         /// Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
+        [XmlAttribute]
         public double y { get; set; }
+
         /// <summary>
         /// Gets or sets the z.
         /// </summary>
         /// <value>The z.</value>
+        [XmlAttribute]
         public double z { get; set; }
     }
 
     /// <summary>
     /// Class CT_Mesh.
     /// </summary>
-   #if help
-    internal class CT_Mesh
+#if help
+    internal class Mesh
 #else
-    public class CT_Mesh
-#endif  
+    public class Mesh
+#endif
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Mesh"/> class.
+        /// Initializes a new instance of the <see cref="Mesh"/> class.
         /// </summary>
-        public CT_Mesh()
+        public Mesh()
         {
-            triangles = new List<CT_Triangle>();
-            vertices = new List<CT_Vertex>();
+            triangles = new List<Triangle>();
+            vertices = new List<Vertex>();
         }
 
         /// <summary>
@@ -289,88 +296,56 @@ namespace ClassesFor_3mf_Files
         /// </summary>
         /// <value>The vertices.</value>
         [XmlArrayItem("vertex", IsNullable = false)]
-        public List<CT_Vertex> vertices { get; set; }
+        public List<Vertex> vertices { get; set; }
 
         /// <summary>
         /// Gets or sets the triangles.
         /// </summary>
         /// <value>The triangles.</value>
         [XmlArrayItem("triangle", IsNullable = false)]
-        public List<CT_Triangle> triangles { get; set; }
+        public List<Triangle> triangles { get; set; }
     }
 
     /// <summary>
     /// Class CT_Object.
     /// </summary>
-   #if help
-    internal class CT_Object
+#if help
+    internal class Object
 #else
-    public class CT_Object
-#endif 
+    public class Object
+#endif
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Object"/> class.
-        /// </summary>
-        public CT_Object()
-        {
-            type = ST_ObjectType.model;
-        }
+        [XmlAttribute]
+        public int id { get; set; }
 
-        /// <summary>
-        /// Gets or sets the item.
-        /// </summary>
-        /// <value>The item.</value>
-        public object Item { get; set; }
-        /// <summary>
-        /// Gets or sets the identifier.
-        /// </summary>
-        /// <value>The identifier.</value>
-        public string id { get; set; }
+        [XmlAttribute]
+        [DefaultValue(ObjectType.model)]
+        public ObjectType type { get; set; }
 
-        /// <summary>
-        /// Gets or sets the type.
-        /// </summary>
-        /// <value>The type.</value>
-        [DefaultValue(ST_ObjectType.model)]
-        public ST_ObjectType type { get; set; }
+        [XmlAttribute("materialid")]
+        public int MaterialID { get; set; }
 
-        /// <summary>
-        /// Gets or sets the matid.
-        /// </summary>
-        /// <value>The matid.</value>
-        public string matid { get; set; }
-        /// <summary>
-        /// Gets or sets the matindex.
-        /// </summary>
-        /// <value>The matindex.</value>
-        public string matindex { get; set; }
-        /// <summary>
-        /// Gets or sets the thumbnail.
-        /// </summary>
-        /// <value>The thumbnail.</value>
+        [XmlAttribute]
         public string thumbnail { get; set; }
-        /// <summary>
-        /// Gets or sets the partnumber.
-        /// </summary>
-        /// <value>The partnumber.</value>
-        public string partnumber { get; set; }
-        /// <summary>
-        /// Gets or sets the name.
-        /// </summary>
-        /// <value>The name.</value>
+
+        [XmlAttribute]
+        public int partnumber { get; set; }
+
+        [XmlAttribute]
         public string name { get; set; }
 
-        public CT_Mesh mesh { get; set; }
+        [XmlElement]
+        public Mesh mesh { get; set; }
     }
 
     /// <summary>
     /// Enum ST_ObjectType
     /// </summary>
-    #if help
+#if help
     internal enum ST_ObjectType
 #else
-    public enum ST_ObjectType
-#endif    
+    public enum ObjectType
+#endif
     {
         /// <summary>
         /// The model
@@ -389,94 +364,107 @@ namespace ClassesFor_3mf_Files
     }
 
     /// <summary>
-    /// Class CT_Base.
+    /// Class Material.
     /// </summary>
-   #if help
-    internal class CT_Base
+#if help
+    internal class Material
 #else
-    public class CT_Base
+    public class Material
 #endif
     {
-        /// <summary>
-        /// Gets or sets the name.
-        /// </summary>
-        /// <value>The name.</value>
+        [XmlAttribute]
         public string name { get; set; }
-        /// <summary>
-        /// Gets or sets the displaycolor.
-        /// </summary>
-        /// <value>The displaycolor.</value>
-        public string displaycolor { get; set; }
+
+        [XmlAttribute]
+        public int id { get; set; }
+
+        [XmlAttribute]
+        public int colorid { get; set; }
+
+        [XmlAttribute]
+        public string type { get; set; }
     }
 
     /// <summary>
-    /// Class CT_BaseMaterials.
+    /// Class Color3MF.
     /// </summary>
-    #if help
-    internal class CT_BaseMaterials
+#if help
+    internal class Color3MF
 #else
-    public class CT_BaseMaterials
+    public class Color3MF
 #endif
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CT_BaseMaterials"/> class.
-        /// </summary>
-        public CT_BaseMaterials()
-        {
-            @base = new List<CT_Base>();
-        }
+        [XmlAttribute]
+        public string name { get; set; }
 
-        /// <summary>
-        /// Gets or sets the base.
-        /// </summary>
-        /// <value>The base.</value>
-        public List<CT_Base> @base { get; set; }
-        /// <summary>
-        /// Gets or sets the identifier.
-        /// </summary>
-        /// <value>The identifier.</value>
-        public string id { get; set; }
+        [XmlAttribute]
+        public int id { get; set; }
+
+        [XmlAttribute("value")]
+        public string colorString { get; set; }
+
+        internal Color color
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(colorString) || (colorString.Length != 7&&colorString.Length != 9))
+                    return new Color(KnownColors.UnknownColor);
+                var r = Convert.ToByte(colorString.Substring(1, 2),16);
+                var g = Convert.ToByte(colorString.Substring(3, 2),16);
+                var b = Convert.ToByte(colorString.Substring(5, 2),16);
+                if (colorString.Length == 9)
+                {
+                    var a = Convert.ToByte(colorString.Substring(7, 2), 16);
+                    return new Color(a,r,g,b);
+                }
+                else return new Color(r, g, b);
+            }
+        }
     }
 
     /// <summary>
     /// Class CT_Resources.
     /// </summary>
-    #if help
-    internal class CT_Resources
+#if help
+    internal class Resources
 #else
-    public class CT_Resources
-#endif   
+    public class Resources
+#endif
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Resources"/> class.
+        /// Initializes a new instance of the <see cref="Resources"/> class.
         /// </summary>
-        public CT_Resources()
+        public Resources()
         {
-            @object = new List<CT_Object>();
-            basematerials = new List<CT_BaseMaterials>();
+            objects = new List<Object>();
+            materials = new List<Material>();
         }
 
-        /// <summary>
-        /// Gets or sets the basematerials.
-        /// </summary>
-        /// <value>The basematerials.</value>
-        public List<CT_BaseMaterials> basematerials { get; set; }
+        [XmlElement("material")]
+        public List<Material> materials { get; set; }
+
+        [XmlElement("color")]
+        public List<Color3MF> colors { get; set; }
+
         /// <summary>
         /// Gets or sets the object.
         /// </summary>
         /// <value>The object.</value>
-        public List<CT_Object> @object { get; set; }
+        [XmlElement("object")]
+        public List<Object> objects { get; set; }
     }
 
     /// <summary>
     /// Enum ST_Unit
     /// </summary>
-    #if help
+#if help
     internal enum ST_Unit
 #else
     public enum ST_Unit
 #endif
     {
+        unspecified = -1,
+
         /// <summary>
         /// The micron
         /// </summary>
@@ -506,53 +494,5 @@ namespace ClassesFor_3mf_Files
         /// The meter
         /// </summary>
         meter
-    }
-
-    /// <summary>
-    /// Class CT_Vertices.
-    /// </summary>
-    #if help
-    internal class CT_Vertices
-#else
-    public class CT_Vertices
-#endif
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Vertices"/> class.
-        /// </summary>
-        public CT_Vertices()
-        {
-            vertex = new List<CT_Vertex>();
-        }
-
-        /// <summary>
-        /// Gets or sets the vertex.
-        /// </summary>
-        /// <value>The vertex.</value>
-        public List<CT_Vertex> vertex { get; set; }
-    }
-
-    /// <summary>
-    /// Class CT_Triangles.
-    /// </summary>
-    #if help
-    internal class CT_Triangles
-#else
-    public class CT_Triangles
-#endif  
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CT_Triangles"/> class.
-        /// </summary>
-        public CT_Triangles()
-        {
-            triangle = new List<CT_Triangle>();
-        }
-
-        /// <summary>
-        /// Gets or sets the triangle.
-        /// </summary>
-        /// <value>The triangle.</value>
-        public List<CT_Triangle> triangle { get; set; }
     }
 }

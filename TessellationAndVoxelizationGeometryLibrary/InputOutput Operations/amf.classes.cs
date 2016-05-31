@@ -8,7 +8,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace amf
+namespace TVGL.IOFunctions.amfclasses
 {
     /// <summary>
     ///     Class AMF_Object.
@@ -19,6 +19,10 @@ namespace amf
     public class AMF_Object
 #endif
     {
+        public AMF_Object()
+        {
+            metadata=new List<AMF_Metadata>();
+        }
         /// <summary>
         ///     The identifier
         /// </summary>
@@ -28,14 +32,42 @@ namespace amf
         ///     The mesh
         /// </summary>
         public AMF_Mesh mesh;
+
+        /// <summary>
+        ///     The metadata
+        /// </summary>
+        [XmlElement]
+        public List<AMF_Metadata> metadata;
+
     }
 
+    /// <summary>
+    ///     Class AMF_Metadata.
+    /// </summary>
+#if help
+    internal class AMF_Metadata
+#else
+    public class Metadata
+#endif
+    {
+        /// <summary>
+        ///     The type
+        /// </summary>
+        [XmlAttribute]
+        public string type;
+
+        /// <summary>
+        ///     The value
+        /// </summary>
+        [XmlText]
+        public string Value;
+    }
     /// <summary>
     ///     Class AMF_Mesh.
     /// </summary>
 #if help
     internal class AMF_Mesh
-#else                   
+#else
     public class AMF_Mesh
 #endif
     {
@@ -453,6 +485,10 @@ namespace amf
     public class AMF_Texture
 #endif  
     {
+        public AMF_Texture()
+        {
+            depth = -1;
+        }
         /// <summary>
         ///     The depth
         /// </summary>
@@ -570,6 +606,7 @@ namespace amf
         /// <summary>
         ///     The type
         /// </summary>
+        [XmlAttribute]
         public string type;
 
         /// <summary>

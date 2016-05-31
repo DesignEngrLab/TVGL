@@ -97,6 +97,18 @@ namespace TVGL.IOFunctions
         }
 
         /// <summary>
+        /// Gets the name from the filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <returns>System.String.</returns>
+        protected static string GetNameFromFileName(string filename)
+        {
+            var startIndex = filename.LastIndexOf('/')+1;
+            var endIndex = filename.IndexOf('.', startIndex);
+            if (endIndex == -1) endIndex = filename.Length - 1;
+            return filename.Substring(startIndex, endIndex - startIndex);
+        }
+        /// <summary>
         ///     Parses the ID and values from the specified line.
         /// </summary>
         /// <param name="line">The line.</param>

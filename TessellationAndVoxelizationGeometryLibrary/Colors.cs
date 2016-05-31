@@ -786,7 +786,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Color" /> class.
         /// </summary>
         /// <param name="amfColor">Color of the amf.</param>
-        internal Color(amf.AMF_Color amfColor)
+        internal Color(IOFunctions.amfclasses.AMF_Color amfColor)
             : this(amfColor.a, amfColor.r, amfColor.g, amfColor.b)
         {
         }

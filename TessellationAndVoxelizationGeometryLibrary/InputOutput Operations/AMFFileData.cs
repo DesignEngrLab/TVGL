@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using amf;
+using TVGL.IOFunctions.amfclasses;
 
 namespace TVGL.IOFunctions
 {
@@ -37,6 +37,7 @@ namespace TVGL.IOFunctions
         public AMFFileData()
         {
             Objects = new List<AMF_Object>();
+            Textures = new List<AMF_Texture>();
         }
 
         /// <summary>
@@ -107,7 +108,6 @@ namespace TVGL.IOFunctions
                 var streamReader = new StreamReader(s);
                 var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
                 amfData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
-                amfData.Name = filename;
                 Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
             }
             catch (Exception exception)
@@ -115,6 +115,7 @@ namespace TVGL.IOFunctions
                 Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").", 1);
                 return null;
             }
+            amfData.Name = GetNameFromFileName(filename);
             var results = new List<TessellatedSolid>();
             foreach (var amfObject in amfData.Objects)
             {
@@ -133,7 +134,11 @@ namespace TVGL.IOFunctions
                     foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
                         colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
                 }
-                results.Add(new TessellatedSolid(filename,
+                var name = amfData.Name;
+                var nameIndex =
+                    amfObject.metadata.FindIndex(md => md != null && md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase));
+                if (nameIndex != -1) name = amfObject.metadata[nameIndex].Value;
+                results.Add(new TessellatedSolid(name + "_" + amfObject.id,
                     amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
                     amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
                     colors));
