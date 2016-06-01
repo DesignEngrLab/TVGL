@@ -8,16 +8,41 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Net.Http;
-using System.Xml;
 using System.Xml.Serialization;
 using StarMathLib;
 
-
 namespace TVGL.IOFunctions.threemfclasses
 {
+
+    #region Build and Item
+
     /// <summary>
-    /// Class Item - is used in the build section.
+    ///     Class Build is a major categoy usually following resources.
+    /// </summary>
+#if help
+    internal class Build
+#else
+    public class Build
+#endif
+    {
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Build" /> class.
+        /// </summary>
+        public Build()
+        {
+            Items = new List<Item>();
+        }
+
+        /// <summary>
+        ///     Gets or sets the item.
+        /// </summary>
+        /// <value>The item.</value>
+        [XmlElement("item")]
+        public List<Item> Items { get; set; }
+    }
+
+    /// <summary>
+    ///     Class Item - is used in the build section.
     /// </summary>
 #if help
     internal class Item
@@ -26,21 +51,21 @@ namespace TVGL.IOFunctions.threemfclasses
 #endif
     {
         /// <summary>
-        /// Gets or sets the objectid.
+        ///     Gets or sets the objectid.
         /// </summary>
         /// <value>The objectid.</value>
         [XmlAttribute]
         public int objectid { get; set; }
 
         /// <summary>
-        /// Gets or sets the transform.
+        ///     Gets or sets the transform.
         /// </summary>
         /// <value>The transform.</value>
         [XmlAttribute]
         public string transform { get; set; }
 
         /// <summary>
-        /// Gets or sets the itemref.
+        ///     Gets or sets the itemref.
         /// </summary>
         [XmlAttribute]
         /// <value>The itemref.</value>
@@ -54,7 +79,7 @@ namespace TVGL.IOFunctions.threemfclasses
                 var stringTerms = transform.Trim().Split(' ', ',');
                 var num = stringTerms.Length;
                 var result = new double[num];
-                for (int i = 0; i < num; i++)
+                for (var i = 0; i < num; i++)
                 {
                     double term;
                     if (double.TryParse(stringTerms[i], out term))
@@ -95,6 +120,10 @@ namespace TVGL.IOFunctions.threemfclasses
         }
     }
 
+    #endregion
+
+    #region just MetaData
+
     /// <summary>
     ///     Class Metadata is used in the header and potentially other places.
     /// </summary>
@@ -115,33 +144,12 @@ namespace TVGL.IOFunctions.threemfclasses
         [XmlText] public string Value;
     }
 
-    /// <summary>
-    /// Class Build is a major categoy usually following resources.
-    /// </summary>
-#if help
-    internal class Build
-#else
-    public class Build
-#endif
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Build"/> class.
-        /// </summary>
-        public Build()
-        {
-            Items = new List<Item>();
-        }
+    #endregion
 
-        /// <summary>
-        /// Gets or sets the item.
-        /// </summary>
-        /// <value>The item.</value>
-        [XmlElement("item")]
-        public List<Item> Items { get; set; }
-    }
+    #region Objects: Component, Mesh, etc.
 
     /// <summary>
-    /// Class Component.
+    ///     Class Component.
     /// </summary>
 #if help
     internal class Component
@@ -150,14 +158,14 @@ namespace TVGL.IOFunctions.threemfclasses
 #endif
     {
         /// <summary>
-        /// Gets or sets the objectid.
+        ///     Gets or sets the objectid.
         /// </summary>
         /// <value>The objectid.</value>
         [XmlAttribute]
         public string objectid { get; set; }
 
         /// <summary>
-        /// Gets or sets the transform.
+        ///     Gets or sets the transform.
         /// </summary>
         /// <value>The transform.</value>
         [XmlAttribute]
@@ -165,7 +173,7 @@ namespace TVGL.IOFunctions.threemfclasses
     }
 
     /// <summary>
-    /// Class CT_Triangle.
+    ///     Class CT_Triangle.
     /// </summary>
 #if help
     internal class Triangle
@@ -174,49 +182,49 @@ namespace TVGL.IOFunctions.threemfclasses
 #endif
     {
         /// <summary>
-        /// Gets or sets the v1.
+        ///     Gets or sets the v1.
         /// </summary>
         /// <value>The v1.</value>
         [XmlAttribute]
         public int v1 { get; set; }
 
         /// <summary>
-        /// Gets or sets the v2.
+        ///     Gets or sets the v2.
         /// </summary>
         /// <value>The v2.</value>
         [XmlAttribute]
         public int v2 { get; set; }
 
         /// <summary>
-        /// Gets or sets the v3.
+        ///     Gets or sets the v3.
         /// </summary>
         /// <value>The v3.</value>
         [XmlAttribute]
         public int v3 { get; set; }
 
         /// <summary>
-        /// Gets or sets the p1.
+        ///     Gets or sets the p1.
         /// </summary>
         /// <value>The p1.</value>
         [XmlAttribute]
         public int p1 { get; set; }
 
         /// <summary>
-        /// Gets or sets the p2.
+        ///     Gets or sets the p2.
         /// </summary>
         /// <value>The p2.</value>
         [XmlAttribute]
         public int p2 { get; set; }
 
         /// <summary>
-        /// Gets or sets the p3.
+        ///     Gets or sets the p3.
         /// </summary>
         /// <value>The p3.</value>
         [XmlAttribute]
         public int p3 { get; set; }
 
         /// <summary>
-        /// Gets or sets the pid.
+        ///     Gets or sets the pid.
         /// </summary>
         /// <value>The pid.</value>
         [XmlAttribute]
@@ -224,7 +232,7 @@ namespace TVGL.IOFunctions.threemfclasses
     }
 
     /// <summary>
-    /// Class CT_Vertex.
+    ///     Class CT_Vertex.
     /// </summary>
 #if help
     internal class Vertex
@@ -233,21 +241,21 @@ namespace TVGL.IOFunctions.threemfclasses
 #endif
     {
         /// <summary>
-        /// Gets or sets the x.
+        ///     Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
         [XmlAttribute]
         public double x { get; set; }
 
         /// <summary>
-        /// Gets or sets the y.
+        ///     Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
         [XmlAttribute]
         public double y { get; set; }
 
         /// <summary>
-        /// Gets or sets the z.
+        ///     Gets or sets the z.
         /// </summary>
         /// <value>The z.</value>
         [XmlAttribute]
@@ -255,7 +263,7 @@ namespace TVGL.IOFunctions.threemfclasses
     }
 
     /// <summary>
-    /// Class CT_Mesh.
+    ///     Class CT_Mesh.
     /// </summary>
 #if help
     internal class Mesh
@@ -264,7 +272,7 @@ namespace TVGL.IOFunctions.threemfclasses
 #endif
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Mesh"/> class.
+        ///     Initializes a new instance of the <see cref="Mesh" /> class.
         /// </summary>
         public Mesh()
         {
@@ -273,14 +281,14 @@ namespace TVGL.IOFunctions.threemfclasses
         }
 
         /// <summary>
-        /// Gets or sets the vertices.
+        ///     Gets or sets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
         [XmlArrayItem("vertex", IsNullable = false)]
         public List<Vertex> vertices { get; set; }
 
         /// <summary>
-        /// Gets or sets the triangles.
+        ///     Gets or sets the triangles.
         /// </summary>
         /// <value>The triangles.</value>
         [XmlArrayItem("triangle", IsNullable = false)]
@@ -288,7 +296,7 @@ namespace TVGL.IOFunctions.threemfclasses
     }
 
     /// <summary>
-    /// Class CT_Object.
+    ///     Class CT_Object.
     /// </summary>
 #if help
     internal class Object
@@ -317,9 +325,9 @@ namespace TVGL.IOFunctions.threemfclasses
 
         [XmlElement]
         public Mesh mesh { get; set; }
-        
+
         /// <summary>
-        /// Gets or sets the components.
+        ///     Gets or sets the components.
         /// </summary>
         /// <value>The components.</value>
         [XmlArrayItem("component", IsNullable = false)]
@@ -327,7 +335,7 @@ namespace TVGL.IOFunctions.threemfclasses
     }
 
     /// <summary>
-    /// Enum ST_ObjectType
+    ///     Enum ST_ObjectType
     /// </summary>
 #if help
     internal enum ST_ObjectType
@@ -336,23 +344,109 @@ namespace TVGL.IOFunctions.threemfclasses
 #endif
     {
         /// <summary>
-        /// The model
+        ///     The model
         /// </summary>
         model,
 
         /// <summary>
-        /// The support
+        ///     The support
         /// </summary>
         support,
 
         /// <summary>
-        /// The other
+        ///     The other
         /// </summary>
         other
     }
 
     /// <summary>
-    /// Class Material.
+    ///     Enum Unit
+    /// </summary>
+#if help
+    internal enum Unit
+#else
+    public enum Unit
+#endif
+    {
+        unspecified = -1,
+
+        /// <summary>
+        ///     The micron
+        /// </summary>
+        micron,
+
+        /// <summary>
+        ///     The millimeter
+        /// </summary>
+        millimeter,
+
+        /// <summary>
+        ///     The centimeter
+        /// </summary>
+        centimeter,
+
+        /// <summary>
+        ///     The inch
+        /// </summary>
+        inch,
+
+        /// <summary>
+        ///     The foot
+        /// </summary>
+        foot,
+
+        /// <summary>
+        ///     The meter
+        /// </summary>
+        meter
+    }
+
+    #endregion
+
+    #region Resources
+
+    /// <summary>
+    ///     Class CT_Resources.
+    /// </summary>
+#if help
+    internal class Resources
+#else
+    public class Resources
+#endif
+    {
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Resources" /> class.
+        /// </summary>
+        public Resources()
+        {
+            objects = new List<Object>();
+            materials = new List<Material>();
+            basematerials = new List<Material>();
+        }
+
+        [XmlElement("basematerials")]
+        public List<Material> basematerials { get; set; }
+
+        [XmlElement("material")]
+        public List<Material> materials { get; set; }
+
+        [XmlElement("color")]
+        public List<Color3MF> colors { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the object.
+        /// </summary>
+        /// <value>The object.</value>
+        [XmlElement("object")]
+        public List<Object> objects { get; set; }
+    }
+
+    #endregion
+
+    #region Materials and Colors
+
+    /// <summary>
+    ///     Class Material.
     /// </summary>
 #if help
     internal class Material
@@ -360,6 +454,18 @@ namespace TVGL.IOFunctions.threemfclasses
     public class Material
 #endif
     {
+        public Material()
+        {
+            bases = new List<Base>();
+        }
+
+        /// <summary>
+        ///     Gets or sets the base.
+        /// </summary>
+        /// <value>The base.</value>
+        [XmlArrayItem("base", IsNullable = false)]
+        public List<Base> bases { get; set; }
+
         [XmlAttribute]
         public string name { get; set; }
 
@@ -374,7 +480,7 @@ namespace TVGL.IOFunctions.threemfclasses
     }
 
     /// <summary>
-    /// Class Color3MF.
+    ///     Class Color3MF.
     /// </summary>
 #if help
     internal class Color3MF
@@ -395,92 +501,58 @@ namespace TVGL.IOFunctions.threemfclasses
         {
             get
             {
-                if (string.IsNullOrWhiteSpace(colorString) || (colorString.Length != 7&&colorString.Length != 9))
+                if (string.IsNullOrWhiteSpace(colorString) || (colorString.Length != 7 && colorString.Length != 9))
                     return new Color(KnownColors.UnknownColor);
-                var r = Convert.ToByte(colorString.Substring(1, 2),16);
-                var g = Convert.ToByte(colorString.Substring(3, 2),16);
-                var b = Convert.ToByte(colorString.Substring(5, 2),16);
+                var r = Convert.ToByte(colorString.Substring(1, 2), 16);
+                var g = Convert.ToByte(colorString.Substring(3, 2), 16);
+                var b = Convert.ToByte(colorString.Substring(5, 2), 16);
                 if (colorString.Length == 9)
                 {
                     var a = Convert.ToByte(colorString.Substring(7, 2), 16);
-                    return new Color(a,r,g,b);
+                    return new Color(a, r, g, b);
                 }
-                else return new Color(r, g, b);
+                return new Color(r, g, b);
             }
         }
     }
 
     /// <summary>
-    /// Class CT_Resources.
+    ///     Class Base.
     /// </summary>
 #if help
-    internal class Resources
+    internal class Base
 #else
-    public class Resources
+    public class Base
 #endif
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Resources"/> class.
+        ///     Gets or sets the name.
         /// </summary>
-        public Resources()
+        /// <value>The name.</value>
+        [XmlAttribute]
+        public string name { get; set; }
+
+        [XmlAttribute("displaycolor")]
+        public string colorString { get; set; }
+
+        internal Color color
         {
-            objects = new List<Object>();
-            materials = new List<Material>();
+            get
+            {
+                if (string.IsNullOrWhiteSpace(colorString) || (colorString.Length != 7 && colorString.Length != 9))
+                    return new Color(KnownColors.UnknownColor);
+                var r = Convert.ToByte(colorString.Substring(1, 2), 16);
+                var g = Convert.ToByte(colorString.Substring(3, 2), 16);
+                var b = Convert.ToByte(colorString.Substring(5, 2), 16);
+                if (colorString.Length == 9)
+                {
+                    var a = Convert.ToByte(colorString.Substring(7, 2), 16);
+                    return new Color(a, r, g, b);
+                }
+                return new Color(r, g, b);
+            }
         }
-
-        [XmlElement("material")]
-        public List<Material> materials { get; set; }
-
-        [XmlElement("color")]
-        public List<Color3MF> colors { get; set; }
-
-        /// <summary>
-        /// Gets or sets the object.
-        /// </summary>
-        /// <value>The object.</value>
-        [XmlElement("object")]
-        public List<Object> objects { get; set; }
     }
 
-    /// <summary>
-    /// Enum ST_Unit
-    /// </summary>
-#if help
-    internal enum ST_Unit
-#else
-    public enum ST_Unit
-#endif
-    {
-        unspecified = -1,
-
-        /// <summary>
-        /// The micron
-        /// </summary>
-        micron,
-
-        /// <summary>
-        /// The millimeter
-        /// </summary>
-        millimeter,
-
-        /// <summary>
-        /// The centimeter
-        /// </summary>
-        centimeter,
-
-        /// <summary>
-        /// The inch
-        /// </summary>
-        inch,
-
-        /// <summary>
-        /// The foot
-        /// </summary>
-        foot,
-
-        /// <summary>
-        /// The meter
-        /// </summary>
-        meter
-    }
+    #endregion
 }
