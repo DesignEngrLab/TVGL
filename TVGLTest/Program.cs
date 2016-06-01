@@ -15,7 +15,7 @@ namespace TVGL_Test
         private static readonly string[] FileNames = {
         //"../../../TestFiles/Candy.shell",
         //"../../../TestFiles/amf_Cube.amf",
-        //"../../../TestFiles/wedge.model",
+        "../../../TestFiles/3dmodel.model",
         "../../../TestFiles/train.3mf",
         "../../../TestFiles/shark.ply",
         "../../../TestFiles/bunnySmall.ply",

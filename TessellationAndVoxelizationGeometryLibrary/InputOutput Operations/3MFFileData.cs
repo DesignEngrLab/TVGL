@@ -39,45 +39,8 @@ namespace TVGL.IOFunctions
         /// </summary>
         public ThreeMFFileData()
         {
-            //Objects = new List<CT_Object>();
-            //build = new CT_Build();
-            //resources = new CT_Resources();
             metadata = new List<Metadata>();
         }
-        /*
-        /// <summary>
-        ///     Gets or sets the objects.
-        /// </summary>
-        /// <value>The objects.</value>
-        [XmlElement("object")]
-        public List<CT_Object> Objects { get; set; }
-
-        /// <summary>
-        ///     Gets or sets a value indicating whether [unit specified].
-        /// </summary>
-        /// <value><c>true</c> if [unit specified]; otherwise, <c>false</c>.</value>
-        [XmlIgnore]
-        public bool unitSpecified { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the version.
-        /// </summary>
-        /// <value>The version.</value>
-        public double version { get; set; }
-
-        /// <summary>
-        ///     Gets or sets a value indicating whether [version specified].
-        /// </summary>
-        /// <value><c>true</c> if [version specified]; otherwise, <c>false</c>.</value>
-        [XmlIgnore]
-        public bool versionSpecified { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the language.
-        /// </summary>
-        /// <value>The language.</value>
-        public string lang { get; set; }
-        */
         /// <summary>
         /// Gets or sets the metadata.
         /// </summary>
@@ -147,10 +110,20 @@ namespace TVGL.IOFunctions
                 threeMFData = (ThreeMFFileData)threeMFDeserializer.Deserialize(streamReader);
                 Message.output("Successfully read in 3MF file (" + (DateTime.Now - now) + ").", 3);
             }
-            catch (Exception exception)
+            catch
             {
-                Message.output("Unable to read in 3MF file (" + (DateTime.Now - now) + ").", 1);
-                return null;
+                try
+                {
+                    var streamReader = new StreamReader(s);
+                    var threeMFDeserializer = new XmlSerializer(typeof(ThreeMFFileData), "http://schemas.microsoft.com/3dmanufacturing/2015/02");
+                    threeMFData = (ThreeMFFileData)threeMFDeserializer.Deserialize(streamReader);
+                    Message.output("Successfully read in 3MF file (" + (DateTime.Now - now) + ").", 3);
+                }
+                catch (Exception exception)
+                {
+                    Message.output("Unable to read in model file (" + (DateTime.Now - now) + ").", 1);
+                    return null;
+                }
             }
             var results = new List<TessellatedSolid>();
             threeMFData.Name = GetNameFromFileName(filename);

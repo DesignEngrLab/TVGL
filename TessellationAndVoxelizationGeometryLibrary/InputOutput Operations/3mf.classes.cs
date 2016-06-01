@@ -141,31 +141,6 @@ namespace TVGL.IOFunctions.threemfclasses
     }
 
     /// <summary>
-    /// Class Components is a list of type Component (see next class). These are subtly similar to meshes and build, but
-    /// are about the final ("as assembled") positions.
-    /// </summary>
-#if help
-    internal class Components
-#else
-    public class Components
-#endif
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Components"/> class.
-        /// </summary>
-        public Components()
-        {
-            component = new List<Component>();
-        }
-
-        /// <summary>
-        /// Gets or sets the component.
-        /// </summary>
-        /// <value>The component.</value>
-        public List<Component> component { get; set; }
-    }
-
-    /// <summary>
     /// Class Component.
     /// </summary>
 #if help
@@ -178,12 +153,14 @@ namespace TVGL.IOFunctions.threemfclasses
         /// Gets or sets the objectid.
         /// </summary>
         /// <value>The objectid.</value>
+        [XmlAttribute]
         public string objectid { get; set; }
 
         /// <summary>
         /// Gets or sets the transform.
         /// </summary>
         /// <value>The transform.</value>
+        [XmlAttribute]
         public string transform { get; set; }
     }
 
@@ -221,24 +198,28 @@ namespace TVGL.IOFunctions.threemfclasses
         /// Gets or sets the p1.
         /// </summary>
         /// <value>The p1.</value>
+        [XmlAttribute]
         public int p1 { get; set; }
 
         /// <summary>
         /// Gets or sets the p2.
         /// </summary>
         /// <value>The p2.</value>
+        [XmlAttribute]
         public int p2 { get; set; }
 
         /// <summary>
         /// Gets or sets the p3.
         /// </summary>
         /// <value>The p3.</value>
+        [XmlAttribute]
         public int p3 { get; set; }
 
         /// <summary>
         /// Gets or sets the pid.
         /// </summary>
         /// <value>The pid.</value>
+        [XmlAttribute]
         public int pid { get; set; }
     }
 
@@ -336,6 +317,13 @@ namespace TVGL.IOFunctions.threemfclasses
 
         [XmlElement]
         public Mesh mesh { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the components.
+        /// </summary>
+        /// <value>The components.</value>
+        [XmlArrayItem("component", IsNullable = false)]
+        public List<Component> components { get; set; }
     }
 
     /// <summary>
