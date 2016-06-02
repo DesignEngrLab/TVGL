@@ -136,12 +136,14 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <summary>
         ///     The type
         /// </summary>
-        [XmlAttribute("name")] public string type;
+        [XmlAttribute("name")]
+        public string type;
 
         /// <summary>
         ///     The value
         /// </summary>
-        [XmlText] public string Value;
+        [XmlText]
+        public string Value;
     }
 
     #endregion
@@ -420,11 +422,11 @@ namespace TVGL.IOFunctions.threemfclasses
         {
             objects = new List<Object>();
             materials = new List<Material>();
-            basematerials = new List<Material>();
+            basematerials = new List<BaseMaterials>();
         }
 
         [XmlElement("basematerials")]
-        public List<Material> basematerials { get; set; }
+        public List<BaseMaterials> basematerials { get; set; }
 
         [XmlElement("material")]
         public List<Material> materials { get; set; }
@@ -443,7 +445,7 @@ namespace TVGL.IOFunctions.threemfclasses
     #endregion
 
     #region Materials and Colors
-
+    #region the 2013/01 approach
     /// <summary>
     ///     Class Material.
     /// </summary>
@@ -453,18 +455,6 @@ namespace TVGL.IOFunctions.threemfclasses
     public class Material
 #endif
     {
-        public Material()
-        {
-           // bases = new List<Base>();
-        }
-
-        /// <summary>
-        ///     Gets or sets the base.
-        /// </summary>
-        /// <value>The base.</value>
-        [XmlArrayItem("base", IsNullable = false)]
-        public List<Base> bases { get; set; }
-
         [XmlAttribute]
         public string name { get; set; }
 
@@ -496,25 +486,55 @@ namespace TVGL.IOFunctions.threemfclasses
         [XmlAttribute("value")]
         public string colorString { get; set; }
 
-        internal Color color
+        internal Color color => ConvertToTVGLColor(colorString);
+
+        internal static Color ConvertToTVGLColor(string colorString)
         {
-            get
+            if (string.IsNullOrWhiteSpace(colorString) || (colorString.Length != 7 && colorString.Length != 9))
+                return new Color(KnownColors.UnknownColor);
+            var r = Convert.ToByte(colorString.Substring(1, 2), 16);
+            var g = Convert.ToByte(colorString.Substring(3, 2), 16);
+            var b = Convert.ToByte(colorString.Substring(5, 2), 16);
+            if (colorString.Length == 9)
             {
-                if (string.IsNullOrWhiteSpace(colorString) || (colorString.Length != 7 && colorString.Length != 9))
-                    return new Color(KnownColors.UnknownColor);
-                var r = Convert.ToByte(colorString.Substring(1, 2), 16);
-                var g = Convert.ToByte(colorString.Substring(3, 2), 16);
-                var b = Convert.ToByte(colorString.Substring(5, 2), 16);
-                if (colorString.Length == 9)
-                {
-                    var a = Convert.ToByte(colorString.Substring(7, 2), 16);
-                    return new Color(a, r, g, b);
-                }
-                return new Color(r, g, b);
+                var a = Convert.ToByte(colorString.Substring(7, 2), 16);
+                return new Color(a, r, g, b);
             }
+            return new Color(r, g, b);
         }
     }
+    #endregion
+    #region the 2015/02 approach
+    /// <summary>
+    /// Class BaseMaterials.
+    /// </summary>
+#if help
+    internal class BaseMaterials
+#else
+    public class BaseMaterials
+#endif
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BaseMaterials"/> class.
+        /// </summary>
+        public BaseMaterials()
+        {
+            bases = new List<Base>();
+        }
 
+        /// <summary>
+        /// Gets or sets the base.
+        /// </summary>
+        /// <value>The base.</value>
+        [XmlElement("base")]
+        public List<Base> bases { get; set; }
+        /// <summary>
+        /// Gets or sets the identifier.
+        /// </summary>
+        /// <value>The identifier.</value>
+        [XmlAttribute]
+        public int id { get; set; }
+    }
     /// <summary>
     ///     Class Base.
     /// </summary>
@@ -530,28 +550,15 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The name.</value>
         [XmlAttribute]
         public string name { get; set; }
-        
+
         [XmlAttribute("displaycolor")]
         public string colorString { get; set; }
 
-        internal Color color
-        {
-            get
-            {
-                if (string.IsNullOrWhiteSpace(colorString) || (colorString.Length != 7 && colorString.Length != 9))
-                    return new Color(KnownColors.UnknownColor);
-                var r = Convert.ToByte(colorString.Substring(1, 2), 16);
-                var g = Convert.ToByte(colorString.Substring(3, 2), 16);
-                var b = Convert.ToByte(colorString.Substring(5, 2), 16);
-                if (colorString.Length == 9)
-                {
-                    var a = Convert.ToByte(colorString.Substring(7, 2), 16);
-                    return new Color(a, r, g, b);
-                }
-                return new Color(r, g, b);
-            }
-        }
+
+        internal Color color => Color3MF.ConvertToTVGLColor(colorString);
+        
     }
 
+    #endregion
     #endregion
 }

@@ -138,8 +138,8 @@ namespace TVGL.IOFunctions
             {
                 var solid = threeMFData.resources.objects.First(obj => obj.id == item.objectid);
                 var i = 0;
-                Mesh mesh = (solid.mesh != null) ? solid.mesh : threeMFData.resources.objects.FirstOrDefault(obj => obj.id == solid.components[i].objectid).mesh;
-                while (mesh != null)
+                Mesh mesh = solid.mesh ?? threeMFData.resources.objects.FirstOrDefault(obj => obj.id == solid.components[i].objectid).mesh;
+                do
                 {
                     Color defaultColor = new Color(Constants.DefaultColor);
                     if (solid.MaterialID >= 0)
@@ -147,7 +147,8 @@ namespace TVGL.IOFunctions
                         var material = threeMFData.resources.materials.FirstOrDefault(mat => mat.id == solid.MaterialID);
                         if (material != null)
                         {
-                            var defaultColorXml = threeMFData.resources.colors.FirstOrDefault(col => col.id == material.colorid);
+                            var defaultColorXml =
+                                threeMFData.resources.colors.FirstOrDefault(col => col.id == material.colorid);
                             if (defaultColorXml != null) defaultColor = defaultColorXml.color;
                         }
                     }
@@ -158,7 +159,9 @@ namespace TVGL.IOFunctions
                         foreach (var vert in verts)
                         {
                             var newCoord = transform.multiply(new[] { vert[0], vert[1], vert[2], 1 });
-                            vert[0] = newCoord[0]; vert[1] = newCoord[1]; vert[2] = newCoord[2];
+                            vert[0] = newCoord[0];
+                            vert[1] = newCoord[1];
+                            vert[2] = newCoord[2];
                         }
                     }
                     Color[] colors = null;
@@ -169,9 +172,15 @@ namespace TVGL.IOFunctions
                         var triangle = mesh.triangles[j];
                         if (triangle.pid == -1) continue;
                         if (triangle.p1 == -1) continue;
-                        var baseMaterial = threeMFData.resources.basematerials.FirstOrDefault(bm => bm.id == triangle.pid);
+                        var baseMaterial =
+                            threeMFData.resources.basematerials.FirstOrDefault(bm => bm.id == triangle.pid);
                         if (baseMaterial == null) continue;
                         var baseColor = baseMaterial.bases[triangle.p1];
+                        if (j == 0)
+                        {
+                            defaultColor = baseColor.color;
+                            continue;
+                        }
                         if (uniformColor && baseColor.color.Equals(defaultColor)) continue;
                         uniformColor = false;
                         if (colors == null) colors = new Color[mesh.triangles.Count];
@@ -183,11 +192,14 @@ namespace TVGL.IOFunctions
                             if (colors[j] == null) colors[j] = defaultColor;
 
                     results.Add(new TessellatedSolid(threeMFData.Name + "_" + solid.name + "_" + solid.id, verts,
-                         mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors));
+                        mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors));
                     i++;
                     if (solid.components == null || solid.components.Count <= i) mesh = null;
-                    else mesh = threeMFData.resources.objects.FirstOrDefault(obj => obj.id == solid.components[i].objectid).mesh;
-                }
+                    else
+                        mesh =
+                            threeMFData.resources.objects.FirstOrDefault(obj => obj.id == solid.components[i].objectid)
+                                .mesh;
+                } while (mesh != null);
             }
             return results;
         }
