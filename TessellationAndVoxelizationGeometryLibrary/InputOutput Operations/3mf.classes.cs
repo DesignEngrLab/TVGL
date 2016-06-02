@@ -162,7 +162,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// </summary>
         /// <value>The objectid.</value>
         [XmlAttribute]
-        public string objectid { get; set; }
+        public int objectid { get; set; }
 
         /// <summary>
         ///     Gets or sets the transform.
@@ -181,6 +181,10 @@ namespace TVGL.IOFunctions.threemfclasses
     public class Triangle
 #endif
     {
+        public Triangle()
+        {
+            p1 = p2 = p3 = pid = -1;
+        }
         /// <summary>
         ///     Gets or sets the v1.
         /// </summary>
@@ -272,15 +276,6 @@ namespace TVGL.IOFunctions.threemfclasses
 #endif
     {
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Mesh" /> class.
-        /// </summary>
-        public Mesh()
-        {
-            triangles = new List<Triangle>();
-            vertices = new List<Vertex>();
-        }
-
-        /// <summary>
         ///     Gets or sets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
@@ -296,7 +291,7 @@ namespace TVGL.IOFunctions.threemfclasses
     }
 
     /// <summary>
-    ///     Class CT_Object.
+    ///     Class Object.
     /// </summary>
 #if help
     internal class Object
@@ -304,6 +299,10 @@ namespace TVGL.IOFunctions.threemfclasses
     public class Object
 #endif
     {
+        public Object()
+        {
+            MaterialID = -1;
+        }
         [XmlAttribute]
         public int id { get; set; }
 
@@ -456,7 +455,7 @@ namespace TVGL.IOFunctions.threemfclasses
     {
         public Material()
         {
-            bases = new List<Base>();
+           // bases = new List<Base>();
         }
 
         /// <summary>
@@ -531,7 +530,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The name.</value>
         [XmlAttribute]
         public string name { get; set; }
-
+        
         [XmlAttribute("displaycolor")]
         public string colorString { get; set; }
 
