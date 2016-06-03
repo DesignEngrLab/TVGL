@@ -63,6 +63,8 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The transform.</value>
         [XmlAttribute]
         public string transform { get; set; }
+        internal double[] transformArray => MakeTransformArray(transform);
+        internal double[,] transformMatrix => MakeTransformMatrix(transformArray);
 
         /// <summary>
         ///     Gets or sets the itemref.
@@ -71,52 +73,49 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The itemref.</value>
         public string itemref { get; set; }
 
-        internal double[] transformArray
+
+        internal static double[] MakeTransformArray(string transform)
         {
-            get
+
+            if (string.IsNullOrWhiteSpace(transform)) return null;
+            var stringTerms = transform.Trim().Split(' ', ',');
+            var num = stringTerms.Length;
+            var result = new double[num];
+            for (var i = 0; i < num; i++)
             {
-                if (string.IsNullOrWhiteSpace(transform)) return null;
-                var stringTerms = transform.Trim().Split(' ', ',');
-                var num = stringTerms.Length;
-                var result = new double[num];
-                for (var i = 0; i < num; i++)
-                {
-                    double term;
-                    if (double.TryParse(stringTerms[i], out term))
-                        result[i] = term;
-                    else result[i] = double.NaN;
-                }
-                return result;
+                double term;
+                if (double.TryParse(stringTerms[i], out term))
+                    result[i] = term;
+                else result[i] = double.NaN;
             }
+            return result;
         }
 
-        internal double[,] transformMatrix
+
+        internal static double[,] MakeTransformMatrix(double[] transformArray)
         {
-            get
+            if (transformArray == null || (transformArray.Length != 3 && transformArray.Length != 12)) return null;
+            var result = StarMath.makeIdentity(4);
+            if (transformArray.Length == 3)
             {
-                if (transformArray == null || (transformArray.Length != 3 && transformArray.Length != 12)) return null;
-                var result = StarMath.makeIdentity(4);
-                if (transformArray.Length == 3)
-                {
-                    result[0, 3] = transformArray[0];
-                    result[1, 3] = transformArray[1];
-                    result[2, 3] = transformArray[2];
-                    return result;
-                }
-                result[0, 0] = transformArray[0];
-                result[1, 0] = transformArray[1];
-                result[2, 0] = transformArray[2];
-                result[0, 1] = transformArray[3];
-                result[1, 1] = transformArray[4];
-                result[2, 1] = transformArray[5];
-                result[0, 2] = transformArray[6];
-                result[1, 2] = transformArray[7];
-                result[2, 2] = transformArray[8];
-                result[0, 3] = transformArray[9];
-                result[1, 3] = transformArray[10];
-                result[2, 3] = transformArray[11];
+                result[0, 3] = transformArray[0];
+                result[1, 3] = transformArray[1];
+                result[2, 3] = transformArray[2];
                 return result;
             }
+            result[0, 0] = transformArray[0];
+            result[1, 0] = transformArray[1];
+            result[2, 0] = transformArray[2];
+            result[0, 1] = transformArray[3];
+            result[1, 1] = transformArray[4];
+            result[2, 1] = transformArray[5];
+            result[0, 2] = transformArray[6];
+            result[1, 2] = transformArray[7];
+            result[2, 2] = transformArray[8];
+            result[0, 3] = transformArray[9];
+            result[1, 3] = transformArray[10];
+            result[2, 3] = transformArray[11];
+            return result;
         }
     }
 
@@ -164,7 +163,8 @@ namespace TVGL.IOFunctions.threemfclasses
         /// </summary>
         /// <value>The objectid.</value>
         [XmlAttribute]
-        public int objectid { get; set; }
+        public int objectid
+        { get; set; }
 
         /// <summary>
         ///     Gets or sets the transform.
@@ -172,6 +172,8 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The transform.</value>
         [XmlAttribute]
         public string transform { get; set; }
+        internal double[] transformArray => Item.MakeTransformArray(transform);
+        internal double[,] transformMatrix => Item.MakeTransformMatrix(transformArray);
     }
 
     /// <summary>
@@ -556,7 +558,7 @@ namespace TVGL.IOFunctions.threemfclasses
 
 
         internal Color color => Color3MF.ConvertToTVGLColor(colorString);
-        
+
     }
 
     #endregion

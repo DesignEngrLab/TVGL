@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
@@ -73,6 +74,11 @@ namespace TVGL
             }
             DistanceToOrigin = (Vertices.Count*DistanceToOrigin + newDistanceToPlane)/(Vertices.Count + newVerts.Count);
             base.UpdateWith(face);
+        }
+
+        public override void Transform(double[,] transformMatrix)
+        {
+            throw new NotImplementedException();
         }
 
         #region Constructors

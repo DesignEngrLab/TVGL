@@ -136,72 +136,75 @@ namespace TVGL.IOFunctions
             if (nameIndex != -1) threeMFData.Name = threeMFData.metadata[nameIndex].Value;
             foreach (var item in threeMFData.build.Items)
             {
-                var solid = threeMFData.resources.objects.First(obj => obj.id == item.objectid);
-                var i = 0;
-                Mesh mesh = solid.mesh ?? threeMFData.resources.objects.FirstOrDefault(obj => obj.id == solid.components[i].objectid).mesh;
-                do
-                {
-                    Color defaultColor = new Color(Constants.DefaultColor);
-                    if (solid.MaterialID >= 0)
-                    {
-                        var material = threeMFData.resources.materials.FirstOrDefault(mat => mat.id == solid.MaterialID);
-                        if (material != null)
-                        {
-                            var defaultColorXml =
-                                threeMFData.resources.colors.FirstOrDefault(col => col.id == material.colorid);
-                            if (defaultColorXml != null) defaultColor = defaultColorXml.color;
-                        }
-                    }
-                    var verts = mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList();
-                    var transform = item.transformMatrix;
-                    if (transform != null)
-                    {
-                        foreach (var vert in verts)
-                        {
-                            var newCoord = transform.multiply(new[] { vert[0], vert[1], vert[2], 1 });
-                            vert[0] = newCoord[0];
-                            vert[1] = newCoord[1];
-                            vert[2] = newCoord[2];
-                        }
-                    }
-                    Color[] colors = null;
-                    var uniformColor = true;
-                    var numTriangles = mesh.triangles.Count;
-                    for (int j = 0; j < numTriangles; j++)
-                    {
-                        var triangle = mesh.triangles[j];
-                        if (triangle.pid == -1) continue;
-                        if (triangle.p1 == -1) continue;
-                        var baseMaterial =
-                            threeMFData.resources.basematerials.FirstOrDefault(bm => bm.id == triangle.pid);
-                        if (baseMaterial == null) continue;
-                        var baseColor = baseMaterial.bases[triangle.p1];
-                        if (j == 0)
-                        {
-                            defaultColor = baseColor.color;
-                            continue;
-                        }
-                        if (uniformColor && baseColor.color.Equals(defaultColor)) continue;
-                        uniformColor = false;
-                        if (colors == null) colors = new Color[mesh.triangles.Count];
-                        colors[j] = baseColor.color;
-                    }
-                    if (uniformColor) colors = new[] { defaultColor };
-                    else
-                        for (int j = 0; j < numTriangles; j++)
-                            if (colors[j] == null) colors[j] = defaultColor;
-
-                    results.Add(new TessellatedSolid(threeMFData.Name + "_" + solid.name + "_" + solid.id, verts,
-                        mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors));
-                    i++;
-                    if (solid.components == null || solid.components.Count <= i) mesh = null;
-                    else
-                        mesh =
-                            threeMFData.resources.objects.FirstOrDefault(obj => obj.id == solid.components[i].objectid)
-                                .mesh;
-                } while (mesh != null);
+                results.AddRange(TessellatedSolidsFromIDAndTransform(item.objectid, item.transformMatrix, threeMFData.resources, threeMFData.Name + "_"));
             }
             return results;
+        }
+        private static IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid, double[,] transformMatrix, Resources resources, string name)
+        {
+            var solid = resources.objects.First(obj => obj.id == objectid);
+            List<TessellatedSolid> result = TessellatedSolidsFromObject(solid, resources, name);
+            if (transformMatrix != null)
+                foreach (var ts in result)
+                    ts.Transform(transformMatrix);
+            return result;
+        }
+        private static List<TessellatedSolid> TessellatedSolidsFromObject(threemfclasses.Object obj, Resources resources, string name)
+        {
+            name += obj.name + "_" + obj.id;
+            var result = new List<TessellatedSolid>();
+            if (obj.mesh != null) result.Add(TessellatedSolidFromMesh(obj.mesh, obj.MaterialID, name, resources));
+            foreach (var comp in obj.components)
+            {
+                result.AddRange(TessellatedSolidsFromComponent(comp, resources, name));
+            }
+            return result;
+        }
+        private static IEnumerable<TessellatedSolid> TessellatedSolidsFromComponent(Component comp, Resources resources, string name)
+        { return TessellatedSolidsFromIDAndTransform(comp.objectid, comp.transformMatrix, resources, name); }
+        private static TessellatedSolid TessellatedSolidFromMesh(Mesh mesh, int materialID, string name, Resources resources)
+        {
+            Color defaultColor = new Color(Constants.DefaultColor);
+            if (materialID >= 0)
+            {
+                var material = resources.materials.FirstOrDefault(mat => mat.id == materialID);
+                if (material != null)
+                {
+                    var defaultColorXml =
+                        resources.colors.FirstOrDefault(col => col.id == material.colorid);
+                    if (defaultColorXml != null) defaultColor = defaultColorXml.color;
+                }
+            }
+            var verts = mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList();
+
+            Color[] colors = null;
+            var uniformColor = true;
+            var numTriangles = mesh.triangles.Count;
+            for (int j = 0; j < numTriangles; j++)
+            {
+                var triangle = mesh.triangles[j];
+                if (triangle.pid == -1) continue;
+                if (triangle.p1 == -1) continue;
+                var baseMaterial =
+                    resources.basematerials.FirstOrDefault(bm => bm.id == triangle.pid);
+                if (baseMaterial == null) continue;
+                var baseColor = baseMaterial.bases[triangle.p1];
+                if (j == 0)
+                {
+                    defaultColor = baseColor.color;
+                    continue;
+                }
+                if (uniformColor && baseColor.color.Equals(defaultColor)) continue;
+                uniformColor = false;
+                if (colors == null) colors = new Color[mesh.triangles.Count];
+                colors[j] = baseColor.color;
+            }
+            if (uniformColor) colors = new[] { defaultColor };
+            else
+                for (int j = 0; j < numTriangles; j++)
+                    if (colors[j] == null) colors[j] = defaultColor;
+            return new TessellatedSolid(name, verts,
+                mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors);
         }
 
         /// <summary>
