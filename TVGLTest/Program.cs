@@ -78,7 +78,6 @@ namespace TVGL_Test
                 //MiscFunctions.IsSolidBroken(ts[0]);
                 MinimumEnclosure.OrientedBoundingBox(ts[0]);
                 //TestClassification(ts[0]);
-                TestXSections(ts[0]);
                 TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 //TestSimplify(ts[0]);
                 //TestSlice(ts[0]);
@@ -162,89 +161,6 @@ namespace TVGL_Test
             Console.WriteLine();
             Console.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
             Console.ReadLine();
-        }
-
-
-        private static void TestXSections(TessellatedSolid ts)
-        {
-            var now = DateTime.Now;
-            Debug.WriteLine("start...");
-            var crossAreas = new double[3][,];
-            var maxSlices = 100;
-            var delta = Math.Max((ts.Bounds[1][0] - ts.Bounds[0][0]) / maxSlices,
-                Math.Max((ts.Bounds[1][1] - ts.Bounds[0][1]) / maxSlices,
-                    (ts.Bounds[1][2] - ts.Bounds[0][2]) / maxSlices));
-            //Parallel.For(0, 3, i =>
-            var greatestDeltas = new List<double>();
-            var greatestDeltaLocations = new List<double>();
-            var areaData = new List<List<double[]>>();
-            for (int i = 0; i < 3; i++)
-            {
-                //var max = ts.Bounds[1][i];
-                //var min = ts.Bounds[0][i];
-                //var numSteps = (int)Math.Ceiling((max - min) / delta);
-                var coordValues = ts.Vertices.Select(v => v.Position[i]).Distinct().OrderBy(x => x).ToList();
-                var numValues = new List<double>();
-                var offset = 0.000000001;
-                foreach (var coordValue in coordValues)
-                {
-                    if (coordValues[0] == coordValue)
-                    {
-                        //Only Add increment forward
-                        numValues.Add(coordValue + offset);
-                    }
-                    else if (coordValues.Last() == coordValue)
-                    {
-                        //Only Add increment back
-                        numValues.Add(coordValue - offset);
-                    }
-                    else
-                    {
-                        //Add increment forward and back
-                        numValues.Add(coordValue + offset);
-                        numValues.Add(coordValue - offset);
-                    }
-                }
-                coordValues = numValues.OrderBy(x => x).ToList();
-                var numSteps = coordValues.Count;
-                var direction = new double[3];
-                direction[i] = 1.0;
-                crossAreas[i] = new double[numSteps, 2];
-                var greatestDelta = 0.0;
-                var previousArea = 0.0;
-                var greatestDeltaLocation = 0.0;
-                var dataPoints = new List<double[]>();
-                for (var j = 0; j < numSteps; j++)
-                {
-                    var dist = crossAreas[i][j, 0] = coordValues[j];
-                    //Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
-                    var newArea = Slice.DefineContact(ts, new Flat(dist, direction), false).Area;
-                    crossAreas[i][j, 1] = newArea;
-                    if (j > 0 && Math.Abs(newArea - previousArea) > greatestDelta)
-                    {
-                        greatestDelta = Math.Abs(newArea - previousArea);
-                        greatestDeltaLocation = dist;
-                    }
-                    var dataPoint = new double[] { dist, newArea };
-                    dataPoints.Add(dataPoint);
-                    previousArea = newArea;
-                }
-                areaData.Add(dataPoints);
-                greatestDeltas.Add(greatestDelta);
-                greatestDeltaLocations.Add(greatestDeltaLocation);
-            }//);
-            TVGLTest.ExcelInterface.CreateNewGraph(areaData, "Area Decomposition", "Distance From Origin", "Area");
-            Debug.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
-
-            //Console.ReadKey();
-            //for (var i = 0; i < 3; i++)
-            //{
-            //    Debug.WriteLine("\nfor direction " + i);
-            //    for (var j = 0; j < crossAreas[i].GetLength(0); j++)
-            //    {
-            //        Debug.WriteLine(crossAreas[i][j, 0] + ", " + crossAreas[i][j, 1]);
-            //    }
-            //}
         }
     }
 }
