@@ -101,6 +101,10 @@ namespace TVGL
         public List<Vertex> Vertices { get; internal set; }
 
 
+        /// <summary>
+        /// Transforms the shape by the provided transformation matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
         public abstract void Transform(double[,] transformMatrix);
 
         /// <summary>

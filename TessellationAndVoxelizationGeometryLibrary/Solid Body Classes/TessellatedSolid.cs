@@ -167,21 +167,21 @@ namespace TVGL
             double[] tempCoord;
             foreach (var vert in Vertices)
             {
-                tempCoord = transformMatrix.multiply(vert.Position);
+                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
                 vert.Position[0] = tempCoord[0];
                 vert.Position[1] = tempCoord[1];
                 vert.Position[2] = tempCoord[2];
             }
-            tempCoord = transformMatrix.multiply(Bounds[0]);
+            tempCoord = transformMatrix.multiply(new[] { XMin, YMin, ZMin, 1 });
             XMin = tempCoord[0];
             YMin = tempCoord[1];
             ZMin = tempCoord[2];
 
-            tempCoord = transformMatrix.multiply(Bounds[1]);
+            tempCoord = transformMatrix.multiply(new[] { XMax, YMax, ZMax, 1 });
             XMax = tempCoord[0];
             YMax = tempCoord[1];
             ZMax = tempCoord[2];
-            Center = transformMatrix.multiply(Center);
+            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             if (_inertiaTensor != null)
             {
@@ -191,8 +191,9 @@ namespace TVGL
                         rotMatrix[i, j] = transformMatrix[i, j];
                 _inertiaTensor = rotMatrix.multiply(_inertiaTensor);
             }
-            foreach (var primitive in Primitives)
-                primitive.Transform(transformMatrix);
+            if (Primitives != null)
+                foreach (var primitive in Primitives)
+                    primitive.Transform(transformMatrix);
         }
 
         /// <summary>
