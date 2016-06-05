@@ -67,12 +67,72 @@ namespace TVGL
         /// </summary>
         public readonly List<PolygonalFace> OnSideFaces;
     }
-    
+
     /// <summary>
-    /// The Loop class is basically a list of ContactElements that form a path. Usually, this path
-    /// is closed, hence the name "loop", but it may be used and useful for open paths as well.
+    /// The GroupOfLoops class is a list of dependent loops and their associated information.
+    /// This difference from ContactData, since it only every has one positive loop.
     /// </summary>
-    public class Loop
+    public class GroupOfLoops
+    {
+        /// <summary>
+        /// Gets the positive loop.
+        /// </summary>
+        /// <value>The positive loops.</value>
+        public readonly Loop PositiveLoop;
+
+        /// <summary>
+        /// Gets the loops of negative area (i.e. holes).
+        /// </summary>
+        /// <value>The negative loops.</value>                    
+        public readonly List<Loop> NegativeLoops;
+
+        /// <summary>
+        /// The faces that were formed on-side for all the loops in this group. 
+        /// </summary>
+        public readonly List<PolygonalFace> OnSideContactFaces;
+
+        /// <summary>
+        /// A list of the idices of the faces that were adjacent and onside to the straddle faces
+        /// </summary>
+        public readonly HashSet<int> AdjOnsideFaceIndices;
+
+        /// <summary>
+        /// A list of the idices of the straddle faces 
+        /// </summary>
+        public readonly HashSet<int> StraddleFaceIndices;
+
+        internal GroupOfLoops(Loop positiveLoop, List<Loop> negativeLoops = null)
+        {
+            OnSideContactFaces = positiveLoop.OnSideContactFaces;
+            StraddleFaceIndices = positiveLoop.StraddleFaceIndices;
+            AdjOnsideFaceIndices = positiveLoop.AdjOnsideFaceIndices;
+            PositiveLoop = positiveLoop;
+            if (negativeLoops == null) return;
+            NegativeLoops = negativeLoops;
+            foreach (var negativeLoop in NegativeLoops)
+            {
+                foreach (var onSideContactFace in negativeLoop.OnSideContactFaces)
+                {
+                    OnSideContactFaces.Add(onSideContactFace);
+                }
+                foreach (var straddleFaceIndex in negativeLoop.StraddleFaceIndices)
+                {
+                    StraddleFaceIndices.Add(straddleFaceIndex);
+                }
+                foreach (var adjOnsideFaceIndex in negativeLoop.AdjOnsideFaceIndices)
+                {
+                    AdjOnsideFaceIndices.Add(adjOnsideFaceIndex);
+                }
+            }
+        }
+    }
+
+
+    /// <summary>
+        /// The Loop class is basically a list of ContactElements that form a path. Usually, this path
+        /// is closed, hence the name "loop", but it may be used and useful for open paths as well.
+        /// </summary>
+        public class Loop
     {
         /// <summary>
         /// The vertices making up this loop
@@ -106,11 +166,25 @@ namespace TVGL
         public readonly bool IsClosed;
 
         /// <summary>
+        /// A list of the idices of the faces that were adjacent and onside to the straddle faces
+        /// </summary>
+        public readonly HashSet<int> AdjOnsideFaceIndices;
+
+        /// <summary>
+        /// A list of the idices of the straddle faces 
+        /// </summary>
+        public readonly HashSet<int> StraddleFaceIndices;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Loop" /> class.
         /// </summary>
+        /// <param name="vertexLoop"></param>
+        /// <param name="onSideContactFaces"></param>
         /// <param name="normal">The normal.</param>
+        /// <param name="straddleFaceIndices"></param>
+        /// <param name="adjOnsideFaceIndices"></param>
         /// <param name="isClosed">is closed.</param>
-        internal Loop(List<Vertex> vertexLoop, List<PolygonalFace> onSideContactFaces, double[] normal, bool isClosed = true)
+        internal Loop(List<Vertex> vertexLoop, List<PolygonalFace> onSideContactFaces, double[] normal, HashSet<int> straddleFaceIndices, HashSet<int> adjOnsideFaceIndices, bool isClosed = true)
         {
             if (!IsClosed) Message.output("loop not closed!",3);
             VertexLoop = vertexLoop;
@@ -118,7 +192,11 @@ namespace TVGL
             IsClosed = isClosed;
             Area = MiscFunctions.AreaOf3DPolygon(vertexLoop, normal);
             Perimeter = MiscFunctions.Perimeter(vertexLoop);
+            AdjOnsideFaceIndices = adjOnsideFaceIndices;
+            StraddleFaceIndices = straddleFaceIndices;
         }
+
+        
     }
 }
 

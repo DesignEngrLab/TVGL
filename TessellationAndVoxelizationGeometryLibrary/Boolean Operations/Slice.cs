@@ -133,35 +133,83 @@ namespace TVGL.Boolean_Operations
         /// <param name="onSideFaces"></param>
         /// <param name="contactDataForEachSolid"></param>
         /// <returns></returns>
-        private static bool SeperateLoopsForEachSolid(List<List<Vertex>> onSideLoops, List<PolygonalFace> onSideFaces, 
+        private static bool SeperateLoopsForEachSolid(TessellatedSolid ts, List<Loop> onSideLoops, List<PolygonalFace> onSideFaces, double[] normal,
             out List<ContactData> contactDataForEachSolid)
         {
             contactDataForEachSolid = new List<ContactData>();
-            //Determine positive or negative for each loop 
-            //Also determine which positive loop each negative loop belongs to. 
-            //Lines 172-254 in the triangulate polygon function can determine this.
-            //Writing a new function for 3D space would be time consuming and adds another untested function. 
-            var orderedLoops = new List<Loop>();
-        
-            while(orderedLoops.Any()) 
+            //Order the loops into groups and determine positive or negative for each loop 
+            //Each group consists of one positive loop, but may include no or many negative loops.
+            //No negative loop will be inside of two positive loops. No positive loop will be inside another positive loop. 
+            //(NOTE: although they technically can be 'inside' other loops, there is no need for such a complicated tree of groupings)
+            var onSideVertexLoops = onSideLoops.Select(loop => loop.VertexLoop).ToList();
+            var isPositive = new bool[onSideLoops.Count];
+            //ToDo: Could come up with a more efficient way to order the loops, but this works.
+            var groupsOfLoopsIndices = TriangulatePolygon.OrderLoops(onSideVertexLoops, normal, ref isPositive, false);
+            for (var i = 0; i < isPositive.Length; i++)
             {
-                //Get the first positive loop. 
-                var posLoop = orderedLoops.First();
-                var negLoops = posLoop.DependentLoops;
-                if (!posLoop.IsPositive) throw new Exception("First loop in this function should always be positive. Likely the ordering and pairing of loops is incorrect" );
-                //Perform face wrapping (using adjacency to build up a list of all the faces on a solid) -- Similar to 'GetMultipleSolids'
-                //ToDo: Get contact faces into this fuction (Contact Data should connect loops to faces)
-                var posFaces = new List<PolygonalFace>();
-
-                //If the wrapping contained any faces with null adjacency references, find the loop they are from 
-                //and remove that loop from onSideLoops and negLoops - if it's dependentLoop is the current posLoop. 
-
-                //The next step is required for blind pockets and holes (If the positive loop had any negative 
-                //loops that belonged to it that were not found by wrapping).
-                while (negLoops.Any())
+                onSideLoops[i].IsPositive = isPositive[i];
+            }
+            //Put the groups of loops into a GroupOfLoops class.
+            var groupsOfLoops = new List<GroupOfLoops>();
+            foreach (var group in groupsOfLoopsIndices)
+            {
+                var positiveLoop = onSideLoops[group.First()];
+                var negativeLoops = new List<Loop>();
+                if (!positiveLoop.IsPositive) throw new Exception("This loop should always be positive. Check to may sure the group was created correctly in 'OrderLoops' ");
+                //Skip the first loop, since that is the positive loop
+                for (var j = 1; j < group.Count; j++)
                 {
-                    //remove them one at a time and perform face wrapping on each to add additional faces.
-                }               
+                    var negativeLoop = onSideLoops[group[j]];
+                    if (negativeLoop.IsPositive) throw new Exception("This loop should always be negative. Check to may sure the group was created correctly in 'OrderLoops' ");
+                    negativeLoops.Add(negativeLoop);
+                }
+                var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops);
+                groupsOfLoops.Add(groupOfLoops);
+            }
+
+            //Perform face wrapping (using adjacency to build up a list of all the faces on a solid) -- Similar to 'GetMultipleSolids'
+            //The straddle faces form the barrier for the wrapping procedure.
+            while(groupsOfLoops.Any())
+            {
+                var groupOfLoops = groupsOfLoops.First();
+                groupsOfLoops.RemoveAt(0);
+                //Push all the adjacent onside faces to a stack
+                //Note that blind pockets and holes are also included in this loop, since the onside faces for every loop in the group are included
+                var faces = new HashSet<PolygonalFace>();
+                var stack = new Stack<PolygonalFace>();
+                foreach (var adjOnsideFaceIndex in groupOfLoops.AdjOnsideFaceIndices)
+                {
+                    stack.Push(ts.Faces[adjOnsideFaceIndex]);
+                }
+
+                while (stack.Any())
+                {
+                    var face = stack.Pop();
+                    if (faces.Contains(face)) continue;
+                    faces.Add(face);
+                    foreach (var adjacentFace in face.AdjacentFaces)
+                    {
+                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
+                        if (groupOfLoops.StraddleFaceIndices.Contains(adjacentFace.IndexInList)) continue; //Don't add the straddle face. 
+                        //If the wrapping gets to any faces that are straddle faces for other loops, then that group of loops is part of the same solid.
+                        //Note that blind pockets and holes are also included in this loop, since the onside faces for every loop in the group are included
+                        var notStraddleEdge = true;
+                        for (var i = 0; i < groupsOfLoops.Count; i++)
+                        {
+                            if (!groupsOfLoops[i].StraddleFaceIndices.Contains(adjacentFace.IndexInList)) continue;
+                            notStraddleEdge = false;
+                            //Don't add the straddle face. 
+                            //Add all the adjacenet onside face indexes to the stack
+                            foreach (var adjOnsideFaceIndex in groupsOfLoops[i].AdjOnsideFaceIndices)
+                            {
+                                stack.Push(ts.Faces[adjOnsideFaceIndex]);
+                            }
+                            //Remove that group from the list of groups
+                            groupsOfLoops.RemoveAt(i);
+                        } 
+                        if (notStraddleEdge) stack.Push(adjacentFace);
+                    }
+                }             
             } 
             return true;
         }
@@ -310,19 +358,23 @@ namespace TVGL.Boolean_Operations
             }
             //Get loops of straddleEdges 
             var loopsOfStraddleEdges = new List<List<StraddleEdge>>();
+            var loopsOfStraddleFaceIndices = new List<HashSet<int>>();
             var maxCount = straddleEdges.Count/3;
             var attempts = 0;
             while (straddleEdges.Any() && attempts < maxCount)
             {
                 attempts++;
                 var loopOfStraddleEdges = new List<StraddleEdge>();
+                var loopOfStraddleFaceIndices = new HashSet<int>();
                 var straddleEdge = straddleEdges[0];
                 loopOfStraddleEdges.Add(straddleEdge);
                 straddleEdges.RemoveAt(0);
                 var startFace = straddleEdge.Edge.OwnedFace;
+                loopOfStraddleFaceIndices.Add(startFace.IndexInList);
                 var newStartFace = straddleEdge.NextFace(startFace);
                 do
                 {
+                    loopOfStraddleFaceIndices.Add(newStartFace.IndexInList);
                     var possibleStraddleEdges = new List<StraddleEdge>();
                     foreach (var edge in newStartFace.Edges)
                     {
@@ -343,6 +395,7 @@ namespace TVGL.Boolean_Operations
                 } while (newStartFace != startFace);
                 if (loopOfStraddleEdges.Count < 3) continue; //Ignore this loop, since it seems to be a knife edge 
                 loopsOfStraddleEdges.Add(loopOfStraddleEdges);
+                loopsOfStraddleFaceIndices.Add(loopOfStraddleFaceIndices);
             }
             if(straddleEdges.Any()) throw new Exception("While loop was unable to complete.");
             
@@ -354,11 +407,14 @@ namespace TVGL.Boolean_Operations
             var newVertexIndex = ts.NumberOfVertices;
             var allNewFaces = new List<PolygonalFace>();
             var tolerance = Math.Sqrt(ts.SameTolerance);
-            foreach (var loopOfStraddleEdges in loopsOfStraddleEdges)
-            {   
+            for (var i = 0; i < loopsOfStraddleEdges.Count; i++) 
+            {
+                var loopOfStraddleEdges = loopsOfStraddleEdges[i];
+                var straddleFaceIndices = loopsOfStraddleFaceIndices[i];
                 var newFaces = new List<PolygonalFace>();
                 var newEdges = new List<Edge>();
                 var loopOfVertices = new List<Vertex>();
+                var adjOnsideFaceIndices = new HashSet<int>();
                 //Find a good starting edge. One with an intersect vertex far enough away from other intersection vertices.
                 var k = 0; 
                 var length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges.Last().IntersectVertex.Position,
@@ -391,7 +447,7 @@ namespace TVGL.Boolean_Operations
                             previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
                             loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
                         }
-                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge , ref newEdges, true));                   
+                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge , ref newEdges, ref adjOnsideFaceIndices, true));                   
                         successfull = true;
                     }
                     //If too close together for a good triangle
@@ -418,7 +474,7 @@ namespace TVGL.Boolean_Operations
                         }
                         else
                         {
-                            newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges)); 
+                            newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges, ref adjOnsideFaceIndices)); 
                             previousStraddleEdge = currentStraddleEdge;
                         }
                     }
@@ -429,12 +485,12 @@ namespace TVGL.Boolean_Operations
                             previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
                             loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
                         }
-                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges)); 
+                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges, ref adjOnsideFaceIndices)); 
                         previousStraddleEdge = currentStraddleEdge;
                     }
                 } while (!successfull);
                 if (loopOfVertices.Count < 3) throw new Exception("This could be a knife edge. But this error will likely cause errors down the line");
-                loops.Add(new Loop(loopOfVertices, newFaces, plane.Normal));
+                loops.Add(new Loop(loopOfVertices, newFaces, plane.Normal, straddleFaceIndices, adjOnsideFaceIndices)); 
                 allNewFaces.AddRange(newFaces);
             }
             
@@ -451,9 +507,10 @@ namespace TVGL.Boolean_Operations
         /// <param name="st1"></param>
         /// <param name="st2"></param>
         /// <param name="newEdges"></param>
+        /// <param name="adjOnsideFaceIndices"></param>
         /// <param name="lastNewFace"></param>
         /// <returns></returns>
-        public static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, ref List<Edge> newEdges, bool lastNewFace = false )
+        public static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, ref List<Edge> newEdges, ref HashSet<int> adjOnsideFaceIndices, bool lastNewFace = false )
         {
             PolygonalFace sharedFace;
             if (st1.OwnedFace == st2.OwnedFace || st1.OwnedFace == st2.OtherFace) sharedFace = st1.OwnedFace;
@@ -478,12 +535,26 @@ namespace TVGL.Boolean_Operations
                     newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) {OwnedFace = newFace});
                 else newEdges.First().OwnedFace = newFace;
 
-                //Set ownership for boundary edge.
-                //var checksum = GetCheckSum(st1.OnSideVertex, st2.OnSideVertex);
-                //var edge = sharedFace.Edges.First(e => e.EdgeReference == checksum);
-                //if (edge.OwnedFace == sharedFace) edge.OwnedFace = newFace;
-                //else if (edge.OtherFace == sharedFace) edge.OtherFace = newFace;
-                //else throw new Exception("Edge should have been connected to sharedFace");
+                //Store index of face on boundary edge.
+                foreach (var edge in sharedFace.Edges)
+                {
+                    //First, find the boundary edge
+                    //No duplicates are to be included in the adjOnsideFaceIndices HashSet.
+                    if (edge == st1.Edge || edge == st2.Edge) continue;
+                    var boundaryEdge = edge;
+                    if (boundaryEdge.OwnedFace == sharedFace)
+                    {
+                        if (adjOnsideFaceIndices.Contains(boundaryEdge.OtherFace.IndexInList)) continue;
+                        adjOnsideFaceIndices.Add(boundaryEdge.OtherFace.IndexInList);
+                    }
+                    else if (boundaryEdge.OtherFace == sharedFace)
+                    {
+                        if (adjOnsideFaceIndices.Contains(boundaryEdge.OwnedFace.IndexInList)) continue;
+                        adjOnsideFaceIndices.Add(boundaryEdge.OwnedFace.IndexInList);
+                    }
+                    else throw new Exception("This should never be the case. The boundary edge should be have the sharedFace as owned or other");
+                    break;
+                }
                 return new List<PolygonalFace> {newFace};
             }
             if (st1.OffSideVertex == st2.OffSideVertex || st1.OriginalOffSideVertex == st2.OffSideVertex || st1.OffSideVertex == st2.OriginalOffSideVertex) //If not the same intersect vertex, then the same offSideVertex denotes two Consecutive curved edges, so this creates two new faces
@@ -504,13 +575,27 @@ namespace TVGL.Boolean_Operations
                 //Create the last edge, if this is not the last new face
                 if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) { OwnedFace = newFace2});
                 else newEdges.First().OwnedFace = newFace2;
-                
-                //Set ownership for boundary edge.
-                //var checksum = GetCheckSum(st1.OnSideVertex, st2.OnSideVertex);
-                //var edge = sharedFace.Edges.First(e => e.EdgeReference == checksum);
-                //if (edge.OwnedFace == sharedFace) edge.OwnedFace = newFace2;
-                //else if (edge.OtherFace == sharedFace) edge.OtherFace = newFace2;
-                //else throw new Exception("Edge should have been connected to sharedFace");
+
+                //Store index of face on boundary edge.
+                //No duplicates are to be included in the adjOnsideFaceIndices HashSet.
+                foreach (var edge in sharedFace.Edges)
+                {
+                    //First, find the boundary edge
+                    if (edge == st1.Edge || edge == st2.Edge) continue;
+                    var boundaryEdge = edge;
+                    if (boundaryEdge.OwnedFace == sharedFace)
+                    {
+                        if (adjOnsideFaceIndices.Contains(boundaryEdge.OtherFace.IndexInList)) continue;
+                        adjOnsideFaceIndices.Add(boundaryEdge.OtherFace.IndexInList);
+                    }
+                    else if (boundaryEdge.OtherFace == sharedFace)
+                    {
+                        if (adjOnsideFaceIndices.Contains(boundaryEdge.OwnedFace.IndexInList)) continue;
+                        adjOnsideFaceIndices.Add(boundaryEdge.OwnedFace.IndexInList);
+                    }
+                    else throw new Exception("This should never be the case. The boundary edge should be have the sharedFace as owned or other");
+                    break;
+                }
                 return new List<PolygonalFace> {newFace1, newFace2};
             }
             if (st1.OnSideVertex == st2.OnSideVertex)
