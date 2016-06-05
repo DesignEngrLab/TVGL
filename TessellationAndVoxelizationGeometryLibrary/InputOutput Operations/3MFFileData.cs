@@ -35,6 +35,7 @@ namespace TVGL.IOFunctions
     public class ThreeMFFileData : IO
 #endif
     {
+        private const string defXMLNameSpace = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
         /// <summary>
         ///     Initializes a new instance of the <see cref="ThreeMFFileData" /> class.
         /// </summary>
@@ -65,9 +66,9 @@ namespace TVGL.IOFunctions
         /// Gets or sets the unit.
         /// </summary>
         /// <value>The unit.</value>
-        [DefaultValue(Unit.unspecified)]
+        [DefaultValue(UnitType.unspecified)]
         [XmlAttribute]
-        public Unit unit { get; set; }
+        public UnitType unit { get; set; }
 
         /// <summary>
         /// Gets or sets the language.
@@ -120,25 +121,29 @@ namespace TVGL.IOFunctions
                         XmlSerializer serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
                         threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
                     }
+
+                    var results = new List<TessellatedSolid>();
+                    threeMFData.Name = GetNameFromFileName(filename);
+                    var nameIndex =
+                        threeMFData.metadata.FindIndex(
+                            md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
+                                                 md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
+                    if (nameIndex != -1) threeMFData.Name = threeMFData.metadata[nameIndex].Value;
+                    foreach (var item in threeMFData.build.Items)
+                    {
+                        results.AddRange(TessellatedSolidsFromIDAndTransform(item.objectid, item.transformMatrix,
+                            threeMFData.resources, threeMFData.Name + "_"));
+                    }
+
+                    Message.output("Successfully read in 3MF file (" + (DateTime.Now - now) + ").", 3);
+                    return results;
                 }
-                Message.output("Successfully read in 3MF file (" + (DateTime.Now - now) + ").", 3);
             }
             catch (Exception exception)
             {
                 Message.output("Unable to read in model file (" + (DateTime.Now - now) + ").", 1);
                 return null;
             }
-            var results = new List<TessellatedSolid>();
-            threeMFData.Name = GetNameFromFileName(filename);
-            var nameIndex =
-                threeMFData.metadata.FindIndex(md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
-            md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
-            if (nameIndex != -1) threeMFData.Name = threeMFData.metadata[nameIndex].Value;
-            foreach (var item in threeMFData.build.Items)
-            {
-                results.AddRange(TessellatedSolidsFromIDAndTransform(item.objectid, item.transformMatrix, threeMFData.resources, threeMFData.Name + "_"));
-            }
-            return results;
         }
         private static IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid, double[,] transformMatrix, Resources resources, string name)
         {
@@ -216,7 +221,93 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
-            throw new NotImplementedException();
+            var objects = new List<threemfclasses.Object>();
+            var baseMats = new BaseMaterials {id = 1};
+            var materials = new List<Material>();
+            var colors = new List<Color3MF>();
+            foreach (var solid in solids)
+            {
+                var thisObject = new threemfclasses.Object {name = solid.Name};
+                List<Triangle> triangles;
+                if (solid.HasUniformColor)
+                {
+                    if (solid.Faces[0].Color != null)
+                    {
+                        var thisColor = colors.Find(col => col.colorString.Equals(solid.Faces[0].Color.ToString()));
+                        if (thisColor != null)
+                        {
+                            var thisMaterial = materials.Find(mat => mat.colorid == thisColor.id);
+                            thisObject.MaterialID = thisMaterial.id;
+                        }
+                        else
+                        {
+                            var newID = colors.Count + 1;
+                            colors.Add(new Color3MF {id = newID, colorString = solid.Faces[0].Color.ToString()});
+                            materials.Add(new Material {colorid = newID, id = materials.Count + 1});
+                            thisObject.MaterialID = materials.Count + 1;
+                        }
+                    }
+                    triangles =
+                        solid.Faces.Select(
+                            f =>
+                                new Triangle
+                                {
+                                    v1 = f.Vertices[0].IndexInList,
+                                    v2 = f.Vertices[1].IndexInList,
+                                    v3 = f.Vertices[2].IndexInList
+                                }).ToList();
+                }
+                else
+                {
+                    triangles = new List<Triangle>();
+                    foreach (var face in solid.Faces)
+                    {
+                        int colorIndex = baseMats.bases.FindIndex(col => col.colorString.Equals(face.Color.ToString()));
+                        if (colorIndex==-1)
+                        {
+                            colorIndex= baseMats.bases.Count;
+                            baseMats.bases.Add(new Base{ colorString = face.Color.ToString() });
+                        }
+                        triangles.Add(new Triangle
+                        {
+                            v1 = face.Vertices[0].IndexInList,
+                            v2 = face.Vertices[1].IndexInList,
+                            v3 = face.Vertices[2].IndexInList,
+                            pid = 1,
+                            p1 = colorIndex
+                        });
+                    }
+                }
+                thisObject.mesh = new Mesh
+                {
+                    vertices = solid.Vertices.Select(v => new threemfclasses.Vertex
+                    {x = v.X, y = v.Y, z = v.Z}).ToList(),
+                    triangles = triangles
+                };
+                objects.Add(thisObject);
+            }
+            ThreeMFFileData threeMFData = new ThreeMFFileData
+            {
+                unit = solids[0].Units,
+                build = new Build {Items = objects.Select(o => new Item {objectid = o.id}).ToList()},
+                resources =
+                    new Resources {basematerials =(new[] { baseMats}).ToList(), colors = colors, materials = materials, objects = objects}
+            };
+            try
+            {
+                using (var writer = XmlWriter.Create(stream))
+                {
+                    var serializer = new XmlSerializer(typeof(ThreeMFFileData), defXMLNameSpace);
+                    serializer.Serialize(writer, threeMFData);
+                }
+                Message.output("Successfully wrote 3MF file to stream.", 3);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                return false;
+            }
         }
     }
 }

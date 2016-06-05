@@ -8,8 +8,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Dynamic;
 using System.Xml.Serialization;
 using StarMathLib;
+using TVGL.IOFunctions.amfclasses;
 
 namespace TVGL.IOFunctions.threemfclasses
 {
@@ -362,48 +364,6 @@ namespace TVGL.IOFunctions.threemfclasses
         other
     }
 
-    /// <summary>
-    ///     Enum Unit
-    /// </summary>
-#if help
-    internal enum Unit
-#else
-    public enum Unit
-#endif
-    {
-        unspecified = -1,
-
-        /// <summary>
-        ///     The micron
-        /// </summary>
-        micron,
-
-        /// <summary>
-        ///     The millimeter
-        /// </summary>
-        millimeter,
-
-        /// <summary>
-        ///     The centimeter
-        /// </summary>
-        centimeter,
-
-        /// <summary>
-        ///     The inch
-        /// </summary>
-        inch,
-
-        /// <summary>
-        ///     The foot
-        /// </summary>
-        foot,
-
-        /// <summary>
-        ///     The meter
-        /// </summary>
-        meter
-    }
-
     #endregion
 
     #region Resources
@@ -488,22 +448,18 @@ namespace TVGL.IOFunctions.threemfclasses
         [XmlAttribute("value")]
         public string colorString { get; set; }
 
-        internal Color color => ConvertToTVGLColor(colorString);
-
-        internal static Color ConvertToTVGLColor(string colorString)
+        internal Color color
         {
-            if (string.IsNullOrWhiteSpace(colorString) || (colorString.Length != 7 && colorString.Length != 9))
-                return new Color(KnownColors.UnknownColor);
-            var r = Convert.ToByte(colorString.Substring(1, 2), 16);
-            var g = Convert.ToByte(colorString.Substring(3, 2), 16);
-            var b = Convert.ToByte(colorString.Substring(5, 2), 16);
-            if (colorString.Length == 9)
+            get
             {
-                var a = Convert.ToByte(colorString.Substring(7, 2), 16);
-                return new Color(a, r, g, b);
+                if (_color == null)
+                    _color = new Color(colorString);
+                return _color;
             }
-            return new Color(r, g, b);
         }
+        private Color _color;
+
+
     }
     #endregion
     #region the 2015/02 approach
@@ -556,8 +512,16 @@ namespace TVGL.IOFunctions.threemfclasses
         [XmlAttribute("displaycolor")]
         public string colorString { get; set; }
 
-
-        internal Color color => Color3MF.ConvertToTVGLColor(colorString);
+        internal Color color
+        {
+            get
+            {
+                if (_color == null)
+                    _color = new Color(colorString);
+                return _color;
+            }
+        }
+        private Color _color;
 
     }
 

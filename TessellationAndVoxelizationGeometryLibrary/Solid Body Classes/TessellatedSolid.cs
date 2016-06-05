@@ -139,6 +139,12 @@ namespace TVGL
         public double Mass { get; set; }
 
         /// <summary>
+        /// Gets or sets the units.
+        /// </summary>
+        /// <value>The units.</value>
+        public UnitType Units { get; set; }
+
+        /// <summary>
         ///     Gets the surface area.
         /// </summary>
         /// <value>The surface area.</value>
