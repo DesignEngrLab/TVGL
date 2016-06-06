@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using StarMathLib;
 
 namespace TVGL.Boolean_Operations
@@ -38,7 +39,10 @@ namespace TVGL.Boolean_Operations
             List<Loop> negativeSideLoops;
             var isSuccessful = GetLoops(ts, plane, out positiveSideFaces, out negativeSideFaces, out positiveSideLoops, out negativeSideLoops);
             if (!isSuccessful) return;
-            MakeSolids(plane, positiveSideFaces, negativeSideFaces, positiveSideLoops, negativeSideLoops, out positiveSideSolids, out negativeSideSolids);
+            var contactDataForEachPositiveSolid = MakeContactDataForEachSolid(ts, positiveSideLoops, positiveSideFaces, plane.Normal);
+            positiveSideSolids = contactDataForEachPositiveSolid.Select(contactData => MakeSolid(plane.Normal.multiply(-1), contactData)).ToList();
+            var contactDataForEachNegativeSolid = MakeContactDataForEachSolid(ts, negativeSideLoops, negativeSideFaces, plane.Normal);
+            negativeSideSolids = contactDataForEachNegativeSolid.Select(contactData => MakeSolid(plane.Normal, contactData)).ToList();
         }
 
         /// <summary>
@@ -77,51 +81,36 @@ namespace TVGL.Boolean_Operations
             }
             DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal), out positiveSideFaces,
                 out positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift);
+            foreach (var face in positiveSideFaces)
+            {
+                face.CreatedInFunction = "Original Positive Side Face";
+            }
             DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces,
                 out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
+            
+            foreach (var face in negativeSideFaces)
+            {
+                face.CreatedInFunction = "Original Negative Side Face";
+            }
             return true;
         }
 
         /// <summary>
         /// Takes the loops and faces from GetLoops and outputs watertight solids.
         /// </summary>
-        /// <param name="plane"></param>
-        /// <param name="positiveSideFaces"></param>
-        /// <param name="negativeSideFaces"></param>
-        /// <param name="positiveSideLoops"></param>
-        /// <param name="negativeSideLoops"></param>
-        /// <param name="positiveSideSolids"></param>
-        /// <param name="negativeSideSolids"></param>
-        public static void MakeSolids(Flat plane, List<PolygonalFace> positiveSideFaces, 
-            List<PolygonalFace> negativeSideFaces, List<Loop> positiveSideLoops,
-            List<Loop> negativeSideLoops, out List<TessellatedSolid> positiveSideSolids, 
-            out List<TessellatedSolid> negativeSideSolids)
+        /// <param name="normal"></param>
+        /// <param name="solidContactData"></param>
+        public static TessellatedSolid MakeSolid(double[] normal, ContactData solidContactData)
         {
-            positiveSideSolids = new List<TessellatedSolid>();
-            negativeSideSolids = new List<TessellatedSolid>();
+            var allOnSideFaces = solidContactData.AllOnSideFaces;
             //3. Triangulate that empty space and add to list 
             List<List<Vertex[]>> triangleFaceList;
-            var positiveSideVertexLoops = new List<List<Vertex>>();
-            positiveSideVertexLoops.AddRange(positiveSideLoops.Select(n => n.VertexLoop));
-            var triangles = TriangulatePolygon.Run(positiveSideVertexLoops, plane.Normal, out triangleFaceList);
-            positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1), false){CreatedInFunction = "Slice4: Triangulation"}));
-
-            var negativeSideVertexLoops = new List<List<Vertex>>();
-            negativeSideVertexLoops.AddRange(negativeSideLoops.Select(n => n.VertexLoop));
-            triangles = TriangulatePolygon.Run(negativeSideVertexLoops, plane.Normal, out triangleFaceList);
-            negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal, false){CreatedInFunction = "Slice4: Triangulation"}));
-            //4. Create a new tesselated solid. This solid may actually be multiple solids.
-            if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
-            {
-                var positiveSideSolid = new TessellatedSolid(positiveSideFaces);
-                //5. Split the tesselated solid into multiple solids if necessary
-                positiveSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(positiveSideSolid));
-
-                //6. Repeat steps 4-5 for the negative side
-                var negativeSideSolid = new TessellatedSolid(negativeSideFaces);
-                negativeSideSolids = new List<TessellatedSolid>(MiscFunctions.GetMultipleSolids(negativeSideSolid));
-            }
-            //Else, there was no cut made. 
+            var onSideVertexLoops = new List<List<Vertex>>();
+            onSideVertexLoops.AddRange(solidContactData.AllLoops.Select(n => n.VertexLoop));
+            var triangles = TriangulatePolygon.Run(onSideVertexLoops, normal, out triangleFaceList);
+            allOnSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, normal, false){CreatedInFunction = "Slice4: Triangulation"}));
+            //Create a new solid
+            return new TessellatedSolid(allOnSideFaces);
         }
 
         /// <summary>
@@ -129,14 +118,14 @@ namespace TVGL.Boolean_Operations
         /// loop information and face wrapping to identify which loops belong together.
         /// The direction of each loop is not necessary as it can be inferred.
         /// </summary>
+        /// <param name="ts"></param>
         /// <param name="onSideLoops"></param>
-        /// <param name="onSideFaces"></param>
-        /// <param name="contactDataForEachSolid"></param>
+        /// <param name="normal"></param>
         /// <returns></returns>
-        private static bool SeperateLoopsForEachSolid(TessellatedSolid ts, List<Loop> onSideLoops, List<PolygonalFace> onSideFaces, double[] normal,
-            out List<ContactData> contactDataForEachSolid)
+        private static List<ContactData> MakeContactDataForEachSolid(TessellatedSolid ts, List<Loop> onSideLoops, List<PolygonalFace> onSideFaces, double[] normal)
         {
-            contactDataForEachSolid = new List<ContactData>();
+            var contactDataForEachSolid = new List<ContactData>();
+            var hashSetFaces = new HashSet<PolygonalFace>(onSideFaces);
             //Order the loops into groups and determine positive or negative for each loop 
             //Each group consists of one positive loop, but may include no or many negative loops.
             //No negative loop will be inside of two positive loops. No positive loop will be inside another positive loop. 
@@ -172,46 +161,62 @@ namespace TVGL.Boolean_Operations
             while(groupsOfLoops.Any())
             {
                 var groupOfLoops = groupsOfLoops.First();
+                var allLoopsBelongingToSolid = new List<Loop>(groupOfLoops.AllLoops);
                 groupsOfLoops.RemoveAt(0);
                 //Push all the adjacent onside faces to a stack
                 //Note that blind pockets and holes are also included in this loop, since the onside faces for every loop in the group are included
-                var faces = new HashSet<PolygonalFace>();
+                var straddleFaceIndices = groupOfLoops.StraddleFaceIndices;
+                var facesBelongingToSolid = new HashSet<PolygonalFace>();
                 var stack = new Stack<PolygonalFace>();
+                var usedFaces = new HashSet<PolygonalFace>();
                 foreach (var adjOnsideFaceIndex in groupOfLoops.AdjOnsideFaceIndices)
                 {
                     stack.Push(ts.Faces[adjOnsideFaceIndex]);
+                    usedFaces.Add(ts.Faces[adjOnsideFaceIndex]);
                 }
-
                 while (stack.Any())
                 {
                     var face = stack.Pop();
-                    if (faces.Contains(face)) continue;
-                    faces.Add(face);
+                    if (!hashSetFaces.Contains(face)) throw new Exception("The face should be in this list. Otherwise, it should not have been selected with face wrapping"); //ToDo: Remove this line and 'onSideFaces' from this function when convinced its working well
+                    if (facesBelongingToSolid.Contains(face)) continue;
+                    facesBelongingToSolid.Add(face);
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
+                        if (usedFaces.Contains(adjacentFace)) continue;
+                        usedFaces.Add(adjacentFace);
                         if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
-                        if (groupOfLoops.StraddleFaceIndices.Contains(adjacentFace.IndexInList)) continue; //Don't add the straddle face. 
+                        if (straddleFaceIndices.Contains(adjacentFace.IndexInList)) continue; //Don't add the straddle face. 
                         //If the wrapping gets to any faces that are straddle faces for other loops, then that group of loops is part of the same solid.
                         //Note that blind pockets and holes are also included in this loop, since the onside faces for every loop in the group are included
                         var notStraddleEdge = true;
                         for (var i = 0; i < groupsOfLoops.Count; i++)
                         {
                             if (!groupsOfLoops[i].StraddleFaceIndices.Contains(adjacentFace.IndexInList)) continue;
+                            //Update the straddleFaceIndexList
+                            foreach (var faceIndex in groupsOfLoops[i].StraddleFaceIndices)
+                            {
+                                straddleFaceIndices.Add(faceIndex);
+                            }
                             notStraddleEdge = false;
                             //Don't add the straddle face. 
                             //Add all the adjacenet onside face indexes to the stack
                             foreach (var adjOnsideFaceIndex in groupsOfLoops[i].AdjOnsideFaceIndices)
                             {
+                                if (usedFaces.Contains(ts.Faces[adjOnsideFaceIndex])) continue;
+                                usedFaces.Add(ts.Faces[adjOnsideFaceIndex]);
                                 stack.Push(ts.Faces[adjOnsideFaceIndex]);
                             }
+                            //Add this the loops in this group to this solid
+                            allLoopsBelongingToSolid.AddRange(groupsOfLoops[i].AllLoops);
                             //Remove that group from the list of groups
                             groupsOfLoops.RemoveAt(i);
                         } 
                         if (notStraddleEdge) stack.Push(adjacentFace);
                     }
-                }             
+                }
+                contactDataForEachSolid.Add(new ContactData(allLoopsBelongingToSolid, facesBelongingToSolid.ToList()));
             } 
-            return true;
+            return contactDataForEachSolid;
         }
 
         private static bool ShiftPlaneForRobustCut(TessellatedSolid ts, Flat plane, out List<double> distancesToPlane, out double posPlaneShift, out double negPlaneShift)
@@ -333,7 +338,10 @@ namespace TVGL.Boolean_Operations
                                 tempOnSideFaces.Add(face.IndexInList);
                                 straddleFaces.Remove(face.IndexInList);
                             }
-                            else straddleFaces.Add(face.IndexInList, face);
+                            else
+                            {
+                                straddleFaces.Add(face.IndexInList, face);
+                            }
                         }
                     }
                     continue;
@@ -351,6 +359,7 @@ namespace TVGL.Boolean_Operations
             var boundaryEdges = new Dictionary<int, Edge>();
             foreach (var face in straddleFaces.Values)
             {
+                face.CreatedInFunction = "Original Straddle Face";
                 foreach (var edge in face.Edges.Where(edge => !listEdges.ContainsKey(edge.IndexInList) && !boundaryEdges.ContainsKey(edge.IndexInList)))
                 {
                     boundaryEdges.Add(edge.IndexInList, edge);

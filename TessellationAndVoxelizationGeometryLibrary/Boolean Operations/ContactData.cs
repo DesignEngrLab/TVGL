@@ -21,6 +21,7 @@ namespace TVGL
         internal ContactData(List<Loop> loops, List<PolygonalFace> onSideFaces)
         {
             OnSideFaces = onSideFaces;
+            OnSideContactFaces = new List<PolygonalFace>();
             PositiveLoops = new List<Loop>();
             NegativeLoops = new List<Loop>();
             foreach (var loop in loops)
@@ -28,6 +29,7 @@ namespace TVGL
                 Area += loop.Area;
                 if (loop.IsPositive) PositiveLoops.Add(loop);
                 else NegativeLoops.Add(loop);
+                OnSideContactFaces.AddRange(loop.OnSideContactFaces);
             }
         }
 
@@ -63,9 +65,28 @@ namespace TVGL
         public readonly double Area;
 
         /// <summary>
-        /// List of In Plane Faces
+        /// List of pre-existing faces on this side of the cutting plane
         /// </summary>
         public readonly List<PolygonalFace> OnSideFaces;
+
+        /// <summary>
+        /// The faces that were formed on-side for all the loops in this solid. 
+        /// </summary>
+        public readonly List<PolygonalFace> OnSideContactFaces;
+
+        /// <summary>
+        /// Gets all faces belonging to this solid's contact data (All faces except those that will be triangulated in plane)
+        /// </summary>
+        /// <value>All loops.</value>
+        public List<PolygonalFace> AllOnSideFaces
+        {
+            get
+            {
+                var allOnSideFaces = new List<PolygonalFace>(OnSideFaces);
+                allOnSideFaces.AddRange(OnSideContactFaces);
+                return allOnSideFaces;
+            }
+        }
     }
 
     /// <summary>
@@ -85,6 +106,21 @@ namespace TVGL
         /// </summary>
         /// <value>The negative loops.</value>                    
         public readonly List<Loop> NegativeLoops;
+
+        /// <summary>
+        /// Gets all loops in one list (the positive loops are followed by the
+        /// negative loops).
+        /// </summary>
+        /// <value>All loops.</value>
+        public List<Loop> AllLoops
+        {
+            get
+            {
+                var allLoops = new List<Loop>() { PositiveLoop};
+                allLoops.AddRange(NegativeLoops);
+                return allLoops;
+            }
+        }
 
         /// <summary>
         /// The faces that were formed on-side for all the loops in this group. 
@@ -194,6 +230,10 @@ namespace TVGL
             Perimeter = MiscFunctions.Perimeter(vertexLoop);
             AdjOnsideFaceIndices = adjOnsideFaceIndices;
             StraddleFaceIndices = straddleFaceIndices;
+            foreach (var index in straddleFaceIndices)
+            {
+                if(adjOnsideFaceIndices.Contains(index)) throw new Exception("Face cannot be both a straddle face and an adjacent onside face.");
+            }
         }
 
         

@@ -1109,7 +1109,7 @@ namespace TVGL
                     throw new Exception(
                         "Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
                 var sortedGroup = new List<Node>(sortedLoops[i]);
-                var group = new List<int> {i};
+                var group = new List<int> {sortedGroup[0].LoopID};
                 listPositive.RemoveAt(i);
                 orderedLoops.RemoveAt(i);
                 sortedLoops.RemoveAt(i);
@@ -1161,7 +1161,7 @@ namespace TVGL
                             listPositive.RemoveAt(k);
                             orderedLoops.RemoveAt(k);
                             sortedLoops.RemoveAt(k);
-                            group.Add(k);
+                            group.Add(node.LoopID);
                         }
                         else
                         {
