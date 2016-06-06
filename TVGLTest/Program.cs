@@ -71,7 +71,7 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
-            TVGL.Message.Verbosity=VerbosityLevels.AboveNormal;
+            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             for (var i = 0; i < FileNames.Count(); i++)
             {
                 var filename = FileNames[i];
@@ -79,8 +79,8 @@ namespace TVGL_Test
                 var fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
                 fileStream.Close();
-                fileStream = File.Create(filename + ".3mf");
-                IO.Save(fileStream, ts, FileType.ThreeMF);
+                using (fileStream = File.Create(filename + ".3mf"))
+                    IO.Save(fileStream, ts, FileType.ThreeMF);
                 TVGL.Presenter.ShowAndHang(ts);
                 //TestSimplify(ts[0]);
             }
