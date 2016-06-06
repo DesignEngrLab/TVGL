@@ -217,6 +217,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// </summary>
         /// <value>The p1.</value>
         [XmlAttribute]
+        [DefaultValue(-1)]
         public int p1 { get; set; }
 
         /// <summary>
@@ -224,6 +225,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// </summary>
         /// <value>The p2.</value>
         [XmlAttribute]
+        [DefaultValue(-1)]
         public int p2 { get; set; }
 
         /// <summary>
@@ -231,6 +233,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// </summary>
         /// <value>The p3.</value>
         [XmlAttribute]
+        [DefaultValue(-1)]
         public int p3 { get; set; }
 
         /// <summary>
@@ -238,6 +241,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// </summary>
         /// <value>The pid.</value>
         [XmlAttribute]
+        [DefaultValue(-1)]
         public int pid { get; set; }
     }
 
@@ -317,12 +321,14 @@ namespace TVGL.IOFunctions.threemfclasses
         public ObjectType type { get; set; }
 
         [XmlAttribute("materialid")]
+        [DefaultValue(-1)]
         public int MaterialID { get; set; }
 
         [XmlAttribute]
         public string thumbnail { get; set; }
 
         [XmlAttribute]
+        [DefaultValue(0)]
         public int partnumber { get; set; }
 
         [XmlAttribute]
