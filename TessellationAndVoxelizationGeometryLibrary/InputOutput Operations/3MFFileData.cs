@@ -36,6 +36,7 @@ namespace TVGL.IOFunctions
 #endif
     {
         private const string defXMLNameSpace = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
+       
         /// <summary>
         ///     Initializes a new instance of the <see cref="ThreeMFFileData" /> class.
         /// </summary>
@@ -221,13 +222,30 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
+            using (ZipArchive archive = new ZipArchive(stream, ZipArchiveMode.Create))
+            {
+                ZipArchiveEntry model = archive.CreateEntry("3D/3dmodel.model");
+                SaveModel(model.Open(), solids);
+            }
+            return true;
+        }
+
+        /// <summary>
+        ///     Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        internal static bool SaveModel(Stream stream, IList<TessellatedSolid> solids)
+        {
             var objects = new List<threemfclasses.Object>();
-            var baseMats = new BaseMaterials {id = 1};
+            var baseMats = new BaseMaterials { id = 1 };
             var materials = new List<Material>();
             var colors = new List<Color3MF>();
             foreach (var solid in solids)
             {
-                var thisObject = new threemfclasses.Object {name = solid.Name};
+                var thisObject = new threemfclasses.Object { name = solid.Name };
                 List<Triangle> triangles;
                 if (solid.HasUniformColor)
                 {
@@ -242,8 +260,8 @@ namespace TVGL.IOFunctions
                         else
                         {
                             var newID = colors.Count + 1;
-                            colors.Add(new Color3MF {id = newID, colorString = solid.Faces[0].Color.ToString()});
-                            materials.Add(new Material {colorid = newID, id = materials.Count + 1});
+                            colors.Add(new Color3MF { id = newID, colorString = solid.Faces[0].Color.ToString() });
+                            materials.Add(new Material { colorid = newID, id = materials.Count + 1 });
                             thisObject.MaterialID = materials.Count + 1;
                         }
                     }
@@ -263,10 +281,10 @@ namespace TVGL.IOFunctions
                     foreach (var face in solid.Faces)
                     {
                         int colorIndex = baseMats.bases.FindIndex(col => col.colorString.Equals(face.Color.ToString()));
-                        if (colorIndex==-1)
+                        if (colorIndex == -1)
                         {
-                            colorIndex= baseMats.bases.Count;
-                            baseMats.bases.Add(new Base{ colorString = face.Color.ToString() });
+                            colorIndex = baseMats.bases.Count;
+                            baseMats.bases.Add(new Base { colorString = face.Color.ToString() });
                         }
                         triangles.Add(new Triangle
                         {
@@ -281,7 +299,7 @@ namespace TVGL.IOFunctions
                 thisObject.mesh = new Mesh
                 {
                     vertices = solid.Vertices.Select(v => new threemfclasses.Vertex
-                    {x = v.X, y = v.Y, z = v.Z}).ToList(),
+                    { x = v.X, y = v.Y, z = v.Z }).ToList(),
                     triangles = triangles
                 };
                 objects.Add(thisObject);
@@ -289,9 +307,9 @@ namespace TVGL.IOFunctions
             ThreeMFFileData threeMFData = new ThreeMFFileData
             {
                 unit = solids[0].Units,
-                build = new Build {Items = objects.Select(o => new Item {objectid = o.id}).ToList()},
+                build = new Build { Items = objects.Select(o => new Item { objectid = o.id }).ToList() },
                 resources =
-                    new Resources {basematerials =(new[] { baseMats}).ToList(), colors = colors, materials = materials, objects = objects}
+                    new Resources { basematerials = (new[] { baseMats }).ToList(), colors = colors, materials = materials, objects = objects }
             };
             try
             {
