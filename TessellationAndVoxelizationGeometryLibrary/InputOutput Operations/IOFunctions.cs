@@ -60,17 +60,26 @@ namespace TVGL.IOFunctions
             switch (extension)
             {
                 case "stl":
-                    tessellatedSolids = STLFileData.Open(s,filename, inParallel); // Standard Tessellation or StereoLithography
+                    tessellatedSolids = STLFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
                     break;
                 case "ply":
                     tessellatedSolids = PLYFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
                     break;
+                case "3mf":
+                    tessellatedSolids = ThreeMFFileData.Open(s, filename, inParallel);
+                    break;
+                case "model":
+                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, inParallel);
+                    break;
                 case "amf":
-                    tessellatedSolids = AMFFileData.Open(s,filename, inParallel);
+                    tessellatedSolids = AMFFileData.Open(s, filename, inParallel);
                     break;
                 case "off":
                     tessellatedSolids = OFFFileData.Open(s, filename, inParallel);
-                        // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    break;
+                case "shell":
+                    tessellatedSolids = ShellFileData.Open(s, filename, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
                 default:
                     throw new Exception(
@@ -87,6 +96,18 @@ namespace TVGL.IOFunctions
             return tessellatedSolids;
         }
 
+        /// <summary>
+        /// Gets the name from the filename.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <returns>System.String.</returns>
+        protected static string GetNameFromFileName(string filename)
+        {
+            var startIndex = filename.LastIndexOf('/')+1;
+            var endIndex = filename.IndexOf('.', startIndex);
+            if (endIndex == -1) endIndex = filename.Length - 1;
+            return filename.Substring(startIndex, endIndex - startIndex);
+        }
         /// <summary>
         ///     Parses the ID and values from the specified line.
         /// </summary>

@@ -11,6 +11,10 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+
+using System;
+using System.Reflection;
+
 namespace TVGL
 {
     /// <summary>
@@ -741,7 +745,7 @@ namespace TVGL
         /// <returns>System.Single.</returns>
         private static float Convert(byte value)
         {
-            return value/255f;
+            return value / 255f;
         }
 
         /// <summary>
@@ -755,7 +759,7 @@ namespace TVGL
                 return 0;
             if (value > 1.0f)
                 return 255;
-            return (byte) (value*255f);
+            return (byte)(value * 255f);
         }
 
         /// <summary>
@@ -766,7 +770,7 @@ namespace TVGL
         public override bool Equals(object obj)
         {
             if (!(obj is Color)) return false;
-            var otherColor = (Color) obj;
+            var otherColor = (Color)obj;
             return A == otherColor.A && B == otherColor.B
                    && G == otherColor.G && R == otherColor.R;
         }
@@ -778,7 +782,7 @@ namespace TVGL
         /// </summary>
         /// <param name="knownColor">Color of the known.</param>
         public Color(KnownColors knownColor)
-            : this((uint) knownColor)
+            : this((uint)knownColor)
         {
         }
 
@@ -786,7 +790,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Color" /> class.
         /// </summary>
         /// <param name="amfColor">Color of the amf.</param>
-        internal Color(amf.AMF_Color amfColor)
+        internal Color(IOFunctions.amfclasses.AMF_Color amfColor)
             : this(amfColor.a, amfColor.r, amfColor.g, amfColor.b)
         {
         }
@@ -797,10 +801,10 @@ namespace TVGL
         /// <param name="argb">The ARGB.</param>
         public Color(uint argb)
         {
-            A = (byte) ((argb & 0xff000000) >> 24);
-            R = (byte) ((argb & 0x00ff0000) >> 16);
-            G = (byte) ((argb & 0x0000ff00) >> 8);
-            B = (byte) (argb & 0x000000ff);
+            A = (byte)((argb & 0xff000000) >> 24);
+            R = (byte)((argb & 0x00ff0000) >> 16);
+            G = (byte)((argb & 0x0000ff00) >> 8);
+            B = (byte)(argb & 0x000000ff);
         }
 
 
@@ -821,6 +825,21 @@ namespace TVGL
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Color" /> struct.
+        /// </summary>
+        /// <param name="r">The r.</param>
+        /// <param name="g">The g.</param>
+        /// <param name="b">The b.</param>
+        public Color(float r, float g, float b)
+        {
+
+            A = 1;
+            R = Convert(r);
+            G = Convert(g);
+            B = Convert(b);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Color"/> struct.
         /// </summary>
         /// <param name="a">a.</param>
         /// <param name="r">The r.</param>
@@ -845,7 +864,29 @@ namespace TVGL
         {
         }
 
+        public Color(string colorString)
+        {
+            if (!string.IsNullOrWhiteSpace(colorString) && (colorString.Length == 7 || colorString.Length == 9))
+            {
+                R = System.Convert.ToByte(colorString.Substring(1, 2), 16);
+                G = System.Convert.ToByte(colorString.Substring(3, 2), 16);
+                B = System.Convert.ToByte(colorString.Substring(5, 2), 16);
+                if (colorString.Length == 9)
+                    A = System.Convert.ToByte(colorString.Substring(7, 2), 16);
+            }
+        }
+
         #endregion Constructors
+
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
+        public override string ToString()
+        {
+            string hex ="#"+ BitConverter.ToString(new[] { R, G, B, A });
+            return hex.Replace("-", "");
+        }
 
         #region Public Properties
 

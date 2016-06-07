@@ -24,11 +24,6 @@ namespace TVGL
     /// </summary>
     public class TessellationError
     {
-        /// <summary>
-        ///     The _edge face ratio
-        /// </summary>
-        private double _edgeFaceRatio = double.NaN;
-
         #region Puplic Properties
 
         /// <summary>
@@ -137,11 +132,7 @@ namespace TVGL
         ///     Edges to face ratio
         /// </summary>
         /// <value>The edge face ratio.</value>
-        public double EdgeFaceRatio
-        {
-            get { return _edgeFaceRatio; }
-            private set { _edgeFaceRatio = value; }
-        }
+        public double EdgeFaceRatio { get; private set; } = double.NaN;
 
         /// <summary>
         ///     Whether ts.Errors contains any errors that need to be resolved
@@ -238,7 +229,7 @@ namespace TVGL
             if (!double.IsNaN(EdgeFaceRatio))
                 Message.output("==> Edges / Faces = " + EdgeFaceRatio + ", but it should be 1.5.");
             if (OverusedEdges != null)
-            {
+            { 
                 Message.output("==> " + OverusedEdges.Count + " overused edges.");
                 Message.output("    The number of faces per overused edge: " +
                                OverusedEdges.Select(p => p.Item2.Count).MakePrintString());

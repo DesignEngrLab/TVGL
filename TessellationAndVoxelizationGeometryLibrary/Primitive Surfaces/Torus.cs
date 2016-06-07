@@ -92,5 +92,10 @@ namespace TVGL
         {
             throw new NotImplementedException();
         }
+
+        public override void Transform(double[,] transformMatrix)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

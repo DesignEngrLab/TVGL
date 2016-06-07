@@ -117,6 +117,46 @@ namespace TVGL
         }
     }
 
+
+    /// <summary>
+    /// Enum Units of specified shape
+    /// </summary>
+    public enum UnitType
+    {
+        unspecified = -1,
+        /// <summary>
+        ///     The millimeter
+        /// </summary>
+        millimeter,
+
+        /// <summary>
+        ///     The micron
+        /// </summary>
+        micron,
+
+
+        /// <summary>
+        ///     The centimeter
+        /// </summary>
+        centimeter,
+
+        /// <summary>
+        ///     The inch
+        /// </summary>
+        inch,
+
+        /// <summary>
+        ///     The foot
+        /// </summary>
+        foot,
+
+        /// <summary>
+        ///     The meter
+        /// </summary>
+        meter
+    }
+
+
     /// <summary>
     ///     Enum CurvatureType
     /// </summary>

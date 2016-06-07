@@ -117,6 +117,11 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        public override void Transform(double[,] transformMatrix)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         ///     Updates cone with face
         /// </summary>

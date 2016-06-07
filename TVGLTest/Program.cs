@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
@@ -13,24 +13,29 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        "../../../TestFiles/SimplifyFails.ply",
-       // "../../../TestFiles/shark.ply",
-       // "../../../TestFiles/bunnySmall.ply",
-       // "../../../TestFiles/cube.ply",
-       // "../../../TestFiles/airplane.ply",
-       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-       // "../../../TestFiles/Beam_Boss.STL",
-       // "../../../TestFiles/Tetrahedron.STL",
-       // "../../../TestFiles/off_axis_box.STL",
-       // "../../../TestFiles/Wedge.STL",
-       // "../../../TestFiles/amf_Cube.amf",
-       // "../../../TestFiles/Mic_Holder_SW.stl",
-       // "../../../TestFiles/Mic_Holder_JR.stl",
-       // "../../../TestFiles/3_bananas.amf",
-       // //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-       // //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-       // "../../../TestFiles/Rook.amf",
-       // "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
+        //"../../../TestFiles/Candy.shell",
+        //"../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/train.3mf",
+        "../../../TestFiles/keychain.3mf",
+        "../../../TestFiles/Castle.3mf",
+        "../../../TestFiles/Raspberry Pi Case.3mf",
+        "../../../TestFiles/shark.ply",
+        "../../../TestFiles/bunnySmall.ply",
+        "../../../TestFiles/cube.ply",
+        "../../../TestFiles/airplane.ply",
+        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        "../../../TestFiles/Beam_Boss.STL",
+
+        "../../../TestFiles/Tetrahedron.STL",
+        "../../../TestFiles/off_axis_box.STL",
+        "../../../TestFiles/Wedge.STL",
+        "../../../TestFiles/Mic_Holder_SW.stl",
+        "../../../TestFiles/Mic_Holder_JR.stl",
+        "../../../TestFiles/3_bananas.amf",
+        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+        "../../../TestFiles/Rook.amf",
+        "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
        // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
        // "../../../TestFiles/ABF.STL",
        // "../../../TestFiles/Pump-1repair.STL",
@@ -43,7 +48,7 @@ namespace TVGL_Test
        // "../../../TestFiles/bradley.stl",
        // "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
        // "../../../TestFiles/new/5.STL",
-       // "../../../TestFiles/new/2.stl", //Note that this is an assembly 
+       //"../../../TestFiles/new/2.stl", //Note that this is an assembly 
        // "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
        //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
        // "../../../TestFiles/radiobox.stl",
@@ -67,29 +72,21 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
-            TVGL.Message.Verbosity=VerbosityLevels.AboveNormal;
+            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             for (var i = 0; i < FileNames.Count(); i++)
             {
                 var filename = FileNames[i];
                 Console.WriteLine("Attempting: " + filename);
-                FileStream fileStream = File.OpenRead(filename);
+                var fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
-                //Primitive_Classification.Run(ts[0]);
-                //MiscFunctions.IsSolidBroken(ts[0]);
-                MinimumEnclosure.OrientedBoundingBox(ts[0]);
-                //TestClassification(ts[0]);
-               // TestXSections(ts[0]);
-                TVGL.Presenter.ShowAndHang(ts);
-                TestSimplify(ts[0]);
-                //TestSlice(ts[0]);
-                //TestOBB(ts[0], filename);
-                //var filename2 = filenames[i + 1];
-                //FileStream fileStream2 = File.OpenRead(filename2);
-                //var ts2 = IO.Open(fileStream2, filename2, false);
-                //TestInsideSolid(ts[0], ts2[0]);
+                fileStream.Close();
+                using (fileStream = File.Create(filename + ".3mf"))
+                    IO.Save(fileStream, ts, FileType.ThreeMF);
+               // TVGL.Presenter.ShowAndHang(ts);
+                //TestSimplify(ts[0]);
             }
             Console.WriteLine("Completed.");
-            Console.ReadKey();
+          //  Console.ReadKey();
         }
 
         private static void TestOBB(string InputDir)

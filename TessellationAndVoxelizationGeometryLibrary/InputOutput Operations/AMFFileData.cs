@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using amf;
+using TVGL.IOFunctions.amfclasses;
 
 namespace TVGL.IOFunctions
 {
@@ -37,6 +37,7 @@ namespace TVGL.IOFunctions
         public AMFFileData()
         {
             Objects = new List<AMF_Object>();
+            Textures = new List<AMF_Texture>();
         }
 
         /// <summary>
@@ -85,7 +86,12 @@ namespace TVGL.IOFunctions
         /// <value>The language.</value>
         public string lang { get; set; }
 
-    
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        public string Name { get; set; }
+
         /// <summary>
         /// Opens the specified s.
         /// </summary>
@@ -96,23 +102,20 @@ namespace TVGL.IOFunctions
         internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
             var now = DateTime.Now;
-            AMFFileData amfData;
-            // Try to read in BINARY format
-            if (TryUnzippedXMLRead(s, out amfData))
-                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
-            else
+            AMFFileData amfData = null;
+            try
             {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                //if (amf.TryZippedXMLRead(s, out amfData))
-                //    Message.output("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").",3);
-                //else
-                //{
-                //    Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").",1);
-                //    return null;
-                //}
+                var streamReader = new StreamReader(s);
+                var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
+                amfData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
+                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
             }
+            catch (Exception exception)
+            {
+                Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").", 1);
+                return null;
+            }
+            amfData.Name = GetNameFromFileName(filename);
             var results = new List<TessellatedSolid>();
             foreach (var amfObject in amfData.Objects)
             {
@@ -131,7 +134,11 @@ namespace TVGL.IOFunctions
                     foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
                         colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
                 }
-                results.Add(new TessellatedSolid(filename,
+                var name = amfData.Name;
+                var nameIndex =
+                    amfObject.metadata.FindIndex(md => md != null && md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase));
+                if (nameIndex != -1) name = amfObject.metadata[nameIndex].Value;
+                results.Add(new TessellatedSolid(name + "_" + amfObject.id,
                     amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
                     amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
                     colors));
@@ -151,8 +158,8 @@ namespace TVGL.IOFunctions
             try
             {
                 var streamReader = new StreamReader(stream);
-                var amfDeserializer = new XmlSerializer(typeof (AMFFileData));
-                amfFileData = (AMFFileData) amfDeserializer.Deserialize(streamReader);
+                var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
+                amfFileData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
             }
             catch (Exception exception)
             {
@@ -184,7 +191,26 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
-            throw new NotImplementedException();
+            var fileData = new AMFFileData();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            var amfWriter = new StreamWriter(stream);
+            var amfSerializer = new XmlSerializer(typeof(AMFFileData));
+            amfSerializer.Serialize(amfWriter, fileData);
+            amfWriter.Dispose();
+            return true;
         }
     }
 }

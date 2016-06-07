@@ -65,6 +65,11 @@ namespace TVGL
             base.UpdateWith(face);
         }
 
+        public override void Transform(double[,] transformMatrix)
+        {
+            throw new NotImplementedException();
+        }
+
         #region Constructor
 
         /// <summary>
