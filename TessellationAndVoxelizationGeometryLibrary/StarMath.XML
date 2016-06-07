@@ -3264,172 +3264,53 @@
             <param name="potentialIndices">The potential indices.</param>
             <returns>System.Int32[].</returns>
         </member>
-        <member name="T:StarMathLib.SymbolicFactorization">
+        <member name="M:StarMathLib.CSparse.CompressedColumnStorage.Resize(System.Int32)">
             <summary>
-            Class SymbolicFactorization.
+                Change the max # of entries sparse matrix
             </summary>
+            <param name="size"></param>
+            <returns></returns>
         </member>
-        <member name="F:StarMathLib.SymbolicFactorization.ColumnPointers">
+        <member name="T:StarMathLib.CSparse.SymbolicColumnStorage">
             <summary>
-            The column pointers
+                Represents the nonzero pattern of a column-compressed matrix.
             </summary>
+            <remarks>
+                Used for ordering and symbolic factorization.
+            </remarks>
         </member>
-        <member name="F:StarMathLib.SymbolicFactorization.NumNonZeroInLower">
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.Resize(System.Int32)">
             <summary>
-            The number non zero in lower
+                Change the max # of entries sparse matrix
             </summary>
+            <param name="size"></param>
+            <returns></returns>
         </member>
-        <member name="F:StarMathLib.SymbolicFactorization.NumNonZeroInUpper">
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.Transpose">
             <summary>
-            The number non zero in upper
-            </summary>
-        </member>
-        <member name="F:StarMathLib.SymbolicFactorization.ParentIndices">
-            <summary>
-            The parent indices used in the elimination tree for Cholesky
-            </summary>
-        </member>
-        <member name="F:StarMathLib.SymbolicFactorization.InversePermute">
-            <summary>
-            The inverse permute
-            </summary>
-        </member>
-        <member name="F:StarMathLib.SymbolicFactorization.PermutationVector">
-            <summary>
-            The permutation vector
-            </summary>
-        </member>
-        <member name="T:StarMathLib.CompressedColumnStorage">
-            <summary>
-            Class CompressedColumnStorage.
-            </summary>
-        </member>
-        <member name="F:StarMathLib.CompressedColumnStorage.ncols">
-            <summary>
-            The ncols
-            </summary>
-        </member>
-        <member name="F:StarMathLib.CompressedColumnStorage.nrows">
-            <summary>
-            The nrows
-            </summary>
-        </member>
-        <member name="F:StarMathLib.CompressedColumnStorage.ColumnPointers">
-            <summary>
-            The column pointers
-            </summary>
-        </member>
-        <member name="F:StarMathLib.CompressedColumnStorage.RowIndices">
-            <summary>
-            The row indices
-            </summary>
-        </member>
-        <member name="F:StarMathLib.CompressedColumnStorage.Values">
-            <summary>
-            The values
-            </summary>
-        </member>
-        <member name="M:StarMathLib.CompressedColumnStorage.#ctor(System.Int32,System.Int32,System.Int32)">
-            <summary>
-            Initializes a new instance of the <see cref="T:StarMathLib.CompressedColumnStorage"/> class.
-            </summary>
-            <param name="rowCount">The row count.</param>
-            <param name="columnCount">The column count.</param>
-            <param name="numNonZero">The number non zero.</param>
-        </member>
-        <member name="M:StarMathLib.CompressedColumnStorage.Resize(System.Int32)">
-            <summary>
-            Change the max # of entries sparse matrix
-            </summary>
-            <param name="size">The size.</param>
-            <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        </member>
-        <member name="T:StarMathLib.SymbolicColumnStorage">
-            <summary>
-            Represents the nonzero pattern of a column-compressed matrix.
-            </summary>
-            <remarks>Used for ordering and symbolic factorization.</remarks>
-        </member>
-        <member name="F:StarMathLib.SymbolicColumnStorage.ncols">
-            <summary>
-            The ncols
-            </summary>
-        </member>
-        <member name="F:StarMathLib.SymbolicColumnStorage.nrows">
-            <summary>
-            The nrows
-            </summary>
-        </member>
-        <member name="F:StarMathLib.SymbolicColumnStorage.ColumnPointers">
-            <summary>
-            The column pointers
-            </summary>
-        </member>
-        <member name="F:StarMathLib.SymbolicColumnStorage.RowIndices">
-            <summary>
-            The row indices
-            </summary>
-        </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.#ctor(StarMathLib.CompressedColumnStorage)">
-            <summary>
-            Initializes a new instance of the <see cref="T:StarMathLib.SymbolicColumnStorage"/> class.
-            </summary>
-            <param name="mat">The mat.</param>
-        </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.#ctor(System.Int32,System.Int32,System.Int32[],System.Int32[])">
-            <summary>
-            Initializes a new instance of the <see cref="T:StarMathLib.SymbolicColumnStorage"/> class.
-            </summary>
-            <param name="ncols">The ncols.</param>
-            <param name="nrows">The nrows.</param>
-            <param name="colPointers">The col pointers.</param>
-            <param name="rowIndices">The row indices.</param>
-        </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.Resize(System.Int32)">
-            <summary>
-            Change the max # of entries sparse matrix
-            </summary>
-            <param name="size">The size.</param>
-            <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.Transpose">
-            <summary>
-            Computes the transpose of a sparse matrix, C = A';
+                Computes the transpose of a sparse matrix, C = A';
             </summary>
             <returns>Transposed matrix, C = A'</returns>
         </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.CumulativeSum(System.Int32[],System.Int32[],System.Int32)">
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.CumulativeSum(System.Int32[],System.Int32[],System.Int32)">
             <summary>
-            Cumulative sum of given array.
+                Cumulative sum of given array.
             </summary>
             <param name="sum">Output: cumulative sum of counts</param>
             <param name="counts">input array, overwritten with sum</param>
             <param name="size">length of counts</param>
             <returns>sum[size] (non-zeros)</returns>
         </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.ConstructMatrix(StarMathLib.CompressedColumnStorage)">
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.Add(StarMathLib.CSparse.SymbolicColumnStorage)">
             <summary>
-            Constructs the matrix.
-            </summary>
-            <param name="a">a.</param>
-            <returns>SymbolicColumnStorage.</returns>
-        </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.Add(StarMathLib.SymbolicColumnStorage)">
-            <summary>
-            Symbolic sum C = A + B
+                Symbolic sum C = A + B
             </summary>
             <param name="other">column-compressed matrix</param>
             <returns>Sum C = A + B</returns>
         </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.Keep">
+        <member name="M:StarMathLib.CSparse.SymbolicColumnStorage.Scatter(System.Int32,System.Int32[],System.Int32,System.Int32[],System.Int32)">
             <summary>
-            Keeps this instance.
-            </summary>
-            <returns>System.Int32.</returns>
-        </member>
-        <member name="M:StarMathLib.SymbolicColumnStorage.Scatter(System.Int32,System.Int32[],System.Int32,System.Int32[],System.Int32)">
-            <summary>
-            Scatters and sums a sparse vector A(:,j) into a dense vector, x = x + beta * A(:,j).
+                Scatters and sums a sparse vector A(:,j) into a dense vector, x = x + beta * A(:,j).
             </summary>
             <param name="j">the column of A to use</param>
             <param name="work">size m, node i is marked if w[i] = mark</param>
@@ -3438,47 +3319,26 @@
             <param name="nz">pattern of x placed in C starting at C.i[nz]</param>
             <returns>new value of nz</returns>
         </member>
-        <member name="T:StarMathLib.ApproximateMinimumDegree">
+        <member name="T:StarMathLib.CSparse.ApproximateMinimumDegree">
             <summary>
-            Approximate Minimum Degree ordering.
+                Approximate Minimum Degree ordering.
             </summary>
         </member>
-        <member name="M:StarMathLib.ApproximateMinimumDegree.Generate(StarMathLib.CompressedColumnStorage)">
+        <member name="M:StarMathLib.CSparse.ApproximateMinimumDegree.Generate(StarMathLib.CSparse.CompressedColumnStorage)">
             <summary>
-            Generate minimum degree ordering of A+A' (if A is symmetric) or A'A.
+                Generate minimum degree ordering of A+A' (if A is symmetric) or A'A.
             </summary>
             <param name="A">Column-compressed matrix</param>
-            <returns>amd(A+A') if A is symmetric, or amd(A'A) otherwise, null on
-            error or for natural ordering</returns>
-            <remarks>See Chapter 7.1 (Fill-reducing orderings: Minimum degree ordering) in
-            "Direct Methods for Sparse Linear Systems" by Tim Davis.</remarks>
+            <returns>
+                amd(A+A') if A is symmetric, or amd(A'A) otherwise, null on
+                error or for natural ordering
+            </returns>
+            <remarks>
+                See Chapter 7.1 (Fill-reducing orderings: Minimum degree ordering) in
+                "Direct Methods for Sparse Linear Systems" by Tim Davis.
+            </remarks>
         </member>
-        <member name="M:StarMathLib.ApproximateMinimumDegree.Generate(StarMathLib.SymbolicColumnStorage,System.Int32)">
-            <summary>
-            Generates the specified c.
-            </summary>
-            <param name="C">The c.</param>
-            <param name="n">The n.</param>
-            <returns>System.Int32[].</returns>
-        </member>
-        <member name="M:StarMathLib.ApproximateMinimumDegree.flip(System.Int32)">
-            <summary>
-            Flips the specified i.
-            </summary>
-            <param name="i">The i.</param>
-            <returns>System.Int32.</returns>
-        </member>
-        <member name="M:StarMathLib.ApproximateMinimumDegree.Clear(System.Int32,System.Int32,System.Int32[],System.Int32)">
-            <summary>
-            Clears the specified mark.
-            </summary>
-            <param name="mark">The mark.</param>
-            <param name="lemax">The lemax.</param>
-            <param name="w">The w.</param>
-            <param name="n">The n.</param>
-            <returns>System.Int32.</returns>
-        </member>
-        <member name="M:StarMathLib.ApproximateMinimumDegree.Reach(System.Int32[],System.Int32[],System.Int32[],System.Int32[],System.Int32,System.Int32,System.Int32[],System.Int32[])">
+        <member name="M:StarMathLib.CSparse.ApproximateMinimumDegree.Reach(System.Int32[],System.Int32[],System.Int32[],System.Int32[],System.Int32,System.Int32,System.Int32[],System.Int32[])">
             <summary>
             Reaches the specified gp.
             </summary>
@@ -3492,7 +3352,7 @@
             <param name="pinv">The pinv.</param>
             <returns>System.Int32.</returns>
         </member>
-        <member name="M:StarMathLib.ApproximateMinimumDegree.DepthFirstSearch(System.Int32,System.Int32[],System.Int32[],System.Int32,System.Int32[],System.Int32[],System.Int32,System.Int32[])">
+        <member name="M:StarMathLib.CSparse.ApproximateMinimumDegree.DepthFirstSearch(System.Int32,System.Int32[],System.Int32[],System.Int32,System.Int32[],System.Int32[],System.Int32,System.Int32[])">
             <summary>
             Depth-first-search of the graph of a matrix, starting at node j.
             </summary>
@@ -3506,7 +3366,7 @@
             <param name="pinv">mapping of rows to columns of G, ignored if null</param>
             <returns>new value of top, -1 on error</returns>
         </member>
-        <member name="M:StarMathLib.ApproximateMinimumDegree.TreeDepthFirstSearch(System.Int32,System.Int32,System.Int32[],System.Int32[],System.Int32[],System.Int32[])">
+        <member name="M:StarMathLib.CSparse.ApproximateMinimumDegree.TreeDepthFirstSearch(System.Int32,System.Int32,System.Int32[],System.Int32[],System.Int32[],System.Int32[])">
             <summary>
             Depth-first search and postorder of a tree rooted at node j
             </summary>
@@ -3518,31 +3378,21 @@
             <param name="stack">size n, work array</param>
             <returns>new value of k, -1 on error</returns>
         </member>
-        <member name="T:StarMathLib.CSparse">
-            <summary>
-            Class CSparse.
-            </summary>
-        </member>
-        <member name="F:StarMathLib.CSparse.tol">
-            <summary>
-            The tol
-            </summary>
-        </member>
-        <member name="M:StarMathLib.CSparse.SolveLower(StarMathLib.CompressedColumnStorage,System.Double[])">
+        <member name="M:StarMathLib.CSparse.Main.SolveLower(StarMathLib.CSparse.CompressedColumnStorage,System.Double[])">
             <summary>
             Solve a lower triangular system by forward elimination, Lx=b.
             </summary>
             <param name="L">The l.</param>
             <param name="x">The x.</param>
         </member>
-        <member name="M:StarMathLib.CSparse.SolveUpper(StarMathLib.CompressedColumnStorage,System.Double[])">
+        <member name="M:StarMathLib.CSparse.Main.SolveUpper(StarMathLib.CSparse.CompressedColumnStorage,System.Double[])">
             <summary>
             Solve an upper triangular system by backward elimination, Ux=b.
             </summary>
             <param name="U">The u.</param>
             <param name="x">The x.</param>
         </member>
-        <member name="M:StarMathLib.CSparse.FactorizeLU(StarMathLib.CompressedColumnStorage,System.Int32[],StarMathLib.CompressedColumnStorage@,StarMathLib.CompressedColumnStorage@,System.Int32[]@)">
+        <member name="M:StarMathLib.CSparse.Main.FactorizeLU(StarMathLib.CSparse.CompressedColumnStorage,System.Int32[],StarMathLib.CSparse.CompressedColumnStorage@,StarMathLib.CSparse.CompressedColumnStorage@,System.Int32[]@)">
             <summary>
             [L,U,pinv] = lu(A, [q lnz unz]). lnz and unz can be guess.
             </summary>
@@ -3552,9 +3402,8 @@
             <param name="U">The u.</param>
             <param name="pinv">The pinv.</param>
             <exception cref="T:System.Exception">No pivot element found.</exception>
-            <exception cref="T:System.Exception">No pivot element found.</exception>
         </member>
-        <member name="M:StarMathLib.CSparse.SolveSp(StarMathLib.CompressedColumnStorage,StarMathLib.CompressedColumnStorage,System.Int32,System.Int32[],System.Double[],System.Int32[],System.Boolean)">
+        <member name="M:StarMathLib.CSparse.Main.SolveSp(StarMathLib.CSparse.CompressedColumnStorage,StarMathLib.CSparse.CompressedColumnStorage,System.Int32,System.Int32[],System.Double[],System.Int32[],System.Boolean)">
             <summary>
             Solve Gx=b(:,k), where G is either upper (lo=false) or lower (lo=true)
             triangular.
@@ -3568,14 +3417,14 @@
             <param name="lo">true if lower triangular, false if upper</param>
             <returns>top, -1 in error</returns>
         </member>
-        <member name="M:StarMathLib.CSparse.SymbolicAnalysisLDL(StarMathLib.CompressedColumnStorage)">
+        <member name="M:StarMathLib.CSparse.Main.SymbolicAnalysisLDL(StarMathLib.CSparse.CompressedColumnStorage)">
             <summary>
             Symbolics the analysis LDL.
             </summary>
             <param name="A">a.</param>
             <returns>SymbolicFactorization.</returns>
         </member>
-        <member name="M:StarMathLib.CSparse.FactorizeLDL(StarMathLib.CompressedColumnStorage,StarMathLib.SymbolicFactorization,System.Double[]@,StarMathLib.CompressedColumnStorage@)">
+        <member name="M:StarMathLib.CSparse.Main.FactorizeLDL(StarMathLib.CSparse.CompressedColumnStorage,StarMathLib.CSparse.SymbolicFactorization,System.Double[]@,StarMathLib.CSparse.CompressedColumnStorage@)">
             <summary>
             Compute the numeric LDL' factorization of PAP'.
             </summary>
@@ -3584,9 +3433,8 @@
             <param name="D">The diagonals of LDL.</param>
             <param name="L">The lower triangular matrix.</param>
             <exception cref="T:System.Exception">Diagonal element is zero.</exception>
-            <exception cref="T:System.Exception">Diagonal element is zero.</exception>
         </member>
-        <member name="M:StarMathLib.CSparse.SolveLDL(System.Collections.Generic.IList{System.Double},StarMathLib.CompressedColumnStorage,System.Double[],System.Int32[])">
+        <member name="M:StarMathLib.CSparse.Main.SolveLDL(System.Collections.Generic.IList{System.Double},StarMathLib.CSparse.CompressedColumnStorage,System.Double[],System.Int32[])">
             <summary>
             Solves a linear system Ax=b, where A is symmetric positive definite.
             </summary>
@@ -3596,7 +3444,7 @@
             <param name="inversePermute">The inverse permute.</param>
             <returns>System.Double[].</returns>
         </member>
-        <member name="M:StarMathLib.CSparse.Apply(System.Int32[],System.Collections.Generic.IList{System.Double},System.Int32)">
+        <member name="M:StarMathLib.CSparse.Main.ApplyPermute(System.Int32[],System.Collections.Generic.IList{System.Double},System.Int32)">
             <summary>
             Permutes a vector, x=P*b.
             </summary>
@@ -3606,7 +3454,7 @@
             <returns>System.Double[].</returns>
             <remarks>p = null denotes identity.</remarks>
         </member>
-        <member name="M:StarMathLib.CSparse.ApplyInverse(System.Int32[],System.Collections.Generic.IList{System.Double},System.Int32)">
+        <member name="M:StarMathLib.CSparse.Main.ApplyInversePermute(System.Int32[],System.Collections.Generic.IList{System.Double},System.Int32)">
             <summary>
             Permutes a vector, x = P'b.
             </summary>
@@ -3616,7 +3464,7 @@
             <returns>System.Double[].</returns>
             <remarks>p = null denotes identity.</remarks>
         </member>
-        <member name="M:StarMathLib.CSparse.Invert(System.Int32[])">
+        <member name="M:StarMathLib.CSparse.Main.Invert(System.Int32[])">
             <summary>
             Inverts a permutation vector.
             </summary>
@@ -3926,7 +3774,7 @@
             or
             Sparse Matrix must be have the same number of rows as the vector, b.</exception>
         </member>
-        <member name="M:StarMathLib.SparseMatrix.SolveAnalytically(System.Collections.Generic.IList{System.Double},System.Boolean)">
+        <member name="M:StarMathLib.SparseMatrix.SolveAnalytically(System.Collections.Generic.IList{System.Double},System.Boolean,System.Collections.Generic.List{System.Int32}[])">
             <summary>
             Solves the system of equations analytically.
             </summary>
@@ -3934,6 +3782,44 @@
             <param name="IsASymmetric">if set to <c>true</c> [a is symmetric].</param>
             <param name="potentialDiagonals">The potential diagonals.</param>
             <returns>System.Double[].</returns>
+        </member>
+        <member name="M:StarMathLib.SparseMatrix.CholeskyDecomposition">
+            <summary>
+            Overwrites the matrix with its Cholesky decomposition (i.e. it is destructive).
+            This is based on: https://en.wikipedia.org/wiki/Cholesky_decomposition#LDL_decomposition_2
+            </summary>
+            <returns>SparseMatrix.</returns>
+            <exception cref="T:System.ArithmeticException">Cholesky Decomposition can only be determined for square matrices.</exception>
+            <exception cref="T:System.ArithmeticException">Cholesky Decomposition can only be determined for square matrices.</exception>
+        </member>
+        <member name="M:StarMathLib.SparseMatrix.solveFromCholeskyFactorization(System.Collections.Generic.IList{System.Double})">
+            <summary>
+            Solves from cholesky factorization.
+            </summary>
+            <param name="b">The b.</param>
+            <returns>System.Double[].</returns>
+        </member>
+        <member name="M:StarMathLib.SparseMatrix.AddCellToTheLeftOfAndBelow(StarMathLib.SparseCell,StarMathLib.SparseCell,System.Int32,System.Int32,System.Double)">
+            <summary>
+            Adds the cell to the left of and below.
+            </summary>
+            <param name="cellToTheRight">The cell to the right.</param>
+            <param name="cellToTheUp">The cell to the up.</param>
+            <param name="rowI">The row i.</param>
+            <param name="colI">The col i.</param>
+            <param name="value">The value.</param>
+            <returns>SparseCell.</returns>
+        </member>
+        <member name="M:StarMathLib.SparseMatrix.AddCellToTheLeftOfAndAbove(StarMathLib.SparseCell,StarMathLib.SparseCell,System.Int32,System.Int32,System.Double)">
+            <summary>
+            Adds the cell to the left of and below.
+            </summary>
+            <param name="cellToTheRight">The cell to the right.</param>
+            <param name="cellToTheUp">The cell to the up.</param>
+            <param name="rowI">The row i.</param>
+            <param name="colI">The col i.</param>
+            <param name="value">The value.</param>
+            <returns>SparseCell.</returns>
         </member>
         <member name="T:StarMathLib.SparseCell">
             <summary>
