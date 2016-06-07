@@ -6,9 +6,11 @@
 // ------------------------------------------------------------------------------
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Dynamic;
+using System.Linq;
 using System.Xml.Serialization;
 using StarMathLib;
 using TVGL.IOFunctions.amfclasses;
@@ -317,7 +319,7 @@ namespace TVGL.IOFunctions.threemfclasses
         public int id { get; set; }
 
         [XmlAttribute]
-        [DefaultValue(ObjectType.model)]
+        //[DefaultValue(ObjectType.model)]
         public ObjectType type { get; set; }
 
         [XmlAttribute("materialid")]
@@ -513,7 +515,7 @@ namespace TVGL.IOFunctions.threemfclasses
         /// </summary>
         /// <value>The name.</value>
         [XmlAttribute]
-        public string name { get; set; }
+        public string name { get; set; } = "noname";
 
         [XmlAttribute("displaycolor")]
         public string colorString { get; set; }
@@ -533,4 +535,61 @@ namespace TVGL.IOFunctions.threemfclasses
 
     #endregion
     #endregion
+
+    #region Content_Types
+#if help
+    internal class Types
+#else
+    public class Types
+#endif
+    {
+        public Types()
+        {
+            Defaults = new List<Default>();
+        }
+
+        [XmlElement("Default")]
+        public List<Default> Defaults { get; set; }
+    }
+
+#if help
+    internal class Default
+#else
+    public class Default
+#endif
+    {
+        [XmlAttribute]
+        public string Extension { get; set; }
+
+        [XmlAttribute]
+        public string ContentType { get; set; }
+    }
+    #endregion
+
+    #region Relationships
+#if help
+    internal class Types
+#else
+    public class Relationships
+#endif
+    {
+        [XmlElement("Relationship")]
+        public Relationship[] rels;
+    }
+
+#if help
+    internal class Relationship
+#else
+    public class Relationship
+#endif
+    {
+        [XmlAttribute]
+        public string Target { get; set; }
+        [XmlAttribute]
+        public string Id { get; set; }
+        [XmlAttribute]
+        public string Type { get; set; }
+    }
+    #endregion
+
 }

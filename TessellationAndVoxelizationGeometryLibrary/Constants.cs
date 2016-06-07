@@ -124,16 +124,16 @@ namespace TVGL
     public enum UnitType
     {
         unspecified = -1,
+        /// <summary>
+        ///     The millimeter
+        /// </summary>
+        millimeter,
 
         /// <summary>
         ///     The micron
         /// </summary>
         micron,
 
-        /// <summary>
-        ///     The millimeter
-        /// </summary>
-        millimeter,
 
         /// <summary>
         ///     The centimeter

@@ -35,8 +35,15 @@ namespace TVGL.IOFunctions
     public class ThreeMFFileData : IO
 #endif
     {
-        private const string defXMLNameSpace = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
-       
+        private const string defXMLNameSpaceModel = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
+
+        private const string defXMLNameSpaceContentTypes =
+            "http://schemas.openxmlformats.org/package/2006/content-types";
+
+        private const string defXMLNameSpaceRelationships =
+            "http://schemas.openxmlformats.org/package/2006/relationships";
+
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="ThreeMFFileData" /> class.
         /// </summary>
@@ -219,13 +226,22 @@ namespace TVGL.IOFunctions
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
+            ZipArchiveEntry entry;
+            Stream entryStream;
             using (ZipArchive archive = new ZipArchive(stream, ZipArchiveMode.Create))
             {
-                ZipArchiveEntry model = archive.CreateEntry("3D/3dmodel.model");
-                SaveModel(model.Open(), solids);
+                entry = archive.CreateEntry("3D/3dmodel.model");
+                using (entryStream = entry.Open())
+                    SaveModel(entryStream, solids);
+                archive.CreateEntry("Metadata/thumbnail.png");
+                entry = archive.CreateEntry("_rels/.rels");
+                using (entryStream = entry.Open())
+                    SaveRelationships(entryStream);
+                entry = archive.CreateEntry("[Content_Types].xml");
+                using (entryStream = entry.Open())
+                    SaveContentTypes(entryStream);
             }
             return true;
         }
@@ -236,65 +252,37 @@ namespace TVGL.IOFunctions
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveModel(Stream stream, IList<TessellatedSolid> solids)
         {
             var objects = new List<threemfclasses.Object>();
             var baseMats = new BaseMaterials { id = 1 };
             var materials = new List<Material>();
             var colors = new List<Color3MF>();
-            foreach (var solid in solids)
+            var matColorIndexer = solids.Count + 2;
+            // this is "+ 2" since the id's start with 1 instead of 0 plus BaseMaterials is typically 1, so start at 2.
+            for (int i = 0; i < solids.Count; i++)
             {
-                var thisObject = new threemfclasses.Object { name = solid.Name };
-                List<Triangle> triangles;
-                if (solid.HasUniformColor)
+                var solid = solids[i];
+                var thisObject = new threemfclasses.Object { name = solid.Name, id = i + 2 };
+                var triangles = new List<Triangle>();
+
+                foreach (var face in solid.Faces)
                 {
-                    if (solid.Faces[0].Color != null)
+                    var colString = (face.Color ?? solid.SolidColor ?? new Color(Constants.DefaultColor)).ToString();
+                    int colorIndex = baseMats.bases.FindIndex(col => col.colorString.Equals(colString));
+                    if (colorIndex == -1)
                     {
-                        var thisColor = colors.Find(col => col.colorString.Equals(solid.Faces[0].Color.ToString()));
-                        if (thisColor != null)
-                        {
-                            var thisMaterial = materials.Find(mat => mat.colorid == thisColor.id);
-                            thisObject.MaterialID = thisMaterial.id;
-                        }
-                        else
-                        {
-                            var newID = colors.Count + 1;
-                            colors.Add(new Color3MF { id = newID, colorString = solid.Faces[0].Color.ToString() });
-                            materials.Add(new Material { colorid = newID, id = materials.Count + 1 });
-                            thisObject.MaterialID = materials.Count + 1;
-                        }
+                        colorIndex = baseMats.bases.Count;
+                        baseMats.bases.Add(new Base { colorString = colString });
                     }
-                    triangles =
-                        solid.Faces.Select(
-                            f =>
-                                new Triangle
-                                {
-                                    v1 = f.Vertices[0].IndexInList,
-                                    v2 = f.Vertices[1].IndexInList,
-                                    v3 = f.Vertices[2].IndexInList
-                                }).ToList();
-                }
-                else
-                {
-                    triangles = new List<Triangle>();
-                    foreach (var face in solid.Faces)
+                    triangles.Add(new Triangle
                     {
-                        int colorIndex = baseMats.bases.FindIndex(col => col.colorString.Equals(face.Color.ToString()));
-                        if (colorIndex == -1)
-                        {
-                            colorIndex = baseMats.bases.Count;
-                            baseMats.bases.Add(new Base { colorString = face.Color.ToString() });
-                        }
-                        triangles.Add(new Triangle
-                        {
-                            v1 = face.Vertices[0].IndexInList,
-                            v2 = face.Vertices[1].IndexInList,
-                            v3 = face.Vertices[2].IndexInList,
-                            pid = 1,
-                            p1 = colorIndex
-                        });
-                    }
+                        v1 = face.Vertices[0].IndexInList,
+                        v2 = face.Vertices[1].IndexInList,
+                        v3 = face.Vertices[2].IndexInList,
+                        pid = 1,
+                        p1 = colorIndex
+                    });
                 }
                 thisObject.mesh = new Mesh
                 {
@@ -309,13 +297,17 @@ namespace TVGL.IOFunctions
                 unit = solids[0].Units,
                 build = new Build { Items = objects.Select(o => new Item { objectid = o.id }).ToList() },
                 resources =
-                    new Resources { basematerials = (new[] { baseMats }).ToList(), colors = colors, materials = materials, objects = objects }
+                    new Resources
+                    {
+                        basematerials = (new[] { baseMats }).ToList(), //colors = colors, materials = materials,
+                        objects = objects
+                    }
             };
             try
             {
                 using (var writer = XmlWriter.Create(stream))
                 {
-                    var serializer = new XmlSerializer(typeof(ThreeMFFileData), defXMLNameSpace);
+                    var serializer = new XmlSerializer(typeof(ThreeMFFileData), defXMLNameSpaceModel);
                     serializer.Serialize(writer, threeMFData);
                 }
                 Message.output("Successfully wrote 3MF file to stream.", 3);
@@ -325,6 +317,61 @@ namespace TVGL.IOFunctions
             {
                 Message.output("Unable to write in model file.", 1);
                 return false;
+            }
+        }
+
+        private static void SaveRelationships(Stream stream)
+        {
+            //[XmlArrayItem("vertex", IsNullable = false)]
+            var rels = new Relationships
+            {
+                rels = new[]
+            {
+                new Relationship
+                {
+                    Target = "/3D/3dmodel.model",
+                    Id = "rel-1",
+                    Type = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
+                },
+                new Relationship
+                {
+                    Target = "/Metadata/thumbnail.png",
+                    Id = "rel0",
+                    Type = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
+                }
+            }
+            };
+
+            using (var writer = XmlWriter.Create(stream))
+            {
+                var serializer = new XmlSerializer(typeof(Relationships), defXMLNameSpaceRelationships);
+                serializer.Serialize(writer, rels);
+            }
+        }
+
+        private static void SaveContentTypes(Stream stream)
+        {
+            var defaults = new List<Default>
+            {
+                new Default
+                {
+                    Extension = "rels",
+                    ContentType = "application/vnd.openxmlformats-package.relationships+xml"
+                },
+                new Default
+                {
+                    Extension = "model",
+                    ContentType = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
+                },
+                new Default {Extension = "png", ContentType = "image/png"},
+
+            };
+            var types = new Types { Defaults = defaults };
+
+            using (var writer = XmlWriter.Create(stream))
+            {
+                var serializer = new XmlSerializer(typeof(Types), defXMLNameSpaceContentTypes);
+                serializer.Serialize(writer, types);
             }
         }
     }

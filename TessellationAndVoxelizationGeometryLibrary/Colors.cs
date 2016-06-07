@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
 using System.Reflection;
 
 namespace TVGL
@@ -883,7 +884,8 @@ namespace TVGL
         /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
         public override string ToString()
         {
-            return System.Convert.ToBase64String(new[] {R, G, B, A});
+            string hex ="#"+ BitConverter.ToString(new[] { R, G, B, A });
+            return hex.Replace("-", "");
         }
 
         #region Public Properties
