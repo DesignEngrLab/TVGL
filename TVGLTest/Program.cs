@@ -13,29 +13,30 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+        "../../../TestFiles/DxTopLevelPart2.shell",
         //"../../../TestFiles/Candy.shell",
-        //"../../../TestFiles/amf_Cube.amf",
-        //"../../../TestFiles/train.3mf",
-        "../../../TestFiles/keychain.3mf",
-        "../../../TestFiles/Castle.3mf",
-        "../../../TestFiles/Raspberry Pi Case.3mf",
-        "../../../TestFiles/shark.ply",
-        "../../../TestFiles/bunnySmall.ply",
-        "../../../TestFiles/cube.ply",
-        "../../../TestFiles/airplane.ply",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        "../../../TestFiles/Beam_Boss.STL",
+        ////"../../../TestFiles/amf_Cube.amf",
+        ////"../../../TestFiles/train.3mf",
+        //"../../../TestFiles/keychain.3mf",
+        //"../../../TestFiles/Castle.3mf",
+        //"../../../TestFiles/Raspberry Pi Case.3mf",
+        //"../../../TestFiles/shark.ply",
+        //"../../../TestFiles/bunnySmall.ply",
+        //"../../../TestFiles/cube.ply",
+        //"../../../TestFiles/airplane.ply",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        //"../../../TestFiles/Beam_Boss.STL",
 
-        "../../../TestFiles/Tetrahedron.STL",
-        "../../../TestFiles/off_axis_box.STL",
-        "../../../TestFiles/Wedge.STL",
-        "../../../TestFiles/Mic_Holder_SW.stl",
-        "../../../TestFiles/Mic_Holder_JR.stl",
-        "../../../TestFiles/3_bananas.amf",
-        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-        "../../../TestFiles/Rook.amf",
-        "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
+        //"../../../TestFiles/Tetrahedron.STL",
+        //"../../../TestFiles/off_axis_box.STL",
+        //"../../../TestFiles/Wedge.STL",
+        //"../../../TestFiles/Mic_Holder_SW.stl",
+        //"../../../TestFiles/Mic_Holder_JR.stl",
+        //"../../../TestFiles/3_bananas.amf",
+        ////"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+        ////"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+        //"../../../TestFiles/Rook.amf",
+        //"../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
        // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
        // "../../../TestFiles/ABF.STL",
        // "../../../TestFiles/Pump-1repair.STL",

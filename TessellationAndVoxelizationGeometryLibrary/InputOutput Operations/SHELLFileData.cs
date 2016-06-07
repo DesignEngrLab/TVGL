@@ -111,7 +111,6 @@ namespace TVGL.IOFunctions
 
         internal static bool TryReadAscii(Stream stream, out List<ShellFileData> shellData)
         {
-            var defaultName = getNameFromStream(stream) + "_";
             var reader = new StreamReader(stream);
             shellData = new List<ShellFileData>();
             var shellSolid = new ShellFileData();

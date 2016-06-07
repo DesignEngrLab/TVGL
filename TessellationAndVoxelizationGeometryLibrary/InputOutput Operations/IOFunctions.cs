@@ -103,7 +103,7 @@ namespace TVGL.IOFunctions
         /// <returns>System.String.</returns>
         protected static string GetNameFromFileName(string filename)
         {
-            var startIndex = filename.LastIndexOf('/')+1;
+            var startIndex = filename.LastIndexOf('/') + 1;
             var endIndex = filename.IndexOf('.', startIndex);
             if (endIndex == -1) endIndex = filename.Length - 1;
             return filename.Substring(startIndex, endIndex - startIndex);
@@ -204,6 +204,7 @@ namespace TVGL.IOFunctions
             do
             {
                 line = reader.ReadLine();
+                if (reader.EndOfStream) break;
             } while (string.IsNullOrWhiteSpace(line) || line.StartsWith("\0") || line.StartsWith("#") ||
                      line.StartsWith("!")
                      || line.StartsWith("$"));
