@@ -1,19 +1,23 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
+// Last Modified On : 05-28-2016
+// ***********************************************************************
+// <copyright file="AMFFileData.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
 // ***********************************************************************
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using amf;
+using TVGL.IOFunctions.amfclasses;
 
 namespace TVGL.IOFunctions
 {
@@ -21,9 +25,9 @@ namespace TVGL.IOFunctions
     ///     Class AMFFileData.
     /// </summary>
     [XmlRoot("amf")]
-     #if help
+#if help
     internal class AMFFileData : IO
-#else                   
+#else
     public class AMFFileData : IO
 #endif
     {
@@ -33,6 +37,7 @@ namespace TVGL.IOFunctions
         public AMFFileData()
         {
             Objects = new List<AMF_Object>();
+            Textures = new List<AMF_Texture>();
         }
 
         /// <summary>
@@ -82,33 +87,35 @@ namespace TVGL.IOFunctions
         public string lang { get; set; }
 
         /// <summary>
-        ///     Gets or sets the name.
+        /// Gets or sets the name.
         /// </summary>
         /// <value>The name.</value>
         public string Name { get; set; }
 
-
-
-        internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
+        /// <summary>
+        /// Opens the specified s.
+        /// </summary>
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
             var now = DateTime.Now;
-            AMFFileData amfData;
-            // Try to read in BINARY format
-            if (AMFFileData.TryUnzippedXMLRead(s, out amfData))
-                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").",3);
-            else
+            AMFFileData amfData = null;
+            try
             {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                //if (amf.TryZippedXMLRead(s, out amfData))
-                //    Message.output("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").",3);
-                //else
-                //{
-                //    Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").",1);
-                //    return null;
-                //}
+                var streamReader = new StreamReader(s);
+                var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
+                amfData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
+                Message.output("Successfully read in AMF file (" + (DateTime.Now - now) + ").", 3);
             }
+            catch (Exception exception)
+            {
+                Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").", 1);
+                return null;
+            }
+            amfData.Name = GetNameFromFileName(filename);
             var results = new List<TessellatedSolid>();
             foreach (var amfObject in amfData.Objects)
             {
@@ -118,16 +125,20 @@ namespace TVGL.IOFunctions
                     colors = new List<Color>();
                     var solidColor = new Color(amfObject.mesh.volume.color);
                     foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add((amfTriangle.color != null) ? new Color(amfTriangle.color) : solidColor);
+                        colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
                 }
                 else if (amfObject.mesh.volume.Triangles.Any(t => t.color != null))
                 {
                     colors = new List<Color>();
                     var solidColor = new Color(Constants.DefaultColor);
                     foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add((amfTriangle.color != null) ? new Color(amfTriangle.color) : solidColor);
+                        colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
                 }
-                results.Add(new TessellatedSolid(amfData.Name,
+                var name = amfData.Name;
+                var nameIndex =
+                    amfObject.metadata.FindIndex(md => md != null && md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase));
+                if (nameIndex != -1) name = amfObject.metadata[nameIndex].Value;
+                results.Add(new TessellatedSolid(name + "_" + amfObject.id,
                     amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
                     amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
                     colors));
@@ -147,13 +158,12 @@ namespace TVGL.IOFunctions
             try
             {
                 var streamReader = new StreamReader(stream);
-                var amfDeserializer = new XmlSerializer(typeof (AMFFileData));
-                amfFileData = (AMFFileData) amfDeserializer.Deserialize(streamReader);
-                amfFileData.Name = getNameFromStream(stream);
+                var amfDeserializer = new XmlSerializer(typeof(AMFFileData));
+                amfFileData = (AMFFileData)amfDeserializer.Deserialize(streamReader);
             }
             catch (Exception exception)
             {
-                Message.output("Unable to read AMF file:" + exception,1);
+                Message.output("Unable to read AMF file:" + exception, 1);
                 return false;
             }
             return true;
@@ -165,15 +175,42 @@ namespace TVGL.IOFunctions
         /// <param name="stream">The stream.</param>
         /// <param name="amfFileData">The amf file data.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         /// <exception cref="System.NotImplementedException"></exception>
         internal static bool TryZippedXMLRead(Stream stream, out AMFFileData amfFileData)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        ///     Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
-            throw new NotImplementedException();
+            var fileData = new AMFFileData();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            var amfWriter = new StreamWriter(stream);
+            var amfSerializer = new XmlSerializer(typeof(AMFFileData));
+            amfSerializer.Serialize(amfWriter, fileData);
+            amfWriter.Dispose();
+            return true;
         }
     }
 }

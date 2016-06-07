@@ -1,4 +1,18 @@
-﻿using System;
+﻿// ***********************************************************************
+// Assembly         : TessellationAndVoxelizationGeometryLibrary
+// Author           : Design Engineering Lab
+// Created          : 04-18-2016
+//
+// Last Modified By : Design Engineering Lab
+// Last Modified On : 05-25-2016
+// ***********************************************************************
+// <copyright file="Slice4.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
@@ -6,25 +20,28 @@ using StarMathLib;
 namespace TVGL.Boolean_Operations
 {
     /// <summary>
-    /// The Slice class includes static functions for cutting a tessellated solid.
-    /// Slice4 Performs the slicing operation on the prescribed flat plane. This is a NON-Destructive
-    /// operation, and returns two of more new tessellated solids  in the "out" parameter
-    /// lists.
-    /// However, it does reference the solid's faces. So this may conflict with parallel processing.
+    ///     The Slice class includes static functions for cutting a tessellated solid.
+    ///     Slice4 Performs the slicing operation on the prescribed flat plane. This is a NON-Destructive
+    ///     operation, and returns two of more new tessellated solids  in the "out" parameter
+    ///     lists.
+    ///     However, it does reference the solid's faces. So this may conflict with parallel processing.
     /// </summary>
     public static class Slice4
     {
         #region Define Contact at a Flat Plane
+
         /// <summary>
-        /// This slice function makes a seperate cut for the positive and negative side,
-        /// at a specified offset in both directions. It rebuilds straddle triangles, 
-        /// but only uses one of the two straddle edge intersection vertices to prevent
-        /// tiny triangles from being created.
+        ///     This slice function makes a seperate cut for the positive and negative side,
+        ///     at a specified offset in both directions. It rebuilds straddle triangles,
+        ///     but only uses one of the two straddle edge intersection vertices to prevent
+        ///     tiny triangles from being created.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="plane">The plane.</param>
-        /// <param name="positiveSideSolids">The solids that are on the positive side of the plane
-        /// This means that are on the side that the normal faces.</param>
+        /// <param name="positiveSideSolids">
+        ///     The solids that are on the positive side of the plane
+        ///     This means that are on the side that the normal faces.
+        /// </param>
         /// <param name="negativeSideSolids">The solids on the negative side of the plane.</param>
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
@@ -46,15 +63,26 @@ namespace TVGL.Boolean_Operations
             var isSuccessful = ShiftPlaneForRobustCut(ts, plane, out distancesToPlane, out posPlaneShift,
                 out negPlaneShift);
             if (!isSuccessful) return; //End with both lists of children empty;
-            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal), out positiveSideFaces, out positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift);
-            DivideUpFaces(ts,new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces, out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
+            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal), out positiveSideFaces,
+                out positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift);
+            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces,
+                out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
 
             //3. Triangulate that empty space and add to list 
             List<List<Vertex[]>> triangleFaceList;
             var triangles = TriangulatePolygon.Run(positiveSideLoops, plane.Normal, out triangleFaceList);
-            positiveSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal.multiply(-1), false){CreatedInFunction = "Slice4: Triangulation"}));
+            positiveSideFaces.AddRange(
+                triangles.Select(
+                    triangle =>
+                        new PolygonalFace(triangle, plane.Normal.multiply(-1), false)
+                        {
+                            CreatedInFunction = "Slice4: Triangulation"
+                        }));
             triangles = TriangulatePolygon.Run(negativeSideLoops, plane.Normal, out triangleFaceList);
-            negativeSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, plane.Normal, false){CreatedInFunction = "Slice4: Triangulation"}));
+            negativeSideFaces.AddRange(
+                triangles.Select(
+                    triangle =>
+                        new PolygonalFace(triangle, plane.Normal, false) {CreatedInFunction = "Slice4: Triangulation"}));
             //4. Create a new tesselated solid. This solid may actually be multiple solids.
             if (positiveSideFaces.Count > 3 && negativeSideFaces.Count > 3)
             {
@@ -69,7 +97,17 @@ namespace TVGL.Boolean_Operations
             //Else, there was no cut made. 
         }
 
-        private static bool ShiftPlaneForRobustCut(TessellatedSolid ts, Flat plane, out List<double> distancesToPlane, out double posPlaneShift, out double negPlaneShift)
+        /// <summary>
+        ///     Shifts the plane for robust cut.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="distancesToPlane">The distances to plane.</param>
+        /// <param name="posPlaneShift">The position plane shift.</param>
+        /// <param name="negPlaneShift">The neg plane shift.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private static bool ShiftPlaneForRobustCut(TessellatedSolid ts, Flat plane, out List<double> distancesToPlane,
+            out double posPlaneShift, out double negPlaneShift)
         {
             //Set the distance of every vertex in the solid to the plane
             distancesToPlane = new List<double>();
@@ -86,11 +124,11 @@ namespace TVGL.Boolean_Operations
                 if (distance > 0) distancesToPosPlane.Add(distance);
                 else if (distance < 0) distancesToNegPlane.Add(Math.Abs(distance));
                 else atLeastOneVertexOnPlane = true;
-            } 
+            }
 
             //Make sure the plane actually cuts the part into two or more parts
             if (!distancesToNegPlane.Any() || !distancesToPosPlane.Any()) return false;
-            
+
             //Sort Results
             distancesToPosPlane.Sort();
             //This will sort it from small negative to large negative values (magnitude), since the input was the 
@@ -101,7 +139,7 @@ namespace TVGL.Boolean_Operations
             var minimumShift = Math.Sqrt(ts.SameTolerance);
             if (!atLeastOneVertexOnPlane && distancesToPosPlane[0] > minimumShift &&
                 distancesToNegPlane[0] > minimumShift) return true;
-      
+
             //Shift the plane a small amount positive and negative, creating the respective disctanceToPlane lists
             //This forces NO vertices to be "on plane," making the slice function simpler in that it only deals
             //with straddle edges. 
@@ -110,13 +148,14 @@ namespace TVGL.Boolean_Operations
             //along direction of normal, and add a  negative offset to move backward along normal.
             var i = 0;
             var difference = distancesToPosPlane[i];
-            if (difference >= 2 * minimumShift) posPlaneShift = minimumShift;
+            if (difference >= 2*minimumShift) posPlaneShift = minimumShift;
             else
             {
-                while (difference < 2 * minimumShift)
+                while (difference < 2*minimumShift)
                 {
                     i++;
-                    if (i == distancesToPosPlane.Count) return false; //This plane is essentially on an outer face. Don't pursue.
+                    if (i == distancesToPosPlane.Count)
+                        return false; //This plane is essentially on an outer face. Don't pursue.
                     difference = distancesToPosPlane[i] - distancesToPosPlane[i - 1];
                 }
                 //i will be greater than 1 since the first difference must be less than ts.SameTolerance
@@ -126,23 +165,52 @@ namespace TVGL.Boolean_Operations
             //Now do the negative side
             i = 0;
             difference = distancesToNegPlane[i];
-            if (difference >= 2 * minimumShift) negPlaneShift = -minimumShift;
+            if (difference >= 2*minimumShift) negPlaneShift = -minimumShift;
             else
             {
-                while (difference < 2 * minimumShift)
+                while (difference < 2*minimumShift)
                 {
                     i++;
-                    if (i == distancesToNegPlane.Count) return false; //This plane is essentially on an outer face. Don't pursue.
+                    if (i == distancesToNegPlane.Count)
+                        return false; //This plane is essentially on an outer face. Don't pursue.
                     difference = distancesToNegPlane[i] - distancesToNegPlane[i - 1];
                 }
                 //Subtract the distance to plane and minimum shift to make a negative shift to the plane
-                negPlaneShift = - distancesToNegPlane[i - 1] - minimumShift;
+                negPlaneShift = -distancesToNegPlane[i - 1] - minimumShift;
             }
             return true;
         }
 
 
-        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<List<Vertex>> loops,
+        /// <summary>
+        ///     Divides up faces.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="onSideFaces">The on side faces.</param>
+        /// <param name="loops">The loops.</param>
+        /// <param name="isPositiveSide">The is positive side.</param>
+        /// <param name="distancesToPlane">The distances to plane.</param>
+        /// <param name="planeOffset">The plane offset.</param>
+        /// <exception cref="Exception">
+        ///     Issue in implementation of shift plane function
+        ///     or
+        ///     Every face should have either 2 or 0 straddle edges, but never just 1.
+        ///     or
+        ///     This should never happen and will cause errors down the line. Prevent it.
+        ///     or
+        ///     While loop was unable to complete.
+        ///     or
+        ///     No good starting edge found. Rewrite the function to find a better edge
+        ///     or
+        ///     pick a different starting edge
+        ///     or
+        ///     No shared face exists between these two straddle edges
+        ///     or
+        ///     This could be a knife edge. But this error will likely cause errors down the line
+        /// </exception>
+        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces,
+            out List<List<Vertex>> loops,
             int isPositiveSide, IList<double> distancesToPlane, double planeOffset = double.NaN)
         {
             onSideFaces = new List<PolygonalFace>();
@@ -154,10 +222,11 @@ namespace TVGL.Boolean_Operations
                 for (var i = 0; i < distancesToPlane.Count; i++)
                 {
                     distancesToPlane[i] = distancesToPlane[i] - planeOffset;
-                    if(Math.Abs(distancesToPlane[i]) < ts.SameTolerance) throw new Exception("Issue in implementation of shift plane function");
+                    if (Math.Abs(distancesToPlane[i]) < ts.SameTolerance)
+                        throw new Exception("Issue in implementation of shift plane function");
                 }
             }
-            
+
             //Find all the straddle edges and add the new intersect vertices to both the pos and nef loops.
             //Also, find which faces are on the current side of the plane, by using edges.
             //Every face should have either 2 or 0 straddle edges, but never just 1.
@@ -177,7 +246,7 @@ namespace TVGL.Boolean_Operations
                         for (var i = 0; i < 2; i++)
                         {
                             var face = i == 0 ? edge.OwnedFace : edge.OtherFace;
-                            if(tempOnSideFaces.Contains(face.IndexInList))
+                            if (tempOnSideFaces.Contains(face.IndexInList))
                             {
                                 onSideFaces.Add(face);
                                 tempOnSideFaces.Remove(face.IndexInList);
@@ -199,13 +268,19 @@ namespace TVGL.Boolean_Operations
                 straddleEdges.Add(new StraddleEdge(edge, plane, offSideVertex));
                 listEdges.Add(edge.IndexInList, edge);
             }
-            if(tempOnSideFaces.Any()) throw new Exception("Every face should have either 2 or 0 straddle edges, but never just 1.");
+            if (tempOnSideFaces.Any())
+                throw new Exception("Every face should have either 2 or 0 straddle edges, but never just 1.");
 
             //Get all the edges that make up the boundary being kept
             var boundaryEdges = new Dictionary<int, Edge>();
             foreach (var face in straddleFaces.Values)
             {
-                foreach (var edge in face.Edges.Where(edge => !listEdges.ContainsKey(edge.IndexInList) && !boundaryEdges.ContainsKey(edge.IndexInList)))
+                foreach (
+                    var edge in
+                        face.Edges.Where(
+                            edge =>
+                                !listEdges.ContainsKey(edge.IndexInList) && !boundaryEdges.ContainsKey(edge.IndexInList))
+                    )
                 {
                     boundaryEdges.Add(edge.IndexInList, edge);
                 }
@@ -234,9 +309,10 @@ namespace TVGL.Boolean_Operations
                             possibleStraddleEdges.Add(possibleStraddleEdge);
                         }
                     }
-                    
+
                     //Only two straddle edges are possible per face, and the other has already been removed from straddleEdges.
-                    if (possibleStraddleEdges.Count != 1) throw new Exception("This should never happen and will cause errors down the line. Prevent it.");
+                    if (possibleStraddleEdges.Count != 1)
+                        throw new Exception("This should never happen and will cause errors down the line. Prevent it.");
                     straddleEdge = possibleStraddleEdges[0];
                     loopOfStraddleEdges.Add(straddleEdge);
                     straddleEdges.Remove(straddleEdge);
@@ -246,8 +322,8 @@ namespace TVGL.Boolean_Operations
                 if (loopOfStraddleEdges.Count < 3) continue; //Ignore this loop, since it seems to be a knife edge 
                 loopsOfStraddleEdges.Add(loopOfStraddleEdges);
             }
-            if(straddleEdges.Any()) throw new Exception("While loop was unable to complete.");
-            
+            if (straddleEdges.Any()) throw new Exception("While loop was unable to complete.");
+
             //Get loops of vertices, adding newly creates faces to onSideFaces as you go
             //This is the brains of this function. It loops through the straddle edges to 
             //create new faces. This function avoids creating two new points that are 
@@ -263,28 +339,29 @@ namespace TVGL.Boolean_Operations
                 var newEdges = new List<Edge>();
                 var loopOfVertices = new List<Vertex>();
                 //Find a good starting edge. One with an intersect vertex far enough away from other intersection vertices.
-                var k = 0; 
+                var k = 0;
                 var length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges.Last().IntersectVertex.Position,
-                            loopOfStraddleEdges[k].IntersectVertex.Position);
+                    loopOfStraddleEdges[k].IntersectVertex.Position);
                 while (length1.IsNegligible(tolerance) && k + 1 != loopOfStraddleEdges.Count - 1)
                 {
-                    k++;   
-                    length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges[k-1].IntersectVertex.Position,
+                    k++;
+                    length1 = MiscFunctions.DistancePointToPoint(loopOfStraddleEdges[k - 1].IntersectVertex.Position,
                         loopOfStraddleEdges[k].IntersectVertex.Position);
                 }
-                if (k +1 == loopOfStraddleEdges.Count-1) throw new Exception("No good starting edge found. Rewrite the function to find a better edge");
+                if (k + 1 == loopOfStraddleEdges.Count - 1)
+                    throw new Exception("No good starting edge found. Rewrite the function to find a better edge");
                 var firstStraddleEdge = loopOfStraddleEdges[k];
                 var previousStraddleEdge = firstStraddleEdge;
                 successfull = false;
-                do 
+                do
                 {
                     //ToDo: this function allows loops of two vertices if created vertices are too close together
                     k++; //Update the index
                     if (k > loopOfStraddleEdges.Count - 1) k = 0; //Set back to start if necessary
                     var currentStraddleEdge = loopOfStraddleEdges[k];
                     var length = MiscFunctions.DistancePointToPoint(currentStraddleEdge.IntersectVertex.Position,
-                            previousStraddleEdge.IntersectVertex.Position);
-                    
+                        previousStraddleEdge.IntersectVertex.Position);
+
                     //If finished, then create the final face and end
                     if (currentStraddleEdge == firstStraddleEdge)
                     {
@@ -294,7 +371,7 @@ namespace TVGL.Boolean_Operations
                             previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
                             loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
                         }
-                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge , ref newEdges, true));                   
+                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges, true));
                         successfull = true;
                     }
                     //If too close together for a good triangle
@@ -310,18 +387,18 @@ namespace TVGL.Boolean_Operations
                         {
                             if (currentStraddleEdge.OwnedFace == previousStraddleEdge.OwnedFace)
                                 previousStraddleEdge.OwnedFace = currentStraddleEdge.OtherFace;
-                            else if (currentStraddleEdge.OwnedFace == previousStraddleEdge.OtherFace) 
+                            else if (currentStraddleEdge.OwnedFace == previousStraddleEdge.OtherFace)
                                 previousStraddleEdge.OtherFace = currentStraddleEdge.OtherFace;
                             else if (currentStraddleEdge.OtherFace == previousStraddleEdge.OwnedFace)
                                 previousStraddleEdge.OwnedFace = currentStraddleEdge.OwnedFace;
-                            else if(currentStraddleEdge.OtherFace == previousStraddleEdge.OtherFace) 
+                            else if (currentStraddleEdge.OtherFace == previousStraddleEdge.OtherFace)
                                 previousStraddleEdge.OtherFace = currentStraddleEdge.OwnedFace;
                             else throw new Exception("No shared face exists between these two straddle edges");
                             previousStraddleEdge.OffSideVertex = currentStraddleEdge.OffSideVertex;
                         }
                         else
                         {
-                            newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges)); 
+                            newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges));
                             previousStraddleEdge = currentStraddleEdge;
                         }
                     }
@@ -332,15 +409,17 @@ namespace TVGL.Boolean_Operations
                             previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
                             loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
                         }
-                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges)); 
+                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, ref newEdges));
                         previousStraddleEdge = currentStraddleEdge;
                     }
                 } while (!successfull);
-                if (loopOfVertices.Count < 3) throw new Exception("This could be a knife edge. But this error will likely cause errors down the line");
+                if (loopOfVertices.Count < 3)
+                    throw new Exception(
+                        "This could be a knife edge. But this error will likely cause errors down the line");
                 loops.Add(loopOfVertices);
                 allNewFaces.AddRange(newFaces);
             }
-            
+
             foreach (var face in allNewFaces)
             {
                 face.CreatedInFunction = "Slice4: Divide up faces";
@@ -349,14 +428,20 @@ namespace TVGL.Boolean_Operations
         }
 
         /// <summary>
-        /// Creates a new face given two straddle edges
+        ///     Creates a new face given two straddle edges
         /// </summary>
-        /// <param name="st1"></param>
-        /// <param name="st2"></param>
-        /// <param name="newEdges"></param>
-        /// <param name="lastNewFace"></param>
-        /// <returns></returns>
-        public static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, ref List<Edge> newEdges, bool lastNewFace = false )
+        /// <param name="st1">The ST1.</param>
+        /// <param name="st2">The ST2.</param>
+        /// <param name="newEdges">The new edges.</param>
+        /// <param name="lastNewFace">if set to <c>true</c> [last new face].</param>
+        /// <returns>List&lt;PolygonalFace&gt;.</returns>
+        /// <exception cref="Exception">
+        ///     No shared face exists between these two straddle edges
+        ///     or
+        ///     Error, the straddle edges do not match up at a common vertex
+        /// </exception>
+        public static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, ref List<Edge> newEdges,
+            bool lastNewFace = false)
         {
             PolygonalFace sharedFace;
             if (st1.OwnedFace == st2.OwnedFace || st1.OwnedFace == st2.OtherFace) sharedFace = st1.OwnedFace;
@@ -366,7 +451,7 @@ namespace TVGL.Boolean_Operations
             //Make an extra edge if the first new face
             if (!newEdges.Any())
             {
-                var newEdge = new Edge(st1.IntersectVertex, st1.OnSideVertex,  false);
+                var newEdge = new Edge(st1.IntersectVertex, st1.OnSideVertex, false);
                 newEdges.Add(newEdge);
             }
 
@@ -389,25 +474,32 @@ namespace TVGL.Boolean_Operations
                 //else throw new Exception("Edge should have been connected to sharedFace");
                 return new List<PolygonalFace> {newFace};
             }
-            if (st1.OffSideVertex == st2.OffSideVertex || st1.OriginalOffSideVertex == st2.OffSideVertex || st1.OffSideVertex == st2.OriginalOffSideVertex) //If not the same intersect vertex, then the same offSideVertex denotes two Consecutive curved edges, so this creates two new faces
+            if (st1.OffSideVertex == st2.OffSideVertex || st1.OriginalOffSideVertex == st2.OffSideVertex ||
+                st1.OffSideVertex == st2.OriginalOffSideVertex)
+                //If not the same intersect vertex, then the same offSideVertex denotes two Consecutive curved edges, so this creates two new faces
             {
                 //Create two new faces
                 var newFace1 =
                     new PolygonalFace(new List<Vertex> {st1.OnSideVertex, st1.IntersectVertex, st2.IntersectVertex},
-                        sharedFace.Normal, false); 
+                        sharedFace.Normal, false);
                 var newFace2 =
                     new PolygonalFace(new List<Vertex> {st1.OnSideVertex, st2.IntersectVertex, st2.OnSideVertex},
-                        sharedFace.Normal, false); 
+                        sharedFace.Normal, false);
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace1;
                 //Create new edges and update their ownership 
-                var newEdge1 = new Edge(st1.IntersectVertex, st2.IntersectVertex, false) { OwnedFace = newFace1};
-                var newEdge2 = new Edge(st1.OnSideVertex, st2.IntersectVertex, false) { OwnedFace = newFace2, OtherFace = newFace1};
-                newEdges.AddRange(new List<Edge> { newEdge1, newEdge2});
+                var newEdge1 = new Edge(st1.IntersectVertex, st2.IntersectVertex, false) {OwnedFace = newFace1};
+                var newEdge2 = new Edge(st1.OnSideVertex, st2.IntersectVertex, false)
+                {
+                    OwnedFace = newFace2,
+                    OtherFace = newFace1
+                };
+                newEdges.AddRange(new List<Edge> {newEdge1, newEdge2});
                 //Create the last edge, if this is not the last new face
-                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) { OwnedFace = newFace2});
+                if (!lastNewFace)
+                    newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) {OwnedFace = newFace2});
                 else newEdges.First().OwnedFace = newFace2;
-                
+
                 //Set ownership for boundary edge.
                 //var checksum = GetCheckSum(st1.OnSideVertex, st2.OnSideVertex);
                 //var edge = sharedFace.Edges.First(e => e.EdgeReference == checksum);
@@ -425,54 +517,62 @@ namespace TVGL.Boolean_Operations
                 //Update ownership of most recently created edge
                 newEdges.Last().OtherFace = newFace;
                 //Create new edges and update their ownership 
-                newEdges.Add(new Edge(st1.IntersectVertex, st2.IntersectVertex, false) { OwnedFace = newFace });
-                if (!lastNewFace) newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) { OwnedFace = newFace }); 
+                newEdges.Add(new Edge(st1.IntersectVertex, st2.IntersectVertex, false) {OwnedFace = newFace});
+                if (!lastNewFace)
+                    newEdges.Add(new Edge(st2.IntersectVertex, st2.OnSideVertex, false) {OwnedFace = newFace});
                 else newEdges.First().OwnedFace = newFace;
-                return new List<PolygonalFace> { newFace };
+                return new List<PolygonalFace> {newFace};
             }
             throw new Exception("Error, the straddle edges do not match up at a common vertex");
         }
 
         /// <summary>
-        /// Straddle edge references original edge and an intersection vertex.
+        ///     Straddle edge references original edge and an intersection vertex.
         /// </summary>
         public class StraddleEdge
         {
             /// <summary>
-            /// Point of edge / plane intersection
-            /// </summary>
-            public Vertex IntersectVertex;
-
-            /// <summary>
-            /// Vertex on side of plane that will not be kept
-            /// </summary>
-            public Vertex OffSideVertex;
-
-            /// <summary>
-            /// Vertex on side of plane that will not be kept (Used when collapsing an edge)
-            /// </summary>
-            public Vertex OriginalOffSideVertex;
-
-            /// <summary>
-            /// Vertex on side of plane that will be kept
-            /// </summary>
-            public Vertex OnSideVertex;
-
-            /// <summary>
-            /// Connect back to the base edge
+            ///     Connect back to the base edge
             /// </summary>
             public Edge Edge;
 
             /// <summary>
-            /// OwnedFace (may change if collapsed into another straddle edge)
+            ///     Point of edge / plane intersection
+            /// </summary>
+            public Vertex IntersectVertex;
+
+            /// <summary>
+            ///     Vertex on side of plane that will not be kept
+            /// </summary>
+            public Vertex OffSideVertex;
+
+            /// <summary>
+            ///     Vertex on side of plane that will be kept
+            /// </summary>
+            public Vertex OnSideVertex;
+
+            /// <summary>
+            ///     Vertex on side of plane that will not be kept (Used when collapsing an edge)
+            /// </summary>
+            public Vertex OriginalOffSideVertex;
+
+            /// <summary>
+            ///     OtherFace (may change if collapsed into another straddle edge)
+            /// </summary>
+            public PolygonalFace OtherFace;
+
+            /// <summary>
+            ///     OwnedFace (may change if collapsed into another straddle edge)
             /// </summary>
             public PolygonalFace OwnedFace;
 
             /// <summary>
-            /// OtherFace (may change if collapsed into another straddle edge)
+            ///     Initializes a new instance of the <see cref="StraddleEdge" /> class.
             /// </summary>
-            public PolygonalFace OtherFace;
-
+            /// <param name="edge">The edge.</param>
+            /// <param name="plane">The plane.</param>
+            /// <param name="offSideVertex">The off side vertex.</param>
+            /// <exception cref="Exception">Cannot Be Null</exception>
             internal StraddleEdge(Edge edge, Flat plane, Vertex offSideVertex)
             {
                 OwnedFace = edge.OwnedFace;
@@ -481,20 +581,22 @@ namespace TVGL.Boolean_Operations
                 OffSideVertex = offSideVertex;
                 OriginalOffSideVertex = offSideVertex;
                 OnSideVertex = Edge.OtherVertex(OffSideVertex);
-                IntersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin, edge.To, edge.From);
+                IntersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(plane.Normal, plane.DistanceToOrigin,
+                    edge.To, edge.From);
                 if (IntersectVertex == null) throw new Exception("Cannot Be Null");
             }
 
             /// <summary>
-            /// Gets the next face in the loop from this edge, given the current face
+            ///     Gets the next face in the loop from this edge, given the current face
             /// </summary>
-            /// <param name="face"></param>
-            /// <returns></returns>
+            /// <param name="face">The face.</param>
+            /// <returns>PolygonalFace.</returns>
             public PolygonalFace NextFace(PolygonalFace face)
             {
                 return Edge.OwnedFace == face ? Edge.OtherFace : Edge.OwnedFace;
             }
         }
+
         #endregion
     }
 }

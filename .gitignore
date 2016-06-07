@@ -94,7 +94,10 @@ _ReSharper*/
 .JustCode
 
 # TeamCity is a build add-in
-_TeamCity*
+_TeamCity
+
+# if GhostDoc is a build add-in
+*.GhostDoc.xml
 
 # DotCover is a Code Coverage Tool
 *.dotCover

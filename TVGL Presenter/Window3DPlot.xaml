@@ -1,10 +1,9 @@
-﻿<Window x:Class="TVGL_Helix_Presenter.MainWindow"
+﻿<Window x:Class="TVGL.Window3DPlot"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
           xmlns:pt="clr-namespace:PropertyTools.Wpf;assembly=PropertyTools.Wpf"        
-
         xmlns:helix="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf" 
-        Title="CameraControlDemo" Height="480" Width="640">
+        Title="CameraControlDemo" Height="480" Width="640" Loaded="GridLines_OnChecked">
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="View">
@@ -74,7 +73,7 @@
                 </Grid>
             </MenuItem>
         </Menu>
-        <helix:HelixViewport3D x:Name="view1" ZoomExtentsWhenLoaded="True">
+        <helix:HelixViewport3D x:Name="view1" ZoomExtentsWhenLoaded="False">
             <!--     <helix:HelixViewport3D.DefaultCamera />
                <PerspectiveCamera Position="100,100,100" LookDirection="-100,-100,-100" UpDirection="0,0,1" FieldOfView="61" NearPlaneDistance="0.001"/>-->
 
@@ -85,7 +84,7 @@
 
             <!--<helix:SphereVisual3D Radius="5"/>
             <helix:SphereVisual3D Center="5,0,0" Radius="1" Fill="White"/>-->
-            <helix:GridLinesVisual3D x:Name="GridLines"/>
+            <helix:GridLinesVisual3D x:Name="GridLines" Visible="False"/>
         </helix:HelixViewport3D>
     </DockPanel>
 </Window>

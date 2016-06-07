@@ -1,12 +1,12 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 03-18-2015
+// Last Modified On : 04-18-2016
 // ***********************************************************************
-// <copyright file="Constants.cs" company="">
+// <copyright file="Constants.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
@@ -17,6 +17,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
+/// <summary>
+/// The TVGL namespace.
+/// </summary>
+
 namespace TVGL
 {
     /// <summary>
@@ -25,9 +29,13 @@ namespace TVGL
     public static class Constants
     {
         /// <summary>
-        /// The convex hull radius for robustness. This is only used when ConvexHull fails on the model.    
+        ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
         /// </summary>
         internal const double ConvexHullRadiusForRobustness = 0.0000001;
+
+        /// <summary>
+        ///     The default color
+        /// </summary>
         internal const KnownColors DefaultColor = KnownColors.PaleGoldenrod;
 
         /// <summary>
@@ -44,26 +52,27 @@ namespace TVGL
         ///     The number style
         /// </summary>
         public const NumberStyles NumberStyle =
-            (NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign);
+            NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign;
 
 
         /// <summary>
-        /// The error ratio used as a base for determining a good tolerance within a given tessellated solid.
+        ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
         public const double BaseTolerance = 1E-7;
 
 
         /// <summary>
-        /// The angle tolerance used in the Oriented Bounding Box calculations
+        ///     The angle tolerance used in the Oriented Bounding Box calculations
         /// </summary>
         public const double OBBAngleTolerance = 1e-5;
+
         /// <summary>
         ///     The error for face in surface
         /// </summary>
         public const double ErrorForFaceInSurface = 0.002;
 
         /// <summary>
-        /// The tolerance for the same normal of a face when two are dot-producted.
+        ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-1;
 
@@ -73,7 +82,7 @@ namespace TVGL
         /// <typeparam name="T"></typeparam>
         /// <param name="items">The items.</param>
         /// <param name="predicate">The predicate.</param>
-        /// <returns>System.Int32.</returns>  
+        /// <returns>System.Int32.</returns>
         internal static int FindIndex<T>(this IEnumerable<T> items, Predicate<T> predicate)
         {
             var numItems = items.Count();
@@ -86,8 +95,9 @@ namespace TVGL
             }
             return -1;
         }
+
         /// <summary>
-        /// Finds the index.
+        ///     Finds the index.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="items">The items.</param>
@@ -106,6 +116,46 @@ namespace TVGL
             return -1;
         }
     }
+
+
+    /// <summary>
+    /// Enum Units of specified shape
+    /// </summary>
+    public enum UnitType
+    {
+        unspecified = -1,
+        /// <summary>
+        ///     The millimeter
+        /// </summary>
+        millimeter,
+
+        /// <summary>
+        ///     The micron
+        /// </summary>
+        micron,
+
+
+        /// <summary>
+        ///     The centimeter
+        /// </summary>
+        centimeter,
+
+        /// <summary>
+        ///     The inch
+        /// </summary>
+        inch,
+
+        /// <summary>
+        ///     The foot
+        /// </summary>
+        foot,
+
+        /// <summary>
+        ///     The meter
+        /// </summary>
+        meter
+    }
+
 
     /// <summary>
     ///     Enum CurvatureType
@@ -139,44 +189,65 @@ namespace TVGL
     public enum FileType
     {
         /// <summary>
-        /// Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
+        ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
         /// </summary>
         // ReSharper disable once InconsistentNaming
         STL_ASCII,
 
         /// <summary>
-        /// Stereolithography (STL) Binary 
+        ///     Stereolithography (STL) Binary
         /// </summary>
         // ReSharper disable once InconsistentNaming
         STL_Binary,
 
         /// <summary>
-        /// Mobile MultiModal Framework
+        ///     Mobile MultiModal Framework
         /// </summary>
         ThreeMF,
 
         /// <summary>
-        /// Additive Manufacturing File Format
+        ///     Additive Manufacturing File Format
         /// </summary>
         AMF,
 
         /// <summary>
-        /// Object File Format
+        ///     Object File Format
         /// </summary>
         OFF,
 
         /// <summary>
-        /// Polygon File Format
+        ///     Polygon File Format
         /// </summary>
         PLY
     }
 
+    /// <summary>
+    ///     Enum ShapeElement
+    /// </summary>
     internal enum ShapeElement
     {
-        Vertex, Edge, Face
+        /// <summary>
+        ///     The vertex
+        /// </summary>
+        Vertex,
+        Edge,
+        Face
     }
+
+    /// <summary>
+    ///     Enum ColorElements
+    /// </summary>
     internal enum ColorElements
-    { Red, Green, Blue, Opacity }
+        /// <summary>
+        /// The red
+        /// </summary>
+    {
+        Red,
+        Green,
+        Blue,
+        Opacity
+    }
+
     /// <summary>
     ///     A comparer for optimization that can be used for either
     ///     minimization or maximization.

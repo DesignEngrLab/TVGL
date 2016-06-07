@@ -1,44 +1,51 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 03-05-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 03-05-2015
+// Last Modified On : 05-28-2016
 // ***********************************************************************
-// <copyright file="Slice.cs" company="">
+// <copyright file="Slice.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
 namespace TVGL
 {
     /// <summary>
-    /// The Slice class includes static functions for cutting a tessellated solid.
+    ///     The Slice class includes static functions for cutting a tessellated solid.
     /// </summary>
     public static class SimplifyTessellation
     {
         /// <summary>
-        /// Simplifies by the percentage provided. For example, is ts has 100 triangles, then passing 
-        /// a 0.2 will reduce to 80 triangles
+        ///     Simplifies by the percentage provided. For example, is ts has 100 triangles, then passing
+        ///     a 0.2 will reduce to 80 triangles
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="percentageToReduceBy">The percentage to reduce by.</param>
         public static void SimplifyByPercentage(this TessellatedSolid ts, double percentageToReduceBy)
         {
-            SimplifyToNFaces(ts, (int)((1 - percentageToReduceBy) * ts.NumberOfFaces));
+            SimplifyToNFaces(ts, (int) ((1 - percentageToReduceBy)*ts.NumberOfFaces));
         }
 
+        /// <summary>
+        ///     Simplifies to n faces.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="numberOfFaces">The number of faces.</param>
         private static void SimplifyToNFaces(this TessellatedSolid ts, int numberOfFaces)
         {
             if (ts.Errors != null)
-                Message.output("** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",1);
+                Message.output(
+                    "** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",
+                    1);
 
             var numberToRemove = ts.NumberOfFaces - numberOfFaces;
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
@@ -59,7 +66,7 @@ namespace TVGL
                     out removedFace2))
                 {
                     removedEdges.Add(edge);
-                    removedEdgesSorted.Add(edge.IndexInList,edge);
+                    removedEdgesSorted.Add(edge.IndexInList, edge);
                     removedEdges.Add(removedEdge1);
                     removedEdgesSorted.Add(removedEdge1.IndexInList, removedEdge1);
                     removedEdges.Add(removedEdge2);
@@ -77,23 +84,25 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Simplifies the model by merging the vertices that are closest together
+        ///     Simplifies the model by merging the vertices that are closest together
         /// </summary>
-        /// <param name="ts"></param>
+        /// <param name="ts">The ts.</param>
         public static void Simplify(this TessellatedSolid ts)
         {
-            SimplifyByTolerance(ts, ts.SameTolerance * 10);
+            SimplifyByTolerance(ts, ts.SameTolerance*10);
         }
 
         /// <summary>
-        /// Simplifies by a tolerance whereby vertices within the specified length will be merged.
+        ///     Simplifies by a tolerance whereby vertices within the specified length will be merged.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="tolerance">The tolerance.</param>
         public static void SimplifyByTolerance(this TessellatedSolid ts, double tolerance)
         {
             if (ts.Errors != null)
-                Message.output("** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",1);
+                Message.output(
+                    "** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",
+                    1);
 
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
             var removedEdges = new List<Edge>();
@@ -127,6 +136,16 @@ namespace TVGL
             ts.RemoveVertices(removedVertices);
         }
 
+        /// <summary>
+        ///     Combines the vertices of edge.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="removedVertexOut">The removed vertex out.</param>
+        /// <param name="removedEdge1Out">The removed edge1 out.</param>
+        /// <param name="removedEdge2Out">The removed edge2 out.</param>
+        /// <param name="removedFace1">The removed face1.</param>
+        /// <param name="removedFace2">The removed face2.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private static bool CombineVerticesOfEdge(Edge edge, out Vertex removedVertexOut, out Edge removedEdge1Out,
             out Edge removedEdge2Out, out PolygonalFace removedFace1, out PolygonalFace removedFace2)
         {
@@ -180,13 +199,13 @@ namespace TVGL
             // for the winged edges (removedEdge1 and removedEdge2) that are removed, connected their faces to 
             // the new edge
             // first on the "owned side of edge"
-            var fromFace = (removedEdge1.OwnedFace == removedFace1) ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
+            var fromFace = removedEdge1.OwnedFace == removedFace1 ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
             var index = fromFace.Edges.IndexOf(removedEdge1);
             fromFace.Edges[index] = keepEdge1;
             if (keepEdge1.OwnedFace == removedFace1) keepEdge1.OwnedFace = fromFace;
             else keepEdge1.OtherFace = fromFace;
             // second on the "other side of edge"
-            fromFace = (removedEdge2.OwnedFace == removedFace2) ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
+            fromFace = removedEdge2.OwnedFace == removedFace2 ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
             index = fromFace.Edges.IndexOf(removedEdge2);
             fromFace.Edges[index] = keepEdge2;
             if (keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
@@ -204,6 +223,12 @@ namespace TVGL
             removedEdge2Out = removedEdge2;
             return true;
         }
+
+        /// <summary>
+        ///     Adjusts the position of kept vertex.
+        /// </summary>
+        /// <param name="keepVertex">The keep vertex.</param>
+        /// <param name="removedVertex">The removed vertex.</param>
         private static void AdjustPositionOfKeptVertex(Vertex keepVertex, Vertex removedVertex)
         {
             //average positions
@@ -211,16 +236,24 @@ namespace TVGL
             keepVertex.Position = newPosition.divide(2);
         }
 
-        private static void AdjustPositionOfKeptVertexExperimental(Vertex keepVertex, Vertex removedVertex, PolygonalFace removeFace1, PolygonalFace removeFace2)
+        /// <summary>
+        ///     Adjusts the position of kept vertex experimental.
+        /// </summary>
+        /// <param name="keepVertex">The keep vertex.</param>
+        /// <param name="removedVertex">The removed vertex.</param>
+        /// <param name="removeFace1">The remove face1.</param>
+        /// <param name="removeFace2">The remove face2.</param>
+        private static void AdjustPositionOfKeptVertexExperimental(Vertex keepVertex, Vertex removedVertex,
+            PolygonalFace removeFace1, PolygonalFace removeFace2)
         {
             //average positions
             var newPosition = keepVertex.Position.add(removedVertex.Position);
-            var radius = keepVertex.Position.subtract(removedVertex.Position).norm2() / 2.0;
+            var radius = keepVertex.Position.subtract(removedVertex.Position).norm2()/2.0;
             keepVertex.Position = newPosition.divide(2);
             var avgNormal = removeFace1.Normal.add(removeFace2.Normal).normalize();
             var otherVertexAvgDistanceToEdgePlane =
                 keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.dotProduct(avgNormal)).Sum()/
-                ((double) (keepVertex.Edges.Count - 1));
+                (keepVertex.Edges.Count - 1);
             var distanceOfEdgePlane = keepVertex.Position.dotProduct(avgNormal);
 
             // use a sigmoid function to determine how far out to move the vertex
@@ -228,6 +261,5 @@ namespace TVGL
             var length = 2*radius*x/Math.Sqrt(1 + x*x) - radius;
             keepVertex.Position = keepVertex.Position.add(avgNormal.multiply(length));
         }
-
     }
 }

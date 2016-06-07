@@ -1,151 +1,378 @@
 ﻿// ***********************************************************************
 // Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Matt Campbell
+// Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 06-05-2014
+// Last Modified On : 05-28-2016
+// ***********************************************************************
+// <copyright file="3MFFileData.cs" company="Design Engineering Lab">
+//     Copyright ©  2014
+// </copyright>
+// <summary></summary>
 // ***********************************************************************
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using ClassesFor_3mf_Files;
+using System.IO.Compression;
+using System.Xml;
+using StarMathLib;
+using TVGL.IOFunctions.threemfclasses;
 
 namespace TVGL.IOFunctions
 {
     /// <summary>
     ///     Class ThreeMFFileData.
     /// </summary>
-    [XmlRoot("threeMF")]
+    [XmlRoot("model")]
 #if help
     internal class ThreeMFFileData : IO
 #else
     public class ThreeMFFileData : IO
 #endif
     {
+        private const string defXMLNameSpaceModel = "http://schemas.microsoft.com/3dmanufacturing/core/2015/02";
+
+        private const string defXMLNameSpaceContentTypes =
+            "http://schemas.openxmlformats.org/package/2006/content-types";
+
+        private const string defXMLNameSpaceRelationships =
+            "http://schemas.openxmlformats.org/package/2006/relationships";
+
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="ThreeMFFileData" /> class.
         /// </summary>
         public ThreeMFFileData()
         {
-            Objects = new List<CT_Object>();
+            metadata = new List<Metadata>();
         }
-
         /// <summary>
-        ///     Gets or sets the objects.
+        /// Gets or sets the metadata.
         /// </summary>
-        /// <value>The objects.</value>
-        [XmlElement("object")]
-        public List<CT_Object> Objects { get; set; }
-
+        /// <value>The metadata.</value>
+        [XmlElement]
+        public List<Metadata> metadata { get; set; }
         /// <summary>
-        ///     Gets or sets a value indicating whether [unit specified].
+        /// Gets or sets the resources.
         /// </summary>
-        /// <value><c>true</c> if [unit specified]; otherwise, <c>false</c>.</value>
-        [XmlIgnore]
-        public bool unitSpecified { get; set; }
-
+        /// <value>The resources.</value>
+        [XmlElement]
+        public Resources resources { get; set; }
         /// <summary>
-        ///     Gets or sets the version.
+        /// Gets or sets the build.
         /// </summary>
-        /// <value>The version.</value>
-        public double version { get; set; }
+        /// <value>The build.</value>
+        [XmlElement]
+        public Build build { get; set; }
 
         /// <summary>
-        ///     Gets or sets a value indicating whether [version specified].
+        /// Gets or sets the unit.
         /// </summary>
-        /// <value><c>true</c> if [version specified]; otherwise, <c>false</c>.</value>
-        [XmlIgnore]
-        public bool versionSpecified { get; set; }
+        /// <value>The unit.</value>
+        [DefaultValue(UnitType.unspecified)]
+        [XmlAttribute]
+        public UnitType unit { get; set; }
 
         /// <summary>
-        ///     Gets or sets the language.
+        /// Gets or sets the language.
         /// </summary>
         /// <value>The language.</value>
-        public string lang { get; set; }
-
+        [XmlAttribute("lang")]
+        public string language { get; set; }
         /// <summary>
-        ///     Gets or sets the name.
+        /// Gets or sets the requiredextensions.
         /// </summary>
-        /// <value>The name.</value>
+        /// <value>The requiredextensions.</value>
+        public string requiredextensions { get; set; }
+
         public string Name { get; set; }
 
-
-
-        internal static List<TessellatedSolid> Open(Stream s, bool inParallel = true)
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
             var now = DateTime.Now;
-            ThreeMFFileData threeMFData;
-            // Try to read in BINARY format
-            if (ThreeMFFileData.TryUnzippedXMLRead(s, out threeMFData))
-                Message.output("Successfully read in ThreeMF file (" + (DateTime.Now - now) + ").",3);
-            else
+            var result = new List<TessellatedSolid>();
+            var archive = new ZipArchive(s);
+            foreach (var modelFile in archive.Entries.Where(f => f.FullName.EndsWith(".model")))
             {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                //if (threeMF.TryZippedXMLRead(s, out threeMFData))
-                //    Message.output("Successfully unzipped and read in ASCII OFF file (" + (DateTime.Now - now) + ").",3);
-                //else
-                //{
-                //    Message.output("Unable to read in ThreeMF file (" + (DateTime.Now - now) + ").",1);
-                //    return null;
-                //}
+                var modelStream = modelFile.Open();
+                result.AddRange(OpenModelFile(modelStream, filename, inParallel));
             }
-            var results = new List<TessellatedSolid>();
-            foreach (var threeMFObject in threeMFData.Objects)
-            {
-                results.Add(new TessellatedSolid(threeMFData.Name,
-                    threeMFObject.mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList(),
-                    threeMFObject.mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(),
-                    null));
-            }
-            return results;
+            return result;
         }
 
-        /// <summary>
-        ///     Tries the unzipped XML read.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="threeMFFileData">The threeMF file data.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool TryUnzippedXMLRead(Stream stream, out ThreeMFFileData threeMFFileData)
+        internal static List<TessellatedSolid> OpenModelFile(Stream s, string filename, bool inParallel)
         {
-            threeMFFileData = null;
+            var now = DateTime.Now;
+            ThreeMFFileData threeMFData = null;
             try
             {
-                var streamReader = new StreamReader(stream);
-                var threeMFDeserializer = new XmlSerializer(typeof(ThreeMFFileData));
-                threeMFFileData = (ThreeMFFileData)threeMFDeserializer.Deserialize(streamReader);
-                threeMFFileData.Name = getNameFromStream(stream);
+                var settings = new XmlReaderSettings
+                {
+                    IgnoreComments = true,
+                    IgnoreProcessingInstructions = true,
+                    IgnoreWhitespace = true
+                };
+                using (var reader = XmlReader.Create(s, settings))
+                {
+                    if (reader.IsStartElement("model"))
+                    {
+                        string defaultNamespace = reader["xmlns"];
+                        XmlSerializer serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
+                        threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
+                    }
+
+                    var results = new List<TessellatedSolid>();
+                    threeMFData.Name = GetNameFromFileName(filename);
+                    var nameIndex =
+                        threeMFData.metadata.FindIndex(
+                            md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
+                                                 md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
+                    if (nameIndex != -1) threeMFData.Name = threeMFData.metadata[nameIndex].Value;
+                    foreach (var item in threeMFData.build.Items)
+                    {
+                        results.AddRange(TessellatedSolidsFromIDAndTransform(item.objectid, item.transformMatrix,
+                            threeMFData.resources, threeMFData.Name + "_"));
+                    }
+
+                    Message.output("Successfully read in 3MF file (" + (DateTime.Now - now) + ").", 3);
+                    return results;
+                }
             }
             catch (Exception exception)
             {
-                Message.output("Unable to read ThreeMF file:" + exception,1);
-                return false;
+                Message.output("Unable to read in model file (" + (DateTime.Now - now) + ").", 1);
+                return null;
+            }
+        }
+        private static IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid, double[,] transformMatrix, Resources resources, string name)
+        {
+            var solid = resources.objects.First(obj => obj.id == objectid);
+            List<TessellatedSolid> result = TessellatedSolidsFromObject(solid, resources, name);
+            if (transformMatrix != null)
+                foreach (var ts in result)
+                    ts.Transform(transformMatrix);
+            return result;
+        }
+        private static List<TessellatedSolid> TessellatedSolidsFromObject(threemfclasses.Object obj, Resources resources, string name)
+        {
+            name += obj.name + "_" + obj.id;
+            var result = new List<TessellatedSolid>();
+            if (obj.mesh != null) result.Add(TessellatedSolidFromMesh(obj.mesh, obj.MaterialID, name, resources));
+            foreach (var comp in obj.components)
+            {
+                result.AddRange(TessellatedSolidsFromComponent(comp, resources, name));
+            }
+            return result;
+        }
+        private static IEnumerable<TessellatedSolid> TessellatedSolidsFromComponent(Component comp, Resources resources, string name)
+        { return TessellatedSolidsFromIDAndTransform(comp.objectid, comp.transformMatrix, resources, name); }
+        private static TessellatedSolid TessellatedSolidFromMesh(Mesh mesh, int materialID, string name, Resources resources)
+        {
+            Color defaultColor = new Color(Constants.DefaultColor);
+            if (materialID >= 0)
+            {
+                var material = resources.materials.FirstOrDefault(mat => mat.id == materialID);
+                if (material != null)
+                {
+                    var defaultColorXml =
+                        resources.colors.FirstOrDefault(col => col.id == material.colorid);
+                    if (defaultColorXml != null) defaultColor = defaultColorXml.color;
+                }
+            }
+            var verts = mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList();
+
+            Color[] colors = null;
+            var uniformColor = true;
+            var numTriangles = mesh.triangles.Count;
+            for (int j = 0; j < numTriangles; j++)
+            {
+                var triangle = mesh.triangles[j];
+                if (triangle.pid == -1) continue;
+                if (triangle.p1 == -1) continue;
+                var baseMaterial =
+                    resources.basematerials.FirstOrDefault(bm => bm.id == triangle.pid);
+                if (baseMaterial == null) continue;
+                var baseColor = baseMaterial.bases[triangle.p1];
+                if (j == 0)
+                {
+                    defaultColor = baseColor.color;
+                    continue;
+                }
+                if (uniformColor && baseColor.color.Equals(defaultColor)) continue;
+                uniformColor = false;
+                if (colors == null) colors = new Color[mesh.triangles.Count];
+                colors[j] = baseColor.color;
+            }
+            if (uniformColor) colors = new[] { defaultColor };
+            else
+                for (int j = 0; j < numTriangles; j++)
+                    if (colors[j] == null) colors[j] = defaultColor;
+            return new TessellatedSolid(name, verts,
+                mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors);
+        }
+
+        /// <summary>
+        ///     Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
+        {
+            ZipArchiveEntry entry;
+            Stream entryStream;
+            using (ZipArchive archive = new ZipArchive(stream, ZipArchiveMode.Create))
+            {
+                entry = archive.CreateEntry("3D/3dmodel.model");
+                using (entryStream = entry.Open())
+                    SaveModel(entryStream, solids);
+                archive.CreateEntry("Metadata/thumbnail.png");
+                entry = archive.CreateEntry("_rels/.rels");
+                using (entryStream = entry.Open())
+                    SaveRelationships(entryStream);
+                entry = archive.CreateEntry("[Content_Types].xml");
+                using (entryStream = entry.Open())
+                    SaveContentTypes(entryStream);
             }
             return true;
         }
 
         /// <summary>
-        ///     Tries the zipped XML read.
+        ///     Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
-        /// <param name="threeMFFileData">The threeMF file data.</param>
+        /// <param name="solids">The solids.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="System.NotImplementedException"></exception>
-        internal static bool TryZippedXMLRead(Stream stream, out ThreeMFFileData threeMFFileData)
+        internal static bool SaveModel(Stream stream, IList<TessellatedSolid> solids)
         {
-            throw new NotImplementedException();
+            var objects = new List<threemfclasses.Object>();
+            var baseMats = new BaseMaterials { id = 1 };
+            var materials = new List<Material>();
+            var colors = new List<Color3MF>();
+            var matColorIndexer = solids.Count + 2;
+            // this is "+ 2" since the id's start with 1 instead of 0 plus BaseMaterials is typically 1, so start at 2.
+            for (int i = 0; i < solids.Count; i++)
+            {
+                var solid = solids[i];
+                var thisObject = new threemfclasses.Object { name = solid.Name, id = i + 2 };
+                var triangles = new List<Triangle>();
+
+                foreach (var face in solid.Faces)
+                {
+                    var colString = (face.Color ?? solid.SolidColor ?? new Color(Constants.DefaultColor)).ToString();
+                    int colorIndex = baseMats.bases.FindIndex(col => col.colorString.Equals(colString));
+                    if (colorIndex == -1)
+                    {
+                        colorIndex = baseMats.bases.Count;
+                        baseMats.bases.Add(new Base { colorString = colString });
+                    }
+                    triangles.Add(new Triangle
+                    {
+                        v1 = face.Vertices[0].IndexInList,
+                        v2 = face.Vertices[1].IndexInList,
+                        v3 = face.Vertices[2].IndexInList,
+                        pid = 1,
+                        p1 = colorIndex
+                    });
+                }
+                thisObject.mesh = new Mesh
+                {
+                    vertices = solid.Vertices.Select(v => new threemfclasses.Vertex
+                    { x = v.X, y = v.Y, z = v.Z }).ToList(),
+                    triangles = triangles
+                };
+                objects.Add(thisObject);
+            }
+            ThreeMFFileData threeMFData = new ThreeMFFileData
+            {
+                unit = solids[0].Units,
+                build = new Build { Items = objects.Select(o => new Item { objectid = o.id }).ToList() },
+                resources =
+                    new Resources
+                    {
+                        basematerials = (new[] { baseMats }).ToList(), //colors = colors, materials = materials,
+                        objects = objects
+                    }
+            };
+            try
+            {
+                using (var writer = XmlWriter.Create(stream))
+                {
+                    var serializer = new XmlSerializer(typeof(ThreeMFFileData), defXMLNameSpaceModel);
+                    serializer.Serialize(writer, threeMFData);
+                }
+                Message.output("Successfully wrote 3MF file to stream.", 3);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                return false;
+            }
         }
 
-        internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
+        private static void SaveRelationships(Stream stream)
         {
-            throw new NotImplementedException();
+            //[XmlArrayItem("vertex", IsNullable = false)]
+            var rels = new Relationships
+            {
+                rels = new[]
+            {
+                new Relationship
+                {
+                    Target = "/3D/3dmodel.model",
+                    Id = "rel-1",
+                    Type = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
+                },
+                new Relationship
+                {
+                    Target = "/Metadata/thumbnail.png",
+                    Id = "rel0",
+                    Type = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
+                }
+            }
+            };
+
+            using (var writer = XmlWriter.Create(stream))
+            {
+                var serializer = new XmlSerializer(typeof(Relationships), defXMLNameSpaceRelationships);
+                serializer.Serialize(writer, rels);
+            }
+        }
+
+        private static void SaveContentTypes(Stream stream)
+        {
+            var defaults = new List<Default>
+            {
+                new Default
+                {
+                    Extension = "rels",
+                    ContentType = "application/vnd.openxmlformats-package.relationships+xml"
+                },
+                new Default
+                {
+                    Extension = "model",
+                    ContentType = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
+                },
+                new Default {Extension = "png", ContentType = "image/png"},
+
+            };
+            var types = new Types { Defaults = defaults };
+
+            using (var writer = XmlWriter.Create(stream))
+            {
+                var serializer = new XmlSerializer(typeof(Types), defXMLNameSpaceContentTypes);
+                serializer.Serialize(writer, types);
+            }
         }
     }
 }
