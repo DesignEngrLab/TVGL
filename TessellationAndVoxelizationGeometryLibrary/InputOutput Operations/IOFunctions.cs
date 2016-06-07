@@ -66,10 +66,18 @@ namespace TVGL.IOFunctions
                     tessellatedSolids = PLYFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
                     break;
                 case "3mf":
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
                     tessellatedSolids = ThreeMFFileData.Open(s, filename, inParallel);
+#endif
                     break;
                 case "model":
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
                     tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, inParallel);
+#endif
                     break;
                 case "amf":
                     tessellatedSolids = AMFFileData.Open(s, filename, inParallel);
@@ -233,7 +241,11 @@ namespace TVGL.IOFunctions
                 case FileType.AMF:
                     return AMFFileData.Save(stream, solids);
                 case FileType.ThreeMF:
-                    return ThreeMFFileData.Save(stream, solids);
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
+                  return ThreeMFFileData.Save(stream, solids);
+#endif
                 case FileType.OFF:
                     return OFFFileData.Save(stream, solids);
                 case FileType.PLY:
