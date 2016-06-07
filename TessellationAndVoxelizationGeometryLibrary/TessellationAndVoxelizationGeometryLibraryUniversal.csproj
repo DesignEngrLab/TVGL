@@ -2,7 +2,7 @@
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
+    <MinimumVisualStudioVersion>10.0</MinimumVisualStudioVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{E3489019-D590-46A8-B2C2-E3481E8DB77C}</ProjectGuid>
@@ -13,8 +13,8 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Profile5</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
@@ -23,7 +23,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;helpOFF, net40</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
@@ -47,9 +47,7 @@
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
     <Compile Include="Boolean Operations\PolygonOperations.cs" />
-    <Compile Include="InputOutput Operations\3mf.classes.cs" />
     <Compile Include="InputOutput Operations\amf.classes.cs" />
-    <Compile Include="InputOutput Operations\3MFFileData.cs" />
     <Compile Include="InputOutput Operations\PLYFileData.cs" />
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
@@ -96,11 +94,11 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MIConvexHull, Version=1.0.16.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.0.16.0000\lib\portable-net45+wp8+win8\MIConvexHull.dll</HintPath>
+      <HintPath>..\packages\MIConvexHull.1.0.16.0000\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net45+wp8+win8\StarMath.dll</HintPath>
+      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -112,13 +110,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
-  <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
-  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

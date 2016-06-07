@@ -66,10 +66,18 @@ namespace TVGL.IOFunctions
                     tessellatedSolids = PLYFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
                     break;
                 case "3mf":
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
                     tessellatedSolids = ThreeMFFileData.Open(s, filename, inParallel);
+#endif
                     break;
                 case "model":
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
                     tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, inParallel);
+#endif
                     break;
                 case "amf":
                     tessellatedSolids = AMFFileData.Open(s, filename, inParallel);
@@ -103,7 +111,7 @@ namespace TVGL.IOFunctions
         /// <returns>System.String.</returns>
         protected static string GetNameFromFileName(string filename)
         {
-            var startIndex = filename.LastIndexOf('/')+1;
+            var startIndex = filename.LastIndexOf('/') + 1;
             var endIndex = filename.IndexOf('.', startIndex);
             if (endIndex == -1) endIndex = filename.Length - 1;
             return filename.Substring(startIndex, endIndex - startIndex);
@@ -204,6 +212,7 @@ namespace TVGL.IOFunctions
             do
             {
                 line = reader.ReadLine();
+                if (reader.EndOfStream) break;
             } while (string.IsNullOrWhiteSpace(line) || line.StartsWith("\0") || line.StartsWith("#") ||
                      line.StartsWith("!")
                      || line.StartsWith("$"));
@@ -232,7 +241,11 @@ namespace TVGL.IOFunctions
                 case FileType.AMF:
                     return AMFFileData.Save(stream, solids);
                 case FileType.ThreeMF:
-                    return ThreeMFFileData.Save(stream, solids);
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
+                  return ThreeMFFileData.Save(stream, solids);
+#endif
                 case FileType.OFF:
                     return OFFFileData.Save(stream, solids);
                 case FileType.PLY:
