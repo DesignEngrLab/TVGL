@@ -28,9 +28,10 @@ namespace TVGL
         /// </summary>
         /// <param name="loops"></param>
         /// <param name="normal"></param>
+        /// <param name="triangleFaceList"></param>
         /// <param name="ignoreNegativeSpace"></param>
         /// <returns></returns>
-        public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
+        public static List<Vertex[]> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
@@ -49,7 +50,7 @@ namespace TVGL
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<Vertex[]> Run(List<Point[]> points2D, bool[] isPositive, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
+        public static List<Vertex[]> Run(IList<Point[]> points2D, bool[] isPositive, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -810,14 +811,14 @@ namespace TVGL
         /// <param name="isPositive"></param>
         /// <param name="isDirectionalityKnown"></param>
         /// <returns></returns>
-        public static List<List<int>> OrderLoops(List<List<Vertex>> loops, double[] normal, ref bool[] isPositive, bool isDirectionalityKnown = false)
+        public static List<List<int>> OrderLoops(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, ref bool[] isPositive, bool isDirectionalityKnown = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
             return OrderLoops2D(points2D, ref isPositive, isDirectionalityKnown);
         }
 
-        private static List<List<int>> OrderLoops2D(List<Point[]> points2D, ref bool[] isPositive, bool isDirectionalityKnown = false)
+        private static List<List<int>> OrderLoops2D(IList<Point[]> points2D, ref bool[] isPositive, bool isDirectionalityKnown = false)
         {
             var orderedLoops2D = new List<List<int>>();
             const int attempts = 1;
