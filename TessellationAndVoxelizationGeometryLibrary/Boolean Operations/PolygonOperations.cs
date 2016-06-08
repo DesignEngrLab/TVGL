@@ -78,6 +78,7 @@ namespace TVGL.Boolean_Operations
 
 namespace TVGL.Boolean_Operations.Clipper
 {
+    using StarMathLib;
     using Path = List<IntPoint>;
     using Paths = List<List<IntPoint>>;
 
@@ -390,7 +391,7 @@ namespace TVGL.Boolean_Operations.Clipper
         protected const int Skip = -2;
         protected const int Unassigned = -1;
         protected const double Tolerance = 1.0E-20;
-        internal static bool near_zero(double val) { return (val > -Tolerance) && (val < Tolerance); }
+        //  internal static bool near_zero(double val) { return (val > -Tolerance) && (val < Tolerance); }
 
         internal const long LoRange = 0x3FFFFFFF;
         internal const long HiRange = 0x3FFFFFFFFFFFFFFFL;
@@ -4043,8 +4044,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
         internal double ArcTolerance { get; set; }
         internal double MiterLimit { get; set; }
-
-        private const double two_pi = Math.PI * 2;
+        
         private const double def_arc_tolerance = 0.25;
 
         internal ClipperOffset(
@@ -4063,11 +4063,6 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal static long Round(double value)
-        {
-            return value < 0 ? (long)(value - 0.5) : (long)(value + 0.5);
-        }
-        //------------------------------------------------------------------------------
 
         internal void AddPath(Path path, JoinType joinType, EndType endType)
         {
@@ -4167,7 +4162,7 @@ namespace TVGL.Boolean_Operations.Clipper
             delta = delta;
 
             //if Zero offset, just copy any CLOSED polygons to p and return ...
-            if (Clipper.near_zero(delta))
+            if (delta.IsNegligible())
             {
                 destPolys.Capacity = polyNodes.ChildCount;
                 for (int i = 0; i < polyNodes.ChildCount; i++)
@@ -4192,9 +4187,9 @@ namespace TVGL.Boolean_Operations.Clipper
                 y = ArcTolerance;
             //see offset_triginometry2.svg in the documentation folder ...
             double steps = Math.PI / Math.Acos(1 - y / Math.Abs(delta));
-            sin = Math.Sin(two_pi / steps);
-            cos = Math.Cos(two_pi / steps);
-            StepsPerRad = steps / two_pi;
+            sin = Math.Sin(Constants.TwoPi / steps);
+            cos = Math.Cos(Constants.TwoPi / steps);
+            StepsPerRad = steps / Constants.TwoPi;
             if (delta < 0.0) sin = -sin;
 
             destPolys.Capacity = polyNodes.ChildCount * 2;
@@ -4219,8 +4214,8 @@ namespace TVGL.Boolean_Operations.Clipper
                         for (int j = 1; j <= steps; j++)
                         {
                             destPoly.Add(new IntPoint(
-                              Round(srcPoly[0].X + X * delta),
-                              Round(srcPoly[0].Y + Y * delta)));
+                                (long)Math.Round(srcPoly[0].X + X * delta),
+                                (long)Math.Round(srcPoly[0].Y + Y * delta)));
                             double X2 = X;
                             X = X * cos - sin * Y;
                             Y = X2 * sin + Y * cos;
@@ -4232,8 +4227,8 @@ namespace TVGL.Boolean_Operations.Clipper
                         for (int j = 0; j < 4; ++j)
                         {
                             destPoly.Add(new IntPoint(
-                              Round(srcPoly[0].X + X * delta),
-                              Round(srcPoly[0].Y + Y * delta)));
+                          (long)Math.Round(srcPoly[0].X + X * delta),
+                          (long)Math.Round(srcPoly[0].Y + Y * delta)));
                             if (X < 0) X = 1;
                             else if (Y < 0) Y = 1;
                             else X = -1;
@@ -4288,11 +4283,11 @@ namespace TVGL.Boolean_Operations.Clipper
                     if (node.MEndtype == EndType.OpenButt)
                     {
                         int j = len - 1;
-                        pt1 = new IntPoint((long)Round(srcPoly[j].X + normals[j].X *
-                          delta), (long)Round(srcPoly[j].Y + normals[j].Y * delta));
+                        pt1 = new IntPoint((long)Math.Round(srcPoly[j].X + normals[j].X *
+                          delta), (long)Math.Round(srcPoly[j].Y + normals[j].Y * delta));
                         destPoly.Add(pt1);
-                        pt1 = new IntPoint((long)Round(srcPoly[j].X - normals[j].X *
-                          delta), (long)Round(srcPoly[j].Y - normals[j].Y * delta));
+                        pt1 = new IntPoint((long)Math.Round(srcPoly[j].X - normals[j].X *
+                          delta), (long)Math.Round(srcPoly[j].Y - normals[j].Y * delta));
                         destPoly.Add(pt1);
                     }
                     else
@@ -4319,11 +4314,11 @@ namespace TVGL.Boolean_Operations.Clipper
 
                     if (node.MEndtype == EndType.OpenButt)
                     {
-                        pt1 = new IntPoint((long)Round(srcPoly[0].X - normals[0].X * delta),
-                          (long)Round(srcPoly[0].Y - normals[0].Y * delta));
+                        pt1 = new IntPoint((long)Math.Round(srcPoly[0].X - normals[0].X * delta),
+                          (long)Math.Round(srcPoly[0].Y - normals[0].Y * delta));
                         destPoly.Add(pt1);
-                        pt1 = new IntPoint((long)Round(srcPoly[0].X + normals[0].X * delta),
-                          (long)Round(srcPoly[0].Y + normals[0].Y * delta));
+                        pt1 = new IntPoint((long)Math.Round(srcPoly[0].X + normals[0].X * delta),
+                          (long)Math.Round(srcPoly[0].Y + normals[0].Y * delta));
                         destPoly.Add(pt1);
                     }
                     else
@@ -4426,8 +4421,8 @@ namespace TVGL.Boolean_Operations.Clipper
                 double cosA = (normals[k].X * normals[j].X + normals[j].Y * normals[k].Y);
                 if (cosA > 0) // angle ==> 0 degrees
                 {
-                    destPoly.Add(new IntPoint(Round(srcPoly[j].X + normals[k].X * delta),
-                      Round(srcPoly[j].Y + normals[k].Y * delta)));
+                    destPoly.Add(new IntPoint((long)Math.Round(srcPoly[j].X + normals[k].X * delta),
+                      (long)Math.Round(srcPoly[j].Y + normals[k].Y * delta)));
                     return;
                 }
                 //else angle ==> 180 degrees   
@@ -4437,11 +4432,11 @@ namespace TVGL.Boolean_Operations.Clipper
 
             if (sinA * delta < 0)
             {
-                destPoly.Add(new IntPoint(Round(srcPoly[j].X + normals[k].X * delta),
-                  Round(srcPoly[j].Y + normals[k].Y * delta)));
+                destPoly.Add(new IntPoint((long)Math.Round(srcPoly[j].X + normals[k].X * delta),
+                (long)Math.Round(srcPoly[j].Y + normals[k].Y * delta)));
                 destPoly.Add(srcPoly[j]);
-                destPoly.Add(new IntPoint(Round(srcPoly[j].X + normals[j].X * delta),
-                  Round(srcPoly[j].Y + normals[j].Y * delta)));
+                destPoly.Add(new IntPoint((long)Math.Round(srcPoly[j].X + normals[j].X * delta),
+                 (long)Math.Round(srcPoly[j].Y + normals[j].Y * delta)));
             }
             else
                 switch (jointype)
@@ -4465,19 +4460,19 @@ namespace TVGL.Boolean_Operations.Clipper
             double dx = Math.Tan(Math.Atan2(sinA,
                 normals[k].X * normals[j].X + normals[k].Y * normals[j].Y) / 4);
             destPoly.Add(new IntPoint(
-                Round(srcPoly[j].X + delta * (normals[k].X - normals[k].Y * dx)),
-                Round(srcPoly[j].Y + delta * (normals[k].Y + normals[k].X * dx))));
+            (long)Math.Round(srcPoly[j].X + delta * (normals[k].X - normals[k].Y * dx)),
+            (long)Math.Round(srcPoly[j].Y + delta * (normals[k].Y + normals[k].X * dx))));
             destPoly.Add(new IntPoint(
-                Round(srcPoly[j].X + delta * (normals[j].X + normals[j].Y * dx)),
-                Round(srcPoly[j].Y + delta * (normals[j].Y - normals[j].X * dx))));
+(long)Math.Round(srcPoly[j].X + delta * (normals[j].X + normals[j].Y * dx)),
+            (long)Math.Round(srcPoly[j].Y + delta * (normals[j].Y - normals[j].X * dx))));
         }
         //------------------------------------------------------------------------------
 
         private void DoMiter(int j, int k, double r)
         {
             double q = delta / r;
-            destPoly.Add(new IntPoint(Round(srcPoly[j].X + (normals[k].X + normals[j].X) * q),
-                Round(srcPoly[j].Y + (normals[k].Y + normals[j].Y) * q)));
+            destPoly.Add(new IntPoint((long)Math.Round(srcPoly[j].X + (normals[k].X + normals[j].X) * q),
+                (long)Math.Round(srcPoly[j].Y + (normals[k].Y + normals[j].Y) * q)));
         }
         //------------------------------------------------------------------------------
 
@@ -4485,21 +4480,21 @@ namespace TVGL.Boolean_Operations.Clipper
         {
             double a = Math.Atan2(sinA,
             normals[k].X * normals[j].X + normals[k].Y * normals[j].Y);
-            int steps = Math.Max((int)Round(StepsPerRad * Math.Abs(a)), 1);
+            int steps = Math.Max((int)Math.Round(StepsPerRad * Math.Abs(a)), 1);
 
             double X = normals[k].X, Y = normals[k].Y, X2;
             for (int i = 0; i < steps; ++i)
             {
                 destPoly.Add(new IntPoint(
-                    Round(srcPoly[j].X + X * delta),
-                    Round(srcPoly[j].Y + Y * delta)));
+               (long)Math.Round(srcPoly[j].X + X * delta),
+               (long)Math.Round(srcPoly[j].Y + Y * delta)));
                 X2 = X;
                 X = X * cos - sin * Y;
                 Y = X2 * sin + Y * cos;
             }
             destPoly.Add(new IntPoint(
-            Round(srcPoly[j].X + normals[j].X * delta),
-            Round(srcPoly[j].Y + normals[j].Y * delta)));
+          (long)Math.Round(srcPoly[j].X + normals[j].X * delta),
+            (long)Math.Round(srcPoly[j].Y + normals[j].Y * delta)));
         }
         //------------------------------------------------------------------------------
     }

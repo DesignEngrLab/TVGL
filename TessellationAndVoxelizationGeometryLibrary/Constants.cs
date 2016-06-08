@@ -58,7 +58,7 @@ namespace TVGL
         /// <summary>
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
-        public const double BaseTolerance = 1E-7;
+        public const double BaseTolerance = 1E-9;
 
 
         /// <summary>
@@ -75,6 +75,9 @@ namespace TVGL
         ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-1;
+
+
+        internal const double TwoPi = 2 * Math.PI;
 
         /// <summary>
         ///     Finds the index.
