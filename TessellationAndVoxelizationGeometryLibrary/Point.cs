@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using MIConvexHull;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -61,7 +62,7 @@ namespace TVGL
         /// <value>The coordinates or position.</value>
         public double[] Position
         {
-            get { return new[] {X, Y, Z}; }
+            get { return new[] { X, Y, Z }; }
             set
             {
                 X = value[0];
@@ -77,7 +78,7 @@ namespace TVGL
         /// <exception cref="Exception">Cannot set the value of a point with an array with more than 2 values.</exception>
         public double[] Position2D
         {
-            get { return new[] {X, Y}; }
+            get { return new[] { X, Y }; }
             set
             {
                 X = value[0];
@@ -89,7 +90,21 @@ namespace TVGL
         }
 
         #endregion
+        public static bool operator ==(Point a, Point b)
+        {
+            if (a == b) return true;
+            if (a == null) return false;
+            if (b == null) return false;
+            return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
+        }
 
+        public static bool operator !=(Point a, Point b)
+        {
+            if (a == b) return false;
+            if (a == null) return true;
+            if (b == null) return true;
+            return !a.X.IsPracticallySame(b.X) || !a.Y.IsPracticallySame(b.Y);
+        }
         #region Constructor
 
         /// <summary>
@@ -97,7 +112,7 @@ namespace TVGL
         /// </summary>
         /// <param name="v">The v.</param>
         public Point(Vertex v)
-            : this(v, v.Position[0], v.Position[1], v.Position[2])
+                : this(v, v.Position[0], v.Position[1], v.Position[2])
         {
         }
 
@@ -121,7 +136,7 @@ namespace TVGL
         /// <param name="z">The z.</param>
         public Point(Vertex vertex, double x, double y, double z)
         {
-            References = new List<Vertex> {vertex};
+            References = new List<Vertex> { vertex };
             X = x;
             Y = y;
             Z = z;
