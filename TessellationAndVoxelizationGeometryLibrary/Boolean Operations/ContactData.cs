@@ -75,7 +75,31 @@ namespace TVGL
             OnSideContactFaces = onSideContactFaces;
             PositiveLoops = positiveLoops;
             NegativeLoops = negativeLoops;
+            _vertices = new List<Vertex>();
         }
+
+        /// <summary>
+        /// Gets the vertices belonging to this solid
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<Vertex> AllVertices()
+        {
+            if (_vertices.Any()) return _vertices;
+
+            //Find all the vertices for this solid.
+            var vertexHash = new HashSet<Vertex>();
+            var allFaces = new List<PolygonalFace>(OnSideFaces);
+            allFaces.AddRange(OnSideContactFaces);
+            foreach (
+                var vertex in allFaces.SelectMany(face => face.Vertices.Where(vertex => !vertexHash.Contains(vertex))))
+            {
+                vertexHash.Add(vertex);
+            }
+            _vertices = vertexHash;
+            return _vertices;
+        }
+
+        private IEnumerable<Vertex> _vertices;
 
         /// <summary>
         /// Gets the positive loops.

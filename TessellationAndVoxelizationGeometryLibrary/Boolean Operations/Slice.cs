@@ -30,8 +30,6 @@ namespace TVGL.Boolean_Operations
         public static void OnFlat(TessellatedSolid ts, Flat plane,
             out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
-            positiveSideSolids = new List<TessellatedSolid>();
-            negativeSideSolids = new List<TessellatedSolid>();
             ContactData contactData;
             GetContactData(ts, plane, out contactData);
             MakeSolids(contactData, out positiveSideSolids, out negativeSideSolids);
