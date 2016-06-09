@@ -16,7 +16,6 @@ namespace TVGL.Boolean_Operations
     public static class Slice
     {
         #region Define Contact at a Flat Plane
-
         /// <summary>
         /// This slice function makes a seperate cut for the positive and negative side,
         /// at a specified offset in both directions. It rebuilds straddle triangles, 
@@ -33,16 +32,64 @@ namespace TVGL.Boolean_Operations
         {
             positiveSideSolids = new List<TessellatedSolid>();
             negativeSideSolids = new List<TessellatedSolid>();
+            ContactData contactData;
+            GetContactData(ts, plane, out contactData);
+            MakeSolids(contactData, out positiveSideSolids, out negativeSideSolids);
+        }
+
+        /// <summary>
+        /// Gets the contact data for a slice, without making the individual solids.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="plane"></param>
+        /// <param name="contactData"></param>
+        public static void GetContactData(TessellatedSolid ts, Flat plane, out ContactData contactData)
+        { 
+            
             List<PolygonalFace> positiveSideFaces;
             List<PolygonalFace> negativeSideFaces;
             List<Loop> positiveSideLoops;
             List<Loop> negativeSideLoops;
             var isSuccessful = GetLoops(ts, plane, out positiveSideFaces, out negativeSideFaces, out positiveSideLoops, out negativeSideLoops);
-            if (!isSuccessful) return;
-            var contactDataForEachPositiveSolid = MakeContactDataForEachSolid(ts, positiveSideLoops, positiveSideFaces, plane.Normal);
-            positiveSideSolids = contactDataForEachPositiveSolid.Select(contactData => MakeSolid(plane.Normal.multiply(-1), contactData)).ToList();
-            var contactDataForEachNegativeSolid = MakeContactDataForEachSolid(ts, negativeSideLoops, negativeSideFaces, plane.Normal);
-            negativeSideSolids = contactDataForEachNegativeSolid.Select(contactData => MakeSolid(plane.Normal, contactData)).ToList();
+            if (!isSuccessful)
+            {
+                contactData = null;
+                return;
+            }
+            var positiveSideContactData = MakeContactDataForEachSolid(ts, positiveSideLoops, positiveSideFaces, plane.Normal);
+            var negativeSideContactData = MakeContactDataForEachSolid(ts, negativeSideLoops, negativeSideFaces, plane.Normal);
+            contactData = new ContactData(positiveSideContactData, negativeSideContactData, plane);
+        }
+
+        /// <summary>
+        /// Returns lists of solids, given contact data for this slice
+        /// </summary>
+        /// <param name="contactData"></param>
+        /// <param name="positiveSideSolids"></param>
+        /// <param name="negativeSideSolids"></param>
+        public static void MakeSolids(ContactData contactData, out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
+        {
+            var normal = contactData.Plane.Normal;
+            positiveSideSolids = contactData.PositiveSideContactData.Select(solidContactData => MakeSolid(solidContactData, normal.multiply(-1))).ToList();
+            negativeSideSolids = contactData.NegativeSideContactData.Select(solidContactData => MakeSolid(solidContactData, normal)).ToList();
+        }
+
+        /// <summary>
+        /// Takes the loops and faces from GetLoops and outputs watertight solids.
+        /// </summary>
+        /// <param name="normal"></param>
+        /// <param name="solidContactData"></param>
+        private static TessellatedSolid MakeSolid(SolidContactData solidContactData, double[] normal)
+        {
+            var allOnSideFaces = new List<PolygonalFace>(solidContactData.AllOnSideFaces);
+            //3. Triangulate that empty space and add to list 
+            List<List<Vertex[]>> triangleFaceList;
+            var onSideVertexLoops = new List<IEnumerable<Vertex>>();
+            onSideVertexLoops.AddRange(solidContactData.AllLoops.Select(n => n.VertexLoop));
+            var triangles = TriangulatePolygon.Run(onSideVertexLoops, normal, out triangleFaceList);
+            allOnSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, normal, false){CreatedInFunction = "Slice4: Triangulation"}));
+            //Create a new solid
+            return new TessellatedSolid(allOnSideFaces);
         }
 
         /// <summary>
@@ -57,8 +104,8 @@ namespace TVGL.Boolean_Operations
         /// <param name="negativeSideFaces"></param>
         /// <param name="positiveSideLoops"></param>
         /// <param name="negativeSideLoops"></param>
-        public static bool GetLoops(TessellatedSolid ts, Flat plane, 
-            out List<PolygonalFace> positiveSideFaces, out List<PolygonalFace> negativeSideFaces, 
+        private static bool GetLoops(TessellatedSolid ts, Flat plane,
+            out List<PolygonalFace> positiveSideFaces, out List<PolygonalFace> negativeSideFaces,
             out List<Loop> positiveSideLoops, out List<Loop> negativeSideLoops)
         {
             positiveSideFaces = new List<PolygonalFace>();
@@ -87,30 +134,12 @@ namespace TVGL.Boolean_Operations
             }
             DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces,
                 out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
-            
+
             foreach (var face in negativeSideFaces)
             {
                 face.CreatedInFunction = "Original Negative Side Face";
             }
             return true;
-        }
-
-        /// <summary>
-        /// Takes the loops and faces from GetLoops and outputs watertight solids.
-        /// </summary>
-        /// <param name="normal"></param>
-        /// <param name="solidContactData"></param>
-        public static TessellatedSolid MakeSolid(double[] normal, ContactData solidContactData)
-        {
-            var allOnSideFaces = new List<PolygonalFace>(solidContactData.AllOnSideFaces);
-            //3. Triangulate that empty space and add to list 
-            List<List<Vertex[]>> triangleFaceList;
-            var onSideVertexLoops = new List<IEnumerable<Vertex>>();
-            onSideVertexLoops.AddRange(solidContactData.AllLoops.Select(n => n.VertexLoop));
-            var triangles = TriangulatePolygon.Run(onSideVertexLoops, normal, out triangleFaceList);
-            allOnSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, normal, false){CreatedInFunction = "Slice4: Triangulation"}));
-            //Create a new solid
-            return new TessellatedSolid(allOnSideFaces);
         }
 
         /// <summary>
@@ -120,11 +149,13 @@ namespace TVGL.Boolean_Operations
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="onSideLoops"></param>
+        /// <param name="onSideFaces"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        private static List<ContactData> MakeContactDataForEachSolid(TessellatedSolid ts, List<Loop> onSideLoops, List<PolygonalFace> onSideFaces, double[] normal)
+        private static IEnumerable<SolidContactData> MakeContactDataForEachSolid(TessellatedSolid ts, 
+            IList<Loop> onSideLoops, IEnumerable<PolygonalFace> onSideFaces, double[] normal)
         {
-            var contactDataForEachSolid = new List<ContactData>();
+            var contactDataForEachSolid = new List<SolidContactData>();
             var hashSetFaces = new HashSet<PolygonalFace>(onSideFaces);
             //Order the loops into groups and determine positive or negative for each loop 
             //Each group consists of one positive loop, but may include no or many negative loops.
@@ -214,7 +245,7 @@ namespace TVGL.Boolean_Operations
                         if (notStraddleEdge) stack.Push(adjacentFace);
                     }
                 }
-                contactDataForEachSolid.Add(new ContactData(allLoopsBelongingToSolid, facesBelongingToSolid.ToList()));
+                contactDataForEachSolid.Add(new SolidContactData(allLoopsBelongingToSolid, facesBelongingToSolid.ToList()));
             } 
             return contactDataForEachSolid;
         }

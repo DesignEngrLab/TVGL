@@ -7,19 +7,58 @@ using StarMathLib;
 namespace TVGL
 {
     /// <summary>
-    /// A ContactData object represents a 2D path on the surface of the tessellated solid. 
-    /// It is notably comprised of loops (both positive and negative). Each subvolume
-    /// created from a slice has its own contact data.
+    /// A ContactData that stores all the necessary face information from a slice
+    /// to be able to produce solids.
     /// </summary>
     public class ContactData
     {
+        internal ContactData(IEnumerable<SolidContactData> positiveSideContactData,
+            IEnumerable<SolidContactData> negativeSideContactData, Flat plane)
+        {
+            PositiveSideContactData = new List<SolidContactData>(positiveSideContactData);
+            NumPositiveSideSolids = PositiveSideContactData.Count();
+            NegativeSideContactData = new List<SolidContactData>(negativeSideContactData);
+            NumNegativeSideSolids= NegativeSideContactData.Count();
+            Plane = plane;
+        }
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="ContactData" /> class.
-        /// Loop directionality must be set prior to initiallizing a new instance.
+        /// Gets the list of positive side contact data
         /// </summary>
-        /// <param name="loops">The loops.</param>
-        /// <param name="onSideFaces"></param>
-        internal ContactData(IEnumerable<Loop> loops, IEnumerable<PolygonalFace> onSideFaces)
+        /// <value>The positive loops.</value>
+        public readonly IEnumerable<SolidContactData> PositiveSideContactData;
+
+        /// <summary>
+        /// Gets the list of negative side contact data
+        /// </summary>
+        /// <value>The positive loops.</value>
+        public readonly IEnumerable<SolidContactData> NegativeSideContactData;
+
+        /// <summary>
+        /// Gets the number of positive side solids
+        /// </summary>
+        /// <value>The positive loops.</value>
+        public readonly int NumPositiveSideSolids;
+
+        /// <summary>
+        /// Gets the number of negative side solids
+        /// </summary>
+        /// <value>The positive loops.</value>
+        public readonly int NumNegativeSideSolids;
+
+        /// <summary>
+        /// Gets the plane for this contact data 
+        /// </summary>
+        /// <value>The positive loops.</value>
+        public readonly Flat Plane;
+    }
+
+    /// <summary>
+    /// Stores the information 
+    /// </summary>
+    public class SolidContactData
+    {
+            internal SolidContactData(IEnumerable<Loop> loops, IEnumerable<PolygonalFace> onSideFaces)
         {
             OnSideFaces = new List<PolygonalFace>(onSideFaces);
             var onSideContactFaces = new List<PolygonalFace>();
