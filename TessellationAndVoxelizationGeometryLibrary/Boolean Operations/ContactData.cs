@@ -76,6 +76,7 @@ namespace TVGL
             PositiveLoops = positiveLoops;
             NegativeLoops = negativeLoops;
             _vertices = new List<Vertex>();
+            _volume = 0;
         }
 
         /// <summary>
@@ -90,8 +91,7 @@ namespace TVGL
             var vertexHash = new HashSet<Vertex>();
             var allFaces = new List<PolygonalFace>(OnSideFaces);
             allFaces.AddRange(OnSideContactFaces);
-            foreach (
-                var vertex in allFaces.SelectMany(face => face.Vertices.Where(vertex => !vertexHash.Contains(vertex))))
+            foreach (var vertex in allFaces.SelectMany(face => face.Vertices.Where(vertex => !vertexHash.Contains(vertex))))
             {
                 vertexHash.Add(vertex);
             }
@@ -100,6 +100,20 @@ namespace TVGL
         }
 
         private IEnumerable<Vertex> _vertices;
+
+        /// <summary>
+        /// Gets the vertices belonging to this solid
+        /// </summary>
+        /// <returns></returns>
+        public double Volume()
+        {
+            if (_volume > 0) return _volume;
+
+            
+            return _volume;
+        }
+
+        private double _volume;
 
         /// <summary>
         /// Gets the positive loops.
