@@ -98,24 +98,23 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MIConvexHull, Version=1.0.10.1021, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.0.10.1045\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="StarMath">
-      <HintPath>..\packages\StarMath.2.0.16.0423\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
-    </Reference>
+    <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />
+    <EmbeddedResource Include="Primitive Classification\NewFaRules.csv" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
-    <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />
-    <EmbeddedResource Include="Primitive Classification\NewFaRules.csv" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MIConvexHull">
+      <HintPath>..\packages\MIConvexHull.1.0.10.1045\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+    </Reference>
+    <Reference Include="StarMath">
+      <HintPath>..\packages\StarMath.2.0.16.0423\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

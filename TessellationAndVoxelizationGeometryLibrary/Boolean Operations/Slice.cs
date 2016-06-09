@@ -165,7 +165,7 @@ namespace TVGL.Boolean_Operations
                 groupsOfLoops.RemoveAt(0);
                 //Push all the adjacent onside faces to a stack
                 //Note that blind pockets and holes are also included in this loop, since the onside faces for every loop in the group are included
-                var straddleFaceIndices = groupOfLoops.StraddleFaceIndices;
+                var straddleFaceIndices = new HashSet<int>(groupOfLoops.StraddleFaceIndices);
                 var facesBelongingToSolid = new HashSet<PolygonalFace>();
                 var stack = new Stack<PolygonalFace>();
                 var usedFaces = new HashSet<PolygonalFace>();

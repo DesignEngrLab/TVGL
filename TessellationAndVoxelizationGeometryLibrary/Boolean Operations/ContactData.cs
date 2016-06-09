@@ -22,32 +22,32 @@ namespace TVGL
         internal ContactData(IEnumerable<Loop> loops, IEnumerable<PolygonalFace> onSideFaces)
         {
             OnSideFaces = new List<PolygonalFace>(onSideFaces);
-            OnSideContactFaces = new List<PolygonalFace>();
-            PositiveLoops = new List<Loop>();
-            NegativeLoops = new List<Loop>();
+            var onSideContactFaces = new List<PolygonalFace>();
+            var positiveLoops = new List<Loop>();
+            var negativeLoops = new List<Loop>();
             foreach (var loop in loops)
             {
                 Area += loop.Area;
-                if (loop.IsPositive) PositiveLoops.Add(loop);
-                else NegativeLoops.Add(loop);
-                foreach (var contactFace in loop.OnSideContactFaces)
-                {
-                    OnSideContactFaces.Add(contactFace);
-                }
+                if (loop.IsPositive) positiveLoops.Add(loop);
+                else negativeLoops.Add(loop);
+                onSideContactFaces.AddRange(loop.OnSideContactFaces);
             }
+            OnSideContactFaces = onSideContactFaces;
+            PositiveLoops = positiveLoops;
+            NegativeLoops = negativeLoops;
         }
 
         /// <summary>
         /// Gets the positive loops.
         /// </summary>
         /// <value>The positive loops.</value>
-        public readonly ICollection<Loop> PositiveLoops;
+        public readonly IEnumerable<Loop> PositiveLoops;  
 
         /// <summary>
         /// Gets the loops of negative area (i.e. holes).
         /// </summary>
         /// <value>The negative loops.</value>                    
-        public readonly ICollection<Loop> NegativeLoops;
+        public readonly IEnumerable<Loop> NegativeLoops;
 
         /// <summary>
         /// Gets all loops in one list (the positive loops are followed by the
@@ -72,12 +72,12 @@ namespace TVGL
         /// <summary>
         /// List of pre-existing faces on this side of the cutting plane
         /// </summary>
-        public readonly ICollection<PolygonalFace> OnSideFaces;
+        public readonly IEnumerable<PolygonalFace> OnSideFaces;
 
         /// <summary>
         /// The faces that were formed on-side for all the loops in this solid. 
         /// </summary>
-        public readonly ICollection<PolygonalFace> OnSideContactFaces;
+        public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
 
         /// <summary>
         /// Gets all faces belonging to this solid's contact data (All faces except those that will be triangulated in plane)
@@ -130,40 +130,40 @@ namespace TVGL
         /// <summary>
         /// The faces that were formed on-side for all the loops in this group. 
         /// </summary>
-        public readonly ICollection<PolygonalFace> OnSideContactFaces;
+        public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
 
         /// <summary>
         /// A list of the idices of the faces that were adjacent and onside to the straddle faces
         /// </summary>
-        public readonly ISet<int> AdjOnsideFaceIndices;
+        public readonly IEnumerable<int> AdjOnsideFaceIndices;
 
         /// <summary>
         /// A list of the idices of the straddle faces 
         /// </summary>
-        public readonly ISet<int> StraddleFaceIndices;
+        public readonly IEnumerable<int> StraddleFaceIndices;
 
         internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops = null)
         {
-            OnSideContactFaces = new List<PolygonalFace>(positiveLoop.OnSideContactFaces);
-            StraddleFaceIndices = new HashSet<int>(positiveLoop.StraddleFaceIndices);
-            AdjOnsideFaceIndices = new HashSet<int>(positiveLoop.AdjOnsideFaceIndices);
+            var onSideContactFaces = new List<PolygonalFace>(positiveLoop.OnSideContactFaces);
+            var straddleFaceIndices = new HashSet<int>(positiveLoop.StraddleFaceIndices);
+            var adjOnsideFaceIndices = new HashSet<int>(positiveLoop.AdjOnsideFaceIndices);
             PositiveLoop = positiveLoop;
             if (negativeLoops == null) return;
             NegativeLoops = new List<Loop>(negativeLoops);
             foreach (var negativeLoop in NegativeLoops)
             {
-                foreach (var onSideContactFace in negativeLoop.OnSideContactFaces)
-                {
-                    OnSideContactFaces.Add(onSideContactFace);
-                }
+                onSideContactFaces.AddRange(negativeLoop.OnSideContactFaces);
+                OnSideContactFaces = onSideContactFaces;
                 foreach (var straddleFaceIndex in negativeLoop.StraddleFaceIndices)
                 {
-                    StraddleFaceIndices.Add(straddleFaceIndex);
+                    straddleFaceIndices.Add(straddleFaceIndex);
                 }
+                StraddleFaceIndices = straddleFaceIndices;
                 foreach (var adjOnsideFaceIndex in negativeLoop.AdjOnsideFaceIndices)
                 {
-                    AdjOnsideFaceIndices.Add(adjOnsideFaceIndex);
+                    adjOnsideFaceIndices.Add(adjOnsideFaceIndex);
                 }
+                AdjOnsideFaceIndices = adjOnsideFaceIndices;
             }
         }
     }
@@ -209,12 +209,12 @@ namespace TVGL
         /// <summary>
         /// A list of the idices of the faces that were adjacent and onside to the straddle faces
         /// </summary>
-        public readonly ISet<int> AdjOnsideFaceIndices;
+        public readonly IEnumerable<int> AdjOnsideFaceIndices;
 
         /// <summary>
         /// A list of the idices of the straddle faces 
         /// </summary>
-        public readonly ISet<int> StraddleFaceIndices;
+        public readonly IEnumerable<int> StraddleFaceIndices;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Loop" /> class.
@@ -226,7 +226,7 @@ namespace TVGL
         /// <param name="adjOnsideFaceIndices"></param>
         /// <param name="isClosed">is closed.</param>
         internal Loop(ICollection<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, double[] normal, 
-            ISet<int> straddleFaceIndices, ISet<int> adjOnsideFaceIndices, bool isClosed = true)
+            IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, bool isClosed = true)
         {
             if (!IsClosed) Message.output("loop not closed!",3);
             VertexLoop = new List<Vertex>(vertexLoop);
@@ -234,12 +234,8 @@ namespace TVGL
             IsClosed = isClosed;
             Area = MiscFunctions.AreaOf3DPolygon(vertexLoop, normal);
             Perimeter = MiscFunctions.Perimeter(vertexLoop);
-            AdjOnsideFaceIndices = adjOnsideFaceIndices;
-            StraddleFaceIndices = straddleFaceIndices;
-            if (straddleFaceIndices.Any(adjOnsideFaceIndices.Contains))
-            {
-                throw new Exception("Face cannot be both a straddle face and an adjacent onside face.");
-            }
+            AdjOnsideFaceIndices = new List<int>(adjOnsideFaceIndices);
+            StraddleFaceIndices = new List<int>(straddleFaceIndices);
         }
 
         
