@@ -43,22 +43,41 @@ namespace TVGL.Boolean_Operations
         /// <param name="ts"></param>
         /// <param name="plane"></param>
         /// <param name="contactData"></param>
-        public static void GetContactData(TessellatedSolid ts, Flat plane, out ContactData contactData)
+        public static bool GetContactData(TessellatedSolid ts, Flat plane, out ContactData contactData)
         { 
-            
             List<PolygonalFace> positiveSideFaces;
             List<PolygonalFace> negativeSideFaces;
             List<Loop> positiveSideLoops;
             List<Loop> negativeSideLoops;
-            var isSuccessful = GetLoops(ts, plane, out positiveSideFaces, out negativeSideFaces, out positiveSideLoops, out negativeSideLoops);
+
+            #region Get the loops
+            //1. Offset positive and get the positive faces.
+            //Straddle faces are split into 2 or 3 new faces.
+            //Note that this ensures that the loops are made from all new vertices
+            //and are unique for the positive and negative sides.
+            List<double> distancesToPlane;
+            double posPlaneShift;
+            double negPlaneShift;
+            var isSuccessful = ShiftPlaneForRobustCut(ts, plane, out distancesToPlane, out posPlaneShift,
+                out negPlaneShift);
             if (!isSuccessful)
             {
                 contactData = null;
-                return;
+                return false; //This plane does not slice through the solid, or an error occured from the plane shift
             }
+            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal), out positiveSideFaces,
+                out positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift);
+            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces,
+                out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
+            #endregion
+
+            #region Create the contact data for this slice
             var positiveSideContactData = MakeContactDataForEachSolid(ts, positiveSideLoops, positiveSideFaces, plane.Normal);
             var negativeSideContactData = MakeContactDataForEachSolid(ts, negativeSideLoops, negativeSideFaces, plane.Normal);
             contactData = new ContactData(positiveSideContactData, negativeSideContactData, plane);
+            #endregion
+
+            return true;
         }
 
         /// <summary>
@@ -90,56 +109,6 @@ namespace TVGL.Boolean_Operations
             allOnSideFaces.AddRange(triangles.Select(triangle => new PolygonalFace(triangle, normal, false){CreatedInFunction = "Slice4: Triangulation"}));
             //Create a new solid
             return new TessellatedSolid(allOnSideFaces);
-        }
-
-        /// <summary>
-        /// This function returns the loops from slicing a solid along a plane. In addition,
-        /// it returns the negative and positive side faces. This function does not return
-        /// watertight solids. To get watertight solids, send the outputs from GetLoops to 
-        /// MakeSolids, or simply call OnFlat which does both.
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="plane"></param>
-        /// <param name="positiveSideFaces"></param>
-        /// <param name="negativeSideFaces"></param>
-        /// <param name="positiveSideLoops"></param>
-        /// <param name="negativeSideLoops"></param>
-        private static bool GetLoops(TessellatedSolid ts, Flat plane,
-            out List<PolygonalFace> positiveSideFaces, out List<PolygonalFace> negativeSideFaces,
-            out List<Loop> positiveSideLoops, out List<Loop> negativeSideLoops)
-        {
-            positiveSideFaces = new List<PolygonalFace>();
-            negativeSideFaces = new List<PolygonalFace>();
-            positiveSideLoops = new List<Loop>();
-            negativeSideLoops = new List<Loop>();
-            //MiscFunctions.IsSolidBroken(ts);
-            //1. Offset positive and get the positive faces.
-            //Straddle faces are split into 2 or 3 new faces.
-            //Note that this ensures that the loops are made from all new vertices
-            //and are unique for the positive and negative sides.
-            List<double> distancesToPlane;
-            double posPlaneShift;
-            double negPlaneShift;
-            var isSuccessful = ShiftPlaneForRobustCut(ts, plane, out distancesToPlane, out posPlaneShift,
-                out negPlaneShift);
-            if (!isSuccessful)
-            {
-                return false; //End with both lists of children empty;
-            }
-            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal), out positiveSideFaces,
-                out positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift);
-            foreach (var face in positiveSideFaces)
-            {
-                face.CreatedInFunction = "Original Positive Side Face";
-            }
-            DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal), out negativeSideFaces,
-                out negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
-
-            foreach (var face in negativeSideFaces)
-            {
-                face.CreatedInFunction = "Original Negative Side Face";
-            }
-            return true;
         }
 
         /// <summary>
@@ -324,8 +293,8 @@ namespace TVGL.Boolean_Operations
 
         ///Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the 
         /// halves of the straddle faces that are on this side.
-        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces, out List<Loop> loops,
-            int isPositiveSide, IList<double> distancesToPlane, double planeOffset = double.NaN)
+        private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<PolygonalFace> onSideFaces,
+            out List<Loop> loops, int isPositiveSide, IList<double> distancesToPlane, double planeOffset = double.NaN)
         {
             loops = new List<Loop>();
 
@@ -395,7 +364,7 @@ namespace TVGL.Boolean_Operations
                 }
             }
             if (straddleFaces.Count != straddleEdges.Count) throw new Exception("These should be equal for closed geometry");
-            
+
             //Get loops of straddleEdges 
             var loopsOfStraddleEdges = new List<List<StraddleEdge>>();
             var loopsOfStraddleFaceIndices = new List<HashSet<int>>();
