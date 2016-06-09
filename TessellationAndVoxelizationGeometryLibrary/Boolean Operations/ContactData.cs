@@ -32,6 +32,7 @@ namespace TVGL
                 else negativeLoops.Add(loop);
                 onSideContactFaces.AddRange(loop.OnSideContactFaces);
             }
+            //Set Immutable Lists
             OnSideContactFaces = onSideContactFaces;
             PositiveLoops = positiveLoops;
             NegativeLoops = negativeLoops;
@@ -153,18 +154,20 @@ namespace TVGL
             foreach (var negativeLoop in NegativeLoops)
             {
                 onSideContactFaces.AddRange(negativeLoop.OnSideContactFaces);
-                OnSideContactFaces = onSideContactFaces;
+                
                 foreach (var straddleFaceIndex in negativeLoop.StraddleFaceIndices)
                 {
                     straddleFaceIndices.Add(straddleFaceIndex);
                 }
-                StraddleFaceIndices = straddleFaceIndices;
                 foreach (var adjOnsideFaceIndex in negativeLoop.AdjOnsideFaceIndices)
                 {
                     adjOnsideFaceIndices.Add(adjOnsideFaceIndex);
                 }
-                AdjOnsideFaceIndices = adjOnsideFaceIndices;
             }
+            //Set immutable lists
+            OnSideContactFaces = onSideContactFaces;
+            StraddleFaceIndices = straddleFaceIndices;
+            AdjOnsideFaceIndices = adjOnsideFaceIndices;
         }
     }
 
