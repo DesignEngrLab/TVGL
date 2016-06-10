@@ -113,59 +113,49 @@ namespace TVGL.IOFunctions
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
-            var now = DateTime.Now;
-            PLYFileData plyData;
-            // Read in ASCII format
-            if (TryReadAscii(s, out plyData))
-                Message.output("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").", 3);
-            else
+                var now = DateTime.Now;
+            try
             {
-                Message.output("Unable to read in PLY file (" + (DateTime.Now - now) + ").", 1);
-                return null;
-            }
-            return new List<TessellatedSolid>
+                var reader = new StreamReader(s);
+                var plyData = new PLYFileData();
+                var line = ReadLine(reader);
+                if (!line.Contains("ply") && !line.Contains("PLY"))
+                    return null;
+                plyData.ReadHeader(reader);
+                foreach (var shapeElement in plyData.ReadInOrder)
+                {
+                    bool successful;
+                    switch (shapeElement)
+                    {
+                        case ShapeElement.Vertex:
+                            successful = plyData.ReadVertices(reader);
+                            break;
+                        case ShapeElement.Face:
+                            successful = plyData.ReadFaces(reader);
+                            break;
+                        case ShapeElement.Edge:
+                            successful = plyData.ReadEdges(reader);
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                    if (!successful) return null;
+                }
+                Message.output("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").", 3);
+
+                return new List<TessellatedSolid>
             {
                 new TessellatedSolid(filename, plyData.Vertices, plyData.FaceToVertexIndices,
                     plyData.HasColorSpecified ? plyData.Colors : null)
             };
-        }
-
-        /// <summary>
-        ///     Tries the read ASCII.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="plyData">The ply data.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
-        internal static bool TryReadAscii(Stream stream, out PLYFileData plyData)
-        {
-            var reader = new StreamReader(stream);
-            plyData = new PLYFileData();
-            var line = ReadLine(reader);
-            if (!line.Contains("ply") && !line.Contains("PLY"))
-                return false;
-            plyData.ReadHeader(reader);
-            foreach (var shapeElement in plyData.ReadInOrder)
-            {
-                bool successful;
-                switch (shapeElement)
-                {
-                    case ShapeElement.Vertex:
-                        successful = plyData.ReadVertices(reader);
-                        break;
-                    case ShapeElement.Face:
-                        successful = plyData.ReadFaces(reader);
-                        break;
-                    case ShapeElement.Edge:
-                        successful = plyData.ReadEdges(reader);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-                if (!successful) return false;
             }
-            return true;
+            catch
+            {
+                Message.output("Unable to read in PLY file (" + (DateTime.Now - now) + ").", 1);
+                return null;
+            }
         }
+        
 
         /// <summary>
         ///     Reads the edges.
@@ -192,10 +182,10 @@ namespace TVGL.IOFunctions
                 double[] numbers;
                 if (!TryParseDoubleArray(line, out numbers)) return false;
 
-                var numVerts = (int) Math.Round(numbers[0], 0);
+                var numVerts = (int)Math.Round(numbers[0], 0);
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = (int) Math.Round(numbers[1 + j], 0);
+                    vertIndices[j] = (int)Math.Round(numbers[1 + j], 0);
                 FaceToVertexIndices.Add(vertIndices);
 
                 if (ColorDescriptor.Any())
@@ -206,20 +196,20 @@ namespace TVGL.IOFunctions
                         for (var j = 0; j < ColorDescriptor.Count; j++)
                         {
                             var colorElements = ColorDescriptor[j];
-                            var value = (float) numbers[1 + numVerts + j];
+                            var value = (float)numbers[1 + numVerts + j];
                             switch (colorElements)
                             {
                                 case ColorElements.Red:
-                                    r = ColorIsFloat ? value : value/255f;
+                                    r = ColorIsFloat ? value : value / 255f;
                                     break;
                                 case ColorElements.Green:
-                                    g = ColorIsFloat ? value : value/255f;
+                                    g = ColorIsFloat ? value : value / 255f;
                                     break;
                                 case ColorElements.Blue:
-                                    b = ColorIsFloat ? value : value/255f;
+                                    b = ColorIsFloat ? value : value / 255f;
                                     break;
                                 case ColorElements.Opacity:
-                                    a = ColorIsFloat ? value : value/255f;
+                                    a = ColorIsFloat ? value : value / 255f;
                                     break;
                             }
                         }
@@ -329,9 +319,44 @@ namespace TVGL.IOFunctions
         /// <param name="solids">The solids.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
+        internal static bool Save(Stream stream, TessellatedSolid solid)
         {
-            throw new NotImplementedException();
+            try
+            {
+            var pLYFileData = new PLYFileData
+            {
+                ColorDescriptor = Enumerable.Range(0, 4).Cast<ColorElements>().ToList(),
+                HasColorSpecified =
+                    !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor))),
+                NumEdges = solid.NumberOfEdges,
+                NumFaces = solid.NumberOfFaces,
+                NumVertices = solid.NumberOfVertices
+            };
+            pLYFileData.Vertices.AddRange(solid.Vertices.Select(v => v.Position));
+            pLYFileData.FaceToVertexIndices.AddRange(solid.Faces.Select());
+       
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.WriteLine("ply");
+                    writer.WriteLine("format ascii 1.0");
+                    writer.WriteLine("comment"+ tvglDateMarkText);
+                    writer.WriteLine("element vertex "+ pLYFileData.NumVertices);
+                    writer.WriteLine("property double x");
+                    writer.WriteLine("property double y");
+                    writer.WriteLine("property double z");
+                    writer.WriteLine("element face " + pLYFileData.NumFaces);
+                    writer.WriteLine("property list uint8 int32 vertex_indices");
+                    writer.WriteLine("end_header");
+
+                }
+                Message.output("Successfully wrote 3MF file to stream.", 3);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                return false;
+            }
         }
     }
 }
