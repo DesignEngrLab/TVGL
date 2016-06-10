@@ -113,7 +113,7 @@ namespace TVGL.IOFunctions
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
-                var now = DateTime.Now;
+            var now = DateTime.Now;
             try
             {
                 var reader = new StreamReader(s);
@@ -155,7 +155,7 @@ namespace TVGL.IOFunctions
                 return null;
             }
         }
-        
+
 
         /// <summary>
         ///     Reads the edges.
@@ -288,6 +288,8 @@ namespace TVGL.IOFunctions
                 {
                     string typeString, restString;
                     ParseLine(values, out typeString, out restString);
+                    ColorIsFloat = typeString.StartsWith("float", StringComparison.OrdinalIgnoreCase)
+                                   || typeString.StartsWith("double", StringComparison.OrdinalIgnoreCase);
                     // doesn't seem like much point in checking this, it comes in many
                     // varieties like uint8 int32 vertex_indices, but it'll read in just fine
                     //if (typeString.Equals("list") && restString.Contains("uchar int vertex_index"))
@@ -305,9 +307,13 @@ namespace TVGL.IOFunctions
                              || restString.StartsWith("transp", StringComparison.OrdinalIgnoreCase)
                              || restString.Equals("a", StringComparison.OrdinalIgnoreCase))
                         ColorDescriptor.Add(ColorElements.Opacity);
+                    else if (restString.Contains("red"))
+                        ColorDescriptor.Add(ColorElements.Red);
+                    else if (restString.Contains("blue"))
+                        ColorDescriptor.Add(ColorElements.Blue);
+                    else if (restString.Contains("green"))
+                        ColorDescriptor.Add(ColorElements.Green);
                     else continue;
-                    ColorIsFloat = typeString.StartsWith("float", StringComparison.OrdinalIgnoreCase)
-                                   || typeString.StartsWith("double", StringComparison.OrdinalIgnoreCase);
                 }
             } while (!line.Equals("end_header"));
         }
@@ -323,33 +329,54 @@ namespace TVGL.IOFunctions
         {
             try
             {
-            var pLYFileData = new PLYFileData
-            {
-                ColorDescriptor = Enumerable.Range(0, 4).Cast<ColorElements>().ToList(),
-                HasColorSpecified =
-                    !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor))),
-                NumEdges = solid.NumberOfEdges,
-                NumFaces = solid.NumberOfFaces,
-                NumVertices = solid.NumberOfVertices
-            };
-            pLYFileData.Vertices.AddRange(solid.Vertices.Select(v => v.Position));
-            pLYFileData.FaceToVertexIndices.AddRange(solid.Faces.Select());
-       
                 using (var writer = new StreamWriter(stream))
                 {
                     writer.WriteLine("ply");
                     writer.WriteLine("format ascii 1.0");
-                    writer.WriteLine("comment"+ tvglDateMarkText);
-                    writer.WriteLine("element vertex "+ pLYFileData.NumVertices);
+                    writer.WriteLine("comment " + tvglDateMarkText);
+                    writer.WriteLine("element vertex " + solid.NumberOfVertices);
                     writer.WriteLine("property double x");
                     writer.WriteLine("property double y");
                     writer.WriteLine("property double z");
-                    writer.WriteLine("element face " + pLYFileData.NumFaces);
+                    writer.WriteLine("element face " + solid.NumberOfFaces);
                     writer.WriteLine("property list uint8 int32 vertex_indices");
+                    if (solid.HasUniformColor)
+                    {
+                        if (!solid.SolidColor.Equals(new Color(Constants.DefaultColor)))
+                        {
+                            writer.WriteLine("element uniform_color");
+                            writer.WriteLine("property uchar red");
+                            writer.WriteLine("property uchar green");
+                            writer.WriteLine("property uchar blue");
+                            writer.WriteLine("property uchar opacity");
+                        }
+                    }
+                    else
+                    {
+                        writer.WriteLine("property uchar red");
+                        writer.WriteLine("property uchar green");
+                        writer.WriteLine("property uchar blue");
+                        writer.WriteLine("property uchar opacity");
+                    }
                     writer.WriteLine("end_header");
 
+                    foreach (var vertex in solid.Vertices)
+                        writer.WriteLine(vertex.X + " " + vertex.Y + " " + vertex.Z);
+                    foreach (var face in solid.Faces)
+                    {
+                        var faceString = face.Vertices.Count.ToString();
+                        foreach (var v in face.Vertices)
+                            faceString += " " + v.IndexInList;
+                        if (!solid.HasUniformColor)
+                            faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
+                                          face.Color.A;
+                        writer.WriteLine(faceString);
+                    }
+                    if (solid.HasUniformColor && !solid.SolidColor.Equals(new Color(Constants.DefaultColor)))
+                        writer.WriteLine(solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
+                                          solid.SolidColor.A);
                 }
-                Message.output("Successfully wrote 3MF file to stream.", 3);
+                Message.output("Successfully wrote PLY file to stream.", 3);
                 return true;
             }
             catch (Exception exception)

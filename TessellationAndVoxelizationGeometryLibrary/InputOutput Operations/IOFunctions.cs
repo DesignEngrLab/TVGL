@@ -232,6 +232,7 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType)
         {
+            if (solids.Count == 0) return false;
             switch (fileType)
             {
                 case FileType.STL_ASCII:
@@ -247,9 +248,15 @@ namespace TVGL.IOFunctions
                     return ThreeMFFileData.Save(stream, solids);
 #endif
                 case FileType.OFF:
-                    throw new NotSupportedException("The OFF format does not support saving multiple solids to a single file.");
+                    if (solids.Count > 1)
+                        throw new NotSupportedException(
+                            "The OFF format does not support saving multiple solids to a single file.");
+                    else return OFFFileData.Save(stream, solids[0]);
                 case FileType.PLY:
-                    throw new NotSupportedException("The PLY format does not support saving multiple solids to a single file.");
+                    if (solids.Count > 1)
+                        throw new NotSupportedException(
+                            "The PLY format does not support saving multiple solids to a single file.");
+                    else return PLYFileData.Save(stream, solids[0]);
                 default:
                     return false;
             }
@@ -279,14 +286,15 @@ namespace TVGL.IOFunctions
             }
         }
 
-        protected string tvglDateMarkText
+        protected static string tvglDateMarkText
         {
             get
             {
                 var now = DateTime.Now;
                 return "created by TVGL on " + now.Year + "." + now.Month + "." + now.Day + "." + now.Hour + "." +
                        now.Minute + "." + now.Second;
-            } }
+            }
+        }
         /// <summary>
         ///     Writes the coordinates.
         /// </summary>
