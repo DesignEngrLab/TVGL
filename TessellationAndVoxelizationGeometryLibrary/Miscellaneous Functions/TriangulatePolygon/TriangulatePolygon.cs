@@ -35,7 +35,28 @@ namespace TVGL
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
-            return Run(points2D, null, out triangleFaceList, ignoreNegativeSpace);
+            List<List<int>> groupsOfLoops;
+            bool[] isPositive = null;
+            return Run2D(points2D,  out triangleFaceList, out groupsOfLoops, ref isPositive,ignoreNegativeSpace);
+        }
+
+        /// <summary>
+        /// Triangulates a list of loops into faces in O(n*log(n)) time.
+        /// </summary>
+        /// <param name="loops"></param>
+        /// <param name="normal"></param>
+        /// <param name="triangleFaceList"></param>
+        /// <param name="isPositive"></param>
+        /// <param name="ignoreNegativeSpace"></param>
+        /// <param name="groupsOfLoops"></param>
+        /// <returns></returns>
+        public static List<Vertex[]> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, out List<List<Vertex[]>> triangleFaceList, 
+            out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
+        {
+            //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
+            var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
+            isPositive = null;
+            return Run2D(points2D, out triangleFaceList, out groupsOfLoops, ref isPositive, ignoreNegativeSpace);
         }
 
         /// <summary>
@@ -46,11 +67,13 @@ namespace TVGL
         /// <param name="points2D"></param>
         /// <param name="isPositive"></param>
         /// <param name="triangleFaceList"></param>
+        /// <param name="groupsOfLoops"></param>
         /// <param name="ignoreNegativeSpace"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<Vertex[]> Run(IList<Point[]> points2D, bool[] isPositive, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
+        public static List<Vertex[]> Run2D(IList<Point[]> points2D, out List<List<Vertex[]>> triangleFaceList, 
+            out List<List<int>> groupsOfLoops, ref bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -70,6 +93,7 @@ namespace TVGL
             //Create return variables
             var triangles = new List<Vertex[]>();
             triangleFaceList = new List<List<Vertex[]>>();
+            groupsOfLoops = new List<List<int>>();
 
             //Check incomining lists
             if (isPositive != null && points2D.Count != isPositive.Length)
@@ -423,6 +447,7 @@ namespace TVGL
                         i = listPositive.FindIndex(true);
                         if (i == -1) throw new Exception("Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
                         var sortedGroup = new List<Node>(sortedLoops[i]);
+                        var group = new List<int> { sortedGroup[0].LoopID };
                         listPositive.RemoveAt(i);
                         orderedLoops.RemoveAt(i);
                         sortedLoops.RemoveAt(i);
@@ -479,6 +504,7 @@ namespace TVGL
                                     listPositive.RemoveAt(k);
                                     orderedLoops.RemoveAt(k);
                                     sortedLoops.RemoveAt(k);
+                                    group.Add(node.LoopID);
                                 }
                                 else
                                 {
@@ -718,6 +744,7 @@ namespace TVGL
                             newTriangles.AddRange(Triangulate(monotonePolygon2));
                         triangles.AddRange(newTriangles);
                         triangleFaceList.Add(newTriangles);
+                        groupsOfLoops.Add(group);
                         #endregion
                     }
                     //Check to see if the proper number of triangles were created from this set of loops
@@ -820,7 +847,6 @@ namespace TVGL
 
         private static List<List<int>> OrderLoops2D(IList<Point[]> points2D, ref bool[] isPositive, bool isDirectionalityKnown = false)
         {
-            var orderedLoops2D = new List<List<int>>();
             const int attempts = 1;
 
             #region Preprocessing

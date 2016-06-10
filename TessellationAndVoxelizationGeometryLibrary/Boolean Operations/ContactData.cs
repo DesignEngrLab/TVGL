@@ -58,9 +58,10 @@ namespace TVGL
     /// </summary>
     public class SolidContactData
     {
-            internal SolidContactData(IEnumerable<Loop> loops, IEnumerable<PolygonalFace> onSideFaces)
+        internal SolidContactData(IEnumerable<Loop> loops, IEnumerable<PolygonalFace> onSideFaces, IEnumerable<PolygonalFace> onPlaneFaces)
         {
             OnSideFaces = new List<PolygonalFace>(onSideFaces);
+            OnPlaneFaces = new List<PolygonalFace>(onPlaneFaces);
             var onSideContactFaces = new List<PolygonalFace>();
             var positiveLoops = new List<Loop>();
             var negativeLoops = new List<Loop>();
@@ -108,8 +109,9 @@ namespace TVGL
         public double Volume()
         {
             if (_volume > 0) return _volume;
-
-            
+            //Else
+            double[] center;
+            _volume = MiscFunctions.Volume(AllFaces, out center);
             return _volume;
         }
 
@@ -158,16 +160,22 @@ namespace TVGL
         public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
 
         /// <summary>
+        /// A list of the on plane faces formed by the triangulation of the loops
+        /// </summary>
+        public readonly IEnumerable<PolygonalFace> OnPlaneFaces;
+
+        /// <summary>
         /// Gets all faces belonging to this solid's contact data (All faces except those that will be triangulated in plane)
         /// </summary>
         /// <value>All loops.</value>
-        public List<PolygonalFace> AllOnSideFaces
+        public List<PolygonalFace> AllFaces
         {
             get
             {
-                var allOnSideFaces = new List<PolygonalFace>(OnSideFaces);
-                allOnSideFaces.AddRange(OnSideContactFaces);
-                return allOnSideFaces;
+                var allFaces = new List<PolygonalFace>(OnSideFaces);
+                allFaces.AddRange(OnSideContactFaces);
+                allFaces.AddRange(OnPlaneFaces);
+                return allFaces;
             }
         }
     }
@@ -220,13 +228,18 @@ namespace TVGL
         /// </summary>
         public readonly IEnumerable<int> StraddleFaceIndices;
 
-        internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops = null)
+        /// <summary>
+        /// A list of the on plane faces formed by the triangulation of the loops
+        /// </summary>
+        public readonly IEnumerable<PolygonalFace> OnPlaneFaces;
+
+        internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<PolygonalFace> onPlaneFaces)
         {
             var onSideContactFaces = new List<PolygonalFace>(positiveLoop.OnSideContactFaces);
             var straddleFaceIndices = new HashSet<int>(positiveLoop.StraddleFaceIndices);
             var adjOnsideFaceIndices = new HashSet<int>(positiveLoop.AdjOnsideFaceIndices);
+            OnPlaneFaces = new List<PolygonalFace>(onPlaneFaces);
             PositiveLoop = positiveLoop;
-            if (negativeLoops == null) return;
             NegativeLoops = new List<Loop>(negativeLoops);
             foreach (var negativeLoop in NegativeLoops)
             {
@@ -246,6 +259,8 @@ namespace TVGL
             StraddleFaceIndices = straddleFaceIndices;
             AdjOnsideFaceIndices = adjOnsideFaceIndices;
         }
+
+        
     }
 
 
