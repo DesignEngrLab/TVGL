@@ -569,7 +569,7 @@ namespace TVGL
         private void MakeVertices(IEnumerable<List<double[]>> vertsPerFace, out List<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
-            //Gets the number og decimal places, with the maximum being the StarMath Equality (1E-15)
+            //Gets the number of decimal places, with the maximum being the StarMath Equality (1E-15)
             while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             /* vertexMatchingIndices will be used to speed up the linking of faces and edges to vertices
              * it  preserves the order of vertsPerFace (as read in from the file), and indicates where

@@ -87,12 +87,13 @@ namespace TVGL.IOFunctions
                     // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
                 case "shell":
-                    tessellatedSolids = ShellFileData.Open(s, filename, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    tessellatedSolids = ShellFileData.Open(s, filename, inParallel);
                     break;
                 default:
                     throw new Exception(
                         "Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");
             }
+            if (tessellatedSolids == null || tessellatedSolids.Count == 0) return null;
             Message.output("number of solids = " + tessellatedSolids.Count, 3);
             foreach (var tessellatedSolid in tessellatedSolids)
             {
@@ -147,7 +148,7 @@ namespace TVGL.IOFunctions
         /// <returns>True if parsing was successful.</returns>
         protected static bool TryParseDoubleArray(string line, out double[] doubles)
         {
-            var strings = line.Split(' ').ToList();
+            var strings = line.Split(' ','\t').ToList();
             strings.RemoveAll(string.IsNullOrWhiteSpace);
             doubles = new double[strings.Count];
             for (var i = 0; i < strings.Count; i++)
@@ -230,7 +231,7 @@ namespace TVGL.IOFunctions
         /// <param name="solids">The solids.</param>
         /// <param name="fileType">Type of the file.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType)
+        public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType = FileType.PLY)
         {
             if (solids.Count == 0) return false;
             switch (fileType)
@@ -261,7 +262,7 @@ namespace TVGL.IOFunctions
                     return false;
             }
         }
-        public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType)
+        public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType = FileType.PLY)
         {
             switch (fileType)
             {

@@ -24,7 +24,7 @@ namespace TVGL_Test
         //"../../../TestFiles/bunnySmall.ply",
         //"../../../TestFiles/cube.ply",
         //"../../../TestFiles/airplane.ply",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
         //"../../../TestFiles/Beam_Boss.STL",
 
         //"../../../TestFiles/Tetrahedron.STL",
@@ -36,8 +36,14 @@ namespace TVGL_Test
         ////"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
         ////"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/Rook.amf",
-     //   "../../../TestFiles/trapezoid.4d.off.ply",//breaks in OFFFileData
-       // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
+        "../../../TestFiles/dodec2.off",   //breaks in OFFFileData
+        "../../../TestFiles/hdodec.off",   //breaks in OFFFileData
+        "../../../TestFiles/icosa.off",   //breaks in OFFFileData
+        "../../../TestFiles/mctet.off",   //breaks in OFFFileData
+        "../../../TestFiles/tref.off",   //breaks in OFFFileData
+        "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
+        "../../../TestFiles/vertcube.off",   //breaks in OFFFileData
+        "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
        // "../../../TestFiles/ABF.STL",
        // "../../../TestFiles/Pump-1repair.STL",
        // "../../../TestFiles/Pump-1.STL",
@@ -74,6 +80,7 @@ namespace TVGL_Test
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
+
             for (var i = 0; i < FileNames.Count(); i++)
             {
                 var filename = FileNames[i];
