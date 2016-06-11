@@ -206,6 +206,11 @@ namespace TVGL
         ThreeMF,
 
         /// <summary>
+        ///     Mobile MultiModal Framework
+        /// </summary>
+        Model3MF,
+
+        /// <summary>
         ///     Additive Manufacturing File Format
         /// </summary>
         AMF,

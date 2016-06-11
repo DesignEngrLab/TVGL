@@ -17,7 +17,7 @@ namespace TVGL_Test
         //"../../../TestFiles/Candy.shell",
         ////"../../../TestFiles/amf_Cube.amf",
         ////"../../../TestFiles/train.3mf",
-        //"../../../TestFiles/keychain.3mf",
+        "../../../TestFiles/keychain.3mf.amf",
         //"../../../TestFiles/Castle.3mf",
         //"../../../TestFiles/Raspberry Pi Case.3mf",
         //"../../../TestFiles/shark.ply",
@@ -36,14 +36,14 @@ namespace TVGL_Test
         ////"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
         ////"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/Rook.amf",
-        "../../../TestFiles/dodec2.off",   //breaks in OFFFileData
-        "../../../TestFiles/hdodec.off",   //breaks in OFFFileData
-        "../../../TestFiles/icosa.off",   //breaks in OFFFileData
-        "../../../TestFiles/mctet.off",   //breaks in OFFFileData
-        "../../../TestFiles/tref.off",   //breaks in OFFFileData
-        "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
-        "../../../TestFiles/vertcube.off",   //breaks in OFFFileData
-        "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
+        //"../../../TestFiles/dodec2.off",   //breaks in OFFFileData
+        //"../../../TestFiles/hdodec.off",   //breaks in OFFFileData
+        //"../../../TestFiles/icosa.off",   //breaks in OFFFileData
+        //"../../../TestFiles/mctet.off",   //breaks in OFFFileData
+        //"../../../TestFiles/tref.off",   //breaks in OFFFileData
+        //"../../../TestFiles/mushroom.off",   //breaks in OFFFileData
+        //"../../../TestFiles/vertcube.off",   //breaks in OFFFileData
+        //"../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
        // "../../../TestFiles/ABF.STL",
        // "../../../TestFiles/Pump-1repair.STL",
        // "../../../TestFiles/Pump-1.STL",
@@ -89,9 +89,9 @@ namespace TVGL_Test
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-                //ts[0].SolidColor=new Color(KnownColors.Salmon);
-                //using (fileStream = File.Create(filename + ".ply"))
-                //    IO.Save(fileStream, ts, FileType.PLY);
+                //ts[0].SolidColor = new Color(KnownColors.Salmon);
+                //using (fileStream = File.Create(filename + ".amf"))
+                //    IO.Save(fileStream, ts, FileType.AMF);
                 TVGL.Presenter.ShowAndHang(ts);
                 //TestSimplify(ts[0]);
             }

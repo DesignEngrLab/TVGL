@@ -98,6 +98,9 @@ namespace TVGL.IOFunctions
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
         {
+#if net40
+            throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
+#else
             var now = DateTime.Now;
             var result = new List<TessellatedSolid>();
             var archive = new ZipArchive(s);
@@ -107,6 +110,7 @@ namespace TVGL.IOFunctions
                 result.AddRange(OpenModelFile(modelStream, filename, inParallel));
             }
             return result;
+#endif
         }
 
         internal static List<TessellatedSolid> OpenModelFile(Stream s, string filename, bool inParallel)
@@ -228,6 +232,9 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
+#if net40
+            throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
+#else
             ZipArchiveEntry entry;
             Stream entryStream;
             using (ZipArchive archive = new ZipArchive(stream, ZipArchiveMode.Create))
@@ -244,6 +251,7 @@ namespace TVGL.IOFunctions
                     SaveContentTypes(entryStream);
             }
             return true;
+#endif
         }
 
         /// <summary>
@@ -256,14 +264,11 @@ namespace TVGL.IOFunctions
         {
             var objects = new List<threemfclasses.Object>();
             var baseMats = new BaseMaterials { id = 1 };
-            var materials = new List<Material>();
-            var colors = new List<Color3MF>();
-            var matColorIndexer = solids.Count + 2;
-            // this is "+ 2" since the id's start with 1 instead of 0 plus BaseMaterials is typically 1, so start at 2.
             for (int i = 0; i < solids.Count; i++)
             {
                 var solid = solids[i];
                 var thisObject = new threemfclasses.Object { name = solid.Name, id = i + 2 };
+                // this is "+ 2" since the id's start with 1 instead of 0 plus BaseMaterials is typically 1, so start at 2.
                 var triangles = new List<Triangle>();
 
                 foreach (var face in solid.Faces)

@@ -51,11 +51,8 @@ namespace TVGL.IOFunctions
         /// </exception>
         public static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = false)
         {
-            var lastIndexOfDot = filename.LastIndexOf('.');
-            if (lastIndexOfDot < 0 || lastIndexOfDot >= filename.Length - 1)
-                throw new Exception("Cannot open file without extension (e.g. f00.stl).");
-            var extension = filename.Substring(lastIndexOfDot + 1, filename.Length - lastIndexOfDot - 1).ToLower();
-            List<TessellatedSolid> tessellatedSolids;
+            var extension = GetExtensionFromFileName(filename);
+            List <TessellatedSolid> tessellatedSolids;
             if (inParallel) throw new Exception("This function has been recently removed.");
             switch (extension)
             {
@@ -67,17 +64,13 @@ namespace TVGL.IOFunctions
                     break;
                 case "3mf":
 #if net40
-                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+                    throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
 #else
                     tessellatedSolids = ThreeMFFileData.Open(s, filename, inParallel);
 #endif
                     break;
                 case "model":
-#if net40
-                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
-#else
                     tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, inParallel);
-#endif
                     break;
                 case "amf":
                     tessellatedSolids = AMFFileData.Open(s, filename, inParallel);
@@ -116,6 +109,13 @@ namespace TVGL.IOFunctions
             var endIndex = filename.IndexOf('.', startIndex);
             if (endIndex == -1) endIndex = filename.Length - 1;
             return filename.Substring(startIndex, endIndex - startIndex);
+        }
+        protected static string GetExtensionFromFileName(string filename)
+        {
+            var lastIndexOfDot = filename.LastIndexOf('.');
+            if (lastIndexOfDot < 0 || lastIndexOfDot >= filename.Length - 1)
+                throw new Exception("Cannot open file without extension (e.g. f00.stl).");
+            return filename.Substring(lastIndexOfDot + 1, filename.Length - lastIndexOfDot - 1).ToLower();
         }
         /// <summary>
         ///     Parses the ID and values from the specified line.
@@ -248,6 +248,8 @@ namespace TVGL.IOFunctions
 #else
                     return ThreeMFFileData.Save(stream, solids);
 #endif
+                case FileType.Model3MF:
+                    return ThreeMFFileData.SaveModel(stream, solids);
                 case FileType.OFF:
                     if (solids.Count > 1)
                         throw new NotSupportedException(

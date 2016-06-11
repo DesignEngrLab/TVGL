@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Serialization;
 using TVGL.IOFunctions.amfclasses;
 
@@ -39,6 +40,7 @@ namespace TVGL.IOFunctions
             Objects = new List<AMF_Object>();
             Textures = new List<AMF_Texture>();
         }
+
 
         /// <summary>
         ///     Gets or sets the objects.
@@ -191,26 +193,72 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
-            var fileData = new AMFFileData();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            var amfWriter = new StreamWriter(stream);
-            var amfSerializer = new XmlSerializer(typeof(AMFFileData));
-            amfSerializer.Serialize(amfWriter, fileData);
-            amfWriter.Dispose();
-            return true;
+            var amfFileData = new AMFFileData(solids);
+            try
+            {
+                using (var writer = XmlWriter.Create(stream))
+                {
+                    var serializer = new XmlSerializer(typeof(AMFFileData));
+                    serializer.Serialize(writer, amfFileData);
+                }
+                Message.output("Successfully wrote AMF file to stream.", 3);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                return false;
+            }
+        }
+        // this is used by the save method above
+        private AMFFileData(IList<TessellatedSolid> solids):this()
+        {
+            for (int i = 0; i < solids.Count; i++)
+            {
+                var tessellatedSolid = solids[i];
+                var vertexList = new AMF_Vertices
+                {
+                    Vertices = tessellatedSolid.Vertices.Select(v => new AMF_Vertex
+                    {
+                        coordinates = new AMF_Coordinates { x = v.X, y = v.Y, z = v.Z }
+                    }).ToList()
+                };
+                var volume = new AMF_Volume();
+                if (tessellatedSolid.HasUniformColor)
+                {
+                    var colorFromSolid = tessellatedSolid.SolidColor ?? new Color(Constants.DefaultColor);
+                    volume.color = new AMF_Color
+                    {
+                        a = colorFromSolid.Af,
+                        b = colorFromSolid.Bf,
+                        g = colorFromSolid.Gf,
+                        r = colorFromSolid.Rf
+                    };
+                    volume.Triangles = tessellatedSolid.Faces.Select(f => new AMF_Triangle
+                    {
+                        v1 = f.Vertices[0].IndexInList,
+                        v2 = f.Vertices[1].IndexInList,
+                        v3 = f.Vertices[2].IndexInList
+                    }).ToList();
+                }
+                else
+                {
+                    volume.Triangles = tessellatedSolid.Faces.Select(f => new AMF_Triangle
+                    {
+                        v1 = f.Vertices[0].IndexInList,
+                        v2 = f.Vertices[1].IndexInList,
+                        v3 = f.Vertices[2].IndexInList,
+                        color = new AMF_Color
+                        {
+                            a = f.Color.Af,
+                            b = f.Color.Bf,
+                            g = f.Color.Gf,
+                            r = f.Color.Rf
+                        }
+                    }).ToList();
+                }
+                Objects.Add(new AMF_Object { id = i.ToString(), mesh = new AMF_Mesh { vertices = vertexList, volume = volume } });
+            }
         }
     }
 }
