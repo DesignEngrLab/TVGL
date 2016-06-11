@@ -291,32 +291,10 @@ namespace TVGL.IOFunctions
             get
             {
                 var now = DateTime.Now;
-                return "created by TVGL on " + now.Year + "." + now.Month + "." + now.Day + "." + now.Hour + "." +
-                       now.Minute + "." + now.Second;
+                return "created by TVGL on " + now.Year + "/" + now.Month + "/" + now.Day + " at " + now.Hour + ":" +
+                       now.Minute + ":" + now.Second;
             }
         }
-        /// <summary>
-        ///     Writes the coordinates.
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        /// <param name="writer">The writer.</param>
-        private static void WriteCoordinates(IList<double> coordinates, StreamWriter writer)
-        {
-            writer.WriteLine("\t\t\t" + coordinates[0] + " " + coordinates[1] + " " + coordinates[2]);
-        }
-
-        /// <summary>
-        ///     Writes the coordinates.
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        /// <param name="writer">The writer.</param>
-        private static void WriteCoordinates(double[] coordinates, BinaryWriter writer)
-        {
-            writer.Write(coordinates[0]);
-            writer.Write(coordinates[1]);
-            writer.Write(coordinates[2]);
-        }
-
         #endregion
     }
 }

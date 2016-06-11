@@ -327,6 +327,9 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool Save(Stream stream, TessellatedSolid solid)
         {
+            var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+            var colorString = " " + solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
+                                             solid.SolidColor.A;
             try
             {
                 using (var writer = new StreamWriter(stream))
@@ -340,18 +343,7 @@ namespace TVGL.IOFunctions
                     writer.WriteLine("property double z");
                     writer.WriteLine("element face " + solid.NumberOfFaces);
                     writer.WriteLine("property list uint8 int32 vertex_indices");
-                    if (solid.HasUniformColor)
-                    {
-                        if (!solid.SolidColor.Equals(new Color(Constants.DefaultColor)))
-                        {
-                            writer.WriteLine("element uniform_color");
-                            writer.WriteLine("property uchar red");
-                            writer.WriteLine("property uchar green");
-                            writer.WriteLine("property uchar blue");
-                            writer.WriteLine("property uchar opacity");
-                        }
-                    }
-                    else
+                    if (defineColors)
                     {
                         writer.WriteLine("property uchar red");
                         writer.WriteLine("property uchar green");
@@ -367,14 +359,16 @@ namespace TVGL.IOFunctions
                         var faceString = face.Vertices.Count.ToString();
                         foreach (var v in face.Vertices)
                             faceString += " " + v.IndexInList;
-                        if (!solid.HasUniformColor)
-                            faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
+                        if (defineColors)
+                        {
+                            if (face.Color != null)
+                                faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
                                           face.Color.A;
+                            else
+                                faceString += colorString;
+                        }
                         writer.WriteLine(faceString);
                     }
-                    if (solid.HasUniformColor && !solid.SolidColor.Equals(new Color(Constants.DefaultColor)))
-                        writer.WriteLine(solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
-                                          solid.SolidColor.A);
                 }
                 Message.output("Successfully wrote PLY file to stream.", 3);
                 return true;
