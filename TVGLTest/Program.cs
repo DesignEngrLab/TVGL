@@ -13,7 +13,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        "../../../TestFiles/DxTopLevelPart2.shell",
+      //  "../../../TestFiles/DxTopLevelPart2.shell",
         //"../../../TestFiles/Candy.shell",
         ////"../../../TestFiles/amf_Cube.amf",
         ////"../../../TestFiles/train.3mf",
@@ -24,7 +24,7 @@ namespace TVGL_Test
         //"../../../TestFiles/bunnySmall.ply",
         //"../../../TestFiles/cube.ply",
         //"../../../TestFiles/airplane.ply",
-        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
         //"../../../TestFiles/Beam_Boss.STL",
 
         //"../../../TestFiles/Tetrahedron.STL",
@@ -36,7 +36,7 @@ namespace TVGL_Test
         ////"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
         ////"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/Rook.amf",
-        //"../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
+     //   "../../../TestFiles/trapezoid.4d.off.ply",//breaks in OFFFileData
        // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
        // "../../../TestFiles/ABF.STL",
        // "../../../TestFiles/Pump-1repair.STL",
@@ -78,12 +78,14 @@ namespace TVGL_Test
             {
                 var filename = FileNames[i];
                 Console.WriteLine("Attempting: " + filename);
-                var fileStream = File.OpenRead(filename);
-                var ts = IO.Open(fileStream, filename, false);
-                fileStream.Close();
-                using (fileStream = File.Create(filename + ".3mf"))
-                    IO.Save(fileStream, ts, FileType.ThreeMF);
-               // TVGL.Presenter.ShowAndHang(ts);
+                Stream fileStream;
+                List<TessellatedSolid> ts;
+                using (fileStream = File.OpenRead(filename))
+                    ts = IO.Open(fileStream, filename);
+                //ts[0].SolidColor=new Color(KnownColors.Salmon);
+                //using (fileStream = File.Create(filename + ".ply"))
+                //    IO.Save(fileStream, ts, FileType.PLY);
+                TVGL.Presenter.ShowAndHang(ts);
                 //TestSimplify(ts[0]);
             }
             Console.WriteLine("Completed.");

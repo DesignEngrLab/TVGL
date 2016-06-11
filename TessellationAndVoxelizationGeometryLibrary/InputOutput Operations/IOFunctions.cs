@@ -232,6 +232,7 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType)
         {
+            if (solids.Count == 0) return false;
             switch (fileType)
             {
                 case FileType.STL_ASCII:
@@ -244,39 +245,56 @@ namespace TVGL.IOFunctions
 #if net40
                     throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
 #else
-                  return ThreeMFFileData.Save(stream, solids);
+                    return ThreeMFFileData.Save(stream, solids);
 #endif
                 case FileType.OFF:
-                    return OFFFileData.Save(stream, solids);
+                    if (solids.Count > 1)
+                        throw new NotSupportedException(
+                            "The OFF format does not support saving multiple solids to a single file.");
+                    else return OFFFileData.Save(stream, solids[0]);
                 case FileType.PLY:
-                    return PLYFileData.Save(stream, solids);
+                    if (solids.Count > 1)
+                        throw new NotSupportedException(
+                            "The PLY format does not support saving multiple solids to a single file.");
+                    else return PLYFileData.Save(stream, solids[0]);
+                default:
+                    return false;
+            }
+        }
+        public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType)
+        {
+            switch (fileType)
+            {
+                case FileType.STL_ASCII:
+                    return STLFileData.SaveASCII(stream, new List<TessellatedSolid> { solid });
+                case FileType.STL_Binary:
+                    return STLFileData.SaveBinary(stream, new List<TessellatedSolid> { solid });
+                case FileType.AMF:
+                    return AMFFileData.Save(stream, new List<TessellatedSolid> { solid });
+                case FileType.ThreeMF:
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
+                    return ThreeMFFileData.Save(stream, new List<TessellatedSolid> { solid });
+#endif
+                case FileType.OFF:
+                    return OFFFileData.Save(stream, solid);
+                case FileType.PLY:
+                    return PLYFileData.Save(stream, solid);
                 default:
                     return false;
             }
         }
 
-        /// <summary>
-        ///     Writes the coordinates.
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        /// <param name="writer">The writer.</param>
-        private static void WriteCoordinates(IList<double> coordinates, StreamWriter writer)
+        protected static string tvglDateMarkText
         {
-            writer.WriteLine("\t\t\t" + coordinates[0] + " " + coordinates[1] + " " + coordinates[2]);
+            get
+            {
+                var now = DateTime.Now;
+                return "created by TVGL on " + now.Year + "/" + now.Month + "/" + now.Day + " at " + now.Hour + ":" +
+                       now.Minute + ":" + now.Second;
+            }
         }
-
-        /// <summary>
-        ///     Writes the coordinates.
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        /// <param name="writer">The writer.</param>
-        private static void WriteCoordinates(double[] coordinates, BinaryWriter writer)
-        {
-            writer.Write(coordinates[0]);
-            writer.Write(coordinates[1]);
-            writer.Write(coordinates[2]);
-        }
-
         #endregion
     }
 }
