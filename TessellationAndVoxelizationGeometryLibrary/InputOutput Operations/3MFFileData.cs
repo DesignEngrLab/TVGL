@@ -70,33 +70,28 @@ namespace TVGL.IOFunctions
         [XmlElement]
         public Build build { get; set; }
 
-        /// <summary>
-        /// Gets or sets the unit.
-        /// </summary>
-        /// <value>The unit.</value>
-        [DefaultValue(UnitType.unspecified)]
-        [XmlAttribute]
-        public UnitType unit { get; set; }
+        internal new List<string> Comments
+        {
+            get
+            {
+                var result = metadata.Select(m => m.type + " ==> " + m.Value).ToList();
+                result.AddRange(_comments);
+                return result;
+            }
+        }
 
-        /// <summary>
-        /// Gets or sets the language.
-        /// </summary>
-        /// <value>The language.</value>
-        [XmlAttribute("lang")]
-        public string language { get; set; }
         /// <summary>
         /// Gets or sets the requiredextensions.
         /// </summary>
         /// <value>The requiredextensions.</value>
         public string requiredextensions { get; set; }
 
-        public string Name { get; set; }
 
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
+        internal new static List<TessellatedSolid> OpenSolids(Stream s, string filename, bool inParallel = true)
         {
 #if net40
             throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
@@ -107,13 +102,13 @@ namespace TVGL.IOFunctions
             foreach (var modelFile in archive.Entries.Where(f => f.FullName.EndsWith(".model")))
             {
                 var modelStream = modelFile.Open();
-                result.AddRange(OpenModelFile(modelStream, filename, inParallel));
+                result.AddRange(OpenModelFile(modelStream, filename));
             }
             return result;
 #endif
         }
 
-        internal static List<TessellatedSolid> OpenModelFile(Stream s, string filename, bool inParallel)
+        internal static List<TessellatedSolid> OpenModelFile(Stream s, string filename)
         {
             var now = DateTime.Now;
             ThreeMFFileData threeMFData = null;
@@ -140,20 +135,24 @@ namespace TVGL.IOFunctions
                         threeMFData.metadata.FindIndex(
                             md => md != null && (md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase) ||
                                                  md.type.Equals("title", StringComparison.CurrentCultureIgnoreCase)));
-                    if (nameIndex != -1) threeMFData.Name = threeMFData.metadata[nameIndex].Value;
+                    if (nameIndex != -1)
+                    {
+                        threeMFData.Name = threeMFData.metadata[nameIndex].Value;
+                        threeMFData.metadata.RemoveAt(nameIndex);
+                    }
                     foreach (var item in threeMFData.build.Items)
                     {
                         results.AddRange(TessellatedSolidsFromIDAndTransform(item.objectid, item.transformMatrix,
                             threeMFData.resources, threeMFData.Name + "_"));
                     }
 
-                    Message.output("Successfully read in 3MF file (" + (DateTime.Now - now) + ").", 3);
+                    Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
                     return results;
                 }
             }
             catch (Exception exception)
             {
-                Message.output("Unable to read in model file (" + (DateTime.Now - now) + ").", 1);
+                Message.output("Unable to read in 3Dmodel file.", 1);
                 return null;
             }
         }
@@ -299,7 +298,7 @@ namespace TVGL.IOFunctions
             }
             ThreeMFFileData threeMFData = new ThreeMFFileData
             {
-                unit = solids[0].Units,
+                Units = solids[0].Units,
                 build = new Build { Items = objects.Select(o => new Item { objectid = o.id }).ToList() },
                 resources =
                     new Resources

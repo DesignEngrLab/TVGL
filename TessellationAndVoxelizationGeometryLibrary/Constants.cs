@@ -188,6 +188,7 @@ namespace TVGL
     /// </summary>
     public enum FileType
     {
+        unspecified,    
         /// <summary>
         ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
         /// </summary>
