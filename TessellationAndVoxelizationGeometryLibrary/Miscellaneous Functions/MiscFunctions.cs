@@ -1288,6 +1288,223 @@ namespace TVGL
                 : new Vertex(vertex.Position.add(direction.multiply(signedDistance)));
             return IsPointInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint.Position : null;
         }
+        #endregion
+
+        #region Sort Along Direction
+        /// <summary>
+        /// Returns a list of sorted vertices along a set direction. Ties are broken by direction[1] then direction[2] if available.
+        /// </summary>
+        /// <param name="directions"></param>
+        /// <param name="vertices"></param>
+        /// <param name="sortedVertices"></param>
+        /// <param name="duplicateRanges"></param>
+        /// <returns></returns>
+        public static void SortAlongDirection(double[][] directions, List<Vertex> vertices, out List<Vertex> sortedVertices,
+            out List<int[]> duplicateRanges)
+        {
+            //Get integer values for every vertex as distance along direction
+            //Split positive and negative numbers into seperate lists. 0 is 
+            //considered positive.
+            //This is an O(n) preprocessing step
+            duplicateRanges = new List<int[]>();
+            sortedVertices = new List<Vertex>();
+            var points = new List<Point>();
+            foreach (var vertex in vertices)
+            {
+                //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
+                switch (directions.Length)
+                {
+                    case 1:
+                    {
+                        var dot1 = Math.Round(directions[0].dotProduct(vertex.Position)*1E+15);//Accuracy to the 15th decimal place
+                        var point = new Point(vertex, dot1, 0.0, 0.0);
+                        points.Add(point);
+                    }
+                        break;
+                    case 2:
+                    {
+                        var dot1 = Math.Round(directions[0].dotProduct(vertex.Position)*1E+15);
+                        var dot2 = Math.Round(directions[1].dotProduct(vertex.Position)*1E+15);
+                        var point = new Point(vertex, dot1, dot2, 0.0);
+                        points.Add(point);
+                    }
+                        break;
+                    case 3:
+                    {
+                        var dot1 = Math.Round(directions[0].dotProduct(vertex.Position) * 1E+15);
+                        var dot2 = Math.Round(directions[1].dotProduct(vertex.Position) * 1E+15);
+                        var dot3 = Math.Round(directions[2].dotProduct(vertex.Position) * 1E+15);
+                        var point = new Point(vertex, dot1, dot2, dot3);
+                        points.Add(point); 
+                    }
+                        break;
+                    default:
+                        throw new Exception("Must provide between 1 to 3 direction vectors");
+                }
+            }
+            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
+            //tolerance as the "isNeglible" star math function 
+            var sortedPoints =
+                points.OrderBy(point => point.X).ThenBy(point => point.Y).ThenBy(point => point.Z).ToList();
+
+
+            //Linear operation to locate duplicates and convert back to a list of vertices
+            var previousDuplicate = false;
+            var startIndex = 0;
+            sortedVertices.Add(sortedPoints[0].References[0]);
+            var counter=0;
+            int[] intRange;
+            switch (directions.Length)
+            {
+                case 1:
+                {
+                    for (var i = 1; i < sortedPoints.Count; i++)
+                    {
+                        sortedVertices.Add(sortedPoints[i].References[0]);
+                        if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X))
+                        {
+                            counter++;
+                            if (previousDuplicate) continue;
+                            startIndex = i - 1;
+                            previousDuplicate = true;
+                            counter++;
+                        }
+                        else if (previousDuplicate)
+                        {
+                            intRange = new[] { startIndex, counter };
+                            duplicateRanges.Add(intRange);
+                            previousDuplicate = false;
+                            counter = 0;
+                        }
+                    }
+                    //Add last duplicate group if necessary
+                    if (!previousDuplicate) return;
+                    intRange = new[] { startIndex, counter };
+                    duplicateRanges.Add(intRange);
+                }
+                    break;
+                case 2:
+                {
+                    for (var i = 1; i < sortedPoints.Count; i++)
+                    {
+                        sortedVertices.Add(sortedPoints[i].References[0]);
+                        if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
+                            sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y))
+                        {
+                            counter++;
+                            if (previousDuplicate) continue;
+                            startIndex = i - 1;
+                            previousDuplicate = true;
+                            counter++;
+                        }
+                        else if (previousDuplicate)
+                        {
+                            intRange = new[] { startIndex, counter };
+                            duplicateRanges.Add(intRange);
+                            previousDuplicate = false;
+                            counter = 0;
+                        }
+                    }
+                    //Add last duplicate group if necessary
+                    if (!previousDuplicate) return;
+                    intRange = new[] { startIndex, counter };
+                    duplicateRanges.Add(intRange);
+                }
+                    break;
+                case 3:
+                {
+                    for (var i = 1; i < sortedPoints.Count; i++)
+                    {
+                        sortedVertices.Add(sortedPoints[i].References[0]);
+                        if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
+                            sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y) &&
+                            sortedPoints[i - 1].Z.IsPracticallySame(sortedPoints[i].Z))
+                        {
+                            counter++;
+                            if (previousDuplicate) continue;
+                            startIndex = i - 1;
+                            previousDuplicate = true;
+                            counter++;
+                        }
+                        else if (previousDuplicate)
+                        {
+                            intRange = new[] { startIndex, counter };
+                            duplicateRanges.Add(intRange);
+                            previousDuplicate = false;
+                            counter = 0;
+                        }
+                    }
+                    //Add last duplicate group if necessary
+                    if (!previousDuplicate) return;
+                    intRange = new[] { startIndex, counter };
+                    duplicateRanges.Add(intRange);
+                }
+                    break;
+                default:
+                    throw new Exception("Must provide between 1 to 3 direction vectors");
+            }
+        }
+        #endregion
+
+        #region Perimeter
+        /// <summary>
+        /// Gets the perimeter for a 2D set of points.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
+        public static double Perimeter(List<Point> polygon)
+        {
+            var listWithStartPointAtEnd = new List<Point>(polygon) {polygon.First()};
+            double perimeter = 0;
+            for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
+            {
+                perimeter = perimeter +
+                            DistancePointToPoint(listWithStartPointAtEnd[i - 1].Position2D,
+                                listWithStartPointAtEnd[i].Position2D);
+            }
+            return perimeter;
+        }
+
+        /// <summary>
+        /// Gets the Perimeter (length of a loop) of a 3D set of Vertices.
+        /// </summary>
+        /// <param name="polygon3D"></param>
+        /// <returns></returns>
+        public static double Perimeter(List<Vertex> polygon3D)
+        {
+            var listWithStartPointAtEnd = new List<Vertex>(polygon3D) { polygon3D.First() };
+            double perimeter = 0;
+            for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
+            {
+                perimeter = perimeter +
+                            DistancePointToPoint(listWithStartPointAtEnd[i - 1].Position,
+                                listWithStartPointAtEnd[i].Position);
+            }
+            return perimeter;
+        }
+        #endregion
+
+        /// <summary>
+        /// A secondary volume calculation, since the primary volume calculation in the tesselated solid creation seems to be broken
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        public static double Volume(TessellatedSolid ts)
+        {
+            var normal = new[] {1.0, 0.0, 0.0}; //Direction is irrellevant
+            var stepSize = 0.01;
+            var volume = 0.0;
+            var areas = AreaDecomposition.Run(ts, normal, stepSize);
+            //Trapezoidal approximation. This should be accurate since the lines betweens data points are linear
+            for (var i = 1; i < areas.Count; i++)
+            {
+                var deltaX = areas[i][0] - areas[i-1][0];
+                var deltaY = areas[i][1] + areas[i-1][1];
+                if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
+                volume = volume + .5* deltaY * deltaX;
+            }
+            return volume;
+        }
 
         #endregion
 
@@ -1511,6 +1728,49 @@ namespace TVGL
             throw new Exception("Failed to return intercept information");
         }
 
+        #region Split Tesselated Solid into multiple solids if faces are disconnected 
+        /// <summary>
+        /// Gets all the individual solids from a tesselated solid.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<TessellatedSolid> GetMultipleSolids(TessellatedSolid ts)
+        {
+            var solids = new List<TessellatedSolid>();
+            var seperateSolids = new List<List<PolygonalFace>>();
+            var unusedFaces = ts.Faces.ToDictionary(face => face.IndexInList);
+            while (unusedFaces.Any())
+            {
+                var faces = new HashSet<PolygonalFace>();
+                var stack = new Stack<PolygonalFace>(new[] { unusedFaces.ElementAt(0).Value });
+                while (stack.Any())
+                {
+                    var face = stack.Pop();
+                    if (faces.Contains(face)) continue;
+                    faces.Add(face);
+                    unusedFaces.Remove(face.IndexInList);
+                    foreach (var adjacentFace in face.AdjacentFaces)
+                    {
+                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
+                        stack.Push(adjacentFace);
+                    }
+                }
+                seperateSolids.Add(faces.ToList());
+            }
+            var count = 0;
+            if (seperateSolids.Count == 1)
+            {
+                solids.Add(ts);
+                return solids;
+            }
+            foreach (var seperateSolid in seperateSolids)
+            {
+                solids.Add(new TessellatedSolid(seperateSolid));
+                count = count + seperateSolid.Count;
+            }
+            return solids;
+        }
         #endregion
     }
 }

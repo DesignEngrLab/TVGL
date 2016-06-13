@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
@@ -13,29 +13,23 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        //"../../../TestFiles/Candy.shell",
-        //"../../../TestFiles/amf_Cube.amf",
-        //"../../../TestFiles/train.3mf",
-        "../../../TestFiles/keychain.3mf",
-        "../../../TestFiles/Castle.3mf",
-        "../../../TestFiles/Raspberry Pi Case.3mf",
-        "../../../TestFiles/shark.ply",
-        "../../../TestFiles/bunnySmall.ply",
-        "../../../TestFiles/cube.ply",
-        "../../../TestFiles/airplane.ply",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        "../../../TestFiles/Beam_Boss.STL",
-
-        "../../../TestFiles/Tetrahedron.STL",
-        "../../../TestFiles/off_axis_box.STL",
-        "../../../TestFiles/Wedge.STL",
-        "../../../TestFiles/Mic_Holder_SW.stl",
-        "../../../TestFiles/Mic_Holder_JR.stl",
-        "../../../TestFiles/3_bananas.amf",
-        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-        "../../../TestFiles/Rook.amf",
-        "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
+        //"../../../TestFiles/shark.ply",
+        //"../../../TestFiles/bunnySmall.ply",
+        //"../../../TestFiles/cube.ply",
+        //"../../../TestFiles/airplane.ply",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
+        //"../../../TestFiles/Beam_Boss.STL",
+       // "../../../TestFiles/Tetrahedron.STL",
+       // "../../../TestFiles/off_axis_box.STL",
+       // "../../../TestFiles/Wedge.STL",
+       // "../../../TestFiles/amf_Cube.amf",
+       // "../../../TestFiles/Mic_Holder_SW.stl",
+       // "../../../TestFiles/Mic_Holder_JR.stl",
+       // "../../../TestFiles/3_bananas.amf",
+       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+       // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+       // "../../../TestFiles/Rook.amf",
+       // "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
        // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
        // "../../../TestFiles/ABF.STL",
        // "../../../TestFiles/Pump-1repair.STL",
@@ -48,7 +42,7 @@ namespace TVGL_Test
        // "../../../TestFiles/bradley.stl",
        // "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
        // "../../../TestFiles/new/5.STL",
-       //"../../../TestFiles/new/2.stl", //Note that this is an assembly 
+       // "../../../TestFiles/new/2.stl", //Note that this is an assembly 
        // "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
        //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
        // "../../../TestFiles/radiobox.stl",
@@ -62,7 +56,7 @@ namespace TVGL_Test
        // "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
        // "../../../TestFiles/mendel_extruder.stl",
        // "../../../TestFiles/Square Support.STL",
-       // "../../../TestFiles/Aerospace_Beam.STL",
+        "../../../TestFiles/Aerospace_Beam.STL",
        //"../../../TestFiles/MV-Test files/holding-device.STL",
        //"../../../TestFiles/MV-Test files/gear.STL"
         };
@@ -72,21 +66,29 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
-            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
+            //TestOBB("../../../TestFiles/");
+            //return;
             for (var i = 0; i < FileNames.Count(); i++)
             {
                 var filename = FileNames[i];
                 Console.WriteLine("Attempting: " + filename);
-                var fileStream = File.OpenRead(filename);
+                FileStream fileStream = File.OpenRead(filename);
                 var ts = IO.Open(fileStream, filename, false);
-                fileStream.Close();
-                using (fileStream = File.Create(filename + ".3mf"))
-                    IO.Save(fileStream, ts, FileType.ThreeMF);
-               // TVGL.Presenter.ShowAndHang(ts);
+                Primitive_Classification.Run(ts[0]);
+                //MiscFunctions.IsSolidBroken(ts[0]);
+                MinimumEnclosure.OrientedBoundingBox(ts[0]);
+                //TestClassification(ts[0]);
+                TVGL_Helix_Presenter.HelixPresenter.Show(ts[0]);
                 //TestSimplify(ts[0]);
+                //TestSlice(ts[0]);
+                //TestOBB(ts[0], filename);
+                //var filename2 = filenames[i + 1];
+                //FileStream fileStream2 = File.OpenRead(filename2);
+                //var ts2 = IO.Open(fileStream2, filename2, false);
+                //TestInsideSolid(ts[0], ts2[0]);
             }
             Console.WriteLine("Completed.");
-          //  Console.ReadKey();
+            Console.ReadKey();
         }
 
         private static void TestOBB(string InputDir)
@@ -116,11 +118,11 @@ namespace TVGL_Test
 
         private static void TestSimplify(TessellatedSolid ts)
         {
-            ts.SimplifyByPercentage(.9);
+            ts.SimplifyByPercentage(.5);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL.Presenter.Show(ts);
+            TVGL_Helix_Presenter.HelixPresenter.Show(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)
@@ -159,89 +161,6 @@ namespace TVGL_Test
             Console.WriteLine();
             Console.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
             Console.ReadLine();
-        }
-
-
-        private static void TestXSections(TessellatedSolid ts)
-        {
-            var now = DateTime.Now;
-            Debug.WriteLine("start...");
-            var crossAreas = new double[3][,];
-            var maxSlices = 100;
-            var delta = Math.Max((ts.Bounds[1][0] - ts.Bounds[0][0]) / maxSlices,
-                Math.Max((ts.Bounds[1][1] - ts.Bounds[0][1]) / maxSlices,
-                    (ts.Bounds[1][2] - ts.Bounds[0][2]) / maxSlices));
-            //Parallel.For(0, 3, i =>
-            var greatestDeltas = new List<double>();
-            var greatestDeltaLocations = new List<double>();
-            var areaData = new List<List<double[]>>();
-            for (int i = 0; i < 3; i++)
-            {
-                //var max = ts.Bounds[1][i];
-                //var min = ts.Bounds[0][i];
-                //var numSteps = (int)Math.Ceiling((max - min) / delta);
-                var coordValues = ts.Vertices.Select(v => v.Position[i]).Distinct().OrderBy(x => x).ToList();
-                var numValues = new List<double>();
-                var offset = 0.000000001;
-                foreach (var coordValue in coordValues)
-                {
-                    if (coordValues[0] == coordValue)
-                    {
-                        //Only Add increment forward
-                        numValues.Add(coordValue + offset);
-                    }
-                    else if (coordValues.Last() == coordValue)
-                    {
-                        //Only Add increment back
-                        numValues.Add(coordValue - offset);
-                    }
-                    else
-                    {
-                        //Add increment forward and back
-                        numValues.Add(coordValue + offset);
-                        numValues.Add(coordValue - offset);
-                    }
-                }
-                coordValues = numValues.OrderBy(x => x).ToList();
-                var numSteps = coordValues.Count;
-                var direction = new double[3];
-                direction[i] = 1.0;
-                crossAreas[i] = new double[numSteps, 2];
-                var greatestDelta = 0.0;
-                var previousArea = 0.0;
-                var greatestDeltaLocation = 0.0;
-                var dataPoints = new List<double[]>();
-                for (var j = 0; j < numSteps; j++)
-                {
-                    var dist = crossAreas[i][j, 0] = coordValues[j];
-                    //Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
-                    var newArea = Slice.DefineContact(ts, new Flat(dist, direction), false).Area;
-                    crossAreas[i][j, 1] = newArea;
-                    if (j > 0 && Math.Abs(newArea - previousArea) > greatestDelta)
-                    {
-                        greatestDelta = Math.Abs(newArea - previousArea);
-                        greatestDeltaLocation = dist;
-                    }
-                    var dataPoint = new double[] { dist, newArea };
-                    dataPoints.Add(dataPoint);
-                    previousArea = newArea;
-                }
-                areaData.Add(dataPoints);
-                greatestDeltas.Add(greatestDelta);
-                greatestDeltaLocations.Add(greatestDeltaLocation);
-            }//);
-            TVGLTest.ExcelInterface.CreateNewGraph(areaData, "Area Decomposition", "Distance From Origin", "Area");
-            Debug.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
-
-            //Console.ReadKey();
-            //for (var i = 0; i < 3; i++)
-            //{
-            //    Debug.WriteLine("\nfor direction " + i);
-            //    for (var j = 0; j < crossAreas[i].GetLength(0); j++)
-            //    {
-            //        Debug.WriteLine(crossAreas[i][j, 0] + ", " + crossAreas[i][j, 1]);
-            //    }
-            //}
         }
     }
 }

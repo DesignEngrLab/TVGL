@@ -39,10 +39,8 @@
     <DocumentationFile>bin\Release\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Boolean Operations\ContactElement Classes.cs" />
     <Compile Include="Boolean Operations\ContactData.cs" />
     <Compile Include="Boolean Operations\Slice.cs" />
-    <Compile Include="Boolean Operations\Slice4.cs" />
     <Compile Include="Enclosure Operations\GaussianSphere.cs" />
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
