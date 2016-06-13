@@ -228,13 +228,12 @@ namespace TVGL
         #endregion
 
         /// <summary>
-        ///     A secondary volume calculation, since the primary volume calculation in the tesselated solid creation seems to be
-        ///     broken
+        /// Find the volume of a tesselated solid with a slower method. 
+        /// This method could be exteded to find partial volumes of a solid (e.g. volume between two planes)
         /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <returns>System.Double.</returns>
-        /// <exception cref="Exception">Error in your implementation. This should never occur</exception>
-        public static double Volume(TessellatedSolid ts)
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        public static double VolumeViaAreaDecomposition(TessellatedSolid ts)
         {
             var normal = new[] { 1.0, 0.0, 0.0 }; //Direction is irrellevant
             var stepSize = 0.01;
@@ -248,6 +247,66 @@ namespace TVGL
                 if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
                 volume = volume + .5 * deltaY * deltaX;
             }
+            return volume;
+        }
+
+        /// <summary>
+        /// Find the volume of a tesselated solid.
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="center"></param>
+        /// <returns></returns>
+        public static double Volume(IList<PolygonalFace> faces, out double[] center)
+        {
+            center = new double[3];
+            foreach (var face in faces)
+            {
+                center[0] += face.Center[0];
+                center[1] += face.Center[1];
+                center[2] += face.Center[2];
+            }
+            var numVertices = faces.Count;
+            center = center.divide(numVertices);
+            return Volume(faces, center);
+        }
+
+        /// <summary>
+        /// Find the volume of a tesselated solid.
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="center"></param>
+        /// <returns></returns>
+        public static double Volume(IList<PolygonalFace> faces, double[] center)
+        {
+            double oldVolume;
+            var volume = 0.0;
+            var iterations = 0;
+            var oldCenter1 = new double[3];
+            var oldCenter2 = new double[3];
+            do
+            {
+                oldVolume = volume;
+                oldCenter2[0] = oldCenter1[0]; oldCenter2[1] = oldCenter1[1]; oldCenter2[2] = oldCenter1[2];
+                oldCenter1[0] = center[0]; oldCenter1[1] = center[1]; oldCenter1[2] = center[2];
+                volume = 0;
+                center[0] = 0.0; center[1] = 0.0; center[2] = 0.0;
+                foreach (var face in faces)
+                {
+                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1))) / 3;
+                    // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
+                    // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
+                    // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
+                    // on the volume.
+                    volume += tetrahedronVolume;
+                    center[0] += (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4;
+                    center[1] += (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4;
+                    center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
+                    // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
+                }
+                if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2).divide(2);
+                else center = center.divide(volume);
+                iterations++;
+            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance || iterations <= 20);
             return volume;
         }
 
