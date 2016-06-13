@@ -92,18 +92,14 @@ namespace TVGL.IOFunctions
             var now = DateTime.Now;
             List<ShellFileData> shellData;
             // Read in ASCII format
-            if (ShellFileData.TryReadAscii(s,filename, out shellData))
-                Message.output("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").",3);
+            if (ShellFileData.TryReadAscii(s, out shellData))
+                Message.output("Successfully read in ASCII SHELL file (" + (DateTime.Now - now) + ").",3);
             else
             {
-                Message.output("Unable to read in PLY file (" + (DateTime.Now - now) + ").",1);
+                Message.output("Unable to read in SHELL file (" + (DateTime.Now - now) + ").",1);
                 return null;
             }
-            //return new List<TessellatedSolid>
-            //{
-            //    new TessellatedSolid(shellData.Name+shel, shellData.Vertices, shellData.FaceToVertexIndices,
-            //        (shellData.HasColorSpecified ? shellData.Colors : null))
-            //};
+
             var results = new List<TessellatedSolid>();
             foreach (var shell in shellData)
                 if (shell.Vertices.Any() && shell.FaceToVertexIndices.Any())
@@ -113,12 +109,8 @@ namespace TVGL.IOFunctions
             return results;
         }
 
-
-        
-        internal static bool TryReadAscii(Stream stream,string filename, out List<ShellFileData> shellData)
+        internal static bool TryReadAscii(Stream stream, out List<ShellFileData> shellData)
         {
-            var defaultName = filename + "_";
-            var solidNum = 0;
             var reader = new StreamReader(stream);
             shellData = new List<ShellFileData>();
             var shellSolid = new ShellFileData();
@@ -157,26 +149,17 @@ namespace TVGL.IOFunctions
                     default:
                         break;
                 }
-                if (inObject && startofVertices && !endofVertices)                             //read and collect vertices coordinates while we're in the vertices loop of the current object/shell
+                if (inObject && startofVertices && !endofVertices)       //read and collect vertices coordinates while we're in the vertices loop of the current object/shell
                 {
                    shellSolid.ReadVertices(line);
                 }
-                if (inObject && startofFacets && !endofFacets)                                       //read and collect trianges numbers while we're in the vertices loop of the current object/shell
+                if (inObject && startofFacets && !endofFacets)           //read and collect trianges numbers while we're in the vertices loop of the current object/shell
                 {
                     shellSolid.ReadFaces(line);
                 }
             }
             return true;
         }
-
-
-        //private bool ReadEdges(StreamReader reader)
-        //{
-            
-        //    for (var i = 0; i < NumEdges; i++)
-        //        ReadLine(reader);
-        //    return true;
-        //}
 
         private  bool ReadFaces(string line)
         {
@@ -212,73 +195,6 @@ namespace TVGL.IOFunctions
             else return false;
             return true;
         }
-
-        //private void ReadHeader(StreamReader reader)
-        //{
-        //    ReadInOrder = new List<ShapeElement>();
-        //    ColorDescriptor = new List<ColorElements>();
-        //    string line;
-        //    do
-        //    {
-        //        line = ReadLine(reader);
-        //        string id, values;
-        //        ParseLine(line, out id, out values);
-        //        if (id.Equals("comment"))
-        //        {
-        //            if (Comments == null) Comments = new List<string>();
-        //            Comments.Add(values);
-        //        }
-        //        else if (id.Equals("element"))
-        //        {
-        //            string numberString;
-        //            ParseLine(values, out id, out numberString);
-        //            int numberInt;
-        //            var successfulParse = int.TryParse(numberString, out numberInt);
-        //            if (!successfulParse) continue;
-        //            if (id.Equals("vertex"))
-        //            {
-        //                ReadInOrder.Add(ShapeElement.Vertex);
-        //                NumVertices = numberInt;
-        //            }
-        //            else if (id.Equals("face"))
-        //            {
-        //                ReadInOrder.Add(ShapeElement.Face);
-        //                NumFaces = numberInt;
-        //            }
-        //            else if (id.Equals("edge"))
-        //            {
-        //                ReadInOrder.Add(ShapeElement.Edge);
-        //                NumEdges = numberInt;
-        //            }
-        //        }
-        //        else if (id.Equals("property") && ReadInOrder.Last() == ShapeElement.Face)
-        //        {
-        //            string typeString, restString;
-        //            ParseLine(values, out typeString, out restString);
-        //            // doesn't seem like much point in checking this, it comes in many
-        //            // varieties like uint8 int32 vertex_indices, but it'll read in just fine
-        //            //if (typeString.Equals("list") && restString.Contains("uchar int vertex_index"))
-        //            //    expectingFaceToHaveListOfVertices = true;
-        //            if (restString.Equals("red", StringComparison.OrdinalIgnoreCase)
-        //                || restString.Equals("r", StringComparison.OrdinalIgnoreCase))
-        //                ColorDescriptor.Add(ColorElements.Red);
-        //            else if (restString.Equals("blue", StringComparison.OrdinalIgnoreCase)
-        //                     || restString.Equals("b", StringComparison.OrdinalIgnoreCase))
-        //                ColorDescriptor.Add(ColorElements.Blue);
-        //            else if (restString.Equals("green", StringComparison.OrdinalIgnoreCase)
-        //                     || restString.Equals("g", StringComparison.OrdinalIgnoreCase))
-        //                ColorDescriptor.Add(ColorElements.Green);
-        //            else if (restString.Equals("opacity", StringComparison.OrdinalIgnoreCase)
-        //                     || restString.StartsWith("transp", StringComparison.OrdinalIgnoreCase)
-        //                     || restString.Equals("a", StringComparison.OrdinalIgnoreCase))
-        //                ColorDescriptor.Add(ColorElements.Opacity);
-        //            else continue;
-        //            ColorIsFloat = typeString.StartsWith("float", StringComparison.OrdinalIgnoreCase)
-        //                           || typeString.StartsWith("double", StringComparison.OrdinalIgnoreCase);
-        //        }
-        //    } while (!line.Equals("end_header"));
-        //}
-
         internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
         {
             throw new NotImplementedException();

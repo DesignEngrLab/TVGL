@@ -36,7 +36,7 @@ namespace TVGL
         /// <summary>
         ///     The default color
         /// </summary>
-        internal const KnownColors DefaultColor = KnownColors.PaleGoldenrod;
+        internal const KnownColors DefaultColor = KnownColors.LightGray;
 
         /// <summary>
         ///     The reg ex solid

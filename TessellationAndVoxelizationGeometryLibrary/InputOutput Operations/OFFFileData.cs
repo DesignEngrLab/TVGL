@@ -235,7 +235,7 @@ namespace TVGL.IOFunctions
         /// <param name="solids">The solids.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
+        internal static bool Save(Stream stream, TessellatedSolid solid)
         {
             throw new NotImplementedException();
         }
