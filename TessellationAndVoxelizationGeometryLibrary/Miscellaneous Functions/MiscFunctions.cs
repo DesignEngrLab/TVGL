@@ -195,7 +195,7 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon"></param>
         /// <returns></returns>
-        public static double Perimeter(List<Point> polygon)
+        public static double Perimeter(ICollection<Point> polygon)
         {
             var listWithStartPointAtEnd = new List<Point>(polygon) { polygon.First() };
             double perimeter = 0;
@@ -213,7 +213,7 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon3D"></param>
         /// <returns></returns>
-        public static double Perimeter(List<Vertex> polygon3D)
+        public static double Perimeter(ICollection<Vertex> polygon3D)
         {
             var listWithStartPointAtEnd = new List<Vertex>(polygon3D) { polygon3D.First() };
             double perimeter = 0;
@@ -357,7 +357,7 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double.</returns>
         /// <references>http://geomalgorithms.com/a01-_area.html </references>
-        public static double AreaOf3DPolygon(List<Vertex> polygon, double[] normal)
+        public static double AreaOf3DPolygon(ICollection<Vertex> polygon, double[] normal)
         {
             var ax = Math.Abs(normal[0]);
             var ay = Math.Abs(normal[1]);
