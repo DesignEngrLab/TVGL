@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 using TVGL.IOFunctions.amfclasses;
@@ -73,17 +74,6 @@ namespace TVGL.IOFunctions
         /// <value>The version.</value>
         public double version { get; set; }
 #endif
-        internal new List<string> Comments
-        {
-            get
-            {
-                var result = new List<string>();
-                foreach (var amfObject in Objects)
-                    result.AddRange(amfObject.metadata.Select(m => m.type + " ==> " + m.Value));
-                result.AddRange(_comments);
-                return result;
-            }
-        }
         #endregion
         #region Open Solids
         /// <summary>
@@ -140,7 +130,8 @@ namespace TVGL.IOFunctions
                 results.Add(new TessellatedSolid(
                     amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
                     amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                    colors,amfData.Units, name + "_" + amfObject.id,filename,amfData.Comments,amfData.Language));
+                    colors, amfData.Units, name + "_" + amfObject.id, filename,
+                    amfObject.metadata.Select(md => md.ToString()).ToList(), amfData.Language));
             }
             return results;
         }
@@ -162,6 +153,9 @@ namespace TVGL.IOFunctions
             {
                 using (var writer = XmlWriter.Create(stream))
                 {
+                    writer.WriteComment(tvglDateMarkText);
+                    if (!string.IsNullOrWhiteSpace(solids[0].FileName))
+                        writer.WriteComment("Originally loaded from " + solids[0].FileName);
                     var serializer = new XmlSerializer(typeof(AMFFileData));
                     serializer.Serialize(writer, amfFileData);
                 }
@@ -177,20 +171,40 @@ namespace TVGL.IOFunctions
         // this is used by the save method above
         private AMFFileData(IList<TessellatedSolid> solids) : this()
         {
+            this.Name = solids[0].Name.TrimEnd('_', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
+            this.FileName = solids[0].FileName;
+            this.Units = solids[0].Units;
+            this.Language = solids[0].Language;
             for (int i = 0; i < solids.Count; i++)
             {
-                var tessellatedSolid = solids[i];
+                var solid = solids[i];
+                var metaData = new List<AMF_Metadata>();
+                foreach (var comment in solid.Comments)
+                {
+                    var arrowIndex = comment.IndexOf("==>");
+                    if (arrowIndex==-1)  this.Comments.Add(comment);
+                    else
+                    {
+                        var endOfType = arrowIndex - 1;
+                        var beginOfValue = arrowIndex + 3;  //todo: check this -1 and +3
+                        metaData.Add(new AMF_Metadata
+                        {
+                            type = comment.Substring(0, endOfType),
+                            Value = comment.Substring(beginOfValue, comment.Length - beginOfValue)
+                        });
+                    }
+                }
                 var vertexList = new AMF_Vertices
                 {
-                    Vertices = tessellatedSolid.Vertices.Select(v => new AMF_Vertex
+                    Vertices = solid.Vertices.Select(v => new AMF_Vertex
                     {
                         coordinates = new AMF_Coordinates { x = v.X, y = v.Y, z = v.Z }
                     }).ToList()
                 };
                 var volume = new AMF_Volume();
-                if (tessellatedSolid.HasUniformColor)
+                if (solid.HasUniformColor)
                 {
-                    var colorFromSolid = tessellatedSolid.SolidColor ?? new Color(Constants.DefaultColor);
+                    var colorFromSolid = solid.SolidColor ?? new Color(Constants.DefaultColor);
                     volume.color = new AMF_Color
                     {
                         a = colorFromSolid.Af,
@@ -198,7 +212,7 @@ namespace TVGL.IOFunctions
                         g = colorFromSolid.Gf,
                         r = colorFromSolid.Rf
                     };
-                    volume.Triangles = tessellatedSolid.Faces.Select(f => new AMF_Triangle
+                    volume.Triangles = solid.Faces.Select(f => new AMF_Triangle
                     {
                         v1 = f.Vertices[0].IndexInList,
                         v2 = f.Vertices[1].IndexInList,
@@ -207,7 +221,7 @@ namespace TVGL.IOFunctions
                 }
                 else
                 {
-                    volume.Triangles = tessellatedSolid.Faces.Select(f => new AMF_Triangle
+                    volume.Triangles = solid.Faces.Select(f => new AMF_Triangle
                     {
                         v1 = f.Vertices[0].IndexInList,
                         v2 = f.Vertices[1].IndexInList,
@@ -221,7 +235,11 @@ namespace TVGL.IOFunctions
                         }
                     }).ToList();
                 }
-                Objects.Add(new AMF_Object { id = i.ToString(), mesh = new AMF_Mesh { vertices = vertexList, volume = volume } });
+                Objects.Add(new AMF_Object
+                {
+                    id = i.ToString(), mesh = new AMF_Mesh { vertices = vertexList, volume = volume },
+                    metadata = metaData
+                });
             }
         }
         #endregion

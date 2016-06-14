@@ -26,6 +26,7 @@ namespace TVGL.IOFunctions
     internal class OFFFileData : IO
     {
         #region Constructor
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="OFFFileData" /> class.
         /// </summary>
@@ -35,8 +36,11 @@ namespace TVGL.IOFunctions
             FaceToVertexIndices = new List<int[]>();
             Colors = new List<Color>();
         }
+
         #endregion
+
         #region Fields and Properties
+
         /// <summary>
         ///     The last color
         /// </summary>
@@ -107,8 +111,11 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The contains normals.</value>
         private bool ContainsNormals { get; set; }
+
         #endregion
+
         #region Open Solid
+
         /// <summary>
         /// Opens the specified s.
         /// </summary>
@@ -229,8 +236,11 @@ namespace TVGL.IOFunctions
             offData = null;
             return false;
         }
+
         #endregion
+
         #region Save Solid
+
         /// <summary>
         ///     Saves the specified stream.
         /// </summary>
@@ -240,8 +250,57 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveSolid(Stream stream, TessellatedSolid solid)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var colorsDefined =
+                    !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+                var colorString = solid.SolidColor.Rf + " " + solid.SolidColor.Gf + " " + solid.SolidColor.Bf;
+                var writer = new StreamWriter(stream);
+                if (colorsDefined)
+                    writer.WriteLine("off C");
+                else
+                    writer.WriteLine("off");
+                writer.WriteLine("#  " + tvglDateMarkText);
+                if (!string.IsNullOrWhiteSpace(solid.Name))
+                    writer.WriteLine("#  Name : " + solid.Name);
+                if (!string.IsNullOrWhiteSpace(solid.FileName))
+                    writer.WriteLine("#  Originally loaded from : " + solid.FileName);
+                if (solid.Units != UnitType.unspecified)
+                    writer.WriteLine("#  Units : " + solid.Units);
+                if (!string.IsNullOrWhiteSpace(solid.Language))
+                    writer.WriteLine("#  Lang : " + solid.Language);
+                foreach (var comment in solid.Comments)
+                    writer.WriteLine("#  " + comment);
+                writer.WriteLine(solid.NumberOfVertices + " " + solid.NumberOfFaces + " " + solid.NumberOfEdges);
+                writer.WriteLine();
+                foreach (var v in solid.Vertices)
+                    writer.WriteLine(v.X + " " + v.Y + " " + v.Z);
+                writer.WriteLine();
+                foreach (var face in solid.Faces)
+                {
+                    var faceString = face.Vertices.Count.ToString();
+                    foreach (var v in face.Vertices)
+                        faceString += " " + v.IndexInList;
+                    if (colorsDefined)
+                    {
+                        if (face.Color != null)
+                            faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
+                                          face.Color.A;
+                        else
+                            faceString += colorString;
+                    }
+                    writer.WriteLine(faceString);
+                }
+                Message.output("Successfully wrote OFF file to stream.", 3);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                return false;
+            }
         }
+
         #endregion
     }
 }

@@ -61,6 +61,17 @@ namespace TVGL.IOFunctions.amfclasses
         /// </summary>
         [XmlText]
         public string Value;
+
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="System.String" /> that represents this instance.
+        /// </returns>
+        public override string ToString()
+        {
+            return type + " ==> " + Value;
+        }
     }
     /// <summary>
     ///     Class AMF_Mesh.

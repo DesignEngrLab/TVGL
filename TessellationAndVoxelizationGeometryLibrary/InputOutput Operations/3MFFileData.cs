@@ -14,14 +14,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Xml.Serialization;
 using System.IO.Compression;
+using System.Linq;
 using System.Xml;
-using StarMathLib;
+using System.Xml.Serialization;
 using TVGL.IOFunctions.threemfclasses;
+using Object = TVGL.IOFunctions.threemfclasses.Object;
 
 namespace TVGL.IOFunctions
 {
@@ -51,20 +50,23 @@ namespace TVGL.IOFunctions
         {
             metadata = new List<Metadata>();
         }
+
         /// <summary>
-        /// Gets or sets the metadata.
+        ///     Gets or sets the metadata.
         /// </summary>
         /// <value>The metadata.</value>
         [XmlElement]
         public List<Metadata> metadata { get; set; }
+
         /// <summary>
-        /// Gets or sets the resources.
+        ///     Gets or sets the resources.
         /// </summary>
         /// <value>The resources.</value>
         [XmlElement]
         public Resources resources { get; set; }
+
         /// <summary>
-        /// Gets or sets the build.
+        ///     Gets or sets the build.
         /// </summary>
         /// <value>The build.</value>
         [XmlElement]
@@ -81,7 +83,7 @@ namespace TVGL.IOFunctions
         }
 
         /// <summary>
-        /// Gets or sets the requiredextensions.
+        ///     Gets or sets the requiredextensions.
         /// </summary>
         /// <value>The requiredextensions.</value>
         public string requiredextensions { get; set; }
@@ -91,12 +93,11 @@ namespace TVGL.IOFunctions
         /// <param name="filename">The filename.</param>
         /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal new static List<TessellatedSolid> OpenSolids(Stream s, string filename, bool inParallel = true)
+        internal static List<TessellatedSolid> OpenSolids(Stream s, string filename, bool inParallel = true)
         {
 #if net40
             throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
 #else
-            var now = DateTime.Now;
             var result = new List<TessellatedSolid>();
             var archive = new ZipArchive(s);
             foreach (var modelFile in archive.Entries.Where(f => f.FullName.EndsWith(".model")))
@@ -124,9 +125,9 @@ namespace TVGL.IOFunctions
                 {
                     if (reader.IsStartElement("model"))
                     {
-                        string defaultNamespace = reader["xmlns"];
-                        XmlSerializer serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
-                        threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
+                        var defaultNamespace = reader["xmlns"];
+                        var serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
+                        threeMFData = (ThreeMFFileData) serializer.Deserialize(reader);
                     }
                     threeMFData.FileName = filename;
                     var results = new List<TessellatedSolid>();
@@ -142,8 +143,9 @@ namespace TVGL.IOFunctions
                     }
                     foreach (var item in threeMFData.build.Items)
                     {
-                        results.AddRange(TessellatedSolidsFromIDAndTransform(item.objectid, item.transformMatrix,
-                            threeMFData.resources, threeMFData.Name + "_"));
+                        results.AddRange(threeMFData.TessellatedSolidsFromIDAndTransform(item.objectid,
+                            item.transformMatrix,
+                            threeMFData.Name + "_"));
                     }
 
                     Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
@@ -156,31 +158,38 @@ namespace TVGL.IOFunctions
                 return null;
             }
         }
-        private static IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid, double[,] transformMatrix, Resources resources, string name)
+
+        private IEnumerable<TessellatedSolid> TessellatedSolidsFromIDAndTransform(int objectid,
+            double[,] transformMatrix, string name)
         {
             var solid = resources.objects.First(obj => obj.id == objectid);
-            List<TessellatedSolid> result = TessellatedSolidsFromObject(solid, resources, name);
+            var result = TessellatedSolidsFromObject(solid, name);
             if (transformMatrix != null)
                 foreach (var ts in result)
                     ts.Transform(transformMatrix);
             return result;
         }
-        private static List<TessellatedSolid> TessellatedSolidsFromObject(threemfclasses.Object obj, Resources resources, string name)
+
+        private List<TessellatedSolid> TessellatedSolidsFromObject(Object obj, string name)
         {
             name += obj.name + "_" + obj.id;
             var result = new List<TessellatedSolid>();
-            if (obj.mesh != null) result.Add(TessellatedSolidFromMesh(obj.mesh, obj.MaterialID, name, resources));
+            if (obj.mesh != null) result.Add(TessellatedSolidFromMesh(obj.mesh, obj.MaterialID, name));
             foreach (var comp in obj.components)
             {
-                result.AddRange(TessellatedSolidsFromComponent(comp, resources, name));
+                result.AddRange(TessellatedSolidsFromComponent(comp, name));
             }
             return result;
         }
-        private static IEnumerable<TessellatedSolid> TessellatedSolidsFromComponent(Component comp, Resources resources, string name)
-        { return TessellatedSolidsFromIDAndTransform(comp.objectid, comp.transformMatrix, resources, name); }
-        private static TessellatedSolid TessellatedSolidFromMesh(Mesh mesh, int materialID, string name, Resources resources)
+
+        private IEnumerable<TessellatedSolid> TessellatedSolidsFromComponent(Component comp, string name)
         {
-            Color defaultColor = new Color(Constants.DefaultColor);
+            return TessellatedSolidsFromIDAndTransform(comp.objectid, comp.transformMatrix, name);
+        }
+
+        private TessellatedSolid TessellatedSolidFromMesh(Mesh mesh, int materialID, string name)
+        {
+            var defaultColor = new Color(Constants.DefaultColor);
             if (materialID >= 0)
             {
                 var material = resources.materials.FirstOrDefault(mat => mat.id == materialID);
@@ -191,12 +200,12 @@ namespace TVGL.IOFunctions
                     if (defaultColorXml != null) defaultColor = defaultColorXml.color;
                 }
             }
-            var verts = mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList();
+            var verts = mesh.vertices.Select(v => new[] {v.x, v.y, v.z}).ToList();
 
             Color[] colors = null;
             var uniformColor = true;
             var numTriangles = mesh.triangles.Count;
-            for (int j = 0; j < numTriangles; j++)
+            for (var j = 0; j < numTriangles; j++)
             {
                 var triangle = mesh.triangles[j];
                 if (triangle.pid == -1) continue;
@@ -215,12 +224,13 @@ namespace TVGL.IOFunctions
                 if (colors == null) colors = new Color[mesh.triangles.Count];
                 colors[j] = baseColor.color;
             }
-            if (uniformColor) colors = new[] { defaultColor };
+            if (uniformColor) colors = new[] {defaultColor};
             else
-                for (int j = 0; j < numTriangles; j++)
+                for (var j = 0; j < numTriangles; j++)
                     if (colors[j] == null) colors[j] = defaultColor;
             return new TessellatedSolid(verts,
-                mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors);//todo
+                mesh.triangles.Select(t => new[] {t.v1, t.v2, t.v3}).ToList(), colors, Units,
+                name, FileName, Comments, Language);
         }
 
         /// <summary>
@@ -236,7 +246,7 @@ namespace TVGL.IOFunctions
 #else
             ZipArchiveEntry entry;
             Stream entryStream;
-            using (ZipArchive archive = new ZipArchive(stream, ZipArchiveMode.Create))
+            using (var archive = new ZipArchive(stream, ZipArchiveMode.Create))
             {
                 entry = archive.CreateEntry("3D/3dmodel.model");
                 using (entryStream = entry.Open())
@@ -261,23 +271,23 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool SaveModel(Stream stream, IList<TessellatedSolid> solids)
         {
-            var objects = new List<threemfclasses.Object>();
-            var baseMats = new BaseMaterials { id = 1 };
-            for (int i = 0; i < solids.Count; i++)
+            var objects = new List<Object>();
+            var baseMats = new BaseMaterials {id = 1};
+            for (var i = 0; i < solids.Count; i++)
             {
                 var solid = solids[i];
-                var thisObject = new threemfclasses.Object { name = solid.Name, id = i + 2 };
+                var thisObject = new Object {name = solid.Name, id = i + 2};
                 // this is "+ 2" since the id's start with 1 instead of 0 plus BaseMaterials is typically 1, so start at 2.
                 var triangles = new List<Triangle>();
 
                 foreach (var face in solid.Faces)
                 {
                     var colString = (face.Color ?? solid.SolidColor ?? new Color(Constants.DefaultColor)).ToString();
-                    int colorIndex = baseMats.bases.FindIndex(col => col.colorString.Equals(colString));
+                    var colorIndex = baseMats.bases.FindIndex(col => col.colorString.Equals(colString));
                     if (colorIndex == -1)
                     {
                         colorIndex = baseMats.bases.Count;
-                        baseMats.bases.Add(new Base { colorString = colString });
+                        baseMats.bases.Add(new Base {colorString = colString});
                     }
                     triangles.Add(new Triangle
                     {
@@ -291,26 +301,52 @@ namespace TVGL.IOFunctions
                 thisObject.mesh = new Mesh
                 {
                     vertices = solid.Vertices.Select(v => new threemfclasses.Vertex
-                    { x = v.X, y = v.Y, z = v.Z }).ToList(),
+                    {x = v.X, y = v.Y, z = v.Z}).ToList(),
                     triangles = triangles
                 };
                 objects.Add(thisObject);
             }
-            ThreeMFFileData threeMFData = new ThreeMFFileData
+
+            var metaData = new List<Metadata>();
+            var allRawComments = solids.SelectMany(s => s.Comments);
+            var comments = new List<string>();
+            foreach (var comment in allRawComments)
+            {
+                var arrowIndex = comment.IndexOf("==>");
+                if (arrowIndex == -1) comments.Add(comment);
+                else
+                {
+                    var endOfType = arrowIndex - 1;
+                    var beginOfValue = arrowIndex + 3; //todo: check this -1 and +3
+                    metaData.Add(new Metadata
+                    {
+                        type = comment.Substring(0, endOfType),
+                        Value = comment.Substring(beginOfValue, comment.Length - beginOfValue)
+                    });
+                }
+            }
+            var threeMFData = new ThreeMFFileData
             {
                 Units = solids[0].Units,
-                build = new Build { Items = objects.Select(o => new Item { objectid = o.id }).ToList() },
+                Name = solids[0].Name.Split('_')[0],
+                Language = solids[0].Language,
+                metadata = metaData,
+                build = new Build {Items = objects.Select(o => new Item {objectid = o.id}).ToList()},
                 resources =
                     new Resources
                     {
-                        basematerials = (new[] { baseMats }).ToList(), //colors = colors, materials = materials,
+                        basematerials = new[] {baseMats}.ToList(), //colors = colors, materials = materials,
                         objects = objects
                     }
             };
+            threeMFData.Comments.AddRange(comments);
             try
             {
                 using (var writer = XmlWriter.Create(stream))
                 {
+                    writer.WriteComment(tvglDateMarkText);
+                    if (!string.IsNullOrWhiteSpace(solids[0].FileName))
+                        writer.WriteComment("Originally loaded from " + solids[0].FileName);
                     var serializer = new XmlSerializer(typeof(ThreeMFFileData), defXMLNameSpaceModel);
                     serializer.Serialize(writer, threeMFData);
                 }
@@ -330,20 +366,20 @@ namespace TVGL.IOFunctions
             var rels = new Relationships
             {
                 rels = new[]
-            {
-                new Relationship
                 {
-                    Target = "/3D/3dmodel.model",
-                    Id = "rel-1",
-                    Type = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
-                },
-                new Relationship
-                {
-                    Target = "/Metadata/thumbnail.png",
-                    Id = "rel0",
-                    Type = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
+                    new Relationship
+                    {
+                        Target = "/3D/3dmodel.model",
+                        Id = "rel-1",
+                        Type = "http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"
+                    },
+                    new Relationship
+                    {
+                        Target = "/Metadata/thumbnail.png",
+                        Id = "rel0",
+                        Type = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
+                    }
                 }
-            }
             };
 
             using (var writer = XmlWriter.Create(stream))
@@ -367,10 +403,9 @@ namespace TVGL.IOFunctions
                     Extension = "model",
                     ContentType = "application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
                 },
-                new Default {Extension = "png", ContentType = "image/png"},
-
+                new Default {Extension = "png", ContentType = "image/png"}
             };
-            var types = new Types { Defaults = defaults };
+            var types = new Types {Defaults = defaults};
 
             using (var writer = XmlWriter.Create(stream))
             {

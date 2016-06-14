@@ -316,7 +316,6 @@ namespace TVGL.IOFunctions
         /// <returns>
         ///   <c>true</c> if XXXX, <c>false</c> otherwise.
         /// </returns>
-        /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveSolid(Stream stream, TessellatedSolid solid)
         {
             var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
@@ -328,7 +327,17 @@ namespace TVGL.IOFunctions
                 {
                     writer.WriteLine("ply");
                     writer.WriteLine("format ascii 1.0");
-                    writer.WriteLine("comment " + tvglDateMarkText);
+                    writer.WriteLine("comment  " + tvglDateMarkText);
+                    if (!string.IsNullOrWhiteSpace(solid.Name))
+                        writer.WriteLine("comment  Name : " + solid.Name);
+                    if (!string.IsNullOrWhiteSpace(solid.FileName))
+                        writer.WriteLine("comment  Originally loaded from : " + solid.FileName);
+                    if (solid.Units != UnitType.unspecified)
+                        writer.WriteLine("comment  Units : " + solid.Units);
+                    if (!string.IsNullOrWhiteSpace(solid.Language))
+                        writer.WriteLine("comment  Lang : " + solid.Language);
+                    foreach (var comment in solid.Comments)
+                        writer.WriteLine("comment  " + comment);
                     writer.WriteLine("element vertex " + solid.NumberOfVertices);
                     writer.WriteLine("property double x");
                     writer.WriteLine("property double y");
