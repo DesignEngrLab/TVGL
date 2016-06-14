@@ -36,7 +36,14 @@ namespace TVGL.IOFunctions
         /// Gets or sets the name.
         /// </summary>
         /// <value>The name.</value>
-        public string Name { get; set; }
+        internal string Name { get; set; }
+        /// <summary>
+        /// Gets or sets the name of the file.
+        /// </summary>
+        /// <value>
+        /// The name of the file.
+        /// </value>
+        internal string FileName { get; set; }
 
         /// <summary>
         /// Gets or sets the unit.
@@ -250,10 +257,20 @@ namespace TVGL.IOFunctions
             {
                 line = reader.ReadLine();
                 if (reader.EndOfStream) break;
-            } while (string.IsNullOrWhiteSpace(line) || line.StartsWith("\0") || line.StartsWith("#") ||
-                     line.StartsWith("!")
-                     || line.StartsWith("$"));
+            } while (string.IsNullOrWhiteSpace(line));
             return line.Trim(' ');
+        }
+
+        protected static UnitType InferUnitsFromComments(List<string> comments)
+        {
+            UnitType units;
+            foreach (var comment in comments)
+            {
+                var words = Regex.Matches(comment, "([a-z]+)");
+                foreach (var word in words)
+                    if (TryParseUnits((string)word, out units)) return units;
+            }
+            return UnitType.unspecified;
         }
 
         /// <summary>

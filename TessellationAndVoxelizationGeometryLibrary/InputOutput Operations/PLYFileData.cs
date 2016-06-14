@@ -113,7 +113,7 @@ namespace TVGL.IOFunctions
             try
             {
                 var reader = new StreamReader(s);
-                var plyData = new PLYFileData();
+                var plyData = new PLYFileData { FileName = filename, Name = GetNameFromFileName(filename) };
                 var line = ReadLine(reader);
                 if (!line.Contains("ply") && !line.Contains("PLY"))
                     return null;
@@ -138,8 +138,9 @@ namespace TVGL.IOFunctions
                     if (!successful) return null;
                 }
                 Message.output("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").", 3);
-                return new TessellatedSolid(filename, plyData.Vertices, plyData.FaceToVertexIndices,
-                    plyData.HasColorSpecified ? plyData.Colors : null);
+                return new TessellatedSolid(plyData.Vertices, plyData.FaceToVertexIndices,
+                    plyData.HasColorSpecified ? plyData.Colors : null,InferUnitsFromComments(plyData.Comments),
+                  plyData.Name,plyData.FileName,plyData.Comments,plyData.Language);
             }
             catch
             {

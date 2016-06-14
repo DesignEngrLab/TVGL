@@ -108,8 +108,9 @@ namespace TVGL.IOFunctions
             }
             var results = new List<TessellatedSolid>();
             foreach (var stlFileData in stlData)
-                results.Add(new TessellatedSolid(stlFileData.Name, stlFileData.Normals, stlFileData.Vertices,
-                    stlFileData.HasColorSpecified ? stlFileData.Colors : null));
+                results.Add(new TessellatedSolid(stlFileData.Normals, stlFileData.Vertices,
+                    stlFileData.HasColorSpecified ? stlFileData.Colors : null,stlFileData.Units,
+                    stlFileData.Name,filename,stlFileData.Comments,stlFileData.Language));
             Message.output(
                 "Successfully read in " + typeString + " file called " + filename + " in " +
                 (DateTime.Now - now).TotalSeconds + " seconds.", 4);
@@ -124,11 +125,11 @@ namespace TVGL.IOFunctions
         /// <returns>True if the model was loaded successfully.</returns>
         internal static bool TryReadAscii(Stream stream, string filename, out List<STLFileData> stlData)
         {
-            var defaultName = filename + "_";
+            var defaultName =GetNameFromFileName(filename) + "_";
             var solidNum = 0;
             var reader = new StreamReader(stream);
             stlData = new List<STLFileData>();
-            var stlSolid = new STLFileData();
+            var stlSolid = new STLFileData {FileName = filename};
             while (!reader.EndOfStream)
             {
                 var line = ReadLine(reader);
@@ -222,7 +223,7 @@ namespace TVGL.IOFunctions
             stlSolid1.Name = decoder.GetString(reader.ReadBytes(80), 0, 80).Trim(' ');
             stlSolid1.Name = stlSolid1.Name.Replace("solid", "").Trim(' ');
             if (string.IsNullOrWhiteSpace(stlSolid1.Name))
-                stlSolid1.Name = filename;
+                stlSolid1.Name =GetNameFromFileName(filename);
             var numberTriangles = ReadUInt32(reader);
 
             if (length - 84 != numberTriangles * 50)

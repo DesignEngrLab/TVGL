@@ -128,7 +128,7 @@ namespace TVGL.IOFunctions
                         XmlSerializer serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
                         threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
                     }
-
+                    threeMFData.FileName = filename;
                     var results = new List<TessellatedSolid>();
                     threeMFData.Name = GetNameFromFileName(filename);
                     var nameIndex =
@@ -219,8 +219,8 @@ namespace TVGL.IOFunctions
             else
                 for (int j = 0; j < numTriangles; j++)
                     if (colors[j] == null) colors[j] = defaultColor;
-            return new TessellatedSolid(name, verts,
-                mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors);
+            return new TessellatedSolid(verts,
+                mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors);//todo
         }
 
         /// <summary>

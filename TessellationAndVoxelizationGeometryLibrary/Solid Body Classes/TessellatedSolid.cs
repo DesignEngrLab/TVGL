@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
+using TVGL.IOFunctions;
 
 namespace TVGL
 {
@@ -39,14 +40,10 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid Copy()
         {
-            var listDoubles = new List<double[]>();
-            foreach (var vertex in Vertices)
-            {
-                if (vertex.IndexInList == -1) throw new Exception("Need to fix ts.Copy function if it ever comes up");
-                listDoubles.Add((double[])vertex.Position.Clone());
-            }
-            var faces = Faces.Select(t => t.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList();
-            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor });
+            return new TessellatedSolid(Vertices.Select(vertex => (double[])vertex.Position.Clone()).ToList(),
+                Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
+                Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
+                FileName, Comments, Language);
         }
 
         #endregion
@@ -137,13 +134,6 @@ namespace TVGL
         /// </summary>
         /// <value>The mass.</value>
         public double Mass { get; set; }
-
-        /// <summary>
-        /// Gets or sets the units.
-        /// </summary>
-        /// <value>The units.</value>
-        public UnitType Units { get; set; }
-
         /// <summary>
         ///     Gets the surface area.
         /// </summary>
@@ -156,6 +146,23 @@ namespace TVGL
         /// <value>The name.</value>
         public string Name { get; set; }
 
+        /// <summary>
+        /// The comments
+        /// </summary>
+        public readonly List<string> Comments;
+
+        /// <summary>
+        /// The file name
+        /// </summary>
+        public readonly string FileName;
+
+        /// <summary>
+        /// Gets or sets the units.
+        /// </summary>
+        /// <value>The units.</value>
+        public readonly UnitType Units;
+
+        public readonly string Language;
         /// <summary>
         ///     Gets the faces.
         /// </summary>
@@ -289,27 +296,34 @@ namespace TVGL
 
         #region Constructors
 
-        /// <summary>
-        ///     Prevents a default instance of the <see cref="TessellatedSolid" /> class from being created.
-        /// </summary>
-        private TessellatedSolid()
-        {
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
-        ///     matches with the STL format.
-        /// </summary>
-        /// <param name="name">The name.</param>
-        /// <param name="normals">The normals.</param>
-        /// <param name="vertsPerFace">The verts per face.</param>
-        /// <param name="colors">The colors.</param>
-        public TessellatedSolid(string name, IList<double[]> normals, IList<List<double[]>> vertsPerFace,
-            IList<Color> colors)
+        private TessellatedSolid(UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "")
         {
             var now = DateTime.Now;
             //Begin Construction 
             Name = name;
+            FileName = filename;
+            Comments = new List<string>(comments);
+            Language = language;
+            Units = units;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
+        /// matches with the STL format.
+        /// </summary>
+        /// <param name="normals">The normals.</param>
+        /// <param name="vertsPerFace">The verts per face.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
+        public TessellatedSolid(IList<double[]> normals, IList<List<double[]>> vertsPerFace,
+            IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
+        {
             List<int[]> faceToVertexIndices;
             DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFace.SelectMany(v => v));
             MakeVertices(vertsPerFace, out faceToVertexIndices);
@@ -317,55 +331,52 @@ namespace TVGL
             MakeFaces(faceToVertexIndices, normals);
             DefineFaceColors(colors);
             CompleteInitiation();
-
-            Message.output("File opened in: " + (DateTime.Now - now), 4);
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This matches with formats
-        ///     that use indices to the vertices (almost everything except STL).
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This matches with formats
+        /// that use indices to the vertices (almost everything except STL).
         /// </summary>
-        /// <param name="name">The name.</param>
         /// <param name="vertices">The vertices.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="colors">The colors.</param>
-        public TessellatedSolid(string name, IList<double[]> vertices, IList<int[]> faceToVertexIndices,
-            IList<Color> colors)
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
+        public TessellatedSolid(IList<double[]> vertices, IList<int[]> faceToVertexIndices,
+            IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
         {
-            var now = DateTime.Now;
-            //Begin Construction 
-            Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices);
             MakeVertices(vertices, ref faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices);
             DefineFaceColors(colors);
             CompleteInitiation();
-
-            Message.output("File opened in: " + (DateTime.Now - now), 4);
         }
 
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
-        ///     for cases in which the faces and vertices are already defined.
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
+        /// for cases in which the faces and vertices are already defined.
         /// </summary>
-        /// <param name="faces"></param>
-        /// <param name="vertices"></param>
-        /// <param name="name"></param>
-        /// <param name="colors"></param>
-        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, string name = "",
-            IList<Color> colors = null)
+        /// <param name="faces">The faces.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
+        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null,
+            IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
         {
-            Name = name;
-            //Get vertices if null
             if (vertices == null)
-            {
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
-            }
-            Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
-
             //Create a copy of the vertex and face (This is NON-Destructive!)
 
             var newVertices = new List<Vertex>();
@@ -378,7 +389,6 @@ namespace TVGL
                 newVertices.Add(vertex);
                 simpleCompareDict.Add(vertices[i], vertex);
             }
-            Vertices = new Vertex[0];
             Vertices = newVertices.ToArray();
             NumberOfVertices = Vertices.Length;
 
@@ -399,7 +409,6 @@ namespace TVGL
                 face.Vertices = faceVertices;
                 newFaces.Add(face);
             }
-            Faces = new PolygonalFace[0];
             Faces = newFaces.ToArray();
             NumberOfFaces = Faces.Length;
             VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(NumberOfVertices)) + 1);
@@ -686,22 +695,21 @@ namespace TVGL
         private void DefineFaceColors(IList<Color> colors = null)
         {
             HasUniformColor = true;
-            if (colors == null || !colors.Any()) SolidColor = new Color(Constants.DefaultColor);
-            else if (colors.Count == 1) SolidColor = colors[0];
-            else HasUniformColor = false;
+            if (colors == null || !colors.Any())
+            {
+                SolidColor = new Color(Constants.DefaultColor);
+                return;
+            }
+            SolidColor = colors[0];
+            if (colors.Count == 1) return;
             for (var i = 0; i < Faces.Length; i++)
             {
                 var face = Faces[i];
-                if (face.Color != null && !face.Color.Equals(SolidColor)) HasUniformColor = false;
-                else if (!HasUniformColor)
-                {
-                    if (colors == null || !colors.Any()) face.Color = SolidColor;
-                    else
-                    {
-                        var j = i < colors.Count - 1 ? i : colors.Count - 1;
-                        face.Color = colors[j];
-                    }
-                }
+                var j = i < colors.Count - 1 ? i : colors.Count - 1;
+                var color = colors[j];
+                if (SolidColor.Equals(color)) continue;
+                HasUniformColor = false;
+                face.Color = colors[j];
             }
         }
 

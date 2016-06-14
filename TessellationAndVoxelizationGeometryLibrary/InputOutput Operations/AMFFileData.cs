@@ -96,7 +96,7 @@ namespace TVGL.IOFunctions
         internal static List<TessellatedSolid> OpenSolids(Stream s, string filename)
         {
             var now = DateTime.Now;
-            AMFFileData amfData = null;
+            AMFFileData amfData;
             try
             {
                 var streamReader = new StreamReader(s);
@@ -109,6 +109,7 @@ namespace TVGL.IOFunctions
                 Message.output("Unable to read in AMF file (" + (DateTime.Now - now) + ").", 1);
                 return null;
             }
+            amfData.FileName = filename;
             amfData.Name = GetNameFromFileName(filename);
             var results = new List<TessellatedSolid>();
             foreach (var amfObject in amfData.Objects)
@@ -131,11 +132,15 @@ namespace TVGL.IOFunctions
                 var name = amfData.Name;
                 var nameIndex =
                     amfObject.metadata.FindIndex(md => md != null && md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase));
-                if (nameIndex != -1) name = amfObject.metadata[nameIndex].Value;
-                results.Add(new TessellatedSolid(name + "_" + amfObject.id,
+                if (nameIndex != -1)
+                {
+                    name = amfObject.metadata[nameIndex].Value;
+                    amfObject.metadata.RemoveAt(nameIndex);
+                }
+                results.Add(new TessellatedSolid(
                     amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
                     amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                    colors));
+                    colors,amfData.Units, name + "_" + amfObject.id,filename,amfData.Comments,amfData.Language));
             }
             return results;
         }
