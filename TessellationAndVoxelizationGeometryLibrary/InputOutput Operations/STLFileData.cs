@@ -257,7 +257,7 @@ namespace TVGL.IOFunctions
                     FileName = last.FileName
                 };
                 stlSolid1.Comments.Add(comments);
-            } while (reader.BaseStream.CanRead);
+            } while (reader.BaseStream.Position<length);
             return true;
         }
 
