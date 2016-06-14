@@ -138,7 +138,15 @@ namespace TVGL
         ///     Whether ts.Errors contains any errors that need to be resolved
         /// </summary>
         /// <value><c>true</c> if [no errors]; otherwise, <c>false</c>.</value>
-        public bool NoErrors { get; private set; }
+        internal bool NoErrors { get; set; }
+        /// <summary>
+        /// Gets a value indicating whether [model is inside out].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [model is inside out]; otherwise, <c>false</c>.
+        /// </value>
+        public bool ModelIsInsideOut { get; private set; }
+
 
         #endregion
 
@@ -154,6 +162,7 @@ namespace TVGL
             ts.Errors = new TessellationError();
             ts.Errors.NoErrors = true;
             Message.output("Model Integrity Check...", 3);
+            if (ts.Volume < 0) StoreModelIsInsideOut(ts);
             if (ts.MostPolygonSides > 3) StoreHigherThanTriFaces(ts);
             var edgeFaceRatio = ts.NumberOfEdges / (double)ts.NumberOfFaces;
             if (ts.MostPolygonSides == 3 && !edgeFaceRatio.IsPracticallySame(1.5))
@@ -182,7 +191,7 @@ namespace TVGL
                 if (!edge.OtherFace.Edges.Contains(edge)) StoreFaceDoesNotLinkBackToEdge(ts, edge, edge.OtherFace);
                 if (!edge.To.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.To);
                 if (!edge.From.Edges.Contains(edge)) StoreVertDoesNotLinkBackToEdge(ts, edge, edge.From);
-                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > 2 * Math.PI)
+                if (double.IsNaN(edge.InternalAngle) || edge.InternalAngle < 0 || edge.InternalAngle > Constants.TwoPi)
                     StoreEdgeHasBadAngle(ts, edge);
             }
             //Check if each vertex has cyclic references with each edge and each face.
@@ -196,12 +205,13 @@ namespace TVGL
             if (ts.Errors.NoErrors)
             {
                 Message.output("** Model contains no errors.", 3);
+                ts.Errors = null;
                 return;
             }
             if (repairAutomatically)
             {
                 Message.output("Some errors found. Attempting to Repair...", 2);
-                var success = ts.Errors.Repair(ts);
+                var success = ts.Repair();
                 if (success)
                 {
                     ts.Errors = null;
@@ -214,7 +224,6 @@ namespace TVGL
             ts.Errors.Report();
         }
 
-
         /// <summary>
         ///     Report out any errors
         /// </summary>
@@ -224,6 +233,8 @@ namespace TVGL
             //Note that negligible faces are not truly errors.
             Message.output("Errors found in model:");
             Message.output("======================");
+            if (ModelIsInsideOut)
+                Message.output("==> The model is inside-out! All the normals of the faces are pointed inward.");
             if (NonTriangularFaces != null)
                 Message.output("==> " + NonTriangularFaces.Count + " faces are polygons with more than 3 sides.");
             if (!double.IsNaN(EdgeFaceRatio))
@@ -269,6 +280,16 @@ namespace TVGL
         #endregion
 
         #region Error Storing
+
+        /// <summary>
+        /// Stores the model is inside out.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        private static void StoreModelIsInsideOut(TessellatedSolid ts)
+        {
+            ts.Errors.NoErrors = false;
+            ts.Errors.ModelIsInsideOut = true;
+        }
 
         /// <summary>
         ///     Stores the higher than tri faces.
@@ -518,8 +539,10 @@ namespace TVGL
         internal bool Repair(TessellatedSolid ts)
         {
             var completelyRepaired = true;
+            if (ModelIsInsideOut)
+                completelyRepaired = ts.TurnModelInsideOut();
             if (EdgesWithBadAngle != null)
-                completelyRepaired = FlipFacesBasedOnBadAngles(ts);
+                completelyRepaired = completelyRepaired && FlipFacesBasedOnBadAngles(ts);
             if (NonTriangularFaces != null)
                 completelyRepaired = completelyRepaired && DivideUpNonTriangularFaces(ts);
             if (SingledSidedEdges != null) //what about faces with only one or two edges?

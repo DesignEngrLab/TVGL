@@ -256,8 +256,8 @@ namespace TVGL
             for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].dotProduct(normals[i - 1]));
             // if all are close to one (or at least positive), then the face is a convex polygon. Now,
             // we can simply average and return the answer.
-            IsConvex = dotProductsOfNormals.All(x => x > 0);
-            if (IsConvex)
+         var isConvex = dotProductsOfNormals.All(x => x > 0);
+            if (isConvex)
             {
                 var newNormal = normals.Aggregate((current, c) => current.add(c)).normalize();
                 // even though the normal provide was wrong above (or nonexistent)
@@ -293,13 +293,6 @@ namespace TVGL
             reverseVertexOrder = true;
             return normals[0].normalize();
         }
-
-        /// <summary>
-        ///     Gets the is convex.
-        /// </summary>
-        /// <value>The is convex.</value>
-        public bool IsConvex { get; private set; }
-
         #endregion
 
         #region Properties

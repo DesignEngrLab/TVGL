@@ -199,13 +199,13 @@ namespace TVGL
         ///     Gets the internal angle in radians.
         /// </summary>
         /// <value>The internal angle.</value>
-        public double InternalAngle { get; private set; }
+        public double InternalAngle { get; internal set; }
 
         /// <summary>
         ///     Gets the curvature of the surface.
         /// </summary>
         /// <value>The curvature of the surface.</value>
-        public CurvatureType Curvature { get; private set; }
+        public CurvatureType Curvature { get; internal set; }
 
         /// <summary>
         ///     Gets a value indicating whether [is part of the convex hull].

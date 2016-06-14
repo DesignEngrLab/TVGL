@@ -28,6 +28,7 @@ namespace TVGL
     /// </summary>
     public static class Constants
     {
+        internal const double TwoPi = 2 * Math.PI;
         /// <summary>
         ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
         /// </summary>
@@ -188,7 +189,7 @@ namespace TVGL
     /// </summary>
     public enum FileType
     {
-        unspecified,    
+        unspecified,
         /// <summary>
         ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
         /// </summary>
@@ -244,9 +245,9 @@ namespace TVGL
     ///     Enum ColorElements
     /// </summary>
     internal enum ColorElements
-        /// <summary>
-        /// The red
-        /// </summary>
+    /// <summary>
+    /// The red
+    /// </summary>
     {
         Red,
         Green,

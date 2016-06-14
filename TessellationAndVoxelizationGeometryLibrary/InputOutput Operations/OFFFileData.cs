@@ -169,7 +169,15 @@ namespace TVGL.IOFunctions
             offData.ContainsHomogeneousCoordinates = line.Contains("4");
 
             double[] point;
-            if (TryParseDoubleArray(ReadLine(reader), out point))
+            line = ReadLine(reader);
+            while (line.StartsWith("#"))
+            {
+                line.Remove(0, 1);
+                if (!string.IsNullOrWhiteSpace(line))
+                    offData.Comments.Add(line.Substring(1));
+                line = ReadLine(reader);
+            }
+            if (TryParseDoubleArray(line, out point))
             {
                 offData.NumVertices = (int)Math.Round(point[0], 0);
                 offData.NumFaces = (int)Math.Round(point[1], 0);
@@ -180,6 +188,13 @@ namespace TVGL.IOFunctions
             for (var i = 0; i < offData.NumVertices; i++)
             {
                 line = ReadLine(reader);
+                while (line.StartsWith("#"))
+                {
+                    line.Remove(0, 1);
+                    if (!string.IsNullOrWhiteSpace(line))
+                        offData.Comments.Add(line.Substring(1));
+                    line = ReadLine(reader);
+                }
                 if (TryParseDoubleArray(line, out point))
                 {
                     if (offData.ContainsHomogeneousCoordinates
@@ -197,6 +212,13 @@ namespace TVGL.IOFunctions
             for (var i = 0; i < offData.NumFaces; i++)
             {
                 line = ReadLine(reader);
+                while (line.StartsWith("#"))
+                {
+                    line.Remove(0, 1);
+                    if (!string.IsNullOrWhiteSpace(line))
+                        offData.Comments.Add(line.Substring(1));
+                    line = ReadLine(reader);
+                }
                 double[] numbers;
                 if (!TryParseDoubleArray(line, out numbers)) return false;
 
@@ -232,9 +254,9 @@ namespace TVGL.IOFunctions
         /// <exception cref="System.IO.EndOfStreamException">Incomplete file</exception>
         private static bool TryReadBinary(Stream stream, out OFFFileData offData)
         {
-            throw new NotImplementedException();
             offData = null;
             return false;
+            throw new NotImplementedException();
         }
 
         #endregion

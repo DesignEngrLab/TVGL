@@ -64,6 +64,30 @@ namespace TVGL
             return success;
         }
 
+
+        internal bool TurnModelInsideOut()
+        {
+            Volume = -1 * Volume;
+            _inertiaTensor = null;
+            foreach (var face in Faces)
+            {
+                face.Normal = face.Normal.multiply(-1);
+                face.Vertices.Reverse();
+                face.Edges.Reverse();
+                face.Curvature = (CurvatureType)(-1 * (int)face.Curvature);
+            }
+            foreach (var edge in Edges)
+            {
+                edge.Curvature = (CurvatureType)(-1 * (int)edge.Curvature);
+                edge.InternalAngle = Constants.TwoPi - edge.InternalAngle;
+                var tempFace = edge.OwnedFace;
+                edge.OwnedFace = edge.OtherFace;
+                edge.OtherFace = tempFace;
+            }
+            return true;
+        }
+
+
         #region Fields and Properties
 
         /// <summary>

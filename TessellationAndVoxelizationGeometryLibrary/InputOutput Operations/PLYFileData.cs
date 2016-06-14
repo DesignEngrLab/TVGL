@@ -142,7 +142,7 @@ namespace TVGL.IOFunctions
                     plyData.HasColorSpecified ? plyData.Colors : null,InferUnitsFromComments(plyData.Comments),
                   plyData.Name,plyData.FileName,plyData.Comments,plyData.Language);
             }
-            catch
+            catch (Exception exception)
             {
                 Message.output("Unable to read in PLY file (" + (DateTime.Now - now) + ").", 1);
                 return null;
@@ -277,10 +277,6 @@ namespace TVGL.IOFunctions
                 {
                     string typeString, restString;
                     ParseLine(values, out typeString, out restString);
-                    ColorIsFloat = typeString.StartsWith("float", StringComparison.OrdinalIgnoreCase)
-                                   || typeString.StartsWith("double", StringComparison.OrdinalIgnoreCase);
-                    // doesn't seem like much point in checking this, it comes in many
-                    // varieties like uint8 int32 vertex_indices, but it'll read in just fine
                     //if (typeString.Equals("list") && restString.Contains("uchar int vertex_index"))
                     //    expectingFaceToHaveListOfVertices = true;
                     if (restString.Equals("red", StringComparison.OrdinalIgnoreCase)
@@ -303,6 +299,10 @@ namespace TVGL.IOFunctions
                     else if (restString.Contains("green"))
                         ColorDescriptor.Add(ColorElements.Green);
                     else continue;
+                    // the continue ensures that the following line will only be processed if it the property
+                    // was identified as a color
+                    ColorIsFloat = typeString.StartsWith("float", StringComparison.OrdinalIgnoreCase)
+                                   || typeString.StartsWith("double", StringComparison.OrdinalIgnoreCase);
                 }
             } while (!line.Equals("end_header"));
         }

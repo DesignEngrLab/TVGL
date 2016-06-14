@@ -190,7 +190,7 @@ namespace TVGL.IOFunctions
                         metaData.Add(new AMF_Metadata
                         {
                             type = comment.Substring(0, endOfType),
-                            Value = comment.Substring(beginOfValue, comment.Length - beginOfValue)
+                            Value = comment.Substring(beginOfValue)
                         });
                     }
                 }

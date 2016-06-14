@@ -321,7 +321,7 @@ namespace TVGL.IOFunctions
                     metaData.Add(new Metadata
                     {
                         type = comment.Substring(0, endOfType),
-                        Value = comment.Substring(beginOfValue, comment.Length - beginOfValue)
+                        Value = comment.Substring(beginOfValue)
                     });
                 }
             }

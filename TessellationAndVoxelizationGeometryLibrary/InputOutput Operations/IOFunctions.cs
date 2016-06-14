@@ -117,11 +117,15 @@ namespace TVGL.IOFunctions
                     tessellatedSolids = AMFFileData.OpenSolids(s, filename);
                     break;
                 case "off":
-                    tessellatedSolids = new List<TessellatedSolid> { OFFFileData.OpenSolid(s, filename) };
+                    var offTS = OFFFileData.OpenSolid(s, filename);
+                    if (offTS == null) tessellatedSolids = null;
+                    else tessellatedSolids = new List<TessellatedSolid> { offTS };
                     // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
                 case "ply":
-                    tessellatedSolids = new List<TessellatedSolid> { PLYFileData.OpenSolid(s, filename) };
+                    var plyTS = PLYFileData.OpenSolid(s, filename);
+                    if (plyTS == null) tessellatedSolids = null;
+                    else tessellatedSolids = new List<TessellatedSolid> { plyTS };
                     break;
                 case "shell":
                     tessellatedSolids = ShellFileData.OpenSolids(s, filename);
@@ -149,6 +153,7 @@ namespace TVGL.IOFunctions
         protected static string GetNameFromFileName(string filename)
         {
             var startIndex = filename.LastIndexOf('/') + 1;
+            if (startIndex == -1) startIndex = filename.LastIndexOf('\\') + 1;
             var endIndex = filename.IndexOf('.', startIndex);
             if (endIndex == -1) endIndex = filename.Length - 1;
             return filename.Substring(startIndex, endIndex - startIndex);
@@ -158,7 +163,7 @@ namespace TVGL.IOFunctions
             var lastIndexOfDot = filename.LastIndexOf('.');
             if (lastIndexOfDot < 0 || lastIndexOfDot >= filename.Length - 1)
                 throw new Exception("Cannot open file without extension (e.g. f00.stl).");
-            return filename.Substring(lastIndexOfDot + 1, filename.Length - lastIndexOfDot - 1).ToLower();
+            return filename.Substring(lastIndexOfDot + 1).ToLower();
         }
         /// <summary>
         ///     Parses the ID and values from the specified line.
@@ -261,6 +266,11 @@ namespace TVGL.IOFunctions
             return line.Trim(' ');
         }
 
+        /// <summary>
+        /// Infers the units from comments.
+        /// </summary>
+        /// <param name="comments">The comments.</param>
+        /// <returns></returns>
         protected static UnitType InferUnitsFromComments(List<string> comments)
         {
             UnitType units;
@@ -268,7 +278,7 @@ namespace TVGL.IOFunctions
             {
                 var words = Regex.Matches(comment, "([a-z]+)");
                 foreach (var word in words)
-                    if (TryParseUnits((string)word, out units)) return units;
+                    if (TryParseUnits(word.ToString(), out units)) return units;
             }
             return UnitType.unspecified;
         }

@@ -146,6 +146,9 @@ namespace TVGL.IOFunctions
                 ParseLine(line, out id, out values);
                 switch (id)
                 {
+                    case "#":
+                        stlSolid.Comments.Add(values);
+                        break;
                     case "solid":
                         if (string.IsNullOrWhiteSpace(values))
                             stlSolid.Name = defaultName + ++solidNum;

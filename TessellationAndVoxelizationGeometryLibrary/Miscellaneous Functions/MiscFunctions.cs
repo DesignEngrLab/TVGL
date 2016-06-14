@@ -755,8 +755,8 @@ namespace TVGL
             var angleV0 = Math.Atan2(v0[1], v0[0]);
             var angleV1 = Math.Atan2(v1[1], v1[0]);
             var angleChange = Math.PI - (angleV1 - angleV0);
-            if (angleChange > 2*Math.PI) return angleChange - 2*Math.PI;
-            if (angleChange < 0) return angleChange + 2*Math.PI;
+            if (angleChange > 2*Math.PI) return angleChange - Constants.TwoPi;
+            if (angleChange < 0) return angleChange + Constants.TwoPi;
             return angleChange;
         }
 
