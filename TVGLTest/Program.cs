@@ -13,6 +13,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+        "../../../TestFiles/bigmotor.amf",
         "../../../TestFiles/DxTopLevelPart2.shell",
         "../../../TestFiles/Candy.shell",
         "../../../TestFiles/amf_Cube.amf",
@@ -69,12 +70,12 @@ namespace TVGL_Test
         {
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
-            TVGL.Message.Verbosity = VerbosityLevels.BelowNormal;
+            TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles();
             for (var i = 0; i < fileNames.Count(); i++)
             {
-                var filename = fileNames[i].FullName;
+                var filename = FileNames[i];//.FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
@@ -83,8 +84,8 @@ namespace TVGL_Test
                 //ts[0].SolidColor = new Color(KnownColors.Salmon);
                 //using (fileStream = File.Create(filename + ".amf"))
                 //    IO.Save(fileStream, ts, FileType.AMF);
-                TVGL.Presenter.Show(ts);
-                //TestSimplify(ts[0]);
+                TVGL.Presenter.ShowAndHang(ts);
+                TestSimplify(ts[0]);
             }
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
