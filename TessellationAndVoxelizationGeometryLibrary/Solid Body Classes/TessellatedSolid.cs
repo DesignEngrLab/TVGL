@@ -323,11 +323,12 @@ namespace TVGL
         private TessellatedSolid(UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "")
         {
-            var now = DateTime.Now;
             //Begin Construction 
             Name = name;
             FileName = filename;
-            Comments = new List<string>(comments);
+            Comments = new List<string>();
+            if (comments != null)
+                Comments.AddRange(comments);
             Language = language;
             Units = units;
         }
