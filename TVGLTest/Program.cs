@@ -13,6 +13,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+        //"../../../TestFiles/Beam_Boss.STL",
         "../../../TestFiles/bigmotor.amf",
         "../../../TestFiles/DxTopLevelPart2.shell",
         "../../../TestFiles/Candy.shell",
@@ -25,7 +26,6 @@ namespace TVGL_Test
         "../../../TestFiles/cube.ply",
         "../../../TestFiles/airplane.ply",
         "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        "../../../TestFiles/Beam_Boss.STL",
         "../../../TestFiles/Tetrahedron.STL",
         "../../../TestFiles/off_axis_box.STL",
         "../../../TestFiles/Wedge.STL",
@@ -84,8 +84,9 @@ namespace TVGL_Test
                 //ts[0].SolidColor = new Color(KnownColors.Salmon);
                 //using (fileStream = File.Create(filename + ".amf"))
                 //    IO.Save(fileStream, ts, FileType.AMF);
-                TVGL.Presenter.ShowAndHang(ts);
-                TestSimplify(ts[0]);
+                TVGL.Presenter.Show(ts[0]);
+                TVGL.Presenter.Show(ts[1]);
+                 TestSimplify(ts[1]);
             }
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
@@ -122,7 +123,7 @@ namespace TVGL_Test
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL.Presenter.Show(ts);
+            TVGL.Presenter.ShowAndHang(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)

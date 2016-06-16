@@ -64,30 +64,6 @@ namespace TVGL
             return success;
         }
 
-
-        internal bool TurnModelInsideOut()
-        {
-            Volume = -1 * Volume;
-            _inertiaTensor = null;
-            foreach (var face in Faces)
-            {
-                face.Normal = face.Normal.multiply(-1);
-                face.Vertices.Reverse();
-                face.Edges.Reverse();
-                face.Curvature = (CurvatureType)(-1 * (int)face.Curvature);
-            }
-            foreach (var edge in Edges)
-            {
-                edge.Curvature = (CurvatureType)(-1 * (int)edge.Curvature);
-                edge.InternalAngle = Constants.TwoPi - edge.InternalAngle;
-                var tempFace = edge.OwnedFace;
-                edge.OwnedFace = edge.OtherFace;
-                edge.OtherFace = tempFace;
-            }
-            return true;
-        }
-
-
         #region Fields and Properties
 
         /// <summary>
@@ -151,7 +127,7 @@ namespace TVGL
         ///     Gets the volume.
         /// </summary>
         /// <value>The volume.</value>
-        public double Volume { get; private set; }
+        public double Volume { get; internal set; }
 
         /// <summary>
         ///     Gets and sets the mass.
@@ -286,7 +262,7 @@ namespace TVGL
                 return _inertiaTensor;
             }
         }
-        private double[,] _inertiaTensor;
+        internal double[,] _inertiaTensor;
 
         /// <summary>
         ///     The solid color
@@ -550,9 +526,8 @@ namespace TVGL
         //Primary make edges function
         internal Edge[] MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices, int numberOfVertices)
         {
-            //No need to store partly defined edges and overused edges because the ERROR function will catch them.
             var partlyDefinedEdgeDictionary = new Dictionary<long, Edge>();
-            var alreadyDefinedEdges = new Dictionary<long, Edge>();
+            var alreadyDefinedEdges = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
             var overUsedEdgesDictionary = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
             foreach (var face in faces)
             {
@@ -567,22 +542,17 @@ namespace TVGL
                         overUsedEdgesDictionary[checksum].Item2.Add(face);
                     else if (alreadyDefinedEdges.ContainsKey(checksum))
                     {
-                        var edge = alreadyDefinedEdges[checksum];
-                        var facesConnectedToEdge = new List<PolygonalFace> { edge.OwnedFace, edge.OtherFace, face };
-                        overUsedEdgesDictionary.Add(checksum,
-                            new Tuple<Edge, List<PolygonalFace>>(edge, facesConnectedToEdge));
+                        var edgeEntry = alreadyDefinedEdges[checksum];
+                        edgeEntry.Item2.Add(face);
+                        overUsedEdgesDictionary.Add(checksum, edgeEntry);
                         alreadyDefinedEdges.Remove(checksum);
                     }
                     else if (partlyDefinedEdgeDictionary.ContainsKey(checksum))
                     {
                         //Finish creating edge.
                         var edge = partlyDefinedEdgeDictionary[checksum];
-                        if (face.Normal.Contains(double.NaN)) face.Normal = (double[])edge.OwnedFace.Normal.Clone();
-                        if (edge.OwnedFace.Normal.Contains(double.NaN))
-                            edge.OwnedFace.Normal = (double[])face.Normal.Clone();
-                        edge.OtherFace = face;
-                        face.Edges.Add(edge);
-                        alreadyDefinedEdges.Add(checksum, edge);
+                        alreadyDefinedEdges.Add(checksum, new Tuple<Edge, List<PolygonalFace>>(edge,
+                            new List<PolygonalFace> { edge.OwnedFace, face }));
                         partlyDefinedEdgeDictionary.Remove(checksum);
                     }
                     else // this edge doesn't already exist.
@@ -592,7 +562,22 @@ namespace TVGL
                     }
                 }
             }
-            return alreadyDefinedEdges.Values.ToArray();
+            var goodEdgeEntries = alreadyDefinedEdges.Values.ToList();
+            goodEdgeEntries.AddRange(TessellationError.FixBadEdges(overUsedEdgesDictionary.Values, partlyDefinedEdgeDictionary.Values.ToList()));
+            foreach (var entry in goodEdgeEntries)
+            { //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor
+                //above
+                var edge = entry.Item1;
+                var ownedFace = entry.Item2[0];
+                var otherFace = entry.Item2[1];
+                // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
+                // face has no area (collapsed to a line).
+                if (otherFace.Normal.Contains(double.NaN)) otherFace.Normal = (double[])ownedFace.Normal.Clone();
+                if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (double[])otherFace.Normal.Clone();
+                edge.OtherFace = otherFace;
+                otherFace.AddEdge(edge);
+            }
+            return goodEdgeEntries.Select(entry => entry.Item1).ToArray();
         }
 
         /// <summary>
@@ -924,7 +909,7 @@ namespace TVGL
             {
                 face.PartofConvexHull = true;
                 foreach (var e in face.Edges)
-                    e.PartofConvexHull = true;
+                    if (e != null) e.PartofConvexHull = true;
             }
         }
 
@@ -1063,7 +1048,7 @@ namespace TVGL
             var fromIndex = fromVertex.IndexInList;
             var toIndex = toVertex.IndexInList;
             if (fromIndex == -1 || toIndex == -1) return -1;
-            if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+            //  if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
             return fromIndex < toIndex
                 ? fromIndex + VertexCheckSumMultiplier * toIndex
                 : toIndex + VertexCheckSumMultiplier * fromIndex;
@@ -1154,6 +1139,7 @@ namespace TVGL
                 vertex.Faces.Remove(face);
             foreach (var edge in face.Edges)
             {
+                if (edge == null) continue;
                 if (face == edge.OwnedFace) edge.OwnedFace = null;
                 if (face == edge.OtherFace) edge.OtherFace = null;
             }
@@ -1359,7 +1345,7 @@ namespace TVGL
                     {
                         var edge = edgeDictionary[checksum];
                         edge.OtherFace = face;
-                        face.Edges.Add(edge);
+                        face.AddEdge(edge);
                     }
                     else edgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, face, null, false, checksum));
                 }

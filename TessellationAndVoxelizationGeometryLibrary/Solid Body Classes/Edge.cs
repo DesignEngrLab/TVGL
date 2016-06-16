@@ -64,8 +64,8 @@ namespace TVGL
             EdgeReference = edgeReference;
             _ownedFace = ownedFace;
             _otherFace = otherFace;
-            if (ownedFace != null) ownedFace.Edges.Add(this);
-            if (otherFace != null) otherFace.Edges.Add(this);
+            if (ownedFace != null) ownedFace.AddEdge(this);
+            if (otherFace != null) otherFace.AddEdge(this);
             if (doublyLinkedVertices)
             {
                 fromVertex.Edges.Add(this);

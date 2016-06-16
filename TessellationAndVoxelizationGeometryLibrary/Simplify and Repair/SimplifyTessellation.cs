@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -62,19 +63,34 @@ namespace TVGL
                 Edge removedEdge1, removedEdge2;
                 PolygonalFace removedFace1, removedFace2;
                 Vertex removedVertex;
-                if (CombineVerticesOfEdge(edge, out removedVertex, out removedEdge1, out removedEdge2, out removedFace1,
+                if (CombineVerticesOfEdge(edge, out removedVertex, out removedEdge1, out removedEdge2,
+                    out removedFace1,
                     out removedFace2))
                 {
                     removedEdges.Add(edge);
                     removedEdgesSorted.Add(edge.IndexInList, edge);
-                    removedEdges.Add(removedEdge1);
-                    removedEdgesSorted.Add(removedEdge1.IndexInList, removedEdge1);
-                    removedEdges.Add(removedEdge2);
-                    removedEdgesSorted.Add(removedEdge2.IndexInList, removedEdge2);
-                    removedFaces.Add(removedFace1.IndexInList, removedFace1);
-                    numberToRemove--;
-                    removedFaces.Add(removedFace2.IndexInList, removedFace2);
-                    numberToRemove--;
+                    if (removedEdge1 != null)
+                    {
+                        removedEdges.Add(removedEdge1);
+                        if (!removedEdgesSorted.ContainsKey(removedEdge1.IndexInList))
+                            removedEdgesSorted.Add(removedEdge1.IndexInList, removedEdge1);
+                    }
+                    if (removedEdge2 != null)
+                    {
+                        removedEdges.Add(removedEdge2);
+                        if (!removedEdgesSorted.ContainsKey(removedEdge2.IndexInList))
+                            removedEdgesSorted.Add(removedEdge2.IndexInList, removedEdge2);
+                    }
+                    if (removedFace1 != null)
+                    {
+                        removedFaces.Add(removedFace1.IndexInList, removedFace1);
+                        numberToRemove--;
+                    }
+                    if (removedFace2 != null)
+                    {
+                        removedFaces.Add(removedFace2.IndexInList, removedFace2);
+                        numberToRemove--;
+                    }
                     removedVertices.Add(removedVertex.IndexInList, removedVertex);
                 }
             }
@@ -149,86 +165,108 @@ namespace TVGL
         private static bool CombineVerticesOfEdge(Edge edge, out Vertex removedVertexOut, out Edge removedEdge1Out,
             out Edge removedEdge2Out, out PolygonalFace removedFace1, out PolygonalFace removedFace2)
         {
-            removedVertexOut = null;
-            removedEdge1Out = null;
-            removedEdge2Out = null;
-            removedFace1 = null;
-            removedFace2 = null;
-            try
+            var keepVertex = edge.To; // arbitrarily choose the To as the keep vertex, but this may be swapped below
+            var removedVertex = edge.From; // if the To has some missing faces
+            if (keepVertex == removedVertex)
             {
-                var keepVertex = edge.To;
-                var removedVertex = edge.From;
-                removedFace1 = edge.OwnedFace;
-                removedFace2 = edge.OtherFace;
-                var removedEdge1 = removedFace1.OtherEdge(keepVertex, true);
-                var removedEdge2 = removedFace2.OtherEdge(keepVertex, true);
-                var keepEdge1 = removedFace1.OtherEdge(removedVertex, true);
-                var keepEdge2 = removedFace2.OtherEdge(removedVertex, true);
-                if (removedEdge1 == null || removedEdge2 == null || keepEdge1 == null || keepEdge2 == null) return false;
-                var otherEdgesOnTheToSide =
-                    keepVertex.Edges.Where(e => e != edge && e != keepEdge1 && e != keepEdge2).ToList();
-                var otherEdgesOnTheFromSide =
-                    removedVertex.Edges.Where(e => e != edge && e != removedEdge1 && e != removedEdge2).ToList();
-                if (
-                    otherEdgesOnTheToSide.Select(e => e.OtherVertex(keepVertex))
-                        .Intersect(otherEdgesOnTheFromSide.Select(e => e.OtherVertex(removedVertex)))
-                        .Any())
-                    return false;
-                // move edges connected to removeVertex to the keepVertex and let keepVertex link back to these edges
-                foreach (var e in otherEdgesOnTheFromSide)
-                {
-                    keepVertex.Edges.Add(e);
-                    if (e.From == removedVertex) e.From = keepVertex;
-                    else e.To = keepVertex;
-                }
-                // move faces connected to removeVertex to the keepVertex and let keepVertex link back to these edges.
-                foreach (var face in removedVertex.Faces)
-                {
-                    if (face == removedFace1 || face == removedFace2) continue;
-                    keepVertex.Faces.Add(face);
-                    face.Vertices[face.Vertices.IndexOf(removedVertex)] = keepVertex;
-                }
-                // conversely keepVertex should forget about the edge and the remove faces
-                keepVertex.Edges.Remove(edge);
-                keepVertex.Faces.Remove(removedFace1);
-                keepVertex.Faces.Remove(removedFace2);
-                var farVertex = removedFace1.OtherVertex(edge);
-                farVertex.Edges.Remove(removedEdge1);
-                farVertex.Faces.Remove(removedFace1);
-                farVertex = removedFace2.OtherVertex(edge);
-                farVertex.Edges.Remove(removedEdge2);
-                farVertex.Faces.Remove(removedFace2);
-                // for the winged edges (removedEdge1 and removedEdge2) that are removed, connected their faces to 
-                // the new edge
-                // first on the "owned side of edge"
-                var fromFace = removedEdge1.OwnedFace == removedFace1 ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
-                var index = fromFace.Edges.IndexOf(removedEdge1);
-                fromFace.Edges[index] = keepEdge1;
-                if (keepEdge1.OwnedFace == removedFace1) keepEdge1.OwnedFace = fromFace;
-                else keepEdge1.OtherFace = fromFace;
-                // second on the "other side of edge"
-                fromFace = removedEdge2.OwnedFace == removedFace2 ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
-                index = fromFace.Edges.IndexOf(removedEdge2);
-                fromFace.Edges[index] = keepEdge2;
-                if (keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
-                else keepEdge2.OtherFace = fromFace;
-
-
-                //AdjustPositionOfKeptVertexAverage(keepVertex, removedVertex);
-                AdjustPositionOfKeptVertex(keepVertex, removedVertex);
-                foreach (var e in keepVertex.Edges)
-                    e.Update();
-                foreach (var f in keepVertex.Faces)
-                    f.Update();
-                removedVertexOut = removedVertex;
-                removedEdge1Out = removedEdge1;
-                removedEdge2Out = removedEdge2;
-                return true;
-            }
-            catch (Exception exception)
-            {
+                removedVertexOut = null;
+                removedEdge2Out = removedEdge1Out = null;
+                removedFace1 = removedFace2 = null;
                 return false;
             }
+            removedFace1 = edge.OwnedFace;
+            removedFace2 = edge.OtherFace;
+            var removedEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(keepVertex, true);
+            var removedEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(keepVertex, true);
+            var keepEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(removedVertex, true);
+            var keepEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(removedVertex, true);
+            if (removedEdge1 != null && removedEdge2 != null && (keepEdge1 == null || keepEdge2 == null))
+            { // swap with removed.
+                var tempVertex = keepVertex; keepVertex = removedVertex; removedVertex = tempVertex;
+                var tempEdge = keepEdge1; keepEdge1 = removedEdge1; removedEdge1 = tempEdge;
+                tempEdge = keepEdge2; keepEdge2 = removedEdge2; removedEdge2 = tempEdge;
+            }
+            var otherEdgesOnTheKeepSide =
+            keepVertex.Edges.Where(e => e != edge && e != keepEdge1 && e != keepEdge2).ToList();
+            var otherEdgesOnTheRemoveSide =
+                removedVertex.Edges.Where(e => e != edge && e != removedEdge1 && e != removedEdge2).ToList();
+            if ( // this is a topologically important check. It ensures that the edge is not deleted if
+                 // it serves an important role in ensuring the proper topology of the solid
+                otherEdgesOnTheKeepSide.Select(e => e.OtherVertex(keepVertex))
+                    .Intersect(otherEdgesOnTheRemoveSide.Select(e => e.OtherVertex(removedVertex)))
+                    .Any())
+            {
+                removedVertexOut = null;
+                removedEdge2Out = removedEdge1Out = null;
+                removedFace1 = removedFace2 = null;
+                return false;
+            }
+            // move edges connected to removeVertex to the keepVertex and let keepVertex link back to these edges
+            foreach (var e in otherEdgesOnTheRemoveSide)
+            {
+                keepVertex.Edges.Add(e);
+                if (e.From == removedVertex) e.From = keepVertex;
+                else e.To = keepVertex;
+            }
+            // move faces connected to removeVertex to the keepVertex and let keepVertex link back to these edges.
+            foreach (var face in removedVertex.Faces)
+            {
+                if (face == removedFace1 || face == removedFace2) continue;
+                keepVertex.Faces.Add(face);
+                face.Vertices[face.Vertices.IndexOf(removedVertex)] = keepVertex;
+            }
+            // conversely keepVertex should forget about the edge and the remove faces
+            keepVertex.Edges.Remove(edge);
+            keepVertex.Faces.Remove(removedFace1);
+            keepVertex.Faces.Remove(removedFace2);
+            var farVertex = removedFace1 == null ? null : removedFace1.OtherVertex(edge, true);
+            if (farVertex != null)
+            {
+                farVertex.Edges.Remove(removedEdge1);
+                farVertex.Faces.Remove(removedFace1);
+            }
+            farVertex = removedFace2 == null ? null : removedFace2.OtherVertex(edge, true);
+            if (farVertex != null)
+            {
+                farVertex.Edges.Remove(removedEdge2);
+                farVertex.Faces.Remove(removedFace2);
+            }
+            // for the winged edges (removedEdge1 and removedEdge2) that are removed, connected their faces to 
+            // the new edge
+            // first on the "owned side of edge"
+            var fromFace = removedEdge1 == null ? null
+                : removedEdge1.OwnedFace == removedFace1 ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
+            if (fromFace != null)
+            {
+                var index = fromFace.Edges.IndexOf(removedEdge1);
+                if (index >= 0 && index < fromFace.Edges.Count)
+                    fromFace.Edges[index] = keepEdge1;
+            }
+            if (keepEdge1 != null && keepEdge1.OwnedFace == removedFace1) keepEdge1.OwnedFace = fromFace;
+            else if (keepEdge1 != null) keepEdge1.OtherFace = fromFace;
+            // second on the "other side of edge"
+            fromFace = removedEdge2 == null ? null
+                : removedEdge2.OwnedFace == removedFace2 ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
+            if (fromFace != null)
+            {
+                var index = fromFace.Edges.IndexOf(removedEdge2);
+                if (index >= 0 && index < fromFace.Edges.Count)
+                    fromFace.Edges[index] = keepEdge2;
+            }
+            if (keepEdge2 != null && keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
+            else if (keepEdge2 != null) keepEdge2.OtherFace = fromFace;
+
+
+            //AdjustPositionOfKeptVertexAverage(keepVertex, removedVertex);
+            AdjustPositionOfKeptVertex(keepVertex, removedVertex);
+            foreach (var e in keepVertex.Edges)
+                e.Update();
+            foreach (var f in keepVertex.Faces)
+                f.Update();
+            removedVertexOut = removedVertex;
+            removedEdge1Out = removedEdge1;
+            removedEdge2Out = removedEdge2;
+            return true;
         }
 
         /// <summary>

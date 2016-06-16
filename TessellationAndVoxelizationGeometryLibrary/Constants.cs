@@ -76,6 +76,7 @@ namespace TVGL
         ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-1;
+        internal static double MaxAllowableEdgeSimilarityScore = 1.0;
 
         /// <summary>
         ///     Finds the index.
