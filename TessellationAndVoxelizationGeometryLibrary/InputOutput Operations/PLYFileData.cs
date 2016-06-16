@@ -139,8 +139,8 @@ namespace TVGL.IOFunctions
                 }
                 Message.output("Successfully read in ASCII PLY file (" + (DateTime.Now - now) + ").", 3);
                 return new TessellatedSolid(plyData.Vertices, plyData.FaceToVertexIndices,
-                    plyData.HasColorSpecified ? plyData.Colors : null,InferUnitsFromComments(plyData.Comments),
-                  plyData.Name,plyData.FileName,plyData.Comments,plyData.Language);
+                    plyData.HasColorSpecified ? plyData.Colors : null, InferUnitsFromComments(plyData.Comments),
+                  plyData.Name, plyData.FileName, plyData.Comments, plyData.Language);
             }
             catch (Exception exception)
             {
@@ -336,8 +336,9 @@ namespace TVGL.IOFunctions
                         writer.WriteLine("comment  Units : " + solid.Units);
                     if (!string.IsNullOrWhiteSpace(solid.Language))
                         writer.WriteLine("comment  Lang : " + solid.Language);
-                    foreach (var comment in solid.Comments)
-                        writer.WriteLine("comment  " + comment);
+                    if (solid.Comments != null)
+                        foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
+                            writer.WriteLine("comment  " + comment);
                     writer.WriteLine("element vertex " + solid.NumberOfVertices);
                     writer.WriteLine("property double x");
                     writer.WriteLine("property double y");

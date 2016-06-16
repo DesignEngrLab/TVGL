@@ -179,19 +179,22 @@ namespace TVGL.IOFunctions
             {
                 var solid = solids[i];
                 var metaData = new List<AMF_Metadata>();
-                foreach (var comment in solid.Comments)
+                if (solid.Comments != null)
                 {
-                    var arrowIndex = comment.IndexOf("==>");
-                    if (arrowIndex==-1)  this.Comments.Add(comment);
-                    else
+                    foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
                     {
-                        var endOfType = arrowIndex - 1;
-                        var beginOfValue = arrowIndex + 3;  //todo: check this -1 and +3
-                        metaData.Add(new AMF_Metadata
+                        var arrowIndex = comment.IndexOf("==>");
+                        if (arrowIndex == -1) this.Comments.Add(comment);
+                        else
                         {
-                            type = comment.Substring(0, endOfType),
-                            Value = comment.Substring(beginOfValue)
-                        });
+                            var endOfType = arrowIndex - 1;
+                            var beginOfValue = arrowIndex + 3;  //todo: check this -1 and +3
+                            metaData.Add(new AMF_Metadata
+                            {
+                                type = comment.Substring(0, endOfType),
+                                Value = comment.Substring(beginOfValue)
+                            });
+                        }
                     }
                 }
                 var vertexList = new AMF_Vertices
@@ -237,7 +240,8 @@ namespace TVGL.IOFunctions
                 }
                 Objects.Add(new AMF_Object
                 {
-                    id = i.ToString(), mesh = new AMF_Mesh { vertices = vertexList, volume = volume },
+                    id = i.ToString(),
+                    mesh = new AMF_Mesh { vertices = vertexList, volume = volume },
                     metadata = metaData
                 });
             }

@@ -310,7 +310,7 @@ namespace TVGL.IOFunctions
             var metaData = new List<Metadata>();
             var allRawComments = solids.SelectMany(s => s.Comments);
             var comments = new List<string>();
-            foreach (var comment in allRawComments)
+            foreach (var comment in allRawComments.Where(string.IsNullOrWhiteSpace))
             {
                 var arrowIndex = comment.IndexOf("==>");
                 if (arrowIndex == -1) comments.Add(comment);

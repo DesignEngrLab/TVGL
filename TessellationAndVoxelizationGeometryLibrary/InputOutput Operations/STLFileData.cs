@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -382,7 +383,7 @@ namespace TVGL.IOFunctions
                 writer.WriteLine("#  Units : " + solids[0].Units);
             if (!string.IsNullOrWhiteSpace(solids[0].Language))
                 writer.WriteLine("#  Lang : " + solids[0].Language);
-            foreach (var comment in solids[0].Comments)
+            foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
                 writer.WriteLine("#  " + comment);
             return true;
         }
@@ -432,7 +433,7 @@ namespace TVGL.IOFunctions
             headerString += tvglDateMarkText;
             if (solids[0].Units != UnitType.unspecified)
                 headerString += solids[0].Units.ToString();
-            foreach (var comment in solids[0].Comments)
+            foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
                 headerString += " " + comment;
             if (headerString.Length > 80) headerString = headerString.Substring(0, 80);
             var headerBytes = Encoding.UTF8.GetBytes(headerString);

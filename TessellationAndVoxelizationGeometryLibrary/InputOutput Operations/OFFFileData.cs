@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using StarMathLib;
 
 namespace TVGL.IOFunctions
@@ -291,8 +292,9 @@ namespace TVGL.IOFunctions
                     writer.WriteLine("#  Units : " + solid.Units);
                 if (!string.IsNullOrWhiteSpace(solid.Language))
                     writer.WriteLine("#  Lang : " + solid.Language);
-                foreach (var comment in solid.Comments)
-                    writer.WriteLine("#  " + comment);
+                if (solid.Comments != null)
+                    foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
+                        writer.WriteLine("#  " + comment);
                 writer.WriteLine(solid.NumberOfVertices + " " + solid.NumberOfFaces + " " + solid.NumberOfEdges);
                 writer.WriteLine();
                 foreach (var v in solid.Vertices)
