@@ -56,29 +56,29 @@ namespace TVGL
                 switch (directions.Length)
                 {
                     case 1:
-                    {
-                        var dot1 = Math.Round(directions[0].dotProduct(vertex.Position)*1E+15);
+                        {
+                            var dot1 = Math.Round(directions[0].dotProduct(vertex.Position) * 1E+15);
                             //Accuracy to the 15th decimal place
-                        var point = new Point(vertex, dot1, 0.0, 0.0);
-                        points.Add(point);
-                    }
+                            var point = new Point(vertex, dot1, 0.0, 0.0);
+                            points.Add(point);
+                        }
                         break;
                     case 2:
-                    {
-                        var dot1 = Math.Round(directions[0].dotProduct(vertex.Position)*1E+15);
-                        var dot2 = Math.Round(directions[1].dotProduct(vertex.Position)*1E+15);
-                        var point = new Point(vertex, dot1, dot2, 0.0);
-                        points.Add(point);
-                    }
+                        {
+                            var dot1 = Math.Round(directions[0].dotProduct(vertex.Position) * 1E+15);
+                            var dot2 = Math.Round(directions[1].dotProduct(vertex.Position) * 1E+15);
+                            var point = new Point(vertex, dot1, dot2, 0.0);
+                            points.Add(point);
+                        }
                         break;
                     case 3:
-                    {
-                        var dot1 = Math.Round(directions[0].dotProduct(vertex.Position)*1E+15);
-                        var dot2 = Math.Round(directions[1].dotProduct(vertex.Position)*1E+15);
-                        var dot3 = Math.Round(directions[2].dotProduct(vertex.Position)*1E+15);
-                        var point = new Point(vertex, dot1, dot2, dot3);
-                        points.Add(point);
-                    }
+                        {
+                            var dot1 = Math.Round(directions[0].dotProduct(vertex.Position) * 1E+15);
+                            var dot2 = Math.Round(directions[1].dotProduct(vertex.Position) * 1E+15);
+                            var dot3 = Math.Round(directions[2].dotProduct(vertex.Position) * 1E+15);
+                            var point = new Point(vertex, dot1, dot2, dot3);
+                            points.Add(point);
+                        }
                         break;
                     default:
                         throw new Exception("Must provide between 1 to 3 direction vectors");
@@ -99,88 +99,88 @@ namespace TVGL
             switch (directions.Length)
             {
                 case 1:
-                {
-                    for (var i = 1; i < sortedPoints.Count; i++)
                     {
-                        sortedVertices.Add(sortedPoints[i].References[0]);
-                        if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X))
+                        for (var i = 1; i < sortedPoints.Count; i++)
                         {
-                            counter++;
-                            if (previousDuplicate) continue;
-                            startIndex = i - 1;
-                            previousDuplicate = true;
-                            counter++;
+                            sortedVertices.Add(sortedPoints[i].References[0]);
+                            if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X))
+                            {
+                                counter++;
+                                if (previousDuplicate) continue;
+                                startIndex = i - 1;
+                                previousDuplicate = true;
+                                counter++;
+                            }
+                            else if (previousDuplicate)
+                            {
+                                intRange = new[] { startIndex, counter };
+                                duplicateRanges.Add(intRange);
+                                previousDuplicate = false;
+                                counter = 0;
+                            }
                         }
-                        else if (previousDuplicate)
-                        {
-                            intRange = new[] {startIndex, counter};
-                            duplicateRanges.Add(intRange);
-                            previousDuplicate = false;
-                            counter = 0;
-                        }
+                        //Add last duplicate group if necessary
+                        if (!previousDuplicate) return;
+                        intRange = new[] { startIndex, counter };
+                        duplicateRanges.Add(intRange);
                     }
-                    //Add last duplicate group if necessary
-                    if (!previousDuplicate) return;
-                    intRange = new[] {startIndex, counter};
-                    duplicateRanges.Add(intRange);
-                }
                     break;
                 case 2:
-                {
-                    for (var i = 1; i < sortedPoints.Count; i++)
                     {
-                        sortedVertices.Add(sortedPoints[i].References[0]);
-                        if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
-                            sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y))
+                        for (var i = 1; i < sortedPoints.Count; i++)
                         {
-                            counter++;
-                            if (previousDuplicate) continue;
-                            startIndex = i - 1;
-                            previousDuplicate = true;
-                            counter++;
+                            sortedVertices.Add(sortedPoints[i].References[0]);
+                            if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
+                                sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y))
+                            {
+                                counter++;
+                                if (previousDuplicate) continue;
+                                startIndex = i - 1;
+                                previousDuplicate = true;
+                                counter++;
+                            }
+                            else if (previousDuplicate)
+                            {
+                                intRange = new[] { startIndex, counter };
+                                duplicateRanges.Add(intRange);
+                                previousDuplicate = false;
+                                counter = 0;
+                            }
                         }
-                        else if (previousDuplicate)
-                        {
-                            intRange = new[] {startIndex, counter};
-                            duplicateRanges.Add(intRange);
-                            previousDuplicate = false;
-                            counter = 0;
-                        }
+                        //Add last duplicate group if necessary
+                        if (!previousDuplicate) return;
+                        intRange = new[] { startIndex, counter };
+                        duplicateRanges.Add(intRange);
                     }
-                    //Add last duplicate group if necessary
-                    if (!previousDuplicate) return;
-                    intRange = new[] {startIndex, counter};
-                    duplicateRanges.Add(intRange);
-                }
                     break;
                 case 3:
-                {
-                    for (var i = 1; i < sortedPoints.Count; i++)
                     {
-                        sortedVertices.Add(sortedPoints[i].References[0]);
-                        if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
-                            sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y) &&
-                            sortedPoints[i - 1].Z.IsPracticallySame(sortedPoints[i].Z))
+                        for (var i = 1; i < sortedPoints.Count; i++)
                         {
-                            counter++;
-                            if (previousDuplicate) continue;
-                            startIndex = i - 1;
-                            previousDuplicate = true;
-                            counter++;
+                            sortedVertices.Add(sortedPoints[i].References[0]);
+                            if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
+                                sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y) &&
+                                sortedPoints[i - 1].Z.IsPracticallySame(sortedPoints[i].Z))
+                            {
+                                counter++;
+                                if (previousDuplicate) continue;
+                                startIndex = i - 1;
+                                previousDuplicate = true;
+                                counter++;
+                            }
+                            else if (previousDuplicate)
+                            {
+                                intRange = new[] { startIndex, counter };
+                                duplicateRanges.Add(intRange);
+                                previousDuplicate = false;
+                                counter = 0;
+                            }
                         }
-                        else if (previousDuplicate)
-                        {
-                            intRange = new[] {startIndex, counter};
-                            duplicateRanges.Add(intRange);
-                            previousDuplicate = false;
-                            counter = 0;
-                        }
+                        //Add last duplicate group if necessary
+                        if (!previousDuplicate) return;
+                        intRange = new[] { startIndex, counter };
+                        duplicateRanges.Add(intRange);
                     }
-                    //Add last duplicate group if necessary
-                    if (!previousDuplicate) return;
-                    intRange = new[] {startIndex, counter};
-                    duplicateRanges.Add(intRange);
-                }
                     break;
                 default:
                     throw new Exception("Must provide between 1 to 3 direction vectors");
@@ -189,14 +189,15 @@ namespace TVGL
 
         #endregion
 
+        #region Perimeter
         /// <summary>
-        ///     Perimeters the specified polygon.
+        /// Gets the perimeter for a 2D set of points.
         /// </summary>
-        /// <param name="polygon">The polygon.</param>
-        /// <returns>System.Double.</returns>
-        public static double Perimeter(List<Point> polygon)
+        /// <param name="polygon"></param>
+        /// <returns></returns>
+        public static double Perimeter(ICollection<Point> polygon)
         {
-            var listWithStartPointAtEnd = new List<Point>(polygon) {polygon.First()};
+            var listWithStartPointAtEnd = new List<Point>(polygon) { polygon.First() };
             double perimeter = 0;
             for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
             {
@@ -208,15 +209,33 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     A secondary volume calculation, since the primary volume calculation in the tesselated solid creation seems to be
-        ///     broken
+        /// Gets the Perimeter (length of a loop) of a 3D set of Vertices.
         /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <returns>System.Double.</returns>
-        /// <exception cref="Exception">Error in your implementation. This should never occur</exception>
-        public static double Volume(TessellatedSolid ts)
+        /// <param name="polygon3D"></param>
+        /// <returns></returns>
+        public static double Perimeter(ICollection<Vertex> polygon3D)
         {
-            var normal = new[] {1.0, 0.0, 0.0}; //Direction is irrellevant
+            var listWithStartPointAtEnd = new List<Vertex>(polygon3D) { polygon3D.First() };
+            double perimeter = 0;
+            for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
+            {
+                perimeter = perimeter +
+                            DistancePointToPoint(listWithStartPointAtEnd[i - 1].Position,
+                                listWithStartPointAtEnd[i].Position);
+            }
+            return perimeter;
+        }
+        #endregion
+
+        /// <summary>
+        /// Find the volume of a tesselated solid with a slower method. 
+        /// This method could be exteded to find partial volumes of a solid (e.g. volume between two planes)
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        public static double VolumeViaAreaDecomposition(TessellatedSolid ts)
+        {
+            var normal = new[] { 1.0, 0.0, 0.0 }; //Direction is irrellevant
             var stepSize = 0.01;
             var volume = 0.0;
             var areas = AreaDecomposition.Run(ts, normal, stepSize);
@@ -226,11 +245,70 @@ namespace TVGL
                 var deltaX = areas[i][0] - areas[i - 1][0];
                 var deltaY = areas[i][1] + areas[i - 1][1];
                 if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
-                volume = volume + .5*deltaY*deltaX;
+                volume = volume + .5 * deltaY * deltaX;
             }
             return volume;
         }
 
+        /// <summary>
+        /// Find the volume of a tesselated solid.
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="center"></param>
+        /// <returns></returns>
+        public static double Volume(IList<PolygonalFace> faces, out double[] center)
+        {
+            center = new double[3];
+            foreach (var face in faces)
+            {
+                center[0] += face.Center[0];
+                center[1] += face.Center[1];
+                center[2] += face.Center[2];
+            }
+            var numVertices = faces.Count;
+            center = center.divide(numVertices);
+            return Volume(faces, center);
+        }
+
+        /// <summary>
+        /// Find the volume of a tesselated solid.
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="center"></param>
+        /// <returns></returns>
+        public static double Volume(IList<PolygonalFace> faces, double[] center)
+        {
+            double oldVolume;
+            var volume = 0.0;
+            var iterations = 0;
+            var oldCenter1 = new double[3];
+            var oldCenter2 = new double[3];
+            do
+            {
+                oldVolume = volume;
+                oldCenter2[0] = oldCenter1[0]; oldCenter2[1] = oldCenter1[1]; oldCenter2[2] = oldCenter1[2];
+                oldCenter1[0] = center[0]; oldCenter1[1] = center[1]; oldCenter1[2] = center[2];
+                volume = 0;
+                center[0] = 0.0; center[1] = 0.0; center[2] = 0.0;
+                foreach (var face in faces)
+                {
+                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1))) / 3;
+                    // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
+                    // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
+                    // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
+                    // on the volume.
+                    volume += tetrahedronVolume;
+                    center[0] += (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4;
+                    center[1] += (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4;
+                    center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
+                    // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
+                }
+                if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2).divide(2);
+                else center = center.divide(volume);
+                iterations++;
+            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance || iterations <= 20);
+            return volume;
+        }
 
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
@@ -262,12 +340,12 @@ namespace TVGL
             var n = polygon.Length;
             for (var i = 1; i < n - 1; i++)
             {
-                area += polygon[i].X*(polygon[i + 1].Y - polygon[i - 1].Y);
+                area += polygon[i].X * (polygon[i + 1].Y - polygon[i - 1].Y);
             }
             //Final wrap around terms
-            area += polygon[0].X*(polygon[1].Y - polygon[n - 1].Y);
-            area += polygon[n - 1].X*(polygon[0].Y - polygon[n - 2].Y);
-            area = area/2;
+            area += polygon[0].X * (polygon[1].Y - polygon[n - 1].Y);
+            area += polygon[n - 1].X * (polygon[0].Y - polygon[n - 2].Y);
+            area = area / 2;
             return area;
         }
 
@@ -279,12 +357,12 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double.</returns>
         /// <references>http://geomalgorithms.com/a01-_area.html </references>
-        public static double AreaOf3DPolygon(List<Vertex> polygon, double[] normal)
+        public static double AreaOf3DPolygon(ICollection<Vertex> polygon, double[] normal)
         {
             var ax = Math.Abs(normal[0]);
             var ay = Math.Abs(normal[1]);
             var az = Math.Abs(normal[2]);
-            var vertices = new List<Vertex>(polygon) {polygon.First()};
+            var vertices = new List<Vertex>(polygon) { polygon.First() };
 
             //Chosse the largest abs coordinate to ignore for projections
             var coord = 3; //ignore z-coord
@@ -299,49 +377,48 @@ namespace TVGL
             {
                 case 1:
                     for (i = 1; i < n; i++)
-                        area += vertices[i].Y*(vertices[i + 1].Z - vertices[i - 1].Z);
+                        area += vertices[i].Y * (vertices[i + 1].Z - vertices[i - 1].Z);
                     break;
                 case 2:
                     for (i = 1; i < n; i++)
-                        area += vertices[i].Z*(vertices[i + 1].X - vertices[i - 1].X);
+                        area += vertices[i].Z * (vertices[i + 1].X - vertices[i - 1].X);
                     break;
                 case 3:
                     for (i = 1; i < n; i++)
-                        area += vertices[i].X*(vertices[i + 1].Y - vertices[i - 1].Y);
+                        area += vertices[i].X * (vertices[i + 1].Y - vertices[i - 1].Y);
                     break;
             }
             switch (coord)
             {
                 case 1:
-                    area += vertices[n].Y*(vertices[1].Z - vertices[n - 1].Z);
+                    area += vertices[n].Y * (vertices[1].Z - vertices[n - 1].Z);
                     break;
                 case 2:
-                    area += vertices[n].Z*(vertices[1].X - vertices[n - 1].X);
+                    area += vertices[n].Z * (vertices[1].X - vertices[n - 1].X);
                     break;
                 case 3:
-                    area += vertices[n].X*(vertices[1].Y - vertices[n - 1].Y);
+                    area += vertices[n].X * (vertices[1].Y - vertices[n - 1].Y);
                     break;
             }
 
             // scale to get area before projection
-            var an = Math.Sqrt(ax*ax + ay*ay + az*az); // length of normal vector
+            var an = Math.Sqrt(ax * ax + ay * ay + az * az); // length of normal vector
             switch (coord)
             {
                 case 1:
-                    area *= an/(2*normal[0]);
+                    area *= an / (2 * normal[0]);
                     break;
                 case 2:
-                    area *= an/(2*normal[1]);
+                    area *= an / (2 * normal[1]);
                     break;
                 case 3:
-                    area *= an/(2*normal[2]);
+                    area *= an / (2 * normal[2]);
                     break;
             }
             return area;
         }
 
         #region Split Tesselated Solid into multiple solids if faces are disconnected 
-
         /// <summary>
         ///     Gets all the individual solids from a tesselated solid.
         /// </summary>
@@ -356,7 +433,7 @@ namespace TVGL
             while (unusedFaces.Any())
             {
                 var faces = new HashSet<PolygonalFace>();
-                var stack = new Stack<PolygonalFace>(new[] {unusedFaces.ElementAt(0).Value});
+                var stack = new Stack<PolygonalFace>(new[] { unusedFaces.ElementAt(0).Value });
                 while (stack.Any())
                 {
                     var face = stack.Pop();
@@ -384,7 +461,6 @@ namespace TVGL
             }
             return solids;
         }
-
         #endregion
 
         #region Flatten to 2D
@@ -469,7 +545,7 @@ namespace TVGL
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Point>();
-            var pointAs4 = new[] {0.0, 0.0, 0.0, 1.0};
+            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
             var simpleCompareDict = new Dictionary<string, Point>();
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
@@ -518,14 +594,14 @@ namespace TVGL
         {
             var transform = TransformToXYPlane(direction);
             var points = new double[vertices.Count][];
-            var pointAs4 = new[] {0.0, 0.0, 0.0, 1.0};
+            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
             for (var i = 0; i < vertices.Count; i++)
             {
                 pointAs4[0] = vertices[i][0];
                 pointAs4[1] = vertices[i][1];
                 pointAs4[2] = vertices[i][2];
                 pointAs4 = transform.multiply(pointAs4);
-                points[i] = new[] {pointAs4[0], pointAs4[1]};
+                points[i] = new[] { pointAs4[0], pointAs4[1] };
             }
             return points;
         }
@@ -556,25 +632,25 @@ namespace TVGL
             double[,] rotateX, rotateY, backRotateX, backRotateY;
             if (xDir.IsNegligible() && zDir.IsNegligible())
             {
-                rotateX = StarMath.RotationX(Math.Sign(yDir)*Math.PI/2, true);
-                backRotateX = StarMath.RotationX(-Math.Sign(yDir)*Math.PI/2, true);
+                rotateX = StarMath.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
+                backRotateX = StarMath.RotationX(-Math.Sign(yDir) * Math.PI / 2, true);
                 backRotateY = rotateY = StarMath.makeIdentity(4);
             }
             else if (zDir.IsNegligible())
             {
-                rotateY = StarMath.RotationY(-Math.Sign(xDir)*Math.PI/2, true);
-                backRotateY = StarMath.RotationY(Math.Sign(xDir)*Math.PI/2, true);
-                var rotXAngle = Math.Atan(yDir/Math.Abs(xDir));
+                rotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
+                backRotateY = StarMath.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
+                var rotXAngle = Math.Atan(yDir / Math.Abs(xDir));
                 rotateX = StarMath.RotationX(rotXAngle, true);
                 backRotateX = StarMath.RotationX(-rotXAngle, true);
             }
             else
             {
-                var rotYAngle = -Math.Atan(xDir/zDir);
+                var rotYAngle = -Math.Atan(xDir / zDir);
                 rotateY = StarMath.RotationY(rotYAngle, true);
                 backRotateY = StarMath.RotationY(-rotYAngle, true);
-                var baseLength = Math.Sqrt(xDir*xDir + zDir*zDir);
-                var rotXAngle = Math.Sign(zDir)*Math.Atan(yDir/baseLength);
+                var baseLength = Math.Sqrt(xDir * xDir + zDir * zDir);
+                var rotXAngle = Math.Sign(zDir) * Math.Atan(yDir / baseLength);
                 rotateX = StarMath.RotationX(rotXAngle, true);
                 backRotateX = StarMath.RotationX(-rotXAngle, true);
             }
@@ -595,7 +671,7 @@ namespace TVGL
         internal static double SmallerAngleBetweenEdges(Edge edge1, Edge edge2)
         {
             var axis = edge1.Vector.crossProduct(edge2.Vector);
-            var twoDEdges = Get2DProjectionPoints(new[] {edge1.Vector, edge2.Vector}, axis);
+            var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
             return Math.Min(AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]),
                 AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]));
         }
@@ -609,9 +685,9 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double SmallerAngleBetweenEdges(Point a, Point b, Point c)
         {
-            var edge1 = new[] {b.X - a.X, b.Y - a.Y};
-            var edge2 = new[] {c.X - b.X, c.Y - b.Y};
-            return Math.Acos(edge1.dotProduct(edge2)/(edge1.norm2()*edge2.norm2()));
+            var edge1 = new[] { b.X - a.X, b.Y - a.Y };
+            var edge2 = new[] { c.X - b.X, c.Y - b.Y };
+            return Math.Acos(edge1.dotProduct(edge2) / (edge1.norm2() * edge2.norm2()));
         }
 
         /// <summary>
@@ -634,7 +710,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double AngleBetweenEdgesCW(Edge edge1, Edge edge2, double[] axis)
         {
-            var twoDEdges = Get2DProjectionPoints(new[] {edge1.Vector, edge2.Vector}, axis);
+            var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
             return AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -647,7 +723,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double AngleBetweenEdgesCCW(Edge edge1, Edge edge2, double[] axis)
         {
-            var twoDEdges = Get2DProjectionPoints(new[] {edge1.Vector, edge2.Vector}, axis);
+            var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
             return AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -660,7 +736,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double AngleBetweenEdgesCW(double[] edge1, double[] edge2, double[] axis)
         {
-            var twoDEdges = Get2DProjectionPoints(new[] {edge1, edge2}, axis);
+            var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
             return AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -673,7 +749,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double AngleBetweenEdgesCCW(double[] edge1, double[] edge2, double[] axis)
         {
-            var twoDEdges = Get2DProjectionPoints(new[] {edge1, edge2}, axis);
+            var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
             return AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]);
         }
 
@@ -686,7 +762,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double AngleBetweenEdgesCW(Point a, Point b, Point c)
         {
-            return AngleBetweenEdgesCW(new[] {b.X - a.X, b.Y - a.Y}, new[] {c.X - b.X, c.Y - b.Y});
+            return AngleBetweenEdgesCW(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
 
         /// <summary>
@@ -698,7 +774,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double AngleBetweenEdgesCCW(Point a, Point b, Point c)
         {
-            return AngleBetweenEdgesCCW(new[] {b.X - a.X, b.Y - a.Y}, new[] {c.X - b.X, c.Y - b.Y});
+            return AngleBetweenEdgesCCW(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
 
         /// <summary>
@@ -711,9 +787,9 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double ProjectedAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
         {
-            var points = Get2DProjectionPoints(new List<Vertex> {a, b, c}, positiveNormal);
-            return AngleBetweenEdgesCCW(new[] {points[1].X - points[0].X, points[1].Y - points[0].Y},
-                new[] {points[2].X - points[1].X, points[2].Y - points[1].Y});
+            var points = Get2DProjectionPoints(new List<Vertex> { a, b, c }, positiveNormal);
+            return AngleBetweenEdgesCCW(new[] { points[1].X - points[0].X, points[1].Y - points[0].Y },
+                new[] { points[2].X - points[1].X, points[2].Y - points[1].Y });
         }
 
         /// <summary>
@@ -724,7 +800,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double AngleBetweenEdgesCW(double[] v0, double[] v1)
         {
-            return 2*Math.PI - AngleBetweenEdgesCCW(v0, v1);
+            return 2 * Math.PI - AngleBetweenEdgesCCW(v0, v1);
         }
 
         //Gets the angle between edges that are ordered in a CCW list. 
@@ -755,8 +831,8 @@ namespace TVGL
             var angleV0 = Math.Atan2(v0[1], v0[0]);
             var angleV1 = Math.Atan2(v1[1], v1[0]);
             var angleChange = Math.PI - (angleV1 - angleV0);
-            if (angleChange > 2*Math.PI) return angleChange - Constants.TwoPi;
-            if (angleChange < 0) return angleChange + Constants.TwoPi;
+            if (angleChange > 2 * Math.PI) return angleChange - 2 * Math.PI;
+            if (angleChange < 0) return angleChange + 2 * Math.PI;
             return angleChange;
         }
 
@@ -777,15 +853,15 @@ namespace TVGL
         public static double[] PointCommonToThreePlanes(double[] n1, double d1, double[] n2, double d2, double[] n3,
             double d3)
         {
-            var matrixOfNormals = new[,] {{n1[0], n1[1], n1[2]}, {n2[0], n2[1], n2[2]}, {n3[0], n3[1], n3[2]}};
-            var distances = new[] {d1, d2, d3};
+            var matrixOfNormals = new[,] { { n1[0], n1[1], n1[2] }, { n2[0], n2[1], n2[2] }, { n3[0], n3[1], n3[2] } };
+            var distances = new[] { d1, d2, d3 };
             try
             {
                 return StarMath.solve(matrixOfNormals, distances);
             }
             catch
             {
-                return new[] {double.NaN, double.NaN, double.NaN};
+                return new[] { double.NaN, double.NaN, double.NaN };
             }
         }
 
@@ -824,7 +900,7 @@ namespace TVGL
             a.SetRow(0, n1);
             a.SetRow(1, n2);
             a.SetRow(2, directionOfLine);
-            var b = new[] {d1, d2, 0};
+            var b = new[] { d1, d2, 0 };
             pointOnLine = StarMath.solve(a, b);
         }
 
@@ -916,19 +992,19 @@ namespace TVGL
             out double[] center,
             out double[] interSect1, out double[] interSect2, out double t1, out double t2)
         {
-            var a00 = n1[0]*n1[0] + n1[1]*n1[1] + n1[2]*n1[2];
-            var a01 = -n1[0]*n2[0] - n1[1]*n2[1] - n1[2]*n2[2];
-            var a10 = n1[0]*n2[0] + n1[1]*n2[1] + n1[2]*n2[2];
-            var a11 = -n2[0]*n2[0] - n2[1]*n2[1] - n2[2]*n2[2];
-            var b0 = n1[0]*(p2[0] - p1[0]) + n1[1]*(p2[1] - p1[1]) + n1[2]*(p2[2] - p1[2]);
-            var b1 = n2[0]*(p2[0] - p1[0]) + n2[1]*(p2[1] - p1[1]) + n2[2]*(p2[2] - p1[2]);
-            var a = new[,] {{a00, a01}, {a10, a11}};
-            var b = new[] {b0, b1};
+            var a00 = n1[0] * n1[0] + n1[1] * n1[1] + n1[2] * n1[2];
+            var a01 = -n1[0] * n2[0] - n1[1] * n2[1] - n1[2] * n2[2];
+            var a10 = n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2];
+            var a11 = -n2[0] * n2[0] - n2[1] * n2[1] - n2[2] * n2[2];
+            var b0 = n1[0] * (p2[0] - p1[0]) + n1[1] * (p2[1] - p1[1]) + n1[2] * (p2[2] - p1[2]);
+            var b1 = n2[0] * (p2[0] - p1[0]) + n2[1] * (p2[1] - p1[1]) + n2[2] * (p2[2] - p1[2]);
+            var a = new[,] { { a00, a01 }, { a10, a11 } };
+            var b = new[] { b0, b1 };
             var t = StarMath.solve(a, b);
             t1 = t[0];
             t2 = t[1];
-            interSect1 = new[] {p1[0] + n1[0]*t1, p1[1] + n1[1]*t1, p1[2] + n1[2]*t1};
-            interSect2 = new[] {p2[0] + n2[0]*t2, p2[1] + n2[1]*t2, p2[2] + n2[2]*t2};
+            interSect1 = new[] { p1[0] + n1[0] * t1, p1[1] + n1[1] * t1, p1[2] + n1[2] * t1 };
+            interSect2 = new[] { p2[0] + n2[0] * t2, p2[1] + n2[1] * t2, p2[2] + n2[2] * t2 };
             center = new[]
             {(interSect1[0] + interSect2[0])/2, (interSect1[1] + interSect2[1])/2, (interSect1[2] + interSect2[2])/2};
             return DistancePointToPoint(interSect1, interSect2);
@@ -958,8 +1034,8 @@ namespace TVGL
             //ToDo: determine what to do with the above cases
 
             var position1 = norm1.crossProduct(norm2).normalize();
-            var position2 = new[] {-position1[0], -position1[1], -position1[2]};
-            var vertices = new[] {position1, position2};
+            var position2 = new[] { -position1[0], -position1[1], -position1[2] };
+            var vertices = new[] { position1, position2 };
             //Check to see if the intersections are on the arcs
             for (var i = 0; i < 2; i++)
             {
@@ -1003,11 +1079,11 @@ namespace TVGL
 
             //Set directions, where dir2 is perpendicular to dir1 and dir3 is perpendicular to both dir1 and dir2.
             var rnd = new Random();
-            var direction1 = new[] {rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble()}.normalize();
-            var direction2 = new[] {direction1[1] - direction1[2], -direction1[0], direction1[0]}.normalize();
-                //one of many
+            var direction1 = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
+            var direction2 = new[] { direction1[1] - direction1[2], -direction1[0], direction1[0] }.normalize();
+            //one of many
             var direction3 = direction1.crossProduct(direction2).normalize();
-            var directions = new[] {direction1, direction2, direction3};
+            var directions = new[] { direction1, direction2, direction3 };
             var allVertices = new List<Vertex>(insideVertices);
             allVertices.AddRange(outsideVertices);
             List<Vertex> sortedVertices;
@@ -1082,7 +1158,7 @@ namespace TVGL
                         }
                     }
                     if (faceCountAbove == 0 || faceCountBelow == 0) inside = false;
-                    if (faceCountAbove%2 == 0 || faceCountBelow%2 == 0)
+                    if (faceCountAbove % 2 == 0 || faceCountBelow % 2 == 0)
                         inside = false; //Even number of intercepts, means the vertex is outside
                     if (inside) verticesFromSolid2InsideSolid1.Add(vertex);
                     else verticesFromSolid2OutsideSolid1.Add(vertex);
@@ -1131,7 +1207,7 @@ namespace TVGL
                         }
                     }
                     if (faceCountAbove == 0 || faceCountBelow == 0) inside = false;
-                    if (faceCountAbove%2 == 0 || faceCountBelow%2 == 0)
+                    if (faceCountAbove % 2 == 0 || faceCountBelow % 2 == 0)
                         inside = false; //Even number of intercepts, means the vertex is outside
                     if (inside) verticesFromSolid1InsideSolid2.Add(vertex);
                     else verticesFromSolid1OutsideSolid2.Add(vertex);
@@ -1169,9 +1245,9 @@ namespace TVGL
         {
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            var t = (lineVector[0]*(qPoint[0] - lineRefPt[0]) + lineVector[1]*(qPoint[1] - lineRefPt[1]) +
-                     lineVector[2]*(qPoint[2] - lineRefPt[2]))
-                    /(lineVector[0]*lineVector[0] + lineVector[1]*lineVector[1] + lineVector[2]*lineVector[2]);
+            var t = (lineVector[0] * (qPoint[0] - lineRefPt[0]) + lineVector[1] * (qPoint[1] - lineRefPt[1]) +
+                     lineVector[2] * (qPoint[2] - lineRefPt[2]))
+                    / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1] + lineVector[2] * lineVector[2]);
             pointOnLine = new[]
             {lineRefPt[0] + lineVector[0]*t, lineRefPt[1] + lineVector[1]*t, lineRefPt[2] + lineVector[2]*t};
             return DistancePointToPoint(qPoint, pointOnLine);
@@ -1187,9 +1263,9 @@ namespace TVGL
         {
             var dX = p1[0] - p2[0];
             var dY = p1[1] - p2[1];
-            if (p1.Length == 2) return Math.Sqrt(dX*dX + dY*dY);
+            if (p1.Length == 2) return Math.Sqrt(dX * dX + dY * dY);
             var dZ = p1[2] - p2[2];
-            return Math.Sqrt(dX*dX + dY*dY + dZ*dZ);
+            return Math.Sqrt(dX * dX + dY * dY + dZ * dZ);
         }
 
         /// <summary>
@@ -1233,11 +1309,11 @@ namespace TVGL
         {
             var d1 = normalOfPlane.dotProduct(point1.Position);
             var d2 = normalOfPlane.dotProduct(point2.Position);
-            var fraction = (d1 - distOfPlane)/(d1 - d2);
+            var fraction = (d1 - distOfPlane) / (d1 - d2);
             var position = new double[3];
             for (var i = 0; i < 3; i++)
             {
-                position[i] = point2.Position[i]*fraction + point1.Position[i]*(1 - fraction);
+                position[i] = point2.Position[i] * fraction + point1.Position[i] * (1 - fraction);
                 if (double.IsNaN(position[i]))
                     throw new Exception("This should never occur. Prevent this from happening");
             }
@@ -1258,7 +1334,7 @@ namespace TVGL
         {
             var d1 = -DistancePointToPlane(rayDirection, normalOfPlane, distOfPlane);
             var angle = SmallerAngleBetweenEdges(normalOfPlane, rayDirection);
-            var d2 = d1/Math.Cos(angle);
+            var d2 = d1 / Math.Cos(angle);
             if (d2 < 0) return null;
             return rayPosition.add(rayDirection.multiply(d2));
         }
@@ -1279,7 +1355,7 @@ namespace TVGL
             out double signedDistance, bool onBoundaryIsInside = true)
         {
             var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-            signedDistance = -(vertex.Position.dotProduct(face.Normal) - distanceToOrigin)/
+            signedDistance = -(vertex.Position.dotProduct(face.Normal) - distanceToOrigin) /
                              direction.dotProduct(face.Normal);
             //Note that if t == 0, then it is on the plane
             //else, find the intersection point and determine if it is inside the polygon (face)
@@ -1288,8 +1364,10 @@ namespace TVGL
                 : new Vertex(vertex.Position.add(direction.multiply(signedDistance)));
             return IsPointInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint.Position : null;
         }
-
         #endregion
+
+
+
 
         #region isInside Methods (is 2D point inside polygon, vertex inside solid, ect.)
 
@@ -1376,7 +1454,7 @@ namespace TVGL
             while (inconclusive)
             {
                 inconclusive = false;
-                var direction = new[] {rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble()}.normalize();
+                var direction = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
                 foreach (var face in ts.Faces)
                 {
                     if (face.Vertices.Any(vertex => vertexInQuestion.X.IsPracticallySame(vertex.X) &&
@@ -1387,7 +1465,7 @@ namespace TVGL
                     }
 
                     var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal) - distanceToOrigin)/
+                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal) - distanceToOrigin) /
                             direction.dotProduct(face.Normal);
                     //Note that if t == 0, then it is on the face
                     //else, find the intersection point and determine if it is inside the polygon (face)
@@ -1428,8 +1506,8 @@ namespace TVGL
                 }
             }
             if (facesAbove.Count == 0 || facesBelow.Count == 0) return false;
-            return facesAbove.Count%2 != 0 && facesBelow.Count%2 != 0;
-                //Even number of intercepts, means the vertex is inside
+            return facesAbove.Count % 2 != 0 && facesBelow.Count % 2 != 0;
+            //Even number of intercepts, means the vertex is inside
         }
 
 
@@ -1480,15 +1558,15 @@ namespace TVGL
                 //If reached the point in question, then find intercepts on the lineList
                 if (node.StartLine == null)
                 {
-                    if (lineList.Count%2 != 0 || lineList.Count < 1) return false;
+                    if (lineList.Count % 2 != 0 || lineList.Count < 1) return false;
                     Line leftLine, rightLine;
                     bool isOnLine;
                     var numberOfLinesToLeft = TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, out isOnLine);
                     //Check if the point is on the left line or right line (note that one direction search is sufficient).
                     if (isOnLine) return onBoundaryIsInside;
                     //Else, not on a boundary, so check to see that it is in between an odd number of lines to left and right
-                    if (numberOfLinesToLeft%2 == 0) return false;
-                    return TriangulatePolygon.LinesToRight(node, lineList, out rightLine, out isOnLine)%2 != 0;
+                    if (numberOfLinesToLeft % 2 == 0) return false;
+                    return TriangulatePolygon.LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                 }
                 if (lineList.Contains(node.StartLine))
                 {
@@ -1511,6 +1589,6 @@ namespace TVGL
             throw new Exception("Failed to return intercept information");
         }
 
-        #endregion
     }
+    #endregion
 }

@@ -42,17 +42,11 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\ContactData.cs">
       <Link>Boolean Operations\ContactData.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\ContactElement Classes.cs">
-      <Link>Boolean Operations\ContactElement Classes.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\PolygonOperations.cs">
       <Link>Boolean Operations\PolygonOperations.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\Slice.cs">
       <Link>Boolean Operations\Slice.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\Slice4.cs">
-      <Link>Boolean Operations\Slice4.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs">
       <Link>Colors.cs</Link>
