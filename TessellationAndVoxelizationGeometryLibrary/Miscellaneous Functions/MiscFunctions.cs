@@ -292,6 +292,7 @@ namespace TVGL
                 center[0] = 0.0; center[1] = 0.0; center[2] = 0.0;
                 foreach (var face in faces)
                 {
+                    if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
                     var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1))) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
                     // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
