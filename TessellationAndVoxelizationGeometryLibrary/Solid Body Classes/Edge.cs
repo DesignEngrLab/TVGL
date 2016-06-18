@@ -345,7 +345,7 @@ namespace TVGL
                 otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
                 if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector) < 0)
                 {
-                    InternalAngle = 2*Math.PI;
+                    InternalAngle = Constants.TwoPi;
                     Curvature = CurvatureType.Concave;
                 }
                 else
@@ -368,7 +368,7 @@ namespace TVGL
                     Curvature = CurvatureType.Convex;
                 }
             }
-            if (InternalAngle > Math.PI*2) throw new Exception("not possible");
+            if (InternalAngle >Constants.TwoPi) throw new Exception("not possible");
         }
 
         #endregion

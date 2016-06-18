@@ -114,7 +114,7 @@ namespace TVGL
             Center = center;
             Radius = radius;
             Area = Math.PI*radius*radius;
-            Circumference = 2*Math.PI*radius;
+            Circumference = Constants.TwoPi*radius;
         }
     }
 

@@ -800,7 +800,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double AngleBetweenEdgesCW(double[] v0, double[] v1)
         {
-            return 2 * Math.PI - AngleBetweenEdgesCCW(v0, v1);
+            return Constants.TwoPi - AngleBetweenEdgesCCW(v0, v1);
         }
 
         //Gets the angle between edges that are ordered in a CCW list. 
@@ -824,15 +824,15 @@ namespace TVGL
             //var angle = Math.Acos((aSq + bSq - cSq) / (2 * Math.Sqrt(aSq) * Math.Sqrt(bSq)));
             ////Use cross product sign to determine if smaller angle is CCW from v0
             //var cross = v0[0] * v1[1] - v0[1] * v1[0];
-            //if (Math.Sign(cross) < 0) angle = 2 * Math.PI - angle;
+            //if (Math.Sign(cross) < 0) angle = Constants.TwoPi - angle;
 
             #endregion
 
             var angleV0 = Math.Atan2(v0[1], v0[0]);
             var angleV1 = Math.Atan2(v1[1], v1[0]);
             var angleChange = Math.PI - (angleV1 - angleV0);
-            if (angleChange > 2 * Math.PI) return angleChange - 2 * Math.PI;
-            if (angleChange < 0) return angleChange + 2 * Math.PI;
+            if (angleChange > Constants.TwoPi) return angleChange - Constants.TwoPi;
+            if (angleChange < 0) return angleChange + Constants.TwoPi;
             return angleChange;
         }
 

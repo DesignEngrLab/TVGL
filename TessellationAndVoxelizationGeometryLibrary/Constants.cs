@@ -29,6 +29,7 @@ namespace TVGL
     public static class Constants
     {
         internal const double TwoPi = 2 * Math.PI;
+        internal const double HalfPi = Math.PI / 2;
         /// <summary>
         ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
         /// </summary>
@@ -38,23 +39,6 @@ namespace TVGL
         ///     The default color
         /// </summary>
         internal const KnownColors DefaultColor = KnownColors.LightGray;
-
-        /// <summary>
-        ///     The reg ex solid
-        /// </summary>
-        public const string RegExSolid = @"solid\s+(?<Name>[^\r\n]+)?";
-
-        /// <summary>
-        ///     The reg ex coord
-        /// </summary>
-        public const string RegExCoord = @"\s*(facet normal|vertex)\s+(?<X>[^\s]+)\s+(?<Y>[^\s]+)\s+(?<Z>[^\s]+)";
-
-        /// <summary>
-        ///     The number style
-        /// </summary>
-        public const NumberStyles NumberStyle =
-            NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign;
-
 
         /// <summary>
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
@@ -76,6 +60,10 @@ namespace TVGL
         ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-1;
+        /// <summary>
+        /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in 
+        /// a tessellated model.
+        /// </summary>
         internal static double MaxAllowableEdgeSimilarityScore = 1.0;
 
         /// <summary>
@@ -121,7 +109,7 @@ namespace TVGL
 
 
     /// <summary>
-    /// Enum Units of specified shape
+    /// Units of a specified coordinates within the shape or set of shapes.
     /// </summary>
     public enum UnitType
     {

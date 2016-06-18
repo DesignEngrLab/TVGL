@@ -14,13 +14,13 @@ namespace TVGL_Test
     {
         private static readonly string[] FileNames = {
         //"../../../TestFiles/Beam_Boss.STL",
-        "../../../TestFiles/bigmotor.amf",
-        "../../../TestFiles/DxTopLevelPart2.shell",
-        "../../../TestFiles/Candy.shell",
-        "../../../TestFiles/amf_Cube.amf",
-        "../../../TestFiles/train.3mf",
-        "../../../TestFiles/Castle.3mf",
-        "../../../TestFiles/Raspberry Pi Case.3mf",
+        //"../../../TestFiles/bigmotor.amf",
+        //"../../../TestFiles/DxTopLevelPart2.shell",
+        //"../../../TestFiles/Candy.shell",
+        //"../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/train.3mf",
+        //"../../../TestFiles/Castle.3mf",
+        //"../../../TestFiles/Raspberry Pi Case.3mf",
        "../../../TestFiles/shark.ply",
         "../../../TestFiles/bunnySmall.ply",
         "../../../TestFiles/cube.ply",
@@ -84,9 +84,9 @@ namespace TVGL_Test
                 //ts[0].SolidColor = new Color(KnownColors.Salmon);
                 //using (fileStream = File.Create(filename + ".amf"))
                 //    IO.Save(fileStream, ts, FileType.AMF);
-                TVGL.Presenter.Show(ts[0]);
-                TVGL.Presenter.Show(ts[1]);
-                 TestSimplify(ts[1]);
+                TVGL.Presenter.ShowAndHang(ts);
+                //TVGL.Presenter.Show(ts[1]);
+                // TestSimplify(ts[1]);
             }
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
@@ -218,7 +218,7 @@ namespace TVGL_Test
                 {
                     var dist = crossAreas[i][j, 0] = coordValues[j];
                     //Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
-                    var newArea = Slice.DefineContact(ts, new Flat(dist, direction), false).Area;
+                    var newArea = 0.0;// Slice.DefineContact(ts, new Flat(dist, direction), false).Area;
                     crossAreas[i][j, 1] = newArea;
                     if (j > 0 && Math.Abs(newArea - previousArea) > greatestDelta)
                     {

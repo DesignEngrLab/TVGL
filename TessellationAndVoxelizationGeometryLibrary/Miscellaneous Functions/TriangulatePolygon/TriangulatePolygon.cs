@@ -827,7 +827,7 @@ namespace TVGL
             }
             return triangles;
         }
-        
+
         #region Get Node Type
         /// <summary>
         /// Gets the type of node for B.
@@ -836,7 +836,7 @@ namespace TVGL
         internal static NodeType GetNodeType(Node a, Node b, Node c)
         {
             var angle = MiscFunctions.AngleBetweenEdgesCCW(a.Point, b.Point, c.Point);
-            if (angle > Math.PI * 2) throw new Exception();
+            if (angle > Constants.TwoPi) throw new Exception();
             if (a.Y.IsPracticallySame(b.Y))
             {
                 if (c.Y.IsPracticallySame(b.Y))

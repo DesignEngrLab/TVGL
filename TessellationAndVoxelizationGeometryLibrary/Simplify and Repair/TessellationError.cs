@@ -212,7 +212,7 @@ namespace TVGL
             if (repairAutomatically)
             {
                 Message.output("Some errors found. Attempting to Repair...", 2);
-                var success = ts.Repair();
+                var success = ts.Errors.Repair(ts);
                 if (success)
                 {
                     ts.Errors = null;
@@ -810,9 +810,16 @@ namespace TVGL
             return !partlyDefinedEdges.Any();
         }
 
+        /// <summary>
+        /// Fixes the bad edges. By taking in the edges with more than two faces (the over-used edges) and the edges with only one face (the partlyDefinedEdges), this
+        /// repair method attempts to repair the edges as best possible through a series of pairwise searches.
+        /// </summary>
+        /// <param name="overUsedEdgesDictionary">The over used edges dictionary.</param>
+        /// <param name="partlyDefinedEdgesIEnumerable">The partly defined edges i enumerable.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
         internal static IEnumerable<Tuple<Edge, List<PolygonalFace>>> FixBadEdges(
-             IEnumerable<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary,
-            IEnumerable<Edge> partlyDefinedEdgesIEnumerable)
+                     IEnumerable<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary,
+                    IEnumerable<Edge> partlyDefinedEdgesIEnumerable)
         {
             var newListOfGoodEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
             var partlyDefinedEdges = new List<Edge>(partlyDefinedEdgesIEnumerable);
@@ -821,17 +828,22 @@ namespace TVGL
                 var candidateFaces = entry.Item2;
                 var edge = entry.Item1;
                 var numFailedTries = 0;
+                // foreach over-used edge:
+                // first, try to find the best match for each face. Basically, it is assumed that faces with the most similar normals 
+                // should be paired together. 
                 while (candidateFaces.Count > 1 && numFailedTries < candidateFaces.Count)
                 {
                     var highestDotProduct = -2.0;
                     PolygonalFace bestMatch = null;
-                    var referenceFace = candidateFaces[0];
+                    var refFace = candidateFaces[0];
                     candidateFaces.RemoveAt(0);
-                    var refOwnsEdge = FaceShouldBeOwnedFace(edge, referenceFace);
+                    var refOwnsEdge = FaceShouldBeOwnedFace(edge, refFace);
                     foreach (var candidateMatchingFace in candidateFaces)
                     {
-                        var dotProductScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace) ? -2 //edge cannot be owned by both faces, 
-                            : referenceFace.Normal.dotProduct(candidateMatchingFace.Normal);          // thus this is not a good candidate for this
+                        var dotProductScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
+                            ? -2 //edge cannot be owned by both faces, thus this is not a good candidate for this.
+                            : refFace.Normal.dotProduct(candidateMatchingFace.Normal);
+                        //  To take it "out of the running", we simply give it a value of -2
                         if (dotProductScore > highestDotProduct)
                         {
                             highestDotProduct = dotProductScore;
@@ -839,71 +851,50 @@ namespace TVGL
                         }
                     }
                     if (highestDotProduct > -1)
+                    // -1 is a valid dot-product but it is not practical to match faces with completely opposite
+                    // faces
                     {
                         numFailedTries = 0;
-                        storeSuccessfulFaceMatch(edge, referenceFace, bestMatch, newListOfGoodEdges);
                         candidateFaces.Remove(bestMatch);
+                        if (FaceShouldBeOwnedFace(edge, refFace))
+                            newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
+                                 new Edge(edge.From, edge.To, refFace, bestMatch, false), new List<PolygonalFace> { refFace, bestMatch }));
+                        else
+                            newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
+                                 new Edge(edge.From, edge.To, bestMatch, refFace, false), new List<PolygonalFace> { bestMatch, refFace }));
                     }
                     else
                     {
-                        candidateFaces.Add(referenceFace);
-                        numFailedTries++;
-                    }
-                }
-                while (partlyDefinedEdges.Any() && candidateFaces.Any() && numFailedTries < candidateFaces.Count)
-                {
-                    var smallestDistance = double.PositiveInfinity;
-                    Edge bestMatch = null;
-                    var referenceFace = candidateFaces[0];
-                    candidateFaces.RemoveAt(0);
-                    foreach (var partlyDefinedEdge in partlyDefinedEdges)
-                    {
-                        var score = GetEdgeSimilarityScore(edge, partlyDefinedEdge);
-                        if (score < smallestDistance)
-                        {
-                            smallestDistance = score;
-                            bestMatch = partlyDefinedEdge;
-                        }
-                    }
-                    if (smallestDistance < 0.1)
-                    {
-                        numFailedTries = 0;
-                        storeSuccessfulFaceMatch(bestMatch, bestMatch.OwnedFace, referenceFace, newListOfGoodEdges);
-                        partlyDefinedEdges.Remove(bestMatch);
-                    }
-                    else
-                    {
-                        candidateFaces.Add(referenceFace);
+                        candidateFaces.Add(refFace); //referenceFace was removed 24 lines earlier. Here, we re-add it to the
+                        // end of the list.
                         numFailedTries++;
                     }
                 }
             }
+            // for any faces left in the over-used edge dictionary, an entry is made in the list of partly-defined edges
             foreach (var entry in overUsedEdgesDictionary)
             {
+                var oldEdge = entry.Item1;
+                oldEdge.From.Edges.Remove(entry.Item1); //the original over-used edge will not be used in the model.
+                oldEdge.To.Edges.Remove(entry.Item1);   //so, here we remove it from the vertex references
                 foreach (var face in entry.Item2)
-                {
-                    for (int i = 0; i < face.Edges.Count; i++)
-                    {
-                        var edge = face.Edges[i];
-                        if (edge != null) continue;
-                        var fromVertex = face.Vertices[i];
-                        var toVertex = face.NextVertexCCW(fromVertex);
-                        partlyDefinedEdges.Add(new Edge(fromVertex, toVertex, face, null));
-                    }
-                }
-                entry.Item1.From.Edges.Remove(entry.Item1);
-                entry.Item1.To.Edges.Remove(entry.Item1);
+                    partlyDefinedEdges.Add(FaceShouldBeOwnedFace(oldEdge, face)
+                            ? new Edge(oldEdge.From, oldEdge.To, face, null, false)
+                            : new Edge(oldEdge.To, oldEdge.From, face, null, false));
             }
+            // now do a pairwise check with all entries in the partly defined edges
             var pDELength = partlyDefinedEdges.Count;
             var scores = new SortedDictionary<double, int[]>(new NoEqualSort());
             for (int i = 0; i < pDELength; i++)
                 for (int j = i + 1; j < pDELength; j++)
                     scores.Add(GetEdgeSimilarityScore(partlyDefinedEdges[i], partlyDefinedEdges[j]), new[] { i, j });
+            // basically, we go through from best match to worst until the MaxAllowableEdgeSimilarityScore is exceeded.
+            //
             var alreadyMatchedIndices = new HashSet<int>();
             var highestScore = 0.0;
             foreach (var score in scores)
             {
-                if (highestScore > Constants.MaxAllowableEdgeSimilarityScore) break;
+                // if (highestScore > Constants.MaxAllowableEdgeSimilarityScore) break;
                 if (alreadyMatchedIndices.Contains(score.Value[0]) || alreadyMatchedIndices.Contains(score.Value[1]))
                     continue;
                 highestScore = score.Key;
@@ -927,15 +918,6 @@ namespace TVGL
             return score;
         }
 
-        private static void storeSuccessfulFaceMatch(Edge edge, PolygonalFace refFace, PolygonalFace bestMatch, List<Tuple<Edge, List<PolygonalFace>>> newListOfGoodEdges)
-        {
-            if (FaceShouldBeOwnedFace(edge, refFace))
-                newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                     new Edge(edge.From, edge.To, refFace, bestMatch), new List<PolygonalFace> { refFace, bestMatch }));
-            else
-                newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                     new Edge(edge.From, edge.To, bestMatch, refFace), new List<PolygonalFace> { bestMatch, refFace }));
-        }
 
         private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
         {

@@ -32,38 +32,6 @@ namespace TVGL
     /// </remarks>
     public class TessellatedSolid
     {
-        #region Copy Function
-
-        /// <summary>
-        ///     Copies this instance.
-        /// </summary>
-        /// <returns>TessellatedSolid.</returns>
-        public TessellatedSolid Copy()
-        {
-            return new TessellatedSolid(Vertices.Select(vertex => (double[])vertex.Position.Clone()).ToList(),
-                Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
-                Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
-                FileName, Comments, Language);
-        }
-
-        #endregion
-
-        /// <summary>
-        ///     Repairs this instance.
-        /// </summary>
-        /// <returns><c>true</c> if this solid is now free of errors, <c>false</c> if errors remain.</returns>
-        public bool Repair()
-        {
-            if (Errors == null)
-            {
-                Message.output("No errors to fix!", 4);
-                return true;
-            }
-            var success = Errors.Repair(this);
-            if (success) Errors = null;
-            return success;
-        }
-
         #region Fields and Properties
 
         /// <summary>
@@ -557,15 +525,17 @@ namespace TVGL
                     }
                     else // this edge doesn't already exist.
                     {
-                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices, checksum);
+                        var edge = new Edge(fromVertex, toVertex, face, null, false, checksum);
                         partlyDefinedEdgeDictionary.Add(checksum, edge);
                     }
                 }
             }
             var goodEdgeEntries = alreadyDefinedEdges.Values.ToList();
-            goodEdgeEntries.AddRange(TessellationError.FixBadEdges(overUsedEdgesDictionary.Values, partlyDefinedEdgeDictionary.Values.ToList()));
+            goodEdgeEntries.AddRange(TessellationError.FixBadEdges(overUsedEdgesDictionary.Values,
+                partlyDefinedEdgeDictionary.Values));
             foreach (var entry in goodEdgeEntries)
-            { //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor
+            {
+                //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor
                 //above
                 var edge = entry.Item1;
                 var ownedFace = entry.Item2[0];
@@ -576,6 +546,11 @@ namespace TVGL
                 if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (double[])otherFace.Normal.Clone();
                 edge.OtherFace = otherFace;
                 otherFace.AddEdge(edge);
+                if (doublyLinkToVertices)
+                {
+                    edge.To.Edges.Add(edge);
+                    edge.From.Edges.Add(edge);
+                }
             }
             return goodEdgeEntries.Select(entry => entry.Item1).ToArray();
         }
@@ -1193,6 +1168,39 @@ namespace TVGL
         }
 
         #endregion
+
+        #region Copy Function
+
+        /// <summary>
+        ///     Copies this instance.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
+        public TessellatedSolid Copy()
+        {
+            return new TessellatedSolid(Vertices.Select(vertex => (double[])vertex.Position.Clone()).ToList(),
+                Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
+                Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
+                FileName, Comments, Language);
+        }
+
+        #endregion
+
+        /// <summary>
+        ///     Repairs this instance.
+        /// </summary>
+        /// <returns><c>true</c> if this solid is now free of errors, <c>false</c> if errors remain.</returns>
+        public bool Repair()
+        {
+            if (Errors == null)
+            {
+                Message.output("No errors to fix!", 4);
+                return true;
+            }
+            var success = Errors.Repair(this);
+            if (success) Errors = null;
+            return success;
+        }
+
     }
 
     /// <summary>
