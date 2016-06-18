@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
+using TVGL.IOFunctions;
 
 namespace TVGL
 {
@@ -31,42 +32,6 @@ namespace TVGL
     /// </remarks>
     public class TessellatedSolid
     {
-        #region Copy Function
-
-        /// <summary>
-        ///     Copies this instance.
-        /// </summary>
-        /// <returns>TessellatedSolid.</returns>
-        public TessellatedSolid Copy()
-        {
-            var listDoubles = new List<double[]>();
-            foreach (var vertex in Vertices)
-            {
-                if (vertex.IndexInList == -1) throw new Exception("Need to fix ts.Copy function if it ever comes up");
-                listDoubles.Add((double[])vertex.Position.Clone());
-            }
-            var faces = Faces.Select(t => t.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList();
-            return new TessellatedSolid(Name + "_Copy", listDoubles, faces, new List<Color> { SolidColor });
-        }
-
-        #endregion
-
-        /// <summary>
-        ///     Repairs this instance.
-        /// </summary>
-        /// <returns><c>true</c> if this solid is now free of errors, <c>false</c> if errors remain.</returns>
-        public bool Repair()
-        {
-            if (Errors == null)
-            {
-                Message.output("No errors to fix!", 4);
-                return true;
-            }
-            var success = Errors.Repair(this);
-            if (success) Errors = null;
-            return success;
-        }
-
         #region Fields and Properties
 
         /// <summary>
@@ -130,20 +95,13 @@ namespace TVGL
         ///     Gets the volume.
         /// </summary>
         /// <value>The volume.</value>
-        public double Volume { get; private set; }
+        public double Volume { get; internal set; }
 
         /// <summary>
         ///     Gets and sets the mass.
         /// </summary>
         /// <value>The mass.</value>
         public double Mass { get; set; }
-
-        /// <summary>
-        /// Gets or sets the units.
-        /// </summary>
-        /// <value>The units.</value>
-        public UnitType Units { get; set; }
-
         /// <summary>
         ///     Gets the surface area.
         /// </summary>
@@ -156,6 +114,23 @@ namespace TVGL
         /// <value>The name.</value>
         public string Name { get; set; }
 
+        /// <summary>
+        /// The comments
+        /// </summary>
+        public readonly List<string> Comments;
+
+        /// <summary>
+        /// The file name
+        /// </summary>
+        public readonly string FileName;
+
+        /// <summary>
+        /// Gets or sets the units.
+        /// </summary>
+        /// <value>The units.</value>
+        public readonly UnitType Units;
+
+        public readonly string Language;
         /// <summary>
         ///     Gets the faces.
         /// </summary>
@@ -255,7 +230,7 @@ namespace TVGL
                 return _inertiaTensor;
             }
         }
-        private double[,] _inertiaTensor;
+        internal double[,] _inertiaTensor;
 
         /// <summary>
         ///     The solid color
@@ -289,27 +264,35 @@ namespace TVGL
 
         #region Constructors
 
-        /// <summary>
-        ///     Prevents a default instance of the <see cref="TessellatedSolid" /> class from being created.
-        /// </summary>
-        private TessellatedSolid()
+        private TessellatedSolid(UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "")
         {
+            //Begin Construction 
+            Name = name;
+            FileName = filename;
+            Comments = new List<string>();
+            if (comments != null)
+                Comments.AddRange(comments);
+            Language = language;
+            Units = units;
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
-        ///     matches with the STL format.
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
+        /// matches with the STL format.
         /// </summary>
-        /// <param name="name">The name.</param>
         /// <param name="normals">The normals.</param>
         /// <param name="vertsPerFace">The verts per face.</param>
         /// <param name="colors">The colors.</param>
-        public TessellatedSolid(string name, IList<double[]> normals, IList<List<double[]>> vertsPerFace,
-            IList<Color> colors)
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
+        public TessellatedSolid(IList<double[]> normals, IList<List<double[]>> vertsPerFace,
+            IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
         {
-            var now = DateTime.Now;
-            //Begin Construction 
-            Name = name;
             List<int[]> faceToVertexIndices;
             DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFace.SelectMany(v => v));
             MakeVertices(vertsPerFace, out faceToVertexIndices);
@@ -317,55 +300,52 @@ namespace TVGL
             MakeFaces(faceToVertexIndices, normals);
             DefineFaceColors(colors);
             CompleteInitiation();
-
-            Message.output("File opened in: " + (DateTime.Now - now), 4);
         }
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This matches with formats
-        ///     that use indices to the vertices (almost everything except STL).
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This matches with formats
+        /// that use indices to the vertices (almost everything except STL).
         /// </summary>
-        /// <param name="name">The name.</param>
         /// <param name="vertices">The vertices.</param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
         /// <param name="colors">The colors.</param>
-        public TessellatedSolid(string name, IList<double[]> vertices, IList<int[]> faceToVertexIndices,
-            IList<Color> colors)
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
+        public TessellatedSolid(IList<double[]> vertices, IList<int[]> faceToVertexIndices,
+            IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
         {
-            var now = DateTime.Now;
-            //Begin Construction 
-            Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices);
             MakeVertices(vertices, ref faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices);
             DefineFaceColors(colors);
             CompleteInitiation();
-
-            Message.output("File opened in: " + (DateTime.Now - now), 4);
         }
 
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
-        ///     for cases in which the faces and vertices are already defined.
+        /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
+        /// for cases in which the faces and vertices are already defined.
         /// </summary>
-        /// <param name="faces"></param>
-        /// <param name="vertices"></param>
-        /// <param name="name"></param>
-        /// <param name="colors"></param>
-        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, string name = "",
-            IList<Color> colors = null)
+        /// <param name="faces">The faces.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
+        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null,
+            IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
+            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
         {
-            Name = name;
-            //Get vertices if null
             if (vertices == null)
-            {
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
-            }
-            Name = name;
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
-
             //Create a copy of the vertex and face (This is NON-Destructive!)
 
             var newVertices = new List<Vertex>();
@@ -378,7 +358,6 @@ namespace TVGL
                 newVertices.Add(vertex);
                 simpleCompareDict.Add(vertices[i], vertex);
             }
-            Vertices = new Vertex[0];
             Vertices = newVertices.ToArray();
             NumberOfVertices = Vertices.Length;
 
@@ -399,7 +378,6 @@ namespace TVGL
                 face.Vertices = faceVertices;
                 newFaces.Add(face);
             }
-            Faces = new PolygonalFace[0];
             Faces = newFaces.ToArray();
             NumberOfFaces = Faces.Length;
             VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(NumberOfVertices)) + 1);
@@ -516,9 +494,8 @@ namespace TVGL
         //Primary make edges function
         internal Edge[] MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices, int numberOfVertices)
         {
-            //No need to store partly defined edges and overused edges because the ERROR function will catch them.
             var partlyDefinedEdgeDictionary = new Dictionary<long, Edge>();
-            var alreadyDefinedEdges = new Dictionary<long, Edge>();
+            var alreadyDefinedEdges = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
             var overUsedEdgesDictionary = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
             foreach (var face in faces)
             {
@@ -533,32 +510,49 @@ namespace TVGL
                         overUsedEdgesDictionary[checksum].Item2.Add(face);
                     else if (alreadyDefinedEdges.ContainsKey(checksum))
                     {
-                        var edge = alreadyDefinedEdges[checksum];
-                        var facesConnectedToEdge = new List<PolygonalFace> { edge.OwnedFace, edge.OtherFace, face };
-                        overUsedEdgesDictionary.Add(checksum,
-                            new Tuple<Edge, List<PolygonalFace>>(edge, facesConnectedToEdge));
+                        var edgeEntry = alreadyDefinedEdges[checksum];
+                        edgeEntry.Item2.Add(face);
+                        overUsedEdgesDictionary.Add(checksum, edgeEntry);
                         alreadyDefinedEdges.Remove(checksum);
                     }
                     else if (partlyDefinedEdgeDictionary.ContainsKey(checksum))
                     {
                         //Finish creating edge.
                         var edge = partlyDefinedEdgeDictionary[checksum];
-                        if (face.Normal.Contains(double.NaN)) face.Normal = (double[])edge.OwnedFace.Normal.Clone();
-                        if (edge.OwnedFace.Normal.Contains(double.NaN))
-                            edge.OwnedFace.Normal = (double[])face.Normal.Clone();
-                        edge.OtherFace = face;
-                        face.Edges.Add(edge);
-                        alreadyDefinedEdges.Add(checksum, edge);
+                        alreadyDefinedEdges.Add(checksum, new Tuple<Edge, List<PolygonalFace>>(edge,
+                            new List<PolygonalFace> { edge.OwnedFace, face }));
                         partlyDefinedEdgeDictionary.Remove(checksum);
                     }
                     else // this edge doesn't already exist.
                     {
-                        var edge = new Edge(fromVertex, toVertex, face, null, doublyLinkToVertices, checksum);
+                        var edge = new Edge(fromVertex, toVertex, face, null, false, checksum);
                         partlyDefinedEdgeDictionary.Add(checksum, edge);
                     }
                 }
             }
-            return alreadyDefinedEdges.Values.ToArray();
+            var goodEdgeEntries = alreadyDefinedEdges.Values.ToList();
+            goodEdgeEntries.AddRange(TessellationError.FixBadEdges(overUsedEdgesDictionary.Values,
+                partlyDefinedEdgeDictionary.Values));
+            foreach (var entry in goodEdgeEntries)
+            {
+                //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor
+                //above
+                var edge = entry.Item1;
+                var ownedFace = entry.Item2[0];
+                var otherFace = entry.Item2[1];
+                // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
+                // face has no area (collapsed to a line).
+                if (otherFace.Normal.Contains(double.NaN)) otherFace.Normal = (double[])ownedFace.Normal.Clone();
+                if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (double[])otherFace.Normal.Clone();
+                edge.OtherFace = otherFace;
+                otherFace.AddEdge(edge);
+                if (doublyLinkToVertices)
+                {
+                    edge.To.Edges.Add(edge);
+                    edge.From.Edges.Add(edge);
+                }
+            }
+            return goodEdgeEntries.Select(entry => entry.Item1).ToArray();
         }
 
         /// <summary>
@@ -569,7 +563,7 @@ namespace TVGL
         private void MakeVertices(IEnumerable<List<double[]>> vertsPerFace, out List<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
-            //Gets the number og decimal places, with the maximum being the StarMath Equality (1E-15)
+            //Gets the number of decimal places, with the maximum being the StarMath Equality (1E-15)
             while (Math.Round(SameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             /* vertexMatchingIndices will be used to speed up the linking of faces and edges to vertices
              * it  preserves the order of vertsPerFace (as read in from the file), and indicates where
@@ -686,27 +680,26 @@ namespace TVGL
         private void DefineFaceColors(IList<Color> colors = null)
         {
             HasUniformColor = true;
-            if (colors == null || !colors.Any()) SolidColor = new Color(Constants.DefaultColor);
-            else if (colors.Count == 1) SolidColor = colors[0];
-            else HasUniformColor = false;
+            if (colors == null || !colors.Any())
+            {
+                SolidColor = new Color(Constants.DefaultColor);
+                return;
+            }
+            SolidColor = colors[0];
+            if (colors.Count == 1) return;
             for (var i = 0; i < Faces.Length; i++)
             {
                 var face = Faces[i];
-                if (face.Color != null && !face.Color.Equals(SolidColor)) HasUniformColor = false;
-                else if (!HasUniformColor)
-                {
-                    if (colors == null || !colors.Any()) face.Color = SolidColor;
-                    else
-                    {
-                        var j = i < colors.Count - 1 ? i : colors.Count - 1;
-                        face.Color = colors[j];
-                    }
-                }
+                var j = i < colors.Count - 1 ? i : colors.Count - 1;
+                var color = colors[j];
+                if (SolidColor.Equals(color)) continue;
+                HasUniformColor = false;
+                face.Color = colors[j];
             }
         }
 
         /// <summary>
-        ///     Defines the center, the volume and the surface area.
+        /// Defines the center, the volume and the surface area.
         /// </summary>
         private void DefineCenterVolumeAndSurfaceArea()
         {
@@ -714,97 +707,26 @@ namespace TVGL
             double volume;
             double surfaceArea;
             DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea);
-            //This lost in every comparison to Trapezoidal Approximation of volume
             Center = center;
             Volume = volume;
-            //Message.output(Bounds[0].MakePrintString());
-            //Message.output(Bounds[1].MakePrintString());
-            //Message.output("center = " + center.MakePrintString());
-            //var dims = Bounds[1].subtract(Bounds[0]);
-            //Message.output(dims[0] * dims[1] * dims[2]);
-            //Message.output("vol = " + volume);
-            //RecalculateVolume();
-            //if (Volume > ConvexHull.Volume || Volume < 0) RecalculateVolume();
             SurfaceArea = surfaceArea;
         }
 
         /// <summary>
-        ///     This function recalculates the volume, since the original method of finding the volume is broken.
-        ///     Note also that the current "Center" function might also be broken, but I haven't any need for it yet.
+        /// Defines the center, the volume and the surface area.
         /// </summary>
-        public void RecalculateVolume()
-        {
-            Volume = MiscFunctions.Volume(this);
-            Message.output(".............compare to " + Volume);
-        }
-
-        /// <summary>
-        ///     Defines the center, the volume and the surface area.
-        /// </summary>
-        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out double[] center,
-            out double volume, out double surfaceArea)
+        internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out double[] center, out double volume, out double surfaceArea)
         {
             surfaceArea = 0;
             foreach (var face in faces)
             {
                 // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
-                if (face.Area.IsNegligible())
-                    face.Area = face.DetermineArea(); //the area of the face was also determined in 
+                if (face.Area.IsNegligible()) face.Area = face.DetermineArea(); //the area of the face was also determined in 
                 // one of the PolygonalFace constructors. In case it is zero, we will recalculate it here.
-                surfaceArea += face.Area; // accumulate areas into surface area
+                surfaceArea += face.Area;   // accumulate areas into surface area
             }
-
-            var oldCenter1 = new double[3];
-            var oldCenter2 = new double[3];
-            center = new double[3];
-            foreach (var face in faces)
-            {
-                center[0] += face.Center[0];
-                center[1] += face.Center[1];
-                center[2] += face.Center[2];
-            }
-            var numVertices = faces.Count;
-            center = center.divide(numVertices);
-
-            double oldVolume;
-            volume = 0;
-            var iterations = 0;
-            do
-            {
-                oldVolume = volume;
-                oldCenter2[0] = oldCenter1[0];
-                oldCenter2[1] = oldCenter1[1];
-                oldCenter2[2] = oldCenter1[2];
-                oldCenter1[0] = center[0];
-                oldCenter1[1] = center[1];
-                oldCenter1[2] = center[2];
-                volume = 0;
-                center[0] = 0.0;
-                center[1] = 0.0;
-                center[2] = 0.0;
-                foreach (var face in faces)
-                {
-                    var tetrahedronVolume = face.Area *
-                                            face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1)) / 3;
-                    // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
-                    // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
-                    // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
-                    // on the volume.
-                    volume += tetrahedronVolume;
-                    center[0] += (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) *
-                                 tetrahedronVolume / 4;
-                    center[1] += (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) *
-                                 tetrahedronVolume / 4;
-                    center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) *
-                                 tetrahedronVolume / 4;
-                    // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
-                }
-                if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2).divide(2);
-                else center = center.divide(volume);
-                iterations++;
-            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance || iterations <= 20);
+            volume = MiscFunctions.Volume(faces, out center);
         }
-
 
         private double[,] DefineInertiaTensor()
         {
@@ -891,7 +813,7 @@ namespace TVGL
             {
                 face.PartofConvexHull = true;
                 foreach (var e in face.Edges)
-                    e.PartofConvexHull = true;
+                    if (e != null) e.PartofConvexHull = true;
             }
         }
 
@@ -1030,7 +952,7 @@ namespace TVGL
             var fromIndex = fromVertex.IndexInList;
             var toIndex = toVertex.IndexInList;
             if (fromIndex == -1 || toIndex == -1) return -1;
-            if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+            //  if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
             return fromIndex < toIndex
                 ? fromIndex + VertexCheckSumMultiplier * toIndex
                 : toIndex + VertexCheckSumMultiplier * fromIndex;
@@ -1121,6 +1043,7 @@ namespace TVGL
                 vertex.Faces.Remove(face);
             foreach (var edge in face.Edges)
             {
+                if (edge == null) continue;
                 if (face == edge.OwnedFace) edge.OwnedFace = null;
                 if (face == edge.OtherFace) edge.OtherFace = null;
             }
@@ -1245,6 +1168,39 @@ namespace TVGL
         }
 
         #endregion
+
+        #region Copy Function
+
+        /// <summary>
+        ///     Copies this instance.
+        /// </summary>
+        /// <returns>TessellatedSolid.</returns>
+        public TessellatedSolid Copy()
+        {
+            return new TessellatedSolid(Vertices.Select(vertex => (double[])vertex.Position.Clone()).ToList(),
+                Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
+                Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
+                FileName, Comments, Language);
+        }
+
+        #endregion
+
+        /// <summary>
+        ///     Repairs this instance.
+        /// </summary>
+        /// <returns><c>true</c> if this solid is now free of errors, <c>false</c> if errors remain.</returns>
+        public bool Repair()
+        {
+            if (Errors == null)
+            {
+                Message.output("No errors to fix!", 4);
+                return true;
+            }
+            var success = Errors.Repair(this);
+            if (success) Errors = null;
+            return success;
+        }
+
     }
 
     /// <summary>
@@ -1326,7 +1282,7 @@ namespace TVGL
                     {
                         var edge = edgeDictionary[checksum];
                         edge.OtherFace = face;
-                        face.Edges.Add(edge);
+                        face.AddEdge(edge);
                     }
                     else edgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, face, null, false, checksum));
                 }

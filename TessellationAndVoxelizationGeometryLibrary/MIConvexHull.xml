@@ -573,11 +573,7 @@
             Check the dimensionality of the input data.
             </summary>
         </member>
-<<<<<<< HEAD
-        <member name="M:MIConvexHull.ConvexHullInternal.CreateInitialHull">
-=======
         <member name="M:MIConvexHull.ConvexHullInternal.CreateInitialHull(System.Collections.Generic.List{System.Int32})">
->>>>>>> master
             <summary>
             Create the first faces from (dimension + 1) vertices.
             </summary>
@@ -648,15 +644,9 @@
             Explained in ConvexHullComputationConfig.
             </summary>
         </member>
-<<<<<<< HEAD
-        <member name="F:MIConvexHull.ConvexHullInternal.ConvexHull">
-            <summary>
-            A list of vertices that form the convex hull.
-=======
         <member name="F:MIConvexHull.ConvexHullInternal.ConvexHullSize">
             <summary>
             Used to track the size of the current hull in the Update/RollbackCenter functions.
->>>>>>> master
             </summary>
         </member>
         <member name="F:MIConvexHull.ConvexHullInternal.UnprocessedFaces">
@@ -758,15 +748,6 @@
             <param name="i"></param>
             <returns></returns>
         </member>
-<<<<<<< HEAD
-        <member name="M:MIConvexHull.ConvexHullInternal.AddConvexVertex(System.Int32)">
-            <summary>
-            Check if the vertex was already added and if not, add it.
-            </summary>
-            <param name="i"></param>
-        </member>
-=======
->>>>>>> master
         <member name="M:MIConvexHull.ConvexHullInternal.GetDelaunayTriangulation``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
             <summary>
             Computes the Delaunay triangulation.

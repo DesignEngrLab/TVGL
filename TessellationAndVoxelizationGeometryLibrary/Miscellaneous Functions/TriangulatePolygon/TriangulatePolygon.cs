@@ -1,33 +1,22 @@
-﻿// ***********************************************************************
-// Assembly         : TessellationAndVoxelizationGeometryLibrary
-// Author           : Design Engineering Lab
-// Created          : 04-18-2016
-//
-// Last Modified By : Design Engineering Lab
-// Last Modified On : 05-26-2016
-// ***********************************************************************
-// <copyright file="TriangulatePolygon.cs" company="Design Engineering Lab">
-//     Copyright ©  2014
-// </copyright>
-// <summary></summary>
-// ***********************************************************************
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
+using System.Diagnostics;
+using System.Runtime.Serialization.Json;
 
 namespace TVGL
 {
     /// <summary>
-    ///     Triangulates a Polygon into faces in O(n log n) time.
+    /// Triangulates a Polygon into faces in O(n log n) time.
     /// </summary>
-    /// <References>
-    ///     Trapezoidation algorithm heavily based on:
+    ///  <References>
+    ///     Trapezoidation algorithm heavily based on: 
     ///     "A Fast Trapezoidation Technique For Planar Polygons" by
     ///     Gian Paolo Lorenzetto, Amitava Datta, and Richard Thomas. 2000.
     ///     http://www.researchgate.net/publication/2547487_A_Fast_Trapezoidation_Technique_For_Planar_Polygons
-    ///     This algorithm should run in O(n log n)  time.
+    ///     This algorithm should run in O(n log n)  time.    
+    /// 
     ///     Triangulation method based on Montuno's work, but referenced material and algorithm are from:
     ///     http://www.personal.kent.edu/~rmuhamma/Compgeometry/MyCG/PolyPart/polyPartition.htm
     ///     This algorithm should run in O(n) time.
@@ -35,52 +24,56 @@ namespace TVGL
     public static class TriangulatePolygon
     {
         /// <summary>
-        ///     Triangulates a list of loops into faces in O(n*log(n)) time.
+        /// Triangulates a list of loops into faces in O(n*log(n)) time.
         /// </summary>
-        /// <param name="loops">The loops.</param>
-        /// <param name="normal">The normal.</param>
-        /// <param name="triangleFaceList">The triangle face list.</param>
-        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
-        /// <returns>List&lt;Vertex[]&gt;.</returns>
-        public static List<Vertex[]> Run(List<List<Vertex>> loops, double[] normal,
-            out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
+        /// <param name="loops"></param>
+        /// <param name="normal"></param>
+        /// <param name="triangleFaceList"></param>
+        /// <param name="ignoreNegativeSpace"></param>
+        /// <returns></returns>
+        public static List<Vertex[]> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
-            var points2D =
-                loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
-            return Run(points2D, null, out triangleFaceList, ignoreNegativeSpace);
+            var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
+            List<List<int>> groupsOfLoops;
+            bool[] isPositive = null;
+            return Run2D(points2D,  out triangleFaceList, out groupsOfLoops, ref isPositive,ignoreNegativeSpace);
         }
 
         /// <summary>
-        ///     Triangulates a list of loops into faces in O(n*log(n)) time.
-        ///     Ignoring the negative space, fills in holes. DO NOT USE this
-        ///     parameter for watertight geometry.
+        /// Triangulates a list of loops into faces in O(n*log(n)) time.
         /// </summary>
-        /// <param name="points2D">The points2 d.</param>
-        /// <param name="isPositive">The is positive.</param>
-        /// <param name="triangleFaceList">The triangle face list.</param>
-        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
-        /// <returns>List&lt;Vertex[]&gt;.</returns>
-        /// <exception cref="Exception">
-        ///     Inputs into 'TriangulatePolygon' are unbalanced
-        ///     or
-        ///     Duplicate point found
-        ///     or
-        ///     Incorrect balance of node types
-        ///     or
-        ///     Incorrect balance of node types
-        ///     or
-        ///     Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created
-        ///     correctly.
-        ///     or
-        ///     Trapezoidation failed to complete properly. Check to see that the assumptions are met.
-        ///     or
-        ///     Incorrect number of triangles created in triangulate function
-        ///     or
-        /// </exception>
+        /// <param name="loops"></param>
+        /// <param name="normal"></param>
+        /// <param name="triangleFaceList"></param>
+        /// <param name="isPositive"></param>
+        /// <param name="ignoreNegativeSpace"></param>
+        /// <param name="groupsOfLoops"></param>
+        /// <returns></returns>
+        public static List<Vertex[]> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, out List<List<Vertex[]>> triangleFaceList, 
+            out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
+        {
+            //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
+            var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
+            isPositive = null;
+            return Run2D(points2D, out triangleFaceList, out groupsOfLoops, ref isPositive, ignoreNegativeSpace);
+        }
+
+        /// <summary>
+        /// Triangulates a list of loops into faces in O(n*log(n)) time.
+        /// Ignoring the negative space, fills in holes. DO NOT USE this 
+        /// parameter for watertight geometry.
+        /// </summary>
+        /// <param name="points2D"></param>
+        /// <param name="isPositive"></param>
+        /// <param name="triangleFaceList"></param>
+        /// <param name="groupsOfLoops"></param>
+        /// <param name="ignoreNegativeSpace"></param>
+        /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<Vertex[]> Run(List<Point[]> points2D, bool[] isPositive,
-            out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
+        /// <exception cref="Exception"></exception>
+        public static List<Vertex[]> Run2D(IList<Point[]> points2D, out List<List<Vertex[]>> triangleFaceList, 
+            out List<List<int>> groupsOfLoops, ref bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -100,6 +93,7 @@ namespace TVGL
             //Create return variables
             var triangles = new List<Vertex[]>();
             triangleFaceList = new List<List<Vertex[]>>();
+            groupsOfLoops = new List<List<int>>();
 
             //Check incomining lists
             if (isPositive != null && points2D.Count != isPositive.Length)
@@ -113,7 +107,6 @@ namespace TVGL
                 try
                 {
                     #region Preprocessing
-
                     //Preprocessing
                     // 1) For each loop in points2D
                     // 2)   Count the number of points and add to total.
@@ -130,15 +123,15 @@ namespace TVGL
 
                     //Change point X and Y coordinates to be changed to mostly random primary axis
                     //Removed random value to make function repeatable for debugging.
-                    var values = new List<double> {0.82348, 0.13905, 0.78932, 0.37510};
+                    var values = new List<double>() { 0.82348, 0.13905, 0.78932, 0.37510 };
                     var theta = values[attempts - 1];
                     foreach (var loop in points2D)
                     {
                         var pHighest = double.NegativeInfinity;
                         foreach (var point in loop)
                         {
-                            point.X = point.X*Math.Cos(theta) - point.Y*Math.Sin(theta);
-                            point.Y = point.X*Math.Sin(theta) + point.Y*Math.Cos(theta);
+                            point.X = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
+                            point.Y = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
                             if (point.Y > pHighest)
                             {
                                 pHighest = point.Y;
@@ -193,10 +186,8 @@ namespace TVGL
                         linesInLoop.Add(line2);
 
                         const int precision = 15;
-                        var sortedLoop =
-                            orderedLoop.OrderByDescending(node => Math.Round(node.Y, precision))
-                                .ThenByDescending(node =>
-                                    Math.Round(node.X, precision)).ToList();
+                        var sortedLoop = orderedLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node => 
+                            Math.Round(node.X, precision)).ToList();
                         orderedLoops.Add(orderedLoop);
                         sortedLoops.Add(sortedLoop);
                         linesInLoops.Add(linesInLoop);
@@ -211,18 +202,15 @@ namespace TVGL
                         //will be visited in.
                         var firstNodeFromEachLoop = sortedLoops.Select(sortedLoop => sortedLoop[0]).ToList();
                         const int precision = 15;
-                        var sortedFirstNodes =
-                            firstNodeFromEachLoop.OrderByDescending(node => Math.Round(node.Y, precision))
-                                .ThenByDescending(node =>
-                                    Math.Round(node.X, precision)).ToList();
+                        var sortedFirstNodes = firstNodeFromEachLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node => 
+                            Math.Round(node.X, precision)).ToList();
                         //Use a red-black tree to track whether loops are inside other loops
                         var tempSortedLoops = new List<List<Node>>(sortedLoops);
                         while (tempSortedLoops.Any())
                         {
                             //Set the start loop and remove necessary information
                             var startLoop = sortedLoops[sortedFirstNodes[0].LoopID];
-                            isPositive[sortedFirstNodes[0].LoopID] = true;
-                                //The first loop in the group must always be CCW positive
+                            isPositive[sortedFirstNodes[0].LoopID] = true; //The first loop in the group must always be CCW positive
                             sortedFirstNodes.RemoveAt(0);
                             tempSortedLoops.Remove(startLoop);
                             if (!sortedFirstNodes.Any()) continue; //Exit while loop
@@ -247,13 +235,13 @@ namespace TVGL
                                     //If remainder is not equal to 0, then it is odd.
                                     //If both LinesToLeft and LinesToRight are odd, then it must be inside.
                                     Line leftLine;
-                                    if (LinesToLeft(node, lineList, out leftLine, out isOnLine)%2 != 0)
+                                    if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
                                     {
                                         Line rightLine;
-                                        isInside = LinesToRight(node, lineList, out rightLine, out isOnLine)%2 != 0;
+                                        isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                                     }
                                     else isInside = false;
-                                    if (isInside) //Merge the loop into this one and remove from the tempList
+                                    if(isInside) //Merge the loop into this one and remove from the tempList
                                     {
                                         isPositive[node.LoopID] = false; //This is a negative loop
                                         sortedFirstNodes.Remove(node);
@@ -264,8 +252,7 @@ namespace TVGL
                                     else //remove the node from this group and continue
                                     {
                                         sortedGroup.Remove(node);
-                                        j--;
-                                            //Pick the same index for the next iteration as the node which was just removed
+                                        j--; //Pick the same index for the next iteration as the node which was just removed
                                         continue;
                                     }
                                 }
@@ -295,7 +282,7 @@ namespace TVGL
                     //If they are incorrectly ordered, reverse the order.
                     //This is used to check situations whether isPositive == null or not.
                     var nodesLoopsCorrected = new List<List<Node>>();
-                    for (var j = 0; j < orderedLoops.Count; j++)
+                    for (var j = 0; j < orderedLoops.Count; j++) 
                     {
                         var orderedLoop = orderedLoops[j];
                         var index = orderedLoop.IndexOf(sortedLoops[j][0]); // index of first node in orderedLoop
@@ -311,8 +298,7 @@ namespace TVGL
                         else nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop[index], orderedLoop[index + 1]);
                         //If node type is incorrect (loop is CW when it should be CCW or vice versa), 
                         //reverse the order of the loop
-                        if ((isPositive[j] && nodeType != NodeType.Peak) ||
-                            (!isPositive[j] && nodeType != NodeType.UpwardReflex))
+                        if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
                         {
                             orderedLoop.Reverse();
                             //Also, reorder all the lines for these nodes
@@ -333,7 +319,6 @@ namespace TVGL
                     orderedLoops = new List<List<Node>>(nodesLoopsCorrected);
 
                     #region Ignore Negative Space Alterations
-
                     //If we are to ignore the negative space, we need to get rid of any loops that are inside other loops.
                     //All negative loops must be inside, so remove them.
                     //Some positive loops may be nested inside a negative then a postive, and therefore they are inside a positive. Remove them.
@@ -348,8 +333,7 @@ namespace TVGL
                             var isInside = false;
                             foreach (var positiveLoop2 in orderedLoops)
                             {
-                                if (!isPositive[positiveLoop2.First().LoopID])
-                                    continue; //Only concerned about positive loops
+                                if (!isPositive[positiveLoop2.First().LoopID]) continue; //Only concerned about positive loops
                                 if (positiveLoop1 == positiveLoop2) continue;
                                 //If any point (just check the first one) is NOT inside positive loop 2, then keep positive loop 1
                                 //Note: If this occues, any loops inside loop 1 will also be inside loop 2, so no information is lost.
@@ -361,7 +345,7 @@ namespace TVGL
                             //Only keep it if its not inside other loops
                             if (!isInside) listOfLoopIDsToKeep.Add(positiveLoop1.First().LoopID);
                         }
-
+                        
                         //Rewrite the lists 
                         var tempOrderedLoops = new List<List<Node>>();
                         var tempSortedLoops = new List<List<Node>>();
@@ -388,7 +372,6 @@ namespace TVGL
                             }
                         }
                     }
-
                     #endregion
 
                     //Set the NodeTypes of every Node. This step is after "isPositive == null" fuction because
@@ -407,8 +390,7 @@ namespace TVGL
 
                         //Set nodeType for the last node
                         //Create last node
-                        orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2],
-                            orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
+                        orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2], orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
 
                         //Debug to see if the proper balance of point types has been used
                         var downwardReflexCount = 0;
@@ -439,14 +421,13 @@ namespace TVGL
                         }
                         i++;
                     }
-
+                                      
                     //Get the number of negative loops
-                    foreach (var boolean in isPositive)
+                    foreach (var boolean in isPositive) 
                     {
                         if (boolean) positiveLoopCount++;
                         else negativeLoopCount++;
                     }
-
                     #endregion
 
                     // 1) For each positive loop
@@ -464,10 +445,9 @@ namespace TVGL
                     {
                         //Get information about positive loop, remove from loops, and create new group
                         i = listPositive.FindIndex(true);
-                        if (i == -1)
-                            throw new Exception(
-                                "Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
+                        if (i == -1) throw new Exception("Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
                         var sortedGroup = new List<Node>(sortedLoops[i]);
+                        var group = new List<int> { sortedGroup[0].LoopID };
                         listPositive.RemoveAt(i);
                         orderedLoops.RemoveAt(i);
                         sortedLoops.RemoveAt(i);
@@ -500,19 +480,18 @@ namespace TVGL
                             //Check if negative loop is inside polygon 
                             //note that listPositive changes order /size , while isPositive is static like loopID.
                             //Similarly points2D is static.
-                            if (node == completeListSortedLoops[node.LoopID][0] && isPositive[node.LoopID] == false)
-                                //if first point in the sorted loop and loop is negative 
+                            if (node == completeListSortedLoops[node.LoopID][0] && isPositive[node.LoopID] == false) //if first point in the sorted loop and loop is negative 
                             {
                                 bool isInside;
                                 bool isOnLine;
                                 //If remainder is not equal to 0, then it is odd.
                                 //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                                if (LinesToLeft(node, lineList, out leftLine, out isOnLine)%2 != 0)
+                                if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)  
                                 {
-                                    isInside = LinesToRight(node, lineList, out rightLine, out isOnLine)%2 != 0;
+                                    isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                                 }
                                 else isInside = false;
-                                if (isInside)
+                                if(isInside)
                                 {
                                     //NOTE: This node must be a reflex upward point by observation
                                     //leftLine and rightLine are set in the two previous call and are now not null.
@@ -525,13 +504,14 @@ namespace TVGL
                                     listPositive.RemoveAt(k);
                                     orderedLoops.RemoveAt(k);
                                     sortedLoops.RemoveAt(k);
+                                    group.Add(node.LoopID);
                                 }
                                 else
                                 {
                                     sortedGroup.Remove(node);
                                     j--; //Pick the same index for the next iteration as the node which was just removed
                                     continue;
-                                }
+                                } 
                             }
 
                             //Add to or remove from Red-Black Tree
@@ -555,89 +535,84 @@ namespace TVGL
                             switch (node.Type)
                             {
                                 case NodeType.DownwardReflex:
-                                {
-                                    FindLeftLine(node, lineList, out leftLine);
-                                    FindRightLine(node, lineList, out rightLine);
-
-                                    //Close two trapezoids
-                                    //Left trapezoid:
-                                    InsertTrapezoid(node, leftLine, node.StartLine, ref trapTree,
-                                        ref completedTrapezoids);
-                                    //Right trapezoid:
-                                    InsertTrapezoid(node, node.EndLine, rightLine, ref trapTree, ref completedTrapezoids);
-
-                                    //Create one new partial trapezoid
-                                    var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, rightLine);
-                                    trapTree.Add(newPartialTrapezoid);
-                                }
-                                    break;
-                                case NodeType.UpwardReflex:
-                                {
-                                    if (leftLine == null)
-                                        //If from the first negative point, leftLine and rightLine will already be set.
                                     {
                                         FindLeftLine(node, lineList, out leftLine);
                                         FindRightLine(node, lineList, out rightLine);
+
+                                        //Close two trapezoids
+                                        //Left trapezoid:
+                                        InsertTrapezoid(node, leftLine, node.StartLine, ref trapTree, ref completedTrapezoids);
+                                        //Right trapezoid:
+                                        InsertTrapezoid(node, node.EndLine, rightLine, ref trapTree, ref completedTrapezoids);
+
+                                        //Create one new partial trapezoid
+                                        var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, rightLine);
+                                        trapTree.Add(newPartialTrapezoid);
                                     }
+                                    break;
+                                case NodeType.UpwardReflex:
+                                    {
+                                        if (leftLine == null) //If from the first negative point, leftLine and rightLine will already be set.
+                                        {
+                                            FindLeftLine(node, lineList, out leftLine);
+                                            FindRightLine(node, lineList, out rightLine);
+                                        }
 
-                                    //Close one trapezoid
-                                    InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
+                                        //Close one trapezoid
+                                        InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
 
-                                    //Create two new partial trapezoids
-                                    //Left Trapezoid
-                                    var newPartialTrapezoid1 = new PartialTrapezoid(node, leftLine, node.EndLine);
-                                    trapTree.Add(newPartialTrapezoid1);
-                                    //Right Trapezoid
-                                    var newPartialTrapezoid2 = new PartialTrapezoid(node, node.StartLine, rightLine);
-                                    trapTree.Add(newPartialTrapezoid2);
-                                }
+                                        //Create two new partial trapezoids
+                                        //Left Trapezoid
+                                        var newPartialTrapezoid1 = new PartialTrapezoid(node, leftLine, node.EndLine);
+                                        trapTree.Add(newPartialTrapezoid1);
+                                        //Right Trapezoid
+                                        var newPartialTrapezoid2 = new PartialTrapezoid(node, node.StartLine, rightLine);
+                                        trapTree.Add(newPartialTrapezoid2);
+                                    }
                                     break;
                                 case NodeType.Peak:
-                                {
-                                    //Create one new partial trapezoid
-                                    var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, node.EndLine);
-                                    trapTree.Add(newPartialTrapezoid);
-                                }
+                                    {
+                                        //Create one new partial trapezoid
+                                        var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, node.EndLine);
+                                        trapTree.Add(newPartialTrapezoid);
+                                    }
                                     break;
                                 case NodeType.Root:
-                                {
-                                    //Close one trapezoid
-                                    InsertTrapezoid(node, node.EndLine, node.StartLine, ref trapTree,
-                                        ref completedTrapezoids);
-                                }
+                                    {
+                                        //Close one trapezoid
+                                        InsertTrapezoid(node, node.EndLine, node.StartLine, ref trapTree, ref completedTrapezoids);
+                                    }
                                     break;
                                 case NodeType.Left:
-                                {
-                                    //Create one trapezoid
-                                    FindLeftLine(node, lineList, out leftLine);
-                                    rightLine = node.StartLine;
-                                    InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
+                                    {
+                                        //Create one trapezoid
+                                        FindLeftLine(node, lineList, out leftLine);
+                                        rightLine = node.StartLine;
+                                        InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
 
-                                    //Create one new partial trapezoid
-                                    var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, node.EndLine);
-                                    trapTree.Add(newPartialTrapezoid);
-                                }
+                                        //Create one new partial trapezoid
+                                        var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, node.EndLine);
+                                        trapTree.Add(newPartialTrapezoid);
+                                    }
                                     break;
                                 case NodeType.Right:
-                                {
-                                    //Create one trapezoid
-                                    FindRightLine(node, lineList, out rightLine);
-                                    leftLine = node.EndLine;
-                                    InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
+                                    {
+                                        //Create one trapezoid
+                                        FindRightLine(node, lineList, out rightLine);
+                                        leftLine = node.EndLine;
+                                        InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
 
-                                    //Create one new partial trapezoid
-                                    var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, rightLine);
-                                    trapTree.Add(newPartialTrapezoid);
-                                }
+                                        //Create one new partial trapezoid
+                                        var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, rightLine);
+                                        trapTree.Add(newPartialTrapezoid);
+                                    }
                                     break;
                             }
                         }
                         if (trapTree.Count > 0)
                         {
-                            throw new Exception(
-                                "Trapezoidation failed to complete properly. Check to see that the assumptions are met.");
+                            throw new Exception("Trapezoidation failed to complete properly. Check to see that the assumptions are met.");
                         }
-
                         #endregion
 
                         #region Create Monotone Polygons
@@ -647,42 +622,32 @@ namespace TVGL
                         for (var j = 0; j < completedTrapezoids.Count; j++)
                         {
                             var trapezoid = completedTrapezoids[j];
-                            if (trapezoid.TopNode.Type == NodeType.DownwardReflex)
-                                //If upper node is reflex down (bottom node could be reflex up, reflex down, or other)
+                            if (trapezoid.TopNode.Type == NodeType.DownwardReflex) //If upper node is reflex down (bottom node could be reflex up, reflex down, or other)
                             {
                                 var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
                                 completedTrapezoids.RemoveAt(j);
-                                var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode,
-                                    trapezoid.LeftLine, newLine);
-                                var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine,
-                                    trapezoid.RightLine);
-                                completedTrapezoids.Insert(j, rightTrapezoid);
-                                    //right trapezoid will end up right below left trapezoid
-                                completedTrapezoids.Insert(j, leftTrapezoid);
-                                    //left trapezoid will end up were the original trapezoid was located
+                                var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
+                                var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
+                                completedTrapezoids.Insert(j, rightTrapezoid); //right trapezoid will end up right below left trapezoid
+                                completedTrapezoids.Insert(j, leftTrapezoid); //left trapezoid will end up were the original trapezoid was located
                                 j++; //Extra counter to skip extra trapezoid
                             }
-                            else if (trapezoid.BottomNode.Type == NodeType.UpwardReflex)
-                                //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
+                            else if (trapezoid.BottomNode.Type == NodeType.UpwardReflex) //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
                             {
                                 var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
                                 completedTrapezoids.RemoveAt(j);
-                                var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode,
-                                    trapezoid.LeftLine, newLine);
-                                var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine,
-                                    trapezoid.RightLine);
-                                completedTrapezoids.Insert(j, rightTrapezoid);
-                                    //right trapezoid will end up right below left trapezoid
-                                completedTrapezoids.Insert(j, leftTrapezoid);
-                                    //left trapezoid will end up were the original trapezoid was located
+                                var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
+                                var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
+                                completedTrapezoids.Insert(j, rightTrapezoid); //right trapezoid will end up right below left trapezoid
+                                completedTrapezoids.Insert(j, leftTrapezoid); //left trapezoid will end up were the original trapezoid was located
                                 j++; //Extra counter to skip extra trapezoid
                             }
                         }
 
                         //Create Monotone Polygons from Trapezoids
                         var currentTrap = completedTrapezoids[0];
-                        var monotoneTrapPolygon1 = new List<Trapezoid> {currentTrap};
-                        var monotoneTrapPolygons = new List<List<Trapezoid>> {monotoneTrapPolygon1};
+                        var monotoneTrapPolygon1 = new List<Trapezoid> { currentTrap };
+                        var monotoneTrapPolygons = new List<List<Trapezoid>> { monotoneTrapPolygon1 };
                         //for each trapezoid except the first one, which was added in the intitialization above.
                         for (var j = 1; j < completedTrapezoids.Count; j++)
                         {
@@ -704,7 +669,7 @@ namespace TVGL
                             // If they cannot be attached to any existing monotone polygon, create a new monotone polygon
                             if (boolstatus == false)
                             {
-                                var trapezoidList = new List<Trapezoid> {completedTrapezoids[j]};
+                                var trapezoidList = new List<Trapezoid> { completedTrapezoids[j] };
                                 monotoneTrapPolygons.Add(trapezoidList);
                             }
                         }
@@ -750,15 +715,12 @@ namespace TVGL
                             sortedMonotonePolyNodes.Add(monotoneTrapPoly.Last().BottomNode);
 
                             //Create new monotone polygon based on these two chains and sorted list.
-                            var monotonePolygon = new MonotonePolygon(monotoneLeftChain, monotoneRightChain,
-                                sortedMonotonePolyNodes);
+                            var monotonePolygon = new MonotonePolygon(monotoneLeftChain, monotoneRightChain, sortedMonotonePolyNodes);
                             monotonePolygons.Add(monotonePolygon);
                         }
-
                         #endregion
 
                         #region DEBUG: Find a chain containing a particular vertex
-
                         //var vertexInQuestion = new Vertex(new double[] { 200.0, 100.0, 750.0 });
                         //foreach (var monotonePolygon in monotonePolygons)
                         //{
@@ -773,18 +735,16 @@ namespace TVGL
                         //        }
                         //    }
                         //}
-
                         #endregion
 
                         #region Triangulate Monotone Polygons
-
                         //Triangulates the monotone polygons
                         var newTriangles = new List<Vertex[]>();
                         foreach (var monotonePolygon2 in monotonePolygons)
                             newTriangles.AddRange(Triangulate(monotonePolygon2));
                         triangles.AddRange(newTriangles);
                         triangleFaceList.Add(newTriangles);
-
+                        groupsOfLoops.Add(group);
                         #endregion
                     }
                     //Check to see if the proper number of triangles were created from this set of loops
@@ -792,14 +752,13 @@ namespace TVGL
                     //The addition of negative loops makes this: triangles = (number of vertices) + 2*(number of negative loops) - 2
                     //The most general form (by inspection) is then: triangles = (number of vertices) + 2*(number of negative loops) - 2*(number of positive loops)
                     //You could individually solve the equation for each positive loop, but simpler just to use most general form.
-                    if (triangles.Count != pointCount + 2*negativeLoopCount - 2*positiveLoopCount)
+                    if (triangles.Count != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
                     {
                         throw new Exception("Incorrect number of triangles created in triangulate function");
                     }
                     successful = true;
 
                     #region DEBUG: Find a particular triangle or all triangles with a particular vertex
-
                     //Find all triangles with a particular vertex
                     //var vertexInQuestion1 = new Vertex(new double[] { 200.0, 100.0, 750.0 });
                     //var vertexInQuestion2 = new Vertex(new double[] { 50.0, 100.0, 784.99993896484375 });
@@ -852,14 +811,14 @@ namespace TVGL
                     //    }
                     //}
                     //trianglesInQuestion.Clear();
-
                     #endregion
+
                 }
                 catch
                 {
                     if (attempts >= 4)
                     {
-                        Message.output("Triangulation failed after " + attempts + " attempts.", 1);
+                        Message.output("Triangulation failed after " + attempts + " attempts.",1);
                         throw new Exception();
                     }
                     isPositive = null;
@@ -869,28 +828,413 @@ namespace TVGL
             return triangles;
         }
 
-        #region Get Node Type
-
         /// <summary>
-        ///     Gets the type of node for B.
+        /// Determines the order of a set of loops and their positive or negative directionality.
+        /// If loop directionality is not know, make a array of booleans for isPositive and set
+        /// isDirectionalityKnown to false.
         /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <param name="c">The c.</param>
-        /// <returns>NodeType.</returns>
-        /// <exception cref="Exception"></exception>
+        /// <param name="loops"></param>
+        /// <param name="normal"></param>
+        /// <param name="isPositive"></param>
+        /// <param name="isDirectionalityKnown"></param>
+        /// <returns></returns>
+        public static List<List<int>> OrderLoops(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, ref bool[] isPositive, bool isDirectionalityKnown = false)
+        {
+            //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
+            var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
+            return OrderLoops2D(points2D, ref isPositive, isDirectionalityKnown);
+        }
+
+        private static List<List<int>> OrderLoops2D(IList<Point[]> points2D, ref bool[] isPositive, bool isDirectionalityKnown = false)
+        {
+            const int attempts = 1;
+
+            #region Preprocessing
+            //Preprocessing
+            // 1) For each loop in points2D
+            // 2)   Count the number of points and add to total.
+            // 3)   Create nodes and lines from points, and retain whether a point
+            //      was in a positive or negative loop.
+            // 4)   Add nodes to an ordered loop (same as points2D except now Nodes) 
+            //      and a sorted loop (used for sweeping).
+            // 5) Get the number of positive and negative loops. 
+            var orderedLoops = new List<List<Node>>();
+            var sortedLoops = new List<List<Node>>();
+            var negativeLoopCount = 0;
+            var positiveLoopCount = 0;
+            var pointCount = 0;
+
+            //Change point X and Y coordinates to be changed to mostly random primary axis
+            //Removed random value to make function repeatable for debugging.
+            var values = new List<double>() { 0.82348, 0.13905, 0.78932, 0.37510 };
+            var theta = values[attempts - 1];
+            foreach (var loop in points2D)
+            {
+                var pHighest = double.NegativeInfinity;
+                foreach (var point in loop)
+                {
+                    point.X = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
+                    point.Y = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
+                    if (point.Y > pHighest)
+                    {
+                        pHighest = point.Y;
+                    }
+                }
+            }
+            var linesInLoops = new List<List<Line>>();
+            var i = 0; //i is the used to set the loop ID
+            foreach (var loop in points2D)
+            {
+                var orderedLoop = new List<Node>();
+                var linesInLoop = new List<Line>();
+                //Count the number of points and add to total.
+                pointCount = pointCount + loop.Length;
+
+                //Create first node
+                //Note that getNodeType -> GetAngle functions works for both + and - loops without a reverse boolean.
+                //This is because the loops are ordered clockwise - and counterclockwise +.
+                var firstNode = new Node(loop[0], i);
+                var previousNode = firstNode;
+                orderedLoop.Add(firstNode);
+
+                //Create other nodes
+                for (var j = 1; j < loop.Length - 1; j++)
+                {
+                    //Create New Node
+                    var node = new Node(loop[j], i);
+
+                    //Add node to the ordered loop
+                    orderedLoop.Add(node);
+
+                    //Create New Line
+                    var line = new Line(previousNode, node);
+                    previousNode.StartLine = line;
+                    node.EndLine = line;
+                    previousNode = node;
+                    linesInLoop.Add(line);
+                }
+
+                //Create last node
+                var lastNode = new Node(loop[loop.Length - 1], i);
+                orderedLoop.Add(lastNode);
+
+                //Create both missing lines 
+                var line1 = new Line(previousNode, lastNode);
+                previousNode.StartLine = line1;
+                lastNode.EndLine = line1;
+                linesInLoop.Insert(0, line1);
+                var line2 = new Line(lastNode, firstNode);
+                lastNode.StartLine = line2;
+                firstNode.EndLine = line2;
+                linesInLoop.Add(line2);
+
+                const int precision = 15;
+                var sortedLoop = orderedLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node =>
+                    Math.Round(node.X, precision)).ToList();
+                orderedLoops.Add(orderedLoop);
+                sortedLoops.Add(sortedLoop);
+                linesInLoops.Add(linesInLoop);
+                i++;
+            }
+
+            //If isPositive was not known, correct the CW / CCW ordering of the sortedLoops
+            if (!isDirectionalityKnown)
+            {
+                isPositive = new bool[sortedLoops.Count];
+                //First, find the first node from each loop and then sort them. This determines the order the loops
+                //will be visited in.
+                var firstNodeFromEachLoop = sortedLoops.Select(sortedLoop => sortedLoop[0]).ToList();
+                const int precision = 15;
+                var sortedFirstNodes = firstNodeFromEachLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node =>
+                    Math.Round(node.X, precision)).ToList();
+                //Use a red-black tree to track whether loops are inside other loops
+                var tempSortedLoops = new List<List<Node>>(sortedLoops);
+                while (tempSortedLoops.Any())
+                {
+                    //Set the start loop and remove necessary information
+                    var startLoop = sortedLoops[sortedFirstNodes[0].LoopID];
+                    isPositive[sortedFirstNodes[0].LoopID] = true; //The first loop in the group must always be CCW positive
+                    sortedFirstNodes.RemoveAt(0);
+                    tempSortedLoops.Remove(startLoop);
+                    if (!sortedFirstNodes.Any()) continue; //Exit while loop
+                    var sortedGroup = new List<Node>(startLoop);
+
+                    //Add the remaining first points from each loop into sortedGroup.
+                    foreach (var firstNode in sortedFirstNodes)
+                    {
+                        InsertNodeInSortedList(sortedGroup, firstNode);
+                    }
+
+                    //inititallize lineList 
+                    var lineList = new List<Line>();
+                    for (var j = 0; j < sortedGroup.Count; j++)
+                    {
+                        var node = sortedGroup[j];
+
+                        if (sortedFirstNodes.Contains(node)) //if first point in the sorted loop 
+                        {
+                            bool isInside;
+                            bool isOnLine;
+                            //If remainder is not equal to 0, then it is odd.
+                            //If both LinesToLeft and LinesToRight are odd, then it must be inside.
+                            Line leftLine;
+                            if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
+                            {
+                                Line rightLine;
+                                isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
+                            }
+                            else isInside = false;
+                            if (isInside) //Merge the loop into this one and remove from the tempList
+                            {
+                                isPositive[node.LoopID] = false; //This is a negative loop
+                                sortedFirstNodes.Remove(node);
+                                tempSortedLoops.Remove(sortedLoops[node.LoopID]);
+                                if (!tempSortedLoops.Any()) break; //That was the last loop
+                                MergeSortedListsOfNodes(sortedGroup, sortedLoops[node.LoopID], node);
+                            }
+                            else //remove the node from this group and continue
+                            {
+                                sortedGroup.Remove(node);
+                                j--; //Pick the same index for the next iteration as the node which was just removed
+                                continue;
+                            }
+                        }
+
+                        //Add to or remove from Red-Black Tree
+                        if (lineList.Contains(node.StartLine))
+                        {
+                            lineList.Remove(node.StartLine);
+                        }
+                        else
+                        {
+                            lineList.Add(node.StartLine);
+                        }
+                        if (lineList.Contains(node.EndLine))
+                        {
+                            lineList.Remove(node.EndLine);
+                        }
+                        else
+                        {
+                            lineList.Add(node.EndLine);
+                        }
+                    }
+                }
+            }
+
+            //Check to see that the loops are ordered correctly to their isPositive boolean
+            //If they are incorrectly ordered, reverse the order.
+            //This is used to check situations whether isPositive == null or not.
+            var nodesLoopsCorrected = new List<List<Node>>();
+            for (var j = 0; j < orderedLoops.Count; j++)
+            {
+                var orderedLoop = orderedLoops[j];
+                var index = orderedLoop.IndexOf(sortedLoops[j][0]); // index of first node in orderedLoop
+                NodeType nodeType;
+                if (index == 0)
+                {
+                    nodeType = GetNodeType(orderedLoop.Last(), orderedLoop.First(), orderedLoop[1]);
+                }
+                else if (index == orderedLoop.Count - 1)
+                {
+                    nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop.Last(), orderedLoop.First());
+                }
+                else nodeType = GetNodeType(orderedLoop[index - 1], orderedLoop[index], orderedLoop[index + 1]);
+                //If node type is incorrect (loop is CW when it should be CCW or vice versa), 
+                //reverse the order of the loop
+                if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
+                {
+                    orderedLoop.Reverse();
+                    //Also, reorder all the lines for these nodes
+                    foreach (var line in linesInLoops[j])
+                    {
+                        line.Reverse();
+                    }
+                    //And reorder all the node - line identifiers
+                    foreach (var node in orderedLoop)
+                    {
+                        var tempLine = node.EndLine;
+                        node.EndLine = node.StartLine;
+                        node.StartLine = tempLine;
+                    }
+                }
+                nodesLoopsCorrected.Add(orderedLoop);
+            }
+            orderedLoops = new List<List<Node>>(nodesLoopsCorrected);
+
+            //Set the NodeTypes of every Node. This step is after "isPositive == null" fuction because
+            //the CW/CCW order of the loops must be accurate.
+            i = 0;
+            foreach (var orderedLoop in orderedLoops)
+            {
+                //Set nodeType for the first node
+                orderedLoop[0].Type = GetNodeType(orderedLoop.Last(), orderedLoop[0], orderedLoop[1]);
+
+                //Set nodeTypes for other nodes
+                for (var j = 1; j < orderedLoop.Count - 1; j++)
+                {
+                    orderedLoop[j].Type = GetNodeType(orderedLoop[j - 1], orderedLoop[j], orderedLoop[j + 1]);
+                }
+
+                //Set nodeType for the last node
+                //Create last node
+                orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2], orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
+
+                //Debug to see if the proper balance of point types has been used
+                var downwardReflexCount = 0;
+                var upwardReflexCount = 0;
+                var peakCount = 0;
+                var rootCount = 0;
+                foreach (var node in orderedLoop)
+                {
+                    if (node.Type == NodeType.DownwardReflex) downwardReflexCount++;
+                    if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
+                    if (node.Type == NodeType.Peak) peakCount++;
+                    if (node.Type == NodeType.Root) rootCount++;
+                    if (node.Type == NodeType.Duplicate) throw new Exception("Duplicate point found");
+                }
+                if (isPositive[i]) //If a positive loop, the following conditions must be balanced
+                {
+                    if (peakCount != downwardReflexCount + 1 || rootCount != upwardReflexCount + 1)
+                    {
+                        throw new Exception("Incorrect balance of node types");
+                    }
+                }
+                else //If negative loop, the conditions change
+                {
+                    if (peakCount != downwardReflexCount - 1 || rootCount != upwardReflexCount - 1)
+                    {
+                        throw new Exception("Incorrect balance of node types");
+                    }
+                }
+                i++;
+            }
+
+            //Get the number of negative loops
+            foreach (var boolean in isPositive)
+            {
+                if (boolean) positiveLoopCount++;
+                else negativeLoopCount++;
+            }
+            #endregion
+
+            // 1) For each positive loop
+            // 2)   Remove it from orderedLoops.
+            // 3)   Create a new group
+            // 4)   Insert the first node from all the negative loops remaining into the group list in the correct sorted order.
+            // 5)   Use the red-black tree to determine if the first node from a negative loop is inside the polygon.
+            //         Refer to http://alienryderflex.com/polygon/ for how to determine if a point is inside a polygon.
+            // 6)   If not inside, remove that nodes from the group list. 
+            // 7)      else remove the negative loop from orderedLoops and merge the negative loop with the group list.
+            var groups = new List<List<int>>();
+            var listPositive = isPositive.ToList();
+            var completeListSortedLoops = new List<List<Node>>(sortedLoops);
+            while (orderedLoops.Any())
+            {
+                //Get information about positive loop, remove from loops, and create new group
+                i = listPositive.FindIndex(true);
+                if (i == -1)
+                    throw new Exception(
+                        "Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
+                var sortedGroup = new List<Node>(sortedLoops[i]);
+                var group = new List<int> {sortedGroup[0].LoopID};
+                listPositive.RemoveAt(i);
+                orderedLoops.RemoveAt(i);
+                sortedLoops.RemoveAt(i);
+
+                //Insert the first node from all the negative loops remaining into the group list in the correct sorted order.
+                for (var j = 0; j < orderedLoops.Count; j++)
+                {
+                    if (listPositive[j] == false)
+                    {
+                        InsertNodeInSortedList(sortedGroup, sortedLoops[j][0]);
+                    }
+                }
+
+                //inititallize lineList and sortedNodes
+                var lineList = new List<Line>();
+                //Use the red-black tree to determine if the first node from a negative loop is inside the polygon.
+                //for each node in sortedNodes, update the lineList. Note that at this point each node only has two edges.
+                for (var j = 0; j < sortedGroup.Count; j++)
+                {
+                    var node = sortedGroup[j];
+                    Line leftLine = null;
+                    Line rightLine = null;
+
+                    //Check if negative loop is inside polygon 
+                    //note that listPositive changes order /size , while isPositive is static like loopID.
+                    //Similarly points2D is static.
+                    if (node == completeListSortedLoops[node.LoopID][0] && isPositive[node.LoopID] == false)
+                        //if first point in the sorted loop and loop is negative 
+                    {
+                        bool isInside;
+                        bool isOnLine;
+                        //If remainder is not equal to 0, then it is odd.
+                        //If both LinesToLeft and LinesToRight are odd, then it must be inside.
+                        if (LinesToLeft(node, lineList, out leftLine, out isOnLine)%2 != 0)
+                        {
+                            isInside = LinesToRight(node, lineList, out rightLine, out isOnLine)%2 != 0;
+                        }
+                        else isInside = false;
+                        if (isInside)
+                        {
+                            //NOTE: This node must be a reflex upward point by observation
+                            //leftLine and rightLine are set in the two previous call and are now not null.
+                            //Add remaining points from loop into sortedGroup.
+                            MergeSortedListsOfNodes(sortedGroup, completeListSortedLoops[node.LoopID], node);
+
+                            //Remove this loop from lists of loops and the boolean list
+                            var loop = completeListSortedLoops[node.LoopID];
+                            var k = sortedLoops.FindIndex(loop);
+                            listPositive.RemoveAt(k);
+                            orderedLoops.RemoveAt(k);
+                            sortedLoops.RemoveAt(k);
+                            group.Add(node.LoopID);
+                        }
+                        else
+                        {
+                            sortedGroup.Remove(node);
+                            j--; //Pick the same index for the next iteration as the node which was just removed
+                            continue;
+                        }
+                    }
+
+                    //Add to or remove from Red-Black Tree
+                    if (lineList.Contains(node.StartLine))
+                    {
+                        lineList.Remove(node.StartLine);
+                    }
+                    else
+                    {
+                        lineList.Add(node.StartLine);
+                    }
+                    if (lineList.Contains(node.EndLine))
+                    {
+                        lineList.Remove(node.EndLine);
+                    }
+                    else
+                    {
+                        lineList.Add(node.EndLine);
+                    }
+                }
+                groups.Add(group);
+            }
+            return groups;
+        }
+
+        #region Get Node Type
+        /// <summary>
+        /// Gets the type of node for B.
+        /// </summary>
         /// A, B, and C are counterclockwise ordered points.
         internal static NodeType GetNodeType(Node a, Node b, Node c)
         {
             var angle = MiscFunctions.AngleBetweenEdgesCCW(a.Point, b.Point, c.Point);
-            if (angle > Math.PI*2) throw new Exception();
+            if(angle > Math.PI*2) throw new Exception();
             if (a.Y.IsPracticallySame(b.Y))
             {
                 if (c.Y.IsPracticallySame(b.Y))
                 {
-                    if (a.X.IsPracticallySame(c.X))
-                        return NodeType.Duplicate;
-                            //signifies an error (two points with practically the same coordinates)
+                    if (a.X.IsPracticallySame(c.X)) return NodeType.Duplicate; //signifies an error (two points with practically the same coordinates)
                     return a.X > c.X ? NodeType.Right : NodeType.Left;
                 }
                 if (c.Y > b.Y) return angle > Math.PI ? NodeType.DownwardReflex : NodeType.Left;
@@ -900,7 +1244,7 @@ namespace TVGL
 
             if (a.Y < b.Y)
             {
-                if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Peak : NodeType.Left;
+                if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Peak: NodeType.Left;
                 if (c.Y > b.Y) return NodeType.Left;
                 //else c.Y < b.Y
                 return angle < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
@@ -910,24 +1254,12 @@ namespace TVGL
             if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Root : NodeType.Right;
             if (c.Y > b.Y) return angle < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
             //else (c.Y < b.Y)
-            return NodeType.Right;
+            return NodeType.Right;           
         }
-
         #endregion
 
         #region Create Trapezoid and Insert Into List
-
-        /// <summary>
-        ///     Inserts the trapezoid.
-        /// </summary>
-        /// <param name="node">The node.</param>
-        /// <param name="leftLine">The left line.</param>
-        /// <param name="rightLine">The right line.</param>
-        /// <param name="trapTree">The trap tree.</param>
-        /// <param name="completedTrapezoids">The completed trapezoids.</param>
-        /// <exception cref="Exception">Trapezoid failed to find left or right line.</exception>
-        internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine,
-            ref List<PartialTrapezoid> trapTree, ref List<Trapezoid> completedTrapezoids)
+        internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, ref List<PartialTrapezoid> trapTree, ref List<Trapezoid> completedTrapezoids)
         {
             var matchesTrap = false;
             var i = 0;
@@ -936,8 +1268,7 @@ namespace TVGL
                 var partialTrap = trapTree[i];
                 if (partialTrap.Contains(leftLine, rightLine))
                 {
-                    var newTrapezoid = new Trapezoid(partialTrap.TopNode, node, partialTrap.LeftLine,
-                        partialTrap.RightLine);
+                    var newTrapezoid = new Trapezoid(partialTrap.TopNode, node, partialTrap.LeftLine, partialTrap.RightLine);
                     completedTrapezoids.Add(newTrapezoid);
                     trapTree.Remove(partialTrap);
                     matchesTrap = true;
@@ -946,29 +1277,130 @@ namespace TVGL
             }
             if (matchesTrap == false) throw new Exception("Trapezoid failed to find left or right line.");
         }
+        #endregion
 
+        #region Find Lines to Left or Right
+        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, out bool isOnLine)
+        {
+            isOnLine = false; 
+            leftLine = null;
+            var xleft = double.NegativeInfinity;
+            var counter = 0;
+            foreach (var line in lineList)
+            {
+                //Check to make sure that the line does not contain the node
+                if (line.FromNode == node || line.ToNode == node) continue;
+                //Find distance to line
+                var x = line.Xintercept(node.Y);
+                var xdif = x - node.X;
+                if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
+                if (xdif < 0 && !xdif.IsNegligible())//Moved to the left by some tolerance 
+                {
+                    
+                    counter++;
+                    if (xdif.IsPracticallySame(xleft)) // if approximately equal
+                    {
+                        //Find the shared node
+                        Node nodeOnLine;
+                        if (leftLine ==  null) throw new Exception("Null Reference");
+                        if (leftLine.ToNode == line.FromNode)
+                        {
+                            nodeOnLine = line.FromNode;
+                        }
+                        else if (leftLine.FromNode == line.ToNode)
+                        {
+                            nodeOnLine = line.ToNode;
+                        }
+                        else throw new Exception("Rounding Error");
+
+                        //Choose whichever line has the right most other node
+                        //Note that this condition will only occur when line and
+                        //leftLine share a node. 
+                        leftLine = nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X ? nodeOnLine.EndLine : nodeOnLine.StartLine;
+                    }
+                    else if (xdif >= xleft) 
+                    {
+                        xleft = xdif;
+                        leftLine = line;
+                    }
+                }
+            }
+            return counter;
+        }
+
+        internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
+        {
+            bool isOnLine; 
+            LinesToLeft(node, lineList, out leftLine, out isOnLine);
+            if (leftLine == null) throw new Exception("Failed to find line to left.");
+        }
+
+        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, out bool isOnLine)
+        {
+            isOnLine = false; 
+            rightLine = null;
+            var xright = double.PositiveInfinity;
+            var counter = 0;
+            foreach (var line in lineList)
+            {
+                //Check to make sure that the line does not contain the node
+                if (line.FromNode == node || line.ToNode == node) continue;
+                //Find distance to line
+                var x = line.Xintercept(node.Y);
+                var xdif = x - node.X;
+                if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
+                if (xdif > 0 && !xdif.IsNegligible())//Moved to the right by some tolerance
+                {
+                    counter++;
+                    if (xdif.IsPracticallySame(xright)) // if approximately equal
+                    {
+                        //Choose whichever line has the right most other node
+                        //Note that this condition will only occur when line and
+                        //leftLine share a node.                        
+                        Node nodeOnLine;
+                        if (rightLine == null) throw new Exception("Null Reference");
+                        if (rightLine.ToNode == line.FromNode)
+                        {
+                            nodeOnLine = line.FromNode;
+                        }
+                        else if (rightLine.FromNode == line.ToNode)
+                        {
+                            nodeOnLine = line.ToNode;
+                        }
+                        else throw new Exception("Rounding Error");
+
+                        //Choose whichever line has the right most other node
+                        rightLine = nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X ? nodeOnLine.StartLine : nodeOnLine.EndLine;
+                    }
+                    else if (xdif <= xright) //If less than
+                    {
+                        xright = xdif;
+                        rightLine = line;
+                    }
+                }
+            }
+            return counter;
+        }
+
+        internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
+        {
+            bool isOnLine; 
+            LinesToRight(node, lineList, out rightLine, out isOnLine);
+            if (rightLine == null) throw new Exception("Failed to find line to right.");
+        }
         #endregion
 
         #region Insert Node in Sorted List
-
-        /// <summary>
-        ///     Inserts the node in sorted list.
-        /// </summary>
-        /// <param name="sortedNodes">The sorted nodes.</param>
-        /// <param name="node">The node.</param>
-        /// <returns>System.Int32.</returns>
-        /// <exception cref="Exception">Points are practically the same.</exception>
         internal static int InsertNodeInSortedList(List<Node> sortedNodes, Node node)
         {
             //Search for insertion location starting from the first element in the list.
             for (var i = 0; i < sortedNodes.Count; i++)
             {
-                if (node.Y.IsPracticallySame(sortedNodes[i].Y) && node.X.IsPracticallySame(sortedNodes[i].X))
-                    //Descending X
+                if (node.Y.IsPracticallySame(sortedNodes[i].Y)  && node.X.IsPracticallySame(sortedNodes[i].X)) //Descending X
                 {
                     throw new Exception("Points are practically the same.");
                 }
-                if (node.Y.IsPracticallySame(sortedNodes[i].Y) && node.X > sortedNodes[i].X) //Descending X
+                if (node.Y.IsPracticallySame(sortedNodes[i].Y)  && node.X > sortedNodes[i].X) //Descending X
                 {
                     sortedNodes.Insert(i, node);
                     return i;
@@ -984,22 +1416,9 @@ namespace TVGL
             sortedNodes.Add(node);
             return sortedNodes.Count - 1;
         }
-
         #endregion
 
         #region Merge Two Sorted Lists of Nodes
-
-        /// <summary>
-        ///     Merges the sorted lists of nodes.
-        /// </summary>
-        /// <param name="sortedNodes">The sorted nodes.</param>
-        /// <param name="negativeLoop">The negative loop.</param>
-        /// <param name="startingNode">The starting node.</param>
-        /// <exception cref="Exception">
-        ///     Points are practically the same.
-        ///     or
-        ///     Negative loop must be fully enclosed
-        /// </exception>
         internal static void MergeSortedListsOfNodes(List<Node> sortedNodes, List<Node> negativeLoop, Node startingNode)
         {
             //For each node in negativeLoop, minus the first node (which is already in the list)
@@ -1010,13 +1429,11 @@ namespace TVGL
                 //Starting from after the nodeID, search for an insertion location
                 for (var j = nodeId + 1; j < sortedNodes.Count; j++)
                 {
-                    if (negativeLoop[i].Y.IsPracticallySame(sortedNodes[j].Y) &&
-                        negativeLoop[i].X.IsPracticallySame(sortedNodes[j].X)) //Descending X
+                    if (negativeLoop[i].Y.IsPracticallySame(sortedNodes[j].Y) && negativeLoop[i].X.IsPracticallySame(sortedNodes[j].X)) //Descending X
                     {
                         throw new Exception("Points are practically the same.");
                     }
-                    if (negativeLoop[i].Y.IsPracticallySame(sortedNodes[j].Y) && negativeLoop[i].X > sortedNodes[j].X)
-                        //Descending X
+                    if (negativeLoop[i].Y.IsPracticallySame(sortedNodes[j].Y) && negativeLoop[i].X > sortedNodes[j].X) //Descending X
                     {
                         sortedNodes.Insert(j, negativeLoop[i]);
                         isInserted = true;
@@ -1038,20 +1455,9 @@ namespace TVGL
                 }
             }
         }
-
         #endregion
 
         #region Triangulate Monotone Polygon
-
-        /// <summary>
-        ///     Triangulates the specified monotone polygon.
-        /// </summary>
-        /// <param name="monotonePolygon">The monotone polygon.</param>
-        /// <returns>List&lt;Vertex[]&gt;.</returns>
-        /// <exception cref="Exception">
-        ///     Incorrect number of triangles created in triangulate monotone polgon function. This is
-        ///     likely due to angle and area tolerances.
-        /// </exception>
         internal static List<Vertex[]> Triangulate(MonotonePolygon monotonePolygon)
         {
             var triangles = new List<Vertex[]>();
@@ -1059,7 +1465,7 @@ namespace TVGL
             var leftChain = monotonePolygon.LeftChain;
             var rightChain = monotonePolygon.RightChain;
             var sortedNodes = monotonePolygon.SortedNodes;
-
+            
 
             //For each node other than the start and finish, add a chain affiliation.
             //Note that this is updated each time the triangulate function is called, 
@@ -1096,21 +1502,18 @@ namespace TVGL
                 ////If the root, make the final triangle regardless of angle/area tolerance
                 if (i == sortedNodes.Count - 1 && scan.Count == 2)
                 {
-                    triangles.Add(new[]
-                    {node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0]});
+                    triangles.Add(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                     continue;
                 }
                 //If the nodes is on the opposite chain from any other node (s). 
                 if ((node.IsLeftChain && (scan.Last().IsLeftChain == false || scan[scan.Count - 2].IsLeftChain == false)) ||
-                    (node.IsRightChain &&
-                     (scan.Last().IsRightChain == false || scan[scan.Count - 2].IsRightChain == false)))
+                    (node.IsRightChain && (scan.Last().IsRightChain == false || scan[scan.Count - 2].IsRightChain == false)))
                 {
                     while (scan.Count > 1)
                     {
                         //Do not skip, even if angle is close to Math.PI, because skipping could break the algorithm (create incorrect triangles)
                         //Better to output negligible triangles.
-                        triangles.Add(new[]
-                        {node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0]});
+                        triangles.Add(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain
                         //Essentially this moves the peak. 
@@ -1128,22 +1531,16 @@ namespace TVGL
                     {
                         //Check to see if the angle is concave (Strictly less than PI). Exit if it is convex.
                         //Note that if the chain is the right chain, the order of nodes will be backwards 
-                        var angle = node.IsRightChain
-                            ? MiscFunctions.AngleBetweenEdgesCCW(node.Point, scan.Last().Point,
-                                scan[scan.Count - 2].Point)
-                            : MiscFunctions.AngleBetweenEdgesCW(node.Point, scan.Last().Point,
-                                scan[scan.Count - 2].Point);
+                        var angle = (node.IsRightChain)
+                            ? MiscFunctions.AngleBetweenEdgesCCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point)
+                            : MiscFunctions.AngleBetweenEdgesCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point);
                         //Skip if greater than OR close to Math.PI, because that will yield a Negligible area triangle
-                        if (angle > Math.PI || Math.Abs(angle - Math.PI) < 1E-6)
+                        if (angle > Math.PI || Math.Abs(angle - Math.PI) < 1E-6) 
                         {
                             exitBool = true;
                             continue;
                         }
-                        triangles.Add(new[]
-                        {
-                            scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0],
-                            node.Point.References[0]
-                        });
+                        triangles.Add(new [] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
                         //Remove last node from scan list 
                         scan.Remove(scan.Last());
                     }
@@ -1154,178 +1551,19 @@ namespace TVGL
             //Check to see if the proper number of triangles were created from this monotone polygon
             if (triangles.Count != sortedNodes.Count - 2)
             {
-                throw new Exception(
-                    "Incorrect number of triangles created in triangulate monotone polgon function. This is likely due to angle and area tolerances.");
+                throw new Exception("Incorrect number of triangles created in triangulate monotone polgon function. This is likely due to angle and area tolerances.");
             }
             foreach (var triangle in triangles)
             {
                 var edge1 = triangle[1].Position.subtract(triangle[0].Position);
                 var edge2 = triangle[2].Position.subtract(triangle[0].Position);
-                var area = Math.Abs(edge1.crossProduct(edge2).norm2())/2;
-                if (area.IsNegligible())
-                    Message.output("Neglible Area Traingle Created", 2);
-                        //CANNOT output a 0.0 area triangle. It will break other functions!
+                var area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
+                if (area.IsNegligible()) Message.output("Neglible Area Traingle Created",2); //CANNOT output a 0.0 area triangle. It will break other functions!
                 //Could collapse whichever edge vector is giving 0 area and ignore this triangle. 
             }
             return triangles;
         }
-
-        #endregion
-
-        #region Find Lines to Left or Right
-
-        /// <summary>
-        ///     Lineses to left.
-        /// </summary>
-        /// <param name="node">The node.</param>
-        /// <param name="lineList">The line list.</param>
-        /// <param name="leftLine">The left line.</param>
-        /// <param name="isOnLine">if set to <c>true</c> [is on line].</param>
-        /// <returns>System.Int32.</returns>
-        /// <exception cref="Exception">
-        ///     Null Reference
-        ///     or
-        ///     Rounding Error
-        /// </exception>
-        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, out bool isOnLine)
-        {
-            isOnLine = false;
-            leftLine = null;
-            var xleft = double.NegativeInfinity;
-            var counter = 0;
-            foreach (var line in lineList)
-            {
-                //Check to make sure that the line does not contain the node
-                if (line.FromNode == node || line.ToNode == node) continue;
-                //Find distance to line
-                var x = line.Xintercept(node.Y);
-                var xdif = x - node.X;
-                if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
-                if (xdif < 0 && !xdif.IsNegligible()) //Moved to the left by some tolerance 
-                {
-                    counter++;
-                    if (xdif.IsPracticallySame(xleft)) // if approximately equal
-                    {
-                        //Find the shared node
-                        Node nodeOnLine;
-                        if (leftLine == null) throw new Exception("Null Reference");
-                        if (leftLine.ToNode == line.FromNode)
-                        {
-                            nodeOnLine = line.FromNode;
-                        }
-                        else if (leftLine.FromNode == line.ToNode)
-                        {
-                            nodeOnLine = line.ToNode;
-                        }
-                        else throw new Exception("Rounding Error");
-
-                        //Choose whichever line has the right most other node
-                        //Note that this condition will only occur when line and
-                        //leftLine share a node. 
-                        leftLine = nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X
-                            ? nodeOnLine.EndLine
-                            : nodeOnLine.StartLine;
-                    }
-                    else if (xdif >= xleft)
-                    {
-                        xleft = xdif;
-                        leftLine = line;
-                    }
-                }
-            }
-            return counter;
-        }
-
-        /// <summary>
-        ///     Finds the left line.
-        /// </summary>
-        /// <param name="node">The node.</param>
-        /// <param name="lineList">The line list.</param>
-        /// <param name="leftLine">The left line.</param>
-        /// <exception cref="Exception">Failed to find line to left.</exception>
-        internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
-        {
-            bool isOnLine;
-            LinesToLeft(node, lineList, out leftLine, out isOnLine);
-            if (leftLine == null) throw new Exception("Failed to find line to left.");
-        }
-
-        /// <summary>
-        ///     Lineses to right.
-        /// </summary>
-        /// <param name="node">The node.</param>
-        /// <param name="lineList">The line list.</param>
-        /// <param name="rightLine">The right line.</param>
-        /// <param name="isOnLine">if set to <c>true</c> [is on line].</param>
-        /// <returns>System.Int32.</returns>
-        /// <exception cref="Exception">
-        ///     Null Reference
-        ///     or
-        ///     Rounding Error
-        /// </exception>
-        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, out bool isOnLine)
-        {
-            isOnLine = false;
-            rightLine = null;
-            var xright = double.PositiveInfinity;
-            var counter = 0;
-            foreach (var line in lineList)
-            {
-                //Check to make sure that the line does not contain the node
-                if (line.FromNode == node || line.ToNode == node) continue;
-                //Find distance to line
-                var x = line.Xintercept(node.Y);
-                var xdif = x - node.X;
-                if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
-                if (xdif > 0 && !xdif.IsNegligible()) //Moved to the right by some tolerance
-                {
-                    counter++;
-                    if (xdif.IsPracticallySame(xright)) // if approximately equal
-                    {
-                        //Choose whichever line has the right most other node
-                        //Note that this condition will only occur when line and
-                        //leftLine share a node.                        
-                        Node nodeOnLine;
-                        if (rightLine == null) throw new Exception("Null Reference");
-                        if (rightLine.ToNode == line.FromNode)
-                        {
-                            nodeOnLine = line.FromNode;
-                        }
-                        else if (rightLine.FromNode == line.ToNode)
-                        {
-                            nodeOnLine = line.ToNode;
-                        }
-                        else throw new Exception("Rounding Error");
-
-                        //Choose whichever line has the right most other node
-                        rightLine = nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X
-                            ? nodeOnLine.StartLine
-                            : nodeOnLine.EndLine;
-                    }
-                    else if (xdif <= xright) //If less than
-                    {
-                        xright = xdif;
-                        rightLine = line;
-                    }
-                }
-            }
-            return counter;
-        }
-
-        /// <summary>
-        ///     Finds the right line.
-        /// </summary>
-        /// <param name="node">The node.</param>
-        /// <param name="lineList">The line list.</param>
-        /// <param name="rightLine">The right line.</param>
-        /// <exception cref="Exception">Failed to find line to right.</exception>
-        internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
-        {
-            bool isOnLine;
-            LinesToRight(node, lineList, out rightLine, out isOnLine);
-            if (rightLine == null) throw new Exception("Failed to find line to right.");
-        }
-
         #endregion
     }
+
 }

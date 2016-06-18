@@ -61,6 +61,17 @@ namespace TVGL.IOFunctions.amfclasses
         /// </summary>
         [XmlText]
         public string Value;
+
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="System.String" /> that represents this instance.
+        /// </returns>
+        public override string ToString()
+        {
+            return type + " ==> " + Value;
+        }
     }
     /// <summary>
     ///     Class AMF_Mesh.
@@ -704,39 +715,5 @@ namespace TVGL.IOFunctions.amfclasses
         /// </summary>
         [XmlIgnore] public bool wtex3Specified;
     }
-
-    /// <summary>
-    ///     Enum AMF_Unit
-    /// </summary>
-  #if help
-    internal enum AMF_Unit
-#else
-    public enum AMF_Unit
-#endif     
-    {
-        /// <summary>
-        ///     The inch
-        /// </summary>
-        inch,
-
-        /// <summary>
-        ///     The millimeter
-        /// </summary>
-        millimeter,
-
-        /// <summary>
-        ///     The meter
-        /// </summary>
-        meter,
-
-        /// <summary>
-        ///     The feet
-        /// </summary>
-        feet,
-
-        /// <summary>
-        ///     The micron
-        /// </summary>
-        micron
-    }
+    
 }

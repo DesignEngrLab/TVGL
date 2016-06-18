@@ -13,58 +13,56 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+        //"../../../TestFiles/Beam_Boss.STL",
+        //"../../../TestFiles/bigmotor.amf",
+        //"../../../TestFiles/DxTopLevelPart2.shell",
         //"../../../TestFiles/Candy.shell",
         //"../../../TestFiles/amf_Cube.amf",
         //"../../../TestFiles/train.3mf",
-        "../../../TestFiles/keychain.3mf",
-        "../../../TestFiles/Castle.3mf",
-        "../../../TestFiles/Raspberry Pi Case.3mf",
-        "../../../TestFiles/shark.ply",
+        //"../../../TestFiles/Castle.3mf",
+        //"../../../TestFiles/Raspberry Pi Case.3mf",
+       "../../../TestFiles/shark.ply",
         "../../../TestFiles/bunnySmall.ply",
         "../../../TestFiles/cube.ply",
         "../../../TestFiles/airplane.ply",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL",
-        "../../../TestFiles/Beam_Boss.STL",
-
+        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
         "../../../TestFiles/Tetrahedron.STL",
         "../../../TestFiles/off_axis_box.STL",
         "../../../TestFiles/Wedge.STL",
         "../../../TestFiles/Mic_Holder_SW.stl",
         "../../../TestFiles/Mic_Holder_JR.stl",
         "../../../TestFiles/3_bananas.amf",
-        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+        "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+        "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         "../../../TestFiles/Rook.amf",
-        "../../../TestFiles/trapezoid.4d.off",//breaks in OFFFileData
-       // "../../../TestFiles/mushroom.off",   //breaks in OFFFileData
-       // "../../../TestFiles/ABF.STL",
-       // "../../../TestFiles/Pump-1repair.STL",
-       // "../../../TestFiles/Pump-1.STL",
-       // "../../../TestFiles/Beam_Clean.STL",
-       // "../../../TestFiles/piston.stl",
-       // "../../../TestFiles/Z682.stl",
-       // "../../../TestFiles/sth2.stl",
-       // "../../../TestFiles/pump.stl",
-       // "../../../TestFiles/bradley.stl",
-       // "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
-       // "../../../TestFiles/new/5.STL",
-       //"../../../TestFiles/new/2.stl", //Note that this is an assembly 
-       // "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
-       //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
-       // "../../../TestFiles/radiobox.stl",
-       // "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
-       // "../../../TestFiles/box.stl", //not water tight, may be an assembly //breaks in slice at 1/2 Z direction
-       // "../../../TestFiles/G0.stl",
-       // "../../../TestFiles/GKJ0.stl",
-       // "../../../TestFiles/SCS12UU.stl", //Broken in slice because 3 triangles share the same edge at 1/2 Z direction
-       // "../../../TestFiles/testblock2.stl",
-       // "../../../TestFiles/Z665.stl",
-       // "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
-       // "../../../TestFiles/mendel_extruder.stl",
-       // "../../../TestFiles/Square Support.STL",
-       // "../../../TestFiles/Aerospace_Beam.STL",
-       //"../../../TestFiles/MV-Test files/holding-device.STL",
-       //"../../../TestFiles/MV-Test files/gear.STL"
+        "../../../TestFiles/hdodec.off",
+        "../../../TestFiles/tref.off",
+        "../../../TestFiles/mushroom.off",
+        "../../../TestFiles/vertcube.off",
+        "../../../TestFiles/trapezoid.4d.off",
+        "../../../TestFiles/ABF.STL",
+        "../../../TestFiles/Pump-1repair.STL",
+        "../../../TestFiles/Pump-1.STL",
+        "../../../TestFiles/Beam_Clean.STL",
+        "../../../TestFiles/piston.stl",
+        "../../../TestFiles/Z682.stl",
+        "../../../TestFiles/sth2.stl",
+        "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
+        "../../../TestFiles/new/5.STL",
+       "../../../TestFiles/new/2.stl", //Note that this is an assembly 
+        "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
+       "../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
+        "../../../TestFiles/radiobox.stl",
+        "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
+        "../../../TestFiles/G0.stl",
+        "../../../TestFiles/GKJ0.stl",
+        "../../../TestFiles/testblock2.stl",
+        "../../../TestFiles/Z665.stl",
+        "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
+        "../../../TestFiles/mendel_extruder.stl",
+        "../../../TestFiles/Aerospace_Beam.STL",
+       "../../../TestFiles/MV-Test files/holding-device.STL",
+       "../../../TestFiles/MV-Test files/gear.STL"
         };
 
         [STAThread]
@@ -73,20 +71,25 @@ namespace TVGL_Test
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
-            for (var i = 0; i < FileNames.Count(); i++)
+            var dir = new DirectoryInfo("../../../TestFiles");
+            var fileNames = dir.GetFiles();
+            for (var i = 0; i < fileNames.Count(); i++)
             {
-                var filename = FileNames[i];
+                var filename = FileNames[i];//.FullName;
                 Console.WriteLine("Attempting: " + filename);
-                var fileStream = File.OpenRead(filename);
-                var ts = IO.Open(fileStream, filename, false);
-                fileStream.Close();
-                using (fileStream = File.Create(filename + ".3mf"))
-                    IO.Save(fileStream, ts, FileType.ThreeMF);
-               // TVGL.Presenter.ShowAndHang(ts);
-                //TestSimplify(ts[0]);
+                Stream fileStream;
+                List<TessellatedSolid> ts;
+                using (fileStream = File.OpenRead(filename))
+                    ts = IO.Open(fileStream, filename);
+                //ts[0].SolidColor = new Color(KnownColors.Salmon);
+                //using (fileStream = File.Create(filename + ".amf"))
+                //    IO.Save(fileStream, ts, FileType.AMF);
+                TVGL.Presenter.ShowAndHang(ts);
+                //TVGL.Presenter.Show(ts[1]);
+                // TestSimplify(ts[1]);
             }
             Console.WriteLine("Completed.");
-          //  Console.ReadKey();
+            //  Console.ReadKey();
         }
 
         private static void TestOBB(string InputDir)
@@ -120,7 +123,7 @@ namespace TVGL_Test
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL.Presenter.Show(ts);
+            TVGL.Presenter.ShowAndHang(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)
@@ -215,7 +218,7 @@ namespace TVGL_Test
                 {
                     var dist = crossAreas[i][j, 0] = coordValues[j];
                     //Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
-                    var newArea = Slice.DefineContact(ts, new Flat(dist, direction), false).Area;
+                    var newArea = 0.0;// Slice.DefineContact(ts, new Flat(dist, direction), false).Area;
                     crossAreas[i][j, 1] = newArea;
                     if (j > 0 && Math.Abs(newArea - previousArea) > greatestDelta)
                     {

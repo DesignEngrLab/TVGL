@@ -14,10 +14,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.ServiceModel.Channels;
+using System.Xml.Serialization;
 
 namespace TVGL.IOFunctions
 {
@@ -26,8 +29,49 @@ namespace TVGL.IOFunctions
     ///     Note that as a Portable class library, these IO functions cannot interact with your file system. In order
     ///     to load or save, the filename is not enough. One needs to provide the stream.
     /// </summary>
-    public class IO
+    public abstract class IO
     {
+
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
+        internal string Name { get; set; }
+        /// <summary>
+        /// Gets or sets the name of the file.
+        /// </summary>
+        /// <value>
+        /// The name of the file.
+        /// </value>
+        internal string FileName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the unit.
+        /// </summary>
+        /// <value>The unit.</value>
+        [DefaultValue(UnitType.unspecified)]
+        [XmlAttribute("unit")]
+        public UnitType Units { get; set; }
+
+        /// <summary>
+        /// Gets or sets the language.
+        /// </summary>
+        /// <value>The language.</value>
+        [XmlAttribute("lang")]
+        public string Language { get; set; }
+
+        /// <summary>
+        /// Gets or sets the comments.
+        /// </summary>
+        /// <value>
+        /// The comments.
+        /// </value>
+        internal List<string> Comments => _comments;
+        /// <summary>
+        /// The _comments
+        /// </summary>
+        protected List<string> _comments = new List<string>();
+
         #region Open/Load/Read
 
         /// <summary>
@@ -51,40 +95,46 @@ namespace TVGL.IOFunctions
         /// </exception>
         public static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = false)
         {
-            var lastIndexOfDot = filename.LastIndexOf('.');
-            if (lastIndexOfDot < 0 || lastIndexOfDot >= filename.Length - 1)
-                throw new Exception("Cannot open file without extension (e.g. f00.stl).");
-            var extension = filename.Substring(lastIndexOfDot + 1, filename.Length - lastIndexOfDot - 1).ToLower();
+            var extension = GetExtensionFromFileName(filename);
             List<TessellatedSolid> tessellatedSolids;
             if (inParallel) throw new Exception("This function has been recently removed.");
             switch (extension)
             {
                 case "stl":
-                    tessellatedSolids = STLFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
-                    break;
-                case "ply":
-                    tessellatedSolids = PLYFileData.Open(s, filename, inParallel); // Standard Tessellation or StereoLithography
+                    tessellatedSolids = STLFileData.OpenSolids(s, filename); // Standard Tessellation or StereoLithography
                     break;
                 case "3mf":
-                    tessellatedSolids = ThreeMFFileData.Open(s, filename, inParallel);
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
+#else
+                    tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
+#endif
                     break;
                 case "model":
-                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename, inParallel);
+                    tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
                     break;
                 case "amf":
-                    tessellatedSolids = AMFFileData.Open(s, filename, inParallel);
+                    tessellatedSolids = AMFFileData.OpenSolids(s, filename);
                     break;
                 case "off":
-                    tessellatedSolids = OFFFileData.Open(s, filename, inParallel);
+                    var offTS = OFFFileData.OpenSolid(s, filename);
+                    if (offTS == null) tessellatedSolids = null;
+                    else tessellatedSolids = new List<TessellatedSolid> { offTS };
                     // http://en.wikipedia.org/wiki/OFF_(file_format)
                     break;
+                case "ply":
+                    var plyTS = PLYFileData.OpenSolid(s, filename);
+                    if (plyTS == null) tessellatedSolids = null;
+                    else tessellatedSolids = new List<TessellatedSolid> { plyTS };
+                    break;
                 case "shell":
-                    tessellatedSolids = ShellFileData.Open(s, filename, inParallel); // http://en.wikipedia.org/wiki/OFF_(file_format)
+                    tessellatedSolids = ShellFileData.OpenSolids(s, filename);
                     break;
                 default:
                     throw new Exception(
                         "Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");
             }
+            if (tessellatedSolids == null || tessellatedSolids.Count == 0) return null;
             Message.output("number of solids = " + tessellatedSolids.Count, 3);
             foreach (var tessellatedSolid in tessellatedSolids)
             {
@@ -92,7 +142,6 @@ namespace TVGL.IOFunctions
                 Message.output("number of edges = " + tessellatedSolid.NumberOfEdges, 4);
                 Message.output("number of faces = " + tessellatedSolid.NumberOfFaces, 4);
             }
-
             return tessellatedSolids;
         }
 
@@ -103,10 +152,18 @@ namespace TVGL.IOFunctions
         /// <returns>System.String.</returns>
         protected static string GetNameFromFileName(string filename)
         {
-            var startIndex = filename.LastIndexOf('/')+1;
+            var startIndex = filename.LastIndexOf('/') + 1;
+            if (startIndex == -1) startIndex = filename.LastIndexOf('\\') + 1;
             var endIndex = filename.IndexOf('.', startIndex);
             if (endIndex == -1) endIndex = filename.Length - 1;
             return filename.Substring(startIndex, endIndex - startIndex);
+        }
+        protected static string GetExtensionFromFileName(string filename)
+        {
+            var lastIndexOfDot = filename.LastIndexOf('.');
+            if (lastIndexOfDot < 0 || lastIndexOfDot >= filename.Length - 1)
+                throw new Exception("Cannot open file without extension (e.g. f00.stl).");
+            return filename.Substring(lastIndexOfDot + 1).ToLower();
         }
         /// <summary>
         ///     Parses the ID and values from the specified line.
@@ -139,7 +196,7 @@ namespace TVGL.IOFunctions
         /// <returns>True if parsing was successful.</returns>
         protected static bool TryParseDoubleArray(string line, out double[] doubles)
         {
-            var strings = line.Split(' ').ToList();
+            var strings = line.Split(' ', '\t').ToList();
             strings.RemoveAll(string.IsNullOrWhiteSpace);
             doubles = new double[strings.Count];
             for (var i = 0; i < strings.Count; i++)
@@ -204,12 +261,63 @@ namespace TVGL.IOFunctions
             do
             {
                 line = reader.ReadLine();
-            } while (string.IsNullOrWhiteSpace(line) || line.StartsWith("\0") || line.StartsWith("#") ||
-                     line.StartsWith("!")
-                     || line.StartsWith("$"));
+                if (reader.EndOfStream) break;
+            } while (string.IsNullOrWhiteSpace(line));
             return line.Trim(' ');
         }
 
+        /// <summary>
+        /// Infers the units from comments.
+        /// </summary>
+        /// <param name="comments">The comments.</param>
+        /// <returns></returns>
+        protected static UnitType InferUnitsFromComments(List<string> comments)
+        {
+            UnitType units;
+            foreach (var comment in comments)
+            {
+                var words = Regex.Matches(comment, "([a-z]+)");
+                foreach (var word in words)
+                    if (TryParseUnits(word.ToString(), out units)) return units;
+            }
+            return UnitType.unspecified;
+        }
+
+        /// <summary>
+        /// Tries to parse units.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <param name="units">The units.</param>
+        /// <returns></returns>
+        protected static bool TryParseUnits(string input, out UnitType units)
+        {
+            if (Enum.TryParse(input, out units)) return true;
+            if (input.Equals("milimeter", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("milimeters", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("millimeters", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("mm", StringComparison.CurrentCultureIgnoreCase))
+                units = UnitType.millimeter;
+            if (input.Equals("centimeters", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("cm", StringComparison.CurrentCultureIgnoreCase))
+                units = UnitType.centimeter;
+            else if (input.Equals("meters", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("m", StringComparison.CurrentCultureIgnoreCase))
+                units = UnitType.meter;
+            else if (input.Equals("micrometer", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("micrometers", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("microns", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("um", StringComparison.CurrentCultureIgnoreCase))
+                units = UnitType.meter;
+            else if (input.Equals("feet", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("foots", StringComparison.CurrentCultureIgnoreCase))
+                units = UnitType.foot;
+            else if (input.Equals("inches", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("in", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("in.", StringComparison.CurrentCultureIgnoreCase))
+                units = UnitType.inch;
+            else return false;
+            return true;
+        }
         #endregion
 
         #region Save/Write
@@ -221,8 +329,11 @@ namespace TVGL.IOFunctions
         /// <param name="solids">The solids.</param>
         /// <param name="fileType">Type of the file.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType)
+        public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType = FileType.unspecified)
         {
+            if (solids.Count == 0) return false;
+            if (fileType == FileType.unspecified)
+                fileType = (solids.Count == 1) ? FileType.PLY : FileType.AMF;
             switch (fileType)
             {
                 case FileType.STL_ASCII:
@@ -230,40 +341,65 @@ namespace TVGL.IOFunctions
                 case FileType.STL_Binary:
                     return STLFileData.SaveBinary(stream, solids);
                 case FileType.AMF:
-                    return AMFFileData.Save(stream, solids);
+                    return AMFFileData.SaveSolids(stream, solids);
                 case FileType.ThreeMF:
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
                     return ThreeMFFileData.Save(stream, solids);
+#endif
+                case FileType.Model3MF:
+                    return ThreeMFFileData.SaveModel(stream, solids);
                 case FileType.OFF:
-                    return OFFFileData.Save(stream, solids);
+                    if (solids.Count > 1)
+                        throw new NotSupportedException(
+                            "The OFF format does not support saving multiple solids to a single file.");
+                    else return OFFFileData.SaveSolid(stream, solids[0]);
                 case FileType.PLY:
-                    return PLYFileData.Save(stream, solids);
+                    if (solids.Count > 1)
+                        throw new NotSupportedException(
+                            "The PLY format does not support saving multiple solids to a single file.");
+                    else return PLYFileData.SaveSolid(stream, solids[0]);
+                default:
+                    return false;
+            }
+        }
+        public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType = FileType.PLY)
+        {
+            switch (fileType)
+            {
+                case FileType.STL_ASCII:
+                    return STLFileData.SaveASCII(stream, new List<TessellatedSolid> { solid });
+                case FileType.STL_Binary:
+                    return STLFileData.SaveBinary(stream, new List<TessellatedSolid> { solid });
+                case FileType.AMF:
+                    return AMFFileData.SaveSolids(stream, new List<TessellatedSolid> { solid });
+                case FileType.ThreeMF:
+#if net40
+                    throw new NotSupportedException("The loading or saving of .3mf files are not allowed in the .NET4.0 version of TVGL.");
+#else
+                    return ThreeMFFileData.Save(stream, new List<TessellatedSolid> { solid });
+#endif
+                case FileType.Model3MF:
+                    return ThreeMFFileData.SaveModel(stream, new List<TessellatedSolid> { solid });
+                case FileType.OFF:
+                    return OFFFileData.SaveSolid(stream, solid);
+                case FileType.PLY:
+                    return PLYFileData.SaveSolid(stream, solid);
                 default:
                     return false;
             }
         }
 
-        /// <summary>
-        ///     Writes the coordinates.
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        /// <param name="writer">The writer.</param>
-        private static void WriteCoordinates(IList<double> coordinates, StreamWriter writer)
+        protected static string tvglDateMarkText
         {
-            writer.WriteLine("\t\t\t" + coordinates[0] + " " + coordinates[1] + " " + coordinates[2]);
+            get
+            {
+                var now = DateTime.Now;
+                return "created by TVGL on " + now.Year + "/" + now.Month + "/" + now.Day + " at " + now.Hour + ":" +
+                       now.Minute + ":" + now.Second;
+            }
         }
-
-        /// <summary>
-        ///     Writes the coordinates.
-        /// </summary>
-        /// <param name="coordinates">The coordinates.</param>
-        /// <param name="writer">The writer.</param>
-        private static void WriteCoordinates(double[] coordinates, BinaryWriter writer)
-        {
-            writer.Write(coordinates[0]);
-            writer.Write(coordinates[1]);
-            writer.Write(coordinates[2]);
-        }
-
         #endregion
     }
 }
