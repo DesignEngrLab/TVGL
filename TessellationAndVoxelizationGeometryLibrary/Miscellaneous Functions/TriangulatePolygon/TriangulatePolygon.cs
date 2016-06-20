@@ -79,13 +79,13 @@ namespace TVGL
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
             //then a slightly altered point (near duplicate) should be inserted after the negative loop such that the lines do not intersect.
             //Ex 2) If a negative loop shares 2 consecutive points on a positive loop, insert the negative loop into the positive loop between those two points.
-            //Ex 3) If a positive loop intersects itself, it should be two seperate positive loops.
+            //Ex 3) If a positive loop intersects itself, it should be two separate positive loops.
 
             //ROBUST FEATURES:
             // 1: Two positive loops may share a point, because they are processed separately.
             // 2: Loops can be in given CW or CCW, because as long as the isPositive boolean is correct, 
             // the code recognizes when the loop should be reversed.
-            // 3: If isPositive == null, CW and CCW ordering for the loops is unknown. A prepocess step can build a new isPositive variable.
+            // 3: If isPositive == null, CW and CCW ordering for the loops is unknown. A preprocess step can build a new isPositive variable.
             // 4: It is OK if a positive loop is inside a another positive loop, given that there is a negative loop between them.
             // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
             // 5: If isPositive == null, then 

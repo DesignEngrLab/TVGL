@@ -67,7 +67,7 @@ namespace TVGL
         public void Update()
         {
             bool reverseVertexOrder;
-            Normal = DetermineNormal(out reverseVertexOrder, Normal);
+            Normal = DetermineNormal(this.Vertices, out reverseVertexOrder, Normal);
             if (reverseVertexOrder) Vertices.Reverse();
             Area = DetermineArea();
         }
@@ -181,7 +181,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">A guess for the normal vector.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IEnumerable<Vertex> vertices, double[] normal = null, bool connectVerticesBackToFace = true)
+        public PolygonalFace(IEnumerable<Vertex> vertices, double[] normal, bool connectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
@@ -194,9 +194,7 @@ namespace TVGL
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
             Center = new[] { centerX, centerY, centerZ };
-            bool reverseVertexOrder;
-            Normal = DetermineNormal(out reverseVertexOrder, normal);
-            if (reverseVertexOrder) Vertices.Reverse();
+            Normal = normal;
             Area = DetermineArea();
         }
 
@@ -219,24 +217,24 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Determines the normal.
+        /// Determines the normal.
         /// </summary>
         /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
+        /// <param name="vertices">The vertices.</param>
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double[].</returns>
-        private double[] DetermineNormal(out bool reverseVertexOrder, double[] normal = null)
-        //Assuming CCW order of vertices
+        internal static double[] DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, double[] normal = null)
         {
             reverseVertexOrder = false;
-            var n = Vertices.Count;
+            var n = vertices.Count;
             if (normal != null && normal.Contains(double.NaN)) normal = null;
             else if (normal != null) normal.normalizeInPlace();
             var edgeVectors = new double[n][];
             var normals = new List<double[]>();
-            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
+            edgeVectors[0] = vertices[0].Position.subtract(vertices[n - 1].Position);
             for (var i = 1; i < n; i++)
             {
-                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
+                edgeVectors[i] = vertices[i].Position.subtract(vertices[i - 1].Position);
                 var tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
                 if (!tempCross.Any(double.IsNaN))
                 {

@@ -24,13 +24,13 @@ namespace TVGL_Test
        //"../../../TestFiles/shark.ply",
        // "../../../TestFiles/bunnySmall.ply",
         //"../../../TestFiles/cube.ply",
-        //"../../../TestFiles/airplane.ply",
-        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        //"../../../TestFiles/Tetrahedron.STL",
-        //"../../../TestFiles/off_axis_box.STL",
-        //"../../../TestFiles/Wedge.STL",
-        //"../../../TestFiles/Mic_Holder_SW.stl",
-        //"../../../TestFiles/Mic_Holder_JR.stl",
+        "../../../TestFiles/airplane.ply",
+        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
+        "../../../TestFiles/Tetrahedron.STL",
+        "../../../TestFiles/off_axis_box.STL",
+        "../../../TestFiles/Wedge.STL",
+        "../../../TestFiles/Mic_Holder_SW.stl",
+        "../../../TestFiles/Mic_Holder_JR.stl",
         "../../../TestFiles/3_bananas.amf",
         "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
         "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
@@ -84,7 +84,7 @@ namespace TVGL_Test
                 //ts[0].SolidColor = new Color(KnownColors.Salmon);
                 //using (fileStream = File.Create(filename + ".amf"))
                 //    IO.Save(fileStream, ts, FileType.AMF);
-                TVGL.Presenter.ShowAndHang(ts);
+                TVGL.Presenter.Show(ts);
                 //TVGL.Presenter.Show(ts[1]);
                 // TestSimplify(ts[1]);
             }
