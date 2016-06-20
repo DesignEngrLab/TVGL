@@ -30,6 +30,8 @@
 * http://www.me.berkeley.edu/~mcmains/pubs/DAC05OffsetPolygon.pdf              *
 *                                                                              *
 *******************************************************************************/
+//Note that a newer paper "An Improved Polygon Clipping Algorithm Based on Affine Transformation" 
+//Claims to beat the Vatti Altgorithms
 
 /*******************************************************************************
 *                                                                              *
@@ -71,15 +73,30 @@ namespace TVGL.Boolean_Operations
     public static class PolygonOffset
     {
         /// <summary>
-        /// Offsets all loops by the given offset value. Rounds the corners.
-        /// Offest value may be positive or negative.
-        /// Loops must be ordered CCW positive.
+        /// Offets the given loop by the given offset, rounding corners.
         /// </summary>
-        /// <param name="loops"></param>
+        /// <param name="loop"></param>
         /// <param name="offset"></param>
         /// <param name="scale"></param>
         /// <returns></returns>
-        public static List<Point[]> Round(List<Point[]> loops, double offset, double scale = 100000)
+        public static List<Point> Round(IList<Point> loop, double offset, double scale = 100000)
+        {
+            var loops = new List<List<Point>> {new List<Point>(loop)};
+            var offsetLoops = Round(loops, offset, scale);
+            return offsetLoops.First();
+        }
+
+
+        /// <summary>
+            /// Offsets all loops by the given offset value. Rounds the corners.
+            /// Offest value may be positive or negative.
+            /// Loops must be ordered CCW positive.
+            /// </summary>
+            /// <param name="loops"></param>
+            /// <param name="offset"></param>
+            /// <param name="scale"></param>
+            /// <returns></returns>
+        public static List<List<Point>> Round(List<List<Point>> loops, double offset, double scale = 100000)
         {
             //Convert Points (TVGL) to IntPoints (Clipper)
             var polygons =
@@ -91,16 +108,16 @@ namespace TVGL.Boolean_Operations
             clip.AddPaths(polygons, JoinType.jtRound, EndType.etClosedPolygon);
             clip.Execute(ref solution, offset);
 
-            var offsetLoops = new List<Point[]>();
+            var offsetLoops = new List<List<Point>>();
             foreach (var loop in solution)
             {
-                var offsetLoop = new Point[loop.Count];
+                var offsetLoop = new List<Point>();
                 for (var i = 0; i < loop.Count; i++)
                 {
                     var intPoint = loop[i];
                     var x = Convert.ToDouble(intPoint.X)/scale;
                     var y = Convert.ToDouble(intPoint.Y)/scale;
-                    offsetLoop[i] = new Point(new List<double> {x, y, 0.0});
+                    offsetLoop.Add(new Point(new List<double> {x, y, 0.0}));
                 }
                 offsetLoops.Add(offsetLoop);
             }
