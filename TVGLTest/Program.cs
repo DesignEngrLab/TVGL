@@ -13,7 +13,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        //"../../../TestFiles/Beam_Boss.STL",
+        "../../../TestFiles/Beam_Boss.STL",
         //"../../../TestFiles/bigmotor.amf",
         //"../../../TestFiles/DxTopLevelPart2.shell",
         //"../../../TestFiles/Candy.shell",
@@ -81,15 +81,19 @@ namespace TVGL_Test
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-                //ts[0].SolidColor = new Color(KnownColors.Salmon);
-                //using (fileStream = File.Create(filename + ".amf"))
-                //    IO.Save(fileStream, ts, FileType.AMF);
-                TVGL.Presenter.ShowAndHang(ts);
-                //TVGL.Presenter.Show(ts[1]);
-                // TestSimplify(ts[1]);
+                TestPolygon(ts[0]);
             }
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
+        }
+
+        private static void TestPolygon(TessellatedSolid ts)
+        {
+            ContactData contactData;
+            Slice.GetContactData(ts,new Flat(10,new [] {1.0,0,0}),
+                out contactData);
+
+            contactData.NegativeSideContactData[0]
         }
 
         private static void TestOBB(string InputDir)
