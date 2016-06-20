@@ -531,8 +531,7 @@ namespace TVGL
                 }
             }
             var goodEdgeEntries = alreadyDefinedEdges.Values.ToList();
-            goodEdgeEntries.AddRange(TessellationError.FixBadEdges(overUsedEdgesDictionary.Values,
-                partlyDefinedEdgeDictionary.Values));
+            goodEdgeEntries.AddRange(TessellationError.TeaseApartOverUsedEdges(overUsedEdgesDictionary.Values));
             foreach (var entry in goodEdgeEntries)
             {
                 //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor

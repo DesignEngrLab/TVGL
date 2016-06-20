@@ -455,6 +455,7 @@ namespace TVGL
             else ts.Errors.FacesWithTwoVertices.Add(face);
         }
 
+
         /// <summary>
         ///     Stores the face with one edge.
         /// </summary>
@@ -811,18 +812,13 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Fixes the bad edges. By taking in the edges with more than two faces (the over-used edges) and the edges with only one face (the partlyDefinedEdges), this
-        /// repair method attempts to repair the edges as best possible through a series of pairwise searches.
+        /// Teases the apart over used edges. By taking in the edges with more than two faces (the over-used edges) a list is return of newly defined edges.
         /// </summary>
-        /// <param name="overUsedEdgesDictionary">The over used edges dictionary.</param>
-        /// <param name="partlyDefinedEdgesIEnumerable">The partly defined edges i enumerable.</param>
+        /// <param name="values">The values.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
-        internal static IEnumerable<Tuple<Edge, List<PolygonalFace>>> FixBadEdges(
-                     IEnumerable<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary,
-                    IEnumerable<Edge> partlyDefinedEdgesIEnumerable)
+        internal static IEnumerable<Tuple<Edge, List<PolygonalFace>>> TeaseApartOverUsedEdges(IEnumerable<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary)
         {
             var newListOfGoodEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
-            var partlyDefinedEdges = new List<Edge>(partlyDefinedEdgesIEnumerable);
             foreach (var entry in overUsedEdgesDictionary)
             {
                 var candidateFaces = entry.Item2;
@@ -851,26 +847,44 @@ namespace TVGL
                         }
                     }
                     if (highestDotProduct > -1)
-                    // -1 is a valid dot-product but it is not practical to match faces with completely opposite
-                    // faces
+                        // -1 is a valid dot-product but it is not practical to match faces with completely opposite
+                        // faces
                     {
                         numFailedTries = 0;
                         candidateFaces.Remove(bestMatch);
                         if (FaceShouldBeOwnedFace(edge, refFace))
                             newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                                 new Edge(edge.From, edge.To, refFace, bestMatch, false), new List<PolygonalFace> { refFace, bestMatch }));
+                                new Edge(edge.From, edge.To, refFace, bestMatch, false),
+                                new List<PolygonalFace> {refFace, bestMatch}));
                         else
                             newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                                 new Edge(edge.From, edge.To, bestMatch, refFace, false), new List<PolygonalFace> { bestMatch, refFace }));
+                                new Edge(edge.From, edge.To, bestMatch, refFace, false),
+                                new List<PolygonalFace> {bestMatch, refFace}));
                     }
                     else
                     {
-                        candidateFaces.Add(refFace); //referenceFace was removed 24 lines earlier. Here, we re-add it to the
+                        candidateFaces.Add(refFace);
+                            //referenceFace was removed 24 lines earlier. Here, we re-add it to the
                         // end of the list.
                         numFailedTries++;
                     }
                 }
             }
+            return newListOfGoodEdges;
+        }
+        /// <summary>
+        /// Fixes the bad edges. By taking in the edges with more than two faces (the over-used edges) and the edges with only one face (the partlyDefinedEdges), this
+        /// repair method attempts to repair the edges as best possible through a series of pairwise searches.
+        /// </summary>
+        /// <param name="overUsedEdgesDictionary">The over used edges dictionary.</param>
+        /// <param name="partlyDefinedEdgesIEnumerable">The partly defined edges i enumerable.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
+        internal static IEnumerable<Tuple<Edge, List<PolygonalFace>>> FixBadEdges(
+            IEnumerable<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary,
+            IEnumerable<Edge> partlyDefinedEdgesIEnumerable)
+        {
+            var newListOfGoodEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
+            var partlyDefinedEdges = new List<Edge>(partlyDefinedEdgesIEnumerable);
             // for any faces left in the over-used edge dictionary, an entry is made in the list of partly-defined edges
             foreach (var entry in overUsedEdgesDictionary)
             {
@@ -894,7 +908,7 @@ namespace TVGL
             var highestScore = 0.0;
             foreach (var score in scores)
             {
-                // if (highestScore > Constants.MaxAllowableEdgeSimilarityScore) break;
+                if (highestScore > Constants.MaxAllowableEdgeSimilarityScore) break;
                 if (alreadyMatchedIndices.Contains(score.Value[0]) || alreadyMatchedIndices.Contains(score.Value[1]))
                     continue;
                 highestScore = score.Key;
@@ -908,7 +922,7 @@ namespace TVGL
 
         private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
         {
-            var score = Math.Abs(e1.Length - e2.Length);
+            var score = Math.Abs(e1.Length - e2.Length) / e1.Length;
             score += 1 - Math.Abs(e1.Vector.normalize().dotProduct(e2.Vector.normalize()));
             score += Math.Min(e2.From.Position.subtract(e1.To.Position).norm2()
                 + e2.To.Position.subtract(e1.From.Position).norm2(),

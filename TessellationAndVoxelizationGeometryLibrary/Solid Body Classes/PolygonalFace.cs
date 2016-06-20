@@ -80,9 +80,12 @@ namespace TVGL
         {
             var vertFromIndex = Vertices.IndexOf(edge.From);
             var vertToIndex = Vertices.IndexOf(edge.To);
-            var index = 0; // indices are 0 and 1 OR 1 and 0
-            if (vertFromIndex != 0 && vertToIndex != 0) index = 1; // indices are 1 and 2 OR 2 and 1
-            else if (vertFromIndex == 2 || vertToIndex == 2) index = 2; // indices are 0 and 2 OR 2 and 0
+            int index;
+            var lastIndex = Vertices.Count - 1;
+            if ((vertFromIndex == 0 && vertToIndex == lastIndex)
+                || (vertFromIndex == lastIndex && vertToIndex == 0))
+                index = lastIndex;
+            else index = (vertFromIndex + vertToIndex) / 2;
             while (Edges.Count <= index) Edges.Add(null);
             Edges[index] = edge;
         }
