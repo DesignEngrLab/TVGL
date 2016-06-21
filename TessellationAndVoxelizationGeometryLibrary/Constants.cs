@@ -16,6 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Xml;
+using System.Xml.Serialization;
 
 /// <summary>
 /// The TVGL namespace.
@@ -64,7 +66,7 @@ namespace TVGL
         /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in 
         /// a tessellated model.
         /// </summary>
-        internal static double MaxAllowableEdgeSimilarityScore = 1.0;
+        internal static double MaxAllowableEdgeSimilarityScore = 0.2;
 
 
         internal const double TwoPi = 2 * Math.PI;

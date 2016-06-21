@@ -49,9 +49,21 @@ namespace TVGL.IOFunctions
         /// Gets or sets the unit.
         /// </summary>
         /// <value>The unit.</value>
-        [DefaultValue(UnitType.unspecified)]
-        [XmlAttribute("unit")]
+        [XmlIgnore]
         public UnitType Units { get; set; }
+
+        [XmlAttribute("unit")]
+        public string UnitsAsString
+        {
+            get
+            {
+                return Enum.GetName(typeof(UnitType), Units);
+            }
+            set
+            {
+                Units = ParseUnits(value);
+            }
+        }
 
         /// <summary>
         /// Gets or sets the language.
@@ -317,6 +329,13 @@ namespace TVGL.IOFunctions
                 units = UnitType.inch;
             else return false;
             return true;
+        }
+
+        protected static UnitType ParseUnits(string input)
+        {
+            UnitType units;
+            if (TryParseUnits(input, out units)) return units;
+            return UnitType.unspecified;
         }
         #endregion
 

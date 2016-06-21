@@ -83,6 +83,8 @@
     <Compile Include="Simplify and Repair\TessellationError.cs" />
     <Compile Include="Solid Body Classes\Edge.cs" />
     <Compile Include="Solid Body Classes\PolygonalFace.cs" />
+    <Compile Include="Solid Body Classes\TessellatedSolid.StaticFunctions.cs" />
+    <Compile Include="Solid Body Classes\TVGLConvexHull.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />
     <Compile Include="Verbosity.cs" />
