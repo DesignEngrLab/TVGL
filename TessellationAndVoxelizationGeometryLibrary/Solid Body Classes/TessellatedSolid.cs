@@ -363,7 +363,6 @@ namespace TVGL
             NumberOfEdges = Edges.GetLength(0);
             for (var i = 0; i < NumberOfEdges; i++)
                 Edges[i].IndexInList = i;
-            CreateConvexHull();
             double[] center;
             double volume;
             double surfaceArea;
@@ -371,6 +370,7 @@ namespace TVGL
             Center = center;
             Volume = volume;
             SurfaceArea = surfaceArea;
+            CreateConvexHull();
             foreach (var face in Faces)
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)
@@ -592,7 +592,7 @@ namespace TVGL
         /// </summary>
         private void CreateConvexHull()
         {
-            ConvexHull = new TVGLConvexHull(Vertices);
+            ConvexHull = new TVGLConvexHull(Vertices, Volume);
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartofConvexHull = true;
             foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartofConvexHull)))
