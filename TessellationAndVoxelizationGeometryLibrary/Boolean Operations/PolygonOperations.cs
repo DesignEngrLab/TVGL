@@ -106,7 +106,7 @@ namespace TVGL.Boolean_Operations
             var solution = new List<List<IntPoint>>();
             var clip = new ClipperOffset();
             clip.AddPaths(polygons, JoinType.jtRound, EndType.etClosedPolygon);
-            clip.Execute(ref solution, offset);
+            clip.Execute(ref solution, offset*scale);
 
             var offsetLoops = new List<List<Point>>();
             foreach (var loop in solution)
