@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -26,6 +27,22 @@ namespace TVGL.IOFunctions
     /// <remarks>The format is documented on <a href="http://en.wikipedia.org/wiki/STL_(file_format)">Wikipedia</a>.</remarks>
     internal class STLFileData : IO
     {
+        #region Constructor
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="STLFileData" /> class.
+        /// </summary>
+        private STLFileData()
+        {
+            Normals = new List<double[]>();
+            Vertices = new List<List<double[]>>();
+            Colors = new List<Color>();
+        }
+
+        #endregion
+
+        #region Fields and Properties
+
         /// <summary>
         ///     The regular expression used to parse normal vectors.
         /// </summary>
@@ -41,46 +58,114 @@ namespace TVGL.IOFunctions
         /// </summary>
         private Color _lastColor;
 
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="STLFileData" /> class.
-        /// </summary>
-        public STLFileData()
-        {
-            Normals = new List<double[]>();
-            Vertices = new List<List<double[]>>();
-            Colors = new List<Color>();
-        }
-
         /// <summary>
         ///     Gets the has color specified.
         /// </summary>
         /// <value>The has color specified.</value>
-        public bool HasColorSpecified { get; private set; }
+        private bool HasColorSpecified { get; set; }
 
         /// <summary>
         ///     Gets or sets the colors.
         /// </summary>
         /// <value>The colors.</value>
-        public List<Color> Colors { get; set; }
+        private List<Color> Colors { get; }
 
         /// <summary>
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        public List<List<double[]>> Vertices { get; set; }
+        private List<List<double[]>> Vertices { get; }
 
         /// <summary>
         ///     Gets or sets the normals.
         /// </summary>
         /// <value>The normals.</value>
-        public List<double[]> Normals { get; set; }
+        private List<double[]> Normals { get; }
+
+        #endregion
+
+        #region Open Solids
 
         /// <summary>
-        ///     Gets the file header.
+        ///     Opens the specified s.
         /// </summary>
-        /// <value>The header.</value>
-        public string Name { get; private set; }
+        /// <param name="s">The s.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        internal static List<TessellatedSolid> OpenSolids(Stream s, string filename)
+        {
+            var typeString = "";
+            var now = DateTime.Now;
+            List<STLFileData> stlData;
+            // Try to read in BINARY format
+            if (TryReadBinary(s, filename, out stlData))
+                typeString = "binary STL";
+            else
+            {
+                // Reset position of stream
+                s.Position = 0;
+                // Read in ASCII format
+                if (TryReadAscii(s, filename, out stlData))
+                    typeString = "ASCII STL";
+                else
+                {
+                    Message.output("Unable to read in STL file called {0}", filename, 1);
+                    return null;
+                }
+            }
+            var results = new List<TessellatedSolid>();
+            foreach (var stlFileData in stlData)
+                results.Add(new TessellatedSolid(stlFileData.Normals, stlFileData.Vertices,
+                    stlFileData.HasColorSpecified ? stlFileData.Colors : null, stlFileData.Units,
+                    stlFileData.Name, filename, stlFileData.Comments, stlFileData.Language));
+            Message.output(
+                "Successfully read in " + typeString + " file called " + filename + " in " +
+                (DateTime.Now - now).TotalSeconds + " seconds.", 4);
+            return results;
+        }
+
+        #region ASCII
+
+        /// <summary>
+        ///     Reads the model in ASCII format from the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="stlData">The STL data.</param>
+        /// <returns>True if the model was loaded successfully.</returns>
+        internal static bool TryReadAscii(Stream stream, string filename, out List<STLFileData> stlData)
+        {
+            var defaultName = GetNameFromFileName(filename) + "_";
+            var solidNum = 0;
+            var reader = new StreamReader(stream);
+            stlData = new List<STLFileData>();
+            var stlSolid = new STLFileData { FileName = filename };
+            while (!reader.EndOfStream)
+            {
+                var line = ReadLine(reader);
+                string id, values;
+                ParseLine(line, out id, out values);
+                switch (id)
+                {
+                    case "#":
+                        stlSolid.Comments.Add(values);
+                        break;
+                    case "solid":
+                        if (string.IsNullOrWhiteSpace(values))
+                            stlSolid.Name = defaultName + ++solidNum;
+                        stlSolid.Name = values.Trim(' ');
+                        break;
+                    case "facet":
+                        stlSolid.ReadFacet(reader, values);
+                        break;
+                    case "endsolid":
+                        stlData.Add(stlSolid);
+                        stlSolid = new STLFileData();
+                        break;
+                }
+            }
+            return true;
+        }
 
         /// <summary>
         ///     Reads a facet.
@@ -126,94 +211,9 @@ namespace TVGL.IOFunctions
             Vertices.Add(points);
         }
 
-        /// <summary>
-        ///     Saves the ASCII.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="solids">The solids.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="NotImplementedException"></exception>
-        internal static bool SaveASCII(Stream stream, IList<TessellatedSolid> solids)
-        {
-            throw new NotImplementedException();
-        }
+        #endregion
 
-        /// <summary>
-        ///     Saves the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="solids">The solids.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="NotImplementedException"></exception>
-        internal static bool Save(Stream stream, IList<TessellatedSolid> solids)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        ///     Saves the binary.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="solids">The solids.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="NotImplementedException"></exception>
-        internal static bool SaveBinary(Stream stream, IList<TessellatedSolid> solids)
-        {
-            throw new NotImplementedException();
-            /*using (BinaryWriter writer = new BinaryWriter(stream, Encoding.ASCII, true))
-            {
-                byte[] header = Encoding.ASCII.GetBytes("Binary STL generated by STLdotNET. QuantumConceptsCorp.com");
-                byte[] headerFull = new byte[80];
-
-                Buffer.BlockCopy(header, 0, headerFull, 0, Math.Min(header.Length, headerFull.Length));
-
-                //Write the header and facet count.
-                writer.Write(headerFull);
-                writer.Write((UInt32)this.Facets.Count);
-
-                //Write each facet.
-                foreach (var o in Facets)
-                    o.Write(writer);
-            }*/
-        }
-
-        /// <summary>
-        ///     Reads the model in ASCII format from the specified stream.
-        /// </summary>
-        /// <param name="stream">The stream.</param>
-        /// <param name="stlData">The STL data.</param>
-        /// <returns>True if the model was loaded successfully.</returns>
-        internal static bool TryReadAscii(Stream stream,string filename, out List<STLFileData> stlData)
-        {
-            var defaultName = filename + "_";
-            var solidNum = 0;
-            var reader = new StreamReader(stream);
-            stlData = new List<STLFileData>();
-            var stlSolid = new STLFileData();
-            while (!reader.EndOfStream)
-            {
-                var line = ReadLine(reader);
-                string id, values;
-                ParseLine(line, out id, out values);
-                switch (id)
-                {
-                    case "solid":
-                        if (string.IsNullOrWhiteSpace(values))
-                            stlSolid.Name = defaultName + ++solidNum;
-                        stlSolid.Name = values.Trim(' ');
-                        break;
-                    case "facet":
-                        stlSolid.ReadFacet(reader, values);
-                        break;
-                    case "endsolid":
-                        stlData.Add(stlSolid);
-                        stlSolid = new STLFileData();
-                        break;
-                }
-            }
-            return true;
-        }
-
+        #region STL Binary Reading Functions
 
         /// <summary>
         ///     Tries the read binary.
@@ -223,10 +223,10 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="EndOfStreamException">Incomplete file</exception>
         /// <exception cref="System.IO.EndOfStreamException">Incomplete file</exception>
-        internal static bool TryReadBinary(Stream stream,string filename, out List<STLFileData> stlData)
+        internal static bool TryReadBinary(Stream stream, string filename, out List<STLFileData> stlData)
         {
             var length = stream.Length;
-            stlData = null;
+            stlData = new List<STLFileData>();
             var stlSolid1 = new STLFileData();
             if (length < 84)
             {
@@ -235,73 +235,38 @@ namespace TVGL.IOFunctions
             var decoder = new UTF8Encoding();
 
             var reader = new BinaryReader(stream);
-            stlSolid1.Name = decoder.GetString(reader.ReadBytes(80), 0, 80).Trim(' ');
-            stlSolid1.Name = stlSolid1.Name.Replace("solid", "").Trim(' ');
+            var comments = decoder.GetString(reader.ReadBytes(80), 0, 80).Trim(' ');
+            stlSolid1.Comments.Add(comments);
+            stlSolid1.Name = comments.Split(' ')[0];
+            stlSolid1.Units = InferUnitsFromComments(stlSolid1.Comments);
+            stlSolid1.FileName = filename;
             if (string.IsNullOrWhiteSpace(stlSolid1.Name))
-                stlSolid1.Name = filename;
-            var numberTriangles = ReadUInt32(reader);
-
-            if (length - 84 != numberTriangles * 50)
+                stlSolid1.Name = GetNameFromFileName(filename);
+            do
             {
-                return false;
-            }
-
-            //this.Meshes.Add(new MeshBuilder(true, true));
-            //this.Materials.Add(this.DefaultMaterial);
-
-            for (var i = 0; i < numberTriangles; i++)
-            {
-                stlSolid1.ReadTriangle(reader);
-            }
-            stlData = new List<STLFileData>(new[] { stlSolid1 });
-            return true;
-        }
-
-        #region STL Binary Reading Functions
-
-        /// <summary>
-        /// Opens the specified s.
-        /// </summary>
-        /// <param name="s">The s.</param>
-        /// <param name="filename">The filename.</param>
-        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
-        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal new static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = true)
-        {
-            var typeString = "";
-            var now = DateTime.Now;
-            List<STLFileData> stlData;
-            // Try to read in BINARY format
-            if (TryReadBinary(s, filename, out stlData))
-                typeString = "binary STL";
-            else
-            {
-                // Reset position of stream
-                s.Position = 0;
-                // Read in ASCII format
-                if (TryReadAscii(s, filename, out stlData))
-                    typeString = "ASCII STL";
-                else
+                var numFaces = ReadUInt32(reader);
+                if (length - 84 != numFaces * 50)
+                    return false;
+                for (var i = 0; i < numFaces; i++)
+                    stlSolid1.ReadFacet(reader);
+                stlData.Add(stlSolid1);
+                var last = stlSolid1;
+                stlSolid1 = new STLFileData
                 {
-                    Message.output("Unable to read in STL file called {0}", filename, 1);
-                    return null;
-                }
-            }
-            var results = new List<TessellatedSolid>();
-            foreach (var stlFileData in stlData)
-                results.Add(new TessellatedSolid(stlFileData.Name, stlFileData.Normals, stlFileData.Vertices,
-                    stlFileData.HasColorSpecified ? stlFileData.Colors : null));
-            Message.output(
-                "Successfully read in " + typeString + " file called " + filename + " in " +
-                (DateTime.Now - now).TotalSeconds + " seconds.", 4);
-            return results;
+                    Name = last.Name,
+                    Units = last.Units,
+                    FileName = last.FileName
+                };
+                stlSolid1.Comments.Add(comments);
+            } while (reader.BaseStream.Position<length);
+            return true;
         }
 
         /// <summary>
         ///     Reads a triangle from a binary STL file.
         /// </summary>
         /// <param name="reader">The reader.</param>
-        private void ReadTriangle(BinaryReader reader)
+        private void ReadFacet(BinaryReader reader)
         {
             var ni = ReadFloatToDouble(reader);
             var nj = ReadFloatToDouble(reader);
@@ -394,5 +359,125 @@ namespace TVGL.IOFunctions
         }
 
         #endregion
+
+        #endregion
+
+        #region Save
+
+        /// <summary>
+        ///     Saves the ASCII.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        internal static bool SaveASCII(Stream stream, IList<TessellatedSolid> solids)
+        {
+            foreach (var solid in solids)
+                if (!SaveASCII(stream, solid)) return false;
+            var writer = new StreamWriter(stream);
+            writer.WriteLine("#  " + tvglDateMarkText);
+            if (!string.IsNullOrWhiteSpace(solids[0].FileName))
+                writer.WriteLine("#  Originally loaded from : " + solids[0].FileName);
+            if (solids[0].Units != UnitType.unspecified)
+                writer.WriteLine("#  Units : " + solids[0].Units);
+            if (!string.IsNullOrWhiteSpace(solids[0].Language))
+                writer.WriteLine("#  Lang : " + solids[0].Language);
+            foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
+                writer.WriteLine("#  " + comment);
+            return true;
+        }
+
+        private static bool SaveASCII(Stream stream, TessellatedSolid solid)
+        {
+            try
+            {
+                var writer = new StreamWriter(stream);
+                writer.WriteLine("solid " + solid.Name);
+                foreach (var face in solid.Faces)
+                {
+                    writer.WriteLine("facet normal " + face.Normal[0] + " " + face.Normal[1] + " " + face.Normal[2]);
+                    writer.WriteLine("  outer loop");
+                    writer.WriteLine("  vertex " + face.Vertices[0].X + " " + face.Vertices[0].Y + " " +
+                                     face.Vertices[0].Z);
+                    writer.WriteLine("  vertex " + face.Vertices[1].X + " " + face.Vertices[1].Y + " " +
+                                     face.Vertices[1].Z);
+                    writer.WriteLine("  vertex " + face.Vertices[2].X + " " + face.Vertices[2].Y + " " +
+                                     face.Vertices[2].Z);
+                    writer.WriteLine("  end loop");
+                    writer.WriteLine("  endfacet");
+                }
+                writer.WriteLine("endsolid " + solid.Name);
+                Message.output("Successfully wrote STL file to stream.", 4);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                return false;
+            }
+        }
+
+        /// <summary>
+        ///     Saves the binary.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        /// <exception cref="NotImplementedException"></exception>
+        internal static bool SaveBinary(Stream stream, IList<TessellatedSolid> solids)
+        {
+            var writer = new BinaryWriter(stream, Encoding.UTF8);
+            var headerString = GetNameFromFileName(solids[0].FileName);
+            if (string.IsNullOrWhiteSpace(headerString)) headerString = solids[0].Name;
+            headerString += tvglDateMarkText;
+            if (solids[0].Units != UnitType.unspecified)
+                headerString += solids[0].Units.ToString();
+            foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
+                headerString += " " + comment;
+            if (headerString.Length > 80) headerString = headerString.Substring(0, 80);
+            var headerBytes = Encoding.UTF8.GetBytes(headerString);
+            writer.Write(headerBytes);
+            foreach (var solid in solids)
+            {
+                var defaultColor = new Color(Constants.DefaultColor);
+                var defineColors = !(solid.HasUniformColor && defaultColor.Equals(solid.SolidColor));
+                writer.Write((uint)solid.NumberOfFaces);
+                foreach (var face in solid.Faces)
+                    WriteFacet(writer, face, defineColors, defaultColor);
+            }
+            return true;
+        }
+
+        private static void WriteFacet(BinaryWriter writer, PolygonalFace face, bool defineColors, Color defaultColor)
+        {
+            writer.Write(BitConverter.GetBytes((float)face.Normal[0]));
+            writer.Write(BitConverter.GetBytes((float)face.Normal[1]));
+            writer.Write(BitConverter.GetBytes((float)face.Normal[2]));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].X));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].Y));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].Z));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].X));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].Y));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].Z));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].X));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].Y));
+            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].Z));
+            var colorBytes = (ushort)0;
+            if (defineColors)
+            {
+                colorBytes += 32768;
+                var red = (ushort)(face.Color.R / 8);
+                colorBytes += red;
+                var green = (ushort)(face.Color.G / 8);
+                colorBytes += (ushort)(green * 32);
+                var blue = (ushort)(face.Color.B / 8);
+                colorBytes += (ushort)(blue * 1024);
+            }
+            writer.Write(BitConverter.GetBytes(colorBytes));
+        }
+
+        #endregion
     }
 }
+

@@ -16,6 +16,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Xml;
+using System.Xml.Serialization;
 
 /// <summary>
 /// The TVGL namespace.
@@ -28,6 +30,8 @@ namespace TVGL
     /// </summary>
     public static class Constants
     {
+        internal const double TwoPi = 2 * Math.PI;
+        internal const double HalfPi = Math.PI / 2;
         /// <summary>
         ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
         /// </summary>
@@ -37,23 +41,6 @@ namespace TVGL
         ///     The default color
         /// </summary>
         internal const KnownColors DefaultColor = KnownColors.LightGray;
-
-        /// <summary>
-        ///     The reg ex solid
-        /// </summary>
-        public const string RegExSolid = @"solid\s+(?<Name>[^\r\n]+)?";
-
-        /// <summary>
-        ///     The reg ex coord
-        /// </summary>
-        public const string RegExCoord = @"\s*(facet normal|vertex)\s+(?<X>[^\s]+)\s+(?<Y>[^\s]+)\s+(?<Z>[^\s]+)";
-
-        /// <summary>
-        ///     The number style
-        /// </summary>
-        public const NumberStyles NumberStyle =
-            NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign;
-
 
         /// <summary>
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
@@ -75,6 +62,11 @@ namespace TVGL
         ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
         public const double SameFaceNormalDotTolerance = 1e-1;
+        /// <summary>
+        /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in 
+        /// a tessellated model.
+        /// </summary>
+        internal static double MaxAllowableEdgeSimilarityScore = 0.2;
 
         /// <summary>
         ///     Finds the index.
@@ -119,7 +111,7 @@ namespace TVGL
 
 
     /// <summary>
-    /// Enum Units of specified shape
+    /// Units of a specified coordinates within the shape or set of shapes.
     /// </summary>
     public enum UnitType
     {
@@ -188,6 +180,7 @@ namespace TVGL
     /// </summary>
     public enum FileType
     {
+        unspecified,
         /// <summary>
         ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
         /// </summary>
@@ -204,6 +197,11 @@ namespace TVGL
         ///     Mobile MultiModal Framework
         /// </summary>
         ThreeMF,
+
+        /// <summary>
+        ///     Mobile MultiModal Framework
+        /// </summary>
+        Model3MF,
 
         /// <summary>
         ///     Additive Manufacturing File Format
@@ -238,9 +236,9 @@ namespace TVGL
     ///     Enum ColorElements
     /// </summary>
     internal enum ColorElements
-        /// <summary>
-        /// The red
-        /// </summary>
+    /// <summary>
+    /// The red
+    /// </summary>
     {
         Red,
         Green,

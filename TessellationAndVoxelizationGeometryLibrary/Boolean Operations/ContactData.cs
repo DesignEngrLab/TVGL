@@ -18,7 +18,7 @@ namespace TVGL
             PositiveSideContactData = new List<SolidContactData>(positiveSideContactData);
             NumPositiveSideSolids = PositiveSideContactData.Count();
             NegativeSideContactData = new List<SolidContactData>(negativeSideContactData);
-            NumNegativeSideSolids = NegativeSideContactData.Count();
+            NumNegativeSideSolids= NegativeSideContactData.Count();
             Plane = plane;
         }
 
@@ -121,7 +121,7 @@ namespace TVGL
         /// Gets the positive loops.
         /// </summary>
         /// <value>The positive loops.</value>
-        public readonly IEnumerable<Loop> PositiveLoops;
+        public readonly IEnumerable<Loop> PositiveLoops;  
 
         /// <summary>
         /// Gets the loops of negative area (i.e. holes).
@@ -207,7 +207,7 @@ namespace TVGL
         {
             get
             {
-                var allLoops = new List<Loop>() { PositiveLoop };
+                var allLoops = new List<Loop>() { PositiveLoop};
                 allLoops.AddRange(NegativeLoops);
                 return allLoops;
             }
@@ -244,7 +244,7 @@ namespace TVGL
             foreach (var negativeLoop in NegativeLoops)
             {
                 onSideContactFaces.AddRange(negativeLoop.OnSideContactFaces);
-
+                
                 foreach (var straddleFaceIndex in negativeLoop.StraddleFaceIndices)
                 {
                     straddleFaceIndices.Add(straddleFaceIndex);
@@ -260,15 +260,15 @@ namespace TVGL
             AdjOnsideFaceIndices = adjOnsideFaceIndices;
         }
 
-
+        
     }
 
 
     /// <summary>
-    /// The Loop class is basically a list of ContactElements that form a path. Usually, this path
-    /// is closed, hence the name "loop", but it may be used and useful for open paths as well.
-    /// </summary>
-    public class Loop
+        /// The Loop class is basically a list of ContactElements that form a path. Usually, this path
+        /// is closed, hence the name "loop", but it may be used and useful for open paths as well.
+        /// </summary>
+        public class Loop
     {
         /// <summary>
         /// The vertices making up this loop
@@ -320,10 +320,10 @@ namespace TVGL
         /// <param name="straddleFaceIndices"></param>
         /// <param name="adjOnsideFaceIndices"></param>
         /// <param name="isClosed">is closed.</param>
-        internal Loop(ICollection<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, double[] normal,
+        internal Loop(ICollection<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, double[] normal, 
             IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, bool isClosed = true)
         {
-            if (!IsClosed) Message.output("loop not closed!", 3);
+            if (!IsClosed) Message.output("loop not closed!",3);
             VertexLoop = new List<Vertex>(vertexLoop);
             OnSideContactFaces = onSideContactFaces;
             IsClosed = isClosed;
@@ -333,7 +333,7 @@ namespace TVGL
             StraddleFaceIndices = new List<int>(straddleFaceIndices);
         }
 
-
+        
     }
 }
-
+  

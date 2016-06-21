@@ -64,8 +64,8 @@ namespace TVGL
             EdgeReference = edgeReference;
             _ownedFace = ownedFace;
             _otherFace = otherFace;
-            if (ownedFace != null) ownedFace.Edges.Add(this);
-            if (otherFace != null) otherFace.Edges.Add(this);
+            if (ownedFace != null) ownedFace.AddEdge(this);
+            if (otherFace != null) otherFace.AddEdge(this);
             if (doublyLinkedVertices)
             {
                 fromVertex.Edges.Add(this);
@@ -81,7 +81,6 @@ namespace TVGL
             //if (Length.IsNegligible(Constants.BaseTolerance)) throw new Exception();
             if (OwnedFace == null || OtherFace == null) return; //No need for the next few functions
             DefineInternalEdgeAngle();
-            Vertices = new List<Vertex> {From, To};
             if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
@@ -107,7 +106,6 @@ namespace TVGL
                 To.Position[2] - From.Position[2]
             };
             Length = Math.Sqrt(Vector[0]*Vector[0] + Vector[1]*Vector[1] + Vector[2]*Vector[2]);
-            Vertices = new List<Vertex> {From, To};
             //if (Length.IsNegligible(Constants.BaseTolerance)) throw new Exception();
             //Since there are no faces yet, internal angle is not calculated.
         }
@@ -139,12 +137,6 @@ namespace TVGL
         /// </summary>
         /// <value>The vector.</value>
         public double[] Vector { get; internal set; }
-
-        /// <summary>
-        ///     Gets the two vertices that make up an edge.
-        /// </summary>
-        /// <value>The vertices.</value>
-        public List<Vertex> Vertices { get; internal set; }
 
         /// <summary>
         ///     The _other face
@@ -199,13 +191,13 @@ namespace TVGL
         ///     Gets the internal angle in radians.
         /// </summary>
         /// <value>The internal angle.</value>
-        public double InternalAngle { get; private set; }
+        public double InternalAngle { get; internal set; }
 
         /// <summary>
         ///     Gets the curvature of the surface.
         /// </summary>
         /// <value>The curvature of the surface.</value>
-        public CurvatureType Curvature { get; private set; }
+        public CurvatureType Curvature { get; internal set; }
 
         /// <summary>
         ///     Gets a value indicating whether [is part of the convex hull].
@@ -345,7 +337,7 @@ namespace TVGL
                 otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
                 if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector) < 0)
                 {
-                    InternalAngle = 2*Math.PI;
+                    InternalAngle = Constants.TwoPi;
                     Curvature = CurvatureType.Concave;
                 }
                 else
@@ -368,7 +360,7 @@ namespace TVGL
                     Curvature = CurvatureType.Convex;
                 }
             }
-            if (InternalAngle > Math.PI*2) throw new Exception("not possible");
+            if (InternalAngle >Constants.TwoPi) throw new Exception("not possible");
         }
 
         #endregion

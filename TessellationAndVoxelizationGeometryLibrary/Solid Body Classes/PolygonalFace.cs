@@ -31,7 +31,7 @@ namespace TVGL
         /// </summary>
         public void DefineFaceCurvature()
         {
-            if (Edges.Any(e => e.Curvature == CurvatureType.Undefined))
+            if (Edges.Any(e => e == null || e.Curvature == CurvatureType.Undefined))
                 Curvature = CurvatureType.Undefined;
             else if (Edges.All(e => e.Curvature != CurvatureType.Concave))
                 Curvature = CurvatureType.Convex;
@@ -49,12 +49,12 @@ namespace TVGL
             return new PolygonalFace
             {
                 Area = Area,
-                Center = (double[]) Center.Clone(),
+                Center = (double[])Center.Clone(),
                 Curvature = Curvature,
                 Color = Color,
                 PartofConvexHull = PartofConvexHull,
                 Edges = new List<Edge>(),
-                Normal = (double[]) Normal.Clone(),
+                Normal = (double[])Normal.Clone(),
                 Vertices = new List<Vertex>()
             };
         }
@@ -67,9 +67,27 @@ namespace TVGL
         public void Update()
         {
             bool reverseVertexOrder;
-            Normal = DetermineNormal(out reverseVertexOrder, Normal);
+            Normal = DetermineNormal(this.Vertices, out reverseVertexOrder, Normal);
             if (reverseVertexOrder) Vertices.Reverse();
             Area = DetermineArea();
+        }
+
+        /// <summary>
+        /// Adds the edge.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        internal void AddEdge(Edge edge)
+        {
+            var vertFromIndex = Vertices.IndexOf(edge.From);
+            var vertToIndex = Vertices.IndexOf(edge.To);
+            int index;
+            var lastIndex = Vertices.Count - 1;
+            if ((vertFromIndex == 0 && vertToIndex == lastIndex)
+                || (vertFromIndex == lastIndex && vertToIndex == 0))
+                index = lastIndex;
+            else index = (vertFromIndex + vertToIndex) / 2;
+            while (Edges.Count <= index) Edges.Add(null);
+            Edges[index] = edge;
         }
 
         /// <summary>
@@ -81,8 +99,8 @@ namespace TVGL
         internal Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
         {
             if (willAcceptNullAnswer)
-                return Edges.FirstOrDefault(e => e.To != thisVertex && e.From != thisVertex);
-            return Edges.First(e => e.To != thisVertex && e.From != thisVertex);
+                return Edges.FirstOrDefault(e => e != null && e.To != thisVertex && e.From != thisVertex);
+            return Edges.First(e => e != null && e.To != thisVertex && e.From != thisVertex);
         }
 
         /// <summary>
@@ -94,9 +112,9 @@ namespace TVGL
         internal Vertex OtherVertex(Edge thisEdge, bool willAcceptNullAnswer = false)
         {
             return willAcceptNullAnswer
-                ? Vertices.FirstOrDefault(v => v != thisEdge.To &&
+                ? Vertices.FirstOrDefault(v => v != null && v != thisEdge.To &&
                                                v != thisEdge.From)
-                : Vertices.First(v => v != thisEdge.To && v != thisEdge.From);
+                : Vertices.First(v => v != null && v != thisEdge.To && v != thisEdge.From);
         }
 
         /// <summary>
@@ -109,8 +127,8 @@ namespace TVGL
         internal Vertex OtherVertex(Vertex v1, Vertex v2, bool willAcceptNullAnswer = false)
         {
             return willAcceptNullAnswer
-                ? Vertices.FirstOrDefault(v => v != v1 && v != v2)
-                : Vertices.First(v => v != v1 && v != v2);
+                ? Vertices.FirstOrDefault(v => v != null && v != v1 && v != v2)
+                : Vertices.First(v => v != null && v != v1 && v != v2);
         }
 
         /// <summary>
@@ -163,7 +181,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">A guess for the normal vector.</param>
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
-        public PolygonalFace(IEnumerable<Vertex> vertices, double[] normal = null, bool connectVerticesBackToFace = true)
+        public PolygonalFace(IEnumerable<Vertex> vertices, double[] normal, bool connectVerticesBackToFace = true)
             : this()
         {
             foreach (var v in vertices)
@@ -175,10 +193,8 @@ namespace TVGL
             var centerX = Vertices.Average(v => v.X);
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
-            Center = new[] {centerX, centerY, centerZ};
-            bool reverseVertexOrder;
-            Normal = DetermineNormal(out reverseVertexOrder, normal);
-            if (reverseVertexOrder) Vertices.Reverse();
+            Center = new[] { centerX, centerY, centerZ };
+            Normal = normal;
             Area = DetermineArea();
         }
 
@@ -194,31 +210,31 @@ namespace TVGL
                 var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
                 var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
                 // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-                area += Math.Abs(edge1.crossProduct(edge2).dotProduct(Normal))/2;
+                area += Math.Abs(edge1.crossProduct(edge2).dotProduct(Normal)) / 2;
             }
             //If not a number, the triangle is actually a straight line. Set the area = 0, and let repair function fix this.
             return double.IsNaN(area) ? 0.0 : area;
         }
 
         /// <summary>
-        ///     Determines the normal.
+        /// Determines the normal.
         /// </summary>
         /// <param name="reverseVertexOrder">if set to <c>true</c> [reverse vertex order].</param>
+        /// <param name="vertices">The vertices.</param>
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double[].</returns>
-        private double[] DetermineNormal(out bool reverseVertexOrder, double[] normal = null)
-            //Assuming CCW order of vertices
+        internal static double[] DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, double[] normal = null)
         {
             reverseVertexOrder = false;
-            var n = Vertices.Count;
+            var n = vertices.Count;
             if (normal != null && normal.Contains(double.NaN)) normal = null;
             else if (normal != null) normal.normalizeInPlace();
             var edgeVectors = new double[n][];
             var normals = new List<double[]>();
-            edgeVectors[0] = Vertices[0].Position.subtract(Vertices[n - 1].Position);
+            edgeVectors[0] = vertices[0].Position.subtract(vertices[n - 1].Position);
             for (var i = 1; i < n; i++)
             {
-                edgeVectors[i] = Vertices[i].Position.subtract(Vertices[i - 1].Position);
+                edgeVectors[i] = vertices[i].Position.subtract(vertices[i - 1].Position);
                 var tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
                 if (!tempCross.Any(double.IsNaN))
                 {
@@ -247,7 +263,7 @@ namespace TVGL
 
             n = normals.Count;
             if (n == 0) // this would happen if the face collapse to a line.
-                return new[] {double.NaN, double.NaN, double.NaN};
+                return new[] { double.NaN, double.NaN, double.NaN };
             // before we just average these normals, let's check that they agree.
             // the dotProductsOfNormals simply takes the dot product of adjacent
             // normals. If they're all close to one, then we can average and return.
@@ -256,8 +272,8 @@ namespace TVGL
             for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].dotProduct(normals[i - 1]));
             // if all are close to one (or at least positive), then the face is a convex polygon. Now,
             // we can simply average and return the answer.
-            IsConvex = dotProductsOfNormals.All(x => x > 0);
-            if (IsConvex)
+            var isConvex = dotProductsOfNormals.All(x => x > 0);
+            if (isConvex)
             {
                 var newNormal = normals.Aggregate((current, c) => current.add(c)).normalize();
                 // even though the normal provide was wrong above (or nonexistent)
@@ -286,20 +302,13 @@ namespace TVGL
                 if (likeFirstNormal) numLikeFirstNormal++;
             }
             // if the majority are like the first one, then use that one (which may have been the guess).
-            if (2*numLikeFirstNormal >= normals.Count) return normals[0].normalize();
+            if (2 * numLikeFirstNormal >= normals.Count) return normals[0].normalize();
             // otherwise, go with the opposite (so long as there isn't an original guess)
             if (normal == null) return normals[0].normalize().multiply(-1);
             //finally, assume the original guess is right, and reverse the order
             reverseVertexOrder = true;
             return normals[0].normalize();
         }
-
-        /// <summary>
-        ///     Gets the is convex.
-        /// </summary>
-        /// <value>The is convex.</value>
-        public bool IsConvex { get; private set; }
-
         #endregion
 
         #region Properties
@@ -320,7 +329,7 @@ namespace TVGL
         ///     Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
-        public List<Edge> Edges { get; set; }
+        public List<Edge> Edges { get; internal set; }
 
         /// <summary>
         ///     Gets the center.

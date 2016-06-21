@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -32,7 +33,7 @@ namespace TVGL
         /// <param name="percentageToReduceBy">The percentage to reduce by.</param>
         public static void SimplifyByPercentage(this TessellatedSolid ts, double percentageToReduceBy)
         {
-            SimplifyToNFaces(ts, (int) ((1 - percentageToReduceBy)*ts.NumberOfFaces));
+            SimplifyToNFaces(ts, (int)((1 - percentageToReduceBy) * ts.NumberOfFaces));
         }
 
         /// <summary>
@@ -62,19 +63,34 @@ namespace TVGL
                 Edge removedEdge1, removedEdge2;
                 PolygonalFace removedFace1, removedFace2;
                 Vertex removedVertex;
-                if (CombineVerticesOfEdge(edge, out removedVertex, out removedEdge1, out removedEdge2, out removedFace1,
+                if (CombineVerticesOfEdge(edge, out removedVertex, out removedEdge1, out removedEdge2,
+                    out removedFace1,
                     out removedFace2))
                 {
                     removedEdges.Add(edge);
                     removedEdgesSorted.Add(edge.IndexInList, edge);
-                    removedEdges.Add(removedEdge1);
-                    removedEdgesSorted.Add(removedEdge1.IndexInList, removedEdge1);
-                    removedEdges.Add(removedEdge2);
-                    removedEdgesSorted.Add(removedEdge2.IndexInList, removedEdge2);
-                    removedFaces.Add(removedFace1.IndexInList, removedFace1);
-                    numberToRemove--;
-                    removedFaces.Add(removedFace2.IndexInList, removedFace2);
-                    numberToRemove--;
+                    if (removedEdge1 != null)
+                    {
+                        removedEdges.Add(removedEdge1);
+                        if (!removedEdgesSorted.ContainsKey(removedEdge1.IndexInList))
+                            removedEdgesSorted.Add(removedEdge1.IndexInList, removedEdge1);
+                    }
+                    if (removedEdge2 != null)
+                    {
+                        removedEdges.Add(removedEdge2);
+                        if (!removedEdgesSorted.ContainsKey(removedEdge2.IndexInList))
+                            removedEdgesSorted.Add(removedEdge2.IndexInList, removedEdge2);
+                    }
+                    if (removedFace1 != null)
+                    {
+                        removedFaces.Add(removedFace1.IndexInList, removedFace1);
+                        numberToRemove--;
+                    }
+                    if (removedFace2 != null)
+                    {
+                        removedFaces.Add(removedFace2.IndexInList, removedFace2);
+                        numberToRemove--;
+                    }
                     removedVertices.Add(removedVertex.IndexInList, removedVertex);
                 }
             }
@@ -89,7 +105,7 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         public static void Simplify(this TessellatedSolid ts)
         {
-            SimplifyByTolerance(ts, ts.SameTolerance*10);
+            SimplifyByTolerance(ts, ts.SameTolerance * 10);
         }
 
         /// <summary>
@@ -149,31 +165,44 @@ namespace TVGL
         private static bool CombineVerticesOfEdge(Edge edge, out Vertex removedVertexOut, out Edge removedEdge1Out,
             out Edge removedEdge2Out, out PolygonalFace removedFace1, out PolygonalFace removedFace2)
         {
-            var keepVertex = edge.To;
-            var removedVertex = edge.From;
+            var keepVertex = edge.To; // arbitrarily choose the To as the keep vertex, but this may be swapped below
+            var removedVertex = edge.From; // if the To has some missing faces
+            if (keepVertex == removedVertex)
+            {
+                removedVertexOut = null;
+                removedEdge2Out = removedEdge1Out = null;
+                removedFace1 = removedFace2 = null;
+                return false;
+            }
             removedFace1 = edge.OwnedFace;
             removedFace2 = edge.OtherFace;
-            var removedEdge1 = removedFace1.OtherEdge(keepVertex);
-            var removedEdge2 = removedFace2.OtherEdge(keepVertex);
-            var keepEdge1 = removedFace1.OtherEdge(removedVertex);
-            var keepEdge2 = removedFace2.OtherEdge(removedVertex);
-            var otherEdgesOnTheToSide =
-                keepVertex.Edges.Where(e => e != edge && e != keepEdge1 && e != keepEdge2).ToList();
-            var otherEdgesOnTheFromSide =
+            var removedEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(keepVertex, true);
+            var removedEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(keepVertex, true);
+            var keepEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(removedVertex, true);
+            var keepEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(removedVertex, true);
+            if (removedEdge1 != null && removedEdge2 != null && (keepEdge1 == null || keepEdge2 == null))
+            { // swap with removed.
+                var tempVertex = keepVertex; keepVertex = removedVertex; removedVertex = tempVertex;
+                var tempEdge = keepEdge1; keepEdge1 = removedEdge1; removedEdge1 = tempEdge;
+                tempEdge = keepEdge2; keepEdge2 = removedEdge2; removedEdge2 = tempEdge;
+            }
+            var otherEdgesOnTheKeepSide =
+            keepVertex.Edges.Where(e => e != edge && e != keepEdge1 && e != keepEdge2).ToList();
+            var otherEdgesOnTheRemoveSide =
                 removedVertex.Edges.Where(e => e != edge && e != removedEdge1 && e != removedEdge2).ToList();
-            if (
-                otherEdgesOnTheToSide.Select(e => e.OtherVertex(keepVertex))
-                    .Intersect(otherEdgesOnTheFromSide.Select(e => e.OtherVertex(removedVertex)))
+            if ( // this is a topologically important check. It ensures that the edge is not deleted if
+                 // it serves an important role in ensuring the proper topology of the solid
+                otherEdgesOnTheKeepSide.Select(e => e.OtherVertex(keepVertex))
+                    .Intersect(otherEdgesOnTheRemoveSide.Select(e => e.OtherVertex(removedVertex)))
                     .Any())
             {
                 removedVertexOut = null;
-                removedEdge1Out = null;
-                removedEdge2Out = null;
+                removedEdge2Out = removedEdge1Out = null;
+                removedFace1 = removedFace2 = null;
                 return false;
             }
-
             // move edges connected to removeVertex to the keepVertex and let keepVertex link back to these edges
-            foreach (var e in otherEdgesOnTheFromSide)
+            foreach (var e in otherEdgesOnTheRemoveSide)
             {
                 keepVertex.Edges.Add(e);
                 if (e.From == removedVertex) e.From = keepVertex;
@@ -190,26 +219,42 @@ namespace TVGL
             keepVertex.Edges.Remove(edge);
             keepVertex.Faces.Remove(removedFace1);
             keepVertex.Faces.Remove(removedFace2);
-            var farVertex = removedFace1.OtherVertex(edge);
-            farVertex.Edges.Remove(removedEdge1);
-            farVertex.Faces.Remove(removedFace1);
-            farVertex = removedFace2.OtherVertex(edge);
-            farVertex.Edges.Remove(removedEdge2);
-            farVertex.Faces.Remove(removedFace2);
+            var farVertex = removedFace1 == null ? null : removedFace1.OtherVertex(edge, true);
+            if (farVertex != null)
+            {
+                farVertex.Edges.Remove(removedEdge1);
+                farVertex.Faces.Remove(removedFace1);
+            }
+            farVertex = removedFace2 == null ? null : removedFace2.OtherVertex(edge, true);
+            if (farVertex != null)
+            {
+                farVertex.Edges.Remove(removedEdge2);
+                farVertex.Faces.Remove(removedFace2);
+            }
             // for the winged edges (removedEdge1 and removedEdge2) that are removed, connected their faces to 
             // the new edge
             // first on the "owned side of edge"
-            var fromFace = removedEdge1.OwnedFace == removedFace1 ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
-            var index = fromFace.Edges.IndexOf(removedEdge1);
-            fromFace.Edges[index] = keepEdge1;
-            if (keepEdge1.OwnedFace == removedFace1) keepEdge1.OwnedFace = fromFace;
-            else keepEdge1.OtherFace = fromFace;
+            var fromFace = removedEdge1 == null ? null
+                : removedEdge1.OwnedFace == removedFace1 ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
+            if (fromFace != null)
+            {
+                var index = fromFace.Edges.IndexOf(removedEdge1);
+                if (index >= 0 && index < fromFace.Edges.Count)
+                    fromFace.Edges[index] = keepEdge1;
+            }
+            if (keepEdge1 != null && keepEdge1.OwnedFace == removedFace1) keepEdge1.OwnedFace = fromFace;
+            else if (keepEdge1 != null) keepEdge1.OtherFace = fromFace;
             // second on the "other side of edge"
-            fromFace = removedEdge2.OwnedFace == removedFace2 ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
-            index = fromFace.Edges.IndexOf(removedEdge2);
-            fromFace.Edges[index] = keepEdge2;
-            if (keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
-            else keepEdge2.OtherFace = fromFace;
+            fromFace = removedEdge2 == null ? null
+                : removedEdge2.OwnedFace == removedFace2 ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
+            if (fromFace != null)
+            {
+                var index = fromFace.Edges.IndexOf(removedEdge2);
+                if (index >= 0 && index < fromFace.Edges.Count)
+                    fromFace.Edges[index] = keepEdge2;
+            }
+            if (keepEdge2 != null && keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
+            else if (keepEdge2 != null) keepEdge2.OtherFace = fromFace;
 
 
             //AdjustPositionOfKeptVertexAverage(keepVertex, removedVertex);
@@ -248,17 +293,17 @@ namespace TVGL
         {
             //average positions
             var newPosition = keepVertex.Position.add(removedVertex.Position);
-            var radius = keepVertex.Position.subtract(removedVertex.Position).norm2()/2.0;
+            var radius = keepVertex.Position.subtract(removedVertex.Position).norm2() / 2.0;
             keepVertex.Position = newPosition.divide(2);
             var avgNormal = removeFace1.Normal.add(removeFace2.Normal).normalize();
             var otherVertexAvgDistanceToEdgePlane =
-                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.dotProduct(avgNormal)).Sum()/
+                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.dotProduct(avgNormal)).Sum() /
                 (keepVertex.Edges.Count - 1);
             var distanceOfEdgePlane = keepVertex.Position.dotProduct(avgNormal);
 
             // use a sigmoid function to determine how far out to move the vertex
-            var x = 0.05*(distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane)/radius;
-            var length = 2*radius*x/Math.Sqrt(1 + x*x) - radius;
+            var x = 0.05 * (distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane) / radius;
+            var length = 2 * radius * x / Math.Sqrt(1 + x * x) - radius;
             keepVertex.Position = keepVertex.Position.add(avgNormal.multiply(length));
         }
     }
