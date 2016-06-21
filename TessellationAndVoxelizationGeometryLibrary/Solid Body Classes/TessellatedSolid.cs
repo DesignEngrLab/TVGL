@@ -143,39 +143,6 @@ namespace TVGL
         /// <value>The edges.</value>
         public Edge[] Edges { get; private set; }
 
-        public void Transform(double[,] transformMatrix)
-        {
-            double[] tempCoord;
-            foreach (var vert in Vertices)
-            {
-                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
-                vert.Position[0] = tempCoord[0];
-                vert.Position[1] = tempCoord[1];
-                vert.Position[2] = tempCoord[2];
-            }
-            tempCoord = transformMatrix.multiply(new[] { XMin, YMin, ZMin, 1 });
-            XMin = tempCoord[0];
-            YMin = tempCoord[1];
-            ZMin = tempCoord[2];
-
-            tempCoord = transformMatrix.multiply(new[] { XMax, YMax, ZMax, 1 });
-            XMax = tempCoord[0];
-            YMax = tempCoord[1];
-            ZMax = tempCoord[2];
-            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
-            // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
-            if (_inertiaTensor != null)
-            {
-                var rotMatrix = new double[3, 3];
-                for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                        rotMatrix[i, j] = transformMatrix[i, j];
-                _inertiaTensor = rotMatrix.multiply(_inertiaTensor);
-            }
-            if (Primitives != null)
-                foreach (var primitive in Primitives)
-                    primitive.Transform(transformMatrix);
-        }
 
         /// <summary>
         ///     Gets the vertices.
@@ -394,11 +361,19 @@ namespace TVGL
             for (var i = 0; i < NumberOfEdges; i++)
                 Edges[i].IndexInList = i;
             CreateConvexHull();
-            DefineCenterVolumeAndSurfaceArea();
+            double[] center;
+            double volume;
+            double surfaceArea;
+            DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea);
+            Center = center;
+            Volume = volume;
+            SurfaceArea = surfaceArea;
             DefineInertiaTensor();
-            DefineFaceCurvature();
-            DefineVertexCurvature();
-           TessellationError.CheckModelIntegrity(this);
+            foreach (var face in Faces)
+                face.DefineFaceCurvature();
+            foreach (var v in Vertices)
+                v.DefineVertexCurvature();
+            TessellationError.CheckModelIntegrity(this);
         }
 
         #endregion
@@ -676,35 +651,14 @@ namespace TVGL
         #endregion
 
         #region Define Additional Characteristics of Faces, Edges and Vertices
-
-
-        /// <summary>
-        /// Defines the center, the volume and the surface area.
-        /// </summary>
-        private void DefineCenterVolumeAndSurfaceArea()
-        {
-            double[] center;
-            double volume;
-            double surfaceArea;
-            DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea);
-            Center = center;
-            Volume = volume;
-            SurfaceArea = surfaceArea;
-        }
+        
 
         /// <summary>
         /// Defines the center, the volume and the surface area.
         /// </summary>
         internal static void DefineCenterVolumeAndSurfaceArea(IList<PolygonalFace> faces, out double[] center, out double volume, out double surfaceArea)
         {
-            surfaceArea = 0;
-            foreach (var face in faces)
-            {
-                // assuming triangular faces: the area is half the magnitude of the cross product of two of the edges
-                if (face.Area.IsNegligible()) face.Area = face.DetermineArea(); //the area of the face was also determined in 
-                // one of the PolygonalFace constructors. In case it is zero, we will recalculate it here.
-                surfaceArea += face.Area;   // accumulate areas into surface area
-            }
+            surfaceArea = faces.Sum(face => face.Area);
             volume = MiscFunctions.Volume(faces, out center);
         }
         const double oneSixtieth = 1.0 / 60.0;
@@ -754,34 +708,6 @@ namespace TVGL
             return result.subtract(matrixCprime);
         }
 
-        #endregion
-
-        #region Curvatures
-
-        /// <summary>
-        ///     Defines the vertex curvature.
-        /// </summary>
-        private void DefineVertexCurvature()
-        {
-            foreach (var v in Vertices)
-            {
-                v.DefineVertexCurvature();
-            }
-        }
-
-        /// <summary>
-        ///     Defines the face curvature. Depends on DefineEdgeAngle
-        /// </summary>
-        private void DefineFaceCurvature()
-        {
-            foreach (var face in Faces)
-            {
-                face.DefineFaceCurvature();
-            }
-        }
-
-        #endregion
-
         #region Convex Hull
         /// <summary>
         ///     Creates the convex hull.
@@ -800,6 +726,8 @@ namespace TVGL
         }
 
         #endregion
+        #endregion
+
 
         #region Add or Remove Items
 
@@ -1178,6 +1106,41 @@ namespace TVGL
             var success = Errors.Repair(this);
             if (success) Errors = null;
             return success;
+        }
+
+
+        public void Transform(double[,] transformMatrix)
+        {
+            double[] tempCoord;
+            foreach (var vert in Vertices)
+            {
+                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
+                vert.Position[0] = tempCoord[0];
+                vert.Position[1] = tempCoord[1];
+                vert.Position[2] = tempCoord[2];
+            }
+            tempCoord = transformMatrix.multiply(new[] { XMin, YMin, ZMin, 1 });
+            XMin = tempCoord[0];
+            YMin = tempCoord[1];
+            ZMin = tempCoord[2];
+
+            tempCoord = transformMatrix.multiply(new[] { XMax, YMax, ZMax, 1 });
+            XMax = tempCoord[0];
+            YMax = tempCoord[1];
+            ZMax = tempCoord[2];
+            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
+            // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
+            if (_inertiaTensor != null)
+            {
+                var rotMatrix = new double[3, 3];
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                        rotMatrix[i, j] = transformMatrix[i, j];
+                _inertiaTensor = rotMatrix.multiply(_inertiaTensor);
+            }
+            if (Primitives != null)
+                foreach (var primitive in Primitives)
+                    primitive.Transform(transformMatrix);
         }
 
     }
