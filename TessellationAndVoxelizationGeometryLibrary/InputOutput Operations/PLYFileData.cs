@@ -110,8 +110,8 @@ namespace TVGL.IOFunctions
         internal static TessellatedSolid OpenSolid(Stream s, string filename)
         {
             var now = DateTime.Now;
-            try
-            {
+            //try
+            //{
                 var reader = new StreamReader(s);
                 var plyData = new PLYFileData { FileName = filename, Name = GetNameFromFileName(filename) };
                 var line = ReadLine(reader);
@@ -141,12 +141,12 @@ namespace TVGL.IOFunctions
                 return new TessellatedSolid(plyData.Vertices, plyData.FaceToVertexIndices,
                     plyData.HasColorSpecified ? plyData.Colors : null, InferUnitsFromComments(plyData.Comments),
                   plyData.Name, plyData.FileName, plyData.Comments, plyData.Language);
-            }
-            catch (Exception exception)
-            {
-                Message.output("Unable to read in PLY file (" + (DateTime.Now - now) + ").", 1);
-                return null;
-            }
+           // }
+            //catch (Exception exception)
+            //{
+            //    Message.output("Unable to read in PLY file (" + (DateTime.Now - now) + ").", 1);
+            //    return null;
+            //}
         }
         /// <summary>
         ///     Reads the edges.

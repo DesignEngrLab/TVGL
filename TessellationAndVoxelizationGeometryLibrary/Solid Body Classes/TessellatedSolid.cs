@@ -359,10 +359,16 @@ namespace TVGL
 
         private void CompleteInitiation()
         {
-            Edges = MakeEdges(Faces, true, VertexCheckSumMultiplier);
-            NumberOfEdges = Edges.GetLength(0);
-            for (var i = 0; i < NumberOfEdges; i++)
-                Edges[i].IndexInList = i;
+            List<Tuple<Edge, List<PolygonalFace>>> overDefinedEdges;
+            List<Edge> singleSidedEdges, moreSingleSidedEdges;
+            var edgeList = MakeEdges(Faces, true, VertexCheckSumMultiplier, out overDefinedEdges, out singleSidedEdges);
+            edgeList.AddRange(TeaseApartOverUsedEdges(overDefinedEdges, out moreSingleSidedEdges));
+            singleSidedEdges.AddRange(moreSingleSidedEdges);
+            List<PolygonalFace> newFaces;
+            List<Vertex> removedVertices;
+            edgeList.AddRange(MediateSingleSidedEdges(singleSidedEdges,out newFaces, out removedVertices));
+            Edges = CompleteEdgeArray(edgeList);
+            NumberOfEdges = Edges.Length;
             CreateConvexHull();
             double[] center;
             double volume;
@@ -995,6 +1001,5 @@ namespace TVGL
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
         }
-
     }
 }
