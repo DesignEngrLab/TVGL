@@ -358,7 +358,9 @@ namespace TVGL
             edgeList.AddRange(TeaseApartOverUsedEdges(overDefinedEdges, out moreSingleSidedEdges));
             singleSidedEdges.AddRange(moreSingleSidedEdges);
             List<PolygonalFace> newFaces;
-            ICollection<Vertex> removedVertices;
+            List<Vertex> removedVertices;
+            foreach (var tuple in edgeList)
+                tuple.Item1.DoublyLinkVertices();
             edgeList.AddRange(MediateSingleSidedEdges(singleSidedEdges, out newFaces, out removedVertices));
             Edges = CompleteEdgeArray(edgeList);
             NumberOfEdges = Edges.Length;

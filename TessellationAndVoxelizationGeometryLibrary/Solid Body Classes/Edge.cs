@@ -57,31 +57,17 @@ namespace TVGL
         /// <param name="edgeReference">The edge reference.</param>
         /// <exception cref="Exception"></exception>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            bool doublyLinkedVertices, long edgeReference)
+            bool doublyLinkedVertices, long edgeReference = 0) : this(fromVertex, toVertex, doublyLinkedVertices)
         {
-            From = fromVertex;
-            To = toVertex;
-            EdgeReference = edgeReference;
+            if (edgeReference > 0)
+                EdgeReference = edgeReference;
+            else TessellatedSolid.SetAndGetEdgeChecksum(this);
             _ownedFace = ownedFace;
             _otherFace = otherFace;
             if (ownedFace != null) ownedFace.AddEdge(this);
             if (otherFace != null) otherFace.AddEdge(this);
-            if (doublyLinkedVertices)
-            {
-                fromVertex.Edges.Add(this);
-                toVertex.Edges.Add(this);
-            }
-            Vector = new[]
-            {
-                To.Position[0] - From.Position[0],
-                To.Position[1] - From.Position[1],
-                To.Position[2] - From.Position[2]
-            };
-            Length = Math.Sqrt(Vector[0]*Vector[0] + Vector[1]*Vector[1] + Vector[2]*Vector[2]);
-            //if (Length.IsNegligible(Constants.BaseTolerance)) throw new Exception();
-            if (OwnedFace == null || OtherFace == null) return; //No need for the next few functions
-            DefineInternalEdgeAngle();
-            if (double.IsNaN(InternalAngle)) throw new Exception();
+            if (OwnedFace != null && OtherFace != null)
+                DefineInternalEdgeAngle();
         }
 
         /// <summary>
@@ -94,20 +80,15 @@ namespace TVGL
         {
             From = fromVertex;
             To = toVertex;
-            if (doublyLinkedVertices)
-            {
-                fromVertex.Edges.Add(this);
-                toVertex.Edges.Add(this);
-            }
+            if (doublyLinkedVertices) DoublyLinkVertices();
+
             Vector = new[]
             {
                 To.Position[0] - From.Position[0],
                 To.Position[1] - From.Position[1],
                 To.Position[2] - From.Position[2]
             };
-            Length = Math.Sqrt(Vector[0]*Vector[0] + Vector[1]*Vector[1] + Vector[2]*Vector[2]);
-            //if (Length.IsNegligible(Constants.BaseTolerance)) throw new Exception();
-            //Since there are no faces yet, internal angle is not calculated.
+            Length = Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
         }
 
         #endregion
@@ -225,7 +206,7 @@ namespace TVGL
                 To.Position[2] - From.Position[2]
             };
             Length =
-                Math.Sqrt(Vector[0]*Vector[0] + Vector[1]*Vector[1] + Vector[2]*Vector[2]);
+                Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
             // if (double.IsNaN(InternalAngle)) throw new Exception();
         }
@@ -278,7 +259,7 @@ namespace TVGL
                 nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
                 var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
                 if (dotOfCross2 < 0)
-                    // neither faces appear to own the edge...must be something wrong
+                // neither faces appear to own the edge...must be something wrong
                 {
                     InternalAngle = double.NaN;
                     Curvature = CurvatureType.Undefined;
@@ -295,7 +276,7 @@ namespace TVGL
                 nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
                 var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
                 if (dotOfCross2 > 0)
-                    // both faces appear to own the edge...must be something wrong
+                // both faces appear to own the edge...must be something wrong
                 {
                     InternalAngle = double.NaN;
                     Curvature = CurvatureType.Undefined;
@@ -360,7 +341,13 @@ namespace TVGL
                     Curvature = CurvatureType.Convex;
                 }
             }
-            if (InternalAngle >Constants.TwoPi) throw new Exception("not possible");
+            if (InternalAngle > Constants.TwoPi) throw new Exception("not possible");
+        }
+
+        internal void DoublyLinkVertices()
+        {
+            From.Edges.Add(this);
+            To.Edges.Add(this);
         }
 
         #endregion

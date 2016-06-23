@@ -85,7 +85,7 @@ namespace TVGL
             if ((vertFromIndex == 0 && vertToIndex == lastIndex)
                 || (vertFromIndex == lastIndex && vertToIndex == 0))
                 index = lastIndex;
-            else index = (vertFromIndex + vertToIndex) / 2;
+            else index = Math.Min(vertFromIndex, vertToIndex);
             while (Edges.Count <= index) Edges.Add(null);
             Edges[index] = edge;
         }
@@ -194,7 +194,9 @@ namespace TVGL
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
             Center = new[] { centerX, centerY, centerZ };
-            Normal = normal;
+            bool reverseVertexOrder;
+            Normal = DetermineNormal(Vertices, out reverseVertexOrder, normal);
+            if (reverseVertexOrder) Vertices.Reverse();
             Area = DetermineArea();
         }
 
