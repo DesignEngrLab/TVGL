@@ -484,7 +484,7 @@ namespace TVGL
                         else successful = false;
                     }
                 } while (loop.First().To != loop.Last().From && successful);
-                if (successful)
+                if (successful && loop.Count > 2)
                 {
                     //Average the normals from all the owned faces.
                     listOfLoops.Add(new Tuple<List<Edge>, double[]>(loop, normal));
@@ -527,7 +527,7 @@ namespace TVGL
                     { edges.Select(e => e.To).ToList() }, normal, out triangleFaceList);
                     if (triangles.Any())
                     {
-                        Message.output("loop successfully repaired with " + triangles.Count);
+                        Message.output("loop successfully repaired with " + triangles.Count, 5);
                         foreach (var triangle in triangles)
                         {
                             var newFace = new PolygonalFace(triangle, normal);
@@ -601,13 +601,12 @@ namespace TVGL
                 var ownedFace = edgeList[i].Item2[0];
                 var otherFace = edgeList[i].Item2[1];
                 edge.IndexInList = i;
+                SetAndGetEdgeChecksum(edge);
                 // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
                 // face has no area (collapsed to a line).
                 if (otherFace.Normal.Contains(double.NaN)) otherFace.Normal = (double[])ownedFace.Normal.Clone();
                 if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (double[])otherFace.Normal.Clone();
                 edge.OtherFace = otherFace;
-                edge.To.Edges.Add(edge);
-                edge.From.Edges.Add(edge);
                 otherFace.AddEdge(edge);
                 edgeArray[i] = edge;
             }

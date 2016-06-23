@@ -13,6 +13,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
+            "../../../TestFiles/DxTopLevel.shell",
         //"../../../TestFiles/Beam_Boss.STL",
         //"../../../TestFiles/bigmotor.amf",
         //"../../../TestFiles/DxTopLevelPart2.shell",
@@ -73,9 +74,9 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles();
-            for (var i = 0; i < fileNames.Count(); i++)
+            for (var i = 0; i < FileNames.Count(); i++)
             {
-                var filename = fileNames[i].FullName;
+                var filename = FileNames[i];//.FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
