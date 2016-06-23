@@ -165,12 +165,6 @@ namespace TVGL
         public int NumberOfVertices { get; private set; }
 
         /// <summary>
-        ///     Gets the checksum multiplier to be used for face and edge references. Set at end of "Make Vertices".
-        /// </summary>
-        /// <value>The number of vertices.</value>
-        public int VertexCheckSumMultiplier { get; private set; }
-
-        /// <summary>
         ///     Gets the number of edges.
         /// </summary>
         /// <value>The number of edges.</value>
@@ -353,16 +347,17 @@ namespace TVGL
             }
             Faces = newFaces.ToArray();
             NumberOfFaces = Faces.Length;
-            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(NumberOfVertices)) + 1);
             CompleteInitiation();
         }
 
         private void CompleteInitiation()
         {
-            Edges = MakeEdges(Faces, true, VertexCheckSumMultiplier);
-            NumberOfEdges = Edges.GetLength(0);
-            for (var i = 0; i < NumberOfEdges; i++)
-                Edges[i].IndexInList = i;
+            List<PolygonalFace> newFaces;
+            List<Vertex> removedVertices;
+            MakeEdges(out newFaces, out removedVertices);
+            AddFaces(newFaces);
+            RemoveVertices(removedVertices);
+            CreateConvexHull();
             double[] center;
             double volume;
             double surfaceArea;
@@ -370,13 +365,13 @@ namespace TVGL
             Center = center;
             Volume = volume;
             SurfaceArea = surfaceArea;
-            CreateConvexHull();
             foreach (var face in Faces)
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)
                 v.DefineVertexCurvature();
             TessellationError.CheckModelIntegrity(this);
         }
+
 
         #endregion
 
@@ -408,6 +403,7 @@ namespace TVGL
         private void MakeFaces(IList<int[]> faceToVertexIndices, IList<Color> colors,
             IList<double[]> normals = null, bool doublyLinkToVertices = true)
         {
+            var duplicateFaceCheck = true;
             HasUniformColor = true;
             if (colors == null || !colors.Any())
                 SolidColor = new Color(Constants.DefaultColor);
@@ -415,21 +411,32 @@ namespace TVGL
             NumberOfFaces = faceToVertexIndices.Count;
             var listOfFaces = new List<PolygonalFace>(NumberOfFaces);
             var faceChecksums = new HashSet<long>();
-            var checksumMultiplier = new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices };
+            if (NumberOfVertices > Constants.CubeRootOfLongMaxValue)
+            {
+                Message.output("Repeat Face check is disabled since the number of vertices exceeds "
+                               + Constants.CubeRootOfLongMaxValue);
+                duplicateFaceCheck = false;
+            }
+            var checksumMultiplier = duplicateFaceCheck
+                ? new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices }
+                : null;
             for (var i = 0; i < NumberOfFaces; i++)
             {
                 var faceToVertexIndexList = faceToVertexIndices[i];
-                // first check to be sure that this is a new face and not a duplicate or a degenerate
-                var orderedIndices = new List<int>(faceToVertexIndexList.Select(index => Vertices[index].IndexInList));
-                orderedIndices.Sort();
-                while (orderedIndices.Count > checksumMultiplier.Count)
-                    checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
-                var checksum = orderedIndices.Select((index, p) => index * checksumMultiplier[p]).Sum();
-                if (faceChecksums.Contains(checksum)) continue; //Duplicate face. Do not create
-                if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue;
-                // if you made it passed these to "continue" conditions, then this is a valid new face
-                faceChecksums.Add(checksum);
-
+                if (duplicateFaceCheck)
+                {
+                    // first check to be sure that this is a new face and not a duplicate or a degenerate
+                    var orderedIndices =
+                        new List<int>(faceToVertexIndexList.Select(index => Vertices[index].IndexInList));
+                    orderedIndices.Sort();
+                    while (orderedIndices.Count > checksumMultiplier.Count)
+                        checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
+                    var checksum = orderedIndices.Select((index, p) => index * checksumMultiplier[p]).Sum();
+                    if (faceChecksums.Contains(checksum)) continue; //Duplicate face. Do not create
+                    if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue;
+                    // if you made it passed these to "continue" conditions, then this is a valid new face
+                    faceChecksums.Add(checksum);
+                }
                 var faceVertices =
                     faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToList();
                 bool reverseVertexOrder;
@@ -579,7 +586,6 @@ namespace TVGL
             for (var i = 0; i < NumberOfVertices; i++)
                 Vertices[i] = new Vertex(listOfVertices[i], i);
             //Set the checksum
-            VertexCheckSumMultiplier = (int)Math.Pow(10, (int)Math.Floor(Math.Log10(Vertices.Length)) + 1);
         }
 
         #endregion
@@ -702,22 +708,8 @@ namespace TVGL
         internal void UpdateAllEdgeCheckSums()
         {
             foreach (var edge in Edges)
-                SetEdgeChecksum(edge);
+                SetAndGetEdgeChecksum(edge);
         }
-
-        internal long SetEdgeChecksum(Edge edge)
-        {
-            var checksum = SetEdgeChecksum(edge.From, edge.To);
-            edge.EdgeReference = checksum;
-            return checksum;
-        }
-
-        internal long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
-        {
-            return SetEdgeChecksum(fromVertex, toVertex, this.VertexCheckSumMultiplier);
-        }
-
-
         #endregion
 
         #region Faces
@@ -820,7 +812,7 @@ namespace TVGL
             for (var i = 0; i < NumberOfEdges; i++)
                 newEdges[i] = Edges[i];
             newEdges[NumberOfEdges] = newEdge;
-            if (newEdge.EdgeReference == null) SetEdgeChecksum(newEdge);
+            if (newEdge.EdgeReference == null) SetAndGetEdgeChecksum(newEdge);
             newEdge.IndexInList = NumberOfEdges;
             Edges = newEdges;
             NumberOfEdges++;
@@ -835,7 +827,7 @@ namespace TVGL
             for (var i = 0; i < numToAdd; i++)
             {
                 newEdges[NumberOfEdges + i] = edgesToAdd[i];
-                if (newEdges[NumberOfEdges + i].EdgeReference == null) SetEdgeChecksum(newEdges[NumberOfEdges + i]);
+                if (newEdges[NumberOfEdges + i].EdgeReference == null) SetAndGetEdgeChecksum(newEdges[NumberOfEdges + i]);
                 newEdges[NumberOfEdges + i].IndexInList = NumberOfEdges;
             }
             Edges = newEdges;
@@ -995,6 +987,5 @@ namespace TVGL
                 foreach (var primitive in Primitives)
                     primitive.Transform(transformMatrix);
         }
-
     }
 }

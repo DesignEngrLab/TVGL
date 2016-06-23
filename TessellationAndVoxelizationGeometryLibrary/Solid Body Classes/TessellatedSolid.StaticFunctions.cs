@@ -4,7 +4,7 @@
 // Created          : 02-27-2015
 //
 // Last Modified By : Matt Campbell
-// Last Modified On : 03-07-2015
+// Last Modified On : 06-21-2015
 // ***********************************************************************
 // <copyright file="TessellatedSolid.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
@@ -26,82 +26,17 @@ namespace TVGL
     /// </summary>
     /// <tags>help</tags>
     /// <remarks>
-    ///     This is the currently the <strong>main</strong> class within TVGL all filetypes are read in as a TessellatedSolid,
-    ///     and
-    ///     all interesting operations work on the TessellatedSolid.
+    ///     This partial class file is focused on static functions that relate to Tessellated Solid.
     /// </remarks>
     public partial class TessellatedSolid
     {
-        internal static bool ContainsDuplicateIndices(List<int> orderedIndices)
+        private static bool ContainsDuplicateIndices(List<int> orderedIndices)
         {
             for (var i = 0; i < orderedIndices.Count - 1; i++)
                 if (orderedIndices[i] == orderedIndices[i + 1]) return true;
             return false;
         }
-
-        private static Edge[] MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices,
-            int vertexCheckSumMultiplier)
-        {
-            var partlyDefinedEdgeDictionary = new Dictionary<long, Edge>();
-            var alreadyDefinedEdges = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
-            var overUsedEdgesDictionary = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
-            foreach (var face in faces)
-            {
-                var lastIndex = face.Vertices.Count - 1;
-                for (var j = 0; j <= lastIndex; j++)
-                {
-                    var fromVertex = face.Vertices[j];
-                    var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
-                    var checksum = SetEdgeChecksum(fromVertex, toVertex, vertexCheckSumMultiplier);
-
-                    if (overUsedEdgesDictionary.ContainsKey(checksum))
-                        overUsedEdgesDictionary[checksum].Item2.Add(face);
-                    else if (alreadyDefinedEdges.ContainsKey(checksum))
-                    {
-                        var edgeEntry = alreadyDefinedEdges[checksum];
-                        edgeEntry.Item2.Add(face);
-                        overUsedEdgesDictionary.Add(checksum, edgeEntry);
-                        alreadyDefinedEdges.Remove(checksum);
-                    }
-                    else if (partlyDefinedEdgeDictionary.ContainsKey(checksum))
-                    {
-                        //Finish creating edge.
-                        var edge = partlyDefinedEdgeDictionary[checksum];
-                        alreadyDefinedEdges.Add(checksum, new Tuple<Edge, List<PolygonalFace>>(edge,
-                            new List<PolygonalFace> { edge.OwnedFace, face }));
-                        partlyDefinedEdgeDictionary.Remove(checksum);
-                    }
-                    else // this edge doesn't already exist.
-                    {
-                        var edge = new Edge(fromVertex, toVertex, face, null, false, checksum);
-                        partlyDefinedEdgeDictionary.Add(checksum, edge);
-                    }
-                }
-            }
-            var goodEdgeEntries = alreadyDefinedEdges.Values.ToList();
-            goodEdgeEntries.AddRange(TessellationError.TeaseApartOverUsedEdges(overUsedEdgesDictionary.Values));
-            foreach (var entry in goodEdgeEntries)
-            {
-                //stitch together edges and faces. Note, the first face is already attached to the edge, due to the edge constructor
-                //above
-                var edge = entry.Item1;
-                var ownedFace = entry.Item2[0];
-                var otherFace = entry.Item2[1];
-                // grabbing the neighbor's normal (in the next 2 lines) should only happen if the original
-                // face has no area (collapsed to a line).
-                if (otherFace.Normal.Contains(double.NaN)) otherFace.Normal = (double[])ownedFace.Normal.Clone();
-                if (ownedFace.Normal.Contains(double.NaN)) ownedFace.Normal = (double[])otherFace.Normal.Clone();
-                edge.OtherFace = otherFace;
-                otherFace.AddEdge(edge);
-                if (doublyLinkToVertices)
-                {
-                    edge.To.Edges.Add(edge);
-                    edge.From.Edges.Add(edge);
-                }
-            }
-            return goodEdgeEntries.Select(entry => entry.Item1).ToArray();
-        }
-
+        #region Volume, Center and Surface Area
         /// <summary>
         /// Defines the center, the volume and the surface area.
         /// </summary>
@@ -109,9 +44,76 @@ namespace TVGL
             out double volume, out double surfaceArea)
         {
             surfaceArea = faces.Sum(face => face.Area);
-            volume = MiscFunctions.Volume(faces, out center);
+            volume = CalculateVolume(faces, out center);
         }
 
+        /// <summary>
+        /// Find the volume of a tesselated solid with a slower method. 
+        /// This method could be exteded to find partial volumes of a solid (e.g. volume between two planes)
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <returns></returns>
+        private static double VolumeViaAreaDecomposition(TessellatedSolid ts)
+        {
+            var normal = new[] { 1.0, 0.0, 0.0 }; //Direction is irrellevant
+            var stepSize = 0.01;
+            var volume = 0.0;
+            var areas = AreaDecomposition.Run(ts, normal, stepSize);
+            //Trapezoidal approximation. This should be accurate since the lines betweens data points are linear
+            for (var i = 1; i < areas.Count; i++)
+            {
+                var deltaX = areas[i][0] - areas[i - 1][0];
+                var deltaY = areas[i][1] + areas[i - 1][1];
+                if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
+                volume = volume + .5 * deltaY * deltaX;
+            }
+            return volume;
+        }
+
+        /// <summary>
+        /// Find the volume of a tesselated solid.
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="center"></param>
+        /// <returns></returns>
+        public static double CalculateVolume(IList<PolygonalFace> faces, out double[] center)
+        {
+            double oldVolume;
+            var volume = 0.0;
+            var iterations = 0;
+            center = new double[3];
+            var oldCenter1 = new double[3];
+            var oldCenter2 = new double[3];
+            do
+            {
+                oldVolume = volume;
+                oldCenter2[0] = oldCenter1[0]; oldCenter2[1] = oldCenter1[1]; oldCenter2[2] = oldCenter1[2];
+                oldCenter1[0] = center[0]; oldCenter1[1] = center[1]; oldCenter1[2] = center[2];
+                volume = 0;
+                center[0] = 0.0; center[1] = 0.0; center[2] = 0.0;
+                foreach (var face in faces)
+                {
+                    if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
+                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1))) / 3;
+                    // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
+                    // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
+                    // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
+                    // on the volume.
+                    volume += tetrahedronVolume;
+                    center[0] += (oldCenter1[0] + face.Vertices[0].X + face.Vertices[1].X + face.Vertices[2].X) * tetrahedronVolume / 4;
+                    center[1] += (oldCenter1[1] + face.Vertices[0].Y + face.Vertices[1].Y + face.Vertices[2].Y) * tetrahedronVolume / 4;
+                    center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
+                    // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
+                }
+                if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2).divide(2);
+                else center = center.divide(volume);
+                iterations++;
+            } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && iterations <= 20);
+            return volume;
+        }
+        #endregion
+
+        #region Define Inertia Tensor
         const double oneSixtieth = 1.0 / 60.0;
 
         private static double[,] DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, double[] Center, double Volume)
@@ -161,7 +163,7 @@ namespace TVGL
                 StarMath.makeIdentity(3).multiply(matrixCprime[0, 0] + matrixCprime[1, 1] + matrixCprime[2, 2]);
             return result.subtract(matrixCprime);
         }
-
+        #endregion
 
         private static void RemoveReferencesToVertex(Vertex vertex)
         {
@@ -176,53 +178,5 @@ namespace TVGL
                 if (vertex == edge.From) edge.From = null;
             }
         }
-
-        internal static long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex, int VertexCheckSumMultiplier)
-        {
-            var fromIndex = fromVertex.IndexInList;
-            var toIndex = toVertex.IndexInList;
-            if (fromIndex == -1 || toIndex == -1) return -1;
-            //  if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
-            return fromIndex < toIndex
-                ? fromIndex + VertexCheckSumMultiplier * toIndex
-                : toIndex + VertexCheckSumMultiplier * fromIndex;
-        }
-
-
-        public static void Transform(IEnumerable<Vertex> Vertices, double[,] transformMatrix)
-        {
-            double[] tempCoord;
-            foreach (var vert in Vertices)
-            {
-                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
-                vert.Position[0] = tempCoord[0];
-                vert.Position[1] = tempCoord[1];
-                vert.Position[2] = tempCoord[2];
-            }
-            /*     tempCoord = transformMatrix.multiply(new[] {XMin, YMin, ZMin, 1});
-                 XMin = tempCoord[0];
-                 YMin = tempCoord[1];
-                 ZMin = tempCoord[2];
-
-                 tempCoord = transformMatrix.multiply(new[] {XMax, YMax, ZMax, 1});
-                 XMax = tempCoord[0];
-                 YMax = tempCoord[1];
-                 ZMax = tempCoord[2];
-                 Center = transformMatrix.multiply(new[] {Center[0], Center[1], Center[2], 1});
-                 // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
-                 if (_inertiaTensor != null)
-                 {
-                     var rotMatrix = new double[3, 3];
-                     for (int i = 0; i < 3; i++)
-                         for (int j = 0; j < 3; j++)
-                             rotMatrix[i, j] = transformMatrix[i, j];
-                     _inertiaTensor = rotMatrix.multiply(_inertiaTensor);
-                 }
-                 if (Primitives != null)
-                     foreach (var primitive in Primitives)
-                         primitive.Transform(transformMatrix);
-         */
-        }
-
     }
 }

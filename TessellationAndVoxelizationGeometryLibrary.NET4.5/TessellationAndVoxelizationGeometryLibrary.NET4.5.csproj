@@ -168,6 +168,12 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TessellatedSolid.cs">
       <Link>Solid Body Classes\TessellatedSolid.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TessellatedSolid.StaticFunctions.cs">
+      <Link>Solid Body Classes\TessellatedSolid.StaticFunctions.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TVGLConvexHull.cs">
+      <Link>Solid Body Classes\TVGLConvexHull.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Vertex.cs">
       <Link>Solid Body Classes\Vertex.cs</Link>
     </Compile>
@@ -175,6 +181,7 @@
       <Link>Verbosity.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Solid Body Classes\TessellatedSolid.EdgeInitialization.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
