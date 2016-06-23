@@ -604,7 +604,7 @@ namespace TVGL
         /// </summary>
         private void CreateConvexHull()
         {
-            ConvexHull = new TVGLConvexHull(Vertices);
+            ConvexHull = new TVGLConvexHull(Vertices, Volume);
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartofConvexHull = true;
             foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartofConvexHull)))

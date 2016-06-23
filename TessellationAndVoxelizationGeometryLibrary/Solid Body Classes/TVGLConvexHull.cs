@@ -30,50 +30,91 @@ namespace TVGL
         ///     Gets the convex hull, given a list of vertices
         /// </summary>
         /// <param name="allVertices"></param>
-        public TVGLConvexHull(IList<Vertex> allVertices)
+        /// <param name="solidVolume"></param>
+        public TVGLConvexHull(IList<Vertex> allVertices, double solidVolume)
         {
-            var convexHull = ConvexHull.Create(allVertices);
-            Vertices = convexHull.Points.ToArray();
-            var numCvxFaces = convexHull.Faces.Count();
-            if (numCvxFaces < 3)
+            var iteration = 0;
+            do
             {
-                var config = new ConvexHullComputationConfig
+                ConvexHullComputationConfig config = null;
+                if (iteration > 0)
                 {
-                    PointTranslationType = PointTranslationType.TranslateInternal,
-                    PlaneDistanceTolerance = Constants.ConvexHullRadiusForRobustness,
-                    // the translation radius should be lower than PlaneDistanceTolerance / 2
-                    PointTranslationGenerator =
-                        ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness)
-                };
-                convexHull = ConvexHull.Create(allVertices, config);
+                    config = new ConvexHullComputationConfig
+                    {
+                        PointTranslationType = PointTranslationType.TranslateInternal,
+                        PlaneDistanceTolerance = Constants.ConvexHullRadiusForRobustness,
+                        // the translation radius should be lower than PlaneDistanceTolerance / 2
+                        PointTranslationGenerator =
+                            ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness)
+                    };
+                }
+                var convexHull = ConvexHull.Create(allVertices, config);
                 Vertices = convexHull.Points.ToArray();
-                numCvxFaces = convexHull.Faces.Count();
-                if (numCvxFaces < 3)
+                var convexHullFaceList = new List<PolygonalFace>();
+                var checkSumMultipliers = new long[3];
+                for (var i = 0; i < 3; i++)
+                    checkSumMultipliers[i] = (long) Math.Pow(allVertices.Count, i);
+                var alreadyCreatedFaces = new HashSet<long>();
+                foreach (var cvxFace in convexHull.Faces)
                 {
-                    Succeeded = false;
-                    return;
+                    var vertices = cvxFace.Vertices;
+                    var orderedIndices = vertices.Select(v => v.IndexInList).ToList();
+                    orderedIndices.Sort();
+                    var checksum = orderedIndices.Select((t, j) => t*checkSumMultipliers[j]).Sum();
+                    if (alreadyCreatedFaces.Contains(checksum)) continue;
+                    alreadyCreatedFaces.Add(checksum);
+                    convexHullFaceList.Add(new PolygonalFace(vertices, cvxFace.Normal, false));
+                }
+                //ToDo: It seems sometimes the edges angles are undefined because of either incorrect ordering of vertices or incorrect normals.
+                Faces = convexHullFaceList.ToArray();
+                Edges = MakeEdges(Faces, Vertices);
+                TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+                iteration++;
+            } while ((Volume < solidVolume || double.IsNaN(Volume)) && iteration < 2);
+            if (solidVolume < 0.1)
+            {
+                //This solid has a small volume. Relax the constraint.
+                Succeeded = (Volume > solidVolume || Volume.IsPracticallySame(solidVolume, 0.000001));
+            }
+            else
+            {
+                //Use a loose tolerance based on the size of the solid, since accuracy is not terribly important
+                Succeeded = (Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume/1000));
+            }
+
+            if (!Succeeded) throw new Exception("Error in implementation of ConvexHull3D or Volume Calculation");
+        }
+
+        private static Edge[] MakeEdges(IEnumerable<PolygonalFace> faces, IList<Vertex> vertices)
+        {
+            var numVertices = vertices.Count;
+            var vertexIndices = new Dictionary<Vertex, int>();
+            for (var i = 0; i < vertices.Count; i++)
+                vertexIndices.Add(vertices[i], i);
+            var edgeDictionary = new Dictionary<long, Edge>();
+            foreach (var face in faces)
+            {
+                var lastIndex = face.Vertices.Count - 1;
+                for (var j = 0; j <= lastIndex; j++)
+                {
+                    var fromVertex = face.Vertices[j];
+                    var fromVertexIndex = vertexIndices[fromVertex];
+                    var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
+                    var toVertexIndex = vertexIndices[toVertex];
+                    long checksum = fromVertexIndex < toVertexIndex
+                        ? fromVertexIndex + numVertices * toVertexIndex
+                        : toVertexIndex + numVertices * fromVertexIndex;
+
+                    if (edgeDictionary.ContainsKey(checksum))
+                    {
+                        var edge = edgeDictionary[checksum];
+                        edge.OtherFace = face;
+                        face.AddEdge(edge);
+                    }
+                    else edgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, face, null, false, checksum));
                 }
             }
-            var convexHullFaceList = new List<PolygonalFace>();
-            var checkSumMultipliers = new long[3];
-            for (var i = 0; i < 3; i++)
-                checkSumMultipliers[i] = (long)Math.Pow(allVertices.Count, i);
-            foreach (var cvxFace in convexHull.Faces)
-            {
-                var verts = cvxFace.Vertices;
-                var v1 = verts[1].Position.subtract(verts[0].Position);
-                var v2 = verts[2].Position.subtract(verts[0].Position);
-                convexHullFaceList.Add(v1.crossProduct(v2).dotProduct(cvxFace.Normal) < 0
-                    ? new PolygonalFace(verts.Reverse(), cvxFace.Normal, false)
-                    : new PolygonalFace(verts, cvxFace.Normal, false));
-            }
-            Faces = convexHullFaceList.ToArray();
-            List<Edge> partlyDefinedEdges;
-            List<Tuple<Edge, List<PolygonalFace>>> overDefinedEdges;
-            var edgeList = TessellatedSolid.MakeEdges(Faces, false, out overDefinedEdges, out partlyDefinedEdges);
-            Succeeded = !partlyDefinedEdges.Any() && !overDefinedEdges.Any();
-            Edges = TessellatedSolid.CompleteEdgeArray(edgeList);
-            TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+            return edgeDictionary.Values.ToArray();
         }
 
         #region Public Properties
