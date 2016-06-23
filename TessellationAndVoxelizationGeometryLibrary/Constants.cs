@@ -35,11 +35,12 @@ namespace TVGL
         internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
         internal const long CubeRootOfLongMaxValue = 2097151; //2 million
         /// <summary>
-        ///     The checksum multiplier to be used for face and edge references.
+        /// VertexCheckSumMultiplier is the checksum multiplier to be used for face and edge references.
         /// Since the edges connect two vertices the maximum value this can be is
         /// the square root of the max. value of a long (see above). However, during
         /// debugging, it is nice to see the digits of the vertex indices embedded in 
         /// check, so when debugging, this is reducing to 1 billion instead of 3 billion.
+        /// This way if you are connecting vertex 1234 with 5678, you will get a checksum = 5678000001234
         /// </summary>
 #if DEBUG
         public const long VertexCheckSumMultiplier = 1000000000;

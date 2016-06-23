@@ -111,7 +111,7 @@ namespace TVGL
             if (_volume > 0) return _volume;
             //Else
             double[] center;
-            _volume = MiscFunctions.Volume(AllFaces, out center);
+            _volume = TessellatedSolid.CalculateVolume(AllFaces, out center);
             return _volume;
         }
 

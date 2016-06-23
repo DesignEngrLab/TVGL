@@ -181,6 +181,7 @@
       <Link>Verbosity.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Solid Body Classes\TessellatedSolid.EdgeInitialization.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">

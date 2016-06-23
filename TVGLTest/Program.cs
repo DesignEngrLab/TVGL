@@ -14,17 +14,17 @@ namespace TVGL_Test
     {
         private static readonly string[] FileNames = {
             "../../../TestFiles/DxTopLevel.shell",
-        //"../../../TestFiles/Beam_Boss.STL",
-        //"../../../TestFiles/bigmotor.amf",
-        //"../../../TestFiles/DxTopLevelPart2.shell",
-        //"../../../TestFiles/Candy.shell",
-        //"../../../TestFiles/amf_Cube.amf",
-        //"../../../TestFiles/train.3mf",
-        //"../../../TestFiles/Castle.3mf",
-        //"../../../TestFiles/Raspberry Pi Case.3mf",
-      // "../../../TestFiles/shark.ply",
-        //"../../../TestFiles/bunnySmall.ply",
-        //"../../../TestFiles/cube.ply",
+        "../../../TestFiles/Beam_Boss.STL",
+        "../../../TestFiles/bigmotor.amf",
+        "../../../TestFiles/DxTopLevelPart2.shell",
+        "../../../TestFiles/Candy.shell",
+        "../../../TestFiles/amf_Cube.amf",
+        "../../../TestFiles/train.3mf",
+        "../../../TestFiles/Castle.3mf",
+        "../../../TestFiles/Raspberry Pi Case.3mf",
+       "../../../TestFiles/shark.ply",
+        "../../../TestFiles/bunnySmall.ply",
+        "../../../TestFiles/cube.ply",
         "../../../TestFiles/airplane.ply",
         "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
         "../../../TestFiles/Tetrahedron.STL",
@@ -74,9 +74,9 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles();
-            for (var i = 0; i < FileNames.Count(); i++)
+            for (var i = 0; i < fileNames.Count(); i++)
             {
-                var filename = FileNames[i];//.FullName;
+                var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
@@ -85,7 +85,7 @@ namespace TVGL_Test
                 //ts[0].SolidColor = new Color(KnownColors.Salmon);
                 //using (fileStream = File.Create(filename + ".amf"))
                 //    IO.Save(fileStream, ts, FileType.AMF);
-                TVGL.Presenter.ShowAndHang(ts);
+                TVGL.Presenter.Show(ts);
                 //TVGL.Presenter.Show(ts[1]);
                 // TestSimplify(ts[1]);
             }

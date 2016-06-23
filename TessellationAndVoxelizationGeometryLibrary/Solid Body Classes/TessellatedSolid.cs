@@ -352,18 +352,9 @@ namespace TVGL
 
         private void CompleteInitiation()
         {
-            List<Tuple<Edge, List<PolygonalFace>>> overDefinedEdges;
-            List<Edge> singleSidedEdges, moreSingleSidedEdges;
-            var edgeList = MakeEdges(Faces, true, out overDefinedEdges, out singleSidedEdges);
-            edgeList.AddRange(TeaseApartOverUsedEdges(overDefinedEdges, out moreSingleSidedEdges));
-            singleSidedEdges.AddRange(moreSingleSidedEdges);
             List<PolygonalFace> newFaces;
             List<Vertex> removedVertices;
-            foreach (var tuple in edgeList)
-                tuple.Item1.DoublyLinkVertices();
-            edgeList.AddRange(MediateSingleSidedEdges(singleSidedEdges, out newFaces, out removedVertices));
-            Edges = CompleteEdgeArray(edgeList);
-            NumberOfEdges = Edges.Length;
+            MakeEdges(out newFaces, out removedVertices);
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
             CreateConvexHull();
@@ -380,6 +371,7 @@ namespace TVGL
                 v.DefineVertexCurvature();
             TessellationError.CheckModelIntegrity(this);
         }
+
 
         #endregion
 
