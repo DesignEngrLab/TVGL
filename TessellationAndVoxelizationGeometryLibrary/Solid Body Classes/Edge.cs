@@ -57,7 +57,7 @@ namespace TVGL
         /// <param name="edgeReference">The edge reference.</param>
         /// <exception cref="Exception"></exception>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            bool doublyLinkedVertices = true, long edgeReference = 0)
+            bool doublyLinkedVertices, long edgeReference)
         {
             From = fromVertex;
             To = toVertex;

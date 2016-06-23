@@ -32,6 +32,20 @@ namespace TVGL
     {
         internal const double TwoPi = 2 * Math.PI;
         internal const double HalfPi = Math.PI / 2;
+        internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
+        internal const long CubeRootOfLongMaxValue = 2097151; //2 million
+        /// <summary>
+        ///     The checksum multiplier to be used for face and edge references.
+        /// Since the edges connect two vertices the maximum value this can be is
+        /// the square root of the max. value of a long (see above). However, during
+        /// debugging, it is nice to see the digits of the vertex indices embedded in 
+        /// check, so when debugging, this is reducing to 1 billion instead of 3 billion.
+        /// </summary>
+#if DEBUG
+        public const long VertexCheckSumMultiplier = 1000000000;
+#else
+        public const long VertexCheckSumMultiplier = SquareRootOfLongMaxValue;
+#endif
         /// <summary>
         ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
         /// </summary>

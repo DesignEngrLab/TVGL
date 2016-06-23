@@ -70,7 +70,7 @@ namespace TVGL
             Faces = convexHullFaceList.ToArray();
             List<Edge> partlyDefinedEdges;
             List<Tuple<Edge, List<PolygonalFace>>> overDefinedEdges;
-            var edgeList = TessellatedSolid.MakeEdges(Faces, false, allVertices.Count, out overDefinedEdges, out partlyDefinedEdges);
+            var edgeList = TessellatedSolid.MakeEdges(Faces, false, out overDefinedEdges, out partlyDefinedEdges);
             Succeeded = !partlyDefinedEdges.Any() && !overDefinedEdges.Any();
             Edges = TessellatedSolid.CompleteEdgeArray(edgeList);
             TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);

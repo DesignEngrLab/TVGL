@@ -40,8 +40,7 @@ namespace TVGL
         }
         #region Make Edges
         internal static List<Tuple<Edge, List<PolygonalFace>>> MakeEdges(IList<PolygonalFace> faces, bool doublyLinkToVertices,
-            int vertexCheckSumMultiplier, out List<Tuple<Edge, List<PolygonalFace>>> overDefinedEdges,
-            out List<Edge> partlyDefinedEdges)
+            out List<Tuple<Edge, List<PolygonalFace>>> overDefinedEdges, out List<Edge> partlyDefinedEdges)
         {
             var partlyDefinedEdgeDictionary = new Dictionary<long, Edge>();
             var alreadyDefinedEdges = new Dictionary<long, Tuple<Edge, List<PolygonalFace>>>();
@@ -53,7 +52,7 @@ namespace TVGL
                 {
                     var fromVertex = face.Vertices[j];
                     var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
-                    var checksum = SetEdgeChecksum(fromVertex, toVertex, vertexCheckSumMultiplier);
+                    var checksum = GetEdgeChecksum(fromVertex, toVertex);
 
                     if (overDefinedEdgesDictionary.ContainsKey(checksum))
                         overDefinedEdgesDictionary[checksum].Item2.Add(face);
@@ -84,7 +83,7 @@ namespace TVGL
             return alreadyDefinedEdges.Values.ToList();
         }
         /// <summary>
-        /// Teases the apart over used edges. By taking in the edges with more than two faces (the over-used edges) a list is return of newly defined edges.
+        /// Teases apart over used edges. By taking in the edges with more than two faces (the over-used edges) a list is return of newly defined edges.
         /// </summary>
         /// <param name="values">The values.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
@@ -127,11 +126,11 @@ namespace TVGL
                         candidateFaces.Remove(bestMatch);
                         if (TessellatedSolid.FaceShouldBeOwnedFace(edge, refFace))
                             newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                                new Edge(edge.From, edge.To, refFace, bestMatch, false),
+                                new Edge(edge.From, edge.To, refFace, bestMatch, false, edge.EdgeReference),
                                 new List<PolygonalFace> { refFace, bestMatch }));
                         else
                             newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                                new Edge(edge.From, edge.To, bestMatch, refFace, false),
+                                new Edge(edge.From, edge.To, bestMatch, refFace, false, edge.EdgeReference),
                                 new List<PolygonalFace> { bestMatch, refFace }));
                     }
                     else
@@ -151,8 +150,8 @@ namespace TVGL
                 oldEdge.To.Edges.Remove(entry.Item1);   //so, here we remove it from the vertex references
                 foreach (var face in entry.Item2)
                     moreSingleSidedEdges.Add(FaceShouldBeOwnedFace(oldEdge, face)
-                            ? new Edge(oldEdge.From, oldEdge.To, face, null, false)
-                            : new Edge(oldEdge.To, oldEdge.From, face, null, false));
+                            ? new Edge(oldEdge.From, oldEdge.To, face, null, false, oldEdge.EdgeReference)
+                            : new Edge(oldEdge.To, oldEdge.From, face, null, false, oldEdge.EdgeReference));
             }
             return newListOfGoodEdges;
         }
@@ -173,46 +172,30 @@ namespace TVGL
         /// <param name="partlyDefinedEdgesIEnumerable">The partly defined edges i enumerable.</param>
         /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
         private static IEnumerable<Tuple<Edge, List<PolygonalFace>>> MediateSingleSidedEdges(List<Edge> singleSidedEdges,
-            out List<PolygonalFace> newFaces, out List<Vertex> removedVertices)
+            out List<PolygonalFace> newFaces, out ICollection<Vertex> removedVertices)
         {
-            newFaces=new List<PolygonalFace>();
-            removedVertices = new List<Vertex>();
             var newListOfGoodEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
-            List<Edge> remainingEdges;
+            List<Edge> remainingEdges, moreRemainingEdges;
             var loops = OrganizeIntoLoops(singleSidedEdges, out remainingEdges);
-            for (var i = 0; i < loops.Count(); i++)
-            {
-                //if a simple triangle, create a new face from vertices
-                if (loops[i].Item1.Count == 3)
-                {
-                    var newFace = new PolygonalFace(loops[i].Item1.Select(e=>e.To),loops[i].Item2);
-                    newFaces.Add(newFace);
-                }
-                //Else, use the triangulate function
-                else 
-                {
-                    //First, get an average normal from all vertices, assuming CCW order.
-                    List<List<Vertex[]>> triangleFaceList;
-                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>>
-                    { loops[i].Item1.Select(e => e.To).ToList() }, loops[i].Item2, out triangleFaceList);
-                    foreach (var triangle in triangles)
-                    {
-                        var newFace = new PolygonalFace(triangle, loops[i].Item2);
-                        newFaces.Add(newFace);
-                    }
-                }
-            }
-            if (newFaces.Count == 1) Message.output("1 missing face was fixed", 3);
-            if (newFaces.Count > 1) Message.output(newFaces.Count + " missing faces were fixed", 3);
-            return LinkUpNewFaces(newFaces, ts, ts.Errors.SingledSidedEdges);
-        
-        // now do a pairwise check with all entries in the partly defined edges
-        var numRemaining = remainingEdges.Count;
+            newListOfGoodEdges.AddRange(CreateMissingEdgesAndFaces(loops, out newFaces, out moreRemainingEdges));
+            remainingEdges.AddRange(moreRemainingEdges);
+            newListOfGoodEdges.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out removedVertices));
+
+            return newListOfGoodEdges;
+        }
+
+
+        private static IEnumerable<Tuple<Edge, List<PolygonalFace>>> MatchUpRemainingSingleSidedEdge(List<Edge> singleSidedEdges, out ICollection<Vertex> removedVertices)
+        {
+            removedVertices = new HashSet<Vertex>();
+            var completedEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
+            // now do a pairwise check with all entries in the partly defined edges
+            var numRemaining = singleSidedEdges.Count;
             var scoresAndPairs = new SortedDictionary<double, int[]>(new NoEqualSort());
             for (int i = 0; i < numRemaining; i++)
                 for (int j = i + 1; j < numRemaining; j++)
                 {
-                    var score = GetEdgeSimilarityScore(remainingEdges[i], remainingEdges[j]);
+                    var score = GetEdgeSimilarityScore(singleSidedEdges[i], singleSidedEdges[j]);
                     if (score <= Constants.MaxAllowableEdgeSimilarityScore)
                         scoresAndPairs.Add(score, new[] { i, j });
                 }
@@ -223,15 +206,201 @@ namespace TVGL
                 if (alreadyMatchedIndices.Contains(score.Value[0]) || alreadyMatchedIndices.Contains(score.Value[1]))
                     continue;
                 alreadyMatchedIndices.Add(score.Value[0]);
+                var keepEdge = singleSidedEdges[score.Value[0]];
                 alreadyMatchedIndices.Add(score.Value[1]);
-                newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(singleSidedEdges[score.Value[0]],
-                        new List<PolygonalFace> { singleSidedEdges[score.Value[0]].OwnedFace, singleSidedEdges[score.Value[1]].OwnedFace }));
+                var removeEdge = singleSidedEdges[score.Value[1]];
+                completedEdges.Add(new Tuple<Edge, List<PolygonalFace>>(keepEdge,
+                        new List<PolygonalFace> { keepEdge.OwnedFace, removeEdge.OwnedFace }));
+                
+                if (!removedVertices.Contains(removeEdge.From) && keepEdge.To != removeEdge.From)
+                {
+                    CombineVerticesOfEdge(keepEdge.To, removeEdge.From);
+                    removedVertices.Add(removeEdge.From);
+                }
+                if (!removedVertices.Contains(removeEdge.To) && keepEdge.From != removeEdge.To)
+                {
+                    CombineVerticesOfEdge(keepEdge.From, removeEdge.To);
+                    removedVertices.Add(removeEdge.To);
+                }
             }
-            newFaces = null;
-            removedVertices = null;
-            return newListOfGoodEdges;
+            return completedEdges;
+        }
+        private static void CombineVerticesOfEdge(Vertex keepVertex, Vertex removedVertex)
+        {
+            foreach (var edge in removedVertex.Edges)
+            {
+                keepVertex.Edges.Add(edge);
+                if (edge.To == removedVertex) edge.To = keepVertex;
+                if (edge.From == removedVertex) edge.From = keepVertex;
+            }
+            foreach (var face in removedVertex.Faces)
+            {
+                keepVertex.Faces.Add(face);
+                var index = face.Vertices.IndexOf(removedVertex);
+                face.Vertices[index] = keepVertex;
+            }
+            AdjustPositionOfKeptVertex(keepVertex, removedVertex);
+            foreach (var e in keepVertex.Edges)
+                e.Update();
+            foreach (var f in keepVertex.Faces)
+                f.Update();
         }
 
+        /// <summary>
+        ///     Combines the vertices of edge.
+        /// </summary>
+        /// <param name="edge">The edge.</param>
+        /// <param name="removedVertexOut">The removed vertex out.</param>
+        /// <param name="removedEdge1Out">The removed edge1 out.</param>
+        /// <param name="removedEdge2Out">The removed edge2 out.</param>
+        /// <param name="removedFace1">The removed face1.</param>
+        /// <param name="removedFace2">The removed face2.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool CombineVerticesOfEdge(Edge edge, out Vertex removedVertexOut, out Edge removedEdge1Out,
+            out Edge removedEdge2Out, out PolygonalFace removedFace1, out PolygonalFace removedFace2)
+        {
+            var keepVertex = edge.To; // arbitrarily choose the To as the keep vertex, but this may be swapped below
+            var removedVertex = edge.From; // if the To has some missing faces
+            if (keepVertex == removedVertex)
+            {
+                removedVertexOut = null;
+                removedEdge2Out = removedEdge1Out = null;
+                removedFace1 = removedFace2 = null;
+                return false;
+            }
+            removedFace1 = edge.OwnedFace;
+            removedFace2 = edge.OtherFace;
+            var removedEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(keepVertex, true);
+            var removedEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(keepVertex, true);
+            var keepEdge1 = removedFace1 == null ? null : removedFace1.OtherEdge(removedVertex, true);
+            var keepEdge2 = removedFace2 == null ? null : removedFace2.OtherEdge(removedVertex, true);
+            if (removedEdge1 != null && removedEdge2 != null && (keepEdge1 == null || keepEdge2 == null))
+            { // swap with removed.
+                var tempVertex = keepVertex; keepVertex = removedVertex; removedVertex = tempVertex;
+                var tempEdge = keepEdge1; keepEdge1 = removedEdge1; removedEdge1 = tempEdge;
+                tempEdge = keepEdge2; keepEdge2 = removedEdge2; removedEdge2 = tempEdge;
+            }
+            var otherEdgesOnTheKeepSide =
+            keepVertex.Edges.Where(e => e != edge && e != keepEdge1 && e != keepEdge2).ToList();
+            var otherEdgesOnTheRemoveSide =
+                removedVertex.Edges.Where(e => e != edge && e != removedEdge1 && e != removedEdge2).ToList();
+            if ( // this is a topologically important check. It ensures that the edge is not deleted if
+                 // it serves an important role in ensuring the proper topology of the solid
+                otherEdgesOnTheKeepSide.Select(e => e.OtherVertex(keepVertex))
+                    .Intersect(otherEdgesOnTheRemoveSide.Select(e => e.OtherVertex(removedVertex)))
+                    .Any())
+            {
+                removedVertexOut = null;
+                removedEdge2Out = removedEdge1Out = null;
+                removedFace1 = removedFace2 = null;
+                return false;
+            }
+            // move edges connected to removeVertex to the keepVertex and let keepVertex link back to these edges
+            foreach (var e in otherEdgesOnTheRemoveSide)
+            {
+                keepVertex.Edges.Add(e);
+                if (e.From == removedVertex) e.From = keepVertex;
+                else e.To = keepVertex;
+            }
+            // move faces connected to removeVertex to the keepVertex and let keepVertex link back to these edges.
+            foreach (var face in removedVertex.Faces)
+            {
+                if (face == removedFace1 || face == removedFace2) continue;
+                keepVertex.Faces.Add(face);
+                face.Vertices[face.Vertices.IndexOf(removedVertex)] = keepVertex;
+            }
+            // conversely keepVertex should forget about the edge and the remove faces
+            keepVertex.Edges.Remove(edge);
+            keepVertex.Faces.Remove(removedFace1);
+            keepVertex.Faces.Remove(removedFace2);
+            var farVertex = removedFace1 == null ? null : removedFace1.OtherVertex(edge, true);
+            if (farVertex != null)
+            {
+                farVertex.Edges.Remove(removedEdge1);
+                farVertex.Faces.Remove(removedFace1);
+            }
+            farVertex = removedFace2 == null ? null : removedFace2.OtherVertex(edge, true);
+            if (farVertex != null)
+            {
+                farVertex.Edges.Remove(removedEdge2);
+                farVertex.Faces.Remove(removedFace2);
+            }
+            // for the winged edges (removedEdge1 and removedEdge2) that are removed, connected their faces to 
+            // the new edge
+            // first on the "owned side of edge"
+            var fromFace = removedEdge1 == null ? null
+                : removedEdge1.OwnedFace == removedFace1 ? removedEdge1.OtherFace : removedEdge1.OwnedFace;
+            if (fromFace != null)
+            {
+                var index = fromFace.Edges.IndexOf(removedEdge1);
+                if (index >= 0 && index < fromFace.Edges.Count)
+                    fromFace.Edges[index] = keepEdge1;
+            }
+            if (keepEdge1 != null && keepEdge1.OwnedFace == removedFace1) keepEdge1.OwnedFace = fromFace;
+            else if (keepEdge1 != null) keepEdge1.OtherFace = fromFace;
+            // second on the "other side of edge"
+            fromFace = removedEdge2 == null ? null
+                : removedEdge2.OwnedFace == removedFace2 ? removedEdge2.OtherFace : removedEdge2.OwnedFace;
+            if (fromFace != null)
+            {
+                var index = fromFace.Edges.IndexOf(removedEdge2);
+                if (index >= 0 && index < fromFace.Edges.Count)
+                    fromFace.Edges[index] = keepEdge2;
+            }
+            if (keepEdge2 != null && keepEdge2.OwnedFace == removedFace2) keepEdge2.OwnedFace = fromFace;
+            else if (keepEdge2 != null) keepEdge2.OtherFace = fromFace;
+
+
+            //AdjustPositionOfKeptVertexAverage(keepVertex, removedVertex);
+            AdjustPositionOfKeptVertex(keepVertex, removedVertex);
+            foreach (var e in keepVertex.Edges)
+                e.Update();
+            foreach (var f in keepVertex.Faces)
+                f.Update();
+            removedVertexOut = removedVertex;
+            removedEdge1Out = removedEdge1;
+            removedEdge2Out = removedEdge2;
+            return true;
+        }
+
+
+        /// <summary>
+        ///     Adjusts the position of kept vertex.
+        /// </summary>
+        /// <param name="keepVertex">The keep vertex.</param>
+        /// <param name="removedVertex">The removed vertex.</param>
+        private static void AdjustPositionOfKeptVertex(Vertex keepVertex, Vertex removedVertex)
+        {
+            //average positions
+            var newPosition = keepVertex.Position.add(removedVertex.Position);
+            keepVertex.Position = newPosition.divide(2);
+        }
+
+        /// <summary>
+        ///     Adjusts the position of kept vertex experimental.
+        /// </summary>
+        /// <param name="keepVertex">The keep vertex.</param>
+        /// <param name="removedVertex">The removed vertex.</param>
+        /// <param name="removeFace1">The remove face1.</param>
+        /// <param name="removeFace2">The remove face2.</param>
+        private static void AdjustPositionOfKeptVertexExperimental(Vertex keepVertex, Vertex removedVertex,
+            PolygonalFace removeFace1, PolygonalFace removeFace2)
+        {
+            //average positions
+            var newPosition = keepVertex.Position.add(removedVertex.Position);
+            var radius = keepVertex.Position.subtract(removedVertex.Position).norm2() / 2.0;
+            keepVertex.Position = newPosition.divide(2);
+            var avgNormal = removeFace1.Normal.add(removeFace2.Normal).normalize();
+            var otherVertexAvgDistanceToEdgePlane =
+                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.dotProduct(avgNormal)).Sum() /
+                (keepVertex.Edges.Count - 1);
+            var distanceOfEdgePlane = keepVertex.Position.dotProduct(avgNormal);
+
+            // use a sigmoid function to determine how far out to move the vertex
+            var x = 0.05 * (distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane) / radius;
+            var length = 2 * radius * x / Math.Sqrt(1 + x * x) - radius;
+            keepVertex.Position = keepVertex.Position.add(avgNormal.multiply(length));
+        }
         private static List<Tuple<List<Edge>, double[]>> OrganizeIntoLoops(List<Edge> singleSidedEdges, out List<Edge> remainingEdges)
         {
             remainingEdges = new List<Edge>(singleSidedEdges);
@@ -300,6 +469,60 @@ namespace TVGL
             return listOfLoops;
         }
 
+        private static IEnumerable<Tuple<Edge, List<PolygonalFace>>> CreateMissingEdgesAndFaces(List<Tuple<List<Edge>, double[]>> loops,
+            out List<PolygonalFace> newFaces, out List<Edge> remainingEdges)
+        {
+            var completedEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
+            newFaces = new List<PolygonalFace>();
+            remainingEdges = new List<Edge>();
+            foreach (var tuple in loops)
+            {
+                var edges = tuple.Item1;
+                var normal = tuple.Item2;
+                //if a simple triangle, create a new face from vertices
+                if (edges.Count == 3)
+                {
+                    var newFace = new PolygonalFace(edges.Select(e => e.To), normal);
+                    foreach (var edge in edges)
+                        completedEdges.Add(new Tuple<Edge, List<PolygonalFace>>(edge,
+                            new List<PolygonalFace> { edge.OwnedFace, newFace }));
+                    newFaces.Add(newFace);
+                }
+                //Else, use the triangulate function
+                else
+                {
+                    var edgeDic = edges.ToDictionary(SetAndGetEdgeChecksum);
+                    List<List<Vertex[]>> triangleFaceList;
+                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>>
+                    { edges.Select(e => e.To).ToList() }, normal, out triangleFaceList);
+                    if (triangles.Any())
+                        foreach (var triangle in triangles)
+                        {
+                            var newFace = new PolygonalFace(triangle, normal);
+                            newFaces.Add(newFace);
+                            for (var j = 0; j < 3; j++)
+                            {
+                                var fromVertex = newFace.Vertices[j];
+                                var toVertex = newFace.NextVertexCCW(fromVertex);
+                                var checksum = GetEdgeChecksum(fromVertex, toVertex);
+                                if (edgeDic.ContainsKey(checksum))
+                                {
+                                    //Finish creating edge.
+                                    var edge = edgeDic[checksum];
+                                    completedEdges.Add(new Tuple<Edge, List<PolygonalFace>>(edge,
+                                        new List<PolygonalFace> { edge.OwnedFace, newFace }));
+                                    edgeDic.Remove(checksum);
+                                }
+                                else
+                                    edgeDic.Add(checksum, new Edge(fromVertex, toVertex, newFace, null, false, checksum));
+                            }
+                        }
+                    else remainingEdges.AddRange(edges);
+                }
+            }
+            return completedEdges;
+        }
+
         private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, double[] refEdge, double[] normal)
         {
             var unitRefEdge = refEdge.normalize();
@@ -318,6 +541,8 @@ namespace TVGL
             }
             return bestEdge;
         }
+
+
 
         private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
         {
@@ -433,15 +658,22 @@ namespace TVGL
             }
         }
 
-        internal static long SetEdgeChecksum(Vertex fromVertex, Vertex toVertex, int VertexCheckSumMultiplier)
+        internal static long SetAndGetEdgeChecksum(Edge edge)
+        {
+            var checksum = GetEdgeChecksum(edge.From, edge.To);
+            edge.EdgeReference = checksum;
+            return checksum;
+        }
+
+        internal static long GetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
         {
             var fromIndex = fromVertex.IndexInList;
             var toIndex = toVertex.IndexInList;
             if (fromIndex == -1 || toIndex == -1) return -1;
-            //  if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
+            if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
             return fromIndex < toIndex
-                ? fromIndex + VertexCheckSumMultiplier * toIndex
-                : toIndex + VertexCheckSumMultiplier * fromIndex;
+                ? fromIndex + Constants.VertexCheckSumMultiplier * toIndex
+                : toIndex + Constants.VertexCheckSumMultiplier * fromIndex;
         }
 
 
