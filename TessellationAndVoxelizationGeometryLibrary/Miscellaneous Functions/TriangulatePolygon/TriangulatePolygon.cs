@@ -102,9 +102,6 @@ namespace TVGL
             // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
             // 5: If isPositive == null, then 
 
-            //Create return variables
-            var triangleFaceList = new List<List<Vertex[]>>();
-            groupsOfLoops = new List<List<int>>();
 
             //Check incomining lists
             if (isPositive != null && points2D.Count != isPositive.Length)
@@ -113,10 +110,18 @@ namespace TVGL
             }
             var successful = false;
             var attempts = 1;
+            //Create return variables
+            var triangleFaceList = new List<List<Vertex[]>>();
+            groupsOfLoops = new List<List<int>>();
             while (successful == false && attempts < 4)
             {
                 try
                 {
+                    //Reset return variables
+                    triangleFaceList = new List<List<Vertex[]>>();
+                    groupsOfLoops = new List<List<int>>();
+                    var numTriangles = 0;
+
                     #region Preprocessing
                     //Preprocessing
                     // 1) For each loop in points2D
@@ -754,6 +759,7 @@ namespace TVGL
                         foreach (var monotonePolygon2 in monotonePolygons)
                             newTriangles.AddRange(Triangulate(monotonePolygon2));
                         triangleFaceList.Add(newTriangles);
+                        numTriangles += newTriangles.Count;
                         groupsOfLoops.Add(group);
                         #endregion
                     }
@@ -762,7 +768,7 @@ namespace TVGL
                     //The addition of negative loops makes this: triangles = (number of vertices) + 2*(number of negative loops) - 2
                     //The most general form (by inspection) is then: triangles = (number of vertices) + 2*(number of negative loops) - 2*(number of positive loops)
                     //You could individually solve the equation for each positive loop, but simpler just to use most general form.
-                    if (triangleFaceList.Last().Count != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
+                    if (numTriangles != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
                     {
                         throw new Exception("Incorrect number of triangles created in triangulate function");
                     }
