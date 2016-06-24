@@ -66,8 +66,7 @@ namespace TVGL
             _otherFace = otherFace;
             if (ownedFace != null) ownedFace.AddEdge(this);
             if (otherFace != null) otherFace.AddEdge(this);
-            if (OwnedFace != null && OtherFace != null)
-                DefineInternalEdgeAngle();
+            DefineInternalEdgeAngle();
         }
 
         /// <summary>

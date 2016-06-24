@@ -27,11 +27,21 @@ namespace TVGL
     public class TVGLConvexHull
     {
         /// <summary>
-        ///     Gets the convex hull, given a list of vertices
+        /// Initializes a new instance of the <see cref="TVGLConvexHull"/> class.
         /// </summary>
-        /// <param name="allVertices"></param>
-        /// <param name="solidVolume"></param>
-        public TVGLConvexHull(IList<Vertex> allVertices, double solidVolume)
+        /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
+        public TVGLConvexHull(TessellatedSolid ts) : this(ts.Vertices, ts.Volume)
+        {
+        }
+
+        /// <summary>
+        /// Gets the convex hull, given a list of vertices
+        /// </summary>
+        /// <param name="allVertices">All vertices.</param>
+        /// <param name="solidVolume">The volume of the tessellated solid, if known. This represents
+        /// the lower bound on the convex hull, which is used in a check to finding the convex hull.</param>
+        /// <exception cref="System.Exception">Error in implementation of ConvexHull3D or Volume Calculation</exception>
+        public TVGLConvexHull(IList<Vertex> allVertices, double solidVolume = 0)
         {
             var iteration = 0;
             do
@@ -53,14 +63,14 @@ namespace TVGL
                 var convexHullFaceList = new List<PolygonalFace>();
                 var checkSumMultipliers = new long[3];
                 for (var i = 0; i < 3; i++)
-                    checkSumMultipliers[i] = (long) Math.Pow(allVertices.Count, i);
+                    checkSumMultipliers[i] = (long)Math.Pow(allVertices.Count, i);
                 var alreadyCreatedFaces = new HashSet<long>();
                 foreach (var cvxFace in convexHull.Faces)
                 {
                     var vertices = cvxFace.Vertices;
                     var orderedIndices = vertices.Select(v => v.IndexInList).ToList();
                     orderedIndices.Sort();
-                    var checksum = orderedIndices.Select((t, j) => t*checkSumMultipliers[j]).Sum();
+                    var checksum = orderedIndices.Select((t, j) => t * checkSumMultipliers[j]).Sum();
                     if (alreadyCreatedFaces.Contains(checksum)) continue;
                     alreadyCreatedFaces.Add(checksum);
                     convexHullFaceList.Add(new PolygonalFace(vertices, cvxFace.Normal, false));
@@ -69,8 +79,7 @@ namespace TVGL
                 Faces = convexHullFaceList.ToArray();
                 Edges = MakeEdges(Faces, Vertices);
                 TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
-                iteration++;
-            } while ((Volume < solidVolume || double.IsNaN(Volume)) && iteration < 2);
+            } while ((double.IsNaN(Volume) || Volume < solidVolume) && iteration++ < 2);
             if (solidVolume < 0.1)
             {
                 //This solid has a small volume. Relax the constraint.
@@ -79,7 +88,7 @@ namespace TVGL
             else
             {
                 //Use a loose tolerance based on the size of the solid, since accuracy is not terribly important
-                Succeeded = (Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume/1000));
+                Succeeded = (Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume / 1000));
             }
 
             if (!Succeeded) throw new Exception("Error in implementation of ConvexHull3D or Volume Calculation");

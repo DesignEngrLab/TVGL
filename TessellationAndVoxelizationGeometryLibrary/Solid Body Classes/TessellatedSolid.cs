@@ -149,6 +149,8 @@ namespace TVGL
         public Edge[] Edges { get; private set; }
 
 
+        public Edge[] BorderEdges { get; private set; }
+
         /// <summary>
         ///     Gets the vertices.
         /// </summary>
