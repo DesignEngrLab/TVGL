@@ -96,7 +96,7 @@ namespace TVGL
             if (!Succeeded)
             {
                 Debug.WriteLine("Error in implementation of ConvexHull3D or Volume Calculation");
-                throw new Exception();
+                //throw new Exception();
             }
         }
 

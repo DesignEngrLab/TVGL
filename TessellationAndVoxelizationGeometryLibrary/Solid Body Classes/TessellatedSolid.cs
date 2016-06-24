@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
@@ -366,13 +367,15 @@ namespace TVGL
             DefineCenterVolumeAndSurfaceArea(Faces, out center, out volume, out surfaceArea);
             Center = center;
             Volume = volume;
-            CreateConvexHull(volume);
             SurfaceArea = surfaceArea;
             foreach (var face in Faces)
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)
                 v.DefineVertexCurvature();
             TessellationError.CheckModelIntegrity(this);
+
+            //Create convex hull last. After the volume for the solid has found and errors corrected.
+            CreateConvexHull(Volume);
         }
 
 
@@ -602,7 +605,7 @@ namespace TVGL
         private void CreateConvexHull(double solidVolume)
         {
             if (solidVolume < 0)
-                throw new Exception("Correct the face normals (currently inside-out) before calling this function");
+                Debug.WriteLine("Correct the face normals (currently inside-out) before calling this function");
             //Take the absolute value of volume, incase the solid is inside out, which will be corrected later.
             ConvexHull = new TVGLConvexHull(Vertices, solidVolume);
             foreach (var cvxHullPt in ConvexHull.Vertices)
