@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security;
 using StarMathLib;
@@ -49,8 +50,11 @@ namespace TVGL.Boolean_Operations
             {
                 totalVolume2 += solidContactData.Volume();
             }
-            if (!totalVolume2.IsPracticallySame(totalVolume1, 100)) throw new Exception("These values should basically be equal. It is likely the volume function did not work for the unfinished solid");
-            //if (!totalVolume1.IsPracticallySame(ts.Volume, 100)) throw new Exception("These values should basically be equal. The new volumes should be nearly equal in size to the original");
+            if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
+            {
+                Debug.WriteLine("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.");
+                Debug.WriteLine("Contact Data Total Volume = " + totalVolume2 + ". Solid Total Volume = " + totalVolume1);
+            }
         }
 
         /// <summary>

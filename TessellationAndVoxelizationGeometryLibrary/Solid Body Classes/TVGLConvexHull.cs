@@ -76,19 +76,19 @@ namespace TVGL
                 Edges = MakeEdges(Faces, Vertices);
                 TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
                 iteration++;
-                if (Volume < 0)
-                {
-                    foreach (var face in Faces)
-                    {
-                        face.Normal = face.Normal.multiply(-1);
-                    }
-                    Debug.WriteLine("ConvexHull created a negative volume. Attempting to correct.");
-                    TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
-                    if (Volume >= solidVolume)
-                    {
-                        Debug.WriteLine("ConvexHull successfully inverted solid");
-                    }
-                }
+                //if (Volume < 0)
+                //{
+                //    foreach (var face in Faces)
+                //    {
+                //        face.Normal = face.Normal.multiply(-1);
+                //    }
+                //    Debug.WriteLine("ConvexHull created a negative volume. Attempting to correct.");
+                //    TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+                //    if (Volume >= solidVolume)
+                //    {
+                //        Debug.WriteLine("ConvexHull successfully inverted solid");
+                //    }
+                //}
                 if (solidVolume < 0.1)
                 {
                     //This solid has a small volume. Relax the constraint.
