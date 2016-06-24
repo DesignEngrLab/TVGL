@@ -102,9 +102,6 @@ namespace TVGL
             // These "nested" loop cases are handled by ordering the loops (working outward to inward) and the red black tree.
             // 5: If isPositive == null, then 
 
-            //Create return variables
-            var triangleFaceList = new List<List<Vertex[]>>();
-            groupsOfLoops = new List<List<int>>();
 
             //Check incomining lists
             if (isPositive != null && points2D.Count != isPositive.Length)
@@ -113,10 +110,17 @@ namespace TVGL
             }
             var successful = false;
             var attempts = 1;
+            //Create return variables
+            var triangleFaceList = new List<List<Vertex[]>>();
+            groupsOfLoops = new List<List<int>>();
             while (successful == false && attempts < 4)
             {
                 try
                 {
+                    //Reset return variables
+                    triangleFaceList = new List<List<Vertex[]>>();
+                    groupsOfLoops = new List<List<int>>();
+
                     #region Preprocessing
                     //Preprocessing
                     // 1) For each loop in points2D
