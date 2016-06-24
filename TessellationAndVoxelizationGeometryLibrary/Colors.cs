@@ -864,6 +864,10 @@ namespace TVGL
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Color"/> class.
+        /// </summary>
+        /// <param name="colorString">The color string.</param>
         public Color(string colorString)
         {
             if (!string.IsNullOrWhiteSpace(colorString) && (colorString.Length == 7 || colorString.Length == 9))

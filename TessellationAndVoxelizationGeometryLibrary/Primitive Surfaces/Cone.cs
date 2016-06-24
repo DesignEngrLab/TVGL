@@ -117,6 +117,11 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Transforms the shape by the provided transformation matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(double[,] transformMatrix)
         {
             throw new NotImplementedException();

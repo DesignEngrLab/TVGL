@@ -85,9 +85,9 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibraryUniversal.csproj">
-      <Project>{e3489019-d590-46a8-b2c2-e3481e8db77c}</Project>
-      <Name>TessellationAndVoxelizationGeometryLibraryUniversal</Name>
+    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.NET4.5\TessellationAndVoxelizationGeometryLibrary.NET4.5.csproj">
+      <Project>{b2d2586a-5f3b-4122-b10e-4ac143c05ea4}</Project>
+      <Name>TessellationAndVoxelizationGeometryLibrary.NET4.5</Name>
     </ProjectReference>
     <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj">
       <Project>{8c1364cc-908a-4174-b62c-21ec4839584d}</Project>

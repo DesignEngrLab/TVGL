@@ -611,7 +611,6 @@ namespace TVGL
         /// <param name="allEdgeWithScores">All edge with scores.</param>
         private static void FaceFuzzyClassification(FaceWithScores eachFace, List<EdgeWithScores> allEdgeWithScores)
         {
-            var c = 0;
             /*var aya = allEdgeWithScores.Count(e => e.CatProb == null);
             var aya2 = new List<int>();
             foreach (var e in eachFace.Face.Edges)

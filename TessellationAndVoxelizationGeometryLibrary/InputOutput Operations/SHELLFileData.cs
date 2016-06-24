@@ -27,18 +27,14 @@ namespace TVGL.IOFunctions
         #endregion
 
         #region Properties and Fields
-        private Color _lastColor;
         private static bool inObject;
         private static bool startofVertices;
         private static bool endofVertices;
         private static bool startofFacets;
         private static bool endofFacets;
-        private bool ColorIsFloat;
         private List<Color> Colors { get; set; }
         private List<double[]> Vertices { get; }
         private List<int[]> FaceToVertexIndices { get; }
-        private List<ShapeElement> ReadInOrder;
-        private List<ColorElements> ColorDescriptor;
         private ShellMaterial Material { get; set; }
 
         private struct ShellMaterial

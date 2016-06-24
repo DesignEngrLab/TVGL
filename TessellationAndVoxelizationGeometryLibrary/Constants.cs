@@ -19,10 +19,6 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
-/// <summary>
-/// The TVGL namespace.
-/// </summary>
-
 namespace TVGL
 {
     /// <summary>
@@ -32,6 +28,21 @@ namespace TVGL
     {
         internal const double TwoPi = 2 * Math.PI;
         internal const double HalfPi = Math.PI / 2;
+        internal const long SquareRootOfLongMaxValue = 3037000499; // 3 billion
+        internal const long CubeRootOfLongMaxValue = 2097151; //2 million
+        /// <summary>
+        /// VertexCheckSumMultiplier is the checksum multiplier to be used for face and edge references.
+        /// Since the edges connect two vertices the maximum value this can be is
+        /// the square root of the max. value of a long (see above). However, during
+        /// debugging, it is nice to see the digits of the vertex indices embedded in 
+        /// check, so when debugging, this is reducing to 1 billion instead of 3 billion.
+        /// This way if you are connecting vertex 1234 with 5678, you will get a checksum = 5678000001234
+        /// </summary>
+#if DEBUG
+        public const long VertexCheckSumMultiplier = 1000000000;
+#else
+        public const long VertexCheckSumMultiplier = SquareRootOfLongMaxValue;
+#endif
         /// <summary>
         ///     The convex hull radius for robustness. This is only used when ConvexHull fails on the model.
         /// </summary>
@@ -118,6 +129,9 @@ namespace TVGL
     /// </summary>
     public enum UnitType
     {
+        /// <summary>
+        /// the unspecified state
+        /// </summary>
         unspecified = -1,
         /// <summary>
         ///     The millimeter
@@ -183,6 +197,9 @@ namespace TVGL
     /// </summary>
     public enum FileType
     {
+        /// <summary>
+        /// represents an unspecified state
+        /// </summary>
         unspecified,
         /// <summary>
         ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
@@ -239,9 +256,6 @@ namespace TVGL
     ///     Enum ColorElements
     /// </summary>
     internal enum ColorElements
-    /// <summary>
-    /// The red
-    /// </summary>
     {
         Red,
         Green,

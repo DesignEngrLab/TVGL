@@ -86,8 +86,22 @@ namespace TVGL
             base.UpdateWith(face);
         }
 
+        /// <summary>
+        /// Transforms the shape by the provided transformation matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(double[,] transformMatrix)
         {
+            var homoCoord = new[] { Anchor[0], Anchor[1], Anchor[2], 1.0 };
+            homoCoord = transformMatrix.multiply(homoCoord);
+            Anchor[0] = homoCoord[0]; Anchor[1] = homoCoord[1]; Anchor[2] = homoCoord[2];
+
+             homoCoord = new[] { Axis[0], Axis[1], Axis[2], 1.0 };
+            homoCoord = transformMatrix.multiply(homoCoord);
+            Axis[0] = homoCoord[0]; Axis[1] = homoCoord[1]; Axis[2] = homoCoord[2];
+
+            //how to adjust the radii?
             throw new NotImplementedException();
         }
 

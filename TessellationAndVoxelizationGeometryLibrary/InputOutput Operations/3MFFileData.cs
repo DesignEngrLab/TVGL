@@ -127,7 +127,7 @@ namespace TVGL.IOFunctions
                     {
                         var defaultNamespace = reader["xmlns"];
                         var serializer = new XmlSerializer(typeof(ThreeMFFileData), defaultNamespace);
-                        threeMFData = (ThreeMFFileData) serializer.Deserialize(reader);
+                        threeMFData = (ThreeMFFileData)serializer.Deserialize(reader);
                     }
                     threeMFData.FileName = filename;
                     var results = new List<TessellatedSolid>();
@@ -155,6 +155,7 @@ namespace TVGL.IOFunctions
             catch (Exception exception)
             {
                 Message.output("Unable to read in 3Dmodel file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
                 return null;
             }
         }
@@ -200,7 +201,7 @@ namespace TVGL.IOFunctions
                     if (defaultColorXml != null) defaultColor = defaultColorXml.color;
                 }
             }
-            var verts = mesh.vertices.Select(v => new[] {v.x, v.y, v.z}).ToList();
+            var verts = mesh.vertices.Select(v => new[] { v.x, v.y, v.z }).ToList();
 
             Color[] colors = null;
             var uniformColor = true;
@@ -224,12 +225,12 @@ namespace TVGL.IOFunctions
                 if (colors == null) colors = new Color[mesh.triangles.Count];
                 colors[j] = baseColor.color;
             }
-            if (uniformColor) colors = new[] {defaultColor};
+            if (uniformColor) colors = new[] { defaultColor };
             else
                 for (var j = 0; j < numTriangles; j++)
                     if (colors[j] == null) colors[j] = defaultColor;
             return new TessellatedSolid(verts,
-                mesh.triangles.Select(t => new[] {t.v1, t.v2, t.v3}).ToList(), colors, Units,
+                mesh.triangles.Select(t => new[] { t.v1, t.v2, t.v3 }).ToList(), colors, Units,
                 name, FileName, Comments, Language);
         }
 
@@ -272,11 +273,11 @@ namespace TVGL.IOFunctions
         internal static bool SaveModel(Stream stream, IList<TessellatedSolid> solids)
         {
             var objects = new List<Object>();
-            var baseMats = new BaseMaterials {id = 1};
+            var baseMats = new BaseMaterials { id = 1 };
             for (var i = 0; i < solids.Count; i++)
             {
                 var solid = solids[i];
-                var thisObject = new Object {name = solid.Name, id = i + 2};
+                var thisObject = new Object { name = solid.Name, id = i + 2 };
                 // this is "+ 2" since the id's start with 1 instead of 0 plus BaseMaterials is typically 1, so start at 2.
                 var triangles = new List<Triangle>();
 
@@ -287,7 +288,7 @@ namespace TVGL.IOFunctions
                     if (colorIndex == -1)
                     {
                         colorIndex = baseMats.bases.Count;
-                        baseMats.bases.Add(new Base {colorString = colString});
+                        baseMats.bases.Add(new Base { colorString = colString });
                     }
                     triangles.Add(new Triangle
                     {
@@ -301,7 +302,7 @@ namespace TVGL.IOFunctions
                 thisObject.mesh = new Mesh
                 {
                     vertices = solid.Vertices.Select(v => new threemfclasses.Vertex
-                    {x = v.X, y = v.Y, z = v.Z}).ToList(),
+                    { x = v.X, y = v.Y, z = v.Z }).ToList(),
                     triangles = triangles
                 };
                 objects.Add(thisObject);
@@ -331,11 +332,11 @@ namespace TVGL.IOFunctions
                 Name = solids[0].Name.Split('_')[0],
                 Language = solids[0].Language,
                 metadata = metaData,
-                build = new Build {Items = objects.Select(o => new Item {objectid = o.id}).ToList()},
+                build = new Build { Items = objects.Select(o => new Item { objectid = o.id }).ToList() },
                 resources =
                     new Resources
                     {
-                        basematerials = new[] {baseMats}.ToList(), //colors = colors, materials = materials,
+                        basematerials = new[] { baseMats }.ToList(), //colors = colors, materials = materials,
                         objects = objects
                     }
             };
@@ -356,6 +357,7 @@ namespace TVGL.IOFunctions
             catch (Exception exception)
             {
                 Message.output("Unable to write in model file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
                 return false;
             }
         }
@@ -405,7 +407,7 @@ namespace TVGL.IOFunctions
                 },
                 new Default {Extension = "png", ContentType = "image/png"}
             };
-            var types = new Types {Defaults = defaults};
+            var types = new Types { Defaults = defaults };
 
             using (var writer = XmlWriter.Create(stream))
             {

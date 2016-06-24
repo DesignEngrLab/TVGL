@@ -81,11 +81,6 @@ namespace TVGL
         internal class EdgeWithScores
         {
             /// <summary>
-            ///     The e
-            /// </summary>
-            private Edge e;
-
-            /// <summary>
             ///     The edge
             /// </summary>
             internal Edge Edge;

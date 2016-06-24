@@ -87,11 +87,10 @@ namespace TVGL.IOFunctions
         #region Open Solids
 
         /// <summary>
-        ///     Opens the specified s.
+        /// Opens the specified s.
         /// </summary>
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
-        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
         internal static List<TessellatedSolid> OpenSolids(Stream s, string filename)
         {
@@ -128,9 +127,10 @@ namespace TVGL.IOFunctions
         #region ASCII
 
         /// <summary>
-        ///     Reads the model in ASCII format from the specified stream.
+        /// Reads the model in ASCII format from the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
+        /// <param name="filename">The filename.</param>
         /// <param name="stlData">The STL data.</param>
         /// <returns>True if the model was loaded successfully.</returns>
         internal static bool TryReadAscii(Stream stream, string filename, out List<STLFileData> stlData)
@@ -216,13 +216,14 @@ namespace TVGL.IOFunctions
         #region STL Binary Reading Functions
 
         /// <summary>
-        ///     Tries the read binary.
+        /// Tries the read binary.
         /// </summary>
         /// <param name="stream">The stream.</param>
+        /// <param name="filename">The filename.</param>
         /// <param name="stlData">The STL data.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        /// <exception cref="EndOfStreamException">Incomplete file</exception>
         /// <exception cref="System.IO.EndOfStreamException">Incomplete file</exception>
+        /// <exception cref="EndOfStreamException">Incomplete file</exception>
         internal static bool TryReadBinary(Stream stream, string filename, out List<STLFileData> stlData)
         {
             var length = stream.Length;
@@ -414,6 +415,7 @@ namespace TVGL.IOFunctions
             catch (Exception exception)
             {
                 Message.output("Unable to write in model file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
                 return false;
             }
         }

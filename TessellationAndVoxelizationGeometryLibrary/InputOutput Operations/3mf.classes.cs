@@ -74,7 +74,6 @@ namespace TVGL.IOFunctions.threemfclasses
         ///     Gets or sets the itemref.
         /// </summary>
         [XmlAttribute]
-        /// <value>The itemref.</value>
         public string itemref { get; set; }
 
 
@@ -189,6 +188,9 @@ namespace TVGL.IOFunctions.threemfclasses
     public class Triangle
 #endif
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Triangle" /> class.
+        /// </summary>
         public Triangle()
         {
             p1 = p2 = p3 = pid = -1;
@@ -311,31 +313,62 @@ namespace TVGL.IOFunctions.threemfclasses
     public class Object
 #endif
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Object" /> class.
+        /// </summary>
         public Object()
         {
             MaterialID = -1;
         }
+        /// <summary>
+        /// Gets or sets the identifier.
+        /// </summary>
+        /// <value>The identifier.</value>
         [XmlAttribute]
         public int id { get; set; }
 
+        /// <summary>
+        /// Gets or sets the type.
+        /// </summary>
+        /// <value>The type.</value>
         [XmlAttribute]
         //[DefaultValue(ObjectType.model)]
         public ObjectType type { get; set; }
 
+        /// <summary>
+        /// Gets or sets the material identifier.
+        /// </summary>
+        /// <value>The material identifier.</value>
         [XmlAttribute("materialid")]
         [DefaultValue(-1)]
         public int MaterialID { get; set; }
 
+        /// <summary>
+        /// Gets or sets the thumbnail.
+        /// </summary>
+        /// <value>The thumbnail.</value>
         [XmlAttribute]
         public string thumbnail { get; set; }
 
+        /// <summary>
+        /// Gets or sets the partnumber.
+        /// </summary>
+        /// <value>The partnumber.</value>
         [XmlAttribute]
         [DefaultValue(0)]
         public int partnumber { get; set; }
 
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
         [XmlAttribute]
         public string name { get; set; }
 
+        /// <summary>
+        /// Gets or sets the mesh.
+        /// </summary>
+        /// <value>The mesh.</value>
         [XmlElement]
         public Mesh mesh { get; set; }
 
@@ -395,12 +428,24 @@ namespace TVGL.IOFunctions.threemfclasses
             basematerials = new List<BaseMaterials>();
         }
 
+        /// <summary>
+        /// Gets or sets the basematerials.
+        /// </summary>
+        /// <value>The basematerials.</value>
         [XmlElement("basematerials")]
         public List<BaseMaterials> basematerials { get; set; }
 
+        /// <summary>
+        /// Gets or sets the materials.
+        /// </summary>
+        /// <value>The materials.</value>
         [XmlElement("material")]
         public List<Material> materials { get; set; }
 
+        /// <summary>
+        /// Gets or sets the colors.
+        /// </summary>
+        /// <value>The colors.</value>
         [XmlElement("color")]
         public List<Color3MF> colors { get; set; }
 
@@ -425,15 +470,31 @@ namespace TVGL.IOFunctions.threemfclasses
     public class Material
 #endif
     {
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
         [XmlAttribute]
         public string name { get; set; }
 
+        /// <summary>
+        /// Gets or sets the identifier.
+        /// </summary>
+        /// <value>The identifier.</value>
         [XmlAttribute]
         public int id { get; set; }
 
+        /// <summary>
+        /// Gets or sets the colorid.
+        /// </summary>
+        /// <value>The colorid.</value>
         [XmlAttribute]
         public int colorid { get; set; }
 
+        /// <summary>
+        /// Gets or sets the type.
+        /// </summary>
+        /// <value>The type.</value>
         [XmlAttribute]
         public string type { get; set; }
     }
@@ -447,12 +508,24 @@ namespace TVGL.IOFunctions.threemfclasses
     public class Color3MF
 #endif
     {
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
+        /// <value>The name.</value>
         [XmlAttribute]
         public string name { get; set; }
 
+        /// <summary>
+        /// Gets or sets the identifier.
+        /// </summary>
+        /// <value>The identifier.</value>
         [XmlAttribute]
         public int id { get; set; }
 
+        /// <summary>
+        /// Gets or sets the color string.
+        /// </summary>
+        /// <value>The color string.</value>
         [XmlAttribute("value")]
         public string colorString { get; set; }
 
@@ -517,6 +590,10 @@ namespace TVGL.IOFunctions.threemfclasses
         [XmlAttribute]
         public string name { get; set; } = "noname";
 
+        /// <summary>
+        /// Gets or sets the color string.
+        /// </summary>
+        /// <value>The color string.</value>
         [XmlAttribute("displaycolor")]
         public string colorString { get; set; }
 
@@ -540,14 +617,24 @@ namespace TVGL.IOFunctions.threemfclasses
 #if help
     internal class Types
 #else
+    /// <summary>
+    /// Class Types.
+    /// </summary>
     public class Types
 #endif
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Types" /> class.
+        /// </summary>
         public Types()
         {
             Defaults = new List<Default>();
         }
 
+        /// <summary>
+        /// Gets or sets the defaults.
+        /// </summary>
+        /// <value>The defaults.</value>
         [XmlElement("Default")]
         public List<Default> Defaults { get; set; }
     }
@@ -555,12 +642,23 @@ namespace TVGL.IOFunctions.threemfclasses
 #if help
     internal class Default
 #else
+    /// <summary>
+    /// Class Default.
+    /// </summary>
     public class Default
 #endif
     {
+        /// <summary>
+        /// Gets or sets the extension.
+        /// </summary>
+        /// <value>The extension.</value>
         [XmlAttribute]
         public string Extension { get; set; }
 
+        /// <summary>
+        /// Gets or sets the type of the content.
+        /// </summary>
+        /// <value>The type of the content.</value>
         [XmlAttribute]
         public string ContentType { get; set; }
     }
@@ -570,9 +668,15 @@ namespace TVGL.IOFunctions.threemfclasses
 #if help
     internal class Types
 #else
+    /// <summary>
+    /// Class Relationships.
+    /// </summary>
     public class Relationships
 #endif
     {
+        /// <summary>
+        /// The rels
+        /// </summary>
         [XmlElement("Relationship")]
         public Relationship[] rels;
     }
@@ -580,13 +684,28 @@ namespace TVGL.IOFunctions.threemfclasses
 #if help
     internal class Relationship
 #else
+    /// <summary>
+    /// Class Relationship.
+    /// </summary>
     public class Relationship
 #endif
     {
+        /// <summary>
+        /// Gets or sets the target.
+        /// </summary>
+        /// <value>The target.</value>
         [XmlAttribute]
         public string Target { get; set; }
+        /// <summary>
+        /// Gets or sets the identifier.
+        /// </summary>
+        /// <value>The identifier.</value>
         [XmlAttribute]
         public string Id { get; set; }
+        /// <summary>
+        /// Gets or sets the type.
+        /// </summary>
+        /// <value>The type.</value>
         [XmlAttribute]
         public string Type { get; set; }
     }

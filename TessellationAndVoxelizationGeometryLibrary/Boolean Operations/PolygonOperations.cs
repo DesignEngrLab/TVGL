@@ -40,7 +40,7 @@ namespace TVGL.Boolean_Operations
     #region internal Interface with Clipper
 
     /// <summary>
-    /// Interface to the 2D offset/clipping library: Clipper <http://www.angusj.com/delphi/clipper.php>
+    /// Interface to the 2D offset/clipping library: Clipper http://www.angusj.com/delphi/clipper.php
     /// </summary>
     public static class PolygonOffset
     {

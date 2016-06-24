@@ -265,10 +265,10 @@ namespace TVGL.IOFunctions
         #region Save Solid
 
         /// <summary>
-        ///     Saves the specified stream.
+        /// Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
-        /// <param name="solids">The solids.</param>
+        /// <param name="solid">The solid.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveSolid(Stream stream, TessellatedSolid solid)
@@ -321,6 +321,7 @@ namespace TVGL.IOFunctions
             catch (Exception exception)
             {
                 Message.output("Unable to write in model file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
                 return false;
             }
         }

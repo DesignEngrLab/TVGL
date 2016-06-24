@@ -153,9 +153,9 @@ namespace TVGL
         /// <param name="repairAutomatically">The repair automatically.</param>
         public static void CheckModelIntegrity(TessellatedSolid ts, bool repairAutomatically = true)
         {
-            ts.Errors = new TessellationError();
-            ts.Errors.NoErrors = true;
             Message.output("Model Integrity Check...", 3);
+            ts.Errors = new TessellationError { NoErrors = true };
+
             if (ts.Volume < 0) StoreModelIsInsideOut(ts);
             var edgeFaceRatio = ts.NumberOfEdges / (double)ts.NumberOfFaces;
             if (!edgeFaceRatio.IsPracticallySame(1.5)) StoreEdgeFaceRatio(ts, edgeFaceRatio);
@@ -281,7 +281,7 @@ namespace TVGL
             ts.Errors.NoErrors = false;
             ts.Errors.ModelIsInsideOut = true;
         }
-        
+
         /// <summary>
         ///     Stores the edge face ratio.
         /// </summary>
@@ -522,8 +522,6 @@ namespace TVGL
                 completelyRepaired = TurnModelInsideOut(ts);
             if (EdgesWithBadAngle != null)
                 completelyRepaired = completelyRepaired && FlipFacesBasedOnBadAngles(ts);
-            if (SingledSidedEdges != null) //what about faces with only one or two edges?
-                completelyRepaired = completelyRepaired && RepairMissingFacesFromEdges(ts);
             //Note that negligible faces are not truly errors, so they are not repaired
             return completelyRepaired;
         }
@@ -588,292 +586,8 @@ namespace TVGL
             ts.Errors.EdgesWithBadAngle = null;
             return true;
         }
-
-        /// <summary>
-        ///     Repairs the missing faces from edges.
-        /// </summary>
-        /// <param name="ts">The ts.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool RepairMissingFacesFromEdges(TessellatedSolid ts)
-        {
-            var newFaces = new List<PolygonalFace>();
-            var loops = new List<List<Vertex>>();
-            var loopNormals = new List<double[]>();
-            var attempts = 0;
-            var remainingEdges = new List<Edge>(ts.Errors.SingledSidedEdges);
-            while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
-            {
-                var loop = new List<Vertex>();
-                var successful = true;
-                var removedEdges = new List<Edge>();
-                var remainingEdge = remainingEdges[0];
-                var startVertex = remainingEdge.From;
-                var newStartVertex = remainingEdge.To;
-                var normal = remainingEdge.OwnedFace.Normal;
-                loop.Add(newStartVertex);
-                removedEdges.Add(remainingEdge);
-                remainingEdges.RemoveAt(0);
-                do
-                {
-                    var possibleNextEdges =
-                        remainingEdges.Where(e => e.To == newStartVertex || e.From == newStartVertex).ToList();
-                    if (possibleNextEdges.Count() != 1) successful = false;
-                    else
-                    {
-                        var currentEdge = possibleNextEdges[0];
-                        normal = normal.multiply(loop.Count).add(currentEdge.OwnedFace.Normal).divide(loop.Count + 1);
-                        normal.normalizeInPlace();
-                        newStartVertex = currentEdge.OtherVertex(newStartVertex);
-                        loop.Add(newStartVertex);
-                        removedEdges.Add(currentEdge);
-                        remainingEdges.Remove(currentEdge);
-                    }
-                } while (newStartVertex != startVertex && successful);
-                if (successful)
-                {
-                    //Average the normals from all the owned faces.
-                    loopNormals.Add(normal);
-                    loops.Add(loop);
-                    attempts = 0;
-                }
-                else
-                {
-                    remainingEdges.AddRange(removedEdges);
-                    attempts++;
-                }
-            }
-
-            for (var i = 0; i < loops.Count; i++)
-            {
-                //first check if a loop matches with another loop
-                int j = FindMatchingLoop(i, loops, ts.SameTolerance);
-                if (j != -1)
-                {
-                    GlueTogetherLoops(loops[i], loops[j]);
-                    loops.RemoveAt(j);
-                    loopNormals.RemoveAt(j);
-                }
-                //if a simple triangle, create a new face from vertices
-                else if (loops[i].Count == 3)
-                {
-                    var newFace = new PolygonalFace(loops[i], loopNormals[i]);
-                    newFaces.Add(newFace);
-                }
-                //Else, use the triangulate function
-                else if (loops[i].Count > 3)
-                {
-                    //First, get an average normal from all vertices, assuming CCW order.
-                    List<List<Vertex[]>> triangleFaceList;
-                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { loops[i] }, loopNormals[i],
-                        out triangleFaceList);
-                    foreach (var triangle in triangles)
-                    {
-                        var newFace = new PolygonalFace(triangle, loopNormals[i]);
-                        newFaces.Add(newFace);
-                    }
-                }
-            }
-            if (newFaces.Count == 1) Message.output("1 missing face was fixed", 3);
-            if (newFaces.Count > 1) Message.output(newFaces.Count + " missing faces were fixed", 3);
-            return LinkUpNewFaces(newFaces, ts, ts.Errors.SingledSidedEdges);
-        }
-
-
-        private void GlueTogetherLoops(List<Vertex> iLoop, List<Vertex> jLoop)
-        {
-            throw new NotImplementedException();
-        }
-
-        private int FindMatchingLoop(int i, List<List<Vertex>> loops, double sameTolerance)//, out bool sameDirection)
-        {
-            var j = i + 1;
-            var iLoopFirstVertex = loops[i][0];
-            while (j < loops.Count)
-            {
-                var testLoop = loops[j++];
-                if (testLoop.Count != loops[i].Count) continue;
-                var k = testLoop.Count - 1;
-                while (k >= 0 && !testLoop[k].Position.IsPracticallySame(iLoopFirstVertex.Position, 10 * sameTolerance))
-                    k--;
-                if (k == -1) continue;
-
-            }
-            return -1;
-        }
-
-        /// <summary>
-        ///     Links up new faces.
-        /// </summary>
-        /// <param name="newFaces">The new faces.</param>
-        /// <param name="ts">The ts.</param>
-        /// <param name="singledSidedEdges">The singled sided edges.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool LinkUpNewFaces(List<PolygonalFace> newFaces, TessellatedSolid ts, List<Edge> singledSidedEdges)
-        {
-            ts.AddFaces(newFaces);
-            var newEdges = new List<Edge>();
-            var completedEdges = new List<Edge>();
-            var partlyDefinedEdges = singledSidedEdges.ToDictionary(ts.SetEdgeChecksum);
-            ts.UpdateAllEdgeCheckSums();
-
-            foreach (var face in newFaces)
-            {
-                for (var j = 0; j < 3; j++)
-                {
-                    var fromVertex = face.Vertices[j];
-                    var toVertex = face.Vertices[j == 2 ? 0 : j + 1];
-                    var checksum = ts.SetEdgeChecksum(fromVertex, toVertex);
-
-                    if (partlyDefinedEdges.ContainsKey(checksum))
-                    {
-                        //Finish creating edge.
-                        var edge = partlyDefinedEdges[checksum];
-                        if (edge.OwnedFace == null) edge.OwnedFace = face;
-                        else if (edge.OtherFace == null) edge.OtherFace = face;
-                        face.AddEdge(edge);
-                        completedEdges.Add(edge);
-                        partlyDefinedEdges.Remove(checksum);
-                    }
-                    else
-                    {
-                        var edge = new Edge(fromVertex, toVertex, face, null, true, checksum);
-                        newEdges.Add(edge);
-                        partlyDefinedEdges.Add(checksum, edge);
-                    }
-                }
-            }
-            ts.AddEdges(newEdges);
-            return !partlyDefinedEdges.Any();
-        }
-
-        /// <summary>
-        /// Teases the apart over used edges. By taking in the edges with more than two faces (the over-used edges) a list is return of newly defined edges.
-        /// </summary>
-        /// <param name="values">The values.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
-        internal static IEnumerable<Tuple<Edge, List<PolygonalFace>>> TeaseApartOverUsedEdges(IEnumerable<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary)
-        {
-            var newListOfGoodEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
-            foreach (var entry in overUsedEdgesDictionary)
-            {
-                var candidateFaces = entry.Item2;
-                var edge = entry.Item1;
-                var numFailedTries = 0;
-                // foreach over-used edge:
-                // first, try to find the best match for each face. Basically, it is assumed that faces with the most similar normals 
-                // should be paired together. 
-                while (candidateFaces.Count > 1 && numFailedTries < candidateFaces.Count)
-                {
-                    var highestDotProduct = -2.0;
-                    PolygonalFace bestMatch = null;
-                    var refFace = candidateFaces[0];
-                    candidateFaces.RemoveAt(0);
-                    var refOwnsEdge = FaceShouldBeOwnedFace(edge, refFace);
-                    foreach (var candidateMatchingFace in candidateFaces)
-                    {
-                        var dotProductScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
-                            ? -2 //edge cannot be owned by both faces, thus this is not a good candidate for this.
-                            : refFace.Normal.dotProduct(candidateMatchingFace.Normal);
-                        //  To take it "out of the running", we simply give it a value of -2
-                        if (dotProductScore > highestDotProduct)
-                        {
-                            highestDotProduct = dotProductScore;
-                            bestMatch = candidateMatchingFace;
-                        }
-                    }
-                    if (highestDotProduct > -1)
-                        // -1 is a valid dot-product but it is not practical to match faces with completely opposite
-                        // faces
-                    {
-                        numFailedTries = 0;
-                        candidateFaces.Remove(bestMatch);
-                        if (FaceShouldBeOwnedFace(edge, refFace))
-                            newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                                new Edge(edge.From, edge.To, refFace, bestMatch, false),
-                                new List<PolygonalFace> {refFace, bestMatch}));
-                        else
-                            newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(
-                                new Edge(edge.From, edge.To, bestMatch, refFace, false),
-                                new List<PolygonalFace> {bestMatch, refFace}));
-                    }
-                    else
-                    {
-                        candidateFaces.Add(refFace);
-                            //referenceFace was removed 24 lines earlier. Here, we re-add it to the
-                        // end of the list.
-                        numFailedTries++;
-                    }
-                }
-            }
-            return newListOfGoodEdges;
-        }
-        /// <summary>
-        /// Fixes the bad edges. By taking in the edges with more than two faces (the over-used edges) and the edges with only one face (the partlyDefinedEdges), this
-        /// repair method attempts to repair the edges as best possible through a series of pairwise searches.
-        /// </summary>
-        /// <param name="overUsedEdgesDictionary">The over used edges dictionary.</param>
-        /// <param name="partlyDefinedEdgesIEnumerable">The partly defined edges i enumerable.</param>
-        /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
-        internal static IEnumerable<Tuple<Edge, List<PolygonalFace>>> FixBadEdges(
-            IEnumerable<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary,
-            IEnumerable<Edge> partlyDefinedEdgesIEnumerable)
-        {
-            var newListOfGoodEdges = new List<Tuple<Edge, List<PolygonalFace>>>();
-            var partlyDefinedEdges = new List<Edge>(partlyDefinedEdgesIEnumerable);
-            // for any faces left in the over-used edge dictionary, an entry is made in the list of partly-defined edges
-            foreach (var entry in overUsedEdgesDictionary)
-            {
-                var oldEdge = entry.Item1;
-                oldEdge.From.Edges.Remove(entry.Item1); //the original over-used edge will not be used in the model.
-                oldEdge.To.Edges.Remove(entry.Item1);   //so, here we remove it from the vertex references
-                foreach (var face in entry.Item2)
-                    partlyDefinedEdges.Add(FaceShouldBeOwnedFace(oldEdge, face)
-                            ? new Edge(oldEdge.From, oldEdge.To, face, null, false)
-                            : new Edge(oldEdge.To, oldEdge.From, face, null, false));
-            }
-            // now do a pairwise check with all entries in the partly defined edges
-            var pDELength = partlyDefinedEdges.Count;
-            var scores = new SortedDictionary<double, int[]>(new NoEqualSort());
-            for (int i = 0; i < pDELength; i++)
-                for (int j = i + 1; j < pDELength; j++)
-                    scores.Add(GetEdgeSimilarityScore(partlyDefinedEdges[i], partlyDefinedEdges[j]), new[] { i, j });
-            // basically, we go through from best match to worst until the MaxAllowableEdgeSimilarityScore is exceeded.
-            //
-            var alreadyMatchedIndices = new HashSet<int>();
-            var highestScore = 0.0;
-            foreach (var score in scores)
-            {
-                if (highestScore > Constants.MaxAllowableEdgeSimilarityScore) break;
-                if (alreadyMatchedIndices.Contains(score.Value[0]) || alreadyMatchedIndices.Contains(score.Value[1]))
-                    continue;
-                highestScore = score.Key;
-                alreadyMatchedIndices.Add(score.Value[0]);
-                alreadyMatchedIndices.Add(score.Value[1]);
-                newListOfGoodEdges.Add(new Tuple<Edge, List<PolygonalFace>>(partlyDefinedEdges[score.Value[0]],
-                        new List<PolygonalFace> { partlyDefinedEdges[score.Value[0]].OwnedFace, partlyDefinedEdges[score.Value[1]].OwnedFace }));
-            }
-            return newListOfGoodEdges;
-        }
-
-        private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
-        {
-            var score = Math.Abs(e1.Length - e2.Length) / e1.Length;
-            score += 1 - Math.Abs(e1.Vector.normalize().dotProduct(e2.Vector.normalize()));
-            score += Math.Min(e2.From.Position.subtract(e1.To.Position).norm2()
-                + e2.To.Position.subtract(e1.From.Position).norm2(),
-                e2.From.Position.subtract(e1.From.Position).norm2()
-                + e2.To.Position.subtract(e1.To.Position).norm2())
-                     / e1.Length;
-            return score;
-        }
-
-
-        private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
-        {
-            var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Position.subtract(edge.To.Position);
-            var isThisNormal = edge.Vector.crossProduct(otherEdgeVector);
-            return face.Normal.dotProduct(isThisNormal) > 0;
-        }
+        
+       
         #endregion
     }
 }

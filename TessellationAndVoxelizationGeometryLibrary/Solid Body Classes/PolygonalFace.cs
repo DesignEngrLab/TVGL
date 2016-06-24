@@ -85,7 +85,7 @@ namespace TVGL
             if ((vertFromIndex == 0 && vertToIndex == lastIndex)
                 || (vertFromIndex == lastIndex && vertToIndex == 0))
                 index = lastIndex;
-            else index = (vertFromIndex + vertToIndex) / 2;
+            else index = Math.Min(vertFromIndex, vertToIndex);
             while (Edges.Count <= index) Edges.Add(null);
             Edges[index] = edge;
         }
