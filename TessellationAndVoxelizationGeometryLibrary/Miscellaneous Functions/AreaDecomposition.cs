@@ -186,7 +186,6 @@ namespace TVGL
                     //Determine cross sectional area for section right after previous vertex
                     var distance = previousVertexDistance + minOffset; //X value (distance along axis) 
                     var cuttingPlane = new Flat(distance, axis);
-                    List<List<Edge>> outputEdgeLoops = null;
                     var inputEdgeLoops = new List<List<Edge>>();
                     var area = 0.0;
                     area = BoundingRectangleArea(edgeListDictionary, cuttingPlane, ref convexHull2D);

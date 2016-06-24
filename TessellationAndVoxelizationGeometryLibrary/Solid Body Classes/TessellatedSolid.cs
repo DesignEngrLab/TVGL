@@ -131,6 +131,9 @@ namespace TVGL
         /// <value>The units.</value>
         public readonly UnitType Units;
 
+        /// <summary>
+        /// The language
+        /// </summary>
         public readonly string Language;
 
         /// <summary>
@@ -395,11 +398,12 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Makes the faces, avoiding duplicates.
+        /// Makes the faces, avoiding duplicates.
         /// </summary>
-        /// <param name="faceToVertexIndices"></param>
+        /// <param name="faceToVertexIndices">The face to vertex indices.</param>
+        /// <param name="colors">The colors.</param>
         /// <param name="normals">The normals.</param>
-        /// <param name="doublyLinkToVertices"></param>
+        /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
         private void MakeFaces(IList<int[]> faceToVertexIndices, IList<Color> colors,
             IList<double[]> normals = null, bool doublyLinkToVertices = true)
         {
@@ -455,9 +459,8 @@ namespace TVGL
                     listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices) { Color = color });
                 else
                 {
-                    List<List<Vertex[]>> triangleFaceList;
-                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>> { faceVertices }, normal,
-                        out triangleFaceList);
+                    List<List<Vertex[]>> triangleFaceList = TriangulatePolygon.Run(new List<List<Vertex>> { faceVertices }, normal);
+                    var triangles = triangleFaceList.SelectMany(tl => tl).ToList();
                     foreach (var triangle in triangles)
                     {
                         var v1 = triangle[1].Position.subtract(triangle[0].Position);
@@ -812,7 +815,7 @@ namespace TVGL
             for (var i = 0; i < NumberOfEdges; i++)
                 newEdges[i] = Edges[i];
             newEdges[NumberOfEdges] = newEdge;
-            if (newEdge.EdgeReference == null) SetAndGetEdgeChecksum(newEdge);
+            if (newEdge.EdgeReference <= 0) SetAndGetEdgeChecksum(newEdge);
             newEdge.IndexInList = NumberOfEdges;
             Edges = newEdges;
             NumberOfEdges++;
@@ -827,7 +830,7 @@ namespace TVGL
             for (var i = 0; i < numToAdd; i++)
             {
                 newEdges[NumberOfEdges + i] = edgesToAdd[i];
-                if (newEdges[NumberOfEdges + i].EdgeReference == null) SetAndGetEdgeChecksum(newEdges[NumberOfEdges + i]);
+                if (newEdges[NumberOfEdges + i].EdgeReference <= 0) SetAndGetEdgeChecksum(newEdges[NumberOfEdges + i]);
                 newEdges[NumberOfEdges + i].IndexInList = NumberOfEdges;
             }
             Edges = newEdges;
@@ -954,6 +957,10 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Transforms the specified transform matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
         public void Transform(double[,] transformMatrix)
         {
             double[] tempCoord;

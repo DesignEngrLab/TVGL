@@ -19,6 +19,9 @@ namespace TVGL.IOFunctions.amfclasses
     public class AMF_Object
 #endif
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AMF_Object"/> class.
+        /// </summary>
         public AMF_Object()
         {
             metadata=new List<AMF_Metadata>();
@@ -496,6 +499,9 @@ namespace TVGL.IOFunctions.amfclasses
     public class AMF_Texture
 #endif  
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AMF_Texture"/> class.
+        /// </summary>
         public AMF_Texture()
         {
             depth = -1;

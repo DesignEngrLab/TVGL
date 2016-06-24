@@ -311,12 +311,8 @@ namespace TVGL
              * Akl-Toussaint heuristic. */
             var maxX = double.NegativeInfinity;
             var maxY = double.NegativeInfinity;
-            var maxSum = double.NegativeInfinity;
-            var maxDiff = double.NegativeInfinity;
             var minX = double.PositiveInfinity;
             var minY = double.PositiveInfinity;
-            var minSum = double.PositiveInfinity;
-            var minDiff = double.PositiveInfinity;
 
             /* the array of extreme is comprised of: 0.minX, 1. minSum, 2. minY, 3. maxDiff, 4. MaxX, 
              * 5. MaxSum, 6. MaxY, 7. MinDiff. */
@@ -423,7 +419,6 @@ namespace TVGL
              * should not take long since there are only 3 to 8 members currently in hull, and it will save time 
              * comparing to all the result vertices. */
             var edgeUnitVectors = new double[cvxVNum][];
-            double magnitude;
             for (var i = 0; i < last; i++)
             {
                 edgeUnitVectors[i] = convexHullCCW[i + 1].Position2D.subtract(convexHullCCW[i].Position2D).normalize();
@@ -486,10 +481,9 @@ namespace TVGL
              * the current convex hull points s.t. any additions will not confuse our for-loop indexers. */
             for (var j = cvxVNum; j > 0; j--)
             {
-                var lop = 0;
                 if (hullCands[j - 1].Any())
                 {
-                    if (hullCands[j - 1].Count == 1) lop = 1;
+                    if (hullCands[j - 1].Count == 1) ;
                     /* If there is one and only one candidate, it must be in the convex hull. Add it now. */
                     //convexHullCCW.Insert(j, hullCands[j - 1][0].point);
                     //

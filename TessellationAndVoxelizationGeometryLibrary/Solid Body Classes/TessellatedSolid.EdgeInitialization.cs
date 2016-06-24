@@ -150,14 +150,13 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Teases apart over-defined edges. By taking in the edges with more than two faces (the over-used edges) a list is
-        ///     return of newly defined edges.
+        /// Teases apart over-defined edges. By taking in the edges with more than two faces (the over-used edges) a list is
+        /// return of newly defined edges.
         /// </summary>
-        /// <param name="values">The values.</param>
-        /// <returns>
-        ///     System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;
-        ///     TVGL.PolygonalFace&gt;&gt;&gt;.
-        /// </returns>
+        /// <param name="overUsedEdgesDictionary">The over used edges dictionary.</param>
+        /// <param name="moreSingleSidedEdges">The more single sided edges.</param>
+        /// <returns>System.Collections.Generic.IEnumerable&lt;System.Tuple&lt;TVGL.Edge, System.Collections.Generic.List&lt;
+        /// TVGL.PolygonalFace&gt;&gt;&gt;.</returns>
         private static IEnumerable<Tuple<Edge, List<PolygonalFace>>> TeaseApartOverUsedEdges(
             List<Tuple<Edge, List<PolygonalFace>>> overUsedEdgesDictionary,
             out List<Edge> moreSingleSidedEdges)
@@ -589,9 +588,9 @@ namespace TVGL
                 else
                 {
                     var edgeDic = edges.ToDictionary(SetAndGetEdgeChecksum);
-                    List<List<Vertex[]>> triangleFaceList;
-                    var triangles = TriangulatePolygon.Run(new List<List<Vertex>>
-                    {edges.Select(e => e.To).ToList()}, normal, out triangleFaceList);
+                    var triangleLists = TriangulatePolygon.Run(new List<List<Vertex>>
+                    {edges.Select(e => e.To).ToList()}, normal);
+                    var triangles = triangleLists.SelectMany(tl => tl).ToList();
                     if (triangles.Any())
                     {
                         Message.output("loop successfully repaired with " + triangles.Count, 5);

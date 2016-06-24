@@ -19,10 +19,6 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
-/// <summary>
-/// The TVGL namespace.
-/// </summary>
-
 namespace TVGL
 {
     /// <summary>
@@ -130,6 +126,9 @@ namespace TVGL
     /// </summary>
     public enum UnitType
     {
+        /// <summary>
+        /// the unspecified state
+        /// </summary>
         unspecified = -1,
         /// <summary>
         ///     The millimeter
@@ -195,6 +194,9 @@ namespace TVGL
     /// </summary>
     public enum FileType
     {
+        /// <summary>
+        /// represents an unspecified state
+        /// </summary>
         unspecified,
         /// <summary>
         ///     Stereolithography (STL) American Standard Code for Information Interchange (ASCII)
@@ -251,9 +253,6 @@ namespace TVGL
     ///     Enum ColorElements
     /// </summary>
     internal enum ColorElements
-    /// <summary>
-    /// The red
-    /// </summary>
     {
         Red,
         Green,

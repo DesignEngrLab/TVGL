@@ -78,8 +78,8 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void UpdateWith(PolygonalFace face)
         {
-            throw new NotImplementedException();
             base.UpdateWith(face);
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -93,6 +93,11 @@ namespace TVGL
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Transforms the shape by the provided transformation matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(double[,] transformMatrix)
         {
             throw new NotImplementedException();

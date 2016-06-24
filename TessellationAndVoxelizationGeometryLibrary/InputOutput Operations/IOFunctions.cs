@@ -52,6 +52,10 @@ namespace TVGL.IOFunctions
         [XmlIgnore]
         public UnitType Units { get; set; }
 
+        /// <summary>
+        /// Gets or sets the units as string.
+        /// </summary>
+        /// <value>The units as string.</value>
         [XmlAttribute("unit")]
         public string UnitsAsString
         {
@@ -120,8 +124,8 @@ namespace TVGL.IOFunctions
                     throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
 #else
                     tessellatedSolids = ThreeMFFileData.OpenSolids(s, filename);
-#endif
                     break;
+#endif
                 case "model":
                     tessellatedSolids = ThreeMFFileData.OpenModelFile(s, filename);
                     break;
@@ -170,6 +174,11 @@ namespace TVGL.IOFunctions
             if (endIndex == -1) endIndex = filename.Length - 1;
             return filename.Substring(startIndex, endIndex - startIndex);
         }
+        /// <summary>
+        /// Gets the name of the extension from file.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <returns>System.String.</returns>
         protected static string GetExtensionFromFileName(string filename)
         {
             var lastIndexOfDot = filename.LastIndexOf('.');
@@ -331,6 +340,11 @@ namespace TVGL.IOFunctions
             return true;
         }
 
+        /// <summary>
+        /// Parses the units.
+        /// </summary>
+        /// <param name="input">The input.</param>
+        /// <returns>TVGL.UnitType.</returns>
         protected static UnitType ParseUnits(string input)
         {
             UnitType units;
@@ -383,6 +397,13 @@ namespace TVGL.IOFunctions
                     return false;
             }
         }
+        /// <summary>
+        /// Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solid">The solid.</param>
+        /// <param name="fileType">Type of the file.</param>
+        /// <returns>System.Boolean.</returns>
         public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType = FileType.PLY)
         {
             switch (fileType)
@@ -410,6 +431,10 @@ namespace TVGL.IOFunctions
             }
         }
 
+        /// <summary>
+        /// Gets the TVGL date mark text.
+        /// </summary>
+        /// <value>The TVGL date mark text.</value>
         protected static string tvglDateMarkText
         {
             get

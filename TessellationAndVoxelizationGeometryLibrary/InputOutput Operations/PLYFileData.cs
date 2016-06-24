@@ -105,8 +105,8 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
-        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
         internal static TessellatedSolid OpenSolid(Stream s, string filename)
         {
             var now = DateTime.Now;
@@ -378,6 +378,7 @@ namespace TVGL.IOFunctions
             catch (Exception exception)
             {
                 Message.output("Unable to write in model file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
                 return false;
             }
         }

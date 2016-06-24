@@ -26,55 +26,66 @@ namespace TVGL
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
         /// </summary>
-        /// <param name="loops"></param>
-        /// <param name="normal"></param>
-        /// <param name="triangleFaceList"></param>
-        /// <param name="ignoreNegativeSpace"></param>
-        /// <returns></returns>
-        public static List<Vertex[]> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, 
-            out List<List<Vertex[]>> triangleFaceList, bool ignoreNegativeSpace = false)
+        /// <param name="loops">The loops.</param>
+        /// <param name="normal">The normal.</param>
+        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
+        /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
+        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
             List<List<int>> groupsOfLoops;
             bool[] isPositive = null;
-            return Run2D(points2D,  out triangleFaceList, out groupsOfLoops, ref isPositive,ignoreNegativeSpace);
+            return Run2D(points2D, out groupsOfLoops, ref isPositive, ignoreNegativeSpace);
         }
 
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
         /// </summary>
-        /// <param name="loops"></param>
-        /// <param name="normal"></param>
-        /// <param name="triangleFaceList"></param>
-        /// <param name="isPositive"></param>
-        /// <param name="ignoreNegativeSpace"></param>
-        /// <param name="groupsOfLoops"></param>
-        /// <returns></returns>
-        public static List<Vertex[]> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal, out List<List<Vertex[]>> triangleFaceList, 
+        /// <param name="loops">The loops.</param>
+        /// <param name="normal">The normal.</param>
+        /// <param name="groupsOfLoops">The groups of loops.</param>
+        /// <param name="isPositive">The is positive.</param>
+        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
+        /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
+        public static List<List<Vertex[]>> Run(IEnumerable<IEnumerable<Vertex>> loops, double[] normal,
             out List<List<int>> groupsOfLoops, out bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //Note: Do NOT merge duplicates unless you have good reason to, since it may make the solid non-watertight
             var points2D = loops.Select(loop => MiscFunctions.Get2DProjectionPoints(loop.ToArray(), normal, false)).ToList();
             isPositive = null;
-            return Run2D(points2D, out triangleFaceList, out groupsOfLoops, ref isPositive, ignoreNegativeSpace);
+            return Run2D(points2D, out groupsOfLoops, ref isPositive, ignoreNegativeSpace);
         }
 
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
-        /// Ignoring the negative space, fills in holes. DO NOT USE this 
+        /// Ignoring the negative space, fills in holes. DO NOT USE this
         /// parameter for watertight geometry.
         /// </summary>
-        /// <param name="points2D"></param>
-        /// <param name="isPositive"></param>
-        /// <param name="triangleFaceList"></param>
-        /// <param name="groupsOfLoops"></param>
-        /// <param name="ignoreNegativeSpace"></param>
-        /// <returns></returns>
+        /// <param name="points2D">The points2 d.</param>
+        /// <param name="groupsOfLoops">The groups of loops.</param>
+        /// <param name="isPositive">The is positive.</param>
+        /// <param name="ignoreNegativeSpace">if set to <c>true</c> [ignore negative space].</param>
+        /// <returns>List&lt;List&lt;Vertex[]&gt;&gt;.</returns>
+        /// <exception cref="System.Exception">
+        /// Inputs into 'TriangulatePolygon' are unbalanced
+        /// or
+        /// Duplicate point found
+        /// or
+        /// Incorrect balance of node types
+        /// or
+        /// Incorrect balance of node types
+        /// or
+        /// Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.
+        /// or
+        /// Trapezoidation failed to complete properly. Check to see that the assumptions are met.
+        /// or
+        /// Incorrect number of triangles created in triangulate function
+        /// or
+        /// </exception>
         /// <exception cref="Exception"></exception>
         /// <exception cref="Exception"></exception>
-        public static List<Vertex[]> Run2D(IList<Point[]> points2D, out List<List<Vertex[]>> triangleFaceList, 
-            out List<List<int>> groupsOfLoops, ref bool[] isPositive, bool ignoreNegativeSpace = false)
+        public static List<List<Vertex[]>> Run2D(IList<Point[]> points2D, out List<List<int>> groupsOfLoops, ref bool[] isPositive, bool ignoreNegativeSpace = false)
         {
             //ASSUMPTION: NO lines intersect other lines or points && NO two points in any of the loops are the same.
             //Ex 1) If a negative loop and positive share a point, the negative loop should be inserted into the positive loop after that point and
@@ -92,8 +103,7 @@ namespace TVGL
             // 5: If isPositive == null, then 
 
             //Create return variables
-            var triangles = new List<Vertex[]>();
-            triangleFaceList = new List<List<Vertex[]>>();
+            var triangleFaceList = new List<List<Vertex[]>>();
             groupsOfLoops = new List<List<int>>();
 
             //Check incomining lists
@@ -187,7 +197,7 @@ namespace TVGL
                         linesInLoop.Add(line2);
 
                         const int precision = 15;
-                        var sortedLoop = orderedLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node => 
+                        var sortedLoop = orderedLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node =>
                             Math.Round(node.X, precision)).ToList();
                         orderedLoops.Add(orderedLoop);
                         sortedLoops.Add(sortedLoop);
@@ -203,7 +213,7 @@ namespace TVGL
                         //will be visited in.
                         var firstNodeFromEachLoop = sortedLoops.Select(sortedLoop => sortedLoop[0]).ToList();
                         const int precision = 15;
-                        var sortedFirstNodes = firstNodeFromEachLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node => 
+                        var sortedFirstNodes = firstNodeFromEachLoop.OrderByDescending(node => Math.Round(node.Y, precision)).ThenByDescending(node =>
                             Math.Round(node.X, precision)).ToList();
                         //Use a red-black tree to track whether loops are inside other loops
                         var tempSortedLoops = new List<List<Node>>(sortedLoops);
@@ -242,7 +252,7 @@ namespace TVGL
                                         isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                                     }
                                     else isInside = false;
-                                    if(isInside) //Merge the loop into this one and remove from the tempList
+                                    if (isInside) //Merge the loop into this one and remove from the tempList
                                     {
                                         isPositive[node.LoopID] = false; //This is a negative loop
                                         sortedFirstNodes.Remove(node);
@@ -283,7 +293,7 @@ namespace TVGL
                     //If they are incorrectly ordered, reverse the order.
                     //This is used to check situations whether isPositive == null or not.
                     var nodesLoopsCorrected = new List<List<Node>>();
-                    for (var j = 0; j < orderedLoops.Count; j++) 
+                    for (var j = 0; j < orderedLoops.Count; j++)
                     {
                         var orderedLoop = orderedLoops[j];
                         var index = orderedLoop.IndexOf(sortedLoops[j][0]); // index of first node in orderedLoop
@@ -346,7 +356,7 @@ namespace TVGL
                             //Only keep it if its not inside other loops
                             if (!isInside) listOfLoopIDsToKeep.Add(positiveLoop1.First().LoopID);
                         }
-                        
+
                         //Rewrite the lists 
                         var tempOrderedLoops = new List<List<Node>>();
                         var tempSortedLoops = new List<List<Node>>();
@@ -422,9 +432,9 @@ namespace TVGL
                         }
                         i++;
                     }
-                                      
+
                     //Get the number of negative loops
-                    foreach (var boolean in isPositive) 
+                    foreach (var boolean in isPositive)
                     {
                         if (boolean) positiveLoopCount++;
                         else negativeLoopCount++;
@@ -487,12 +497,12 @@ namespace TVGL
                                 bool isOnLine;
                                 //If remainder is not equal to 0, then it is odd.
                                 //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                                if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)  
+                                if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
                                 {
                                     isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                                 }
                                 else isInside = false;
-                                if(isInside)
+                                if (isInside)
                                 {
                                     //NOTE: This node must be a reflex upward point by observation
                                     //leftLine and rightLine are set in the two previous call and are now not null.
@@ -512,7 +522,7 @@ namespace TVGL
                                     sortedGroup.Remove(node);
                                     j--; //Pick the same index for the next iteration as the node which was just removed
                                     continue;
-                                } 
+                                }
                             }
 
                             //Add to or remove from Red-Black Tree
@@ -743,17 +753,16 @@ namespace TVGL
                         var newTriangles = new List<Vertex[]>();
                         foreach (var monotonePolygon2 in monotonePolygons)
                             newTriangles.AddRange(Triangulate(monotonePolygon2));
-                        triangles.AddRange(newTriangles);
                         triangleFaceList.Add(newTriangles);
                         groupsOfLoops.Add(group);
                         #endregion
                     }
                     //Check to see if the proper number of triangles were created from this set of loops
-                    //For a polgyon: traingles = (number of vertices) - 2
+                    //For a polygon: triangles = (number of vertices) - 2
                     //The addition of negative loops makes this: triangles = (number of vertices) + 2*(number of negative loops) - 2
                     //The most general form (by inspection) is then: triangles = (number of vertices) + 2*(number of negative loops) - 2*(number of positive loops)
                     //You could individually solve the equation for each positive loop, but simpler just to use most general form.
-                    if (triangles.Count != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
+                    if (triangleFaceList.Last().Count != pointCount + 2 * negativeLoopCount - 2 * positiveLoopCount)
                     {
                         throw new Exception("Incorrect number of triangles created in triangulate function");
                     }
@@ -819,14 +828,14 @@ namespace TVGL
                 {
                     if (attempts >= 4)
                     {
-                        Message.output("Triangulation failed after " + attempts + " attempts.",1);
+                        Message.output("Triangulation failed after " + attempts + " attempts.", 1);
                         throw new Exception();
                     }
                     isPositive = null;
                     attempts++;
                 }
             }
-            return triangles;
+            return triangleFaceList;
         }
 
         /// <summary>
@@ -1137,7 +1146,7 @@ namespace TVGL
                     throw new Exception(
                         "Negative Loop must be inside a positive loop, but no positive loops are left. Check if loops were created correctly.");
                 var sortedGroup = new List<Node>(sortedLoops[i]);
-                var group = new List<int> {sortedGroup[0].LoopID};
+                var group = new List<int> { sortedGroup[0].LoopID };
                 listPositive.RemoveAt(i);
                 orderedLoops.RemoveAt(i);
                 sortedLoops.RemoveAt(i);
@@ -1165,15 +1174,15 @@ namespace TVGL
                     //note that listPositive changes order /size , while isPositive is static like loopID.
                     //Similarly points2D is static.
                     if (node == completeListSortedLoops[node.LoopID][0] && isPositive[node.LoopID] == false)
-                        //if first point in the sorted loop and loop is negative 
+                    //if first point in the sorted loop and loop is negative 
                     {
                         bool isInside;
                         bool isOnLine;
                         //If remainder is not equal to 0, then it is odd.
                         //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                        if (LinesToLeft(node, lineList, out leftLine, out isOnLine)%2 != 0)
+                        if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
                         {
-                            isInside = LinesToRight(node, lineList, out rightLine, out isOnLine)%2 != 0;
+                            isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                         }
                         else isInside = false;
                         if (isInside)
@@ -1230,7 +1239,7 @@ namespace TVGL
         internal static NodeType GetNodeType(Node a, Node b, Node c)
         {
             var angle = MiscFunctions.AngleBetweenEdgesCCW(a.Point, b.Point, c.Point);
-            if(angle > Math.PI*2) throw new Exception();
+            if (angle > Math.PI * 2) throw new Exception();
             if (a.Y.IsPracticallySame(b.Y))
             {
                 if (c.Y.IsPracticallySame(b.Y))
@@ -1245,7 +1254,7 @@ namespace TVGL
 
             if (a.Y < b.Y)
             {
-                if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Peak: NodeType.Left;
+                if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Peak : NodeType.Left;
                 if (c.Y > b.Y) return NodeType.Left;
                 //else c.Y < b.Y
                 return angle < Math.PI ? NodeType.Peak : NodeType.UpwardReflex;
@@ -1255,7 +1264,7 @@ namespace TVGL
             if (c.Y.IsPracticallySame(b.Y)) return angle < Math.PI ? NodeType.Root : NodeType.Right;
             if (c.Y > b.Y) return angle < Math.PI ? NodeType.Root : NodeType.DownwardReflex;
             //else (c.Y < b.Y)
-            return NodeType.Right;           
+            return NodeType.Right;
         }
         #endregion
 
@@ -1283,7 +1292,7 @@ namespace TVGL
         #region Find Lines to Left or Right
         internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, out bool isOnLine)
         {
-            isOnLine = false; 
+            isOnLine = false;
             leftLine = null;
             var xleft = double.NegativeInfinity;
             var counter = 0;
@@ -1297,13 +1306,13 @@ namespace TVGL
                 if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
                 if (xdif < 0 && !xdif.IsNegligible())//Moved to the left by some tolerance 
                 {
-                    
+
                     counter++;
                     if (xdif.IsPracticallySame(xleft)) // if approximately equal
                     {
                         //Find the shared node
                         Node nodeOnLine;
-                        if (leftLine ==  null) throw new Exception("Null Reference");
+                        if (leftLine == null) throw new Exception("Null Reference");
                         if (leftLine.ToNode == line.FromNode)
                         {
                             nodeOnLine = line.FromNode;
@@ -1319,7 +1328,7 @@ namespace TVGL
                         //leftLine share a node. 
                         leftLine = nodeOnLine.EndLine.FromNode.X > nodeOnLine.StartLine.ToNode.X ? nodeOnLine.EndLine : nodeOnLine.StartLine;
                     }
-                    else if (xdif >= xleft) 
+                    else if (xdif >= xleft)
                     {
                         xleft = xdif;
                         leftLine = line;
@@ -1331,14 +1340,14 @@ namespace TVGL
 
         internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
         {
-            bool isOnLine; 
+            bool isOnLine;
             LinesToLeft(node, lineList, out leftLine, out isOnLine);
             if (leftLine == null) throw new Exception("Failed to find line to left.");
         }
 
         internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, out bool isOnLine)
         {
-            isOnLine = false; 
+            isOnLine = false;
             rightLine = null;
             var xright = double.PositiveInfinity;
             var counter = 0;
@@ -1385,7 +1394,7 @@ namespace TVGL
 
         internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
         {
-            bool isOnLine; 
+            bool isOnLine;
             LinesToRight(node, lineList, out rightLine, out isOnLine);
             if (rightLine == null) throw new Exception("Failed to find line to right.");
         }
@@ -1397,11 +1406,11 @@ namespace TVGL
             //Search for insertion location starting from the first element in the list.
             for (var i = 0; i < sortedNodes.Count; i++)
             {
-                if (node.Y.IsPracticallySame(sortedNodes[i].Y)  && node.X.IsPracticallySame(sortedNodes[i].X)) //Descending X
+                if (node.Y.IsPracticallySame(sortedNodes[i].Y) && node.X.IsPracticallySame(sortedNodes[i].X)) //Descending X
                 {
                     throw new Exception("Points are practically the same.");
                 }
-                if (node.Y.IsPracticallySame(sortedNodes[i].Y)  && node.X > sortedNodes[i].X) //Descending X
+                if (node.Y.IsPracticallySame(sortedNodes[i].Y) && node.X > sortedNodes[i].X) //Descending X
                 {
                     sortedNodes.Insert(i, node);
                     return i;
@@ -1466,7 +1475,7 @@ namespace TVGL
             var leftChain = monotonePolygon.LeftChain;
             var rightChain = monotonePolygon.RightChain;
             var sortedNodes = monotonePolygon.SortedNodes;
-            
+
 
             //For each node other than the start and finish, add a chain affiliation.
             //Note that this is updated each time the triangulate function is called, 
@@ -1514,7 +1523,7 @@ namespace TVGL
                     {
                         //Do not skip, even if angle is close to Math.PI, because skipping could break the algorithm (create incorrect triangles)
                         //Better to output negligible triangles.
-                        triangles.Add(new [] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
+                        triangles.Add(new[] { node.Point.References[0], scan[0].Point.References[0], scan[1].Point.References[0] });
                         scan.RemoveAt(0);
                         //Make the new scan[0] point both left and right for the remaining chain
                         //Essentially this moves the peak. 
@@ -1536,12 +1545,12 @@ namespace TVGL
                             ? MiscFunctions.AngleBetweenEdgesCCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point)
                             : MiscFunctions.AngleBetweenEdgesCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point);
                         //Skip if greater than OR close to Math.PI, because that will yield a Negligible area triangle
-                        if (angle > Math.PI || Math.Abs(angle - Math.PI) < 1E-6) 
+                        if (angle > Math.PI || Math.Abs(angle - Math.PI) < 1E-6)
                         {
                             exitBool = true;
                             continue;
                         }
-                        triangles.Add(new [] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
+                        triangles.Add(new[] { scan[scan.Count - 2].Point.References[0], scan.Last().Point.References[0], node.Point.References[0] });
                         //Remove last node from scan list 
                         scan.Remove(scan.Last());
                     }
@@ -1559,7 +1568,7 @@ namespace TVGL
                 var edge1 = triangle[1].Position.subtract(triangle[0].Position);
                 var edge2 = triangle[2].Position.subtract(triangle[0].Position);
                 var area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
-                if (area.IsNegligible()) Message.output("Neglible Area Traingle Created",2); //CANNOT output a 0.0 area triangle. It will break other functions!
+                if (area.IsNegligible()) Message.output("Neglible Area Traingle Created", 2); //CANNOT output a 0.0 area triangle. It will break other functions!
                 //Could collapse whichever edge vector is giving 0 area and ignore this triangle. 
             }
             return triangles;
