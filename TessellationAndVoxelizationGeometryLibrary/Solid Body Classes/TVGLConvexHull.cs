@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
@@ -37,7 +38,7 @@ namespace TVGL
             do
             {
                 ConvexHullComputationConfig config = null;
-                if (iteration > 0)
+                if(iteration > 0)
                 {
                     config = new ConvexHullComputationConfig
                     {
@@ -45,9 +46,10 @@ namespace TVGL
                         PlaneDistanceTolerance = Constants.ConvexHullRadiusForRobustness,
                         // the translation radius should be lower than PlaneDistanceTolerance / 2
                         PointTranslationGenerator =
-                            ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness)
+                            ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness / 2)
                     };
                 }
+         
                 var convexHull = ConvexHull.Create(allVertices, config);
                 Vertices = convexHull.Points.ToArray();
                 var convexHullFaceList = new List<PolygonalFace>();
@@ -70,6 +72,15 @@ namespace TVGL
                 Edges = MakeEdges(Faces, Vertices);
                 TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
                 iteration++;
+                if (Volume < 0)
+                {
+                    foreach (var face in Faces)
+                    {
+                        face.Normal = face.Normal.multiply(-1);
+                    }
+                    Debug.WriteLine("ConvexHull created a negative volume. Attempting to correct.");
+                    TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+                }
             } while ((Volume < solidVolume || double.IsNaN(Volume)) && iteration < 2);
             if (solidVolume < 0.1)
             {
@@ -82,7 +93,11 @@ namespace TVGL
                 Succeeded = (Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume/1000));
             }
 
-            if (!Succeeded) throw new Exception("Error in implementation of ConvexHull3D or Volume Calculation");
+            if (!Succeeded)
+            {
+                Debug.WriteLine("Error in implementation of ConvexHull3D or Volume Calculation");
+                throw new Exception();
+            }
         }
 
         private static Edge[] MakeEdges(IEnumerable<PolygonalFace> faces, IList<Vertex> vertices)
