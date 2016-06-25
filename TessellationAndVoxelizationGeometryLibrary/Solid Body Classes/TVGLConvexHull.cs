@@ -56,10 +56,13 @@ namespace TVGL
 
                 var convexHull = ConvexHull.Create(allVertices, config);
                 Vertices = convexHull.Points.ToArray();
+                var centerApprox = new double[3];
+                centerApprox = Vertices.Aggregate(centerApprox, (current, v) => current.add(v.Position));
+                centerApprox = centerApprox.divide(Vertices.Length);
                 var convexHullFaceList = new List<PolygonalFace>();
                 var checkSumMultipliers = new long[3];
                 for (var i = 0; i < 3; i++)
-                    checkSumMultipliers[i] = (long) Math.Pow(allVertices.Count, i);
+                    checkSumMultipliers[i] = (long) Math.Pow(Constants.CubeRootOfLongMaxValue, i);
                 var alreadyCreatedFaces = new HashSet<long>();
                 foreach (var cvxFace in convexHull.Faces)
                 {
@@ -69,6 +72,8 @@ namespace TVGL
                     var checksum = orderedIndices.Select((t, j) => t*checkSumMultipliers[j]).Sum();
                     if (alreadyCreatedFaces.Contains(checksum)) continue;
                     alreadyCreatedFaces.Add(checksum);
+                    var dot = vertices[0].Position.subtract(centerApprox).dotProduct(cvxFace.Normal);
+                    if (dot < 0) cvxFace.Normal.multiply(-1);
                     convexHullFaceList.Add(new PolygonalFace(vertices, cvxFace.Normal, false));
                 }
                 //ToDo: It seems sometimes the edges angles are undefined because of either incorrect ordering of vertices or incorrect normals.
