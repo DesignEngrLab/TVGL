@@ -44,6 +44,7 @@ namespace TVGL
         /// <exception cref="System.Exception">Error in implementation of ConvexHull3D or Volume Calculation</exception>
         public TVGLConvexHull(IList<Vertex> allVertices, double solidVolume = 0)
         {
+            Succeeded = false;
             var convexHull = ConvexHull.Create(allVertices);
             Vertices = convexHull.Points.ToArray();
             var convexHullFaceList = new List<PolygonalFace>();
@@ -67,7 +68,12 @@ namespace TVGL
             if (Volume < solidVolume)
             {
                 var diff = solidVolume - Volume;
-                Debug.WriteLine("ConvexHullCreation failed to created a larger volume than the solid by " + diff + " [mm^3]. The Solid's volume was " + solidVolume + " [mm^3].");
+                Debug.WriteLine("ConvexHullCreation failed to created a larger volume than the solid by " + diff +
+                                " [mm^3]. The Solid's volume was " + solidVolume + " [mm^3].");
+            }
+            else
+            {
+                Succeeded = true;
             }
         }
 
