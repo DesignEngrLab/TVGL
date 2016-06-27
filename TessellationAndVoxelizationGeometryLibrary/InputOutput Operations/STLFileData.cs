@@ -259,7 +259,7 @@ namespace TVGL.IOFunctions
                     FileName = last.FileName
                 };
                 stlSolid1.Comments.Add(comments);
-            } while (reader.BaseStream.Position<length);
+            } while (reader.BaseStream.Position < length);
             return true;
         }
 
@@ -374,39 +374,40 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveASCII(Stream stream, IList<TessellatedSolid> solids)
         {
-            foreach (var solid in solids)
-                if (!SaveASCII(stream, solid)) return false;
-            var writer = new StreamWriter(stream);
-            writer.WriteLine("#  " + tvglDateMarkText);
-            if (!string.IsNullOrWhiteSpace(solids[0].FileName))
-                writer.WriteLine("#  Originally loaded from : " + solids[0].FileName);
-            if (solids[0].Units != UnitType.unspecified)
-                writer.WriteLine("#  Units : " + solids[0].Units);
-            if (!string.IsNullOrWhiteSpace(solids[0].Language))
-                writer.WriteLine("#  Lang : " + solids[0].Language);
-            foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
-                writer.WriteLine("#  " + comment);
+            using (var writer = new StreamWriter(stream))
+            {
+                foreach (var solid in solids)
+                    if (!SaveASCII(writer, solid)) return false;
+                writer.WriteLine("#  " + tvglDateMarkText);
+                if (!string.IsNullOrWhiteSpace(solids[0].FileName))
+                    writer.WriteLine("#  Originally loaded from : " + solids[0].FileName);
+                if (solids[0].Units != UnitType.unspecified)
+                    writer.WriteLine("#  Units : " + solids[0].Units);
+                if (!string.IsNullOrWhiteSpace(solids[0].Language))
+                    writer.WriteLine("#  Lang : " + solids[0].Language);
+                foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
+                    writer.WriteLine("#  " + comment);
+            }
             return true;
         }
 
-        private static bool SaveASCII(Stream stream, TessellatedSolid solid)
+        private static bool SaveASCII(StreamWriter writer, TessellatedSolid solid)
         {
             try
             {
-                var writer = new StreamWriter(stream);
                 writer.WriteLine("solid " + solid.Name);
                 foreach (var face in solid.Faces)
                 {
-                    writer.WriteLine("facet normal " + face.Normal[0] + " " + face.Normal[1] + " " + face.Normal[2]);
-                    writer.WriteLine("  outer loop");
-                    writer.WriteLine("  vertex " + face.Vertices[0].X + " " + face.Vertices[0].Y + " " +
+                    writer.WriteLine("\tfacet normal " + face.Normal[0] + " " + face.Normal[1] + " " + face.Normal[2]);
+                    writer.WriteLine("\t\touter loop");
+                    writer.WriteLine("\t\t\tvertex " + face.Vertices[0].X + " " + face.Vertices[0].Y + " " +
                                      face.Vertices[0].Z);
-                    writer.WriteLine("  vertex " + face.Vertices[1].X + " " + face.Vertices[1].Y + " " +
+                    writer.WriteLine("\t\t\tvertex " + face.Vertices[1].X + " " + face.Vertices[1].Y + " " +
                                      face.Vertices[1].Z);
-                    writer.WriteLine("  vertex " + face.Vertices[2].X + " " + face.Vertices[2].Y + " " +
+                    writer.WriteLine("\t\t\tvertex " + face.Vertices[2].X + " " + face.Vertices[2].Y + " " +
                                      face.Vertices[2].Z);
-                    writer.WriteLine("  end loop");
-                    writer.WriteLine("  endfacet");
+                    writer.WriteLine("\t\tendloop");
+                    writer.WriteLine("\tendfacet");
                 }
                 writer.WriteLine("endsolid " + solid.Name);
                 Message.output("Successfully wrote STL file to stream.", 4);
@@ -429,27 +430,30 @@ namespace TVGL.IOFunctions
         /// <exception cref="NotImplementedException"></exception>
         internal static bool SaveBinary(Stream stream, IList<TessellatedSolid> solids)
         {
-            var writer = new BinaryWriter(stream, Encoding.UTF8);
-            var headerString = GetNameFromFileName(solids[0].FileName);
-            if (string.IsNullOrWhiteSpace(headerString)) headerString = solids[0].Name;
-            headerString += tvglDateMarkText;
-            if (solids[0].Units != UnitType.unspecified)
-                headerString += solids[0].Units.ToString();
-            foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
-                headerString += " " + comment;
-            if (headerString.Length > 80) headerString = headerString.Substring(0, 80);
-            var headerBytes = Encoding.UTF8.GetBytes(headerString);
-            writer.Write(headerBytes);
-            foreach (var solid in solids)
+            using (var writer = new BinaryWriter(stream, Encoding.UTF8))
             {
-                var defaultColor = new Color(Constants.DefaultColor);
-                var defineColors = !(solid.HasUniformColor && defaultColor.Equals(solid.SolidColor));
-                writer.Write((uint)solid.NumberOfFaces);
-                foreach (var face in solid.Faces)
-                    WriteFacet(writer, face, defineColors, defaultColor);
+                var headerString = GetNameFromFileName(solids[0].FileName);
+                if (string.IsNullOrWhiteSpace(headerString)) headerString = solids[0].Name;
+                headerString += tvglDateMarkText;
+                if (solids[0].Units != UnitType.unspecified)
+                    headerString += solids[0].Units.ToString();
+                foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))
+                    headerString += " " + comment;
+                if (headerString.Length > 80) headerString = headerString.Substring(0, 80);
+                var headerBytes = Encoding.UTF8.GetBytes(headerString);
+                writer.Write(headerBytes);
+                foreach (var solid in solids)
+                {
+                    var defaultColor = new Color(Constants.DefaultColor);
+                    var defineColors = !(solid.HasUniformColor && defaultColor.Equals(solid.SolidColor));
+                    writer.Write((uint)solid.NumberOfFaces);
+                    foreach (var face in solid.Faces)
+                        WriteFacet(writer, face, defineColors, defaultColor);
+                }
             }
             return true;
         }
+
 
         private static void WriteFacet(BinaryWriter writer, PolygonalFace face, bool defineColors, Color defaultColor)
         {
