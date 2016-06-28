@@ -78,10 +78,7 @@ namespace TVGL
         /// a tessellated model.
         /// </summary>
         internal static double MaxAllowableEdgeSimilarityScore = 0.2;
-
-
-        internal const double TwoPi = 2 * Math.PI;
-
+        
         /// <summary>
         ///     Finds the index.
         /// </summary>

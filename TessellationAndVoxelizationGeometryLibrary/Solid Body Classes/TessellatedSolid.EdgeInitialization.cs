@@ -57,12 +57,12 @@ namespace TVGL
             // a moment to stitch these to the vertices
             foreach (var tuple in edgeList)
                 tuple.Item1.DoublyLinkVertices();
+            HashSet<Edge> borderEdges;
             // finally, the remainingEdges may be close enough that they should have been matched together
-            // in the beginning. We check that here, and we spit out the ... removed vertices! Yes, 
-            // we don't have another approach to the edges, but we need to make sure we remove vertices
-            // that were paried up here.
-            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges, out removedVertices));
-
+            // in the beginning. We check that here, and we spit out the final unrepairable edges as the border
+            // edges and removed vertices. we need to make sure we remove vertices that were paired up here.
+            edgeList.AddRange(MatchUpRemainingSingleSidedEdge(remainingEdges,out borderEdges, out removedVertices));
+            BorderEdges = borderEdges.ToArray();
             // now, we have list, we can do some finally cleanup and stitching
             NumberOfEdges = edgeList.Count;
             Edges = new Edge[NumberOfEdges];
@@ -236,13 +236,13 @@ namespace TVGL
             var isThisNormal = edge.Vector.crossProduct(otherEdgeVector);
             return face.Normal.dotProduct(isThisNormal) > 0;
         }
-        
+
 
 
         private static IEnumerable<Tuple<Edge, List<PolygonalFace>>> MatchUpRemainingSingleSidedEdge(
-            List<Edge> singleSidedEdges,
-            out List<Vertex> removedVertices)
+            List<Edge> singleSidedEdges, out HashSet<Edge> borderEdges, out List<Vertex> removedVertices)
         {
+            borderEdges = new HashSet<Edge>(singleSidedEdges);
             var removedVerticesHash = new HashSet<Vertex>();
             removedVertices = new List<Vertex>();
             var keptVerticesHash = new HashSet<Vertex>();
@@ -271,6 +271,8 @@ namespace TVGL
                 if (VerticesAreAdjacent(keepEdge.From, removeEdge.To) ||
                     VerticesAreAdjacent(keepEdge.To, removeEdge.From))
                     continue;
+                borderEdges.Remove(keepEdge);
+                borderEdges.Remove(removeEdge);
                 completedEdges.Add(new Tuple<Edge, List<PolygonalFace>>(keepEdge,
                     new List<PolygonalFace> { keepEdge.OwnedFace, removeEdge.OwnedFace }));
                 keepEdge.DoublyLinkVertices();
@@ -493,7 +495,7 @@ namespace TVGL
             keepVertex.Position = keepVertex.Position.add(avgNormal.multiply(length));
         }
 
-        private static List<Tuple<List<Edge>, double[]>> OrganizeIntoLoops(List<Edge> singleSidedEdges,
+        internal static List<Tuple<List<Edge>, double[]>> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)
         {
             remainingEdges = new List<Edge>(singleSidedEdges);
@@ -588,9 +590,9 @@ namespace TVGL
                 else
                 {
                     var edgeDic = edges.ToDictionary(SetAndGetEdgeChecksum);
-                    var triangleLists = TriangulatePolygon.Run(new List<List<Vertex>>
-                    {edges.Select(e => e.To).ToList()}, normal);
-                    var triangles = triangleLists.SelectMany(tl => tl).ToList();
+                    var triangleFaceList = TriangulatePolygon.Run(new List<List<Vertex>>
+                    {edges.Select(e => e.To).ToList()}, normal); ;
+                    var triangles = triangleFaceList.SelectMany(tl => tl).ToList();
                     if (triangles.Any())
                     {
                         Message.output("loop successfully repaired with " + triangles.Count, 5);

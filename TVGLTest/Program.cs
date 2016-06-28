@@ -81,7 +81,8 @@ namespace TVGL_Test
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-                TestPolygon(ts[0]);
+             //   TestPolygon(ts[0]);
+             Presenter.ShowAndHang(ts[0]);
             }
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
@@ -90,10 +91,9 @@ namespace TVGL_Test
         private static void TestPolygon(TessellatedSolid ts)
         {
             ContactData contactData;
-            Slice.GetContactData(ts,new Flat(10,new [] {1.0,0,0}),
+            Slice.GetContactData(ts, new Flat(10, new[] { 1.0, 0, 0 }),
                 out contactData);
-
-            contactData.NegativeSideContactData[0]
+            throw new NotImplementedException();
         }
 
         private static void TestOBB(string InputDir)
