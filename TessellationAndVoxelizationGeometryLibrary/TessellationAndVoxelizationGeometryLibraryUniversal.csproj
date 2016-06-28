@@ -51,20 +51,6 @@
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
     <Compile Include="InputOutput Operations\SHELLFileData.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\Collections.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\Constants.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\ConvexFace.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\ConvexFaceInternal.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\ConvexHull.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\ConvexHullInternal.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\IVertex.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\MathHelper.cs" />
-    <Compile Include="MIConvexHull\ConvexHull\ObjectManager.cs" />
-    <Compile Include="MIConvexHull\Triangulation\DelaunayTriangulation.cs" />
-    <Compile Include="MIConvexHull\Triangulation\Triangulation.cs" />
-    <Compile Include="MIConvexHull\Triangulation\TriangulationCell.cs" />
-    <Compile Include="MIConvexHull\Triangulation\VoronoiEdge.cs" />
-    <Compile Include="MIConvexHull\Triangulation\VoronoiMesh.cs" />
     <Compile Include="Miscellaneous Functions\AreaDecomposition.cs" />
     <Compile Include="Miscellaneous Functions\ListFunctions.cs">
       <SubType>Code</SubType>
@@ -109,12 +95,17 @@
     <EmbeddedResource Include="Primitive Classification\NewFaRules.csv" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="MIConvexHull, Version=1.0.16.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MIConvexHull.1.0.16.0000\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>

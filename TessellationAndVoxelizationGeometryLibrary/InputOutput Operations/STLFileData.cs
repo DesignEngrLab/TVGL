@@ -434,7 +434,7 @@ namespace TVGL.IOFunctions
             {
                 var headerString = GetNameFromFileName(solids[0].FileName);
                 if (string.IsNullOrWhiteSpace(headerString)) headerString = solids[0].Name;
-                headerString += " " + tvglDateMarkText;
+                headerString += tvglDateMarkText;
                 if (solids[0].Units != UnitType.unspecified)
                     headerString += solids[0].Units.ToString();
                 foreach (var comment in solids[0].Comments.Where(string.IsNullOrWhiteSpace))

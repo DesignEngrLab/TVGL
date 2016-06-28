@@ -99,48 +99,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs">
       <Link>InputOutput Operations\STLFileData.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\Collections.cs">
-      <Link>MIConvexHull\ConvexHull\Collections.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\Constants.cs">
-      <Link>MIConvexHull\ConvexHull\Constants.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\ConvexFace.cs">
-      <Link>MIConvexHull\ConvexHull\ConvexFace.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\ConvexFaceInternal.cs">
-      <Link>MIConvexHull\ConvexHull\ConvexFaceInternal.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\ConvexHull.cs">
-      <Link>MIConvexHull\ConvexHull\ConvexHull.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\ConvexHullInternal.cs">
-      <Link>MIConvexHull\ConvexHull\ConvexHullInternal.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\IVertex.cs">
-      <Link>MIConvexHull\ConvexHull\IVertex.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\MathHelper.cs">
-      <Link>MIConvexHull\ConvexHull\MathHelper.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\ConvexHull\ObjectManager.cs">
-      <Link>MIConvexHull\ConvexHull\ObjectManager.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\Triangulation\DelaunayTriangulation.cs">
-      <Link>MIConvexHull\Triangulation\DelaunayTriangulation.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\Triangulation\Triangulation.cs">
-      <Link>MIConvexHull\Triangulation\Triangulation.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\Triangulation\TriangulationCell.cs">
-      <Link>MIConvexHull\Triangulation\TriangulationCell.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\Triangulation\VoronoiEdge.cs">
-      <Link>MIConvexHull\Triangulation\VoronoiEdge.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\MIConvexHull\Triangulation\VoronoiMesh.cs">
-      <Link>MIConvexHull\Triangulation\VoronoiMesh.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\AreaDecomposition.cs">
       <Link>Miscellaneous Functions\AreaDecomposition.cs</Link>
     </Compile>
@@ -235,12 +193,17 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="MIConvexHull">
+      <HintPath>..\packages\MIConvexHull.1.0.16.0000\lib\portable-net45+wp8+win8\MIConvexHull.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="StarMath">
       <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net45+wp8+win8\StarMath.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
