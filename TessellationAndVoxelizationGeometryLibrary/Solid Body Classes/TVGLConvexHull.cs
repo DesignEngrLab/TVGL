@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
@@ -27,18 +28,32 @@ namespace TVGL
     public class TVGLConvexHull
     {
         /// <summary>
-        ///     Gets the convex hull, given a list of vertices
+        /// Initializes a new instance of the <see cref="TVGLConvexHull"/> class.
         /// </summary>
-        /// <param name="allVertices"></param>
-        /// <param name="solidVolume"></param>
-        public TVGLConvexHull(IList<Vertex> allVertices, double solidVolume)
+        /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
+        public TVGLConvexHull(TessellatedSolid ts) : this(ts.Vertices, ts.Volume)
+        {
+        }
+
+        /// <summary>
+        /// Gets the convex hull, given a list of vertices
+        /// </summary>
+        /// <param name="allVertices">All vertices.</param>
+        /// <param name="solidVolume">The volume of the tessellated solid, if known. This represents
+        /// the lower bound on the convex hull, which is used in a check to finding the convex hull.</param>
+        /// <exception cref="System.Exception">Error in implementation of ConvexHull3D or Volume Calculation</exception>
+        public TVGLConvexHull(IList<Vertex> allVertices, double solidVolume = 0)
         {
             var iteration = 0;
+            Succeeded = false;
             do
             {
                 ConvexHullComputationConfig config = null;
                 if (iteration > 0)
                 {
+                    Debug.WriteLine("ConvexHull starting second attempt");
+
+                    //Always do the config, since it was breaking about 50% of the time without.
                     config = new ConvexHullComputationConfig
                     {
                         PointTranslationType = PointTranslationType.TranslateInternal,
@@ -48,6 +63,7 @@ namespace TVGL
                             ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness)
                     };
                 }
+
                 var convexHull = ConvexHull.Create(allVertices, config);
                 Vertices = convexHull.Points.ToArray();
                 var convexHullFaceList = new List<PolygonalFace>();
@@ -70,19 +86,46 @@ namespace TVGL
                 Edges = MakeEdges(Faces, Vertices);
                 TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
                 iteration++;
-            } while ((Volume < solidVolume || double.IsNaN(Volume)) && iteration < 2);
-            if (solidVolume < 0.1)
+                if (Volume < 0)
+                {
+                    foreach (var face in Faces)
+                    {
+                        face.Normal = face.Normal.multiply(-1);
+                    }
+                    Debug.WriteLine("ConvexHull created a negative volume. Attempting to correct.");
+                    TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+                    if (Volume >= solidVolume)
+                    {
+                        Debug.WriteLine("ConvexHull successfully inverted solid");
+                    }
+                }
+                if (solidVolume < 0.1)
+                {
+                    //This solid has a small volume. Relax the constraint.
+                    Succeeded = Volume > solidVolume || Volume.IsPracticallySame(solidVolume, 0.000001);
+                }
+                else
+                {
+                    //Use a loose tolerance based on the size of the solid, since accuracy is not terribly important
+                    Succeeded = Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume / 1000);
+                }
+            } while (!Succeeded && iteration < 2);
+
+            if (Succeeded) return;
+            //Else, why did it not succeed?
+            if (Volume < 0)
             {
-                //This solid has a small volume. Relax the constraint.
-                Succeeded = (Volume > solidVolume || Volume.IsPracticallySame(solidVolume, 0.000001));
+                Debug.WriteLine("ConvexHullCreation failed to create a positive volume");
+            }
+            else if (Volume < solidVolume)
+            {
+                var diff = solidVolume - Volume;
+                Debug.WriteLine("ConvexHullCreation failed to created a larger volume than the solid by " + diff + " [mm^3]. The Solid's volume was " + solidVolume + " [mm^3].");
             }
             else
             {
-                //Use a loose tolerance based on the size of the solid, since accuracy is not terribly important
-                Succeeded = (Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume/1000));
+                Debug.WriteLine("Error in implementation of ConvexHull3D or Volume Calculation");
             }
-
-            if (!Succeeded) throw new Exception("Error in implementation of ConvexHull3D or Volume Calculation");
         }
 
         private static Edge[] MakeEdges(IEnumerable<PolygonalFace> faces, IList<Vertex> vertices)

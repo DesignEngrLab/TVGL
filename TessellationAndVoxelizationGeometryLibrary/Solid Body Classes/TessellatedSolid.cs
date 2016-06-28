@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
@@ -148,6 +149,8 @@ namespace TVGL
         /// <value>The edges.</value>
         public Edge[] Edges { get; private set; }
 
+
+        public Edge[] BorderEdges { get; private set; }
 
         /// <summary>
         ///     Gets the vertices.
@@ -360,7 +363,6 @@ namespace TVGL
             MakeEdges(out newFaces, out removedVertices);
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
-            CreateConvexHull();
             double[] center;
             double volume;
             double surfaceArea;
@@ -373,6 +375,9 @@ namespace TVGL
             foreach (var v in Vertices)
                 v.DefineVertexCurvature();
             TessellationError.CheckModelIntegrity(this);
+
+            //Create convex hull last. After the volume for the solid has found and errors corrected.
+            CreateConvexHull(Volume);
         }
 
 
@@ -597,11 +602,14 @@ namespace TVGL
         #region Convex Hull
 
         /// <summary>
-        ///     Creates the convex hull.
+        ///     Creates the convex hull. 
         /// </summary>
-        private void CreateConvexHull()
+        private void CreateConvexHull(double solidVolume)
         {
-            ConvexHull = new TVGLConvexHull(Vertices, Volume);
+            if (solidVolume < 0)
+                Debug.WriteLine("Correct the face normals (currently inside-out) before calling this function");
+            //Take the absolute value of volume, incase the solid is inside out, which will be corrected later.
+            ConvexHull = new TVGLConvexHull(Vertices, solidVolume);
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartofConvexHull = true;
             foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartofConvexHull)))
