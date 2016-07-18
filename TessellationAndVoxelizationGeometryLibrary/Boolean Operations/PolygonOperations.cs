@@ -47,9 +47,6 @@
 //use_xyz: adds a Z member to IntPoint. Adds a minor cost to performance.
 //#define use_xyz
 
-//use_lines: Enables open path clipping. Adds a very minor cost to performance.
-//#define use_lines
-
 //use_deprecated: Enables temporary support for the obsolete functions
 //#define use_deprecated
 
@@ -915,13 +912,8 @@ namespace TVGL.Boolean_Operations.Clipper
 
         internal bool AddPath(Path pg, PolyType polyType, bool Closed)
         {
-#if use_lines
-      if (!Closed && polyType == PolyType.Clip)
-        throw new ClipperException("AddPath: Open paths must be subject.");
-#else
-            if (!Closed)
-                throw new ClipperException("AddPath: Open paths have been disabled.");
-#endif
+            if (!Closed && polyType == PolyType.Clip)
+                throw new ClipperException("AddPath: Open paths must be subject.");
 
             int highI = (int)pg.Count - 1;
             if (Closed) while (highI > 0 && (pg[highI] == pg[0])) --highI;
@@ -2412,52 +2404,50 @@ namespace TVGL.Boolean_Operations.Clipper
           SetZ(ref pt, e1, e2);
 #endif
 
-#if use_lines
-          //if either edge is on an OPEN path ...
-          if (e1.WindDelta == 0 || e2.WindDelta == 0)
-          {
-            //ignore subject-subject open path intersections UNLESS they
-            //are both open paths, AND they are both 'contributing maximas' ...
-            if (e1.WindDelta == 0 && e2.WindDelta == 0) return;
-            //if intersecting a subj line with a subj poly ...
-            else if (e1.PolyTyp == e2.PolyTyp && 
-              e1.WindDelta != e2.WindDelta && m_ClipType == ClipType.Union)
+            //if either edge is on an OPEN path ...
+            if (e1.WindDelta == 0 || e2.WindDelta == 0)
             {
-              if (e1.WindDelta == 0)
-              {
-                if (e2Contributing)
+                //ignore subject-subject open path intersections UNLESS they
+                //are both open paths, AND they are both 'contributing maximas' ...
+                if (e1.WindDelta == 0 && e2.WindDelta == 0) return;
+                //if intersecting a subj line with a subj poly ...
+                else if (e1.PolyTyp == e2.PolyTyp &&
+                  e1.WindDelta != e2.WindDelta && m_ClipType == ClipType.Union)
                 {
-                  AddOutPt(e1, pt);
-                  if (e1Contributing) e1.OutIdx = Unassigned;
+                    if (e1.WindDelta == 0)
+                    {
+                        if (e2Contributing)
+                        {
+                            AddOutPt(e1, pt);
+                            if (e1Contributing) e1.OutIdx = Unassigned;
+                        }
+                    }
+                    else
+                    {
+                        if (e1Contributing)
+                        {
+                            AddOutPt(e2, pt);
+                            if (e2Contributing) e2.OutIdx = Unassigned;
+                        }
+                    }
                 }
-              }
-              else
-              {
-                if (e1Contributing)
+                else if (e1.PolyTyp != e2.PolyTyp)
                 {
-                  AddOutPt(e2, pt);
-                  if (e2Contributing) e2.OutIdx = Unassigned;
+                    if ((e1.WindDelta == 0) && Math.Abs(e2.WindCnt) == 1 &&
+                      (m_ClipType != ClipType.Union || e2.WindCnt2 == 0))
+                    {
+                        AddOutPt(e1, pt);
+                        if (e1Contributing) e1.OutIdx = Unassigned;
+                    }
+                    else if ((e2.WindDelta == 0) && (Math.Abs(e1.WindCnt) == 1) &&
+                      (m_ClipType != ClipType.Union || e1.WindCnt2 == 0))
+                    {
+                        AddOutPt(e2, pt);
+                        if (e2Contributing) e2.OutIdx = Unassigned;
+                    }
                 }
-              }
+                return;
             }
-            else if (e1.PolyTyp != e2.PolyTyp)
-            {
-              if ((e1.WindDelta == 0) && Math.Abs(e2.WindCnt) == 1 && 
-                (m_ClipType != ClipType.Union || e2.WindCnt2 == 0))
-              {
-                AddOutPt(e1, pt);
-                if (e1Contributing) e1.OutIdx = Unassigned;
-              }
-              else if ((e2.WindDelta == 0) && (Math.Abs(e1.WindCnt) == 1) && 
-                (m_ClipType != ClipType.Union || e1.WindCnt2 == 0))
-              {
-                AddOutPt(e2, pt);
-                if (e2Contributing) e2.OutIdx = Unassigned;
-              }
-            }
-            return;
-          }
-#endif
 
             //update winding counts...
             //assumes that e1 will be to the Right of e2 ABOVE the intersection
@@ -3193,24 +3183,22 @@ namespace TVGL.Boolean_Operations.Clipper
                 DeleteFromAEL(e);
                 DeleteFromAEL(eMaxPair);
             }
-#if use_lines
-        else if (e.WindDelta == 0)
-        {
-          if (e.OutIdx >= 0) 
-          {
-            AddOutPt(e, e.Top);
-            e.OutIdx = Unassigned;
-          }
-          DeleteFromAEL(e);
+            else if (e.WindDelta == 0)
+            {
+                if (e.OutIdx >= 0)
+                {
+                    AddOutPt(e, e.Top);
+                    e.OutIdx = Unassigned;
+                }
+                DeleteFromAEL(e);
 
-          if (eMaxPair.OutIdx >= 0)
-          {
-            AddOutPt(eMaxPair, e.Top);
-            eMaxPair.OutIdx = Unassigned;
-          }
-          DeleteFromAEL(eMaxPair);
-        } 
-#endif
+                if (eMaxPair.OutIdx >= 0)
+                {
+                    AddOutPt(eMaxPair, e.Top);
+                    eMaxPair.OutIdx = Unassigned;
+                }
+                DeleteFromAEL(eMaxPair);
+            }
             else throw new ClipperException("DoMaxima error");
         }
         //------------------------------------------------------------------------------
