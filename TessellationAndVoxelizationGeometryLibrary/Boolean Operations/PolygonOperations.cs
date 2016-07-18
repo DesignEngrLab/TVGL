@@ -105,7 +105,7 @@ namespace TVGL.Boolean_Operations
             //Begin an evaluation
             var solution = new List<List<IntPoint>>();
             var clip = new ClipperOffset();
-            clip.AddPaths(polygons, JoinType.jtRound, EndType.etClosedPolygon);
+            clip.AddPaths(polygons, JoinType.Round, EndType.ClosedPolygon);
             clip.Execute(ref solution, offset * scale);
 
             var offsetLoops = new List<List<Point>>();
@@ -481,20 +481,20 @@ namespace TVGL.Boolean_Operations.Clipper
     #endregion
 
     #region Internal Enum Values
-    internal enum ClipType { ctIntersection, ctUnion, ctDifference, ctXor };
-    internal enum PolyType { ptSubject, ptClip };
+    internal enum ClipType { Intersection, Union, Difference, Xor };
+    internal enum PolyType { Subject, Clip };
 
     //By far the most widely used winding rules for polygon filling are
     //EvenOdd & NonZero (GDI, GDI+, XLib, OpenGL, Cairo, AGG, Quartz, SVG, Gr32)
     //Others rules include Positive, Negative and ABS_GTR_EQ_TWO (only in OpenGL)
     //see http://glprogramming.com/red/chapter11.html
-    internal enum PolyFillType { pftEvenOdd, pftNonZero, pftPositive, pftNegative };
+    internal enum PolyFillType { EvenOdd, NonZero, Positive, Negative };
 
-    internal enum JoinType { jtSquare, jtRound, jtMiter };
-    internal enum EndType { etClosedPolygon, etClosedLine, etOpenButt, etOpenSquare, etOpenRound };
+    internal enum JoinType { Square, Round, Miter };
+    internal enum EndType { ClosedPolygon, ClosedLine, OpenButt, OpenSquare, OpenRound };
 
-    internal enum EdgeSide { esLeft, esRight };
-    internal enum Direction { dRightToLeft, dLeftToRight };
+    internal enum EdgeSide { Left, Right };
+    internal enum Direction { RightToLeft, LeftToRight };
     #endregion
 
     #region T Edge Class
@@ -916,7 +916,7 @@ namespace TVGL.Boolean_Operations.Clipper
         internal bool AddPath(Path pg, PolyType polyType, bool Closed)
         {
 #if use_lines
-      if (!Closed && polyType == PolyType.ptClip)
+      if (!Closed && polyType == PolyType.Clip)
         throw new ClipperException("AddPath: Open paths must be subject.");
 #else
             if (!Closed)
@@ -1014,7 +1014,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 locMin.Y = E.Bot.Y;
                 locMin.LeftBound = null;
                 locMin.RightBound = E;
-                locMin.RightBound.Side = EdgeSide.esRight;
+                locMin.RightBound.Side = EdgeSide.Right;
                 locMin.RightBound.WindDelta = 0;
                 while (E.Next.OutIdx != Skip)
                 {
@@ -1058,8 +1058,8 @@ namespace TVGL.Boolean_Operations.Clipper
                     locMin.RightBound = E.Prev;
                     leftBoundIsForward = true; //Q.nextInLML = Q.next
                 }
-                locMin.LeftBound.Side = EdgeSide.esLeft;
-                locMin.RightBound.Side = EdgeSide.esRight;
+                locMin.LeftBound.Side = EdgeSide.Left;
+                locMin.RightBound.Side = EdgeSide.Right;
 
                 if (!Closed) locMin.LeftBound.WindDelta = 0;
                 else if (locMin.LeftBound.Next == locMin.RightBound)
@@ -1176,14 +1176,14 @@ namespace TVGL.Boolean_Operations.Clipper
                 if (e != null)
                 {
                     e.Curr = e.Bot;
-                    e.Side = EdgeSide.esLeft;
+                    e.Side = EdgeSide.Left;
                     e.OutIdx = Unassigned;
                 }
                 e = lm.RightBound;
                 if (e != null)
                 {
                     e.Curr = e.Bot;
-                    e.Side = EdgeSide.esRight;
+                    e.Side = EdgeSide.Right;
                     e.OutIdx = Unassigned;
                 }
                 lm = lm.Next;
@@ -1387,14 +1387,14 @@ namespace TVGL.Boolean_Operations.Clipper
         internal bool Execute(ClipType clipType, Paths solution)
         {
             return Execute(clipType, solution,
-                PolyFillType.pftEvenOdd, PolyFillType.pftEvenOdd);
+                PolyFillType.EvenOdd, PolyFillType.EvenOdd);
         }
         //------------------------------------------------------------------------------
 
         internal bool Execute(ClipType clipType, PolyTree polytree)
         {
             return Execute(clipType, polytree,
-                PolyFillType.pftEvenOdd, PolyFillType.pftEvenOdd);
+                PolyFillType.EvenOdd, PolyFillType.EvenOdd);
         }
         //------------------------------------------------------------------------------
 
@@ -1657,26 +1657,26 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private bool IsEvenOddFillType(TEdge edge)
         {
-            if (edge.PolyTyp == PolyType.ptSubject)
-                return m_SubjFillType == PolyFillType.pftEvenOdd;
+            if (edge.PolyTyp == PolyType.Subject)
+                return m_SubjFillType == PolyFillType.EvenOdd;
             else
-                return m_ClipFillType == PolyFillType.pftEvenOdd;
+                return m_ClipFillType == PolyFillType.EvenOdd;
         }
         //------------------------------------------------------------------------------
 
         private bool IsEvenOddAltFillType(TEdge edge)
         {
-            if (edge.PolyTyp == PolyType.ptSubject)
-                return m_ClipFillType == PolyFillType.pftEvenOdd;
+            if (edge.PolyTyp == PolyType.Subject)
+                return m_ClipFillType == PolyFillType.EvenOdd;
             else
-                return m_SubjFillType == PolyFillType.pftEvenOdd;
+                return m_SubjFillType == PolyFillType.EvenOdd;
         }
         //------------------------------------------------------------------------------
 
         private bool IsContributing(TEdge edge)
         {
             PolyFillType pft, pft2;
-            if (edge.PolyTyp == PolyType.ptSubject)
+            if (edge.PolyTyp == PolyType.Subject)
             {
                 pft = m_SubjFillType;
                 pft2 = m_ClipFillType;
@@ -1689,14 +1689,14 @@ namespace TVGL.Boolean_Operations.Clipper
 
             switch (pft)
             {
-                case PolyFillType.pftEvenOdd:
+                case PolyFillType.EvenOdd:
                     //return false if a subj line has been flagged as inside a subj polygon
                     if (edge.WindDelta == 0 && edge.WindCnt != 1) return false;
                     break;
-                case PolyFillType.pftNonZero:
+                case PolyFillType.NonZero:
                     if (Math.Abs(edge.WindCnt) != 1) return false;
                     break;
-                case PolyFillType.pftPositive:
+                case PolyFillType.Positive:
                     if (edge.WindCnt != 1) return false;
                     break;
                 default: //PolyFillType.pftNegative
@@ -1706,36 +1706,36 @@ namespace TVGL.Boolean_Operations.Clipper
 
             switch (m_ClipType)
             {
-                case ClipType.ctIntersection:
+                case ClipType.Intersection:
                     switch (pft2)
                     {
-                        case PolyFillType.pftEvenOdd:
-                        case PolyFillType.pftNonZero:
+                        case PolyFillType.EvenOdd:
+                        case PolyFillType.NonZero:
                             return (edge.WindCnt2 != 0);
-                        case PolyFillType.pftPositive:
+                        case PolyFillType.Positive:
                             return (edge.WindCnt2 > 0);
                         default:
                             return (edge.WindCnt2 < 0);
                     }
-                case ClipType.ctUnion:
+                case ClipType.Union:
                     switch (pft2)
                     {
-                        case PolyFillType.pftEvenOdd:
-                        case PolyFillType.pftNonZero:
+                        case PolyFillType.EvenOdd:
+                        case PolyFillType.NonZero:
                             return (edge.WindCnt2 == 0);
-                        case PolyFillType.pftPositive:
+                        case PolyFillType.Positive:
                             return (edge.WindCnt2 <= 0);
                         default:
                             return (edge.WindCnt2 >= 0);
                     }
-                case ClipType.ctDifference:
-                    if (edge.PolyTyp == PolyType.ptSubject)
+                case ClipType.Difference:
+                    if (edge.PolyTyp == PolyType.Subject)
                         switch (pft2)
                         {
-                            case PolyFillType.pftEvenOdd:
-                            case PolyFillType.pftNonZero:
+                            case PolyFillType.EvenOdd:
+                            case PolyFillType.NonZero:
                                 return (edge.WindCnt2 == 0);
-                            case PolyFillType.pftPositive:
+                            case PolyFillType.Positive:
                                 return (edge.WindCnt2 <= 0);
                             default:
                                 return (edge.WindCnt2 >= 0);
@@ -1743,22 +1743,22 @@ namespace TVGL.Boolean_Operations.Clipper
                     else
                         switch (pft2)
                         {
-                            case PolyFillType.pftEvenOdd:
-                            case PolyFillType.pftNonZero:
+                            case PolyFillType.EvenOdd:
+                            case PolyFillType.NonZero:
                                 return (edge.WindCnt2 != 0);
-                            case PolyFillType.pftPositive:
+                            case PolyFillType.Positive:
                                 return (edge.WindCnt2 > 0);
                             default:
                                 return (edge.WindCnt2 < 0);
                         }
-                case ClipType.ctXor:
+                case ClipType.Xor:
                     if (edge.WindDelta == 0) //XOr always contributing unless open
                         switch (pft2)
                         {
-                            case PolyFillType.pftEvenOdd:
-                            case PolyFillType.pftNonZero:
+                            case PolyFillType.EvenOdd:
+                            case PolyFillType.NonZero:
                                 return (edge.WindCnt2 == 0);
-                            case PolyFillType.pftPositive:
+                            case PolyFillType.Positive:
                                 return (edge.WindCnt2 <= 0);
                             default:
                                 return (edge.WindCnt2 >= 0);
@@ -1781,7 +1781,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 edge.WindCnt2 = 0;
                 e = m_ActiveEdges; //ie get ready to calc WindCnt2
             }
-            else if (edge.WindDelta == 0 && m_ClipType != ClipType.ctUnion)
+            else if (edge.WindDelta == 0 && m_ClipType != ClipType.Union)
             {
                 edge.WindCnt = 1;
                 edge.WindCnt2 = e.WindCnt2;
@@ -2041,8 +2041,8 @@ namespace TVGL.Boolean_Operations.Clipper
             {
                 result = AddOutPt(e1, pt);
                 e2.OutIdx = e1.OutIdx;
-                e1.Side = EdgeSide.esLeft;
-                e2.Side = EdgeSide.esRight;
+                e1.Side = EdgeSide.Left;
+                e2.Side = EdgeSide.Right;
                 e = e1;
                 if (e.PrevInAEL == e2)
                     prevE = e2.PrevInAEL;
@@ -2053,8 +2053,8 @@ namespace TVGL.Boolean_Operations.Clipper
             {
                 result = AddOutPt(e2, pt);
                 e1.OutIdx = e2.OutIdx;
-                e1.Side = EdgeSide.esRight;
-                e2.Side = EdgeSide.esLeft;
+                e1.Side = EdgeSide.Right;
+                e2.Side = EdgeSide.Left;
                 e = e2;
                 if (e.PrevInAEL == e1)
                     prevE = e1.PrevInAEL;
@@ -2092,7 +2092,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private OutPt AddOutPt(TEdge e, IntPoint pt)
         {
-            bool ToFront = (e.Side == EdgeSide.esLeft);
+            bool ToFront = (e.Side == EdgeSide.Left);
             if (e.OutIdx < 0)
             {
                 OutRec outRec = CreateOutRec();
@@ -2290,9 +2290,9 @@ namespace TVGL.Boolean_Operations.Clipper
 
             EdgeSide side;
             //join e2 poly onto e1 poly and delete pointers to e2 ...
-            if (e1.Side == EdgeSide.esLeft)
+            if (e1.Side == EdgeSide.Left)
             {
-                if (e2.Side == EdgeSide.esLeft)
+                if (e2.Side == EdgeSide.Left)
                 {
                     //z y x a b c
                     ReversePolyPtLinks(p2_lft);
@@ -2311,11 +2311,11 @@ namespace TVGL.Boolean_Operations.Clipper
                     p1_rt.Next = p2_lft;
                     outRec1.Pts = p2_lft;
                 }
-                side = EdgeSide.esLeft;
+                side = EdgeSide.Left;
             }
             else
             {
-                if (e2.Side == EdgeSide.esRight)
+                if (e2.Side == EdgeSide.Right)
                 {
                     //a b c z y x
                     ReversePolyPtLinks(p2_lft);
@@ -2332,7 +2332,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     p1_lft.Prev = p2_rt;
                     p2_rt.Next = p1_lft;
                 }
-                side = EdgeSide.esRight;
+                side = EdgeSide.Right;
             }
 
             outRec1.BottomPt = null;
@@ -2421,7 +2421,7 @@ namespace TVGL.Boolean_Operations.Clipper
             if (e1.WindDelta == 0 && e2.WindDelta == 0) return;
             //if intersecting a subj line with a subj poly ...
             else if (e1.PolyTyp == e2.PolyTyp && 
-              e1.WindDelta != e2.WindDelta && m_ClipType == ClipType.ctUnion)
+              e1.WindDelta != e2.WindDelta && m_ClipType == ClipType.Union)
             {
               if (e1.WindDelta == 0)
               {
@@ -2443,13 +2443,13 @@ namespace TVGL.Boolean_Operations.Clipper
             else if (e1.PolyTyp != e2.PolyTyp)
             {
               if ((e1.WindDelta == 0) && Math.Abs(e2.WindCnt) == 1 && 
-                (m_ClipType != ClipType.ctUnion || e2.WindCnt2 == 0))
+                (m_ClipType != ClipType.Union || e2.WindCnt2 == 0))
               {
                 AddOutPt(e1, pt);
                 if (e1Contributing) e1.OutIdx = Unassigned;
               }
               else if ((e2.WindDelta == 0) && (Math.Abs(e1.WindCnt) == 1) && 
-                (m_ClipType != ClipType.ctUnion || e1.WindCnt2 == 0))
+                (m_ClipType != ClipType.Union || e1.WindCnt2 == 0))
               {
                 AddOutPt(e2, pt);
                 if (e2Contributing) e2.OutIdx = Unassigned;
@@ -2486,7 +2486,7 @@ namespace TVGL.Boolean_Operations.Clipper
             }
 
             PolyFillType e1FillType, e2FillType, e1FillType2, e2FillType2;
-            if (e1.PolyTyp == PolyType.ptSubject)
+            if (e1.PolyTyp == PolyType.Subject)
             {
                 e1FillType = m_SubjFillType;
                 e1FillType2 = m_ClipFillType;
@@ -2496,7 +2496,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 e1FillType = m_ClipFillType;
                 e1FillType2 = m_SubjFillType;
             }
-            if (e2.PolyTyp == PolyType.ptSubject)
+            if (e2.PolyTyp == PolyType.Subject)
             {
                 e2FillType = m_SubjFillType;
                 e2FillType2 = m_ClipFillType;
@@ -2510,21 +2510,21 @@ namespace TVGL.Boolean_Operations.Clipper
             int e1Wc, e2Wc;
             switch (e1FillType)
             {
-                case PolyFillType.pftPositive: e1Wc = e1.WindCnt; break;
-                case PolyFillType.pftNegative: e1Wc = -e1.WindCnt; break;
+                case PolyFillType.Positive: e1Wc = e1.WindCnt; break;
+                case PolyFillType.Negative: e1Wc = -e1.WindCnt; break;
                 default: e1Wc = Math.Abs(e1.WindCnt); break;
             }
             switch (e2FillType)
             {
-                case PolyFillType.pftPositive: e2Wc = e2.WindCnt; break;
-                case PolyFillType.pftNegative: e2Wc = -e2.WindCnt; break;
+                case PolyFillType.Positive: e2Wc = e2.WindCnt; break;
+                case PolyFillType.Negative: e2Wc = -e2.WindCnt; break;
                 default: e2Wc = Math.Abs(e2.WindCnt); break;
             }
 
             if (e1Contributing && e2Contributing)
             {
                 if ((e1Wc != 0 && e1Wc != 1) || (e2Wc != 0 && e2Wc != 1) ||
-                  (e1.PolyTyp != e2.PolyTyp && m_ClipType != ClipType.ctXor))
+                  (e1.PolyTyp != e2.PolyTyp && m_ClipType != ClipType.Xor))
                 {
                     AddLocalMaxPoly(e1, e2, pt);
                 }
@@ -2561,14 +2561,14 @@ namespace TVGL.Boolean_Operations.Clipper
                 cInt e1Wc2, e2Wc2;
                 switch (e1FillType2)
                 {
-                    case PolyFillType.pftPositive: e1Wc2 = e1.WindCnt2; break;
-                    case PolyFillType.pftNegative: e1Wc2 = -e1.WindCnt2; break;
+                    case PolyFillType.Positive: e1Wc2 = e1.WindCnt2; break;
+                    case PolyFillType.Negative: e1Wc2 = -e1.WindCnt2; break;
                     default: e1Wc2 = Math.Abs(e1.WindCnt2); break;
                 }
                 switch (e2FillType2)
                 {
-                    case PolyFillType.pftPositive: e2Wc2 = e2.WindCnt2; break;
-                    case PolyFillType.pftNegative: e2Wc2 = -e2.WindCnt2; break;
+                    case PolyFillType.Positive: e2Wc2 = e2.WindCnt2; break;
+                    case PolyFillType.Negative: e2Wc2 = -e2.WindCnt2; break;
                     default: e2Wc2 = Math.Abs(e2.WindCnt2); break;
                 }
 
@@ -2579,20 +2579,20 @@ namespace TVGL.Boolean_Operations.Clipper
                 else if (e1Wc == 1 && e2Wc == 1)
                     switch (m_ClipType)
                     {
-                        case ClipType.ctIntersection:
+                        case ClipType.Intersection:
                             if (e1Wc2 > 0 && e2Wc2 > 0)
                                 AddLocalMinPoly(e1, e2, pt);
                             break;
-                        case ClipType.ctUnion:
+                        case ClipType.Union:
                             if (e1Wc2 <= 0 && e2Wc2 <= 0)
                                 AddLocalMinPoly(e1, e2, pt);
                             break;
-                        case ClipType.ctDifference:
-                            if (((e1.PolyTyp == PolyType.ptClip) && (e1Wc2 > 0) && (e2Wc2 > 0)) ||
-                                ((e1.PolyTyp == PolyType.ptSubject) && (e1Wc2 <= 0) && (e2Wc2 <= 0)))
+                        case ClipType.Difference:
+                            if (((e1.PolyTyp == PolyType.Clip) && (e1Wc2 > 0) && (e2Wc2 > 0)) ||
+                                ((e1.PolyTyp == PolyType.Subject) && (e1Wc2 <= 0) && (e2Wc2 <= 0)))
                                 AddLocalMinPoly(e1, e2, pt);
                             break;
-                        case ClipType.ctXor:
+                        case ClipType.Xor:
                             AddLocalMinPoly(e1, e2, pt);
                             break;
                     }
@@ -2676,13 +2676,13 @@ namespace TVGL.Boolean_Operations.Clipper
             {
                 Left = HorzEdge.Bot.X;
                 Right = HorzEdge.Top.X;
-                Dir = Direction.dLeftToRight;
+                Dir = Direction.LeftToRight;
             }
             else
             {
                 Left = HorzEdge.Top.X;
                 Right = HorzEdge.Bot.X;
-                Dir = Direction.dRightToLeft;
+                Dir = Direction.RightToLeft;
             }
         }
         //------------------------------------------------------------------------
@@ -2713,8 +2713,8 @@ namespace TVGL.Boolean_Operations.Clipper
 
                     TEdge eNext = GetNextInAEL(e, dir); //saves eNext for later
 
-                    if ((dir == Direction.dLeftToRight && e.Curr.X <= horzRight) ||
-                      (dir == Direction.dRightToLeft && e.Curr.X >= horzLeft))
+                    if ((dir == Direction.LeftToRight && e.Curr.X <= horzRight) ||
+                      (dir == Direction.RightToLeft && e.Curr.X >= horzLeft))
                     {
                         //so far we're still in range of the horizontal Edge  but make sure
                         //we're at the last of consec. horizontals when matching with eMaxPair
@@ -2742,7 +2742,7 @@ namespace TVGL.Boolean_Operations.Clipper
                             DeleteFromAEL(eMaxPair);
                             return;
                         }
-                        else if (dir == Direction.dLeftToRight)
+                        else if (dir == Direction.LeftToRight)
                         {
                             IntPoint Pt = new IntPoint(e.Curr.X, horzEdge.Curr.Y);
                             IntersectEdges(horzEdge, e, Pt);
@@ -2754,8 +2754,8 @@ namespace TVGL.Boolean_Operations.Clipper
                         }
                         SwapPositionsInAEL(horzEdge, e);
                     }
-                    else if ((dir == Direction.dLeftToRight && e.Curr.X >= horzRight) ||
-                      (dir == Direction.dRightToLeft && e.Curr.X <= horzLeft)) break;
+                    else if ((dir == Direction.LeftToRight && e.Curr.X >= horzRight) ||
+                      (dir == Direction.RightToLeft && e.Curr.X <= horzLeft)) break;
                     e = eNext;
                 } //end while
 
@@ -2811,7 +2811,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private TEdge GetNextInAEL(TEdge e, Direction Direction)
         {
-            return Direction == Direction.dLeftToRight ? e.NextInAEL : e.PrevInAEL;
+            return Direction == Direction.LeftToRight ? e.NextInAEL : e.PrevInAEL;
         }
         //------------------------------------------------------------------------------
 
@@ -3387,9 +3387,9 @@ namespace TVGL.Boolean_Operations.Clipper
           IntPoint Pt, bool DiscardLeft)
         {
             Direction Dir1 = (op1.Pt.X > op1b.Pt.X ?
-              Direction.dRightToLeft : Direction.dLeftToRight);
+              Direction.RightToLeft : Direction.LeftToRight);
             Direction Dir2 = (op2.Pt.X > op2b.Pt.X ?
-              Direction.dRightToLeft : Direction.dLeftToRight);
+              Direction.RightToLeft : Direction.LeftToRight);
             if (Dir1 == Dir2) return false;
 
             //When DiscardLeft, we want Op1b to be on the Left of Op1, otherwise we
@@ -3397,7 +3397,7 @@ namespace TVGL.Boolean_Operations.Clipper
             //So, to facilitate this while inserting Op1b and Op2b ...
             //when DiscardLeft, make sure we're AT or RIGHT of Pt before adding Op1b,
             //otherwise make sure we're AT or LEFT of Pt. (Likewise with Op2b.)
-            if (Dir1 == Direction.dLeftToRight)
+            if (Dir1 == Direction.LeftToRight)
             {
                 while (op1.Next.Pt.X <= Pt.X &&
                   op1.Next.Pt.X >= op1.Pt.X && op1.Next.Pt.Y == Pt.Y)
@@ -3426,7 +3426,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 }
             }
 
-            if (Dir2 == Direction.dLeftToRight)
+            if (Dir2 == Direction.LeftToRight)
             {
                 while (op2.Next.Pt.X <= Pt.X &&
                   op2.Next.Pt.X >= op2.Pt.X && op2.Next.Pt.Y == Pt.Y)
@@ -3455,7 +3455,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 };
             };
 
-            if ((Dir1 == Direction.dLeftToRight) == DiscardLeft)
+            if ((Dir1 == Direction.LeftToRight) == DiscardLeft)
             {
                 op1.Prev = op2;
                 op2.Next = op1;
@@ -3986,25 +3986,25 @@ namespace TVGL.Boolean_Operations.Clipper
         //------------------------------------------------------------------------------
 
         internal static Paths SimplifyPolygon(Path poly,
-              PolyFillType fillType = PolyFillType.pftEvenOdd)
+              PolyFillType fillType = PolyFillType.EvenOdd)
         {
             Paths result = new Paths();
             Clipper c = new Clipper();
             c.StrictlySimple = true;
-            c.AddPath(poly, PolyType.ptSubject, true);
-            c.Execute(ClipType.ctUnion, result, fillType, fillType);
+            c.AddPath(poly, PolyType.Subject, true);
+            c.Execute(ClipType.Union, result, fillType, fillType);
             return result;
         }
         //------------------------------------------------------------------------------
 
         internal static Paths SimplifyPolygons(Paths polys,
-            PolyFillType fillType = PolyFillType.pftEvenOdd)
+            PolyFillType fillType = PolyFillType.EvenOdd)
         {
             Paths result = new Paths();
             Clipper c = new Clipper();
             c.StrictlySimple = true;
-            c.AddPaths(polys, PolyType.ptSubject, true);
-            c.Execute(ClipType.ctUnion, result, fillType, fillType);
+            c.AddPaths(polys, PolyType.Subject, true);
+            c.Execute(ClipType.Union, result, fillType, fillType);
             return result;
         }
         //------------------------------------------------------------------------------
@@ -4191,8 +4191,8 @@ namespace TVGL.Boolean_Operations.Clipper
         {
             Paths paths = Minkowski(pattern, path, true, pathIsClosed);
             Clipper c = new Clipper();
-            c.AddPaths(paths, PolyType.ptSubject, true);
-            c.Execute(ClipType.ctUnion, paths, PolyFillType.pftNonZero, PolyFillType.pftNonZero);
+            c.AddPaths(paths, PolyType.Subject, true);
+            c.Execute(ClipType.Union, paths, PolyFillType.NonZero, PolyFillType.NonZero);
             return paths;
         }
         //------------------------------------------------------------------------------
@@ -4213,15 +4213,15 @@ namespace TVGL.Boolean_Operations.Clipper
             for (int i = 0; i < paths.Count; ++i)
             {
                 Paths tmp = Minkowski(pattern, paths[i], true, pathIsClosed);
-                c.AddPaths(tmp, PolyType.ptSubject, true);
+                c.AddPaths(tmp, PolyType.Subject, true);
                 if (pathIsClosed)
                 {
                     Path path = TranslatePath(paths[i], pattern[0]);
-                    c.AddPath(path, PolyType.ptClip, true);
+                    c.AddPath(path, PolyType.Clip, true);
                 }
             }
-            c.Execute(ClipType.ctUnion, solution,
-              PolyFillType.pftNonZero, PolyFillType.pftNonZero);
+            c.Execute(ClipType.Union, solution,
+              PolyFillType.NonZero, PolyFillType.NonZero);
             return solution;
         }
         //------------------------------------------------------------------------------
@@ -4230,8 +4230,8 @@ namespace TVGL.Boolean_Operations.Clipper
         {
             Paths paths = Minkowski(poly1, poly2, false, true);
             Clipper c = new Clipper();
-            c.AddPaths(paths, PolyType.ptSubject, true);
-            c.Execute(ClipType.ctUnion, paths, PolyFillType.pftNonZero, PolyFillType.pftNonZero);
+            c.AddPaths(paths, PolyType.Subject, true);
+            c.Execute(ClipType.Union, paths, PolyFillType.NonZero, PolyFillType.NonZero);
             return paths;
         }
         //------------------------------------------------------------------------------
@@ -4339,7 +4339,7 @@ namespace TVGL.Boolean_Operations.Clipper
             newNode.MEndtype = endType;
 
             //strip duplicate points from path and also get index to the lowest point ...
-            if (endType == EndType.etClosedLine || endType == EndType.etClosedPolygon)
+            if (endType == EndType.ClosedLine || endType == EndType.ClosedPolygon)
                 while (highI > 0 && path[0] == path[highI]) highI--;
             newNode.MPolygon.Capacity = highI + 1;
             newNode.MPolygon.Add(path[0]);
@@ -4353,12 +4353,12 @@ namespace TVGL.Boolean_Operations.Clipper
                       (path[i].Y == newNode.MPolygon[k].Y &&
                       path[i].X < newNode.MPolygon[k].X)) k = j;
                 }
-            if (endType == EndType.etClosedPolygon && j < 2) return;
+            if (endType == EndType.ClosedPolygon && j < 2) return;
 
             m_polyNodes.AddChild(newNode);
 
             //if this path's lowest pt is lower than all the others then update m_lowest
-            if (endType != EndType.etClosedPolygon) return;
+            if (endType != EndType.ClosedPolygon) return;
             if (m_lowest.X < 0)
                 m_lowest = new IntPoint(m_polyNodes.ChildCount - 1, k);
             else
@@ -4389,8 +4389,8 @@ namespace TVGL.Boolean_Operations.Clipper
                 for (int i = 0; i < m_polyNodes.ChildCount; i++)
                 {
                     PolyNode node = m_polyNodes.Childs[i];
-                    if (node.MEndtype == EndType.etClosedPolygon ||
-                      (node.MEndtype == EndType.etClosedLine &&
+                    if (node.MEndtype == EndType.ClosedPolygon ||
+                      (node.MEndtype == EndType.ClosedLine &&
                       Clipper.Orientation(node.MPolygon)))
                         node.MPolygon.Reverse();
                 }
@@ -4400,7 +4400,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 for (int i = 0; i < m_polyNodes.ChildCount; i++)
                 {
                     PolyNode node = m_polyNodes.Childs[i];
-                    if (node.MEndtype == EndType.etClosedLine &&
+                    if (node.MEndtype == EndType.ClosedLine &&
                       !Clipper.Orientation(node.MPolygon))
                         node.MPolygon.Reverse();
                 }
@@ -4434,7 +4434,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 for (int i = 0; i < m_polyNodes.ChildCount; i++)
                 {
                     PolyNode node = m_polyNodes.Childs[i];
-                    if (node.MEndtype == EndType.etClosedPolygon)
+                    if (node.MEndtype == EndType.ClosedPolygon)
                         m_destPolys.Add(node.MPolygon);
                 }
                 return;
@@ -4467,14 +4467,14 @@ namespace TVGL.Boolean_Operations.Clipper
                 int len = m_srcPoly.Count;
 
                 if (len == 0 || (delta <= 0 && (len < 3 ||
-                  node.MEndtype != EndType.etClosedPolygon)))
+                  node.MEndtype != EndType.ClosedPolygon)))
                     continue;
 
                 m_destPoly = new Path();
 
                 if (len == 1)
                 {
-                    if (node.MJointype == JoinType.jtRound)
+                    if (node.MJointype == JoinType.Round)
                     {
                         double X = 1.0, Y = 0.0;
                         for (int j = 1; j <= steps; j++)
@@ -4509,20 +4509,20 @@ namespace TVGL.Boolean_Operations.Clipper
                 m_normals.Capacity = len;
                 for (int j = 0; j < len - 1; j++)
                     m_normals.Add(GetUnitNormal(m_srcPoly[j], m_srcPoly[j + 1]));
-                if (node.MEndtype == EndType.etClosedLine ||
-                  node.MEndtype == EndType.etClosedPolygon)
+                if (node.MEndtype == EndType.ClosedLine ||
+                  node.MEndtype == EndType.ClosedPolygon)
                     m_normals.Add(GetUnitNormal(m_srcPoly[len - 1], m_srcPoly[0]));
                 else
                     m_normals.Add(new DoublePoint(m_normals[len - 2]));
 
-                if (node.MEndtype == EndType.etClosedPolygon)
+                if (node.MEndtype == EndType.ClosedPolygon)
                 {
                     int k = len - 1;
                     for (int j = 0; j < len; j++)
                         OffsetPoint(j, ref k, node.MJointype);
                     m_destPolys.Add(m_destPoly);
                 }
-                else if (node.MEndtype == EndType.etClosedLine)
+                else if (node.MEndtype == EndType.ClosedLine)
                 {
                     int k = len - 1;
                     for (int j = 0; j < len; j++)
@@ -4546,7 +4546,7 @@ namespace TVGL.Boolean_Operations.Clipper
                         OffsetPoint(j, ref k, node.MJointype);
 
                     IntPoint pt1;
-                    if (node.MEndtype == EndType.etOpenButt)
+                    if (node.MEndtype == EndType.OpenButt)
                     {
                         int j = len - 1;
                         pt1 = new IntPoint((cInt)Round(m_srcPoly[j].X + m_normals[j].X *
@@ -4562,7 +4562,7 @@ namespace TVGL.Boolean_Operations.Clipper
                         k = len - 2;
                         m_sinA = 0;
                         m_normals[j] = new DoublePoint(-m_normals[j].X, -m_normals[j].Y);
-                        if (node.MEndtype == EndType.etOpenSquare)
+                        if (node.MEndtype == EndType.OpenSquare)
                             DoSquare(j, k);
                         else
                             DoRound(j, k);
@@ -4578,7 +4578,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     for (int j = k - 1; j > 0; --j)
                         OffsetPoint(j, ref k, node.MJointype);
 
-                    if (node.MEndtype == EndType.etOpenButt)
+                    if (node.MEndtype == EndType.OpenButt)
                     {
                         pt1 = new IntPoint((cInt)Round(m_srcPoly[0].X - m_normals[0].X * delta),
                           (cInt)Round(m_srcPoly[0].Y - m_normals[0].Y * delta));
@@ -4591,7 +4591,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     {
                         k = 1;
                         m_sinA = 0;
-                        if (node.MEndtype == EndType.etOpenSquare)
+                        if (node.MEndtype == EndType.OpenSquare)
                             DoSquare(0, 1);
                         else
                             DoRound(0, 1);
@@ -4609,11 +4609,11 @@ namespace TVGL.Boolean_Operations.Clipper
             DoOffset(delta);
             //now clean up 'corners' ...
             Clipper clpr = new Clipper();
-            clpr.AddPaths(m_destPolys, PolyType.ptSubject, true);
+            clpr.AddPaths(m_destPolys, PolyType.Subject, true);
             if (delta > 0)
             {
-                clpr.Execute(ClipType.ctUnion, solution,
-                  PolyFillType.pftPositive, PolyFillType.pftPositive);
+                clpr.Execute(ClipType.Union, solution,
+                  PolyFillType.Positive, PolyFillType.Positive);
             }
             else
             {
@@ -4625,9 +4625,9 @@ namespace TVGL.Boolean_Operations.Clipper
                 outer.Add(new IntPoint(r.right + 10, r.top - 10));
                 outer.Add(new IntPoint(r.left - 10, r.top - 10));
 
-                clpr.AddPath(outer, PolyType.ptSubject, true);
+                clpr.AddPath(outer, PolyType.Subject, true);
                 clpr.ReverseSolution = true;
-                clpr.Execute(ClipType.ctUnion, solution, PolyFillType.pftNegative, PolyFillType.pftNegative);
+                clpr.Execute(ClipType.Union, solution, PolyFillType.Negative, PolyFillType.Negative);
                 if (solution.Count > 0) solution.RemoveAt(0);
             }
         }
@@ -4641,11 +4641,11 @@ namespace TVGL.Boolean_Operations.Clipper
 
             //now clean up 'corners' ...
             Clipper clpr = new Clipper();
-            clpr.AddPaths(m_destPolys, PolyType.ptSubject, true);
+            clpr.AddPaths(m_destPolys, PolyType.Subject, true);
             if (delta > 0)
             {
-                clpr.Execute(ClipType.ctUnion, solution,
-                  PolyFillType.pftPositive, PolyFillType.pftPositive);
+                clpr.Execute(ClipType.Union, solution,
+                  PolyFillType.Positive, PolyFillType.Positive);
             }
             else
             {
@@ -4657,9 +4657,9 @@ namespace TVGL.Boolean_Operations.Clipper
                 outer.Add(new IntPoint(r.right + 10, r.top - 10));
                 outer.Add(new IntPoint(r.left - 10, r.top - 10));
 
-                clpr.AddPath(outer, PolyType.ptSubject, true);
+                clpr.AddPath(outer, PolyType.Subject, true);
                 clpr.ReverseSolution = true;
-                clpr.Execute(ClipType.ctUnion, solution, PolyFillType.pftNegative, PolyFillType.pftNegative);
+                clpr.Execute(ClipType.Union, solution, PolyFillType.Negative, PolyFillType.Negative);
                 //remove the outer PolyNode rectangle ...
                 if (solution.ChildCount == 1 && solution.Childs[0].ChildCount > 0)
                 {
@@ -4707,15 +4707,15 @@ namespace TVGL.Boolean_Operations.Clipper
             else
                 switch (jointype)
                 {
-                    case JoinType.jtMiter:
+                    case JoinType.Miter:
                         {
                             double r = 1 + (m_normals[j].X * m_normals[k].X +
                               m_normals[j].Y * m_normals[k].Y);
                             if (r >= m_miterLim) DoMiter(j, k, r); else DoSquare(j, k);
                             break;
                         }
-                    case JoinType.jtSquare: DoSquare(j, k); break;
-                    case JoinType.jtRound: DoRound(j, k); break;
+                    case JoinType.Square: DoSquare(j, k); break;
+                    case JoinType.Round: DoRound(j, k); break;
                 }
             k = j;
         }
