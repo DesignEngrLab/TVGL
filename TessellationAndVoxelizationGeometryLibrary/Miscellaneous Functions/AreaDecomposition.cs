@@ -239,6 +239,118 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Returns the additive volume of a solid, with support material and an offset accuracy, Given the direction of printing.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="stepSize"></param>
+        /// <param name="additiveAccuracy">The additive processes accuracy, used for a Polygon Offset. </param>
+        /// <param name="minOffset"></param>
+        /// <returns></returns>
+        public static double AdditiveVolume(TessellatedSolid ts, double[] direction, double stepSize, double additiveAccuracy, double minOffset = double.NaN)
+        {
+            //The idea here is to slice up the solid from top to bottom, along the direction given. 
+            //The loop from a pervious iteration is merged with the new loop, to form a larger loop.
+            //If an unconnected loop appears, it adds to total area of that slice.
+            //1) previousPolygons => Get the loops and area for the first slice. 
+            //   previousOffsetArea => Offset all the loops by the additive offset and get the area.
+            //2) While not complete, cut at the next depth
+            //   get the loops for the next depth (step size).
+            //   currentPolygons => Use "UnionPolygons" from Clipper to get the union of positive and negative loops
+            //   offsetArea => Offset all the loops by the additive offset and get the area.
+            //   Add the incremental volume, using trapezoidal approximation. 
+            //   This should be accurate since the lines betweens data points are linear
+            
+            #region Same Setup as Area Decomposition
+            var outputData = new List<double[]>();
+            if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
+            if (stepSize <= minOffset * 2)
+            {
+                //"step size must be at least 2x as large as the min offset");
+                //Change it rather that throwing an exception
+                stepSize = minOffset * 2 + ts.SameTolerance;
+            }
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            List<Vertex> sortedVertices;
+            List<int[]> duplicateRanges;
+            MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+            #endregion
+
+            var additiveVolume = 0.0;
+            var edgeListDictionary = new Dictionary<int, Edge>();
+            var previousDistanceAlongAxis = direction.dotProduct(sortedVertices[0].Position); //This value can be negative
+            var previousVertexDistance = previousDistanceAlongAxis;
+            foreach (var vertex in sortedVertices)
+            {
+                var distanceAlongAxis = direction.dotProduct(vertex.Position); //This value can be negative
+                var difference1 = distanceAlongAxis - previousDistanceAlongAxis;
+                var difference2 = distanceAlongAxis - previousVertexDistance;
+                if (difference2 > minOffset && difference1 > stepSize)
+                {
+                    //Determine cross sectional area for section right after previous vertex
+                    var distance = previousVertexDistance + minOffset; //X value (distance along axis) 
+                    var cuttingPlane = new Flat(distance, direction);
+                    List<List<Edge>> outputEdgeLoops;
+                    var inputEdgeLoops = new List<List<Edge>>();
+                    var currentPolygons = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+                    //ToDo: Organize loops into groups of loops, or polygon tree.
+                    //ToDo: Get the area of this layer, given an offset. 
+                    //ToDO: Add to the volume by using the trapezoid approximation for each group of loops.
+                    //foreach (var groupOfLoops in groupsOfLoops)
+                    //{
+                    //var deltaX = groupOfLoops.Distance - groupOfLoops.PreviousDistance;
+                    //var deltaY = groupOfLoops.Area - groupOfLoops.PreviousArea;
+                    //if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
+                    //additiveVolume += .5 * deltaY * deltaX;
+                    //}
+                    //ToDo: If a group of loops is new, then its added volume is its Area*additiveAccuracy (Vertical Accuracy).
+                    var previousPolygons = currentPolygons;
+
+                    //If the difference is far enough, add another data point right before the current vertex
+                    //Use the vertex loops provided from the first pass above
+                    if (difference2 > 3 * minOffset)
+                    {
+                        var distance2 = distanceAlongAxis - minOffset; //X value (distance along axis) 
+                        cuttingPlane = new Flat(distance2, direction);
+                        currentPolygons = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+                        //ToDo: Organize loops into groups of loops, or polygon tree.
+                        
+                        //ToDo: Get the area of this layer, given an offset. 
+                        //ToDO: Add to the volume by using the trapezoid approximation for each group of loops.
+                        //foreach (var groupOfLoops in groupsOfLoops)
+                        //{
+                            //var deltaX = groupOfLoops.Distance - groupOfLoops.PreviousDistance;
+                            //var deltaY = groupOfLoops.Area - groupOfLoops.PreviousArea;
+                            //if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
+                            //additiveVolume += .5 * deltaY * deltaX;
+                        //}
+                        //ToDo: If a group of loops is new, then its added volume is its Area*additiveAccuracy (Vertical Accuracy).
+                        previousPolygons = currentPolygons;
+                    }
+
+                    //Update the previous distance used to make a data point
+                    previousDistanceAlongAxis = distanceAlongAxis;
+                }
+                foreach (var edge in vertex.Edges)
+                {
+                    //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
+                    //and the second removes it from the list.
+                    if (edgeListDictionary.ContainsKey(edge.IndexInList))
+                    {
+                        edgeListDictionary.Remove(edge.IndexInList);
+                    }
+                    else
+                    {
+                        edgeListDictionary.Add(edge.IndexInList, edge);
+                    }
+                }
+                //Update the previous distance of the vertex checked
+                previousVertexDistance = distanceAlongAxis;
+            }
+            return additiveVolume;
+        }
+
+        /// <summary>
         ///     Crosses the sectional area.
         /// </summary>
         /// <param name="edgeListDictionary">The edge list dictionary.</param>
@@ -250,6 +362,21 @@ namespace TVGL
         /// <exception cref="Exception">Loop did not complete</exception>
         private static double CrossSectionalArea(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane,
             out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops, bool ignoreNegativeSpace = false)
+        {
+            var loops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, intputEdgeLoops);
+            var totalArea = 0.0;
+            foreach (var loop in loops)
+            {
+                //The area function returns negative values for negative loops and positive values for positive loops
+                var area = MiscFunctions.AreaOf3DPolygon(loop, cuttingPlane.Normal);
+                if (ignoreNegativeSpace && Math.Sign(area) < 0) continue;
+                totalArea += area;
+            }
+            return totalArea;
+        }
+
+        private static IEnumerable<List<Vertex>> GetLoops(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane,
+            out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops)
         {
             var edgeLoops = new List<List<Edge>>();
             var loops = new List<List<Vertex>>();
@@ -271,7 +398,7 @@ namespace TVGL
                     var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
                         cuttingPlane.DistanceToOrigin, startEdge.To, startEdge.From);
                     loop.Add(intersectVertex);
-                    var edgeLoop = new List<Edge> {startEdge};
+                    var edgeLoop = new List<Edge> { startEdge };
                     edgeList.Remove(startEdge.IndexInList);
                     var startFace = startEdge.OwnedFace;
                     var currentFace = startFace;
@@ -313,9 +440,9 @@ namespace TVGL
                             loop.Add(intersectVertex);
                             edgeLoop.Add(nextEdge);
                             edgeList.Remove(nextEdge.IndexInList);
-                                //Note that removing at an index is FASTER than removing a object.
-                            if (Math.Sign(dot) >= 0) correctDirection ++;
-                            else reverseDirection ++;
+                            //Note that removing at an index is FASTER than removing a object.
+                            if (Math.Sign(dot) >= 0) correctDirection++;
+                            else reverseDirection++;
                         }
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
@@ -329,16 +456,8 @@ namespace TVGL
                 }
             }
             outputEdgeLoops = edgeLoops;
-
-            var totalArea = 0.0;
-            foreach (var loop in loops)
-            {
-                //The area function returns negative values for negative loops and positive values for positive loops
-                totalArea += MiscFunctions.AreaOf3DPolygon(loop, cuttingPlane.Normal);
-            }
-
-            return totalArea;
-        }
+            return loops;
+        } 
 
         /// <summary>
         ///     Convexes the hull2 d area.
