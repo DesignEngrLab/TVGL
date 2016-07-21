@@ -141,119 +141,128 @@ namespace TVGLTest.Test
         [Test]
         public void Difference1()
         {
-            PolyFillType fillMethod = PolyFillType.EvenOdd;
+            PolyFillType fillMethod = PolyFillType.Positive;
             //Note: If you do not use a scaling factor for intPoints, 
             //if two points are close together, they will not be distinguished.
             //Clipper was meant to use a scaling factor.
             var scalingFactor = 1000;
             int[] ints1 = { 29, 342, 115, 68, 141, 86 }; //CCW Black
             //int[] ints2 = { 128, 160, 99, 132, 97, 174 }; //CW Teal
-            int[] ints2 = { 128, 160,  97, 174, 99, 132 }; //CCW Teal
-            int[] ints3 = { 99, 212, 128, 160, 97, 174, 58, 160 }; //CW Magenta
-            int[] ints4 = { 97, 174, 99, 132, 60, 124, 58, 160 }; //CCW Red
+            int[] ints2 = { 128, 160,  97, 174, 99, 132}; //CCW Teal
+            //int[] ints3 = { 99, 212, 128, 160, 97, 174, 58, 160 }; //CW Magenta
+            int[] ints3 = { 99, 212, 58, 160, 97, 174, 128, 160 }; //CCW Magenta
+            //int[] ints4 = { 97, 174, 99, 132, 60, 124, 58, 160 }; //CW Red
+            int[] ints4 = { 97, 174, 58, 160, 60, 124, 99, 132 }; //CCW Red
 
             subject.Add(MakePolygonFromInts(ints1, scalingFactor));
             clip.Add(MakePolygonFromInts(ints2, scalingFactor));
             clip.Add(MakePolygonFromInts(ints3, scalingFactor));
             clip.Add(MakePolygonFromInts(ints4, scalingFactor));
 
-            Debug.WriteLine("Difference");
-            ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip}, scalingFactor);
+            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip}, scalingFactor);
 
+            clipper.StrictlySimple = true;
             clipper.AddPaths(subject, PolyType.Subject, true);
             clipper.AddPaths(clip, PolyType.Clip, true);
 
             var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            ShowPaths(solution);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(1));
 
             result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
             Assert.That(Clipper.Orientation(solution[0]), Is.True);
             Assert.That(Clipper.Orientation(solution[1]), Is.True);
 
             result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(2));
+            Assert.That(solution.Count, Is.EqualTo(1));
+
+            result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
+            //ShowPaths(solution, scalingFactor);
+            Assert.That(result, Is.True);
+            Assert.That(solution.Count, Is.EqualTo(4));
         }
 
         [Test]
         public void Difference2()
         {
-            PolyFillType fillMethod = PolyFillType.EvenOdd;
+            PolyFillType fillMethod = PolyFillType.Positive;
             const int scalingFactor = 1000;
-            int[] ints1 = { -103, -219, -103, -136, -115, -136 };
-            int[] ints2 = { -110, -155, -110, -174, -70, -174  };
+            int[] ints1 = { -103, -219, -103, -136, -115, -136 }; //CCW
+            int[] ints2 = { -110, -155, -110, -174, -70, -174  }; //CCW
 
             subject.Add(MakePolygonFromInts(ints1, scalingFactor));
             clip.Add(MakePolygonFromInts(ints2, scalingFactor));
 
-            ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip }, scalingFactor);
+            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip }, scalingFactor);
 
+            clipper.StrictlySimple = true;
             clipper.AddPaths(subject, PolyType.Subject, true);
             clipper.AddPaths(clip, PolyType.Clip, true);
 
             var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(1));
 
             result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
 
             result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(1));
 
             result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(1));
+            Assert.That(solution.Count, Is.EqualTo(4));
         }
 
         [Test]
         public void Horz1()
         {
+            //Must use EvenOdd with self intersecting polygons.
             PolyFillType fillMethod = PolyFillType.EvenOdd;
             const int scalingFactor = 1000;
-            int[] ints1 = { 380, 280, 450, 280, 130, 400, 490, 540, 320, 200, 450, 260 };
-            int[] ints2 = { 350, 260, 520, 600, 100, 300 };
+            int[] ints1 = { 450, 260, 320, 200, 490, 540, 130, 400, 450, 280, 380, 280};//CCW
+            int[] ints2 = { 350, 260, 520, 600, 100, 300}; //CCW
 
             subject.Add(MakePolygonFromInts(ints1, scalingFactor));
             clip.Add(MakePolygonFromInts(ints2, scalingFactor));
 
-            Debug.WriteLine("Intersection");
-            ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip }, scalingFactor);
+            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip }, scalingFactor);
 
+            clipper.StrictlySimple = true;
             clipper.AddPaths(subject, PolyType.Subject, true);
             clipper.AddPaths(clip, PolyType.Clip, true);
 
             bool result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(1));
 
             result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(1));
 
             result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
 
             result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(1));
+            Assert.That(solution.Count, Is.EqualTo(4));
         }
 
         [Test]
@@ -268,13 +277,9 @@ namespace TVGLTest.Test
 
             clip.Add(MakePolygonFromInts(ints2));
 
-            Debug.WriteLine("Intersection");
-            ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip });
-
             clipper.AddPaths(subject, PolyType.Subject, true);
             clipper.AddPaths(clip, PolyType.Clip, true);
             bool result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
-            ShowPaths(solution);
 
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
@@ -1059,13 +1064,9 @@ namespace TVGLTest.Test
 
             clip.Add(MakePolygonFromInts(ints4));
 
-            Debug.WriteLine("Union");
-            ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip });
-
             clipper.AddPaths(subject, PolyType.Subject, true);
             clipper.AddPaths(clip, PolyType.Clip, true);
             bool result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            ShowPaths(solution);
 
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
@@ -1097,12 +1098,11 @@ namespace TVGLTest.Test
                 subject.Add(MakePolygonFromInts(ints[i], scalingFactor));
             }
 
-            Debug.WriteLine("Union");
-            ShowPathListsAsDifferentColors(new List<List<Path>>() { subject}, scalingFactor);
+            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject}, scalingFactor);
 
             clipper.AddPaths(subject, PolyType.Subject, true);
             bool result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            ShowPaths(solution, scalingFactor);
+            //ShowPaths(solution, scalingFactor);
 
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
