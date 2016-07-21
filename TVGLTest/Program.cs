@@ -13,18 +13,17 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-       //     "../../../TestFiles/DxTopLevel.shell",
-       // "../../../TestFiles/Beam_Boss.STL",
-       // "../../../TestFiles/bigmotor.amf",
-       // "../../../TestFiles/DxTopLevelPart2.shell",
-       // "../../../TestFiles/Candy.shell",
-       // "../../../TestFiles/amf_Cube.amf",
-       // "../../../TestFiles/train.3mf",
-       // "../../../TestFiles/Castle.3mf",
-       // "../../../TestFiles/Raspberry Pi Case.3mf",
-       //"../../../TestFiles/shark.ply",
-       // "../../../TestFiles/bunnySmall.ply",
-       // "../../../TestFiles/cube.ply",
+        "../../../TestFiles/Beam_Boss.STL",
+        //"../../../TestFiles/bigmotor.amf",
+        //"../../../TestFiles/DxTopLevelPart2.shell",
+        //"../../../TestFiles/Candy.shell",
+        //"../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/train.3mf",
+        //"../../../TestFiles/Castle.3mf",
+        //"../../../TestFiles/Raspberry Pi Case.3mf",
+       "../../../TestFiles/shark.ply",
+        "../../../TestFiles/bunnySmall.ply",
+        "../../../TestFiles/cube.ply",
         "../../../TestFiles/airplane.ply",
         "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
         "../../../TestFiles/Tetrahedron.STL",
@@ -82,16 +81,19 @@ namespace TVGL_Test
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-                var jhgf = new TVGLConvexHull(ts[0].Vertices);
-                //ts[0].SolidColor = new Color(KnownColors.Salmon);
-                //using (fileStream = File.Create(filename + ".amf"))
-                //    IO.Save(fileStream, ts, FileType.AMF);
-                TVGL.Presenter.Show(ts);
-                //TVGL.Presenter.Show(ts[1]);
-                // TestSimplify(ts[1]);
+             //   TestPolygon(ts[0]);
+             Presenter.ShowAndHang(ts[0]);
             }
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
+        }
+
+        private static void TestPolygon(TessellatedSolid ts)
+        {
+            ContactData contactData;
+            Slice.GetContactData(ts, new Flat(10, new[] { 1.0, 0, 0 }),
+                out contactData);
+            throw new NotImplementedException();
         }
 
         private static void TestOBB(string InputDir)

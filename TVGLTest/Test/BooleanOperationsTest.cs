@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Collections.Generic;
+using System.Diagnostics;
 using TVGL.Boolean_Operations.Clipper;
 
 namespace TVGLTest.Test
