@@ -121,10 +121,11 @@ namespace TVGL
         /// <param name="z">The z.</param>
         public Point(Vertex vertex, double x, double y, double z)
         {
-            References = new List<Vertex> {vertex};
             X = x;
             Y = y;
             Z = z;
+            if (vertex == null) return;
+            References = new List<Vertex> {vertex};
         }
 
         /// <summary>

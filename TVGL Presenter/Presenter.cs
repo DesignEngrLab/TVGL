@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -76,6 +77,22 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHang(IEnumerable<List<Point>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+        {
+
+            var window = new Window2DPlot(pointsList, title, plot2DType, closeShape, marker);
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHang(IEnumerable<List<List<Point>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+        {
+
+            var window = new Window2DPlot(pointsLists, title, plot2DType, closeShape, marker);
             window.ShowDialog();
         }
 

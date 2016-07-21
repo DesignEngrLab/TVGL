@@ -127,12 +127,6 @@ namespace TVGL.Boolean_Operations
 
 namespace TVGL.Boolean_Operations.Clipper
 {
-#if use_int32
-          using cInt = Int32;
-#else
-    using cInt = Int64;
-#endif
-
     using Path = List<IntPoint>;
     using Paths = List<List<IntPoint>>;
 
@@ -280,17 +274,17 @@ namespace TVGL.Boolean_Operations.Clipper
 
     internal struct Int128
     {
-        private Int64 hi;
-        private UInt64 lo;
+        private long hi;
+        private ulong lo;
 
-        internal Int128(Int64 _lo)
+        internal Int128(long _lo)
         {
-            lo = (UInt64)_lo;
+            lo = (ulong)_lo;
             if (_lo < 0) hi = -1;
             else hi = 0;
         }
 
-        internal Int128(Int64 _hi, UInt64 _lo)
+        internal Int128(long _hi, ulong _lo)
         {
             lo = _lo;
             hi = _hi;
@@ -319,7 +313,7 @@ namespace TVGL.Boolean_Operations.Clipper
             return !(val1 == val2);
         }
 
-        public override bool Equals(Object obj)
+        public override bool Equals(object obj)
         {
             if (!(obj is Int128))
                 return false;
@@ -377,24 +371,24 @@ namespace TVGL.Boolean_Operations.Clipper
         //is slow. So, although calling the Int128Mul method doesn't look as clean, the 
         //code runs significantly faster than if we'd used the * operator.
 
-        internal static Int128 Int128Mul(Int64 lhs, Int64 rhs)
+        internal static Int128 Int128Mul(long lhs, long rhs)
         {
             bool negate = (lhs < 0) != (rhs < 0);
             if (lhs < 0) lhs = -lhs;
             if (rhs < 0) rhs = -rhs;
-            UInt64 int1Hi = (UInt64)lhs >> 32;
-            UInt64 int1Lo = (UInt64)lhs & 0xFFFFFFFF;
-            UInt64 int2Hi = (UInt64)rhs >> 32;
-            UInt64 int2Lo = (UInt64)rhs & 0xFFFFFFFF;
+            ulong int1Hi = (ulong)lhs >> 32;
+            ulong int1Lo = (ulong)lhs & 0xFFFFFFFF;
+            ulong int2Hi = (ulong)rhs >> 32;
+            ulong int2Lo = (ulong)rhs & 0xFFFFFFFF;
 
             //nb: see comments in clipper.pas
-            UInt64 a = int1Hi * int2Hi;
-            UInt64 b = int1Lo * int2Lo;
-            UInt64 c = int1Hi * int2Lo + int1Lo * int2Hi;
+            ulong a = int1Hi * int2Hi;
+            ulong b = int1Lo * int2Lo;
+            ulong c = int1Hi * int2Lo + int1Lo * int2Hi;
 
-            UInt64 lo;
-            Int64 hi;
-            hi = (Int64)(a + (c >> 32));
+            ulong lo;
+            long hi;
+            hi = (long)(a + (c >> 32));
 
             unchecked { lo = (c << 32) + b; }
             if (lo < b) hi++;
@@ -408,17 +402,17 @@ namespace TVGL.Boolean_Operations.Clipper
     /// <summary>
     /// Integer Point with X and Y coordinates
     /// </summary>
-    internal struct IntPoint
+    public struct IntPoint
     {
-        internal cInt X;
-        internal cInt Y;
-        internal IntPoint(cInt X, cInt Y)
+        public long X;
+        public long Y;
+        internal IntPoint(long X, long Y)
         {
             this.X = X; this.Y = Y;
         }
         internal IntPoint(double x, double y)
         {
-            this.X = (cInt)x; this.Y = (cInt)y;
+            this.X = (long)x; this.Y = (long)y;
         }
 
         internal IntPoint(IntPoint pt)
@@ -459,12 +453,12 @@ namespace TVGL.Boolean_Operations.Clipper
     #region Integer Rectangle Class
     internal struct IntRect
     {
-        internal cInt left;
-        internal cInt top;
-        internal cInt right;
-        internal cInt bottom;
+        internal long left;
+        internal long top;
+        internal long right;
+        internal long bottom;
 
-        internal IntRect(cInt l, cInt t, cInt r, cInt b)
+        internal IntRect(long l, long t, long r, long b)
         {
             left = l; top = t;
             right = r; bottom = b;
@@ -672,8 +666,8 @@ namespace TVGL.Boolean_Operations.Clipper
             if (UseFullRange)
                 return Int128.Int128Mul(e1.Delta.Y, e2.Delta.X) ==
                     Int128.Int128Mul(e1.Delta.X, e2.Delta.Y);
-            else return (cInt)(e1.Delta.Y) * (e2.Delta.X) ==
-              (cInt)(e1.Delta.X) * (e2.Delta.Y);
+            else return (long)(e1.Delta.Y) * (e2.Delta.X) ==
+              (long)(e1.Delta.X) * (e2.Delta.Y);
         }
         //------------------------------------------------------------------------------
 
@@ -684,7 +678,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 return Int128.Int128Mul(pt1.Y - pt2.Y, pt2.X - pt3.X) ==
                   Int128.Int128Mul(pt1.X - pt2.X, pt2.Y - pt3.Y);
             else return
-              (cInt)(pt1.Y - pt2.Y) * (pt2.X - pt3.X) - (cInt)(pt1.X - pt2.X) * (pt2.Y - pt3.Y) == 0;
+              (long)(pt1.Y - pt2.Y) * (pt2.X - pt3.X) - (long)(pt1.X - pt2.X) * (pt2.Y - pt3.Y) == 0;
         }
         //------------------------------------------------------------------------------
 
@@ -695,7 +689,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 return Int128.Int128Mul(pt1.Y - pt2.Y, pt3.X - pt4.X) ==
                   Int128.Int128Mul(pt1.X - pt2.X, pt3.Y - pt4.Y);
             else return
-              (cInt)(pt1.Y - pt2.Y) * (pt3.X - pt4.X) - (cInt)(pt1.X - pt2.X) * (pt3.Y - pt4.Y) == 0;
+              (long)(pt1.Y - pt2.Y) * (pt3.X - pt4.X) - (long)(pt1.X - pt2.X) * (pt3.Y - pt4.Y) == 0;
         }
 
         internal ClipperBase() //constructor (nb: no external instantiation)
@@ -1294,7 +1288,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void InsertScanbeam(cInt Y)
+        private void InsertScanbeam(long Y)
         {
             if (m_Scanbeam == null)
             {
@@ -1412,14 +1406,14 @@ namespace TVGL.Boolean_Operations.Clipper
                 Reset();
                 if (MCurrentLm == null) return false;
 
-                cInt botY = PopScanbeam();
+                long botY = PopScanbeam();
                 do
                 {
                     InsertLocalMinimaIntoAEL(botY);
                     m_GhostJoins.Clear();
                     ProcessHorizontals(false);
                     if (m_Scanbeam == null) break;
-                    cInt topY = PopScanbeam();
+                    long topY = PopScanbeam();
                     if (!ProcessIntersections(topY)) return false;
                     ProcessEdgesAtTopOfScanbeam(topY);
                     botY = topY;
@@ -1455,9 +1449,9 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private cInt PopScanbeam()
+        private long PopScanbeam()
         {
-            cInt Y = m_Scanbeam.Y;
+            long Y = m_Scanbeam.Y;
             m_Scanbeam = m_Scanbeam.Next;
             return Y;
         }
@@ -1511,7 +1505,7 @@ namespace TVGL.Boolean_Operations.Clipper
       //------------------------------------------------------------------------------
 #endif
 
-        private void InsertLocalMinimaIntoAEL(cInt botY)
+        private void InsertLocalMinimaIntoAEL(long botY)
         {
             while (MCurrentLm != null && (MCurrentLm.Y == botY))
             {
@@ -2129,7 +2123,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private bool HorzSegmentsOverlap(cInt seg1a, cInt seg1b, cInt seg2a, cInt seg2b)
+        private bool HorzSegmentsOverlap(long seg1a, long seg1b, long seg2a, long seg2b)
         {
             if (seg1a > seg1b) Swap(ref seg1a, ref seg1b);
             if (seg2a > seg2b) Swap(ref seg2a, ref seg2b);
@@ -2548,7 +2542,7 @@ namespace TVGL.Boolean_Operations.Clipper
             else if ((e1Wc == 0 || e1Wc == 1) && (e2Wc == 0 || e2Wc == 1))
             {
                 //neither edge is currently contributing ...
-                cInt e1Wc2, e2Wc2;
+                long e1Wc2, e2Wc2;
                 switch (e1FillType2)
                 {
                     case PolyFillType.Positive: e1Wc2 = e1.WindCnt2; break;
@@ -2660,7 +2654,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        void GetHorzDirection(TEdge HorzEdge, out Direction Dir, out cInt Left, out cInt Right)
+        void GetHorzDirection(TEdge HorzEdge, out Direction Dir, out long Left, out long Right)
         {
             if (HorzEdge.Bot.X < HorzEdge.Top.X)
             {
@@ -2680,7 +2674,7 @@ namespace TVGL.Boolean_Operations.Clipper
         private void ProcessHorizontal(TEdge horzEdge, bool isTopOfScanbeam)
         {
             Direction dir;
-            cInt horzLeft, horzRight;
+            long horzLeft, horzRight;
 
             GetHorzDirection(horzEdge, out dir, out horzLeft, out horzRight);
 
@@ -2837,7 +2831,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private bool ProcessIntersections(cInt topY)
+        private bool ProcessIntersections(long topY)
         {
             if (m_ActiveEdges == null) return true;
             try
@@ -2860,7 +2854,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void BuildIntersectList(cInt topY)
+        private void BuildIntersectList(long topY)
         {
             if (m_ActiveEdges == null) return;
 
@@ -2964,13 +2958,13 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal static cInt Round(double value)
+        internal static long Round(double value)
         {
-            return value < 0 ? (cInt)(value - 0.5) : (cInt)(value + 0.5);
+            return value < 0 ? (long)(value - 0.5) : (long)(value + 0.5);
         }
         //------------------------------------------------------------------------------
 
-        private static cInt TopX(TEdge edge, cInt currentY)
+        private static long TopX(TEdge edge, long currentY)
         {
             if (currentY == edge.Top.Y)
                 return edge.Top.X;
@@ -3053,7 +3047,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void ProcessEdgesAtTopOfScanbeam(cInt topY)
+        private void ProcessEdgesAtTopOfScanbeam(long topY)
         {
             TEdge e = m_ActiveEdges;
             while (e != null)
@@ -3355,7 +3349,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        bool GetOverlap(cInt a1, cInt a2, cInt b1, cInt b2, out cInt Left, out cInt Right)
+        bool GetOverlap(long a1, long a2, long b1, long b2, out long Left, out long Right)
         {
             if (a1 < a2)
             {
@@ -3532,7 +3526,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     op2b = op2b.Next;
                 if (op2b.Next == op2 || op2b.Next == op1) return false; //a flat 'polygon'
 
-                cInt Left, Right;
+                long Left, Right;
                 //Op1 -. Op1b & Op2 -. Op2b are the extremites of the horizontal edges
                 if (!GetOverlap(op1.Pt.X, op1b.Pt.X, op2.Pt.X, op2b.Pt.X, out Left, out Right))
                     return false;
@@ -3676,12 +3670,12 @@ namespace TVGL.Boolean_Operations.Clipper
             //http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.88.5498&rep=rep1&type=pdf
             int result = 0;
             OutPt startOp = op;
-            cInt ptx = pt.X, pty = pt.Y;
-            cInt poly0x = op.Pt.X, poly0y = op.Pt.Y;
+            long ptx = pt.X, pty = pt.Y;
+            long poly0x = op.Pt.X, poly0y = op.Pt.Y;
             do
             {
                 op = op.Next;
-                cInt poly1x = op.Pt.X, poly1y = op.Pt.Y;
+                long poly1x = op.Pt.X, poly1y = op.Pt.Y;
 
                 if (poly1y == pty)
                 {
@@ -4312,9 +4306,9 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal static cInt Round(double value)
+        internal static long Round(double value)
         {
-            return value < 0 ? (cInt)(value - 0.5) : (cInt)(value + 0.5);
+            return value < 0 ? (long)(value - 0.5) : (long)(value + 0.5);
         }
         //------------------------------------------------------------------------------
 
@@ -4537,11 +4531,11 @@ namespace TVGL.Boolean_Operations.Clipper
                     if (node.MEndtype == EndType.OpenButt)
                     {
                         int j = len - 1;
-                        pt1 = new IntPoint((cInt)Round(m_srcPoly[j].X + m_normals[j].X *
-                          delta), (cInt)Round(m_srcPoly[j].Y + m_normals[j].Y * delta));
+                        pt1 = new IntPoint((long)Round(m_srcPoly[j].X + m_normals[j].X *
+                          delta), (long)Round(m_srcPoly[j].Y + m_normals[j].Y * delta));
                         m_destPoly.Add(pt1);
-                        pt1 = new IntPoint((cInt)Round(m_srcPoly[j].X - m_normals[j].X *
-                          delta), (cInt)Round(m_srcPoly[j].Y - m_normals[j].Y * delta));
+                        pt1 = new IntPoint((long)Round(m_srcPoly[j].X - m_normals[j].X *
+                          delta), (long)Round(m_srcPoly[j].Y - m_normals[j].Y * delta));
                         m_destPoly.Add(pt1);
                     }
                     else
@@ -4568,11 +4562,11 @@ namespace TVGL.Boolean_Operations.Clipper
 
                     if (node.MEndtype == EndType.OpenButt)
                     {
-                        pt1 = new IntPoint((cInt)Round(m_srcPoly[0].X - m_normals[0].X * delta),
-                          (cInt)Round(m_srcPoly[0].Y - m_normals[0].Y * delta));
+                        pt1 = new IntPoint((long)Round(m_srcPoly[0].X - m_normals[0].X * delta),
+                          (long)Round(m_srcPoly[0].Y - m_normals[0].Y * delta));
                         m_destPoly.Add(pt1);
-                        pt1 = new IntPoint((cInt)Round(m_srcPoly[0].X + m_normals[0].X * delta),
-                          (cInt)Round(m_srcPoly[0].Y + m_normals[0].Y * delta));
+                        pt1 = new IntPoint((long)Round(m_srcPoly[0].X + m_normals[0].X * delta),
+                          (long)Round(m_srcPoly[0].Y + m_normals[0].Y * delta));
                         m_destPoly.Add(pt1);
                     }
                     else
