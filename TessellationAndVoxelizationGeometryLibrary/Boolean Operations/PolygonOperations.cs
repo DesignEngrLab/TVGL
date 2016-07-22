@@ -792,10 +792,10 @@ namespace TVGL.Boolean_Operations.Clipper
             for (;;)
             {
                 while (E.Bot != E.Prev.Bot || E.Curr == E.Top) E = E.Next;
-                if (E.Dx != Horizontal && E.Prev.Dx != Horizontal) break;
-                while (E.Prev.Dx == Horizontal) E = E.Prev;
+                if (!E.Dx.IsPracticallySame(Horizontal) && !E.Prev.Dx.IsPracticallySame(Horizontal)) break;
+                while (E.Prev.Dx.IsPracticallySame(Horizontal)) E = E.Prev;
                 var e2 = E;
-                while (E.Dx == Horizontal) E = E.Next;
+                while (E.Dx.IsPracticallySame(Horizontal)) E = E.Next;
                 if (E.Top.Y == E.Prev.Bot.Y) continue; //ie just an intermediate horz.
                 if (e2.Prev.Bot.X < E.Bot.X) E = e2;
                 break;
@@ -816,12 +816,12 @@ namespace TVGL.Boolean_Operations.Clipper
                 if (leftBoundIsForward)
                 {
                     while (E.Top.Y == E.Next.Bot.Y) E = E.Next;
-                    while (E != result && E.Dx == Horizontal) E = E.Prev;
+                    while (E != result && E.Dx.IsPracticallySame(Horizontal)) E = E.Prev;
                 }
                 else
                 {
                     while (E.Top.Y == E.Prev.Bot.Y) E = E.Prev;
-                    while (E != result && E.Dx == Horizontal) E = E.Next;
+                    while (E != result && E.Dx.IsPracticallySame(Horizontal)) E = E.Next;
                 }
                 if (E == result)
                 {
@@ -845,16 +845,15 @@ namespace TVGL.Boolean_Operations.Clipper
                 return result;
             }
 
-            if (E.Dx == Horizontal)
+            if (E.Dx.IsPracticallySame(Horizontal))
             {
                 //We need to be careful with open paths because this may not be a
                 //true local minima (ie E may be following a skip edge).
                 //Also, consecutive horz. edges may start heading left before going right.
-                if (leftBoundIsForward) eStart = E.Prev;
-                else eStart = E.Next;
+                eStart = leftBoundIsForward ? E.Prev : E.Next;
                 if (eStart.OutIdx != Skip)
                 {
-                    if (eStart.Dx == Horizontal) //ie an adjoining horizontal skip edge
+                    if (eStart.Dx.IsPracticallySame(Horizontal)) //ie an adjoining horizontal skip edge
                     {
                         if (eStart.Bot.X != E.Bot.X && eStart.Top.X != E.Bot.X)
                             ReverseHorizontal(E);
@@ -869,27 +868,26 @@ namespace TVGL.Boolean_Operations.Clipper
             {
                 while (result.Top.Y == result.Next.Bot.Y && result.Next.OutIdx != Skip)
                     result = result.Next;
-                if (result.Dx == Horizontal && result.Next.OutIdx != Skip)
+                if (result.Dx.IsPracticallySame(Horizontal) && result.Next.OutIdx != Skip)
                 {
                     //nb: at the top of a bound, horizontals are added to the bound
                     //only when the preceding edge attaches to the horizontal's left vertex
                     //unless a Skip edge is encountered when that becomes the top divide
                     horz = result;
-                    while (horz.Prev.Dx == Horizontal) horz = horz.Prev;
+                    while (horz.Prev.Dx.IsPracticallySame(Horizontal)) horz = horz.Prev;
                     if (horz.Prev.Top.X == result.Next.Top.X)
                     {
-                        if (!leftBoundIsForward) result = horz.Prev;
                     }
                     else if (horz.Prev.Top.X > result.Next.Top.X) result = horz.Prev;
                 }
                 while (E != result)
                 {
                     E.NextInLML = E.Next;
-                    if (E.Dx == Horizontal && E != eStart && E.Bot.X != E.Prev.Top.X)
+                    if (E.Dx.IsPracticallySame(Horizontal) && E != eStart && E.Bot.X != E.Prev.Top.X)
                         ReverseHorizontal(E);
                     E = E.Next;
                 }
-                if (E.Dx == Horizontal && E != eStart && E.Bot.X != E.Prev.Top.X)
+                if (E.Dx.IsPracticallySame(Horizontal) && E != eStart && E.Bot.X != E.Prev.Top.X)
                     ReverseHorizontal(E);
                 result = result.Next; //move to the edge just beyond current bound
             }
@@ -897,13 +895,13 @@ namespace TVGL.Boolean_Operations.Clipper
             {
                 while (result.Top.Y == result.Prev.Bot.Y && result.Prev.OutIdx != Skip)
                     result = result.Prev;
-                if (result.Dx == Horizontal && result.Prev.OutIdx != Skip)
+                if (result.Dx.IsPracticallySame(Horizontal) && result.Prev.OutIdx != Skip)
                 {
                     horz = result;
-                    while (horz.Next.Dx == Horizontal) horz = horz.Next;
+                    while (horz.Next.Dx.IsPracticallySame(Horizontal)) horz = horz.Next;
                     if (horz.Next.Top.X == result.Prev.Top.X)
                     {
-                        if (!leftBoundIsForward) result = horz.Next;
+                        result = horz.Next;
                     }
                     else if (horz.Next.Top.X > result.Prev.Top.X) result = horz.Next;
                 }
@@ -911,11 +909,11 @@ namespace TVGL.Boolean_Operations.Clipper
                 while (E != result)
                 {
                     E.NextInLML = E.Prev;
-                    if (E.Dx == Horizontal && E != eStart && E.Bot.X != E.Next.Top.X)
+                    if (E.Dx.IsPracticallySame(Horizontal) && E != eStart && E.Bot.X != E.Next.Top.X)
                         ReverseHorizontal(E);
                     E = E.Prev;
                 }
-                if (E.Dx == Horizontal && E != eStart && E.Bot.X != E.Next.Top.X)
+                if (E.Dx.IsPracticallySame(Horizontal) && E != eStart && E.Bot.X != E.Next.Top.X)
                     ReverseHorizontal(E);
                 result = result.Prev; //move to the edge just beyond current bound
             }
@@ -929,16 +927,16 @@ namespace TVGL.Boolean_Operations.Clipper
             if (!Closed && polyType == PolyType.Clip)
                 throw new ClipperException("AddPath: Open paths must be subject.");
 
-            int highI = (int)pg.Count - 1;
+            var highI = pg.Count - 1;
             if (Closed) while (highI > 0 && (pg[highI] == pg[0])) --highI;
             while (highI > 0 && (pg[highI] == pg[highI - 1])) --highI;
             if ((Closed && highI < 2) || (!Closed && highI < 1)) return false;
 
             //create a new edge array ...
-            List<TEdge> edges = new List<TEdge>(highI + 1);
-            for (int i = 0; i <= highI; i++) edges.Add(new TEdge());
+            var edges = new List<TEdge>(highI + 1);
+            for (var i = 0; i <= highI; i++) edges.Add(new TEdge());
 
-            bool IsFlat = true;
+            var isFlat = true;
 
             //1. Basic (first) edge initialization ...
             edges[1].Curr = pg[1];
@@ -951,43 +949,43 @@ namespace TVGL.Boolean_Operations.Clipper
                 RangeTest(pg[i], ref MUseFullRange);
                 InitEdge(edges[i], edges[i + 1], edges[i - 1], pg[i]);
             }
-            TEdge eStart = edges[0];
+            var eStart = edges[0];
 
             //2. Remove duplicate vertices, and (when closed) collinear edges ...
-            TEdge E = eStart, eLoopStop = eStart;
+            TEdge edge = eStart, eLoopStop = eStart;
             for (;;)
             {
                 //nb: allows matching start and end points when not Closed ...
-                if (E.Curr == E.Next.Curr && (Closed || E.Next != eStart))
+                if (edge.Curr == edge.Next.Curr && (Closed || edge.Next != eStart))
                 {
-                    if (E == E.Next) break;
-                    if (E == eStart) eStart = E.Next;
-                    E = RemoveEdge(E);
-                    eLoopStop = E;
+                    if (edge == edge.Next) break;
+                    if (edge == eStart) eStart = edge.Next;
+                    edge = RemoveEdge(edge);
+                    eLoopStop = edge;
                     continue;
                 }
-                if (E.Prev == E.Next)
+                if (edge.Prev == edge.Next)
                     break; //only two vertices
                 else if (Closed &&
-                  SlopesEqual(E.Prev.Curr, E.Curr, E.Next.Curr, MUseFullRange) &&
+                  SlopesEqual(edge.Prev.Curr, edge.Curr, edge.Next.Curr, MUseFullRange) &&
                   (!PreserveCollinear ||
-                  !Pt2IsBetweenPt1AndPt3(E.Prev.Curr, E.Curr, E.Next.Curr)))
+                  !Pt2IsBetweenPt1AndPt3(edge.Prev.Curr, edge.Curr, edge.Next.Curr)))
                 {
                     //Collinear edges are allowed for open paths but in closed paths
                     //the default is to merge adjacent collinear edges into a single edge.
                     //However, if the PreserveCollinear property is enabled, only overlapping
                     //collinear edges (ie spikes) will be removed from closed paths.
-                    if (E == eStart) eStart = E.Next;
-                    E = RemoveEdge(E);
-                    E = E.Prev;
-                    eLoopStop = E;
+                    if (edge == eStart) eStart = edge.Next;
+                    edge = RemoveEdge(edge);
+                    edge = edge.Prev;
+                    eLoopStop = edge;
                     continue;
                 }
-                E = E.Next;
-                if ((E == eLoopStop) || (!Closed && E.Next == eStart)) break;
+                edge = edge.Next;
+                if ((edge == eLoopStop) || (!Closed && edge.Next == eStart)) break;
             }
 
-            if ((!Closed && (E == E.Next)) || (Closed && (E.Prev == E.Next)))
+            if ((!Closed && (edge == edge.Next)) || (Closed && (edge.Prev == edge.Next)))
                 return false;
 
             if (!Closed)
@@ -997,36 +995,36 @@ namespace TVGL.Boolean_Operations.Clipper
             }
 
             //3. Do second stage of edge initialization ...
-            E = eStart;
+            edge = eStart;
             do
             {
-                InitEdge2(E, polyType);
-                E = E.Next;
-                if (IsFlat && E.Curr.Y != eStart.Curr.Y) IsFlat = false;
+                InitEdge2(edge, polyType);
+                edge = edge.Next;
+                if (isFlat && edge.Curr.Y != eStart.Curr.Y) isFlat = false;
             }
-            while (E != eStart);
+            while (edge != eStart);
 
             //4. Finally, add edge bounds to LocalMinima list ...
 
             //Totally flat paths must be handled differently when adding them
             //to LocalMinima list to avoid endless loops etc ...
-            if (IsFlat)
+            if (isFlat)
             {
                 if (Closed) return false;
-                E.Prev.OutIdx = Skip;
-                if (E.Prev.Bot.X < E.Prev.Top.X) ReverseHorizontal(E.Prev);
+                edge.Prev.OutIdx = Skip;
+                if (edge.Prev.Bot.X < edge.Prev.Top.X) ReverseHorizontal(edge.Prev);
                 LocalMinima locMin = new LocalMinima();
                 locMin.Next = null;
-                locMin.Y = E.Bot.Y;
+                locMin.Y = edge.Bot.Y;
                 locMin.LeftBound = null;
-                locMin.RightBound = E;
+                locMin.RightBound = edge;
                 locMin.RightBound.Side = EdgeSide.Right;
                 locMin.RightBound.WindDelta = 0;
-                while (E.Next.OutIdx != Skip)
+                while (edge.Next.OutIdx != Skip)
                 {
-                    E.NextInLML = E.Next;
-                    if (E.Bot.X != E.Prev.Top.X) ReverseHorizontal(E);
-                    E = E.Next;
+                    edge.NextInLML = edge.Next;
+                    if (edge.Bot.X != edge.Prev.Top.X) ReverseHorizontal(edge);
+                    edge = edge.Next;
                 }
                 InsertLocalMinima(locMin);
                 MEdges.Add(edges);
@@ -1039,29 +1037,29 @@ namespace TVGL.Boolean_Operations.Clipper
 
             //workaround to avoid an endless loop in the while loop below when
             //open paths have matching start and end points ...
-            if (E.Prev.Bot == E.Prev.Top) E = E.Next;
+            if (edge.Prev.Bot == edge.Prev.Top) edge = edge.Next;
 
             for (;;)
             {
-                E = FindNextLocMin(E);
-                if (E == EMin) break;
-                else if (EMin == null) EMin = E;
+                edge = FindNextLocMin(edge);
+                if (edge == EMin) break;
+                else if (EMin == null) EMin = edge;
 
                 //E and E.Prev now share a local minima (left aligned if horizontal).
                 //Compare their slopes to find which starts which bound ...
                 LocalMinima locMin = new LocalMinima();
                 locMin.Next = null;
-                locMin.Y = E.Bot.Y;
-                if (E.Dx < E.Prev.Dx)
+                locMin.Y = edge.Bot.Y;
+                if (edge.Dx < edge.Prev.Dx)
                 {
-                    locMin.LeftBound = E.Prev;
-                    locMin.RightBound = E;
+                    locMin.LeftBound = edge.Prev;
+                    locMin.RightBound = edge;
                     leftBoundIsForward = false; //Q.nextInLML = Q.prev
                 }
                 else
                 {
-                    locMin.LeftBound = E;
-                    locMin.RightBound = E.Prev;
+                    locMin.LeftBound = edge;
+                    locMin.RightBound = edge.Prev;
                     leftBoundIsForward = true; //Q.nextInLML = Q.next
                 }
                 locMin.LeftBound.Side = EdgeSide.Left;
@@ -1073,8 +1071,8 @@ namespace TVGL.Boolean_Operations.Clipper
                 else locMin.LeftBound.WindDelta = 1;
                 locMin.RightBound.WindDelta = -locMin.LeftBound.WindDelta;
 
-                E = ProcessBound(locMin.LeftBound, leftBoundIsForward);
-                if (E.OutIdx == Skip) E = ProcessBound(E, leftBoundIsForward);
+                edge = ProcessBound(locMin.LeftBound, leftBoundIsForward);
+                if (edge.OutIdx == Skip) edge = ProcessBound(edge, leftBoundIsForward);
 
                 TEdge E2 = ProcessBound(locMin.RightBound, !leftBoundIsForward);
                 if (E2.OutIdx == Skip) E2 = ProcessBound(E2, !leftBoundIsForward);
@@ -1084,7 +1082,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 else if (locMin.RightBound.OutIdx == Skip)
                     locMin.RightBound = null;
                 InsertLocalMinima(locMin);
-                if (!leftBoundIsForward) E = E2;
+                if (!leftBoundIsForward) edge = E2;
             }
             return true;
 
