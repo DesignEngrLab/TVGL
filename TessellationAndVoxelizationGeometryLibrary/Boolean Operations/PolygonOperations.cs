@@ -434,7 +434,7 @@ namespace TVGL.Boolean_Operations.Clipper
         /// <returns></returns>
         public static bool operator ==(IntPoint a, IntPoint b)
         {
-            return a.X == b.X && a.Y == b.Y;
+            return ((double)a.X).IsPracticallySame(b.X) && ((double)a.Y).IsPracticallySame(b.Y);
         }
 
         /// <summary>
@@ -445,7 +445,7 @@ namespace TVGL.Boolean_Operations.Clipper
         /// <returns></returns>
         public static bool operator !=(IntPoint a, IntPoint b)
         {
-            return a.X != b.X || a.Y != b.Y;
+            return !((double)a.X).IsPracticallySame(b.X) || !((double)a.Y).IsPracticallySame(b.Y);
         }
 
         /// <summary>
