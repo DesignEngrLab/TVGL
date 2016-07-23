@@ -371,8 +371,10 @@ namespace TVGL.Boolean_Operations.Clipper
         //is slow. So, although calling the Int128Mul method doesn't look as clean, the 
         //code runs significantly faster than if we'd used the * operator.
 
-        internal static Int128 Int128Mul(long lhs, long rhs)
+        internal static Int128 Int128Mul(double lhsD, double rhsD)
         {
+            var lhs = (int) lhsD;
+            var rhs = (int) rhsD;
             bool negate = (lhs < 0) != (rhs < 0);
             if (lhs < 0) lhs = -lhs;
             if (rhs < 0) rhs = -rhs;
@@ -407,11 +409,11 @@ namespace TVGL.Boolean_Operations.Clipper
         /// <summary>
         /// X value for integer point
         /// </summary>
-        public long X;
+        public double X;
         /// <summary>
         /// Y value for integer point
         /// </summary>
-        public long Y;
+        public double Y;
         internal IntPoint(long x, long y)
         {
             this.X = x; this.Y = y;
@@ -476,12 +478,12 @@ namespace TVGL.Boolean_Operations.Clipper
     #region Integer Rectangle Class
     internal struct IntRect
     {
-        internal long Left;
-        internal long Top;
-        internal long Right;
-        internal long Bottom;
+        internal double Left;
+        internal double Top;
+        internal double Right;
+        internal double Bottom;
 
-        internal IntRect(long l, long t, long r, long b)
+        internal IntRect(double l, double t, double r, double b)
         {
             Left = l; Top = t;
             Right = r; Bottom = b;
@@ -566,7 +568,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
     internal class Scanbeam
     {
-        internal long Y;
+        internal double Y;
         internal Scanbeam Next;
     }
 
@@ -619,7 +621,7 @@ namespace TVGL.Boolean_Operations.Clipper
             set;
         }
 
-        internal void Swap(ref long val1, ref long val2)
+        internal void Swap(ref double val1, ref double val2)
         {
             var tmp = val1;
             val1 = val2;
@@ -827,7 +829,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     var locMin = new LocalMinima
                     {
                         Next = null,
-                        Y = e.Bot.Y,
+                        Y = (long)e.Bot.Y,
                         LeftBound = null,
                         RightBound = e
                     };
@@ -1009,7 +1011,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 var locMin = new LocalMinima
                 {
                     Next = null,
-                    Y = edge.Bot.Y,
+                    Y = (long)edge.Bot.Y,
                     LeftBound = null,
                     RightBound = edge
                 };
@@ -1044,7 +1046,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 var locMin = new LocalMinima
                 {
                     Next = null,
-                    Y = edge.Bot.Y
+                    Y = (long)edge.Bot.Y
                 };
                 bool leftBoundIsForward;
                 if (edge.Dx < edge.Prev.Dx)
@@ -1280,7 +1282,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void InsertScanbeam(long y)
+        private void InsertScanbeam(double y)
         {
             if (_mScanbeam == null)
             {
@@ -1444,7 +1446,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private long PopScanbeam()
+        private double PopScanbeam()
         {
             var y = _mScanbeam.Y;
             _mScanbeam = _mScanbeam.Next;
@@ -1486,7 +1488,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void InsertLocalMinimaIntoAEL(long botY)
+        private void InsertLocalMinimaIntoAEL(double botY)
         {
             while (MCurrentLm != null && (MCurrentLm.Y == botY))
             {
@@ -2101,7 +2103,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private bool HorzSegmentsOverlap(long seg1A, long seg1B, long seg2A, long seg2B)
+        private bool HorzSegmentsOverlap(double seg1A, double seg1B, double seg2A, double seg2B)
         {
             if (seg1A > seg1B) Swap(ref seg1A, ref seg1B);
             if (seg2A > seg2B) Swap(ref seg2A, ref seg2B);
@@ -2632,7 +2634,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        void GetHorzDirection(TEdge horzEdge, out Direction dir, out long left, out long right)
+        void GetHorzDirection(TEdge horzEdge, out Direction dir, out double left, out double right)
         {
             if (horzEdge.Bot.X < horzEdge.Top.X)
             {
@@ -2652,7 +2654,7 @@ namespace TVGL.Boolean_Operations.Clipper
         private void ProcessHorizontal(TEdge horzEdge, bool isTopOfScanbeam)
         {
             Direction dir;
-            long horzLeft, horzRight;
+            double horzLeft, horzRight;
 
             GetHorzDirection(horzEdge, out dir, out horzLeft, out horzRight);
 
@@ -2809,7 +2811,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private bool ProcessIntersections(long topY)
+        private bool ProcessIntersections(double topY)
         {
             if (_mActiveEdges == null) return true;
             try
@@ -2832,7 +2834,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void BuildIntersectList(long topY)
+        private void BuildIntersectList(double topY)
         {
             if (_mActiveEdges == null) return;
 
@@ -2944,7 +2946,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private static long TopX(TEdge edge, long currentY)
+        private static double TopX(TEdge edge, double currentY)
         {
             if (currentY == edge.Top.Y)
                 return edge.Top.X;
@@ -3013,7 +3015,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void ProcessEdgesAtTopOfScanbeam(long topY)
+        private void ProcessEdgesAtTopOfScanbeam(double topY)
         {
             var e = _mActiveEdges;
             while (e != null)
@@ -3311,7 +3313,7 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private static bool GetOverlap(long a1, long a2, long b1, long b2, out long left, out long right)
+        private static bool GetOverlap(double a1, double a2, double b1, double b2, out double left, out double right)
         {
             if (a1 < a2)
             {
@@ -3488,7 +3490,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     op2B = op2B.Next;
                 if (op2B.Next == op2 || op2B.Next == op1) return false; //a flat 'polygon'
 
-                long left, right;
+                double left, right;
                 //outPoint1 -. Op1b & outPoint2 -. Op2b are the extremites of the horizontal edges
                 if (!GetOverlap(op1.Pt.X, op1B.Pt.X, op2.Pt.X, op2B.Pt.X, out left, out right))
                     return false;
@@ -3632,12 +3634,12 @@ namespace TVGL.Boolean_Operations.Clipper
             //http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.88.5498&rep=rep1&type=pdf
             var result = 0;
             var startOp = op;
-            long ptx = pt.X, pty = pt.Y;
-            long poly0X = op.Pt.X, poly0Y = op.Pt.Y;
+            double ptx = pt.X, pty = pt.Y;
+            double poly0X = op.Pt.X, poly0Y = op.Pt.Y;
             do
             {
                 op = op.Next;
-                long poly1X = op.Pt.X, poly1Y = op.Pt.Y;
+                double poly1X = op.Pt.X, poly1Y = op.Pt.Y;
 
                 if (((double)poly1Y).IsPracticallySame(pty))
                 {
