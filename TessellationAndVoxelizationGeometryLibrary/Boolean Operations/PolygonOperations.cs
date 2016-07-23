@@ -275,37 +275,37 @@ namespace TVGL.Boolean_Operations.Clipper
 
     internal struct Int128
     {
-        private long hi;
-        private ulong lo;
+        private long _hi;
+        private ulong _lo;
 
         internal Int128(long _lo)
         {
-            lo = (ulong)_lo;
-            if (_lo < 0) hi = -1;
-            else hi = 0;
+            this._lo = (ulong)_lo;
+            if (_lo < 0) _hi = -1;
+            else _hi = 0;
         }
 
         internal Int128(long _hi, ulong _lo)
         {
-            lo = _lo;
-            hi = _hi;
+            this._lo = _lo;
+            this._hi = _hi;
         }
 
         internal Int128(Int128 val)
         {
-            hi = val.hi;
-            lo = val.lo;
+            _hi = val._hi;
+            _lo = val._lo;
         }
 
         internal bool IsNegative()
         {
-            return hi < 0;
+            return _hi < 0;
         }
 
         public static bool operator ==(Int128 val1, Int128 val2)
         {
             if ((object)val1 == (object)val2) return true;
-            return (val1.hi == val2.hi && val1.lo == val2.lo);
+            return (val1._hi == val2._hi && val1._lo == val2._lo);
         }
 
         public static bool operator !=(Int128 val1, Int128 val2)
@@ -318,33 +318,33 @@ namespace TVGL.Boolean_Operations.Clipper
             if (!(obj is Int128))
                 return false;
             var i128 = (Int128)obj;
-            return (i128.hi == hi && i128.lo == lo);
+            return (i128._hi == _hi && i128._lo == _lo);
         }
 
         public override int GetHashCode()
         {
-            return hi.GetHashCode() ^ lo.GetHashCode();
+            return _hi.GetHashCode() ^ _lo.GetHashCode();
         }
 
         public static bool operator >(Int128 val1, Int128 val2)
         {
-            if (val1.hi != val2.hi)
-                return val1.hi > val2.hi;
-            return val1.lo > val2.lo;
+            if (val1._hi != val2._hi)
+                return val1._hi > val2._hi;
+            return val1._lo > val2._lo;
         }
 
         public static bool operator <(Int128 val1, Int128 val2)
         {
-            if (val1.hi != val2.hi)
-                return val1.hi < val2.hi;
-            return val1.lo < val2.lo;
+            if (val1._hi != val2._hi)
+                return val1._hi < val2._hi;
+            return val1._lo < val2._lo;
         }
 
         public static Int128 operator +(Int128 lhs, Int128 rhs)
         {
-            lhs.hi += rhs.hi;
-            lhs.lo += rhs.lo;
-            if (lhs.lo < rhs.lo) lhs.hi++;
+            lhs._hi += rhs._hi;
+            lhs._lo += rhs._lo;
+            if (lhs._lo < rhs._lo) lhs._hi++;
             return lhs;
         }
 
@@ -355,16 +355,16 @@ namespace TVGL.Boolean_Operations.Clipper
 
         public static Int128 operator -(Int128 val)
         {
-            return val.lo == 0 ? new Int128(-val.hi, 0) : new Int128(~val.hi, ~val.lo + 1);
+            return val._lo == 0 ? new Int128(-val._hi, 0) : new Int128(~val._hi, ~val._lo + 1);
         }
 
         public static explicit operator double(Int128 val)
         {
             const double shift64 = 18446744073709551616.0; //2^64
-            if (val.hi >= 0) return val.lo + val.hi * shift64;
-            if (val.lo == 0)
-                return val.hi * shift64;
-            return -(~val.lo + ~val.hi * shift64);
+            if (val._hi >= 0) return val._lo + val._hi * shift64;
+            if (val._lo == 0)
+                return val._hi * shift64;
+            return -(~val._lo + ~val._hi * shift64);
         }
 
         //nb: Constructing two new Int128 objects every time we want to multiply longs  
@@ -412,9 +412,9 @@ namespace TVGL.Boolean_Operations.Clipper
         /// Y value for integer point
         /// </summary>
         public long Y;
-        internal IntPoint(long X, long Y)
+        internal IntPoint(long x, long y)
         {
-            this.X = X; this.Y = Y;
+            this.X = x; this.Y = y;
         }
         internal IntPoint(double x, double y)
         {
@@ -455,13 +455,9 @@ namespace TVGL.Boolean_Operations.Clipper
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (obj == null) return false;
-            if (obj is IntPoint)
-            {
-                IntPoint a = (IntPoint)obj;
-                return (X == a.X) && (Y == a.Y);
-            }
-            else return false;
+            if (!(obj is IntPoint)) return false;
+            var a = (IntPoint)obj;
+            return ((double)X).IsPracticallySame(a.X) && ((double)Y).IsPracticallySame(a.Y);
         }
 
         /// <summary>
@@ -480,20 +476,20 @@ namespace TVGL.Boolean_Operations.Clipper
     #region Integer Rectangle Class
     internal struct IntRect
     {
-        internal long left;
-        internal long top;
-        internal long right;
-        internal long bottom;
+        internal long Left;
+        internal long Top;
+        internal long Right;
+        internal long Bottom;
 
         internal IntRect(long l, long t, long r, long b)
         {
-            left = l; top = t;
-            right = r; bottom = b;
+            Left = l; Top = t;
+            Right = r; Bottom = b;
         }
         internal IntRect(IntRect ir)
         {
-            left = ir.left; top = ir.top;
-            right = ir.right; bottom = ir.bottom;
+            Left = ir.Left; Top = ir.Top;
+            Right = ir.Right; Bottom = ir.Bottom;
         }
     }
     #endregion
@@ -531,11 +527,11 @@ namespace TVGL.Boolean_Operations.Clipper
         internal int OutIdx;
         internal TEdge Next;
         internal TEdge Prev;
-        internal TEdge NextInLML;
+        internal TEdge NextInLml;
         internal TEdge NextInAEL;
         internal TEdge PrevInAEL;
-        internal TEdge NextInSEL;
-        internal TEdge PrevInSEL;
+        internal TEdge NextInSel;
+        internal TEdge PrevInSel;
     }
     #endregion
 
@@ -667,12 +663,12 @@ namespace TVGL.Boolean_Operations.Clipper
 
         //------------------------------------------------------------------------------
 
-        internal bool PointOnPolygon(IntPoint pt, OutPt pp, bool UseFullRange)
+        internal bool PointOnPolygon(IntPoint pt, OutPt pp, bool useFullRange)
         {
             OutPt pp2 = pp;
             while (true)
             {
-                if (PointOnLineSegment(pt, pp2.Pt, pp2.Next.Pt, UseFullRange))
+                if (PointOnLineSegment(pt, pp2.Pt, pp2.Next.Pt, useFullRange))
                     return true;
                 pp2 = pp2.Next;
                 if (pp2 == pp) break;
@@ -681,9 +677,9 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal static bool SlopesEqual(TEdge e1, TEdge e2, bool UseFullRange)
+        internal static bool SlopesEqual(TEdge e1, TEdge e2, bool useFullRange)
         {
-            if (UseFullRange)
+            if (useFullRange)
                 return Int128.Int128Mul(e1.Delta.Y, e2.Delta.X) ==
                     Int128.Int128Mul(e1.Delta.X, e2.Delta.Y);
             return ((double)e1.Delta.Y * e2.Delta.X).IsPracticallySame(e1.Delta.X * e2.Delta.Y);
@@ -691,9 +687,9 @@ namespace TVGL.Boolean_Operations.Clipper
         //------------------------------------------------------------------------------
 
         protected static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
-            IntPoint pt3, bool UseFullRange)
+            IntPoint pt3, bool useFullRange)
         {
-            if (UseFullRange)
+            if (useFullRange)
                 return Int128.Int128Mul(pt1.Y - pt2.Y, pt2.X - pt3.X) ==
                        Int128.Int128Mul(pt1.X - pt2.X, pt2.Y - pt3.Y);
                 return ((double) (pt1.Y - pt2.Y)*(pt2.X - pt3.X) - (pt1.X - pt2.X)*(pt2.Y - pt3.Y)).IsNegligible();
@@ -701,9 +697,9 @@ namespace TVGL.Boolean_Operations.Clipper
         //------------------------------------------------------------------------------
 
         protected static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
-            IntPoint pt3, IntPoint pt4, bool UseFullRange)
+            IntPoint pt3, IntPoint pt4, bool useFullRange)
         {
-            if (UseFullRange)
+            if (useFullRange)
                 return Int128.Int128Mul(pt1.Y - pt2.Y, pt3.X - pt4.X) ==
                   Int128.Int128Mul(pt1.X - pt2.X, pt3.Y - pt4.Y);
             return ((double)(pt1.Y - pt2.Y) * (pt3.X - pt4.X) - (pt1.X - pt2.X) * (pt3.Y - pt4.Y)).IsNegligible();
@@ -784,83 +780,83 @@ namespace TVGL.Boolean_Operations.Clipper
             e.PolyTyp = polyType;
         }
 
-        private static TEdge FindNextLocMin(TEdge E)
+        private static TEdge FindNextLocMin(TEdge e)
         {
             for (;;)
             {
-                while (E.Bot != E.Prev.Bot || E.Curr == E.Top) E = E.Next;
-                if (!E.Dx.IsPracticallySame(Horizontal) && !E.Prev.Dx.IsPracticallySame(Horizontal)) break;
-                while (E.Prev.Dx.IsPracticallySame(Horizontal)) E = E.Prev;
-                var e2 = E;
-                while (E.Dx.IsPracticallySame(Horizontal)) E = E.Next;
-                if (E.Top.Y == E.Prev.Bot.Y) continue; //ie just an intermediate horz.
-                if (e2.Prev.Bot.X < E.Bot.X) E = e2;
+                while (e.Bot != e.Prev.Bot || e.Curr == e.Top) e = e.Next;
+                if (!e.Dx.IsPracticallySame(Horizontal) && !e.Prev.Dx.IsPracticallySame(Horizontal)) break;
+                while (e.Prev.Dx.IsPracticallySame(Horizontal)) e = e.Prev;
+                var e2 = e;
+                while (e.Dx.IsPracticallySame(Horizontal)) e = e.Next;
+                if (e.Top.Y == e.Prev.Bot.Y) continue; //ie just an intermediate horz.
+                if (e2.Prev.Bot.X < e.Bot.X) e = e2;
                 break;
             }
-            return E;
+            return e;
         }
 
-        private TEdge ProcessBound(TEdge E, bool leftBoundIsForward)
+        private TEdge ProcessBound(TEdge e, bool leftBoundIsForward)
         {
-            TEdge eStart, result = E;
+            TEdge eStart, result = e;
             TEdge horz;
 
             if (result.OutIdx == Skip)
             {
                 //check if there are edges beyond the skip edge in the bound and if so
                 //create another LocMin and calling ProcessBound once more ...
-                E = result;
+                e = result;
                 if (leftBoundIsForward)
                 {
-                    while (E.Top.Y == E.Next.Bot.Y) E = E.Next;
-                    while (E != result && E.Dx.IsPracticallySame(Horizontal)) E = E.Prev;
+                    while (e.Top.Y == e.Next.Bot.Y) e = e.Next;
+                    while (e != result && e.Dx.IsPracticallySame(Horizontal)) e = e.Prev;
                 }
                 else
                 {
-                    while (E.Top.Y == E.Prev.Bot.Y) E = E.Prev;
-                    while (E != result && E.Dx.IsPracticallySame(Horizontal)) E = E.Next;
+                    while (e.Top.Y == e.Prev.Bot.Y) e = e.Prev;
+                    while (e != result && e.Dx.IsPracticallySame(Horizontal)) e = e.Next;
                 }
-                if (E == result)
+                if (e == result)
                 {
-                    result = leftBoundIsForward ? E.Next : E.Prev;
+                    result = leftBoundIsForward ? e.Next : e.Prev;
                 }
                 else
                 {
                     //there are more edges in the bound beyond result starting with E
-                    E = leftBoundIsForward ? result.Next : result.Prev;
+                    e = leftBoundIsForward ? result.Next : result.Prev;
                     var locMin = new LocalMinima
                     {
                         Next = null,
-                        Y = E.Bot.Y,
+                        Y = e.Bot.Y,
                         LeftBound = null,
-                        RightBound = E
+                        RightBound = e
                     };
-                    E.WindDelta = 0;
-                    result = ProcessBound(E, leftBoundIsForward);
+                    e.WindDelta = 0;
+                    result = ProcessBound(e, leftBoundIsForward);
                     InsertLocalMinima(locMin);
                 }
                 return result;
             }
 
-            if (E.Dx.IsPracticallySame(Horizontal))
+            if (e.Dx.IsPracticallySame(Horizontal))
             {
                 //We need to be careful with open paths because this may not be a
                 //true local minima (ie E may be following a skip edge).
                 //Also, consecutive horz. edges may start heading left before going right.
-                eStart = leftBoundIsForward ? E.Prev : E.Next;
+                eStart = leftBoundIsForward ? e.Prev : e.Next;
                 if (eStart.OutIdx != Skip)
                 {
                     if (eStart.Dx.IsPracticallySame(Horizontal)) //ie an adjoining horizontal skip edge
                     {
-                        if (eStart.Bot.X != E.Bot.X && eStart.Top.X != E.Bot.X)
-                            ReverseHorizontal(E);
+                        if (eStart.Bot.X != e.Bot.X && eStart.Top.X != e.Bot.X)
+                            ReverseHorizontal(e);
                     }
-                    else if (eStart.Bot.X != E.Bot.X)
-                        ReverseHorizontal(E);
+                    else if (eStart.Bot.X != e.Bot.X)
+                        ReverseHorizontal(e);
                 }
             }
 
-            eStart = E;
+            eStart = e;
             if (leftBoundIsForward)
             {
                 while (result.Top.Y == result.Next.Bot.Y && result.Next.OutIdx != Skip)
@@ -877,15 +873,15 @@ namespace TVGL.Boolean_Operations.Clipper
                     }
                     else if (horz.Prev.Top.X > result.Next.Top.X) result = horz.Prev;
                 }
-                while (E != result)
+                while (e != result)
                 {
-                    E.NextInLML = E.Next;
-                    if (E.Dx.IsPracticallySame(Horizontal) && E != eStart && E.Bot.X != E.Prev.Top.X)
-                        ReverseHorizontal(E);
-                    E = E.Next;
+                    e.NextInLml = e.Next;
+                    if (e.Dx.IsPracticallySame(Horizontal) && e != eStart && e.Bot.X != e.Prev.Top.X)
+                        ReverseHorizontal(e);
+                    e = e.Next;
                 }
-                if (E.Dx.IsPracticallySame(Horizontal) && E != eStart && E.Bot.X != E.Prev.Top.X)
-                    ReverseHorizontal(E);
+                if (e.Dx.IsPracticallySame(Horizontal) && e != eStart && e.Bot.X != e.Prev.Top.X)
+                    ReverseHorizontal(e);
                 result = result.Next; //move to the edge just beyond current bound
             }
             else
@@ -903,15 +899,15 @@ namespace TVGL.Boolean_Operations.Clipper
                     else if (horz.Next.Top.X > result.Prev.Top.X) result = horz.Next;
                 }
 
-                while (E != result)
+                while (e != result)
                 {
-                    E.NextInLML = E.Prev;
-                    if (E.Dx.IsPracticallySame(Horizontal) && E != eStart && E.Bot.X != E.Next.Top.X)
-                        ReverseHorizontal(E);
-                    E = E.Prev;
+                    e.NextInLml = e.Prev;
+                    if (e.Dx.IsPracticallySame(Horizontal) && e != eStart && e.Bot.X != e.Next.Top.X)
+                        ReverseHorizontal(e);
+                    e = e.Prev;
                 }
-                if (E.Dx.IsPracticallySame(Horizontal) && E != eStart && E.Bot.X != E.Next.Top.X)
-                    ReverseHorizontal(E);
+                if (e.Dx.IsPracticallySame(Horizontal) && e != eStart && e.Bot.X != e.Next.Top.X)
+                    ReverseHorizontal(e);
                 result = result.Prev; //move to the edge just beyond current bound
             }
             return result;
@@ -919,15 +915,15 @@ namespace TVGL.Boolean_Operations.Clipper
         //------------------------------------------------------------------------------
 
 
-        internal bool AddPath(Path pg, PolyType polyType, bool Closed)
+        internal bool AddPath(Path pg, PolyType polyType, bool closed)
         {
-            if (!Closed && polyType == PolyType.Clip)
+            if (!closed && polyType == PolyType.Clip)
                 throw new ClipperException("AddPath: Open paths must be subject.");
 
             var highI = pg.Count - 1;
-            if (Closed) while (highI > 0 && (pg[highI] == pg[0])) --highI;
+            if (closed) while (highI > 0 && (pg[highI] == pg[0])) --highI;
             while (highI > 0 && (pg[highI] == pg[highI - 1])) --highI;
-            if ((Closed && highI < 2) || (!Closed && highI < 1)) return false;
+            if ((closed && highI < 2) || (!closed && highI < 1)) return false;
 
             //create a new edge array ...
             var edges = new List<TEdge>(highI + 1);
@@ -953,7 +949,7 @@ namespace TVGL.Boolean_Operations.Clipper
             for (;;)
             {
                 //nb: allows matching start and end points when not Closed ...
-                if (edge.Curr == edge.Next.Curr && (Closed || edge.Next != eStart))
+                if (edge.Curr == edge.Next.Curr && (closed || edge.Next != eStart))
                 {
                     if (edge == edge.Next) break;
                     if (edge == eStart) eStart = edge.Next;
@@ -963,7 +959,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 }
                 if (edge.Prev == edge.Next)
                     break; //only two vertices
-                else if (Closed &&
+                else if (closed &&
                   SlopesEqual(edge.Prev.Curr, edge.Curr, edge.Next.Curr, MUseFullRange) &&
                   (!PreserveCollinear ||
                   !Pt2IsBetweenPt1AndPt3(edge.Prev.Curr, edge.Curr, edge.Next.Curr)))
@@ -979,13 +975,13 @@ namespace TVGL.Boolean_Operations.Clipper
                     continue;
                 }
                 edge = edge.Next;
-                if ((edge == eLoopStop) || (!Closed && edge.Next == eStart)) break;
+                if ((edge == eLoopStop) || (!closed && edge.Next == eStart)) break;
             }
 
-            if ((!Closed && (edge == edge.Next)) || (Closed && (edge.Prev == edge.Next)))
+            if ((!closed && (edge == edge.Next)) || (closed && (edge.Prev == edge.Next)))
                 return false;
 
-            if (!Closed)
+            if (!closed)
             {
                 MHasOpenPaths = true;
                 eStart.Prev.OutIdx = Skip;
@@ -1007,19 +1003,21 @@ namespace TVGL.Boolean_Operations.Clipper
             //to LocalMinima list to avoid endless loops etc ...
             if (isFlat)
             {
-                if (Closed) return false;
+                if (closed) return false;
                 edge.Prev.OutIdx = Skip;
                 if (edge.Prev.Bot.X < edge.Prev.Top.X) ReverseHorizontal(edge.Prev);
-                LocalMinima locMin = new LocalMinima();
-                locMin.Next = null;
-                locMin.Y = edge.Bot.Y;
-                locMin.LeftBound = null;
-                locMin.RightBound = edge;
+                var locMin = new LocalMinima
+                {
+                    Next = null,
+                    Y = edge.Bot.Y,
+                    LeftBound = null,
+                    RightBound = edge
+                };
                 locMin.RightBound.Side = EdgeSide.Right;
                 locMin.RightBound.WindDelta = 0;
                 while (edge.Next.OutIdx != Skip)
                 {
-                    edge.NextInLML = edge.Next;
+                    edge.NextInLml = edge.Next;
                     if (edge.Bot.X != edge.Prev.Top.X) ReverseHorizontal(edge);
                     edge = edge.Next;
                 }
@@ -1029,8 +1027,7 @@ namespace TVGL.Boolean_Operations.Clipper
             }
 
             MEdges.Add(edges);
-            bool leftBoundIsForward;
-            TEdge EMin = null;
+            TEdge eMin = null;
 
             //workaround to avoid an endless loop in the while loop below when
             //open paths have matching start and end points ...
@@ -1039,8 +1036,8 @@ namespace TVGL.Boolean_Operations.Clipper
             for (;;)
             {
                 edge = FindNextLocMin(edge);
-                if (edge == EMin) break;
-                if (EMin == null) EMin = edge;
+                if (edge == eMin) break;
+                if (eMin == null) eMin = edge;
 
                 //E and E.Prev now share a local minima (left aligned if horizontal).
                 //Compare their slopes to find which starts which bound ...
@@ -1049,6 +1046,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     Next = null,
                     Y = edge.Bot.Y
                 };
+                bool leftBoundIsForward;
                 if (edge.Dx < edge.Prev.Dx)
                 {
                     locMin.LeftBound = edge.Prev;
@@ -1064,7 +1062,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 locMin.LeftBound.Side = EdgeSide.Left;
                 locMin.RightBound.Side = EdgeSide.Right;
 
-                if (!Closed) locMin.LeftBound.WindDelta = 0;
+                if (!closed) locMin.LeftBound.WindDelta = 0;
                 else if (locMin.LeftBound.Next == locMin.RightBound)
                     locMin.LeftBound.WindDelta = -1;
                 else locMin.LeftBound.WindDelta = 1;
@@ -1195,17 +1193,17 @@ namespace TVGL.Boolean_Operations.Clipper
             int i = 0, cnt = paths.Count;
             while (i < cnt && paths[i].Count == 0) i++;
             if (i == cnt) return new IntRect(0, 0, 0, 0);
-            var result = new IntRect {left = paths[i][0].X};
-            result.right = result.left;
-            result.top = paths[i][0].Y;
-            result.bottom = result.top;
+            var result = new IntRect {Left = paths[i][0].X};
+            result.Right = result.Left;
+            result.Top = paths[i][0].Y;
+            result.Bottom = result.Top;
             for (; i < cnt; i++)
                 for (int j = 0; j < paths[i].Count; j++)
                 {
-                    if (paths[i][j].X < result.left) result.left = paths[i][j].X;
-                    else if (paths[i][j].X > result.right) result.right = paths[i][j].X;
-                    if (paths[i][j].Y < result.top) result.top = paths[i][j].Y;
-                    else if (paths[i][j].Y > result.bottom) result.bottom = paths[i][j].Y;
+                    if (paths[i][j].X < result.Left) result.Left = paths[i][j].X;
+                    else if (paths[i][j].X > result.Right) result.Right = paths[i][j].X;
+                    if (paths[i][j].Y < result.Top) result.Top = paths[i][j].Y;
+                    else if (paths[i][j].Y > result.Bottom) result.Bottom = paths[i][j].Y;
                 }
             return result;
         }
@@ -1221,32 +1219,32 @@ namespace TVGL.Boolean_Operations.Clipper
         internal const int IOStrictlySimple = 2;
         internal const int IOPreserveCollinear = 4;
 
-        private List<OutRec> m_PolyOuts;
-        private ClipType m_ClipType;
-        private Scanbeam m_Scanbeam;
-        private TEdge m_ActiveEdges;
-        private TEdge m_SortedEdges;
-        private List<IntersectNode> m_IntersectList;
-        IComparer<IntersectNode> m_IntersectNodeComparer;
-        private bool m_ExecuteLocked;
-        private PolyFillType m_ClipFillType;
-        private PolyFillType m_SubjFillType;
-        private List<Join> m_Joins;
-        private List<Join> m_GhostJoins;
-        private bool m_UsingPolyTree;
+        private List<OutRec> _mPolyOuts;
+        private ClipType _mClipType;
+        private Scanbeam _mScanbeam;
+        private TEdge _mActiveEdges;
+        private TEdge _mSortedEdges;
+        private List<IntersectNode> _mIntersectList;
+        IComparer<IntersectNode> _mIntersectNodeComparer;
+        private bool _mExecuteLocked;
+        private PolyFillType _mClipFillType;
+        private PolyFillType _mSubjFillType;
+        private List<Join> _mJoins;
+        private List<Join> _mGhostJoins;
+        private bool _mUsingPolyTree;
 
         internal Clipper(int initOptions = 0) //constructor
         {
-            m_Scanbeam = null;
-            m_ActiveEdges = null;
-            m_SortedEdges = null;
-            m_IntersectList = new List<IntersectNode>();
-            m_IntersectNodeComparer = new MyIntersectNodeSort();
-            m_ExecuteLocked = false;
-            m_UsingPolyTree = false;
-            m_PolyOuts = new List<OutRec>();
-            m_Joins = new List<Join>();
-            m_GhostJoins = new List<Join>();
+            _mScanbeam = null;
+            _mActiveEdges = null;
+            _mSortedEdges = null;
+            _mIntersectList = new List<IntersectNode>();
+            _mIntersectNodeComparer = new MyIntersectNodeSort();
+            _mExecuteLocked = false;
+            _mUsingPolyTree = false;
+            _mPolyOuts = new List<OutRec>();
+            _mJoins = new List<Join>();
+            _mGhostJoins = new List<Join>();
             ReverseSolution = (IOReverseSolution & initOptions) != 0;
             StrictlySimple = (IOStrictlySimple & initOptions) != 0;
             PreserveCollinear = (IOPreserveCollinear & initOptions) != 0;
@@ -1256,9 +1254,9 @@ namespace TVGL.Boolean_Operations.Clipper
         protected override void Reset()
         {
             base.Reset();
-            m_Scanbeam = null;
-            m_ActiveEdges = null;
-            m_SortedEdges = null;
+            _mScanbeam = null;
+            _mActiveEdges = null;
+            _mSortedEdges = null;
             var lm = MMinimaList;
             while (lm != null)
             {
@@ -1282,33 +1280,33 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void InsertScanbeam(long Y)
+        private void InsertScanbeam(long y)
         {
-            if (m_Scanbeam == null)
+            if (_mScanbeam == null)
             {
-                m_Scanbeam = new Scanbeam
+                _mScanbeam = new Scanbeam
                 {
                     Next = null,
-                    Y = Y
+                    Y = y
                 };
             }
-            else if (Y > m_Scanbeam.Y)
+            else if (y > _mScanbeam.Y)
             {
                 var newSb = new Scanbeam
                 {
-                    Y = Y,
-                    Next = m_Scanbeam
+                    Y = y,
+                    Next = _mScanbeam
                 };
-                m_Scanbeam = newSb;
+                _mScanbeam = newSb;
             }
             else
             {
-                var sb2 = m_Scanbeam;
-                while (sb2.Next != null && (Y <= sb2.Next.Y)) sb2 = sb2.Next;
-                if (Y == sb2.Y) return; //ie ignores duplicates
+                var sb2 = _mScanbeam;
+                while (sb2.Next != null && (y <= sb2.Next.Y)) sb2 = sb2.Next;
+                if (y == sb2.Y) return; //ie ignores duplicates
                 var newSb = new Scanbeam
                 {
-                    Y = Y,
+                    Y = y,
                     Next = sb2.Next
                 };
                 sb2.Next = newSb;
@@ -1319,16 +1317,16 @@ namespace TVGL.Boolean_Operations.Clipper
         internal bool Execute(ClipType clipType, Paths solution,
             PolyFillType subjFillType, PolyFillType clipFillType)
         {
-            if (m_ExecuteLocked) return false;
+            if (_mExecuteLocked) return false;
             if (MHasOpenPaths) throw
               new ClipperException("Error: PolyTree struct is need for open path clipping.");
 
-            m_ExecuteLocked = true;
+            _mExecuteLocked = true;
             solution.Clear();
-            m_SubjFillType = subjFillType;
-            m_ClipFillType = clipFillType;
-            m_ClipType = clipType;
-            m_UsingPolyTree = false;
+            _mSubjFillType = subjFillType;
+            _mClipFillType = clipFillType;
+            _mClipType = clipType;
+            _mUsingPolyTree = false;
             bool succeeded;
             try
             {
@@ -1339,7 +1337,7 @@ namespace TVGL.Boolean_Operations.Clipper
             finally
             {
                 DisposeAllPolyPts();
-                m_ExecuteLocked = false;
+                _mExecuteLocked = false;
             }
             return succeeded;
         }
@@ -1348,12 +1346,12 @@ namespace TVGL.Boolean_Operations.Clipper
         internal bool Execute(ClipType clipType, PolyTree polytree,
             PolyFillType subjFillType, PolyFillType clipFillType)
         {
-            if (m_ExecuteLocked) return false;
-            m_ExecuteLocked = true;
-            m_SubjFillType = subjFillType;
-            m_ClipFillType = clipFillType;
-            m_ClipType = clipType;
-            m_UsingPolyTree = true;
+            if (_mExecuteLocked) return false;
+            _mExecuteLocked = true;
+            _mSubjFillType = subjFillType;
+            _mClipFillType = clipFillType;
+            _mClipType = clipType;
+            _mUsingPolyTree = true;
             bool succeeded;
             try
             {
@@ -1364,7 +1362,7 @@ namespace TVGL.Boolean_Operations.Clipper
             finally
             {
                 DisposeAllPolyPts();
-                m_ExecuteLocked = false;
+                _mExecuteLocked = false;
             }
             return succeeded;
         }
@@ -1410,17 +1408,17 @@ namespace TVGL.Boolean_Operations.Clipper
                 do
                 {
                     InsertLocalMinimaIntoAEL(botY);
-                    m_GhostJoins.Clear();
+                    _mGhostJoins.Clear();
                     ProcessHorizontals(false);
-                    if (m_Scanbeam == null) break;
+                    if (_mScanbeam == null) break;
                     var topY = PopScanbeam();
                     if (!ProcessIntersections(topY)) return false;
                     ProcessEdgesAtTopOfScanbeam(topY);
                     botY = topY;
-                } while (m_Scanbeam != null || MCurrentLm != null);
+                } while (_mScanbeam != null || MCurrentLm != null);
 
                 //fix orientations ...
-                foreach (var outRec in m_PolyOuts)
+                foreach (var outRec in _mPolyOuts)
                 {
                     if (outRec.Pts == null || outRec.IsOpen) continue;
                     if ((outRec.IsHole ^ ReverseSolution) == (Area(outRec) > 0))
@@ -1429,10 +1427,9 @@ namespace TVGL.Boolean_Operations.Clipper
 
                 JoinCommonEdges();
 
-                foreach (OutRec outRec in m_PolyOuts)
+                foreach (var outRec in _mPolyOuts.Where(outRec => outRec.Pts != null && !outRec.IsOpen))
                 {
-                    if (outRec.Pts != null && !outRec.IsOpen)
-                        FixupOutPolygon(outRec);
+                    FixupOutPolygon(outRec);
                 }
 
                 if (StrictlySimple) DoSimplePolygons();
@@ -1441,32 +1438,32 @@ namespace TVGL.Boolean_Operations.Clipper
             //catch { return false; }
             finally
             {
-                m_Joins.Clear();
-                m_GhostJoins.Clear();
+                _mJoins.Clear();
+                _mGhostJoins.Clear();
             }
         }
         //------------------------------------------------------------------------------
 
         private long PopScanbeam()
         {
-            var y = m_Scanbeam.Y;
-            m_Scanbeam = m_Scanbeam.Next;
+            var y = _mScanbeam.Y;
+            _mScanbeam = _mScanbeam.Next;
             return y;
         }
         //------------------------------------------------------------------------------
 
         private void DisposeAllPolyPts()
         {
-            for (var i = 0; i < m_PolyOuts.Count; ++i) DisposeOutRec(i);
-            m_PolyOuts.Clear();
+            for (var i = 0; i < _mPolyOuts.Count; ++i) DisposeOutRec(i);
+            _mPolyOuts.Clear();
         }
         //------------------------------------------------------------------------------
 
         private void DisposeOutRec(int index)
         {
-            var outRec = m_PolyOuts[index];
+            var outRec = _mPolyOuts[index];
             outRec.Pts = null;
-            m_PolyOuts[index] = null;
+            _mPolyOuts[index] = null;
         }
         //------------------------------------------------------------------------------
 
@@ -1476,7 +1473,7 @@ namespace TVGL.Boolean_Operations.Clipper
             join.OutPt1 = outPoint1;
             join.OutPt2 = outPoint2;
             join.OffPt = offPt;
-            m_Joins.Add(join);
+            _mJoins.Add(join);
         }
         //------------------------------------------------------------------------------
 
@@ -1485,22 +1482,9 @@ namespace TVGL.Boolean_Operations.Clipper
             var join = new Join();
             join.OutPt1 = outPoint;
             join.OffPt = offPt;
-            m_GhostJoins.Add(join);
+            _mGhostJoins.Add(join);
         }
         //------------------------------------------------------------------------------
-
-#if use_xyz
-      internal void SetZ(ref IntPoint pt, TEdge e1, TEdge e2)
-      {
-        if (pt.Z != 0 || ZFillFunction == null) return;
-        else if (pt == e1.Bot) pt.Z = e1.Bot.Z;
-        else if (pt == e1.Top) pt.Z = e1.Top.Z;
-        else if (pt == e2.Bot) pt.Z = e2.Bot.Z;
-        else if (pt == e2.Top) pt.Z = e2.Top.Z;
-        else ZFillFunction(e1.Bot, e1.Top, e2.Bot, e2.Top, ref pt);
-      }
-      //------------------------------------------------------------------------------
-#endif
 
         private void InsertLocalMinimaIntoAEL(long botY)
         {
@@ -1550,13 +1534,13 @@ namespace TVGL.Boolean_Operations.Clipper
 
                 //if output polygons share an Edge with a horizontal rb, they'll need joining later ...
                 if (outPoint != null && IsHorizontal(rightBoundEdge) &&
-                  m_GhostJoins.Count > 0 && rightBoundEdge.WindDelta != 0)
+                  _mGhostJoins.Count > 0 && rightBoundEdge.WindDelta != 0)
                 {
-                    for (var i = 0; i < m_GhostJoins.Count; i++)
+                    for (var i = 0; i < _mGhostJoins.Count; i++)
                     {
                         //if the horizontal Rb and a 'ghost' horizontal overlap, then convert
                         //the 'ghost' join to a real join ready for later ...
-                        var join = m_GhostJoins[i];
+                        var join = _mGhostJoins[i];
                         if (HorzSegmentsOverlap(join.OutPt1.Pt.X, join.OffPt.X, rightBoundEdge.Bot.X, rightBoundEdge.Top.X))
                             AddJoin(join.OutPt1, outPoint, join.OffPt);
                     }
@@ -1596,22 +1580,22 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private void InsertEdgeIntoAEL(TEdge edge, TEdge startEdge)
         {
-            if (m_ActiveEdges == null)
+            if (_mActiveEdges == null)
             {
                 edge.PrevInAEL = null;
                 edge.NextInAEL = null;
-                m_ActiveEdges = edge;
+                _mActiveEdges = edge;
             }
-            else if (startEdge == null && E2InsertsBeforeE1(m_ActiveEdges, edge))
+            else if (startEdge == null && E2InsertsBeforeE1(_mActiveEdges, edge))
             {
                 edge.PrevInAEL = null;
-                edge.NextInAEL = m_ActiveEdges;
-                m_ActiveEdges.PrevInAEL = edge;
-                m_ActiveEdges = edge;
+                edge.NextInAEL = _mActiveEdges;
+                _mActiveEdges.PrevInAEL = edge;
+                _mActiveEdges = edge;
             }
             else
             {
-                if (startEdge == null) startEdge = m_ActiveEdges;
+                if (startEdge == null) startEdge = _mActiveEdges;
                 while (startEdge.NextInAEL != null &&
                   !E2InsertsBeforeE1(startEdge.NextInAEL, edge))
                     startEdge = startEdge.NextInAEL;
@@ -1638,18 +1622,18 @@ namespace TVGL.Boolean_Operations.Clipper
         private bool IsEvenOddFillType(TEdge edge)
         {
             if (edge.PolyTyp == PolyType.Subject)
-                return m_SubjFillType == PolyFillType.EvenOdd;
+                return _mSubjFillType == PolyFillType.EvenOdd;
             else
-                return m_ClipFillType == PolyFillType.EvenOdd;
+                return _mClipFillType == PolyFillType.EvenOdd;
         }
         //------------------------------------------------------------------------------
 
         private bool IsEvenOddAltFillType(TEdge edge)
         {
             if (edge.PolyTyp == PolyType.Subject)
-                return m_ClipFillType == PolyFillType.EvenOdd;
+                return _mClipFillType == PolyFillType.EvenOdd;
             else
-                return m_SubjFillType == PolyFillType.EvenOdd;
+                return _mSubjFillType == PolyFillType.EvenOdd;
         }
         //------------------------------------------------------------------------------
 
@@ -1658,13 +1642,13 @@ namespace TVGL.Boolean_Operations.Clipper
             PolyFillType pft, pft2;
             if (edge.PolyTyp == PolyType.Subject)
             {
-                pft = m_SubjFillType;
-                pft2 = m_ClipFillType;
+                pft = _mSubjFillType;
+                pft2 = _mClipFillType;
             }
             else
             {
-                pft = m_ClipFillType;
-                pft2 = m_SubjFillType;
+                pft = _mClipFillType;
+                pft2 = _mSubjFillType;
             }
 
             switch (pft)
@@ -1684,7 +1668,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     break;
             }
 
-            switch (m_ClipType)
+            switch (_mClipType)
             {
                 case ClipType.Intersection:
                     switch (pft2)
@@ -1759,9 +1743,9 @@ namespace TVGL.Boolean_Operations.Clipper
             {
                 edge.WindCnt = (edge.WindDelta == 0 ? 1 : edge.WindDelta);
                 edge.WindCnt2 = 0;
-                previousEdge = m_ActiveEdges; //ie get ready to calc WindCnt2
+                previousEdge = _mActiveEdges; //ie get ready to calc WindCnt2
             }
-            else if (edge.WindDelta == 0 && m_ClipType != ClipType.Union)
+            else if (edge.WindDelta == 0 && _mClipType != ClipType.Union)
             {
                 edge.WindCnt = 1;
                 edge.WindCnt2 = previousEdge.WindCnt2;
@@ -1852,30 +1836,30 @@ namespace TVGL.Boolean_Operations.Clipper
         {
             //SEL pointers in PEdge are reused to build a list of horizontal edges.
             //However, we don't need to worry about order with horizontal edge processing.
-            if (m_SortedEdges == null)
+            if (_mSortedEdges == null)
             {
-                m_SortedEdges = edge;
-                edge.PrevInSEL = null;
-                edge.NextInSEL = null;
+                _mSortedEdges = edge;
+                edge.PrevInSel = null;
+                edge.NextInSel = null;
             }
             else
             {
-                edge.NextInSEL = m_SortedEdges;
-                edge.PrevInSEL = null;
-                m_SortedEdges.PrevInSEL = edge;
-                m_SortedEdges = edge;
+                edge.NextInSel = _mSortedEdges;
+                edge.PrevInSel = null;
+                _mSortedEdges.PrevInSel = edge;
+                _mSortedEdges = edge;
             }
         }
         //------------------------------------------------------------------------------
 
         private void CopyAELToSEL()
         {
-            TEdge e = m_ActiveEdges;
-            m_SortedEdges = e;
+            TEdge e = _mActiveEdges;
+            _mSortedEdges = e;
             while (e != null)
             {
-                e.PrevInSEL = e.PrevInAEL;
-                e.NextInSEL = e.NextInAEL;
+                e.PrevInSel = e.PrevInAEL;
+                e.NextInSel = e.NextInAEL;
                 e = e.NextInAEL;
             }
         }
@@ -1932,67 +1916,67 @@ namespace TVGL.Boolean_Operations.Clipper
             }
 
             if (edge1.PrevInAEL == null)
-                m_ActiveEdges = edge1;
+                _mActiveEdges = edge1;
             else if (edge2.PrevInAEL == null)
-                m_ActiveEdges = edge2;
+                _mActiveEdges = edge2;
         }
         //------------------------------------------------------------------------------
 
         private void SwapPositionsInSEL(TEdge edge1, TEdge edge2)
         {
-            if (edge1.NextInSEL == null && edge1.PrevInSEL == null)
+            if (edge1.NextInSel == null && edge1.PrevInSel == null)
                 return;
-            if (edge2.NextInSEL == null && edge2.PrevInSEL == null)
+            if (edge2.NextInSel == null && edge2.PrevInSel == null)
                 return;
 
-            if (edge1.NextInSEL == edge2)
+            if (edge1.NextInSel == edge2)
             {
-                TEdge next = edge2.NextInSEL;
+                TEdge next = edge2.NextInSel;
                 if (next != null)
-                    next.PrevInSEL = edge1;
-                TEdge prev = edge1.PrevInSEL;
+                    next.PrevInSel = edge1;
+                TEdge prev = edge1.PrevInSel;
                 if (prev != null)
-                    prev.NextInSEL = edge2;
-                edge2.PrevInSEL = prev;
-                edge2.NextInSEL = edge1;
-                edge1.PrevInSEL = edge2;
-                edge1.NextInSEL = next;
+                    prev.NextInSel = edge2;
+                edge2.PrevInSel = prev;
+                edge2.NextInSel = edge1;
+                edge1.PrevInSel = edge2;
+                edge1.NextInSel = next;
             }
-            else if (edge2.NextInSEL == edge1)
+            else if (edge2.NextInSel == edge1)
             {
-                TEdge next = edge1.NextInSEL;
+                TEdge next = edge1.NextInSel;
                 if (next != null)
-                    next.PrevInSEL = edge2;
-                TEdge prev = edge2.PrevInSEL;
+                    next.PrevInSel = edge2;
+                TEdge prev = edge2.PrevInSel;
                 if (prev != null)
-                    prev.NextInSEL = edge1;
-                edge1.PrevInSEL = prev;
-                edge1.NextInSEL = edge2;
-                edge2.PrevInSEL = edge1;
-                edge2.NextInSEL = next;
+                    prev.NextInSel = edge1;
+                edge1.PrevInSel = prev;
+                edge1.NextInSel = edge2;
+                edge2.PrevInSel = edge1;
+                edge2.NextInSel = next;
             }
             else
             {
-                TEdge next = edge1.NextInSEL;
-                TEdge prev = edge1.PrevInSEL;
-                edge1.NextInSEL = edge2.NextInSEL;
-                if (edge1.NextInSEL != null)
-                    edge1.NextInSEL.PrevInSEL = edge1;
-                edge1.PrevInSEL = edge2.PrevInSEL;
-                if (edge1.PrevInSEL != null)
-                    edge1.PrevInSEL.NextInSEL = edge1;
-                edge2.NextInSEL = next;
-                if (edge2.NextInSEL != null)
-                    edge2.NextInSEL.PrevInSEL = edge2;
-                edge2.PrevInSEL = prev;
-                if (edge2.PrevInSEL != null)
-                    edge2.PrevInSEL.NextInSEL = edge2;
+                TEdge next = edge1.NextInSel;
+                TEdge prev = edge1.PrevInSel;
+                edge1.NextInSel = edge2.NextInSel;
+                if (edge1.NextInSel != null)
+                    edge1.NextInSel.PrevInSel = edge1;
+                edge1.PrevInSel = edge2.PrevInSel;
+                if (edge1.PrevInSel != null)
+                    edge1.PrevInSel.NextInSel = edge1;
+                edge2.NextInSel = next;
+                if (edge2.NextInSel != null)
+                    edge2.NextInSel.PrevInSel = edge2;
+                edge2.PrevInSel = prev;
+                if (edge2.PrevInSel != null)
+                    edge2.PrevInSel.NextInSel = edge2;
             }
 
-            if (edge1.PrevInSEL == null)
-                m_SortedEdges = edge1;
-            else if (edge2.PrevInSEL == null)
-                m_SortedEdges = edge2;
+            if (edge1.PrevInSel == null)
+                _mSortedEdges = edge1;
+            else if (edge2.PrevInSel == null)
+                _mSortedEdges = edge2;
         }
         //------------------------------------------------------------------------------
 
@@ -2064,15 +2048,15 @@ namespace TVGL.Boolean_Operations.Clipper
             result.Pts = null;
             result.BottomPt = null;
             result.PolyNode = null;
-            m_PolyOuts.Add(result);
-            result.Idx = m_PolyOuts.Count - 1;
+            _mPolyOuts.Add(result);
+            result.Idx = _mPolyOuts.Count - 1;
             return result;
         }
         //------------------------------------------------------------------------------
 
         private OutPt AddOutPt(TEdge e, IntPoint pt)
         {
-            bool ToFront = (e.Side == EdgeSide.Left);
+            bool toFront = (e.Side == EdgeSide.Left);
             if (e.OutIdx < 0)
             {
                 OutRec outRec = CreateOutRec();
@@ -2090,11 +2074,11 @@ namespace TVGL.Boolean_Operations.Clipper
             }
             else
             {
-                OutRec outRec = m_PolyOuts[e.OutIdx];
+                OutRec outRec = _mPolyOuts[e.OutIdx];
                 //OutRec.Pts is the 'Left-most' point & OutRec.Pts.Prev is the 'Right-most'
                 OutPt op = outRec.Pts;
-                if (ToFront && pt == op.Pt) return op;
-                else if (!ToFront && pt == op.Prev.Pt) return op.Prev;
+                if (toFront && pt == op.Pt) return op;
+                else if (!toFront && pt == op.Prev.Pt) return op.Prev;
 
                 OutPt newOp = new OutPt();
                 newOp.Idx = outRec.Idx;
@@ -2103,7 +2087,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 newOp.Prev = op.Prev;
                 newOp.Prev.Next = newOp;
                 op.Prev = newOp;
-                if (ToFront) outRec.Pts = newOp;
+                if (toFront) outRec.Pts = newOp;
                 return newOp;
             }
         }
@@ -2117,11 +2101,11 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private bool HorzSegmentsOverlap(long seg1a, long seg1b, long seg2a, long seg2b)
+        private bool HorzSegmentsOverlap(long seg1A, long seg1B, long seg2A, long seg2B)
         {
-            if (seg1a > seg1b) Swap(ref seg1a, ref seg1b);
-            if (seg2a > seg2b) Swap(ref seg2a, ref seg2b);
-            return (seg1a < seg2b) && (seg2a < seg1b);
+            if (seg1A > seg1B) Swap(ref seg1A, ref seg1B);
+            if (seg2A > seg2B) Swap(ref seg2A, ref seg2B);
+            return (seg1A < seg2B) && (seg2A < seg1B);
         }
         //------------------------------------------------------------------------------
 
@@ -2135,7 +2119,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 {
                     isHole = !isHole;
                     if (outRec.FirstLeft == null)
-                        outRec.FirstLeft = m_PolyOuts[e2.OutIdx];
+                        outRec.FirstLeft = _mPolyOuts[e2.OutIdx];
                 }
                 e2 = e2.PrevInAEL;
             }
@@ -2155,18 +2139,18 @@ namespace TVGL.Boolean_Operations.Clipper
         {
             OutPt p = btmPt1.Prev;
             while ((p.Pt == btmPt1.Pt) && (p != btmPt1)) p = p.Prev;
-            double dx1p = Math.Abs(GetDx(btmPt1.Pt, p.Pt));
+            double dx1P = Math.Abs(GetDx(btmPt1.Pt, p.Pt));
             p = btmPt1.Next;
             while ((p.Pt == btmPt1.Pt) && (p != btmPt1)) p = p.Next;
-            double dx1n = Math.Abs(GetDx(btmPt1.Pt, p.Pt));
+            double dx1N = Math.Abs(GetDx(btmPt1.Pt, p.Pt));
 
             p = btmPt2.Prev;
             while ((p.Pt == btmPt2.Pt) && (p != btmPt2)) p = p.Prev;
-            double dx2p = Math.Abs(GetDx(btmPt2.Pt, p.Pt));
+            double dx2P = Math.Abs(GetDx(btmPt2.Pt, p.Pt));
             p = btmPt2.Next;
             while ((p.Pt == btmPt2.Pt) && (p != btmPt2)) p = p.Next;
-            double dx2n = Math.Abs(GetDx(btmPt2.Pt, p.Pt));
-            return (dx1p >= dx2p && dx1p >= dx2n) || (dx1n >= dx2p && dx1n >= dx2n);
+            double dx2N = Math.Abs(GetDx(btmPt2.Pt, p.Pt));
+            return (dx1P >= dx2P && dx1P >= dx2N) || (dx1N >= dx2P && dx1N >= dx2N);
         }
         //------------------------------------------------------------------------------
 
@@ -2242,9 +2226,9 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private OutRec GetOutRec(int idx)
         {
-            OutRec outrec = m_PolyOuts[idx];
-            while (outrec != m_PolyOuts[outrec.Idx])
-                outrec = m_PolyOuts[outrec.Idx];
+            OutRec outrec = _mPolyOuts[idx];
+            while (outrec != _mPolyOuts[outrec.Idx])
+                outrec = _mPolyOuts[outrec.Idx];
             return outrec;
         }
         //------------------------------------------------------------------------------
@@ -2252,8 +2236,8 @@ namespace TVGL.Boolean_Operations.Clipper
         private void AppendPolygon(TEdge e1, TEdge e2)
         {
             //get the start and ends of both output polygons ...
-            OutRec outRec1 = m_PolyOuts[e1.OutIdx];
-            OutRec outRec2 = m_PolyOuts[e2.OutIdx];
+            OutRec outRec1 = _mPolyOuts[e1.OutIdx];
+            OutRec outRec2 = _mPolyOuts[e2.OutIdx];
 
             OutRec holeStateRec;
             if (Param1RightOfParam2(outRec1, outRec2))
@@ -2263,10 +2247,10 @@ namespace TVGL.Boolean_Operations.Clipper
             else
                 holeStateRec = GetLowermostRec(outRec1, outRec2);
 
-            OutPt p1_lft = outRec1.Pts;
-            OutPt p1_rt = p1_lft.Prev;
-            OutPt p2_lft = outRec2.Pts;
-            OutPt p2_rt = p2_lft.Prev;
+            OutPt p1Lft = outRec1.Pts;
+            OutPt p1Rt = p1Lft.Prev;
+            OutPt p2Lft = outRec2.Pts;
+            OutPt p2Rt = p2Lft.Prev;
 
             EdgeSide side;
             //join e2 poly onto e1 poly and delete pointers to e2 ...
@@ -2275,21 +2259,21 @@ namespace TVGL.Boolean_Operations.Clipper
                 if (e2.Side == EdgeSide.Left)
                 {
                     //z y x a b c
-                    ReversePolyPtLinks(p2_lft);
-                    p2_lft.Next = p1_lft;
-                    p1_lft.Prev = p2_lft;
-                    p1_rt.Next = p2_rt;
-                    p2_rt.Prev = p1_rt;
-                    outRec1.Pts = p2_rt;
+                    ReversePolyPtLinks(p2Lft);
+                    p2Lft.Next = p1Lft;
+                    p1Lft.Prev = p2Lft;
+                    p1Rt.Next = p2Rt;
+                    p2Rt.Prev = p1Rt;
+                    outRec1.Pts = p2Rt;
                 }
                 else
                 {
                     //x y z a b c
-                    p2_rt.Next = p1_lft;
-                    p1_lft.Prev = p2_rt;
-                    p2_lft.Prev = p1_rt;
-                    p1_rt.Next = p2_lft;
-                    outRec1.Pts = p2_lft;
+                    p2Rt.Next = p1Lft;
+                    p1Lft.Prev = p2Rt;
+                    p2Lft.Prev = p1Rt;
+                    p1Rt.Next = p2Lft;
+                    outRec1.Pts = p2Lft;
                 }
                 side = EdgeSide.Left;
             }
@@ -2298,19 +2282,19 @@ namespace TVGL.Boolean_Operations.Clipper
                 if (e2.Side == EdgeSide.Right)
                 {
                     //a b c z y x
-                    ReversePolyPtLinks(p2_lft);
-                    p1_rt.Next = p2_rt;
-                    p2_rt.Prev = p1_rt;
-                    p2_lft.Next = p1_lft;
-                    p1_lft.Prev = p2_lft;
+                    ReversePolyPtLinks(p2Lft);
+                    p1Rt.Next = p2Rt;
+                    p2Rt.Prev = p1Rt;
+                    p2Lft.Next = p1Lft;
+                    p1Lft.Prev = p2Lft;
                 }
                 else
                 {
                     //a b c x y z
-                    p1_rt.Next = p2_lft;
-                    p2_lft.Prev = p1_rt;
-                    p1_lft.Prev = p2_rt;
-                    p2_rt.Next = p1_lft;
+                    p1Rt.Next = p2Lft;
+                    p2Lft.Prev = p1Rt;
+                    p1Lft.Prev = p2Rt;
+                    p2Rt.Next = p1Lft;
                 }
                 side = EdgeSide.Right;
             }
@@ -2327,18 +2311,18 @@ namespace TVGL.Boolean_Operations.Clipper
 
             outRec2.FirstLeft = outRec1;
 
-            int OKIdx = e1.OutIdx;
-            int ObsoleteIdx = e2.OutIdx;
+            int okIdx = e1.OutIdx;
+            int obsoleteIdx = e2.OutIdx;
 
             e1.OutIdx = Unassigned; //nb: safe because we only get here via AddLocalMaxPoly
             e2.OutIdx = Unassigned;
 
-            TEdge e = m_ActiveEdges;
+            TEdge e = _mActiveEdges;
             while (e != null)
             {
-                if (e.OutIdx == ObsoleteIdx)
+                if (e.OutIdx == obsoleteIdx)
                 {
-                    e.OutIdx = OKIdx;
+                    e.OutIdx = okIdx;
                     e.Side = side;
                     break;
                 }
@@ -2400,7 +2384,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 if (e1.WindDelta == 0 && e2.WindDelta == 0) return;
                 //if intersecting a subj line with a subj poly ...
                 else if (e1.PolyTyp == e2.PolyTyp &&
-                  e1.WindDelta != e2.WindDelta && m_ClipType == ClipType.Union)
+                  e1.WindDelta != e2.WindDelta && _mClipType == ClipType.Union)
                 {
                     if (e1.WindDelta == 0)
                     {
@@ -2422,13 +2406,13 @@ namespace TVGL.Boolean_Operations.Clipper
                 else if (e1.PolyTyp != e2.PolyTyp)
                 {
                     if ((e1.WindDelta == 0) && Math.Abs(e2.WindCnt) == 1 &&
-                      (m_ClipType != ClipType.Union || e2.WindCnt2 == 0))
+                      (_mClipType != ClipType.Union || e2.WindCnt2 == 0))
                     {
                         AddOutPt(e1, pt);
                         if (e1Contributing) e1.OutIdx = Unassigned;
                     }
                     else if ((e2.WindDelta == 0) && (Math.Abs(e1.WindCnt) == 1) &&
-                      (m_ClipType != ClipType.Union || e1.WindCnt2 == 0))
+                      (_mClipType != ClipType.Union || e1.WindCnt2 == 0))
                     {
                         AddOutPt(e2, pt);
                         if (e2Contributing) e2.OutIdx = Unassigned;
@@ -2466,23 +2450,23 @@ namespace TVGL.Boolean_Operations.Clipper
             PolyFillType e1FillType, e2FillType, e1FillType2, e2FillType2;
             if (e1.PolyTyp == PolyType.Subject)
             {
-                e1FillType = m_SubjFillType;
-                e1FillType2 = m_ClipFillType;
+                e1FillType = _mSubjFillType;
+                e1FillType2 = _mClipFillType;
             }
             else
             {
-                e1FillType = m_ClipFillType;
-                e1FillType2 = m_SubjFillType;
+                e1FillType = _mClipFillType;
+                e1FillType2 = _mSubjFillType;
             }
             if (e2.PolyTyp == PolyType.Subject)
             {
-                e2FillType = m_SubjFillType;
-                e2FillType2 = m_ClipFillType;
+                e2FillType = _mSubjFillType;
+                e2FillType2 = _mClipFillType;
             }
             else
             {
-                e2FillType = m_ClipFillType;
-                e2FillType2 = m_SubjFillType;
+                e2FillType = _mClipFillType;
+                e2FillType2 = _mSubjFillType;
             }
 
             int e1Wc, e2Wc;
@@ -2502,7 +2486,7 @@ namespace TVGL.Boolean_Operations.Clipper
             if (e1Contributing && e2Contributing)
             {
                 if ((e1Wc != 0 && e1Wc != 1) || (e2Wc != 0 && e2Wc != 1) ||
-                  (e1.PolyTyp != e2.PolyTyp && m_ClipType != ClipType.Xor))
+                  (e1.PolyTyp != e2.PolyTyp && _mClipType != ClipType.Xor))
                 {
                     AddLocalMaxPoly(e1, e2, pt);
                 }
@@ -2555,7 +2539,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     AddLocalMinPoly(e1, e2, pt);
                 }
                 else if (e1Wc == 1 && e2Wc == 1)
-                    switch (m_ClipType)
+                    switch (_mClipType)
                     {
                         case ClipType.Intersection:
                             if (e1Wc2 > 0 && e2Wc2 > 0)
@@ -2582,15 +2566,15 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private void DeleteFromAEL(TEdge e)
         {
-            TEdge AelPrev = e.PrevInAEL;
-            TEdge AelNext = e.NextInAEL;
-            if (AelPrev == null && AelNext == null && (e != m_ActiveEdges))
+            TEdge aelPrev = e.PrevInAEL;
+            TEdge aelNext = e.NextInAEL;
+            if (aelPrev == null && aelNext == null && (e != _mActiveEdges))
                 return; //already deleted
-            if (AelPrev != null)
-                AelPrev.NextInAEL = AelNext;
-            else m_ActiveEdges = AelNext;
-            if (AelNext != null)
-                AelNext.PrevInAEL = AelPrev;
+            if (aelPrev != null)
+                aelPrev.NextInAEL = aelNext;
+            else _mActiveEdges = aelNext;
+            if (aelNext != null)
+                aelNext.PrevInAEL = aelPrev;
             e.NextInAEL = null;
             e.PrevInAEL = null;
         }
@@ -2598,69 +2582,69 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private void DeleteFromSEL(TEdge e)
         {
-            TEdge SelPrev = e.PrevInSEL;
-            TEdge SelNext = e.NextInSEL;
-            if (SelPrev == null && SelNext == null && (e != m_SortedEdges))
+            TEdge selPrev = e.PrevInSel;
+            TEdge selNext = e.NextInSel;
+            if (selPrev == null && selNext == null && (e != _mSortedEdges))
                 return; //already deleted
-            if (SelPrev != null)
-                SelPrev.NextInSEL = SelNext;
-            else m_SortedEdges = SelNext;
-            if (SelNext != null)
-                SelNext.PrevInSEL = SelPrev;
-            e.NextInSEL = null;
-            e.PrevInSEL = null;
+            if (selPrev != null)
+                selPrev.NextInSel = selNext;
+            else _mSortedEdges = selNext;
+            if (selNext != null)
+                selNext.PrevInSel = selPrev;
+            e.NextInSel = null;
+            e.PrevInSel = null;
         }
         //------------------------------------------------------------------------------
 
         private void UpdateEdgeIntoAEL(ref TEdge e)
         {
-            if (e.NextInLML == null)
+            if (e.NextInLml == null)
                 throw new ClipperException("UpdateEdgeIntoAEL: invalid call");
-            TEdge AelPrev = e.PrevInAEL;
-            TEdge AelNext = e.NextInAEL;
-            e.NextInLML.OutIdx = e.OutIdx;
-            if (AelPrev != null)
-                AelPrev.NextInAEL = e.NextInLML;
-            else m_ActiveEdges = e.NextInLML;
-            if (AelNext != null)
-                AelNext.PrevInAEL = e.NextInLML;
-            e.NextInLML.Side = e.Side;
-            e.NextInLML.WindDelta = e.WindDelta;
-            e.NextInLML.WindCnt = e.WindCnt;
-            e.NextInLML.WindCnt2 = e.WindCnt2;
-            e = e.NextInLML;
+            TEdge aelPrev = e.PrevInAEL;
+            TEdge aelNext = e.NextInAEL;
+            e.NextInLml.OutIdx = e.OutIdx;
+            if (aelPrev != null)
+                aelPrev.NextInAEL = e.NextInLml;
+            else _mActiveEdges = e.NextInLml;
+            if (aelNext != null)
+                aelNext.PrevInAEL = e.NextInLml;
+            e.NextInLml.Side = e.Side;
+            e.NextInLml.WindDelta = e.WindDelta;
+            e.NextInLml.WindCnt = e.WindCnt;
+            e.NextInLml.WindCnt2 = e.WindCnt2;
+            e = e.NextInLml;
             e.Curr = e.Bot;
-            e.PrevInAEL = AelPrev;
-            e.NextInAEL = AelNext;
+            e.PrevInAEL = aelPrev;
+            e.NextInAEL = aelNext;
             if (!IsHorizontal(e)) InsertScanbeam(e.Top.Y);
         }
         //------------------------------------------------------------------------------
 
         private void ProcessHorizontals(bool isTopOfScanbeam)
         {
-            TEdge horzEdge = m_SortedEdges;
+            TEdge horzEdge = _mSortedEdges;
             while (horzEdge != null)
             {
                 DeleteFromSEL(horzEdge);
                 ProcessHorizontal(horzEdge, isTopOfScanbeam);
-                horzEdge = m_SortedEdges;
+                horzEdge = _mSortedEdges;
             }
         }
         //------------------------------------------------------------------------------
 
-        void GetHorzDirection(TEdge HorzEdge, out Direction Dir, out long Left, out long Right)
+        void GetHorzDirection(TEdge horzEdge, out Direction dir, out long left, out long right)
         {
-            if (HorzEdge.Bot.X < HorzEdge.Top.X)
+            if (horzEdge.Bot.X < horzEdge.Top.X)
             {
-                Left = HorzEdge.Bot.X;
-                Right = HorzEdge.Top.X;
-                Dir = Direction.LeftToRight;
+                left = horzEdge.Bot.X;
+                right = horzEdge.Top.X;
+                dir = Direction.LeftToRight;
             }
             else
             {
-                Left = HorzEdge.Top.X;
-                Right = HorzEdge.Bot.X;
-                Dir = Direction.RightToLeft;
+                left = horzEdge.Top.X;
+                right = horzEdge.Bot.X;
+                dir = Direction.RightToLeft;
             }
         }
         //------------------------------------------------------------------------
@@ -2673,35 +2657,35 @@ namespace TVGL.Boolean_Operations.Clipper
             GetHorzDirection(horzEdge, out dir, out horzLeft, out horzRight);
 
             TEdge eLastHorz = horzEdge, eMaxPair = null;
-            while (eLastHorz.NextInLML != null && IsHorizontal(eLastHorz.NextInLML))
-                eLastHorz = eLastHorz.NextInLML;
-            if (eLastHorz.NextInLML == null)
+            while (eLastHorz.NextInLml != null && IsHorizontal(eLastHorz.NextInLml))
+                eLastHorz = eLastHorz.NextInLml;
+            if (eLastHorz.NextInLml == null)
                 eMaxPair = GetMaximaPair(eLastHorz);
 
             for (;;)
             {
-                bool IsLastHorz = (horzEdge == eLastHorz);
-                TEdge e = GetNextInAEL(horzEdge, dir);
+                var isLastHorz = (horzEdge == eLastHorz);
+                var e = GetNextInAEL(horzEdge, dir);
                 while (e != null)
                 {
                     //Break if we've got to the end of an intermediate horizontal edge ...
                     //nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
-                    if (e.Curr.X == horzEdge.Top.X && horzEdge.NextInLML != null &&
-                      e.Dx < horzEdge.NextInLML.Dx) break;
+                    if (e.Curr.X == horzEdge.Top.X && horzEdge.NextInLml != null &&
+                      e.Dx < horzEdge.NextInLml.Dx) break;
 
-                    TEdge eNext = GetNextInAEL(e, dir); //saves eNext for later
+                    var eNext = GetNextInAEL(e, dir); //saves eNext for later
 
                     if ((dir == Direction.LeftToRight && e.Curr.X <= horzRight) ||
                       (dir == Direction.RightToLeft && e.Curr.X >= horzLeft))
                     {
                         //so far we're still in range of the horizontal Edge  but make sure
                         //we're at the last of consec. horizontals when matching with eMaxPair
-                        if (e == eMaxPair && IsLastHorz)
+                        if (e == eMaxPair && isLastHorz)
                         {
                             if (horzEdge.OutIdx >= 0)
                             {
-                                OutPt op1 = AddOutPt(horzEdge, horzEdge.Top);
-                                TEdge eNextHorz = m_SortedEdges;
+                                var op1 = AddOutPt(horzEdge, horzEdge.Top);
+                                var eNextHorz = _mSortedEdges;
                                 while (eNextHorz != null)
                                 {
                                     if (eNextHorz.OutIdx >= 0 &&
@@ -2711,7 +2695,7 @@ namespace TVGL.Boolean_Operations.Clipper
                                         OutPt op2 = AddOutPt(eNextHorz, eNextHorz.Bot);
                                         AddJoin(op2, op1, eNextHorz.Top);
                                     }
-                                    eNextHorz = eNextHorz.NextInSEL;
+                                    eNextHorz = eNextHorz.NextInSel;
                                 }
                                 AddGhostJoin(op1, horzEdge.Bot);
                                 AddLocalMaxPoly(horzEdge, eMaxPair, horzEdge.Top);
@@ -2720,15 +2704,15 @@ namespace TVGL.Boolean_Operations.Clipper
                             DeleteFromAEL(eMaxPair);
                             return;
                         }
-                        else if (dir == Direction.LeftToRight)
+                        if (dir == Direction.LeftToRight)
                         {
-                            IntPoint Pt = new IntPoint(e.Curr.X, horzEdge.Curr.Y);
-                            IntersectEdges(horzEdge, e, Pt);
+                            var pt = new IntPoint(e.Curr.X, horzEdge.Curr.Y);
+                            IntersectEdges(horzEdge, e, pt);
                         }
                         else
                         {
-                            IntPoint Pt = new IntPoint(e.Curr.X, horzEdge.Curr.Y);
-                            IntersectEdges(e, horzEdge, Pt);
+                            var pt = new IntPoint(e.Curr.X, horzEdge.Curr.Y);
+                            IntersectEdges(e, horzEdge, pt);
                         }
                         SwapPositionsInAEL(horzEdge, e);
                     }
@@ -2737,7 +2721,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     e = eNext;
                 } //end while
 
-                if (horzEdge.NextInLML != null && IsHorizontal(horzEdge.NextInLML))
+                if (horzEdge.NextInLml != null && IsHorizontal(horzEdge.NextInLml))
                 {
                     UpdateEdgeIntoAEL(ref horzEdge);
                     if (horzEdge.OutIdx >= 0) AddOutPt(horzEdge, horzEdge.Bot);
@@ -2747,7 +2731,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     break;
             } //end for (;;)
 
-            if (horzEdge.NextInLML != null)
+            if (horzEdge.NextInLml != null)
             {
                 if (horzEdge.OutIdx >= 0)
                 {
@@ -2795,28 +2779,28 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private bool IsMinima(TEdge e)
         {
-            return e != null && (e.Prev.NextInLML != e) && (e.Next.NextInLML != e);
+            return e != null && (e.Prev.NextInLml != e) && (e.Next.NextInLml != e);
         }
         //------------------------------------------------------------------------------
 
         private static bool IsMaxima(TEdge e, double y)
         {
-            return (e != null && ((double)e.Top.Y).IsPracticallySame(y) && e.NextInLML == null);
+            return (e != null && ((double)e.Top.Y).IsPracticallySame(y) && e.NextInLml == null);
         }
         //------------------------------------------------------------------------------
 
         private static bool IsIntermediate(TEdge e, double y)
         {
-            return (((double)e.Top.Y).IsPracticallySame(y) && e.NextInLML != null);
+            return (((double)e.Top.Y).IsPracticallySame(y) && e.NextInLml != null);
         }
         //------------------------------------------------------------------------------
 
         private static TEdge GetMaximaPair(TEdge e)
         {
             TEdge result = null;
-            if ((e.Next.Top == e.Top) && e.Next.NextInLML == null)
+            if ((e.Next.Top == e.Top) && e.Next.NextInLml == null)
                 result = e.Next;
-            else if ((e.Prev.Top == e.Top) && e.Prev.NextInLML == null)
+            else if ((e.Prev.Top == e.Top) && e.Prev.NextInLml == null)
                 result = e.Prev;
             if (result != null && (result.OutIdx == Skip ||
               (result.NextInAEL == result.PrevInAEL && !IsHorizontal(result))))
@@ -2827,60 +2811,62 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private bool ProcessIntersections(long topY)
         {
-            if (m_ActiveEdges == null) return true;
+            if (_mActiveEdges == null) return true;
             try
             {
                 BuildIntersectList(topY);
-                if (m_IntersectList.Count == 0) return true;
-                if (m_IntersectList.Count == 1 || FixupIntersectionOrder())
+                if (_mIntersectList.Count == 0) return true;
+                if (_mIntersectList.Count == 1 || FixupIntersectionOrder())
                     ProcessIntersectList();
                 else
                     return false;
             }
             catch
             {
-                m_SortedEdges = null;
-                m_IntersectList.Clear();
+                _mSortedEdges = null;
+                _mIntersectList.Clear();
                 throw new ClipperException("ProcessIntersections error");
             }
-            m_SortedEdges = null;
+            _mSortedEdges = null;
             return true;
         }
         //------------------------------------------------------------------------------
 
         private void BuildIntersectList(long topY)
         {
-            if (m_ActiveEdges == null) return;
+            if (_mActiveEdges == null) return;
 
             //prepare for sorting ...
-            TEdge e = m_ActiveEdges;
-            m_SortedEdges = e;
+            var e = _mActiveEdges;
+            _mSortedEdges = e;
             while (e != null)
             {
-                e.PrevInSEL = e.PrevInAEL;
-                e.NextInSEL = e.NextInAEL;
+                e.PrevInSel = e.PrevInAEL;
+                e.NextInSel = e.NextInAEL;
                 e.Curr.X = TopX(e, topY);
                 e = e.NextInAEL;
             }
 
             //bubblesort ...
-            bool isModified = true;
-            while (isModified && m_SortedEdges != null)
+            var isModified = true;
+            while (isModified && _mSortedEdges != null)
             {
                 isModified = false;
-                e = m_SortedEdges;
-                while (e.NextInSEL != null)
+                e = _mSortedEdges;
+                while (e.NextInSel != null)
                 {
-                    TEdge eNext = e.NextInSEL;
-                    IntPoint pt;
+                    var eNext = e.NextInSel;
                     if (e.Curr.X > eNext.Curr.X)
                     {
+                        IntPoint pt;
                         IntersectPoint(e, eNext, out pt);
-                        IntersectNode newNode = new IntersectNode();
-                        newNode.Edge1 = e;
-                        newNode.Edge2 = eNext;
-                        newNode.Pt = pt;
-                        m_IntersectList.Add(newNode);
+                        var newNode = new IntersectNode
+                        {
+                            Edge1 = e,
+                            Edge2 = eNext,
+                            Pt = pt
+                        };
+                        _mIntersectList.Add(newNode);
 
                         SwapPositionsInSEL(e, eNext);
                         isModified = true;
@@ -2888,23 +2874,23 @@ namespace TVGL.Boolean_Operations.Clipper
                     else
                         e = eNext;
                 }
-                if (e.PrevInSEL != null) e.PrevInSEL.NextInSEL = null;
+                if (e.PrevInSel != null) e.PrevInSel.NextInSel = null;
                 else break;
             }
-            m_SortedEdges = null;
+            _mSortedEdges = null;
         }
         //------------------------------------------------------------------------------
 
         private bool EdgesAdjacent(IntersectNode inode)
         {
-            return (inode.Edge1.NextInSEL == inode.Edge2) ||
-              (inode.Edge1.PrevInSEL == inode.Edge2);
+            return (inode.Edge1.NextInSel == inode.Edge2) ||
+              (inode.Edge1.PrevInSel == inode.Edge2);
         }
         //------------------------------------------------------------------------------
 
         private static int IntersectNodeSort(IntersectNode node1, IntersectNode node2)
         {
-            //the following typecast is safe because the differences in Pt.Y will
+            //the following typecast is safe because the differences in point.Y will
             //be limited to the height of the scanbeam.
             return (int)(node2.Pt.Y - node1.Pt.Y);
         }
@@ -2915,24 +2901,24 @@ namespace TVGL.Boolean_Operations.Clipper
             //pre-condition: intersections are sorted bottom-most first.
             //Now it's crucial that intersections are made only between adjacent edges,
             //so to ensure this the order of intersections may need adjusting ...
-            m_IntersectList.Sort(m_IntersectNodeComparer);
+            _mIntersectList.Sort(_mIntersectNodeComparer);
 
             CopyAELToSEL();
-            int cnt = m_IntersectList.Count;
-            for (int i = 0; i < cnt; i++)
+            var cnt = _mIntersectList.Count;
+            for (var i = 0; i < cnt; i++)
             {
-                if (!EdgesAdjacent(m_IntersectList[i]))
+                if (!EdgesAdjacent(_mIntersectList[i]))
                 {
-                    int j = i + 1;
-                    while (j < cnt && !EdgesAdjacent(m_IntersectList[j])) j++;
+                    var j = i + 1;
+                    while (j < cnt && !EdgesAdjacent(_mIntersectList[j])) j++;
                     if (j == cnt) return false;
 
-                    IntersectNode tmp = m_IntersectList[i];
-                    m_IntersectList[i] = m_IntersectList[j];
-                    m_IntersectList[j] = tmp;
+                    var tmp = _mIntersectList[i];
+                    _mIntersectList[i] = _mIntersectList[j];
+                    _mIntersectList[j] = tmp;
 
                 }
-                SwapPositionsInSEL(m_IntersectList[i].Edge1, m_IntersectList[i].Edge2);
+                SwapPositionsInSEL(_mIntersectList[i].Edge1, _mIntersectList[i].Edge2);
             }
             return true;
         }
@@ -2940,16 +2926,16 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private void ProcessIntersectList()
         {
-            for (int i = 0; i < m_IntersectList.Count; i++)
+            foreach (var iNode in _mIntersectList)
             {
-                IntersectNode iNode = m_IntersectList[i];
                 {
                     IntersectEdges(iNode.Edge1, iNode.Edge2, iNode.Pt);
                     SwapPositionsInAEL(iNode.Edge1, iNode.Edge2);
                 }
             }
-            m_IntersectList.Clear();
+            _mIntersectList.Clear();
         }
+
         //------------------------------------------------------------------------------
 
         internal static long Round(double value)
@@ -3029,30 +3015,29 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private void ProcessEdgesAtTopOfScanbeam(long topY)
         {
-            TEdge e = m_ActiveEdges;
+            var e = _mActiveEdges;
             while (e != null)
             {
                 //1. process maxima, treating them as if they're 'bent' horizontal edges,
                 //   but exclude maxima with horizontal edges. nb: e can't be a horizontal.
-                bool IsMaximaEdge = IsMaxima(e, topY);
+                var isMaximaEdge = IsMaxima(e, topY);
 
-                if (IsMaximaEdge)
+                if (isMaximaEdge)
                 {
-                    TEdge eMaxPair = GetMaximaPair(e);
-                    IsMaximaEdge = (eMaxPair == null || !IsHorizontal(eMaxPair));
+                    var eMaxPair = GetMaximaPair(e);
+                    isMaximaEdge = (eMaxPair == null || !IsHorizontal(eMaxPair));
                 }
 
-                if (IsMaximaEdge)
+                if (isMaximaEdge)
                 {
-                    TEdge ePrev = e.PrevInAEL;
+                    var ePrev = e.PrevInAEL;
                     DoMaxima(e);
-                    if (ePrev == null) e = m_ActiveEdges;
-                    else e = ePrev.NextInAEL;
+                    e = ePrev == null ? _mActiveEdges : ePrev.NextInAEL;
                 }
                 else
                 {
                     //2. promote horizontal edges, otherwise update Curr.X and Curr.Y ...
-                    if (IsIntermediate(e, topY) && IsHorizontal(e.NextInLML))
+                    if (IsIntermediate(e, topY) && IsHorizontal(e.NextInLml))
                     {
                         UpdateEdgeIntoAEL(ref e);
                         if (e.OutIdx >= 0)
@@ -3090,7 +3075,7 @@ namespace TVGL.Boolean_Operations.Clipper
             ProcessHorizontals(true);
 
             //4. Promote intermediate vertices ...
-            e = m_ActiveEdges;
+            e = _mActiveEdges;
             while (e != null)
             {
                 if (IsIntermediate(e, topY))
@@ -3207,8 +3192,8 @@ namespace TVGL.Boolean_Operations.Clipper
         private void BuildResult(Paths polyg)
         {
             polyg.Clear();
-            polyg.Capacity = m_PolyOuts.Count;
-            foreach (var outRec in m_PolyOuts)
+            polyg.Capacity = _mPolyOuts.Count;
+            foreach (var outRec in _mPolyOuts)
             {
                 if (outRec.Pts == null) continue;
                 OutPt p = outRec.Pts.Prev;
@@ -3230,8 +3215,8 @@ namespace TVGL.Boolean_Operations.Clipper
             polytree.Clear();
 
             //add each output polygon/contour to polytree ...
-            polytree.MAllPolys.Capacity = m_PolyOuts.Count;
-            foreach (var outRec in m_PolyOuts)
+            polytree.MAllPolys.Capacity = _mPolyOuts.Count;
+            foreach (var outRec in _mPolyOuts)
             {
                 var cnt = PointCount(outRec.Pts);
                 if ((outRec.IsOpen && cnt < 2) ||
@@ -3250,8 +3235,8 @@ namespace TVGL.Boolean_Operations.Clipper
             }
 
             //fixup PolyNode links etc ...
-            polytree.MChilds.Capacity = m_PolyOuts.Count;
-            foreach (var outRec in m_PolyOuts.Where(outRec => outRec.PolyNode != null))
+            polytree.MChilds.Capacity = _mPolyOuts.Count;
+            foreach (var outRec in _mPolyOuts.Where(outRec => outRec.PolyNode != null))
             {
                 if (outRec.IsOpen)
                 {
@@ -3270,9 +3255,9 @@ namespace TVGL.Boolean_Operations.Clipper
         {
             //FixupOutPolygon() - removes duplicate points and simplifies consecutive
             //parallel edges by removing the middle vertex.
-            OutPt lastOK = null;
+            OutPt lastOk = null;
             outRec.BottomPt = null;
-            OutPt pp = outRec.Pts;
+            var pp = outRec.Pts;
             for (;;)
             {
                 if (pp.Prev == pp || pp.Prev == pp.Next)
@@ -3285,15 +3270,15 @@ namespace TVGL.Boolean_Operations.Clipper
                   (SlopesEqual(pp.Prev.Pt, pp.Pt, pp.Next.Pt, MUseFullRange) &&
                   (!PreserveCollinear || !Pt2IsBetweenPt1AndPt3(pp.Prev.Pt, pp.Pt, pp.Next.Pt))))
                 {
-                    lastOK = null;
+                    lastOk = null;
                     pp.Prev.Next = pp.Next;
                     pp.Next.Prev = pp.Prev;
                     pp = pp.Prev;
                 }
-                else if (pp == lastOK) break;
+                else if (pp == lastOk) break;
                 else
                 {
-                    if (lastOK == null) lastOK = pp;
+                    if (lastOk == null) lastOk = pp;
                     pp = pp.Next;
                 }
             }
@@ -3301,12 +3286,14 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        OutPt DupOutPt(OutPt outPt, bool InsertAfter)
+        private static OutPt DupOutPt(OutPt outPt, bool insertAfter)
         {
-            OutPt result = new OutPt();
-            result.Pt = outPt.Pt;
-            result.Idx = outPt.Idx;
-            if (InsertAfter)
+            var result = new OutPt
+            {
+                Pt = outPt.Pt,
+                Idx = outPt.Idx
+            };
+            if (insertAfter)
             {
                 result.Next = outPt.Next;
                 result.Prev = outPt;
@@ -3324,107 +3311,107 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        bool GetOverlap(long a1, long a2, long b1, long b2, out long Left, out long Right)
+        private static bool GetOverlap(long a1, long a2, long b1, long b2, out long left, out long right)
         {
             if (a1 < a2)
             {
-                if (b1 < b2) { Left = Math.Max(a1, b1); Right = Math.Min(a2, b2); }
-                else { Left = Math.Max(a1, b2); Right = Math.Min(a2, b1); }
+                if (b1 < b2) { left = Math.Max(a1, b1); right = Math.Min(a2, b2); }
+                else { left = Math.Max(a1, b2); right = Math.Min(a2, b1); }
             }
             else
             {
-                if (b1 < b2) { Left = Math.Max(a2, b1); Right = Math.Min(a1, b2); }
-                else { Left = Math.Max(a2, b2); Right = Math.Min(a1, b1); }
+                if (b1 < b2) { left = Math.Max(a2, b1); right = Math.Min(a1, b2); }
+                else { left = Math.Max(a2, b2); right = Math.Min(a1, b1); }
             }
-            return Left < Right;
+            return left < right;
         }
         //------------------------------------------------------------------------------
 
-        bool JoinHorz(OutPt op1, OutPt op1b, OutPt op2, OutPt op2b,
-          IntPoint Pt, bool DiscardLeft)
+        private bool JoinHorz(OutPt op1, OutPt op1B, OutPt op2, OutPt op2B,
+          IntPoint point, bool discardLeft)
         {
-            Direction Dir1 = (op1.Pt.X > op1b.Pt.X ?
+            var dir1 = (op1.Pt.X > op1B.Pt.X ?
               Direction.RightToLeft : Direction.LeftToRight);
-            Direction Dir2 = (op2.Pt.X > op2b.Pt.X ?
+            var dir2 = (op2.Pt.X > op2B.Pt.X ?
               Direction.RightToLeft : Direction.LeftToRight);
-            if (Dir1 == Dir2) return false;
+            if (dir1 == dir2) return false;
 
             //When DiscardLeft, we want Op1b to be on the Left of outPoint1, otherwise we
             //want Op1b to be on the Right. (And likewise with outPoint2 and Op2b.)
             //So, to facilitate this while inserting Op1b and Op2b ...
-            //when DiscardLeft, make sure we're AT or RIGHT of Pt before adding Op1b,
-            //otherwise make sure we're AT or LEFT of Pt. (Likewise with Op2b.)
-            if (Dir1 == Direction.LeftToRight)
+            //when DiscardLeft, make sure we're AT or RIGHT of point before adding Op1b,
+            //otherwise make sure we're AT or LEFT of point. (Likewise with Op2b.)
+            if (dir1 == Direction.LeftToRight)
             {
-                while (op1.Next.Pt.X <= Pt.X &&
-                  op1.Next.Pt.X >= op1.Pt.X && op1.Next.Pt.Y == Pt.Y)
+                while (op1.Next.Pt.X <= point.X &&
+                  op1.Next.Pt.X >= op1.Pt.X && ((double)op1.Next.Pt.Y).IsPracticallySame(point.Y))
                     op1 = op1.Next;
-                if (DiscardLeft && (op1.Pt.X != Pt.X)) op1 = op1.Next;
-                op1b = DupOutPt(op1, !DiscardLeft);
-                if (op1b.Pt != Pt)
+                if (discardLeft && !((double)op1.Pt.X).IsPracticallySame(point.X)) op1 = op1.Next;
+                op1B = DupOutPt(op1, !discardLeft);
+                if (op1B.Pt != point)
                 {
-                    op1 = op1b;
-                    op1.Pt = Pt;
-                    op1b = DupOutPt(op1, !DiscardLeft);
+                    op1 = op1B;
+                    op1.Pt = point;
+                    op1B = DupOutPt(op1, !discardLeft);
                 }
             }
             else
             {
-                while (op1.Next.Pt.X >= Pt.X &&
-                  op1.Next.Pt.X <= op1.Pt.X && op1.Next.Pt.Y == Pt.Y)
+                while (op1.Next.Pt.X >= point.X &&
+                  op1.Next.Pt.X <= op1.Pt.X && ((double)op1.Next.Pt.Y).IsPracticallySame(point.Y))
                     op1 = op1.Next;
-                if (!DiscardLeft && (op1.Pt.X != Pt.X)) op1 = op1.Next;
-                op1b = DupOutPt(op1, DiscardLeft);
-                if (op1b.Pt != Pt)
+                if (!discardLeft && !((double)op1.Pt.X).IsPracticallySame(point.X)) op1 = op1.Next;
+                op1B = DupOutPt(op1, discardLeft);
+                if (op1B.Pt != point)
                 {
-                    op1 = op1b;
-                    op1.Pt = Pt;
-                    op1b = DupOutPt(op1, DiscardLeft);
+                    op1 = op1B;
+                    op1.Pt = point;
+                    op1B = DupOutPt(op1, discardLeft);
                 }
             }
 
-            if (Dir2 == Direction.LeftToRight)
+            if (dir2 == Direction.LeftToRight)
             {
-                while (op2.Next.Pt.X <= Pt.X &&
-                  op2.Next.Pt.X >= op2.Pt.X && op2.Next.Pt.Y == Pt.Y)
+                while (op2.Next.Pt.X <= point.X &&
+                  op2.Next.Pt.X >= op2.Pt.X && ((double)op2.Next.Pt.Y).IsPracticallySame(point.Y))
                     op2 = op2.Next;
-                if (DiscardLeft && (op2.Pt.X != Pt.X)) op2 = op2.Next;
-                op2b = DupOutPt(op2, !DiscardLeft);
-                if (op2b.Pt != Pt)
+                if (discardLeft && !((double)op2.Pt.X).IsPracticallySame(point.X)) op2 = op2.Next;
+                op2B = DupOutPt(op2, !discardLeft);
+                if (op2B.Pt != point)
                 {
-                    op2 = op2b;
-                    op2.Pt = Pt;
-                    op2b = DupOutPt(op2, !DiscardLeft);
+                    op2 = op2B;
+                    op2.Pt = point;
+                    op2B = DupOutPt(op2, !discardLeft);
                 }
             }
             else
             {
-                while (op2.Next.Pt.X >= Pt.X &&
-                  op2.Next.Pt.X <= op2.Pt.X && op2.Next.Pt.Y == Pt.Y)
+                while (op2.Next.Pt.X >= point.X &&
+                  op2.Next.Pt.X <= op2.Pt.X && ((double)op2.Next.Pt.Y).IsPracticallySame(point.Y))
                     op2 = op2.Next;
-                if (!DiscardLeft && (op2.Pt.X != Pt.X)) op2 = op2.Next;
-                op2b = DupOutPt(op2, DiscardLeft);
-                if (op2b.Pt != Pt)
+                if (!discardLeft && !((double)op2.Pt.X).IsPracticallySame(point.X)) op2 = op2.Next;
+                op2B = DupOutPt(op2, discardLeft);
+                if (op2B.Pt != point)
                 {
-                    op2 = op2b;
-                    op2.Pt = Pt;
-                    op2b = DupOutPt(op2, DiscardLeft);
+                    op2 = op2B;
+                    op2.Pt = point;
+                    op2B = DupOutPt(op2, discardLeft);
                 }
             }
 
-            if ((Dir1 == Direction.LeftToRight) == DiscardLeft)
+            if ((dir1 == Direction.LeftToRight) == discardLeft)
             {
                 op1.Prev = op2;
                 op2.Next = op1;
-                op1b.Next = op2b;
-                op2b.Prev = op1b;
+                op1B.Next = op2B;
+                op2B.Prev = op1B;
             }
             else
             {
                 op1.Next = op2;
                 op2.Prev = op1;
-                op1b.Prev = op2b;
-                op2b.Next = op1b;
+                op1B.Prev = op2B;
+                op2B.Next = op1B;
             }
             return true;
         }
@@ -3432,8 +3419,8 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private bool JoinPoints(Join j, OutRec outRec1, OutRec outRec2)
         {
-            OutPt op1 = j.OutPt1, op1b;
-            OutPt op2 = j.OutPt2, op2b;
+            OutPt op1 = j.OutPt1, op1B;
+            OutPt op2 = j.OutPt2, op2B;
 
             //There are 3 kinds of joins for output polygons ...
             //1. Horizontal joins where Join.OutPt1 & Join.OutPt2 are a vertices anywhere
@@ -3448,144 +3435,144 @@ namespace TVGL.Boolean_Operations.Clipper
             {
                 //Strictly Simple join ...
                 if (outRec1 != outRec2) return false;
-                op1b = j.OutPt1.Next;
-                while (op1b != op1 && (op1b.Pt == j.OffPt))
-                    op1b = op1b.Next;
-                bool reverse1 = (op1b.Pt.Y > j.OffPt.Y);
-                op2b = j.OutPt2.Next;
-                while (op2b != op2 && (op2b.Pt == j.OffPt))
-                    op2b = op2b.Next;
-                bool reverse2 = (op2b.Pt.Y > j.OffPt.Y);
+                op1B = j.OutPt1.Next;
+                while (op1B != op1 && (op1B.Pt == j.OffPt))
+                    op1B = op1B.Next;
+                bool reverse1 = (op1B.Pt.Y > j.OffPt.Y);
+                op2B = j.OutPt2.Next;
+                while (op2B != op2 && (op2B.Pt == j.OffPt))
+                    op2B = op2B.Next;
+                bool reverse2 = (op2B.Pt.Y > j.OffPt.Y);
                 if (reverse1 == reverse2) return false;
                 if (reverse1)
                 {
-                    op1b = DupOutPt(op1, false);
-                    op2b = DupOutPt(op2, true);
+                    op1B = DupOutPt(op1, false);
+                    op2B = DupOutPt(op2, true);
                     op1.Prev = op2;
                     op2.Next = op1;
-                    op1b.Next = op2b;
-                    op2b.Prev = op1b;
+                    op1B.Next = op2B;
+                    op2B.Prev = op1B;
                     j.OutPt1 = op1;
-                    j.OutPt2 = op1b;
+                    j.OutPt2 = op1B;
                     return true;
                 }
                 else
                 {
-                    op1b = DupOutPt(op1, true);
-                    op2b = DupOutPt(op2, false);
+                    op1B = DupOutPt(op1, true);
+                    op2B = DupOutPt(op2, false);
                     op1.Next = op2;
                     op2.Prev = op1;
-                    op1b.Prev = op2b;
-                    op2b.Next = op1b;
+                    op1B.Prev = op2B;
+                    op2B.Next = op1B;
                     j.OutPt1 = op1;
-                    j.OutPt2 = op1b;
+                    j.OutPt2 = op1B;
                     return true;
                 }
             }
-            else if (isHorizontal)
+            if (isHorizontal)
             {
                 //treat horizontal joins differently to non-horizontal joins since with
-                //them we're not yet sure where the overlapping is. OutPt1.Pt & OutPt2.Pt
+                //them we're not yet sure where the overlapping is. OutPt1.point & OutPt2.point
                 //may be anywhere along the horizontal edge.
-                op1b = op1;
-                while (op1.Prev.Pt.Y == op1.Pt.Y && op1.Prev != op1b && op1.Prev != op2)
+                op1B = op1;
+                while (((double)op1.Prev.Pt.Y).IsPracticallySame(op1.Pt.Y) && op1.Prev != op1B && op1.Prev != op2)
                     op1 = op1.Prev;
-                while (op1b.Next.Pt.Y == op1b.Pt.Y && op1b.Next != op1 && op1b.Next != op2)
-                    op1b = op1b.Next;
-                if (op1b.Next == op1 || op1b.Next == op2) return false; //a flat 'polygon'
+                while (((double)op1B.Next.Pt.Y).IsPracticallySame(op1B.Pt.Y) && op1B.Next != op1 && op1B.Next != op2)
+                    op1B = op1B.Next;
+                if (op1B.Next == op1 || op1B.Next == op2) return false; //a flat 'polygon'
 
-                op2b = op2;
-                while (op2.Prev.Pt.Y == op2.Pt.Y && op2.Prev != op2b && op2.Prev != op1b)
+                op2B = op2;
+                while (((double)op2.Prev.Pt.Y).IsPracticallySame(op2.Pt.Y) && op2.Prev != op2B && op2.Prev != op1B)
                     op2 = op2.Prev;
-                while (op2b.Next.Pt.Y == op2b.Pt.Y && op2b.Next != op2 && op2b.Next != op1)
-                    op2b = op2b.Next;
-                if (op2b.Next == op2 || op2b.Next == op1) return false; //a flat 'polygon'
+                while (((double)op2B.Next.Pt.Y).IsPracticallySame(op2B.Pt.Y) && op2B.Next != op2 && op2B.Next != op1)
+                    op2B = op2B.Next;
+                if (op2B.Next == op2 || op2B.Next == op1) return false; //a flat 'polygon'
 
-                long Left, Right;
+                long left, right;
                 //outPoint1 -. Op1b & outPoint2 -. Op2b are the extremites of the horizontal edges
-                if (!GetOverlap(op1.Pt.X, op1b.Pt.X, op2.Pt.X, op2b.Pt.X, out Left, out Right))
+                if (!GetOverlap(op1.Pt.X, op1B.Pt.X, op2.Pt.X, op2B.Pt.X, out left, out right))
                     return false;
 
                 //DiscardLeftSide: when overlapping edges are joined, a spike will created
                 //which needs to be cleaned up. However, we don't want outPoint1 or outPoint2 caught up
                 //on the discard Side as either may still be needed for other joins ...
-                IntPoint Pt;
-                bool DiscardLeftSide;
-                if (op1.Pt.X >= Left && op1.Pt.X <= Right)
+                IntPoint pt;
+                bool discardLeftSide;
+                if (op1.Pt.X >= left && op1.Pt.X <= right)
                 {
-                    Pt = op1.Pt; DiscardLeftSide = (op1.Pt.X > op1b.Pt.X);
+                    pt = op1.Pt; discardLeftSide = (op1.Pt.X > op1B.Pt.X);
                 }
-                else if (op2.Pt.X >= Left && op2.Pt.X <= Right)
+                else if (op2.Pt.X >= left && op2.Pt.X <= right)
                 {
-                    Pt = op2.Pt; DiscardLeftSide = (op2.Pt.X > op2b.Pt.X);
+                    pt = op2.Pt; discardLeftSide = (op2.Pt.X > op2B.Pt.X);
                 }
-                else if (op1b.Pt.X >= Left && op1b.Pt.X <= Right)
+                else if (op1B.Pt.X >= left && op1B.Pt.X <= right)
                 {
-                    Pt = op1b.Pt; DiscardLeftSide = op1b.Pt.X > op1.Pt.X;
+                    pt = op1B.Pt; discardLeftSide = op1B.Pt.X > op1.Pt.X;
                 }
                 else
                 {
-                    Pt = op2b.Pt; DiscardLeftSide = (op2b.Pt.X > op2.Pt.X);
+                    pt = op2B.Pt; discardLeftSide = (op2B.Pt.X > op2.Pt.X);
                 }
                 j.OutPt1 = op1;
                 j.OutPt2 = op2;
-                return JoinHorz(op1, op1b, op2, op2b, Pt, DiscardLeftSide);
+                return JoinHorz(op1, op1B, op2, op2B, pt, discardLeftSide);
             }
             else
             {
                 //nb: For non-horizontal joins ...
-                //    1. Jr.OutPt1.Pt.Y == Jr.OutPt2.Pt.Y
-                //    2. Jr.OutPt1.Pt > Jr.OffPt.Y
+                //    1. Jr.OutPt1.point.Y == Jr.OutPt2.point.Y
+                //    2. Jr.OutPt1.point > Jr.OffPt.Y
 
                 //make sure the polygons are correctly oriented ...
-                op1b = op1.Next;
-                while ((op1b.Pt == op1.Pt) && (op1b != op1)) op1b = op1b.Next;
-                var reverse1 = ((op1b.Pt.Y > op1.Pt.Y) ||
-                  !SlopesEqual(op1.Pt, op1b.Pt, j.OffPt, MUseFullRange));
+                op1B = op1.Next;
+                while ((op1B.Pt == op1.Pt) && (op1B != op1)) op1B = op1B.Next;
+                var reverse1 = ((op1B.Pt.Y > op1.Pt.Y) ||
+                  !SlopesEqual(op1.Pt, op1B.Pt, j.OffPt, MUseFullRange));
                 if (reverse1)
                 {
-                    op1b = op1.Prev;
-                    while ((op1b.Pt == op1.Pt) && (op1b != op1)) op1b = op1b.Prev;
-                    if ((op1b.Pt.Y > op1.Pt.Y) ||
-                      !SlopesEqual(op1.Pt, op1b.Pt, j.OffPt, MUseFullRange)) return false;
+                    op1B = op1.Prev;
+                    while ((op1B.Pt == op1.Pt) && (op1B != op1)) op1B = op1B.Prev;
+                    if ((op1B.Pt.Y > op1.Pt.Y) ||
+                      !SlopesEqual(op1.Pt, op1B.Pt, j.OffPt, MUseFullRange)) return false;
                 }
-                op2b = op2.Next;
-                while ((op2b.Pt == op2.Pt) && (op2b != op2)) op2b = op2b.Next;
-                var reverse2 = ((op2b.Pt.Y > op2.Pt.Y) ||
-                  !SlopesEqual(op2.Pt, op2b.Pt, j.OffPt, MUseFullRange));
+                op2B = op2.Next;
+                while ((op2B.Pt == op2.Pt) && (op2B != op2)) op2B = op2B.Next;
+                var reverse2 = ((op2B.Pt.Y > op2.Pt.Y) ||
+                  !SlopesEqual(op2.Pt, op2B.Pt, j.OffPt, MUseFullRange));
                 if (reverse2)
                 {
-                    op2b = op2.Prev;
-                    while ((op2b.Pt == op2.Pt) && (op2b != op2)) op2b = op2b.Prev;
-                    if ((op2b.Pt.Y > op2.Pt.Y) ||
-                      !SlopesEqual(op2.Pt, op2b.Pt, j.OffPt, MUseFullRange)) return false;
+                    op2B = op2.Prev;
+                    while ((op2B.Pt == op2.Pt) && (op2B != op2)) op2B = op2B.Prev;
+                    if ((op2B.Pt.Y > op2.Pt.Y) ||
+                      !SlopesEqual(op2.Pt, op2B.Pt, j.OffPt, MUseFullRange)) return false;
                 }
 
-                if ((op1b == op1) || (op2b == op2) || (op1b == op2b) ||
+                if ((op1B == op1) || (op2B == op2) || (op1B == op2B) ||
                   ((outRec1 == outRec2) && (reverse1 == reverse2))) return false;
 
                 if (reverse1)
                 {
-                    op1b = DupOutPt(op1, false);
-                    op2b = DupOutPt(op2, true);
+                    op1B = DupOutPt(op1, false);
+                    op2B = DupOutPt(op2, true);
                     op1.Prev = op2;
                     op2.Next = op1;
-                    op1b.Next = op2b;
-                    op2b.Prev = op1b;
+                    op1B.Next = op2B;
+                    op2B.Prev = op1B;
                     j.OutPt1 = op1;
-                    j.OutPt2 = op1b;
+                    j.OutPt2 = op1B;
                     return true;
                 }
                 else
                 {
-                    op1b = DupOutPt(op1, true);
-                    op2b = DupOutPt(op2, false);
+                    op1B = DupOutPt(op1, true);
+                    op2B = DupOutPt(op2, false);
                     op1.Next = op2;
                     op2.Prev = op1;
-                    op1b.Prev = op2b;
-                    op2b.Next = op1b;
+                    op1B.Prev = op2B;
+                    op2B.Next = op1B;
                     j.OutPt1 = op1;
-                    j.OutPt2 = op1b;
+                    j.OutPt2 = op1B;
                     return true;
                 }
             }
@@ -3603,10 +3590,10 @@ namespace TVGL.Boolean_Operations.Clipper
             for (var i = 1; i <= cnt; ++i)
             {
                 var ipNext = (i == cnt ? path[0] : path[i]);
-                if (ipNext.Y == pt.Y)
+                if (((double)ipNext.Y).IsPracticallySame(pt.Y))
                 {
-                    if ((ipNext.X == pt.X) || (ip.Y == pt.Y &&
-                      ((ipNext.X > pt.X) == (ip.X < pt.X)))) return -1;
+                    if ((((double)ipNext.X).IsPracticallySame(pt.X)) || (((double)ip.Y).IsPracticallySame(pt.Y) &&
+                      (ipNext.X > pt.X == ip.X < pt.X))) return -1;
                 }
                 if ((ip.Y < pt.Y) != (ipNext.Y < pt.Y))
                 {
@@ -3618,7 +3605,7 @@ namespace TVGL.Boolean_Operations.Clipper
                             var d = (double)(ip.X - pt.X) * (ipNext.Y - pt.Y) -
                               (double)(ipNext.X - pt.X) * (ip.Y - pt.Y);
                             if (d.IsNegligible()) return -1;
-                            else if ((d > 0) == (ipNext.Y > ip.Y)) result = 1 - result;
+                            if ((d > 0) == (ipNext.Y > ip.Y)) result = 1 - result;
                         }
                     }
                     else
@@ -3628,7 +3615,7 @@ namespace TVGL.Boolean_Operations.Clipper
                             var d = (double)(ip.X - pt.X) * (ipNext.Y - pt.Y) -
                               (double)(ipNext.X - pt.X) * (ip.Y - pt.Y);
                             if (d.IsNegligible()) return -1;
-                            else if ((d > 0) == (ipNext.Y > ip.Y)) result = 1 - result;
+                            if ((d > 0) == (ipNext.Y > ip.Y)) result = 1 - result;
                         }
                     }
                 }
@@ -3652,10 +3639,10 @@ namespace TVGL.Boolean_Operations.Clipper
                 op = op.Next;
                 long poly1X = op.Pt.X, poly1Y = op.Pt.Y;
 
-                if (poly1Y == pty)
+                if (((double)poly1Y).IsPracticallySame(pty))
                 {
-                    if ((poly1X == ptx) || (poly0Y == pty &&
-                      ((poly1X > ptx) == (poly0X < ptx)))) return -1;
+                    if (((double)poly1X).IsPracticallySame(ptx) || (((double)poly0Y).IsPracticallySame(pty) &&
+                      (poly1X > ptx == poly0X < ptx))) return -1;
                 }
                 if ((poly0Y < pty) != (poly1Y < pty))
                 {
@@ -3689,11 +3676,11 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private static bool Poly2ContainsPoly1(OutPt outPt1, OutPt outPt2)
         {
-            OutPt op = outPt1;
+            var op = outPt1;
             do
             {
                 //nb: PointInPolygon returns 0 if false, +1 if true, -1 if pt on polygon
-                int res = PointInPolygon(op.Pt, outPt2);
+                var res = PointInPolygon(op.Pt, outPt2);
                 if (res >= 0) return res > 0;
                 op = op.Next;
             }
@@ -3702,45 +3689,42 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //----------------------------------------------------------------------
 
-        private void FixupFirstLefts1(OutRec OldOutRec, OutRec NewOutRec)
+        private void FixupFirstLefts1(OutRec oldOutRec, OutRec newOutRec)
         {
-            for (int i = 0; i < m_PolyOuts.Count; i++)
+            foreach (var outRec in _mPolyOuts)
             {
-                OutRec outRec = m_PolyOuts[i];
                 if (outRec.Pts == null || outRec.FirstLeft == null) continue;
-                OutRec firstLeft = ParseFirstLeft(outRec.FirstLeft);
-                if (firstLeft == OldOutRec)
-                {
-                    if (Poly2ContainsPoly1(outRec.Pts, NewOutRec.Pts))
-                        outRec.FirstLeft = NewOutRec;
-                }
+                var firstLeft = ParseFirstLeft(outRec.FirstLeft);
+                if (firstLeft != oldOutRec) continue;
+                if (Poly2ContainsPoly1(outRec.Pts, newOutRec.Pts))
+                    outRec.FirstLeft = newOutRec;
             }
         }
+
         //----------------------------------------------------------------------
 
-        private void FixupFirstLefts2(OutRec OldOutRec, OutRec NewOutRec)
+        private void FixupFirstLefts2(OutRec oldOutRec, OutRec newOutRec)
         {
-            foreach (OutRec outRec in m_PolyOuts)
-                if (outRec.FirstLeft == OldOutRec) outRec.FirstLeft = NewOutRec;
+            foreach (var outRec in _mPolyOuts.Where(outRec => outRec.FirstLeft == oldOutRec))
+                outRec.FirstLeft = newOutRec;
         }
+
         //----------------------------------------------------------------------
 
-        private static OutRec ParseFirstLeft(OutRec FirstLeft)
+        private static OutRec ParseFirstLeft(OutRec firstLeft)
         {
-            while (FirstLeft != null && FirstLeft.Pts == null)
-                FirstLeft = FirstLeft.FirstLeft;
-            return FirstLeft;
+            while (firstLeft != null && firstLeft.Pts == null)
+                firstLeft = firstLeft.FirstLeft;
+            return firstLeft;
         }
         //------------------------------------------------------------------------------
 
         private void JoinCommonEdges()
         {
-            for (int i = 0; i < m_Joins.Count; i++)
+            foreach (var join1 in _mJoins)
             {
-                Join join = m_Joins[i];
-
-                OutRec outRec1 = GetOutRec(join.OutPt1.Idx);
-                OutRec outRec2 = GetOutRec(join.OutPt2.Idx);
+                var outRec1 = GetOutRec(join1.OutPt1.Idx);
+                var outRec2 = GetOutRec(join1.OutPt2.Idx);
 
                 if (outRec1.Pts == null || outRec2.Pts == null) continue;
 
@@ -3752,29 +3736,29 @@ namespace TVGL.Boolean_Operations.Clipper
                 else if (Param1RightOfParam2(outRec2, outRec1)) holeStateRec = outRec1;
                 else holeStateRec = GetLowermostRec(outRec1, outRec2);
 
-                if (!JoinPoints(join, outRec1, outRec2)) continue;
+                if (!JoinPoints(join1, outRec1, outRec2)) continue;
 
                 if (outRec1 == outRec2)
                 {
                     //instead of joining two polygons, we've just created a new one by
                     //splitting one polygon into two.
-                    outRec1.Pts = join.OutPt1;
+                    outRec1.Pts = join1.OutPt1;
                     outRec1.BottomPt = null;
                     outRec2 = CreateOutRec();
-                    outRec2.Pts = join.OutPt2;
+                    outRec2.Pts = join1.OutPt2;
 
                     //update all OutRec2.Pts Idx's ...
                     UpdateOutPtIdxs(outRec2);
 
                     //We now need to check every OutRec.FirstLeft pointer. If it points
                     //to OutRec1 it may need to point to OutRec2 instead ...
-                    if (m_UsingPolyTree)
-                        for (int j = 0; j < m_PolyOuts.Count - 1; j++)
+                    if (_mUsingPolyTree)
+                        for (var j = 0; j < _mPolyOuts.Count - 1; j++)
                         {
-                            OutRec oRec = m_PolyOuts[j];
+                            var oRec = _mPolyOuts[j];
                             if (oRec.Pts == null || ParseFirstLeft(oRec.FirstLeft) != outRec1 ||
-                              oRec.IsHole == outRec1.IsHole) continue;
-                            if (Poly2ContainsPoly1(oRec.Pts, join.OutPt2))
+                                oRec.IsHole == outRec1.IsHole) continue;
+                            if (Poly2ContainsPoly1(oRec.Pts, join1.OutPt2))
                                 oRec.FirstLeft = outRec2;
                         }
 
@@ -3785,7 +3769,7 @@ namespace TVGL.Boolean_Operations.Clipper
                         outRec2.FirstLeft = outRec1;
 
                         //fixup FirstLeft pointers that may need reassigning to OutRec1
-                        if (m_UsingPolyTree) FixupFirstLefts2(outRec2, outRec1);
+                        if (_mUsingPolyTree) FixupFirstLefts2(outRec2, outRec1);
 
                         if ((outRec2.IsHole ^ ReverseSolution) == (Area(outRec2) > 0))
                             ReversePolyPtLinks(outRec2.Pts);
@@ -3800,7 +3784,7 @@ namespace TVGL.Boolean_Operations.Clipper
                         outRec1.FirstLeft = outRec2;
 
                         //fixup FirstLeft pointers that may need reassigning to OutRec1
-                        if (m_UsingPolyTree) FixupFirstLefts2(outRec1, outRec2);
+                        if (_mUsingPolyTree) FixupFirstLefts2(outRec1, outRec2);
 
                         if ((outRec1.IsHole ^ ReverseSolution) == (Area(outRec1) > 0))
                             ReversePolyPtLinks(outRec1.Pts);
@@ -3812,7 +3796,7 @@ namespace TVGL.Boolean_Operations.Clipper
                         outRec2.FirstLeft = outRec1.FirstLeft;
 
                         //fixup FirstLeft pointers that may need reassigning to OutRec2
-                        if (m_UsingPolyTree) FixupFirstLefts1(outRec1, outRec2);
+                        if (_mUsingPolyTree) FixupFirstLefts1(outRec1, outRec2);
                     }
 
                 }
@@ -3830,49 +3814,50 @@ namespace TVGL.Boolean_Operations.Clipper
                     outRec2.FirstLeft = outRec1;
 
                     //fixup FirstLeft pointers that may need reassigning to OutRec1
-                    if (m_UsingPolyTree) FixupFirstLefts2(outRec2, outRec1);
+                    if (_mUsingPolyTree) FixupFirstLefts2(outRec2, outRec1);
                 }
             }
         }
+
         //------------------------------------------------------------------------------
 
-        private void UpdateOutPtIdxs(OutRec outrec)
+        private static void UpdateOutPtIdxs(OutRec outrec)
         {
-            OutPt op = outrec.Pts;
+            var outPoint = outrec.Pts;
             do
             {
-                op.Idx = outrec.Idx;
-                op = op.Prev;
+                outPoint.Idx = outrec.Idx;
+                outPoint = outPoint.Prev;
             }
-            while (op != outrec.Pts);
+            while (outPoint != outrec.Pts);
         }
         //------------------------------------------------------------------------------
 
         private void DoSimplePolygons()
         {
-            int i = 0;
-            while (i < m_PolyOuts.Count)
+            var i = 0;
+            while (i < _mPolyOuts.Count)
             {
-                OutRec outrec = m_PolyOuts[i++];
-                OutPt op = outrec.Pts;
+                var outrec = _mPolyOuts[i++];
+                var op = outrec.Pts;
                 if (op == null || outrec.IsOpen) continue;
-                do //for each Pt in Polygon until duplicate found do ...
+                do //for each point in Polygon until duplicate found do ...
                 {
-                    OutPt op2 = op.Next;
+                    var op2 = op.Next;
                     while (op2 != outrec.Pts)
                     {
                         if ((op.Pt == op2.Pt) && op2.Next != op && op2.Prev != op)
                         {
                             //split the polygon into two ...
-                            OutPt op3 = op.Prev;
-                            OutPt op4 = op2.Prev;
+                            var op3 = op.Prev;
+                            var op4 = op2.Prev;
                             op.Prev = op4;
                             op4.Next = op;
                             op2.Prev = op3;
                             op3.Next = op2;
 
                             outrec.Pts = op;
-                            OutRec outrec2 = CreateOutRec();
+                            var outrec2 = CreateOutRec();
                             outrec2.Pts = op2;
                             UpdateOutPtIdxs(outrec2);
                             if (Poly2ContainsPoly1(outrec2.Pts, outrec.Pts))
@@ -3880,7 +3865,7 @@ namespace TVGL.Boolean_Operations.Clipper
                                 //OutRec2 is contained by OutRec1 ...
                                 outrec2.IsHole = !outrec.IsHole;
                                 outrec2.FirstLeft = outrec;
-                                if (m_UsingPolyTree) FixupFirstLefts2(outrec2, outrec);
+                                if (_mUsingPolyTree) FixupFirstLefts2(outrec2, outrec);
                             }
                             else
                               if (Poly2ContainsPoly1(outrec.Pts, outrec2.Pts))
@@ -3890,14 +3875,14 @@ namespace TVGL.Boolean_Operations.Clipper
                                 outrec.IsHole = !outrec2.IsHole;
                                 outrec2.FirstLeft = outrec.FirstLeft;
                                 outrec.FirstLeft = outrec2;
-                                if (m_UsingPolyTree) FixupFirstLefts2(outrec, outrec2);
+                                if (_mUsingPolyTree) FixupFirstLefts2(outrec, outrec2);
                             }
                             else
                             {
                                 //the 2 polygons are separate ...
                                 outrec2.IsHole = outrec.IsHole;
                                 outrec2.FirstLeft = outrec.FirstLeft;
-                                if (m_UsingPolyTree) FixupFirstLefts1(outrec, outrec2);
+                                if (_mUsingPolyTree) FixupFirstLefts1(outrec, outrec2);
                             }
                             op2 = op; //ie get ready for the next iteration
                         }
@@ -3912,7 +3897,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
         internal static double Area(Path poly)
         {
-            int cnt = poly.Count;
+            var cnt = poly.Count;
             if (cnt < 3) return 0;
             double a = 0;
             for (int i = 0, j = cnt - 1; i < cnt; ++i)
@@ -3924,9 +3909,9 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        double Area(OutRec outRec)
+        static double Area(OutRec outRec)
         {
-            OutPt op = outRec.Pts;
+            var op = outRec.Pts;
             if (op == null) return 0;
             double a = 0;
             do
@@ -4232,35 +4217,35 @@ namespace TVGL.Boolean_Operations.Clipper
     #region Clipper Offset
     internal class ClipperOffset
     {
-        private Paths m_destPolys;
-        private Path m_srcPoly;
-        private Path m_destPoly;
-        private List<DoublePoint> m_normals = new List<DoublePoint>();
-        private double m_delta, m_sinA, m_sin, m_cos;
-        private double m_miterLim, m_StepsPerRad;
+        private Paths _mDestPolys;
+        private Path _mSrcPoly;
+        private Path _mDestPoly;
+        private List<DoublePoint> _mNormals = new List<DoublePoint>();
+        private double _mDelta, _mSinA, _mSin, _mCos;
+        private double _mMiterLim, _mStepsPerRad;
 
-        private IntPoint m_lowest;
-        private PolyNode m_polyNodes = new PolyNode();
+        private IntPoint _mLowest;
+        private PolyNode _mPolyNodes = new PolyNode();
 
         internal double ArcTolerance { get; set; }
         internal double MiterLimit { get; set; }
 
-        private const double two_pi = Math.PI * 2;
-        private const double def_arc_tolerance = 0.25;
+        private const double TwoPi = Math.PI * 2;
+        private const double DefArcTolerance = 0.25;
 
         internal ClipperOffset(
-          double miterLimit = 2.0, double arcTolerance = def_arc_tolerance)
+          double miterLimit = 2.0, double arcTolerance = DefArcTolerance)
         {
             MiterLimit = miterLimit;
             ArcTolerance = arcTolerance;
-            m_lowest.X = -1;
+            _mLowest.X = -1;
         }
         //------------------------------------------------------------------------------
 
         internal void Clear()
         {
-            m_polyNodes.Childs.Clear();
-            m_lowest.X = -1;
+            _mPolyNodes.Childs.Clear();
+            _mLowest.X = -1;
         }
         //------------------------------------------------------------------------------
 
@@ -4272,11 +4257,13 @@ namespace TVGL.Boolean_Operations.Clipper
 
         internal void AddPath(Path path, JoinType joinType, EndType endType)
         {
-            int highI = path.Count - 1;
+            var highI = path.Count - 1;
             if (highI < 0) return;
-            PolyNode newNode = new PolyNode();
-            newNode.MJointype = joinType;
-            newNode.MEndtype = endType;
+            var newNode = new PolyNode
+            {
+                MJointype = joinType,
+                MEndtype = endType
+            };
 
             //strip duplicate points from path and also get index to the lowest point ...
             if (endType == EndType.ClosedLine || endType == EndType.ClosedPolygon)
@@ -4295,27 +4282,27 @@ namespace TVGL.Boolean_Operations.Clipper
                 }
             if (endType == EndType.ClosedPolygon && j < 2) return;
 
-            m_polyNodes.AddChild(newNode);
+            _mPolyNodes.AddChild(newNode);
 
             //if this path's lowest pt is lower than all the others then update m_lowest
             if (endType != EndType.ClosedPolygon) return;
-            if (m_lowest.X < 0)
-                m_lowest = new IntPoint(m_polyNodes.ChildCount - 1, k);
+            if (_mLowest.X < 0)
+                _mLowest = new IntPoint(_mPolyNodes.ChildCount - 1, k);
             else
             {
-                IntPoint ip = m_polyNodes.Childs[(int)m_lowest.X].MPolygon[(int)m_lowest.Y];
+                IntPoint ip = _mPolyNodes.Childs[(int)_mLowest.X].MPolygon[(int)_mLowest.Y];
                 if (newNode.MPolygon[k].Y > ip.Y ||
                   (newNode.MPolygon[k].Y == ip.Y &&
                   newNode.MPolygon[k].X < ip.X))
-                    m_lowest = new IntPoint(m_polyNodes.ChildCount - 1, k);
+                    _mLowest = new IntPoint(_mPolyNodes.ChildCount - 1, k);
             }
         }
         //------------------------------------------------------------------------------
 
         internal void AddPaths(Paths paths, JoinType joinType, EndType endType)
         {
-            foreach (Path p in paths)
-                AddPath(p, joinType, endType);
+            foreach (var path in paths)
+                AddPath(path, joinType, endType);
         }
         //------------------------------------------------------------------------------
 
@@ -4323,12 +4310,12 @@ namespace TVGL.Boolean_Operations.Clipper
         {
             //fixup orientations of all closed paths if the orientation of the
             //closed path with the lowermost vertex is wrong ...
-            if (m_lowest.X >= 0 &&
-              !Clipper.Orientation(m_polyNodes.Childs[(int)m_lowest.X].MPolygon))
+            if (_mLowest.X >= 0 &&
+              !Clipper.Orientation(_mPolyNodes.Childs[(int)_mLowest.X].MPolygon))
             {
-                for (int i = 0; i < m_polyNodes.ChildCount; i++)
+                for (var i = 0; i < _mPolyNodes.ChildCount; i++)
                 {
-                    PolyNode node = m_polyNodes.Childs[i];
+                    var node = _mPolyNodes.Childs[i];
                     if (node.MEndtype == EndType.ClosedPolygon ||
                       (node.MEndtype == EndType.ClosedLine &&
                       Clipper.Orientation(node.MPolygon)))
@@ -4337,9 +4324,9 @@ namespace TVGL.Boolean_Operations.Clipper
             }
             else
             {
-                for (int i = 0; i < m_polyNodes.ChildCount; i++)
+                for (var i = 0; i < _mPolyNodes.ChildCount; i++)
                 {
-                    PolyNode node = m_polyNodes.Childs[i];
+                    var node = _mPolyNodes.Childs[i];
                     if (node.MEndtype == EndType.ClosedLine &&
                       !Clipper.Orientation(node.MPolygon))
                         node.MPolygon.Reverse();
@@ -4354,7 +4341,7 @@ namespace TVGL.Boolean_Operations.Clipper
             double dy = (pt2.Y - pt1.Y);
             if (dx.IsNegligible() && dx.IsNegligible()) return new DoublePoint();
 
-            double f = 1 * 1.0 / Math.Sqrt(dx * dx + dy * dy);
+            var f = 1 * 1.0 / Math.Sqrt(dx * dx + dy * dy);
             dx *= f;
             dy *= f;
 
@@ -4364,178 +4351,184 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private void DoOffset(double delta)
         {
-            m_destPolys = new Paths();
-            m_delta = delta;
+            _mDestPolys = new Paths();
+            _mDelta = delta;
 
             //if Zero offset, just copy any CLOSED polygons to m_p and return ...
             if (ClipperBase.near_zero(delta))
             {
-                m_destPolys.Capacity = m_polyNodes.ChildCount;
-                for (int i = 0; i < m_polyNodes.ChildCount; i++)
+                _mDestPolys.Capacity = _mPolyNodes.ChildCount;
+                for (var i = 0; i < _mPolyNodes.ChildCount; i++)
                 {
-                    PolyNode node = m_polyNodes.Childs[i];
+                    var node = _mPolyNodes.Childs[i];
                     if (node.MEndtype == EndType.ClosedPolygon)
-                        m_destPolys.Add(node.MPolygon);
+                        _mDestPolys.Add(node.MPolygon);
                 }
                 return;
             }
 
             //see offset_triginometry3.svg in the documentation folder ...
-            if (MiterLimit > 2) m_miterLim = 2 / (MiterLimit * MiterLimit);
-            else m_miterLim = 0.5;
+            if (MiterLimit > 2) _mMiterLim = 2 / (MiterLimit * MiterLimit);
+            else _mMiterLim = 0.5;
 
             double y;
             if (ArcTolerance <= 0.0)
-                y = def_arc_tolerance;
-            else if (ArcTolerance > Math.Abs(delta) * def_arc_tolerance)
-                y = Math.Abs(delta) * def_arc_tolerance;
+                y = DefArcTolerance;
+            else if (ArcTolerance > Math.Abs(delta) * DefArcTolerance)
+                y = Math.Abs(delta) * DefArcTolerance;
             else
                 y = ArcTolerance;
             //see offset_triginometry2.svg in the documentation folder ...
-            double steps = Math.PI / Math.Acos(1 - y / Math.Abs(delta));
-            m_sin = Math.Sin(two_pi / steps);
-            m_cos = Math.Cos(two_pi / steps);
-            m_StepsPerRad = steps / two_pi;
-            if (delta < 0.0) m_sin = -m_sin;
+            var steps = Math.PI / Math.Acos(1 - y / Math.Abs(delta));
+            _mSin = Math.Sin(TwoPi / steps);
+            _mCos = Math.Cos(TwoPi / steps);
+            _mStepsPerRad = steps / TwoPi;
+            if (delta < 0.0) _mSin = -_mSin;
 
-            m_destPolys.Capacity = m_polyNodes.ChildCount * 2;
-            for (int i = 0; i < m_polyNodes.ChildCount; i++)
+            _mDestPolys.Capacity = _mPolyNodes.ChildCount * 2;
+            for (var i = 0; i < _mPolyNodes.ChildCount; i++)
             {
-                PolyNode node = m_polyNodes.Childs[i];
-                m_srcPoly = node.MPolygon;
+                var node = _mPolyNodes.Childs[i];
+                _mSrcPoly = node.MPolygon;
 
-                int len = m_srcPoly.Count;
+                var len = _mSrcPoly.Count;
 
                 if (len == 0 || (delta <= 0 && (len < 3 ||
                   node.MEndtype != EndType.ClosedPolygon)))
                     continue;
 
-                m_destPoly = new Path();
+                _mDestPoly = new Path();
 
                 if (len == 1)
                 {
                     if (node.MJointype == JoinType.Round)
                     {
-                        double X = 1.0, Y = 0.0;
-                        for (int j = 1; j <= steps; j++)
+                        double xval = 1.0, yval = 0.0;
+                        for (var j = 1; j <= steps; j++)
                         {
-                            m_destPoly.Add(new IntPoint(
-                              Round(m_srcPoly[0].X + X * delta),
-                              Round(m_srcPoly[0].Y + Y * delta)));
-                            double X2 = X;
-                            X = X * m_cos - m_sin * Y;
-                            Y = X2 * m_sin + Y * m_cos;
+                            _mDestPoly.Add(new IntPoint(
+                              Round(_mSrcPoly[0].X + xval * delta),
+                              Round(_mSrcPoly[0].Y + yval * delta)));
+                            var x2 = xval;
+                            xval = xval * _mCos - _mSin * yval;
+                            yval = x2 * _mSin + yval * _mCos;
                         }
                     }
                     else
                     {
-                        double X = -1.0, Y = -1.0;
-                        for (int j = 0; j < 4; ++j)
+                        double xval = -1.0, yval = -1.0;
+                        for (var j = 0; j < 4; ++j)
                         {
-                            m_destPoly.Add(new IntPoint(
-                              Round(m_srcPoly[0].X + X * delta),
-                              Round(m_srcPoly[0].Y + Y * delta)));
-                            if (X < 0) X = 1;
-                            else if (Y < 0) Y = 1;
-                            else X = -1;
+                            _mDestPoly.Add(new IntPoint(
+                              Round(_mSrcPoly[0].X + xval * delta),
+                              Round(_mSrcPoly[0].Y + yval * delta)));
+                            if (xval < 0) xval = 1;
+                            else if (yval < 0) yval = 1;
+                            else xval = -1;
                         }
                     }
-                    m_destPolys.Add(m_destPoly);
+                    _mDestPolys.Add(_mDestPoly);
                     continue;
                 }
 
                 //build m_normals ...
-                m_normals.Clear();
-                m_normals.Capacity = len;
-                for (int j = 0; j < len - 1; j++)
-                    m_normals.Add(GetUnitNormal(m_srcPoly[j], m_srcPoly[j + 1]));
+                _mNormals.Clear();
+                _mNormals.Capacity = len;
+                for (var j = 0; j < len - 1; j++)
+                    _mNormals.Add(GetUnitNormal(_mSrcPoly[j], _mSrcPoly[j + 1]));
                 if (node.MEndtype == EndType.ClosedLine ||
                   node.MEndtype == EndType.ClosedPolygon)
-                    m_normals.Add(GetUnitNormal(m_srcPoly[len - 1], m_srcPoly[0]));
+                    _mNormals.Add(GetUnitNormal(_mSrcPoly[len - 1], _mSrcPoly[0]));
                 else
-                    m_normals.Add(new DoublePoint(m_normals[len - 2]));
+                    _mNormals.Add(new DoublePoint(_mNormals[len - 2]));
 
-                if (node.MEndtype == EndType.ClosedPolygon)
+                switch (node.MEndtype)
                 {
-                    int k = len - 1;
-                    for (int j = 0; j < len; j++)
-                        OffsetPoint(j, ref k, node.MJointype);
-                    m_destPolys.Add(m_destPoly);
-                }
-                else if (node.MEndtype == EndType.ClosedLine)
-                {
-                    var k = len - 1;
-                    for (var j = 0; j < len; j++)
-                        OffsetPoint(j, ref k, node.MJointype);
-                    m_destPolys.Add(m_destPoly);
-                    m_destPoly = new Path();
-                    //re-build m_normals ...
-                    var n = m_normals[len - 1];
-                    for (var j = len - 1; j > 0; j--)
-                        m_normals[j] = new DoublePoint(-m_normals[j - 1].X, -m_normals[j - 1].Y);
-                    m_normals[0] = new DoublePoint(-n.X, -n.Y);
-                    k = 0;
-                    for (var j = len - 1; j >= 0; j--)
-                        OffsetPoint(j, ref k, node.MJointype);
-                    m_destPolys.Add(m_destPoly);
-                }
-                else
-                {
-                    var k = 0;
-                    for (var j = 1; j < len - 1; ++j)
-                        OffsetPoint(j, ref k, node.MJointype);
-
-                    IntPoint pt1;
-                    if (node.MEndtype == EndType.OpenButt)
+                    case EndType.ClosedPolygon:
                     {
-                        var j = len - 1;
-                        pt1 = new IntPoint(Round(m_srcPoly[j].X + m_normals[j].X *
-                          delta), Round(m_srcPoly[j].Y + m_normals[j].Y * delta));
-                        m_destPoly.Add(pt1);
-                        pt1 = new IntPoint(Round(m_srcPoly[j].X - m_normals[j].X *
-                          delta), Round(m_srcPoly[j].Y - m_normals[j].Y * delta));
-                        m_destPoly.Add(pt1);
+                        var k = len - 1;
+                        for (var j = 0; j < len; j++)
+                            OffsetPoint(j, ref k, node.MJointype);
+                        _mDestPolys.Add(_mDestPoly);
                     }
-                    else
+                        break;
+                    case EndType.ClosedLine:
                     {
-                        var j = len - 1;
-                        k = len - 2;
-                        m_sinA = 0;
-                        m_normals[j] = new DoublePoint(-m_normals[j].X, -m_normals[j].Y);
-                        if (node.MEndtype == EndType.OpenSquare)
-                            DoSquare(j, k);
+                        var k = len - 1;
+                        for (var j = 0; j < len; j++)
+                            OffsetPoint(j, ref k, node.MJointype);
+                        _mDestPolys.Add(_mDestPoly);
+                        _mDestPoly = new Path();
+                        //re-build m_normals ...
+                        var n = _mNormals[len - 1];
+                        for (var j = len - 1; j > 0; j--)
+                            _mNormals[j] = new DoublePoint(-_mNormals[j - 1].X, -_mNormals[j - 1].Y);
+                        _mNormals[0] = new DoublePoint(-n.X, -n.Y);
+                        k = 0;
+                        for (var j = len - 1; j >= 0; j--)
+                            OffsetPoint(j, ref k, node.MJointype);
+                        _mDestPolys.Add(_mDestPoly);
+                    }
+                        break;
+                    default:
+                    {
+                        var k = 0;
+                        for (var j = 1; j < len - 1; ++j)
+                            OffsetPoint(j, ref k, node.MJointype);
+
+                        IntPoint pt1;
+                        if (node.MEndtype == EndType.OpenButt)
+                        {
+                            var j = len - 1;
+                            pt1 = new IntPoint(Round(_mSrcPoly[j].X + _mNormals[j].X *
+                                                     delta), Round(_mSrcPoly[j].Y + _mNormals[j].Y * delta));
+                            _mDestPoly.Add(pt1);
+                            pt1 = new IntPoint(Round(_mSrcPoly[j].X - _mNormals[j].X *
+                                                     delta), Round(_mSrcPoly[j].Y - _mNormals[j].Y * delta));
+                            _mDestPoly.Add(pt1);
+                        }
                         else
-                            DoRound(j, k);
-                    }
+                        {
+                            var j = len - 1;
+                            k = len - 2;
+                            _mSinA = 0;
+                            _mNormals[j] = new DoublePoint(-_mNormals[j].X, -_mNormals[j].Y);
+                            if (node.MEndtype == EndType.OpenSquare)
+                                DoSquare(j, k);
+                            else
+                                DoRound(j, k);
+                        }
 
-                    //re-build m_normals ...
-                    for (var j = len - 1; j > 0; j--)
-                        m_normals[j] = new DoublePoint(-m_normals[j - 1].X, -m_normals[j - 1].Y);
+                        //re-build m_normals ...
+                        for (var j = len - 1; j > 0; j--)
+                            _mNormals[j] = new DoublePoint(-_mNormals[j - 1].X, -_mNormals[j - 1].Y);
 
-                    m_normals[0] = new DoublePoint(-m_normals[1].X, -m_normals[1].Y);
+                        _mNormals[0] = new DoublePoint(-_mNormals[1].X, -_mNormals[1].Y);
 
-                    k = len - 1;
-                    for (var j = k - 1; j > 0; --j)
-                        OffsetPoint(j, ref k, node.MJointype);
+                        k = len - 1;
+                        for (var j = k - 1; j > 0; --j)
+                            OffsetPoint(j, ref k, node.MJointype);
 
-                    if (node.MEndtype == EndType.OpenButt)
-                    {
-                        pt1 = new IntPoint(Round(m_srcPoly[0].X - m_normals[0].X * delta),
-                          Round(m_srcPoly[0].Y - m_normals[0].Y * delta));
-                        m_destPoly.Add(pt1);
-                        pt1 = new IntPoint(Round(m_srcPoly[0].X + m_normals[0].X * delta),
-                          Round(m_srcPoly[0].Y + m_normals[0].Y * delta));
-                        m_destPoly.Add(pt1);
-                    }
-                    else
-                    {
-                        m_sinA = 0;
-                        if (node.MEndtype == EndType.OpenSquare)
-                            DoSquare(0, 1);
+                        if (node.MEndtype == EndType.OpenButt)
+                        {
+                            pt1 = new IntPoint(Round(_mSrcPoly[0].X - _mNormals[0].X * delta),
+                                Round(_mSrcPoly[0].Y - _mNormals[0].Y * delta));
+                            _mDestPoly.Add(pt1);
+                            pt1 = new IntPoint(Round(_mSrcPoly[0].X + _mNormals[0].X * delta),
+                                Round(_mSrcPoly[0].Y + _mNormals[0].Y * delta));
+                            _mDestPoly.Add(pt1);
+                        }
                         else
-                            DoRound(0, 1);
+                        {
+                            _mSinA = 0;
+                            if (node.MEndtype == EndType.OpenSquare)
+                                DoSquare(0, 1);
+                            else
+                                DoRound(0, 1);
+                        }
+                        _mDestPolys.Add(_mDestPoly);
                     }
-                    m_destPolys.Add(m_destPoly);
+                        break;
                 }
             }
         }
@@ -4548,7 +4541,7 @@ namespace TVGL.Boolean_Operations.Clipper
             DoOffset(delta);
             //now clean up 'corners' ...
             var clipper = new Clipper();
-            clipper.AddPaths(m_destPolys, PolyType.Subject, true);
+            clipper.AddPaths(_mDestPolys, PolyType.Subject, true);
             if (delta > 0)
             {
                 clipper.Execute(ClipType.Union, solution,
@@ -4556,13 +4549,13 @@ namespace TVGL.Boolean_Operations.Clipper
             }
             else
             {
-                var r = ClipperBase.GetBounds(m_destPolys);
+                var r = ClipperBase.GetBounds(_mDestPolys);
                 var outerPath = new Path(4)
                 {
-                    new IntPoint(r.left - 10, r.bottom + 10),
-                    new IntPoint(r.right + 10, r.bottom + 10),
-                    new IntPoint(r.right + 10, r.top - 10),
-                    new IntPoint(r.left - 10, r.top - 10)
+                    new IntPoint(r.Left - 10, r.Bottom + 10),
+                    new IntPoint(r.Right + 10, r.Bottom + 10),
+                    new IntPoint(r.Right + 10, r.Top - 10),
+                    new IntPoint(r.Left - 10, r.Top - 10)
                 };
 
 
@@ -4582,7 +4575,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
             //now clean up 'corners' ...
             var clipper = new Clipper();
-            clipper.AddPaths(m_destPolys, PolyType.Subject, true);
+            clipper.AddPaths(_mDestPolys, PolyType.Subject, true);
             if (delta > 0)
             {
                 clipper.Execute(ClipType.Union, solution,
@@ -4590,13 +4583,13 @@ namespace TVGL.Boolean_Operations.Clipper
             }
             else
             {
-                var r = ClipperBase.GetBounds(m_destPolys);
+                var r = ClipperBase.GetBounds(_mDestPolys);
                 var outerPath = new Path(4)
                 {
-                    new IntPoint(r.left - 10, r.bottom + 10),
-                    new IntPoint(r.right + 10, r.bottom + 10),
-                    new IntPoint(r.right + 10, r.top - 10),
-                    new IntPoint(r.left - 10, r.top - 10)
+                    new IntPoint(r.Left - 10, r.Bottom + 10),
+                    new IntPoint(r.Right + 10, r.Bottom + 10),
+                    new IntPoint(r.Right + 10, r.Top - 10),
+                    new IntPoint(r.Left - 10, r.Top - 10)
                 };
 
 
@@ -4606,11 +4599,11 @@ namespace TVGL.Boolean_Operations.Clipper
                 //remove the outer PolyNode rectangle ...
                 if (solution.ChildCount == 1 && solution.Childs[0].ChildCount > 0)
                 {
-                    PolyNode outerNode = solution.Childs[0];
+                    var outerNode = solution.Childs[0];
                     solution.Childs.Capacity = outerNode.ChildCount;
                     solution.Childs[0] = outerNode.Childs[0];
                     solution.Childs[0].MParent = solution;
-                    for (int i = 1; i < outerNode.ChildCount; i++)
+                    for (var i = 1; i < outerNode.ChildCount; i++)
                         solution.AddChild(outerNode.Childs[i]);
                 }
                 else
@@ -4622,39 +4615,39 @@ namespace TVGL.Boolean_Operations.Clipper
         void OffsetPoint(int j, ref int k, JoinType jointype)
         {
             //cross product ...
-            m_sinA = (m_normals[k].X * m_normals[j].Y - m_normals[j].X * m_normals[k].Y);
+            _mSinA = (_mNormals[k].X * _mNormals[j].Y - _mNormals[j].X * _mNormals[k].Y);
 
-            if (Math.Abs(m_sinA * m_delta) < 1.0)
+            if (Math.Abs(_mSinA * _mDelta) < 1.0)
             {
                 //dot product ...
-                double cosA = (m_normals[k].X * m_normals[j].X + m_normals[j].Y * m_normals[k].Y);
+                var cosA = (_mNormals[k].X * _mNormals[j].X + _mNormals[j].Y * _mNormals[k].Y);
                 if (cosA > 0) // angle ==> 0 degrees
                 {
-                    m_destPoly.Add(new IntPoint(Round(m_srcPoly[j].X + m_normals[k].X * m_delta),
-                      Round(m_srcPoly[j].Y + m_normals[k].Y * m_delta)));
+                    _mDestPoly.Add(new IntPoint(Round(_mSrcPoly[j].X + _mNormals[k].X * _mDelta),
+                      Round(_mSrcPoly[j].Y + _mNormals[k].Y * _mDelta)));
                     return;
                 }
                 //else angle ==> 180 degrees   
             }
-            else if (m_sinA > 1.0) m_sinA = 1.0;
-            else if (m_sinA < -1.0) m_sinA = -1.0;
+            else if (_mSinA > 1.0) _mSinA = 1.0;
+            else if (_mSinA < -1.0) _mSinA = -1.0;
 
-            if (m_sinA * m_delta < 0)
+            if (_mSinA * _mDelta < 0)
             {
-                m_destPoly.Add(new IntPoint(Round(m_srcPoly[j].X + m_normals[k].X * m_delta),
-                  Round(m_srcPoly[j].Y + m_normals[k].Y * m_delta)));
-                m_destPoly.Add(m_srcPoly[j]);
-                m_destPoly.Add(new IntPoint(Round(m_srcPoly[j].X + m_normals[j].X * m_delta),
-                  Round(m_srcPoly[j].Y + m_normals[j].Y * m_delta)));
+                _mDestPoly.Add(new IntPoint(Round(_mSrcPoly[j].X + _mNormals[k].X * _mDelta),
+                  Round(_mSrcPoly[j].Y + _mNormals[k].Y * _mDelta)));
+                _mDestPoly.Add(_mSrcPoly[j]);
+                _mDestPoly.Add(new IntPoint(Round(_mSrcPoly[j].X + _mNormals[j].X * _mDelta),
+                  Round(_mSrcPoly[j].Y + _mNormals[j].Y * _mDelta)));
             }
             else
                 switch (jointype)
                 {
                     case JoinType.Miter:
                         {
-                            double r = 1 + (m_normals[j].X * m_normals[k].X +
-                              m_normals[j].Y * m_normals[k].Y);
-                            if (r >= m_miterLim) DoMiter(j, k, r); else DoSquare(j, k);
+                            double r = 1 + (_mNormals[j].X * _mNormals[k].X +
+                              _mNormals[j].Y * _mNormals[k].Y);
+                            if (r >= _mMiterLim) DoMiter(j, k, r); else DoSquare(j, k);
                             break;
                         }
                     case JoinType.Square: DoSquare(j, k); break;
@@ -4666,44 +4659,44 @@ namespace TVGL.Boolean_Operations.Clipper
 
         internal void DoSquare(int j, int k)
         {
-            double dx = Math.Tan(Math.Atan2(m_sinA,
-                m_normals[k].X * m_normals[j].X + m_normals[k].Y * m_normals[j].Y) / 4);
-            m_destPoly.Add(new IntPoint(
-                Round(m_srcPoly[j].X + m_delta * (m_normals[k].X - m_normals[k].Y * dx)),
-                Round(m_srcPoly[j].Y + m_delta * (m_normals[k].Y + m_normals[k].X * dx))));
-            m_destPoly.Add(new IntPoint(
-                Round(m_srcPoly[j].X + m_delta * (m_normals[j].X + m_normals[j].Y * dx)),
-                Round(m_srcPoly[j].Y + m_delta * (m_normals[j].Y - m_normals[j].X * dx))));
+            var dx = Math.Tan(Math.Atan2(_mSinA,
+                _mNormals[k].X * _mNormals[j].X + _mNormals[k].Y * _mNormals[j].Y) / 4);
+            _mDestPoly.Add(new IntPoint(
+                Round(_mSrcPoly[j].X + _mDelta * (_mNormals[k].X - _mNormals[k].Y * dx)),
+                Round(_mSrcPoly[j].Y + _mDelta * (_mNormals[k].Y + _mNormals[k].X * dx))));
+            _mDestPoly.Add(new IntPoint(
+                Round(_mSrcPoly[j].X + _mDelta * (_mNormals[j].X + _mNormals[j].Y * dx)),
+                Round(_mSrcPoly[j].Y + _mDelta * (_mNormals[j].Y - _mNormals[j].X * dx))));
         }
         //------------------------------------------------------------------------------
 
         internal void DoMiter(int j, int k, double r)
         {
-            double q = m_delta / r;
-            m_destPoly.Add(new IntPoint(Round(m_srcPoly[j].X + (m_normals[k].X + m_normals[j].X) * q),
-                Round(m_srcPoly[j].Y + (m_normals[k].Y + m_normals[j].Y) * q)));
+            double q = _mDelta / r;
+            _mDestPoly.Add(new IntPoint(Round(_mSrcPoly[j].X + (_mNormals[k].X + _mNormals[j].X) * q),
+                Round(_mSrcPoly[j].Y + (_mNormals[k].Y + _mNormals[j].Y) * q)));
         }
         //------------------------------------------------------------------------------
 
         internal void DoRound(int j, int k)
         {
-            var a = Math.Atan2(m_sinA,
-            m_normals[k].X * m_normals[j].X + m_normals[k].Y * m_normals[j].Y);
-            var steps = Math.Max((int)Round(m_StepsPerRad * Math.Abs(a)), 1);
+            var a = Math.Atan2(_mSinA,
+            _mNormals[k].X * _mNormals[j].X + _mNormals[k].Y * _mNormals[j].Y);
+            var steps = Math.Max((int)Round(_mStepsPerRad * Math.Abs(a)), 1);
 
-            double x = m_normals[k].X, y = m_normals[k].Y;
+            double x = _mNormals[k].X, y = _mNormals[k].Y;
             for (var i = 0; i < steps; ++i)
             {
-                m_destPoly.Add(new IntPoint(
-                    Round(m_srcPoly[j].X + x * m_delta),
-                    Round(m_srcPoly[j].Y + y * m_delta)));
-                var X2 = x;
-                x = x * m_cos - m_sin * y;
-                y = X2 * m_sin + y * m_cos;
+                _mDestPoly.Add(new IntPoint(
+                    Round(_mSrcPoly[j].X + x * _mDelta),
+                    Round(_mSrcPoly[j].Y + y * _mDelta)));
+                var x2 = x;
+                x = x * _mCos - _mSin * y;
+                y = x2 * _mSin + y * _mCos;
             }
-            m_destPoly.Add(new IntPoint(
-            Round(m_srcPoly[j].X + m_normals[j].X * m_delta),
-            Round(m_srcPoly[j].Y + m_normals[j].Y * m_delta)));
+            _mDestPoly.Add(new IntPoint(
+            Round(_mSrcPoly[j].X + _mNormals[j].X * _mDelta),
+            Round(_mSrcPoly[j].Y + _mNormals[j].Y * _mDelta)));
         }
         //------------------------------------------------------------------------------
     }
