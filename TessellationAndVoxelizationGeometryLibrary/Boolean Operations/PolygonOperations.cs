@@ -485,13 +485,6 @@ namespace TVGL.Boolean_Operations.Clipper
             set;
         }
 
-        internal void Swap(ref double val1, ref double val2)
-        {
-            var tmp = val1;
-            val1 = val2;
-            val2 = tmp;
-        }
-
         internal static bool IsHorizontal(TEdge e)
         {
             return e.Delta.Y.IsNegligible();
@@ -1000,12 +993,14 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void ReverseHorizontal(TEdge e)
+        private static void ReverseHorizontal(TEdge edge)
         {
             //swap horizontal edges' top and bottom x's so they follow the natural
             //progression of the bounds - ie so their xbots will align with the
             //adjoining lower edge. [Helpful in the ProcessHorizontal() method.]
-            Swap(ref e.Top.X, ref e.Bot.X);
+            var temp = edge.Top.X;
+            edge.Top.X = edge.Bot.X;
+            edge.Bot.X = temp;
         }
         //------------------------------------------------------------------------------
 
@@ -1954,8 +1949,18 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private bool HorzSegmentsOverlap(double seg1A, double seg1B, double seg2A, double seg2B)
         {
-            if (seg1A > seg1B) Swap(ref seg1A, ref seg1B);
-            if (seg2A > seg2B) Swap(ref seg2A, ref seg2B);
+            if (seg1A > seg1B)
+            {
+                var temp = seg1A;
+                seg1A = seg1B;
+                seg1B = temp;
+            }
+            if (seg2A > seg2B)
+            {
+                var temp = seg2A;
+                seg2A = seg2B;
+                seg2B = temp;
+            }
             return (seg1A < seg2B) && (seg2A < seg1B);
         }
         //------------------------------------------------------------------------------
