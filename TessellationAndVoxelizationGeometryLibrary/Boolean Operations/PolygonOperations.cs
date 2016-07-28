@@ -264,142 +264,6 @@ namespace TVGL.Boolean_Operations.Clipper
     }
     #endregion
 
-    #region Int128 class Structure
-    //------------------------------------------------------------------------------
-    // Int128 struct (enables safe math on signed 64bit integers)
-    // eg Int128 val1((Int64)9223372036854775807); //ie 2^63 -1
-    //    Int128 val2((Int64)9223372036854775807);
-    //    Int128 val3 = val1 * val2;
-    //    val3.ToString => "85070591730234615847396907784232501249" (8.5e+37)
-    //------------------------------------------------------------------------------
-
-    internal struct Int128
-    {
-        private long _hi;
-        private ulong _lo;
-
-        internal Int128(long _lo)
-        {
-            this._lo = (ulong)_lo;
-            if (_lo < 0) _hi = -1;
-            else _hi = 0;
-        }
-
-        internal Int128(long _hi, ulong _lo)
-        {
-            this._lo = _lo;
-            this._hi = _hi;
-        }
-
-        internal Int128(Int128 val)
-        {
-            _hi = val._hi;
-            _lo = val._lo;
-        }
-
-        internal bool IsNegative()
-        {
-            return _hi < 0;
-        }
-
-        public static bool operator ==(Int128 val1, Int128 val2)
-        {
-            if ((object)val1 == (object)val2) return true;
-            return (val1._hi == val2._hi && val1._lo == val2._lo);
-        }
-
-        public static bool operator !=(Int128 val1, Int128 val2)
-        {
-            return !(val1 == val2);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (!(obj is Int128))
-                return false;
-            var i128 = (Int128)obj;
-            return (i128._hi == _hi && i128._lo == _lo);
-        }
-
-        public override int GetHashCode()
-        {
-            return _hi.GetHashCode() ^ _lo.GetHashCode();
-        }
-
-        public static bool operator >(Int128 val1, Int128 val2)
-        {
-            if (val1._hi != val2._hi)
-                return val1._hi > val2._hi;
-            return val1._lo > val2._lo;
-        }
-
-        public static bool operator <(Int128 val1, Int128 val2)
-        {
-            if (val1._hi != val2._hi)
-                return val1._hi < val2._hi;
-            return val1._lo < val2._lo;
-        }
-
-        public static Int128 operator +(Int128 lhs, Int128 rhs)
-        {
-            lhs._hi += rhs._hi;
-            lhs._lo += rhs._lo;
-            if (lhs._lo < rhs._lo) lhs._hi++;
-            return lhs;
-        }
-
-        public static Int128 operator -(Int128 lhs, Int128 rhs)
-        {
-            return lhs + -rhs;
-        }
-
-        public static Int128 operator -(Int128 val)
-        {
-            return val._lo == 0 ? new Int128(-val._hi, 0) : new Int128(~val._hi, ~val._lo + 1);
-        }
-
-        public static explicit operator double(Int128 val)
-        {
-            const double shift64 = 18446744073709551616.0; //2^64
-            if (val._hi >= 0) return val._lo + val._hi * shift64;
-            if (val._lo == 0)
-                return val._hi * shift64;
-            return -(~val._lo + ~val._hi * shift64);
-        }
-
-        //nb: Constructing two new Int128 objects every time we want to multiply longs  
-        //is slow. So, although calling the Int128Mul method doesn't look as clean, the 
-        //code runs significantly faster than if we'd used the * operator.
-
-        internal static Int128 Int128Mul(double lhsD, double rhsD)
-        {
-            var lhs = (int) lhsD;
-            var rhs = (int) rhsD;
-            bool negate = (lhs < 0) != (rhs < 0);
-            if (lhs < 0) lhs = -lhs;
-            if (rhs < 0) rhs = -rhs;
-            ulong int1Hi = (ulong)lhs >> 32;
-            ulong int1Lo = (ulong)lhs & 0xFFFFFFFF;
-            ulong int2Hi = (ulong)rhs >> 32;
-            ulong int2Lo = (ulong)rhs & 0xFFFFFFFF;
-
-            //nb: see comments in clipper.pas
-            ulong a = int1Hi * int2Hi;
-            ulong b = int1Lo * int2Lo;
-            ulong c = int1Hi * int2Lo + int1Lo * int2Hi;
-
-            ulong lo;
-            long hi;
-            hi = (long)(a + (c >> 32));
-
-            unchecked { lo = (c << 32) + b; }
-            if (lo < b) hi++;
-            Int128 result = new Int128(hi, lo);
-            return negate ? -result : result;
-        }
-    }
-    #endregion
-
     #region Integer Point Class
     /// <summary>
     /// Integer Point with X and Y coordinates
@@ -646,15 +510,8 @@ namespace TVGL.Boolean_Operations.Clipper
         }
 
         internal bool PointOnLineSegment(IntPoint pt,
-            IntPoint linePt1, IntPoint linePt2, bool useFullRange)
+            IntPoint linePt1, IntPoint linePt2)
         {
-            if (useFullRange)
-                return (pt.X.IsPracticallySame(linePt1.X) && pt.Y.IsPracticallySame(linePt1.Y)) ||
-                    (pt.X.IsPracticallySame(linePt2.X) && pt.Y.IsPracticallySame(linePt2.Y)) ||
-                    ((pt.X > linePt1.X == pt.X < linePt2.X) &&
-                    (pt.Y > linePt1.Y == pt.Y < linePt2.Y) &&
-                    Int128.Int128Mul(pt.X - linePt1.X, linePt2.Y - linePt1.Y) ==
-                    Int128.Int128Mul(linePt2.X - linePt1.X, pt.Y - linePt1.Y));
             return ((pt.X.IsPracticallySame(linePt1.X)) && (pt.Y.IsPracticallySame(linePt1.Y))) ||
                    ((pt.X.IsPracticallySame(linePt2.X)) && (pt.Y.IsPracticallySame(linePt2.Y))) ||
                    (((pt.X > linePt1.X) == (pt.X < linePt2.X)) &&
@@ -664,12 +521,12 @@ namespace TVGL.Boolean_Operations.Clipper
 
         //------------------------------------------------------------------------------
 
-        internal bool PointOnPolygon(IntPoint pt, OutPt pp, bool useFullRange)
+        internal bool PointOnPolygon(IntPoint pt, OutPt pp)
         {
             OutPt pp2 = pp;
             while (true)
             {
-                if (PointOnLineSegment(pt, pp2.Pt, pp2.Next.Pt, useFullRange))
+                if (PointOnLineSegment(pt, pp2.Pt, pp2.Next.Pt))
                     return true;
                 pp2 = pp2.Next;
                 if (pp2 == pp) break;
@@ -678,31 +535,22 @@ namespace TVGL.Boolean_Operations.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal static bool SlopesEqual(TEdge e1, TEdge e2, bool useFullRange)
+        internal static bool SlopesEqual(TEdge e1, TEdge e2)
         {
-            if (useFullRange)
-                return Int128.Int128Mul(e1.Delta.Y, e2.Delta.X) ==
-                    Int128.Int128Mul(e1.Delta.X, e2.Delta.Y);
             return (e1.Delta.Y * e2.Delta.X).IsPracticallySame(e1.Delta.X * e2.Delta.Y);
         }
         //------------------------------------------------------------------------------
 
         protected static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
-            IntPoint pt3, bool useFullRange)
+            IntPoint pt3)
         {
-            if (useFullRange)
-                return Int128.Int128Mul(pt1.Y - pt2.Y, pt2.X - pt3.X) ==
-                       Int128.Int128Mul(pt1.X - pt2.X, pt2.Y - pt3.Y);
-                return ((pt1.Y - pt2.Y)*(pt2.X - pt3.X) - (pt1.X - pt2.X)*(pt2.Y - pt3.Y)).IsNegligible();
+            return ((pt1.Y - pt2.Y)*(pt2.X - pt3.X) - (pt1.X - pt2.X)*(pt2.Y - pt3.Y)).IsNegligible();
         }
         //------------------------------------------------------------------------------
 
         protected static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
-            IntPoint pt3, IntPoint pt4, bool useFullRange)
+            IntPoint pt3, IntPoint pt4)
         {
-            if (useFullRange)
-                return Int128.Int128Mul(pt1.Y - pt2.Y, pt3.X - pt4.X) ==
-                  Int128.Int128Mul(pt1.X - pt2.X, pt3.Y - pt4.Y);
             return ((pt1.Y - pt2.Y) * (pt3.X - pt4.X) - (pt1.X - pt2.X) * (pt3.Y - pt4.Y)).IsNegligible();
         }
 
@@ -731,7 +579,7 @@ namespace TVGL.Boolean_Operations.Clipper
         {
             while (MMinimaList != null)
             {
-                LocalMinima tmpLm = MMinimaList.Next;
+                var tmpLm = MMinimaList.Next;
                 MMinimaList = null;
                 MMinimaList = tmpLm;
             }
@@ -961,7 +809,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 if (edge.Prev == edge.Next)
                     break; //only two vertices
                 else if (closed &&
-                  SlopesEqual(edge.Prev.Curr, edge.Curr, edge.Next.Curr, MUseFullRange) &&
+                  SlopesEqual(edge.Prev.Curr, edge.Curr, edge.Next.Curr) &&
                   (!PreserveCollinear ||
                   !Pt2IsBetweenPt1AndPt3(edge.Prev.Curr, edge.Curr, edge.Next.Curr)))
                 {
@@ -1550,7 +1398,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 if (leftBoundEdge.OutIdx >= 0 && leftBoundEdge.PrevInAEL != null &&
                   leftBoundEdge.PrevInAEL.Curr.X.IsPracticallySame(leftBoundEdge.Bot.X) &&
                   leftBoundEdge.PrevInAEL.OutIdx >= 0 &&
-                  SlopesEqual(leftBoundEdge.PrevInAEL, leftBoundEdge, MUseFullRange) &&
+                  SlopesEqual(leftBoundEdge.PrevInAEL, leftBoundEdge) &&
                   leftBoundEdge.WindDelta != 0 && leftBoundEdge.PrevInAEL.WindDelta != 0)
                 {
                     var outPoint2 = AddOutPt(leftBoundEdge.PrevInAEL, leftBoundEdge.Bot);
@@ -1559,7 +1407,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
                 if (leftBoundEdge.NextInAEL == rightBoundEdge) continue;
                 if (rightBoundEdge.OutIdx >= 0 && rightBoundEdge.PrevInAEL.OutIdx >= 0 &&
-                    SlopesEqual(rightBoundEdge.PrevInAEL, rightBoundEdge, MUseFullRange) &&
+                    SlopesEqual(rightBoundEdge.PrevInAEL, rightBoundEdge) &&
                     rightBoundEdge.WindDelta != 0 && rightBoundEdge.PrevInAEL.WindDelta != 0)
                 {
                     var outPoint2 = AddOutPt(rightBoundEdge.PrevInAEL, rightBoundEdge.Bot);
@@ -2029,7 +1877,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
             if (prevE != null && prevE.OutIdx >= 0 &&
                 TopX(prevE, pt.Y).IsPracticallySame(TopX(e, pt.Y)) &&
-                SlopesEqual(e, prevE, MUseFullRange) &&
+                SlopesEqual(e, prevE) &&
                 (e.WindDelta != 0) && (prevE.WindDelta != 0))
             {
                 var outPt = AddOutPt(prevE, pt);
@@ -2749,7 +2597,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     if (ePrev != null && ePrev.Curr.X.IsPracticallySame(horzEdge.Bot.X) &&
                       ePrev.Curr.Y.IsPracticallySame(horzEdge.Bot.Y) && ePrev.WindDelta != 0 &&
                       (ePrev.OutIdx >= 0 && ePrev.Curr.Y > ePrev.Top.Y &&
-                      SlopesEqual(horzEdge, ePrev, MUseFullRange)))
+                      SlopesEqual(horzEdge, ePrev)))
                     {
                         var op2 = AddOutPt(ePrev, horzEdge.Bot);
                         AddJoin(op1, op2, horzEdge.Top);
@@ -2757,7 +2605,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     else if (eNext != null && eNext.Curr.X.IsPracticallySame(horzEdge.Bot.X) &&
                       eNext.Curr.Y.IsPracticallySame(horzEdge.Bot.Y) && eNext.WindDelta != 0 &&
                       eNext.OutIdx >= 0 && eNext.Curr.Y > eNext.Top.Y &&
-                      SlopesEqual(horzEdge, eNext, MUseFullRange))
+                      SlopesEqual(horzEdge, eNext))
                     {
                         var op2 = AddOutPt(eNext, horzEdge.Bot);
                         AddJoin(op1, op2, horzEdge.Top);
@@ -3091,7 +2939,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     if (ePrev != null && ePrev.Curr.X.IsPracticallySame(e.Bot.X) &&
                       ePrev.Curr.Y.IsPracticallySame(e.Bot.Y) && op != null &&
                       ePrev.OutIdx >= 0 && ePrev.Curr.Y > ePrev.Top.Y &&
-                      SlopesEqual(e, ePrev, MUseFullRange) &&
+                      SlopesEqual(e, ePrev) &&
                       (e.WindDelta != 0) && (ePrev.WindDelta != 0))
                     {
                         OutPt op2 = AddOutPt(ePrev, e.Bot);
@@ -3100,7 +2948,7 @@ namespace TVGL.Boolean_Operations.Clipper
                     else if (eNext != null && eNext.Curr.X.IsPracticallySame(e.Bot.X) &&
                       eNext.Curr.Y.IsPracticallySame(e.Bot.Y) && op != null &&
                       eNext.OutIdx >= 0 && eNext.Curr.Y > eNext.Top.Y &&
-                      SlopesEqual(e, eNext, MUseFullRange) &&
+                      SlopesEqual(e, eNext) &&
                       (e.WindDelta != 0) && (eNext.WindDelta != 0))
                     {
                         OutPt op2 = AddOutPt(eNext, e.Bot);
@@ -3267,7 +3115,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 }
                 //test for duplicate points and collinear edges ...
                 if ((pp.Pt == pp.Next.Pt) || (pp.Pt == pp.Prev.Pt) ||
-                  (SlopesEqual(pp.Prev.Pt, pp.Pt, pp.Next.Pt, MUseFullRange) &&
+                  (SlopesEqual(pp.Prev.Pt, pp.Pt, pp.Next.Pt) &&
                   (!PreserveCollinear || !Pt2IsBetweenPt1AndPt3(pp.Prev.Pt, pp.Pt, pp.Next.Pt))))
                 {
                     lastOk = null;
@@ -3528,24 +3376,24 @@ namespace TVGL.Boolean_Operations.Clipper
                 op1B = op1.Next;
                 while ((op1B.Pt == op1.Pt) && (op1B != op1)) op1B = op1B.Next;
                 var reverse1 = ((op1B.Pt.Y > op1.Pt.Y) ||
-                  !SlopesEqual(op1.Pt, op1B.Pt, j.OffPt, MUseFullRange));
+                  !SlopesEqual(op1.Pt, op1B.Pt, j.OffPt));
                 if (reverse1)
                 {
                     op1B = op1.Prev;
                     while ((op1B.Pt == op1.Pt) && (op1B != op1)) op1B = op1B.Prev;
                     if ((op1B.Pt.Y > op1.Pt.Y) ||
-                      !SlopesEqual(op1.Pt, op1B.Pt, j.OffPt, MUseFullRange)) return false;
+                      !SlopesEqual(op1.Pt, op1B.Pt, j.OffPt)) return false;
                 }
                 op2B = op2.Next;
                 while ((op2B.Pt == op2.Pt) && (op2B != op2)) op2B = op2B.Next;
                 var reverse2 = ((op2B.Pt.Y > op2.Pt.Y) ||
-                  !SlopesEqual(op2.Pt, op2B.Pt, j.OffPt, MUseFullRange));
+                  !SlopesEqual(op2.Pt, op2B.Pt, j.OffPt));
                 if (reverse2)
                 {
                     op2B = op2.Prev;
                     while ((op2B.Pt == op2.Pt) && (op2B != op2)) op2B = op2B.Prev;
                     if ((op2B.Pt.Y > op2.Pt.Y) ||
-                      !SlopesEqual(op2.Pt, op2B.Pt, j.OffPt, MUseFullRange)) return false;
+                      !SlopesEqual(op2.Pt, op2B.Pt, j.OffPt)) return false;
                 }
 
                 if ((op1B == op1) || (op2B == op2) || (op1B == op2B) ||
