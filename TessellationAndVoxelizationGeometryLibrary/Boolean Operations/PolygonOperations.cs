@@ -63,8 +63,10 @@ using TVGL.Boolean_Operations.Clipper;
 
 namespace TVGL.Boolean_Operations
 {
-    #region internal Interface with Clipper
+    using Path = List<IntPoint>;
+    using Paths = List<List<IntPoint>>;
 
+    #region internal Interface with Clipper
     /// <summary>
     /// Interface to the 2D offset/clipping library: Clipper http://www.angusj.com/delphi/clipper.php
     /// </summary>
@@ -120,6 +122,89 @@ namespace TVGL.Boolean_Operations
                 offsetLoops.Add(offsetLoop);
             }
             return offsetLoops;
+        }
+
+        /// <summary>
+        /// Union. Joins polygons that are touching into merged larger polygons.
+        /// </summary>
+        /// <param name="loops"></param>
+        /// <param name="scale"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Union(List<List<Point>> loops, double scale = 100000)
+        {
+            var fillMethod = PolyFillType.Positive;
+            var solution = new Paths();
+            var polytree = new PolyTree();
+            var clipper = new Clipper.Clipper();
+
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            var subject =
+                loops.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+            
+            //Begin an evaluation
+            clipper.StrictlySimple = true;
+            clipper.AddPaths(subject, PolyType.Subject, true);
+
+            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
+            if(!result) throw new Exception("Clipper Union Failed");
+            var outputLoops = new List<List<Point>>();
+            foreach (var loop in solution)
+            {
+                var offsetLoop = new List<Point>();
+                for (var i = 0; i < loop.Count; i++)
+                {
+                    var intPoint = loop[i];
+                    var x = Convert.ToDouble(intPoint.X) / scale;
+                    var y = Convert.ToDouble(intPoint.Y) / scale;
+                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
+                }
+                outputLoops.Add(offsetLoop);
+            }
+            return outputLoops;
+        }
+
+        /// <summary>
+        /// Union. Joins two polygons that are touching or overlapping. Returns false if they are not connected.
+        /// </summary>
+        /// <param name="loops"></param>
+        /// <param name="scale"></param>
+        /// <param name="loop1"></param>
+        /// <param name="loop2"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Union(List<Point> loop1, List<Point> loop2, double scale = 100000)
+        {
+            const PolyFillType fillMethod = PolyFillType.Positive;
+            var solution = new Paths();
+            var subject = new Paths();
+            var clipper = new Clipper.Clipper();
+
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            subject.Add(loop1.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList());
+            subject.Add(loop2.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList());
+
+            //Setup Clipper
+            clipper.StrictlySimple = true;
+            clipper.AddPaths(subject, PolyType.Subject, true);
+            
+            //Begin an evaluation
+            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
+            if (!result) throw new Exception("Clipper Union Failed");
+            var outputLoops = new List<List<Point>>();
+            foreach (var loop in solution)
+            {
+                var offsetLoop = new List<Point>();
+                for (var i = 0; i < loop.Count; i++)
+                {
+                    var intPoint = loop[i];
+                    var x = Convert.ToDouble(intPoint.X) / scale;
+                    var y = Convert.ToDouble(intPoint.Y) / scale;
+                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
+                }
+                outputLoops.Add(offsetLoop);
+            }
+            return outputLoops;
         }
     }
 
