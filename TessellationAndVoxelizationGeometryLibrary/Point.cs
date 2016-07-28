@@ -116,6 +116,30 @@ namespace TVGL
         /// <summary>
         ///     Initializes a new instance of the <see cref="Point" /> class.
         /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        public Point(double x, double y)
+            : this(null, x, y, 0.0)
+        {
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Point" /> class.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="point"></param>
+        public Point(Point point)
+        {
+            X = point.X;
+            Y = point.Y;
+            Z = point.Z;
+            References = point.References;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Point" /> class.
+        /// </summary>
         /// <param name="vertex">The vertex.</param>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
