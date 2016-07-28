@@ -12,8 +12,8 @@ using TVGL.IOFunctions;
 
 namespace TVGL_Test
 {
-    using Path = List<Point>;
-    using Paths = List<List<Point>>;
+    using Path = List<IntPoint>;
+    using Paths = List<List<IntPoint>>;
 
     internal class Program
     {
@@ -144,7 +144,7 @@ namespace TVGL_Test
 
             for (var i = 0; i < ints.Length; i += 2)
             {
-                polygon.Add(new Point(scale * ints[i], scale * ints[i + 1]));
+                polygon.Add(new IntPoint(scale * ints[i], scale * ints[i + 1]));
             }
 
             return polygon;
