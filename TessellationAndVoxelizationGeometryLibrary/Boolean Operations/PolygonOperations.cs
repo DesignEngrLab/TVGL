@@ -3624,7 +3624,7 @@ namespace TVGL.Boolean_Operations.Clipper
                 ip = ipNext;
             }
             return result;
-        }
+        } 
         //------------------------------------------------------------------------------
 
         private static int PointInPolygon(IntPoint pt, OutPt op)

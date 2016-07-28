@@ -130,7 +130,7 @@ namespace TVGL
         /// Gets or sets the units.
         /// </summary>
         /// <value>The units.</value>
-        public readonly UnitType Units;
+        public UnitType Units;
 
         /// <summary>
         /// The language

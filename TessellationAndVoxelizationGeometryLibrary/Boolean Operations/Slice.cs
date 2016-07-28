@@ -33,7 +33,7 @@ namespace TVGL.Boolean_Operations
         {
             ContactData contactData;
             GetContactData(ts, plane, out contactData);
-            MakeSolids(contactData, out positiveSideSolids, out negativeSideSolids);
+            MakeSolids(contactData, ts.Units, out positiveSideSolids, out negativeSideSolids);
             var allSolids = new List<TessellatedSolid>(positiveSideSolids);
             allSolids.AddRange(negativeSideSolids);
             var totalVolume1 = 0.0;
@@ -106,10 +106,10 @@ namespace TVGL.Boolean_Operations
         /// <param name="contactData"></param>
         /// <param name="positiveSideSolids"></param>
         /// <param name="negativeSideSolids"></param>
-        public static void MakeSolids(ContactData contactData, out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
+        public static void MakeSolids(ContactData contactData, UnitType unitType, out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
-            positiveSideSolids = contactData.PositiveSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces)).ToList();
-            negativeSideSolids = contactData.NegativeSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces)).ToList();
+            positiveSideSolids = contactData.PositiveSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, null, unitType)).ToList();
+            negativeSideSolids = contactData.NegativeSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, null, unitType)).ToList();
         }
 
 
