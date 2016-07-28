@@ -395,6 +395,13 @@ namespace TVGL.Boolean_Operations.Clipper
         internal TEdge PrevInAEL;
         internal TEdge NextInSel;
         internal TEdge PrevInSel;
+        internal TEdge()
+        {
+            Bot = new IntPoint(0, 0);
+            Curr = new IntPoint(0, 0);
+            Top = new IntPoint(0, 0);
+            Delta = new IntPoint(0, 0);
+        }
     }
     #endregion
 
@@ -2784,7 +2791,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
         private static void IntersectPoint(TEdge edge1, TEdge edge2, out IntPoint ip)
         {
-            ip = new IntPoint();
+            ip = new IntPoint(0,0);
             double b1, b2;
             //nb: with very large coordinate values, it's possible for SlopesEqual() to 
             //return false but for the edge.Dx value be equal due to double precision rounding.
