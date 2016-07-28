@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using MIConvexHull;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -135,7 +136,9 @@ namespace TVGL
         public Point(IList<double> coordinates) : this(null, coordinates[0], coordinates[1], coordinates[2])
         {
         }
+        #endregion
 
+        #region Public Methods
         /// <summary>
         ///     this point
         /// </summary>
@@ -146,6 +149,71 @@ namespace TVGL
             get { return Position[index]; }
         }
 
+        /// <summary>
+        /// Gets whether points are equal
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator ==(Point a, Point b)
+        {
+            if (ReferenceEquals(a, b)) return true;
+            if (ReferenceEquals(a, null) || ReferenceEquals(b, null)) return false;
+            return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
+        }
+
+        /// <summary>
+        /// Gets whether points are not equal
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator !=(Point a, Point b)
+        {
+            if (ReferenceEquals(a, null) || ReferenceEquals(b, null)) return true;
+            return !a.X.IsPracticallySame(b.X) || !a.Y.IsPracticallySame(b.Y);
+        }
+
+        /// <summary>
+        /// Checks if this intPoint is equalt to the given object.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Point)) return false;
+            var a = (Point) obj;
+            return X.IsPracticallySame(a.X) && Y.IsPracticallySame(a.Y);
+        }
+
+        /// <summary>
+        /// Gets whether the given point is the same as this point.
+        /// </summary>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        protected bool Equals(Point b)
+        {
+            var a = this;
+            if (ReferenceEquals(a, b)) return true;
+            if (ReferenceEquals(b, null)) return false;
+            return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
+        }
+
+        /// <summary>
+        /// Gets the HashCode for this Point
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = X.GetHashCode();
+                hashCode = (hashCode*397) ^ Y.GetHashCode();
+                hashCode = (hashCode*397) ^ Z.GetHashCode();
+                hashCode = (hashCode*397) ^ (References?.GetHashCode() ?? 0);
+                return hashCode;
+            }
+        }
         #endregion
     }
 }
