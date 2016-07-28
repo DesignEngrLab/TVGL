@@ -181,8 +181,8 @@ namespace TVGL
         /// <returns></returns>
         public static bool operator ==(Point a, Point b)
         {
-            if (ReferenceEquals(a, b)) return true;
-            if (ReferenceEquals(a, null) || ReferenceEquals(b, null)) return false;
+            //if (ReferenceEquals(a, b)) return true;
+            //if (ReferenceEquals(a, null) || ReferenceEquals(b, null)) return false;
             return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
         }
 
@@ -194,7 +194,7 @@ namespace TVGL
         /// <returns></returns>
         public static bool operator !=(Point a, Point b)
         {
-            if (ReferenceEquals(a, null) || ReferenceEquals(b, null)) return true;
+           // if (ReferenceEquals(a, null) || ReferenceEquals(b, null)) return true;
             return !a.X.IsPracticallySame(b.X) || !a.Y.IsPracticallySame(b.Y);
         }
 
@@ -218,8 +218,6 @@ namespace TVGL
         protected bool Equals(Point b)
         {
             var a = this;
-            if (ReferenceEquals(a, b)) return true;
-            if (ReferenceEquals(b, null)) return false;
             return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
         }
 

@@ -278,13 +278,10 @@ namespace TVGL.Boolean_Operations.Clipper
         /// Y value for integer point
         /// </summary>
         public double Y;
-        internal IntPoint(long x, long y)
-        {
-            X = x; Y = y;
-        }
+
         internal IntPoint(double x, double y)
         {
-            X = (long)x; Y = (long)y;
+            X = x; Y = y;
         }
 
         internal IntPoint(IntPoint pt)
