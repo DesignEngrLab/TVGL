@@ -466,13 +466,11 @@ namespace TVGL.Boolean_Operations.Clipper
     #region ClipperBase Class
     internal class ClipperBase
     {
-        protected const double Horizontal = -3.4E+38;
+        protected const double Horizontal = -3.4E+38; //The code fails if this is set to negative infinity
         protected const int Skip = -2;
         protected const int Unassigned = -1;
-        protected const double Tolerance = 1.0E-20;
+        protected static readonly double Tolerance = StarMath.EqualityTolerance;
         internal static bool near_zero(double val) { return (val > -Tolerance) && (val < Tolerance); }
-        internal const long LoRange = 0x3FFFFFFF;
-        internal const long HiRange = 0x3FFFFFFFFFFFFFFFL;
         internal LocalMinima MMinimaList;
         internal LocalMinima MCurrentLm;
         internal List<List<TEdge>> MEdges = new List<List<TEdge>>();
@@ -516,7 +514,7 @@ namespace TVGL.Boolean_Operations.Clipper
 
         internal bool PointOnPolygon(IntPoint pt, OutPt pp)
         {
-            OutPt pp2 = pp;
+            var pp2 = pp;
             while (true)
             {
                 if (PointOnLineSegment(pt, pp2.Pt, pp2.Next.Pt))
@@ -577,24 +575,6 @@ namespace TVGL.Boolean_Operations.Clipper
                 MMinimaList = tmpLm;
             }
             MCurrentLm = null;
-        }
-
-        private static void RangeTest(IntPoint pt, ref bool useFullRange)
-        {
-            while (true)
-            {
-                if (useFullRange)
-                {
-                    if (pt.X > HiRange || pt.Y > HiRange || -pt.X > HiRange || -pt.Y > HiRange)
-                        throw new ClipperException("Coordinate outside allowed range");
-                }
-                else if (pt.X > LoRange || pt.Y > LoRange || -pt.X > LoRange || -pt.Y > LoRange)
-                {
-                    useFullRange = true;
-                    continue;
-                }
-                break;
-            }
         }
 
         private static void InitEdge(TEdge e, TEdge eNext,
@@ -775,13 +755,10 @@ namespace TVGL.Boolean_Operations.Clipper
 
             //1. Basic (first) edge initialization ...
             edges[1].Curr = pg[1];
-            RangeTest(pg[0], ref MUseFullRange);
-            RangeTest(pg[highI], ref MUseFullRange);
             InitEdge(edges[0], edges[1], edges[highI], pg[0]);
             InitEdge(edges[highI], edges[0], edges[highI - 1], pg[highI]);
             for (int i = highI - 1; i >= 1; --i)
             {
-                RangeTest(pg[i], ref MUseFullRange);
                 InitEdge(edges[i], edges[i + 1], edges[i - 1], pg[i]);
             }
             var eStart = edges[0];
