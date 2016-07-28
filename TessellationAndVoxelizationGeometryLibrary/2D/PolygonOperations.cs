@@ -55,18 +55,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL.Boolean_Operations.Clipper;
+using TVGL._2D.Clipper;
 
 //using System.Text;          //for Int128.AsString() & StringBuilder
 //using System.IO;            //debugging with streamReader & StreamWriter
 //using System.Windows.Forms; //debugging to clipboard
 
-namespace TVGL.Boolean_Operations
+namespace TVGL._2D
 {
     using Path = List<IntPoint>;
     using Paths = List<List<IntPoint>>;
 
     #region internal Interface with Clipper
+
     /// <summary>
     /// Interface to the 2D offset/clipping library: Clipper http://www.angusj.com/delphi/clipper.php
     /// </summary>
@@ -81,7 +82,7 @@ namespace TVGL.Boolean_Operations
         /// <returns></returns>
         public static List<Point> Round(IList<Point> loop, double offset, double scale = 100000)
         {
-            var loops = new List<List<Point>> { new List<Point>(loop) };
+            var loops = new List<List<Point>> {new List<Point>(loop)};
             var offsetLoops = Round(loops, offset, scale);
             return offsetLoops.First();
         }
@@ -100,13 +101,13 @@ namespace TVGL.Boolean_Operations
         {
             //Convert Points (TVGL) to IntPoints (Clipper)
             var polygons =
-                loops.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+                loops.Select(loop => loop.Select(point => new IntPoint(point.X*scale, point.Y*scale)).ToList()).ToList();
 
             //Begin an evaluation
             var solution = new List<List<IntPoint>>();
             var clip = new ClipperOffset();
             clip.AddPaths(polygons, JoinType.Round, EndType.ClosedPolygon);
-            clip.Execute(ref solution, offset * scale);
+            clip.Execute(ref solution, offset*scale);
 
             var offsetLoops = new List<List<Point>>();
             foreach (var loop in solution)
@@ -115,33 +116,37 @@ namespace TVGL.Boolean_Operations
                 for (var i = 0; i < loop.Count; i++)
                 {
                     var intPoint = loop[i];
-                    var x = Convert.ToDouble(intPoint.X) / scale;
-                    var y = Convert.ToDouble(intPoint.Y) / scale;
-                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
+                    var x = Convert.ToDouble(intPoint.X)/scale;
+                    var y = Convert.ToDouble(intPoint.Y)/scale;
+                    offsetLoop.Add(new Point(new List<double> {x, y, 0.0}));
                 }
                 offsetLoops.Add(offsetLoop);
             }
             return offsetLoops;
         }
+    }
 
+    /// <summary>
+    /// Union of muliple polygons
+    /// </summary>
+    public static class Union
+    {
         /// <summary>
         /// Union. Joins polygons that are touching into merged larger polygons.
         /// </summary>
-        /// <param name="loops"></param>
+        /// <param name="polygons"></param>
         /// <param name="scale"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(List<List<Point>> loops, double scale = 100000)
+        public static List<List<Point>> Run(IList<List<Point>> polygons, double scale = 100000)
         {
-            var fillMethod = PolyFillType.Positive;
+            const PolyFillType fillMethod = PolyFillType.Positive;
             var solution = new Paths();
-            var polytree = new PolyTree();
             var clipper = new Clipper.Clipper();
 
             //Convert Points (TVGL) to IntPoints (Clipper)
-            var subject =
-                loops.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
-            
+            var subject = polygons.Select(polygon => polygon.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+
             //Begin an evaluation
             clipper.StrictlySimple = true;
             clipper.AddPaths(subject, PolyType.Subject, true);
@@ -165,33 +170,30 @@ namespace TVGL.Boolean_Operations
         }
 
         /// <summary>
-        /// Union. Joins two polygons that are touching or overlapping. Returns false if they are not connected.
+        /// Union. Joins polygons that are touching into merged larger polygons.
         /// </summary>
-        /// <param name="loops"></param>
+        /// <param name="otherPolygon"></param>
         /// <param name="scale"></param>
-        /// <param name="loop1"></param>
-        /// <param name="loop2"></param>
+        /// <param name="polygons"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(List<Point> loop1, List<Point> loop2, double scale = 100000)
+        public static List<List<Point>> Run(IList<List<Point>> polygons, IList<Point> otherPolygon, double scale = 100000)
         {
             const PolyFillType fillMethod = PolyFillType.Positive;
             var solution = new Paths();
-            var subject = new Paths();
             var clipper = new Clipper.Clipper();
 
             //Convert Points (TVGL) to IntPoints (Clipper)
-            subject.Add(loop1.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList());
-            subject.Add(loop2.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList());
+            var subject = polygons.Select(polygon => polygon.Select(point => new IntPoint(point.X*scale, point.Y*scale)).ToList()).ToList();
+            subject.Add(otherPolygon.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList());
 
-            //Setup Clipper
+            //Begin an evaluation
             clipper.StrictlySimple = true;
             clipper.AddPaths(subject, PolyType.Subject, true);
-            
-            //Begin an evaluation
+
             var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
             if (!result) throw new Exception("Clipper Union Failed");
-            var outputLoops = new List<List<Point>>();
+            var outputPolygons = new List<List<Point>>();
             foreach (var loop in solution)
             {
                 var offsetLoop = new List<Point>();
@@ -202,16 +204,58 @@ namespace TVGL.Boolean_Operations
                     var y = Convert.ToDouble(intPoint.Y) / scale;
                     offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
                 }
-                outputLoops.Add(offsetLoop);
+                outputPolygons.Add(offsetLoop);
             }
-            return outputLoops;
+            return outputPolygons;
+        }
+
+        /// <summary>
+        /// Union. Joins two polygons that are touching or overlapping. Returns false if they are not connected.
+        /// </summary>
+        /// <param name="scale"></param>
+        /// <param name="polygon1"></param>
+        /// <param name="polygon2"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Run(IList<Point> polygon1, IList<Point> polygon2, double scale = 100000)
+        {
+            const PolyFillType fillMethod = PolyFillType.Positive;
+            var solution = new Paths();
+            var subject = new Paths();
+            var clipper = new Clipper.Clipper();
+
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            subject.Add(polygon1.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList());
+            subject.Add(polygon2.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList());
+
+            //Setup Clipper
+            clipper.StrictlySimple = true;
+            clipper.AddPaths(subject, PolyType.Subject, true);
+            
+            //Begin an evaluation
+            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
+            if (!result) throw new Exception("Clipper Union Failed");
+            var outputPolygons = new List<List<Point>> ();
+            foreach (var loop in solution)
+            {
+                var offsetLoop = new List<Point>();
+                for (var i = 0; i < loop.Count; i++)
+                {
+                    var intPoint = loop[i];
+                    var x = Convert.ToDouble(intPoint.X) / scale;
+                    var y = Convert.ToDouble(intPoint.Y) / scale;
+                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
+                }
+                outputPolygons.Add(offsetLoop);
+            }
+            return outputPolygons;
         }
     }
 
     #endregion
 }
 
-namespace TVGL.Boolean_Operations.Clipper
+namespace TVGL._2D.Clipper
 {
     using Path = List<IntPoint>;
     using Paths = List<List<IntPoint>>;

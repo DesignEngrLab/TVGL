@@ -7,7 +7,7 @@ using System.Linq;
 using NUnit.Framework;
 using TVGL;
 using TVGL.Boolean_Operations;
-using TVGL.Boolean_Operations.Clipper;
+using TVGL._2D.Clipper;
 using TVGL.IOFunctions;
 
 namespace TVGL_Test
@@ -73,7 +73,7 @@ namespace TVGL_Test
         [STAThread]
         private static void Main(string[] args)
         {
-            Difference2();
+            //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
@@ -87,11 +87,19 @@ namespace TVGL_Test
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-             //   TestPolygon(ts[0]);
-             Presenter.ShowAndHang(ts[0]);
+                //TestPolygon(ts[0]);
+                Presenter.ShowAndHang(ts[0]);
+                TestSilhouette(ts[0]);
             }
+
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
+        }
+
+        public static void TestSilhouette(TessellatedSolid ts)
+        {
+            var silhouette = TVGL._2D.Silhouette.Run(ts, new[] {1.0, 0.0, 0.0});
+            Presenter.ShowAndHang(silhouette);
         }
 
         public static void Difference2()

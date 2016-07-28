@@ -42,9 +42,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\ContactData.cs">
       <Link>Boolean Operations\ContactData.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\PolygonOperations.cs">
-      <Link>Boolean Operations\PolygonOperations.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\Slice.cs">
       <Link>Boolean Operations\Slice.cs</Link>
     </Compile>
@@ -205,6 +202,9 @@
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="2D\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
