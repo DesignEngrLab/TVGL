@@ -39,6 +39,21 @@
     <DocumentationFile>bin\Release\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Point.cs">
+      <Link>2D\Point.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Polygon.cs">
+      <Link>2D\Polygon.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\PolygonOperations.cs">
+      <Link>2D\PolygonOperations.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\PolygonTree.cs">
+      <Link>2D\PolygonTree.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Silhouette.cs">
+      <Link>2D\Silhouette.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\ContactData.cs">
       <Link>Boolean Operations\ContactData.cs</Link>
     </Compile>
@@ -174,7 +189,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>Verbosity.cs</Link>
     </Compile>
-    <Compile Include="2D\Point.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.EdgeInitialization.cs" />
   </ItemGroup>
