@@ -60,7 +60,7 @@
     <Compile Include="2D\Silhouette.cs" />
     <Compile Include="Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs" />
     <Compile Include="Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs" />
-    <Compile Include="Point.cs" />
+    <Compile Include="2D\Point.cs" />
     <Compile Include="Primitive Surfaces\Torus.cs" />
     <Compile Include="Miscellaneous Functions\MiscFunctions.cs" />
     <Compile Include="Colors.cs" />
