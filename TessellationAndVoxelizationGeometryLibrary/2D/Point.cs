@@ -36,25 +36,40 @@ namespace TVGL
         ///     Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
-        public double X { get; private set; }
+        public double X { get; set; }
 
         /// <summary>
         ///     Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
-        public double Y { get; private set; }
+        public double Y { get; set; }
 
         /// <summary>
         ///     Gets or sets the z coordinate. If one is using Point in a 2D capacity, it can be ignored.
         /// </summary>
         /// <value>The z.</value>
-        public double Z { get; private set; }
+        public double Z { get; set; }
 
         /// <summary>
         ///     Gets or sets the references.
         /// </summary>
         /// <value>The references.</value>
         public List<Vertex> References { get; set; }
+
+        /// <summary>
+        ///     Gets or sets the index in a path
+        /// </summary>
+        public int IndexInPath { get; set; }
+
+        /// <summary>
+        ///  Gets or sets the index of the polygon that this point belongs to
+        /// </summary>
+        public int PolygonIndex { get; set; }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        public IList<Line> Lines { get; set; }
 
         /// <summary>
         ///     Gets or sets the coordinates or position.
@@ -88,6 +103,8 @@ namespace TVGL
                 Z = 0.0;
             }
         }
+
+        
 
         #endregion
 

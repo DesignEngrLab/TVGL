@@ -160,12 +160,12 @@ namespace TVGL
                         }
                         points2D.Add(newLoop.ToArray());
                     }
-                    var linesInLoops = new List<List<Line>>();
+                    var linesInLoops = new List<List<NodeLine>>();
                     var i = 0; //i is the used to set the loop ID
                     foreach (var loop in points2D)
                     {
                         var orderedLoop = new List<Node>();
-                        var linesInLoop = new List<Line>();
+                        var linesInLoop = new List<NodeLine>();
                         //Count the number of points and add to total.
                         pointCount = pointCount + loop.Length;
 
@@ -185,8 +185,8 @@ namespace TVGL
                             //Add node to the ordered loop
                             orderedLoop.Add(node);
 
-                            //Create New Line
-                            var line = new Line(previousNode, node);
+                            //Create New NodeLine
+                            var line = new NodeLine(previousNode, node);
                             previousNode.StartLine = line;
                             node.EndLine = line;
                             previousNode = node;
@@ -198,11 +198,11 @@ namespace TVGL
                         orderedLoop.Add(lastNode);
 
                         //Create both missing lines 
-                        var line1 = new Line(previousNode, lastNode);
+                        var line1 = new NodeLine(previousNode, lastNode);
                         previousNode.StartLine = line1;
                         lastNode.EndLine = line1;
                         linesInLoop.Insert(0, line1);
-                        var line2 = new Line(lastNode, firstNode);
+                        var line2 = new NodeLine(lastNode, firstNode);
                         lastNode.StartLine = line2;
                         firstNode.EndLine = line2;
                         linesInLoop.Add(line2);
@@ -245,7 +245,7 @@ namespace TVGL
                             }
 
                             //inititallize lineList 
-                            var lineList = new List<Line>();
+                            var lineList = new List<NodeLine>();
                             for (var j = 0; j < sortedGroup.Count; j++)
                             {
                                 var node = sortedGroup[j];
@@ -256,10 +256,10 @@ namespace TVGL
                                     bool isOnLine;
                                     //If remainder is not equal to 0, then it is odd.
                                     //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                                    Line leftLine;
+                                    NodeLine leftLine;
                                     if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
                                     {
-                                        Line rightLine;
+                                        NodeLine rightLine;
                                         isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                                     }
                                     else isInside = false;
@@ -484,7 +484,7 @@ namespace TVGL
                         }
 
                         //inititallize lineList and sortedNodes
-                        var lineList = new List<Line>();
+                        var lineList = new List<NodeLine>();
 
                         #region Trapezoidize Polygons
 
@@ -496,8 +496,8 @@ namespace TVGL
                         for (var j = 0; j < sortedGroup.Count; j++)
                         {
                             var node = sortedGroup[j];
-                            Line leftLine = null;
-                            Line rightLine = null;
+                            NodeLine leftLine = null;
+                            NodeLine rightLine = null;
 
                             //Check if negative loop is inside polygon 
                             //note that listPositive changes order /size , while isPositive is static like loopID.
@@ -646,7 +646,7 @@ namespace TVGL
                             var trapezoid = completedTrapezoids[j];
                             if (trapezoid.TopNode.Type == NodeType.DownwardReflex) //If upper node is reflex down (bottom node could be reflex up, reflex down, or other)
                             {
-                                var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
+                                var newLine = new NodeLine(trapezoid.TopNode, trapezoid.BottomNode);
                                 completedTrapezoids.RemoveAt(j);
                                 var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
                                 var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
@@ -656,7 +656,7 @@ namespace TVGL
                             }
                             else if (trapezoid.BottomNode.Type == NodeType.UpwardReflex) //If bottom node is reflex up (if TopNode.Type = 0, this if statement will be skipped).
                             {
-                                var newLine = new Line(trapezoid.TopNode, trapezoid.BottomNode);
+                                var newLine = new NodeLine(trapezoid.TopNode, trapezoid.BottomNode);
                                 completedTrapezoids.RemoveAt(j);
                                 var leftTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, trapezoid.LeftLine, newLine);
                                 var rightTrapezoid = new Trapezoid(trapezoid.TopNode, trapezoid.BottomNode, newLine, trapezoid.RightLine);
@@ -907,12 +907,12 @@ namespace TVGL
                 }
                 points2D.Add(newLoop.ToArray());
             }
-            var linesInLoops = new List<List<Line>>();
+            var linesInLoops = new List<List<NodeLine>>();
             var i = 0; //i is the used to set the loop ID
             foreach (var loop in points2D)
             {
                 var orderedLoop = new List<Node>();
-                var linesInLoop = new List<Line>();
+                var linesInLoop = new List<NodeLine>();
                 //Count the number of points and add to total.
                 pointCount = pointCount + loop.Length;
 
@@ -932,8 +932,8 @@ namespace TVGL
                     //Add node to the ordered loop
                     orderedLoop.Add(node);
 
-                    //Create New Line
-                    var line = new Line(previousNode, node);
+                    //Create New NodeLine
+                    var line = new NodeLine(previousNode, node);
                     previousNode.StartLine = line;
                     node.EndLine = line;
                     previousNode = node;
@@ -945,11 +945,11 @@ namespace TVGL
                 orderedLoop.Add(lastNode);
 
                 //Create both missing lines 
-                var line1 = new Line(previousNode, lastNode);
+                var line1 = new NodeLine(previousNode, lastNode);
                 previousNode.StartLine = line1;
                 lastNode.EndLine = line1;
                 linesInLoop.Insert(0, line1);
-                var line2 = new Line(lastNode, firstNode);
+                var line2 = new NodeLine(lastNode, firstNode);
                 lastNode.StartLine = line2;
                 firstNode.EndLine = line2;
                 linesInLoop.Add(line2);
@@ -992,7 +992,7 @@ namespace TVGL
                     }
 
                     //inititallize lineList 
-                    var lineList = new List<Line>();
+                    var lineList = new List<NodeLine>();
                     for (var j = 0; j < sortedGroup.Count; j++)
                     {
                         var node = sortedGroup[j];
@@ -1003,10 +1003,10 @@ namespace TVGL
                             bool isOnLine;
                             //If remainder is not equal to 0, then it is odd.
                             //If both LinesToLeft and LinesToRight are odd, then it must be inside.
-                            Line leftLine;
+                            NodeLine leftLine;
                             if (LinesToLeft(node, lineList, out leftLine, out isOnLine) % 2 != 0)
                             {
-                                Line rightLine;
+                                NodeLine rightLine;
                                 isInside = LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
                             }
                             else isInside = false;
@@ -1170,14 +1170,14 @@ namespace TVGL
                 }
 
                 //inititallize lineList and sortedNodes
-                var lineList = new List<Line>();
+                var lineList = new List<NodeLine>();
                 //Use the red-black tree to determine if the first node from a negative loop is inside the polygon.
                 //for each node in sortedNodes, update the lineList. Note that at this point each node only has two edges.
                 for (var j = 0; j < sortedGroup.Count; j++)
                 {
                     var node = sortedGroup[j];
-                    Line leftLine = null;
-                    Line rightLine = null;
+                    NodeLine leftLine = null;
+                    NodeLine rightLine = null;
 
                     //Check if negative loop is inside polygon 
                     //note that listPositive changes order /size , while isPositive is static like loopID.
@@ -1278,7 +1278,7 @@ namespace TVGL
         #endregion
 
         #region Create Trapezoid and Insert Into List
-        internal static void InsertTrapezoid(Node node, Line leftLine, Line rightLine, ref List<PartialTrapezoid> trapTree, ref List<Trapezoid> completedTrapezoids)
+        internal static void InsertTrapezoid(Node node, NodeLine leftLine, NodeLine rightLine, ref List<PartialTrapezoid> trapTree, ref List<Trapezoid> completedTrapezoids)
         {
             var matchesTrap = false;
             var i = 0;
@@ -1299,7 +1299,7 @@ namespace TVGL
         #endregion
 
         #region Find Lines to Left or Right
-        internal static int LinesToLeft(Node node, IEnumerable<Line> lineList, out Line leftLine, out bool isOnLine)
+        internal static int LinesToLeft(Node node, IEnumerable<NodeLine> lineList, out NodeLine leftLine, out bool isOnLine)
         {
             isOnLine = false;
             leftLine = null;
@@ -1347,14 +1347,14 @@ namespace TVGL
             return counter;
         }
 
-        internal static void FindLeftLine(Node node, IEnumerable<Line> lineList, out Line leftLine)
+        internal static void FindLeftLine(Node node, IEnumerable<NodeLine> lineList, out NodeLine leftLine)
         {
             bool isOnLine;
             LinesToLeft(node, lineList, out leftLine, out isOnLine);
             if (leftLine == null) throw new Exception("Failed to find line to left.");
         }
 
-        internal static int LinesToRight(Node node, IEnumerable<Line> lineList, out Line rightLine, out bool isOnLine)
+        internal static int LinesToRight(Node node, IEnumerable<NodeLine> lineList, out NodeLine rightLine, out bool isOnLine)
         {
             isOnLine = false;
             rightLine = null;
@@ -1401,7 +1401,7 @@ namespace TVGL
             return counter;
         }
 
-        internal static void FindRightLine(Node node, IEnumerable<Line> lineList, out Line rightLine)
+        internal static void FindRightLine(Node node, IEnumerable<NodeLine> lineList, out NodeLine rightLine)
         {
             bool isOnLine;
             LinesToRight(node, lineList, out rightLine, out isOnLine);

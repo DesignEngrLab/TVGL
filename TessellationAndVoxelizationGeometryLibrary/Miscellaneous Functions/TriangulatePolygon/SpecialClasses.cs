@@ -76,13 +76,13 @@ namespace TVGL
         ///     Gets the line that starts at this node.
         /// </summary>
         /// <value>The start line.</value>
-        internal Line StartLine { get; set; }
+        internal NodeLine StartLine { get; set; }
 
         /// <summary>
         ///     Gets the line that ends at this node.
         /// </summary>
         /// <value>The end line.</value>
-        internal Line EndLine { get; set; }
+        internal NodeLine EndLine { get; set; }
 
         /// <summary>
         ///     Gets the type of  node.
@@ -163,7 +163,7 @@ namespace TVGL
         /// <param name="bottomNode">The bottom node.</param>
         /// <param name="leftLine">The left line.</param>
         /// <param name="rightLine">The right line.</param>
-        internal Trapezoid(Node topNode, Node bottomNode, Line leftLine, Line rightLine)
+        internal Trapezoid(Node topNode, Node bottomNode, NodeLine leftLine, NodeLine rightLine)
         {
             TopNode = topNode;
             BottomNode = bottomNode;
@@ -191,13 +191,13 @@ namespace TVGL
         ///     Gets the left vertical line of the trapezoid. Set is through constructor.
         /// </summary>
         /// <value>The left line.</value>
-        internal Line LeftLine { get; private set; }
+        internal NodeLine LeftLine { get; private set; }
 
         /// <summary>
         ///     Gets the right vertical line of the trapezoid. Set is through constructor.
         /// </summary>
         /// <value>The right line.</value>
-        internal Line RightLine { get; private set; }
+        internal NodeLine RightLine { get; private set; }
 
         #endregion
     }
@@ -217,7 +217,7 @@ namespace TVGL
         /// <param name="topNode">The top node.</param>
         /// <param name="leftLine">The left line.</param>
         /// <param name="rightLine">The right line.</param>
-        internal PartialTrapezoid(Node topNode, Line leftLine, Line rightLine)
+        internal PartialTrapezoid(Node topNode, NodeLine leftLine, NodeLine rightLine)
         {
             TopNode = topNode;
             LeftLine = leftLine;
@@ -234,13 +234,13 @@ namespace TVGL
         ///     Gets the left vertical line of the trapezoid. Set is through constructor.
         /// </summary>
         /// <value>The left line.</value>
-        internal Line LeftLine { get; }
+        internal NodeLine LeftLine { get; }
 
         /// <summary>
         ///     Gets the right vertical line of the trapezoid. Set is through constructor.
         /// </summary>
         /// <value>The right line.</value>
-        internal Line RightLine { get; }
+        internal NodeLine RightLine { get; }
 
         /// <summary>
         ///     Checks whether the partial trapezoid contains the two lines.
@@ -248,7 +248,7 @@ namespace TVGL
         /// <param name="line1">The line1.</param>
         /// <param name="line2">The line2.</param>
         /// <returns><c>true</c> if [contains] [the specified line1]; otherwise, <c>false</c>.</returns>
-        internal bool Contains(Line line1, Line line2)
+        internal bool Contains(NodeLine line1, NodeLine line2)
         {
             if (LeftLine != line1 && LeftLine != line2) return false;
             return RightLine == line1 || RightLine == line2;
@@ -307,19 +307,19 @@ namespace TVGL
 
     #endregion
 
-    #region Line Class
+    #region NodeLine Class
 
     /// <summary>
-    ///     Line
+    ///     NodeLine
     /// </summary>
-    internal class Line
+    internal class NodeLine
     {
         /// <summary>
         ///     Sets to and from nodes as well as slope and intercept of line.
         /// </summary>
         /// <param name="fromNode">From node.</param>
         /// <param name="toNode">To node.</param>
-        internal Line(Node fromNode, Node toNode)
+        internal NodeLine(Node fromNode, Node toNode)
         {
             FromNode = fromNode;
             ToNode = toNode;

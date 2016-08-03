@@ -39,6 +39,9 @@
     <DocumentationFile>bin\Release\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Line.cs">
+      <Link>2D\Line.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Point.cs">
       <Link>2D\Point.cs</Link>
     </Compile>

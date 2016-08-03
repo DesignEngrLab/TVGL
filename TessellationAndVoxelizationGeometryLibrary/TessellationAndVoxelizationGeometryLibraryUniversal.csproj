@@ -38,6 +38,7 @@
     <DocumentationFile>bin\Release\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="2D\Line.cs" />
     <Compile Include="2D\Polygon.cs" />
     <Compile Include="2D\PolygonTree.cs" />
     <Compile Include="Boolean Operations\ContactData.cs" />
