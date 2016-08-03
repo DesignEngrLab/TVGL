@@ -1117,8 +1117,9 @@ namespace TVGL._2D.Clipper
 
         private static void SetDx(TEdge e)
         {
-            e.Delta.X = (e.Top.X - e.Bot.X);
-            e.Delta.Y = (e.Top.Y - e.Bot.Y);
+            var deltaX = (e.Top.X - e.Bot.X);
+            var deltaY = (e.Top.Y - e.Bot.Y);
+            e.Delta = new Point(deltaX, deltaY);
             if (e.Delta.Y.IsNegligible()) e.Dx = Horizontal;
             else e.Dx = (e.Delta.X) / (e.Delta.Y);
         }
@@ -1158,8 +1159,8 @@ namespace TVGL._2D.Clipper
             //progression of the bounds - ie so their xbots will align with the
             //adjoining lower edge. [Helpful in the ProcessHorizontal() method.]
             var temp = edge.Top.X;
-            edge.Top.X = edge.Bot.X;
-            edge.Bot.X = temp;
+            edge.Top = new Point(edge.Bot.X, edge.Top.Y);
+            edge.Bot = new Point(temp, edge.Bot.Y);
         }
         //------------------------------------------------------------------------------
 
@@ -2858,7 +2859,7 @@ namespace TVGL._2D.Clipper
             {
                 e.PrevInSel = e.PrevInAEL;
                 e.NextInSel = e.NextInAEL;
-                e.Curr.X = TopX(e, topY);
+                e.Curr = new Point(TopX(e, topY), e.Curr.Y);
                 e = e.NextInAEL;
             }
 
@@ -2962,41 +2963,44 @@ namespace TVGL._2D.Clipper
 
         private static void IntersectPoint(TEdge edge1, TEdge edge2, out Point ip)
         {
-            ip = new Point(0,0);
             double b1, b2;
+            double ipX;
+            double ipY;
             //nb: with very large coordinate values, it's possible for SlopesEqual() to 
             //return false but for the edge.Dx value be equal due to double precision rounding.
             if (edge1.Dx.IsPracticallySame(edge2.Dx))
             {
-                ip.Y = edge1.Curr.Y;
-                ip.X = TopX(edge1, ip.Y);
+                ipY = edge1.Curr.Y;
+                ipX = TopX(edge1, ipY);
+                ip = new Point(ipX, ipY);
                 return;
             }
 
             if (edge1.Delta.X.IsNegligible())
             {
-                ip.X = edge1.Bot.X;
+
+                ipX = edge1.Bot.X;
                 if (IsHorizontal(edge2))
                 {
-                    ip.Y = edge2.Bot.Y;
+                    ipY = edge2.Bot.Y;
                 }
                 else
                 {
                     b2 = edge2.Bot.Y - (edge2.Bot.X / edge2.Dx);
-                    ip.Y = (ip.X / edge2.Dx + b2);
+                    ipY = (ipX / edge2.Dx + b2);
                 }
             }
             else if (edge2.Delta.X.IsNegligible())
             {
-                ip.X = edge2.Bot.X;
+                ipX = edge2.Bot.X;
                 if (IsHorizontal(edge1))
                 {
-                    ip.Y = edge1.Bot.Y;
+                    ipY = edge1.Bot.Y;
                 }
                 else
                 {
                     b1 = edge1.Bot.Y - (edge1.Bot.X / edge1.Dx);
-                    ip.Y = (ip.X / edge1.Dx + b1);
+                    ipY = (ipX / edge1.Dx + b1);
                 }
             }
             else
@@ -3004,20 +3008,23 @@ namespace TVGL._2D.Clipper
                 b1 = edge1.Bot.X - edge1.Bot.Y * edge1.Dx;
                 b2 = edge2.Bot.X - edge2.Bot.Y * edge2.Dx;
                 var q = (b2 - b1) / (edge1.Dx - edge2.Dx);
-                ip.Y = q;
-                ip.X = Math.Abs(edge1.Dx) < Math.Abs(edge2.Dx) ? (edge1.Dx * q + b1) : (edge2.Dx * q + b2);
+                ipY = q;
+                ipX = Math.Abs(edge1.Dx) < Math.Abs(edge2.Dx) ? (edge1.Dx * q + b1) : (edge2.Dx * q + b2);
             }
 
-            if (ip.Y < edge1.Top.Y || ip.Y < edge2.Top.Y)
+            if (ipY < edge1.Top.Y || ipY < edge2.Top.Y)
             {
-                ip.Y = edge1.Top.Y > edge2.Top.Y ? edge1.Top.Y : edge2.Top.Y;
-                ip.X = TopX(Math.Abs(edge1.Dx) < Math.Abs(edge2.Dx) ? edge1 : edge2, ip.Y);
+                ipY = edge1.Top.Y > edge2.Top.Y ? edge1.Top.Y : edge2.Top.Y;
+                ipX = TopX(Math.Abs(edge1.Dx) < Math.Abs(edge2.Dx) ? edge1 : edge2, ipY);
             }
             //finally, don't allow 'ip' to be BELOW curr.Y (ie bottom of scanbeam) ...
-            if (ip.Y <= edge1.Curr.Y) return;
-            ip.Y = edge1.Curr.Y;
-            //better to use the more vertical edge to derive X ...
-            ip.X = TopX(Math.Abs(edge1.Dx) > Math.Abs(edge2.Dx) ? edge2 : edge1, ip.Y);
+            if (ipY > edge1.Curr.Y)
+            { 
+                ipY = edge1.Curr.Y;
+                //better to use the more vertical edge to derive X ...
+                ipX = TopX(Math.Abs(edge1.Dx) > Math.Abs(edge2.Dx) ? edge2 : edge1, ipY);
+            }
+            ip = new Point(ipX, ipY);
         }
         //------------------------------------------------------------------------------
 
@@ -3054,8 +3061,7 @@ namespace TVGL._2D.Clipper
                     }
                     else
                     {
-                        e.Curr.X = TopX(e, topY);
-                        e.Curr.Y = topY;
+                        e.Curr = new Point(TopX(e, topY), topY);
                     }
 
                     if (StrictlySimple)
@@ -4243,14 +4249,14 @@ namespace TVGL._2D.Clipper
         {
             MiterLimit = miterLimit;
             ArcTolerance = arcTolerance;
-            _mLowest.X = -1;
+            _mLowest = new Point(-1, 0);
         }
         //------------------------------------------------------------------------------
 
         internal void Clear()
         {
             _mPolyNodes.Childs.Clear();
-            _mLowest.X = -1;
+            _mLowest = new Point(-1, 0);
         }
 
         //------------------------------------------------------------------------------
@@ -4290,7 +4296,7 @@ namespace TVGL._2D.Clipper
                 _mLowest = new Point(_mPolyNodes.ChildCount - 1, k);
             else
             {
-                Point ip = _mPolyNodes.Childs[(int)_mLowest.X].MPolygon[(int)_mLowest.Y];
+                var ip = _mPolyNodes.Childs[(int)_mLowest.X].MPolygon[(int)_mLowest.Y];
                 if (newNode.MPolygon[k].Y > ip.Y ||
                   (newNode.MPolygon[k].Y.IsPracticallySame(ip.Y) &&
                   newNode.MPolygon[k].X < ip.X))
@@ -4337,8 +4343,8 @@ namespace TVGL._2D.Clipper
 
         internal static DoublePoint GetUnitNormal(Point pt1, Point pt2)
         {
-            double dx = (pt2.X - pt1.X);
-            double dy = (pt2.Y - pt1.Y);
+            var dx = (pt2.X - pt1.X);
+            var dy = (pt2.Y - pt1.Y);
             if (dx.IsNegligible() && dx.IsNegligible()) return new DoublePoint();
 
             var f = 1 * 1.0 / Math.Sqrt(dx * dx + dy * dy);

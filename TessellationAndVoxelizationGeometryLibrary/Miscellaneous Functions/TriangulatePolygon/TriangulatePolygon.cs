@@ -141,18 +141,24 @@ namespace TVGL
                     //Removed random value to make function repeatable for debugging.
                     var values = new List<double>() { 0.82348, 0.13905, 0.78932, 0.37510 };
                     var theta = values[attempts - 1];
-                    foreach (var loop in points2D)
+                    var points2Dtemp = points2D;
+                    points2D = new List<Point[]>();
+                    foreach (var loop in points2Dtemp)
                     {
+                        var newLoop = new List<Point>();
                         var pHighest = double.NegativeInfinity;
                         foreach (var point in loop)
                         {
-                            point.X = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
-                            point.Y = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
+                            var pointX = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
+                            var pointY = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
+                            var newPoint = new Point(pointX, pointY) {References = point.References};
+                            newLoop.Add(newPoint);
                             if (point.Y > pHighest)
                             {
                                 pHighest = point.Y;
                             }
                         }
+                        points2D.Add(newLoop.ToArray());
                     }
                     var linesInLoops = new List<List<Line>>();
                     var i = 0; //i is the used to set the loop ID
@@ -876,26 +882,30 @@ namespace TVGL
             // 5) Get the number of positive and negative loops. 
             var orderedLoops = new List<List<Node>>();
             var sortedLoops = new List<List<Node>>();
-            var negativeLoopCount = 0;
-            var positiveLoopCount = 0;
             var pointCount = 0;
 
             //Change point X and Y coordinates to be changed to mostly random primary axis
             //Removed random value to make function repeatable for debugging.
             var values = new List<double>() { 0.82348, 0.13905, 0.78932, 0.37510 };
             var theta = values[attempts - 1];
-            foreach (var loop in points2D)
+            var points2Dtemp = points2D;
+            points2D = new List<Point[]>();
+            foreach (var loop in points2Dtemp)
             {
+                var newLoop = new List<Point>();
                 var pHighest = double.NegativeInfinity;
                 foreach (var point in loop)
                 {
-                    point.X = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
-                    point.Y = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
+                    var pointX = point.X * Math.Cos(theta) - point.Y * Math.Sin(theta);
+                    var pointY = point.X * Math.Sin(theta) + point.Y * Math.Cos(theta);
+                    var newPoint = new Point(pointX, pointY) { References = point.References };
+                    newLoop.Add(newPoint);
                     if (point.Y > pHighest)
                     {
                         pHighest = point.Y;
                     }
                 }
+                points2D.Add(newLoop.ToArray());
             }
             var linesInLoops = new List<List<Line>>();
             var i = 0; //i is the used to set the loop ID
@@ -1123,13 +1133,6 @@ namespace TVGL
                     }
                 }
                 i++;
-            }
-
-            //Get the number of negative loops
-            foreach (var boolean in isPositive)
-            {
-                if (boolean) positiveLoopCount++;
-                else negativeLoopCount++;
             }
             #endregion
 

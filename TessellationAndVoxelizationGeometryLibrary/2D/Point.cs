@@ -36,19 +36,19 @@ namespace TVGL
         ///     Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
-        public double X { get; set; }
+        public double X { get; private set; }
 
         /// <summary>
         ///     Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
-        public double Y { get; set; }
+        public double Y { get; private set; }
 
         /// <summary>
         ///     Gets or sets the z coordinate. If one is using Point in a 2D capacity, it can be ignored.
         /// </summary>
         /// <value>The z.</value>
-        public double Z { get; set; }
+        public double Z { get; private set; }
 
         /// <summary>
         ///     Gets or sets the references.
