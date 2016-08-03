@@ -308,7 +308,7 @@ namespace TVGLTest.Test
         [Test]
         public void Horz4()
         {
-            PolyFillType fillMethod = PolyFillType.NonZero;
+            PolyFillType fillMethod = PolyFillType.Positive;
             int[] ints1 = { 904, 901, 1801, 901, 1801, 1801, 902, 1803 };
             int[] ints2 = { 2, 1800, 902, 1800, 902, 2704, 4, 2701 };
             int[] ints3 = { 902, 1802, 902, 2704, 1804, 2703, 1801, 1804 };
@@ -317,13 +317,16 @@ namespace TVGLTest.Test
             subject.Add(MakePolygonFromInts(ints2));
             subject.Add(MakePolygonFromInts(ints3));
 
+            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject});
+
             clipper.AddPaths(subject, PolyType.Subject, true);
             bool result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
 
+           // ShowPaths(solution);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
             Assert.That(Clipper.Orientation(solution[0]), Is.True);
-            Assert.That(Clipper.Orientation(solution[1]), Is.False);
+            Assert.That(Clipper.Orientation(solution[1]), Is.True);
         }
 
         [Test]
@@ -930,7 +933,7 @@ namespace TVGLTest.Test
 
             int[] ints1 = { 0, 0, 200, 0, 219, 207, 0, 200 };
             int[] ints2 = { 201, 207, 400, 200, 400, 400, 200, 400 };
-            int[] ints3 = { 0, 200, 214, 207, 200, 400, 0, 400 };
+            int[] ints3 = { 0, 200, 219, 207, 200, 400, 0, 400 };
             int[] ints4 = { 200, 0, 400, 0, 400, 200, 209, 215 };
 
             subject.Add(MakePolygonFromInts(ints1));
@@ -939,10 +942,12 @@ namespace TVGLTest.Test
             clip.Add(MakePolygonFromInts(ints3));
             clip.Add(MakePolygonFromInts(ints4));
 
+            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip });
             clipper.AddPaths(subject, PolyType.Subject, true);
             clipper.AddPaths(clip, PolyType.Clip, true);
             bool result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
 
+            //ShowPaths(solution);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
             Assert.That(Clipper.Orientation(solution[0]), Is.True);
@@ -1055,21 +1060,25 @@ namespace TVGLTest.Test
 
             int[] ints1 = { 1026, 1126, 1026, 235, 4505, 401, 4522, 1145, 4503, 1162, 2280, 1129 };
             int[] ints2 = { 4501, 1100, 4501, 866, 1146, 462, 1071, 1067, 4469, 1000 };
-            int[] ints3 = { 4499, 1135, 3360, 1050, 3302, 1107 };
+            int[] ints3 = { 4501, 1135, 3360, 1050, 3302, 1107 };
             int[] ints4 = { 3360, 1050, 3291, 1118, 4512, 1136 };
 
             subject.Add(MakePolygonFromInts(ints1));
             subject.Add(MakePolygonFromInts(ints2));
             subject.Add(MakePolygonFromInts(ints3));
-
+            
             clip.Add(MakePolygonFromInts(ints4));
+
+            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip });
 
             clipper.AddPaths(subject, PolyType.Subject, true);
             clipper.AddPaths(clip, PolyType.Clip, true);
             bool result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
 
+            //ShowPaths(solution);
             Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(2));
+            //Should be equal to 4 for exact geometry. Equal to 2 with rounding.
+            Assert.That(solution.Count, Is.EqualTo(4));
             Assert.That(Clipper.Orientation(solution[0]), Is.True);
             Assert.That(Clipper.Orientation(solution[1]), Is.False);
         }
