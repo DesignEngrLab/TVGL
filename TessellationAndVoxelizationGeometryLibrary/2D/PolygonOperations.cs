@@ -44,7 +44,7 @@
 //improve performance but coordinate values are limited to the range +/- 46340
 //#define use_int32
 
-//use_xyz: adds a Z member to IntPoint. Adds a minor cost to performance.
+//use_xyz: adds a Z member to Point. Adds a minor cost to performance.
 //#define use_xyz
 
 //use_deprecated: Enables temporary support for the obsolete functions
@@ -63,8 +63,8 @@ using TVGL._2D.Clipper;
 
 namespace TVGL._2D
 {
-    using Path = List<IntPoint>;
-    using Paths = List<List<IntPoint>>;
+    using Path = List<Point>;
+    using Paths = List<List<Point>>;
 
     #region Polygon Operations
     /// <summary>
@@ -112,11 +112,8 @@ namespace TVGL._2D
         /// <returns></returns>
         public static List<List<Point>> Simplify(IList<Point> polygon)
         {
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var intPolygon = polygon.Select(point => new IntPoint(point.X, point.Y, point.References)).ToList();
-
             //Simplify
-            var solution = Clipper.Clipper.SimplifyPolygon(intPolygon);
+            var solution = Clipper.Clipper.SimplifyPolygon(new Path(polygon));
 
             var outputLoops = new List<List<Point>>();
             foreach (var loop in solution)
@@ -124,10 +121,10 @@ namespace TVGL._2D
                 var offsetLoop = new List<Point>();
                 for (var i = 0; i < loop.Count; i++)
                 {
-                    var intPoint = loop[i];
-                    var x = intPoint.X;
-                    var y = intPoint.Y;
-                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }) { References = intPoint.References });
+                    var Point = loop[i];
+                    var x = Point.X;
+                    var y = Point.Y;
+                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }) { References = Point.References });
                 }
                 outputLoops.Add(offsetLoop);
             }
@@ -148,11 +145,8 @@ namespace TVGL._2D
             //Initialize output parameter
             simplifiedPolygon = new List<Point>();
 
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var intPolygon = polygon.Select(point => new IntPoint(point.X, point.Y , point.References)).ToList();
-
             //Simplify
-            var solution = Clipper.Clipper.SimplifyPolygon(intPolygon);
+            var solution = Clipper.Clipper.SimplifyPolygon(new Path(polygon));
 
             var outputLoops = new List<List<Point>>();
             foreach (var loop in solution)
@@ -160,10 +154,10 @@ namespace TVGL._2D
                 var offsetLoop = new List<Point>();
                 for (var i = 0; i < loop.Count; i++)
                 {
-                    var intPoint = loop[i];
-                    var x = intPoint.X;
-                    var y = intPoint.Y;
-                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }) { References = intPoint.References });
+                    var Point = loop[i];
+                    var x = Point.X;
+                    var y = Point.Y;
+                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }) { References = Point.References });
                 }
                 outputLoops.Add(offsetLoop);
             }
@@ -226,12 +220,12 @@ namespace TVGL._2D
         /// <returns></returns>
         public static List<List<Point>> Round(List<List<Point>> loops, double offset)
         {
-            //Convert Points (TVGL) to IntPoints (Clipper)
+            //Convert Points (TVGL) to Points (Clipper)
             var polygons =
-                loops.Select(loop => loop.Select(point => new IntPoint(point.X, point.Y)).ToList()).ToList();
+                loops.Select(loop => loop.Select(point => new Point(point.X, point.Y)).ToList()).ToList();
 
             //Begin an evaluation
-            var solution = new List<List<IntPoint>>();
+            var solution = new List<List<Point>>();
             var clip = new ClipperOffset();
             clip.AddPaths(polygons, JoinType.Round, EndType.ClosedPolygon);
             clip.Execute(ref solution, offset);
@@ -242,9 +236,9 @@ namespace TVGL._2D
                 var offsetLoop = new List<Point>();
                 for (var i = 0; i < loop.Count; i++)
                 {
-                    var intPoint = loop[i];
-                    var x = intPoint.X;
-                    var y = intPoint.Y;
+                    var Point = loop[i];
+                    var x = Point.X;
+                    var y = Point.Y;
                     offsetLoop.Add(new Point(new List<double> {x, y, 0.0}));
                 }
                 offsetLoops.Add(offsetLoop);
@@ -271,8 +265,8 @@ namespace TVGL._2D
             var solution = new Paths();
             var clipper = new Clipper.Clipper();
 
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var subject = polygons.Select(polygon => polygon.Select(point => new IntPoint(point.X , point.Y)).ToList()).ToList();
+            //Convert Points (TVGL) to Points (Clipper)
+            var subject = polygons.Select(polygon => polygon.Select(point => new Point(point.X , point.Y)).ToList()).ToList();
 
             //Begin an evaluation
             clipper.StrictlySimple = true;
@@ -286,9 +280,9 @@ namespace TVGL._2D
                 var offsetLoop = new List<Point>();
                 for (var i = 0; i < loop.Count; i++)
                 {
-                    var intPoint = loop[i];
-                    var x = intPoint.X;
-                    var y = intPoint.Y;
+                    var Point = loop[i];
+                    var x = Point.X;
+                    var y = Point.Y;
                     offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
                 }
                 outputLoops.Add(offsetLoop);
@@ -310,9 +304,9 @@ namespace TVGL._2D
             var solution = new Paths();
             var clipper = new Clipper.Clipper();
 
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            var subject = polygons.Select(polygon => polygon.Select(point => new IntPoint(point.X, point.Y)).ToList()).ToList();
-            subject.Add(otherPolygon.Select(point => new IntPoint(point.X, point.Y)).ToList());
+            //Convert Points (TVGL) to Points (Clipper)
+            var subject = polygons.Select(polygon => polygon.Select(point => new Point(point.X, point.Y)).ToList()).ToList();
+            subject.Add(otherPolygon.Select(point => new Point(point.X, point.Y)).ToList());
 
             //Begin an evaluation
             clipper.StrictlySimple = true;
@@ -326,9 +320,9 @@ namespace TVGL._2D
                 var offsetLoop = new List<Point>();
                 for (var i = 0; i < loop.Count; i++)
                 {
-                    var intPoint = loop[i];
-                    var x = intPoint.X;
-                    var y = intPoint.Y;
+                    var Point = loop[i];
+                    var x = Point.X;
+                    var y = Point.Y;
                     offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
                 }
                 outputPolygons.Add(offsetLoop);
@@ -351,9 +345,9 @@ namespace TVGL._2D
             var subject = new Paths();
             var clipper = new Clipper.Clipper();
 
-            //Convert Points (TVGL) to IntPoints (Clipper)
-            subject.Add(polygon1.Select(point => new IntPoint(point.X, point.Y)).ToList());
-            subject.Add(polygon2.Select(point => new IntPoint(point.X, point.Y)).ToList());
+            //Convert Points (TVGL) to Points (Clipper)
+            subject.Add(polygon1.Select(point => new Point(point.X, point.Y)).ToList());
+            subject.Add(polygon2.Select(point => new Point(point.X, point.Y)).ToList());
 
             //Setup Clipper
             clipper.StrictlySimple = true;
@@ -368,9 +362,9 @@ namespace TVGL._2D
                 var offsetLoop = new List<Point>();
                 for (var i = 0; i < loop.Count; i++)
                 {
-                    var intPoint = loop[i];
-                    var x = intPoint.X;
-                    var y = intPoint.Y;
+                    var Point = loop[i];
+                    var x = Point.X;
+                    var y = Point.Y;
                     offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
                 }
                 outputPolygons.Add(offsetLoop);
@@ -384,8 +378,8 @@ namespace TVGL._2D
 
 namespace TVGL._2D.Clipper
 {
-    using Path = List<IntPoint>;
-    using Paths = List<List<IntPoint>>;
+    using Path = List<Point>;
+    using Paths = List<List<Point>>;
 
     #region DoublePoint Class
     internal struct DoublePoint
@@ -401,7 +395,7 @@ namespace TVGL._2D.Clipper
         {
             X = dp.X; Y = dp.Y;
         }
-        internal DoublePoint(IntPoint ip)
+        internal DoublePoint(Point ip)
         {
             X = ip.X; Y = ip.Y;
         }
@@ -520,87 +514,6 @@ namespace TVGL._2D.Clipper
     }
     #endregion
 
-    #region Integer Point Class
-    /// <summary>
-    /// Integer Point with X and Y coordinates
-    /// </summary>
-    public struct IntPoint
-    {
-        /// <summary>
-        /// X value for integer point
-        /// </summary>
-        public double X;
-        /// <summary>
-        /// Y value for integer point
-        /// </summary>
-        public double Y;
-
-        /// <summary>
-        /// A list of vertex references, maintained from the projection of the vertex onto a plane.
-        /// </summary>
-        public List<Vertex> References; 
-
-        internal IntPoint(double x, double y, List<Vertex> references = null )
-        {
-            X = x; Y = y;
-            References = references;
-        }
-
-
-
-        internal IntPoint(IntPoint pt)
-        {
-            X = pt.X; Y = pt.Y;
-            References = pt.References;
-        }
-
-        /// <summary>
-        /// Gets whether int points are equal
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        public static bool operator ==(IntPoint a, IntPoint b)
-        {
-            return (a.X).IsPracticallySame(b.X) && (a.Y).IsPracticallySame(b.Y);
-        }
-
-        /// <summary>
-        /// Gets whether int point are not equal
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        public static bool operator !=(IntPoint a, IntPoint b)
-        {
-            return !(a.X).IsPracticallySame(b.X) || !(a.Y).IsPracticallySame(b.Y);
-        }
-
-        /// <summary>
-        /// Checks if this intPoint is equalt to the given object.
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public override bool Equals(object obj)
-        {
-            if (!(obj is IntPoint)) return false;
-            var a = (IntPoint)obj;
-            return (X).IsPracticallySame(a.X) && (Y).IsPracticallySame(a.Y);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public override int GetHashCode()
-        {
-            //simply prevents a compiler warning
-            return base.GetHashCode();
-        }
-
-    }// end struct IntPoint
-    #endregion
-
     #region Integer Rectangle Class
     internal struct IntRect
     {
@@ -642,11 +555,11 @@ namespace TVGL._2D.Clipper
     #region T Edge Class
     internal class TEdge
     {
-        internal IntPoint Bot;
-        internal IntPoint Curr;
-        internal IntPoint Top;
-        internal IntPoint Delta;
-        internal double Dx;
+        internal Point Bot;
+        internal Point Curr;
+        internal Point Top;
+        internal Point Delta;
+        internal double Dx; //Note: For some unknown reason, the author decided to use an inverted slope, where Dx = run/rise, so Dx = inf is horizontal and Dx = 0 is vertical.
         internal PolyType PolyTyp;
         internal EdgeSide Side;
         internal int WindDelta; //1 or -1 depending on winding direction
@@ -662,10 +575,10 @@ namespace TVGL._2D.Clipper
         internal TEdge PrevInSel;
         internal TEdge()
         {
-            Bot = new IntPoint(0, 0);
-            Curr = new IntPoint(0, 0);
-            Top = new IntPoint(0, 0);
-            Delta = new IntPoint(0, 0);
+            Bot = new Point(0, 0);
+            Curr = new Point(0, 0);
+            Top = new Point(0, 0);
+            Delta = new Point(0, 0);
         }
     }
     #endregion
@@ -675,7 +588,7 @@ namespace TVGL._2D.Clipper
     {
         internal TEdge Edge1;
         internal TEdge Edge2;
-        internal IntPoint Pt;
+        internal Point Pt;
     }
     #endregion
 
@@ -719,7 +632,7 @@ namespace TVGL._2D.Clipper
     internal class OutPt
     {
         internal int Idx;
-        internal IntPoint Pt;
+        internal Point Pt;
         internal OutPt Next;
         internal OutPt Prev;
     }
@@ -728,14 +641,14 @@ namespace TVGL._2D.Clipper
     {
         internal OutPt OutPt1;
         internal OutPt OutPt2;
-        internal IntPoint OffPt;
+        internal Point OffPt;
     }
     #endregion
 
     #region ClipperBase Class
     internal class ClipperBase
     {
-        protected const double Horizontal = -3.4E+38; //The code fails if this is set to negative infinity
+        protected const double Horizontal = -3.4E+38; //Note: For some unknown reason, the author decided to use an inverted slope, where Dx = run/rise, so Dx = inf is horizontal and Dx = 0 is vertical.
         protected const int Skip = -2;
         protected const int Unassigned = -1;
         protected static readonly double Tolerance = StarMath.EqualityTolerance;
@@ -757,7 +670,7 @@ namespace TVGL._2D.Clipper
             return e.Delta.Y.IsNegligible();
         }
 
-        internal bool PointIsVertex(IntPoint pt, OutPt pp)
+        internal bool PointIsVertex(Point pt, OutPt pp)
         {
             var pp2 = pp;
             do
@@ -769,8 +682,8 @@ namespace TVGL._2D.Clipper
             return false;
         }
 
-        internal bool PointOnLineSegment(IntPoint pt,
-            IntPoint linePt1, IntPoint linePt2)
+        internal bool PointOnLineSegment(Point pt,
+            Point linePt1, Point linePt2)
         {
             return ((pt.X.IsPracticallySame(linePt1.X)) && (pt.Y.IsPracticallySame(linePt1.Y))) ||
                    ((pt.X.IsPracticallySame(linePt2.X)) && (pt.Y.IsPracticallySame(linePt2.Y))) ||
@@ -781,7 +694,7 @@ namespace TVGL._2D.Clipper
 
         //------------------------------------------------------------------------------
 
-        internal bool PointOnPolygon(IntPoint pt, OutPt pp)
+        internal bool PointOnPolygon(Point pt, OutPt pp)
         {
             var pp2 = pp;
             while (true)
@@ -801,15 +714,15 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        protected static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
-            IntPoint pt3)
+        protected static bool SlopesEqual(Point pt1, Point pt2,
+            Point pt3)
         {
             return ((pt1.Y - pt2.Y)*(pt2.X - pt3.X) - (pt1.X - pt2.X)*(pt2.Y - pt3.Y)).IsNegligible();
         }
         //------------------------------------------------------------------------------
 
-        protected static bool SlopesEqual(IntPoint pt1, IntPoint pt2,
-            IntPoint pt3, IntPoint pt4)
+        protected static bool SlopesEqual(Point pt1, Point pt2,
+            Point pt3, Point pt4)
         {
             return ((pt1.Y - pt2.Y) * (pt3.X - pt4.X) - (pt1.X - pt2.X) * (pt3.Y - pt4.Y)).IsNegligible();
         }
@@ -847,7 +760,7 @@ namespace TVGL._2D.Clipper
         }
 
         private static void InitEdge(TEdge e, TEdge eNext,
-        TEdge ePrev, IntPoint pt)
+        TEdge ePrev, Point pt)
         {
             e.Next = eNext;
             e.Prev = ePrev;
@@ -1183,7 +1096,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal bool Pt2IsBetweenPt1AndPt3(IntPoint pt1, IntPoint pt2, IntPoint pt3)
+        internal bool Pt2IsBetweenPt1AndPt3(Point pt1, Point pt2, Point pt3)
         {
             if ((pt1 == pt3) || (pt1 == pt2) || (pt3 == pt2)) return false;
             if (!pt1.X.IsPracticallySame(pt3.X)) return (pt2.X > pt1.X) == (pt2.X < pt3.X);
@@ -1557,7 +1470,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void AddJoin(OutPt outPoint1, OutPt outPoint2, IntPoint offPt)
+        private void AddJoin(OutPt outPoint1, OutPt outPoint2, Point offPt)
         {
             var join = new Join();
             join.OutPt1 = outPoint1;
@@ -1567,7 +1480,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void AddGhostJoin(OutPt outPoint, IntPoint offPt)
+        private void AddGhostJoin(OutPt outPoint, Point offPt)
         {
             var join = new Join();
             join.OutPt1 = outPoint;
@@ -2071,7 +1984,7 @@ namespace TVGL._2D.Clipper
         //------------------------------------------------------------------------------
 
 
-        private void AddLocalMaxPoly(TEdge e1, TEdge e2, IntPoint pt)
+        private void AddLocalMaxPoly(TEdge e1, TEdge e2, Point pt)
         {
             AddOutPt(e1, pt);
             if (e2.WindDelta == 0) AddOutPt(e2, pt);
@@ -2087,7 +2000,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private OutPt AddLocalMinPoly(TEdge e1, TEdge e2, IntPoint pt)
+        private OutPt AddLocalMinPoly(TEdge e1, TEdge e2, Point pt)
         {
             OutPt result;
             TEdge e, prevE;
@@ -2146,7 +2059,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private OutPt AddOutPt(TEdge e, IntPoint pt)
+        private OutPt AddOutPt(TEdge e, Point pt)
         {
             bool toFront = (e.Side == EdgeSide.Left);
             if (e.OutIdx < 0)
@@ -2185,9 +2098,9 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal void SwapPoints(ref IntPoint pt1, ref IntPoint pt2)
+        internal void SwapPoints(ref Point pt1, ref Point pt2)
         {
-            IntPoint tmp = new IntPoint(pt1);
+            Point tmp = new Point(pt1);
             pt1 = pt2;
             pt2 = tmp;
         }
@@ -2230,7 +2143,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private double GetDx(IntPoint pt1, IntPoint pt2)
+        private double GetDx(Point pt1, Point pt2)
         {
             if (pt1.Y.IsPracticallySame(pt2.Y)) return Horizontal;
             else return (pt2.X - pt1.X) / (pt2.Y - pt1.Y);
@@ -2466,7 +2379,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private void IntersectEdges(TEdge e1, TEdge e2, IntPoint pt)
+        private void IntersectEdges(TEdge e1, TEdge e2, Point pt)
         {
             //e1 will be to the left of e2 BELOW the intersection. Therefore e1 is before
             //e2 in AEL except when e1 is being inserted at the intersection point ...
@@ -2808,12 +2721,12 @@ namespace TVGL._2D.Clipper
                         }
                         if (dir == Direction.LeftToRight)
                         {
-                            var pt = new IntPoint(e.Curr.X, horzEdge.Curr.Y);
+                            var pt = new Point(e.Curr.X, horzEdge.Curr.Y);
                             IntersectEdges(horzEdge, e, pt);
                         }
                         else
                         {
-                            var pt = new IntPoint(e.Curr.X, horzEdge.Curr.Y);
+                            var pt = new Point(e.Curr.X, horzEdge.Curr.Y);
                             IntersectEdges(e, horzEdge, pt);
                         }
                         SwapPositionsInAEL(horzEdge, e);
@@ -2960,7 +2873,7 @@ namespace TVGL._2D.Clipper
                     var eNext = e.NextInSel;
                     if (e.Curr.X > eNext.Curr.X)
                     {
-                        IntPoint pt;
+                        Point pt;
                         IntersectPoint(e, eNext, out pt);
                         var newNode = new IntersectNode
                         {
@@ -3047,9 +2960,9 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private static void IntersectPoint(TEdge edge1, TEdge edge2, out IntPoint ip)
+        private static void IntersectPoint(TEdge edge1, TEdge edge2, out Point ip)
         {
-            ip = new IntPoint(0,0);
+            ip = new Point(0,0);
             double b1, b2;
             //nb: with very large coordinate values, it's possible for SlopesEqual() to 
             //return false but for the edge.Dx value be equal due to double precision rounding.
@@ -3152,7 +3065,7 @@ namespace TVGL._2D.Clipper
                           (ePrev.OutIdx >= 0) && (ePrev.Curr.X.IsPracticallySame(e.Curr.X)) &&
                           (ePrev.WindDelta != 0))
                         {
-                            var ip = new IntPoint(e.Curr);
+                            var ip = new Point(e.Curr);
                             var op = AddOutPt(ePrev, ip);
                             var op2 = AddOutPt(e, ip);
                             AddJoin(op, op2, ip); //StrictlySimple (type-3) join
@@ -3420,7 +3333,7 @@ namespace TVGL._2D.Clipper
         //------------------------------------------------------------------------------
 
         private bool JoinHorz(OutPt op1, OutPt op1B, OutPt op2, OutPt op2B,
-          IntPoint point, bool discardLeft)
+          Point point, bool discardLeft)
         {
             var dir1 = (op1.Pt.X > op1B.Pt.X ?
               Direction.RightToLeft : Direction.LeftToRight);
@@ -3588,7 +3501,7 @@ namespace TVGL._2D.Clipper
                 //DiscardLeftSide: when overlapping edges are joined, a spike will created
                 //which needs to be cleaned up. However, we don't want outPoint1 or outPoint2 caught up
                 //on the discard Side as either may still be needed for other joins ...
-                IntPoint pt;
+                Point pt;
                 bool discardLeftSide;
                 if (op1.Pt.X >= left && op1.Pt.X <= right)
                 {
@@ -3671,7 +3584,7 @@ namespace TVGL._2D.Clipper
         }
         //----------------------------------------------------------------------
 
-        internal static int PointInPolygon(IntPoint pt, Path path)
+        internal static int PointInPolygon(Point pt, Path path)
         {
             //returns 0 if false, +1 if true, -1 if pt ON polygon boundary
             //See "The Point in Polygon Problem for Arbitrary Polygons" by Hormann & Agathos
@@ -3717,7 +3630,7 @@ namespace TVGL._2D.Clipper
         } 
         //------------------------------------------------------------------------------
 
-        private static int PointInPolygon(IntPoint pt, OutPt op)
+        private static int PointInPolygon(Point pt, OutPt op)
         {
             //returns 0 if false, +1 if true, -1 if pt ON polygon boundary
             //See "The Point in Polygon Problem for Arbitrary Polygons" by Hormann & Agathos
@@ -4041,7 +3954,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private static double DistanceFromLineSqrd(IntPoint pt, IntPoint ln1, IntPoint ln2)
+        private static double DistanceFromLineSqrd(Point pt, Point ln1, Point ln2)
         {
             //The equation of a line in general form (Ax + By + C = 0)
             //given 2 points (x¹,y¹) & (x²,y²) is ...
@@ -4057,8 +3970,8 @@ namespace TVGL._2D.Clipper
         }
         //---------------------------------------------------------------------------
 
-        private static bool SlopesNearCollinear(IntPoint pt1,
-            IntPoint pt2, IntPoint pt3, double distSqrd)
+        private static bool SlopesNearCollinear(Point pt1,
+            Point pt2, Point pt3, double distSqrd)
         {
             //this function is more accurate when the point that's GEOMETRICALLY 
             //between the other 2 points is the one that's tested for distance.  
@@ -4084,7 +3997,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private static bool PointsAreClose(IntPoint pt1, IntPoint pt2, double distSqrd)
+        private static bool PointsAreClose(Point pt1, Point pt2, double distSqrd)
         {
             var dx = pt1.X - pt2.X;
             var dy = pt1.Y - pt2.Y;
@@ -4181,7 +4094,7 @@ namespace TVGL._2D.Clipper
                 {
                     var p = new Path(polyCnt);
                     var i1 = i;
-                    p.AddRange(pattern.Select(ip => new IntPoint(path[i1].X + ip.X, path[i1].Y + ip.Y)));
+                    p.AddRange(pattern.Select(ip => new Point(path[i1].X + ip.X, path[i1].Y + ip.Y)));
                     result.Add(p);
                 }
             else
@@ -4189,7 +4102,7 @@ namespace TVGL._2D.Clipper
                 {
                     var p = new Path(polyCnt);
                     var i1 = i;
-                    p.AddRange(pattern.Select(ip => new IntPoint(path[i1].X - ip.X, path[i1].Y - ip.Y)));
+                    p.AddRange(pattern.Select(ip => new Point(path[i1].X - ip.X, path[i1].Y - ip.Y)));
                     result.Add(p);
                 }
 
@@ -4221,11 +4134,11 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        private static Path TranslatePath(Path path, IntPoint delta)
+        private static Path TranslatePath(Path path, Point delta)
         {
             var outPath = new Path(path.Count);
             for (var i = 0; i < path.Count; i++)
-                outPath.Add(new IntPoint(path[i].X + delta.X, path[i].Y + delta.Y));
+                outPath.Add(new Point(path[i].X + delta.X, path[i].Y + delta.Y));
             return outPath;
         }
         //------------------------------------------------------------------------------
@@ -4316,7 +4229,7 @@ namespace TVGL._2D.Clipper
         private double _mDelta, _mSinA, _mSin, _mCos;
         private double _mMiterLim, _mStepsPerRad;
 
-        private IntPoint _mLowest;
+        private Point _mLowest;
         private PolyNode _mPolyNodes = new PolyNode();
 
         internal double ArcTolerance { get; set; }
@@ -4374,14 +4287,14 @@ namespace TVGL._2D.Clipper
             //if this path's lowest pt is lower than all the others then update m_lowest
             if (endType != EndType.ClosedPolygon) return;
             if (_mLowest.X < 0)
-                _mLowest = new IntPoint(_mPolyNodes.ChildCount - 1, k);
+                _mLowest = new Point(_mPolyNodes.ChildCount - 1, k);
             else
             {
-                IntPoint ip = _mPolyNodes.Childs[(int)_mLowest.X].MPolygon[(int)_mLowest.Y];
+                Point ip = _mPolyNodes.Childs[(int)_mLowest.X].MPolygon[(int)_mLowest.Y];
                 if (newNode.MPolygon[k].Y > ip.Y ||
                   (newNode.MPolygon[k].Y.IsPracticallySame(ip.Y) &&
                   newNode.MPolygon[k].X < ip.X))
-                    _mLowest = new IntPoint(_mPolyNodes.ChildCount - 1, k);
+                    _mLowest = new Point(_mPolyNodes.ChildCount - 1, k);
             }
         }
         //------------------------------------------------------------------------------
@@ -4422,7 +4335,7 @@ namespace TVGL._2D.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal static DoublePoint GetUnitNormal(IntPoint pt1, IntPoint pt2)
+        internal static DoublePoint GetUnitNormal(Point pt1, Point pt2)
         {
             double dx = (pt2.X - pt1.X);
             double dy = (pt2.Y - pt1.Y);
@@ -4493,7 +4406,7 @@ namespace TVGL._2D.Clipper
                         double xval = 1.0, yval = 0.0;
                         for (var j = 1; j <= steps; j++)
                         {
-                            _mDestPoly.Add(new IntPoint(
+                            _mDestPoly.Add(new Point(
                               (_mSrcPoly[0].X + xval * delta),
                               (_mSrcPoly[0].Y + yval * delta)));
                             var x2 = xval;
@@ -4506,7 +4419,7 @@ namespace TVGL._2D.Clipper
                         double xval = -1.0, yval = -1.0;
                         for (var j = 0; j < 4; ++j)
                         {
-                            _mDestPoly.Add(new IntPoint(
+                            _mDestPoly.Add(new Point(
                               (_mSrcPoly[0].X + xval * delta),
                               (_mSrcPoly[0].Y + yval * delta)));
                             if (xval < 0) xval = 1;
@@ -4563,14 +4476,14 @@ namespace TVGL._2D.Clipper
                         for (var j = 1; j < len - 1; ++j)
                             OffsetPoint(j, ref k, node.MJointype);
 
-                        IntPoint pt1;
+                        Point pt1;
                         if (node.MEndtype == EndType.OpenButt)
                         {
                             var j = len - 1;
-                            pt1 = new IntPoint((_mSrcPoly[j].X + _mNormals[j].X *
+                            pt1 = new Point((_mSrcPoly[j].X + _mNormals[j].X *
                                                      delta), (_mSrcPoly[j].Y + _mNormals[j].Y * delta));
                             _mDestPoly.Add(pt1);
-                            pt1 = new IntPoint((_mSrcPoly[j].X - _mNormals[j].X *
+                            pt1 = new Point((_mSrcPoly[j].X - _mNormals[j].X *
                                                      delta), (_mSrcPoly[j].Y - _mNormals[j].Y * delta));
                             _mDestPoly.Add(pt1);
                         }
@@ -4598,10 +4511,10 @@ namespace TVGL._2D.Clipper
 
                         if (node.MEndtype == EndType.OpenButt)
                         {
-                            pt1 = new IntPoint((_mSrcPoly[0].X - _mNormals[0].X * delta),
+                            pt1 = new Point((_mSrcPoly[0].X - _mNormals[0].X * delta),
                                 (_mSrcPoly[0].Y - _mNormals[0].Y * delta));
                             _mDestPoly.Add(pt1);
-                            pt1 = new IntPoint((_mSrcPoly[0].X + _mNormals[0].X * delta),
+                            pt1 = new Point((_mSrcPoly[0].X + _mNormals[0].X * delta),
                                 (_mSrcPoly[0].Y + _mNormals[0].Y * delta));
                             _mDestPoly.Add(pt1);
                         }
@@ -4639,10 +4552,10 @@ namespace TVGL._2D.Clipper
                 var r = ClipperBase.GetBounds(_mDestPolys);
                 var outerPath = new Path(4)
                 {
-                    new IntPoint(r.Left - 10, r.Bottom + 10),
-                    new IntPoint(r.Right + 10, r.Bottom + 10),
-                    new IntPoint(r.Right + 10, r.Top - 10),
-                    new IntPoint(r.Left - 10, r.Top - 10)
+                    new Point(r.Left - 10, r.Bottom + 10),
+                    new Point(r.Right + 10, r.Bottom + 10),
+                    new Point(r.Right + 10, r.Top - 10),
+                    new Point(r.Left - 10, r.Top - 10)
                 };
 
 
@@ -4673,10 +4586,10 @@ namespace TVGL._2D.Clipper
                 var r = ClipperBase.GetBounds(_mDestPolys);
                 var outerPath = new Path(4)
                 {
-                    new IntPoint(r.Left - 10, r.Bottom + 10),
-                    new IntPoint(r.Right + 10, r.Bottom + 10),
-                    new IntPoint(r.Right + 10, r.Top - 10),
-                    new IntPoint(r.Left - 10, r.Top - 10)
+                    new Point(r.Left - 10, r.Bottom + 10),
+                    new Point(r.Right + 10, r.Bottom + 10),
+                    new Point(r.Right + 10, r.Top - 10),
+                    new Point(r.Left - 10, r.Top - 10)
                 };
 
 
@@ -4710,7 +4623,7 @@ namespace TVGL._2D.Clipper
                 var cosA = (_mNormals[k].X * _mNormals[j].X + _mNormals[j].Y * _mNormals[k].Y);
                 if (cosA > 0) // angle ==> 0 degrees
                 {
-                    _mDestPoly.Add(new IntPoint((_mSrcPoly[j].X + _mNormals[k].X * _mDelta),
+                    _mDestPoly.Add(new Point((_mSrcPoly[j].X + _mNormals[k].X * _mDelta),
                       (_mSrcPoly[j].Y + _mNormals[k].Y * _mDelta)));
                     return;
                 }
@@ -4721,10 +4634,10 @@ namespace TVGL._2D.Clipper
 
             if (_mSinA * _mDelta < 0)
             {
-                _mDestPoly.Add(new IntPoint((_mSrcPoly[j].X + _mNormals[k].X * _mDelta),
+                _mDestPoly.Add(new Point((_mSrcPoly[j].X + _mNormals[k].X * _mDelta),
                   (_mSrcPoly[j].Y + _mNormals[k].Y * _mDelta)));
                 _mDestPoly.Add(_mSrcPoly[j]);
-                _mDestPoly.Add(new IntPoint((_mSrcPoly[j].X + _mNormals[j].X * _mDelta),
+                _mDestPoly.Add(new Point((_mSrcPoly[j].X + _mNormals[j].X * _mDelta),
                   (_mSrcPoly[j].Y + _mNormals[j].Y * _mDelta)));
             }
             else
@@ -4748,10 +4661,10 @@ namespace TVGL._2D.Clipper
         {
             var dx = Math.Tan(Math.Atan2(_mSinA,
                 _mNormals[k].X * _mNormals[j].X + _mNormals[k].Y * _mNormals[j].Y) / 4);
-            _mDestPoly.Add(new IntPoint(
+            _mDestPoly.Add(new Point(
                 (_mSrcPoly[j].X + _mDelta * (_mNormals[k].X - _mNormals[k].Y * dx)),
                 (_mSrcPoly[j].Y + _mDelta * (_mNormals[k].Y + _mNormals[k].X * dx))));
-            _mDestPoly.Add(new IntPoint(
+            _mDestPoly.Add(new Point(
                 (_mSrcPoly[j].X + _mDelta * (_mNormals[j].X + _mNormals[j].Y * dx)),
                 (_mSrcPoly[j].Y + _mDelta * (_mNormals[j].Y - _mNormals[j].X * dx))));
         }
@@ -4760,7 +4673,7 @@ namespace TVGL._2D.Clipper
         internal void DoMiter(int j, int k, double r)
         {
             double q = _mDelta / r;
-            _mDestPoly.Add(new IntPoint((_mSrcPoly[j].X + (_mNormals[k].X + _mNormals[j].X) * q),
+            _mDestPoly.Add(new Point((_mSrcPoly[j].X + (_mNormals[k].X + _mNormals[j].X) * q),
                 (_mSrcPoly[j].Y + (_mNormals[k].Y + _mNormals[j].Y) * q)));
         }
         //------------------------------------------------------------------------------
@@ -4774,14 +4687,14 @@ namespace TVGL._2D.Clipper
             double x = _mNormals[k].X, y = _mNormals[k].Y;
             for (var i = 0; i < steps; ++i)
             {
-                _mDestPoly.Add(new IntPoint(
+                _mDestPoly.Add(new Point(
                     (_mSrcPoly[j].X + x * _mDelta),
                     (_mSrcPoly[j].Y + y * _mDelta)));
                 var x2 = x;
                 x = x * _mCos - _mSin * y;
                 y = x2 * _mSin + y * _mCos;
             }
-            _mDestPoly.Add(new IntPoint(
+            _mDestPoly.Add(new Point(
             (_mSrcPoly[j].X + _mNormals[j].X * _mDelta),
             (_mSrcPoly[j].Y + _mNormals[j].Y * _mDelta)));
         }

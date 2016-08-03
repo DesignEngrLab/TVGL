@@ -9,8 +9,8 @@ using TVGL._2D.Clipper;
 
 namespace TVGLTest.Test
 {
-    using Path = List<IntPoint>;
-    using Paths = List<List<IntPoint>>;
+    using Path = List<Point>;
+    using Paths = List<List<Point>>;
 
     [TestFixture]
     [RequiresSTA]
@@ -40,7 +40,7 @@ namespace TVGLTest.Test
 
             for (var i = 0; i < ints.Length; i += 2)
             {
-                polygon.Add(new IntPoint(scale * ints[i], scale * ints[i + 1]));
+                polygon.Add(new Point(scale * ints[i], scale * ints[i + 1]));
             }
 
             return polygon;
@@ -113,7 +113,7 @@ namespace TVGLTest.Test
             {
                 var points = new List<Point>();
                 if (scalingFactor < 1) scalingFactor = 1;
-                points.AddRange(path.Select(intPoint => new Point(new List<double>() { intPoint.X / scalingFactor, intPoint.Y / scalingFactor, 0.0 })));
+                points.AddRange(path.Select(Point => new Point(new List<double>() { Point.X / scalingFactor, Point.Y / scalingFactor, 0.0 })));
                 pointPaths.Add(points);
             }
             Presenter.ShowAndHang(pointPaths);
@@ -130,7 +130,7 @@ namespace TVGLTest.Test
                 {
                     var points = new List<Point>();
                     if (scalingFactor < 1) scalingFactor = 1;
-                    points.AddRange(path.Select(intPoint => new Point(new List<double>() { intPoint.X / scalingFactor, intPoint.Y/ scalingFactor, 0.0 })));
+                    points.AddRange(path.Select(Point => new Point(new List<double>() { Point.X / scalingFactor, Point.Y/ scalingFactor, 0.0 })));
                     pointPathList.Add(points);
                 }
                 pointPathLists.Add(pointPathList);
@@ -142,7 +142,7 @@ namespace TVGLTest.Test
         public void Difference1()
         {
             PolyFillType fillMethod = PolyFillType.Positive;
-            //Note: If you do not use a scaling factor for intPoints, 
+            //Note: If you do not use a scaling factor for Points, 
             //if two points are close together, they will not be distinguished.
             //Clipper was meant to use a scaling factor.
             var scalingFactor = 1000;

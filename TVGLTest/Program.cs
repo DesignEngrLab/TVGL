@@ -12,8 +12,8 @@ using TVGL.IOFunctions;
 
 namespace TVGL_Test
 {
-    using Path = List<IntPoint>;
-    using Paths = List<List<IntPoint>>;
+    using Path = List<Point>;
+    using Paths = List<List<Point>>;
 
     internal class Program
     {
@@ -73,7 +73,7 @@ namespace TVGL_Test
         [STAThread]
         private static void Main(string[] args)
         {
-            //Difference2();
+            Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
@@ -152,7 +152,7 @@ namespace TVGL_Test
 
             for (var i = 0; i < ints.Length; i += 2)
             {
-                polygon.Add(new IntPoint(scale * ints[i], scale * ints[i + 1]));
+                polygon.Add(new Point(scale * ints[i], scale * ints[i + 1]));
             }
 
             return polygon;
