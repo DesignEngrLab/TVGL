@@ -37,6 +37,7 @@ namespace TVGL.IOFunctions
             Normals = new List<double[]>();
             Vertices = new List<List<double[]>>();
             Colors = new List<Color>();
+            Units = UnitType.unspecified;
         }
 
         #endregion
@@ -140,9 +141,11 @@ namespace TVGL.IOFunctions
             var reader = new StreamReader(stream);
             stlData = new List<STLFileData>();
             var stlSolid = new STLFileData { FileName = filename };
+            var comments = new List<string>();
             while (!reader.EndOfStream)
             {
                 var line = ReadLine(reader);
+                comments.Add(line);
                 string id, values;
                 ParseLine(line, out id, out values);
                 switch (id)
@@ -163,6 +166,7 @@ namespace TVGL.IOFunctions
                         stlSolid = new STLFileData();
                         break;
                 }
+                stlSolid.Units = InferUnitsFromComments(comments);
             }
             return true;
         }
