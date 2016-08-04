@@ -32,12 +32,11 @@ namespace TVGL.IOFunctions
         /// <summary>
         ///     Initializes a new instance of the <see cref="STLFileData" /> class.
         /// </summary>
-        private STLFileData()
+        internal STLFileData()
         {
             Normals = new List<double[]>();
             Vertices = new List<List<double[]>>();
             Colors = new List<Color>();
-            Units = UnitType.unspecified;
         }
 
         #endregion
@@ -140,7 +139,7 @@ namespace TVGL.IOFunctions
             var solidNum = 0;
             var reader = new StreamReader(stream);
             stlData = new List<STLFileData>();
-            var stlSolid = new STLFileData { FileName = filename };
+            var stlSolid = new STLFileData { FileName = filename, Units = UnitType.unspecified};
             var comments = new List<string>();
             while (!reader.EndOfStream)
             {
@@ -162,12 +161,12 @@ namespace TVGL.IOFunctions
                         stlSolid.ReadFacet(reader, values);
                         break;
                     case "endsolid":
+                        stlSolid.Units = InferUnitsFromComments(comments);
                         stlData.Add(stlSolid);
                         stlSolid = new STLFileData();
                         break;
                 }
-            }
-            stlSolid.Units = InferUnitsFromComments(comments);
+            }         
             return true;
         }
 

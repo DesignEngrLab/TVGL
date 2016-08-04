@@ -314,27 +314,25 @@ namespace TVGL.IOFunctions
         {
             if (Enum.TryParse(input, out units)) return true;
             if (input.Equals("milimeter", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("millimeter", StringComparison.CurrentCultureIgnoreCase) ||
                 input.Equals("milimeters", StringComparison.CurrentCultureIgnoreCase) ||
-                input.Equals("millimeters", StringComparison.CurrentCultureIgnoreCase) ||
-                input.Equals("mm", StringComparison.CurrentCultureIgnoreCase))
+                input.Equals("millimeters", StringComparison.CurrentCultureIgnoreCase))
                 units = UnitType.millimeter;
-            if (input.Equals("centimeters", StringComparison.CurrentCultureIgnoreCase) ||
-                input.Equals("cm", StringComparison.CurrentCultureIgnoreCase))
-                units = UnitType.centimeter;
-            else if (input.Equals("meters", StringComparison.CurrentCultureIgnoreCase) ||
-                input.Equals("m", StringComparison.CurrentCultureIgnoreCase))
-                units = UnitType.meter;
             else if (input.Equals("micrometer", StringComparison.CurrentCultureIgnoreCase) ||
                 input.Equals("micrometers", StringComparison.CurrentCultureIgnoreCase) ||
-                input.Equals("microns", StringComparison.CurrentCultureIgnoreCase) ||
-                input.Equals("um", StringComparison.CurrentCultureIgnoreCase))
+                input.Equals("microns", StringComparison.CurrentCultureIgnoreCase))
+                units = UnitType.micron;
+            else if(input.Equals("centimeter", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("centimeters", StringComparison.CurrentCultureIgnoreCase))
+                units = UnitType.centimeter;
+            else if (input.Equals("meters", StringComparison.CurrentCultureIgnoreCase) ||
+                input.Equals("meter", StringComparison.CurrentCultureIgnoreCase))
                 units = UnitType.meter;
             else if (input.Equals("feet", StringComparison.CurrentCultureIgnoreCase) ||
                 input.Equals("foots", StringComparison.CurrentCultureIgnoreCase))
                 units = UnitType.foot;
             else if (input.Equals("inches", StringComparison.CurrentCultureIgnoreCase) ||
-                input.Equals("in", StringComparison.CurrentCultureIgnoreCase) ||
-                input.Equals("in.", StringComparison.CurrentCultureIgnoreCase))
+                input.Equals("inch", StringComparison.CurrentCultureIgnoreCase))
                 units = UnitType.inch;
             else return false;
             return true;
