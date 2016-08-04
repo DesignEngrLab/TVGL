@@ -166,8 +166,8 @@ namespace TVGL.IOFunctions
                         stlSolid = new STLFileData();
                         break;
                 }
-                stlSolid.Units = InferUnitsFromComments(comments);
             }
+            stlSolid.Units = InferUnitsFromComments(comments);
             return true;
         }
 
