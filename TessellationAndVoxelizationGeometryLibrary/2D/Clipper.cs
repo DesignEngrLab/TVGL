@@ -30,27 +30,6 @@
 * http://www.me.berkeley.edu/~mcmains/pubs/DAC05OffsetPolygon.pdf              *
 *                                                                              *
 *******************************************************************************/
-//Note that a newer paper "An Improved Polygon Clipping Algorithm Based on Affine Transformation" 
-//Claims to beat the Vatti Altgorithms
-
-/*******************************************************************************
-*                                                                              *
-* This is a translation of the Delphi Clipper library and the naming style     *
-* used has retained a Delphi flavour.                                          *
-*                                                                              *
-*******************************************************************************/
-
-//use_int32: When enabled 32bit ints are used instead of 64bit ints. This
-//improve performance but coordinate values are limited to the range +/- 46340
-//#define use_int32
-
-//use_xyz: adds a Z member to Point. Adds a minor cost to performance.
-//#define use_xyz
-
-//use_deprecated: Enables temporary support for the obsolete functions
-//#define use_deprecated
-
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
