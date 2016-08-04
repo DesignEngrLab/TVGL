@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using StarMathLib;
-using TVGL._2D;
 
 namespace TVGL
 {

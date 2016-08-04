@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using StarMathLib;
-using TVGL._2D.Clipper;
 
-namespace TVGL._2D
+namespace TVGL
 {
     /// <summary>
     /// The outline of a solid from a particular direction.

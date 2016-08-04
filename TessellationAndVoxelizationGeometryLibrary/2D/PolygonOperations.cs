@@ -55,13 +55,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL._2D.Clipper;
+using TVGL.Clipper;
 
 //using System.Text;          //for Int128.AsString() & StringBuilder
 //using System.IO;            //debugging with streamReader & StreamWriter
 //using System.Windows.Forms; //debugging to clipboard
 
-namespace TVGL._2D
+namespace TVGL
 {
     using Path = List<Point>;
     using Paths = List<List<Point>>;
@@ -376,7 +376,7 @@ namespace TVGL._2D
     #endregion
 }
 
-namespace TVGL._2D.Clipper
+namespace TVGL.Clipper
 {
     using Path = List<Point>;
     using Paths = List<List<Point>>;

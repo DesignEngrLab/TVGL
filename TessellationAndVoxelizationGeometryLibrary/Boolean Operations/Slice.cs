@@ -32,7 +32,13 @@ namespace TVGL.Boolean_Operations
             out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
             ContactData contactData;
-            GetContactData(ts, plane, out contactData);
+            if (!GetContactData(ts, plane, out contactData))
+            {
+                positiveSideSolids = new List<TessellatedSolid>();
+                negativeSideSolids = new List<TessellatedSolid>();
+                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
+                return;
+            };
             MakeSolids(contactData, ts.Units, out positiveSideSolids, out negativeSideSolids);
             var allSolids = new List<TessellatedSolid>(positiveSideSolids);
             allSolids.AddRange(negativeSideSolids);
