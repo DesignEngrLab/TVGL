@@ -1597,7 +1597,7 @@ namespace TVGLTest.Test
             int[] ints2 = { 348, 257, 364, 148, 362, 148, 326, 241, 295, 219, 258, 88, 440, 129, 370, 196, 372, 275 };
 
             subject.Add(MakePolygonFromInts(ints2, scale));
-            ClipperOffset clipperOffset = new ClipperOffset();
+            ClipperOffset clipperOffset = new ClipperOffset(1);
             clipperOffset.AddPaths(subject, JoinType.Round, EndType.ClosedPolygon);
             clipperOffset.Execute(ref solution, -7.0 * scale);
 

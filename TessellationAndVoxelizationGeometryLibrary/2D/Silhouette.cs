@@ -49,8 +49,22 @@ namespace TVGL
                 nextPolygon = PolygonOperations.CCWPositive(nextPolygon);
                 polygonList = PolygonOperations.Union(polygonList, nextPolygon);
             }
+            var polygons = polygonList.Select(path => new Polygon(path)).ToList();
+            //Get the minimum line length to use for the offset.
+            var minLength = double.PositiveInfinity;
+            var totalLength = 0.0;
+            foreach (var polygon in polygons)
+            {
+                foreach (var line in polygon.PathLines)
+                {
+                    if (line.Length < minLength)
+                    {
+                        minLength = line.Length;
+                    }
+                    totalLength += line.Length;
+                }
+            }
 
-            
             var smallestX = double.PositiveInfinity;
             var largestX = double.NegativeInfinity;
             foreach (var path in polygonList)
@@ -69,7 +83,7 @@ namespace TVGL
             }
             var scale = largestX - smallestX;
 
-            var offsetPolygons = PolygonOperations.OffsetRound(polygonList, scale/10);
+            var offsetPolygons = PolygonOperations.OffsetRound(polygonList, totalLength/1000, scale/10);
             polygonList.AddRange(offsetPolygons);
 
             return polygonList;

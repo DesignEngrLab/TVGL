@@ -23,6 +23,7 @@ namespace TVGL
         {
             FromPoint = fromPoint;
             ToPoint= toPoint;
+            Length = MiscFunctions.DistancePointToPoint(FromPoint.Position2D, ToPoint.Position2D);
 
             //Solve for slope and y intercept. 
             if (ToPoint.X.IsPracticallySame(FromPoint.X)) //If vertical line, set slope = inf.
@@ -76,6 +77,11 @@ namespace TVGL
         internal double Yintercept { get; private set; }
 
         internal int IndexInList { get; set; }
+
+        /// <summary>
+        /// Gets the length of the line
+        /// </summary>
+        public double Length { get; private set; }
 
         /// <summary>
         ///     Gets X intercept given Y

@@ -128,16 +128,18 @@ namespace TVGL
         #endregion
 
         #region Offset
+
         /// <summary>
         /// Offets the given loop by the given offset, rounding corners.
         /// </summary>
         /// <param name="loop"></param>
+        /// <param name="minLength"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static List<Point> OffsetRound(IList<Point> loop, double offset)
+        public static List<Point> OffsetRound(IList<Point> loop, double minLength, double offset)
         {
             var loops = new List<List<Point>> { new List<Point>(loop) };
-            var offsetLoops = OffsetRound(loops, offset);
+            var offsetLoops = OffsetRound(loops, minLength, offset);
             return offsetLoops.First();
         }
 
@@ -147,13 +149,14 @@ namespace TVGL
         /// Loops must be ordered CCW positive.
         /// </summary>
         /// <param name="loops"></param>
+        /// <param name="minLength"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static List<List<Point>> OffsetRound(List<List<Point>> loops, double offset)
+        public static List<List<Point>> OffsetRound(List<List<Point>> loops, double minLength, double offset)
         {
             //Begin an evaluation
             var solution = new List<List<Point>>();
-            var clip = new ClipperOffset();
+            var clip = new ClipperOffset(minLength);
             clip.AddPaths(loops, JoinType.Round, EndType.ClosedPolygon);
             clip.Execute(ref solution, offset);
             return solution;

@@ -3852,13 +3852,13 @@ namespace TVGL.Clipper
         internal double MiterLimit { get; set; }
 
         private const double TwoPi = Math.PI * 2;
-        private const double DefArcTolerance = 0.25;
+        //internal double DefArcTolerance;
 
-        internal ClipperOffset(
-          double miterLimit = 2.0, double arcTolerance = DefArcTolerance)
+        internal ClipperOffset(double minLength, double miterLimit = 2.0)
         {
             MiterLimit = miterLimit;
-            ArcTolerance = arcTolerance;
+            ArcTolerance = minLength;
+            //DefArcTolerance = minLength;
             _mLowest = new Point(-1, 0);
         }
         //------------------------------------------------------------------------------
@@ -3989,9 +3989,9 @@ namespace TVGL.Clipper
 
             double y;
             if (ArcTolerance <= 0.0)
-                y = DefArcTolerance;
-            else if (ArcTolerance > Math.Abs(delta) * DefArcTolerance)
-                y = Math.Abs(delta) * DefArcTolerance;
+                y = Math.Abs(ArcTolerance);
+            else if (ArcTolerance > Math.Abs(delta)/2)
+                y = Math.Abs(delta)/2;
             else
                 y = ArcTolerance;
             //see offset_triginometry2.svg in the documentation folder ...
@@ -4019,7 +4019,7 @@ namespace TVGL.Clipper
                 {
                     if (node.MJointype == JoinType.Round)
                     {
-                        double xval = 1.0, yval = 0.0;
+                        double xval = ArcTolerance, yval = 0.0;
                         for (var j = 1; j <= steps; j++)
                         {
                             _mDestPoly.Add(new Point(
@@ -4032,7 +4032,7 @@ namespace TVGL.Clipper
                     }
                     else
                     {
-                        double xval = -1.0, yval = -1.0;
+                        double xval = -ArcTolerance, yval = -ArcTolerance;
                         for (var j = 0; j < 4; ++j)
                         {
                             _mDestPoly.Add(new Point(
@@ -4233,7 +4233,7 @@ namespace TVGL.Clipper
             //cross product ...
             _mSinA = (_mNormals[k].X * _mNormals[j].Y - _mNormals[j].X * _mNormals[k].Y);
 
-            if (Math.Abs(_mSinA * _mDelta) < 1.0)
+            if (Math.Abs(_mSinA * _mDelta) < 0.01)
             {
                 //dot product ...
                 var cosA = (_mNormals[k].X * _mNormals[j].X + _mNormals[j].Y * _mNormals[k].Y);

@@ -151,7 +151,9 @@ namespace TVGL
             X = point.X;
             Y = point.Y;
             Z = point.Z;
-            References = point.References;
+            Lines = new List<Line>(point.Lines);
+            References = new List<Vertex>(point.References);
+            
         }
 
         /// <summary>
@@ -166,8 +168,10 @@ namespace TVGL
             X = x;
             Y = y;
             Z = z;
+            Lines = new List<Line>();
+            References = new List<Vertex>();
             if (vertex == null) return;
-            References = new List<Vertex> {vertex};
+            References.Add(vertex);
         }
 
         /// <summary>
