@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,7 +6,6 @@ using System.Linq;
 using NUnit.Framework;
 using TVGL;
 using TVGL.Boolean_Operations;
-using TVGL.Clipper;
 using TVGL.Clipper;
 using TVGL.IOFunctions;
 

@@ -47,8 +47,31 @@ namespace TVGL
                 var nextPolygon = MiscFunctions.Get2DProjectionPoints(negativeFace.Vertices, normal, false).ToList();
                 //Make this polygon positive CCW
                 nextPolygon = PolygonOperations.CCWPositive(nextPolygon);
-                polygonList = Union.Run(polygonList, nextPolygon);
+                polygonList = PolygonOperations.Union(polygonList, nextPolygon);
             }
+
+            
+            var smallestX = double.PositiveInfinity;
+            var largestX = double.NegativeInfinity;
+            foreach (var path in polygonList)
+            {
+                foreach (var point in path)
+                {
+                    if (point.X < smallestX)
+                    {
+                        smallestX = point.X;
+                    }
+                    if (point.X > largestX)
+                    {
+                        largestX = point.X;
+                    }
+                }
+            }
+            var scale = largestX - smallestX;
+
+            var offsetPolygons = PolygonOperations.OffsetRound(polygonList, scale/10);
+            polygonList.AddRange(offsetPolygons);
+
             return polygonList;
         }
     }
