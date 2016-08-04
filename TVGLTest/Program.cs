@@ -7,7 +7,8 @@ using System.Linq;
 using NUnit.Framework;
 using TVGL;
 using TVGL.Boolean_Operations;
-using TVGL._2D.Clipper;
+using TVGL.Clipper;
+using TVGL.Clipper;
 using TVGL.IOFunctions;
 
 namespace TVGL_Test
@@ -98,7 +99,7 @@ namespace TVGL_Test
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL._2D.Silhouette.Run(ts, new[] {1.0, 0.0, 0.0});
+            var silhouette = TVGL.Silhouette.Run(ts, new[] {1.0, 0.0, 0.0});
             Presenter.ShowAndHang(silhouette);
         }
 

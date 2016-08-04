@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows.Threading;
 using TVGL;
-using TVGL._2D.Clipper;
+using TVGL.Clipper;
 
 namespace TVGLTest.Test
 {
