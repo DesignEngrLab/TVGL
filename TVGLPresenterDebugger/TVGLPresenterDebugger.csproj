@@ -82,11 +82,29 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper.cs">
+      <Link>TVGL\2D\Clipper.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Line.cs">
+      <Link>TVGL\2D\Line.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Point.cs">
+      <Link>TVGL\2D\Point.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Polygon.cs">
+      <Link>TVGL\2D\Polygon.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\PolygonOperations.cs">
+      <Link>TVGL\2D\PolygonOperations.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\PolygonTree.cs">
+      <Link>TVGL\2D\PolygonTree.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Silhouette.cs">
+      <Link>TVGL\2D\Silhouette.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\ContactData.cs">
       <Link>TVGL\Boolean Operations\ContactData.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\PolygonOperations.cs">
-      <Link>TVGL\Boolean Operations\PolygonOperations.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\Slice.cs">
       <Link>TVGL\Boolean Operations\Slice.cs</Link>
@@ -159,9 +177,6 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs">
       <Link>TVGL\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Point.cs">
-      <Link>TVGL\Point.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\ClassificationConstants.cs">
       <Link>TVGL\Primitive Classification\ClassificationConstants.cs</Link>

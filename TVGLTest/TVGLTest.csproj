@@ -95,16 +95,6 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary\TessellationAndVoxelizationGeometryLibraryUniversal.csproj">
-      <Project>{e3489019-d590-46a8-b2c2-e3481e8db77c}</Project>
-      <Name>TessellationAndVoxelizationGeometryLibraryUniversal</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj">
-      <Project>{8c1364cc-908a-4174-b62c-21ec4839584d}</Project>
-      <Name>TVGL Presenter</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
@@ -114,6 +104,13 @@
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TVGLPresenterDebugger\TVGLPresenterDebugger.csproj">
+      <Project>{f6678d6c-1f71-4f4e-ac77-22f5e133a6f2}</Project>
+      <Name>TVGLPresenterDebugger</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
