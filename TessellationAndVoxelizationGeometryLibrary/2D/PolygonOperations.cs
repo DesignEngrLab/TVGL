@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using StarMathLib;
 using TVGL.Clipper;
 
 namespace TVGL
@@ -9,12 +10,32 @@ namespace TVGL
     using Paths = List<List<Point>>;
 
     #region Polygon Operations
+
     /// <summary>
     /// A set of general operation for points and polygons
     /// </summary>
     public class PolygonOperations
     {
+        /// <summary>
+        /// Gets the length of a path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static double Length(IList<Point> path)
+        {
+            var editPath = new List<Point>(path) {path.First()};
+            var length = 0.0;
+            for (var i = 0; i < path.Count -1; i++)
+            {
+                var p1 = path[i];
+                var p2 = path[i + 1];
+                length += MiscFunctions.DistancePointToPoint(p1.Position2D, p2.Position2D);
+            }
+            return length;
+        }
+
         #region Clockwise / CounterClockwise Ordering
+
         /// <summary>
         /// Sets a polygon to counter clock wise positive
         /// </summary>
@@ -46,9 +67,11 @@ namespace TVGL
             if (area > 0) polygon.Reverse();
             return polygon;
         }
+
         #endregion
 
         #region Simplify
+
         /// <summary>
         /// Simplifies a polygon, by removing self intersection. This may output several polygons.
         /// </summary>
@@ -68,7 +91,7 @@ namespace TVGL
                     var Point = loop[i];
                     var x = Point.X;
                     var y = Point.Y;
-                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }) { References = Point.References });
+                    offsetLoop.Add(new Point(new List<double> {x, y, 0.0}) {References = Point.References});
                 }
                 outputLoops.Add(offsetLoop);
             }
@@ -100,7 +123,7 @@ namespace TVGL
                     var Point = loop[i];
                     var x = Point.X;
                     var y = Point.Y;
-                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }) { References = Point.References });
+                    offsetLoop.Add(new Point(new List<double> {x, y, 0.0}) {References = Point.References});
                 }
                 outputLoops.Add(offsetLoop);
             }
@@ -125,39 +148,105 @@ namespace TVGL
             simplifiedPolygon = unionLoops.First();
             return true;
         }
+
         #endregion
 
         #region Offset
-
         /// <summary>
-        /// Offets the given loop by the given offset, rounding corners.
+        /// Offets the given path by the given offset, rounding corners.
         /// </summary>
-        /// <param name="loop"></param>
-        /// <param name="minLength"></param>
+        /// <param name="path"></param>
         /// <param name="offset"></param>
+        /// <param name="fractionOfPathLengthForMinLength"></param>
         /// <returns></returns>
-        public static List<Point> OffsetRound(IList<Point> loop, double minLength, double offset)
+        public static List<List<Point>> OffsetRound(IList<Point> path, double offset, double fractionOfPathLengthForMinLength = 0.001)
         {
-            var loops = new List<List<Point>> { new List<Point>(loop) };
-            var offsetLoops = OffsetRound(loops, minLength, offset);
-            return offsetLoops.First();
+            var pathLength = Length(path);
+            var minLength = pathLength * fractionOfPathLengthForMinLength;
+            if (minLength.IsNegligible()) minLength = pathLength * 0.001;
+            var loops = new List<List<Point>> {new List<Point>(path)};
+            return OffsetRoundByMinLength(loops, offset, minLength);
         }
 
         /// <summary>
-        /// Offsets all loops by the given offset value. Rounds the corners.
+        /// Offsets all paths by the given offset value. Rounds the corners.
         /// Offest value may be positive or negative.
         /// Loops must be ordered CCW positive.
         /// </summary>
-        /// <param name="loops"></param>
-        /// <param name="minLength"></param>
+        /// <param name="paths"></param>
         /// <param name="offset"></param>
+        /// <param name="fractionOfPathsLengthForMinLength"></param>
         /// <returns></returns>
-        public static List<List<Point>> OffsetRound(List<List<Point>> loops, double minLength, double offset)
+        public static List<List<Point>> OffsetRound(List<List<Point>> paths, double offset, double fractionOfPathsLengthForMinLength = 0.001)
         {
+            var totalLength = paths.Sum(path => Length(path));
+            var minLength = totalLength * fractionOfPathsLengthForMinLength;
+            if (minLength.IsNegligible()) minLength = totalLength * 0.001;
+            return OffsetRoundByMinLength(paths, offset, minLength);
+        }
+
+        private static List<List<Point>> OffsetRoundByMinLength(List<List<Point>> paths, double offset, double minLength)
+        {
+            if (minLength.IsNegligible())
+            {
+                var totalLength = paths.Sum(loop => Length(loop));
+                minLength = totalLength * 0.001;
+            }
+
             //Begin an evaluation
             var solution = new List<List<Point>>();
             var clip = new ClipperOffset(minLength);
-            clip.AddPaths(loops, JoinType.Round, EndType.ClosedPolygon);
+            clip.AddPaths(paths, JoinType.Round, EndType.ClosedPolygon);
+            clip.Execute(ref solution, offset);
+            return solution;
+        }
+
+        /// <summary>
+        /// Offsets all paths by the given offset value. Miters the corners.
+        /// Offest value may be positive or negative.
+        /// Loops must be ordered CCW positive.
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <param name="minLength"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        public static List<List<Point>> OffsetMiter(List<List<Point>> paths,  double offset, double minLength = 0.0)
+        {
+            if (minLength.IsNegligible())
+            {
+                var totalLength = paths.Sum(loop => Length(loop));
+                minLength = totalLength * 0.001;
+            }
+
+            //Begin an evaluation
+            var solution = new List<List<Point>>();
+            var clip = new ClipperOffset(minLength);
+            clip.AddPaths(paths, JoinType.Miter, EndType.ClosedPolygon);
+            clip.Execute(ref solution, offset);
+            return solution;
+        }
+
+        /// <summary>
+        /// Offsets all paths by the given offset value. Squares the corners.
+        /// Offest value may be positive or negative.
+        /// Loops must be ordered CCW positive.
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <param name="minLength"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        public static List<List<Point>> OffsetSquare(List<List<Point>> paths, double offset, double minLength = 0.0)
+        {
+            if (minLength.IsNegligible())
+            {
+                var totalLength = paths.Sum(loop => Length(loop));
+                minLength = totalLength * 0.001;
+            }
+
+            //Begin an evaluation
+            var solution = new List<List<Point>>();
+            var clip = new ClipperOffset(minLength);
+            clip.AddPaths(paths, JoinType.Square, EndType.ClosedPolygon);
             clip.Execute(ref solution, offset);
             return solution;
         }
@@ -174,52 +263,8 @@ namespace TVGL
         {
             const PolyFillType fillMethod = PolyFillType.Positive;
             var solution = new Paths();
-            var clipper = new Clipper.Clipper {StrictlySimple = true};
+            var subject = new List<Path>(polygons);
 
-            //Begin an evaluation
-            clipper.AddPaths(new List<Path>(polygons), PolyType.Subject, true);
-
-            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            if (!result) throw new Exception("Clipper Union Failed");
-            return solution;
-        }
-
-        /// <summary>
-        /// Union. Joins polygons that are touching into merged larger polygons.
-        /// </summary>
-        /// <param name="otherPolygon"></param>
-        /// <param name="polygons"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> polygons, IList<Point> otherPolygon)
-        {
-            const PolyFillType fillMethod = PolyFillType.Positive;
-            var solution = new Paths();
-            var clipper = new Clipper.Clipper();
-            var subject = new List<Path>(polygons) {new Path(otherPolygon)};
-
-            //Begin an evaluation
-            clipper.StrictlySimple = true;
-            clipper.AddPaths(subject, PolyType.Subject, true);
-
-            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            if (!result) throw new Exception("Clipper Union Failed");
-            return solution;
-        }
-
-        /// <summary>
-        /// Union. Joins two polygons that are touching or overlapping. Returns false if they are not connected.
-        /// </summary>
-        /// <param name="polygon1"></param>
-        /// <param name="polygon2"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<Point> polygon1, IList<Point> polygon2)
-        {
-            const PolyFillType fillMethod = PolyFillType.Positive;
-            var solution = new Paths();
-            var subject = new List<Path> {new Path(polygon1), new Path(polygon2)};
-            
             //Setup Clipper
             var clipper = new Clipper.Clipper {StrictlySimple = true};
             clipper.AddPaths(subject, PolyType.Subject, true);
@@ -228,6 +273,219 @@ namespace TVGL
             var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
             if (!result) throw new Exception("Clipper Union Failed");
             return solution;
+        }
+
+        /// <summary>
+        /// Union. Joins polygons that are touching into merged larger polygons.
+        /// </summary>
+        /// <param name="polygon1"></param>
+        /// <param name="polygon2"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Union(List<Point> polygon1, List<Point> polygon2)
+        {
+            return Union(new List<List<Point>>() {polygon1, polygon2});
+        }
+
+        /// <summary>
+        /// Union. Joins polygons that are touching into merged larger polygons.
+        /// </summary>
+        /// <param name="polygons"></param>
+        /// <param name="otherPolygon"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Union(IList<List<Point>> polygons, List<Point> otherPolygon)
+        {
+            return Union(new List<List<Point>>(polygons) { otherPolygon });
+        }
+        #endregion
+
+        #region Difference
+        /// <summary>
+        /// Difference. Gets the difference between two sets of polygons. 
+        /// </summary>
+        /// <param name="subjects"></param>
+        /// <param name="clips"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Difference(IList<List<Point>> subjects, IList<List<Point>> clips)
+        {
+            const PolyFillType fillMethod = PolyFillType.Positive;
+            var solution = new Paths();
+            var subject = new List<Path>(subjects);
+            var clip = new List<Path>(clips);
+
+            //Setup Clipper
+            var clipper = new Clipper.Clipper { StrictlySimple = true };
+            clipper.AddPaths(subject, PolyType.Subject, true);
+            clipper.AddPaths(clip, PolyType.Clip, true);
+
+            //Begin an evaluation
+            var result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
+            if (!result) throw new Exception("Clipper Difference Failed");
+            return solution;
+        }
+
+        /// <summary>
+        /// Difference. Gets the difference between two sets of polygons. 
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Difference(List<Point> subject, List<Point> clip)
+        {
+            return Difference(new List<List<Point>>() { subject}, new List<List<Point>>() { clip });
+        }
+
+        /// <summary>
+        /// Difference. Gets the difference between two sets of polygons. 
+        /// </summary>
+        /// <param name="subjects"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Difference(IList<List<Point>> subjects, List<Point> clip)
+        {
+            return Difference(new List<List<Point>>(subjects), new List<List<Point>>() { clip });
+        }
+
+        /// <summary>
+        /// Difference. Gets the difference between two sets of polygons. 
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clips"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Difference(List<Point> subject, IList<List<Point>> clips)
+        {
+            return Difference(new List<List<Point>>() {subject}, new List<List<Point>>(clips));
+        }
+        #endregion
+
+        #region Intersection
+        /// <summary>
+        /// Intersection. Gets the areas covered by both the subjects and the clips.
+        /// </summary>
+        /// <param name="subjects"></param>
+        /// <param name="clips"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Intersection(IList<List<Point>> subjects, IList<List<Point>> clips)
+        {
+            const PolyFillType fillMethod = PolyFillType.Positive;
+            var solution = new Paths();
+            var subject = new List<Path>(subjects);
+            var clip = new List<Path>(clips);
+
+            //Setup Clipper
+            var clipper = new Clipper.Clipper { StrictlySimple = true };
+            clipper.AddPaths(subject, PolyType.Subject, true);
+            clipper.AddPaths(clip, PolyType.Clip, true);
+
+            //Begin an evaluation
+            var result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
+            if (!result) throw new Exception("Clipper Difference Failed");
+            return solution;
+        }
+
+        /// <summary>
+        /// Intersection. Gets the areas covered by both the subjects and the clips. 
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Intersection(List<Point> subject, List<Point> clip)
+        {
+            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>() { clip });
+        }
+
+        /// <summary>
+        /// Intersection. Gets the areas covered by both the subjects and the clips.
+        /// </summary>
+        /// <param name="subjects"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Intersection(IList<List<Point>> subjects, List<Point> clip)
+        {
+            return Intersection(new List<List<Point>>(subjects), new List<List<Point>>() { clip });
+        }
+
+        /// <summary>
+        /// Intersection. Gets the areas covered by both the subjects and the clips. 
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clips"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Intersection(List<Point> subject, IList<List<Point>> clips)
+        {
+            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>(clips));
+        }
+        #endregion
+
+        #region Xor
+        /// <summary>
+        /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips. 
+        /// </summary>
+        /// <param name="subjects"></param>
+        /// <param name="clips"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Xor(IList<List<Point>> subjects, IList<List<Point>> clips)
+        {
+            const PolyFillType fillMethod = PolyFillType.Positive;
+            var solution = new Paths();
+            var subject = new List<Path>(subjects);
+            var clip = new List<Path>(clips);
+
+            //Setup Clipper
+            var clipper = new Clipper.Clipper { StrictlySimple = true };
+            clipper.AddPaths(subject, PolyType.Subject, true);
+            clipper.AddPaths(clip, PolyType.Clip, true);
+
+            //Begin an evaluation
+            var result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
+            if (!result) throw new Exception("Clipper Difference Failed");
+            return solution;
+        }
+
+        /// <summary>
+        /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips. 
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Xor(List<Point> subject, List<Point> clip)
+        {
+            return Xor(new List<List<Point>>() { subject }, new List<List<Point>>() { clip });
+        }
+
+        /// <summary>
+        /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips. 
+        /// </summary>
+        /// <param name="subjects"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Xor(IList<List<Point>> subjects, List<Point> clip)
+        {
+            return Xor(new List<List<Point>>(subjects), new List<List<Point>>() { clip });
+        }
+
+        /// <summary>
+        /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips.  
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clips"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Xor(List<Point> subject, IList<List<Point>> clips)
+        {
+            return Xor(new List<List<Point>>() { subject }, new List<List<Point>>(clips));
         }
         #endregion
     }

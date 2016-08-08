@@ -145,7 +145,6 @@ namespace TVGLTest.Test
             //Note: If you do not use a scaling factor for Points, 
             //if two points are close together, they will not be distinguished.
             //Clipper was meant to use a scaling factor.
-            var scalingFactor = 1000;
             int[] ints1 = { 29, 342, 115, 68, 141, 86 }; //CCW Black
             //int[] ints2 = { 128, 160, 99, 132, 97, 174 }; //CW Teal
             int[] ints2 = { 128, 160,  97, 174, 99, 132}; //CCW Teal
@@ -154,76 +153,78 @@ namespace TVGLTest.Test
             //int[] ints4 = { 97, 174, 99, 132, 60, 124, 58, 160 }; //CW Red
             int[] ints4 = { 97, 174, 58, 160, 60, 124, 99, 132 }; //CCW Red
 
-            subject.Add(MakePolygonFromInts(ints1, scalingFactor));
-            clip.Add(MakePolygonFromInts(ints2, scalingFactor));
-            clip.Add(MakePolygonFromInts(ints3, scalingFactor));
-            clip.Add(MakePolygonFromInts(ints4, scalingFactor));
+            var subjectList = MakePolygonFromInts(ints1);
+            var clipList = new List<List<Point>>() { MakePolygonFromInts(ints2), MakePolygonFromInts(ints3), MakePolygonFromInts(ints4)};
 
-            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip}, scalingFactor);
-
-            clipper.StrictlySimple = true;
-            clipper.AddPaths(subject, PolyType.Subject, true);
-            clipper.AddPaths(clip, PolyType.Clip, true);
-
-            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
+            solution = PolygonOperations.Union(clipList, subjectList);
+            //ShowPaths(solution);
             Assert.That(solution.Count, Is.EqualTo(1));
 
-            result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
+            solution = PolygonOperations.Difference(subjectList, clipList);
+            //ShowPaths(solution);
             Assert.That(solution.Count, Is.EqualTo(2));
             Assert.That(Clipper.Orientation(solution[0]), Is.True);
             Assert.That(Clipper.Orientation(solution[1]), Is.True);
 
-            result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
+            solution = PolygonOperations.Intersection(subjectList, clipList);
+            //ShowPaths(solution);
             Assert.That(solution.Count, Is.EqualTo(1));
 
-            result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
+            solution = PolygonOperations.Xor(subjectList, clipList);
+            //ShowPaths(solution);
             Assert.That(solution.Count, Is.EqualTo(4));
         }
 
         [Test]
         public void Difference2()
         {
-            PolyFillType fillMethod = PolyFillType.Positive;
-            const int scalingFactor = 1000;
+            //PolyFillType fillMethod = PolyFillType.Positive;
+            //const int scalingFactor = 1000;
             int[] ints1 = { -103, -219, -103, -136, -115, -136 }; //CCW
             int[] ints2 = { -110, -155, -110, -174, -70, -174  }; //CCW
 
-            subject.Add(MakePolygonFromInts(ints1, scalingFactor));
-            clip.Add(MakePolygonFromInts(ints2, scalingFactor));
+            //subject.Add(MakePolygonFromInts(ints1));
+            //clip.Add(MakePolygonFromInts(ints2));
+            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip });
 
-            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip }, scalingFactor);
+            var subjectList = MakePolygonFromInts(ints1);
+            var clipList = MakePolygonFromInts(ints2);
 
-            clipper.StrictlySimple = true;
-            clipper.AddPaths(subject, PolyType.Subject, true);
-            clipper.AddPaths(clip, PolyType.Clip, true);
+            //clipper.StrictlySimple = true;
+            //clipper.AddPaths(subject, PolyType.Subject, true);
+            //clipper.AddPaths(clip, PolyType.Clip, true);
 
-            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
+            //var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
+            //ShowPaths(solution);
+            //Assert.That(result, Is.True);
+            //Assert.That(solution.Count, Is.EqualTo(1));
+            solution = PolygonOperations.Union(subjectList, clipList);
             Assert.That(solution.Count, Is.EqualTo(1));
+            //ShowPaths(solution);
 
-            result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
+            //result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
+            //ShowPaths(solution);
+            //Assert.That(result, Is.True);
+            //Assert.That(solution.Count, Is.EqualTo(2));
+            solution = PolygonOperations.Difference(subjectList, clipList);
             Assert.That(solution.Count, Is.EqualTo(2));
+            //ShowPaths(solution);
 
-            result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
+            //result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
+            //ShowPaths(solution);
+            //Assert.That(result, Is.True);
+            //Assert.That(solution.Count, Is.EqualTo(1));
+            solution = PolygonOperations.Intersection(subjectList, clipList);
             Assert.That(solution.Count, Is.EqualTo(1));
+            //ShowPaths(solution);
 
-            result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
+            //result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
+            //ShowPaths(solution);
+            //Assert.That(result, Is.True);
+            //Assert.That(solution.Count, Is.EqualTo(4));
+            solution = PolygonOperations.Xor(subjectList, clipList);
             Assert.That(solution.Count, Is.EqualTo(4));
+            //ShowPaths(solution);
         }
 
         [Test]
