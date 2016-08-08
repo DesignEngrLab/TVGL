@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
 using System.Diagnostics;
-using System.Runtime.Serialization.Json;
 
 namespace TVGL
 {

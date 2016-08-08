@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGL Presenter", "TVGL Pres
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TessellationAndVoxelizationGeometryLibrary.NET4.5", "TessellationAndVoxelizationGeometryLibrary.NET4.5\TessellationAndVoxelizationGeometryLibrary.NET4.5.csproj", "{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGLPresenterDebugger", "TVGLPresenterDebugger\TVGLPresenterDebugger.csproj", "{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,7 +30,6 @@ Global
 		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E3489019-D590-46A8-B2C2-E3481E8DB77C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E3489019-D590-46A8-B2C2-E3481E8DB77C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E3489019-D590-46A8-B2C2-E3481E8DB77C}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
 		{E3489019-D590-46A8-B2C2-E3481E8DB77C}.Documentation|Any CPU.Build.0 = Debug|Any CPU
 		{E3489019-D590-46A8-B2C2-E3481E8DB77C}.Nsis|Any CPU.ActiveCfg = Release|Any CPU
@@ -44,13 +45,20 @@ Global
 		{8C1364CC-908A-4174-B62C-21EC4839584D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C1364CC-908A-4174-B62C-21EC4839584D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
 		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Documentation|Any CPU.Build.0 = Debug|Any CPU
 		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Nsis|Any CPU.ActiveCfg = Release|Any CPU
 		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Nsis|Any CPU.Build.0 = Release|Any CPU
 		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Documentation|Any CPU.Build.0 = Debug|Any CPU
+		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Nsis|Any CPU.ActiveCfg = Release|Any CPU
+		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Nsis|Any CPU.Build.0 = Release|Any CPU
+		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -56,7 +56,7 @@ namespace TVGL
         /// <summary>
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.
         /// </summary>
-        public const double BaseTolerance = 1E-7;
+        public const double BaseTolerance = 1E-9;
 
 
         /// <summary>
@@ -78,7 +78,7 @@ namespace TVGL
         /// a tessellated model.
         /// </summary>
         internal static double MaxAllowableEdgeSimilarityScore = 0.2;
-
+        
         /// <summary>
         ///     Finds the index.
         /// </summary>
