@@ -51,7 +51,12 @@ namespace TVGL
                 }
                 else SetToCWNegative();
             }
-        }        
+        }
+
+        /// <summary>
+        /// Gets the length of the polygon.
+        /// </summary>
+        public double Length;
 
         /// <summary>
         /// Gets whether the path is CCW positive == not a hole.
@@ -80,6 +85,12 @@ namespace TVGL
             PathLines = SetPathLines();
             IsSelfIntersecting = IsThisSelfIntersecting();
             Area = CalculateArea();
+            Length = SetLength();
+        }
+
+        private double SetLength()
+        {
+            return PathLines.Sum(line => line.Length);
         }
 
         //Gets whether this polygon is a hole, based on its position

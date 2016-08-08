@@ -53,30 +53,13 @@ namespace TVGL
 
                 //Make this polygon positive CCW
                 nextPolygon = PolygonOperations.CCWPositive(nextPolygon);
-                polygonList = PolygonOperations.Union(polygonList, nextPolygon);
+                polygonList = PolygonOperations.Union(new List<List<Point>>(polygonList) { nextPolygon});
             }   
             var polygons = polygonList.Select(path => new Polygon(path)).ToList();
 
             //Get the minimum line length to use for the offset.
-            var minLength = double.PositiveInfinity;
-            var totalLength = 0.0;
-            var maxArea = double.NegativeInfinity;
-            foreach (var polygon in polygons)
-            {
-                foreach (var line in polygon.PathLines)
-                {
-                    if (line.Length < minLength)
-                    {
-                        minLength = line.Length;
-                    }
-                    totalLength += line.Length;
-                }
-                if (polygon.Area > maxArea)
-                {
-                    maxArea = polygon.Area;
-                }
-            }
-            
+            var maxArea = polygons.Select(polygon => polygon.Area).Concat(new[] {double.NegativeInfinity}).Max();
+
             //Remove tiny polygons.
             var count = 0;
             for(var i =0; i < polygons.Count; i++)
@@ -87,26 +70,26 @@ namespace TVGL
             }
 
             #region Offset Testing 
-            //var smallestX = double.PositiveInfinity;
-            //var largestX = double.NegativeInfinity;
-            //foreach (var path in polygonList)
-            //{
-            //    foreach (var point in path)
-            //    {
-            //        if (point.X < smallestX)
-            //        {
-            //            smallestX = point.X;
-            //        }
-            //        if (point.X > largestX)
-            //        {
-            //            largestX = point.X;
-            //        }
-            //    }
-            //}
-            //var scale = largestX - smallestX;
+            var smallestX = double.PositiveInfinity;
+            var largestX = double.NegativeInfinity;
+            foreach (var path in polygonList)
+            {
+                foreach (var point in path)
+                {
+                    if (point.X < smallestX)
+                    {
+                        smallestX = point.X;
+                    }
+                    if (point.X > largestX)
+                    {
+                        largestX = point.X;
+                    }
+                }
+            }
+            var scale = largestX - smallestX;
 
-            //var offsetPolygons = PolygonOperations.OffsetRound(polygonList, totalLength/1000, scale/10);
-            //polygonList.AddRange(offsetPolygons);
+            var offsetPolygons = PolygonOperations.OffsetRound(polygonList, scale / 10);
+            polygonList.AddRange(offsetPolygons);
             #endregion
 
             return polygonList;
