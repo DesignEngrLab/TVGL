@@ -773,7 +773,7 @@ namespace TVGL.Clipper
             {
                 MMinimaList = newLm;
             }
-            else if (newLm.Y >= MMinimaList.Y)
+            else if (!newLm.Y.IsLessThanNonNegligible(MMinimaList.Y))
             {
                 newLm.Next = MMinimaList;
                 MMinimaList = newLm;
@@ -781,7 +781,7 @@ namespace TVGL.Clipper
             else
             {
                 var tmpLm = MMinimaList;
-                while (tmpLm.Next != null && (newLm.Y < tmpLm.Next.Y))
+                while (tmpLm.Next != null && newLm.Y < tmpLm.Next.Y)
                     tmpLm = tmpLm.Next;
                 newLm.Next = tmpLm.Next;
                 tmpLm.Next = newLm;
@@ -948,7 +948,7 @@ namespace TVGL.Clipper
             else
             {
                 var sb2 = _mScanbeam;
-                while (sb2.Next != null && (y <= sb2.Next.Y)) sb2 = sb2.Next;
+                while (sb2.Next != null && !y.IsGreaterThanNonNegligible(sb2.Next.Y)) sb2 = sb2.Next;
                 if (y.IsPracticallySame(sb2.Y)) return; //ie ignores duplicates
                 var newSb = new Scanbeam
                 {
@@ -1810,26 +1810,27 @@ namespace TVGL.Clipper
 
         private OutPt GetBottomPt(OutPt pp)
         {
+
             OutPt dups = null;
             OutPt p = pp.Next;
             while (p != pp)
             {
-                if (p.Pt.Y > pp.Pt.Y)
-                {
-                    pp = p;
-                    dups = null;
-                }
-                else if (p.Pt.Y.IsPracticallySame(pp.Pt.Y) && p.Pt.X <= pp.Pt.X)
+                if (p.Pt.Y.IsPracticallySame(pp.Pt.Y))
                 {
                     if (p.Pt.X < pp.Pt.X)
                     {
                         dups = null;
                         pp = p;
                     }
-                    else
+                    else if(p.Pt.X.IsPracticallySame(pp.Pt.X))
                     {
                         if (p.Next != pp && p.Prev != pp) dups = p;
                     }
+                }
+                else if (p.Pt.Y > pp.Pt.Y)
+                {
+                    pp = p;
+                    dups = null;
                 }
                 p = p.Next;
             }
@@ -2317,8 +2318,8 @@ namespace TVGL.Clipper
 
                     var eNext = GetNextInAEL(e, dir); //saves eNext for later
 
-                    if ((dir == Direction.LeftToRight && e.Curr.X <= horzRight) ||
-                      (dir == Direction.RightToLeft && e.Curr.X >= horzLeft))
+                    if ((dir == Direction.LeftToRight && !e.Curr.X.IsGreaterThanNonNegligible(horzRight)) ||
+                      (dir == Direction.RightToLeft && !e.Curr.X.IsLessThanNonNegligible(horzLeft)))
                     {
                         //so far we're still in range of the horizontal Edge  but make sure
                         //we're at the last of consec. horizontals when matching with eMaxPair
@@ -2358,8 +2359,8 @@ namespace TVGL.Clipper
                         }
                         SwapPositionsInAEL(horzEdge, e);
                     }
-                    else if ((dir == Direction.LeftToRight && e.Curr.X >= horzRight) ||
-                      (dir == Direction.RightToLeft && e.Curr.X <= horzLeft)) break;
+                    else if ((dir == Direction.LeftToRight && !e.Curr.X.IsLessThanNonNegligible(horzRight)) ||
+                      (dir == Direction.RightToLeft && !e.Curr.X.IsGreaterThanNonNegligible(horzLeft))) break;
                     e = eNext;
                 } //end while
 
@@ -2966,9 +2967,12 @@ namespace TVGL.Clipper
             //otherwise make sure we're AT or LEFT of point. (Likewise with Op2b.)
             if (dir1 == Direction.LeftToRight)
             {
-                while (op1.Next.Pt.X <= point.X &&
-                  op1.Next.Pt.X >= op1.Pt.X && op1.Next.Pt.Y.IsPracticallySame(point.Y))
+                while (!op1.Next.Pt.X.IsGreaterThanNonNegligible(point.X) &&
+                       !op1.Next.Pt.X.IsLessThanNonNegligible(op1.Pt.X) &&
+                       op1.Next.Pt.Y.IsPracticallySame(point.Y))
+                {
                     op1 = op1.Next;
+                } 
                 if (discardLeft && !op1.Pt.X.IsPracticallySame(point.X)) op1 = op1.Next;
                 op1B = DupOutPt(op1, !discardLeft);
                 if (op1B.Pt != point)
@@ -2980,9 +2984,12 @@ namespace TVGL.Clipper
             }
             else
             {
-                while (op1.Next.Pt.X >= point.X &&
-                  op1.Next.Pt.X <= op1.Pt.X && op1.Next.Pt.Y.IsPracticallySame(point.Y))
+                while (!op1.Next.Pt.X.IsLessThanNonNegligible(point.X) &&
+                       !op1.Next.Pt.X.IsGreaterThanNonNegligible(op1.Pt.X) &&
+                       op1.Next.Pt.Y.IsPracticallySame(point.Y))
+                {
                     op1 = op1.Next;
+                }  
                 if (!discardLeft && !op1.Pt.X.IsPracticallySame(point.X)) op1 = op1.Next;
                 op1B = DupOutPt(op1, discardLeft);
                 if (op1B.Pt != point)
@@ -2995,9 +3002,12 @@ namespace TVGL.Clipper
 
             if (dir2 == Direction.LeftToRight)
             {
-                while (op2.Next.Pt.X <= point.X &&
-                  op2.Next.Pt.X >= op2.Pt.X && op2.Next.Pt.Y.IsPracticallySame(point.Y))
+                while (!op2.Next.Pt.X.IsGreaterThanNonNegligible(point.X) &&
+                       !op2.Next.Pt.X.IsLessThanNonNegligible(op2.Pt.X) &&
+                       op2.Next.Pt.Y.IsPracticallySame(point.Y))
+                {
                     op2 = op2.Next;
+                }
                 if (discardLeft && !op2.Pt.X.IsPracticallySame(point.X)) op2 = op2.Next;
                 op2B = DupOutPt(op2, !discardLeft);
                 if (op2B.Pt != point)
@@ -3009,9 +3019,12 @@ namespace TVGL.Clipper
             }
             else
             {
-                while (op2.Next.Pt.X >= point.X &&
-                  op2.Next.Pt.X <= op2.Pt.X && op2.Next.Pt.Y.IsPracticallySame(point.Y))
+                while (!op2.Next.Pt.X.IsLessThanNonNegligible(point.X) &&
+                       !op2.Next.Pt.X.IsGreaterThanNonNegligible(op2.Pt.X) &&
+                       op2.Next.Pt.Y.IsPracticallySame(point.Y))
+                {
                     op2 = op2.Next;
+                }
                 if (!discardLeft && !op2.Pt.X.IsPracticallySame(point.X)) op2 = op2.Next;
                 op2B = DupOutPt(op2, discardLeft);
                 if (op2B.Pt != point)
@@ -3119,15 +3132,15 @@ namespace TVGL.Clipper
                 //on the discard Side as either may still be needed for other joins ...
                 Point pt;
                 bool discardLeftSide;
-                if (op1.Pt.X >= left && op1.Pt.X <= right)
+                if (!op1.Pt.X.IsLessThanNonNegligible(left) && !op1.Pt.X.IsGreaterThanNonNegligible(right))
                 {
                     pt = op1.Pt; discardLeftSide = (op1.Pt.X > op1B.Pt.X);
                 }
-                else if (op2.Pt.X >= left && op2.Pt.X <= right)
+                else if (!op2.Pt.X.IsLessThanNonNegligible(left) && !op2.Pt.X.IsGreaterThanNonNegligible(right))
                 {
                     pt = op2.Pt; discardLeftSide = (op2.Pt.X > op2B.Pt.X);
                 }
-                else if (op1B.Pt.X >= left && op1B.Pt.X <= right)
+                else if (!op1B.Pt.X.IsLessThanNonNegligible(left) && !op1B.Pt.X.IsGreaterThanNonNegligible(right))
                 {
                     pt = op1B.Pt; discardLeftSide = op1B.Pt.X > op1.Pt.X;
                 }
@@ -3617,7 +3630,8 @@ namespace TVGL.Clipper
         {
             var dx = pt1.X - pt2.X;
             var dy = pt1.Y - pt2.Y;
-            return ((dx * dx) + (dy * dy) <= distSqrd);
+            var num = (dx*dx) + (dy*dy);
+            return num < distSqrd || num.IsPracticallySame(distSqrd);
         }
         //------------------------------------------------------------------------------
 
