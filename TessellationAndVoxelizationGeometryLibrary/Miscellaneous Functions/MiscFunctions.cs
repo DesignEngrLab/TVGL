@@ -13,6 +13,7 @@
 // ***********************************************************************
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
@@ -230,13 +231,13 @@ namespace TVGL
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
         /// </summary>
-        /// <param name="polygon">The polygon.</param>
+        /// <param name="polygon"></param>
         /// <returns>System.Double.</returns>
         /// <reference>
         ///     Method 1: http://www.mathopenref.com/coordpolygonarea2.html
         ///     Faster Method: http://geomalgorithms.com/a01-_area.html
         /// </reference>
-        public static double AreaOfPolygon(Point[] polygon)
+        public static double AreaOfPolygon(IList<Point> polygon)
         {
             #region Method 1
 
@@ -254,7 +255,7 @@ namespace TVGL
 
             //Faster Method
             var area = 0.0;
-            var n = polygon.Length;
+            var n = polygon.Count;
             for (var i = 1; i < n - 1; i++)
             {
                 area += polygon[i].X * (polygon[i + 1].Y - polygon[i - 1].Y);
