@@ -45,14 +45,22 @@ namespace TVGL
                 var negativeFace = negativeFaces[0];
                 negativeFaces.RemoveAt(0);
                 var nextPolygon = MiscFunctions.Get2DProjectionPoints(negativeFace.Vertices, normal, false).ToList();
+
+                //Check if this polygon is legitimate. If any of the points are the same, then skip.
+                if (nextPolygon[0].Equals(nextPolygon[1]) || nextPolygon[0].Equals(nextPolygon[2]) ||
+                    nextPolygon[1].Equals(nextPolygon[2])) continue;
+                if(MiscFunctions.AreaOfPolygon(nextPolygon).IsNegligible()) continue;
+
                 //Make this polygon positive CCW
                 nextPolygon = PolygonOperations.CCWPositive(nextPolygon);
                 polygonList = PolygonOperations.Union(polygonList, nextPolygon);
-            }
+            }   
             var polygons = polygonList.Select(path => new Polygon(path)).ToList();
+
             //Get the minimum line length to use for the offset.
             var minLength = double.PositiveInfinity;
             var totalLength = 0.0;
+            var maxArea = double.NegativeInfinity;
             foreach (var polygon in polygons)
             {
                 foreach (var line in polygon.PathLines)
@@ -63,28 +71,43 @@ namespace TVGL
                     }
                     totalLength += line.Length;
                 }
-            }
-
-            var smallestX = double.PositiveInfinity;
-            var largestX = double.NegativeInfinity;
-            foreach (var path in polygonList)
-            {
-                foreach (var point in path)
+                if (polygon.Area > maxArea)
                 {
-                    if (point.X < smallestX)
-                    {
-                        smallestX = point.X;
-                    }
-                    if (point.X > largestX)
-                    {
-                        largestX = point.X;
-                    }
+                    maxArea = polygon.Area;
                 }
             }
-            var scale = largestX - smallestX;
+            
+            //Remove tiny polygons.
+            var count = 0;
+            for(var i =0; i < polygons.Count; i++)
+            {
+                if (!polygons[i].Area.IsNegligible(maxArea/10000)) continue;
+                polygonList.RemoveAt(i-count);
+                count ++;
+            }
 
-            var offsetPolygons = PolygonOperations.OffsetRound(polygonList, totalLength/1000, scale/10);
-            polygonList.AddRange(offsetPolygons);
+            #region Offset Testing 
+            //var smallestX = double.PositiveInfinity;
+            //var largestX = double.NegativeInfinity;
+            //foreach (var path in polygonList)
+            //{
+            //    foreach (var point in path)
+            //    {
+            //        if (point.X < smallestX)
+            //        {
+            //            smallestX = point.X;
+            //        }
+            //        if (point.X > largestX)
+            //        {
+            //            largestX = point.X;
+            //        }
+            //    }
+            //}
+            //var scale = largestX - smallestX;
+
+            //var offsetPolygons = PolygonOperations.OffsetRound(polygonList, totalLength/1000, scale/10);
+            //polygonList.AddRange(offsetPolygons);
+            #endregion
 
             return polygonList;
         }
