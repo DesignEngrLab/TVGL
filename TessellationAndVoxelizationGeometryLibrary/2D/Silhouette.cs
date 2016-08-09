@@ -70,26 +70,26 @@ namespace TVGL
             }
 
             #region Offset Testing 
-            var smallestX = double.PositiveInfinity;
-            var largestX = double.NegativeInfinity;
-            foreach (var path in polygonList)
-            {
-                foreach (var point in path)
-                {
-                    if (point.X < smallestX)
-                    {
-                        smallestX = point.X;
-                    }
-                    if (point.X > largestX)
-                    {
-                        largestX = point.X;
-                    }
-                }
-            }
-            var scale = largestX - smallestX;
+            //var smallestX = double.PositiveInfinity;
+            //var largestX = double.NegativeInfinity;
+            //foreach (var path in polygonList)
+            //{
+            //    foreach (var point in path)
+            //    {
+            //        if (point.X < smallestX)
+            //        {
+            //            smallestX = point.X;
+            //        }
+            //        if (point.X > largestX)
+            //        {
+            //            largestX = point.X;
+            //        }
+            //    }
+            //}
+            //var scale = largestX - smallestX;
 
-            var offsetPolygons = PolygonOperations.OffsetRound(polygonList, scale / 10);
-            polygonList.AddRange(offsetPolygons);
+            //var offsetPolygons = PolygonOperations.OffsetRound(polygonList, scale / 10);
+            //polygonList.AddRange(offsetPolygons);
             #endregion
 
             return polygonList;

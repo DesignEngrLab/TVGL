@@ -177,7 +177,7 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="fractionOfPathsLengthForMinLength"></param>
         /// <returns></returns>
-        public static List<List<Point>> OffsetRound(List<List<Point>> paths, double offset, double fractionOfPathsLengthForMinLength = 0.001)
+        public static List<List<Point>> OffsetRound(IList<List<Point>> paths, double offset, double fractionOfPathsLengthForMinLength = 0.001)
         {
             var totalLength = paths.Sum(path => Length(path));
             var minLength = totalLength * fractionOfPathsLengthForMinLength;
@@ -185,7 +185,7 @@ namespace TVGL
             return OffsetRoundByMinLength(paths, offset, minLength);
         }
 
-        private static List<List<Point>> OffsetRoundByMinLength(List<List<Point>> paths, double offset, double minLength)
+        private static List<List<Point>> OffsetRoundByMinLength(IList<List<Point>> paths, double offset, double minLength)
         {
             if (minLength.IsNegligible())
             {
