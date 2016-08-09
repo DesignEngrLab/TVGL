@@ -83,13 +83,13 @@
     <Compile Include="Enclosure Operations\EnclosurePublicStructs.cs" />
     <Compile Include="Enclosure Operations\ConvexHull2D.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure.cs" />
-    <Compile Include="Miscellaneous Functions\SortedList.cs" />
     <Compile Include="Simplify and Repair\SimplifyTessellation.cs" />
     <Compile Include="Simplify and Repair\TessellationError.cs" />
     <Compile Include="Solid Body Classes\Edge.cs" />
     <Compile Include="Solid Body Classes\PolygonalFace.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.EdgeInitialization.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.StaticFunctions.cs" />
+    <Compile Include="Solid Body Classes\TessellationBaseClass.cs" />
     <Compile Include="Solid Body Classes\TVGLConvexHull.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />

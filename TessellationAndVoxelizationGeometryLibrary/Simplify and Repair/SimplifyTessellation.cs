@@ -51,9 +51,9 @@ namespace TVGL
             var numberToRemove = ts.NumberOfFaces - numberOfFaces;
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
             var removedEdges = new HashSet<Edge>();
-            var removedEdgesSorted = new SortedList<int, Edge>();
-            var removedVertices = new SortedList<int, Vertex>();
-            var removedFaces = new SortedList<int, PolygonalFace>();
+            var removedEdgesSorted = new SortedSet<Edge>(new SortByIndexInList());
+            var removedVertices = new SortedSet< Vertex>(new SortByIndexInList());
+            var removedFaces = new SortedSet< PolygonalFace>(new SortByIndexInList());
             var i = 0;
             //var edge = sortedEdges[0];
             while (numberToRemove > 0)
@@ -68,35 +68,35 @@ namespace TVGL
                     out removedFace2))
                 {
                     removedEdges.Add(edge);
-                    removedEdgesSorted.Add(edge.IndexInList, edge);
+                    removedEdgesSorted.Add(edge);
                     if (removedEdge1 != null)
                     {
                         removedEdges.Add(removedEdge1);
-                        if (!removedEdgesSorted.ContainsKey(removedEdge1.IndexInList))
-                            removedEdgesSorted.Add(removedEdge1.IndexInList, removedEdge1);
+                        if (!removedEdgesSorted.Contains(removedEdge1))
+                            removedEdgesSorted.Add(removedEdge1);
                     }
                     if (removedEdge2 != null)
                     {
                         removedEdges.Add(removedEdge2);
-                        if (!removedEdgesSorted.ContainsKey(removedEdge2.IndexInList))
-                            removedEdgesSorted.Add(removedEdge2.IndexInList, removedEdge2);
+                        if (!removedEdgesSorted.Contains(removedEdge2))
+                            removedEdgesSorted.Add(removedEdge2);
                     }
                     if (removedFace1 != null)
                     {
-                        removedFaces.Add(removedFace1.IndexInList, removedFace1);
+                        removedFaces.Add(removedFace1);
                         numberToRemove--;
                     }
                     if (removedFace2 != null)
                     {
-                        removedFaces.Add(removedFace2.IndexInList, removedFace2);
+                        removedFaces.Add(removedFace2);
                         numberToRemove--;
                     }
-                    removedVertices.Add(removedVertex.IndexInList, removedVertex);
+                    removedVertices.Add(removedVertex);
                 }
             }
-            ts.RemoveEdges(removedEdgesSorted.Keys.ToList());
-            ts.RemoveFaces(removedFaces.Keys.ToList());
-            ts.RemoveVertices(removedVertices.Keys.ToList());
+            ts.RemoveEdges(removedEdgesSorted.Select(edge=>edge.IndexInList).ToList());
+            ts.RemoveFaces(removedFaces.Select(edge => edge.IndexInList).ToList());
+            ts.RemoveVertices(removedVertices.Select(edge => edge.IndexInList).ToList());
         }
 
         /// <summary>
@@ -152,5 +152,15 @@ namespace TVGL
             ts.RemoveVertices(removedVertices);
         }
 
+    }
+
+    internal class SortByIndexInList : IComparer<TessellationBaseClass>
+    {
+        public int Compare(TessellationBaseClass x, TessellationBaseClass y)
+        {
+            if (x.Equals(y)) return 0;
+            if (x.IndexInList < y.IndexInList) return -1;
+            else return 1;
+        }
     }
 }

@@ -24,7 +24,7 @@ namespace TVGL
     ///     It should be double-checked for higher polygons.   It inherits from the ConvexFace class in
     ///     MIConvexHull
     /// </summary>
-    public class PolygonalFace
+    public class PolygonalFace : TessellationBaseClass
     {
         /// <summary>
         ///     Defines the face curvature. Depends on DefineEdgeAngle
@@ -52,7 +52,7 @@ namespace TVGL
                 Center = (double[])Center.Clone(),
                 Curvature = Curvature,
                 Color = Color,
-                PartofConvexHull = PartofConvexHull,
+                PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
                 Normal = (double[])Normal.Clone(),
                 Vertices = new List<Vertex>()
@@ -316,12 +316,6 @@ namespace TVGL
         #region Properties
 
         /// <summary>
-        ///     Gets the normal.
-        /// </summary>
-        /// <value>The normal.</value>
-        public double[] Normal { get; set; }
-
-        /// <summary>
         ///     Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
@@ -351,24 +345,10 @@ namespace TVGL
         /// <value>The color.</value>
         public Color Color { get; set; }
 
-        /// <summary>
-        ///     Gets the curvature.
-        /// </summary>
-        /// <value>The curvature.</value>
-        public CurvatureType Curvature { get; internal set; }
-
-        /// <summary>
         ///     Gets or sets the unique ID.
         /// </summary>
         /// <value>The ID.</value>
         public string ID { get; set; }
-
-        /// <summary>
-        ///     Gets a value indicating whether [it is part of the convex hull].
-        /// </summary>
-        /// <value><c>true</c> if [it is part of the convex hull]; otherwise, <c>false</c>.</value>
-        public bool PartofConvexHull { get; internal set; }
-
 
         /// <summary>
         ///     Gets or sets the created in function.
@@ -393,13 +373,6 @@ namespace TVGL
                 return adjacentFaces;
             }
         }
-
-        /// <summary>
-        ///     Index of the face in the tesselated solid face list
-        /// </summary>
-        /// <value>The index in list.</value>
-        public int IndexInList { get; internal set; }
-
         #endregion
     }
 }

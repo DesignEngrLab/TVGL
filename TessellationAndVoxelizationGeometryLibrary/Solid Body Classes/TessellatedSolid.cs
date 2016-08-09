@@ -332,7 +332,7 @@ namespace TVGL
             {
                 //Keep "CreatedInFunction" to help with debug
                 var face = faces[i].Copy();
-                face.PartofConvexHull = false;
+                face.PartOfConvexHull = false;
                 face.IndexInList = i;
                 var faceVertices = new List<Vertex>();
                 foreach (var vertex in faces[i].Vertices)
@@ -373,7 +373,7 @@ namespace TVGL
             foreach (var face in Faces)
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)
-                v.DefineVertexCurvature();
+                v.DefineCurvature();
             TessellationError.CheckModelIntegrity(this);
 
             //Create convex hull last. After the volume for the solid has found and errors corrected.
@@ -611,12 +611,12 @@ namespace TVGL
             //Take the absolute value of volume, incase the solid is inside out, which will be corrected later.
             ConvexHull = new TVGLConvexHull(Vertices, solidVolume);
             foreach (var cvxHullPt in ConvexHull.Vertices)
-                cvxHullPt.PartofConvexHull = true;
-            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartofConvexHull)))
+                cvxHullPt.PartOfConvexHull = true;
+            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
             {
-                face.PartofConvexHull = true;
+                face.PartOfConvexHull = true;
                 foreach (var e in face.Edges)
-                    if (e != null) e.PartofConvexHull = true;
+                    if (e != null) e.PartOfConvexHull = true;
             }
         }
 

@@ -23,7 +23,7 @@ namespace TVGL
     ///     The 3D vertex can connect to any number of faces and edges. It inherits from the
     ///     MIConvexhull IVertex interface.
     /// </summary>
-    public class Vertex : IVertex
+    public class Vertex : TessellationBaseClass, IVertex
     {
         /// <summary>
         ///     Prevents a default instance of the <see cref="Vertex" /> class from being created.
@@ -40,11 +40,11 @@ namespace TVGL
         {
             return new Vertex
             {
-                VertexCurvature = VertexCurvature,
-                PartofConvexHull = PartofConvexHull,
+                Curvature = Curvature,
+                PartOfConvexHull = PartOfConvexHull,
                 Edges = new List<Edge>(),
                 Faces = new List<PolygonalFace>(),
-                Position = (double[]) Position.Clone(),
+                Position = (double[])Position.Clone(),
                 IndexInList = IndexInList
             };
         }
@@ -52,17 +52,17 @@ namespace TVGL
         /// <summary>
         ///     Defines vertex curvature
         /// </summary>
-        public void DefineVertexCurvature()
+        public void DefineCurvature()
         {
             if (Edges.Any(e => e.Curvature == CurvatureType.Undefined))
-                VertexCurvature = CurvatureType.Undefined;
+                Curvature = CurvatureType.Undefined;
             else if (Edges.All(e => e.Curvature == CurvatureType.SaddleOrFlat))
-                VertexCurvature = CurvatureType.SaddleOrFlat;
+                Curvature = CurvatureType.SaddleOrFlat;
             else if (Edges.Any(e => e.Curvature != CurvatureType.Convex))
-                VertexCurvature = CurvatureType.Concave;
+                Curvature = CurvatureType.Concave;
             else if (Edges.Any(e => e.Curvature != CurvatureType.Concave))
-                VertexCurvature = CurvatureType.Convex;
-            else VertexCurvature = CurvatureType.SaddleOrFlat;
+                Curvature = CurvatureType.Convex;
+            else Curvature = CurvatureType.SaddleOrFlat;
         }
 
         #region Constructor
@@ -142,24 +142,6 @@ namespace TVGL
         /// </summary>
         /// <value>The faces.</value>
         public List<PolygonalFace> Faces { get; private set; }
-
-        /// <summary>
-        ///     Gets the curvature at the point.
-        /// </summary>
-        /// <value>The point curvature.</value>
-        public CurvatureType VertexCurvature { get; internal set; }
-
-        /// <summary>
-        ///     Gets a value indicating whether [it is part of the convex hull].
-        /// </summary>
-        /// <value><c>true</c> if [it is part of the convex hull]; otherwise, <c>false</c>.</value>
-        public bool PartofConvexHull { get; internal set; }
-
-        /// <summary>
-        ///     Gets the index in list.
-        /// </summary>
-        /// <value>The index in list.</value>
-        public int IndexInList { get; internal set; }
 
         /// <summary>
         ///     Gets or sets an arbitrary ReferenceIndex to track vertex

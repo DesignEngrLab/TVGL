@@ -21,7 +21,7 @@ namespace TVGL
     /// <summary>
     ///     The straight-line edge class. It connects to two nodes and lies between two faces.
     /// </summary>
-    public class Edge
+    public class Edge : TessellationBaseClass
     {
         /// <summary>
         ///     Prevents a default instance of the <see cref="Edge" /> class from being created.
@@ -172,24 +172,6 @@ namespace TVGL
         /// </summary>
         /// <value>The internal angle.</value>
         public double InternalAngle { get; internal set; }
-
-        /// <summary>
-        ///     Gets the curvature of the surface.
-        /// </summary>
-        /// <value>The curvature of the surface.</value>
-        public CurvatureType Curvature { get; internal set; }
-
-        /// <summary>
-        ///     Gets a value indicating whether [is part of the convex hull].
-        /// </summary>
-        /// <value><c>true</c> if [is part of the convex hull]; otherwise, <c>false</c>.</value>
-        public bool PartofConvexHull { get; internal set; }
-
-        /// <summary>
-        ///     Gets the index in list.
-        /// </summary>
-        /// <value>The index in list.</value>
-        public int IndexInList { get; internal set; }
 
         /// <summary>
         ///     Updates the edge vector and length, if a vertex has been moved.

@@ -126,9 +126,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs">
       <Link>Miscellaneous Functions\MiscFunctions.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\SortedList.cs">
-      <Link>Miscellaneous Functions\SortedList.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs">
       <Link>Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs</Link>
     </Compile>
@@ -188,6 +185,9 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TessellatedSolid.StaticFunctions.cs">
       <Link>Solid Body Classes\TessellatedSolid.StaticFunctions.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TessellationBaseClass.cs">
+      <Link>Solid Body Classes\TessellationBaseClass.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TVGLConvexHull.cs">
       <Link>Solid Body Classes\TVGLConvexHull.cs</Link>
