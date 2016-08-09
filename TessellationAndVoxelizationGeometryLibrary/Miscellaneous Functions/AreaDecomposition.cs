@@ -277,9 +277,12 @@ namespace TVGL
             #endregion
 
             var additiveVolume = 0.0;
+            var previousDistance = 0.0;
+            var previousArea = 0.0;
             var edgeListDictionary = new Dictionary<int, Edge>();
             var previousDistanceAlongAxis = direction.dotProduct(sortedVertices[0].Position); //This value can be negative
             var previousVertexDistance = previousDistanceAlongAxis;
+            var previousPolygons = new List<List<Point>>();
             foreach (var vertex in sortedVertices)
             {
                 var distanceAlongAxis = direction.dotProduct(vertex.Position); //This value can be negative
@@ -292,19 +295,45 @@ namespace TVGL
                     var cuttingPlane = new Flat(distance, direction);
                     List<List<Edge>> outputEdgeLoops;
                     var inputEdgeLoops = new List<List<Edge>>();
-                    var currentPolygons = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
-                    //ToDo: Organize loops into groups of loops, or polygon tree.
-                    //ToDo: Get the area of this layer, given an offset. 
-                    //ToDO: Add to the volume by using the trapezoid approximation for each group of loops.
-                    //foreach (var groupOfLoops in groupsOfLoops)
-                    //{
-                    //var deltaX = groupOfLoops.Distance - groupOfLoops.PreviousDistance;
-                    //var deltaY = groupOfLoops.Area - groupOfLoops.PreviousArea;
-                    //if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
-                    //additiveVolume += .5 * deltaY * deltaX;
-                    //}
-                    //ToDo: If a group of loops is new, then its added volume is its Area*additiveAccuracy (Vertical Accuracy).
-                    var previousPolygons = currentPolygons;
+                    var current3DPolygons = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+
+                    #region Get 2D polygons, offset, union, calculate area, calculate volume increment, and update variables
+                    //Make 2D positive polygons
+                    var currentPolygons = new List<List<Point>>();
+                    foreach (var current3DPolygon in current3DPolygons)
+                    {
+                        var cp = MiscFunctions.Get2DProjectionPoints(current3DPolygon, direction).ToList();
+                        currentPolygons.Add(PolygonOperations.CCWPositive(cp));
+                    }
+
+                    //Offset if the additive accuracy is significant
+                    if (!additiveAccuracy.IsNegligible())
+                    {
+                        currentPolygons = PolygonOperations.OffsetSquare(currentPolygons, additiveAccuracy);
+                    }
+
+                    //Union this new set of polygons with the previous set.
+                    if (previousPolygons.Any()) //If not the first iteration
+                    {
+                        currentPolygons.AddRange(previousPolygons);
+                        currentPolygons = PolygonOperations.Union(currentPolygons);
+                    }
+
+                    //Get the area of this layer
+                    var area = currentPolygons.Sum(p => MiscFunctions.AreaOfPolygon(p));
+
+                    //Add the volume from this iteration.
+                    if (!previousDistance.IsNegligible())
+                    {
+                        var deltaX = distance - previousDistance;
+                        var deltaY = area - previousArea;
+                        if (deltaX < 0 || deltaY < 0) throw new Exception("Error in your implementation. This should never occur");
+                        additiveVolume += .5 * deltaY * deltaX;
+                    }
+                    previousPolygons = currentPolygons;
+                    previousDistance = distance;
+                    previousArea = area;
+                    #endregion
 
                     //If the difference is far enough, add another data point right before the current vertex
                     //Use the vertex loops provided from the first pass above
@@ -312,20 +341,45 @@ namespace TVGL
                     {
                         var distance2 = distanceAlongAxis - minOffset; //X value (distance along axis) 
                         cuttingPlane = new Flat(distance2, direction);
-                        currentPolygons = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
-                        //ToDo: Organize loops into groups of loops, or polygon tree.
+                        current3DPolygons = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
                         
-                        //ToDo: Get the area of this layer, given an offset. 
-                        //ToDO: Add to the volume by using the trapezoid approximation for each group of loops.
-                        //foreach (var groupOfLoops in groupsOfLoops)
-                        //{
-                            //var deltaX = groupOfLoops.Distance - groupOfLoops.PreviousDistance;
-                            //var deltaY = groupOfLoops.Area - groupOfLoops.PreviousArea;
-                            //if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
-                            //additiveVolume += .5 * deltaY * deltaX;
-                        //}
-                        //ToDo: If a group of loops is new, then its added volume is its Area*additiveAccuracy (Vertical Accuracy).
+                        #region Get 2D polygons, offset, union, calculate area, calculate volume increment, and update variables
+                        //Make 2D positive polygons
+                        currentPolygons = new List<List<Point>>();
+                        foreach (var current3DPolygon in current3DPolygons)
+                        {
+                            var cp = MiscFunctions.Get2DProjectionPoints(current3DPolygon, direction).ToList();
+                            currentPolygons.Add(PolygonOperations.CCWPositive(cp));
+                        }
+
+                        //Offset if the additive accuracy is significant
+                        if (!additiveAccuracy.IsNegligible())
+                        {
+                            currentPolygons = PolygonOperations.OffsetSquare(currentPolygons, additiveAccuracy);
+                        }
+
+                        //Union this new set of polygons with the previous set.
+                        if (previousPolygons.Any()) //If not the first iteration
+                        {
+                            currentPolygons.AddRange(previousPolygons);
+                            currentPolygons = PolygonOperations.Union(currentPolygons);
+                        }
+
+                        //Get the area of this layer
+                        area = currentPolygons.Sum(p => MiscFunctions.AreaOfPolygon(p));
+
+                        //Add the volume from this iteration.
+                        if (!previousDistance.IsNegligible())
+                        {
+                            var deltaX = distance - previousDistance;
+                            var deltaY = area - previousArea;
+                            if (deltaX < 0 || deltaY < 0) throw new Exception("Error in your implementation. This should never occur");
+                            additiveVolume += .5 * deltaY * deltaX;
+                        }
                         previousPolygons = currentPolygons;
+                        previousDistance = distance;
+                        previousArea = area;
+                        #endregion
                     }
 
                     //Update the previous distance used to make a data point
