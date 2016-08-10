@@ -63,9 +63,8 @@ namespace TVGL
             for (var i = 1; i < areas.Count; i++)
             {
                 var deltaX = areas[i][0] - areas[i - 1][0];
-                var deltaY = areas[i][1] + areas[i - 1][1];
                 if (deltaX < 0) throw new Exception("Error in your implementation. This should never occur");
-                volume = volume + .5 * deltaY * deltaX;
+                volume = volume + .5 * (areas[i][1] + areas[i - 1][1]) * deltaX;
             }
             return volume;
         }
