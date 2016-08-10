@@ -84,8 +84,9 @@ namespace TVGL
     {
         internal static List<ShallowPolygonTree> Shallow(IList<Polygon> polygons)
         {
+            throw new NotImplementedException("Better to use clipper to output its tree structure. The code below does not work yet.");
             var shallowPolygonTrees = new List<ShallowPolygonTree>();
-
+            
             //Need to put the polygons into a dictionary, so we can grab the correct polygon later by index.
             //Make sure the all the points in the polygon's path know what index the polygon is.
             //Also, make sure that all the polygons are simple.
