@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
+using TVGL;
 
 namespace TVGL
 {
@@ -262,7 +263,7 @@ namespace TVGL
             //   This should be accurate since the lines betweens data points are linear
             
             #region Same Setup as Area Decomposition
-            var outputData = new List<double[]>();
+            var outputData = new List<List<List<Point>>>();
             if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
             if (stepSize <= minOffset * 2)
             {
@@ -281,6 +282,7 @@ namespace TVGL
             var previousArea = 0.0;
             var edgeListDictionary = new Dictionary<int, Edge>();
             var previousDistanceAlongAxis = direction.dotProduct(sortedVertices[0].Position); //This value can be negative
+            var maxDistance = direction.dotProduct(sortedVertices.Last().Position); //This value can be negative
             var previousVertexDistance = previousDistanceAlongAxis;
             var previousPolygons = new List<List<Point>>();
             foreach (var vertex in sortedVertices)
@@ -295,42 +297,49 @@ namespace TVGL
                     var cuttingPlane = new Flat(distance, direction);
                     List<List<Edge>> outputEdgeLoops;
                     var inputEdgeLoops = new List<List<Edge>>();
-                    var current3DPolygons = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+                    var current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
 
                     #region Get 2D polygons, offset, union, calculate area, calculate volume increment, and update variables
-                    //Make 2D positive polygons
-                    var currentPolygons = new List<List<Point>>();
-                    foreach (var current3DPolygon in current3DPolygons)
-                    {
-                        var cp = MiscFunctions.Get2DProjectionPoints(current3DPolygon, direction).ToList();
-                        currentPolygons.Add(PolygonOperations.CCWPositive(cp));
-                    }
+                    //Get a list of 2D paths from the 3D loops
+                    var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
+                    
+                    ////Create and order the polygons
+                    //var currentPolygons = currentPaths.Select(path => new Polygon(path)).ToList();
+                    //var currentShallowTress = BuildPolygonTrees.Shallow(currentPolygons);
+
+                    ////Clear variable and add back in correctly ordered paths from polygons in the current shallow trees
+                    //currentPaths = new List<List<Point>>();
+                    //foreach (var shallowTree in currentShallowTress)
+                    //{
+                    //    currentPaths.AddRange(shallowTree.AllPolygons.Select(polygon => new List<Point>(polygon.Path)));
+                    //}
+                    currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
 
                     //Offset if the additive accuracy is significant
                     if (!additiveAccuracy.IsNegligible())
                     {
-                        currentPolygons = PolygonOperations.OffsetSquare(currentPolygons, additiveAccuracy);
+                        currentPaths = PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy);;
                     }
 
                     //Union this new set of polygons with the previous set.
                     if (previousPolygons.Any()) //If not the first iteration
                     {
-                        currentPolygons.AddRange(previousPolygons);
-                        currentPolygons = PolygonOperations.Union(currentPolygons);
+                        currentPaths.AddRange(previousPolygons);
+                        currentPaths = PolygonOperations.Union(currentPaths);
                     }
 
                     //Get the area of this layer
-                    var area = currentPolygons.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                    var area = currentPaths.Sum(p => MiscFunctions.AreaOfPolygon(p));
 
                     //Add the volume from this iteration.
                     if (!previousDistance.IsNegligible())
                     {
                         var deltaX = distance - previousDistance;
-                        var deltaY = area - previousArea;
-                        if (deltaX < 0 || deltaY < 0) throw new Exception("Error in your implementation. This should never occur");
-                        additiveVolume += .5 * deltaY * deltaX;
+                        if (deltaX < 0 || area < previousArea - ts.SameTolerance) throw new Exception("Error in your implementation. This should never occur");
+                        additiveVolume +=  deltaX * previousArea;
+                        outputData.Add(currentPaths);
                     }
-                    previousPolygons = currentPolygons;
+                    previousPolygons = currentPaths;
                     previousDistance = distance;
                     previousArea = area;
                     #endregion
@@ -341,42 +350,49 @@ namespace TVGL
                     {
                         var distance2 = distanceAlongAxis - minOffset; //X value (distance along axis) 
                         cuttingPlane = new Flat(distance2, direction);
-                        current3DPolygons = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
-                        
+                        current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+
                         #region Get 2D polygons, offset, union, calculate area, calculate volume increment, and update variables
-                        //Make 2D positive polygons
-                        currentPolygons = new List<List<Point>>();
-                        foreach (var current3DPolygon in current3DPolygons)
-                        {
-                            var cp = MiscFunctions.Get2DProjectionPoints(current3DPolygon, direction).ToList();
-                            currentPolygons.Add(PolygonOperations.CCWPositive(cp));
-                        }
+                        //Get a list of 2D paths from the 3D loops
+                        currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
+
+                        ////Create and order the polygons
+                        //currentPolygons = currentPaths.Select(path => new Polygon(path)).ToList();
+                        //currentShallowTress = BuildPolygonTrees.Shallow(currentPolygons);
+
+                        ////Clear variable and add back in correctly ordered paths from polygons in the current shallow trees
+                        //currentPaths = new List<List<Point>>();
+                        //foreach (var shallowTree in currentShallowTress)
+                        //{
+                        //    currentPaths.AddRange(shallowTree.AllPolygons.Select(polygon => new List<Point>(polygon.Path)));
+                        //}
+                        currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
 
                         //Offset if the additive accuracy is significant
                         if (!additiveAccuracy.IsNegligible())
                         {
-                            currentPolygons = PolygonOperations.OffsetSquare(currentPolygons, additiveAccuracy);
+                            currentPaths = PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy);
                         }
 
                         //Union this new set of polygons with the previous set.
                         if (previousPolygons.Any()) //If not the first iteration
                         {
-                            currentPolygons.AddRange(previousPolygons);
-                            currentPolygons = PolygonOperations.Union(currentPolygons);
+                            currentPaths.AddRange(previousPolygons);
+                            currentPaths = PolygonOperations.Union(currentPaths);
                         }
 
                         //Get the area of this layer
-                        area = currentPolygons.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                        area = currentPaths.Sum(p => MiscFunctions.AreaOfPolygon(p));
 
                         //Add the volume from this iteration.
                         if (!previousDistance.IsNegligible())
                         {
                             var deltaX = distance - previousDistance;
-                            var deltaY = area - previousArea;
-                            if (deltaX < 0 || deltaY < 0) throw new Exception("Error in your implementation. This should never occur");
-                            additiveVolume += .5 * deltaY * deltaX;
+                            if (deltaX < 0 || area < previousArea - ts.SameTolerance) throw new Exception("Error in your implementation. This should never occur");
+                            additiveVolume += deltaX * previousArea;
+                            outputData.Add(currentPaths);
                         }
-                        previousPolygons = currentPolygons;
+                        previousPolygons = currentPaths;
                         previousDistance = distance;
                         previousArea = area;
                         #endregion
@@ -401,7 +417,11 @@ namespace TVGL
                 //Update the previous distance of the vertex checked
                 previousVertexDistance = distanceAlongAxis;
             }
+            //Now add the last data point.
+            var finalDistance = maxDistance - previousDistance;
+            additiveVolume += finalDistance*previousArea;
             return additiveVolume;
+            //return outputData;
         }
 
         /// <summary>
