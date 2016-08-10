@@ -54,19 +54,19 @@ namespace TVGL
         ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
         /// </summary>
         /// <value>To node.</value>
-        internal Point ToPoint { get; private set; }
+        public Point ToPoint { get; private set; }
 
         /// <summary>
         ///     Gets the Pointwhich the line is pointing away from. Set is through the constructor.
         /// </summary>
         /// <value>From node.</value>
-        internal Point FromPoint { get; private set; }
-        
+        public Point FromPoint { get; private set; }
+
         /// <summary>
         ///     Gets the Slope.
         /// </summary>
         /// <value>The Slope.</value>
-        internal double Slope { get; }
+        public double Slope { get; }
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         // ReSharper disable once InconsistentNaming
@@ -74,9 +74,9 @@ namespace TVGL
         ///     Gets the Yintercept.
         /// </summary>
         /// <value>The Yintercept.</value>
-        internal double Yintercept { get; private set; }
+        public double Yintercept { get; private set; }
 
-        internal int IndexInList { get; set; }
+        public int IndexInList { get; set; }
 
         /// <summary>
         /// Gets the length of the line
