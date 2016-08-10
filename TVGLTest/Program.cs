@@ -72,7 +72,7 @@ namespace TVGL_Test
         [STAThread]
         private static void Main(string[] args)
         {
-            Difference2();
+            //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
@@ -88,13 +88,21 @@ namespace TVGL_Test
                     ts = IO.Open(fileStream, filename);
                 //TestPolygon(ts[0]);
                 Presenter.ShowAndHang(ts[0]);
-                TestSilhouette(ts[0]);
+                TestAdditiveVolumeEstimate(ts[0]);
             }
 
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
         }
 
+        public static void TestAdditiveVolumeEstimate(TessellatedSolid ts)
+        {
+            var volume = AreaDecomposition.AdditiveVolume(ts, new[] {-1.0, 0.0, 0.0}, 0.1, 0.0);
+            //foreach (var output in data)
+            //{
+            //    Presenter.ShowAndHang(output);
+            //}
+        }
         public static void TestSilhouette(TessellatedSolid ts)
         {
             var silhouette = TVGL.Silhouette.Run(ts, new[] {1.0, 0.0, 0.0});
