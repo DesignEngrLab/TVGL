@@ -88,7 +88,7 @@ namespace TVGL
         /// </summary>
         /// <param name="y">The y.</param>
         /// <returns>System.Double.</returns>
-        internal double Xintercept(double y)
+        public double Xintercept(double y)
         {
             //If basically a vertical line, return an x value on that line (e.g., ToNode.X)
             if (Slope >= double.PositiveInfinity)
@@ -113,7 +113,7 @@ namespace TVGL
         /// <summary>
         ///     Reverses this instance.
         /// </summary>
-        internal void Reverse()
+        public void Reverse()
         {
             var tempPoint= FromPoint;
             FromPoint= ToPoint;

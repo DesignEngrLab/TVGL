@@ -298,6 +298,28 @@ namespace TVGL
         {
             return Union(new List<List<Point>>(polygons) { otherPolygon });
         }
+
+        /// <summary>
+        /// Union based on Even/Odd methodology. Useful for correctly ordering a set of polygons.
+        /// </summary>
+        /// <param name="polygons"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static Paths UnionEvenOdd(IList<List<Point>> polygons)
+        {
+            const PolyFillType fillMethod = PolyFillType.EvenOdd;
+            var solution = new Paths();
+            var subject = new List<Path>(polygons);
+
+            //Setup Clipper
+            var clipper = new Clipper.Clipper { StrictlySimple = true };
+            clipper.AddPaths(subject, PolyType.Subject, true);
+
+            //Begin an evaluation
+            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
+            if (!result) throw new Exception("Clipper Union Failed");
+            return solution;
+        }
         #endregion
 
         #region Difference
@@ -488,6 +510,8 @@ namespace TVGL
             return Xor(new List<List<Point>>() { subject }, new List<List<Point>>(clips));
         }
         #endregion
+
+        
     }
     #endregion
 }

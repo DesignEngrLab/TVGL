@@ -48,6 +48,11 @@ namespace TVGL
         /// </summary>
         public readonly Polygon OuterPolygon;
 
+        /// <summary>
+        /// A list of all the polygons in this tree.
+        /// </summary>
+        public IList<Polygon> AllPolygons => new List<Polygon>(InnerPolygons) {OuterPolygon};
+
         internal ShallowPolygonTree() { }
 
         internal ShallowPolygonTree(Polygon positivePolygon)
@@ -110,7 +115,7 @@ namespace TVGL
                 firstPointFromEachPolygon.Add(sortedPath[0]);
             }
             //Make a readonly collection for the sorted paths, because we will be referencing this collection and do not want it to be mutated.
-            var sortedPaths = new ReadOnlyCollection<List<Point>>(tempSortedPaths);
+            var sortedPaths = new List<List<Point>>(tempSortedPaths);
 
             //First, find the first node from each loop and then sort them. This determines the order the loops
             //will be visited in.

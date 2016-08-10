@@ -73,11 +73,19 @@ namespace TVGL
         /// </summary>
         public bool IsSelfIntersecting;
 
-        internal Polygon()
+        /// <summary>
+        /// Polygon null constructor
+        /// </summary>
+        public Polygon()
         {
         }
 
-        internal Polygon(IEnumerable<Point> points, bool isOpen = false)
+        /// <summary>
+        /// Polygon Constructor
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="isOpen"></param>
+        public Polygon(IEnumerable<Point> points, bool isOpen = false)
         {
             Path = new List<Point>(points);
             IsOpen = isOpen;
