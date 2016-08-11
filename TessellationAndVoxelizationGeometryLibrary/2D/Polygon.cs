@@ -28,10 +28,25 @@ namespace TVGL
         /// The polygon that this polygon is inside of.
         /// </summary>
         public Polygon Parent;
+
         /// <summary>
         /// The index of this child in its parent's child list.
         /// </summary>
-        public int Index;
+        public int Index
+        {
+            get { return _index; }
+            set
+            {
+                _index = value;
+                foreach (var point in Path)
+                {
+                    point.PolygonIndex = _index;
+                }
+            }
+        }
+
+        private int _index;
+
         /// <summary>
         /// Gets whether the polygon has an open path.
         /// </summary>
@@ -78,6 +93,7 @@ namespace TVGL
         /// </summary>
         public Polygon()
         {
+            Index = -1;
         }
 
         /// <summary>
@@ -85,9 +101,16 @@ namespace TVGL
         /// </summary>
         /// <param name="points"></param>
         /// <param name="isOpen"></param>
-        public Polygon(IEnumerable<Point> points, bool isOpen = false)
+        /// <param name="index"></param>
+        public Polygon(IEnumerable<Point> points, bool isOpen = false, int index = -1)
         {
             Path = new List<Point>(points);
+            //set index in path
+            for (var i =0; i < Path.Count; i++)
+            {
+                Path[i].IndexInPath = i;
+            }
+            Index = index;
             IsOpen = isOpen;
             IsConvex = IsThisConvex();
             PathLines = SetPathLines();
