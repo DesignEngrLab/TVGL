@@ -46,11 +46,6 @@ namespace TVGL
                 negativeFaces.RemoveAt(0);
                 var nextPolygon = MiscFunctions.Get2DProjectionPoints(negativeFace.Vertices, normal, false).ToList();
 
-                //Check if this polygon is legitimate. If any of the points are the same, then skip.
-                if (nextPolygon[0].Equals(nextPolygon[1]) || nextPolygon[0].Equals(nextPolygon[2]) ||
-                    nextPolygon[1].Equals(nextPolygon[2])) continue;
-                if(MiscFunctions.AreaOfPolygon(nextPolygon).IsNegligible()) continue;
-
                 //Make this polygon positive CCW
                 nextPolygon = PolygonOperations.CCWPositive(nextPolygon);
                 polygonList = PolygonOperations.Union(new List<List<Point>>(polygonList) { nextPolygon});
