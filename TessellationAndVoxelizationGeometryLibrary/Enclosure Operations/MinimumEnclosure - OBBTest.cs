@@ -156,7 +156,7 @@ namespace TVGL
                     BackEdge = BackEdge,
                     Box = new BoundingBox
                     {
-                        CornerVertices = Box.CornerVertices != null ? (Point[]) Box.CornerVertices.Clone() : null,
+                        CornerVertices = Box.CornerVertices != null ? (Vertex[]) Box.CornerVertices.Clone() : null,
                         Dimensions = Box.Dimensions != null ? (double[]) Box.Dimensions.Clone() : null,
                         Directions = Box.Directions != null ? (double[][]) Box.Directions.Clone() : null,
                         PointsOnFaces = Box.PointsOnFaces != null ? (List<Vertex>[]) Box.PointsOnFaces.Clone() : null,
