@@ -75,29 +75,14 @@ namespace TVGL
         /// <summary>
         /// Simplifies a polygon, by removing self intersection. This may output several polygons.
         /// </summary>
-        /// <param name="polygon"></param>
+        /// <param name="path"></param>
         /// <returns></returns>
-        public static List<List<Point>> Simplify(IList<Point> polygon)
+        public static List<List<Point>> Simplify(IList<Point> path)
         {
-            //Simplify
-            var solution = Clipper.Clipper.SimplifyPolygon(new Path(polygon));
-
-            var outputLoops = new List<List<Point>>();
-            foreach (var loop in solution)
-            {
-                var offsetLoop = new List<Point>();
-                for (var i = 0; i < loop.Count; i++)
-                {
-                    var Point = loop[i];
-                    var x = Point.X;
-                    var y = Point.Y;
-                    offsetLoop.Add(new Point(new List<double> {x, y, 0.0}) {References = Point.References});
-                }
-                outputLoops.Add(offsetLoop);
-            }
-
-            return outputLoops;
+            var solution = Clipper.Clipper.SimplifyPolygon(new Path(path));
+            return solution;
         }
+
 
         /// <summary>
         /// Simplifies a polygon, by removing self intersection. This results in one polygon, but may not be successful 
@@ -302,6 +287,10 @@ namespace TVGL
                     {
                         clipper.AddPaths(clipperClip, PolyType.Clip, true);
                     }
+                }
+                else if (clipperSubject.Count == 1)
+                {
+                    return Simplify(clipperSubject.First());
                 }
             }
   
