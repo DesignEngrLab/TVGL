@@ -212,7 +212,7 @@ namespace TVGL
         ///     length of the axis-aligned bounding box times Constants.
         /// </summary>
         /// <value>The same tolerance.</value>
-        internal double SameTolerance { private set; get; }
+        public double SameTolerance { private set; get; }
 
         /// <summary>
         ///     Errors in the tesselated solid

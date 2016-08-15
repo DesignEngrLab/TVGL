@@ -20,7 +20,7 @@ namespace TVGL
     /// <summary>
     ///     The BoundingBox struct is a simple structure for representing an arbitrarily oriented box
     ///     or 3D prismatic rectangle. It simply includes the orientation as three unit vectors in
-    ///     "Directions", the extreme vertices, and the volume.
+    ///     "Directions2D", the extreme vertices, and the volume.
     /// </summary>
     public struct BoundingBox
     {
@@ -49,7 +49,7 @@ namespace TVGL
         /// <summary>
         ///     The corner points
         /// </summary>
-        public Point[] CornerVertices;
+        public Vertex[] CornerVertices;
     }
 
     /// <summary>
@@ -70,7 +70,7 @@ namespace TVGL
         /// <summary>
         ///     Vector directions of length and width of rectangle
         /// </summary>
-        public double[][] Directions;
+        public double[][] Directions2D;
 
         /// <summary>
         ///     Length and Width of Bounding Rectangle

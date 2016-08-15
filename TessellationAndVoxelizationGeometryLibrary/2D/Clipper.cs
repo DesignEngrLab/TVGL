@@ -3929,7 +3929,7 @@ namespace TVGL.Clipper
         }
         //------------------------------------------------------------------------------
 
-        internal void AddPaths(Paths paths, JoinType joinType, EndType endType)
+        internal void AddPaths(IList<Path> paths, JoinType joinType, EndType endType)
         {
             foreach (var path in paths)
                 AddPath(path, joinType, endType);

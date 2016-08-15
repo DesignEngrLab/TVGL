@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using StarMathLib;
 
 namespace TVGL
@@ -410,7 +411,7 @@ namespace TVGL
                     bestRectangle.PointsOnSides = pointsOnSides;
                     bestRectangle.Area = area;
                     bestRectangle.Dimensions = new[] {width, height};
-                    bestRectangle.Directions = new[] {xDir, yDir};
+                    bestRectangle.Directions2D = new[] {xDir, yDir};
                 }
             } while (true); //process will end on its own by the break statement in line 314
 
@@ -432,37 +433,67 @@ namespace TVGL
         public static BoundingBox AddInCornerVertices(BoundingBox bb)
         {
             if (bb.CornerVertices != null) return bb;
-            var cornerVertices = new Point[8];
-            var normalMatrix = new[,]
+            var cornerVertices = new Vertex[8];
+
+            ////////////////////////////////////////
+            //First, get the bottom corner.
+            ////////////////////////////////////////
+            
+            //Collect all the points on faces
+            var allPointsOnFaces = new List<Vertex>();
+            foreach (var setOfPoints in bb.PointsOnFaces)
             {
-                {bb.Directions[0][0], bb.Directions[1][0], bb.Directions[2][0]},
-                {bb.Directions[0][1], bb.Directions[1][1], bb.Directions[2][1]},
-                {bb.Directions[0][2], bb.Directions[1][2], bb.Directions[2][2]}
-            };
+                allPointsOnFaces.AddRange(setOfPoints);
+            }
+
+            //Get the low extreme vertices along each direction
+            List<Vertex> vLows, vHighs;
+            GetLengthAndExtremeVertices(bb.Directions[0], allPointsOnFaces, out vLows, out vHighs);
+            var v0 = new Vertex(vLows.First().Position);
+            GetLengthAndExtremeVertices(bb.Directions[1], allPointsOnFaces, out vLows, out vHighs);
+            var v1 = new Vertex(vLows.First().Position);
+            GetLengthAndExtremeVertices(bb.Directions[2], allPointsOnFaces, out vLows, out vHighs);
+            var v2 = new Vertex(vLows.First().Position);
+
+            //Start with v0 and move along direction[1] by projection
+            var vector0To1 = v1.Position.subtract(v0.Position);
+            var projectionOntoD1 = bb.Directions[1].multiply(bb.Directions[1].dotProduct(vector0To1));
+            var v4 = v0.Position.add(projectionOntoD1);
+
+            //Move along direction[2] by projection
+            var vector4To2 = v2.Position.subtract(v4);
+            var projectionOntoD2 = bb.Directions[2].multiply(bb.Directions[2].dotProduct(vector4To2));
+            var bottomCorner = new Vertex(v4.add(projectionOntoD2));
+
+            //Double Check to make sure it is the bottom corner
+            allPointsOnFaces.Add(bottomCorner);
+            GetLengthAndExtremeVertices(bb.Directions[0], allPointsOnFaces, out vLows, out vHighs);
+            if(!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
+            GetLengthAndExtremeVertices(bb.Directions[1], allPointsOnFaces, out vLows, out vHighs);
+            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
+            GetLengthAndExtremeVertices(bb.Directions[2], allPointsOnFaces, out vLows, out vHighs);
+            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
+
+            //Create the vertices that make up the box and add them to the corner vertices array
             var count = 0;
             for (var i = 0; i < 2; i++)
             {
-                var tempVect = normalMatrix.transpose().multiply(bb.PointsOnFaces[i][0].Position);
-                var xPrime = tempVect[0];
+                var d0Vector = i == 0 ? new[] {0.0, 0.0, 0.0} : bb.Directions[0].multiply(bb.Dimensions[0]);
                 for (var j = 0; j < 2; j++)
                 {
-                    tempVect = normalMatrix.transpose().multiply(bb.PointsOnFaces[j + 2][0].Position);
-                    var yPrime = tempVect[1];
+                    var d1Vector = j == 0 ? new[] { 0.0, 0.0, 0.0 } : bb.Directions[1].multiply(bb.Dimensions[1]);
                     for (var k = 0; k < 2; k++)
                     {
-                        tempVect = normalMatrix.transpose().multiply(bb.PointsOnFaces[k + 4][0].Position);
-                        var zPrime = tempVect[2];
-                        var offAxisPosition = new[] {xPrime, yPrime, zPrime};
-                        //Rotate back into primary coordinates
-                        var position = normalMatrix.multiply(offAxisPosition);
-                        cornerVertices[count] = new Point(position);
+                        var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : bb.Directions[2].multiply(bb.Dimensions[2]);
+                        var newVertex = new Vertex(bottomCorner.Position.add(d0Vector).add(d1Vector).add(d2Vector));
+                        cornerVertices[count] = newVertex;
                         count++;
                     }
                 }
             }
+
             return new BoundingBox
             {
-                //ToDo: Actually return vertices instead of 3d points
                 CornerVertices = cornerVertices,
                 Dimensions = bb.Dimensions,
                 Directions = bb.Directions,
@@ -481,14 +512,16 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The Direction.</param>
-        /// <param name="vDir1">The v dir1.</param>
-        /// <param name="vDir2">The v dir2.</param>
         /// <returns>BoundingBox.</returns>
         /// <exception cref="Exception">Volume should never be negligible, unless the input data is bad</exception>
         /// <exception cref="System.Exception"></exception>
-        public static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction, Vertex vDir1 = null,
-            Vertex vDir2 = null)
+        public static BoundingBox OBBAlongDirection(IList<Vertex> vertices, double[] direction)
         {
+            return AddInCornerVertices(FindOBBAlongDirection(vertices, direction));
+        }
+
+        private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction)
+        { 
             List<Vertex> bottomVertices, topVertices;
             var direction1 = direction.normalize();
             var depth = GetLengthAndExtremeVertices(direction, vertices, out bottomVertices, out topVertices);
@@ -500,15 +533,15 @@ namespace TVGL
             //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new[]
             {
-                boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1],
-                boundingRectangle.Directions[0][2], 1.0
+                boundingRectangle.Directions2D[0][0], boundingRectangle.Directions2D[0][1],
+                boundingRectangle.Directions2D[0][2], 1.0
             };
             tempDirection = backTransform.multiply(tempDirection);
             var direction2 = new[] {tempDirection[0], tempDirection[1], tempDirection[2]};
             tempDirection = new[]
             {
-                boundingRectangle.Directions[1][0], boundingRectangle.Directions[1][1],
-                boundingRectangle.Directions[1][2], 1.0
+                boundingRectangle.Directions2D[1][0], boundingRectangle.Directions2D[1][1],
+                boundingRectangle.Directions2D[1][2], 1.0
             };
             tempDirection = backTransform.multiply(tempDirection);
             var direction3 = new[] {tempDirection[0], tempDirection[1], tempDirection[2]};
@@ -546,14 +579,14 @@ namespace TVGL
             //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new[]
             {
-                boundingRectangle.Directions[0][0], boundingRectangle.Directions[0][1],
-                boundingRectangle.Directions[0][2], 1.0
+                boundingRectangle.Directions2D[0][0], boundingRectangle.Directions2D[0][1],
+                boundingRectangle.Directions2D[0][2], 1.0
             };
             var direction1 = backTransform.multiply(tempDirection).Take(3).ToArray();
             tempDirection = new[]
             {
-                boundingRectangle.Directions[1][0], boundingRectangle.Directions[1][1],
-                boundingRectangle.Directions[1][2], 1.0
+                boundingRectangle.Directions2D[1][0], boundingRectangle.Directions2D[1][1],
+                boundingRectangle.Directions2D[1][2], 1.0
             };
             var direction2 = backTransform.multiply(tempDirection).Take(3).ToArray();
             boxData.Box =

@@ -12,7 +12,7 @@ namespace TVGL
     #region Polygon Operations
 
     /// <summary>
-    /// A set of general operation for points and polygons
+    /// A set of general operation for points and paths
     /// </summary>
     public class PolygonOperations
     {
@@ -129,7 +129,7 @@ namespace TVGL
             }
 
 
-            //If simplification split the polygon into multiple polygons. Union the polygons together, removing the extraneous lines
+            //If simplification split the polygon into multiple paths. Union the paths together, removing the extraneous lines
             if (outputLoops.Count == 1)
             {
                 simplifiedPolygon = outputLoops.First();
@@ -177,7 +177,7 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="fractionOfPathsLengthForMinLength"></param>
         /// <returns></returns>
-        public static List<List<Point>> OffsetRound(List<List<Point>> paths, double offset, double fractionOfPathsLengthForMinLength = 0.001)
+        public static List<List<Point>> OffsetRound(IList<List<Point>> paths, double offset, double fractionOfPathsLengthForMinLength = 0.001)
         {
             var totalLength = paths.Sum(path => Length(path));
             var minLength = totalLength * fractionOfPathsLengthForMinLength;
@@ -185,7 +185,7 @@ namespace TVGL
             return OffsetRoundByMinLength(paths, offset, minLength);
         }
 
-        private static List<List<Point>> OffsetRoundByMinLength(List<List<Point>> paths, double offset, double minLength)
+        private static List<List<Point>> OffsetRoundByMinLength(IList<List<Point>> paths, double offset, double minLength)
         {
             if (minLength.IsNegligible())
             {
@@ -254,16 +254,26 @@ namespace TVGL
 
         #region Union
         /// <summary>
-        /// Union. Joins polygons that are touching into merged larger polygons.
+        /// Union. Joins paths that are touching into merged larger paths.
         /// </summary>
-        /// <param name="polygons"></param>
+        /// <param name="paths"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> polygons)
+        public static List<List<Point>> Union(IList<List<Point>> paths)
         {
             const PolyFillType fillMethod = PolyFillType.Positive;
             var solution = new Paths();
-            var subject = new List<Path>(polygons);
+            
+            //Check to make sure that each path's area is not negligible. If it is, ignore it.
+            var subject = paths.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible()).ToList();
+            if (subject.Count == 0)
+            {
+                return new Paths(paths);
+            }
+            if (subject.Count == 1)
+            {
+                return subject;
+            }
 
             //Setup Clipper
             var clipper = new Clipper.Clipper {StrictlySimple = true};
@@ -276,27 +286,49 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Union. Joins polygons that are touching into merged larger polygons.
+        /// Union. Joins paths that are touching into merged larger paths.
         /// </summary>
-        /// <param name="polygon1"></param>
-        /// <param name="polygon2"></param>
+        /// <param name="path1"></param>
+        /// <param name="path2"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(List<Point> polygon1, List<Point> polygon2)
+        public static List<List<Point>> Union(List<Point> path1, List<Point> path2)
         {
-            return Union(new List<List<Point>>() {polygon1, polygon2});
+            return Union(new List<List<Point>>() {path1, path2});
         }
 
         /// <summary>
-        /// Union. Joins polygons that are touching into merged larger polygons.
+        /// Union. Joins paths that are touching into merged larger paths.
         /// </summary>
-        /// <param name="polygons"></param>
+        /// <param name="paths"></param>
         /// <param name="otherPolygon"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> polygons, List<Point> otherPolygon)
+        public static List<List<Point>> Union(IList<List<Point>> paths, List<Point> otherPolygon)
         {
-            return Union(new List<List<Point>>(polygons) { otherPolygon });
+            return Union(new List<List<Point>>(paths) { otherPolygon });
+        }
+
+        /// <summary>
+        /// Union based on Even/Odd methodology. Useful for correctly ordering a set of paths.
+        /// </summary>
+        /// <param name="polygons"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static Paths UnionEvenOdd(IList<List<Point>> polygons)
+        {
+            const PolyFillType fillMethod = PolyFillType.EvenOdd;
+            var solution = new Paths();
+            var subject = new List<Path>(polygons);
+
+            //Setup Clipper
+            var clipper = new Clipper.Clipper { StrictlySimple = true };
+            clipper.AddPaths(subject, PolyType.Subject, true);
+
+            //Begin an evaluation
+            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
+            if (!result) throw new Exception("Clipper Union Failed");
+            return solution;
         }
         #endregion
 
@@ -488,6 +520,8 @@ namespace TVGL
             return Xor(new List<List<Point>>() { subject }, new List<List<Point>>(clips));
         }
         #endregion
+
+        
     }
     #endregion
 }

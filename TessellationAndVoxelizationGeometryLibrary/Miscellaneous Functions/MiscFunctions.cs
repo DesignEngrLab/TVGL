@@ -243,15 +243,27 @@ namespace TVGL
 
             //Method 1
             //var area = 0.0;
-            //var j = polygon.Length - 1; //Previous to the first vertex
-            //for (var i =0; i < polygon.Length; i++)
+            //var j = polygon.Count - 1; //Previous to the first vertex
+            //for (var i = 0; i < polygon.Count; i++)
             //{
-            //    area += (polygon[j].X + polygon[i].X)*(polygon[j].Y - polygon[i].Y);
+            //    area += (polygon[j].X + polygon[i].X) * (polygon[j].Y - polygon[i].Y);
             //    j = i; //Previous to i
             //}
-            //area = -area/2;
+            //area = -area / 2;
 
             #endregion
+
+            //First, check if all x are the same. The algorithm will catch all y's and output zero,
+            //But it may output a small number, even if all the x's are the same
+            var xval = polygon.First().X;
+            var returnZero = true;
+            for (var i = 1; i < polygon.Count; i++)
+            {
+                if (polygon[i].X.IsPracticallySame(xval)) continue;
+                returnZero = false;
+                break;
+            }
+            if (returnZero) return 0.0;
 
             //Faster Method
             var area = 0.0;

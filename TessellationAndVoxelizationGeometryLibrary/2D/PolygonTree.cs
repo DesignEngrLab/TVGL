@@ -48,6 +48,11 @@ namespace TVGL
         /// </summary>
         public readonly Polygon OuterPolygon;
 
+        /// <summary>
+        /// A list of all the polygons in this tree.
+        /// </summary>
+        public IList<Polygon> AllPolygons => new List<Polygon>(InnerPolygons) {OuterPolygon};
+
         internal ShallowPolygonTree() { }
 
         internal ShallowPolygonTree(Polygon positivePolygon)
@@ -79,8 +84,9 @@ namespace TVGL
     {
         internal static List<ShallowPolygonTree> Shallow(IList<Polygon> polygons)
         {
+            throw new NotImplementedException("Better to use clipper to output its tree structure. The code below does not work yet.");
             var shallowPolygonTrees = new List<ShallowPolygonTree>();
-
+            
             //Need to put the polygons into a dictionary, so we can grab the correct polygon later by index.
             //Make sure the all the points in the polygon's path know what index the polygon is.
             //Also, make sure that all the polygons are simple.
@@ -110,7 +116,7 @@ namespace TVGL
                 firstPointFromEachPolygon.Add(sortedPath[0]);
             }
             //Make a readonly collection for the sorted paths, because we will be referencing this collection and do not want it to be mutated.
-            var sortedPaths = new ReadOnlyCollection<List<Point>>(tempSortedPaths);
+            var sortedPaths = new List<List<Point>>(tempSortedPaths);
 
             //First, find the first node from each loop and then sort them. This determines the order the loops
             //will be visited in.
