@@ -25,10 +25,10 @@ namespace TVGL_Test
         //"../../../TestFiles/train.3mf",
         //"../../../TestFiles/Castle.3mf",
         //"../../../TestFiles/Raspberry Pi Case.3mf",
-       "../../../TestFiles/shark.ply",
-        "../../../TestFiles/bunnySmall.ply",
+       //"../../../TestFiles/shark.ply",
+        //"../../../TestFiles/bunnySmall.ply",
         "../../../TestFiles/cube.ply",
-        "../../../TestFiles/airplane.ply",
+        //"../../../TestFiles/airplane.ply",
         "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
         "../../../TestFiles/Tetrahedron.STL",
         "../../../TestFiles/off_axis_box.STL",
@@ -87,8 +87,10 @@ namespace TVGL_Test
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
                 //TestPolygon(ts[0]);
+                
                 Presenter.ShowAndHang(ts[0]);
-                TestAdditiveVolumeEstimate(ts[0]);
+                TestSilhouette(ts[0]);
+                //TestAdditiveVolumeEstimate(ts[0]);
             }
 
             Console.WriteLine("Completed.");

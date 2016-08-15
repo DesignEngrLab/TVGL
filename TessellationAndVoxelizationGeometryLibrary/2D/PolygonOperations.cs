@@ -253,32 +253,58 @@ namespace TVGL
         #endregion
 
         #region Union
+
         /// <summary>
         /// Union. Joins paths that are touching into merged larger paths.
         /// </summary>
-        /// <param name="paths"></param>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> paths)
+        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
             const PolyFillType fillMethod = PolyFillType.Positive;
             var solution = new Paths();
             
-            //Check to make sure that each path's area is not negligible. If it is, ignore it.
-            var subject = paths.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible()).ToList();
-            if (subject.Count == 0)
-            {
-                return new Paths(paths);
-            }
-            if (subject.Count == 1)
-            {
-                return subject;
-            }
-
             //Setup Clipper
             var clipper = new Clipper.Clipper {StrictlySimple = true};
-            clipper.AddPaths(subject, PolyType.Subject, true);
+            
+            //Check to make sure that each path's area is not negligible. If it is, ignore it.
+            var clipperSubject = new Paths(subject.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible()).ToList());
+            if (!clipperSubject.Any())
+            {
+                if (clip != null)
+                {
+                    var newSubject =
+                        new Paths(clip.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible()).ToList());
+                    if (newSubject.Any())
+                    {
+                        clipper.AddPaths(newSubject, PolyType.Subject, true);
+                    }
+                    else
+                    {
+                        return solution;
+                    }
+                }
+                else
+                {
+                    return solution;
+                }
+            }
+            else
+            {
+                clipper.AddPaths(clipperSubject, PolyType.Subject, true);
 
+                if (clip != null)
+                {
+                    var clipperClip = new Paths(clip.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible()).ToList());
+                    if(clipperClip.Any())
+                    {
+                        clipper.AddPaths(clipperClip, PolyType.Clip, true);
+                    }
+                }
+            }
+  
             //Begin an evaluation
             var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
             if (!result) throw new Exception("Clipper Union Failed");
@@ -294,7 +320,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(List<Point> path1, List<Point> path2)
         {
-            return Union(new List<List<Point>>() {path1, path2});
+            return Union(new List<List<Point>>() {path1}, new List<List<Point>>() { path2});
         }
 
         /// <summary>
@@ -306,7 +332,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> paths, List<Point> otherPolygon)
         {
-            return Union(new List<List<Point>>(paths) { otherPolygon });
+            return Union(new List<List<Point>>(paths), new List<List<Point>> { otherPolygon});
         }
 
         /// <summary>
