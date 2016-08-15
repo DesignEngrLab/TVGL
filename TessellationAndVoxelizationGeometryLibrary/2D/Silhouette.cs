@@ -98,35 +98,41 @@ namespace TVGL
         /// <returns></returns>
         public static List<List<Point>> Run(TessellatedSolid ts, double[] normal)
         {
+            if (ts.Errors?.SingledSidedEdges != null)
+            {
+                //Run2 is slower, but may handle missing edge/vertex pairing better.
+                return Run2(ts, normal);
+            }
+
             //Get the negative faces into a dictionary
-            var negativeFaceDict = new Dictionary<int, PolygonalFace>();
+            var positiveFaceDict = new Dictionary<int, PolygonalFace>();
             foreach (var face in ts.Faces)
             {
                 var dot = normal.dotProduct(face.Normal);
-                if (Math.Sign(dot) < 0)
+                if (Math.Sign(dot) > 0)
                 {
-                    negativeFaceDict.Add(face.IndexInList, face);
+                    positiveFaceDict.Add(face.IndexInList, face);
                 }
             }
 
-            var unusedNegativeFaces = new Dictionary<int, PolygonalFace>(negativeFaceDict);
+            var unusedPositiveFaces = new Dictionary<int, PolygonalFace>(positiveFaceDict);
             var seperateSurfaces = new List<HashSet<PolygonalFace>>();
 
-            while (unusedNegativeFaces.Any())
+            while (unusedPositiveFaces.Any())
             {
                 var surface = new HashSet<PolygonalFace>();
-                var stack = new Stack<PolygonalFace>(new[] { unusedNegativeFaces.ElementAt(0).Value });
+                var stack = new Stack<PolygonalFace>(new[] { unusedPositiveFaces.ElementAt(0).Value });
                 while (stack.Any())
                 {
                     var face = stack.Pop();
                     if (surface.Contains(face)) continue;
                     surface.Add(face);
-                    unusedNegativeFaces.Remove(face.IndexInList);
+                    unusedPositiveFaces.Remove(face.IndexInList);
                     //Only push adjacent faces that are also negative
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
                         if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
-                        if (!negativeFaceDict.ContainsKey(adjacentFace.IndexInList)) continue; //Ignore if not negative
+                        if (!positiveFaceDict.ContainsKey(adjacentFace.IndexInList)) continue; //Ignore if not negative
                         stack.Push(adjacentFace);
                     }
                 }
@@ -134,6 +140,8 @@ namespace TVGL
             }
 
             //Get the purface positive and negative loops
+            var solution = new List<List<Point>>();
+            var loopCount = 0;
             var allPaths = new List<List<Point>>();
             foreach (var surface in seperateSurfaces)
             {
@@ -159,7 +167,9 @@ namespace TVGL
 
 
                 //The inner edges may form 0 to many negative (CW) loops
+                
                 var surfacePaths= new List<List<Point>>();
+                
                 while (outerEdges.Any())
                 {
                     var isReversed = false;
@@ -168,11 +178,19 @@ namespace TVGL
                     var startVertex = startEdge.From;
                     var vertex = startEdge.To;
                     var loop = new List<Vertex> { vertex };
-                    var dot = 0.0;
-                    var previousEdge = startEdge;
+                    var loopOrder = new List<int> { vertex.IndexInList};
+                    var edgeLoop = new List<Edge> {startEdge};
+                    var stallCount = 0;
+                    var previousLoopSize = 0;
                     do
                     {
                         if(!vertex.Edges.Any()) throw new Exception("error in model");
+                        if (loop.Count - previousLoopSize == 0)
+                        {
+                            stallCount++;
+                        }
+                        previousLoopSize = loop.Count;
+                        if(stallCount > 10) throw new Exception("Missing relationship between edge and vertex");
                         foreach (var edge2 in vertex.Edges.Where(edge2 => outerEdges.Contains(edge2)))
                         {
                             if (edge2.From == vertex)
@@ -180,8 +198,8 @@ namespace TVGL
                                 outerEdges.Remove(edge2);
                                 vertex = edge2.To;
                                 loop.Add(vertex);
-                                //If the edge2.From vertex is the one that is shared, the previous edge comes first.
-                                dot += previousEdge.Vector.crossProduct(edge2.Vector).dotProduct(normal);
+                                loopOrder.Add(vertex.IndexInList);
+                                edgeLoop.Add(edge2);
                                 break;
                             }
                             else if (edge2.To == vertex)
@@ -189,9 +207,8 @@ namespace TVGL
                                 outerEdges.Remove(edge2);
                                 vertex = edge2.From;
                                 loop.Add(vertex);
-                                //If the edge2.To vertex is the one that is shared, edge2 comes first.
-                                dot += edge2.Vector.crossProduct(previousEdge.Vector).dotProduct(normal);
-                                previousEdge = edge2;
+                                loopOrder.Add(vertex.IndexInList);
+                                edgeLoop.Add(edge2);
                                 break;
                             }
                             if (edge2 == vertex.Edges.Last() && !isReversed)
@@ -203,7 +220,9 @@ namespace TVGL
                                 vertex = tempVertex;
                                 loop.Reverse();
                                 loop.Add(vertex);
-                                previousEdge = startEdge;
+                                loop.Reverse();
+                                loopOrder.Add(vertex.IndexInList);
+                                edgeLoop.Reverse();
                                 isReversed = true;
                             }
                             else if (edge2 == vertex.Edges.Last() && isReversed)
@@ -213,33 +232,124 @@ namespace TVGL
                             }
                         }
                     } while (vertex != startVertex && outerEdges.Any());
-                    if (dot.IsNegligible())
-                    {
-                        continue; //Ignore this loop for now.
-                        throw new Exception(
-                            "Failed to assign CCW positive ordering. Should not occur, unless poolygon is invalid.");
-                    }
-                    if (Math.Sign(dot) > 0)
-                    {
-                        surfacePaths.Add(
-                            PolygonOperations.CCWPositive(MiscFunctions.Get2DProjectionPoints(loop, normal)).ToList());
-                    } 
-                    else
-                    {
-                        surfacePaths.Add(
-                            PolygonOperations.CWNegative(MiscFunctions.Get2DProjectionPoints(loop, normal)).ToList());
-                    }
-                    
-                    
 
+                    //To determine order, make sure the loop is ordered in the correct orientation
+                    //This is based on the assumption that the edge direction is CCW with its owned face.
+                    var alreadyReversed = false;
+                    var inCorrectOrder = false;
+                    var errorCount = 0;
+                    var correctCount = 0;
+                    foreach (var edge in edgeLoop)
+                    {
+                        if (edge.OwnedFace.Normal.dotProduct(normal) > 0.0)
+                        {
+                            //Owned face is visible from negative side. 
+                            //edge.From must be right before Edge.To in list of vertices.
+                            var fromIndex = 0;
+                            for (var i = 0; i < loop.Count; i++)
+                            {
+                                if (edge.From.IndexInList == loopOrder[i])
+                                {
+                                    fromIndex = i;
+                                    break;
+                                }
+                            }
+                            var toIndex = 0;
+                            for (var i = 0; i < loop.Count; i++)
+                            {
+                                if (edge.To.IndexInList == loopOrder[i])
+                                {
+                                    toIndex = i;
+                                    break;
+                                }
+                            }
+                            if ((fromIndex + 1 == toIndex) || (toIndex == 0 && fromIndex == loop.Count-1))
+                            {
+                                inCorrectOrder = true;
+                                correctCount ++;
+                            }
+                            else if(((fromIndex == toIndex + 1) || (toIndex == loop.Count && fromIndex == 0)) && !alreadyReversed && !inCorrectOrder)
+                            {
+                                loop.Reverse();
+                                loopOrder.Reverse();
+                                alreadyReversed = true;
+                                inCorrectOrder = true;
+                                correctCount++;
+                            }
+                            else errorCount++;
+                        }
+                        else
+                        {
+                            //Owned face is not visible from negative side. 
+                            //edge.To must be right before Edge.From in list of vertices.
+                            var toIndex = 0;
+                            for (var i = 0; i < loop.Count; i++)
+                            {
+                                if (edge.To.IndexInList == loopOrder[i])
+                                {
+                                    toIndex = i;
+                                    break;
+                                }
+                            }
+                            var fromIndex = 0;
+                            for (var i = 0; i < loop.Count; i++)
+                            {
+                                if (edge.From.IndexInList == loopOrder[i])
+                                {
+                                    fromIndex = i;
+                                    break;
+                                }
+                            }
+                            if ((fromIndex == toIndex + 1 ) || (toIndex == loop.Count-1 && fromIndex == 0))
+                            {
+                                inCorrectOrder = true;
+                                correctCount++;
+                            }
+                            else if (((fromIndex == toIndex - 1) || (toIndex == 0 && fromIndex == loop.Count-1)) && !alreadyReversed && !inCorrectOrder)
+                            {
+                                loop.Reverse();
+                                loopOrder.Reverse();
+                                alreadyReversed = true;
+                                inCorrectOrder = true;
+                                correctCount++;
+                            }
+                            else errorCount++;
+                        }
+                    }
+                    if (errorCount > correctCount) loop.Reverse();
+                    
+                    surfacePaths.Add(MiscFunctions.Get2DProjectionPoints(loop, normal).ToList());
                 }
+
+                //Ignore very small patches
+                var significantPaths = surfacePaths.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible(ts.SurfaceArea/10000)).ToList();
+
                 //Union at the surface level to correctly capture holes
-                allPaths.AddRange(PolygonOperations.Union(surfacePaths));
+                var surfaceUnion = PolygonOperations.Union(significantPaths);
+                if (loopCount == 0)
+                {
+                    solution = new List<List<Point>>(surfaceUnion);
+                }
+                else
+                {
+                    solution = PolygonOperations.Union(solution, surfaceUnion);
+                }
+                loopCount ++;
                 
             }
 
-            //Union all the paths
-            var solution = PolygonOperations.Union(allPaths);
+            //Remove tiny polygons.
+            var polygons = solution.Select(path => new Polygon(path)).ToList();
+
+            //Remove tiny polygons.
+            var count = 0;
+            for (var i = 0; i < polygons.Count; i++)
+            {
+                if (!polygons[i].Area.IsNegligible(ts.SurfaceArea / 10000)) continue;
+                solution.RemoveAt(i - count);
+                count++;
+            }
+
             return solution;
         }
     }
