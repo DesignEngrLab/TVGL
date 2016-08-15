@@ -133,10 +133,8 @@ namespace TVGL
                 seperateSurfaces.Add(surface);
             }
 
-            var solution = new List<List<Point>>();
             //Get the purface positive and negative loops
-            var positiveLoops = new List<List<Vertex>>();
-            var negativeLoops = new List<List<Vertex>>();
+            var allPaths = new List<List<Point>>();
             foreach (var surface in seperateSurfaces)
             {
                 //Get the surface inner and outer edges
@@ -161,6 +159,7 @@ namespace TVGL
 
 
                 //The inner edges may form 0 to many negative (CW) loops
+                var surfacePaths= new List<List<Point>>();
                 while (outerEdges.Any())
                 {
                     var isReversed = false;
@@ -173,6 +172,7 @@ namespace TVGL
                     var previousEdge = startEdge;
                     do
                     {
+                        if(!vertex.Edges.Any()) throw new Exception("error in model");
                         foreach (var edge2 in vertex.Edges.Where(edge2 => outerEdges.Contains(edge2)))
                         {
                             if (edge2.From == vertex)
@@ -213,25 +213,33 @@ namespace TVGL
                             }
                         }
                     } while (vertex != startVertex && outerEdges.Any());
-                    if(Math.Sign(dot) > 0) positiveLoops.Add(loop);
-                    else if (dot.IsNegligible())
+                    if (dot.IsNegligible())
                     {
                         continue; //Ignore this loop for now.
-                        throw new Exception("Failed to assign CCW positive ordering. Should not occur, unless poolygon is invalid.");
+                        throw new Exception(
+                            "Failed to assign CCW positive ordering. Should not occur, unless poolygon is invalid.");
                     }
-                    else negativeLoops.Add(loop);
+                    if (Math.Sign(dot) > 0)
+                    {
+                        surfacePaths.Add(
+                            PolygonOperations.CCWPositive(MiscFunctions.Get2DProjectionPoints(loop, normal)).ToList());
+                    } 
+                    else
+                    {
+                        surfacePaths.Add(
+                            PolygonOperations.CWNegative(MiscFunctions.Get2DProjectionPoints(loop, normal)).ToList());
+                    }
+                    
+                    
+
                 }
-                
+                //Union at the surface level to correctly capture holes
+                allPaths.AddRange(PolygonOperations.Union(surfacePaths));
                 
             }
-            //Project positive loops into paths and make them CCW positive.
-            var allPaths = positiveLoops.Select(positiveLoop => PolygonOperations.CCWPositive(MiscFunctions.Get2DProjectionPoints(positiveLoop, normal))).ToList();
-
-            //Project negative loops into paths and make them CW negative.
-            allPaths.AddRange(negativeLoops.Select(negativeLoop => PolygonOperations.CWNegative(MiscFunctions.Get2DProjectionPoints(negativeLoop, normal))).ToList());
 
             //Union all the paths
-            solution = PolygonOperations.Union(allPaths);
+            var solution = PolygonOperations.Union(allPaths);
             return solution;
         }
     }
