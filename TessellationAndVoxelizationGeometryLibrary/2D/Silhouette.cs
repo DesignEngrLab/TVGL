@@ -17,7 +17,7 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal)
+        public static List<List<Point>> Run2(TessellatedSolid ts, double[] normal)
         {
             //Get the negative faces
             var negativeFaces = new List<PolygonalFace>();
@@ -88,6 +88,151 @@ namespace TVGL
             #endregion
 
             return polygonList;
+        }
+
+        /// <summary>
+        /// Gets the silhouette of a solid along a given normal. 
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="normal"></param>
+        /// <returns></returns>
+        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal)
+        {
+            //Get the negative faces into a dictionary
+            var negativeFaceDict = new Dictionary<int, PolygonalFace>();
+            foreach (var face in ts.Faces)
+            {
+                var dot = normal.dotProduct(face.Normal);
+                if (Math.Sign(dot) < 0)
+                {
+                    negativeFaceDict.Add(face.IndexInList, face);
+                }
+            }
+
+            var unusedNegativeFaces = new Dictionary<int, PolygonalFace>(negativeFaceDict);
+            var seperateSurfaces = new List<HashSet<PolygonalFace>>();
+
+            while (unusedNegativeFaces.Any())
+            {
+                var surface = new HashSet<PolygonalFace>();
+                var stack = new Stack<PolygonalFace>(new[] { unusedNegativeFaces.ElementAt(0).Value });
+                while (stack.Any())
+                {
+                    var face = stack.Pop();
+                    if (surface.Contains(face)) continue;
+                    surface.Add(face);
+                    unusedNegativeFaces.Remove(face.IndexInList);
+                    //Only push adjacent faces that are also negative
+                    foreach (var adjacentFace in face.AdjacentFaces)
+                    {
+                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
+                        if (!negativeFaceDict.ContainsKey(adjacentFace.IndexInList)) continue; //Ignore if not negative
+                        stack.Push(adjacentFace);
+                    }
+                }
+                seperateSurfaces.Add(surface);
+            }
+
+            var solution = new List<List<Point>>();
+            //Get the purface positive and negative loops
+            var positiveLoops = new List<List<Vertex>>();
+            var negativeLoops = new List<List<Vertex>>();
+            foreach (var surface in seperateSurfaces)
+            {
+                //Get the surface inner and outer edges
+                var outerEdges = new HashSet<Edge>();
+                var innerEdges = new HashSet<Edge>();
+                foreach (var face in surface)
+                {
+                    if (face.Edges.Count != 3) throw new Exception();
+                    foreach (var edge in face.Edges)
+                    {
+                        //if (innerEdges.Contains(edge)) continue;
+                        if (!outerEdges.Contains(edge)) outerEdges.Add(edge);
+                        else if (outerEdges.Contains(edge))
+                        {
+                            innerEdges.Add(edge);
+                            outerEdges.Remove(edge);
+                        }
+                        else throw new Exception();
+                    }
+
+                }
+
+
+                //The inner edges may form 0 to many negative (CW) loops
+                while (outerEdges.Any())
+                {
+                    var isReversed = false;
+                    var startEdge = outerEdges.First();
+                    outerEdges.Remove(startEdge);
+                    var startVertex = startEdge.From;
+                    var vertex = startEdge.To;
+                    var loop = new List<Vertex> { vertex };
+                    var dot = 0.0;
+                    var previousEdge = startEdge;
+                    do
+                    {
+                        foreach (var edge2 in vertex.Edges.Where(edge2 => outerEdges.Contains(edge2)))
+                        {
+                            if (edge2.From == vertex)
+                            {
+                                outerEdges.Remove(edge2);
+                                vertex = edge2.To;
+                                loop.Add(vertex);
+                                //If the edge2.From vertex is the one that is shared, the previous edge comes first.
+                                dot += previousEdge.Vector.crossProduct(edge2.Vector).dotProduct(normal);
+                                break;
+                            }
+                            else if (edge2.To == vertex)
+                            {
+                                outerEdges.Remove(edge2);
+                                vertex = edge2.From;
+                                loop.Add(vertex);
+                                //If the edge2.To vertex is the one that is shared, edge2 comes first.
+                                dot += edge2.Vector.crossProduct(previousEdge.Vector).dotProduct(normal);
+                                previousEdge = edge2;
+                                break;
+                            }
+                            if (edge2 == vertex.Edges.Last() && !isReversed)
+                            {
+                                //Swap the vertices were interested in and
+                                //Reverse the loop
+                                var tempVertex = startVertex;
+                                startVertex = vertex;
+                                vertex = tempVertex;
+                                loop.Reverse();
+                                loop.Add(vertex);
+                                previousEdge = startEdge;
+                                isReversed = true;
+                            }
+                            else if (edge2 == vertex.Edges.Last() && isReversed)
+                            {
+                                //Artifically close the loop.
+                                vertex = startVertex;
+                            }
+                        }
+                    } while (vertex != startVertex && outerEdges.Any());
+                    if(Math.Sign(dot) > 0) positiveLoops.Add(loop);
+                    else if (dot.IsNegligible())
+                    {
+                        continue; //Ignore this loop for now.
+                        throw new Exception("Failed to assign CCW positive ordering. Should not occur, unless poolygon is invalid.");
+                    }
+                    else negativeLoops.Add(loop);
+                }
+                
+                
+            }
+            //Project positive loops into paths and make them CCW positive.
+            var allPaths = positiveLoops.Select(positiveLoop => PolygonOperations.CCWPositive(MiscFunctions.Get2DProjectionPoints(positiveLoop, normal))).ToList();
+
+            //Project negative loops into paths and make them CW negative.
+            allPaths.AddRange(negativeLoops.Select(negativeLoop => PolygonOperations.CWNegative(MiscFunctions.Get2DProjectionPoints(negativeLoop, normal))).ToList());
+
+            //Union all the paths
+            solution = PolygonOperations.Union(allPaths);
+            return solution;
         }
     }
 }
