@@ -120,8 +120,8 @@ namespace TVGL
         #endregion
 
         #region Internal Properties for Various Operations
-        internal bool InOut;
-        internal bool OtherInOut;
+        internal bool InsideSame;
+        internal bool InsideOther;
         internal bool InResult;
         internal bool PrevInResult;
         internal PolygonType PolygonType;

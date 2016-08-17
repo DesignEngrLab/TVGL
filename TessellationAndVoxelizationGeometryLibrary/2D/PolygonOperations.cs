@@ -565,10 +565,13 @@ namespace TVGL
         /// <returns></returns>
         public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
+            //ToDo: Simplify within new Union function
+           // subject = Union2(subject);
             var polygonSubject = subject.Select(path => new Polygon(path)).ToList();
             var polygonClip = new List<Polygon>();
             if (clip != null)
             {
+               // clip = Union2(clip);
                 polygonClip.AddRange(clip.Select(path => new Polygon(path)).ToList());
             }
             return BooleanOperation(polygonSubject, polygonClip, BooleanOperationType.Union);
@@ -610,92 +613,51 @@ namespace TVGL
 
             //Find intersections with vertical sweep line moving from left to right 
             //Subdividing the edges as we go.
-            var result = new List<Line>();
             var sweepLines = new SweepList();
             while (sortedPoints.Any())
             {
                 var point = sortedPoints.First();
                 sortedPoints.RemoveAt(0);
-                foreach (var line in point.Lines)
+                //right endpoint, remove all the lines that attach to the left of the point.
+                foreach (var line in point.Lines.Where(line => line.RightPoint == point))
                 {
-
-                    if (line.LeftPoint == point) //the point is the left endpoint
-                    {
-                        sweepLines.Insert(line);
-                        //SetInformation(point, sweepLines.Previous(line));
-                        Point intersectionPoint1, intersectionPoint2;
-                        CheckAndResolveIntersection(line, sweepLines.Next(line), ref sweepLines,
-                            ref currentLineSetIndex, out intersectionPoint1);
-                        CheckAndResolveIntersection(line, sweepLines.Previous(line), ref sweepLines,
-                            ref currentLineSetIndex, out intersectionPoint2);
-                        if (intersectionPoint1 != null)
-                        {
-                            sortedPoints.Add(intersectionPoint1);
-                            allPoints.Add(intersectionPoint1);
-                        }
-                        if (intersectionPoint2 != null)
-                        {
-                            sortedPoints.Add(intersectionPoint2);
-                            allPoints.Add(intersectionPoint2);
-                        }
-
-                        //If either produced an intersection point that was added to the list. Reorder the list.
-                        //ToDo: Insert into the correct position in list and get rid of this order by function.
-                        if (intersectionPoint1 != null || intersectionPoint2 != null)
-                        {
-                            var temp = sortedPoints.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
-                            sortedPoints = temp;
-                        }
-                    }
-                    else //the point is the right endpoint
-                    {
-                        var next = sweepLines.Next(line);
-                        var prev = sweepLines.Previous(line);
-                        sweepLines.Remove(line);
-                        Point intersectionPoint;
-                        CheckAndResolveIntersection(next, prev, ref sweepLines, ref currentLineSetIndex,
-                            out intersectionPoint);
-                        if (intersectionPoint != null)
-                        {
-                            sortedPoints.Add(intersectionPoint);
-                            allPoints.Add(intersectionPoint);
-                            var temp = sortedPoints.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
-                            sortedPoints = temp;
-                        }
-                    }
-                    //if (line.InResult)
-                    //{
-                    //    result.Add(line);
-                    //}
+                    var next = sweepLines.Next(line);
+                    var prev = sweepLines.Previous(line);
+                    sweepLines.Remove(line);
+                    CheckAndResolveIntersections(next, new List<Line> { prev },
+                        ref sweepLines, ref currentLineSetIndex, ref sortedPoints);
+                }
+                //left endpoint, add all the lines that attach to the right of the point.
+                foreach (var line in point.Lines.Where(line => line.LeftPoint == point))
+                {
+                    sweepLines.Insert(line, point);
+                    CheckAndResolveIntersections(line, new List<Line> { sweepLines.Next(line), sweepLines.Previous(line) }, 
+                        ref sweepLines, ref currentLineSetIndex, ref sortedPoints);
                 }
             }
 
             //Section 2.
             sortedPoints = allPoints.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
-            var PathID = 0;
             var solution = new Paths();
-            foreach (var point in sortedPoints)
+            foreach (var point in sortedPoints.Where(point => !point.Processed))
             {
-                if (!point.Processed)
+                bool isHole;
+                var newPath = GetPathFromStartingPoint(point, booleanOperationType, out isHole);
+                if (newPath != null)
                 {
-                    var newPath = GetPathFromStartingPoint(point, subject, clip, booleanOperationType);
-                    if (newPath != null)
-                    {
-                        solution.Add(newPath);
-                    }
+                    solution.Add(isHole ? CWNegative(newPath) : CCWPositive(newPath));
                 }
             }
-            //ToDo: Order CCW or CW 
-
             return solution;
         }
 
-        private static List<Point> GetPathFromStartingPoint(Point startPoint, IList<Polygon> subject, IList<Polygon> clip, BooleanOperationType booleanOperationType)
+        private static List<Point> GetPathFromStartingPoint(Point startPoint, BooleanOperationType booleanOperationType, out bool isHole)
         {
             //Start ordering in CCW order. "point" must be the left most, bottom startPoint. 
             //Therefore, CCW should choose the lower Y value of the two lines
             if (startPoint.Lines.Count != 2) throw new Exception("This point is not correct or its list of lines is faulty");
             var startLine = startPoint.Lines[0].RightPoint.Y < startPoint.Lines[1].RightPoint.Y ? startPoint.Lines[0] : startPoint.Lines[1];
+            isHole = startLine.InsideSame;
             startLine.Processed = true;
             var currentPoint = startLine.OtherPoint(startPoint);
             currentPoint.Processed = true;
@@ -727,10 +689,7 @@ namespace TVGL
                             var otherPoint = line.OtherPoint(currentPoint);
                             if (line.Processed) continue;
                             line.Processed = true;
-                            if (otherPoint.Lines.Count > 2) continue; //skip intersection point line
-                            var lineCenter = new Point(line.Center);
-                            if (PointIsInsideOther(line, lineCenter, subject, clip)) continue; //skip if point is inside other (not part of Union)
-                            //else
+                            if (line.InsideOther) continue; //only intereseted in outside lines for the union.
                             path.Add(otherPoint);
                             currentPoint = otherPoint;
                             if (alreadyAddedPoint) throw new Exception("can only add one point");
@@ -747,52 +706,122 @@ namespace TVGL
             return path;
         }
 
-        private static bool PointIsInsideOther(Line line, Point pointOfInterest, IList<Polygon> subject, IList<Polygon> clip)
+        #region Check and Resolve Intersection between two lines
+        private static void CheckAndResolveIntersections(Line line0, List<Line> possibleIntersectionLines, ref SweepList sweepLines, ref int currentLineSetIndex, ref List<Point> orderedPoints)
         {
-            var otherPaths = new List<List<Point>>();
-            if (line.PolygonType == PolygonType.Subject)
+            //The reason we do these together is that line0 could intersect both lines.
+            if (line0 == null || possibleIntersectionLines.Any()) return;
+
+            //First, get all the intersection points and determine if lines are collinear.
+            //If lines are collinear, the intersection point for that LineLineIntersection will return true, but possibileIntersectionLine will be null.
+            var intersectionsPoints = new List<Point>();
+            var isCollinear = new bool[possibleIntersectionLines.Count];
+            for (var i = 0; i < possibleIntersectionLines.Count ; i++)
             {
-                otherPaths.AddRange(clip.Select(polygon => new Path(polygon.Path)));
-            }
-            else
-            {
-                otherPaths.AddRange(subject.Select(polygon => new Path(polygon.Path)));
-            }
-            foreach (var path in otherPaths)
-            {
-                if (MiscFunctions.IsPointInsidePolygon(path, pointOfInterest, false))
+                var line = possibleIntersectionLines[i];
+                if (line0.ToPoint.Equals(line.ToPoint) || line0.FromPoint.Equals(line.ToPoint) ||
+                    line0.ToPoint.Equals(line.FromPoint) || line0.FromPoint.Equals(line.FromPoint))
                 {
-                    return true;
+                    isCollinear[i] = false;
+                    intersectionsPoints.Add(null);
+                }       
+                else
+                {
+                    Point intersectionPoint = null;
+                    if (MiscFunctions.LineLineIntersection(line0, line, out intersectionPoint, true) && intersectionPoint == null)
+                    {
+                        isCollinear[i] = true;
+                    }
+                    else isCollinear[i] = false;
+                    intersectionsPoints.Add(intersectionPoint);
                 }
             }
-            return false;
-        }
 
-        //private static void SetInformation(Point point, Line previous)
-        //{
-        //    throw new NotImplementedException();
-        //}
+            //If any of the lines are collinear, do them first, then romove them for the possibleIntersectionLines
+            if(isCollinear.Where(c => c).Count() > 1) throw new NotImplementedException("I have not considered this special case yet");
+            for(var i = 0; i < possibleIntersectionLines.Count; i++)
+            {
+                if (!isCollinear[i]) continue;
+                var intLine = possibleIntersectionLines[i];
+                //Else handle the special case of collinearity
+                //First order all the points in question
+                var collinearPoints = new List<Point>
+                {
+                    line0.FromPoint,
+                    line0.ToPoint,
+                    intLine.FromPoint,
+                    intLine.ToPoint
+                };
+                var collinearOrderedPoints = collinearPoints.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
+                var newLine1 = new Line(collinearOrderedPoints[0], collinearOrderedPoints[1], false);
+                var newLine2 = new Line(collinearOrderedPoints[1], collinearOrderedPoints[2], false);
+                var newLine3 = new Line(collinearOrderedPoints[2], collinearOrderedPoints[3], false );
+                if (newLine2.Length.IsNegligible())
+                {
+                    collinearOrderedPoints[1].Lines.Remove(newLine2);
+                    //Erase point 2
+                    collinearOrderedPoints[2].
+                }
+            }
 
-        #region Check and Resolve Intersection between two lines
-        private static void CheckAndResolveIntersection(Line line1, Line line2, ref SweepList sweepLines, ref int currentLineSetIndex, out Point intersectionPoint)
-        {
-            if (!MiscFunctions.LineLineIntersection(line1, line2, out intersectionPoint, true)) return;
+
+
             //It does itersect.
 
-            //Remove references to line1 and line2
-            line1.LeftPoint.Lines.Remove(line1);
-            line1.RightPoint.Lines.Remove(line1);
+            //Remove references to line0 and line2
+            line0.LeftPoint.Lines.Remove(line0);
+            line0.RightPoint.Lines.Remove(line0);
             line2.LeftPoint.Lines.Remove(line2);
             line2.RightPoint.Lines.Remove(line2);
 
-            //Subdivide the lines. Start with the two lines we will add to sweepLines. (left of intersection point)
-            var newLine1 = new Line(line1.LeftPoint, intersectionPoint)
+            if (intersectionPoint == null) //The lines intersect and are colinear.
             {
-                PolygonType = line1.PolygonType,
+                var pointsInQuestion = new List<Point> {line0.ToPoint, line0.FromPoint, line2.ToPoint, line2.FromPoint};
+                //var orderedPoints = pointsInQuestion.OrderBy(p => p.X).ThenBy(p => p.Y).ToArray();
+
+                //Check if they start on the same point. If yes, merge them together.
+                if (line0.LeftPoint.X.IsPracticallySame(line2.LeftPoint.X))
+                {
+                    throw new NotImplementedException();
+                }
+                var newLine5 = new Line(orderedPoints[0], orderedPoints[1])
+                {
+                    PolygonType = line0.PolygonType,
+                    IndexInList = currentLineSetIndex,
+                };
+                currentLineSetIndex++;
+                sweepLines.Replace(line0, newLine5);
+                sweepLines.Remove(line2);
+
+                //Check if they end on the same point. If yes, merge them together.
+                if (line0.RightPoint.X.IsPracticallySame(line2.RightPoint.X))
+                {
+                    throw new NotImplementedException();
+                }
+                var newLine6 = new Line(orderedPoints[1], orderedPoints[2])
+                {
+                    PolygonType = line0.PolygonType,
+                    IndexInList = currentLineSetIndex,
+                };
+                currentLineSetIndex++;
+                var newLine7 = new Line(orderedPoints[2], orderedPoints[3])
+                {
+                    PolygonType = line0.PolygonType,
+                    IndexInList = currentLineSetIndex,
+                };
+                currentLineSetIndex++;
+
+                return;
+            }
+
+            //Subdivide the lines. Start with the two lines we will add to sweepLines. (left of intersection point)
+            var newLine1 = new Line(line0.LeftPoint, intersectionPoint)
+            {
+                PolygonType = line0.PolygonType,
                 IndexInList = currentLineSetIndex,
             };
             currentLineSetIndex++;
-            sweepLines.Replace(line1, newLine1);
+            sweepLines.Replace(line0, newLine1);
 
             var newLine2 = new Line(line2.LeftPoint, intersectionPoint)
             {
@@ -803,9 +832,9 @@ namespace TVGL
             sweepLines.Replace(line2, newLine2);
 
             //Now do the other two lines. The point reference will call these lines once the intersection startPoint comes up in sortedPoints.
-            var newLine3 = new Line(intersectionPoint, line1.RightPoint)
+            var newLine3 = new Line(intersectionPoint, line0.RightPoint)
             {
-                PolygonType = line1.PolygonType,
+                PolygonType = line0.PolygonType,
                 IndexInList = currentLineSetIndex,
             };
             currentLineSetIndex++;
@@ -825,61 +854,68 @@ namespace TVGL
         {
             private Dictionary<int, int> _indexInSweepGivenLineIndex;
 
-            private List<Line> _lines;
+            private List<Line> Lines;
 
             public Line Next(Line line)
             {
                 var indexInLines = _indexInSweepGivenLineIndex[line.IndexInList];
-                return _lines[indexInLines + 1];
+                if (indexInLines == Lines.Count -1 ) return null;
+                return Lines[indexInLines + 1];
             }
 
             public Line Previous(Line line)
             {
                 var indexInLines = _indexInSweepGivenLineIndex[line.IndexInList];
-                return _lines[indexInLines - 1];
+                if (indexInLines == 0) return null;
+                return Lines[indexInLines - 1];
             }
 
             public void Remove(Line line)
             {
                 var indexInLines = _indexInSweepGivenLineIndex[line.IndexInList];
-                _lines.RemoveAt(indexInLines);
+                Lines.RemoveAt(indexInLines);
+                UpdateIndexDictionary();
+            }
 
-                //Recreate IndexInSweepGivenLineIndex
+            private void UpdateIndexDictionary()
+            {
                 _indexInSweepGivenLineIndex.Clear();
-                for (var i = 0; i < _lines.Count; i++)
+                for (var i = 0; i < Lines.Count; i++)
                 {
-                    _indexInSweepGivenLineIndex.Add(_lines[i].IndexInList, i);
+                    _indexInSweepGivenLineIndex.Add(Lines[i].IndexInList, i);
                 }
             }
 
-            public void Insert(Line line)
+            public void Insert(Line line, Point point)
             {
-                if (_lines == null)
+                var index = -1;
+                if (Lines == null)
                 {
-                    _lines = new List<Line> {line};
-                    _indexInSweepGivenLineIndex = new Dictionary<int, int> { {line.IndexInList, 0}};
+                    Lines = new List<Line> {line};
+                    index = 0;
+                    _indexInSweepGivenLineIndex = new Dictionary<int, int> { {line.IndexInList, index} };
                 }
                 else
                 {
                     var leftPoint = line.LeftPoint;
                     var lineY = leftPoint.Y;
                     var insertAtEnd = true;
-                    for (var i = 0; i < _lines.Count; i++)
+                    for (var i = 0; i < Lines.Count; i++)
                     {
-                        var otherLine = _lines[i];
+                        var otherLine = Lines[i];
                         if (otherLine.LeftPoint == leftPoint)
                         {
-                            if (line.OtherPoint(leftPoint).Y < otherLine.OtherPoint(otherLine.LeftPoint).Y)
+                            if (line.OtherPoint(leftPoint).Y > otherLine.OtherPoint(otherLine.LeftPoint).Y)
                             {
                                 //Insert after other line
-                                _lines.Insert(i + 1, line);
-                                _indexInSweepGivenLineIndex.Add(line.IndexInList, i+1);
+                                index = i + 1;
+                                Lines.Insert(i + 1, line);
                             }
                             else
                             {
                                 //Insert before other line
-                                _lines.Insert(i, line);
-                                _indexInSweepGivenLineIndex.Add(line.IndexInList, i);
+                                index = i;
+                                Lines.Insert(i, line);
                             }
                             //Finished
                             insertAtEnd = false;
@@ -888,33 +924,134 @@ namespace TVGL
                         else
                         {
                             var otherLineY = otherLine.YGivenX(leftPoint.X);
-                            if (lineY.IsPracticallySame(otherLineY)) throw new NotImplementedException();
-                            if (lineY < otherLineY)
+                            if (lineY.IsPracticallySame(otherLineY))
                             {
-                                //Insert before the other line
-                                _lines.Insert(i, line);
-                                _indexInSweepGivenLineIndex.Add(line.IndexInList, i);
+                                if (line.RightPoint.Y.IsPracticallySame(otherLine.RightPoint.Y))
+                                {
+                                    
+                                    //Insert according to lower X value
+                                    if(line.RightPoint.X.IsPracticallySame(otherLine.RightPoint.X)) throw new Exception("Lines are colinear and attached");
+                                    if (line.LeftPoint.X < otherLine.LeftPoint.X)
+                                    {
+                                        //Insert before the other line
+                                        index = i;
+                                        Lines.Insert(i, line);
+                                    }
+                                    else
+                                    {
+                                        //Insert after the other line
+                                        index = i + 1;
+                                        Lines.Insert(i + 1, line);
+                                    }
+                                }
+                                else if (line.RightPoint.Y < otherLine.RightPoint.Y)
+                                {
+                                    //Insert before the other line
+                                    index = i;
+                                    Lines.Insert(i, line);
+                                }
+                                else
+                                {
+                                    //Insert after the other line
+                                    index = i+1;
+                                    Lines.Insert(i+1, line);
+                                }
                                 //Finished
                                 insertAtEnd = false;
                                 break;
                             }
+
+                            if (!(lineY < otherLineY)) continue;
+                            //Insert before the other line
+                            index = i;
+                            Lines.Insert(i, line);
+                            //Finished
+                            insertAtEnd = false;
+                            break;
                         }
                     }
                     if (insertAtEnd)
                     {
-                        _lines.Add(line);
-                        _indexInSweepGivenLineIndex.Add(line.IndexInList, _lines.Count-1);
+                        Lines.Add(line);
+                        index = Lines.Count - 1;
                     }
+                    UpdateIndexDictionary();
+                }
+                if (index == -1) throw new Exception("error in implementation");
+
+                //Set information
+                var linesAboveFromOther = 0;
+                var linesBelowFromOther = 0;
+                var linesAboveFromSame = 0;
+                var linesBelowFromSame = 0;
+                for (var i = 0; i < Lines.Count; i++)
+                {
+                    var line2 = Lines[i];
+                    if (line2.ToPoint == point || line2.FromPoint == point)
+                        continue;
+                    //Nope. this next statement will cause an error if a hole lines up with a point on the lines above or below
+                    //if (line2.ToPoint.X.IsPracticallySame(point.X) ||
+                    //    line2.FromPoint.X.IsPracticallySame(point.X)) continue;
+                    //else
+                    var polyType = line.PolygonType;
+                    if (i < index)
+                    {
+                        if (line2.PolygonType == polyType)
+                        {
+                            linesBelowFromSame++;
+                        }
+                        else
+                        {
+                            linesBelowFromOther++;
+                        }
+                    }
+                    else //i > index (i = index results in the same point)
+                    {
+                        if (line2.PolygonType == polyType)
+                        {
+                            linesAboveFromSame++;
+                        }
+                        else
+                        {
+                            linesAboveFromOther++;
+                        }
+                    }
+                }
+                //Check if even or odd
+                if (linesBelowFromSame % 2 == 0 && linesAboveFromSame % 2 == 0) //both even
+                {
+                    line.InsideSame = false;
+                }
+                else if (linesBelowFromSame % 2 != 0 && linesAboveFromSame % 2 != 0) //both odd
+                {
+                    line.InsideSame = true;
+                }
+                //Note: we will only ever use the startline Inside booleans, so it doesn't matter if we have some cases that fail
+                //else throw new Exception("Inconsistent Reading. Fix code. May need to add more detail.");
+                if (linesBelowFromOther % 2 == 0 && linesAboveFromOther % 2 == 0)
+                {
+                    line.InsideOther = false;
+                }
+                if (linesBelowFromOther % 2 != 0 && linesAboveFromOther % 2 != 0)
+                {
+                    line.InsideOther = true;
                 }
             }
 
             public void Replace(Line line, Line newLine)
             {
                 var indexInLines = _indexInSweepGivenLineIndex[line.IndexInList];
-                _lines.RemoveAt(indexInLines);
-                _lines.Add(newLine);
+                Lines.RemoveAt(indexInLines);
+                Lines.Add(newLine);
+                newLine.InsideOther = line.InsideOther;
+                newLine.InsideSame = line.InsideSame;
                 _indexInSweepGivenLineIndex.Remove(line.IndexInList);
                 _indexInSweepGivenLineIndex.Add(newLine.IndexInList, indexInLines);
+            }
+
+            public int IndexOf(Line line)
+            {
+                return _indexInSweepGivenLineIndex[line.IndexInList];
             }
         }
         #endregion

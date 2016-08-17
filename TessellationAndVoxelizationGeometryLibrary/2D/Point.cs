@@ -229,7 +229,7 @@ namespace TVGL
         {
             if (!(obj is Point)) return false;
             var a = (Point)obj;
-            return (a == this);
+            return ReferenceEquals(a, this);
         }
 
         /// <summary>
