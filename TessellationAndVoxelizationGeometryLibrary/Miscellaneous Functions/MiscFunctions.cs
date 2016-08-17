@@ -769,6 +769,71 @@ namespace TVGL
         #endregion
 
         #region Intersection Method (between lines, planes, solids, etc.)
+        /// <summary>
+        /// Detemines if Two Lines intersect. Outputs intersection point if they do.
+        /// If two lines are colinear, they are not considered intersecting.
+        /// </summary>
+        /// <param name="line1"></param>
+        /// <param name="line2"></param>
+        /// <param name="intersectionPoint"></param>
+        /// <param name="considerCollinearOverlapAsIntersect"></param>
+        /// <source>
+        /// http://www.codeproject.com/Tips/862988/Find-the-Intersection-Point-of-Two-Line-Segments
+        /// </source>
+        /// <returns></returns>
+        public static bool LineLineIntersection(Line line1, Line line2, out Point intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
+        {
+            var p = line1.FromPoint.Position2D;
+            var p2 = line1.ToPoint.Position2D;
+            var q = line2.FromPoint.Position2D;
+            var q2 = line2.ToPoint.Position2D;
+            intersectionPoint = null;
+            var r = p2.subtract(p);
+            var s = q2.subtract(q);
+            var rxs = r[0] * s[1] - r[1] * s[0]; //2D cross product
+            var qp = q.subtract(p);
+            var qpxr = qp[0] * r[1] - qp[1] * r[0];//2D cross product
+
+            // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
+            if (rxs.IsNegligible() && qpxr.IsNegligible())
+            {
+                // 1. If either  0 <= (q - p) * r <= r * r or 0 <= (p - q) * s <= * s
+                // then the two lines are overlapping,
+                // 2. If neither 0 <= (q - p) * r = r * r nor 0 <= (p - q) * s <= s * s
+                // then the two lines are collinear but disjoint.
+                if (!considerCollinearOverlapAsIntersect) return false;
+                var qpr = qp[0] * r[0] + qp[1] * r[1];
+                var pqs = p.subtract(q)[0] * s[0] + p.subtract(q)[1] * s[1];
+                return (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) || (0 <= pqs && pqs <= s[0] * s[0] + s[1] + s[1]);
+            }
+
+            // 3. If r x s = 0 and (q - p) x r != 0, then the two lines are parallel and non-intersecting.
+            if (rxs.IsNegligible() && !qpxr.IsNegligible()) return false;
+
+            // t = (q - p) x s / (r x s)
+            //Note, the output of this will be t = [0,0,#] since this is a 2D cross product.
+            var t = q.subtract(p).crossProduct(s).divide(rxs);
+
+            // u = (q - p) x r / (r x s)
+            //Note, the output of this will be u = [0,0,#] since this is a 2D cross product.
+            var u = q.subtract(p).crossProduct(r).divide(rxs);
+
+            // 4. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
+            // the two line segments meet at the point p + t r = q + u s.
+            if (!rxs.IsNegligible() && (0 <= t[2] && t[2] <= 1) && (0 <= u[2] && u[2] <= 1))
+            {
+                // We can calculate the intersection point using either t or u.
+                var x = p[0] + t[0] * r[0];
+                var y = p[1] + t[1] * r[1];
+                intersectionPoint = new Point(x, y);
+
+                // An intersection was found.
+                return true;
+            }
+
+            // 5. Otherwise, the two line segments are not parallel but do not intersect.
+            return false;
+        }
 
         /// <summary>
         ///     Find the point common to three planes.
@@ -940,49 +1005,6 @@ namespace TVGL
             return DistancePointToPoint(interSect1, interSect2);
         }
 
-        /// <summary>
-        ///     Arcs the arc intersection.
-        /// </summary>
-        /// <param name="arc1Vectors">The arc1 vectors.</param>
-        /// <param name="arc2Vectors">The arc2 vectors.</param>
-        /// <param name="intercepts">The intercepts.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool ArcArcIntersection(double[][] arc1Vectors, double[][] arc2Vectors,
-            out List<double[]> intercepts)
-        {
-            intercepts = new List<double[]>();
-            const double tolerance = 0.0001;
-            //Create two planes given arc1 and arc2
-            var norm1 = arc1Vectors[0].crossProduct(arc1Vectors[1]).normalize(); //unit normal
-            var norm2 = arc2Vectors[0].crossProduct(arc2Vectors[1]).normalize(); //unit normal
-
-            //Check whether the planes are the same. 
-            if (Math.Abs(norm1[0] - norm2[0]) < tolerance && Math.Abs(norm1[1] - norm2[1]) < tolerance
-                && Math.Abs(norm1[2] - norm2[2]) < tolerance) return true; //All points intersect
-            if (Math.Abs(norm1[0] + norm2[0]) < tolerance && Math.Abs(norm1[1] + norm2[1]) < tolerance
-                && Math.Abs(norm1[2] + norm2[2]) < tolerance) return true; //All points intersect
-            //ToDo: determine what to do with the above cases
-
-            var position1 = norm1.crossProduct(norm2).normalize();
-            var position2 = new[] { -position1[0], -position1[1], -position1[2] };
-            var vertices = new[] { position1, position2 };
-            //Check to see if the intersections are on the arcs
-            for (var i = 0; i < 2; i++)
-            {
-                var l1 = Math.Acos(arc1Vectors[0].dotProduct(arc1Vectors[1]));
-                var l2 = Math.Acos(arc1Vectors[0].dotProduct(vertices[i]));
-                var l3 = Math.Acos(arc1Vectors[1].dotProduct(vertices[i]));
-                var total1 = l1 - l2 - l3;
-                l1 = Math.Acos(arc2Vectors[0].dotProduct(arc2Vectors[1]));
-                l2 = Math.Acos(arc2Vectors[0].dotProduct(vertices[i]));
-                l3 = Math.Acos(arc2Vectors[1].dotProduct(vertices[i]));
-                var total2 = l1 - l2 - l3;
-                if (!total1.IsNegligible() || !total2.IsNegligible()) continue;
-                intercepts.Add(vertices[i]);
-                return true;
-            }
-            return false;
-        }
 
         /// <summary>
         ///     Returns lists of vertices that are inside vs. outside of each solid.

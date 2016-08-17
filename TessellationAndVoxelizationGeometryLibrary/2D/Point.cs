@@ -104,6 +104,9 @@ namespace TVGL
                 Z = 0.0;
             }
         }
+
+        
+
         #endregion
 
         #region Constructor
@@ -244,5 +247,7 @@ namespace TVGL
             }
         }
         #endregion
+
+        internal bool Processed { get; set; }
     }
 }

@@ -671,16 +671,22 @@ namespace TVGL.Clipper
 
             MEdges.Add(edges);
             ClipperEdge eMin = null;
-
+            ClipperEdge previousEdge = null;
+            var stallCounter = 0;
             //workaround to avoid an endless loop in the while loop below when
             //open paths have matching start and end points ...
             if (edge.Prev.Bot == edge.Prev.Top) edge = edge.Next;
 
             for (;;)
             {
+                //ToDo: There is a memory leak in this function.
                 edge = FindNextLocMin(edge);
                 if (edge == eMin) break;
                 if (eMin == null) eMin = edge;
+                if (edge == previousEdge) stallCounter++;
+                if(stallCounter > 10) throw new Exception("Caught in infinite loop.");
+                previousEdge = edge;
+                
 
                 //E and E.Prev now share a local minima (left aligned if horizontal).
                 //Compare their slopes to find which starts which bound ...
@@ -762,6 +768,7 @@ namespace TVGL.Clipper
             var deltaX = (e.Top.X - e.Bot.X);
             var deltaY = (e.Top.Y - e.Bot.Y);
             e.Delta = new Point(deltaX, deltaY);
+            //ToDo: The value used in this IsNegligible is critical. Better to handle as Horizontal than be very close to horizontal.
             if (e.Delta.Y.IsNegligible()) e.Dx = Horizontal;
             else e.Dx = (e.Delta.X) / (e.Delta.Y);
         }

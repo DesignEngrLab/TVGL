@@ -7,6 +7,12 @@ using StarMathLib;
 
 namespace TVGL
 {
+    internal enum PolygonType
+    {
+        Subject,
+        Clip
+    };
+
     /// <summary>
     /// A list of 2D points
     /// </summary>
@@ -360,7 +366,7 @@ namespace TVGL
                             if (line1.FromPoint == line2.FromPoint || line1.ToPoint == line2.FromPoint ||
                                 line1.FromPoint == line2.ToPoint || line1.ToPoint == line2.ToPoint) continue;
                             Point intersectionPoint;
-                            var linesIntersect = LineLineIntersection(line1, line2, out intersectionPoint);
+                            var linesIntersect = MiscFunctions.LineLineIntersection(line1, line2, out intersectionPoint);
                             if (linesIntersect) intersectionPoints.Add(index, intersectionPoint);
                         }
                     }
@@ -379,71 +385,7 @@ namespace TVGL
             return line1.IndexInList * Path.Count + line2.IndexInList;
         }
 
-        /// <summary>
-        /// Detemines if Two Lines intersect. Outputs intersection point if they do.
-        /// If two lines are colinear, they are not considered intersecting.
-        /// </summary>
-        /// <param name="line1"></param>
-        /// <param name="line2"></param>
-        /// <param name="intersectionPoint"></param>
-        /// <param name="considerCollinearOverlapAsIntersect"></param>
-        /// <source>
-        /// http://www.codeproject.com/Tips/862988/Find-the-Intersection-Point-of-Two-Line-Segments
-        /// </source>
-        /// <returns></returns>
-        public bool LineLineIntersection(Line line1, Line line2, out Point intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
-        {
-            var p = line1.FromPoint.Position2D;
-            var p2 = line1.ToPoint.Position2D;
-            var q = line2.FromPoint.Position2D;
-            var q2 = line2.ToPoint.Position2D;
-            intersectionPoint = null;
-            var r = p2.subtract(p);
-            var s = q2.subtract(q);
-            var rxs = r[0]*s[1]-r[1]*s[0]; //2D cross product
-            var qp = q.subtract(p);
-            var qpxr = qp[0]*r[1] - qp[1] * r[0];//2D cross product
-
-            // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
-            if (rxs.IsNegligible() && qpxr.IsNegligible())
-            {
-                // 1. If either  0 <= (q - p) * r <= r * r or 0 <= (p - q) * s <= * s
-                // then the two lines are overlapping,
-                // 2. If neither 0 <= (q - p) * r = r * r nor 0 <= (p - q) * s <= s * s
-                // then the two lines are collinear but disjoint.
-                if (!considerCollinearOverlapAsIntersect) return false;
-                var qpr = qp[0]*r[0] + qp[1]*r[1];
-                var pqs = p.subtract(q)[0] * s[0] + p.subtract(q)[1] * s[1];
-                return (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) || (0 <= pqs && pqs <= s[0] * s[0] + s[1] + s[1]);
-            }
-
-            // 3. If r x s = 0 and (q - p) x r != 0, then the two lines are parallel and non-intersecting.
-            if (rxs.IsNegligible() && !qpxr.IsNegligible()) return false;
-
-            // t = (q - p) x s / (r x s)
-            //Note, the output of this will be t = [0,0,#] since this is a 2D cross product.
-            var t = q.subtract(p).crossProduct(s).divide(rxs);
-
-            // u = (q - p) x r / (r x s)
-            //Note, the output of this will be u = [0,0,#] since this is a 2D cross product.
-            var u = q.subtract(p).crossProduct(r).divide(rxs);
-
-            // 4. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
-            // the two line segments meet at the point p + t r = q + u s.
-            if (!rxs.IsNegligible() && (0 <= t[2] && t[2] <= 1) && (0 <= u[2] && u[2] <= 1))
-            {
-                // We can calculate the intersection point using either t or u.
-                var x = p[0] + t[0] * r[0];
-                var y = p[1] + t[1] * r[1];
-                intersectionPoint = new Point(x, y);
-
-                // An intersection was found.
-                return true;
-            }
-
-            // 5. Otherwise, the two line segments are not parallel but do not intersect.
-            return false;
-        }
+        
     }
 }
 

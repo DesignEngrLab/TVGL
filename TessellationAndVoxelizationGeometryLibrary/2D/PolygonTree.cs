@@ -295,7 +295,7 @@ namespace TVGL
                 if (line.FromPoint == point || line.ToPoint == point) continue;
                 
                 //Find distance to line
-                var x = line.Xintercept(point.Y);
+                var x = line.XGivenY(point.Y);
                 var xdif = x - point.X;
                 if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
                 
@@ -350,7 +350,7 @@ namespace TVGL
                 //Check to make sure that the line does not contain the node
                 if (line.FromPoint == point || line.ToPoint == point) continue;
                 //Find distance to line
-                var x = line.Xintercept(point.Y);
+                var x = line.XGivenY(point.Y);
                 var xdif = x - point.X;
                 if (xdif.IsNegligible()) isOnLine = true; //If one a line, make true, but don't add to count
 
