@@ -88,17 +88,17 @@ namespace TVGL
         ///     Gets the Slope.
         /// </summary>
         /// <value>The Slope.</value>
-        public double Slope { get; }
+        public double Slope { get; private set; }
 
         /// <summary>
         /// Gets whether line is horizontal
         /// </summary>
-        public bool IsHorizontal { get; }
+        public bool IsHorizontal { get; private set; }
 
         /// <summary>
         /// Gets whether line is vertical
         /// </summary>
-        public bool IsVertical { get; }
+        public bool IsVertical { get; private set; }
 
         // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
         // ReSharper disable once InconsistentNaming
@@ -218,6 +218,74 @@ namespace TVGL
             return (y - Yintercept) / Slope;
         }
         #endregion
+
+        public void ReplaceFromPoint(Point newFromPoint, bool twoWayReference = true)
+        {
+            var oldFromPoint = FromPoint;
+            FromPoint = newFromPoint;
+            Length = MiscFunctions.DistancePointToPoint(FromPoint.Position2D, ToPoint.Position2D);
+            IsHorizontal = false;
+            IsVertical = false;
+
+            //Solve for slope and y intercept. 
+            if (ToPoint.X.IsPracticallySame(FromPoint.X)) //If vertical line, set slope = inf.
+            {
+                Slope = double.PositiveInfinity;
+                Yintercept = double.PositiveInfinity;
+                IsVertical = true;
+            }
+
+            else if (ToPoint.Y.IsPracticallySame(FromPoint.Y)) //If horizontal line, set slope = 0.
+            {
+                Slope = 0.0;
+                IsHorizontal = true;
+                Yintercept = ToPoint.Y;
+            }
+            else //Else y = mx + Yintercept
+            {
+                Slope = (ToPoint.Y - FromPoint.Y) / (ToPoint.X - FromPoint.X);
+                Yintercept = ToPoint.Y - Slope * ToPoint.X;
+            }
+
+            if (!twoWayReference) return;
+            FromPoint.Lines.Add(this);
+            //Already in ToPoint.Lines 
+            oldFromPoint.Lines.Remove(this);
+        }
+
+        public void ReplaceToPoint(Point newToPoint, bool twoWayReference = true)
+        {
+            var oldToPoint = ToPoint;
+            ToPoint = newToPoint;
+            Length = MiscFunctions.DistancePointToPoint(FromPoint.Position2D, ToPoint.Position2D);
+            IsHorizontal = false;
+            IsVertical = false;
+
+            //Solve for slope and y intercept. 
+            if (ToPoint.X.IsPracticallySame(FromPoint.X)) //If vertical line, set slope = inf.
+            {
+                Slope = double.PositiveInfinity;
+                Yintercept = double.PositiveInfinity;
+                IsVertical = true;
+            }
+
+            else if (ToPoint.Y.IsPracticallySame(FromPoint.Y)) //If horizontal line, set slope = 0.
+            {
+                Slope = 0.0;
+                IsHorizontal = true;
+                Yintercept = ToPoint.Y;
+            }
+            else //Else y = mx + Yintercept
+            {
+                Slope = (ToPoint.Y - FromPoint.Y) / (ToPoint.X - FromPoint.X);
+                Yintercept = ToPoint.Y - Slope * ToPoint.X;
+            }
+
+            if (!twoWayReference) return;
+            FromPoint.Lines.Add(this);
+            //Already in ToPoint.Lines 
+            oldToPoint.Lines.Remove(this);
+        }
     }
 }
 
