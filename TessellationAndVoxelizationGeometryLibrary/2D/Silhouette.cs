@@ -318,7 +318,7 @@ namespace TVGL
                     }
                     if (errorCount > correctCount) loop.Reverse();
                     
-                    surfacePaths.Add(MiscFunctions.Get2DProjectionPoints(loop, normal).ToList());
+                    surfacePaths.Add(MiscFunctions.Get2DProjectionPoints(loop, normal, false).ToList());
                 }
 
                 //Ignore very small patches

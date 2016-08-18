@@ -115,6 +115,7 @@ namespace TVGL
             for (var i =0; i < Path.Count; i++)
             {
                 Path[i].IndexInPath = i;
+                Path[i].Lines = new List<Line>();
             }
             Index = index;
             IsOpen = isOpen;

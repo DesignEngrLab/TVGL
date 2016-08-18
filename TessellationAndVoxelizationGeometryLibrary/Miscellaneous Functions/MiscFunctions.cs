@@ -823,8 +823,8 @@ namespace TVGL
             if (!rxs.IsNegligible() && (0 <= t[2] && t[2] <= 1) && (0 <= u[2] && u[2] <= 1))
             {
                 // We can calculate the intersection point using either t or u.
-                var x = p[0] + t[0] * r[0];
-                var y = p[1] + t[1] * r[1];
+                var x = p[0] + t[2] * r[0];
+                var y = p[1] + t[2] * r[1];
                 intersectionPoint = new Point(x, y);
 
                 // An intersection was found.
