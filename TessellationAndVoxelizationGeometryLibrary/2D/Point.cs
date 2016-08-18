@@ -249,5 +249,6 @@ namespace TVGL
         #endregion
 
         internal bool Processed { get; set; }
+        internal bool Ignore { get; set; }
     }
 }
