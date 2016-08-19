@@ -657,59 +657,7 @@ namespace TVGL
         #region Get Paths
         private static List<Point> GetPathFromStartingPoint(Point startPoint, BooleanOperationType booleanOperationType, out bool isHole)
         {
-            //Start ordering in CCW order. "point" must be the left most, bottom startPoint. 
-            //Therefore, CCW should choose the lower Y value of the two lines
-            if (startPoint.Lines.Count != 2) throw new Exception("This point is not correct or its list of lines is faulty");
-            var startLine = startPoint.Lines[0].RightPoint.Y < startPoint.Lines[1].RightPoint.Y ? startPoint.Lines[0] : startPoint.Lines[1];
-            isHole = startLine.InsideSame;
-            startLine.Processed = true;
-            var currentPoint = startLine.OtherPoint(startPoint);
-            currentPoint.Processed = true;
-            if (startLine.InsideOther) return null; //only intereseted in outside lines for the union.
-            var path = new List<Point> {currentPoint};
-            while (currentPoint != startPoint)
-            {
-                if (booleanOperationType == BooleanOperationType.Union)
-                {
-                    if (currentPoint.Lines.Count == 2) //not an intersection point
-                    {
-                        if (currentPoint.Lines[0].Processed)
-                        {
-                            path.Add(currentPoint.Lines[1].OtherPoint(currentPoint));
-                            currentPoint.Lines[1].Processed = true;
-                            currentPoint = path.Last();
-                        }
-                        else
-                        {
-                            path.Add(currentPoint.Lines[0].OtherPoint(currentPoint));
-                            currentPoint.Lines[0].Processed = true;
-                            currentPoint = path.Last();
-                        }
-                    }
-                    else
-                    {
-                        var alreadyAddedPoint = false;
-                        Point otherPoint = null;
-                        foreach (var line in currentPoint.Lines)
-                        {
-                            otherPoint = line.OtherPoint(currentPoint);
-                            if (line.Processed) continue;
-                            line.Processed = true;
-                            if (line.InsideOther) continue;  //only intereseted in outside lines for the union.
-                            path.Add(otherPoint);
-                            if (alreadyAddedPoint) throw new Exception("can only add one point");
-                            alreadyAddedPoint = true;
-                        }
-                        currentPoint = otherPoint;
-                        if (!alreadyAddedPoint || currentPoint == null)//No point was found. This path does not complete and is not used in the Union
-                        {
-                            return null;
-                        }
-                    }
-                }
-                currentPoint.Processed = true;
-            }
-            return path;
+            throw new NotImplementedException();
         }
         #endregion
 

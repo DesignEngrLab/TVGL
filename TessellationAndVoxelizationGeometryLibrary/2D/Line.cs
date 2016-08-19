@@ -119,15 +119,6 @@ namespace TVGL
         public double Length { get; private set; }
         #endregion
 
-        #region Internal Properties for Various Operations
-        internal bool InsideSame;
-        internal bool InsideOther;
-        internal bool InResult;
-        internal bool PrevInResult;
-        internal PolygonType PolygonType;
-        internal bool Processed { get; set; }
-        #endregion
-
         #region Public Methods        
         /// <summary>
         ///     Reverses this line.
@@ -138,25 +129,6 @@ namespace TVGL
             FromPoint= ToPoint;
             ToPoint= tempPoint;
         }
-
-        /// <summary>
-        /// Gets the left most point on the line. If a tie, it returns the one with a lower Y value.
-        /// </summary>
-        /// <exception cref="Exception"></exception>
-        public Point LeftPoint
-        {
-            get
-            {
-                if (!FromPoint.X.IsPracticallySame(ToPoint.X)) return FromPoint.X < ToPoint.X ? FromPoint : ToPoint;
-                if (FromPoint.Y.IsPracticallySame(ToPoint.Y)) throw new Exception("Should collapse this line");
-                return FromPoint.Y < ToPoint.Y ? FromPoint : ToPoint;
-            }
-        }
-
-        /// <summary>
-        /// Gets the righ most point on the line. If a tie, it returns the one with the higher value Y.
-        /// </summary>
-        public Point RightPoint => OtherPoint(LeftPoint);
 
         /// <summary>
         /// Gets the other point that makes up this line.
@@ -218,74 +190,6 @@ namespace TVGL
             return (y - Yintercept) / Slope;
         }
         #endregion
-
-        public void ReplaceFromPoint(Point newFromPoint, bool twoWayReference = true)
-        {
-            var oldFromPoint = FromPoint;
-            FromPoint = newFromPoint;
-            Length = MiscFunctions.DistancePointToPoint(FromPoint.Position2D, ToPoint.Position2D);
-            IsHorizontal = false;
-            IsVertical = false;
-
-            //Solve for slope and y intercept. 
-            if (ToPoint.X.IsPracticallySame(FromPoint.X)) //If vertical line, set slope = inf.
-            {
-                Slope = double.PositiveInfinity;
-                Yintercept = double.PositiveInfinity;
-                IsVertical = true;
-            }
-
-            else if (ToPoint.Y.IsPracticallySame(FromPoint.Y)) //If horizontal line, set slope = 0.
-            {
-                Slope = 0.0;
-                IsHorizontal = true;
-                Yintercept = ToPoint.Y;
-            }
-            else //Else y = mx + Yintercept
-            {
-                Slope = (ToPoint.Y - FromPoint.Y) / (ToPoint.X - FromPoint.X);
-                Yintercept = ToPoint.Y - Slope * ToPoint.X;
-            }
-
-            if (!twoWayReference) return;
-            FromPoint.Lines.Add(this);
-            //Already in ToPoint.Lines 
-            oldFromPoint.Lines.Remove(this);
-        }
-
-        public void ReplaceToPoint(Point newToPoint, bool twoWayReference = true)
-        {
-            var oldToPoint = ToPoint;
-            ToPoint = newToPoint;
-            Length = MiscFunctions.DistancePointToPoint(FromPoint.Position2D, ToPoint.Position2D);
-            IsHorizontal = false;
-            IsVertical = false;
-
-            //Solve for slope and y intercept. 
-            if (ToPoint.X.IsPracticallySame(FromPoint.X)) //If vertical line, set slope = inf.
-            {
-                Slope = double.PositiveInfinity;
-                Yintercept = double.PositiveInfinity;
-                IsVertical = true;
-            }
-
-            else if (ToPoint.Y.IsPracticallySame(FromPoint.Y)) //If horizontal line, set slope = 0.
-            {
-                Slope = 0.0;
-                IsHorizontal = true;
-                Yintercept = ToPoint.Y;
-            }
-            else //Else y = mx + Yintercept
-            {
-                Slope = (ToPoint.Y - FromPoint.Y) / (ToPoint.X - FromPoint.X);
-                Yintercept = ToPoint.Y - Slope * ToPoint.X;
-            }
-
-            if (!twoWayReference) return;
-            FromPoint.Lines.Add(this);
-            //Already in ToPoint.Lines 
-            oldToPoint.Lines.Remove(this);
-        }
     }
 }
 
