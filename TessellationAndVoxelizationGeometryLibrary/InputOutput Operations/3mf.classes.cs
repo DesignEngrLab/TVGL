@@ -384,7 +384,7 @@ namespace TVGL.IOFunctions.threemfclasses
     ///     Enum ST_ObjectType
     /// </summary>
 #if help
-    internal enum ST_ObjectType
+    internal enum ObjectType
 #else
     public enum ObjectType
 #endif
@@ -637,8 +637,13 @@ namespace TVGL.IOFunctions.threemfclasses
         /// <value>The defaults.</value>
         [XmlElement("Default")]
         public List<Default> Defaults { get; set; }
-    }
 
+        /// <summary>
+        /// The rels
+        /// </summary>
+        [XmlElement("Relationship")]
+        public Relationship[] rels;
+    }
 #if help
     internal class Default
 #else
@@ -665,21 +670,7 @@ namespace TVGL.IOFunctions.threemfclasses
     #endregion
 
     #region Relationships
-#if help
-    internal class Types
-#else
-    /// <summary>
-    /// Class Relationships.
-    /// </summary>
-    public class Relationships
-#endif
-    {
-        /// <summary>
-        /// The rels
-        /// </summary>
-        [XmlElement("Relationship")]
-        public Relationship[] rels;
-    }
+
 
 #if help
     internal class Relationship

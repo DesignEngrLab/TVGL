@@ -38,7 +38,7 @@ namespace TVGL.IOFunctions
         ///     Initializes a new instance of the <see cref="AMFFileData" /> class.
         /// </summary>
 #if help
-    internal public AMFFileData()
+    internal AMFFileData()
 #else
         public AMFFileData()
 #endif

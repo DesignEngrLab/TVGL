@@ -13,7 +13,7 @@
   </SpellChecker>
 <HelpConfigurations selected="HelpFile">
   <HelpConfiguration name="HelpFile">
-    <OutputPath>.\Help</OutputPath>
+    <OutputPath>..\GitHub WebSites\Help</OutputPath>
     <HelpFileName>TVGL</HelpFileName>
     <ImageFolderPath />
     <HtmlFormats>
@@ -37,7 +37,6 @@
     <FooterText />
     <SelectedProjects>
       <SelectedProject>TessellationAndVoxelizationGeometryLibraryUniversal</SelectedProject>
-      <SelectedProject>TVGL Helix Presenter</SelectedProject>
     </SelectedProjects>
   </HelpConfiguration>
 </HelpConfigurations>
