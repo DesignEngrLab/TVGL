@@ -593,56 +593,7 @@ namespace TVGL
             //3.Join the selected edges to form the contours of the result polygon and compute the child contours.
 
             #region Build Sweep PathID and Order Them Lexicographically
-            //Merge points that have the same position
             var unsortedSweepEvents = new List<SweepEvent>();
-            //var subjectPoints = new List<Point>();
-            //for (var k = 0; k < subject.Count; k++)
-            //{
-            //    var path = subject[k];
-            //    //Index all the points in the path
-            //    for (var i = 0; i < path.Count; i++)
-            //    {
-            //        path[i].IndexInPath = i;
-            //        path[i].PolygonIndex = k;
-            //    }
-            //}
-
-            //var n = path.Count;
-            //var path2 = path.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
-            //for(var i  = 0; i < path2.Count(); i++)
-            //{
-            //    var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-            //    var p1 = path2[i];
-            //    var p2 = path2[j];
-            //    if (p1.X.IsPracticallySame(p2.X) && p1.Y.IsPracticallySame(p2.Y) && !p1.Y.Equals(p2.Y))
-            //    {
-            //        //If they should be the same, but their reference class => point is not. Make them the same.
-            //        path[p2.IndexInPath] = p1;
-            //    }
-            //}
-            
-            //foreach (var path in clip)
-            //{
-            //    //Index all the points in the path
-            //    for (var i = 0; i < path.Count; i++)
-            //    {
-            //        path[i].IndexInPath = i;
-            //    }
-            //    var n = path.Count;
-            //    var path2 = path.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
-            //    for (var i = 0; i < path2.Count(); i++)
-            //    {
-            //        var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-            //        var p1 = path2[i];
-            //        var p2 = path2[j];
-            //        if (p1.X.IsPracticallySame(p2.X) && p1.Y.IsPracticallySame(p2.Y) && !p1.Y.Equals(p2.Y))
-            //        {
-            //            //If they should be the same, but their reference class => point is not. Make them the same.
-            //            path[p2.IndexInPath] = p1;
-            //        }
-            //    }
-            //}
-
             //Build the sweep events and order them lexicographically (Low X to High X, then Low Y to High Y).
             foreach (var path in subject)
             {
@@ -733,10 +684,13 @@ namespace TVGL
                 {
                     //Inserting the event into the sweepLines list
                     var index = sweepLines.Insert(sweepEvent);
+                    sweepEvent.IndexInList = index;
+                    var goBack1 = false; //goBack is used to processes line segments from some collinear intersections
+                    CheckAndResolveIntersection(sweepEvent, sweepLines.Next(index), ref sweepLines, ref orderedSweepEvents, out goBack1);
+                    var goBack2 = false;
+                    CheckAndResolveIntersection(sweepLines.Previous(index), sweepEvent, ref sweepLines, ref orderedSweepEvents, out goBack2);
+                    if (goBack1 || goBack2) continue;
 
-                    CheckAndResolveIntersection(sweepEvent, sweepLines.Next(index), ref sweepLines, ref orderedSweepEvents);
-                    CheckAndResolveIntersection(sweepLines.Previous(index), sweepEvent, ref sweepLines, ref orderedSweepEvents);
-                    
                     //Select the closest edge downward that belongs to the other polygon.
                     //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
                     SetInformation(sweepEvent, sweepLines.PreviousOther(index), booleanOperationType);                    
@@ -748,7 +702,8 @@ namespace TVGL
                     var next = sweepLines.Next(index);
                     var prev = sweepLines.Previous(index);
                     sweepLines.RemoveAt(index);
-                    CheckAndResolveIntersection(prev, next, ref sweepLines, ref orderedSweepEvents);
+                    var goBack = false;
+                    CheckAndResolveIntersection(prev, next, ref sweepLines, ref orderedSweepEvents, out goBack);
                 }
                 if (sweepEvent.InResult || sweepEvent.OtherEvent.InResult)
                 {
@@ -767,22 +722,32 @@ namespace TVGL
             }
             var solution = new Paths();
             var currentPathID = 0;
-            foreach (var se1 in result.Where(se1 => !se1.Processed))
+            try
             {
-                int parentID;
-                var depth = ComputeDepth(PreviousInResult(se1, result), out parentID);
-                var path = ComputePath(se1, currentPathID, depth, parentID, result);
-                if (depth %2 != 0) //Odd
+                foreach (var se1 in result.Where(se1 => !se1.Processed))
                 {
-                    path = CWNegative(path);
-                } 
-                solution.Add(path);
-                //if (parent != -1) //parent path ID
-                //{
-                //    solution[parent].AddChild(currentPathID);
-                //}
-                currentPathID ++;
+                    int parentID;
+                    var depth = ComputeDepth(PreviousInResult(se1, result), out parentID);
+                    var path = ComputePath(se1, currentPathID, depth, parentID, result);
+                    if (depth%2 != 0) //Odd
+                    {
+                        path = CWNegative(path);
+                    }
+                    solution.Add(path);
+                    //if (parent != -1) //parent path ID
+                    //{
+                    //    solution[parent].AddChild(currentPathID);
+                    //}
+                    currentPathID ++;
+                }
             }
+            catch
+            {
+                solution = new Paths(subject);
+                solution.AddRange(clip);
+                return solution;
+            }
+            
             return solution;
         }
         #endregion
@@ -806,15 +771,16 @@ namespace TVGL
 
             //If duplicate (overlapping) edges, the edge is included for Union and Intersection if they the same LeftToRight flag.
             //Different for other boolean operations
-            if (previous != null && sweepEvent.DuplicateEvent == previous && !previous.InResult)
+            if (previous != null && sweepEvent.DuplicateEvent == previous)
             {
                 if (booleanOperationType == BooleanOperationType.Union ||
                     booleanOperationType == BooleanOperationType.Intersection)
                 {
-                    if (previous.LeftToRight == sweepEvent.LeftToRight)
+                    if (!previous.InResult && previous.LeftToRight == sweepEvent.LeftToRight)
                     {
                         sweepEvent.InResult = true;
                     }
+                    else sweepEvent.InResult = false;
                 }
             }
 
@@ -921,24 +887,13 @@ namespace TVGL
         #endregion
 
         #region Check and Resolve Intersection between two lines
-        private static void CheckAndResolveIntersection(SweepEvent se1, SweepEvent se2, ref SweepList sweepLines, ref OrderedSweepEventList orderedSweepEvents )
+        private static void CheckAndResolveIntersection(SweepEvent se1, SweepEvent se2, ref SweepList sweepLines, ref OrderedSweepEventList orderedSweepEvents, out bool goBack )
         {
-
+            goBack = false;
             if (se1 == null || se2 == null) return;
+            if (se1.DuplicateEvent == se2) return;
 
             var newSweepEvents = new List<SweepEvent>();
-
-            ////SPECIAL CASE: Lines both share a point with different references => needs to be merged
-            //if (!se1.Point.Equals(se2.Point) && !se1.Point.Equals(se2.OtherEvent.Point) &&
-            //    !se1.OtherEvent.Point.Equals(se2.Point) && !se1.OtherEvent.Point.Equals(se2.OtherEvent.Point))
-            //{
-            //    if (se1.Point == se2.Point || se1.Point == se2.OtherEvent.Point ||
-            //        se1.OtherEvent.Point == se2.Point || se1.OtherEvent.Point == se2.OtherEvent.Point)
-            //    {
-            //        throw new NotImplementedException();
-            //    }
-            //}
-
 
             Point intersectionPoint;
             if (MiscFunctions.LineLineIntersection(new Line(se1.Point, se1.OtherEvent.Point),
@@ -950,7 +905,7 @@ namespace TVGL
                 {
                     if (se1.OtherEvent.Point.X.IsPracticallySame(se2.OtherEvent.Point.X))
                     {
-                        if (se1.PolygonType == se2.PolygonType) throw new NotImplementedException();
+                        //if (se1.PolygonType == se2.PolygonType) throw new NotImplementedException();
                         //Else set duplicates
                     }
                     else if (se1.OtherEvent.Point.X < se2.OtherEvent.Point.X)
@@ -972,11 +927,6 @@ namespace TVGL
                     se2.OtherEvent.DuplicateEvent = se1.OtherEvent;
                 }
 
-                else if (se1.Point == se2.Point)
-                {
-                    throw new NotImplementedException("Not equal reference, points should have been merged.");
-                }
-
                 else
                 {
                     //Reorder if necessary (reduces the amount of code)
@@ -987,10 +937,30 @@ namespace TVGL
                         se1 = temp;
                     }
 
-                    if (se1.OtherEvent.Point.X.IsPracticallySame(se2.OtherEvent.Point.X)) throw new NotImplementedException();
-                    if (se1.OtherEvent.Point.X < se2.OtherEvent.Point.X)
+                    if (se1.OtherEvent.Point == se2.OtherEvent.Point)
+                    {
+                        //Order goes, (1) se1.Point, (2) se2.Point, (3) se1.OtherEvent.Point == se2.OtherEvent.Point
+                        goBack = true;
+                        sweepLines.RemoveAt(se2.IndexInList);
+                        orderedSweepEvents.Insert(se2);
+
+                        //Segment se1
+                        var se1Other = se1.OtherEvent;
+                        newSweepEvents.AddRange(Segment(se1, se2.Point));
+
+                        //Set DuplicateEvents
+                        se2.DuplicateEvent = newSweepEvents[1];
+                        newSweepEvents[1].DuplicateEvent = se2;
+                        se1Other.DuplicateEvent = se2.OtherEvent;
+                        se2.OtherEvent.DuplicateEvent = se1Other;
+                    }
+                    else if (se1.OtherEvent.Point.X.IsPracticallySame(se2.OtherEvent.Point.X)) throw new NotImplementedException();
+                    else if (se1.OtherEvent.Point.X < se2.OtherEvent.Point.X)
                     {
                         //Order goes, (1) se1.Point, (2) se2.Point, (3) se1.OtherEvent.Point, (4) se2.OtherEvent.Point
+                        goBack = true;
+                        sweepLines.RemoveAt(se2.IndexInList);
+                        orderedSweepEvents.Insert(se2);
 
                         //Segment se1
                         var se1Other = se1.OtherEvent;
@@ -1008,6 +978,9 @@ namespace TVGL
                     else
                     {
                         //Order goes, (1) se1.Point, (2) se2.Point, (3) se2.OtherEvent.Point, (4) se1.OtherEvent.Point
+                        goBack = true;
+                        sweepLines.RemoveAt(se2.IndexInList);
+                        orderedSweepEvents.Insert(se2);
 
                         //Segment se1
                         newSweepEvents.AddRange(Segment(se1, se2.Point));
@@ -1131,7 +1104,7 @@ namespace TVGL
             }
         }
 
-        private static List<SweepEvent> Segment(SweepEvent sweepEvent, Point point)
+        private static IEnumerable<SweepEvent> Segment(SweepEvent sweepEvent, Point point)
         {
             var sweepEventOther = sweepEvent.OtherEvent;
             //Split Sweep Event 1 (previousSweepEvent)
@@ -1156,13 +1129,17 @@ namespace TVGL
             public SweepEvent Next(int i)
             {
                 if (i == _sweepEvents.Count - 1) return null;
-                return _sweepEvents[i + 1];
+                var sweepEvent = _sweepEvents[i + 1];
+                sweepEvent.IndexInList = i + 1;
+                return sweepEvent;
             }
 
             public SweepEvent Previous(int i)
             {
                 if (i == 0) return null;
-                return _sweepEvents[i - 1];
+                var sweepEvent = _sweepEvents[i - 1];
+                sweepEvent.IndexInList = i - 1;
+                return sweepEvent;
             }
 
             public SweepEvent PreviousOther(int i)
@@ -1174,7 +1151,12 @@ namespace TVGL
                     var previous = _sweepEvents[i];
                     if (current.PolygonType == previous.PolygonType) continue;
                     if (current.Point.Y.IsPracticallySame(previous.Point.Y)) return previous; //The Y's are the same, so use the upper most sweepEvent (earliest in list) to determine if inside.
-                    if (current.Point.Y < previous.Point.Y) throw new Exception("Error in implemenation (sorting?). This should never happen.");
+                    if (current.Point.Y < previous.Point.Y && current.Point.Y < previous.OtherEvent.Point.Y)
+                    {
+                        //Note that it is possible for either the previous.Point or previous.OtherEvent.Point to be below the current point, as long as the previous point is to the left
+                        //of the current.Point and is sloped below or above the current point.
+                        throw new Exception("Error in implemenation (sorting?). This should never happen.");
+                    }   
                     return previous;
                 }
                 //No other polygon event was found. Return null (or duplicate event if it exists).
@@ -1269,6 +1251,7 @@ namespace TVGL
         //Only the sweep events for the left edge are ever added to the sweep list
         private class SweepEvent
         {
+            public int IndexInList { get; set; }
             public  Point Point { get; } //the point for this sweep event
             public bool Left { get; } //The left endpoint of the line
             public bool From { get; } //The point comes first in the path.
@@ -1324,8 +1307,7 @@ namespace TVGL
                         {
                             if (se1.OtherEvent.Point.Y.IsPracticallySame(se2.OtherEvent.Point.Y))
                             {
-                                if(se1.DuplicateEvent == se2) break; //ok to insert before 
-                                throw new NotImplementedException("Sweep Events need to be merged");
+                                 break; //ok to insert before (Will be marked as a duplicate event)
                             }
                             
                             if (se1.OtherEvent.Point.Y < se2.OtherEvent.Point.Y)
@@ -1423,6 +1405,4 @@ namespace TVGL
         }
         #endregion
     }
-
-   
 }
