@@ -579,6 +579,143 @@ namespace TVGL
             return BooleanOperation(subject2, clip2, BooleanOperationType.Union);
         }
 
+        /// <summary>
+        ///  Union. Joins paths that are touching into merged larger paths.
+        /// </summary>
+        /// <returns></returns>
+        public static List<List<Point>> SimplifyForSilhouette(List<Point> path)
+        {
+            //Simplify a path. Trivial if not self intersecting.
+            //1. Subdivide lines at intersection points.
+            //2. Remove edges that are inside the path. (If closest line below is LeftToRight, then it is inside. Otherwise it is outside)
+            //3. Create the new set of paths 
+            #region Build Sweep PathID and Order Them Lexicographically
+            var unsortedSweepEvents = new List<SweepEvent>();
+            //Build the sweep events and order them lexicographically (Low X to High X, then Low Y to High Y).
+            var n = path.Count;
+            for (var i = 0; i < n; i++)
+            {
+                var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                SweepEvent se1, se2;
+
+                if (path[i].X.IsPracticallySame(path[j].X))
+                {
+                    if (path[i].Y.IsPracticallySame(path[j].Y)) continue; //Ignore this 
+                    if (path[i].Y < path[j].Y)
+                    {
+                        se1 = new SweepEvent(path[i], true, true, PolygonType.Subject);
+                        se2 = new SweepEvent(path[j], false, false, PolygonType.Subject);
+                    }
+                    else
+                    {
+                        se1 = new SweepEvent(path[i], false, true, PolygonType.Subject);
+                        se2 = new SweepEvent(path[j], true, false, PolygonType.Subject);
+                    }
+                }
+                else if (path[i].X < path[j].X)
+                {
+                    se1 = new SweepEvent(path[i], true, true, PolygonType.Subject);
+                    se2 = new SweepEvent(path[j], false, false, PolygonType.Subject);
+                }
+                else
+                {
+                    se1 = new SweepEvent(path[i], false, true, PolygonType.Subject);
+                    se2 = new SweepEvent(path[j], true, false, PolygonType.Subject);
+                }
+                se1.OtherEvent = se2;
+                se2.OtherEvent = se1;
+                unsortedSweepEvents.Add(se1);
+                unsortedSweepEvents.Add(se2);
+            }
+            var orderedSweepEvents = new OrderedSweepEventList(unsortedSweepEvents);
+            #endregion
+
+            var result = new List<SweepEvent>();
+            var sweepLines = new SweepList();
+            while (orderedSweepEvents.Any())
+            {
+                var sweepEvent = orderedSweepEvents.First();
+                orderedSweepEvents.RemoveAt(0);
+                if (sweepEvent.Left) //left endpoint
+                {
+                    //Inserting the event into the sweepLines list
+                    var index = sweepLines.Insert(sweepEvent);
+                    sweepEvent.IndexInList = index;
+                    var goBack1 = false; //goBack is used to processes line segments from some collinear intersections
+                    CheckAndResolveSelfIntersection(sweepEvent, sweepLines.Next(index), ref sweepLines, ref orderedSweepEvents, out goBack1);
+                    var goBack2 = false;
+                    CheckAndResolveSelfIntersection(sweepLines.Previous(index), sweepEvent, ref sweepLines, ref orderedSweepEvents, out goBack2);
+                    if (goBack1 || goBack2) continue;
+
+                    //Select the closest edge downward that belongs to the other polygon.
+                    //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
+                    SetSimplifyInformation(sweepEvent, sweepLines.PreviousSame(index));
+                }
+                else //The sweep event corresponds to the right endpoint
+                {
+                    var index = sweepLines.Find(sweepEvent.OtherEvent);
+                    if (index == -1) throw new Exception("Other event not found in list. Error in implementation");
+                    var next = sweepLines.Next(index);
+                    var prev = sweepLines.Previous(index);
+                    sweepLines.RemoveAt(index);
+                    var goBack = false;
+                    CheckAndResolveSelfIntersection(prev, next, ref sweepLines, ref orderedSweepEvents, out goBack);
+                }
+                if (sweepEvent.InResult || sweepEvent.OtherEvent.InResult)
+                {
+                    if (sweepEvent.InResult && !sweepEvent.Left) throw new Exception("error in implementation");
+                    if (sweepEvent.OtherEvent.InResult && sweepEvent.Left) throw new Exception("error in implementation");
+                    if (sweepEvent.Point == sweepEvent.OtherEvent.Point) continue; //Ignore this negligible length line.
+                    result.Add(sweepEvent);
+                }
+            }
+
+            //Next stage. Find the paths
+            for (var i = 0; i < result.Count; i++)
+            {
+                result[i].PositionInResult = i;
+                result[i].Processed = false;
+            }
+            var solution = new Paths();
+            var currentPathID = 0;
+            try
+            {
+                foreach (var se1 in result.Where(se1 => !se1.Processed))
+                {
+                    int parentID;
+                    var depth = ComputeDepth(PreviousInResult(se1, result), out parentID);
+                    var newPath = ComputePath(se1, currentPathID, depth, parentID, result);
+                    if (depth % 2 != 0) //Odd
+                    {
+                        newPath = CWNegative(newPath);
+                    }
+                    solution.Add(newPath);
+                    //if (parent != -1) //parent path ID
+                    //{
+                    //    solution[parent].AddChild(currentPathID);
+                    //}
+                    currentPathID++;
+                }
+            }
+            catch
+            {
+                solution = new Paths{path};
+                return solution;
+            }
+
+            return solution;
+        }
+
+        private static void SetSimplifyInformation(SweepEvent sweepEvent, object previousSame)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static void CheckAndResolveSelfIntersection(SweepEvent sweepEvent, SweepEvent next, ref SweepList sweepLines, ref OrderedSweepEventList orderedSweepEvents, out bool goBack1)
+        {
+            throw new NotImplementedException();
+        }
+
         #region Top Level Boolean Operation Method
         /// <reference>
         /// This aglorithm is based on on the paper:
@@ -1162,6 +1299,28 @@ namespace TVGL
                 //No other polygon event was found. Return null (or duplicate event if it exists).
                 return current.DuplicateEvent;           
                 
+            }
+
+            public object PreviousSame(int i)
+            {
+                var current = _sweepEvents[i];
+                while (i > 0)
+                {
+                    i--; //Decrement
+                    var previous = _sweepEvents[i];
+                    if (current.PolygonType != previous.PolygonType) continue;
+                    if (current.Point.Y.IsPracticallySame(previous.Point.Y)) return previous; //The Y's are the same, so use the upper most sweepEvent (earliest in list) to determine if inside.
+                    if (current.Point.Y < previous.Point.Y && current.Point.Y < previous.OtherEvent.Point.Y)
+                    {
+                        //Note that it is possible for either the previous.Point or previous.OtherEvent.Point to be below the current point, as long as the previous point is to the left
+                        //of the current.Point and is sloped below or above the current point.
+                        throw new Exception("Error in implemenation (sorting?). This should never happen.");
+                    }
+                    return previous;
+                }
+                //No other polygon event was found. Return null (or duplicate event if it exists).
+                if(current.DuplicateEvent != null) throw new NotImplementedException();
+                return null;
             }
 
             public void RemoveAt(int i)
