@@ -696,6 +696,7 @@ namespace TVGL.Clipper
                     Y = edge.Bot.Y
                 };
                 bool leftBoundIsForward;
+
                 if (edge.Dx < edge.Prev.Dx)
                 {
                     locMin.LeftBound = edge.Prev;
@@ -771,6 +772,7 @@ namespace TVGL.Clipper
             //ToDo: The value used in this IsNegligible is critical. Better to handle as Horizontal than be very close to horizontal.
             if (e.Delta.Y.IsNegligible()) e.Dx = Horizontal;
             else e.Dx = (e.Delta.X) / (e.Delta.Y);
+            if(double.IsNaN(e.Dx)) throw new Exception("Must be a number");
         }
         //---------------------------------------------------------------------------
 
@@ -2604,6 +2606,10 @@ namespace TVGL.Clipper
                 {
                     ipY = edge2.Bot.Y;
                 }
+                else if (edge2.Dx.IsNegligible()) //Vertical line
+                {
+                    ipY = edge1.Bot.Y;
+                }
                 else
                 {
                     b2 = edge2.Bot.Y - (edge2.Bot.X / edge2.Dx);
@@ -2617,6 +2623,10 @@ namespace TVGL.Clipper
                 {
                     ipY = edge1.Bot.Y;
                 }
+                else if (edge1.Dx.IsNegligible()) //Vertical line
+                {
+                    ipY = edge2.Bot.Y; 
+                }
                 else
                 {
                     b1 = edge1.Bot.Y - (edge1.Bot.X / edge1.Dx);
@@ -2627,6 +2637,7 @@ namespace TVGL.Clipper
             {
                 b1 = edge1.Bot.X - edge1.Bot.Y * edge1.Dx;
                 b2 = edge2.Bot.X - edge2.Bot.Y * edge2.Dx;
+                if((edge1.Dx - edge2.Dx).IsNegligible()) throw new NotImplementedException();
                 var q = (b2 - b1) / (edge1.Dx - edge2.Dx);
                 ipY = q;
                 ipX = Math.Abs(edge1.Dx) < Math.Abs(edge2.Dx) ? (edge1.Dx * q + b1) : (edge2.Dx * q + b2);
@@ -2644,7 +2655,8 @@ namespace TVGL.Clipper
                 //better to use the more vertical edge to derive X ...
                 ipX = TopX(Math.Abs(edge1.Dx) > Math.Abs(edge2.Dx) ? edge2 : edge1, ipY);
             }
-            ip = new Point(ipX, ipY);
+            if (double.IsNaN(ipX) || double.IsNaN(ipY)) throw new Exception("Must be a number");
+                ip = new Point(ipX, ipY);
         }
         //------------------------------------------------------------------------------
 
