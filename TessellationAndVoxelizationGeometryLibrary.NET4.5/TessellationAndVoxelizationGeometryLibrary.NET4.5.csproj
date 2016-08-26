@@ -42,6 +42,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper.cs">
       <Link>2D\Clipper.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\ClipperInt.cs">
+      <Link>2D\ClipperInt.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Line.cs">
       <Link>2D\Line.cs</Link>
     </Compile>

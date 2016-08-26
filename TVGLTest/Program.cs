@@ -39,8 +39,8 @@ namespace TVGL_Test
        // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
        // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
        // "../../../TestFiles/Rook.amf",
-        "../../../TestFiles/hdodec.off",
-        "../../../TestFiles/tref.off",
+        //"../../../TestFiles/hdodec.off",
+        //"../../../TestFiles/tref.off",
         "../../../TestFiles/mushroom.off",
         "../../../TestFiles/vertcube.off",
         "../../../TestFiles/trapezoid.4d.off",

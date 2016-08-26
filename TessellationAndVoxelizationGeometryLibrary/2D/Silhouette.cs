@@ -323,6 +323,7 @@ namespace TVGL
 
                 //Ignore very small patches
                 var significantPaths = surfacePaths.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible(ts.SurfaceArea/10000)).ToList();
+                if (!significantPaths.Any()) continue;
                 //var simplifiedPaths = new List<List<Point>>();
                 //foreach (var significantPath in significantPaths)
                 //{

@@ -258,6 +258,9 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
+            if (clip == null) return ClipperInt.PolygonOperations.Union(new Paths(subject), null);
+            else return ClipperInt.PolygonOperations.Union(new Paths(subject), new Paths(clip));
+
             const PolyFillType fillMethod = PolyFillType.Positive;
             var solution = new Paths();
 
@@ -344,6 +347,8 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static Paths UnionEvenOdd(IList<List<Point>> polygons)
         {
+            //return ClipperInt.PolygonOperations.UnionEvenOdd(polygons);
+
             const PolyFillType fillMethod = PolyFillType.EvenOdd;
             var solution = new Paths();
             var subject = new List<Path>(polygons);
