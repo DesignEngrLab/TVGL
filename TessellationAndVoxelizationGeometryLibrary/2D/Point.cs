@@ -139,6 +139,7 @@ namespace TVGL
         public Point(double x, double y)
             : this(null, x, y, 0.0)
         {
+            if(double.IsNaN(x) || double.IsNaN(y)) throw new Exception("Must be a number");
         }
 
         /// <summary>
@@ -246,6 +247,10 @@ namespace TVGL
                 return hashCode;
             }
         }
+
+        internal bool InResult;
+        internal bool InResultMultipleTimes;
+
         #endregion
     }
 }

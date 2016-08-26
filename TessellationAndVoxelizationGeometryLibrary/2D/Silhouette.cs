@@ -323,6 +323,11 @@ namespace TVGL
 
                 //Ignore very small patches
                 var significantPaths = surfacePaths.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible(ts.SurfaceArea/10000)).ToList();
+                //var simplifiedPaths = new List<List<Point>>();
+                //foreach (var significantPath in significantPaths)
+                //{
+                //    simplifiedPaths.AddRange(PolygonOperations.SimplifyForSilhouette(significantPath));
+                //}
 
                 //Union at the surface level to correctly capture holes
                 var surfaceUnion = PolygonOperations.Union(significantPaths);
