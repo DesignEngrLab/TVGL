@@ -14,7 +14,9 @@
 <HelpConfigurations selected="HelpFile">
   <HelpConfiguration name="HelpFile">
     <OutputPath>..\GitHub WebSites\Help</OutputPath>
+    <CleanupOutputPath>true</CleanupOutputPath>
     <HelpFileName>TVGL</HelpFileName>
+    <HelpFileNamingMethod>MemberName</HelpFileNamingMethod>
     <ImageFolderPath />
     <HtmlFormats>
       <HtmlHelp>false</HtmlHelp>
@@ -32,6 +34,11 @@
       <EnableTags>false</EnableTags>
       <TagList>help</TagList>
     </IncludeScopes>
+    <SyntaxLanguages>
+      <CSharp>true</CSharp>
+      <VisualBasic>true</VisualBasic>
+      <CPlusPlus>true</CPlusPlus>
+    </SyntaxLanguages>
     <ResolveCrefLinks>true</ResolveCrefLinks>
     <HeaderText />
     <FooterText />
@@ -40,4 +47,6 @@
     </SelectedProjects>
   </HelpConfiguration>
 </HelpConfigurations>
+<GeneralProperties>
+</GeneralProperties>
 </GhostDoc>

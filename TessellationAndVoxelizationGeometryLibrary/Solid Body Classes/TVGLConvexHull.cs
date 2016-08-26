@@ -18,7 +18,6 @@ using System.Diagnostics;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
-using TVGL.IOFunctions;
 
 namespace TVGL
 {
@@ -28,7 +27,7 @@ namespace TVGL
     public class TVGLConvexHull
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="TVGLConvexHull"/> class.
+        ///     Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
         /// </summary>
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
         public TVGLConvexHull(TessellatedSolid ts) : this(ts.Vertices, ts.Volume)
@@ -36,11 +35,13 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the convex hull, given a list of vertices
+        ///     Gets the convex hull, given a list of vertices
         /// </summary>
         /// <param name="allVertices">All vertices.</param>
-        /// <param name="solidVolume">The volume of the tessellated solid, if known. This represents
-        /// the lower bound on the convex hull, which is used in a check to finding the convex hull.</param>
+        /// <param name="solidVolume">
+        ///     The volume of the tessellated solid, if known. This represents
+        ///     the lower bound on the convex hull, which is used in a check to finding the convex hull.
+        /// </param>
         /// <exception cref="System.Exception">Error in implementation of ConvexHull3D or Volume Calculation</exception>
         public TVGLConvexHull(IList<Vertex> allVertices, double solidVolume = 0)
         {
@@ -50,10 +51,9 @@ namespace TVGL
             //Always do the config, since it was breaking about 50% of the time without.
             var config = new ConvexHullComputationConfig
             {
-                PointTranslationType = PointTranslationType.TranslateInternal,
-                PlaneDistanceTolerance = 1e-10,
-                PointTranslationGenerator =
-                    ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness)
+                PointTranslationType = PointTranslationType.None,
+                PlaneDistanceTolerance = 0,
+                PointTranslationGenerator = null
             };
 
             var convexHull = ConvexHull.Create(allVertices, config);
@@ -79,12 +79,12 @@ namespace TVGL
             if (solidVolume < 0.1)
             {
                 //This solid has a small volume. Relax the constraint.
-                Succeeded = Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume / 10);
+                Succeeded = Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume/10);
             }
             else
             {
                 //Use a loose tolerance based on the size of the solid, since accuracy is not terribly important
-                Succeeded = Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume / 1000);
+                Succeeded = Volume > solidVolume || Volume.IsPracticallySame(solidVolume, solidVolume/1000);
             }
 
 
@@ -97,7 +97,8 @@ namespace TVGL
             else if (Volume < solidVolume)
             {
                 var diff = solidVolume - Volume;
-                Debug.WriteLine("ConvexHullCreation failed to created a larger volume than the solid by " + diff + " [mm^3]. The Solid's volume was " + solidVolume + " [mm^3].");
+                Debug.WriteLine("ConvexHullCreation failed to created a larger volume than the solid by " + diff +
+                                " [mm^3]. The Solid's volume was " + solidVolume + " [mm^3].");
             }
             else
             {
@@ -122,8 +123,8 @@ namespace TVGL
                     var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
                     var toVertexIndex = vertexIndices[toVertex];
                     long checksum = fromVertexIndex < toVertexIndex
-                        ? fromVertexIndex + numVertices * toVertexIndex
-                        : toVertexIndex + numVertices * fromVertexIndex;
+                        ? fromVertexIndex + numVertices*toVertexIndex
+                        : toVertexIndex + numVertices*fromVertexIndex;
 
                     if (edgeDictionary.ContainsKey(checksum))
                     {
