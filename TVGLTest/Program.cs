@@ -99,7 +99,8 @@ namespace TVGL_Test
 
         public static void TestAdditiveVolumeEstimate(TessellatedSolid ts)
         {
-            var volume = AreaDecomposition.AdditiveVolume(ts, new[] {-1.0, 0.0, 0.0}, 0.1, 0.0);
+            List<List<List<Point>>> outputData;
+            var volume = AreaDecomposition.AdditiveVolume(ts, new[] {-1.0, 0.0, 0.0}, 0.1, 0.0, out outputData);
             //foreach (var output in data)
             //{
             //    Presenter.ShowAndHang(output);

@@ -246,9 +246,10 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="stepSize"></param>
         /// <param name="additiveAccuracy">The additive processes accuracy, used for a Polygon Offset. </param>
+        /// <param name="outputData"></param>
         /// <param name="minOffset"></param>
         /// <returns></returns>
-        public static double AdditiveVolume(TessellatedSolid ts, double[] direction, double stepSize, double additiveAccuracy, double minOffset = double.NaN)
+        public static double AdditiveVolume(TessellatedSolid ts, double[] direction, double stepSize, double additiveAccuracy, out List<List<List<Point>>> outputData, double minOffset = double.NaN)
         {
             //The idea here is to slice up the solid from top to bottom, along the direction given. 
             //The loop from a pervious iteration is merged with the new loop, to form a larger loop.
@@ -263,7 +264,7 @@ namespace TVGL
             //   This should be accurate since the lines betweens data points are linear
             
             #region Same Setup as Area Decomposition
-            var outputData = new List<List<List<Point>>>();
+            outputData = new List<List<List<Point>>>();
             if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
             if (stepSize <= minOffset * 2)
             {
@@ -313,12 +314,13 @@ namespace TVGL
                     //{
                     //    currentPaths.AddRange(shallowTree.AllPolygons.Select(polygon => new List<Point>(polygon.Path)));
                     //}
-                    currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
-
+                    //currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
+                    var offsetPaths = new List<List<Point>>();
                     //Offset if the additive accuracy is significant
                     if (!additiveAccuracy.IsNegligible())
                     {
-                        currentPaths = PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy);;
+                        currentPaths = PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy);
+                        offsetPaths = currentPaths;
                     }
 
                     //Union this new set of polygons with the previous set.
@@ -326,6 +328,7 @@ namespace TVGL
                     {
                         currentPaths.AddRange(previousPolygons);
                         currentPaths = PolygonOperations.Union(currentPaths);
+
                     }
 
                     //Get the area of this layer
@@ -335,7 +338,15 @@ namespace TVGL
                     if (!previousDistance.IsNegligible())
                     {
                         var deltaX = distance - previousDistance;
-                        if (deltaX < 0 || area < previousArea - ts.SameTolerance) throw new Exception("Error in your implementation. This should never occur");
+                        if (deltaX < 0 || area < previousArea*.99)
+                        {
+                            outputData.Clear();
+                            outputData.Add(offsetPaths);
+                            outputData.Add(previousPolygons);
+                            outputData.Add(currentPaths);
+                            return 0;
+                            throw new Exception("Error in your implementation. This should never occur");
+                        }
                         additiveVolume +=  deltaX * previousArea;
                         outputData.Add(currentPaths);
                     }
@@ -388,7 +399,7 @@ namespace TVGL
                         if (!previousDistance.IsNegligible())
                         {
                             var deltaX = distance - previousDistance;
-                            if (deltaX < 0 || area < previousArea - ts.SameTolerance) throw new Exception("Error in your implementation. This should never occur");
+                            if (deltaX < 0 || area < previousArea*.99) throw new Exception("Error in your implementation. This should never occur");
                             additiveVolume += deltaX * previousArea;
                             outputData.Add(currentPaths);
                         }
