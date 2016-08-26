@@ -375,9 +375,15 @@ namespace TVGL
             foreach (var v in Vertices)
                 v.DefineCurvature();
             TessellationError.CheckModelIntegrity(this);
-
-            //Create convex hull last. After the volume for the solid has found and errors corrected.
-            CreateConvexHull(Volume);
+            ConvexHull = new TVGLConvexHull(this);
+            foreach (var cvxHullPt in ConvexHull.Vertices)
+                cvxHullPt.PartOfConvexHull = true;
+            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
+            {
+                face.PartOfConvexHull = true;
+                foreach (var e in face.Edges)
+                    if (e != null) e.PartOfConvexHull = true;
+            }
         }
 
 
@@ -597,31 +603,6 @@ namespace TVGL
         }
 
         #endregion
-
-
-        #region Convex Hull
-
-        /// <summary>
-        ///     Creates the convex hull. 
-        /// </summary>
-        private void CreateConvexHull(double solidVolume)
-        {
-            if (solidVolume < 0)
-                Debug.WriteLine("Correct the face normals (currently inside-out) before calling this function");
-            //Take the absolute value of volume, incase the solid is inside out, which will be corrected later.
-            ConvexHull = new TVGLConvexHull(Vertices, solidVolume);
-            foreach (var cvxHullPt in ConvexHull.Vertices)
-                cvxHullPt.PartOfConvexHull = true;
-            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
-            {
-                face.PartOfConvexHull = true;
-                foreach (var e in face.Edges)
-                    if (e != null) e.PartOfConvexHull = true;
-            }
-        }
-
-        #endregion
-
 
         #region Add or Remove Items
 

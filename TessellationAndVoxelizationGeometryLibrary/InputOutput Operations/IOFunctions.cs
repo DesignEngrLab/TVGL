@@ -194,7 +194,7 @@ namespace TVGL.IOFunctions
         /// <param name="values">The values.</param>
         protected static void ParseLine(string line, out string id, out string values)
         {
-            line = line.Trim(' ');
+            line = line.Trim();
             var idx = line.IndexOf(' ');
             if (idx == -1)
             {
@@ -284,7 +284,7 @@ namespace TVGL.IOFunctions
                 line = reader.ReadLine();
                 if (reader.EndOfStream) break;
             } while (string.IsNullOrWhiteSpace(line));
-            return line.Trim(' ');
+            return line.Trim();
         }
 
         /// <summary>

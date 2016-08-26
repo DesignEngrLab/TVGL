@@ -375,6 +375,37 @@ namespace TVGL
             window.Close();
         }
 
+
+        public static void ShowWithConvexHull(TessellatedSolid ts)
+        {
+            var window = new Window3DPlot();
+            window.view1.Children.Add(MakeModelVisual3D(ts));
+            var positions =
+         ts.ConvexHull.Faces.SelectMany(
+             f => f.Vertices.Select(v => new Point3D(v.Position[0], v.Position[1], v.Position[2])));
+            var normals =
+                ts.ConvexHull.Faces.SelectMany(f => f.Vertices.Select(v => new Vector3D(f.Normal[0], f.Normal[1], f.Normal[2])));
+            window.view1.Children.Add(
+            new ModelVisual3D
+            {
+                Content =
+                    new GeometryModel3D
+                    {
+                        Geometry = new MeshGeometry3D
+                        {
+                            Positions = new Point3DCollection(positions),
+                            // TriangleIndices = new Int32Collection(triIndices),
+                            Normals = new Vector3DCollection(normals)
+                        },
+                        Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 189, G = 189, B = 189 })
+                    }
+            });
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            //window.Show();
+            window.ShowDialog();
+        }
+
+
         /// <summary>
         ///     Makes the model visual3 d.
         /// </summary>
