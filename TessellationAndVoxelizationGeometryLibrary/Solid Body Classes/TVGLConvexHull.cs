@@ -75,7 +75,7 @@ namespace TVGL
 
 
             if (Succeeded) return;
-            Presenter.ShowWithConvexHull(ts);
+            //Presenter.ShowWithConvexHull(ts);
             //Else, why did it not succeed?
             if (Volume < 0)
             {
