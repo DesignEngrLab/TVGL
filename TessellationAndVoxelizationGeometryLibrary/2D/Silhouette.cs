@@ -17,7 +17,7 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run2(TessellatedSolid ts, double[] normal)
+        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal)
         {
             //Get the negative faces
             var negativeFaces = new List<PolygonalFace>();
@@ -45,10 +45,11 @@ namespace TVGL
                 var negativeFace = negativeFaces[0];
                 negativeFaces.RemoveAt(0);
                 var nextPolygon = MiscFunctions.Get2DProjectionPoints(negativeFace.Vertices, normal, false).ToList();
-
+                var area = MiscFunctions.AreaOfPolygon(nextPolygon);
+                if (area.IsNegligible(0.0000001)) continue; //Higher tolerance because of the conversion to intPoints in the Union function
                 //Make this polygon positive CCW
-                nextPolygon = PolygonOperations.CCWPositive(nextPolygon);
-                polygonList = PolygonOperations.Union(new List<List<Point>>(polygonList) { nextPolygon});
+                if (area < 0) nextPolygon.Reverse();
+                polygonList = PolygonOperations.Union(polygonList, new List<List<Point>>{ nextPolygon});
             }   
             var polygons = polygonList.Select(path => new Polygon(path)).ToList();
 
@@ -96,7 +97,7 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal)
+        public static List<List<Point>> Run2(TessellatedSolid ts, double[] normal)
         {
             if (ts.Errors?.SingledSidedEdges != null)
             {
@@ -104,7 +105,7 @@ namespace TVGL
                 return Run2(ts, normal);
             }
 
-            //Get the negative faces into a dictionary
+            //Get the positive faces into a dictionary
             var positiveFaceDict = new Dictionary<int, PolygonalFace>();
             foreach (var face in ts.Faces)
             {
@@ -139,7 +140,7 @@ namespace TVGL
                 seperateSurfaces.Add(surface);
             }
 
-            //Get the purface positive and negative loops
+            //Get the surface positive and negative loops
             var solution = new List<List<Point>>();
             var loopCount = 0;
             var allPaths = new List<List<Point>>();
@@ -164,12 +165,8 @@ namespace TVGL
                     }
 
                 }
-
-
-                //The inner edges may form 0 to many negative (CW) loops
-                
-                var surfacePaths= new List<List<Point>>();
-                
+         
+                var surfacePaths= new List<List<Point>>();               
                 while (outerEdges.Any())
                 {
                     var isReversed = false;
@@ -241,9 +238,14 @@ namespace TVGL
                     var correctCount = 0;
                     foreach (var edge in edgeLoop)
                     {
+                        //Check assumption
+                        var vertex3 = edge.OwnedFace.OtherVertex(edge);
+                        var v1 = vertex3.Position.subtract(edge.To.Position);
+                        var v2 = edge.Vector;
+                        if(v2.crossProduct(v1).dotProduct(edge.OwnedFace.Normal) < 0) throw new Exception("Assumption is faulty");
                         if (edge.OwnedFace.Normal.dotProduct(normal) > 0.0)
                         {
-                            //Owned face is visible from negative side. 
+                            //Owned face is visible from positive side. 
                             //edge.From must be right before Edge.To in list of vertices.
                             var fromIndex = 0;
                             for (var i = 0; i < loop.Count; i++)
@@ -317,12 +319,23 @@ namespace TVGL
                         }
                     }
                     if (errorCount > correctCount) loop.Reverse();
-                    
+                    //if(alreadyReversed) loop.Reverse(); //Should have been other direction. Internal reverse was just to complete loop
+
                     surfacePaths.Add(MiscFunctions.Get2DProjectionPoints(loop, normal, false).ToList());
                 }
-
-                //Ignore very small patches
-                var significantPaths = surfacePaths.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible(ts.SurfaceArea/10000)).ToList();
+                var area = 0.0;
+                var significantPaths = new List<List<Point>>();
+                foreach (var path in surfacePaths)
+                {
+                    var pathArea = MiscFunctions.AreaOfPolygon(path);
+                    area += pathArea;
+                    if (!pathArea.IsNegligible(ts.SurfaceArea/10000))
+                    {
+                        //Ignore very small patches
+                        significantPaths.Add(path);
+                    }
+                }
+                if(area  < 0) throw new Exception("Area for each surface must be positive");
                 if (!significantPaths.Any()) continue;
                 //var simplifiedPaths = new List<List<Point>>();
                 //foreach (var significantPath in significantPaths)
@@ -332,6 +345,7 @@ namespace TVGL
 
                 //Union at the surface level to correctly capture holes
                 var surfaceUnion = PolygonOperations.Union(significantPaths);
+                if (!surfaceUnion.Any()) continue;
                 if (loopCount == 0)
                 {
                     solution = new List<List<Point>>(surfaceUnion);
