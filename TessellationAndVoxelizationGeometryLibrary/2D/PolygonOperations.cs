@@ -84,10 +84,65 @@ namespace TVGL
         /// <returns></returns>
         public static List<List<Point>> Simplify(IList<Point> path)
         {
+            //Take care of self intersections
             var solution = Clipper.Clipper.SimplifyPolygon(new Path(path));
+
+            //Remove negligible length lines and combine collinear lines.
+            foreach (var simplePath in solution)
+            {
+                SimplifyFuzzy(simplePath);
+            }
             return solution;
         }
 
+        /// <summary>
+        /// Simplifies a polygon, by removing self intersection. This may output several polygons.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static List<Point> SimplifyFuzzy(IList<Point> path)
+        {
+            var simplePath = new List<Point>(path);
+            //Remove negligible length lines and combine collinear lines.
+            for (var i = 0; i < simplePath.Count; i++)
+            {
+                var j = i + 1;
+                if (i == simplePath.Count - 1) j = 0;
+                var k = j + 1;
+                if (j == simplePath.Count - 1) k = 0;
+                var current = simplePath[i];
+                var next = simplePath[j];
+                var nextNext = simplePath[k];
+                if (i == 0 && NegligibleLine(current, next))
+                {
+                    simplePath.RemoveAt(j);
+                    i--;
+                    continue;
+                }
+                if (NegligibleLine(next, nextNext))
+                {
+                    simplePath.RemoveAt(k);
+                    i--;
+                    continue;
+                }
+                if (!SlopesEqual(current, next, nextNext)) continue;
+                simplePath.RemoveAt(j);
+                i--;
+            }
+            return simplePath;
+        }
+
+        private static bool NegligibleLine(Point pt1, Point pt2)
+        {
+            var looseTolerance = 0.0000001;
+            return MiscFunctions.DistancePointToPoint(pt1.Position2D, pt2.Position2D).IsNegligible(looseTolerance);
+        }
+
+        private static bool SlopesEqual(Point pt1, Point pt2, Point pt3)
+        {
+            var looseTolerance = 0.0000001;
+            return ((pt1.Y - pt2.Y) * (pt2.X - pt3.X) - (pt1.X - pt2.X) * (pt2.Y - pt3.Y)).IsNegligible(looseTolerance);
+        }
 
         /// <summary>
         /// Simplifies a polygon, by removing self intersection. This results in one polygon, but may not be successful 
@@ -258,8 +313,8 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
-            if (clip == null) return ClipperInt.PolygonOperations.Union(new Paths(subject), null);
-            else return ClipperInt.PolygonOperations.Union(new Paths(subject), new Paths(clip));
+            //if (clip == null) return ClipperInt.PolygonOperations.Union(new Paths(subject), null);
+            //else return ClipperInt.PolygonOperations.Union(new Paths(subject), new Paths(clip));
 
             const PolyFillType fillMethod = PolyFillType.Positive;
             var solution = new Paths();
@@ -312,6 +367,7 @@ namespace TVGL
             //Begin an evaluation
             var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
             if (!result) throw new Exception("Clipper Union Failed");
+            
             return solution;
         }
 
