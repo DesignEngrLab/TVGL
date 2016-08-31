@@ -410,9 +410,9 @@ namespace TVGL.Clipper
             e.OutIdx = Unassigned;
         }
 
-        private void InitEdge2(ClipperEdge e, PolyType polyType)
+        private static void InitEdge2(ClipperEdge e, PolyType polyType)
         {
-            if (e.Curr.Y >= e.Next.Curr.Y)
+            if (e.Curr.Y.IsPracticallySame(e.Next.Curr.Y) || e.Curr.Y > e.Next.Curr.Y)
             {
                 e.Bot = e.Curr;
                 e.Top = e.Next.Curr;
@@ -673,21 +673,31 @@ namespace TVGL.Clipper
             ClipperEdge eMin = null;
             ClipperEdge previousEdge = null;
             var stallCounter = 0;
+
             //workaround to avoid an endless loop in the while loop below when
             //open paths have matching start and end points ...
             if (edge.Prev.Bot == edge.Prev.Top) edge = edge.Next;
+            var successful = false;
 
-            for (;;)
+            //ToDo: There is a memory leak in this function.
+            while (!successful)
             {
-                //ToDo: There is a memory leak in this function.
+                //Find the next local minima, from the current edge
                 edge = FindNextLocMin(edge);
-                if (edge == eMin) break;
+                //If the next local minima is the first local minima we found, then exit.
+                if (edge == eMin)
+                {
+                    successful = true;
+                    continue;
+                }
+                //Set the first local minima
                 if (eMin == null) eMin = edge;
+
+                //Check if the function is caught in an infinite loop. Fix if possible.
                 if (edge == previousEdge) stallCounter++;
                 if(stallCounter > 10) throw new Exception("Caught in infinite loop.");
                 previousEdge = edge;
                 
-
                 //E and E.Prev now share a local minima (left aligned if horizontal).
                 //Compare their slopes to find which starts which bound ...
                 var locMin = new LocalMinima
@@ -732,7 +742,6 @@ namespace TVGL.Clipper
                 if (!leftBoundIsForward) edge = edge2;
             }
             return true;
-
         }
         //------------------------------------------------------------------------------
 
@@ -1090,7 +1099,7 @@ namespace TVGL.Clipper
                 if (StrictlySimple) DoSimplePolygons();
                 return true;
             }
-            //catch { return false; }
+            catch { return false; }
             finally
             {
                 _mJoins.Clear();
@@ -2485,12 +2494,16 @@ namespace TVGL.Clipper
             //prepare for sorting ...
             var e = _mActiveEdges;
             _mSortedEdges = e;
+           //ToDo: it is possible for e to loop back to itself with Next in AEL. This must be fixed.
+            var now = DateTime.Now;
             while (e != null)
             {
                 e.PrevInSel = e.PrevInAEL;
                 e.NextInSel = e.NextInAEL;
                 e.Curr = new Point(TopX(e, topY), e.Curr.Y);
                 e = e.NextInAEL;
+                var duration = DateTime.Now - now;
+                if(duration > TimeSpan.FromSeconds(10)) throw new Exception("Infinite Loop Detected");
             }
 
             //bubblesort ...
@@ -3906,6 +3919,8 @@ namespace TVGL.Clipper
 
         internal void AddPath(Path path, JoinType joinType, EndType endType)
         {
+            path = PolygonOperations.SimplifyFuzzy(path);
+
             var highI = path.Count - 1;
             if (highI < 0) return;
             var newNode = new PolyNode
