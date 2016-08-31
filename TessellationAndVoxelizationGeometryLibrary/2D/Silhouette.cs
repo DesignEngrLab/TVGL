@@ -35,7 +35,7 @@ namespace TVGL
             //2. Union it with the prior negative faces.
             var startFace = negativeFaces[0];
             negativeFaces.RemoveAt(0);
-            var startPolygon = MiscFunctions.Get2DProjectionPoints(startFace.Vertices, normal, false).ToList();
+            var startPolygon = MiscFunctions.Get2DProjectionPoints(startFace.Vertices, normal, true).ToList();
             //Make this polygon positive CCW
             startPolygon = PolygonOperations.CCWPositive(startPolygon);
             var polygonList = new List<List<Point>> { startPolygon };
@@ -44,13 +44,31 @@ namespace TVGL
             {
                 var negativeFace = negativeFaces[0];
                 negativeFaces.RemoveAt(0);
-                var nextPolygon = MiscFunctions.Get2DProjectionPoints(negativeFace.Vertices, normal, false).ToList();
+                var nextPolygon = MiscFunctions.Get2DProjectionPoints(negativeFace.Vertices, normal, true).ToList();
                 var area = MiscFunctions.AreaOfPolygon(nextPolygon);
                 if (area.IsNegligible(0.0000001)) continue; //Higher tolerance because of the conversion to intPoints in the Union function
                 //Make this polygon positive CCW
                 if (area < 0) nextPolygon.Reverse();
-                polygonList = PolygonOperations.Union(polygonList, new List<List<Point>>{ nextPolygon});
-            }   
+                if (negativeFaces.Count == 22) negativeFaces = negativeFaces; 
+                var oldPolygonList = new List<List<Point>>(polygonList);
+                try
+                {
+                    polygonList = PolygonOperations.Union(oldPolygonList, new List<List<Point>> {nextPolygon});
+                }
+                catch
+                {
+                    oldPolygonList.Add(nextPolygon);
+                    return oldPolygonList;
+                }
+            }
+            try
+            {
+                polygonList = PolygonOperations.Union(polygonList);
+            }
+            catch
+            {
+                return polygonList;
+            }
             var polygons = polygonList.Select(path => new Polygon(path)).ToList();
 
             //Get the minimum line length to use for the offset.
@@ -344,7 +362,16 @@ namespace TVGL
                 //}
 
                 //Union at the surface level to correctly capture holes
-                var surfaceUnion = PolygonOperations.Union(significantPaths);
+                List<List<Point>> surfaceUnion;
+                try
+                {
+                    surfaceUnion = PolygonOperations.Union(significantPaths);
+                }
+                catch
+                {
+                    solution = significantPaths;
+                    break;
+                }
                 if (!surfaceUnion.Any()) continue;
                 if (loopCount == 0)
                 {
@@ -352,7 +379,18 @@ namespace TVGL
                 }
                 else
                 {
-                    solution = PolygonOperations.Union(solution, surfaceUnion);
+                    var oldSolution = new List<List<Point>>(solution);
+                    try
+                    {
+                        solution = PolygonOperations.Union(oldSolution, surfaceUnion);
+                    }
+                    catch
+                    {
+                        oldSolution.AddRange(surfaceUnion);
+                        solution = oldSolution;
+                        break;
+                    }
+
                 }
                 loopCount ++;
                 
