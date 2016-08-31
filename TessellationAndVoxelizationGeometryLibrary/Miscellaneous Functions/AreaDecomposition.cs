@@ -303,32 +303,39 @@ namespace TVGL
                     #region Get 2D polygons, offset, union, calculate area, calculate volume increment, and update variables
                     //Get a list of 2D paths from the 3D loops
                     var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
-                    
-                    ////Create and order the polygons
-                    //var currentPolygons = currentPaths.Select(path => new Polygon(path)).ToList();
-                    //var currentShallowTress = BuildPolygonTrees.Shallow(currentPolygons);
 
-                    ////Clear variable and add back in correctly ordered paths from polygons in the current shallow trees
-                    //currentPaths = new List<List<Point>>();
-                    //foreach (var shallowTree in currentShallowTress)
-                    //{
-                    //    currentPaths.AddRange(shallowTree.AllPolygons.Select(polygon => new List<Point>(polygon.Path)));
-                    //}
-                    //currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
-                    var offsetPaths = new List<List<Point>>();
                     //Offset if the additive accuracy is significant
-                    if (!additiveAccuracy.IsNegligible())
-                    {
-                        currentPaths = PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy);
-                        offsetPaths = currentPaths;
-                    }
+                    var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
+
+                    var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
 
                     //Union this new set of polygons with the previous set.
                     if (previousPolygons.Any()) //If not the first iteration
                     {
-                        currentPaths.AddRange(previousPolygons);
-                        currentPaths = PolygonOperations.Union(currentPaths);
-
+                        previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                        try
+                        {
+                            currentPaths = new List<List<Point>>(PolygonOperations.Union(previousPolygons, simpleOffset));
+                        }
+                        catch
+                        {
+                            var testArea1 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                            var testArea2 = previousPolygons.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                            if (testArea1.IsPracticallySame(testArea2, 0.01))
+                            {
+                                currentPaths = simpleOffset;
+                                    //They are probably throwing an error because they are closely overlapping
+                            }
+                            else
+                            {
+                                outputData.Clear();
+                                outputData.Add(offsetPaths);
+                                outputData.Add(simpleOffset);
+                                outputData.Add(previousPolygons);
+                                return 0;
+                                throw new Exception("Union failed and not similar");
+                            }
+                        }
                     }
 
                     //Get the area of this layer
@@ -342,6 +349,7 @@ namespace TVGL
                         {
                             outputData.Clear();
                             outputData.Add(offsetPaths);
+                            outputData.Add(simpleOffset);
                             outputData.Add(previousPolygons);
                             outputData.Add(currentPaths);
                             return 0;
@@ -350,6 +358,7 @@ namespace TVGL
                         additiveVolume +=  deltaX * previousArea;
                         outputData.Add(currentPaths);
                     }
+        
                     previousPolygons = currentPaths;
                     previousDistance = distance;
                     previousArea = area;
@@ -367,29 +376,38 @@ namespace TVGL
                         //Get a list of 2D paths from the 3D loops
                         currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
 
-                        ////Create and order the polygons
-                        //currentPolygons = currentPaths.Select(path => new Polygon(path)).ToList();
-                        //currentShallowTress = BuildPolygonTrees.Shallow(currentPolygons);
-
-                        ////Clear variable and add back in correctly ordered paths from polygons in the current shallow trees
-                        //currentPaths = new List<List<Point>>();
-                        //foreach (var shallowTree in currentShallowTress)
-                        //{
-                        //    currentPaths.AddRange(shallowTree.AllPolygons.Select(polygon => new List<Point>(polygon.Path)));
-                        //}
-                        currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
-
                         //Offset if the additive accuracy is significant
-                        if (!additiveAccuracy.IsNegligible())
-                        {
-                            currentPaths = PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy);
-                        }
+                        offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
+
+                        simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
 
                         //Union this new set of polygons with the previous set.
                         if (previousPolygons.Any()) //If not the first iteration
                         {
-                            currentPaths.AddRange(previousPolygons);
-                            currentPaths = PolygonOperations.Union(currentPaths);
+                            previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                            try
+                            {
+                                currentPaths = new List<List<Point>>(PolygonOperations.Union(previousPolygons, simpleOffset));
+                            }
+                            catch
+                            {
+                                var testArea1 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                                var testArea2 = previousPolygons.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                                if (testArea1.IsPracticallySame(testArea2, 0.01))
+                                {
+                                    currentPaths = simpleOffset;
+                                        //They are probably throwing an error because they are closely overlapping
+                                }
+                                else
+                                {
+                                    outputData.Clear();
+                                    outputData.Add(offsetPaths);
+                                    outputData.Add(simpleOffset);
+                                    outputData.Add(previousPolygons);
+                                    return 0;
+                                    throw new Exception("Union failed and not similar");
+                                }
+                            }
                         }
 
                         //Get the area of this layer
@@ -399,7 +417,16 @@ namespace TVGL
                         if (!previousDistance.IsNegligible())
                         {
                             var deltaX = distance - previousDistance;
-                            if (deltaX < 0 || area < previousArea*.99) throw new Exception("Error in your implementation. This should never occur");
+                            if (deltaX < 0 || area < previousArea*.99)
+                            {
+                                outputData.Clear();
+                                outputData.Add(offsetPaths);
+                                outputData.Add(simpleOffset);
+                                outputData.Add(previousPolygons);
+                                outputData.Add(currentPaths);
+                                return 0;
+                                throw new Exception("Error in your implementation. This should never occur");
+                            }
                             additiveVolume += deltaX * previousArea;
                             outputData.Add(currentPaths);
                         }
