@@ -1246,7 +1246,7 @@ namespace TVGL
         /// A, B, and C are counterclockwise ordered points.
         internal static NodeType GetNodeType(Node a, Node b, Node c)
         {
-            var angle = MiscFunctions.AngleBetweenEdgesCCW(a.Point, b.Point, c.Point);
+            var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(a.Point, b.Point, c.Point);
             if (angle > Math.PI * 2) throw new Exception();
             if (a.Y.IsPracticallySame(b.Y))
             {
@@ -1550,8 +1550,8 @@ namespace TVGL
                         //Check to see if the angle is concave (Strictly less than PI). Exit if it is convex.
                         //Note that if the chain is the right chain, the order of nodes will be backwards 
                         var angle = (node.IsRightChain)
-                            ? MiscFunctions.AngleBetweenEdgesCCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point)
-                            : MiscFunctions.AngleBetweenEdgesCW(node.Point, scan.Last().Point, scan[scan.Count - 2].Point);
+                            ? MiscFunctions.InteriorAngleBetweenEdgesInCCWList(node.Point, scan.Last().Point, scan[scan.Count - 2].Point)
+                            : MiscFunctions.ExteriorAngleBetweenEdgesInCCWList(node.Point, scan.Last().Point, scan[scan.Count - 2].Point);
                         //Skip if greater than OR close to Math.PI, because that will yield a Negligible area triangle
                         if (angle > Math.PI || Math.Abs(angle - Math.PI) < 1E-6)
                         {
