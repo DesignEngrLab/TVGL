@@ -311,7 +311,7 @@ namespace TVGL
         /// <param name="clip"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
+        public static List<List<Point>> Union2(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
             //if (clip == null) return ClipperInt.PolygonOperations.Union(new Paths(subject), null);
             //else return ClipperInt.PolygonOperations.Union(new Paths(subject), new Paths(clip));
@@ -622,22 +622,22 @@ namespace TVGL
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <returns></returns>
-        public static List<List<Point>> Union2(IList<List<Point>> subject, IList<List<Point>> clip = null)
+        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
-            var subject2 = new List<List<Point>>();
-            foreach (var path in subject)
-            {
-                subject2.AddRange(Simplify(path));
-            }
-            var clip2 = new List<List<Point>>();
-            if (clip != null)
-            {
-                foreach (var path in clip)
-                {
-                    clip2.AddRange(Simplify(path));
-                }
-            }
-            return BooleanOperation(subject2, clip2, BooleanOperationType.Union);
+            //var subject2 = new List<List<Point>>();
+            //foreach (var path in subject)
+            //{
+            //    subject2.Add(SimplifyFuzzy(path));
+            //}
+            //var clip2 = new List<List<Point>>();
+            //if (clip != null)
+            //{
+            //    foreach (var path in clip)
+            //    {
+            //        clip2.Add(SimplifyFuzzy(path));
+            //    }
+            //}
+            return BooleanOperation(subject, clip, BooleanOperationType.Union);
         }
 
         /// <summary>
@@ -755,30 +755,24 @@ namespace TVGL
             if(hashPoints.Any()) throw new Exception("Points should be in result an even number of times");
             var solution = new Paths();
             var currentPathID = 0;
-            //try
-            //{
-                foreach (var se1 in result.Where(se1 => !se1.Processed))
+            Path previousPath = null;
+            foreach (var se1 in result.Where(se1 => !se1.Processed))
+            {
+                int parentID;
+                var depth = ComputeDepth(se1, previousPath, out parentID);
+                var newPath = ComputePath(se1, currentPathID, depth, parentID, result);
+                if (depth % 2 != 0) //Odd
                 {
-                    int parentID;
-                    var depth = ComputeDepth(PreviousInResult(se1, result), out parentID);
-                    var newPath = ComputePath(se1, currentPathID, depth, parentID, result);
-                    if (depth % 2 != 0) //Odd
-                    {
-                        newPath = CWNegative(newPath);
-                    }
-                    solution.Add(newPath);
-                    //if (parent != -1) //parent path ID
-                    //{
-                    //    solution[parent].AddChild(currentPathID);
-                    //}
-                    currentPathID++;
+                    newPath = CWNegative(newPath);
                 }
-            //}
-            //catch
-            //{
-            //    solution = new Paths{path};
-            //    return solution;
-            //}
+                solution.Add(newPath);
+                //if (parent != -1) //parent path ID
+                //{
+                //    solution[parent].AddChild(currentPathID);
+                //}
+                currentPathID++;
+                previousPath = path;
+            }
 
             return solution;
         }
@@ -900,20 +894,70 @@ namespace TVGL
             {
                 var sweepEvent = orderedSweepEvents.First();
                 orderedSweepEvents.RemoveAt(0);
+                SweepEvent nextSweepEvent = null;
+                if (orderedSweepEvents.Any())
+                {
+                    nextSweepEvent = orderedSweepEvents.First();
+                }
                 if (sweepEvent.Left) //left endpoint
                 {
+                    
                     //Inserting the event into the sweepLines list
                     var index = sweepLines.Insert(sweepEvent);
                     sweepEvent.IndexInList = index;
-                    var goBack1 = false; //goBack is used to processes line segments from some collinear intersections
+                    bool goBack1; //goBack is used to processes line segments from some collinear intersections
                     CheckAndResolveIntersection(sweepEvent, sweepLines.Next(index), ref sweepLines, ref orderedSweepEvents, out goBack1);
-                    var goBack2 = false;
+                    bool goBack2;
                     CheckAndResolveIntersection(sweepLines.Previous(index), sweepEvent, ref sweepLines, ref orderedSweepEvents, out goBack2);
                     if (goBack1 || goBack2) continue;
 
-                    //Select the closest edge downward that belongs to the other polygon.
-                    //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
-                    SetInformation(sweepEvent, sweepLines.PreviousOther(index), booleanOperationType);                    
+                    //First, we need to check if the this sweepEvent has the same Point and is collinear with the next line. 
+                    if (nextSweepEvent != null && nextSweepEvent.Point == sweepEvent.Point)
+                    {
+                        //If the slopes are practically the same then the lines are collinear 
+                        double m1, m2; //since one point is the same, we only need partial slopes (assume pt1 = 0,0)
+                        if (sweepEvent.OtherEvent.Point.X.IsNegligible()) m1 = double.PositiveInfinity;
+                        else m1 = sweepEvent.OtherEvent.Point.Y/sweepEvent.OtherEvent.Point.X;
+                        if ( nextSweepEvent.OtherEvent.Point.X.IsNegligible()) m2 = double.PositiveInfinity;
+                        else m2 = nextSweepEvent.OtherEvent.Point.Y/nextSweepEvent.OtherEvent.Point.X;
+                        //If they belong to the same polygon type, they are overlapping, but we still use the other polygon like normal
+                        //to determine if they are in the result.
+                        if (m1.IsPracticallySame(m2) && sweepEvent.PolygonType != nextSweepEvent.PolygonType)
+                        {
+                            SweepEvent previous = null;
+                            //These lines will form a duplicate line that is from the Subject and the Clip.
+                            //Get the first previous line that is not collinear to the current line (if one exists).
+                            for (var i = sweepEvent.IndexInList; i > -1; i--)
+                            {
+                                previous = sweepLines.Previous(i);
+                                if (previous.Point != sweepEvent.Point) break;
+                                //since one point is the same, we only need partial slopes (assume pt1 = 0,0)
+                                double m3;
+                                if (previous.OtherEvent.Point.X.IsNegligible()) m3 = double.PositiveInfinity;
+                                else m3 = previous.OtherEvent.Point.Y/previous.OtherEvent.Point.X;
+                                if (!m1.IsPracticallySame(m3)) break;
+                                previous = null;
+                            }
+                            SetInformation(sweepEvent, previous, booleanOperationType);
+                        }
+                        else
+                        {
+                            //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
+                            //Select the closest edge downward that belongs to the other polygon.
+                            SetInformation(sweepEvent, sweepLines.PreviousOther(index), booleanOperationType);
+                        }
+                    }
+                    else
+                    {
+                        //Select the closest edge downward that belongs to the other polygon.
+                        //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
+                        SetInformation(sweepEvent, sweepLines.PreviousOther(index), booleanOperationType);
+                    }
+                    //Get the previous (first directly below starting point) event in result (using the sweeplines)
+                    if (sweepEvent.InResult)
+                    {
+                        sweepEvent.PrevInResult = sweepLines.PreviousInResult(index);
+                    }
                 }
                 else //The sweep event corresponds to the right endpoint
                 {
@@ -935,37 +979,46 @@ namespace TVGL
             }
 
             //Next stage. Find the paths
-            for(var i = 0; i < result.Count; i++)
+            var hashResult = new HashSet<SweepEvent>(result);
+            var hashPoints = new HashSet<Point>();
+            for (var i = 0; i < result.Count; i++)
             {
                 result[i].PositionInResult = i;
                 result[i].Processed = false;
+                if (!hashResult.Contains(result[i].OtherEvent)) throw new Exception("Error in implementation. Both sweep events in the pair should be in this list.");
+                var point = result[i].Point;
+                if (hashPoints.Contains(point))
+                {
+                    hashPoints.Remove(point);
+                    if (!point.InResult) point.InResult = true;
+                    else point.InResultMultipleTimes = true;
+                }
+                else hashPoints.Add(point);
             }
+            if (hashPoints.Select(point => hashPoints.Where(otherPoint => !point.Equals(otherPoint)).Any(otherPoint => point == otherPoint)).Any(duplicateFound => !duplicateFound))
+            {
+                throw new Exception("Point appears in list an odd number of times. This means there are missing sweep events or one too many.");
+            }
+
             var solution = new Paths();
             var currentPathID = 0;
-            try
+            Path previousPath = null;
+            foreach (var se1 in result.Where(se1 => !se1.Processed))
             {
-                foreach (var se1 in result.Where(se1 => !se1.Processed))
+                int parentID;
+                var depth = ComputeDepth(se1, previousPath, out parentID);
+                var path = ComputePath(se1, currentPathID, depth, parentID, result);
+                if (depth%2 != 0) //Odd
                 {
-                    int parentID;
-                    var depth = ComputeDepth(PreviousInResult(se1, result), out parentID);
-                    var path = ComputePath(se1, currentPathID, depth, parentID, result);
-                    if (depth%2 != 0) //Odd
-                    {
-                        path = CWNegative(path);
-                    }
-                    solution.Add(path);
-                    //if (parent != -1) //parent path ID
-                    //{
-                    //    solution[parent].AddChild(currentPathID);
-                    //}
-                    currentPathID ++;
+                    path = CWNegative(path);
                 }
-            }
-            catch
-            {
-                solution = new Paths(subject);
-                solution.AddRange(clip);
-                return solution;
+                solution.Add(path);
+                //if (parent != -1) //parent path ID
+                //{
+                //    solution[parent].AddChild(currentPathID);
+                //}
+                currentPathID ++;
+                previousPath = path;
             }
             
             return solution;
@@ -989,24 +1042,22 @@ namespace TVGL
                 sweepEvent.OtherEvent.OtherInOut = true;
             }
 
-            //If duplicate (overlapping) edges, the edge is included for Union and Intersection if they the same LeftToRight flag.
-            //Different for other boolean operations
+            //If duplicate (overlapping) edges, the current duplicate is always not in result. 
+            //We only consider the first event as a possibility.
             if (previous != null && sweepEvent.DuplicateEvent == previous)
             {
-                if (booleanOperationType == BooleanOperationType.Union ||
-                    booleanOperationType == BooleanOperationType.Intersection)
-                {
-                    if (!previous.InResult && previous.LeftToRight == sweepEvent.LeftToRight)
-                    {
-                        sweepEvent.InResult = true;
-                    }
-                    else sweepEvent.InResult = false;
-                }
+                sweepEvent.InResult = false;
             }
 
             //Determine if it should be in the results
-            else if (booleanOperationType == BooleanOperationType.Union)
+            if (booleanOperationType == BooleanOperationType.Union)
             {
+                if (sweepEvent.DuplicateEvent != null)
+                {
+                    var inResult = sweepEvent.LeftToRight != sweepEvent.DuplicateEvent.LeftToRight;
+                    sweepEvent.InResult = inResult;
+                    sweepEvent.DuplicateEvent.InResult = inResult;
+                }
                 sweepEvent.InResult = !sweepEvent.OtherInOut;
             }
             else if (booleanOperationType == BooleanOperationType.Intersection)
@@ -1019,21 +1070,29 @@ namespace TVGL
         #endregion
 
         #region Compute Depth
-        private static int ComputeDepth(SweepEvent previousSweepEvent, out int parentID)
+        private static int ComputeDepth(SweepEvent se, Path previousPath, out int parentID)
         {
-            //This function needs to use many of the bools from the SweepEvent to determine depth and parentID
-            //Since previousSweepEvent point is the first point of the path, it must be the left bottom (min X, then min Y) corner
-            if (previousSweepEvent != null) 
-            {
-                if (previousSweepEvent.LeftToRight && previousSweepEvent.ParentPathID != -1)
+            //This function shoots a ray down from the sweep event point, which is the first point of the path.
+            //it must be the left bottom (min X, then min Y) this sweep event is called se2.
+            //Then we use the bool properties of the se2 to determine whether it is inside the polygon that
+            //se2 belongs to, its parent, or none.
+            if (previousPath != null && se.PrevInResult != null)
+            {    
+                if (se.PrevInResult.LeftToRight)
+                {
+                    //else, outside-inside transition. It is inside the previous polygon.
+                    parentID = se.PrevInResult.PathID;
+                    return se.PrevInResult.Depth + 1;
+                }
+                if (se.PrevInResult.ParentPathID != -1)
                 { 
                     //It must share the same parent path and depth
-                    parentID = previousSweepEvent.ParentPathID;
-                    return previousSweepEvent.Depth;
+                    parentID = se.PrevInResult.ParentPathID;
+                    return se.PrevInResult.Depth;
                 }
-                //else, outside-inside transition
-                parentID = previousSweepEvent.PathID;
-                return previousSweepEvent.Depth + 1;
+                //else, there is a polygon below it, but it is not inside any polygons
+                parentID = -1;
+                return 0;
             }
             //else, not inside any other polygons
             parentID = -1;
@@ -1053,14 +1112,17 @@ namespace TVGL
             //Which allows us to handle points with multiple options.
             //We will determine To/From ordering based on the path depth.
             var neighbors = FindAllNeighbors(startEvent, result);
+            neighbors.Add(startEvent);
             var yMin = startEvent.OtherEvent.Point.Y;
+            var xMin = neighbors.Select(neighbor => neighbor.OtherEvent.Point.X).Concat(new[] {double.PositiveInfinity}).Min();
             foreach (var neighbor in neighbors)
             {
+                //We need the lowest neighbor line, not necessarily the lowest Y value.
                 if (!neighbor.Left) throw new Exception("First event should always be left.");
-                if(neighbor.OtherEvent.Point.Y.IsPracticallySame(yMin)) throw new NotImplementedException();
-                if (neighbor.OtherEvent.Point.Y < yMin)
+                var neighborYIntercept = LineIntercept(neighbor, xMin);
+                if (neighborYIntercept < yMin)
                 {
-                    yMin = neighbor.OtherEvent.Point.Y;
+                    yMin = neighborYIntercept;
                     startEvent = neighbor;
                 }
             }
@@ -1078,6 +1140,7 @@ namespace TVGL
 
                 //Since result is sorted lexicographically, the event we are looking for will be adjacent to the current sweep event (note that we are staying on the same point)
                 neighbors = FindAllNeighbors(currentSweepEvent, result);
+                if (!neighbors.Any()) throw new Exception("Must have at least one neighbor");
                 if (neighbors.Count == 1)
                 {
                     currentSweepEvent = neighbors.First();
@@ -1103,7 +1166,7 @@ namespace TVGL
                 currentSweepEvent.Processed = true;
                 updateAll.Add(currentSweepEvent);
 
-                if (!currentSweepEvent.From) throw new Exception("Error in implementation");
+                //if (!currentSweepEvent.From) throw new Exception("Error in implementation");
                 path.Add(currentSweepEvent.Point); //Add the "From" Point  
                             
             } while (currentSweepEvent != startEvent);
@@ -1434,7 +1497,19 @@ namespace TVGL
                 }
                 //No other polygon event was found. Return null (or duplicate event if it exists).
                 return current.DuplicateEvent;           
-                
+            }
+
+            public SweepEvent PreviousInResult(int i)
+            {
+                while (i > 0)
+                {
+                    i--; //Decrement
+                    var previous = _sweepEvents[i];
+                    if (!previous.InResult) continue;
+                    return previous;
+                }
+                //No other polygon event was found. Return null.
+                return null;
             }
 
             public void RemoveAt(int i)
@@ -1572,26 +1647,49 @@ namespace TVGL
                 //Find the index for p1
                 var i = 0;
                 var breakIfNotNear = false;
+                SweepEvent previousSweepEvent = null;
                 foreach (var se2 in _sweepEvents)
                 {
                     if (se1.Point == se2.Point) //reference is the same
                     {
                         if (se1.OtherEvent.Point.X.IsPracticallySame(se2.OtherEvent.Point.X))
                         {
-                            if (se1.OtherEvent.Point.Y.IsPracticallySame(se2.OtherEvent.Point.Y))
+                            //If the slopes are practically collinear (the point is the same, so we only need partial slopes (assume pt 1 = 0,0)
+                            var m1 = se1.OtherEvent.Point.Y / se1.OtherEvent.Point.X;
+                            var m2 = se2.OtherEvent.Point.Y / se2.OtherEvent.Point.X;
+                            if (se1.OtherEvent.Point.Y.IsPracticallySame(se2.OtherEvent.Point.Y) || m1.IsPracticallySame(m2))
                             {
-                                 break; //ok to insert before (Will be marked as a duplicate event)
+                                if (previousSweepEvent == null || previousSweepEvent.PolygonType == se2.PolygonType)
+                                {
+                                    break; //ok to insert before (Will be marked as a duplicate event)
+                                    //If the previousSweepEvent and se2 have the same polygon type, insert se1 before se2.
+                                    //This is to help with determining the result using the previous other line.
+                                }
+                                //Else increment and continue;                         
                             }
-                            
-                            if (se1.OtherEvent.Point.Y < se2.OtherEvent.Point.Y)
+                            else if (se1.OtherEvent.Point.Y < se2.OtherEvent.Point.Y)
                             {
                                 //Insert before se2
                                 break;
                             }   //Else increment and continue;
                         }
-                        else if (se1.Left && se2.Left) //If both left endpoints, add the lower event first.
+                        //If both left endpoints, add whichever line is lower than the other
+                        //To determine this, use whichever X is more left to determine a Y intercept for the other line at that x value.
+                        //If the calculated Y is > or = to the OtherPoint.Y then it is considered above line with the lower x value..
+                        else if (se1.Left && se2.Left)
                         {
-                            if (se1.OtherEvent.Point.Y < se2.OtherEvent.Point.Y)
+                            double se1Y, se2Y;
+                            if (!se1.OtherEvent.Point.X.IsGreaterThanNonNegligible(se2.OtherEvent.Point.X)) // <= is equivalent to !GreaterThanNonNegligible(value)
+                            {
+                                se1Y = se1.OtherEvent.Point.Y;
+                                se2Y = LineIntercept(se2.Point, se2.OtherEvent.Point, se1.OtherEvent.Point.X);
+                            }
+                            else
+                            {
+                                se1Y = LineIntercept(se1.Point, se1.OtherEvent.Point, se2.OtherEvent.Point.X);
+                                se2Y = se2.OtherEvent.Point.Y;
+                            }
+                            if (se1Y < se2Y)
                             {
                                 //Insert before se2
                                 break;
@@ -1600,7 +1698,7 @@ namespace TVGL
                         else if (se1.OtherEvent.Point.X < se2.OtherEvent.Point.X)
                         {
                             //Insert before se2
-                            break;
+                            break; 
                         }   //Else increment and continue;
                     }
                     else if (se1.Point.X.IsPracticallySame(se2.Point.X))
@@ -1612,6 +1710,7 @@ namespace TVGL
                     else if (breakIfNotNear) break;
                     else if (se1.Point.X < se2.Point.X) break;
                     i++;
+                    previousSweepEvent = se2;
                 }
                 _sweepEvents.Insert(i, se1);
             }
@@ -1650,6 +1749,11 @@ namespace TVGL
                 }
             }
             return null;
+        }
+
+        private static double LineIntercept(SweepEvent se, double xval)
+        {
+            return LineIntercept(se.Point, se.OtherEvent.Point, xval);
         }
 
         private static double LineIntercept(Point p1, Point p2, double xval)

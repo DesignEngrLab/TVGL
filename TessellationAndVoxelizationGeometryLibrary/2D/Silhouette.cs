@@ -39,7 +39,7 @@ namespace TVGL
             //Make this polygon positive CCW
             startPolygon = PolygonOperations.CCWPositive(startPolygon);
             var polygonList = new List<List<Point>> { startPolygon };
-
+            var previousArea = 0.0;
             while (negativeFaces.Any())
             {
                 var negativeFace = negativeFaces[0];
@@ -51,24 +51,27 @@ namespace TVGL
                 if (area < 0) nextPolygon.Reverse();
                 if (negativeFaces.Count == 22) negativeFaces = negativeFaces; 
                 var oldPolygonList = new List<List<Point>>(polygonList);
-                try
-                {
+                //try
+                //{
                     polygonList = PolygonOperations.Union(oldPolygonList, new List<List<Point>> {nextPolygon});
-                }
-                catch
-                {
-                    oldPolygonList.Add(nextPolygon);
-                    return oldPolygonList;
-                }
+                var currentArea = polygonList.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                if(currentArea < previousArea) throw new Exception("Adding a triangle should never decrease the area");
+                previousArea = currentArea; //ToDo: Remove this check once it is working properly.
+                //}
+                //catch
+                //{
+                //    oldPolygonList.Add(nextPolygon);
+                //    return oldPolygonList;
+                //}
             }
-            try
-            {
+            //try
+            //{
                 polygonList = PolygonOperations.Union(polygonList);
-            }
-            catch
-            {
-                return polygonList;
-            }
+            //}
+            //catch
+            //{
+            //    return polygonList;
+            //}
             var polygons = polygonList.Select(path => new Polygon(path)).ToList();
 
             //Get the minimum line length to use for the offset.
