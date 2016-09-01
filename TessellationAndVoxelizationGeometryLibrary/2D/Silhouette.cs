@@ -66,7 +66,7 @@ namespace TVGL
             }
             //try
             //{
-                polygonList = PolygonOperations.Union(polygonList);
+                //polygonList = PolygonOperations.Union(polygonList);
             //}
             //catch
             //{
