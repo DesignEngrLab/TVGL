@@ -602,8 +602,8 @@ namespace TVGL
         {
             var axis = edge1.Vector.crossProduct(edge2.Vector);
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return Math.Min(AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]),
-                AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]));
+            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]),
+                InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]));
         }
 
         /// <summary>
@@ -628,7 +628,7 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         internal static double SmallerAngleBetweenEdges(double[] v0, double[] v1)
         {
-            return Math.Min(AngleBetweenEdgesCW(v0, v1), AngleBetweenEdgesCCW(v0, v1));
+            return Math.Min(ExteriorAngleBetweenEdgesInCCWList(v0, v1), InteriorAngleBetweenEdgesInCCWList(v0, v1));
         }
 
         /// <summary>
@@ -638,10 +638,10 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double AngleBetweenEdgesCW(Edge edge1, Edge edge2, double[] axis)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]);
+            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -651,10 +651,10 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double AngleBetweenEdgesCCW(Edge edge1, Edge edge2, double[] axis)
+        internal static double InteriorAngleBetweenEdgesInCCWList(Edge edge1, Edge edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1.Vector, edge2.Vector }, axis);
-            return AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]);
+            return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -664,10 +664,10 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double AngleBetweenEdgesCW(double[] edge1, double[] edge2, double[] axis)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(double[] edge1, double[] edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
-            return AngleBetweenEdgesCW(twoDEdges[0], twoDEdges[1]);
+            return ExteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -677,10 +677,10 @@ namespace TVGL
         /// <param name="edge2">The edge2.</param>
         /// <param name="axis">The axis.</param>
         /// <returns>System.Double.</returns>
-        internal static double AngleBetweenEdgesCCW(double[] edge1, double[] edge2, double[] axis)
+        internal static double InteriorAngleBetweenEdgesInCCWList(double[] edge1, double[] edge2, double[] axis)
         {
             var twoDEdges = Get2DProjectionPoints(new[] { edge1, edge2 }, axis);
-            return AngleBetweenEdgesCCW(twoDEdges[0], twoDEdges[1]);
+            return InteriorAngleBetweenEdgesInCCWList(twoDEdges[0], twoDEdges[1]);
         }
 
         /// <summary>
@@ -690,9 +690,9 @@ namespace TVGL
         /// <param name="b">The b.</param>
         /// <param name="c">The c.</param>
         /// <returns>System.Double.</returns>
-        internal static double AngleBetweenEdgesCW(Point a, Point b, Point c)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(Point a, Point b, Point c)
         {
-            return AngleBetweenEdgesCW(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
+            return ExteriorAngleBetweenEdgesInCCWList(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
 
         /// <summary>
@@ -702,9 +702,9 @@ namespace TVGL
         /// <param name="b">The b.</param>
         /// <param name="c">The c.</param>
         /// <returns>System.Double.</returns>
-        internal static double AngleBetweenEdgesCCW(Point a, Point b, Point c)
+        internal static double InteriorAngleBetweenEdgesInCCWList(Point a, Point b, Point c)
         {
-            return AngleBetweenEdgesCCW(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
+            return InteriorAngleBetweenEdgesInCCWList(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
 
         /// <summary>
@@ -718,7 +718,7 @@ namespace TVGL
         internal static double ProjectedAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
         {
             var points = Get2DProjectionPoints(new List<Vertex> { a, b, c }, positiveNormal);
-            return AngleBetweenEdgesCCW(new[] { points[1].X - points[0].X, points[1].Y - points[0].Y },
+            return InteriorAngleBetweenEdgesInCCWList(new[] { points[1].X - points[0].X, points[1].Y - points[0].Y },
                 new[] { points[2].X - points[1].X, points[2].Y - points[1].Y });
         }
 
@@ -728,9 +728,9 @@ namespace TVGL
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double AngleBetweenEdgesCW(double[] v0, double[] v1)
+        internal static double ExteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
         {
-            return 2 * Math.PI - AngleBetweenEdgesCCW(v0, v1);
+            return 2 * Math.PI - InteriorAngleBetweenEdgesInCCWList(v0, v1);
         }
 
         //Gets the angle between edges that are ordered in a CCW list. 
@@ -742,7 +742,7 @@ namespace TVGL
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double AngleBetweenEdgesCCW(double[] v0, double[] v1)
+        internal static double InteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
         {
             #region Law of Cosines Approach (Commented Out)
 
@@ -769,6 +769,7 @@ namespace TVGL
         #endregion
 
         #region Intersection Method (between lines, planes, solids, etc.)
+
         /// <summary>
         /// Detemines if Two Lines intersect. Outputs intersection point if they do.
         /// If two lines are colinear, they are not considered intersecting.
@@ -777,16 +778,35 @@ namespace TVGL
         /// <param name="line2"></param>
         /// <param name="intersectionPoint"></param>
         /// <param name="considerCollinearOverlapAsIntersect"></param>
+        /// <returns></returns>
+        public static bool LineLineIntersection(Line line1, Line line2, out Point intersectionPoint,
+            bool considerCollinearOverlapAsIntersect = false)
+        {
+            return
+                (LineLineIntersection(line1.FromPoint, line1.ToPoint, line2.FromPoint, line2.ToPoint,
+                    out intersectionPoint, considerCollinearOverlapAsIntersect));
+        }
+
+        /// <summary>
+        /// Detemines if Two Lines intersect. Outputs intersection point if they do.
+        /// If two lines are colinear, they are not considered intersecting.
+        /// </summary>
+        /// <param name="intersectionPoint"></param>
+        /// <param name="considerCollinearOverlapAsIntersect"></param>
+        /// <param name="pt1"></param>
+        /// <param name="pt2"></param>
+        /// <param name="pt3"></param>
+        /// /// <param name="pt4"></param>
         /// <source>
         /// http://www.codeproject.com/Tips/862988/Find-the-Intersection-Point-of-Two-Line-Segments
         /// </source>
         /// <returns></returns>
-        public static bool LineLineIntersection(Line line1, Line line2, out Point intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
+        public static bool LineLineIntersection(Point pt1, Point pt2, Point pt3, Point pt4, out Point intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
         {
-            var p = line1.FromPoint.Position2D;
-            var p2 = line1.ToPoint.Position2D;
-            var q = line2.FromPoint.Position2D;
-            var q2 = line2.ToPoint.Position2D;
+            var p = pt1.Position2D;
+            var p2 = pt2.Position2D;
+            var q = pt3.Position2D;
+            var q2 = pt4.Position2D;
             intersectionPoint = null;
             var r = p2.subtract(p);
             var s = q2.subtract(q);
@@ -804,7 +824,7 @@ namespace TVGL
                 if (!considerCollinearOverlapAsIntersect) return false;
                 var qpr = qp[0] * r[0] + qp[1] * r[1];
                 var pqs = p.subtract(q)[0] * s[0] + p.subtract(q)[1] * s[1];
-                return (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) || (0 <= pqs && pqs <= s[0] * s[0] + s[1] + s[1]);
+                return (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) || (0 <= pqs && pqs <= s[0] * s[0] + s[1] * s[1]);
             }
 
             // 3. If r x s = 0 and (q - p) x r != 0, then the two lines are parallel and non-intersecting.
