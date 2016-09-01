@@ -30,8 +30,8 @@ namespace TVGL
             //Solve for slope and y intercept. 
             if (ToPoint.X.IsPracticallySame(FromPoint.X)) //If vertical line, set slope = inf.
             {
-                Slope = double.PositiveInfinity;
-                Yintercept = double.PositiveInfinity;
+                Slope = double.MaxValue; //use maxvalue instead of infinity, since IsPracticallyTheSame comparison in StarMath does not work with infinity
+                Yintercept = double.MaxValue;//use maxvalue instead of infinity, since IsPracticallyTheSame comparison in StarMath does not work with infinity
                 IsVertical = true;
             }
 
@@ -158,9 +158,9 @@ namespace TVGL
                 //return either positive or negative infinity depending on the direction of the line.
                 if (ToPoint.Y - FromPoint.Y > 0)
                 {
-                    return double.PositiveInfinity;
+                    return double.MaxValue;
                 }
-                return double.NegativeInfinity;
+                return double.MinValue;
             }
             return Slope * xval + Yintercept;
         }
@@ -183,9 +183,9 @@ namespace TVGL
             {
                 if (ToPoint.X - FromPoint.X > 0)
                 {
-                    return double.PositiveInfinity;
+                    return double.MaxValue;
                 }
-                return double.NegativeInfinity;
+                return double.MinValue;
             }
             return (y - Yintercept) / Slope;
         }
