@@ -807,28 +807,85 @@ namespace TVGL
             var p2 = pt2.Position2D;
             var q = pt3.Position2D;
             var q2 = pt4.Position2D;
+            var points = new List<Point> {pt1, pt2, pt3, pt4};
             intersectionPoint = null;
             var r = p2.subtract(p);
             var s = q2.subtract(q);
-            var rxs = r[0] * s[1] - r[1] * s[0]; //2D cross product
+            var rxs = r[0] * s[1] - r[1] * s[0]; //2D cross product, determines if parallel
             var qp = q.subtract(p);
             var qpxr = qp[0] * r[1] - qp[1] * r[0];//2D cross product
 
-            // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
-            if (rxs.IsNegligible() && qpxr.IsNegligible())
+            // If r x s ~ 0 and (q - p) x r ~ 0, then the two lines are possibly collinear.
+            // This is negigible tolerance of 0.00001 is not arbitary. It was chosen because of the second case within this if statement.
+            if (rxs.IsNegligible(0.00001) && qpxr.IsNegligible(0.00001))
             {
                 // 1. If either  0 <= (q - p) * r <= r * r or 0 <= (p - q) * s <= * s
                 // then the two lines are overlapping,
                 // 2. If neither 0 <= (q - p) * r = r * r nor 0 <= (p - q) * s <= s * s
                 // then the two lines are collinear but disjoint.
-                if (!considerCollinearOverlapAsIntersect) return false;
                 var qpr = qp[0] * r[0] + qp[1] * r[1];
                 var pqs = p.subtract(q)[0] * s[0] + p.subtract(q)[1] * s[1];
-                return (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) || (0 <= pqs && pqs <= s[0] * s[0] + s[1] * s[1]);
+                var overlapping = (0 <= qpr && qpr <= r[0]*r[0] + r[1]*r[1]) ||
+                                  (0 <= pqs && pqs <= s[0]*s[0] + s[1]*s[1]);
+                if (rxs.IsNegligible() && qpxr.IsNegligible())
+                    // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
+                {
+                    if (!considerCollinearOverlapAsIntersect) return false;
+                    return overlapping;
+                }
+                //It is possible for the rxs or qpxr to be near negligible, but all points of the two lines are negligibly close to the line
+                //making the lines collinear
+                if (!overlapping) return false;
+                //Get the slope for both lines
+                double slope1, slope2;
+                if (pt1.X.IsPracticallySame(pt2.X)) //Vertical line
+                {
+                    slope1 = double.MaxValue;
+                }
+                else if (pt1.Y.IsPracticallySame(pt2.Y))//Horizontal Line
+                {
+                    slope1 = 0.0;
+                }
+                else slope1 = (pt2.Y - pt1.Y) / (pt2.X - pt1.X);
+                if (pt3.X.IsPracticallySame(pt4.X)) //Vertical line
+                {
+                    slope2 = double.MaxValue;
+                }
+                else if (pt3.Y.IsPracticallySame(pt4.Y))//Horizontal Line
+                {
+                    slope2 = 0.0;
+                }
+                else slope2 = (pt4.Y - pt3.Y) / (pt4.X - pt3.X);
+                //Foreach line, check the Y intercepts of the X values from the other line. If the intercepts match the point.Y values, then it is collinear
+                if ((slope1*(pt3.X - pt1.X) + pt1.Y).IsPracticallySame(pt3.Y) &&
+                    (slope1*(pt4.X - pt1.X) + pt1.Y).IsPracticallySame(pt4.Y))
+                {
+                    if (!considerCollinearOverlapAsIntersect) return false;
+                    return true;
+                }
+                if ((slope2*(pt1.X - pt3.X) + pt3.Y).IsPracticallySame(pt1.Y) &&
+                    (slope2*(pt2.X - pt3.X) + pt3.Y).IsPracticallySame(pt2.Y))
+                {
+                    if (!considerCollinearOverlapAsIntersect) return false;
+                    return true;
+                }
+                //Else look at other cases.
             }
 
             // 3. If r x s = 0 and (q - p) x r != 0, then the two lines are parallel and non-intersecting.
             if (rxs.IsNegligible() && !qpxr.IsNegligible()) return false;
+
+            //4. Check if the lines share a point. If yes, return that point.  
+            if (pt1 == pt3 || pt1 == pt4)
+            {
+                intersectionPoint = pt1;
+                return true;
+            }
+            if (pt2 == pt3 || pt2 == pt4)
+            {
+                intersectionPoint = pt2;
+                return true;
+            }
 
             // t = (q - p) x s / (r x s)
             //Note, the output of this will be t = [0,0,#] since this is a 2D cross product.
@@ -838,17 +895,134 @@ namespace TVGL
             //Note, the output of this will be u = [0,0,#] since this is a 2D cross product.
             var u = q.subtract(p).crossProduct(r).divide(rxs);
 
-            // 4. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
+            // 5. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
             // the two line segments meet at the point p + t r = q + u s.
             if (!rxs.IsNegligible() && (0 <= t[2] && t[2] <= 1) && (0 <= u[2] && u[2] <= 1))
-            {
+            {    
+                
+                ////Tthe intersection point may be one of the existing points
+                ////This is needed because the x,y calculated below can be off by a very slight amount, caused by rounding error.
+                ////Check if any of the points are on the other line.
+                //double slope1, slope2;
+                //if (pt1.X.IsPracticallySame(pt2.X)) //Vertical line
+                //{
+                //    slope1 = double.MaxValue;
+                //}
+                //else if (pt1.Y.IsPracticallySame(pt2.Y))//Horizontal Line
+                //{
+                //    slope1 = 0.0;
+                //}
+                //else slope1 = (pt2.Y - pt1.Y) / (pt2.X - pt1.X);
+                //if (pt3.X.IsPracticallySame(pt4.X)) //Vertical line
+                //{
+                //    slope2 = double.MaxValue;
+                //}
+                //else if (pt3.Y.IsPracticallySame(pt4.Y))//Horizontal Line
+                //{
+                //    slope2 = 0.0;
+                //}
+                //else slope2 = (pt4.Y - pt3.Y) / (pt4.X - pt3.X);
+
+                ////Foreach line, check the Y intercepts of the X values from the other line. If the intercepts match the point.Y values, then it is collinear
+                //if ((slope1*(pt3.X - pt1.X) + pt1.Y).IsPracticallySame(pt3.Y))
+                //{
+                //    intersectionPoint = pt3;
+                //    return true;
+                //}
+                //if ((slope1*(pt4.X - pt1.X) + pt1.Y).IsPracticallySame(pt4.Y))
+                //{
+                //    intersectionPoint = pt4;
+                //    return true;
+                //}
+                //if ((slope2 * (pt1.X - pt3.X) + pt3.Y).IsPracticallySame(pt1.Y))
+                //{
+                //    intersectionPoint = pt1;
+                //    return true;
+                //};
+                //if ((slope2*(pt2.X - pt3.X) + pt3.Y).IsPracticallySame(pt2.Y))
+                //{
+                //    intersectionPoint = pt2;
+                //    return true;
+                //}
+
                 // We can calculate the intersection point using either t or u.
                 var x = p[0] + t[2] * r[0];
                 var y = p[1] + t[2] * r[1];
-                intersectionPoint = new Point(x, y);
+                var x2 = q[0] + u[2] * s[0];
+                var y2 = q[1] + u[2] * s[1];
 
-                // An intersection was found.
+                //If either is equal to any of the given points, return that point
+                if (x.IsPracticallySame(x2) && y.IsPracticallySame(y2))
+                {
+                    //If either is equal to any of the given points, return that point
+                    foreach (var point in points)
+                    {
+                        if (!point.X.IsPracticallySame(x) || !point.Y.IsPracticallySame(y)) continue;
+                        intersectionPoint = point;
+                        return true;
+                    }
+                    //Else, return the new intersection point
+                    intersectionPoint = new Point(x, y);
+                    return true;
+                }
+                
+                //Values are not even close
+                if (!x.IsPracticallySame(x2, 0.0001) || !y.IsPracticallySame(y2, 0.00001)) throw new NotImplementedException();
+
+                //Else, equations were not equal, but one may have been slightly off. 
+                //Check to see if either possible intersection point matches an existing point.
+                foreach (var point in points)
+                {
+                    if ((!point.X.IsPracticallySame(x) || !point.Y.IsPracticallySame(y)) &&
+                        (!point.X.IsPracticallySame(x2) || !point.Y.IsPracticallySame(y2))) continue;
+                    intersectionPoint = point;
+                    return true;
+                }
+
+                //Else, choose the solution with fewer digits
+                var x3 = x;
+                var y3 = y;
+                if (!x.IsPracticallySame(x2))
+                {
+                    var i = 0;
+                    while (i < 16 && !x.IsPracticallySame(Math.Round(x, i)))
+                    {
+                        i++;
+                    }
+                    var j = 0;
+                    while (j < 16 && !x2.IsPracticallySame(Math.Round(x2, j)))
+                    {
+                        j++;
+                    }
+                    //i < j. x3 is already equal to x.
+                    if (i > j)
+                    {
+                        x3 = x2;
+                    }
+                    if( i == j) throw new NotImplementedException("X values are same length, but not equal.");
+                }
+                if (!y.IsPracticallySame(y2))
+                {
+                    var i = 0;
+                    while (i < 16 && !y.IsPracticallySame(Math.Round(y, i)))
+                    {
+                        i++;
+                    }
+                    var j = 0;
+                    while (j < 16 && !y2.IsPracticallySame(Math.Round(y2, j)))
+                    {
+                        j++;
+                    }
+                    //i < j. x3 is already equal to x.
+                    if (i > j)
+                    {
+                        y3 = y2;
+                    }
+                    if (i == j) throw new NotImplementedException("X values are same length, but not equal.");
+                }
+                intersectionPoint = new Point(x3, y3);
                 return true;
+
             }
 
             // 5. Otherwise, the two line segments are not parallel but do not intersect.
