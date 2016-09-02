@@ -806,9 +806,9 @@ namespace TVGL
             //1.Subdivide the edges of the polygons at their intersection points.
             //2.Select those subdivided edges that lie inside—or outside—the other polygon.
             //3.Join the selected edges to form the contours of the result polygon and compute the child contours.
+            var unsortedSweepEvents = new List<SweepEvent>();
 
             #region Build Sweep PathID and Order Them Lexicographically
-            var unsortedSweepEvents = new List<SweepEvent>();
             //Build the sweep events and order them lexicographically (Low X to High X, then Low Y to High Y).
             foreach (var path in subject)
             {
@@ -917,6 +917,10 @@ namespace TVGL
                     if (goBack1 || goBack2) continue;
 
                     //First, we need to check if the this sweepEvent has the same Point and is collinear with the next line. 
+                    //To determine collinearity, we need to make sure we are using the same criteria as everywhere else in the code, and here-in lies the problem
+                    //1. m1 != m2 but LineLineIntersection function says collinear. 
+                    //2. m1 =! m2 && LineLineIntersection says non-collinear, but yintercept at shorter lines other.X, yeilds shorter line's other point.
+                    //Which should we use? Should we adjust tolerances? - We need to use the least precise method, which should be the last one.
                     if (nextSweepEvent != null && nextSweepEvent.Point == sweepEvent.Point)
                     {
                         //If the slopes are practically the same then the lines are collinear 
@@ -935,6 +939,12 @@ namespace TVGL
                                 sweepEvent.DuplicateEvent = nextSweepEvent;
                                 nextSweepEvent.DuplicateEvent = sweepEvent;
                                 SetInformation(sweepEvent, null, booleanOperationType, true);
+                            }
+                            else
+                            {
+                                //Set information updates the OtherInOut property and uses this to determine if the sweepEvent is part of the result.
+                                //Select the closest edge downward that belongs to the other polygon.
+                                SetInformation(sweepEvent, sweepLines.PreviousOther(index), booleanOperationType);
                             }
                         }
                         else
