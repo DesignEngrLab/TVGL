@@ -999,7 +999,7 @@ namespace TVGL
                     {
                         x3 = x2;
                     }
-                    if( i == j) throw new NotImplementedException("X values are same length, but not equal.");
+                    //if i == j, just use the first x.
                 }
                 if (!y.IsPracticallySame(y2))
                 {
@@ -1018,7 +1018,7 @@ namespace TVGL
                     {
                         y3 = y2;
                     }
-                    if (i == j) throw new NotImplementedException("X values are same length, but not equal.");
+                    //if i == j, just use the first y.
                 }
                 intersectionPoint = new Point(x3, y3);
                 return true;

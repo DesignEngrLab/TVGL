@@ -312,11 +312,21 @@ namespace TVGL
         /// <param name="clip"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
+        {
+            if (clip == null) return ClipperInt.PolygonOperations.Union(new Paths(subject), null);
+            else return ClipperInt.PolygonOperations.Union(new Paths(subject), new Paths(clip));
+        }
+
+        /// <summary>
+        /// Union. Joins paths that are touching into merged larger paths.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union2(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
-            //if (clip == null) return ClipperInt.PolygonOperations.Union(new Paths(subject), null);
-            //else return ClipperInt.PolygonOperations.Union(new Paths(subject), new Paths(clip));
-
             const PolyFillType fillMethod = PolyFillType.Positive;
             var solution = new Paths();
 
@@ -623,7 +633,7 @@ namespace TVGL
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <returns></returns>
-        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
+        public static List<List<Point>> Union3(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
             //var subject2 = new List<List<Point>>();
             //foreach (var path in subject)

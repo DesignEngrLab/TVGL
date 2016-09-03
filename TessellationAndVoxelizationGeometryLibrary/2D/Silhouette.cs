@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using StarMathLib;
 
 namespace TVGL
@@ -17,7 +16,7 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal)
+        public static List<List<Point>> Run2(TessellatedSolid ts, double[] normal)
         {
             //Get the negative faces
             var negativeFaces = new List<PolygonalFace>();
@@ -49,29 +48,17 @@ namespace TVGL
                 if (area.IsNegligible(0.0000001)) continue; //Higher tolerance because of the conversion to intPoints in the Union function
                 //Make this polygon positive CCW
                 if (area < 0) nextPolygon.Reverse();
-                if (negativeFaces.Count == 22) negativeFaces = negativeFaces; 
                 var oldPolygonList = new List<List<Point>>(polygonList);
-                //try
-                //{
-                    polygonList = PolygonOperations.Union(oldPolygonList, new List<List<Point>> {nextPolygon});
+                polygonList = PolygonOperations.Union(oldPolygonList, new List<List<Point>> {nextPolygon});
+
+                //Check to make sure the area got larger
                 var currentArea = polygonList.Sum(p => MiscFunctions.AreaOfPolygon(p));
-                if(currentArea < previousArea) throw new Exception("Adding a triangle should never decrease the area");
+                if (currentArea < previousArea) throw new Exception("Adding a triangle should never decrease the area");
                 previousArea = currentArea; //ToDo: Remove this check once it is working properly.
-                //}
-                //catch
-                //{
-                //    oldPolygonList.Add(nextPolygon);
-                //    return oldPolygonList;
-                //}
             }
-            //try
-            //{
-                //polygonList = PolygonOperations.Union(polygonList);
-            //}
-            //catch
-            //{
-            //    return polygonList;
-            //}
+
+            polygonList = PolygonOperations.Union(polygonList);
+
             var polygons = polygonList.Select(path => new Polygon(path)).ToList();
 
             //Get the minimum line length to use for the offset.
@@ -118,7 +105,7 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run2(TessellatedSolid ts, double[] normal)
+        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal)
         {
             if (ts.Errors?.SingledSidedEdges != null)
             {
@@ -164,7 +151,6 @@ namespace TVGL
             //Get the surface positive and negative loops
             var solution = new List<List<Point>>();
             var loopCount = 0;
-            var allPaths = new List<List<Point>>();
             foreach (var surface in seperateSurfaces)
             {
                 //Get the surface inner and outer edges
@@ -340,7 +326,6 @@ namespace TVGL
                         }
                     }
                     if (errorCount > correctCount) loop.Reverse();
-                    //if(alreadyReversed) loop.Reverse(); //Should have been other direction. Internal reverse was just to complete loop
 
                     surfacePaths.Add(MiscFunctions.Get2DProjectionPoints(loop, normal, false).ToList());
                 }
@@ -356,25 +341,25 @@ namespace TVGL
                         significantPaths.Add(path);
                     }
                 }
-                if(area  < 0) throw new Exception("Area for each surface must be positive");
                 if (!significantPaths.Any()) continue;
-                //var simplifiedPaths = new List<List<Point>>();
-                //foreach (var significantPath in significantPaths)
-                //{
-                //    simplifiedPaths.AddRange(PolygonOperations.SimplifyForSilhouette(significantPath));
-                //}
+                List<List<Point>> surfaceUnion;
+                if (area < 0)
+                {
+                    significantPaths = PolygonOperations.UnionEvenOdd(significantPaths);
+                    area = significantPaths.Sum(path => MiscFunctions.AreaOfPolygon(path));
+                    if (area < 0) throw new Exception("Area for each surface must be positive");
+                }
 
                 //Union at the surface level to correctly capture holes
-                List<List<Point>> surfaceUnion;
-                try
-                {
+                //try
+                //{
                     surfaceUnion = PolygonOperations.Union(significantPaths);
-                }
-                catch
-                {
-                    solution = significantPaths;
-                    break;
-                }
+                //}
+                //catch
+                //{
+                //    solution = significantPaths;
+                //    break;
+                //}
                 if (!surfaceUnion.Any()) continue;
                 if (loopCount == 0)
                 {
@@ -383,30 +368,28 @@ namespace TVGL
                 else
                 {
                     var oldSolution = new List<List<Point>>(solution);
-                    try
-                    {
+                    //try
+                    //{
                         solution = PolygonOperations.Union(oldSolution, surfaceUnion);
-                    }
-                    catch
-                    {
-                        oldSolution.AddRange(surfaceUnion);
-                        solution = oldSolution;
-                        break;
-                    }
+                    //}
+                    //catch
+                    //{
+                        //oldSolution.AddRange(surfaceUnion);
+                        //solution = oldSolution;
+                        //break;
+                    //}
 
                 }
                 loopCount ++;
                 
             }
 
-            //Remove tiny polygons.
-            var polygons = solution.Select(path => new Polygon(path)).ToList();
 
             //Remove tiny polygons.
             var count = 0;
-            for (var i = 0; i < polygons.Count; i++)
+            for (var i = 0; i < solution.Count; i++)
             {
-                if (!polygons[i].Area.IsNegligible(ts.SurfaceArea / 10000)) continue;
+                if (!MiscFunctions.AreaOfPolygon(solution[i]).IsNegligible(ts.SurfaceArea / 10000)) continue;
                 solution.RemoveAt(i - count);
                 count++;
             }
