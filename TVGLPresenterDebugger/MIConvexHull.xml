@@ -4,110 +4,20 @@
         <name>MIConvexHull</name>
     </assembly>
     <members>
-        <member name="T:MIConvexHull.PointTranslationType">
+        <member name="F:MIConvexHull.Constants.DefaultPlaneDistanceTolerance">
             <summary>
-            Determines the type of the point translation to use.
-            This is useful for handling "degenerate" data (i.e. uniform grids of points).
+            The default plane distance tolerance
             </summary>
         </member>
-        <member name="F:MIConvexHull.PointTranslationType.None">
+        <member name="F:MIConvexHull.Constants.StartingDeltaDotProductInSimplex">
             <summary>
-            Nothing happens.
+            The starting delta dot product in simplex
             </summary>
         </member>
-        <member name="F:MIConvexHull.PointTranslationType.TranslateInternal">
+        <member name="F:MIConvexHull.Constants.ConnectorTableSize">
             <summary>
-            The points are only translated internally, the vertexes in the result
-            retain their original coordinates.
+            The connector table size
             </summary>
-        </member>
-        <member name="T:MIConvexHull.ConvexHullComputationConfig">
-            <summary>
-            Configuration of the convex hull computation.
-            </summary>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullComputationConfig.#ctor">
-            <summary>
-            Create the config with default values set.
-            </summary>
-        </member>
-        <member name="P:MIConvexHull.ConvexHullComputationConfig.PlaneDistanceTolerance">
-            <summary>
-            This value is used to determine which vertexes are eligible
-            to be part of the convex hull.
-            As an example, imagine a line with 3 points:
-            A ---- C ---- B
-            Points A and B were already determined to be on the hull.
-            Now, the point C would need to be at least 'PlaneDistanceTolerance'
-            away from the line determined by A and B to be also considered
-            a hull point.
-            Default = 0.00001
-            </summary>
-            <value>The plane distance tolerance.</value>
-        </member>
-        <member name="P:MIConvexHull.ConvexHullComputationConfig.PointTranslationType">
-            <summary>
-            Determines what method to use for point translation.
-            This helps with handling "degenerate" data such as uniform grids.
-            Default = None
-            </summary>
-            <value>The type of the point translation.</value>
-        </member>
-        <member name="P:MIConvexHull.ConvexHullComputationConfig.PointTranslationGenerator">
-            <summary>
-            A function used to generate translation direction.
-            This function is called for each coordinate of each point as
-            Position[i] -&gt; Position[i] + PointTranslationGenerator()
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            From my testing the function should be set up so that the
-            translation magnitude is lower than the PlaneDistanceTolerance.
-            Otherwise, flat faces in triangulation could be created as a result.
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            An example of the translation function that would shift each coordinate
-            in 0.0000005 in either direction is:
-            var rnd = new Random(0); // use the same seed for each computation
-            f = () =&gt; 0.000001 * rnd.NextDouble() - 0.0000005;
-            This is implemented by the
-            ConvexHullComputationConfig.RandomShiftByRadius function.
-            Default = null
-            </summary>
-            <value>The point translation generator.</value>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullComputationConfig.Closure(System.Double,System.Random)">
-            <summary>
-            Closures the specified radius.
-            </summary>
-            <param name="radius">The radius.</param>
-            <param name="rnd">The random.</param>
-            <returns>Func&lt;System.Double&gt;.</returns>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullComputationConfig.RandomShiftByRadius(System.Double,System.Nullable{System.Int32})">
-            <summary>
-            Creates values in range (-radius / 2, radius / 2)
-            </summary>
-            <param name="radius">The radius.</param>
-            <param name="randomSeed">If null, initialized to random default System.Random value</param>
-            <returns>Func&lt;System.Double&gt;.</returns>
-        </member>
-        <member name="T:MIConvexHull.TriangulationComputationConfig">
-            <summary>
-            Configuration of the triangulation computation.
-            </summary>
-            <seealso cref="T:MIConvexHull.ConvexHullComputationConfig" />
-        </member>
-        <member name="M:MIConvexHull.TriangulationComputationConfig.#ctor">
-            <summary>
-            Create the config with default values set.
-            </summary>
-        </member>
-        <member name="P:MIConvexHull.TriangulationComputationConfig.ZeroCellVolumeTolerance">
-            <summary>
-            If using PointTranslationType.TranslateInternal, this value is
-            used to determine which boundary cells have zero volume after the
-            points get "translated back".
-            Default value is 0.00001.
-            </summary>
-            <value>The zero cell volume tolerance.</value>
         </member>
         <member name="T:MIConvexHull.SimpleList`1">
             <summary>
@@ -452,32 +362,38 @@
             Factory class for computing convex hulls.
             </summary>
         </member>
-        <member name="M:MIConvexHull.ConvexHull.Create``2(System.Collections.Generic.IList{``0},MIConvexHull.ConvexHullComputationConfig)">
+        <member name="M:MIConvexHull.ConvexHull.Create``2(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Creates a convex hull of the input data.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <typeparam name="TFace">The type of the t face.</typeparam>
             <param name="data">The data.</param>
-            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
-            <returns>ConvexHull&lt;TVertex, TFace&gt;.</returns>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <returns>
+            ConvexHull&lt;TVertex, TFace&gt;.
+            </returns>
         </member>
-        <member name="M:MIConvexHull.ConvexHull.Create``1(System.Collections.Generic.IList{``0},MIConvexHull.ConvexHullComputationConfig)">
+        <member name="M:MIConvexHull.ConvexHull.Create``1(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Creates a convex hull of the input data.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <param name="data">The data.</param>
-            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
-            <returns>ConvexHull&lt;TVertex, DefaultConvexFace&lt;TVertex&gt;&gt;.</returns>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <returns>
+            ConvexHull&lt;TVertex, DefaultConvexFace&lt;TVertex&gt;&gt;.
+            </returns>
         </member>
-        <member name="M:MIConvexHull.ConvexHull.Create(System.Collections.Generic.IList{System.Double[]},MIConvexHull.ConvexHullComputationConfig)">
+        <member name="M:MIConvexHull.ConvexHull.Create(System.Collections.Generic.IList{System.Double[]},System.Double)">
             <summary>
             Creates a convex hull of the input data.
             </summary>
             <param name="data">The data.</param>
-            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
-            <returns>ConvexHull&lt;DefaultVertex, DefaultConvexFace&lt;DefaultVertex&gt;&gt;.</returns>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <returns>
+            ConvexHull&lt;DefaultVertex, DefaultConvexFace&lt;DefaultVertex&gt;&gt;.
+            </returns>
         </member>
         <member name="T:MIConvexHull.ConvexHull`2">
             <summary>
@@ -503,13 +419,16 @@
             </summary>
             <value>The faces.</value>
         </member>
-        <member name="M:MIConvexHull.ConvexHull`2.Create(System.Collections.Generic.IList{`0},MIConvexHull.ConvexHullComputationConfig)">
+        <member name="M:MIConvexHull.ConvexHull`2.Create(System.Collections.Generic.IList{`0},System.Double)">
             <summary>
             Creates the convex hull.
             </summary>
             <param name="data">The data.</param>
-            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
-            <returns>ConvexHull&lt;TVertex, TFace&gt;.</returns>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <returns>
+            ConvexHull&lt;TVertex, TFace&gt;.
+            </returns>
+            <exception cref="T:System.ArgumentNullException">The supplied data is null.</exception>
             <exception cref="T:System.ArgumentNullException">data</exception>
         </member>
         <member name="T:MIConvexHull.ConvexHullAlgorithm">
@@ -636,7 +555,7 @@
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <returns>TFace[].</returns>
         </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.GetConvexHull``2(System.Collections.Generic.IList{``0},MIConvexHull.ConvexHullComputationConfig)">
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.GetConvexHull``2(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             The main function for the Convex Hull algorithm. It is static, but it creates
             an instantiation of this class in order to allow for parallel execution.
@@ -645,34 +564,26 @@
             <typeparam name="TVertex">The type of the vertices in the data.</typeparam>
             <typeparam name="TFace">The desired type of the faces.</typeparam>
             <param name="data">The data is the vertices as a collection of IVertices.</param>
-            <param name="config">The configuration. If null, default ConvexHullComputationConfig.GetDefault() is used.</param>
-            <returns>MIConvexHull.ConvexHull&lt;TVertex, TFace&gt;.</returns>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <returns>
+            MIConvexHull.ConvexHull&lt;TVertex, TFace&gt;.
+            </returns>
         </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.#ctor(MIConvexHull.IVertex[],System.Boolean,MIConvexHull.ConvexHullComputationConfig)">
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.#ctor(MIConvexHull.IVertex[],System.Boolean,System.Double)">
             <summary>
-            Initializes a new instance of the <see cref="T:MIConvexHull.ConvexHullAlgorithm"/> class.
+            Initializes a new instance of the <see cref="T:MIConvexHull.ConvexHullAlgorithm" /> class.
             </summary>
             <param name="vertices">The vertices.</param>
             <param name="lift">if set to <c>true</c> [lift].</param>
-            <param name="config">The configuration.</param>
-            <exception cref="T:System.InvalidOperationException">
-            PointTranslationGenerator cannot be null if PointTranslationType is enabled.
+            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <exception cref="T:System.InvalidOperationException">Dimension of the input must be 2 or greater.</exception>
+            <exception cref="T:System.ArgumentException">There are too few vertices (m) for the n-dimensional space. (m must be greater  +
+            than the n, but m is  + NumberOfVertices +  and n is  + NumOfDimensions</exception>
+            <exception cref="T:System.InvalidOperationException">PointTranslationGenerator cannot be null if PointTranslationType is enabled.
             or
-            Dimension of the input must be 2 or greater.
-            </exception>
+            Dimension of the input must be 2 or greater.</exception>
             <exception cref="T:System.ArgumentException">There are too few vertices (m) for the n-dimensional space. (m must be greater " +
-                                "than the n, but m is " + Vertices.Length + " and n is " + Dimension</exception>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.GetConvexHull">
-            <summary>
-            Gets/calculates the convex hull. This is 
-            </summary>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.InitializePositions(MIConvexHull.ConvexHullComputationConfig)">
-            <summary>
-            Initialize the vertex positions based on the translation type from config.
-            </summary>
-            <param name="config">The configuration.</param>
+            "than the n, but m is " + NumberOfVertices + " and n is " + Dimension</exception>
         </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.DetermineDimension">
             <summary>
@@ -681,12 +592,25 @@
             <returns>System.Int32.</returns>
             <exception cref="T:System.ArgumentException">Invalid input data (non-uniform dimension).</exception>
         </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.UpdateAdjacency(MIConvexHull.ConvexFaceInternal,MIConvexHull.ConvexFaceInternal)">
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.GetConvexHull">
             <summary>
-            Check if 2 faces are adjacent and if so, update their AdjacentFaces array.
+            Gets/calculates the convex hull. This is 
             </summary>
-            <param name="l">The l.</param>
-            <param name="r">The r.</param>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.SerializeVerticesToPositions">
+            <summary>
+            Serializes the vertices into the 1D array, Positions. The 1D array has much quicker access in C#.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.FindBoundingBoxPoints">
+            <summary>
+            Finds the bounding box points.
+            </summary>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.ShiftAndScalePositions">
+            <summary>
+            Shifts and scales the Positions to avoid future errors. This does not alter the original data.
+            </summary>
         </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.CreateInitialSimplex">
             <summary>
@@ -698,36 +622,27 @@
             vertices (thus no savings there), 2) the creation of the face normal is prone to error.
             </summary>
         </member>
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.FindInitialPoints">
+            <summary>
+            Finds (dimension + 1) initial points.
+            </summary>
+            <param name="extremes"></param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.UpdateAdjacency(MIConvexHull.ConvexFaceInternal,MIConvexHull.ConvexFaceInternal)">
+            <summary>
+            Check if 2 faces are adjacent and if so, update their AdjacentFaces array.
+            </summary>
+            <param name="l">The l.</param>
+            <param name="r">The r.</param>
+        </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.FindBeyondVertices(MIConvexHull.ConvexFaceInternal)">
             <summary>
             Used in the "initialization" code.
             </summary>
             <param name="face">The face.</param>
         </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.calcMaxDotProduct(System.Collections.Generic.List{System.Double[]},System.Double[])">
-            <summary>
-            Calculates the maximum dot product.
-            </summary>
-            <param name="edgeUnitVectors">The edge unit vectors.</param>
-            <param name="newUnitVector">The new unit vector.</param>
-            <returns>System.Double.</returns>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.makeUnitVector(System.Int32,System.Int32)">
-            <summary>
-            Makes the unit vector.
-            </summary>
-            <param name="v1">The v1.</param>
-            <param name="v2">The v2.</param>
-            <returns>System.Double[].</returns>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.FindBoundingBoxPoints(MIConvexHull.IVertex[])">
-            <summary>
-            Finds the bounding box points.
-            </summary>
-            <param name="vertices">The vertices.</param>
-            <returns>List&lt;List&lt;System.Int32&gt;&gt;.</returns>
-        </member>
-        <member name="F:MIConvexHull.ConvexHullAlgorithm.Dimension">
+        <member name="F:MIConvexHull.ConvexHullAlgorithm.NumOfDimensions">
             <summary>
             Corresponds to the dimension of the data.
             When the "lifted" hull is computed, Dimension is automatically incremented by one.
@@ -851,11 +766,6 @@
             especially for higher dimensions.
             </summary>
         </member>
-        <member name="F:MIConvexHull.ConvexHullAlgorithm.ConnectorTableSize">
-            <summary>
-            The connector table size
-            </summary>
-        </member>
         <member name="F:MIConvexHull.ConvexHullAlgorithm.ObjectManager">
             <summary>
             Manages the memory allocations and storage of unused objects.
@@ -867,33 +777,19 @@
             Helper class for handling math related stuff.
             </summary>
         </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.GetDelaunayTriangulation``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.GetDelaunayTriangulation``2(System.Collections.Generic.IList{``0})">
             <summary>
             Computes the Delaunay triangulation.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <typeparam name="TCell">The type of the t cell.</typeparam>
             <param name="data">The data.</param>
-            <param name="config">The configuration.</param>
             <returns>TCell[].</returns>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.PostProcessTriangulation(MIConvexHull.TriangulationComputationConfig)">
-            <summary>
-            Remove the upper faces from the hull.
-            Remove empty boundary cells if shifting was used.
-            </summary>
-            <param name="config">The configuration.</param>
         </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.RemoveUpperFaces">
             <summary>
             Removes up facing Tetrahedrons from the triangulation.
             </summary>
-        </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.RemoveEmptyBoundaryCells(System.Double)">
-            <summary>
-            Removes the empty boundary cells that might have been created using PointTranslationType.TranslateInternal.
-            </summary>
-            <param name="tolerance">The tolerance.</param>
         </member>
         <member name="T:MIConvexHull.IVertex">
             <summary>
@@ -989,40 +885,35 @@
             <param name="f">The f.</param>
             <returns>The vertex is "over face" if the result is positive.</returns>
         </member>
-        <member name="M:MIConvexHull.MathHelper.LUFactor(System.Double[],System.Int32,System.Int32[],System.Double[])">
+        <member name="M:MIConvexHull.MathHelper.VectorBetweenVertices(System.Int32,System.Int32)">
             <summary>
-            Lus the factor.
+            Returns the vector the between vertices.
             </summary>
-            <param name="data">The data.</param>
-            <param name="order">The order.</param>
-            <param name="ipiv">The ipiv.</param>
-            <param name="vecLUcolj">The vec l ucolj.</param>
+            <param name="fromIndex">From index.</param>
+            <param name="toIndex">To index.</param>
+            <param name="target">The target.</param>
+            <returns></returns>
         </member>
-        <member name="M:MIConvexHull.MathHelper.FindNormal(System.Int32[],System.Double[])">
+        <member name="M:MIConvexHull.MathHelper.VectorBetweenVertices(System.Int32,System.Int32,System.Double[])">
             <summary>
-            Finds the normal.
+            Returns the vector the between vertices.
+            </summary>
+            <param name="fromIndex">From index.</param>
+            <param name="toIndex">To index.</param>
+            <param name="target">The target.</param>
+            <returns></returns>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.FindNormalVector(System.Int32[],System.Double[])">
+            <summary>
+            Finds normal vector of a hyper-plane given by vertices.
+            Stores the results to normalData.
             </summary>
             <param name="vertices">The vertices.</param>
-            <param name="normal">The normal.</param>
+            <param name="normalData">The normal data.</param>
         </member>
-        <member name="M:MIConvexHull.MathHelper.LengthSquared(System.Double[])">
+        <member name="M:MIConvexHull.MathHelper.FindNormalVector2D(System.Int32[],System.Double[])">
             <summary>
-            Squared length of the vector.
-            </summary>
-            <param name="x">The x.</param>
-            <returns>System.Double.</returns>
-        </member>
-        <member name="M:MIConvexHull.MathHelper.SubtractFast(System.Int32,System.Int32,System.Double[])">
-            <summary>
-            Subtracts vectors x and y and stores the result to target.
-            </summary>
-            <param name="x">The x.</param>
-            <param name="y">The y.</param>
-            <param name="target">The target.</param>
-        </member>
-        <member name="M:MIConvexHull.MathHelper.FindNormalVector4D(System.Int32[],System.Double[])">
-            <summary>
-            Finds 4D normal vector.
+            Finds 2D normal vector.
             </summary>
             <param name="vertices">The vertices.</param>
             <param name="normal">The normal.</param>
@@ -1034,9 +925,9 @@
             <param name="vertices">The vertices.</param>
             <param name="normal">The normal.</param>
         </member>
-        <member name="M:MIConvexHull.MathHelper.FindNormalVector2D(System.Int32[],System.Double[])">
+        <member name="M:MIConvexHull.MathHelper.FindNormalVector4D(System.Int32[],System.Double[])">
             <summary>
-            Finds 2D normal vector.
+            Finds 4D normal vector.
             </summary>
             <param name="vertices">The vertices.</param>
             <param name="normal">The normal.</param>
@@ -1048,61 +939,31 @@
             <param name="vertices">The vertices.</param>
             <param name="normal">The normal.</param>
         </member>
-        <member name="M:MIConvexHull.MathHelper.FindNormalVector(System.Int32[],System.Double[])">
+        <member name="M:MIConvexHull.MathHelper.GetSimplexVolume(System.Double[][],System.Int32,System.Double)">
             <summary>
-            Finds normal vector of a hyper-plane given by vertices.
-            Stores the results to normalData.
+            Gets the simplex volume. Prior to having enough edge vectors, the method pads the remaining with all
+            "other numbers". So, yes, this method is not really finding the volume. But a relative volume-like measure. It 
+            uses the magnitude of the determinant as the volume stand-in following the Cayley-Menger theorem.
             </summary>
-            <param name="vertices">The vertices.</param>
-            <param name="normalData">The normal data.</param>
+            <param name="edgeVectors">The edge vectors.</param>
+            <param name="lastIndex">The last index.</param>
+            <returns></returns>
         </member>
-        <member name="T:MIConvexHull.MathHelper.SimplexVolumeBuffer">
-            <summary>
-            Helper class with "buffers" for computing simplex volume.
-            </summary>
-        </member>
-        <member name="F:MIConvexHull.MathHelper.SimplexVolumeBuffer.Data">
-            <summary>
-            The data
-            </summary>
-        </member>
-        <member name="F:MIConvexHull.MathHelper.SimplexVolumeBuffer.Dimension">
-            <summary>
-            The dimension
-            </summary>
-        </member>
-        <member name="F:MIConvexHull.MathHelper.SimplexVolumeBuffer.Helper">
-            <summary>
-            The helper
-            </summary>
-        </member>
-        <member name="F:MIConvexHull.MathHelper.SimplexVolumeBuffer.Pivots">
-            <summary>
-            The pivots
-            </summary>
-        </member>
-        <member name="M:MIConvexHull.MathHelper.SimplexVolumeBuffer.#ctor(System.Int32)">
-            <summary>
-            Initializes a new instance of the <see cref="T:MIConvexHull.MathHelper.SimplexVolumeBuffer"/> class.
-            </summary>
-            <param name="dimension">The dimension.</param>
-        </member>
-        <member name="M:MIConvexHull.MathHelper.GetSimplexVolume(MIConvexHull.ConvexFaceInternal,System.Collections.Generic.IList{MIConvexHull.IVertex},MIConvexHull.MathHelper.SimplexVolumeBuffer)">
-            <summary>
-            Computes the volume of an n-dimensional simplex.
-            Buffer needs to be array of shape Dimension x Dimension.
-            </summary>
-            <param name="cell">The cell.</param>
-            <param name="vertices">The vertices.</param>
-            <param name="buffer">Helper for the calculation to avoid unnecessary allocations.</param>
-            <returns>System.Double.</returns>
-        </member>
-        <member name="M:MIConvexHull.MathHelper.DeterminantDestructive(MIConvexHull.MathHelper.SimplexVolumeBuffer)">
+        <member name="M:MIConvexHull.MathHelper.DeterminantDestructive(System.Double[])">
             <summary>
             Determinants the destructive.
             </summary>
             <param name="buff">The buff.</param>
             <returns>System.Double.</returns>
+        </member>
+        <member name="M:MIConvexHull.MathHelper.LUFactor(System.Double[],System.Int32,System.Int32[],System.Double[])">
+            <summary>
+            Lus the factor.
+            </summary>
+            <param name="data">The data.</param>
+            <param name="order">The order.</param>
+            <param name="ipiv">The ipiv.</param>
+            <param name="vecLUcolj">The vec l ucolj.</param>
         </member>
         <member name="T:MIConvexHull.ObjectManager">
             <summary>
@@ -1242,7 +1103,7 @@
             </summary>
             <value>The cells.</value>
         </member>
-        <member name="M:MIConvexHull.DelaunayTriangulation`2.Create(System.Collections.Generic.IList{`0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.DelaunayTriangulation`2.Create(System.Collections.Generic.IList{`0})">
             <summary>
             Creates the Delaunay triangulation of the input data.
             </summary>
@@ -1269,7 +1130,7 @@
             Factory class for creating triangulations.
             </summary>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``1(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``1(System.Collections.Generic.IList{``0})">
             <summary>
             Creates the Delaunay triangulation of the input data.
             </summary>
@@ -1278,7 +1139,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>ITriangulation&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateDelaunay(System.Collections.Generic.IList{System.Double[]},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay(System.Collections.Generic.IList{System.Double[]})">
             <summary>
             Creates the Delaunay triangulation of the input data.
             </summary>
@@ -1286,7 +1147,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>ITriangulation&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``2(System.Collections.Generic.IList{``0})">
             <summary>
                 Creates the Delaunay triangulation of the input data.
             </summary>
@@ -1296,7 +1157,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns></returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``3(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``3(System.Collections.Generic.IList{``0})">
             <summary>
                 Create the voronoi mesh.
             </summary>
@@ -1307,7 +1168,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns></returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``1(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``1(System.Collections.Generic.IList{``0})">
             <summary>
                 Create the voronoi mesh.
             </summary>
@@ -1316,7 +1177,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns></returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateVoronoi(System.Collections.Generic.IList{System.Double[]},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi(System.Collections.Generic.IList{System.Double[]})">
             <summary>
                 Create the voronoi mesh.
             </summary>
@@ -1324,7 +1185,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns></returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``2(System.Collections.Generic.IList{``0})">
             <summary>
                 Create the voronoi mesh.
             </summary>
@@ -1400,7 +1261,7 @@
             A factory class for creating a Voronoi mesh.
             </summary>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh.Create``3(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.VoronoiMesh.Create``3(System.Collections.Generic.IList{``0})">
             <summary>
             Create the voronoi mesh.
             </summary>
@@ -1411,7 +1272,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>VoronoiMesh&lt;TVertex, TCell, TEdge&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh.Create``1(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.VoronoiMesh.Create``1(System.Collections.Generic.IList{``0})">
             <summary>
             Create the voronoi mesh.
             </summary>
@@ -1420,7 +1281,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>VoronoiMesh&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;, VoronoiEdge&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh.Create(System.Collections.Generic.IList{System.Double[]},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.VoronoiMesh.Create(System.Collections.Generic.IList{System.Double[]})">
             <summary>
             Create the voronoi mesh.
             </summary>
@@ -1428,7 +1289,7 @@
             <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>VoronoiMesh&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;, VoronoiEdge&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh.Create``2(System.Collections.Generic.IList{``0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.VoronoiMesh.Create``2(System.Collections.Generic.IList{``0})">
             <summary>
             Create the voronoi mesh.
             </summary>
@@ -1464,7 +1325,7 @@
             </summary>
             <value>The edges.</value>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh`3.Create(System.Collections.Generic.IList{`0},MIConvexHull.TriangulationComputationConfig)">
+        <member name="M:MIConvexHull.VoronoiMesh`3.Create(System.Collections.Generic.IList{`0})">
             <summary>
             Create a Voronoi diagram of the input data.
             </summary>

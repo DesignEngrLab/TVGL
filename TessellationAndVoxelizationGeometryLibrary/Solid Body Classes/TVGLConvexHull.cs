@@ -32,17 +32,7 @@ namespace TVGL
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
         public TVGLConvexHull(TessellatedSolid ts)
         {
-            Succeeded = false;
-
-            //Always do the config, since it was breaking about 50% of the time without.
-            var config = new ConvexHullComputationConfig
-            {
-                PointTranslationType = PointTranslationType.TranslateInternal,
-                PlaneDistanceTolerance = ts.SameTolerance,
-                PointTranslationGenerator = ConvexHullComputationConfig.RandomShiftByRadius(Constants.ConvexHullRadiusForRobustness)
-            };
-
-            var convexHull = ConvexHull.Create(ts.Vertices, config);
+            var convexHull = ConvexHull.Create(ts.Vertices);
             Vertices = convexHull.Points.ToArray();
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[3];
@@ -62,35 +52,6 @@ namespace TVGL
             Faces = convexHullFaceList.ToArray();
             Edges = MakeEdges(Faces, Vertices);
             TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
-            if (ts.Volume < 0.1)
-            {
-                //This solid has a small volume. Relax the constraint.
-                Succeeded = Volume > ts.Volume || Volume.IsPracticallySame(ts.Volume, ts.Volume / 10);
-            }
-            else
-            {
-                //Use a loose tolerance based on the size of the solid, since accuracy is not terribly important
-                Succeeded = Volume > ts.Volume || Volume.IsPracticallySame(ts.Volume, ts.Volume / 1000);
-            }
-
-
-            if (Succeeded) return;
-            //Presenter.ShowWithConvexHull(ts);
-            //Else, why did it not succeed?
-            if (Volume < 0)
-            {
-                Debug.WriteLine("ConvexHullCreation failed to create a positive volume");
-            }
-            else if (Volume < ts.Volume)
-            {
-                var diff = ts.Volume - Volume;
-                Debug.WriteLine("ConvexHullCreation failed to created a larger volume than the solid by " + diff +
-                                " [mm^3]. The Solid's volume was " + ts.Volume + " [mm^3].");
-            }
-            else
-            {
-                Debug.WriteLine("Error in implementation of ConvexHull3D or Volume Calculation");
-            }
         }
 
         private static Edge[] MakeEdges(IEnumerable<PolygonalFace> faces, IList<Vertex> vertices)
