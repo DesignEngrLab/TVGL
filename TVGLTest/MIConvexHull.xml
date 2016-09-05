@@ -555,6 +555,16 @@
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <returns>TFace[].</returns>
         </member>
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.Return2DResultInOrder``2(System.Collections.Generic.IList{``0})">
+            <summary>
+            For 2D only: Returns the result in counter-clockwise order starting with the element with the lowest X value.
+            If there are multiple vertices with the same minimum X, then the one with the lowest Y is chosen.
+            </summary>
+            <typeparam name="TVertex">The type of the vertex.</typeparam>
+            <typeparam name="TFace">The type of the face.</typeparam>
+            <param name="data">The data.</param>
+            <returns></returns>
+        </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.GetConvexHull``2(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             The main function for the Convex Hull algorithm. It is static, but it creates

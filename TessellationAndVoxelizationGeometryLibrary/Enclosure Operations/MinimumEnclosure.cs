@@ -184,7 +184,7 @@ namespace TVGL
         {
             #region Initialization
 
-            var cvxPoints = pointsAreConvexHull ? points : ConvexHull2DMinimal(points);
+            var cvxPoints = pointsAreConvexHull ? points : ConvexHull2D(points);
             /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point */
             //First, check to make sure the given convex hull has the min x-value at 0.
             var minX = cvxPoints[0].X;
