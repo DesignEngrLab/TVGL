@@ -32,7 +32,7 @@ namespace TVGL
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
         public TVGLConvexHull(TessellatedSolid ts)
         {
-            var convexHull = ConvexHull.Create(ts.Vertices);
+            var convexHull = ConvexHull.Create(ts.Vertices, ts.SameTolerance);
             Vertices = convexHull.Points.ToArray();
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[3];
