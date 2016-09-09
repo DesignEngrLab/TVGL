@@ -88,7 +88,7 @@ namespace TVGL
             {
                 X = value[0];
                 Y = value[1];
-                Z = value.GetLength(0) > 2 ? value[2] : double.NaN;
+                Z = value.GetLength(0) > 2 ? value[2] : 0.0;
             }
         }
 
@@ -121,7 +121,7 @@ namespace TVGL
         /// </summary>
         /// <param name="v">The v.</param>
         public Point(Vertex v)
-            : this(v, v.Position[0], v.Position[1], double.NaN)
+            : this(v, v.Position[0], v.Position[1], 0.0)
         {
         }
 
@@ -132,7 +132,7 @@ namespace TVGL
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         public Point(Vertex vertex, double x, double y)
-            : this(vertex, x, y, double.NaN)
+            : this(vertex, x, y, 0.0)
         {
         }
 

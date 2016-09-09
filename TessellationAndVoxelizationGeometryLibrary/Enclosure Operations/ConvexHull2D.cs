@@ -47,10 +47,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the 2D convex hull for given list of points. This only works on the x and y coordinates of the
-        /// points and requires that the Z values be NaN. The term maximal refers to the fact that all points that lie on the convex hull are included in the result.
-        /// This is useful if one if trying to identify such points. Otherwise, if the shape is what is important than the
-        /// minimal approach is preferred.
+        /// Returns the 2D convex hull for given list of points. 
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="tolerance">The tolerance.</param>
@@ -59,11 +56,7 @@ namespace TVGL
         /// </returns>
         public static Point[] ConvexHull2D(IList<Point> points, double tolerance = double.NaN)
         {
-            if (double.IsNaN(points[0].Z))
-                if (double.IsNaN(tolerance))
-                    return (Point[])MIConvexHull.ConvexHull.Create(points).Points;
-                else return (Point[])MIConvexHull.ConvexHull.Create(points, tolerance).Points;
-
+            //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
             var numPoints = points.Count;
             var zValues = points.Select(p => p.Z).ToArray();
             foreach (var point in points)
