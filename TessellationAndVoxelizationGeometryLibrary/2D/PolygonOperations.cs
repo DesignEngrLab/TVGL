@@ -30,7 +30,7 @@ namespace TVGL
         {
             var editPath = new List<Point>(path) {path.First()};
             var length = 0.0;
-            for (var i = 0; i < path.Count - 1; i++)
+            for (var i = 0; i < editPath.Count - 1; i++)
             {
                 var p1 = editPath[i];
                 var p2 = editPath[i + 1];

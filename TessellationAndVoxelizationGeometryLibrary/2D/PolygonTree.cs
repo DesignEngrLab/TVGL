@@ -13,6 +13,12 @@ namespace TVGL
     public class PolygonTree
     {
         /// <summary>
+        /// The list of all the polygons that make up this polygon tree.
+        /// </summary>
+        public readonly List<Polygon> AllPolygons;
+
+
+        /// <summary>
         /// The list of all the polygons inside the outer polygon. that make up a polygon.
         /// </summary>
         public readonly IEnumerable<Polygon> InnerPolygons;
@@ -22,14 +28,44 @@ namespace TVGL
         /// </summary>
         public readonly Polygon OuterPolygon;
 
+        /// <summary>
+        /// The outer most polygon. All other polygons are inside it.
+        /// </summary>
+        public readonly List<Point> AllPoints;
+
         internal PolygonTree() { }
 
-        internal PolygonTree(Polygon outerPolygon, IEnumerable<Polygon> innerPolygons)
+        internal PolygonTree(Polygon outerPolygon, IList<Polygon> innerPolygons, IEnumerable<Point> lexicographicallyOrderedPoints = null)
         {
             if (!outerPolygon.IsPositive) throw new Exception("The outer polygon must be positive");
             OuterPolygon = outerPolygon;
             InnerPolygons = new List<Polygon>(innerPolygons);
+            AllPolygons = new List<Polygon> {outerPolygon};
+            AllPolygons.AddRange(InnerPolygons);
+
+            //Get all the points and update the polygon index.
+            AllPoints = new List<Point>();
+            for (var i = 0; i < AllPolygons.Count(); i++)
+            {
+                foreach (var point in AllPolygons[i].Path)
+                {
+                    point.PolygonIndex = i;
+                }
+                AllPoints.AddRange(AllPolygons[i].Path);
+            }
+            
+            //Sort lexicographically to store for later use
+            //ToDo: could make this a Lazy function.
+            if (lexicographicallyOrderedPoints == null)
+            {
+                LexicographicallyOrderedPoints = AllPoints.OrderBy(p => p.X).ThenBy(p => p.Y);
+            }
         }
+
+        /// <summary>
+        /// A list of ordered points. Min X -> Max X with ties ordered by Min Y -> Max Y.
+        /// </summary>
+        public static IEnumerable<Point> LexicographicallyOrderedPoints { get; set; }
     }
     
     /// <summary>

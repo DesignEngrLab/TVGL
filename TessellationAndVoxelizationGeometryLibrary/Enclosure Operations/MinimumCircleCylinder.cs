@@ -192,6 +192,79 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Gets the maximum inner circle given a polygon (set of paths) and a center point.
+        /// The inner path must be negative (forming a hole).
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingCircle MaximumInnerCircleInHole(PolygonTree polyTree, Point centerPoint)
+        {
+            //1. Sweep to determine which polygon the center is inside.
+            var innerPolygon = new Polygon();
+            var lineSweep = new HashSet<Line>();
+            foreach (var point in PolygonTree.LexicographicallyOrderedPoints)
+            {
+                if (point.X.IsPracticallySame(centerPoint.X))
+                {
+                    //Check if center point is on the polygon
+                    if (point.Y.IsPracticallySame(centerPoint.Y)) return new BoundingCircle(0.0, centerPoint); //Null solution.
+                    if (point.Y > centerPoint.Y) break;
+                }
+                else if (point.X > centerPoint.X) break;
+                //else
+                foreach (var line in point.Lines)
+                {
+                    if (lineSweep.Contains(line)) lineSweep.Remove(line);
+                    else lineSweep.Add(line);
+                }
+            }
+            //Check if center point was inside any of the polygons
+            if(!lineSweep.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution.
+            //Get the closest line above (small positive)
+            var closestY = double.MaxValue;
+            foreach (var line in lineSweep)
+            {
+                var yIntersect = line.YGivenX(centerPoint.X);
+                //Check if center point is on the polygon
+                if (yIntersect.IsPracticallySame(centerPoint.Y)) return new BoundingCircle(0.0, centerPoint); //Null solution.
+                if (yIntersect > centerPoint.Y && yIntersect < closestY)
+                {
+                    closestY = yIntersect;
+                    innerPolygon = polyTree.AllPolygons[line.FromPoint.PolygonIndex];
+                }
+            }
+            
+            //2. If that path is positive, return null bounding circle.
+            if(innerPolygon.IsPositive) return new BoundingCircle(0.0, centerPoint); //Null solution.
+
+            //3. For every edge on the path, get the closest point on the edge to the center point. 
+            //   Skip if min distance to line (perpendicular) forms a point not on the line.
+            var editPath = new List<Point>(innerPolygon.Path) { innerPolygon.Path.First() };
+            var shortestDistance = double.MaxValue;
+            for (var i = 0; i < editPath.Count - 1; i++)
+            {
+                var p1 = editPath[i];
+                var p2 = editPath[i + 1];
+                var v1 = p2.Position2D.subtract(p1.Position2D);
+                var v2 = new[] {-v1[1], v1[0]}; //Clockwise rotated perpendicular vector
+                double[] pointOnLine;
+                var d = MiscFunctions.DistancePointToLine(centerPoint.Position2D, p1.Position2D, v1, out pointOnLine);
+                if (d > shortestDistance) continue;
+                var v3 = centerPoint.Position2D.subtract(pointOnLine);
+                if(v2.dotProduct(v3) < 0) continue;
+                shortestDistance = d;
+            }
+
+            //4. For every point in path and every closest edge point find distance to center.
+            //   The shortest distance determines the diameter of the inner circle.
+            foreach (var point in innerPolygon.Path)
+            {
+                var d = MiscFunctions.DistancePointToPoint(point.Position2D, centerPoint.Position2D);
+                if (d < shortestDistance) shortestDistance = d;
+            }
+            return new BoundingCircle(shortestDistance, centerPoint);
+        }
+
+        /// <summary>
         ///     Takes a set of elements and a metric for comparing them pairwise, and returns the median of the elements.
         /// </summary>
         /// <param name="points">The points.</param>

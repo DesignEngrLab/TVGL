@@ -1389,9 +1389,19 @@ namespace TVGL
         public static double DistancePointToLine(double[] qPoint, double[] lineRefPt, double[] lineVector,
             out double[] pointOnLine)
         {
+            double t;
+            if (qPoint.Count() == 2)
+            {
+                /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
+                * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
+                t = (lineVector[0] * (qPoint[0] - lineRefPt[0]) + lineVector[1] * (qPoint[1] - lineRefPt[1]))
+                        / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1]);
+                pointOnLine = new[] {lineRefPt[0] + lineVector[0]*t, lineRefPt[1] + lineVector[1]*t};
+                return DistancePointToPoint(qPoint, pointOnLine);
+            }
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
              * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
-            var t = (lineVector[0] * (qPoint[0] - lineRefPt[0]) + lineVector[1] * (qPoint[1] - lineRefPt[1]) +
+            t = (lineVector[0] * (qPoint[0] - lineRefPt[0]) + lineVector[1] * (qPoint[1] - lineRefPt[1]) +
                      lineVector[2] * (qPoint[2] - lineRefPt[2]))
                     / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1] + lineVector[2] * lineVector[2]);
             pointOnLine = new[]
