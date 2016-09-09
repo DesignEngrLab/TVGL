@@ -191,17 +191,45 @@ namespace TVGL
             return new BoundingCircle(radius, circle.Center);
         }
 
+
         /// <summary>
-        ///     Gets the maximum inner circle given a polygon (set of paths) and a center point.
-        /// The inner path must be negative (forming a hole).
+        ///     Gets the maximum inner circle given a group of polygons and a center point.
+        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircleInHole(PolygonTree polyTree, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircleInHole(List<List<Point>> paths, Point centerPoint)
         {
-            //1. Sweep to determine which polygon the center is inside.
+            var polygons = paths.Select(path => new Polygon(path)).ToList();
+            return MaximumInnerCircleInHole(new PolygonGroup(polygons), centerPoint);
+        }
+
+        /// <summary>
+        ///     Gets the maximum inner circle given a group of polygons and a center point.
+        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingCircle MaximumInnerCircleInHole(List<Polygon> polygons, Point centerPoint)
+        {
+            return MaximumInnerCircleInHole(new PolygonGroup(polygons), centerPoint);
+        }
+
+        /// <summary>
+        ///     Gets the maximum inner circle given a group of polygons and a center point.
+        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingCircle MaximumInnerCircleInHole(PolygonGroup polyGroup, Point centerPoint)
+        {
+            //1. Shrink the polygonGroup down to just negative polygons
+            //   If no negative polygons then return a negligible Bounding Circle
+            var negativePolys = polyGroup.AllPolygons.Where(polygon => !polygon.IsPositive).ToList();
+            if(negativePolys.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
+            var negativePolyGroup = new PolygonGroup(negativePolys);
+
+            //2. Sweep to determine which polygon the center is inside.
             var innerPolygon = new Polygon();
             var lineSweep = new HashSet<Line>();
-            foreach (var point in PolygonTree.LexicographicallyOrderedPoints)
+            foreach (var point in negativePolyGroup.LexicographicallyOrderedPoints)
             {
                 if (point.X.IsPracticallySame(centerPoint.X))
                 {
@@ -229,12 +257,9 @@ namespace TVGL
                 if (yIntersect > centerPoint.Y && yIntersect < closestY)
                 {
                     closestY = yIntersect;
-                    innerPolygon = polyTree.AllPolygons[line.FromPoint.PolygonIndex];
+                    innerPolygon = negativePolyGroup.AllPolygons[line.FromPoint.PolygonIndex];
                 }
             }
-            
-            //2. If that path is positive, return null bounding circle.
-            if(innerPolygon.IsPositive) return new BoundingCircle(0.0, centerPoint); //Null solution.
 
             //3. For every edge on the path, get the closest point on the edge to the center point. 
             //   Skip if min distance to line (perpendicular) forms a point not on the line.

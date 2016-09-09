@@ -17,7 +17,6 @@ namespace TVGL
         /// </summary>
         public readonly List<Polygon> AllPolygons;
 
-
         /// <summary>
         /// The list of all the polygons inside the outer polygon. that make up a polygon.
         /// </summary>
@@ -28,24 +27,51 @@ namespace TVGL
         /// </summary>
         public readonly Polygon OuterPolygon;
 
-        /// <summary>
-        /// The outer most polygon. All other polygons are inside it.
-        /// </summary>
-        public readonly List<Point> AllPoints;
-
         internal PolygonTree() { }
 
-        internal PolygonTree(Polygon outerPolygon, IList<Polygon> innerPolygons, IEnumerable<Point> lexicographicallyOrderedPoints = null)
+        internal PolygonTree(Polygon outerPolygon, IEnumerable<Polygon> innerPolygons, IEnumerable<Point> lexicographicallyOrderedPoints = null)
         {
             if (!outerPolygon.IsPositive) throw new Exception("The outer polygon must be positive");
             OuterPolygon = outerPolygon;
             InnerPolygons = new List<Polygon>(innerPolygons);
             AllPolygons = new List<Polygon> {outerPolygon};
             AllPolygons.AddRange(InnerPolygons);
+        }
+    }
+
+    /// <summary>
+    /// A organized list of polygons
+    /// </summary>
+    public class PolygonGroup
+    {
+        /// <summary>
+        /// The list of all the polygons that make up this polygon tree.
+        /// </summary>
+        public readonly List<Polygon> AllPolygons;
+
+        /// <summary>
+        /// The list of all the points from all the polygons.
+        /// </summary>
+        public readonly List<Point> AllPoints;
+
+        /// <summary>
+        /// A list of ordered points. Min X -> Max X with ties ordered by Min Y -> Max Y.
+        /// </summary>
+        public IEnumerable<Point> LexicographicallyOrderedPoints => _lexicographicallyOrderedPoints.Value;
+        private readonly Lazy<IEnumerable<Point>> _lexicographicallyOrderedPoints;
+        private IEnumerable<Point> OrderPointsLexicographically()
+        {
+            return AllPoints.OrderBy(p => p.X).ThenBy(p => p.Y);
+        }
+
+        #region Constructor
+        internal PolygonGroup(IEnumerable<Polygon> polygons)
+        {
+            AllPolygons = new List<Polygon>(polygons);
 
             //Get all the points and update the polygon index.
             AllPoints = new List<Point>();
-            for (var i = 0; i < AllPolygons.Count(); i++)
+            for (var i = 0; i<AllPolygons.Count(); i++)
             {
                 foreach (var point in AllPolygons[i].Path)
                 {
@@ -53,25 +79,18 @@ namespace TVGL
                 }
                 AllPoints.AddRange(AllPolygons[i].Path);
             }
-            
-            //Sort lexicographically to store for later use
-            //ToDo: could make this a Lazy function.
-            if (lexicographicallyOrderedPoints == null)
-            {
-                LexicographicallyOrderedPoints = AllPoints.OrderBy(p => p.X).ThenBy(p => p.Y);
-            }
-        }
 
-        /// <summary>
-        /// A list of ordered points. Min X -> Max X with ties ordered by Min Y -> Max Y.
-        /// </summary>
-        public static IEnumerable<Point> LexicographicallyOrderedPoints { get; set; }
+            //Make lexicographicall ordering of points lazy, because it will only be needed by users occasionally.
+            _lexicographicallyOrderedPoints = new Lazy<IEnumerable<Point>>(OrderPointsLexicographically);
+        }
+        #endregion
+
     }
-    
+
     /// <summary>
-    /// A list of one positive polygon and all the negative polygons directly inside it.
-    /// </summary>
-    public class ShallowPolygonTree
+        /// A list of one positive polygon and all the negative polygons directly inside it.
+        /// </summary>
+        public class ShallowPolygonTree
     {
         /// <summary>
         /// The list of all the negative polygons inside the positive=outer polygon.
