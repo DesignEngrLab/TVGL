@@ -45,38 +45,6 @@ namespace TVGL.IOFunctions.amfclasses
     }
 
     /// <summary>
-    ///     Class AMF_Metadata.
-    /// </summary>
-#if help
-    internal class AMF_Metadata
-#else
-    public class Metadata
-#endif
-    {
-        /// <summary>
-        ///     The type
-        /// </summary>
-        [XmlAttribute]
-        public string type;
-
-        /// <summary>
-        ///     The value
-        /// </summary>
-        [XmlText]
-        public string Value;
-
-        /// <summary>
-        /// Returns a <see cref="System.String" /> that represents this instance.
-        /// </summary>
-        /// <returns>
-        /// A <see cref="System.String" /> that represents this instance.
-        /// </returns>
-        public override string ToString()
-        {
-            return type + " ==> " + Value;
-        }
-    }
-    /// <summary>
     ///     Class AMF_Mesh.
     /// </summary>
 #if help
@@ -629,13 +597,24 @@ namespace TVGL.IOFunctions.amfclasses
         /// <summary>
         ///     The value
         /// </summary>
-        [XmlText] public string Value;
+        [XmlText]
+        public string Value;
+    
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="System.String" /> that represents this instance.
+        /// </returns>
+        public override string ToString()
+        {
+            return type + " ==> " + Value;
+        }
     }
-
     /// <summary>
     ///     Class AMF_TexMap.
     /// </summary>
- #if help
+#if help
     internal class AMF_TexMap
 #else                   
     public class AMF_TexMap

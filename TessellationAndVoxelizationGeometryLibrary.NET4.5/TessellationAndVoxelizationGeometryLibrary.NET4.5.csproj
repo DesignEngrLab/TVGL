@@ -193,7 +193,7 @@
       <Link>Solid Body Classes\TessellationBaseClass.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TVGLConvexHull.cs">
-      <Link>Solid Body Classes\TVGLConvexHull.cs</Link>
+      <Link>Enclosure Operations\TVGLConvexHull.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Vertex.cs">
       <Link>Solid Body Classes\Vertex.cs</Link>
@@ -214,7 +214,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MIConvexHull, Version=1.0.16.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.0.16.0600\lib\portable-net45+wp8+win8\MIConvexHull.dll</HintPath>
+      <HintPath>..\packages\MIConvexHull.1.1.16.0905\lib\portable-net45+wp8+win8\MIConvexHull.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="StarMath">

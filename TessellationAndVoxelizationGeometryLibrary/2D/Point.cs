@@ -37,19 +37,19 @@ namespace TVGL
         ///     Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
-        public double X { get; private set;  }
+        public double X { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
-        public double Y { get; private set;  }
+        public double Y { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the z coordinate. If one is using Point in a 2D capacity, it can be ignored.
         /// </summary>
         /// <value>The z.</value>
-        public double Z { get; private set; }
+        public double Z { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the references.
@@ -66,7 +66,7 @@ namespace TVGL
         ///  Gets or sets the index of the polygon that this point belongs to
         /// </summary>
         public int PolygonIndex { get; set; }
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -78,12 +78,17 @@ namespace TVGL
         /// <value>The coordinates or position.</value>
         public double[] Position
         {
-            get { return new[] {X, Y, Z}; }
+            get
+            {
+                if (double.IsNaN(Z))
+                    return new[] { X, Y };
+                return new[] { X, Y, Z };
+            }
             set
             {
                 X = value[0];
                 Y = value[1];
-                Z = value.GetLength(0) > 2 ? value[2] : 0.0;
+                Z = value.GetLength(0) > 2 ? value[2] : double.NaN;
             }
         }
 
@@ -94,7 +99,7 @@ namespace TVGL
         /// <exception cref="Exception">Cannot set the value of a point with an array with more than 2 values.</exception>
         public double[] Position2D
         {
-            get { return new[] {X, Y}; }
+            get { return new[] { X, Y }; }
             set
             {
                 X = value[0];
@@ -116,7 +121,7 @@ namespace TVGL
         /// </summary>
         /// <param name="v">The v.</param>
         public Point(Vertex v)
-            : this(v, v.Position[0], v.Position[1], 0.0)
+            : this(v, v.Position[0], v.Position[1], double.NaN)
         {
         }
 
@@ -127,7 +132,7 @@ namespace TVGL
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         public Point(Vertex vertex, double x, double y)
-            : this(vertex, x, y, 0.0)
+            : this(vertex, x, y, double.NaN)
         {
         }
 
@@ -218,7 +223,7 @@ namespace TVGL
         /// <returns></returns>
         public static bool operator !=(Point a, Point b)
         {
-            return !(a == b); 
+            return !(a == b);
         }
 
         /// <summary>
@@ -243,7 +248,7 @@ namespace TVGL
             {
                 //Using prime numbers to get unique hashcodes
                 var hashCode = X.GetHashCode();
-                hashCode = (hashCode*397) ^ Y.GetHashCode();
+                hashCode = (hashCode * 397) ^ Y.GetHashCode();
                 return hashCode;
             }
         }

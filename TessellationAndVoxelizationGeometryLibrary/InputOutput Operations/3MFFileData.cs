@@ -365,9 +365,7 @@ namespace TVGL.IOFunctions
         private static void SaveRelationships(Stream stream)
         {
             //[XmlArrayItem("vertex", IsNullable = false)]
-            var rels = new Relationships
-            {
-                rels = new[]
+            var rels = new[]
                 {
                     new Relationship
                     {
@@ -381,12 +379,11 @@ namespace TVGL.IOFunctions
                         Id = "rel0",
                         Type = "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
                     }
-                }
-            };
+                };
 
             using (var writer = XmlWriter.Create(stream))
             {
-                var serializer = new XmlSerializer(typeof(Relationships), defXMLNameSpaceRelationships);
+                var serializer = new XmlSerializer(typeof(Relationship), defXMLNameSpaceRelationships);
                 serializer.Serialize(writer, rels);
             }
         }
