@@ -32,8 +32,8 @@ namespace TVGL
             var length = 0.0;
             for (var i = 0; i < path.Count - 1; i++)
             {
-                var p1 = path[i];
-                var p2 = path[i + 1];
+                var p1 = editPath[i];
+                var p2 = editPath[i + 1];
                 length += MiscFunctions.DistancePointToPoint(p1.Position2D, p2.Position2D);
             }
             return length;
@@ -649,144 +649,7 @@ namespace TVGL
             //    }
             //}
             return BooleanOperation(subject, clip, BooleanOperationType.Union);
-        }
-
-        /// <summary>
-        ///  Union. Joins paths that are touching into merged larger paths.
-        /// </summary>
-        /// <returns></returns>
-        public static List<List<Point>> SimplifyForSilhouette(List<Point> path)
-        {
-            //Simplify a path. Trivial if not self intersecting.
-            //1. Subdivide lines at intersection points.
-            //2. Remove edges that are inside the path. (If closest line below is LeftToRight, then it is inside. Otherwise it is outside)
-            //3. Create the new set of paths 
-            #region Build Sweep PathID and Order Them Lexicographically
-            var unsortedSweepEvents = new List<SweepEvent>();
-            //Build the sweep events and order them lexicographically (Low X to High X, then Low Y to High Y).
-            var n = path.Count;
-            for (var i = 0; i < n; i++)
-            {
-                var j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
-                SweepEvent se1, se2;
-
-                if (path[i].X.IsPracticallySame(path[j].X))
-                {
-                    if (path[i].Y.IsPracticallySame(path[j].Y)) continue; //Ignore this 
-                    if (path[i].Y < path[j].Y)
-                    {
-                        se1 = new SweepEvent(path[i], true, true, PolygonType.Subject);
-                        se2 = new SweepEvent(path[j], false, false, PolygonType.Subject);
-                    }
-                    else
-                    {
-                        se1 = new SweepEvent(path[i], false, true, PolygonType.Subject);
-                        se2 = new SweepEvent(path[j], true, false, PolygonType.Subject);
-                    }
-                }
-                else if (path[i].X < path[j].X)
-                {
-                    se1 = new SweepEvent(path[i], true, true, PolygonType.Subject);
-                    se2 = new SweepEvent(path[j], false, false, PolygonType.Subject);
-                }
-                else
-                {
-                    se1 = new SweepEvent(path[i], false, true, PolygonType.Subject);
-                    se2 = new SweepEvent(path[j], true, false, PolygonType.Subject);
-                }
-                se1.OtherEvent = se2;
-                se2.OtherEvent = se1;
-                unsortedSweepEvents.Add(se1);
-                unsortedSweepEvents.Add(se2);
-            }
-            var orderedSweepEvents = new OrderedSweepEventList(unsortedSweepEvents);
-            #endregion
-
-            var result = new List<SweepEvent>();
-            var sweepLines = new SweepList();
-            while (orderedSweepEvents.Any())
-            {
-                var sweepEvent = orderedSweepEvents.First();
-                orderedSweepEvents.RemoveAt(0);
-                if (sweepEvent.Left) //left endpoint
-                {
-                    //Inserting the event into the sweepLines list
-                    var index = sweepLines.Insert(sweepEvent);
-                    sweepEvent.IndexInList = index;
-                    var goBack1 = false; //goBack is used to processes line segments from some collinear intersections
-                    CheckAndResolveIntersection(sweepEvent, sweepLines.Next(index), ref sweepLines, ref orderedSweepEvents, out goBack1);
-                    var goBack2 = false;
-                    CheckAndResolveIntersection(sweepLines.Previous(index), sweepEvent, ref sweepLines, ref orderedSweepEvents, out goBack2);
-                    if (goBack1 || goBack2) continue;
-
-                    //Consider a point slighlty to the left along of a line in the From-To Direction.
-                    //Check how many lines are below it.
-                    var numLinesBelow = NumberOfLinesBelow(sweepEvent, sweepLines);
-                    //If left to right, then the point is above the sweepEvent, so add 1 to the number of lines below
-                    if (sweepEvent.LeftToRight) numLinesBelow ++;
-                    //If the number of lines below the point is odd, then it is part of the result.
-                    sweepEvent.InResult = numLinesBelow % 2 != 0;
-                }
-                else //The sweep event corresponds to the right endpoint
-                {
-                    var index = sweepLines.Find(sweepEvent.OtherEvent);
-                    if (index == -1) throw new Exception("Other event not found in list. Error in implementation");
-                    var next = sweepLines.Next(index);
-                    var prev = sweepLines.Previous(index);
-                    sweepLines.RemoveAt(index);
-                    var goBack = false;
-                    CheckAndResolveIntersection(prev, next, ref sweepLines, ref orderedSweepEvents, out goBack);
-                }
-                if (sweepEvent.InResult || sweepEvent.OtherEvent.InResult)
-                {
-                    if (sweepEvent.InResult && !sweepEvent.Left) throw new Exception("error in implementation");
-                    if (sweepEvent.OtherEvent.InResult && sweepEvent.Left) throw new Exception("error in implementation");
-                    if (sweepEvent.Point == sweepEvent.OtherEvent.Point) continue; //Ignore this negligible length line.
-                    result.Add(sweepEvent);
-                }
-            }
-
-            //Next stage. Find the paths
-            var hashResult = new HashSet<SweepEvent>(result);
-            var hashPoints = new HashSet<Point>();
-            for (var i = 0; i < result.Count; i++)
-            {
-                result[i].PositionInResult = i;
-                result[i].Processed = false;
-                if(!hashResult.Contains(result[i].OtherEvent)) throw new Exception("Error in implementation. Both sweep events in the pair should be in this list.");
-                var point = result[i].Point;
-                if (hashPoints.Contains(point))
-                {
-                    hashPoints.Remove(point);
-                    if (!point.InResult) point.InResult = true;
-                    else point.InResultMultipleTimes = true;
-                }
-                else hashPoints.Add(point);
-            }
-            if(hashPoints.Any()) throw new Exception("Points should be in result an even number of times");
-            var solution = new Paths();
-            var currentPathID = 0;
-            Path previousPath = null;
-            foreach (var se1 in result.Where(se1 => !se1.Processed))
-            {
-                int parentID;
-                var depth = ComputeDepth(se1, previousPath, out parentID);
-                var newPath = ComputePath(se1, currentPathID, depth, parentID, result);
-                if (depth % 2 != 0) //Odd
-                {
-                    newPath = CWNegative(newPath);
-                }
-                solution.Add(newPath);
-                //if (parent != -1) //parent path ID
-                //{
-                //    solution[parent].AddChild(currentPathID);
-                //}
-                currentPathID++;
-                previousPath = path;
-            }
-
-            return solution;
-        }
+        }  
 
         private static int NumberOfLinesBelow(SweepEvent se1, SweepList sweepLines)
         {
