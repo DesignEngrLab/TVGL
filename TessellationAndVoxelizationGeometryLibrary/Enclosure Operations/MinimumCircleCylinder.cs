@@ -224,7 +224,20 @@ namespace TVGL
             //   If no negative polygons then return a negligible Bounding Circle
             var negativePolys = polyGroup.AllPolygons.Where(polygon => !polygon.IsPositive).ToList();
             if(negativePolys.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
-            var negativePolyGroup = new PolygonGroup(negativePolys);
+
+            //2. Remove any polygons that are definately not containing the center point
+            var possiblyPolygons = new List<Polygon>();
+            foreach (var negativePoly in negativePolys)
+            {
+                //Check if center point is within bounding box of each polygon
+                if (!centerPoint.X.IsLessThanNonNegligible(negativePoly.MaxX) ||
+                    !centerPoint.X.IsGreaterThanNonNegligible(negativePoly.MinX) ||
+                    !centerPoint.Y.IsLessThanNonNegligible(negativePoly.MaxY) ||
+                    !centerPoint.Y.IsGreaterThanNonNegligible(negativePoly.MinY)) continue;
+                possiblyPolygons.Add(negativePoly);
+            }
+            if (possiblyPolygons.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
+            var negativePolyGroup = new PolygonGroup(possiblyPolygons);
 
             //2. Sweep to determine which polygon the center is inside.
             var innerPolygon = new Polygon();

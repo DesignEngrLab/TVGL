@@ -93,6 +93,26 @@ namespace TVGL
         /// Gets whether the path is self intersecting.
         /// </summary>
         public bool IsSelfIntersecting;
+        
+        /// <summary>
+        /// Maxiumum X value
+        /// </summary>
+        public double MaxX;
+
+        /// <summary>
+        /// Miniumum X value
+        /// </summary>
+        public double MinX;
+
+        /// <summary>
+        /// Maxiumum Y value
+        /// </summary>
+        public double MaxY;
+
+        /// <summary>
+        /// Minimum Y value
+        /// </summary>
+        public double MinY;
 
         /// <summary>
         /// Polygon null constructor
@@ -112,10 +132,19 @@ namespace TVGL
         {
             Path = new List<Point>(points);
             //set index in path
+            MaxX = double.MinValue;
+            MinX = double.MaxValue;
+            MaxY = double.MinValue;
+            MinY = double.MaxValue;
             for (var i =0; i < Path.Count; i++)
             {
-                Path[i].IndexInPath = i;
-                Path[i].Lines = new List<Line>();
+                var point = Path[i];
+                if (point.X > MaxX) MaxX = point.X;
+                else if (point.X < MinX) MinX = point.X;
+                if (point.Y > MaxY) MaxY = point.Y;
+                else if (point.Y < MinY) MinY = point.Y;
+                point.IndexInPath = i;
+                point.Lines = new List<Line>(); //erase any previous connection to lines.
             }
             Index = index;
             IsOpen = isOpen;
