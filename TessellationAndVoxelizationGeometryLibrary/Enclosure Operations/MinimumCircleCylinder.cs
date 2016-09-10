@@ -197,7 +197,7 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircleInHole(List<List<Point>> paths, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircleInHole(IList<List<Point>> paths, Point centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
             return MaximumInnerCircleInHole(new PolygonGroup(polygons), centerPoint);
