@@ -115,14 +115,6 @@ namespace TVGL
         public double MinY;
 
         /// <summary>
-        /// Polygon null constructor
-        /// </summary>
-        public Polygon()
-        {
-            Index = -1;
-        }
-
-        /// <summary>
         /// Polygon Constructor
         /// </summary>
         /// <param name="points"></param>

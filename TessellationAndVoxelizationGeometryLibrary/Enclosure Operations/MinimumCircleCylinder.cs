@@ -223,7 +223,7 @@ namespace TVGL
             //1. Shrink the polygonGroup down to just negative polygons
             //   If no negative polygons then return a negligible Bounding Circle
             var negativePolys = polyGroup.AllPolygons.Where(polygon => !polygon.IsPositive).ToList();
-            if(negativePolys.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
+            if(!negativePolys.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
 
             //2. Remove any polygons that are definately not containing the center point
             var possiblyPolygons = new List<Polygon>();
@@ -236,11 +236,11 @@ namespace TVGL
                     !centerPoint.Y.IsGreaterThanNonNegligible(negativePoly.MinY)) continue;
                 possiblyPolygons.Add(negativePoly);
             }
-            if (possiblyPolygons.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
+            if (!possiblyPolygons.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
             var negativePolyGroup = new PolygonGroup(possiblyPolygons);
 
             //2. Sweep to determine which polygon the center is inside.
-            var innerPolygon = new Polygon();
+           Polygon innerPolygon = null;
             var lineSweep = new HashSet<Line>();
             foreach (var point in negativePolyGroup.LexicographicallyOrderedPoints)
             {
@@ -273,22 +273,32 @@ namespace TVGL
                     innerPolygon = negativePolyGroup.AllPolygons[line.FromPoint.PolygonIndex];
                 }
             }
+            //no candidate polygon found
+            if(innerPolygon == null) return new BoundingCircle(0.0, centerPoint); //Null solution.
 
-            //3. For every edge on the path, get the closest point on the edge to the center point. 
+            //3. For every line on the path, get the closest point on the edge to the center point. 
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
-            var editPath = new List<Point>(innerPolygon.Path) { innerPolygon.Path.First() };
             var shortestDistance = double.MaxValue;
-            for (var i = 0; i < editPath.Count - 1; i++)
+            foreach (var line in innerPolygon.PathLines)
             {
-                var p1 = editPath[i];
-                var p2 = editPath[i + 1];
-                var v1 = p2.Position2D.subtract(p1.Position2D);
-                var v2 = new[] {-v1[1], v1[0]}; //Clockwise rotated perpendicular vector
+                var v1 = line.ToPoint.Position2D.subtract(line.FromPoint.Position2D);
+ 
+                //Correctly ordering the points should yield a negative area, since we are using a negative polygon
+                //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
+                if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint}).IsLessThanNonNegligible())
+                    continue;
+
+                //Figure out how far the center point is away from the line
                 double[] pointOnLine;
-                var d = MiscFunctions.DistancePointToLine(centerPoint.Position2D, p1.Position2D, v1, out pointOnLine);
+                var d = MiscFunctions.DistancePointToLine(centerPoint.Position2D, line.FromPoint.Position2D, v1, out pointOnLine);
                 if (d > shortestDistance) continue;
-                var v3 = centerPoint.Position2D.subtract(pointOnLine);
-                if(v2.dotProduct(v3) < 0) continue;
+
+                //Now we need to figure out if the lines intersect
+                var tempPoint = new Point(pointOnLine[0], pointOnLine[1]);
+                var tempLine = new Line(centerPoint, tempPoint, false);
+                Point intersectionPoint;
+                if (!MiscFunctions.LineLineIntersection(line, tempLine, out intersectionPoint)) continue;
+                //if(intersectionPoint != tempPoint) throw new Exception("Error in implementation. This should always be true.");
                 shortestDistance = d;
             }
 
