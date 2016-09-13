@@ -210,7 +210,9 @@ namespace TVGL
                 {
                     tempList.Add(cvxPoints[i]);
                 }
+                cvxPoints = tempList;
             }
+            
 
             var extremeIndices = new int[4];
 
@@ -252,82 +254,82 @@ namespace TVGL
                     extremeIndices[0]--;
             }
 
-            //Check code: this validates the extreme vertices and the convex hull.
-            var extremeIndicesValidation = new int[4];
-            extremeIndicesValidation[0] = 0; //This was minX from the intitialization
-            var minY = double.PositiveInfinity;
-            var maxX = double.NegativeInfinity;
-            var maxY = double.NegativeInfinity;
-            for (var i = 0; i < numCvxPoints; i++)
-            {
-                //Point0 = min X
-                if (cvxPoints[i][0] < minX)
-                {
-                    minX = cvxPoints[i][0];
-                    extremeIndicesValidation[0] = i;
-                }
-                else if (cvxPoints[i][0] == minX)
-                {
-                    //with max Y for ties
-                    if (cvxPoints[i][1] > cvxPoints[extremeIndicesValidation[0]][1])
-                    {
-                        minX = cvxPoints[i][0];
-                        extremeIndicesValidation[0] = i;
-                    }
-                }
-                //Point1 = min Y
-                if (cvxPoints[i][1] < minY)
-                {
-                    minY = cvxPoints[i][1];
-                    extremeIndicesValidation[1] = i;
-                }
-                else if (cvxPoints[i][1] == minY)
-                {
-                    //with min X for ties
-                    if (cvxPoints[i][0] < cvxPoints[extremeIndicesValidation[1]][0])
-                    {
-                        minY = cvxPoints[i][1];
-                        extremeIndicesValidation[1] = i;
-                    }
-                }
+            ////Check code: this validates the extreme vertices and the convex hull.
+            //var extremeIndicesValidation = new int[4];
+            //extremeIndicesValidation[0] = 0; //This was minX from the intitialization
+            //var minY = double.PositiveInfinity;
+            //var maxX = double.NegativeInfinity;
+            //var maxY = double.NegativeInfinity;
+            //for (var i = 0; i < numCvxPoints; i++)
+            //{
+            //    //Point0 = min X
+            //    if (cvxPoints[i][0] < minX)
+            //    {
+            //        minX = cvxPoints[i][0];
+            //        extremeIndicesValidation[0] = i;
+            //    }
+            //    else if (cvxPoints[i][0] == minX)
+            //    {
+            //        //with max Y for ties
+            //        if (cvxPoints[i][1] > cvxPoints[extremeIndicesValidation[0]][1])
+            //        {
+            //            minX = cvxPoints[i][0];
+            //            extremeIndicesValidation[0] = i;
+            //        }
+            //    }
+            //    //Point1 = min Y
+            //    if (cvxPoints[i][1] < minY)
+            //    {
+            //        minY = cvxPoints[i][1];
+            //        extremeIndicesValidation[1] = i;
+            //    }
+            //    else if (cvxPoints[i][1] == minY)
+            //    {
+            //        //with min X for ties
+            //        if (cvxPoints[i][0] < cvxPoints[extremeIndicesValidation[1]][0])
+            //        {
+            //            minY = cvxPoints[i][1];
+            //            extremeIndicesValidation[1] = i;
+            //        }
+            //    }
 
-                //Point2 = max X
-                if (cvxPoints[i][0] > maxX)
-                {
-                    maxX = cvxPoints[i][0];
-                    extremeIndicesValidation[2] = i;
-                }
-                else if (cvxPoints[i][0] == maxX)
-                {
-                    //with min Y for ties
-                    if (cvxPoints[i][1] < cvxPoints[extremeIndicesValidation[2]][1])
-                    {
-                        maxX = cvxPoints[i][0];
-                        extremeIndicesValidation[2] = i;
-                    }
-                }
+            //    //Point2 = max X
+            //    if (cvxPoints[i][0] > maxX)
+            //    {
+            //        maxX = cvxPoints[i][0];
+            //        extremeIndicesValidation[2] = i;
+            //    }
+            //    else if (cvxPoints[i][0] == maxX)
+            //    {
+            //        //with min Y for ties
+            //        if (cvxPoints[i][1] < cvxPoints[extremeIndicesValidation[2]][1])
+            //        {
+            //            maxX = cvxPoints[i][0];
+            //            extremeIndicesValidation[2] = i;
+            //        }
+            //    }
 
-                //Point3 = max Y
-                if (cvxPoints[i][1] > maxY)
-                {
-                    maxY = cvxPoints[i][1];
-                    extremeIndicesValidation[3] = i;
-                }
-                else if (cvxPoints[i][1] == maxY)
-                {
-                    //with max X for ties
-                    if (cvxPoints[i][0] > cvxPoints[extremeIndicesValidation[3]][0])
-                    {
-                        maxY = cvxPoints[i][1];
-                        extremeIndicesValidation[3] = i;
-                    }
-                }
-            }
+            //    //Point3 = max Y
+            //    if (cvxPoints[i][1] > maxY)
+            //    {
+            //        maxY = cvxPoints[i][1];
+            //        extremeIndicesValidation[3] = i;
+            //    }
+            //    else if (cvxPoints[i][1] == maxY)
+            //    {
+            //        //with max X for ties
+            //        if (cvxPoints[i][0] > cvxPoints[extremeIndicesValidation[3]][0])
+            //        {
+            //            maxY = cvxPoints[i][1];
+            //            extremeIndicesValidation[3] = i;
+            //        }
+            //    }
+            //}
 
-            for (var i = 0; i < 4; i++)
-            {
-                if (extremeIndices[i] != extremeIndicesValidation[i]) throw new Exception();
-            }
+            //for (var i = 0; i < 4; i++)
+            //{
+            //    if (extremeIndices[i] != extremeIndicesValidation[i]) throw new Exception();
+            //}
 
             #endregion
 
@@ -558,6 +560,10 @@ namespace TVGL
             };
             if ((depth*boundingRectangle.Dimensions[0]*boundingRectangle.Dimensions[1]).IsNegligible())
                 throw new Exception("Volume should never be negligible, unless the input data is bad");
+            //var dim2 = GetLengthAndExtremeVertices(direction2, vertices, out bottomVertices, out topVertices);
+            //var dim3 = GetLengthAndExtremeVertices(direction3, vertices, out bottomVertices, out topVertices);
+            //if (!dim2.IsPracticallySame(boundingRectangle.Dimensions[0], 0.000001)) throw new Exception("Error in implementation");
+            //if (!dim3.IsPracticallySame(boundingRectangle.Dimensions[1], 0.000001)) throw new Exception("Error in implementation");
             return new BoundingBox
             {
                 Dimensions = new[] {depth, boundingRectangle.Dimensions[0], boundingRectangle.Dimensions[1]},
