@@ -239,6 +239,192 @@ namespace TVGL
         }
 
         /// <summary>
+        /// The Decomposition Data Class used to store information from A Directional Decomposition
+        /// </summary>
+        public class DecompositionData
+        {
+            /// <summary>
+            /// A list of the paths that make up the slice of the solid at this distance along this direction
+            /// </summary>
+            public List<List<Point>> Paths;
+
+            /// <summary>
+            /// The distance along this direction
+            /// </summary>
+            public double DistanceAlongDirection;
+
+            internal DecompositionData(List<List<Point>> paths, double distanceAlongDirection)
+            {
+                Paths = paths;
+                DistanceAlongDirection = distanceAlongDirection;
+            }
+        }
+
+        /// <summary>
+        /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="stepSize"></param>
+        /// <param name="minOffset"></param>
+        /// <returns></returns>
+        public static List<DecompositionData> DirectionalDecomposition(TessellatedSolid ts, double[] direction, double stepSize, double minOffset = double.NaN)
+        {
+            var outputData = new List<DecompositionData>();
+            if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
+            if (stepSize <= minOffset * 2)
+            {
+                //"step size must be at least 2x as large as the min offset");
+                //Change it rather that throwing an exception
+                stepSize = minOffset * 2 + ts.SameTolerance;
+            }
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            List<Vertex> sortedVertices;
+            List<int[]> duplicateRanges;
+            MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+
+            var edgeListDictionary = new Dictionary<int, Edge>();
+            var previousDistanceAlongAxis = direction.dotProduct(sortedVertices[0].Position); //This value can be negative
+            var previousVertexDistance = previousDistanceAlongAxis;
+            foreach (var vertex in sortedVertices)
+            {
+                var distanceAlongAxis = direction.dotProduct(vertex.Position); //This value can be negative
+                var difference1 = distanceAlongAxis - previousDistanceAlongAxis;
+                var difference2 = distanceAlongAxis - previousVertexDistance;
+                if (difference2 > minOffset && difference1 > stepSize)
+                {
+                    //Determine cross sectional area for section right after previous vertex
+                    var distance = previousVertexDistance + minOffset; //X value (distance along axis) 
+                    var cuttingPlane = new Flat(distance, direction);
+                    List<List<Edge>> outputEdgeLoops;
+                    var inputEdgeLoops = new List<List<Edge>>();
+                    var current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+
+                    //Get a list of 2D paths from the 3D loops
+                    var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
+
+                    //Add the data to the output
+                    outputData.Add(new DecompositionData(currentPaths, distance));
+
+                    //If the difference is far enough, add another data point right before the current vertex
+                    //Use the vertex loops provided from the first pass above
+                    if (difference2 > 3 * minOffset)
+                    {
+                        var distance2 = distanceAlongAxis - minOffset; //X value (distance along axis) 
+                        cuttingPlane = new Flat(distance2, direction);
+                        current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+
+                        //Get a list of 2D paths from the 3D loops
+                        currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
+
+                        //Add the data to the output
+                        outputData.Add(new DecompositionData(currentPaths, distance2));
+                    }
+
+                    //Update the previous distance used to make a data point
+                    previousDistanceAlongAxis = distanceAlongAxis;
+                }
+                foreach (var edge in vertex.Edges)
+                {
+                    //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
+                    //and the second removes it from the list.
+                    if (edgeListDictionary.ContainsKey(edge.IndexInList))
+                    {
+                        edgeListDictionary.Remove(edge.IndexInList);
+                    }
+                    else
+                    {
+                        edgeListDictionary.Add(edge.IndexInList, edge);
+                    }
+                }
+                //Update the previous distance of the vertex checked
+                previousVertexDistance = distanceAlongAxis;
+            }
+            return outputData;
+        }
+
+        /// <summary>
+        /// Gets the additive volume given a list of decomposition data
+        /// </summary>
+        /// <param name="decompData"></param>
+        /// <param name="additiveAccuracy"></param>
+        /// <param name="outputData"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static double AdditiveVolume(List<DecompositionData> decompData, double additiveAccuracy, out List<List<List<Point>>> outputData)
+        {
+            outputData = new List<List<List<Point>>>();
+            var previousPolygons = new List<List<Point>>();
+            var previousDistance = 0.0;
+            var previousArea = 0.0;
+            var additiveVolume = 0.0;
+            foreach (var data in decompData)
+            {
+                var currentPaths = data.Paths;
+                var distance = data.DistanceAlongDirection;
+
+                //Offset if the additive accuracy is significant
+                var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
+                var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
+
+                //Union this new set of polygons with the previous set.
+                if (previousPolygons.Any()) //If not the first iteration
+                {
+                    previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                    try
+                    {
+                        currentPaths = new List<List<Point>>(PolygonOperations.Union(previousPolygons, simpleOffset));
+                    }
+                    catch
+                    {
+                        var testArea1 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                        var testArea2 = previousPolygons.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                        if (testArea1.IsPracticallySame(testArea2, 0.01))
+                        {
+                            currentPaths = simpleOffset;
+                            //They are probably throwing an error because they are closely overlapping
+                        }
+                        else
+                        {
+                            //outputData.Clear();
+                            //outputData.Add(offsetPaths);
+                            //outputData.Add(simpleOffset);
+                            //outputData.Add(previousPolygons);
+                            //return 0;
+                            throw new Exception("Union failed and not similar");
+                        }
+                    }
+                }
+
+                //Get the area of this layer
+                var area = currentPaths.Sum(p => MiscFunctions.AreaOfPolygon(p));
+
+                //Add the volume from this iteration.
+                if (!previousDistance.IsNegligible())
+                {
+                    var deltaX = Math.Abs(distance - previousDistance);
+                    if (area < previousArea * .99)
+                    {
+                        //outputData.Clear();
+                        //outputData.Add(offsetPaths);
+                        //outputData.Add(simpleOffset);
+                        //outputData.Add(previousPolygons);
+                        //outputData.Add(currentPaths);
+                        //return 0;
+                        throw new Exception("Error in your implementation. This should never occur");
+                    }
+                    additiveVolume += deltaX * previousArea;
+                    outputData.Add(currentPaths);
+                }
+
+                previousPolygons = currentPaths;
+                previousDistance = distance;
+                previousArea = area;
+            }
+            return additiveVolume;
+        }
+
+        /// <summary>
         /// Returns the additive volume of a solid, with support material and an offset accuracy, Given the direction of printing.
         /// </summary>
         /// <param name="ts"></param>
