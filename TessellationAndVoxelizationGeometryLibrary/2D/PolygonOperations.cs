@@ -414,7 +414,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static Paths UnionEvenOdd(IList<List<Point>> polygons)
         {
-            //return ClipperInt.PolygonOperations.UnionEvenOdd(polygons);
+            return ClipperInt.PolygonOperations.UnionEvenOdd(polygons);
 
             const PolyFillType fillMethod = PolyFillType.EvenOdd;
             var solution = new Paths();

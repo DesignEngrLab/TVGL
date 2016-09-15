@@ -117,8 +117,9 @@ namespace TVGL
             var positiveFaceDict = new Dictionary<int, PolygonalFace>();
             foreach (var face in ts.Faces)
             {
+                //face.Color = new Color(KnownColors.PaleGoldenrod);
                 var dot = normal.dotProduct(face.Normal);
-                if (Math.Sign(dot) > 0)
+                if (dot.IsGreaterThanNonNegligible(ts.SameTolerance))
                 {
                     positiveFaceDict.Add(face.IndexInList, face);
                 }
@@ -127,15 +128,35 @@ namespace TVGL
             var unusedPositiveFaces = new Dictionary<int, PolygonalFace>(positiveFaceDict);
             var seperateSurfaces = new List<HashSet<PolygonalFace>>();
 
+            //ts.HasUniformColor = false;
+            //var colorList = new List<Color>
+            //{
+            //    new Color(KnownColors.Blue),
+            //    new Color(KnownColors.Red),
+            //    new Color(KnownColors.Yellow),
+            //    new Color(KnownColors.Green),
+            //    new Color(KnownColors.Orange),
+            //    new Color(KnownColors.Yellow),
+            //    new Color(KnownColors.Purple),
+            //    new Color(KnownColors.Brown),
+            //    new Color(KnownColors.DarkTurquoise),
+            //    new Color(KnownColors.AntiqueWhite),
+            //    new Color(KnownColors.DarkOliveGreen),
+            //    new Color(KnownColors.DarkGray),
+            //    new Color(KnownColors.Gold)
+            //};
+            //var ic = 0;
             while (unusedPositiveFaces.Any())
             {
                 var surface = new HashSet<PolygonalFace>();
                 var stack = new Stack<PolygonalFace>(new[] { unusedPositiveFaces.ElementAt(0).Value });
+                
                 while (stack.Any())
                 {
                     var face = stack.Pop();
                     if (surface.Contains(face)) continue;
                     surface.Add(face);
+                    //face.Color = colorList[ic];
                     unusedPositiveFaces.Remove(face.IndexInList);
                     //Only push adjacent faces that are also negative
                     foreach (var adjacentFace in face.AdjacentFaces)
@@ -146,6 +167,8 @@ namespace TVGL
                     }
                 }
                 seperateSurfaces.Add(surface);
+                //ic++;
+                //if (ic == colorList.Count) ic = 0; //Go back to the beginning
             }
 
             //Get the surface positive and negative loops
@@ -345,6 +368,7 @@ namespace TVGL
                 List<List<Point>> surfaceUnion;
                 if (area < 0)
                 {
+                    //return significantPaths;
                     significantPaths = PolygonOperations.UnionEvenOdd(significantPaths);
                     area = significantPaths.Sum(path => MiscFunctions.AreaOfPolygon(path));
                     if (area < 0) throw new Exception("Area for each surface must be positive");
