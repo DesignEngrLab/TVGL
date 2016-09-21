@@ -252,6 +252,19 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Offsets all paths by the given offset value. Squares the corners.
+        /// Offest value may be positive or negative. 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="offset"></param>
+        /// <param name="minLength"></param>
+        /// <returns></returns>
+        public static List<Point> OffsetMiter(List<Point> path, double offset, double minLength = 0.0)
+        {
+            return OffsetMiter(new Paths() { path }, offset, minLength).First();
+        }
+
+        /// <summary>
         /// Offsets all paths by the given offset value. Miters the corners.
         /// Offest value may be positive or negative.
         /// Loops must be ordered CCW positive.
@@ -274,6 +287,19 @@ namespace TVGL
             clip.AddPaths(paths, JoinType.Miter, EndType.ClosedPolygon);
             clip.Execute(ref solution, offset);
             return solution;
+        }
+
+        /// <summary>
+        /// Offsets all paths by the given offset value. Squares the corners.
+        /// Offest value may be positive or negative. 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="offset"></param>
+        /// <param name="minLength"></param>
+        /// <returns></returns>
+        public static List<Point> OffsetSquare(List<Point> path, double offset, double minLength = 0.0)
+        {
+            return OffsetSquare(new Paths() {path}, offset, minLength).First();
         }
 
         /// <summary>
