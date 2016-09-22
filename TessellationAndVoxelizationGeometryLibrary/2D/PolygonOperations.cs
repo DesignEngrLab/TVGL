@@ -261,7 +261,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<Point> OffsetMiter(List<Point> path, double offset, double minLength = 0.0)
         {
-            return OffsetMiter(new Paths() { path }, offset, minLength).First();
+            return OffsetMiter(new Paths() { path }, offset, minLength).FirstOrDefault();
         }
 
         /// <summary>

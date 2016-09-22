@@ -897,7 +897,9 @@ namespace TVGL
 
             // 5. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
             // the two line segments meet at the point p + t r = q + u s.
-            if (!rxs.IsNegligible() && (0 <= t[2] && t[2] <= 1) && (0 <= u[2] && u[2] <= 1))
+            if (!rxs.IsNegligible() && 
+                !t[2].IsLessThanNonNegligible() && !t[2].IsGreaterThanNonNegligible(1.0) &&
+                !u[2].IsLessThanNonNegligible() && !u[2].IsGreaterThanNonNegligible(1.0))
             {    
                 
                 ////Tthe intersection point may be one of the existing points
@@ -1522,8 +1524,35 @@ namespace TVGL
         }
         #endregion
 
+        #region Create 2D Circle Paths
+        /// <summary>
+        /// Returns a the path of a circle made up of points. Increment as needed.
+        /// </summary>
+        /// <param name="center"></param>
+        /// <param name="radius"></param>
+        /// <param name="radianIncrement"></param>
+        /// <returns></returns>
+        public static List<Point> CreateCirclePath(Point center, double radius, double radianIncrement = Math.PI / 50.0)
+        {
+            var path = new List<Point>();
+            for (var theta = 0.0; theta < Math.PI * 2; theta += radianIncrement)
+            {
+                path.Add(new Point(radius * Math.Cos(theta) + center.X, radius * Math.Sin(theta) + center.Y));
+            }
+            return path;
+        }
 
-
+        /// <summary>
+        /// Returns a the path of a circle made up of points. Increment as needed.
+        /// </summary>
+        /// <param name="circle"></param>
+        /// <param name="radianIncrement"></param>
+        /// <returns></returns>
+        public static List<Point> CreateCirclePath(BoundingCircle circle, double radianIncrement = Math.PI / 50.0)
+        {
+            return CreateCirclePath(circle.Center, circle.Radius, radianIncrement);
+        }
+        #endregion
 
         #region isInside Methods (is 2D point inside polygon, vertex inside solid, ect.)
 
@@ -1666,6 +1695,159 @@ namespace TVGL
             //Even number of intercepts, means the vertex is inside
         }
 
+        /// <summary>
+        ///     Determines if a point is inside a polygon.
+        /// </summary>
+        public static bool IsPointInsidePolygon(Polygon polygon, Point pointInQuestion, out Line closestLineAbove, out Line closestLineBelow, out bool onBoundary,
+            bool onBoundaryIsInside = true)
+        {
+            closestLineAbove = null;
+            closestLineBelow = null;
+            onBoundary = false;
+            //Check if center point is within bounding box of each polygon
+            if (!pointInQuestion.X.IsLessThanNonNegligible(polygon.MaxX) ||
+                !pointInQuestion.X.IsGreaterThanNonNegligible(polygon.MinX) ||
+                !pointInQuestion.Y.IsLessThanNonNegligible(polygon.MaxY) ||
+                !pointInQuestion.Y.IsGreaterThanNonNegligible(polygon.MinY)) return false;
+
+            var points = new List<Point> (polygon.Path);
+            
+            //If the point in question is == a point in points, then it is inside the polygon
+            if (
+                points.Any(
+                    point =>
+                        point.X.IsPracticallySame(pointInQuestion.X) && point.Y.IsPracticallySame(pointInQuestion.Y)))
+            {
+                onBoundary = true;
+                return onBoundaryIsInside;
+            }
+
+            //Make sure polygon indices are set properly
+            if (polygon.Index == -1) polygon.Index = 0;
+            foreach (var point in points.Where(point => point.PolygonIndex != polygon.Index))
+            {
+                point.PolygonIndex = polygon.Index;
+            }
+            //Force the point in question not to have the same index, if it does.
+            if (pointInQuestion.PolygonIndex == polygon.Index) pointInQuestion.PolygonIndex = -1; 
+
+            //Sort points ascending x, then by ascending y.
+            points.Add(pointInQuestion);
+            var sortedPoints = points.OrderBy(p => p.X).ThenBy(p=> p.Y).ToList();
+            var lineList = new HashSet<Line>();
+
+            //Use Line sweep to determine if the polygon contains the point.
+            //An odd number of lines above and below a point, means the point is inside the polygon.
+            //Note: either above or below should work. Checks both to catch errors.
+            foreach (var point in sortedPoints)
+            {
+                if (point.PolygonIndex == polygon.Index)
+                {
+                    //Add to or remove from Line Sweep
+                    foreach (var line in point.Lines)
+                    {
+                        if (lineList.Contains(line))
+                        {
+                            lineList.Remove(line);
+                        }
+                        else
+                        {
+                            lineList.Add(line);
+                        }
+                    }
+                }
+                else
+                {
+                    //If reached the point in question, then find intercepts on the lineList 
+                    bool isOnLine;
+                    var numberOfLinesAbove = NumberOfLinesAbovePoint(pointInQuestion, lineList, out closestLineAbove, out isOnLine);
+                    //Check if the point is on the left line or right line (note that one direction search is sufficient).
+                    if (isOnLine)
+                    {
+                        onBoundary = true;
+                        return onBoundaryIsInside;
+                    }
+
+                    //Else, not on a boundary, so check to see that it is in between an odd number of lines to left and right
+                    if (numberOfLinesAbove % 2 == 0) return false;
+                    var numberOfLinesBelow = NumberOfLinesBelowPoint(pointInQuestion, lineList, out closestLineBelow, out isOnLine);
+                    //No need to check isOnLine, since it is the same lines and point as the lines above check.
+                    return numberOfLinesBelow % 2 != 0;
+                }
+            }
+            //If not returned, throw error
+            throw new Exception("Failed to return intercept information");
+        }
+
+        /// <summary>
+        /// Returns the number of lines above a point in question. Also returns the closest line above, if any is above.
+        /// </summary>
+        /// <param name="pointInQuestion"></param>
+        /// <param name="lineList"></param>
+        /// <param name="closestLineAbove"></param>
+        /// <param name="isOnLine"></param>
+        /// <returns></returns>
+        public static int NumberOfLinesAbovePoint(Point pointInQuestion, IEnumerable<Line> lineList, out Line closestLineAbove, out bool isOnLine)
+        {
+            isOnLine = false;
+            var count = 0;
+            var minD = double.MaxValue;
+            closestLineAbove = null;
+            foreach (var line in lineList)
+            {
+                var d = line.YGivenX(pointInQuestion.X) - pointInQuestion.Y;
+                if (d.IsNegligible())
+                {
+                    minD = d;
+                    isOnLine = true;
+                    closestLineAbove = line;
+                }
+
+                if (d < 0) continue; //line is below
+                
+                //Else, line is above
+                count++;
+                if (d > minD) continue;
+                minD = d;
+                closestLineAbove = line;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Returns the number of lines below a point in question. Also returns the closest line below, if any is below.
+        /// </summary>
+        /// <param name="pointInQuestion"></param>
+        /// <param name="lineList"></param>
+        /// <param name="closestLineBelow"></param>
+        /// <param name="isOnLine"></param>
+        /// <returns></returns>
+        public static int NumberOfLinesBelowPoint(Point pointInQuestion, IEnumerable<Line> lineList, out Line closestLineBelow, out bool isOnLine)
+        {
+            isOnLine = false;
+            var count = 0;
+            var maxD = double.MinValue; //Max value should never be greater than 0.
+            closestLineBelow = null;
+            foreach (var line in lineList)
+            {
+                var d = line.YGivenX(pointInQuestion.X) - pointInQuestion.Y;
+                if (d.IsNegligible())
+                {
+                    maxD = d;
+                    isOnLine = true;
+                    closestLineBelow = line;
+                }
+
+                if (d > 0) continue; //line is above
+
+                //Else, line is below
+                count++;
+                if (d < maxD) continue;
+                maxD = d;
+                closestLineBelow = line;
+            }
+            return count;
+        }
 
         /// <summary>
         ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
@@ -1685,8 +1867,9 @@ namespace TVGL
                     point =>
                         point.X.IsPracticallySame(pointInQuestion.X) && point.Y.IsPracticallySame(pointInQuestion.Y)))
             {
-                return true;
+                return onBoundaryIsInside;
             }
+
             //Create nodes and add them to a list
             var nodes = points.Select(point => new Node(point, 0, 0)).ToList();
 

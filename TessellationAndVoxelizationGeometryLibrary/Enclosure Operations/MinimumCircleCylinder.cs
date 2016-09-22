@@ -197,10 +197,10 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircleInHole(IList<List<Point>> paths, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircle(IList<List<Point>> paths, Point centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
-            return MaximumInnerCircleInHole(new PolygonGroup(polygons), centerPoint);
+            return MaximumInnerCircle(new PolygonGroup(polygons), centerPoint);
         }
 
         /// <summary>
@@ -208,84 +208,89 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircleInHole(List<Polygon> polygons, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircle(List<Polygon> polygons, Point centerPoint)
         {
-            return MaximumInnerCircleInHole(new PolygonGroup(polygons), centerPoint);
+            return MaximumInnerCircle(new PolygonGroup(polygons), centerPoint);
         }
 
         /// <summary>
         ///     Gets the maximum inner circle given a group of polygons and a center point.
-        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
+        ///     The circle will either be inside a negative polygon or outside a positive polygon (e.g. C channel). 
+        ///     Else it returns a negligible Bounding Circle
         /// </summary>
-        /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircleInHole(PolygonGroup polyGroup, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircle(PolygonGroup polyGroup, Point centerPoint)
         {
-            //1. Shrink the polygonGroup down to just negative polygons
-            //   If no negative polygons then return a negligible Bounding Circle
-            var negativePolys = polyGroup.AllPolygons.Where(polygon => !polygon.IsPositive).ToList();
-            if(!negativePolys.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
+            //Check the distance from every line and point of every polygon in the group. 
+            //Note: this function could possible be improved by determining which polygon is closest, 
+            //but that did not seem to be a faster method. Also, a inner circle does not necessarily
+            //need to be contained in a bounding box for positive solids (e.g. a C shape).
+            var polygonsOfInterest = new List<Polygon>();
 
-            //2. Remove any polygons that are definately not containing the center point
-            var possiblyPolygons = new List<Polygon>();
-            foreach (var negativePoly in negativePolys)
+            //First, check if the point is inside any negative polygon.
+            var minDistance = double.MaxValue;
+            Polygon closestContainingPolygon = null;
+            foreach (var negativePoly in polyGroup.NegativePolygons)
             {
-                //Check if center point is within bounding box of each polygon
-                if (!centerPoint.X.IsLessThanNonNegligible(negativePoly.MaxX) ||
-                    !centerPoint.X.IsGreaterThanNonNegligible(negativePoly.MinX) ||
-                    !centerPoint.Y.IsLessThanNonNegligible(negativePoly.MaxY) ||
-                    !centerPoint.Y.IsGreaterThanNonNegligible(negativePoly.MinY)) continue;
-                possiblyPolygons.Add(negativePoly);
-            }
-            if (!possiblyPolygons.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution. 
-            var negativePolyGroup = new PolygonGroup(possiblyPolygons);
-
-            //2. Sweep to determine which polygon the center is inside.
-           Polygon innerPolygon = null;
-            var lineSweep = new HashSet<Line>();
-            foreach (var point in negativePolyGroup.LexicographicallyOrderedPoints)
-            {
-                if (point.X.IsPracticallySame(centerPoint.X))
+                bool onBoundary;
+                Line closestLineAbove;
+                Line closestLineBelow;
+                if (!MiscFunctions.IsPointInsidePolygon(negativePoly, centerPoint, out closestLineAbove,
+                    out closestLineBelow, out onBoundary)) continue;
+                if (onBoundary) return new BoundingCircle(0.0, centerPoint); //Null solution.
+                var d = closestLineAbove.YGivenX(centerPoint.X) - centerPoint.Y; //Not negligible because not on Boundary
+                if (d < minDistance)
                 {
-                    //Check if center point is on the polygon
-                    if (point.Y.IsPracticallySame(centerPoint.Y)) return new BoundingCircle(0.0, centerPoint); //Null solution.
-                    if (point.Y > centerPoint.Y) break;
-                }
-                else if (point.X > centerPoint.X) break;
-                //else
-                foreach (var line in point.Lines)
-                {
-                    if (lineSweep.Contains(line)) lineSweep.Remove(line);
-                    else lineSweep.Add(line);
+                    minDistance = d;
+                    closestContainingPolygon = negativePoly;
                 }
             }
-            //Check if center point was inside any of the polygons
-            if(!lineSweep.Any()) return new BoundingCircle(0.0, centerPoint); //Null solution.
-            //Get the closest line above (small positive)
-            var closestY = double.MaxValue;
-            foreach (var line in lineSweep)
+
+            //If the point is inside the polygon.
+            if (closestContainingPolygon != null)
             {
-                var yIntersect = line.YGivenX(centerPoint.X);
-                //Check if center point is on the polygon
-                if (yIntersect.IsPracticallySame(centerPoint.Y)) return new BoundingCircle(0.0, centerPoint); //Null solution.
-                if (yIntersect > centerPoint.Y && yIntersect < closestY)
+                polygonsOfInterest.Add(closestContainingPolygon);
+            }
+            //If not inside a negative polygon, check if the point is inside any positive polygons. If it is return null.
+            else
+            {
+                foreach (var positivePoly in polyGroup.PositivePolygons)
                 {
-                    closestY = yIntersect;
-                    innerPolygon = negativePolyGroup.AllPolygons[line.FromPoint.PolygonIndex];
+                    bool onBoundary;
+                    Line closestLineAbove;
+                    Line closestLineBelow;
+                    if (MiscFunctions.IsPointInsidePolygon(positivePoly, centerPoint, out closestLineAbove,
+                        out closestLineBelow, out onBoundary)) return new BoundingCircle(0.0, centerPoint);
+                    polygonsOfInterest.Add(positivePoly);
                 }
             }
-            //no candidate polygon found
-            if(innerPolygon == null) return new BoundingCircle(0.0, centerPoint); //Null solution.
-
-            //3. For every line on the path, get the closest point on the edge to the center point. 
-            //   Skip if min distance to line (perpendicular) forms a point not on the line.
+            
+            //Lastly, determine how big the inner circle can be.
             var shortestDistance = double.MaxValue;
-            foreach (var line in innerPolygon.PathLines)
+            var smallestBoundingCircle = new BoundingCircle(0.0, centerPoint);
+            foreach (var polygon in polygonsOfInterest)
+            {
+                var boundingCircle = MaximumInnerCircleInHole(polygon, centerPoint);
+                if (boundingCircle.Radius < shortestDistance)
+                {
+                    shortestDistance = boundingCircle.Radius;
+                    smallestBoundingCircle = boundingCircle;
+                }
+            }
+
+            return smallestBoundingCircle;
+        }
+
+        private static BoundingCircle MaximumInnerCircleInHole(Polygon polygon, Point centerPoint)
+        {
+            var shortestDistance = double.MaxValue;
+            //1. For every line on the path, get the closest point on the edge to the center point. 
+            //   Skip if min distance to line (perpendicular) forms a point not on the line.
+            foreach (var line in polygon.PathLines)
             {
                 var v1 = line.ToPoint.Position2D.subtract(line.FromPoint.Position2D);
- 
-                //Correctly ordering the points should yield a negative area, since we are using a negative polygon
+                //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
-                if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint}).IsLessThanNonNegligible())
+                if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
                     continue;
 
                 //Figure out how far the center point is away from the line
@@ -302,13 +307,15 @@ namespace TVGL
                 shortestDistance = d;
             }
 
-            //4. For every point in path and every closest edge point find distance to center.
+            //2. For every point in path and every closest edge point find distance to center.
             //   The shortest distance determines the diameter of the inner circle.
-            foreach (var point in innerPolygon.Path)
+            foreach (var point in polygon.Path)
             {
                 var d = MiscFunctions.DistancePointToPoint(point.Position2D, centerPoint.Position2D);
                 if (d < shortestDistance) shortestDistance = d;
             }
+
+            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new BoundingCircle(0.0, centerPoint); //Not inside any hole or outside any positive polygon
             return new BoundingCircle(shortestDistance, centerPoint);
         }
 

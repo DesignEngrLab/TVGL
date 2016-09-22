@@ -55,6 +55,16 @@ namespace TVGL
         public readonly List<Point> AllPoints;
 
         /// <summary>
+        /// The list of all the negative polygons in this group.
+        /// </summary>
+        public readonly List<Polygon> NegativePolygons;
+
+        /// <summary>
+        /// The list of all the ppsitive polygons in this group.
+        /// </summary>
+        public readonly List<Polygon> PositivePolygons;
+
+        /// <summary>
         /// A list of ordered points. Min X -> Max X with ties ordered by Min Y -> Max Y.
         /// </summary>
         public IEnumerable<Point> LexicographicallyOrderedPoints => _lexicographicallyOrderedPoints.Value;
@@ -68,6 +78,14 @@ namespace TVGL
         internal PolygonGroup(IEnumerable<Polygon> polygons)
         {
             AllPolygons = new List<Polygon>(polygons);
+
+            PositivePolygons = new List<Polygon>();
+            NegativePolygons = new List<Polygon>();
+            foreach (var polygon in AllPolygons)
+            {
+                if (polygon.IsPositive) PositivePolygons.Add(polygon);
+                else NegativePolygons.Add(polygon);
+            }
 
             //Get all the points and update the polygon index.
             AllPoints = new List<Point>();
