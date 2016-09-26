@@ -253,9 +253,14 @@ namespace TVGL
             /// </summary>
             public double DistanceAlongDirection;
 
-            internal DecompositionData(List<List<Point>> paths, double distanceAlongDirection)
+            /// <summary>
+            /// The Decomposition Data Class used to store information from A Directional Decomposition
+            /// </summary>
+            /// <param name="paths"></param>
+            /// <param name="distanceAlongDirection"></param>
+            public DecompositionData(IEnumerable<List<Point>> paths, double distanceAlongDirection)
             {
-                Paths = paths;
+                Paths = new List<List<Point>>(paths);
                 DistanceAlongDirection = distanceAlongDirection;
             }
         }

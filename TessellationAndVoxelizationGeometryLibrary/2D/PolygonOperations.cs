@@ -340,8 +340,14 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
         {
-            if (clip == null) return ClipperInt.PolygonOperations.Union(new Paths(subject), null);
-            else return ClipperInt.PolygonOperations.Union(new Paths(subject), new Paths(clip));
+            var simpleSubject = subject.Select(SimplifyFuzzy).ToList();
+            if (clip == null)
+            {
+                return ClipperInt.PolygonOperations.Union(simpleSubject, null);
+            }
+
+            var simpleClip = clip.Select(SimplifyFuzzy).ToList();
+            return ClipperInt.PolygonOperations.Union(simpleSubject, simpleClip);
         }
 
         /// <summary>

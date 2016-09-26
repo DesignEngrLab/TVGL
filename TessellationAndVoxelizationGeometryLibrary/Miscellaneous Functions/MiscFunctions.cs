@@ -228,6 +228,15 @@ namespace TVGL
         }
         #endregion
 
+
+        /// <summary>
+        ///     Calculate the area of any non-intersecting polygon.
+        /// </summary>
+        public static double AreaOfPolygon(IList<List<Point>> paths)
+        {
+            return paths.Sum(path => AreaOfPolygon(path));
+        }
+
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
         /// </summary>
