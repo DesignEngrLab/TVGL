@@ -550,7 +550,7 @@ namespace TVGL
         /// </summary>
         /// <param name="direction">The direction.</param>
         /// <returns>System.Double[].</returns>
-        private static double[,] TransformToXYPlane(IList<double> direction)
+        public static double[,] TransformToXYPlane(IList<double> direction)
         {
             double[,] backTransformStandIn;
             return TransformToXYPlane(direction, out backTransformStandIn);
@@ -562,7 +562,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
         /// <returns>System.Double[].</returns>
-        private static double[,] TransformToXYPlane(IList<double> direction, out double[,] backTransform)
+        public static double[,] TransformToXYPlane(IList<double> direction, out double[,] backTransform)
         {
             var xDir = direction[0];
             var yDir = direction[1];
