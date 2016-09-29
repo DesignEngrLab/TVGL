@@ -13,6 +13,7 @@
 // ***********************************************************************
 
 using System.Collections;
+using System.Windows.Media;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -264,6 +265,74 @@ namespace TVGL
         #endregion
 
         #region 3D Plots via Helix.Toolkit
+        	
+	    public static void ShowVertexPathsWithSolid(IList<List<List<Vertex>>> vertexPaths, IList<TessellatedSolid> solids)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+
+            foreach (var tessellatedSolid in solids)
+            {
+                var model = MakeModelVisual3D(tessellatedSolid);
+                models.Add(model);
+                window.view1.Children.Add(model);
+            }
+
+            foreach (var crossSection in vertexPaths)
+            {
+                foreach (var path in crossSection)
+                {
+                    var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
+
+                    //No create a line collection by doubling up the points
+                    var lineCollection = new List<Point3D>();
+                    foreach (var t in contour)
+                    {
+                        lineCollection.Add(t);
+                        lineCollection.Add(t);
+                    }
+                    lineCollection.RemoveAt(0);
+                    lineCollection.Add(lineCollection.First());
+
+                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
+                    window.view1.Children.Add(lines);
+                }
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        /// <summary>
+        ///     Shows vertex paths. Assumes paths are closed.
+        /// </summary>
+        /// <param name="vertexPaths"></param>
+        public static void ShowVertexPaths(IList<List<List<Vertex>>> vertexPaths)
+        {
+            var window = new Window3DPlot();
+
+            foreach (var crossSection in vertexPaths)
+            {
+                foreach (var path in crossSection)
+                {
+                    var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
+
+                    //No create a line collection by doubling up the points
+                    var lineCollection = new List<Point3D>();
+                    foreach (var t in contour)
+                    {
+                        lineCollection.Add(t);
+                        lineCollection.Add(t);
+                    }
+                    lineCollection.RemoveAt(0);
+                    lineCollection.Add(lineCollection.First());
+
+                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
+                    window.view1.Children.Add(lines);
+                }
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
 
         /// <summary>
         ///     Shows the specified tessellated solid in a Helix toolkit window.
