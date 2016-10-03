@@ -427,6 +427,22 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
+        /// <param name="mergeDuplicateTolerance">The merge duplicate references.</param>
+        /// <returns>Point2D[].</returns>
+        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction, double mergeDuplicateTolerance)
+        {
+            if (mergeDuplicateTolerance.IsNegligible()) mergeDuplicateTolerance = Constants.BaseTolerance; //Minimum allowed tolerance.
+            var transform = TransformToXYPlane(direction);
+            return Get2DProjectionPoints(vertices, transform, true, mergeDuplicateTolerance);
+        }
+
+        /// <summary>
+        ///     Returns the positions (array of 3D arrays) of the vertices as that they would be represented in
+        ///     the x-y plane (although the z-values will be non-zero). This does not destructively alter
+        ///     the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
         /// <param name="backTransform">The back transform.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
