@@ -410,15 +410,15 @@ namespace TVGL
 
 
             //Remove tiny polygons.
-            var count = 0;
-            for (var i = 0; i < solution.Count; i++)
+            var significantSolution = new List<List<Point>>();
+            foreach(var path in solution)
             {
-                if (!MiscFunctions.AreaOfPolygon(solution[i]).IsNegligible(ts.SurfaceArea / 10000)) continue;
-                solution.RemoveAt(i - count);
-                count++;
+                var area = MiscFunctions.AreaOfPolygon(path);
+                if (area.IsNegligible(ts.SurfaceArea/10000)) continue;
+                significantSolution.Add(path);
             }
 
-            return solution;
+            return significantSolution;
         }
     }
 }
