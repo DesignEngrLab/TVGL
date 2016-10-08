@@ -265,7 +265,7 @@ namespace TVGL.IOFunctions
         {
             var startPosition = reader.BaseStream.Position;
             var line = ReadLine(reader);
-            if (line != null && expected.Equals(line.Trim(' '), StringComparison.OrdinalIgnoreCase))
+            if (line != null && expected.Equals(line.Trim(' '), StringComparison.CurrentCultureIgnoreCase))
                 return true;
             reader.BaseStream.Position = startPosition;
             return false;
@@ -322,7 +322,7 @@ namespace TVGL.IOFunctions
                 input.Equals("micrometers", StringComparison.CurrentCultureIgnoreCase) ||
                 input.Equals("microns", StringComparison.CurrentCultureIgnoreCase))
                 units = UnitType.micron;
-            else if(input.Equals("centimeter", StringComparison.CurrentCultureIgnoreCase) ||
+            else if (input.Equals("centimeter", StringComparison.CurrentCultureIgnoreCase) ||
                 input.Equals("centimeters", StringComparison.CurrentCultureIgnoreCase))
                 units = UnitType.centimeter;
             else if (input.Equals("meters", StringComparison.CurrentCultureIgnoreCase) ||
@@ -348,6 +348,53 @@ namespace TVGL.IOFunctions
             UnitType units;
             if (TryParseUnits(input, out units)) return units;
             return UnitType.unspecified;
+        }
+
+
+
+        /// <summary>
+        /// Tries the parse number type from string.
+        /// </summary>
+        /// <param name="typeString">The type string.</param>
+        /// <param name="type">The type.</param>
+        /// <returns>Type.</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
+        protected bool TryParseNumberTypeFromString(string typeString, out Type type)
+        {
+            if (typeString.StartsWith("float", StringComparison.CurrentCultureIgnoreCase)
+                || typeString.StartsWith("single", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(float);
+            else if (typeString.StartsWith("double", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(double);
+            else if (typeString.StartsWith("long", StringComparison.CurrentCultureIgnoreCase)
+                || typeString.StartsWith("int64", StringComparison.CurrentCultureIgnoreCase)
+                || typeString.StartsWith("uint64", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(long);
+            else if (typeString.StartsWith("int32", StringComparison.CurrentCultureIgnoreCase)
+                     || typeString.Equals("int", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(int);
+            else if (typeString.StartsWith("short", StringComparison.CurrentCultureIgnoreCase)
+                     || typeString.StartsWith("int16", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(short);
+            else if (typeString.StartsWith("ushort", StringComparison.CurrentCultureIgnoreCase)
+                || typeString.StartsWith("uint16", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(ushort);
+            else if (typeString.StartsWith("uint64", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(ulong);
+            else if (typeString.Equals("uint", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(uint);
+            else if (typeString.StartsWith("char", StringComparison.CurrentCultureIgnoreCase)
+                     || typeString.StartsWith("uchar", StringComparison.CurrentCultureIgnoreCase)
+                     || typeString.StartsWith("byte", StringComparison.CurrentCultureIgnoreCase)
+                     || typeString.StartsWith("uint8", StringComparison.CurrentCultureIgnoreCase)
+                     || typeString.StartsWith("int8", StringComparison.CurrentCultureIgnoreCase))
+                type = typeof(byte);
+            else
+            {
+                type = null;
+                return false;
+            }
+            return true;
         }
         #endregion
 
