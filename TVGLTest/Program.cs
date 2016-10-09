@@ -79,10 +79,10 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles();
+            var fileNames = dir.GetFiles("*.ply");
             for (var i = 0; i < FileNames.Count(); i++)
             {
-                var filename = FileNames[i];//.FullName;
+                var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;

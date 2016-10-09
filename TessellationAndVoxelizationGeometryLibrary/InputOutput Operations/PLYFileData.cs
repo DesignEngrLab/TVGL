@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace TVGL.IOFunctions
 {
@@ -118,6 +119,7 @@ namespace TVGL.IOFunctions
         internal static TessellatedSolid OpenSolid(Stream s, string filename)
         {
             var reader = new StreamReader(s);
+
             var plyData = new PLYFileData { FileName = filename, Name = GetNameFromFileName(filename) };
             var line = ReadLine(reader);
             if (!line.Contains("ply") && !line.Contains("PLY"))
@@ -125,7 +127,9 @@ namespace TVGL.IOFunctions
             plyData.ReadHeader(reader);
             if (plyData.endiannessType == FormatEndiannessType.ascii)
                 return plyData.ReadMesh(reader);
-            else return plyData.ReadMesh(new BinaryReader(s));
+            var charposInfo = typeof(StreamReader).GetField("charPos", BindingFlags.NonPublic | BindingFlags.Instance);
+            int charPos = (int)charposInfo.GetValue(reader);
+            return plyData.ReadMesh(new BinaryReader(s), charPos);
         }
 
 
@@ -240,9 +244,10 @@ namespace TVGL.IOFunctions
             return true;
         }
 
-        private TessellatedSolid ReadMesh(BinaryReader reader)
+        private TessellatedSolid ReadMesh(BinaryReader reader, int pos)
         {
             var now = DateTime.Now;
+            reader.BaseStream.Seek(pos, SeekOrigin.Begin);
             foreach (var shapeElement in ReadInOrder)
             {
                 bool successful;
@@ -300,7 +305,7 @@ namespace TVGL.IOFunctions
                 var numVerts = (int)readNumber(reader, vertexAmountType, endiannessType);
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)
-                    vertIndices[j] = (int) readNumber(reader, vertexIndexType, endiannessType);
+                    vertIndices[j] = (int)readNumber(reader, vertexIndexType, endiannessType);
                 FaceToVertexIndices.Add(vertIndices);
 
                 if (ColorDescriptor.Any())
@@ -308,7 +313,7 @@ namespace TVGL.IOFunctions
                     float a = 0, r = 0, g = 0, b = 0;
                     for (var j = 0; j < ColorDescriptor.Count; j++)
                     {
-                        var value = (float) readNumber(reader, colorElementType[j], endiannessType);
+                        var value = (float)readNumber(reader, colorElementType[j], endiannessType);
                         if (colorElementType[j] != typeof(float) && colorElementType[j] != typeof(double))
                             value = value / 255f;
                         switch (ColorDescriptor[j])
@@ -326,296 +331,300 @@ namespace TVGL.IOFunctions
                 }
                 if (_lastColor != null) Colors.Add(_lastColor);
             }
-        return true;
-        }
-
-    /// <summary>
-    ///     Reads the vertices.
-    /// </summary>
-    /// <param name="reader">The reader.</param>
-    /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-    private bool ReadVertices(BinaryReader reader)
-    {
-        var numD = CoordinateOrder.Count;
-        for (var i = 0; i < NumVertices; i++)
-        {
-            double[] point = new double[numD];
-
-            for (int j = 0; j < numD; j++)
-                point[CoordinateOrder[j]] = (double)readNumber(reader, CoordinateTypes[j], endiannessType);
-
-            if (point.Any(double.IsNaN)) return false;
-            Vertices.Add(point);
-        }
-        return true;
-    }
-
-    static object readNumber(BinaryReader reader, Type type, FormatEndiannessType formatType)
-    {
-        var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
-
-        if (type == typeof(double))
-            return TVGLBitConverter.ToDouble(reader.ReadBytes(8), 0, bigEndian);
-        if (type == typeof(long))
-            return TVGLBitConverter.ToInt64(reader.ReadBytes(8), 0);
-        if (type == typeof(ulong))
-            return TVGLBitConverter.ToUInt64(reader.ReadBytes(8), 0);
-        if (type == typeof(float))
-            return TVGLBitConverter.ToSingle(reader.ReadBytes(4), 0);
-        if (type == typeof(int))
-            return TVGLBitConverter.ToInt32(reader.ReadBytes(4), 0);
-        if (type == typeof(uint))
-            return TVGLBitConverter.ToUInt32(reader.ReadBytes(4), 0);
-        if (type == typeof(short))
-            return TVGLBitConverter.ToInt16(reader.ReadBytes(2), 0);
-        if (type == typeof(ushort))
-            return TVGLBitConverter.ToUInt16(reader.ReadBytes(2), 0);
-        if (type == typeof(byte))
-            return reader.ReadBytes(1)[0];
-        return double.NaN;
-    }
-    static object readNumber(string text, Type type)
-    {
-        if (type == typeof(double))
-        {
-            double coord;
-            if (double.TryParse(text, out coord)) return coord;
-        }
-        if (type == typeof(long))
-        {
-            long coord;
-            if (long.TryParse(text, out coord)) return coord;
-        }
-        if (type == typeof(ulong))
-        {
-            ulong coord;
-            if (ulong.TryParse(text, out coord)) return coord;
-        }
-        if (type == typeof(float))
-        {
-            float coord;
-            if (float.TryParse(text, out coord)) return coord;
-        }
-        if (type == typeof(int))
-        {
-            int coord;
-            if (int.TryParse(text, out coord)) return coord;
-        }
-        if (type == typeof(uint))
-        {
-            uint coord;
-            if (uint.TryParse(text, out coord)) return coord;
-        }
-        if (type == typeof(short))
-        {
-            short coord;
-            if (short.TryParse(text, out coord)) return coord;
-        }
-        if (type == typeof(ushort))
-        {
-            ushort coord;
-            if (ushort.TryParse(text, out coord)) return coord;
-        }
-        if (type == typeof(byte))
-        {
-            byte coord;
-            if (byte.TryParse(text, out coord)) return coord;
-        }
-        return double.NaN;
-    }
-
-    /// <summary>
-    ///     Reads the header.
-    /// </summary>
-    /// <param name="reader">The reader.</param>
-    private void ReadHeader(StreamReader reader)
-    {
-        ReadInOrder = new List<ShapeElement>();
-        ColorDescriptor = new List<ColorElements>();
-        CoordinateTypes = new List<Type>();
-        CoordinateOrder = new List<int>();
-        string line;
-        do
-        {
-            line = ReadLine(reader);
-            string id, values;
-            ParseLine(line, out id, out values);
-            if (id.Equals("comment"))
-                Comments.Add(values);
-            else if (id.Equals("format"))
-                Enum.TryParse(values.Split(' ')[0], true, out endiannessType);
-            else if (id.Equals("element"))
-            {
-                string numberString;
-                ParseLine(values, out id, out numberString);
-                int numberInt;
-                var successfulParse = int.TryParse(numberString, out numberInt);
-                if (!successfulParse) continue;
-                if (id.Equals("vertex"))
-                {
-                    ReadInOrder.Add(ShapeElement.Vertex);
-                    NumVertices = numberInt;
-                }
-                else if (id.Equals("face"))
-                {
-                    ReadInOrder.Add(ShapeElement.Face);
-                    NumFaces = numberInt;
-                }
-                else if (id.Equals("edge"))
-                {
-                    ReadInOrder.Add(ShapeElement.Edge);
-                    NumEdges = numberInt;
-                }
-                else if (id.Equals("uniform_color"))
-                {
-                    ReadInOrder.Add(ShapeElement.Edge);
-                    NumEdges = numberInt;
-                }
-            }
-            else if (id.Equals("property"))
-            {
-                if (ReadInOrder.Last() == ShapeElement.Vertex)
-                {
-                    string typeString, coordString;
-                    Type type;
-                    ParseLine(values, out typeString, out coordString);
-                    if (!TryParseNumberTypeFromString(typeString, out type))
-                        throw new ArgumentException("Unable to parse " + typeString + " as a type of number");
-                    CoordinateTypes.Add(type);
-
-                    if (coordString.StartsWith("x", StringComparison.CurrentCultureIgnoreCase))
-                        CoordinateOrder.Add(0);
-                    else if (coordString.StartsWith("y", StringComparison.CurrentCultureIgnoreCase))
-                        CoordinateOrder.Add(1);
-                    else if (coordString.StartsWith("z", StringComparison.CurrentCultureIgnoreCase))
-                        CoordinateOrder.Add(2);
-                }
-                if (ReadInOrder.Last() == ShapeElement.Face)
-                {
-                    string typeString, restString;
-                    ParseLine(values, out typeString, out restString);
-                    if (typeString.Equals("list"))
-                    {
-                        if (!restString.Contains("vertex_index") && !restString.Contains("vertex_indices"))
-                            throw new ArgumentException("The faces in PLY are specified in unknown manner: " + restString);
-                        var words = restString.Split(' ');
-                        Type type;
-                        if (TryParseNumberTypeFromString(words[0], out type))
-                            vertexAmountType = type;
-                        else throw new ArgumentException("The number of vertex in the PLY face definition are of unknown type: "
-                            + words[0]);
-                        if (TryParseNumberTypeFromString(words[1], out type))
-                            vertexIndexType = type;
-                        else throw new ArgumentException("The vertex indices in the PLY face definition are of unknown type: "
-                            + words[1]);
-                        continue;
-                    }
-                    if (restString.Equals("red", StringComparison.CurrentCultureIgnoreCase)
-                    || restString.Equals("r", StringComparison.CurrentCultureIgnoreCase))
-                        ColorDescriptor.Add(ColorElements.Red);
-                    else if (restString.Equals("blue", StringComparison.CurrentCultureIgnoreCase)
-                             || restString.Equals("b", StringComparison.CurrentCultureIgnoreCase))
-                        ColorDescriptor.Add(ColorElements.Blue);
-                    else if (restString.Equals("green", StringComparison.CurrentCultureIgnoreCase)
-                             || restString.Equals("g", StringComparison.CurrentCultureIgnoreCase))
-                        ColorDescriptor.Add(ColorElements.Green);
-                    else if (restString.Equals("opacity", StringComparison.CurrentCultureIgnoreCase)
-                             || restString.StartsWith("transp", StringComparison.CurrentCultureIgnoreCase)
-                             || restString.Equals("a", StringComparison.CurrentCultureIgnoreCase))
-                        ColorDescriptor.Add(ColorElements.Opacity);
-                    else if (restString.Contains("red"))
-                        ColorDescriptor.Add(ColorElements.Red);
-                    else if (restString.Contains("blue"))
-                        ColorDescriptor.Add(ColorElements.Blue);
-                    else if (restString.Contains("green"))
-                        ColorDescriptor.Add(ColorElements.Green);
-                    else continue;
-                    // the continue ensures that the following line will only be processed if it the property
-                    // was identified as a color
-                    Type colorType;
-                    if (TryParseNumberTypeFromString(typeString, out colorType))
-                        colorElementType.Add(colorType);
-                }
-            }
-        } while (!line.Equals("end_header"));
-    }
-
-    #endregion
-    #region Save
-    /// <summary>
-    /// Saves the specified stream.
-    /// </summary>
-    /// <param name="stream">The stream.</param>
-    /// <param name="solid">The solid.</param>
-    /// <returns>
-    ///   <c>true</c> if XXXX, <c>false</c> otherwise.
-    /// </returns>
-    internal static bool SaveSolid(Stream stream, TessellatedSolid solid)
-    {
-        var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
-        var colorString = " " + solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
-                                         solid.SolidColor.A;
-        try
-        {
-            using (var writer = new StreamWriter(stream))
-            {
-                writer.WriteLine("ply");
-                writer.WriteLine("format ascii 1.0");
-                writer.WriteLine("comment  " + tvglDateMarkText);
-                if (!string.IsNullOrWhiteSpace(solid.Name))
-                    writer.WriteLine("comment  Name : " + solid.Name);
-                if (!string.IsNullOrWhiteSpace(solid.FileName))
-                    writer.WriteLine("comment  Originally loaded from : " + solid.FileName);
-                if (solid.Units != UnitType.unspecified)
-                    writer.WriteLine("comment  Units : " + solid.Units);
-                if (!string.IsNullOrWhiteSpace(solid.Language))
-                    writer.WriteLine("comment  Lang : " + solid.Language);
-                if (solid.Comments != null)
-                    foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
-                        writer.WriteLine("comment  " + comment);
-                writer.WriteLine("element vertex " + solid.NumberOfVertices);
-                writer.WriteLine("property double x");
-                writer.WriteLine("property double y");
-                writer.WriteLine("property double z");
-                writer.WriteLine("element face " + solid.NumberOfFaces);
-                writer.WriteLine("property list uint8 int32 vertex_indices");
-                if (defineColors)
-                {
-                    writer.WriteLine("property uchar red");
-                    writer.WriteLine("property uchar green");
-                    writer.WriteLine("property uchar blue");
-                    writer.WriteLine("property uchar opacity");
-                }
-                writer.WriteLine("end_header");
-
-                foreach (var vertex in solid.Vertices)
-                    writer.WriteLine(vertex.X + " " + vertex.Y + " " + vertex.Z);
-                foreach (var face in solid.Faces)
-                {
-                    var faceString = face.Vertices.Count.ToString();
-                    foreach (var v in face.Vertices)
-                        faceString += " " + v.IndexInList;
-                    if (defineColors)
-                    {
-                        if (face.Color != null)
-                            faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
-                                      face.Color.A;
-                        else
-                            faceString += colorString;
-                    }
-                    writer.WriteLine(faceString);
-                }
-            }
-            Message.output("Successfully wrote PLY file to stream.", 3);
             return true;
         }
-        catch (Exception exception)
+
+        /// <summary>
+        ///     Reads the vertices.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool ReadVertices(BinaryReader reader)
         {
-            Message.output("Unable to write in model file.", 1);
-            Message.output("Exception: " + exception.Message, 3);
-            return false;
+            var numD = CoordinateOrder.Count;
+            for (var i = 0; i < NumVertices; i++)
+            {
+                double[] point = new double[numD];
+
+                for (int j = 0; j < numD; j++)
+                    point[CoordinateOrder[j]] = (double)readNumber(reader, CoordinateTypes[j], endiannessType);
+
+                if (point.Any(double.IsNaN)) return false;
+                Vertices.Add(point);
+            }
+            return true;
         }
+
+        static dynamic readNumber(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        {
+            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+
+            if (type == typeof(double))
+                return TVGLBitConverter.ToDouble(reader.ReadBytes(8), 0, bigEndian);
+            if (type == typeof(long))
+                return TVGLBitConverter.ToInt64(reader.ReadBytes(8), 0);
+            if (type == typeof(ulong))
+                return TVGLBitConverter.ToUInt64(reader.ReadBytes(8), 0);
+            if (type == typeof(float))
+                return TVGLBitConverter.ToSingle(reader.ReadBytes(4), 0);
+            if (type == typeof(int))
+                return TVGLBitConverter.ToInt32(reader.ReadBytes(4), 0);
+            if (type == typeof(uint))
+                return TVGLBitConverter.ToUInt32(reader.ReadBytes(4), 0);
+            if (type == typeof(short))
+                return TVGLBitConverter.ToInt16(reader.ReadBytes(2), 0);
+            if (type == typeof(ushort))
+                return TVGLBitConverter.ToUInt16(reader.ReadBytes(2), 0);
+            if (type == typeof(byte))
+            {
+                var oneByteArray = reader.ReadBytes(1);
+                return oneByteArray[0];
+            }
+            return double.NaN;
+        }
+        static dynamic readNumber(string text, Type type)
+        {
+            if (type == typeof(double))
+            {
+                double coord;
+                if (double.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(long))
+            {
+                long coord;
+                if (long.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(ulong))
+            {
+                ulong coord;
+                if (ulong.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(float))
+            {
+                float coord;
+                if (float.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(int))
+            {
+                int coord;
+                if (int.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(uint))
+            {
+                uint coord;
+                if (uint.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(short))
+            {
+                short coord;
+                if (short.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(ushort))
+            {
+                ushort coord;
+                if (ushort.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(byte))
+            {
+                byte coord;
+                if (byte.TryParse(text, out coord)) return coord;
+            }
+            return double.NaN;
+        }
+
+        /// <summary>
+        ///     Reads the header.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        private void ReadHeader(StreamReader reader)
+        {
+            ReadInOrder = new List<ShapeElement>();
+            ColorDescriptor = new List<ColorElements>();
+            colorElementType = new List<Type>();
+            CoordinateTypes = new List<Type>();
+            CoordinateOrder = new List<int>();
+            string line;
+            do
+            {
+                line = ReadLine(reader);
+                string id, values;
+                ParseLine(line, out id, out values);
+                if (id.Equals("comment"))
+                    Comments.Add(values);
+                else if (id.Equals("format"))
+                    Enum.TryParse(values.Split(' ')[0], true, out endiannessType);
+                else if (id.Equals("element"))
+                {
+                    string numberString;
+                    ParseLine(values, out id, out numberString);
+                    int numberInt;
+                    var successfulParse = int.TryParse(numberString, out numberInt);
+                    if (!successfulParse) continue;
+                    if (id.Equals("vertex"))
+                    {
+                        ReadInOrder.Add(ShapeElement.Vertex);
+                        NumVertices = numberInt;
+                    }
+                    else if (id.Equals("face"))
+                    {
+                        ReadInOrder.Add(ShapeElement.Face);
+                        NumFaces = numberInt;
+                    }
+                    else if (id.Equals("edge"))
+                    {
+                        ReadInOrder.Add(ShapeElement.Edge);
+                        NumEdges = numberInt;
+                    }
+                    else if (id.Equals("uniform_color"))
+                    {
+                        ReadInOrder.Add(ShapeElement.Edge);
+                        NumEdges = numberInt;
+                    }
+                }
+                else if (id.Equals("property"))
+                {
+                    if (ReadInOrder.Last() == ShapeElement.Vertex)
+                    {
+                        string typeString, coordString;
+                        Type type;
+                        ParseLine(values, out typeString, out coordString);
+                        if (!TryParseNumberTypeFromString(typeString, out type))
+                            throw new ArgumentException("Unable to parse " + typeString + " as a type of number");
+                        CoordinateTypes.Add(type);
+
+                        if (coordString.StartsWith("x", StringComparison.CurrentCultureIgnoreCase))
+                            CoordinateOrder.Add(0);
+                        else if (coordString.StartsWith("y", StringComparison.CurrentCultureIgnoreCase))
+                            CoordinateOrder.Add(1);
+                        else if (coordString.StartsWith("z", StringComparison.CurrentCultureIgnoreCase))
+                            CoordinateOrder.Add(2);
+                    }
+                    if (ReadInOrder.Last() == ShapeElement.Face)
+                    {
+                        string typeString, restString;
+                        ParseLine(values, out typeString, out restString);
+                        if (typeString.Equals("list"))
+                        {
+                            if (!restString.Contains("vertex_index") && !restString.Contains("vertex_indices"))
+                                throw new ArgumentException("The faces in PLY are specified in unknown manner: " + restString);
+                            var words = restString.Split(' ');
+                            Type type;
+                            if (TryParseNumberTypeFromString(words[0], out type))
+                                vertexAmountType = type;
+                            else throw new ArgumentException("The number of vertex in the PLY face definition are of unknown type: "
+                                + words[0]);
+                            if (TryParseNumberTypeFromString(words[1], out type))
+                                vertexIndexType = type;
+                            else throw new ArgumentException("The vertex indices in the PLY face definition are of unknown type: "
+                                + words[1]);
+                            continue;
+                        }
+                        if (restString.Equals("red", StringComparison.CurrentCultureIgnoreCase)
+                        || restString.Equals("r", StringComparison.CurrentCultureIgnoreCase))
+                            ColorDescriptor.Add(ColorElements.Red);
+                        else if (restString.Equals("blue", StringComparison.CurrentCultureIgnoreCase)
+                                 || restString.Equals("b", StringComparison.CurrentCultureIgnoreCase))
+                            ColorDescriptor.Add(ColorElements.Blue);
+                        else if (restString.Equals("green", StringComparison.CurrentCultureIgnoreCase)
+                                 || restString.Equals("g", StringComparison.CurrentCultureIgnoreCase))
+                            ColorDescriptor.Add(ColorElements.Green);
+                        else if (restString.Equals("opacity", StringComparison.CurrentCultureIgnoreCase)
+                                 || restString.StartsWith("transp", StringComparison.CurrentCultureIgnoreCase)
+                                 || restString.Equals("a", StringComparison.CurrentCultureIgnoreCase))
+                            ColorDescriptor.Add(ColorElements.Opacity);
+                        else if (restString.Contains("red"))
+                            ColorDescriptor.Add(ColorElements.Red);
+                        else if (restString.Contains("blue"))
+                            ColorDescriptor.Add(ColorElements.Blue);
+                        else if (restString.Contains("green"))
+                            ColorDescriptor.Add(ColorElements.Green);
+                        else continue;
+                        // the continue ensures that the following line will only be processed if it the property
+                        // was identified as a color
+                        Type colorType;
+                        if (TryParseNumberTypeFromString(typeString, out colorType))
+                            colorElementType.Add(colorType);
+                    }
+                }
+            } while (!line.Equals("end_header"));
+        }
+
+        #endregion
+        #region Save
+        /// <summary>
+        /// Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solid">The solid.</param>
+        /// <returns>
+        ///   <c>true</c> if XXXX, <c>false</c> otherwise.
+        /// </returns>
+        internal static bool SaveSolid(Stream stream, TessellatedSolid solid)
+        {
+            var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+            var colorString = " " + solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
+                                             solid.SolidColor.A;
+            try
+            {
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.WriteLine("ply");
+                    writer.WriteLine("format ascii 1.0");
+                    writer.WriteLine("comment  " + tvglDateMarkText);
+                    if (!string.IsNullOrWhiteSpace(solid.Name))
+                        writer.WriteLine("comment  Name : " + solid.Name);
+                    if (!string.IsNullOrWhiteSpace(solid.FileName))
+                        writer.WriteLine("comment  Originally loaded from : " + solid.FileName);
+                    if (solid.Units != UnitType.unspecified)
+                        writer.WriteLine("comment  Units : " + solid.Units);
+                    if (!string.IsNullOrWhiteSpace(solid.Language))
+                        writer.WriteLine("comment  Lang : " + solid.Language);
+                    if (solid.Comments != null)
+                        foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
+                            writer.WriteLine("comment  " + comment);
+                    writer.WriteLine("element vertex " + solid.NumberOfVertices);
+                    writer.WriteLine("property double x");
+                    writer.WriteLine("property double y");
+                    writer.WriteLine("property double z");
+                    writer.WriteLine("element face " + solid.NumberOfFaces);
+                    writer.WriteLine("property list uint8 int32 vertex_indices");
+                    if (defineColors)
+                    {
+                        writer.WriteLine("property uchar red");
+                        writer.WriteLine("property uchar green");
+                        writer.WriteLine("property uchar blue");
+                        writer.WriteLine("property uchar opacity");
+                    }
+                    writer.WriteLine("end_header");
+
+                    foreach (var vertex in solid.Vertices)
+                        writer.WriteLine(vertex.X + " " + vertex.Y + " " + vertex.Z);
+                    foreach (var face in solid.Faces)
+                    {
+                        var faceString = face.Vertices.Count.ToString();
+                        foreach (var v in face.Vertices)
+                            faceString += " " + v.IndexInList;
+                        if (defineColors)
+                        {
+                            if (face.Color != null)
+                                faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
+                                          face.Color.A;
+                            else
+                                faceString += colorString;
+                        }
+                        writer.WriteLine(faceString);
+                    }
+                }
+                Message.output("Successfully wrote PLY file to stream.", 3);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
+                return false;
+            }
+        }
+        #endregion
     }
-    #endregion
-}
 }
