@@ -199,7 +199,7 @@ namespace TVGL.IOFunctions
             if (idx == -1)
             {
                 id = line;
-                values = string.Empty;
+                values = String.Empty;
             }
             else
             {
@@ -218,11 +218,11 @@ namespace TVGL.IOFunctions
         protected static bool TryParseDoubleArray(string line, out double[] doubles)
         {
             var strings = line.Split(' ', '\t').ToList();
-            strings.RemoveAll(string.IsNullOrWhiteSpace);
+            strings.RemoveAll(String.IsNullOrWhiteSpace);
             doubles = new double[strings.Count];
             for (var i = 0; i < strings.Count; i++)
             {
-                if (!double.TryParse(strings[i], out doubles[i]))
+                if (!Double.TryParse(strings[i], out doubles[i]))
                     return false;
             }
             return true;
@@ -246,7 +246,7 @@ namespace TVGL.IOFunctions
             doubles = new double[match.Groups.Count - 1];
             for (var i = 0; i < doubles.GetLength(0); i++)
             {
-                if (!double.TryParse(match.Groups[i + 1].Value, out doubles[i]))
+                if (!Double.TryParse(match.Groups[i + 1].Value, out doubles[i]))
                     return false;
             }
             return true;
@@ -283,7 +283,7 @@ namespace TVGL.IOFunctions
             {
                 line = reader.ReadLine();
                 if (reader.EndOfStream) break;
-            } while (string.IsNullOrWhiteSpace(line));
+            } while (String.IsNullOrWhiteSpace(line));
             return line.Trim();
         }
 
@@ -395,6 +395,235 @@ namespace TVGL.IOFunctions
                 return false;
             }
             return true;
+        }
+
+        internal static int readNumberAsInt(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        {
+            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+
+            if (type == typeof(double))
+                return (int)Math.Round(TVGLBitConverter.ToDouble(reader.ReadBytes(8), 0, bigEndian));
+            if (type == typeof(long))
+                return (int)TVGLBitConverter.ToInt64(reader.ReadBytes(8), 0);
+            if (type == typeof(ulong))
+                return (int)TVGLBitConverter.ToUInt64(reader.ReadBytes(8), 0);
+            if (type == typeof(float))
+                return (int)Math.Round(TVGLBitConverter.ToSingle(reader.ReadBytes(4), 0));
+            if (type == typeof(int))
+                return TVGLBitConverter.ToInt32(reader.ReadBytes(4), 0);
+            if (type == typeof(uint))
+                return (int)TVGLBitConverter.ToUInt32(reader.ReadBytes(4), 0);
+            if (type == typeof(short))
+                return TVGLBitConverter.ToInt16(reader.ReadBytes(2), 0);
+            if (type == typeof(ushort))
+                return TVGLBitConverter.ToUInt16(reader.ReadBytes(2), 0);
+            if (type == typeof(byte))
+            {
+                var oneByteArray = reader.ReadBytes(1);
+                return oneByteArray[0];
+            }
+            return int.MinValue;
+        }
+        internal static float readNumberAsFloat(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        {
+            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+
+            if (type == typeof(double))
+                return (float)TVGLBitConverter.ToDouble(reader.ReadBytes(8), 0, bigEndian);
+            if (type == typeof(long))
+                return TVGLBitConverter.ToInt64(reader.ReadBytes(8), 0);
+            if (type == typeof(ulong))
+                return TVGLBitConverter.ToUInt64(reader.ReadBytes(8), 0);
+            if (type == typeof(float))
+                return TVGLBitConverter.ToSingle(reader.ReadBytes(4), 0);
+            if (type == typeof(int))
+                return TVGLBitConverter.ToInt32(reader.ReadBytes(4), 0);
+            if (type == typeof(uint))
+                return TVGLBitConverter.ToUInt32(reader.ReadBytes(4), 0);
+            if (type == typeof(short))
+                return TVGLBitConverter.ToInt16(reader.ReadBytes(2), 0);
+            if (type == typeof(ushort))
+                return TVGLBitConverter.ToUInt16(reader.ReadBytes(2), 0);
+            if (type == typeof(byte))
+            {
+                var oneByteArray = reader.ReadBytes(1);
+                return oneByteArray[0];
+            }
+            return float.NaN;
+        }
+        internal static double readNumberAsDouble(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        {
+            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+
+            if (type == typeof(double))
+                return TVGLBitConverter.ToDouble(reader.ReadBytes(8), 0, bigEndian);
+            if (type == typeof(long))
+                return TVGLBitConverter.ToInt64(reader.ReadBytes(8), 0);
+            if (type == typeof(ulong))
+                return TVGLBitConverter.ToUInt64(reader.ReadBytes(8), 0);
+            if (type == typeof(float))
+                return TVGLBitConverter.ToSingle(reader.ReadBytes(4), 0);
+            if (type == typeof(int))
+                return TVGLBitConverter.ToInt32(reader.ReadBytes(4), 0);
+            if (type == typeof(uint))
+                return TVGLBitConverter.ToUInt32(reader.ReadBytes(4), 0);
+            if (type == typeof(short))
+                return TVGLBitConverter.ToInt16(reader.ReadBytes(2), 0);
+            if (type == typeof(ushort))
+                return TVGLBitConverter.ToUInt16(reader.ReadBytes(2), 0);
+            if (type == typeof(byte))
+            {
+                var oneByteArray = reader.ReadBytes(1);
+                return oneByteArray[0];
+            }
+            return double.NaN;
+        }
+        internal static int readNumberAsInt(string text, Type type)
+        {
+            if (type == typeof(double))
+            {
+                double coord;
+                if (double.TryParse(text, out coord)) return (int)Math.Round(coord);
+            }
+            if (type == typeof(long))
+            {
+                long coord;
+                if (long.TryParse(text, out coord)) return (int)coord;
+            }
+            if (type == typeof(ulong))
+            {
+                ulong coord;
+                if (ulong.TryParse(text, out coord)) return (int)coord;
+            }
+            if (type == typeof(float))
+            {
+                float coord;
+                if (float.TryParse(text, out coord)) return (int)Math.Round(coord);
+            }
+            if (type == typeof(int))
+            {
+                int coord;
+                if (int.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(uint))
+            {
+                uint coord;
+                if (uint.TryParse(text, out coord)) return (int)coord;
+            }
+            if (type == typeof(short))
+            {
+                short coord;
+                if (short.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(ushort))
+            {
+                ushort coord;
+                if (ushort.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(byte))
+            {
+                byte coord;
+                if (byte.TryParse(text, out coord)) return coord;
+            }
+            return int.MinValue;
+        }
+        internal static float readNumberAsFloat(string text, Type type)
+        {
+            if (type == typeof(double))
+            {
+                double coord;
+                if (double.TryParse(text, out coord)) return (float)coord;
+            }
+            if (type == typeof(long))
+            {
+                long coord;
+                if (long.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(ulong))
+            {
+                ulong coord;
+                if (ulong.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(float))
+            {
+                float coord;
+                if (float.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(int))
+            {
+                int coord;
+                if (int.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(uint))
+            {
+                uint coord;
+                if (uint.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(short))
+            {
+                short coord;
+                if (short.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(ushort))
+            {
+                ushort coord;
+                if (ushort.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(byte))
+            {
+                byte coord;
+                if (byte.TryParse(text, out coord)) return coord;
+            }
+            return float.NaN;
+        }
+        internal static double readNumberAsDouble(string text, Type type)
+        {
+            if (type == typeof(double))
+            {
+                double coord;
+                if (Double.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(long))
+            {
+                long coord;
+                if (Int64.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(ulong))
+            {
+                ulong coord;
+                if (UInt64.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(float))
+            {
+                float coord;
+                if (Single.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(int))
+            {
+                int coord;
+                if (Int32.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(uint))
+            {
+                uint coord;
+                if (UInt32.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(short))
+            {
+                short coord;
+                if (Int16.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(ushort))
+            {
+                ushort coord;
+                if (UInt16.TryParse(text, out coord)) return coord;
+            }
+            if (type == typeof(byte))
+            {
+                byte coord;
+                if (Byte.TryParse(text, out coord)) return coord;
+            }
+            return Double.NaN;
         }
 
         #endregion

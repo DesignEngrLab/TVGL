@@ -252,7 +252,8 @@ namespace TVGL
         /// </summary>
         Vertex,
         Edge,
-        Face
+        Face,
+        Uniform_Color
     }
 
     /// <summary>
