@@ -356,13 +356,14 @@ namespace TVGL
         /// <param name="outputData"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static double AdditiveVolume(List<DecompositionData> decompData, double additiveAccuracy, out List<List<List<Point>>> outputData)
+        public static double AdditiveVolume(List<DecompositionData> decompData, double additiveAccuracy, out List<DecompositionData> outputData)
         {
-            outputData = new List<List<List<Point>>>();
+            outputData = new List<DecompositionData>();
             var previousPolygons = new List<List<Point>>();
             var previousDistance = 0.0;
             var previousArea = 0.0;
             var additiveVolume = 0.0;
+            var i = 0;
             foreach (var data in decompData)
             {
                 var currentPaths = data.Paths;
@@ -391,11 +392,6 @@ namespace TVGL
                         }
                         else
                         {
-                            //outputData.Clear();
-                            //outputData.Add(offsetPaths);
-                            //outputData.Add(simpleOffset);
-                            //outputData.Add(previousPolygons);
-                            //return 0;
                             throw new Exception("Union failed and not similar");
                         }
                     }
@@ -404,27 +400,36 @@ namespace TVGL
                 //Get the area of this layer
                 var area = currentPaths.Sum(p => MiscFunctions.AreaOfPolygon(p));
 
+                //This is the first iteration. Add it to the output data.
+                if (i == 0)
+                {
+                    outputData.Add(new DecompositionData(simpleOffset, distance));
+                    var area2 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                    additiveVolume += additiveAccuracy*area2;
+                }
+                
                 //Add the volume from this iteration.
-                if (!previousDistance.IsNegligible())
+                else if (!previousDistance.IsNegligible())
                 {
                     var deltaX = Math.Abs(distance - previousDistance);
                     if (area < previousArea * .99)
                     {
-                        //outputData.Clear();
-                        //outputData.Add(offsetPaths);
-                        //outputData.Add(simpleOffset);
-                        //outputData.Add(previousPolygons);
-                        //outputData.Add(currentPaths);
-                        //return 0;
                         throw new Exception("Error in your implementation. This should never occur");
                     }
                     additiveVolume += deltaX * previousArea;
-                    outputData.Add(currentPaths);
-                }
+                    outputData.Add(new DecompositionData(currentPaths, distance));
 
+                    //This is the last iteration. Add it to the output data.
+                    if (i == decompData.Count - 1)
+                    {
+                        outputData.Add(new DecompositionData(currentPaths, distance + additiveAccuracy));
+                        additiveVolume += additiveAccuracy * area;
+                    }
+                }
                 previousPolygons = currentPaths;
                 previousDistance = distance;
                 previousArea = area;
+                i++;
             }
             return additiveVolume;
         }
