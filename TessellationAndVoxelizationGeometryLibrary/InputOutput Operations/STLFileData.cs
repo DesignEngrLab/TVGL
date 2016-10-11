@@ -321,7 +321,7 @@ namespace TVGL.IOFunctions
 
                 var currentColor = new Color(Convert.ToByte(r), Convert.ToByte(g), Convert.ToByte(b));
                 HasColorSpecified = true;
-                if (!_lastColor.Equals(currentColor))
+                if (!currentColor.Equals(_lastColor))
                     _lastColor = currentColor;
             }
             Colors.Add(_lastColor);
