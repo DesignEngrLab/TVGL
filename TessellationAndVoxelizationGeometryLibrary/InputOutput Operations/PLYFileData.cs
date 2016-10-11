@@ -26,97 +26,83 @@ namespace TVGL.IOFunctions
     /// </summary>
     internal class PLYFileData : IO
     {
-        #region Constructor
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="PLYFileData" /> class.
-        /// </summary>
-        private PLYFileData()
-        {
-            Vertices = new List<double[]>();
-            FaceToVertexIndices = new List<int[]>();
-            Colors = new List<Color>();
-        }
-        #endregion
         #region Properties and Fields
         #region Color Related
         /// <summary>
         ///     The last color - internal storage for face color defining method
         /// </summary>
         private Color _lastColor;
-        public Color UniformColor { get; set; }
+
+        private Color uniformColor;
 
         /// <summary>
         ///     Gets the has color specified.
         /// </summary>
         /// <value>The has color specified.</value>
-        private bool HasColorSpecified { get; set; }
+        private bool hasColorSpecified;
 
         /// <summary>
         ///     The color descriptor
         /// </summary>
-        private List<ColorElements> FaceColorDescriptor;
+        private List<ColorElements> faceColorDescriptor;
         /// <summary>
         /// The color element type
         /// </summary>
-        private List<Type> FaceColorElementType;
+        private List<Type> faceColorElementType;
 
         /// <summary>
         ///     The color descriptor
         /// </summary>
-        private List<ColorElements> UniformColorDescriptor;
+        private List<ColorElements> uniformColorDescriptor;
         /// <summary>
         /// The color element type
         /// </summary>
-        private List<Type> UniformColorElementType;
+        private List<Type> uniformColorElementType;
+
+        private List<Color> colors;
+        #endregion
 
         /// <summary>
         ///     The read in order
         /// </summary>
-        private List<ShapeElement> ReadInOrder;
+        private List<ShapeElement> readInOrder;
 
-
-        /// <summary>
-        ///     Gets or sets the colors.
-        /// </summary>
-        /// <value>The colors.</value>
-        private List<Color> Colors;
-        #endregion
         /// <summary>
         ///     Gets or sets the Vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        private List<double[]> Vertices { get; }
+        private List<double[]> vertices;
 
         /// <summary>
         ///     Gets the face to vertex indices.
         /// </summary>
         /// <value>The face to vertex indices.</value>
-        private List<int[]> FaceToVertexIndices { get; }
+        private List<int[]> faceToVertexIndices;
 
-        private List<int> CoordinateOrder;
-        private List<Type> CoordinateTypes;
+        private List<int> vertexCoordinateOrder;
+        private List<Type> vertexTypes;
+        private Type vertexAmountType;
+        private Type vertexIndexType;
 
         /// <summary>
         ///     Gets the number vertices.
         /// </summary>
         /// <value>The number vertices.</value>
-        private int NumVertices { get; set; }
+        private int numVertices;
 
         /// <summary>
         ///     Gets the number faces.
         /// </summary>
         /// <value>The number faces.</value>
-        private int NumFaces { get; set; }
+        private int numFaces;
 
         /// <summary>
         ///     Gets the number edges.
         /// </summary>
         /// <value>The number edges.</value>
-        private int NumEdges { get; set; }
+        private int numEdges;
 
         private FormatEndiannessType endiannessType;
-        private Type vertexAmountType;
-        private Type vertexIndexType;
 
         #endregion
         #region Open Solids
@@ -153,18 +139,18 @@ namespace TVGL.IOFunctions
             }
             plyData.FixColors();
             Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
-            return new TessellatedSolid(plyData.Vertices, plyData.FaceToVertexIndices, plyData.Colors,
+            return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.colors,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
         }
 
         private void FixColors()
         {
-            if (!HasColorSpecified) Colors = null;
-            else if (!Colors.Any()) Colors.Add(UniformColor);
+            if (!hasColorSpecified) colors = null;
+            else if (!colors.Any()) colors.Add(uniformColor);
             else
-                for (int i = 0; i < Colors.Count; i++)
+                for (int i = 0; i < colors.Count; i++)
 
-                    if (Colors[i] == null) Colors[i] = UniformColor;
+                    if (colors[i] == null) colors[i] = uniformColor;
         }
 
         /// <summary>
@@ -173,13 +159,13 @@ namespace TVGL.IOFunctions
         /// <param name="reader">The reader.</param>
         private int ReadHeader(StreamReader reader)
         {
-            ReadInOrder = new List<ShapeElement>();
-            FaceColorDescriptor = new List<ColorElements>();
-            FaceColorElementType = new List<Type>();
-            UniformColorDescriptor = new List<ColorElements>();
-            UniformColorElementType = new List<Type>();
-            CoordinateTypes = new List<Type>();
-            CoordinateOrder = new List<int>();
+            readInOrder = new List<ShapeElement>();
+            faceColorDescriptor = new List<ColorElements>();
+            faceColorElementType = new List<Type>();
+            uniformColorDescriptor = new List<ColorElements>();
+            uniformColorElementType = new List<Type>();
+            vertexTypes = new List<Type>();
+            vertexCoordinateOrder = new List<int>();
             var position = 0;
             string line;
             do
@@ -205,29 +191,29 @@ namespace TVGL.IOFunctions
                     var successfulParse = int.TryParse(numberString, out numberInt);
                     if (id.Equals("vertex"))
                     {
-                        ReadInOrder.Add(ShapeElement.Vertex);
+                        readInOrder.Add(ShapeElement.Vertex);
                         if (numberInt == 0) throw new ArgumentException("Zero or unknown number of vertices in PLY file.");
-                        NumVertices = numberInt;
+                        numVertices = numberInt;
                     }
                     else if (id.Equals("face"))
                     {
-                        ReadInOrder.Add(ShapeElement.Face);
+                        readInOrder.Add(ShapeElement.Face);
                         if (numberInt == 0) throw new ArgumentException("Zero or unknown number of faces in PLY file.");
-                        NumFaces = numberInt;
+                        numFaces = numberInt;
                     }
                     else if (id.Equals("edge"))
                     {
-                        ReadInOrder.Add(ShapeElement.Edge);
-                        NumEdges = numberInt;
+                        readInOrder.Add(ShapeElement.Edge);
+                        numEdges = numberInt;
                     }
                     else if (id.Equals("uniform_color"))
                     {
-                        ReadInOrder.Add(ShapeElement.Uniform_Color);
+                        readInOrder.Add(ShapeElement.Uniform_Color);
                     }
                 }
                 else if (id.Equals("property"))
                 {
-                    var shapeElement = ReadInOrder.Last();
+                    var shapeElement = readInOrder.Last();
                     switch (shapeElement)
                     {
                         #region Vertex
@@ -239,14 +225,15 @@ namespace TVGL.IOFunctions
                                 ParseLine(values, out typeString, out coordString);
                                 if (!TryParseNumberTypeFromString(typeString, out type))
                                     throw new ArgumentException("Unable to parse " + typeString + " as a type of number");
-                                CoordinateTypes.Add(type);
+                                vertexTypes.Add(type);
 
                                 if (coordString.StartsWith("x", StringComparison.CurrentCultureIgnoreCase))
-                                    CoordinateOrder.Add(0);
+                                    vertexCoordinateOrder.Add(0);
                                 else if (coordString.StartsWith("y", StringComparison.CurrentCultureIgnoreCase))
-                                    CoordinateOrder.Add(1);
+                                    vertexCoordinateOrder.Add(1);
                                 else if (coordString.StartsWith("z", StringComparison.CurrentCultureIgnoreCase))
-                                    CoordinateOrder.Add(2);
+                                    vertexCoordinateOrder.Add(2);
+                                else vertexCoordinateOrder.Add(-1);
                                 break;
                             }
 
@@ -279,29 +266,29 @@ namespace TVGL.IOFunctions
                                 }
                                 if (restString.Equals("red", StringComparison.CurrentCultureIgnoreCase)
                                     || restString.Equals("r", StringComparison.CurrentCultureIgnoreCase))
-                                    FaceColorDescriptor.Add(ColorElements.Red);
+                                    faceColorDescriptor.Add(ColorElements.Red);
                                 else if (restString.Equals("blue", StringComparison.CurrentCultureIgnoreCase)
                                          || restString.Equals("b", StringComparison.CurrentCultureIgnoreCase))
-                                    FaceColorDescriptor.Add(ColorElements.Blue);
+                                    faceColorDescriptor.Add(ColorElements.Blue);
                                 else if (restString.Equals("green", StringComparison.CurrentCultureIgnoreCase)
                                          || restString.Equals("g", StringComparison.CurrentCultureIgnoreCase))
-                                    FaceColorDescriptor.Add(ColorElements.Green);
+                                    faceColorDescriptor.Add(ColorElements.Green);
                                 else if (restString.Equals("opacity", StringComparison.CurrentCultureIgnoreCase)
                                          || restString.StartsWith("transp", StringComparison.CurrentCultureIgnoreCase)
                                          || restString.Equals("a", StringComparison.CurrentCultureIgnoreCase))
-                                    FaceColorDescriptor.Add(ColorElements.Opacity);
+                                    faceColorDescriptor.Add(ColorElements.Opacity);
                                 else if (restString.Contains("red"))
-                                    FaceColorDescriptor.Add(ColorElements.Red);
+                                    faceColorDescriptor.Add(ColorElements.Red);
                                 else if (restString.Contains("blue"))
-                                    FaceColorDescriptor.Add(ColorElements.Blue);
+                                    faceColorDescriptor.Add(ColorElements.Blue);
                                 else if (restString.Contains("green"))
-                                    FaceColorDescriptor.Add(ColorElements.Green);
+                                    faceColorDescriptor.Add(ColorElements.Green);
                                 else continue;
                                 // the continue ensures that the following line will only be processed if it the property
                                 // was identified as a color
                                 Type colorType;
                                 if (TryParseNumberTypeFromString(typeString, out colorType))
-                                    FaceColorElementType.Add(colorType);
+                                    faceColorElementType.Add(colorType);
                                 break;
                             }
 
@@ -314,29 +301,29 @@ namespace TVGL.IOFunctions
                                 ParseLine(values, out typeString, out restString);
                                 if (restString.Equals("red", StringComparison.CurrentCultureIgnoreCase)
                                     || restString.Equals("r", StringComparison.CurrentCultureIgnoreCase))
-                                    UniformColorDescriptor.Add(ColorElements.Red);
+                                    uniformColorDescriptor.Add(ColorElements.Red);
                                 else if (restString.Equals("blue", StringComparison.CurrentCultureIgnoreCase)
                                          || restString.Equals("b", StringComparison.CurrentCultureIgnoreCase))
-                                    UniformColorDescriptor.Add(ColorElements.Blue);
+                                    uniformColorDescriptor.Add(ColorElements.Blue);
                                 else if (restString.Equals("green", StringComparison.CurrentCultureIgnoreCase)
                                          || restString.Equals("g", StringComparison.CurrentCultureIgnoreCase))
-                                    UniformColorDescriptor.Add(ColorElements.Green);
+                                    uniformColorDescriptor.Add(ColorElements.Green);
                                 else if (restString.Equals("opacity", StringComparison.CurrentCultureIgnoreCase)
                                          || restString.StartsWith("transp", StringComparison.CurrentCultureIgnoreCase)
                                          || restString.Equals("a", StringComparison.CurrentCultureIgnoreCase))
-                                    UniformColorDescriptor.Add(ColorElements.Opacity);
+                                    uniformColorDescriptor.Add(ColorElements.Opacity);
                                 else if (restString.Contains("red"))
-                                    UniformColorDescriptor.Add(ColorElements.Red);
+                                    uniformColorDescriptor.Add(ColorElements.Red);
                                 else if (restString.Contains("blue"))
-                                    UniformColorDescriptor.Add(ColorElements.Blue);
+                                    uniformColorDescriptor.Add(ColorElements.Blue);
                                 else if (restString.Contains("green"))
-                                    UniformColorDescriptor.Add(ColorElements.Green);
+                                    uniformColorDescriptor.Add(ColorElements.Green);
                                 else continue;
                                 // the continue ensures that the following line will only be processed if it the property
                                 // was identified as a color
                                 Type colorType;
                                 if (TryParseNumberTypeFromString(typeString, out colorType))
-                                    UniformColorElementType.Add(colorType);
+                                    uniformColorElementType.Add(colorType);
                                 break;
                             }
 
@@ -354,7 +341,7 @@ namespace TVGL.IOFunctions
 
         private void ReadMesh(StreamReader reader)
         {
-            foreach (var shapeElement in ReadInOrder)
+            foreach (var shapeElement in readInOrder)
             {
                 bool successful;
                 switch (shapeElement)
@@ -379,7 +366,7 @@ namespace TVGL.IOFunctions
         }
         private void ReadMesh(BinaryReader reader)
         {
-            foreach (var shapeElement in ReadInOrder)
+            foreach (var shapeElement in readInOrder)
             {
                 bool successful;
                 switch (shapeElement)
@@ -399,7 +386,7 @@ namespace TVGL.IOFunctions
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-                if (!successful) throw new ArgumentOutOfRangeException("Unable to read PLY mesh. Error in " + shapeElement);
+                if (!successful) Message.output("Error found in reading PLY mesh. Error in " + shapeElement);
             }
         }
 
@@ -408,13 +395,13 @@ namespace TVGL.IOFunctions
             var line = ReadLine(reader);
             var words = line.Split(' ');
             float a = 0, r = 0, g = 0, b = 0;
-            for (var j = 0; j < UniformColorDescriptor.Count; j++)
+            for (var j = 0; j < uniformColorDescriptor.Count; j++)
             {
-                var value = readNumberAsFloat(words[j], UniformColorElementType[j]);
+                var value = readNumberAsFloat(words[j], uniformColorElementType[j]);
                 if (float.IsNaN(value)) return false;
-                if (UniformColorElementType[j] != typeof(float) && UniformColorElementType[j] != typeof(double))
+                if (uniformColorElementType[j] != typeof(float) && uniformColorElementType[j] != typeof(double))
                     value = value / 255f;
-                switch (UniformColorDescriptor[j])
+                switch (uniformColorDescriptor[j])
                 {
                     case ColorElements.Red: r = value; break;
                     case ColorElements.Green: g = value; break;
@@ -422,8 +409,8 @@ namespace TVGL.IOFunctions
                     case ColorElements.Opacity: a = value; break;
                 }
             }
-            UniformColor = new Color(a, r, g, b);
-            HasColorSpecified = true;
+            uniformColor = new Color(a, r, g, b);
+            hasColorSpecified = true;
             return true;
         }
 
@@ -435,7 +422,7 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadEdges(StreamReader reader)
         {
-            for (var i = 0; i < NumEdges; i++)
+            for (var i = 0; i < numEdges; i++)
                 ReadLine(reader);
             // Nothing happens in this function. The way TVGL functions, edges are implicitly defined
             // from the faces and vertices. I suppose this is a deficiency in TVGL, but I do not necessarily
@@ -449,7 +436,8 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadFaces(StreamReader reader)
         {
-            for (var i = 0; i < NumFaces; i++)
+            faceToVertexIndices = new List<int[]>();
+            for (var i = 0; i < numFaces; i++)
             {
                 var line = ReadLine(reader);
                 var words = line.Split(' ');
@@ -457,19 +445,20 @@ namespace TVGL.IOFunctions
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)
                     vertIndices[j] = readNumberAsInt(words[1 + j], vertexIndexType);
-                FaceToVertexIndices.Add(vertIndices);
+                faceToVertexIndices.Add(vertIndices);
 
-                if (FaceColorDescriptor.Any())
+                if (faceColorDescriptor.Any())
                 {
-                    if (words.Length >= 1 + numVerts + FaceColorDescriptor.Count)
+                    colors = new List<Color>();
+                    if (words.Length >= 1 + numVerts + faceColorDescriptor.Count)
                     {
                         float a = 0, r = 0, g = 0, b = 0;
-                        for (var j = 0; j < FaceColorDescriptor.Count; j++)
+                        for (var j = 0; j < faceColorDescriptor.Count; j++)
                         {
-                            var value = readNumberAsFloat(words[1 + numVerts + j], FaceColorElementType[j]);
-                            if (FaceColorElementType[j] != typeof(float) && FaceColorElementType[j] != typeof(double))
+                            var value = readNumberAsFloat(words[1 + numVerts + j], faceColorElementType[j]);
+                            if (faceColorElementType[j] != typeof(float) && faceColorElementType[j] != typeof(double))
                                 value = value / 255f;
-                            switch (FaceColorDescriptor[j])
+                            switch (faceColorDescriptor[j])
                             {
                                 case ColorElements.Red:
                                     r = value;
@@ -485,10 +474,10 @@ namespace TVGL.IOFunctions
                                     break;
                             }
                         }
-                        Colors.Add(new Color(a, r, g, b));
-                        HasColorSpecified = true;
+                        colors.Add(new Color(a, r, g, b));
+                        hasColorSpecified = true;
                     }
-                    else Colors.Add(null);
+                    else colors.Add(null);
                 }
             }
             return true;
@@ -501,17 +490,22 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadVertices(StreamReader reader)
         {
-            var numD = CoordinateOrder.Count;
-            for (var i = 0; i < NumVertices; i++)
+            vertices = new List<double[]>();
+            var numD = vertexTypes.Count;
+            for (var i = 0; i < numVertices; i++)
             {
                 var line = ReadLine(reader);
                 var words = line.Split(' ');
                 double[] point = new double[numD];
 
                 for (int j = 0; j < numD; j++)
-                    point[CoordinateOrder[j]] = readNumberAsDouble(words[j], CoordinateTypes[j]);
+                {
+                    var coordinate = readNumberAsDouble(words[j], vertexTypes[j]);
+                    if (vertexCoordinateOrder[j] >= 0)
+                        point[vertexCoordinateOrder[j]] = coordinate;
+                }
                 if (point.Any(double.IsNaN)) return false;
-                Vertices.Add(point);
+                vertices.Add(point);
             }
             return true;
         }
@@ -538,13 +532,13 @@ namespace TVGL.IOFunctions
         private bool ReadUniformColor(BinaryReader reader)
         {
             float a = 0, r = 0, g = 0, b = 0;
-            for (var j = 0; j < UniformColorDescriptor.Count; j++)
+            for (var j = 0; j < uniformColorDescriptor.Count; j++)
             {
-                var value = readNumberAsFloat(reader, UniformColorElementType[j], endiannessType);
+                var value = readNumberAsFloat(reader, uniformColorElementType[j], endiannessType);
                 if (float.IsNaN(value)) return false;
-                if (UniformColorElementType[j] != typeof(float) && UniformColorElementType[j] != typeof(double))
+                if (uniformColorElementType[j] != typeof(float) && uniformColorElementType[j] != typeof(double))
                     value = value / 255f;
-                switch (UniformColorDescriptor[j])
+                switch (uniformColorDescriptor[j])
                 {
                     case ColorElements.Red: r = value; break;
                     case ColorElements.Green: g = value; break;
@@ -552,8 +546,8 @@ namespace TVGL.IOFunctions
                     case ColorElements.Opacity: a = value; break;
                 }
             }
-            UniformColor = new Color(a, r, g, b);
-            HasColorSpecified = true;
+            uniformColor = new Color(a, r, g, b);
+            hasColorSpecified = true;
             return true;
         }
 
@@ -564,23 +558,25 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadFaces(BinaryReader reader)
         {
-            for (var i = 0; i < NumFaces; i++)
+            faceToVertexIndices = new List<int[]>();
+            for (var i = 0; i < numFaces; i++)
             {
                 var numVerts = readNumberAsInt(reader, vertexAmountType, endiannessType);
                 var vertIndices = new int[numVerts];
                 for (var j = 0; j < numVerts; j++)
                     vertIndices[j] = readNumberAsInt(reader, vertexIndexType, endiannessType);
-                FaceToVertexIndices.Add(vertIndices);
+                faceToVertexIndices.Add(vertIndices);
 
-                if (FaceColorDescriptor.Any())
+                if (faceColorDescriptor.Any())
                 {
+                    colors = new List<Color>();
                     float a = 0, r = 0, g = 0, b = 0;
-                    for (var j = 0; j < FaceColorDescriptor.Count; j++)
+                    for (var j = 0; j < faceColorDescriptor.Count; j++)
                     {
-                        var value = readNumberAsFloat(reader, FaceColorElementType[j], endiannessType);
-                        if (FaceColorElementType[j] != typeof(float) && FaceColorElementType[j] != typeof(double))
+                        var value = readNumberAsFloat(reader, faceColorElementType[j], endiannessType);
+                        if (faceColorElementType[j] != typeof(float) && faceColorElementType[j] != typeof(double))
                             value = value / 255f;
-                        switch (FaceColorDescriptor[j])
+                        switch (faceColorDescriptor[j])
                         {
                             case ColorElements.Red: r = value; break;
                             case ColorElements.Green: g = value; break;
@@ -588,10 +584,9 @@ namespace TVGL.IOFunctions
                             case ColorElements.Opacity: a = value; break;
                         }
                     }
-                    Colors.Add(new Color(a, r, g, b));
-                    HasColorSpecified = true;
+                    colors.Add(new Color(a, r, g, b));
+                    hasColorSpecified = true;
                 }
-                else Colors.Add(null);
             }
             return true;
         }
@@ -602,16 +597,20 @@ namespace TVGL.IOFunctions
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool ReadVertices(BinaryReader reader)
         {
-            var numD = CoordinateOrder.Count;
-            for (var i = 0; i < NumVertices; i++)
+            vertices = new List<double[]>();
+            var numD = vertexCoordinateOrder.Count;
+            for (var i = 0; i < numVertices; i++)
             {
                 double[] point = new double[numD];
 
                 for (int j = 0; j < numD; j++)
-                    point[CoordinateOrder[j]] = readNumberAsDouble(reader, CoordinateTypes[j], endiannessType);
-
+                {
+                   var coordinate = readNumberAsDouble(reader, vertexTypes[j], endiannessType);
+                    if (vertexCoordinateOrder[j] >= 0)
+                        point[vertexCoordinateOrder[j]] = coordinate;
+                }
                 if (point.Any(double.IsNaN)) return false;
-                Vertices.Add(point);
+                vertices.Add(point);
             }
             return true;
         }
