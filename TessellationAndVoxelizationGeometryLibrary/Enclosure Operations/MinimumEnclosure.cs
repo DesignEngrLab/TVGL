@@ -50,8 +50,7 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public static BoundingBox OrientedBoundingBox(TessellatedSolid ts)
         {
-            return AddInCornerVertices(OrientedBoundingBox(ts.ConvexHull.Vertices));
-            //return AddInCornerVertices(OrientedBoundingBox(ts.ConvexHull));
+            return OrientedBoundingBox(ts.ConvexHull.Vertices);
         }
 
         /// <summary>
@@ -90,7 +89,7 @@ namespace TVGL
                 minVolume = box.Volume;
                 minBox = box;
             }
-            return minBox;
+            return AddInCornerVertices(minBox);
         }
 
         #region ChanTan AABB Approach
