@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using System.Xml.Serialization;
 using MIConvexHull;
 using StarMathLib;
@@ -29,6 +30,7 @@ namespace TVGL
     ///     a set of vertices without changing those vertices. This is done by "wrapping"
     ///     these Point objects around a vertex and then providing their new position.
     /// </summary>
+    [DataContract]
     public class Point : IVertex
     {
         #region Properties
@@ -37,39 +39,46 @@ namespace TVGL
         ///     Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
+        [DataMember]
         public double X { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
+        [DataMember]
         public double Y { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the z coordinate. If one is using Point in a 2D capacity, it can be ignored.
         /// </summary>
         /// <value>The z.</value>
+        [DataMember]
         public double Z { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the references.
         /// </summary>
         /// <value>The references.</value>
+        [DataMember]
         public List<Vertex> References { get; set; }
 
         /// <summary>
         ///     Gets or sets the index in a path
         /// </summary>
+        [DataMember]
         public int IndexInPath { get; set; }
 
         /// <summary>
         ///  Gets or sets the index of the polygon that this point belongs to
         /// </summary>
+        [DataMember]
         public int PolygonIndex { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
+        /// Can not serialize lines yet. Not sure if circular reference will cause issues.
         public IList<Line> Lines { get; set; }
 
         /// <summary>
