@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 using TVGL;
@@ -399,12 +400,24 @@ namespace TVGL
 
                 //Get the area of this layer
                 var area = currentPaths.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                if (area < 0)
+                {
+                    //Rather than throwing an exception, just assume the polygons were the wrong direction      
+                    area = -area;
+                    Debug.WriteLine("Area for a polygon in the Additive Volume estimate was negative. This means there was an issue with the polygon ordering");
+                }
 
                 //This is the first iteration. Add it to the output data.
                 if (i == 0)
                 {
                     outputData.Add(new DecompositionData(simpleOffset, distance));
                     var area2 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                    if (area2 < 0)
+                    {
+                        //Rather than throwing an exception, just assume the polygons were the wrong direction      
+                        area2 = -area2;
+                        Debug.WriteLine("The first polygon in the Additive Volume estimate was negative. This means there was an issue with the polygon ordering");
+                    }
                     additiveVolume += additiveAccuracy*area2;
                 }
                 
