@@ -265,8 +265,43 @@ namespace TVGL
         #endregion
 
         #region 3D Plots via Helix.Toolkit
-        	
-	    public static void ShowVertexPathsWithSolid(IList<List<List<Vertex>>> vertexPaths, IList<TessellatedSolid> solids)
+        public static void ShowVertexPathsWithSolid(IList<List<List<double[]>>> vertexPaths, IList<TessellatedSolid> solids)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+
+            foreach (var tessellatedSolid in solids)
+            {
+                var model = MakeModelVisual3D(tessellatedSolid);
+                models.Add(model);
+                window.view1.Children.Add(model);
+            }
+
+            foreach (var crossSection in vertexPaths)
+            {
+                foreach (var path in crossSection)
+                {
+                    var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
+
+                    //No create a line collection by doubling up the points
+                    var lineCollection = new List<Point3D>();
+                    foreach (var t in contour)
+                    {
+                        lineCollection.Add(t);
+                        lineCollection.Add(t);
+                    }
+                    lineCollection.RemoveAt(0);
+                    lineCollection.Add(lineCollection.First());
+
+                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
+                    window.view1.Children.Add(lines);
+                }
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        public static void ShowVertexPathsWithSolid(IList<List<List<Vertex>>> vertexPaths, IList<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
