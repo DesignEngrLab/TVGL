@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 using TVGL.Clipper;
@@ -240,15 +241,34 @@ namespace TVGL
             if (minLength.IsNegligible())
             {
                 var totalLength = paths.Sum(loop => Length(loop));
-                minLength = totalLength*0.001;
+                minLength = totalLength * 0.001;
             }
-
-            //Begin an evaluation
             var solution = new List<List<Point>>();
             var clip = new ClipperOffset(minLength);
-            clip.AddPaths(paths, JoinType.Round, EndType.ClosedPolygon);
-            clip.Execute(ref solution, offset);
+            try
+            {
+                clip.AddPaths(paths, JoinType.Round, EndType.ClosedPolygon);
+                clip.Execute(ref solution, offset);
+            }
+            catch
+            {
+                Debug.WriteLine("ClipperInt Offset Square Failed");
+                solution = paths.ToList();
+            }
             return solution;
+
+            ////Begin an evaluation
+            //Paths solution;
+            //try
+            //{
+            //    solution = ClipperInt.PolygonOperations.Round(paths, offset, minLength);
+            //}
+            //catch
+            //{
+            //    Debug.WriteLine("ClipperInt Offset Round Failed");
+            //    solution = paths.ToList();
+            //}
+            //return solution;
         }
 
         /// <summary>
@@ -278,15 +298,35 @@ namespace TVGL
             if (minLength.IsNegligible())
             {
                 var totalLength = paths.Sum(loop => Length(loop));
-                minLength = totalLength*0.001;
+                minLength = totalLength * 0.001;
             }
 
-            //Begin an evaluation
             var solution = new List<List<Point>>();
             var clip = new ClipperOffset(minLength);
-            clip.AddPaths(paths, JoinType.Miter, EndType.ClosedPolygon);
-            clip.Execute(ref solution, offset);
+            try
+            {
+                clip.AddPaths(paths, JoinType.Miter, EndType.ClosedPolygon);
+                clip.Execute(ref solution, offset);
+            }
+            catch
+            {
+                Debug.WriteLine("ClipperInt Offset Square Failed");
+                solution = paths;
+            }
             return solution;
+
+            ////Begin an evaluation
+            //Paths solution;
+            //try
+            //{
+            //    solution = ClipperInt.PolygonOperations.Miter(paths, offset, minLength);
+            //}
+            //catch
+            //{
+            //    Debug.WriteLine("ClipperInt Offset Miter Failed");
+            //    solution = paths;
+            //}
+            //return solution;
         }
 
         /// <summary>
@@ -319,12 +359,32 @@ namespace TVGL
                 minLength = totalLength*0.001;
             }
 
-            //Begin an evaluation
             var solution = new List<List<Point>>();
             var clip = new ClipperOffset(minLength);
-            clip.AddPaths(paths, JoinType.Square, EndType.ClosedPolygon);
-            clip.Execute(ref solution, offset);
+            try
+            {
+                clip.AddPaths(paths, JoinType.Square, EndType.ClosedPolygon);
+                clip.Execute(ref solution, offset);
+            }
+            catch
+            {
+                Debug.WriteLine("ClipperInt Offset Square Failed");
+                solution = paths; 
+            }
             return solution;
+
+            ////Begin an evaluation
+            //Paths solution;
+            //try
+            //{
+            //    solution = ClipperInt.PolygonOperations.Sqaure(paths, offset, minLength);
+            //}
+            //catch
+            //{
+            //    Debug.WriteLine("ClipperInt Offset Square Failed");
+            //    solution = paths;
+            //}
+            //return solution;
         }
 
         #endregion

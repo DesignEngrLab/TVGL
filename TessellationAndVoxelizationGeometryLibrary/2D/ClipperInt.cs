@@ -75,12 +75,13 @@ namespace TVGL.ClipperInt
         /// </summary>
         /// <param name="loop"></param>
         /// <param name="offset"></param>
+        /// <param name="minLength"></param>
         /// <param name="scale"></param>
         /// <returns></returns>
-        public static List<Point> Round(IList<Point> loop, double offset, double scale = 100000)
+        internal static List<Point> Round(IList<Point> loop, double offset, double minLength = 0.0, double scale = 100000)
         {
             var loops = new List<List<Point>> { new List<Point>(loop) };
-            var offsetLoops = Round(loops, offset, scale);
+            var offsetLoops = Round(loops, offset, minLength,  scale);
             return offsetLoops.First();
         }
 
@@ -92,9 +93,10 @@ namespace TVGL.ClipperInt
         /// </summary>
         /// <param name="loops"></param>
         /// <param name="offset"></param>
+        /// <param name="minLength"></param>
         /// <param name="scale"></param>
         /// <returns></returns>
-        public static List<List<Point>> Round(List<List<Point>> loops, double offset, double scale = 100000)
+        internal static List<List<Point>> Round(IList<List<Point>> loops, double offset, double minLength = 0.0, double scale = 100000)
         {
             //Convert Points (TVGL) to IntPoints (Clipper)
             var polygons =
@@ -103,7 +105,127 @@ namespace TVGL.ClipperInt
             //Begin an evaluation
             var solution = new List<List<IntPoint>>();
             var clip = new ClipperOffset();
+            //if (!minLength.IsNegligible())
+            //{
+            //    clip = new ClipperOffset(minLength);
+            //}
             clip.AddPaths(polygons, JoinType.jtRound, EndType.etClosedPolygon);
+            clip.Execute(ref solution, offset * scale);
+
+            var offsetLoops = new List<List<Point>>();
+            foreach (var loop in solution)
+            {
+                var offsetLoop = new List<Point>();
+                for (var i = 0; i < loop.Count; i++)
+                {
+                    var intPoint = loop[i];
+                    var x = Convert.ToDouble(intPoint.X) / scale;
+                    var y = Convert.ToDouble(intPoint.Y) / scale;
+                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
+                }
+                offsetLoops.Add(offsetLoop);
+            }
+            return offsetLoops;
+        }
+
+        /// <summary>
+        /// Offets the given loop by the given offset
+        /// </summary>
+        /// <param name="loop"></param>
+        /// <param name="offset"></param>
+        /// <param name="minLength"></param>
+        /// <param name="scale"></param>
+        /// <returns></returns>
+        internal static List<Point> Square(IList<Point> loop, double offset, double minLength = 0.0, double scale = 100000)
+        {
+            var loops = new List<List<Point>> { new List<Point>(loop) };
+            var offsetLoops = Sqaure(loops, offset, minLength, scale);
+            return offsetLoops.First();
+        }
+
+
+        /// <summary>
+        /// Offsets all loops by the given offset value
+        /// Offest value may be positive or negative.
+        /// Loops must be ordered CCW positive.
+        /// </summary>
+        /// <param name="loops"></param>
+        /// <param name="offset"></param>
+        /// <param name="minLength"></param>
+        /// <param name="scale"></param>
+        /// <returns></returns>
+        internal static List<List<Point>> Sqaure(List<List<Point>> loops, double offset, double minLength = 0.0, double scale = 100000)
+        {
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            var polygons =
+                loops.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+
+            //Begin an evaluation
+            var solution = new List<List<IntPoint>>();
+            var clip = new ClipperOffset();
+            //if (!minLength.IsNegligible())
+            //{
+            //    clip = new ClipperOffset(minLength);
+            //}
+            clip.AddPaths(polygons, JoinType.jtSquare, EndType.etClosedPolygon);
+            clip.Execute(ref solution, offset * scale);
+
+            var offsetLoops = new List<List<Point>>();
+            foreach (var loop in solution)
+            {
+                var offsetLoop = new List<Point>();
+                for (var i = 0; i < loop.Count; i++)
+                {
+                    var intPoint = loop[i];
+                    var x = Convert.ToDouble(intPoint.X) / scale;
+                    var y = Convert.ToDouble(intPoint.Y) / scale;
+                    offsetLoop.Add(new Point(new List<double> { x, y, 0.0 }));
+                }
+                offsetLoops.Add(offsetLoop);
+            }
+            return offsetLoops;
+        }
+
+        /// <summary>
+        /// Offets the given loop by the given offset, rounding corners.
+        /// </summary>
+        /// <param name="loop"></param>
+        /// <param name="offset"></param>
+        /// <param name="minLength"></param>
+        /// <param name="scale"></param>
+        /// <returns></returns>
+        internal static List<Point> Miter(IList<Point> loop, double offset, double minLength = 0.0, double scale = 100000)
+        {
+            var loops = new List<List<Point>> { new List<Point>(loop) };
+            var offsetLoops = Miter(loops, offset, minLength, scale);
+            return offsetLoops.First();
+        }
+
+
+        /// <summary>
+        /// Offsets all loops by the given offset value. Rounds the corners.
+        /// Offest value may be positive or negative.
+        /// Loops must be ordered CCW positive.
+        /// </summary>
+        /// <param name="loops"></param>
+        /// <param name="offset"></param>
+        /// <param name="minLength"></param>
+        /// <param name="scale"></param>
+        /// <returns></returns>
+        internal static List<List<Point>> Miter(List<List<Point>> loops, double offset, double minLength = 0.0, double scale = 100000)
+        {
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            var polygons =
+                loops.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+
+            //Begin an evaluation
+            var solution = new List<List<IntPoint>>();
+            var clip = new ClipperOffset();
+            //if (!minLength.IsNegligible())
+            //{
+            //    clip = new ClipperOffset(minLength);
+            //}
+            clip.AddPaths(polygons, JoinType.jtMiter, EndType.etClosedPolygon);
             clip.Execute(ref solution, offset * scale);
 
             var offsetLoops = new List<List<Point>>();
@@ -130,7 +252,7 @@ namespace TVGL.ClipperInt
         /// <param name="offset"></param>
         /// <param name="scale"></param>
         /// <returns></returns>
-        public static List<List<Point>> Union(List<List<Point>> loops, double offset, double scale = 100000)
+        internal static List<List<Point>> Union(List<List<Point>> loops, double offset, double scale = 100000)
         {
             //Convert Points (TVGL) to IntPoints (Clipper)
             var polygons =
@@ -168,7 +290,7 @@ namespace TVGL.ClipperInt
         /// <param name="scale"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(List<List<Point>> subject, IList<List<Point>> clip = null, double scale = 1000000)
+        internal static List<List<Point>> Union(List<List<Point>> subject, IList<List<Point>> clip = null, double scale = 1000000)
         {
             const PolyFillType fillMethod = PolyFillType.pftPositive;
             var clipperSolution = new List<List<IntPoint>>();
@@ -203,7 +325,7 @@ namespace TVGL.ClipperInt
         /// <param name="path2"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(List<Point> path1, List<Point> path2)
+        internal static List<List<Point>> Union(List<Point> path1, List<Point> path2)
         {
             return Union(new List<List<Point>>() { path1 }, new List<List<Point>>() { path2 });
         }
@@ -215,7 +337,7 @@ namespace TVGL.ClipperInt
         /// <param name="otherPolygon"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> paths, List<Point> otherPolygon)
+        internal static List<List<Point>> Union(IList<List<Point>> paths, List<Point> otherPolygon)
         {
             return Union(new List<List<Point>>(paths), new List<List<Point>> { otherPolygon });
         }
@@ -227,7 +349,7 @@ namespace TVGL.ClipperInt
         /// <param name="scale"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> UnionEvenOdd(IList<List<Point>> polygons, double scale = 100000)
+        internal static List<List<Point>> UnionEvenOdd(IList<List<Point>> polygons, double scale = 100000)
         {
             const PolyFillType fillMethod = PolyFillType.pftEvenOdd;
             var clipperSolution = new List<List<IntPoint>>();
