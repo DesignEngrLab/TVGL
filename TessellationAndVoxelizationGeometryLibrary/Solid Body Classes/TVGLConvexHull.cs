@@ -30,9 +30,17 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
         /// </summary>
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
-        public TVGLConvexHull(TessellatedSolid ts)
+        public TVGLConvexHull(TessellatedSolid ts):this(ts.Vertices, ts.SameTolerance)
         {
-            var convexHull = ConvexHull.Create(ts.Vertices, ts.SameTolerance);
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
+        /// </summary>
+        /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
+        public TVGLConvexHull(IList<Vertex> vertices, double tolerance)
+        {
+            var convexHull = ConvexHull.Create(vertices, tolerance);
             Vertices = convexHull.Points.ToArray();
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[3];
@@ -41,13 +49,13 @@ namespace TVGL
             var alreadyCreatedFaces = new HashSet<long>();
             foreach (var cvxFace in convexHull.Faces)
             {
-                var vertices = cvxFace.Vertices;
-                var orderedIndices = vertices.Select(v => v.IndexInList).ToList();
+                var faceVertices = cvxFace.Vertices;
+                var orderedIndices = faceVertices.Select(v => v.IndexInList).ToList();
                 orderedIndices.Sort();
                 var checksum = orderedIndices.Select((t, j) => t*checkSumMultipliers[j]).Sum();
                 if (alreadyCreatedFaces.Contains(checksum)) continue;
                 alreadyCreatedFaces.Add(checksum);
-                convexHullFaceList.Add(new PolygonalFace(vertices, cvxFace.Normal, false));
+                convexHullFaceList.Add(new PolygonalFace(faceVertices, cvxFace.Normal, false));
             }
             Faces = convexHullFaceList.ToArray();
             Edges = MakeEdges(Faces, Vertices);

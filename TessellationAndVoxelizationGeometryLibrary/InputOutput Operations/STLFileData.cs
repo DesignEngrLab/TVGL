@@ -321,7 +321,7 @@ namespace TVGL.IOFunctions
 
                 var currentColor = new Color(Convert.ToByte(r), Convert.ToByte(g), Convert.ToByte(b));
                 HasColorSpecified = true;
-                if (!_lastColor.Equals(currentColor))
+                if (!currentColor.Equals(_lastColor))
                     _lastColor = currentColor;
             }
             Colors.Add(_lastColor);
@@ -337,7 +337,7 @@ namespace TVGL.IOFunctions
         private static double ReadFloatToDouble(BinaryReader reader)
         {
             var bytes = reader.ReadBytes(4);
-            return BitConverter.ToSingle(bytes, 0);
+            return TVGLBitConverter.ToSingle(bytes, 0);
         }
 
         /// <summary>
@@ -348,7 +348,7 @@ namespace TVGL.IOFunctions
         private static ushort ReadUInt16(BinaryReader reader)
         {
             var bytes = reader.ReadBytes(2);
-            return BitConverter.ToUInt16(bytes, 0);
+            return TVGLBitConverter.ToUInt16(bytes, 0);
         }
 
         /// <summary>
@@ -359,7 +359,7 @@ namespace TVGL.IOFunctions
         private static uint ReadUInt32(BinaryReader reader)
         {
             var bytes = reader.ReadBytes(4);
-            return BitConverter.ToUInt32(bytes, 0);
+            return TVGLBitConverter.ToUInt32(bytes, 0);
         }
 
         #endregion
@@ -460,18 +460,18 @@ namespace TVGL.IOFunctions
 
         private static void WriteFacet(BinaryWriter writer, PolygonalFace face, bool defineColors, Color defaultColor)
         {
-            writer.Write(BitConverter.GetBytes((float)face.Normal[0]));
-            writer.Write(BitConverter.GetBytes((float)face.Normal[1]));
-            writer.Write(BitConverter.GetBytes((float)face.Normal[2]));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].X));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].Y));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[0].Z));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].X));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].Y));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[1].Z));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].X));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].Y));
-            writer.Write(BitConverter.GetBytes((float)face.Vertices[2].Z));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Normal[0]));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Normal[1]));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Normal[2]));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[0].X));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[0].Y));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[0].Z));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[1].X));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[1].Y));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[1].Z));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[2].X));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[2].Y));
+            writer.Write(TVGLBitConverter.GetBytes((float)face.Vertices[2].Z));
             var colorBytes = (ushort)0;
             if (defineColors)
             {
@@ -483,7 +483,7 @@ namespace TVGL.IOFunctions
                 var blue = (ushort)(face.Color.B / 8);
                 colorBytes += (ushort)(blue * 1024);
             }
-            writer.Write(BitConverter.GetBytes(colorBytes));
+            writer.Write(TVGLBitConverter.GetBytes(colorBytes));
         }
 
         #endregion

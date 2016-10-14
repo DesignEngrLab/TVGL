@@ -882,13 +882,14 @@ namespace TVGL
 
         #endregion Constructors
 
+
         /// <summary>
         /// Returns a <see cref="System.String" /> that represents this instance.
         /// </summary>
         /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
         public override string ToString()
         {
-            string hex ="#"+ BitConverter.ToString(new[] { R, G, B, A });
+            string hex ="#"+ TVGLBitConverter.ToString(new[] { R, G, B, A });
             return hex.Replace("-", "");
         }
 
