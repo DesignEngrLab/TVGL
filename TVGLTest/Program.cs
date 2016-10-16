@@ -79,7 +79,7 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.AboveNormal;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*.ply");
+            var fileNames = dir.GetFiles("ard*");
             for (var i = 0; i < FileNames.Count(); i++)
             {
                 var filename = fileNames[i].FullName;
@@ -90,7 +90,7 @@ namespace TVGL_Test
                     ts = IO.Open(fileStream, filename);
                 //TestPolygon(ts[0]);
                 
-                Presenter.ShowAndHang(ts[0]);
+                Presenter.ShowAndHang(ts);
               //  TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
             }

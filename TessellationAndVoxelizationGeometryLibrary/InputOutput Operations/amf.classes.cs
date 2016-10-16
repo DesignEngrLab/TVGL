@@ -29,7 +29,7 @@ namespace TVGL.IOFunctions.amfclasses
         /// <summary>
         ///     The identifier
         /// </summary>
-        [XmlAttribute] public string id;
+        [XmlAttribute] public int id;
 
         /// <summary>
         ///     The mesh
@@ -372,14 +372,15 @@ namespace TVGL.IOFunctions.amfclasses
         /// <summary>
         ///     The instance
         /// </summary>
-        public List<AMF_Instance> instance;
+        [XmlElement("instance")]
+        public List<AMF_Instance> Instances;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="AMF_Constellation" /> class.
         /// </summary>
         public AMF_Constellation()
         {
-            instance = new List<AMF_Instance>();
+            Instances = new List<AMF_Instance>();
         }
     }
 
@@ -425,7 +426,8 @@ namespace TVGL.IOFunctions.amfclasses
         /// <summary>
         ///     The objectid
         /// </summary>
-        public string objectid;
+        [XmlAttribute]
+        public int objectid;
 
         /// <summary>
         ///     The rx

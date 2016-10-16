@@ -19,6 +19,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
+using StarMathLib;
 using TVGL.IOFunctions.amfclasses;
 
 namespace TVGL.IOFunctions
@@ -53,7 +54,15 @@ namespace TVGL.IOFunctions
         internal List<AMF_Texture> Textures { get; set; }
         internal double version { get; set; }
         internal List<AMF_Object> Objects { get; set; }
+        internal List<AMF_Constellation> Constellations { get; set; }
 #else
+        /// <summary>
+        ///     Gets or sets the constellations.
+        /// </summary>
+        /// <value>The constellations.</value>
+        [XmlElement("constellation")]
+        public List<AMF_Constellation> Constellations { get; set; }
+
         /// <summary>
         ///     Gets or sets the objects.
         /// </summary>
@@ -102,39 +111,76 @@ namespace TVGL.IOFunctions
             amfData.FileName = filename;
             amfData.Name = GetNameFromFileName(filename);
             var results = new List<TessellatedSolid>();
+            var objectDict = new Dictionary<int, AMF_Object>();
             foreach (var amfObject in amfData.Objects)
+                objectDict.Add(amfObject.id, amfObject);
+            var objectsUsed = new List<int>();
+            foreach (var amfConstellation in amfData.Constellations)
             {
-                List<Color> colors = null;
-                if (amfObject.mesh.volume.color != null)
+                foreach (var amfInstance in amfConstellation.Instances)
                 {
-                    colors = new List<Color>();
-                    var solidColor = new Color(amfObject.mesh.volume.color);
-                    foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
+                    if (!objectDict.ContainsKey(amfInstance.objectid)) continue;
+                    results.Add(amfData.CreateSolid(objectDict[amfInstance.objectid], amfInstance));
+                    objectsUsed.Add(amfInstance.objectid);
                 }
-                else if (amfObject.mesh.volume.Triangles.Any(t => t.color != null))
-                {
-                    colors = new List<Color>();
-                    var solidColor = new Color(Constants.DefaultColor);
-                    foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
-                        colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
-                }
-                var name = amfData.Name;
-                var nameIndex =
-                    amfObject.metadata.FindIndex(md => md != null && md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase));
-                if (nameIndex != -1)
-                {
-                    name = amfObject.metadata[nameIndex].Value;
-                    amfObject.metadata.RemoveAt(nameIndex);
-                }
-                results.Add(new TessellatedSolid(
-                    amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList(),
-                    amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
-                    colors, amfData.Units, name + "_" + amfObject.id, filename,
-                    amfObject.metadata.Select(md => md.ToString()).ToList(), amfData.Language));
             }
+            if (objectsUsed.Any()) return results;
+            foreach (var amfObject in amfData.Objects)
+                results.Add(amfData.CreateSolid(amfObject));
             return results;
         }
+
+        private TessellatedSolid CreateSolid(AMF_Object amfObject, AMF_Instance amfInstance = null)
+        {
+            List<Color> colors = null;
+            if (amfObject.mesh.volume.color != null)
+            {
+                colors = new List<Color>();
+                var solidColor = new Color(amfObject.mesh.volume.color);
+                foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
+                    colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
+            }
+            else if (amfObject.mesh.volume.Triangles.Any(t => t.color != null))
+            {
+                colors = new List<Color>();
+                var solidColor = new Color(Constants.DefaultColor);
+                foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
+                    colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
+            }
+            var name = this.Name;
+            var nameIndex =
+                amfObject.metadata.FindIndex(md => md != null && md.type.Equals("name", StringComparison.CurrentCultureIgnoreCase));
+            if (nameIndex != -1)
+            {
+                name = amfObject.metadata[nameIndex].Value;
+                amfObject.metadata.RemoveAt(nameIndex);
+            }
+            var vertices = amfObject.mesh.vertices.Vertices.Select(v => v.coordinates.AsArray).ToList();
+            if (amfInstance != null &&
+                (amfInstance.deltaxSpecified || amfInstance.deltaySpecified || amfInstance.deltazSpecified
+                 || amfInstance.rxSpecified || amfInstance.rySpecified || amfInstance.rzSpecified))
+            {
+                var tMatrix =
+                    StarMath.RotationX(amfInstance.rx)
+                        .multiply(StarMath.RotationY(amfInstance.ry))
+                        .multiply(StarMath.RotationZ(amfInstance.rz));
+                tMatrix =
+                    StarMath.Translate(amfInstance.deltax, amfInstance.deltay, amfInstance.deltaz).multiply(tMatrix);
+                foreach (var coord in vertices)
+                {
+                    var coordWith1 = new[] { coord[0], coord[1], coord[2], 1.0 };
+                    coordWith1 = tMatrix.multiply(coordWith1);
+                    coord[0] = coordWith1[0];
+                    coord[1] = coordWith1[1];
+                    coord[2] = coordWith1[2];
+                }
+            }
+            return new TessellatedSolid(vertices,
+                amfObject.mesh.volume.Triangles.Select(t => t.VertexIndices).ToList(),
+                colors, this.Units, name + "_" + amfObject.id, this.FileName,
+                amfObject.metadata.Select(md => md.ToString()).ToList(), this.Language);
+        }
+
         #endregion
         #region Save Solids
         /// <summary>
@@ -241,7 +287,7 @@ namespace TVGL.IOFunctions
                 }
                 Objects.Add(new AMF_Object
                 {
-                    id = i.ToString(),
+                    id = i,
                     mesh = new AMF_Mesh { vertices = vertexList, volume = volume },
                     metadata = metaData
                 });
