@@ -37,6 +37,11 @@ namespace TVGL.IOFunctions.amfclasses
         public AMF_Mesh mesh;
 
         /// <summary>
+        ///     The color
+        /// </summary>
+        public AMF_Color color; 
+
+        /// <summary>
         ///     The metadata
         /// </summary>
         [XmlElement]

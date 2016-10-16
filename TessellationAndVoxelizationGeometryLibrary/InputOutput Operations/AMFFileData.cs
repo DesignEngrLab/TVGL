@@ -133,7 +133,14 @@ namespace TVGL.IOFunctions
         private TessellatedSolid CreateSolid(AMF_Object amfObject, AMF_Instance amfInstance = null)
         {
             List<Color> colors = null;
-            if (amfObject.mesh.volume.color != null)
+            if (amfObject.color != null)
+            {
+                colors = new List<Color>();
+                var solidColor = new Color(amfObject.color);
+                foreach (var amfTriangle in amfObject.mesh.volume.Triangles)
+                    colors.Add(amfTriangle.color != null ? new Color(amfTriangle.color) : solidColor);
+            }
+            else if (amfObject.mesh.volume.color != null)
             {
                 colors = new List<Color>();
                 var solidColor = new Color(amfObject.mesh.volume.color);
