@@ -58,7 +58,6 @@
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
     <Compile Include="InputOutput Operations\SHELLFileData.cs" />
-    <Compile Include="InputOutput Operations\TVGLBitConverter.cs" />
     <Compile Include="Miscellaneous Functions\AreaDecomposition.cs" />
     <Compile Include="Miscellaneous Functions\ListFunctions.cs">
       <SubType>Code</SubType>
