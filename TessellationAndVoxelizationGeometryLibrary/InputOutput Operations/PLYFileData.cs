@@ -87,23 +87,6 @@ namespace TVGL.IOFunctions
 
         #endregion
         #region Open Solids
-
-        /// <summary>
-        /// Opens the solid.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <param name="name">The name.</param>
-        /// <returns>TessellatedSolid.</returns>
-        internal static TessellatedSolid OpenSolid(string data, string name = "")
-        {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(data);
-            writer.Flush();
-            stream.Position = 0;
-            return OpenSolid(stream, name);
-        }
-
         /// <summary>
         /// Opens the specified s.
         /// </summary>
@@ -723,34 +706,6 @@ namespace TVGL.IOFunctions
 
         #endregion
         #region Save
-        /// <summary>
-        /// Saves the solid ASCII.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <param name="solid">The solid.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool SaveSolidASCII(ref string data, TessellatedSolid solid)
-        {
-            var stream = new MemoryStream();
-            if (!SaveSolidASCII(stream, solid)) return false;
-            var reader = new StreamReader(stream);
-            data += reader.ReadToEnd();
-            return true;
-        }
-        /// <summary>
-        /// Saves the solid binary.
-        /// </summary>
-        /// <param name="data">The data.</param>
-        /// <param name="solid">The solid.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool SaveSolidBinary(ref string data, TessellatedSolid solid)
-        {
-            var stream = new MemoryStream();
-            if (!SaveSolidBinary(stream, solid)) return false;
-            var reader = new StreamReader(stream);
-            data += reader.ReadToEnd();
-            return true;
-        }
         /// <summary>
         /// Saves the specified stream.
         /// </summary>

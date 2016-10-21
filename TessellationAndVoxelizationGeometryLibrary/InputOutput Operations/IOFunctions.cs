@@ -161,6 +161,40 @@ namespace TVGL.IOFunctions
             return tessellatedSolids;
         }
 
+
+        /// <summary>
+        /// Opens from string.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="name">The name.</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        public static List<TessellatedSolid> OpenFromString(string data, string name = "")
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(data);
+            writer.Flush();
+            stream.Position = 0;
+            return Open(stream, name);
+        }
+        /// <summary>
+        /// Opens from string.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="fileType">Type of the file.</param>
+        /// <returns>List&lt;TessellatedSolid&gt;.</returns>
+        public static List<TessellatedSolid> OpenFromString(string data, FileType fileType)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(data);
+            writer.Flush();
+            stream.Position = 0;
+            var extensions = new[] {"", "STL", "STL", "3mf", "model", "amf", "off", "ply", "ply"};
+            var name = "data." + extensions[(int)fileType];
+            return Open(stream, name);
+        }
+
         /// <summary>
         /// Gets the name from the filename.
         /// </summary>
@@ -809,6 +843,36 @@ namespace TVGL.IOFunctions
                     return false;
             }
         }
+
+
+        /// <summary>
+        /// Saves the solid as a string.
+        /// </summary>
+        /// <param name="solid">The solid.</param>
+        /// <param name="fileType">Type of the file.</param>
+        /// <returns>System.String.</returns>
+        public static string SaveToString(TessellatedSolid solid, FileType fileType = FileType.PLY_Binary)
+        {
+            var stream = new MemoryStream();
+            if (!Save(stream, solid, fileType)) return "";
+            var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+
+        /// <summary>
+        /// Saves the solids as a string.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
+        /// <param name="fileType">Type of the file.</param>
+        /// <returns>System.String.</returns>
+        public static string SaveToString(IList<TessellatedSolid> solids, FileType fileType = FileType.unspecified)
+        {
+            var stream = new MemoryStream();
+            if (!Save(stream, solids, fileType)) return "";
+            var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+
 
         /// <summary>
         /// Gets the TVGL date mark text.
