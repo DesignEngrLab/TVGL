@@ -351,6 +351,184 @@ namespace TVGL.IOFunctions
         }
 
 
+        internal static int readNumberAsInt(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        {
+            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+
+            if (type == typeof(double))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return (int)Math.Round(BitConverter.ToDouble(byteArray, 0));
+            }
+            if (type == typeof(long))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return (int)BitConverter.ToInt64(byteArray, 0);
+            }
+            if (type == typeof(ulong))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return (int)BitConverter.ToUInt64(byteArray, 0);
+            }
+            if (type == typeof(float))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return (int)Math.Round(BitConverter.ToSingle(byteArray, 0));
+            }
+            if (type == typeof(int))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToInt32(byteArray, 0);
+            }
+            if (type == typeof(uint))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return (int)BitConverter.ToUInt32(byteArray, 0);
+            }
+            if (type == typeof(short))
+            {
+                var byteArray = reader.ReadBytes(2);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToInt16(byteArray, 0);
+            }
+            if (type == typeof(ushort))
+            {
+                var byteArray = reader.ReadBytes(2);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToUInt16(byteArray, 0);
+            }
+            if (type == typeof(byte))
+            {
+                var oneByteArray = reader.ReadBytes(1);
+                return oneByteArray[0];
+            }
+            return int.MinValue;
+        }
+        internal static float readNumberAsFloat(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        {
+            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+
+            if (type == typeof(double))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return (float)BitConverter.ToDouble(byteArray, 0);
+            }
+            if (type == typeof(long))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToInt64(byteArray, 0);
+            }
+            if (type == typeof(ulong))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToUInt64(byteArray, 0);
+            }
+            if (type == typeof(float))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToSingle(byteArray, 0);
+            }
+            if (type == typeof(int))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToInt32(byteArray, 0);
+            }
+            if (type == typeof(uint))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToUInt32(byteArray, 0);
+            }
+            if (type == typeof(short))
+            {
+                var byteArray = reader.ReadBytes(2);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToInt16(byteArray, 0);
+            }
+            if (type == typeof(ushort))
+            {
+                var byteArray = reader.ReadBytes(2);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToUInt16(byteArray, 0);
+            }
+            if (type == typeof(byte))
+            {
+                var oneByteArray = reader.ReadBytes(1);
+                return oneByteArray[0];
+            }
+            return float.NaN;
+        }
+        internal static double readNumberAsDouble(BinaryReader reader, Type type, FormatEndiannessType formatType)
+        {
+            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+
+            if (type == typeof(double))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToDouble(byteArray, 0);
+            }
+            if (type == typeof(long))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToInt64(byteArray, 0);
+            }
+            if (type == typeof(ulong))
+            {
+                var byteArray = reader.ReadBytes(8);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToUInt64(byteArray, 0);
+            }
+            if (type == typeof(float))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToSingle(byteArray, 0);
+            }
+            if (type == typeof(int))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToInt32(byteArray, 0);
+            }
+            if (type == typeof(uint))
+            {
+                var byteArray = reader.ReadBytes(4);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToUInt32(byteArray, 0);
+            }
+            if (type == typeof(short))
+            {
+                var byteArray = reader.ReadBytes(2);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToInt16(byteArray, 0);
+            }
+            if (type == typeof(ushort))
+            {
+                var byteArray = reader.ReadBytes(2);
+                if (bigEndian) byteArray = byteArray.Reverse().ToArray();
+                return BitConverter.ToUInt16(byteArray, 0);
+            }
+            if (type == typeof(byte))
+            {
+                var oneByteArray = reader.ReadBytes(1);
+                return oneByteArray[0];
+            }
+            return double.NaN;
+        }
+
 
         /// <summary>
         /// Tries the parse number type from string.
@@ -397,87 +575,6 @@ namespace TVGL.IOFunctions
             return true;
         }
 
-        internal static int readNumberAsInt(BinaryReader reader, Type type, FormatEndiannessType formatType)
-        {
-            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
-
-            if (type == typeof(double))
-                return (int)Math.Round(TVGLBitConverter.ToDouble(reader.ReadBytes(8), 0, bigEndian));
-            if (type == typeof(long))
-                return (int)TVGLBitConverter.ToInt64(reader.ReadBytes(8), 0);
-            if (type == typeof(ulong))
-                return (int)TVGLBitConverter.ToUInt64(reader.ReadBytes(8), 0);
-            if (type == typeof(float))
-                return (int)Math.Round(TVGLBitConverter.ToSingle(reader.ReadBytes(4), 0));
-            if (type == typeof(int))
-                return TVGLBitConverter.ToInt32(reader.ReadBytes(4), 0);
-            if (type == typeof(uint))
-                return (int)TVGLBitConverter.ToUInt32(reader.ReadBytes(4), 0);
-            if (type == typeof(short))
-                return TVGLBitConverter.ToInt16(reader.ReadBytes(2), 0);
-            if (type == typeof(ushort))
-                return TVGLBitConverter.ToUInt16(reader.ReadBytes(2), 0);
-            if (type == typeof(byte))
-            {
-                var oneByteArray = reader.ReadBytes(1);
-                return oneByteArray[0];
-            }
-            return int.MinValue;
-        }
-        internal static float readNumberAsFloat(BinaryReader reader, Type type, FormatEndiannessType formatType)
-        {
-            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
-
-            if (type == typeof(double))
-                return (float)TVGLBitConverter.ToDouble(reader.ReadBytes(8), 0, bigEndian);
-            if (type == typeof(long))
-                return TVGLBitConverter.ToInt64(reader.ReadBytes(8), 0);
-            if (type == typeof(ulong))
-                return TVGLBitConverter.ToUInt64(reader.ReadBytes(8), 0);
-            if (type == typeof(float))
-                return TVGLBitConverter.ToSingle(reader.ReadBytes(4), 0);
-            if (type == typeof(int))
-                return TVGLBitConverter.ToInt32(reader.ReadBytes(4), 0);
-            if (type == typeof(uint))
-                return TVGLBitConverter.ToUInt32(reader.ReadBytes(4), 0);
-            if (type == typeof(short))
-                return TVGLBitConverter.ToInt16(reader.ReadBytes(2), 0);
-            if (type == typeof(ushort))
-                return TVGLBitConverter.ToUInt16(reader.ReadBytes(2), 0);
-            if (type == typeof(byte))
-            {
-                var oneByteArray = reader.ReadBytes(1);
-                return oneByteArray[0];
-            }
-            return float.NaN;
-        }
-        internal static double readNumberAsDouble(BinaryReader reader, Type type, FormatEndiannessType formatType)
-        {
-            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
-
-            if (type == typeof(double))
-                return TVGLBitConverter.ToDouble(reader.ReadBytes(8), 0, bigEndian);
-            if (type == typeof(long))
-                return TVGLBitConverter.ToInt64(reader.ReadBytes(8), 0);
-            if (type == typeof(ulong))
-                return TVGLBitConverter.ToUInt64(reader.ReadBytes(8), 0);
-            if (type == typeof(float))
-                return TVGLBitConverter.ToSingle(reader.ReadBytes(4), 0);
-            if (type == typeof(int))
-                return TVGLBitConverter.ToInt32(reader.ReadBytes(4), 0);
-            if (type == typeof(uint))
-                return TVGLBitConverter.ToUInt32(reader.ReadBytes(4), 0);
-            if (type == typeof(short))
-                return TVGLBitConverter.ToInt16(reader.ReadBytes(2), 0);
-            if (type == typeof(ushort))
-                return TVGLBitConverter.ToUInt16(reader.ReadBytes(2), 0);
-            if (type == typeof(byte))
-            {
-                var oneByteArray = reader.ReadBytes(1);
-                return oneByteArray[0];
-            }
-            return double.NaN;
-        }
         internal static int readNumberAsInt(string text, Type type)
         {
             if (type == typeof(double))
@@ -641,7 +738,7 @@ namespace TVGL.IOFunctions
         {
             if (solids.Count == 0) return false;
             if (fileType == FileType.unspecified)
-                fileType = (solids.Count == 1) ? FileType.PLY : FileType.AMF;
+                fileType = (solids.Count == 1) ? FileType.PLY_Binary : FileType.AMF;
             switch (fileType)
             {
                 case FileType.STL_ASCII:
@@ -663,11 +760,16 @@ namespace TVGL.IOFunctions
                         throw new NotSupportedException(
                             "The OFF format does not support saving multiple solids to a single file.");
                     else return OFFFileData.SaveSolid(stream, solids[0]);
-                case FileType.PLY:
+                case FileType.PLY_ASCII:
                     if (solids.Count > 1)
                         throw new NotSupportedException(
                             "The PLY format does not support saving multiple solids to a single file.");
-                    else return PLYFileData.SaveSolid(stream, solids[0]);
+                    else return PLYFileData.SaveSolidASCII(stream, solids[0]);
+                case FileType.PLY_Binary:
+                    if (solids.Count > 1)
+                        throw new NotSupportedException(
+                            "The PLY format does not support saving multiple solids to a single file.");
+                    else return PLYFileData.SaveSolidBinary(stream, solids[0]);
                 default:
                     return false;
             }
@@ -679,7 +781,7 @@ namespace TVGL.IOFunctions
         /// <param name="solid">The solid.</param>
         /// <param name="fileType">Type of the file.</param>
         /// <returns>System.Boolean.</returns>
-        public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType = FileType.PLY)
+        public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType = FileType.PLY_Binary)
         {
             switch (fileType)
             {
@@ -699,8 +801,10 @@ namespace TVGL.IOFunctions
                     return ThreeMFFileData.SaveModel(stream, new List<TessellatedSolid> { solid });
                 case FileType.OFF:
                     return OFFFileData.SaveSolid(stream, solid);
-                case FileType.PLY:
-                    return PLYFileData.SaveSolid(stream, solid);
+                case FileType.PLY_ASCII:
+                    return PLYFileData.SaveSolidASCII(stream, solid);
+                case FileType.PLY_Binary:
+                    return PLYFileData.SaveSolidBinary(stream, solid);
                 default:
                     return false;
             }

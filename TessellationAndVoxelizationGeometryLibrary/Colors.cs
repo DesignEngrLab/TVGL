@@ -889,7 +889,7 @@ namespace TVGL
         /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
         public override string ToString()
         {
-            string hex ="#"+ TVGLBitConverter.ToString(new[] { R, G, B, A });
+            string hex ="#"+ BitConverter.ToString(new[] { R, G, B, A });
             return hex.Replace("-", "");
         }
 

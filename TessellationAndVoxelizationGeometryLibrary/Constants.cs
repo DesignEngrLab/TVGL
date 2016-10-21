@@ -231,9 +231,13 @@ namespace TVGL
         OFF,
 
         /// <summary>
-        ///     Polygon File Format
+        ///     Polygon File Format as ASCII
         /// </summary>
-        PLY
+        PLY_ASCII,
+        /// <summary>
+        ///     Polygon File Format as Binary
+        /// </summary>
+        PLY_Binary
     }
 
     internal enum FormatEndiannessType

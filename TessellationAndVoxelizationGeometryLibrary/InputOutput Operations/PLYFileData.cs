@@ -89,6 +89,22 @@ namespace TVGL.IOFunctions
         #region Open Solids
 
         /// <summary>
+        /// Opens the solid.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="name">The name.</param>
+        /// <returns>TessellatedSolid.</returns>
+        internal static TessellatedSolid OpenSolid(string data, string name = "")
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(data);
+            writer.Flush();
+            stream.Position = 0;
+            return OpenSolid(stream, name);
+        }
+
+        /// <summary>
         /// Opens the specified s.
         /// </summary>
         /// <param name="s">The s.</param>
@@ -111,9 +127,6 @@ namespace TVGL.IOFunctions
             else
             {
                 fileTypeString = "binary";
-                //var charPosInfo = typeof(StreamReader).GetField("charPos",
-                //    BindingFlags.NonPublic | BindingFlags.Instance);
-                //var charPos = (int)charPosInfo.GetValue(reader);
                 var binaryReader = new BinaryReader(s);
                 binaryReader.BaseStream.Seek(charPos, SeekOrigin.Begin);
                 plyData.ReadMesh(binaryReader);
@@ -711,67 +724,115 @@ namespace TVGL.IOFunctions
         #endregion
         #region Save
         /// <summary>
+        /// Saves the solid ASCII.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="solid">The solid.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SaveSolidASCII(ref string data, TessellatedSolid solid)
+        {
+            var stream = new MemoryStream();
+            if (!SaveSolidASCII(stream, solid)) return false;
+            var reader = new StreamReader(stream);
+            data += reader.ReadToEnd();
+            return true;
+        }
+        /// <summary>
+        /// Saves the solid binary.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="solid">The solid.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SaveSolidBinary(ref string data, TessellatedSolid solid)
+        {
+            var stream = new MemoryStream();
+            if (!SaveSolidBinary(stream, solid)) return false;
+            var reader = new StreamReader(stream);
+            data += reader.ReadToEnd();
+            return true;
+        }
+        /// <summary>
         /// Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="solid">The solid.</param>
-        /// <returns>
-        ///   <c>true</c> if XXXX, <c>false</c> otherwise.
-        /// </returns>
-        internal static bool SaveSolid(Stream stream, TessellatedSolid solid)
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SaveSolidASCII(Stream stream, TessellatedSolid solid)
         {
-            var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
-            var colorString = " " + solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
-                                             solid.SolidColor.A;
             try
             {
                 using (var writer = new StreamWriter(stream))
                 {
-                    writer.WriteLine("ply");
-                    writer.WriteLine("format ascii 1.0");
-                    writer.WriteLine("comment  " + tvglDateMarkText);
-                    if (!string.IsNullOrWhiteSpace(solid.Name))
-                        writer.WriteLine("comment  Name : " + solid.Name);
-                    if (!string.IsNullOrWhiteSpace(solid.FileName))
-                        writer.WriteLine("comment  Originally loaded from : " + solid.FileName);
-                    if (solid.Units != UnitType.unspecified)
-                        writer.WriteLine("comment  Units : " + solid.Units);
-                    if (!string.IsNullOrWhiteSpace(solid.Language))
-                        writer.WriteLine("comment  Lang : " + solid.Language);
-                    if (solid.Comments != null)
-                        foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
-                            writer.WriteLine("comment  " + comment);
-                    writer.WriteLine("element vertex " + solid.NumberOfVertices);
-                    writer.WriteLine("property double x");
-                    writer.WriteLine("property double y");
-                    writer.WriteLine("property double z");
-                    writer.WriteLine("element face " + solid.NumberOfFaces);
-                    writer.WriteLine("property list uint8 int32 vertex_indices");
-                    if (defineColors)
-                    {
-                        writer.WriteLine("property uchar red");
-                        writer.WriteLine("property uchar green");
-                        writer.WriteLine("property uchar blue");
-                        writer.WriteLine("property uchar opacity");
-                    }
-                    writer.WriteLine("end_header");
-
+                    WriteHeader(writer, solid, false);
                     foreach (var vertex in solid.Vertices)
                         writer.WriteLine(vertex.X + " " + vertex.Y + " " + vertex.Z);
+
+                    var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
                     foreach (var face in solid.Faces)
                     {
                         var faceString = face.Vertices.Count.ToString();
                         foreach (var v in face.Vertices)
                             faceString += " " + v.IndexInList;
                         if (defineColors)
-                        {
-                            if (face.Color != null)
-                                faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
+                            faceString += " " + face.Color.R + " " + face.Color.G + " " + face.Color.B + " " +
                                           face.Color.A;
-                            else
-                                faceString += colorString;
-                        }
                         writer.WriteLine(faceString);
+                    }
+                    if (solid.HasUniformColor)
+                        writer.WriteLine(solid.SolidColor.R + " " + solid.SolidColor.G + " " + solid.SolidColor.B + " " +
+                                                     solid.SolidColor.A);
+                }
+                Message.output("Successfully wrote PLY file to stream.", 3);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
+                return false;
+            }
+        }
+        /// <summary>
+        /// Saves the specified stream.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solid">The solid.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SaveSolidBinary(Stream stream, TessellatedSolid solid)
+        {
+            try
+            {
+                using (var writer = new StreamWriter(stream))
+                    WriteHeader(writer, solid, false);
+                using (var writer = new BinaryWriter(stream))
+                {
+                    foreach (var vertex in solid.Vertices)
+                    {
+                        writer.Write(BitConverter.GetBytes(vertex.X));
+                        writer.Write(BitConverter.GetBytes(vertex.Y));
+                        writer.Write(BitConverter.GetBytes(vertex.Z));
+                    }
+
+                    var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+                    foreach (var face in solid.Faces)
+                    {
+                        writer.Write(BitConverter.GetBytes(face.Vertices.Count));
+                        foreach (var v in face.Vertices)
+                            writer.Write(BitConverter.GetBytes(v.IndexInList));
+                        if (defineColors)
+                        {
+                            writer.Write(face.Color.R);
+                            writer.Write(face.Color.G);
+                            writer.Write(face.Color.B);
+                            writer.Write(face.Color.A);
+                        }
+                    }
+                    if (solid.HasUniformColor)
+                    {
+                        writer.Write(solid.SolidColor.R);
+                        writer.Write(solid.SolidColor.G);
+                        writer.Write(solid.SolidColor.B);
+                        writer.Write(solid.SolidColor.A);
                     }
                 }
                 Message.output("Successfully wrote PLY file to stream.", 3);
@@ -783,6 +844,56 @@ namespace TVGL.IOFunctions
                 Message.output("Exception: " + exception.Message, 3);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Writes the header.
+        /// </summary>
+        /// <param name="writer">The writer.</param>
+        /// <param name="solid">The solid.</param>
+        /// <param name="isBinary">if set to <c>true</c> [is binary].</param>
+        private static void WriteHeader(StreamWriter writer, TessellatedSolid solid, bool isBinary)
+        {
+            var hasFaceColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+
+            writer.WriteLine("ply");
+            if (isBinary)
+                writer.WriteLine("format binary_little_endian 1.0");
+            else writer.WriteLine("format ascii 1.0");
+            writer.WriteLine("comment  " + tvglDateMarkText);
+            if (!string.IsNullOrWhiteSpace(solid.Name))
+                writer.WriteLine("comment  Name : " + solid.Name);
+            if (!string.IsNullOrWhiteSpace(solid.FileName))
+                writer.WriteLine("comment  Originally loaded from : " + solid.FileName);
+            if (solid.Units != UnitType.unspecified)
+                writer.WriteLine("comment  Units : " + solid.Units);
+            if (!string.IsNullOrWhiteSpace(solid.Language))
+                writer.WriteLine("comment  Lang : " + solid.Language);
+            if (solid.Comments != null)
+                foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
+                    writer.WriteLine("comment  " + comment);
+            writer.WriteLine("element vertex " + solid.NumberOfVertices);
+            writer.WriteLine("property double x");
+            writer.WriteLine("property double y");
+            writer.WriteLine("property double z");
+            writer.WriteLine("element face " + solid.NumberOfFaces);
+            writer.WriteLine("property list uint8 int32 vertex_indices");
+            if (hasFaceColors)
+            {
+                writer.WriteLine("property uchar red");
+                writer.WriteLine("property uchar green");
+                writer.WriteLine("property uchar blue");
+                writer.WriteLine("property uchar opacity");
+            }
+            if (solid.HasUniformColor)
+            {
+                writer.WriteLine("element uniform_color");
+                writer.WriteLine("property uchar red");
+                writer.WriteLine("property uchar green");
+                writer.WriteLine("property uchar blue");
+                writer.WriteLine("property uchar opacity");
+            }
+            writer.WriteLine("end_header");
         }
         #endregion
     }
