@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 
 namespace TVGL.IOFunctions
 {
@@ -98,6 +99,7 @@ namespace TVGL.IOFunctions
         {
             var now = DateTime.Now;
             var reader = new StreamReader(s);
+
             var fileTypeString = "ASCII";
             var plyData = new PLYFileData { FileName = filename, Name = GetNameFromFileName(filename) };
             var line = reader.ReadLine();
@@ -109,9 +111,11 @@ namespace TVGL.IOFunctions
                 plyData.ReadMesh(reader);
             else
             {
+                var str = reader.ReadToEnd();
+                var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(str));
                 fileTypeString = "binary";
-                var binaryReader = new BinaryReader(s);
-                binaryReader.BaseStream.Seek(charPos, SeekOrigin.Begin);
+                var binaryReader = new BinaryReader(memoryStream);
+                //binaryReader.BaseStream.Seek(charPos, SeekOrigin.Begin);
                 plyData.ReadMesh(binaryReader);
             }
             plyData.FixColors();
@@ -722,7 +726,7 @@ namespace TVGL.IOFunctions
                     foreach (var vertex in solid.Vertices)
                         writer.WriteLine(vertex.X + " " + vertex.Y + " " + vertex.Z);
 
-                    var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+                    var defineColors = !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
                     foreach (var face in solid.Faces)
                     {
                         var faceString = face.Vertices.Count.ToString();
@@ -757,38 +761,44 @@ namespace TVGL.IOFunctions
         {
             try
             {
-                using (var writer = new StreamWriter(stream))
-                    WriteHeader(writer, solid, false);
-                using (var writer = new BinaryWriter(stream))
+                using (var mwriter = new StreamWriter(stream))
                 {
-                    foreach (var vertex in solid.Vertices)
+                    WriteHeader(mwriter, solid, true);
+                    var memoryStream = new MemoryStream();
+                    using (var binaryWriter = new BinaryWriter(memoryStream))
                     {
-                        writer.Write(BitConverter.GetBytes(vertex.X));
-                        writer.Write(BitConverter.GetBytes(vertex.Y));
-                        writer.Write(BitConverter.GetBytes(vertex.Z));
-                    }
-
-                    var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
-                    foreach (var face in solid.Faces)
-                    {
-                        writer.Write(BitConverter.GetBytes(face.Vertices.Count));
-                        foreach (var v in face.Vertices)
-                            writer.Write(BitConverter.GetBytes(v.IndexInList));
-                        if (defineColors)
+                        foreach (var vertex in solid.Vertices)
                         {
-                            writer.Write(face.Color.R);
-                            writer.Write(face.Color.G);
-                            writer.Write(face.Color.B);
-                            writer.Write(face.Color.A);
+                            binaryWriter.Write(BitConverter.GetBytes(vertex.X));
+                            binaryWriter.Write(BitConverter.GetBytes(vertex.Y));
+                            binaryWriter.Write(BitConverter.GetBytes(vertex.Z));
+                        }
+
+                        var defineColors =
+                            !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+                        foreach (var face in solid.Faces)
+                        {
+                            binaryWriter.Write(BitConverter.GetBytes(face.Vertices.Count));
+                            foreach (var v in face.Vertices)
+                                binaryWriter.Write(BitConverter.GetBytes(v.IndexInList));
+                            if (defineColors)
+                            {
+                                binaryWriter.Write(face.Color.R);
+                                binaryWriter.Write(face.Color.G);
+                                binaryWriter.Write(face.Color.B);
+                                binaryWriter.Write(face.Color.A);
+                            }
+                        }
+                        if (solid.HasUniformColor)
+                        {
+                            binaryWriter.Write(solid.SolidColor.R);
+                            binaryWriter.Write(solid.SolidColor.G);
+                            binaryWriter.Write(solid.SolidColor.B);
+                            binaryWriter.Write(solid.SolidColor.A);
                         }
                     }
-                    if (solid.HasUniformColor)
-                    {
-                        writer.Write(solid.SolidColor.R);
-                        writer.Write(solid.SolidColor.G);
-                        writer.Write(solid.SolidColor.B);
-                        writer.Write(solid.SolidColor.A);
-                    }
+                    var byteArray = memoryStream.ToArray();
+                    mwriter.Write(System.Text.Encoding.Unicode.GetString(byteArray, 0, byteArray.Length));
                 }
                 Message.output("Successfully wrote PLY file to stream.", 3);
                 return true;
@@ -809,7 +819,7 @@ namespace TVGL.IOFunctions
         /// <param name="isBinary">if set to <c>true</c> [is binary].</param>
         private static void WriteHeader(StreamWriter writer, TessellatedSolid solid, bool isBinary)
         {
-            var hasFaceColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+            var hasFaceColors = !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
 
             writer.WriteLine("ply");
             if (isBinary)

@@ -505,7 +505,7 @@ namespace TVGL.IOFunctions
         }
         internal static double readNumberAsDouble(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
-            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+            var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
 
             if (type == typeof(double))
             {
@@ -855,8 +855,8 @@ namespace TVGL.IOFunctions
         {
             var stream = new MemoryStream();
             if (!Save(stream, solid, fileType)) return "";
-            var reader = new StreamReader(stream);
-            return reader.ReadToEnd();
+            var byteArray = stream.ToArray();
+            return System.Text.Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
         }
 
         /// <summary>
@@ -869,8 +869,8 @@ namespace TVGL.IOFunctions
         {
             var stream = new MemoryStream();
             if (!Save(stream, solids, fileType)) return "";
-            var reader = new StreamReader(stream);
-            return reader.ReadToEnd();
+            var byteArray=stream.ToArray();
+            return System.Text.Encoding.UTF8.GetString(byteArray,0,byteArray.Length);
         }
 
 
