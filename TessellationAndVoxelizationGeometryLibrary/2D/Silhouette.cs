@@ -105,8 +105,10 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal)
+        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double tolerance = Constants.BaseTolerance)
         {
+            //A tolerance of ts.SameTolerance * 100 or greater seems to be the best.
+
             if (ts.Errors?.SingledSidedEdges != null)
             {
                 //Run2 is slower, but may handle missing edge/vertex pairing better.
@@ -119,7 +121,7 @@ namespace TVGL
             {
                 //face.Color = new Color(KnownColors.PaleGoldenrod);
                 var dot = normal.dotProduct(face.Normal);
-                if (dot.IsGreaterThanNonNegligible(ts.SameTolerance))
+                if (dot.IsGreaterThanNonNegligible(tolerance))
                 {
                     positiveFaceDict.Add(face.IndexInList, face);
                 }
