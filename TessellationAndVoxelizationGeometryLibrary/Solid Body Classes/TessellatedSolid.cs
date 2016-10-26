@@ -420,7 +420,7 @@ namespace TVGL
         {
             var duplicateFaceCheck = true;
             HasUniformColor = true;
-            if (colors == null || !colors.Any())
+            if (colors == null || !colors.Any() || colors.All(c => c == null))
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
             NumberOfFaces = faceToVertexIndices.Count;
@@ -463,7 +463,7 @@ namespace TVGL
                 if (colors != null)
                 {
                     var j = i < colors.Count - 1 ? i : colors.Count - 1;
-                    color = colors[j];
+                    if (colors[j] != null) color = colors[j];
                     if (!SolidColor.Equals(color)) HasUniformColor = false;
                 }
                 if (faceVertices.Count == 3)

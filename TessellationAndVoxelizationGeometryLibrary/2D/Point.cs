@@ -30,6 +30,7 @@ namespace TVGL
     ///     a set of vertices without changing those vertices. This is done by "wrapping"
     ///     these Point objects around a vertex and then providing their new position.
     /// </summary>
+    [DataContract]
     public class Point : IVertex
     {
         #region Properties
@@ -38,6 +39,7 @@ namespace TVGL
         ///     Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
+        [DataMember]
         public double X { get; internal set; }
 
         /// <summary>

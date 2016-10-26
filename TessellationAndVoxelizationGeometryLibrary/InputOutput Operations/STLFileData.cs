@@ -139,7 +139,7 @@ namespace TVGL.IOFunctions
             var solidNum = 0;
             var reader = new StreamReader(stream);
             stlData = new List<STLFileData>();
-            var stlSolid = new STLFileData { FileName = filename, Units = UnitType.unspecified};
+            var stlSolid = new STLFileData { FileName = filename, Units = UnitType.unspecified };
             var comments = new List<string>();
             while (!reader.EndOfStream)
             {
@@ -166,7 +166,7 @@ namespace TVGL.IOFunctions
                         stlSolid = new STLFileData();
                         break;
                 }
-            }         
+            }
             return true;
         }
 
@@ -248,7 +248,7 @@ namespace TVGL.IOFunctions
                 stlSolid1.Name = GetNameFromFileName(filename);
             do
             {
-                var numFaces = ReadUInt32(reader);
+                var numFaces = readNumberAsInt(reader, typeof(uint),FormatEndiannessType.binary_little_endian);
                 if (length - 84 != numFaces * 50)
                     return false;
                 for (var i = 0; i < numFaces; i++)
@@ -272,28 +272,29 @@ namespace TVGL.IOFunctions
         /// <param name="reader">The reader.</param>
         private void ReadFacet(BinaryReader reader)
         {
-            var ni = ReadFloatToDouble(reader);
-            var nj = ReadFloatToDouble(reader);
-            var nk = ReadFloatToDouble(reader);
+            var ni = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var nj = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var nk = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
 
             var n = new[] { ni, nj, nk };
 
-            var x1 = ReadFloatToDouble(reader);
-            var y1 = ReadFloatToDouble(reader);
-            var z1 = ReadFloatToDouble(reader);
+            var x1 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var y1 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var z1 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var v1 = new[] { x1, y1, z1 };
 
-            var x2 = ReadFloatToDouble(reader);
-            var y2 = ReadFloatToDouble(reader);
-            var z2 = ReadFloatToDouble(reader);
+            var x2 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var y2 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var z2 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var v2 = new[] { x2, y2, z2 };
 
-            var x3 = ReadFloatToDouble(reader);
-            var y3 = ReadFloatToDouble(reader);
-            var z3 = ReadFloatToDouble(reader);
+            var x3 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var y3 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
+            var z3 = readNumberAsDouble(reader, typeof(float), FormatEndiannessType.binary_little_endian);
             var v3 = new[] { x3, y3, z3 };
 
-            var attrib = Convert.ToString(ReadUInt16(reader), 2).PadLeft(16, '0').ToCharArray();
+            var attrib = Convert.ToString(readNumberAsInt(reader, typeof(ushort), FormatEndiannessType.binary_little_endian),
+                2).PadLeft(16, '0').ToCharArray();
             var hasColor = attrib[0].Equals('1');
 
             if (hasColor)
@@ -328,40 +329,6 @@ namespace TVGL.IOFunctions
             Normals.Add(n);
             Vertices.Add(new List<double[]> { v1, v2, v3 });
         }
-
-        /// <summary>
-        ///     Reads a float (4 byte)
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <returns>The float.</returns>
-        private static double ReadFloatToDouble(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(4);
-            return BitConverter.ToSingle(bytes, 0);
-        }
-
-        /// <summary>
-        ///     Reads a 16-bit unsigned integer.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <returns>The unsigned integer.</returns>
-        private static ushort ReadUInt16(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(2);
-            return BitConverter.ToUInt16(bytes, 0);
-        }
-
-        /// <summary>
-        ///     Reads a 32-bit unsigned integer.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <returns>The unsigned integer.</returns>
-        private static uint ReadUInt32(BinaryReader reader)
-        {
-            var bytes = reader.ReadBytes(4);
-            return BitConverter.ToUInt32(bytes, 0);
-        }
-
         #endregion
 
         #endregion
