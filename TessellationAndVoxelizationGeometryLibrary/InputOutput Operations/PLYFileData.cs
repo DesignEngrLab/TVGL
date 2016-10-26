@@ -111,11 +111,11 @@ namespace TVGL.IOFunctions
                 plyData.ReadMesh(reader);
             else
             {
-                var str = reader.ReadToEnd();
-                var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(str));
+                //var str = reader.ReadToEnd();
+                //var memoryStream = new MemoryStream(Encoding.Unicode.GetBytes(str));
                 fileTypeString = "binary";
-                var binaryReader = new BinaryReader(memoryStream);
-                //binaryReader.BaseStream.Seek(charPos, SeekOrigin.Begin);
+                var binaryReader = new BinaryReader(s);
+                binaryReader.BaseStream.Seek(charPos, SeekOrigin.Begin);
                 plyData.ReadMesh(binaryReader);
             }
             plyData.FixColors();
@@ -769,16 +769,18 @@ namespace TVGL.IOFunctions
                     {
                         foreach (var vertex in solid.Vertices)
                         {
-                            binaryWriter.Write(BitConverter.GetBytes(vertex.X));
-                            binaryWriter.Write(BitConverter.GetBytes(vertex.Y));
-                            binaryWriter.Write(BitConverter.GetBytes(vertex.Z));
+                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.X));
+                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.Y));
+                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.Z));
                         }
 
                         var defineColors =
                             !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
                         foreach (var face in solid.Faces)
                         {
-                            binaryWriter.Write(BitConverter.GetBytes(face.Vertices.Count));
+                            var b= (byte)face.Vertices.Count;
+
+                            binaryWriter.Write(BitConverter.GetBytes(b));
                             foreach (var v in face.Vertices)
                                 binaryWriter.Write(BitConverter.GetBytes(v.IndexInList));
                             if (defineColors)
@@ -838,9 +840,12 @@ namespace TVGL.IOFunctions
                 foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
                     writer.WriteLine("comment  " + comment);
             writer.WriteLine("element vertex " + solid.NumberOfVertices);
-            writer.WriteLine("property double x");
-            writer.WriteLine("property double y");
-            writer.WriteLine("property double z");
+            //writer.WriteLine("property double x");
+            //writer.WriteLine("property double y");
+            //writer.WriteLine("property double z");
+            writer.WriteLine("property float x");
+            writer.WriteLine("property float y");
+            writer.WriteLine("property float z");
             writer.WriteLine("element face " + solid.NumberOfFaces);
             writer.WriteLine("property list uint8 int32 vertex_indices");
             if (hasFaceColors)

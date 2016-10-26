@@ -387,7 +387,7 @@ namespace TVGL.IOFunctions
 
         internal static int readNumberAsInt(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
-            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+            var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
 
             if (type == typeof(double))
             {
@@ -446,7 +446,7 @@ namespace TVGL.IOFunctions
         }
         internal static float readNumberAsFloat(BinaryReader reader, Type type, FormatEndiannessType formatType)
         {
-            var bigEndian = (formatType == FormatEndiannessType.binary_little_endian);
+            var bigEndian = (formatType == FormatEndiannessType.binary_big_endian);
 
             if (type == typeof(double))
             {
