@@ -20,6 +20,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using System.ServiceModel.Channels;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace TVGL.IOFunctions
@@ -190,7 +191,7 @@ namespace TVGL.IOFunctions
             writer.Write(data);
             writer.Flush();
             stream.Position = 0;
-            var extensions = new[] {"", "STL", "STL", "3mf", "model", "amf", "off", "ply", "ply"};
+            var extensions = new[] { "", "STL", "STL", "3mf", "model", "amf", "off", "ply", "ply" };
             var name = "data." + extensions[(int)fileType];
             return Open(stream, name);
         }
@@ -756,7 +757,21 @@ namespace TVGL.IOFunctions
             }
             return Double.NaN;
         }
-
+        
+        /// <summary>
+        /// Gets the string from byte array.
+        /// </summary>
+        /// <param name="byteArray">The byte array.</param>
+        /// <returns>System.String.</returns>
+        protected static string GetStringFromByteArray(byte[] byteArray)
+        {
+            var c= Encoding.UTF8.GetChars(byteArray);
+            return (string) c;
+            string byteString = string.Empty;
+            foreach (byte b in byteArray)
+                byteString += b;
+            return byteString;
+        }
         #endregion
 
         #region Save/Write
@@ -869,8 +884,8 @@ namespace TVGL.IOFunctions
         {
             var stream = new MemoryStream();
             if (!Save(stream, solids, fileType)) return "";
-            var byteArray=stream.ToArray();
-            return System.Text.Encoding.UTF8.GetString(byteArray,0,byteArray.Length);
+            var byteArray = stream.ToArray();
+            return System.Text.Encoding.UTF8.GetString(byteArray, 0, byteArray.Length);
         }
 
 

@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace TVGL.IOFunctions
 {
@@ -88,6 +87,23 @@ namespace TVGL.IOFunctions
 
         #endregion
         #region Open Solids
+
+        /// <summary>
+        /// Opens the solid.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="name">The name.</param>
+        /// <returns>TessellatedSolid.</returns>
+        internal static TessellatedSolid OpenSolid(string data, string name = "")
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(data);
+            writer.Flush();
+            stream.Position = 0;
+            return OpenSolid(stream, name);
+        }
+
         /// <summary>
         /// Opens the specified s.
         /// </summary>
@@ -99,7 +115,6 @@ namespace TVGL.IOFunctions
         {
             var now = DateTime.Now;
             var reader = new StreamReader(s);
-
             var fileTypeString = "ASCII";
             var plyData = new PLYFileData { FileName = filename, Name = GetNameFromFileName(filename) };
             var line = reader.ReadLine();
@@ -112,40 +127,14 @@ namespace TVGL.IOFunctions
             else
             {
                 fileTypeString = "binary";
-                var binaryReader = getBinaryReaderFromWhereStreamReaderLeftOff(reader);
+                var binaryReader = new BinaryReader(s);
+                binaryReader.BaseStream.Seek(charPos, SeekOrigin.Begin);
                 plyData.ReadMesh(binaryReader);
             }
             plyData.FixColors();
             Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
             return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.faceColors,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
-        }
-
-        static BinaryReader getBinaryReaderFromWhereStreamReaderLeftOff(StreamReader reader)
-        {
-            var charPosField = typeof(StreamReader).GetField("charPos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            var byteLenField = typeof(StreamReader).GetField("byteLen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            var charBufferField = typeof(StreamReader).GetField("charBuffer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | BindingFlags.DeclaredOnly);
-
-            //shift position back from BaseStream.Position by the number of bytes read
-            //into internal buffer.
-            int byteLen = (int)byteLenField.GetValue(reader);
-            var position = reader.BaseStream.Position - byteLen;
-
-            //if we have consumed chars from the buffer we need to calculate how many
-            //bytes they represent in the current encoding and add that to the position.
-            int charPos = (int)charPosField.GetValue(reader);
-            if (charPos > 0)
-            {
-                var charBuffer = (char[])charBufferField.GetValue(reader);
-                var encoding = reader.CurrentEncoding;
-                var bytesConsumed = encoding.GetBytes(charBuffer, 0, charPos).Length;
-                position += bytesConsumed;
-            }
-            var binReader = new BinaryReader(reader.BaseStream);
-            //reader.DiscardBufferedData();
-            binReader.BaseStream.Seek(position, SeekOrigin.Begin);
-            return binReader;
         }
 
         private void FixColors()
@@ -735,6 +724,34 @@ namespace TVGL.IOFunctions
         #endregion
         #region Save
         /// <summary>
+        /// Saves the solid ASCII.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="solid">The solid.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SaveSolidASCII(ref string data, TessellatedSolid solid)
+        {
+            var stream = new MemoryStream();
+            if (!SaveSolidASCII(stream, solid)) return false;
+            var reader = new StreamReader(stream);
+            data += reader.ReadToEnd();
+            return true;
+        }
+        /// <summary>
+        /// Saves the solid binary.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <param name="solid">The solid.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SaveSolidBinary(ref string data, TessellatedSolid solid)
+        {
+            var stream = new MemoryStream();
+            if (!SaveSolidBinary(stream, solid)) return false;
+            var reader = new StreamReader(stream);
+            data += reader.ReadToEnd();
+            return true;
+        }
+        /// <summary>
         /// Saves the specified stream.
         /// </summary>
         /// <param name="stream">The stream.</param>
@@ -750,7 +767,7 @@ namespace TVGL.IOFunctions
                     foreach (var vertex in solid.Vertices)
                         writer.WriteLine(vertex.X + " " + vertex.Y + " " + vertex.Z);
 
-                    var defineColors = !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+                    var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
                     foreach (var face in solid.Faces)
                     {
                         var faceString = face.Vertices.Count.ToString();
@@ -785,45 +802,38 @@ namespace TVGL.IOFunctions
         {
             try
             {
-                using (var mainWriter = new StreamWriter(stream))
+                using (var writer = new StreamWriter(stream))
+                    WriteHeader(writer, solid, false);
+                using (var writer = new BinaryWriter(stream))
                 {
-                    WriteHeader(mainWriter, solid, true);
-                    var memoryStream = new MemoryStream();
-                    using (var binaryWriter = new BinaryWriter(memoryStream))
+                    foreach (var vertex in solid.Vertices)
                     {
-                        foreach (var vertex in solid.Vertices)
-                        {
-                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.X));
-                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.Y));
-                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.Z));
-                        }
+                        writer.Write(BitConverter.GetBytes(vertex.X));
+                        writer.Write(BitConverter.GetBytes(vertex.Y));
+                        writer.Write(BitConverter.GetBytes(vertex.Z));
+                    }
 
-                        var defineColors =
-                            !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
-                        foreach (var face in solid.Faces)
+                    var defineColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+                    foreach (var face in solid.Faces)
+                    {
+                        writer.Write(BitConverter.GetBytes(face.Vertices.Count));
+                        foreach (var v in face.Vertices)
+                            writer.Write(BitConverter.GetBytes(v.IndexInList));
+                        if (defineColors)
                         {
-                            var b = (byte)face.Vertices.Count;
-
-                            binaryWriter.Write(BitConverter.GetBytes(b));
-                            foreach (var v in face.Vertices)
-                                binaryWriter.Write(BitConverter.GetBytes(v.IndexInList));
-                            if (defineColors)
-                            {
-                                binaryWriter.Write(face.Color.R);
-                                binaryWriter.Write(face.Color.G);
-                                binaryWriter.Write(face.Color.B);
-                                binaryWriter.Write(face.Color.A);
-                            }
-                        }
-                        if (solid.HasUniformColor)
-                        {
-                            binaryWriter.Write(solid.SolidColor.R);
-                            binaryWriter.Write(solid.SolidColor.G);
-                            binaryWriter.Write(solid.SolidColor.B);
-                            binaryWriter.Write(solid.SolidColor.A);
+                            writer.Write(face.Color.R);
+                            writer.Write(face.Color.G);
+                            writer.Write(face.Color.B);
+                            writer.Write(face.Color.A);
                         }
                     }
-                    mainWriter.Write(GetStringFromByteArray(memoryStream.ToArray()));
+                    if (solid.HasUniformColor)
+                    {
+                        writer.Write(solid.SolidColor.R);
+                        writer.Write(solid.SolidColor.G);
+                        writer.Write(solid.SolidColor.B);
+                        writer.Write(solid.SolidColor.A);
+                    }
                 }
                 Message.output("Successfully wrote PLY file to stream.", 3);
                 return true;
@@ -844,7 +854,7 @@ namespace TVGL.IOFunctions
         /// <param name="isBinary">if set to <c>true</c> [is binary].</param>
         private static void WriteHeader(StreamWriter writer, TessellatedSolid solid, bool isBinary)
         {
-            var hasFaceColors = !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+            var hasFaceColors = !(solid.HasUniformColor && solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
 
             writer.WriteLine("ply");
             if (isBinary)
@@ -863,12 +873,9 @@ namespace TVGL.IOFunctions
                 foreach (var comment in solid.Comments.Where(string.IsNullOrWhiteSpace))
                     writer.WriteLine("comment  " + comment);
             writer.WriteLine("element vertex " + solid.NumberOfVertices);
-            //writer.WriteLine("property double x");
-            //writer.WriteLine("property double y");
-            //writer.WriteLine("property double z");
-            writer.WriteLine("property float x");
-            writer.WriteLine("property float y");
-            writer.WriteLine("property float z");
+            writer.WriteLine("property double x");
+            writer.WriteLine("property double y");
+            writer.WriteLine("property double z");
             writer.WriteLine("element face " + solid.NumberOfFaces);
             writer.WriteLine("property list uint8 int32 vertex_indices");
             if (hasFaceColors)
