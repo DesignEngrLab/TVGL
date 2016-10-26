@@ -46,34 +46,39 @@ namespace TVGL
         ///     Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
+        [DataMember]
         public double Y { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the z coordinate. If one is using Point in a 2D capacity, it can be ignored.
         /// </summary>
         /// <value>The z.</value>
+        [DataMember]
         public double Z { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the references.
         /// </summary>
         /// <value>The references.</value>
+        /// Cannot serialize vertices yet. Not a circular reference problem.
         public List<Vertex> References { get; set; }
 
         /// <summary>
         ///     Gets or sets the index in a path
         /// </summary>
+        [DataMember]
         public int IndexInPath { get; set; }
 
         /// <summary>
         ///  Gets or sets the index of the polygon that this point belongs to
         /// </summary>
+        [DataMember]
         public int PolygonIndex { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
-        /// Can not serialize lines yet. Not sure if circular reference will cause issues.
+        /// Cannot serialize lines yet. Not sure if circular reference will cause issues.
         public IList<Line> Lines { get; set; }
 
         /// <summary>
