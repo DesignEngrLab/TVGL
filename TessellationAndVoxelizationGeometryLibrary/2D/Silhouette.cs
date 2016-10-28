@@ -28,75 +28,68 @@ namespace TVGL
                     negativeFaces.Add(face);
                 }
             }
-            
+
             //For each negative face.
             //1. Project it onto a plane perpendicular to the given normal.
-            //2. Union it with the prior negative faces.
-            var startFace = negativeFaces[0];
-            negativeFaces.RemoveAt(0);
-            var startPolygon = MiscFunctions.Get2DProjectionPoints(startFace.Vertices, normal, true).ToList();
-            //Make this polygon positive CCW
-            startPolygon = PolygonOperations.CCWPositive(startPolygon);
-            var polygonList = new List<List<Point>> { startPolygon };
-            var previousArea = 0.0;
-            while (negativeFaces.Any())
+            //2. Remove it from the list if it has a insignificant area
+            var projectedFaces = new List<List<Point>>();
+            foreach (var face in negativeFaces)
             {
-                var negativeFace = negativeFaces[0];
-                negativeFaces.RemoveAt(0);
-                var nextPolygon = MiscFunctions.Get2DProjectionPoints(negativeFace.Vertices, normal, true).ToList();
-                var area = MiscFunctions.AreaOfPolygon(nextPolygon);
+                var polygon = MiscFunctions.Get2DProjectionPoints(face.Vertices, normal, true).ToList();
+                if (polygon.Count < 3) continue; //2 of the points must have been merged
+                var area = MiscFunctions.AreaOfPolygon(polygon);
                 if (area.IsNegligible(0.0000001)) continue; //Higher tolerance because of the conversion to intPoints in the Union function
-                //Make this polygon positive CCW
-                if (area < 0) nextPolygon.Reverse();
+                if (area < 0) polygon.Reverse();//Make this polygon positive CCW
+                projectedFaces.Add(polygon);
+            }
+
+
+            //2. Union it with the prior negative faces.
+            var startPolygon = projectedFaces[0];
+            projectedFaces.RemoveAt(0);
+            var polygonList = new List<List<Point>> { startPolygon };
+            var previousArea = MiscFunctions.AreaOfPolygon(startPolygon);
+            while (projectedFaces.Any())
+            {
+                var nextPolygon = projectedFaces[0];
+                projectedFaces.RemoveAt(0);
                 var oldPolygonList = new List<List<Point>>(polygonList);
                 polygonList = PolygonOperations.Union(oldPolygonList, new List<List<Point>> {nextPolygon});
 
                 //Check to make sure the area got larger
                 var currentArea = polygonList.Sum(p => MiscFunctions.AreaOfPolygon(p));
-                if (currentArea < previousArea) throw new Exception("Adding a triangle should never decrease the area");
+                if (currentArea < previousArea*.99)
+                {
+                    throw new Exception("Adding a triangle should never decrease the area");
+                    //oldPolygonList.Add(nextPolygon);
+                    //return polygonList; 
+                }
                 previousArea = currentArea; //ToDo: Remove this check once it is working properly.
             }
 
-            polygonList = PolygonOperations.Union(polygonList);
-
-            var polygons = polygonList.Select(path => new Polygon(path)).ToList();
-
-            //Get the minimum line length to use for the offset.
-            var maxArea = polygons.Select(polygon => polygon.Area).Concat(new[] {double.NegativeInfinity}).Max();
-
-            //Remove tiny polygons.
-            var count = 0;
-            for(var i =0; i < polygons.Count; i++)
+            var smallestX = double.PositiveInfinity;
+            var largestX = double.NegativeInfinity;
+            foreach (var path in polygonList)
             {
-                if (!polygons[i].Area.IsNegligible(maxArea/10000)) continue;
-                polygonList.RemoveAt(i-count);
-                count ++;
+                foreach (var point in path)
+                {
+                    if (point.X < smallestX)
+                    {
+                        smallestX = point.X;
+                    }
+                    if (point.X > largestX)
+                    {
+                        largestX = point.X;
+                    }
+                }
             }
+            var scale = largestX - smallestX;
 
-            #region Offset Testing 
-            //var smallestX = double.PositiveInfinity;
-            //var largestX = double.NegativeInfinity;
-            //foreach (var path in polygonList)
-            //{
-            //    foreach (var point in path)
-            //    {
-            //        if (point.X < smallestX)
-            //        {
-            //            smallestX = point.X;
-            //        }
-            //        if (point.X > largestX)
-            //        {
-            //            largestX = point.X;
-            //        }
-            //    }
-            //}
-            //var scale = largestX - smallestX;
+            //Remove tiny polygons and slivers 
+            var offsetPolygons = PolygonOperations.OffsetMiter(polygonList, scale / 1000);
+            var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale / 1000);
 
-            //var offsetPolygons = PolygonOperations.OffsetRound(polygonList, scale / 10);
-            //polygonList.AddRange(offsetPolygons);
-            #endregion
-
-            return polygonList;
+            return significantSolution;
         }
 
         /// <summary>
@@ -130,24 +123,24 @@ namespace TVGL
             var unusedPositiveFaces = new Dictionary<int, PolygonalFace>(positiveFaceDict);
             var seperateSurfaces = new List<HashSet<PolygonalFace>>();
 
-            //ts.HasUniformColor = false;
-            //var colorList = new List<Color>
-            //{
-            //    new Color(KnownColors.Blue),
-            //    new Color(KnownColors.Red),
-            //    new Color(KnownColors.Yellow),
-            //    new Color(KnownColors.Green),
-            //    new Color(KnownColors.Orange),
-            //    new Color(KnownColors.Yellow),
-            //    new Color(KnownColors.Purple),
-            //    new Color(KnownColors.Brown),
-            //    new Color(KnownColors.DarkTurquoise),
-            //    new Color(KnownColors.AntiqueWhite),
-            //    new Color(KnownColors.DarkOliveGreen),
-            //    new Color(KnownColors.DarkGray),
-            //    new Color(KnownColors.Gold)
-            //};
-            //var ic = 0;
+            ts.HasUniformColor = false;
+            var colorList = new List<Color>
+            {
+                new Color(KnownColors.Blue),
+                new Color(KnownColors.Red),
+                new Color(KnownColors.Yellow),
+                new Color(KnownColors.Green),
+                new Color(KnownColors.Orange),
+                new Color(KnownColors.Yellow),
+                new Color(KnownColors.Purple),
+                new Color(KnownColors.Brown),
+                new Color(KnownColors.DarkTurquoise),
+                new Color(KnownColors.AntiqueWhite),
+                new Color(KnownColors.DarkOliveGreen),
+                new Color(KnownColors.DarkGray),
+                new Color(KnownColors.Gold)
+            };
+            var ic = 0;
             while (unusedPositiveFaces.Any())
             {
                 var surface = new HashSet<PolygonalFace>();
@@ -158,19 +151,21 @@ namespace TVGL
                     var face = stack.Pop();
                     if (surface.Contains(face)) continue;
                     surface.Add(face);
-                    //face.Color = colorList[ic];
+                    face.Color = colorList[ic];
                     unusedPositiveFaces.Remove(face.IndexInList);
                     //Only push adjacent faces that are also negative
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
                         if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
                         if (!positiveFaceDict.ContainsKey(adjacentFace.IndexInList)) continue; //Ignore if not negative
+                        var dot = surface.Last().Normal.dotProduct(adjacentFace.Normal);
+                        if (!dot.IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) continue; //ignore for now. It will be part of a different surface.
                         stack.Push(adjacentFace);
                     }
                 }
                 seperateSurfaces.Add(surface);
-                //ic++;
-                //if (ic == colorList.Count) ic = 0; //Go back to the beginning
+                ic++;
+                if (ic == colorList.Count) ic = 0; //Go back to the beginning
             }
 
             //Get the surface positive and negative loops
