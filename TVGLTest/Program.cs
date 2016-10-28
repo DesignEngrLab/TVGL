@@ -18,7 +18,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-     //   "../../../TestFiles/ABF.ply",
+        "../../../TestFiles/ABF.ply",
        // "../../../TestFiles/Beam_Boss.STL",
        // //"../../../TestFiles/bigmotor.amf",
        // //"../../../TestFiles/DxTopLevelPart2.shell",
@@ -28,11 +28,11 @@ namespace TVGL_Test
        // //"../../../TestFiles/Castle.3mf",
        // //"../../../TestFiles/Raspberry Pi Case.3mf",
        ////"../../../TestFiles/shark.ply",
-      "../../../TestFiles/bunnySmall.ply",
+     // "../../../TestFiles/bunnySmall.ply",
        // "../../../TestFiles/cube.ply",
        // //"../../../TestFiles/airplane.ply",
        // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-       // "../../../TestFiles/Tetrahedron.STL",
+        "../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
        // "../../../TestFiles/Mic_Holder_SW.stl",
@@ -79,17 +79,24 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*.amf");
+            var fileNames = dir.GetFiles("*.stl");
             for (var i = 0; i < FileNames.Count(); i++)
             {
-                var filename = fileNames[i].FullName;
+                var filename = FileNames[i];//.FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
+                filename += "1.ply";
+                using (fileStream = File.OpenWrite(filename))
+                    IO.Save(fileStream, ts, FileType.PLY_Binary);
+                using (fileStream = File.OpenRead(filename))
+                    ts = IO.Open(fileStream, filename);
+
+
                 //TestPolygon(ts[0]);
-                
+
                 Presenter.ShowAndHang(ts);
               //  TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
