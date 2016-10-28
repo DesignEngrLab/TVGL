@@ -99,7 +99,7 @@ namespace TVGL.IOFunctions
         {
             var now = DateTime.Now;
             var reader = new StreamReader(s);
-
+            var offSetForCharReturn = 1;
             var fileTypeString = "ASCII";
             var plyData = new PLYFileData { FileName = filename, Name = GetNameFromFileName(filename) };
             var line = reader.ReadLine();
@@ -112,40 +112,14 @@ namespace TVGL.IOFunctions
             else
             {
                 fileTypeString = "binary";
-                var binaryReader = getBinaryReaderFromWhereStreamReaderLeftOff(reader);
+                var binaryReader = new BinaryReader(s);
+                s.Seek(charPos, SeekOrigin.Begin);
                 plyData.ReadMesh(binaryReader);
             }
             plyData.FixColors();
             Message.output("Successfully read in " + fileTypeString + " PLY file (" + (DateTime.Now - now) + ").", 3);
             return new TessellatedSolid(plyData.vertices, plyData.faceToVertexIndices, plyData.faceColors,
                 InferUnitsFromComments(plyData.Comments), plyData.Name, filename, plyData.Comments, plyData.Language);
-        }
-
-        static BinaryReader getBinaryReaderFromWhereStreamReaderLeftOff(StreamReader reader)
-        {
-            var charPosField = typeof(StreamReader).GetField("charPos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            var byteLenField = typeof(StreamReader).GetField("byteLen", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            var charBufferField = typeof(StreamReader).GetField("charBuffer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | BindingFlags.DeclaredOnly);
-
-            //shift position back from BaseStream.Position by the number of bytes read
-            //into internal buffer.
-            int byteLen = (int)byteLenField.GetValue(reader);
-            var position = reader.BaseStream.Position - byteLen;
-
-            //if we have consumed chars from the buffer we need to calculate how many
-            //bytes they represent in the current encoding and add that to the position.
-            int charPos = (int)charPosField.GetValue(reader);
-            if (charPos > 0)
-            {
-                var charBuffer = (char[])charBufferField.GetValue(reader);
-                var encoding = reader.CurrentEncoding;
-                var bytesConsumed = encoding.GetBytes(charBuffer, 0, charPos).Length;
-                position += bytesConsumed;
-            }
-            var binReader = new BinaryReader(reader.BaseStream);
-            //reader.DiscardBufferedData();
-            binReader.BaseStream.Seek(position, SeekOrigin.Begin);
-            return binReader;
         }
 
         private void FixColors()
@@ -785,45 +759,46 @@ namespace TVGL.IOFunctions
         {
             try
             {
-                using (var mainWriter = new StreamWriter(stream))
+                using (var binaryWriter = new BinaryWriter(stream))
                 {
-                    WriteHeader(mainWriter, solid, true);
                     var memoryStream = new MemoryStream();
-                    using (var binaryWriter = new BinaryWriter(memoryStream))
+                    using (var headerWriter = new StreamWriter(memoryStream))
+                        WriteHeader(headerWriter, solid, true);
+                    var byteArray = memoryStream.ToArray().ToList();
+                    byteArray.RemoveAll(b => b == 13);
+                    // this is because the Windows StreamWriter writes both Line Feed (ASCII character #10)
+                    // and Carriage Return (ASCII #13) for the ends of these lines in the header.
+                    // In order to make it compatible with PLY, the Carriage Returns (#13) need to be 
+                    // removed.
+                    binaryWriter.Write(byteArray.ToArray());
+                    foreach (var vertex in solid.Vertices)
                     {
-                        foreach (var vertex in solid.Vertices)
+                        binaryWriter.Write(BitConverter.GetBytes((float)vertex.X));
+                        binaryWriter.Write(BitConverter.GetBytes((float)vertex.Y));
+                        binaryWriter.Write(BitConverter.GetBytes((float)vertex.Z));
+                    }
+                    var defineColors =
+                        !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
+                    foreach (var face in solid.Faces)
+                    {
+                        binaryWriter.Write((byte)face.Vertices.Count);
+                        foreach (var v in face.Vertices)
+                            binaryWriter.Write(BitConverter.GetBytes(v.IndexInList));
+                        if (defineColors)
                         {
-                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.X));
-                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.Y));
-                            binaryWriter.Write(BitConverter.GetBytes((float)vertex.Z));
-                        }
-
-                        var defineColors =
-                            !(solid.HasUniformColor || solid.SolidColor.Equals(new Color(Constants.DefaultColor)));
-                        foreach (var face in solid.Faces)
-                        {
-                            var b = (byte)face.Vertices.Count;
-
-                            binaryWriter.Write(BitConverter.GetBytes(b));
-                            foreach (var v in face.Vertices)
-                                binaryWriter.Write(BitConverter.GetBytes(v.IndexInList));
-                            if (defineColors)
-                            {
-                                binaryWriter.Write(face.Color.R);
-                                binaryWriter.Write(face.Color.G);
-                                binaryWriter.Write(face.Color.B);
-                                binaryWriter.Write(face.Color.A);
-                            }
-                        }
-                        if (solid.HasUniformColor)
-                        {
-                            binaryWriter.Write(solid.SolidColor.R);
-                            binaryWriter.Write(solid.SolidColor.G);
-                            binaryWriter.Write(solid.SolidColor.B);
-                            binaryWriter.Write(solid.SolidColor.A);
+                            binaryWriter.Write(face.Color.R);
+                            binaryWriter.Write(face.Color.G);
+                            binaryWriter.Write(face.Color.B);
+                            binaryWriter.Write(face.Color.A);
                         }
                     }
-                    mainWriter.Write(GetStringFromByteArray(memoryStream.ToArray()));
+                    if (solid.HasUniformColor)
+                    {
+                        binaryWriter.Write(solid.SolidColor.R);
+                        binaryWriter.Write(solid.SolidColor.G);
+                        binaryWriter.Write(solid.SolidColor.B);
+                        binaryWriter.Write(solid.SolidColor.A);
+                    }
                 }
                 Message.output("Successfully wrote PLY file to stream.", 3);
                 return true;

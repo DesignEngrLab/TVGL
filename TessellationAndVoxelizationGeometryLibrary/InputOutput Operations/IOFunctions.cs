@@ -757,21 +757,6 @@ namespace TVGL.IOFunctions
             }
             return Double.NaN;
         }
-        
-        /// <summary>
-        /// Gets the string from byte array.
-        /// </summary>
-        /// <param name="byteArray">The byte array.</param>
-        /// <returns>System.String.</returns>
-        protected static string GetStringFromByteArray(byte[] byteArray)
-        {
-            var c= Encoding.UTF8.GetChars(byteArray);
-            return (string) c;
-            string byteString = string.Empty;
-            foreach (byte b in byteArray)
-                byteString += b;
-            return byteString;
-        }
         #endregion
 
         #region Save/Write
