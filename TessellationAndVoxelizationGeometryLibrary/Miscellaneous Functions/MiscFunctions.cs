@@ -303,10 +303,10 @@ namespace TVGL
             var az = Math.Abs(normal[2]);
             var vertices = new List<Vertex>(polygon) { polygon.First() };
 
-            //Chosse the largest abs coordinate to ignore for projections
+            //Choose the largest abs coordinate to ignore for projections
             var coord = 3; //ignore z-coord
-            if (ax > ay) coord = 1; //ignore x-coord
-            else if (ay > az) coord = 2; //ignore y-coord
+            if (ax > az && ax > ay) coord = 1; //ignore x-coord
+            else if (ay > az && ay > ax) coord = 2; //ignore y-coord
 
             // compute area of the 2D projection
             var n = polygon.Count;
