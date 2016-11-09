@@ -61,7 +61,8 @@ namespace TVGL
         internal SolidContactData(IEnumerable<Loop> loops, IEnumerable<PolygonalFace> onSideFaces, IEnumerable<PolygonalFace> onPlaneFaces)
         {
             OnSideFaces = new List<PolygonalFace>(onSideFaces);
-            OnPlaneFaces = new List<PolygonalFace>(onPlaneFaces);
+            var polygonalFaces = onPlaneFaces as PolygonalFace[] ?? onPlaneFaces.ToArray();
+            OnPlaneFaces = new List<PolygonalFace>(polygonalFaces);
             var onSideContactFaces = new List<PolygonalFace>();
             var positiveLoops = new List<Loop>();
             var negativeLoops = new List<Loop>();
@@ -72,6 +73,9 @@ namespace TVGL
                 else negativeLoops.Add(loop);
                 onSideContactFaces.AddRange(loop.OnSideContactFaces);
             }
+
+            var area2 = polygonalFaces.Sum(face => face.Area);
+            if (!Area.IsPracticallySame(area2, 0.01*Area)) Debug.WriteLine("SolidContactData loop area and face area do not match.");
             //Set Immutable Lists
             OnSideContactFaces = onSideContactFaces;
             PositiveLoops = positiveLoops;
@@ -273,16 +277,34 @@ namespace TVGL
         /// <summary>
         /// The vertices making up this loop
         /// </summary>
-        public readonly IEnumerable<Vertex> VertexLoop;
+        public IList<Vertex> VertexLoop;
         /// <summary>
         /// The faces that were formed on-side for this loop. About 2/3 s
         /// of these faces should have one negligible adjacent face. 
         /// </summary>
         public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
+
         /// <summary>
         /// Is the loop positive - meaning does it enclose material versus representing a hole
         /// </summary>
-        public bool IsPositive;
+        public bool IsPositive
+        {
+            get { return _isPositive; }
+            set
+            {
+                _isPositive = value;
+                var positiveArea = !(Area < 0);
+                if (_isPositive == positiveArea) return;
+
+                //Else, reverse the loop and the invert the area.
+                Area = -Area;
+                var temp = VertexLoop.Reverse();
+                VertexLoop = new List<Vertex>(temp);
+            }
+        }
+
+        private bool _isPositive;
+
         /// <summary>
         /// Negative loops must always be inside positive loops. This is a place to store all
         /// the pos/neg loop dependency.
@@ -295,7 +317,7 @@ namespace TVGL
         /// <summary>
         /// The area of the loop
         /// </summary>
-        public readonly double Area;
+        public double Area;
         /// <summary>
         /// Is the loop closed?
         /// </summary>
@@ -328,6 +350,7 @@ namespace TVGL
             OnSideContactFaces = onSideContactFaces;
             IsClosed = isClosed;
             Area = MiscFunctions.AreaOf3DPolygon(vertexLoop, normal);
+            _isPositive = !(Area < 0);
             Perimeter = MiscFunctions.Perimeter(vertexLoop);
             AdjOnsideFaceIndices = new List<int>(adjOnsideFaceIndices);
             StraddleFaceIndices = new List<int>(straddleFaceIndices);
