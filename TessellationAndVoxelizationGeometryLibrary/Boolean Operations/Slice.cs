@@ -148,11 +148,17 @@ namespace TVGL.Boolean_Operations
             var onSideVertexLoops = onSideLoops.Select(loop => loop.VertexLoop);
             bool[] isPositive;
             //ToDo: Could come up with a more efficient way to order the loops, but this works.
+            //Triangulating the polygon reverses loops (internally) if necessary and groups them together.
+            //The isPositive output is used to determine whether each loop should be positive or negative.
+            //The groupsOfLoopsIndices is a list of groups that was used to triangulate each surface.
             List<List<int>> groupsOfLoopsIndices;
             var groupsOfTriangles =
                 TriangulatePolygon.Run(onSideVertexLoops, normal, out groupsOfLoopsIndices, out isPositive, false);
+            //Reverse loops if necessary to match the isPositive list from the triangulation.
             for (var i = 0; i < isPositive.Length; i++)
+            {
                 onSideLoops[i].IsPositive = isPositive[i];
+            }
 
             //Put the groups of loops into a GroupOfLoops class.
             var groupsOfLoops = new List<GroupOfLoops>();
