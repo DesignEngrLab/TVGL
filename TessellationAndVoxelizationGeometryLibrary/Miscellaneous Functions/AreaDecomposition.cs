@@ -350,6 +350,70 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="stepSize"></param>
+        /// <returns></returns>
+        public static List<DecompositionData> UniformDirectionalDecomposition(TessellatedSolid ts, double[] direction, double stepSize)
+        {
+            var outputData = new List<DecompositionData>();
+
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            List<Vertex> sortedVertices;
+            List<int[]> duplicateRanges;
+            MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+
+            var edgeListDictionary = new Dictionary<int, Edge>();
+            var previousDistanceAlongAxis = direction.dotProduct(sortedVertices[0].Position); //This value can be negative
+            foreach (var vertex in sortedVertices)
+            {
+                var distanceAlongAxis = direction.dotProduct(vertex.Position); //This value can be negative
+                var difference1 = distanceAlongAxis - previousDistanceAlongAxis;
+                //If the vertex is far enough that the next step size is reached, get the cross section.
+                var i = 1;
+                var distance = previousDistanceAlongAxis;
+                while (difference1 > i * stepSize )
+                { 
+                    //Determine the next step distance
+                    distance = previousDistanceAlongAxis + stepSize*i; //X value (distance along axis) 
+                    var cuttingPlane = new Flat(distance, direction);
+                    List<List<Edge>> outputEdgeLoops;
+                    var inputEdgeLoops = new List<List<Edge>>();
+                    var current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+
+                    //Get a list of 2D paths from the 3D loops
+                    var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
+
+                    //Add the data to the output
+                    outputData.Add(new DecompositionData(currentPaths, distance));
+
+                    i++;
+                }
+
+                //Update the previous distance used to make a data point
+                previousDistanceAlongAxis = distance;
+
+                //Update the edge dictionary that is used to determine the 3D loops.
+                foreach (var edge in vertex.Edges)
+                {
+                    //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
+                    //and the second removes it from the list.
+                    if (edgeListDictionary.ContainsKey(edge.IndexInList))
+                    {
+                        edgeListDictionary.Remove(edge.IndexInList);
+                    }
+                    else
+                    {
+                        edgeListDictionary.Add(edge.IndexInList, edge);
+                    }
+                }
+            }
+            return outputData;
+        }
+
+        /// <summary>
         /// Gets the additive volume given a list of decomposition data
         /// </summary>
         /// <param name="decompData"></param>
