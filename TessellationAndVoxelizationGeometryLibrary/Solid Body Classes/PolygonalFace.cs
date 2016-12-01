@@ -175,6 +175,17 @@ namespace TVGL
             Edges = new List<Edge>();
         }
 
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
+        public PolygonalFace(IEnumerable<Vertex> vertices, bool connectVerticesBackToFace = true)
+            : this(vertices, null, connectVerticesBackToFace)
+        {           
+        }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="PolygonalFace" /> class.
         /// </summary>
