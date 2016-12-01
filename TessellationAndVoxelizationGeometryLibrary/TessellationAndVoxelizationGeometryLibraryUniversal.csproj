@@ -59,6 +59,7 @@
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
     <Compile Include="InputOutput Operations\SHELLFileData.cs" />
     <Compile Include="Miscellaneous Functions\AreaDecomposition.cs" />
+    <Compile Include="Miscellaneous Functions\Extrude.cs" />
     <Compile Include="Miscellaneous Functions\ListFunctions.cs">
       <SubType>Code</SubType>
     </Compile>
