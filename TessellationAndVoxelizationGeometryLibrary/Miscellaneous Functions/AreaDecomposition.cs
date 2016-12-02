@@ -421,7 +421,7 @@ namespace TVGL
         /// <param name="outputData"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static double AdditiveVolume(List<DecompositionData> decompData, double additiveAccuracy, out List<DecompositionData> outputData)
+        public static double AdditiveVolume(List<DecompositionData> decompData, double additiveAccuracy, out List<DecompositionData> outputData )
         {
             outputData = new List<DecompositionData>();
             var previousPolygons = new List<List<Point>>();
@@ -435,6 +435,9 @@ namespace TVGL
                 var distance = data.DistanceAlongDirection;
 
                 //Offset if the additive accuracy is significant
+                //Since you could offset the wrong direction if the loops are ordered incorrectly, we must first reorder if necessary
+                bool[] isPositive = null;
+                currentPaths = TriangulatePolygon.OrderLoops2D(currentPaths, ref isPositive);
                 var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
                 var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
 
@@ -491,7 +494,11 @@ namespace TVGL
                     var deltaX = Math.Abs(distance - previousDistance);
                     if (area < previousArea * .99)
                     {
-                        throw new Exception("Error in your implementation. This should never occur");
+                        //var previousData = outputData.Last();
+                        //outputData = new List<DecompositionData>() { previousData, new DecompositionData( currentPaths, distance )};
+                        Debug.WriteLine("Error in your implementation. This should never occur");
+                        area = previousArea;
+                        // return 0.0;
                     }
                     additiveVolume += deltaX * previousArea;
                     outputData.Add(new DecompositionData(currentPaths, distance));
