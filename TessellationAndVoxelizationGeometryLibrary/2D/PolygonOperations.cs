@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL.Clipper;
+using TVGL.ClipperInt;
 
 namespace TVGL
 {
@@ -76,25 +76,6 @@ namespace TVGL
         #endregion
 
         #region Simplify
-
-        /// <summary>
-        /// Simplifies a polygon, by removing self intersection. This may output several polygons.
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        public static List<List<Point>> Simplify(IList<Point> path)
-        {
-            //Take care of self intersections
-            var solution = Clipper.Clipper.SimplifyPolygon(new Path(path));
-
-            //Remove negligible length lines and combine collinear lines.
-            foreach (var simplePath in solution)
-            {
-                SimplifyFuzzy(simplePath);
-            }
-            return solution;
-        }
-
         /// <summary>
         /// Simplifies a polygon, by removing self intersection. This may output several polygons.
         /// </summary>
@@ -102,7 +83,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<Point> SimplifyFuzzy(IList<Point> path)
         {
-            var looseTolerance = 0.0000001;
+            const double looseTolerance = 0.0000001;
             var simplePath = new List<Point>(path);
             //Remove negligible length lines and combine collinear lines.
             for (var i = 0; i < simplePath.Count; i++)
@@ -175,7 +156,7 @@ namespace TVGL
             }
 
 
-            //If simplification split the polygon into multiple paths. Union the paths together, removing the extraneous lines
+            //If simplification split the polygon into multiple paths. Union the subject together, removing the extraneous lines
             if (outputLoops.Count == 1)
             {
                 simplifiedPolygon = outputLoops.First();
@@ -204,16 +185,12 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <param name="offset"></param>
-        /// <param name="fractionOfPathLengthForMinLength"></param>
+        /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<Point>> OffsetRound(IList<Point> path, double offset,
-            double fractionOfPathLengthForMinLength = 0.001)
+        public static List<List<Point>> OffsetRound(IEnumerable<Point> path, double offset,
+            double minLength = 0.0)
         {
-            var pathLength = Length(path);
-            var minLength = pathLength*fractionOfPathLengthForMinLength;
-            if (minLength.IsNegligible()) minLength = pathLength*0.001;
-            var loops = new List<List<Point>> {new List<Point>(path)};
-            return OffsetRoundByMinLength(loops, offset, minLength);
+            return Offset(new Paths { path.ToList() }, offset, JoinType.jtRound, minLength);
         }
 
         /// <summary>
@@ -223,32 +200,13 @@ namespace TVGL
         /// </summary>
         /// <param name="paths"></param>
         /// <param name="offset"></param>
-        /// <param name="fractionOfPathsLengthForMinLength"></param>
+        /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<List<Point>> OffsetRound(IList<List<Point>> paths, double offset,
-            double fractionOfPathsLengthForMinLength = 0.001)
+        public static List<List<Point>> OffsetRound(IEnumerable<IEnumerable<Point>> paths, double offset,
+            double minLength = 0.0)
         {
-            var totalLength = paths.Sum(path => Length(path));
-            var minLength = totalLength*fractionOfPathsLengthForMinLength;
-            if (minLength.IsNegligible()) minLength = totalLength*0.001;
-            return OffsetRoundByMinLength(paths, offset, minLength);
-        }
-
-        private static List<List<Point>> OffsetRoundByMinLength(IList<List<Point>> paths, double offset,
-            double minLength)
-        {
-            if (minLength.IsNegligible())
-            {
-                var totalLength = paths.Sum(loop => Length(loop));
-                minLength = totalLength*0.001;
-            }
-
-            //Begin an evaluation
-            var solution = new List<List<Point>>();
-            var clip = new ClipperOffset(minLength);
-            clip.AddPaths(paths, JoinType.Round, EndType.ClosedPolygon);
-            clip.Execute(ref solution, offset);
-            return solution;
+            var listPaths = paths.Select(path => path.ToList()).ToList();
+            return Offset(listPaths, offset, JoinType.jtRound, minLength);
         }
 
         /// <summary>
@@ -259,9 +217,9 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<Point> OffsetMiter(List<Point> path, double offset, double minLength = 0.0)
+        public static List<Point> OffsetMiter(IEnumerable<Point> path, double offset, double minLength = 0.0)
         {
-            return OffsetMiter(new Paths() { path }, offset, minLength).FirstOrDefault();
+            return Offset(new Paths { path.ToList() }, offset, JoinType.jtMiter, minLength).FirstOrDefault();
         }
 
         /// <summary>
@@ -273,20 +231,10 @@ namespace TVGL
         /// <param name="minLength"></param>
         /// <param name="offset"></param>
         /// <returns></returns>
-        public static List<List<Point>> OffsetMiter(List<List<Point>> paths, double offset, double minLength = 0.0)
+        public static List<List<Point>> OffsetMiter(IEnumerable<IEnumerable<Point>> paths, double offset, double minLength = 0.0)
         {
-            if (minLength.IsNegligible())
-            {
-                var totalLength = paths.Sum(loop => Length(loop));
-                minLength = totalLength*0.001;
-            }
-
-            //Begin an evaluation
-            var solution = new List<List<Point>>();
-            var clip = new ClipperOffset(minLength);
-            clip.AddPaths(paths, JoinType.Miter, EndType.ClosedPolygon);
-            clip.Execute(ref solution, offset);
-            return solution;
+            var listPaths = paths.Select(path => path.ToList()).ToList();
+            return Offset(listPaths, offset, JoinType.jtMiter, minLength);
         }
 
         /// <summary>
@@ -297,9 +245,9 @@ namespace TVGL
         /// <param name="offset"></param>
         /// <param name="minLength"></param>
         /// <returns></returns>
-        public static List<Point> OffsetSquare(List<Point> path, double offset, double minLength = 0.0)
+        public static List<List<Point>> OffsetSquare(List<Point> path, double offset, double minLength = 0.0)
         {
-            return OffsetSquare(new Paths() {path}, offset, minLength).First();
+            return Offset(new Paths {path.ToList()}, offset, JoinType.jtSquare, minLength);
         }
 
         /// <summary>
@@ -313,182 +261,105 @@ namespace TVGL
         /// <returns></returns>
         public static List<List<Point>> OffsetSquare(List<List<Point>> paths, double offset, double minLength = 0.0)
         {
+            var listPaths = paths.Select(path => path.ToList()).ToList();
+            return Offset(listPaths, offset, JoinType.jtSquare, minLength);
+        }
+
+        private static List<List<Point>> Offset(List<List<Point>> paths, double offset, JoinType joinType,
+            double minLength = 0.0)
+        {
+            const double scale = 1000000;
             if (minLength.IsNegligible())
             {
                 var totalLength = paths.Sum(loop => Length(loop));
-                minLength = totalLength*0.001;
+                minLength = totalLength * 0.001;
             }
 
-            //Begin an evaluation
-            var solution = new List<List<Point>>();
-            var clip = new ClipperOffset(minLength);
-            clip.AddPaths(paths, JoinType.Square, EndType.ClosedPolygon);
-            clip.Execute(ref solution, offset);
-            return solution;
-        }
-
-        #endregion
-
-        #region Union
-
-        /// <summary>
-        /// Union. Joins paths that are touching into merged larger paths.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null)
-        {
-            var simpleSubject = subject.Select(SimplifyFuzzy).ToList();
-            if (clip == null)
-            {
-                return ClipperInt.PolygonOperations.Union(simpleSubject, null);
-            }
-
-            var simpleClip = clip.Select(SimplifyFuzzy).ToList();
-            return ClipperInt.PolygonOperations.Union(simpleSubject, simpleClip);
-        }
-
-        /// <summary>
-        /// Union. Joins paths that are touching into merged larger paths.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union2(IList<List<Point>> subject, IList<List<Point>> clip = null)
-        {
-            const PolyFillType fillMethod = PolyFillType.Positive;
-            var solution = new Paths();
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            var clipperSubject =
+                paths.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
 
             //Setup Clipper
-            var clipper = new Clipper.Clipper {StrictlySimple = true};
-
-            //Check to make sure that each path's area is not negligible. If it is, ignore it.
-            var clipperSubject =
-                new Paths(subject.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible()).ToList());
-            if (!clipperSubject.Any())
-            {
-                if (clip != null)
-                {
-                    var newSubject =
-                        new Paths(clip.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible()).ToList());
-                    if (newSubject.Any())
-                    {
-                        clipper.AddPaths(newSubject, PolyType.Subject, true);
-                    }
-                    else
-                    {
-                        return solution;
-                    }
-                }
-                else
-                {
-                    return solution;
-                }
-            }
-            else
-            {
-                clipper.AddPaths(clipperSubject, PolyType.Subject, true);
-
-                if (clip != null)
-                {
-                    var clipperClip =
-                        new Paths(clip.Where(path => !MiscFunctions.AreaOfPolygon(path).IsNegligible()).ToList());
-                    if (clipperClip.Any())
-                    {
-                        clipper.AddPaths(clipperClip, PolyType.Clip, true);
-                    }
-                }
-                else if (clipperSubject.Count == 1)
-                {
-                    return Simplify(clipperSubject.First());
-                }
-            }
+            var clip = new ClipperOffset(2, minLength*scale);
+            clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
-            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            if (!result) throw new Exception("Clipper Union Failed");
-            
+            var clipperSolution = new List<List<IntPoint>>();
+            clip.Execute(ref clipperSolution, offset*scale);
+
+            //Convert back to points and return solution
+            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point => new Point(point.X / scale, point.Y / scale)).ToList()).ToList();
             return solution;
         }
+        #endregion
 
+        #region Boolean Operations
+
+        #region Union
         /// <summary>
-        /// Union. Joins paths that are touching into merged larger paths.
+        /// Union. Joins paths that are touching into merged larger subject.
         /// </summary>
-        /// <param name="path1"></param>
-        /// <param name="path2"></param>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(List<Point> path1, List<Point> path2)
+        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null, bool simplifyPriorToUnion = true)
         {
-            return Union(new List<List<Point>>() {path1}, new List<List<Point>>() {path2});
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
 
         /// <summary>
-        /// Union. Joins paths that are touching into merged larger paths.
+        /// Union. Joins paths that are touching into merged larger subject.
         /// </summary>
-        /// <param name="paths"></param>
-        /// <param name="otherPolygon"></param>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> paths, List<Point> otherPolygon)
+        public static List<List<Point>> Union(List<Point> subject, List<Point> clip, bool simplifyPriorToUnion = true)
         {
-            return Union(new List<List<Point>>(paths), new List<List<Point>> {otherPolygon});
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctUnion, new Paths { subject }, new Paths { clip }, simplifyPriorToUnion);
+        }
+
+        /// <summary>
+        /// Union. Joins paths that are touching into merged larger subject.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToUnion"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Union(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToUnion = true)
+        {
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctUnion, subject, new Paths { clip }, simplifyPriorToUnion);
         }
 
         /// <summary>
         /// Union based on Even/Odd methodology. Useful for correctly ordering a set of paths.
         /// </summary>
-        /// <param name="polygons"></param>
+        /// <param name="subject"></param>
+        /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static Paths UnionEvenOdd(IList<List<Point>> polygons)
+        public static Paths UnionEvenOdd(IList<List<Point>> subject, bool simplifyPriorToUnion = true)
         {
-            return ClipperInt.PolygonOperations.UnionEvenOdd(polygons);
-
-            const PolyFillType fillMethod = PolyFillType.EvenOdd;
-            var solution = new Paths();
-            var subject = new List<Path>(polygons);
-
-            //Setup Clipper
-            var clipper = new Clipper.Clipper {StrictlySimple = true};
-            clipper.AddPaths(subject, PolyType.Subject, true);
-
-            //Begin an evaluation
-            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            if (!result) throw new Exception("Clipper Union Failed");
-            return solution;
+            return BooleanOperation(PolyFillType.pftEvenOdd, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
         }
-
         #endregion
 
         #region Difference
-
         /// <summary>
         /// Difference. Gets the difference between two sets of polygons. 
         /// </summary>
-        /// <param name="subjects"></param>
-        /// <param name="clips"></param>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToDifference"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Difference(IList<List<Point>> subjects, IList<List<Point>> clips)
+        public static List<List<Point>> Difference(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToDifference = true)
         {
-            const PolyFillType fillMethod = PolyFillType.Positive;
-            var solution = new Paths();
-            var subject = new List<Path>(subjects);
-            var clip = new List<Path>(clips);
-
-            //Setup Clipper
-            var clipper = new Clipper.Clipper {StrictlySimple = true};
-            clipper.AddPaths(subject, PolyType.Subject, true);
-            clipper.AddPaths(clip, PolyType.Clip, true);
-
-            //Begin an evaluation
-            var result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
-            if (!result) throw new Exception("Clipper Difference Failed");
-            return solution;
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -496,76 +367,53 @@ namespace TVGL
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
+        /// <param name="simplifyPriorToDifference"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Difference(List<Point> subject, List<Point> clip)
+        public static List<List<Point>> Difference(List<Point> subject, List<Point> clip, bool simplifyPriorToDifference = true)
         {
-            return Difference(new List<List<Point>>() {subject}, new List<List<Point>>() {clip});
-        }
-
-        /// <summary>
-        /// Difference. Gets the difference between two sets of polygons. 
-        /// </summary>
-        /// <param name="subjects"></param>
-        /// <param name="clip"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Difference(IList<List<Point>> subjects, List<Point> clip)
-        {
-            return Difference(new List<List<Point>>(subjects), new List<List<Point>>() {clip});
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctDifference, new Paths { subject}, new Paths { clip}, simplifyPriorToDifference);
         }
 
         /// <summary>
         /// Difference. Gets the difference between two sets of polygons. 
         /// </summary>
         /// <param name="subject"></param>
-        /// <param name="clips"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToDifference"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Difference(List<Point> subject, IList<List<Point>> clips)
+        public static List<List<Point>> Difference(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToDifference = true)
         {
-            return Difference(new List<List<Point>>() {subject}, new List<List<Point>>(clips));
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctDifference, subject, new Paths { clip }, simplifyPriorToDifference);
         }
 
+        /// <summary>
+        /// Difference. Gets the difference between two sets of polygons. 
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToDifference"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Difference(List<Point> subject, IList<List<Point>> clip, bool simplifyPriorToDifference = true)
+        {
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctDifference, new Paths { subject}, clip , simplifyPriorToDifference);
+        }
         #endregion
 
         #region Intersection
-
-        /// <summary>
-        /// Intersection. Gets the areas covered by both the subjects and the clips.
-        /// </summary>
-        /// <param name="subjects"></param>
-        /// <param name="clips"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Intersection(IList<List<Point>> subjects, IList<List<Point>> clips)
-        {
-            const PolyFillType fillMethod = PolyFillType.Positive;
-            var solution = new Paths();
-            var subject = new List<Path>(subjects);
-            var clip = new List<Path>(clips);
-
-            //Setup Clipper
-            var clipper = new Clipper.Clipper {StrictlySimple = true};
-            clipper.AddPaths(subject, PolyType.Subject, true);
-            clipper.AddPaths(clip, PolyType.Clip, true);
-
-            //Begin an evaluation
-            var result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
-            if (!result) throw new Exception("Clipper Difference Failed");
-            return solution;
-        }
-
         /// <summary>
         /// Intersection. Gets the areas covered by both the subjects and the clips. 
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
+        /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Intersection(List<Point> subject, List<Point> clip)
+        public static List<List<Point>> Intersection(List<Point> subject, List<Point> clip, bool simplifyPriorToIntersection = true)
         {
-            return Intersection(new List<List<Point>>() {subject}, new List<List<Point>>() {clip});
+            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>() { clip }, simplifyPriorToIntersection);
         }
 
         /// <summary>
@@ -573,11 +421,12 @@ namespace TVGL
         /// </summary>
         /// <param name="subjects"></param>
         /// <param name="clip"></param>
+        /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Intersection(IList<List<Point>> subjects, List<Point> clip)
+        public static List<List<Point>> Intersection(IList<List<Point>> subjects, List<Point> clip, bool simplifyPriorToIntersection = true)
         {
-            return Intersection(new List<List<Point>>(subjects), new List<List<Point>>() {clip});
+            return Intersection(new List<List<Point>>(subjects), new List<List<Point>>() { clip }, simplifyPriorToIntersection);
         }
 
         /// <summary>
@@ -585,11 +434,25 @@ namespace TVGL
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clips"></param>
+        /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Intersection(List<Point> subject, IList<List<Point>> clips)
+        public static List<List<Point>> Intersection(List<Point> subject, IList<List<Point>> clips, bool simplifyPriorToIntersection = true)
         {
-            return Intersection(new List<List<Point>>() {subject}, new List<List<Point>>(clips));
+            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>(clips), simplifyPriorToIntersection);
+        }
+
+        /// <summary>
+        /// Intersection. Gets the areas covered by both the subjects and the clips.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToIntersection"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> Intersection(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToIntersection = true)
+        {
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
         }
 
         #endregion
@@ -599,26 +462,14 @@ namespace TVGL
         /// <summary>
         /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips. 
         /// </summary>
-        /// <param name="subjects"></param>
-        /// <param name="clips"></param>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Xor(IList<List<Point>> subjects, IList<List<Point>> clips)
+        public static List<List<Point>> Xor(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToXor= true)
         {
-            const PolyFillType fillMethod = PolyFillType.Positive;
-            var solution = new Paths();
-            var subject = new List<Path>(subjects);
-            var clip = new List<Path>(clips);
-
-            //Setup Clipper
-            var clipper = new Clipper.Clipper {StrictlySimple = true};
-            clipper.AddPaths(subject, PolyType.Subject, true);
-            clipper.AddPaths(clip, PolyType.Clip, true);
-
-            //Begin an evaluation
-            var result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
-            if (!result) throw new Exception("Clipper Difference Failed");
-            return solution;
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctXor, subject, clip, simplifyPriorToXor);
         }
 
         /// <summary>
@@ -626,11 +477,12 @@ namespace TVGL
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
+        /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Xor(List<Point> subject, List<Point> clip)
+        public static List<List<Point>> Xor(List<Point> subject, List<Point> clip, bool simplifyPriorToXor = true)
         {
-            return Xor(new List<List<Point>>() {subject}, new List<List<Point>>() {clip});
+            return Xor(new List<List<Point>>() { subject }, new List<List<Point>>() { clip }, simplifyPriorToXor);
         }
 
         /// <summary>
@@ -638,11 +490,12 @@ namespace TVGL
         /// </summary>
         /// <param name="subjects"></param>
         /// <param name="clip"></param>
+        /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Xor(IList<List<Point>> subjects, List<Point> clip)
+        public static List<List<Point>> Xor(IList<List<Point>> subjects, List<Point> clip, bool simplifyPriorToXor = true)
         {
-            return Xor(new List<List<Point>>(subjects), new List<List<Point>>() {clip});
+            return Xor(new List<List<Point>>(subjects), new List<List<Point>>() { clip }, simplifyPriorToXor);
         }
 
         /// <summary>
@@ -650,17 +503,69 @@ namespace TVGL
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clips"></param>
+        /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Xor(List<Point> subject, IList<List<Point>> clips)
+        public static List<List<Point>> Xor(List<Point> subject, IList<List<Point>> clips, bool simplifyPriorToXor = true)
         {
-            return Xor(new List<List<Point>>() {subject}, new List<List<Point>>(clips));
+            return Xor(new List<List<Point>>() { subject }, new List<List<Point>>(clips), simplifyPriorToXor);
         }
 
         #endregion
 
         /// <summary>
-        ///  Union. Joins paths that are touching into merged larger paths.
+        /// Performs the Boolean Operations from the Clipper Library
+        /// </summary>
+        /// <param name="clipType"></param>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToBooleanOperation"></param>
+        /// <param name="scale"></param>
+        /// <param name="fillMethod"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private static List<List<Point>> BooleanOperation(PolyFillType fillMethod, ClipType clipType, IEnumerable<Path> subject, 
+            IEnumerable<Path> clip = null,  bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
+        {
+            if (simplifyPriorToBooleanOperation)
+            {
+                subject = subject.Select(SimplifyFuzzy);
+            }
+            if (simplifyPriorToBooleanOperation)
+            {
+                //If not null
+                clip = clip?.Select(SimplifyFuzzy);
+            }
+
+            var clipperSolution = new List<List<IntPoint>>();
+            //Convert Points (TVGL) to IntPoints (Clipper)
+            var clipperSubject =
+                subject.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+
+            //Setup Clipper
+            var clipper = new ClipperInt.Clipper() { StrictlySimple = true };
+            clipper.AddPaths(clipperSubject, PolyType.ptSubject, true);
+
+            if (clip != null)
+            {
+                var clipperClip =
+                    clip.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
+                clipper.AddPaths(clipperClip, PolyType.ptClip, true);
+            }
+
+            //Begin an evaluation
+            var result = clipper.Execute(clipType, clipperSolution, fillMethod, fillMethod);
+            if (!result) throw new Exception("Clipper Union Failed");
+
+            //Convert back to points
+            var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point => new Point(point.X / scale, point.Y / scale)).ToList()).ToList();
+            return solution;
+        }
+        #endregion
+
+
+        /// <summary>
+        ///  Union. Joins paths that are touching into merged larger subject.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
