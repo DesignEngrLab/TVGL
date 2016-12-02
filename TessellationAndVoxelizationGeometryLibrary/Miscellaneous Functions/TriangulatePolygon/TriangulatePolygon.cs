@@ -891,6 +891,8 @@ namespace TVGL
             var orderedLoops = new List<List<Node>>();
             var sortedLoops = new List<List<Node>>();
             var pointCount = 0;
+            var outputLoops = new List<List<Point>>(points2D);
+            var wasReversed = new bool[points2D.Count];
 
             //Change point X and Y coordinates to be changed to mostly random primary axis
             //Removed random value to make function repeatable for debugging.
@@ -1077,6 +1079,7 @@ namespace TVGL
                 //reverse the order of the loop
                 if ((isPositive[j] && nodeType != NodeType.Peak) || (!isPositive[j] && nodeType != NodeType.UpwardReflex))
                 {
+                    wasReversed[j] = true;
                     orderedLoop.Reverse();
                     //Also, reorder all the lines for these nodes
                     foreach (var line in linesInLoops[j])
@@ -1094,59 +1097,62 @@ namespace TVGL
                 nodesLoopsCorrected.Add(orderedLoop);
             }
             orderedLoops = new List<List<Node>>(nodesLoopsCorrected);
-
-            //Set the NodeTypes of every Node. This step is after "isPositive == null" fuction because
-            //the CW/CCW order of the loops must be accurate.
-            i = 0;
-            foreach (var orderedLoop in orderedLoops)
-            {
-                //Set nodeType for the first node
-                orderedLoop[0].Type = GetNodeType(orderedLoop.Last(), orderedLoop[0], orderedLoop[1]);
-
-                //Set nodeTypes for other nodes
-                for (var j = 1; j < orderedLoop.Count - 1; j++)
-                {
-                    orderedLoop[j].Type = GetNodeType(orderedLoop[j - 1], orderedLoop[j], orderedLoop[j + 1]);
-                }
-
-                //Set nodeType for the last node
-                //Create last node
-                orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2], orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
-
-                //Debug to see if the proper balance of point types has been used
-                var downwardReflexCount = 0;
-                var upwardReflexCount = 0;
-                var peakCount = 0;
-                var rootCount = 0;
-                foreach (var node in orderedLoop)
-                {
-                    if (node.Type == NodeType.DownwardReflex) downwardReflexCount++;
-                    if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
-                    if (node.Type == NodeType.Peak) peakCount++;
-                    if (node.Type == NodeType.Root) rootCount++;
-                    if (node.Type == NodeType.Duplicate) throw new Exception("Duplicate point found");
-                }
-                if (isPositive[i]) //If a positive loop, the following conditions must be balanced
-                {
-                    if (peakCount != downwardReflexCount + 1 || rootCount != upwardReflexCount + 1)
-                    {
-                        throw new Exception("Incorrect balance of node types");
-                    }
-                }
-                else //If negative loop, the conditions change
-                {
-                    if (peakCount != downwardReflexCount - 1 || rootCount != upwardReflexCount - 1)
-                    {
-                        throw new Exception("Incorrect balance of node types");
-                    }
-                }
-                i++;
-            }
             #endregion
 
             //Remake the vertex lists, but now in the corrected order
-            var orderedPointLoops = orderedLoops.Select(orderedLoop => orderedLoop.Select(node => node.Point).ToList()).ToList();
-            return orderedPointLoops;
+            for (var j =0; j < outputLoops.Count; j++)
+            {
+                if (wasReversed[j]) outputLoops[j].Reverse();
+            }
+            return outputLoops;
+
+            ////Set the NodeTypes of every Node. This step is after "isPositive == null" fuction because
+            ////the CW/CCW order of the loops must be accurate.
+            //i = 0;
+            //foreach (var orderedLoop in orderedLoops)
+            //{
+            //    //Set nodeType for the first node
+            //    orderedLoop[0].Type = GetNodeType(orderedLoop.Last(), orderedLoop[0], orderedLoop[1]);
+
+            //    //Set nodeTypes for other nodes
+            //    for (var j = 1; j < orderedLoop.Count - 1; j++)
+            //    {
+            //        orderedLoop[j].Type = GetNodeType(orderedLoop[j - 1], orderedLoop[j], orderedLoop[j + 1]);
+            //    }
+
+            //    //Set nodeType for the last node
+            //    //Create last node
+            //    orderedLoop[orderedLoop.Count - 1].Type = GetNodeType(orderedLoop[orderedLoop.Count - 2], orderedLoop[orderedLoop.Count - 1], orderedLoop[0]);
+
+            //    //Debug to see if the proper balance of point types has been used
+            //    var downwardReflexCount = 0;
+            //    var upwardReflexCount = 0;
+            //    var peakCount = 0;
+            //    var rootCount = 0;
+            //    foreach (var node in orderedLoop)
+            //    {
+            //        if (node.Type == NodeType.DownwardReflex) downwardReflexCount++;
+            //        if (node.Type == NodeType.UpwardReflex) upwardReflexCount++;
+            //        if (node.Type == NodeType.Peak) peakCount++;
+            //        if (node.Type == NodeType.Root) rootCount++;
+            //        if (node.Type == NodeType.Duplicate) throw new Exception("Duplicate point found");
+            //    }
+            //    if (isPositive[i]) //If a positive loop, the following conditions must be balanced
+            //    {
+            //        if (peakCount != downwardReflexCount + 1 || rootCount != upwardReflexCount + 1)
+            //        {
+            //            throw new Exception("Incorrect balance of node types");
+            //        }
+            //    }
+            //    else //If negative loop, the conditions change
+            //    {
+            //        if (peakCount != downwardReflexCount - 1 || rootCount != upwardReflexCount - 1)
+            //        {
+            //            throw new Exception("Incorrect balance of node types");
+            //        }
+            //    }
+            //    i++;
+            //}
 
             //// 1) For each positive loop
             //// 2)   Remove it from orderedLoops.
