@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="2D\Clipper.cs" />
     <Compile Include="2D\ClipperInt.cs" />
+    <Compile Include="2D\ClipperIntOld.cs" />
     <Compile Include="2D\Line.cs" />
     <Compile Include="2D\Polygon.cs" />
     <Compile Include="2D\PolygonTree.cs" />
