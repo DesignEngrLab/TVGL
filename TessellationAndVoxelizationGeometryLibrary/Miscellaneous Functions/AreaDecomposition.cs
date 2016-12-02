@@ -437,7 +437,15 @@ namespace TVGL
                 //Offset if the additive accuracy is significant
                 //Since you could offset the wrong direction if the loops are ordered incorrectly, we must first reorder if necessary
                 bool[] isPositive = null;
-                currentPaths = TriangulatePolygon.OrderLoops2D(currentPaths, ref isPositive);
+                try
+                {
+                    currentPaths = TriangulatePolygon.OrderLoops2D(currentPaths, ref isPositive);
+                }
+                catch
+                {
+                    currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
+                }
+                
                 var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
                 var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
 
