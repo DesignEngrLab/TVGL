@@ -468,7 +468,15 @@ namespace TVGL
                         }
                         else
                         {
-                            throw new Exception("Union failed and not similar");
+                            ////Debug Mode
+                            //var previousData = outputData.Last();
+                            //outputData = new List<DecompositionData>() { previousData, new DecompositionData( currentPaths, distance )};
+                            //return 0.0;
+
+                            //Run mode: Use previous path
+                            Debug.WriteLine("Union failed and not similar");
+                            //
+                            currentPaths = outputData.Last().Paths;
                         }
                     }
                 }
@@ -502,11 +510,15 @@ namespace TVGL
                     var deltaX = Math.Abs(distance - previousDistance);
                     if (area < previousArea * .99)
                     {
+                        ////Debug Mode
                         //var previousData = outputData.Last();
                         //outputData = new List<DecompositionData>() { previousData, new DecompositionData( currentPaths, distance )};
+                        //return 0.0;
+
+                        //Run Mode: use previous area
                         Debug.WriteLine("Error in your implementation. This should never occur");
                         area = previousArea;
-                        // return 0.0;
+                        
                     }
                     additiveVolume += deltaX * previousArea;
                     outputData.Add(new DecompositionData(currentPaths, distance));
