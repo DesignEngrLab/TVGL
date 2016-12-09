@@ -54,7 +54,7 @@ namespace TVGL
         /// <returns>
         /// List&lt;Point&gt;.
         /// </returns>
-        public static Point[] ConvexHull2D(IList<Point> points, double tolerance = double.NaN)
+        public static Point[] ConvexHull2D(IList<Point> points, double tolerance = Constants.BaseTolerance	)
         {
             //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
             var numPoints = points.Count;
