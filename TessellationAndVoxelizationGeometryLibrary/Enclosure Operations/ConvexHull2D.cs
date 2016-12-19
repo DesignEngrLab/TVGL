@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -62,9 +63,25 @@ namespace TVGL
             foreach (var point in points)
                 point.Z = double.NaN;
             var cvxPoints = new Point[numPoints];
-            if (double.IsNaN(tolerance))
-                cvxPoints = (Point[])MIConvexHull.ConvexHull.Create(points).Points;
-            else cvxPoints = (Point[])MIConvexHull.ConvexHull.Create(points, tolerance).Points;
+            try
+            {
+                if (double.IsNaN(tolerance))
+                    cvxPoints = (Point[]) MIConvexHull.ConvexHull.Create(points).Points;
+                else cvxPoints = (Point[]) MIConvexHull.ConvexHull.Create(points, tolerance).Points;
+            }
+            catch
+            {
+                Debug.WriteLine("ConvexHull2D failed on first iteration");
+                try
+                {
+                   cvxPoints = (Point[])MIConvexHull.ConvexHull.Create(points, 0.01).Points;
+                }
+                catch
+                {
+                    throw new Exception("ConvexHull2D failed on second attempt");
+                }
+            }
+            
             for (int i = 0; i < numPoints; i++)
                 points[i].Z = zValues[i];
             return cvxPoints;
