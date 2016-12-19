@@ -107,7 +107,8 @@ namespace TVGL
                     i--;
                     continue;
                 }
-                if (!LineSlopesEqual(current, next, nextNext, looseTolerance)) continue;
+                //Use an even looser tolerance to determine if slopes are equal.
+                if (!LineSlopesEqual(current, next, nextNext, Math.Sqrt(looseTolerance))) continue;
                 simplePath.RemoveAt(j);
                 i--;
             }
@@ -123,7 +124,8 @@ namespace TVGL
         private static bool LineSlopesEqual(Point pt1, Point pt2, Point pt3, double tolerance = 0.0)
         {
             if (tolerance.IsNegligible()) tolerance = StarMath.EqualityTolerance;
-            return ((pt1.Y - pt2.Y)*(pt2.X - pt3.X) - (pt1.X - pt2.X)*(pt2.Y - pt3.Y)).IsNegligible(tolerance);
+            var value = (pt1.Y - pt2.Y)*(pt2.X - pt3.X) - (pt1.X - pt2.X)*(pt2.Y - pt3.Y);
+            return value.IsNegligible(tolerance);
         }
 
         /// <summary>
