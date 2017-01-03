@@ -72,7 +72,7 @@ namespace TVGL
                 newVerts.Add(v);
                 newDistanceToPlane += v.Position.dotProduct(Normal);
             }
-            DistanceToOrigin = (Vertices.Count*DistanceToOrigin + newDistanceToPlane)/(Vertices.Count + newVerts.Count);
+            DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + newVerts.Count);
             base.UpdateWith(face);
         }
 
@@ -96,7 +96,6 @@ namespace TVGL
             : base(faces)
         {
             Type = PrimitiveSurfaceType.Flat;
-            Faces = faces.ToList();
             var normalSum = new double[3];
             normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
             Normal = normalSum.divide(Faces.Count);

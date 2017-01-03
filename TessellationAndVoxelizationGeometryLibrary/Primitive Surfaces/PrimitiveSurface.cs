@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,24 +34,6 @@ namespace TVGL
             Type = PrimitiveSurfaceType.Unknown;
             Faces = faces.ToList();
             Area = Faces.Sum(f => f.Area);
-
-            var outerEdges = new HashSet<Edge>();
-            var innerEdges = new HashSet<Edge>();
-            foreach (var face in Faces)
-            {
-                foreach (var edge in face.Edges)
-                {
-                    if (innerEdges.Contains(edge)) continue;
-                    if (!outerEdges.Contains(edge)) outerEdges.Add(edge);
-                    else
-                    {
-                        innerEdges.Add(edge);
-                        outerEdges.Remove(edge);
-                    }
-                }
-            }
-            OuterEdges = new List<Edge>(outerEdges);
-            InnerEdges = new List<Edge>(innerEdges);
             Vertices = Faces.SelectMany(f => f.Vertices).Distinct().ToList();
         }
 
@@ -67,38 +50,75 @@ namespace TVGL
         ///     Gets the Type of primitive surface
         /// </summary>
         /// <value>The type.</value>
-        public PrimitiveSurfaceType Type { get; internal set; }
+        public PrimitiveSurfaceType Type { get; protected set; }
 
         /// <summary>
         ///     Gets the area.
         /// </summary>
         /// <value>The area.</value>
-        public double Area { get; internal set; }
+        public double Area { get; protected set; }
 
         /// <summary>
         ///     Gets or sets the polygonal faces.
         /// </summary>
         /// <value>The polygonal faces.</value>
-        public List<PolygonalFace> Faces { get; internal set; }
+        public List<PolygonalFace> Faces { get; protected set; }
 
         /// <summary>
         ///     Gets the inner edges.
         /// </summary>
         /// <value>The inner edges.</value>
-        public List<Edge> InnerEdges { get; internal set; }
-
-
+        public List<Edge> InnerEdges
+        {
+            get
+            {
+                if (_innerEdges == null) DefineInnerOuterEdges();
+                return _innerEdges;
+            }
+        }
         /// <summary>
         ///     Gets the outer edges.
         /// </summary>
         /// <value>The outer edges.</value>
-        public List<Edge> OuterEdges { get; internal set; }
+        public List<Edge> OuterEdges
+        {
+            get
+            {
+                if (_outerEdges == null) DefineInnerOuterEdges();
+                return _outerEdges;
+            }
+        }
+        private List<Edge> _innerEdges;
+        private List<Edge> _outerEdges;
+
+
+
+        private void DefineInnerOuterEdges()
+        {
+            var outerEdgeHash = new HashSet<Edge>();
+            var innerEdgeHash = new HashSet<Edge>();
+            foreach (var face in Faces)
+            {
+                foreach (var edge in face.Edges)
+                {
+                    if (innerEdgeHash.Contains(edge)) continue;
+                    if (!outerEdgeHash.Contains(edge)) outerEdgeHash.Add(edge);
+                    else
+                    {
+                        innerEdgeHash.Add(edge);
+                        outerEdgeHash.Remove(edge);
+                    }
+                }
+            }
+            _outerEdges = outerEdgeHash.ToList();
+            _innerEdges = innerEdgeHash.ToList();
+        }
 
         /// <summary>
         ///     Gets the vertices.
         /// </summary>
         /// <value>The vertices.</value>
-        public List<Vertex> Vertices { get; internal set; }
+        public List<Vertex> Vertices { get; protected set; }
 
 
         /// <summary>
@@ -125,12 +145,12 @@ namespace TVGL
                 Vertices.Add(v);
             foreach (var e in face.Edges.Where(e => !InnerEdges.Contains(e)))
             {
-                if (OuterEdges.Contains(e))
+                if (_outerEdges.Contains(e))
                 {
-                    OuterEdges.Remove(e);
-                    InnerEdges.Add(e);
+                    _outerEdges.Remove(e);
+                    _innerEdges.Add(e);
                 }
-                else OuterEdges.Add(e);
+                else _outerEdges.Add(e);
             }
             Faces.Add(face);
         }
