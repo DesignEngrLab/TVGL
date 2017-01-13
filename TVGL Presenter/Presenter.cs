@@ -445,6 +445,42 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        public static void ShowAndHangTransparentsAndSolids(IList<TessellatedSolid> transparents, IList<TessellatedSolid> solids )
+        {
+            var window = new Window3DPlot();
+            foreach (var ts in solids)
+            {
+                window.view1.Children.Add(MakeModelVisual3D(ts));
+            }
+            foreach (var ts in transparents)
+            {
+                var positions =
+                ts.Faces.SelectMany(
+                 f => f.Vertices.Select(v => new Point3D(v.Position[0], v.Position[1], v.Position[2])));
+                var normals =
+                    ts.Faces.SelectMany(f => f.Vertices.Select(v => new Vector3D(f.Normal[0], f.Normal[1], f.Normal[2])));
+                var r = ts.SolidColor.R;
+                var g = ts.SolidColor.G;
+                var b = ts.SolidColor.B;
+                window.view1.Children.Add(
+                new ModelVisual3D
+                {
+                    Content =
+                        new GeometryModel3D
+                        {
+                            Geometry = new MeshGeometry3D
+                            {
+                                Positions = new Point3DCollection(positions),
+                                Normals = new Vector3DCollection(normals)
+                            },
+                            Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 120, R = r, G = g, B = b })
+                        }
+                });
+            }
+           
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
         /// <summary>
         ///     Shows the specified tessellated solids in a Helix toolkit window.
         /// </summary>
