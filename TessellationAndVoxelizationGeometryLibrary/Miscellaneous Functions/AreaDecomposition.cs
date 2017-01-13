@@ -267,6 +267,82 @@ namespace TVGL
         }
 
         /// <summary>
+        /// Gets the Cross Section for a given distance
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="distance"></param>
+        /// <returns></returns>
+        public static List<List<Point>> GetCrossSectionAtGivenDistance(TessellatedSolid ts, double[] direction, double distance)
+        {
+            var crossSection = new List<List<Point>>();
+           
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            List<Vertex> sortedVertices;
+            List<int[]> duplicateRanges;
+            MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+
+            var edgeListDictionary = new Dictionary<int, Edge>();
+            var previousVertexDistance = direction.dotProduct(sortedVertices[0].Position); //This value can be negative
+            foreach (var vertex in sortedVertices)
+            {
+                var currentVertexDistance = direction.dotProduct(vertex.Position); //This value can be negative
+
+                if (currentVertexDistance.IsPracticallySame(distance, ts.SameTolerance) || currentVertexDistance > distance)
+                {
+                    //Determine cross sectional area for section as close to given distance as possitible (after previous vertex, but before current vertex)
+                    //But not actually on the current vertex
+                    var distance2 = 0.0;
+                    if (currentVertexDistance.IsPracticallySame(distance))
+                    {
+                        if (previousVertexDistance < distance - ts.SameTolerance)
+                        {
+                            distance2 = distance - ts.SameTolerance;
+                        }
+                        else
+                        {
+                            //Take the average if the function above did not work.
+                            distance2 = (previousVertexDistance + currentVertexDistance/2);
+                        }
+                    }
+                    else
+                    {
+                        //There was a significant enough gap betwwen points to use the exact distance
+                        distance2 = distance;
+                    }
+                    
+                    var cuttingPlane = new Flat(distance2, direction);
+                    List<List<Edge>> outputEdgeLoops;
+                    var inputEdgeLoops = new List<List<Edge>>();
+                    var current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+
+                    //Get a list of 2D paths from the 3D loops
+                    //Get 2D projections does not reorder list if the cutting plane direction is negative
+                    //So we need to do this ourselves. 
+                    crossSection.AddRange(current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, ts.SameTolerance)));
+
+                    return crossSection;
+                }
+                foreach (var edge in vertex.Edges)
+                {
+                    //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
+                    //and the second removes it from the list.
+                    if (edgeListDictionary.ContainsKey(edge.IndexInList))
+                    {
+                        edgeListDictionary.Remove(edge.IndexInList);
+                    }
+                    else
+                    {
+                        edgeListDictionary.Add(edge.IndexInList, edge);
+                    }
+                }
+                //Update the previous distance of the vertex checked
+                previousVertexDistance = currentVertexDistance;
+            }
+            return null; //The function should return from the if statement inside
+        }
+
+        /// <summary>
         /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
         /// </summary>
         /// <param name="ts"></param>
