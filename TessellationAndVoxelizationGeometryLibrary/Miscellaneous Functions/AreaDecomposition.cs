@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using StarMathLib;
 using TVGL;
 
@@ -383,8 +384,8 @@ namespace TVGL
                     var current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
 
                     //Get a list of 2D paths from the 3D loops
-                    var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
-
+                    var currentPaths = current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, ts.SameTolerance));
+                   
                     //Add the data to the output
                     outputData.Add(new DecompositionData(currentPaths, distance));
 
@@ -397,7 +398,7 @@ namespace TVGL
                         current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
 
                         //Get a list of 2D paths from the 3D loops
-                        currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
+                        currentPaths = current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, ts.SameTolerance));
 
                         //Add the data to the output
                         outputData.Add(new DecompositionData(currentPaths, distance2));
@@ -485,7 +486,9 @@ namespace TVGL
                         edgeListDictionary.Add(edge.IndexInList, edge);
                     }
                 }
+
             }
+
             return outputData;
         }
 
@@ -508,22 +511,18 @@ namespace TVGL
             foreach (var data in decompData)
             {
                 var currentPaths = data.Paths;
-                var distance = data.DistanceAlongDirection;
-
-                //Offset if the additive accuracy is significant
-                //Since you could offset the wrong direction if the loops are ordered incorrectly, we must first reorder if necessary
-                //bool[] isPositive = null;
-                //try
-                //{
-                //    currentPaths = TriangulatePolygon.OrderLoops2D(currentPaths, ref isPositive);
-                //}
-                //catch
-                //{
-                    currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
-               // }
+                //Offset the distance back by the additive accuracy. THis acts as a vertical offset
+                var distance = data.DistanceAlongDirection - additiveAccuracy;
+                //currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
                 
+                //Offset if the additive accuracy is significant
+                var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentPaths);           
                 var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
+                var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
                 var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                var areaAfterSimplification = MiscFunctions.AreaOfPolygon(simpleOffset);
+                if(areaPriorToOffset > areaAfterOffset) throw new Exception("Path is ordered incorrectly");
+                if(!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset*.05)) throw new Exception("Simplify Fuzzy Alterned the Geometry more than 5% of the area");
 
                 //Union this new set of polygons with the previous set.
                 if (previousPolygons.Any()) //If not the first iteration
@@ -587,9 +586,9 @@ namespace TVGL
                     if (area < previousArea * .99)
                     {
                         ////Debug Mode
-                        //var previousData = outputData.Last();
-                        //outputData = new List<DecompositionData>() { previousData, new DecompositionData( currentPaths, distance )};
-                        //return 0.0;
+                        var previousData = outputData.Last();
+                        outputData = new List<DecompositionData>() { previousData, new DecompositionData(currentPaths, distance) };
+                        return 0.0;
 
                         //Run Mode: use previous area
                         Debug.WriteLine("Error in your implementation. This should never occur");
@@ -597,15 +596,16 @@ namespace TVGL
                         
                     }
                     additiveVolume += deltaX * previousArea;
-                    outputData.Add(new DecompositionData(currentPaths, distance));
-
-                    //This is the last iteration. Add it to the output data.
-                    if (i == decompData.Count - 1)
-                    {
-                        outputData.Add(new DecompositionData(currentPaths, distance + additiveAccuracy));
-                        additiveVolume += additiveAccuracy * area;
-                    }
+                    outputData.Add(new DecompositionData(currentPaths, distance));   
                 }
+
+                //This is the last iteration. Add it to the output data.
+                if (i == decompData.Count - 1)
+                {
+                    outputData.Add(new DecompositionData(currentPaths, distance + additiveAccuracy));
+                    additiveVolume += additiveAccuracy * area;
+                }
+
                 previousPolygons = currentPaths;
                 previousDistance = distance;
                 previousArea = area;
@@ -929,11 +929,12 @@ namespace TVGL
                             edgeLoop.Add(nextEdge);
                             edgeList.Remove(nextEdge.IndexInList);
                             //Note that removing at an index is FASTER than removing a object.
-                            if (Math.Sign(dot) >= 0) correctDirection++;
-                            else reverseDirection++;
+                            if (Math.Sign(dot) >= 0) correctDirection += dot;
+                            else reverseDirection += (-dot);
                         }
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
+                    if(reverseDirection > 1 && correctDirection > 1) throw new Exception("Area Decomp Loop Finding needs additional work.");
                     if (reverseDirection > correctDirection)
                     {
                         loop.Reverse();
