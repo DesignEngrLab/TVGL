@@ -405,6 +405,40 @@ namespace TVGL
         #region Flatten to 2D
 
         /// <summary>
+        ///     Returns the 2D path (list of points) of the 3D loop (list of vertices) as that they would be represented in
+        ///     the x-y plane (although the z-values will be non-zero). This does not destructively alter
+        ///     the vertices. Additionally, this function will keep the loops in their original positive/negative
+        ///     orientation.
+        /// </summary>
+        /// <param name="loop"></param>
+        /// <param name="direction"></param>
+        /// <param name="tolerance"></param>
+        /// <param name="mergeDuplicateReferences"></param>
+        /// <returns></returns>
+        public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IList<Vertex> loop, double[] direction, double tolerance = Constants.BaseTolerance,
+            bool mergeDuplicateReferences = false)
+        {
+            var area1 = AreaOf3DPolygon(loop, direction);
+            var path = Get2DProjectionPoints(loop, direction).ToList();
+            var area2 = AreaOfPolygon(path);
+            if (!area1.IsPracticallySame(area2, tolerance))
+            {
+                if ((-area1).IsPracticallySame(area2, tolerance))
+                {
+                    path.Reverse();
+                }
+                else
+                {
+                    throw new Exception("area mismatch during 2D projection");
+                }
+            }
+
+            return path ;
+    }
+
+
+
+        /// <summary>
         ///     Returns the positions (array of 3D arrays) of the vertices as that they would be represented in
         ///     the x-y plane (although the z-values will be non-zero). This does not destructively alter
         ///     the vertices.
@@ -1273,7 +1307,7 @@ namespace TVGL
             //The solids share all the same vertices (onBoundaryIsInside = false) was considered above
             //if (sortedVertices.Count < 1) return true; 
             //If the first or last vertex along the direction vectors was in the inside solid, then it is not inside
-            //if (sortedVertices.First().ReferenceIndex == 1 || sortedVertices.Last().ReferenceIndex == 1) return false;
+            //if (sortedVertices.First().ReferenceIndex == 1 || tempSortedVertices.Last().ReferenceIndex == 1) return false;
 
             //Perform a search along direction 1 looking for plane intercepts along direction 2.
             //This method assumes TRIANGLE FACES ONLY.
