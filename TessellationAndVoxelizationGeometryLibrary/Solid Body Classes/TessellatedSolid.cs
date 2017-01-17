@@ -470,16 +470,21 @@ namespace TVGL
                     listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices) { Color = color });
                 else
                 {
-                    List<List<Vertex[]>> triangleFaceList = TriangulatePolygon.Run(new List<List<Vertex>> { faceVertices }, normal);
-                    var triangles = triangleFaceList.SelectMany(tl => tl).ToList();
-                    foreach (var triangle in triangles)
+                    List<List<Vertex[]>> triangulatedListofLists = TriangulatePolygon.Run(new List<List<Vertex>> { faceVertices }, normal);
+                    var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
+                    var listOfFlatFaces = new List<PolygonalFace>();
+                    foreach (var vertexSet in triangulatedList)
                     {
-                        var v1 = triangle[1].Position.subtract(triangle[0].Position);
-                        var v2 = triangle[2].Position.subtract(triangle[0].Position);
-                        listOfFaces.Add(v1.crossProduct(v2).dotProduct(normal) < 0
-                            ? new PolygonalFace(triangle.Reverse(), normal, doublyLinkToVertices) { Color = color }
-                            : new PolygonalFace(triangle, normal, doublyLinkToVertices) { Color = color });
+                        var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position);
+                        var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position);
+                        var face = v1.crossProduct(v2).dotProduct(normal) < 0
+                            ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }
+                            : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
+                        listOfFaces.Add(face);
+                        listOfFlatFaces.Add(face);
                     }
+                    if (Primitives == null) Primitives = new List<PrimitiveSurface>();
+                    Primitives.Add(new Flat(listOfFlatFaces));
                 }
             }
             Faces = listOfFaces.ToArray();
@@ -1006,10 +1011,10 @@ namespace TVGL
             var minDot = double.NegativeInfinity;
             var xPrime = new double[3];
             var xPrimeIndex = 0;
-            for(var i =0; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 var direction = obbDirections[i];
-                var dotX1 = direction.dotProduct(new List<double>() {1.0, 0.0, 0.0});
+                var dotX1 = direction.dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
                 if (dotX1 > minDot)
                 {
                     minDot = dotX1;
@@ -1057,7 +1062,7 @@ namespace TVGL
                 dotXs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest four values. Then get the those four vertices.
-            var bottom4 = dotXs.OrderBy(pair => pair.Value).Take(4).ToDictionary(pair => pair.Key, pair => pair.Value); 
+            var bottom4 = dotXs.OrderBy(pair => pair.Value).Take(4).ToDictionary(pair => pair.Key, pair => pair.Value);
             var bottom4Vertices = bottom4.Keys;
 
             //Second use Y' to eliminate 2 of the remaining 4 vertices by removing the 2 vertices furthest along yPrime
@@ -1068,7 +1073,7 @@ namespace TVGL
                 dotYs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
-            var bottom2 = dotYs.OrderBy(pair => pair.Value).Take(2).ToDictionary(pair => pair.Key, pair => pair.Value); 
+            var bottom2 = dotYs.OrderBy(pair => pair.Value).Take(2).ToDictionary(pair => pair.Key, pair => pair.Value);
             var bottom2Vertices = bottom2.Keys;
 
             //Second use Z' to eliminate one of the remaining two vertices by removing the furthest vertex along zPrime
@@ -1120,7 +1125,7 @@ namespace TVGL
             var colors = new List<Color>();
             foreach (var face in ts.Faces)
             {
-                faceToVertexIndices.Add(new []{face.Vertices[0].IndexInList, face.Vertices[1].IndexInList, face.Vertices[2].IndexInList});
+                faceToVertexIndices.Add(new[] { face.Vertices[0].IndexInList, face.Vertices[1].IndexInList, face.Vertices[2].IndexInList });
                 colors.Add(face.Color);
             }
 
