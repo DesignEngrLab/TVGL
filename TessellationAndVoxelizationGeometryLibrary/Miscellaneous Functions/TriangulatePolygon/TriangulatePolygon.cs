@@ -138,7 +138,7 @@ namespace TVGL
 
                     //Change point X and Y coordinates to be changed to mostly random primary axis
                     //Removed random value to make function repeatable for debugging.
-                    var values = new List<double>() { 0.82348, 0.13905, 0.78932, 0.37510 };
+                    var values = new List<double>() {0.82348, 0.13905, 0.78932, 0.37510 };
                     var theta = values[attempts - 1];
                     var points2Dtemp = points2D;
                     points2D = new List<Point[]>();
@@ -837,7 +837,7 @@ namespace TVGL
                 }
                 catch
                 {
-                    if (attempts >= 4)
+                    if (attempts >= 3)
                     {
                         Message.output("Triangulation failed after " + attempts + " attempts.", 1);
                         throw new Exception();

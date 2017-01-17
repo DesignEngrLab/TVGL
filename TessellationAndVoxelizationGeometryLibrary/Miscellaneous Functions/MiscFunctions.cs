@@ -412,14 +412,15 @@ namespace TVGL
         /// </summary>
         /// <param name="loop"></param>
         /// <param name="direction"></param>
+        /// <param name="backTransform"></param>
         /// <param name="tolerance"></param>
         /// <param name="mergeDuplicateReferences"></param>
         /// <returns></returns>
-        public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IList<Vertex> loop, double[] direction, double tolerance = Constants.BaseTolerance,
+        public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IList<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
             bool mergeDuplicateReferences = false)
         {
             var area1 = AreaOf3DPolygon(loop, direction);
-            var path = Get2DProjectionPoints(loop, direction).ToList();
+            var path = Get2DProjectionPoints(loop, direction, out backTransform).ToList();
             var area2 = AreaOfPolygon(path);
             if (!area1.IsPracticallySame(area2, tolerance))
             {

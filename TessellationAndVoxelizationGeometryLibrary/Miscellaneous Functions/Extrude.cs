@@ -61,9 +61,66 @@ namespace TVGL.Miscellaneous_Functions
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
             List<List<int>> groupsOfLoops;
-            bool[] isPositive;
-            var triangleFaceList = TriangulatePolygon.Run(cleanLoops, extrudeDirection, out groupsOfLoops, out isPositive);
-            var triangles = triangleFaceList.SelectMany(tl => tl).ToList();
+            var backTransform = new double[,] {};
+            var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop.ToArray(), extrudeDirection, out backTransform)).ToList();
+            var points2D = paths.Select(path => path.ToArray()).ToList();
+
+            var triangles = new List<Vertex[]>();
+            try
+            {
+                bool[] isPositive = null;
+                var triangleFaceList = TriangulatePolygon.Run2D(points2D, out groupsOfLoops, ref isPositive);
+                if(!triangleFaceList.Any()) throw new Exception();
+                foreach (var face in triangleFaceList)
+                {
+                    triangles.AddRange(face);
+                }
+            }
+            catch
+            {
+                try
+                {
+                    //Do some polygon functions to clean up issues and try again
+                    paths = PolygonOperations.UnionEvenOdd(paths);
+                    paths = PolygonOperations.OffsetSquare(paths, distance/1000);
+                    paths = PolygonOperations.OffsetSquare(paths, -distance/1000);
+
+                    //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
+                    //This also means we need to recreate cleanLoops
+                    //Also, give the vertices indices.
+                    cleanLoops = new List<List<Vertex>>();
+                    var j = 0;
+                    foreach (var path in paths)
+                    {
+                        var cleanLoop = new List<Vertex>();
+                        foreach (var point in path)
+                        {
+                            var position = new[] { point.X, point.Y, 0.0, 1.0 };
+                            var untransformedPosition = backTransform.multiply(position);
+                            var vertexPosition = untransformedPosition.Take(3).ToArray().add(extrudeDirection.multiply(distance));
+                            var vertex = new Vertex(vertexPosition) {IndexInList = j};
+                            point.References.Add(vertex);
+                            cleanLoop.Add(vertex);
+                            j++;
+                        }
+                        cleanLoops.Add(cleanLoop);
+                    }
+
+                    points2D = paths.Select(path => path.ToArray()).ToList();
+                    bool[] isPositive = null;
+                    var triangleFaceList = TriangulatePolygon.Run2D(points2D, out groupsOfLoops, ref isPositive);
+                    foreach (var face in triangleFaceList)
+                    {
+                        triangles.AddRange(face);
+                    }
+                }
+                catch
+                {
+                    throw new Exception("Tried extrusion twice and failed.");
+                }
+            }
+            
+            
 
             //Second, build up the a set of duplicate vertices
             var pairedVertices = new Dictionary<Vertex, Vertex>();
