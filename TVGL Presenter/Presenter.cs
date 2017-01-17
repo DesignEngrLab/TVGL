@@ -292,8 +292,9 @@ namespace TVGL
                     }
                     lineCollection.RemoveAt(0);
                     lineCollection.Add(lineCollection.First());
-
-                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
+                    var color = new System.Windows.Media.Color();
+                    color.R = 255; //G & B default to 0 to form red
+                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color};
                     window.view1.Children.Add(lines);
                 }
             }
@@ -330,6 +331,33 @@ namespace TVGL
                     lineCollection.Add(lineCollection.First());
 
                     var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
+                    window.view1.Children.Add(lines);
+                }
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        public static void ShowVertexPaths(IList<List<List<double[]>>> vertexPaths)
+        {
+            var window = new Window3DPlot();
+
+            foreach (var crossSection in vertexPaths)
+            {
+                foreach (var path in crossSection)
+                {
+                    var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
+
+                    //No create a line collection by doubling up the points
+                    var lineCollection = new List<Point3D>();
+                    foreach (var t in contour)
+                    {
+                        lineCollection.Add(t);
+                        lineCollection.Add(t);
+                    }
+                    lineCollection.RemoveAt(0);
+                    lineCollection.Add(lineCollection.First());
+                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection)};
                     window.view1.Children.Add(lines);
                 }
             }
