@@ -320,7 +320,8 @@ namespace TVGL
                     //Get a list of 2D paths from the 3D loops
                     //Get 2D projections does not reorder list if the cutting plane direction is negative
                     //So we need to do this ourselves. 
-                    crossSection.AddRange(current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, ts.SameTolerance)));
+                    double[,] backTransform;
+                    crossSection.AddRange(current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, out backTransform, ts.SameTolerance)));
 
                     return crossSection;
                 }
@@ -384,7 +385,8 @@ namespace TVGL
                     var current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
 
                     //Get a list of 2D paths from the 3D loops
-                    var currentPaths = current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, ts.SameTolerance));
+                    double[,] backTransform;
+                    var currentPaths = current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, out backTransform, ts.SameTolerance));
                    
                     //Add the data to the output
                     outputData.Add(new DecompositionData(currentPaths, distance));
@@ -398,7 +400,7 @@ namespace TVGL
                         current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
 
                         //Get a list of 2D paths from the 3D loops
-                        currentPaths = current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, ts.SameTolerance));
+                        currentPaths = current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, out backTransform, ts.SameTolerance));
 
                         //Add the data to the output
                         outputData.Add(new DecompositionData(currentPaths, distance2));
@@ -437,13 +439,29 @@ namespace TVGL
         {
             var outputData = new List<DecompositionData>();
 
+            List<Vertex> bottomVertices, topVertices;
+            var length = MinimumEnclosure.GetLengthAndExtremeVertices(direction, ts.Vertices,
+                out bottomVertices, out topVertices);
+
+            //Set step size to an evan increment over the entire length of the solid
+            stepSize = length/Math.Round(length/stepSize + 1);
+
+            //make the minimum step size 1/10 of the length.
+            if (length < 10 * stepSize)
+            {
+                stepSize = length/10;
+            }
+
+            var minOffset = Math.Sqrt(ts.SameTolerance);
+
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             List<Vertex> sortedVertices;
             List<int[]> duplicateRanges;
             MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
 
             var edgeListDictionary = new Dictionary<int, Edge>();
-            var previousDistanceAlongAxis = direction.dotProduct(sortedVertices[0].Position); //This value can be negative
+            var firstDistance = direction.dotProduct(sortedVertices[0].Position);
+            var previousDistanceAlongAxis = firstDistance; //This value can be negative
             foreach (var vertex in sortedVertices)
             {
                 var distanceAlongAxis = direction.dotProduct(vertex.Position); //This value can be negative
@@ -451,20 +469,54 @@ namespace TVGL
                 //If the vertex is far enough that the next step size is reached, get the cross section.
                 var i = 1;
                 var distance = previousDistanceAlongAxis;
-                while (difference1 > i * stepSize )
-                { 
+                var inputEdgeLoops = new List<List<Edge>>();
+                while (difference1.IsGreaterThanNonNegligible(i * stepSize + 2 * minOffset))
+                {
+                    var counter = 0;
+                    var current3DLoops = new List<List<Vertex>>();
+                    var successfull = true;
                     //Determine the next step distance
-                    distance = previousDistanceAlongAxis + stepSize*i; //X value (distance along axis) 
-                    var cuttingPlane = new Flat(distance, direction);
-                    List<List<Edge>> outputEdgeLoops;
-                    var inputEdgeLoops = new List<List<Edge>>();
-                    var current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
+                    do
+                    {
+                        distance = previousDistanceAlongAxis + stepSize*i; //X value (distance along axis) 
+                        var cuttingPlane = new Flat(distance, direction);
+                        
+                        try
+                        {
+                            List<List<Edge>> outputEdgeLoops;
+                            current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops,
+                                inputEdgeLoops).ToList();
 
-                    //Get a list of 2D paths from the 3D loops
-                    var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPoints(cp, direction).ToList()).ToList();
+                            
+                            //Use the same output edge loops for outer while loop, since the edge list does not change.
+                            //If there is an error, it will occur before this loop.
+                            inputEdgeLoops = outputEdgeLoops;
+                        }
+                        catch
+                        {
+                            counter++;
+                            distance = distance + minOffset;
+                            successfull = false;
+                        } 
+                    } while (counter < 2 && !successfull);
 
-                    //Add the data to the output
-                    outputData.Add(new DecompositionData(currentPaths, distance));
+                    if (successfull)
+                    {
+                        double[,] backTransform;
+                        //Get a list of 2D paths from the 3D loops
+                        var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(cp, direction, out backTransform).ToList()).ToList();
+
+                        //Get the area of this layer
+                        var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
+                        if (area < 0)
+                        {
+                            //Rather than throwing an exception, just assume the polygons were the wrong direction      
+                            Debug.WriteLine("Area for a cross section in UniformDirectionalDecomposition was negative. This means there was an issue with the polygon ordering");
+                        }
+
+                        //Add the data to the output
+                        outputData.Add(new DecompositionData(currentPaths, distance));
+                    }
 
                     i++;
                 }
@@ -486,8 +538,12 @@ namespace TVGL
                         edgeListDictionary.Add(edge.IndexInList, edge);
                     }
                 }
-
             }
+
+            //Add the first and last cross sections. 
+            //Note, these may not be great fits if step size is large
+            outputData.Insert(0, new DecompositionData(outputData.First().Paths, firstDistance));
+            outputData.Add(new DecompositionData(outputData.Last().Paths, direction.dotProduct(sortedVertices.Last().Position)));
 
             return outputData;
         }
