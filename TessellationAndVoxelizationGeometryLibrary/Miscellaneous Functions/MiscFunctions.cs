@@ -15,6 +15,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -422,17 +423,41 @@ namespace TVGL
             var area1 = AreaOf3DPolygon(loop, direction);
             var path = Get2DProjectionPoints(loop, direction, out backTransform).ToList();
             var area2 = AreaOfPolygon(path);
-            if (!area1.IsPracticallySame(area2, tolerance))
+            var dif = area1 - area2;
+            var successful = false;
+            var attempts = 0;
+            //Try up to three times if not successful, expanding the tolerance each time
+            while (!successful && attempts < 4)
             {
-                if ((-area1).IsPracticallySame(area2, tolerance))
+                //For every attempt greater than zero, expand the tolerance by taking its square root
+                if (attempts > 0) tolerance = Math.Sqrt(tolerance);
+
+                try
                 {
-                    path.Reverse();
+                    if (dif.IsNegligible(tolerance))
+                    {
+                        successful = true;
+                    }
+                    else
+                    {
+                        if ((-area1).IsPracticallySame(area2, tolerance))
+                        {
+                            path.Reverse();
+                            successful = true;
+                        }
+                        else
+                        {
+                            throw new Exception("area mismatch during 2D projection");
+                        }
+                    }
                 }
-                else
+                catch
                 {
-                    throw new Exception("area mismatch during 2D projection");
+                    attempts++;
                 }
             }
+            if (attempts > 0 && attempts < 4) Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
+            else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
 
             return path ;
     }
