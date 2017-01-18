@@ -442,6 +442,7 @@ namespace TVGL
                     {
                         if ((-area1).IsPracticallySame(area2, tolerance))
                         {
+                            dif = area1 + area2;
                             path.Reverse();
                             successful = true;
                         }
