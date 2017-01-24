@@ -57,45 +57,77 @@ namespace TVGL
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
         public static List<Flat> Flats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
-            double minSurfaceArea = 0.01)
+           double minSurfaceArea = 0.01)
         {
-            var listFaces = new List<PolygonalFace>(faces);
+            //Note: This function has been optimized to run very fast for large amount of faces
+            //Used hashet for "Contains" function calls 
+            var unusedFaces = new HashSet<PolygonalFace>(faces);
+
             var listFlats = new List<Flat>();
-            while (listFaces.Any())
+            //Use an IEnumerable class (List) for iterating through each part, and then the 
+            //"Contains" function to see if it was already used. This is actually much faster
+            //than using a while loop with a ".Any" and ".First" call on the Hashset.
+            foreach (var startFace in faces)
             {
-                var startFace = listFaces[0];
+                //If this faces has already been used, continue to the next face
+                if (!unusedFaces.Contains(startFace)) continue;
+
+                //Stacks a fast for "Push" and "Pop".
+                //Add all the adjecent faces from the first face to the stack for 
+                //consideration in the while loop below.
                 var stack = new Stack<PolygonalFace>();
                 foreach (var adjacentFace in startFace.AdjacentFaces)
                 {
                     stack.Push(adjacentFace);
                 }
-                //Create new flat from start face
-                var flat = new Flat(new List<PolygonalFace> {startFace}) {Tolerance = tolerance};
-                listFaces.Remove(startFace);
-                var hashFaces = new HashSet<PolygonalFace>(listFaces);
+
+                //Get the distance to origin
+                var distanceToOrigin = startFace.Normal.dotProduct(startFace.Vertices[0].Position);
+                unusedFaces.Remove(startFace);
+
+                //Get all the faces that should be used on this flat
+                //Use a hashset so we can use the ".Contains" function
+                var flatFaces = new HashSet<PolygonalFace> { startFace };
                 while (stack.Any())
                 {
                     var newFace = stack.Pop();
-                    if (hashFaces.Contains(newFace))
+                    //If the new face does not fit the criteria for the flat, continue
+                    //This criteria includes 
+                    //1. Must not already be included in the face list
+                    if (flatFaces.Contains(newFace)) continue;
+                    //2. Must have nearly the same normal
+                    if (!newFace.Normal.dotProduct(startFace.Normal).IsPracticallySame(1.0, tolerance)) continue;
+                    //3. Must be nearly the same distance from the origin (this may not be strictly neccessary 
+                    //since we are wrapping along the surface by using the adjacent faces
+                    //Note that the dotProduct term and distance to origin, must have the same sign, 
+                    //so there is no additional need moth absolute value methods.
+                    if (newFace.Vertices.All(v => !startFace.Normal.dotProduct(v.Position).IsPracticallySame(distanceToOrigin, tolerance))) continue;
+
+                    //If the face has already been used on another flat, continue
+                    if (!unusedFaces.Contains(newFace)) continue;
+
+                    //Add the new face to the flat's face list
+                    flatFaces.Add(newFace);
+
+                    //Remove the new face, since it is now being used
+                    unusedFaces.Remove(newFace);
+
+                    //Add new adjacent faces to the stack for consideration
+                    //if the faces are already listed in the flat faces, the first
+                    //"if" statement in the while loop will ignore them.
+                    foreach (var adjacentFace in newFace.AdjacentFaces)
                     {
-                        //Only visit once per iteration
-                        hashFaces.Remove(newFace);
-                        if (flat.IsNewMemberOf(newFace))
-                        {
-                            flat.UpdateWith(newFace);
-                            listFaces.Remove(newFace);
-                            foreach (var adjacentFace in newFace.AdjacentFaces)
-                            {
-                                stack.Push(adjacentFace);
-                            }
-                        }
+                        stack.Push(adjacentFace);
                     }
                 }
+
+                //Build the flat from the collected faces
+                var flat = new Flat(flatFaces) { Tolerance = tolerance };
 
                 //Criteria of whether it should be a flat should be inserted here.
                 if (flat.Faces.Count < 2) continue;
                 if (flat.Area < minSurfaceArea) continue;
-                listFlats.Add(new Flat(flat.Faces));
+                listFlats.Add(flat);
             }
             return listFlats;
         }
