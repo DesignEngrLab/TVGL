@@ -57,6 +57,7 @@ namespace TVGL.Miscellaneous_Functions
                 }
                 cleanLoops.Add(cleanLoop);
             }
+            var distanceFromOriginAlongDirection = extrudeDirection.dotProduct(cleanLoops.First().First().Position);
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
@@ -96,9 +97,15 @@ namespace TVGL.Miscellaneous_Functions
                         foreach (var point in path)
                         {
                             var position = new[] { point.X, point.Y, 0.0, 1.0 };
-                            var untransformedPosition = backTransform.multiply(position);
-                            var vertexPosition = untransformedPosition.Take(3).ToArray().add(extrudeDirection.multiply(distance));
-                            var vertex = new Vertex(vertexPosition) {IndexInList = j};
+                            var vertexPosition1 = backTransform.multiply(position).Take(3).ToArray();
+                            //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
+                            //So, we must move it to be on the plane
+                            //This next line gets a second vertex to use for the point on plane function
+                            var vertexPosition2 = vertexPosition1.add(extrudeDirection.multiply(5));
+                            var vertex = MiscFunctions.PointOnPlaneFromIntersectingLine(extrudeDirection,
+                                distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
+                                new Vertex(vertexPosition2));
+                            vertex.IndexInList = j;
                             point.References.Add(vertex);
                             cleanLoop.Add(vertex);
                             j++;
