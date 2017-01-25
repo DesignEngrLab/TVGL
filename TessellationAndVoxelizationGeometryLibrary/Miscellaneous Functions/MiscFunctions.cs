@@ -306,13 +306,7 @@ namespace TVGL
 
             //Choose the largest abs coordinate to ignore for projections
             var coord = 3; //ignore z-coord
-            if (ax > az)
-            {
-                if (ax > ay || ax.IsPracticallySame(ay))
-                {
-                    coord = 1; //ignore x-coord
-                }
-            } 
+            if (ax > az && (ax > ay || ax.IsPracticallySame(ay))) coord = 1; //ignore x-coord
             else if (ay > az && ay > ax) coord = 2; //ignore y-coord
             //These are the results for eqaul directions
             //if az == ax, then ignore z-coord.
