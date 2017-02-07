@@ -86,8 +86,8 @@ namespace TVGL
             get
             {
                 var _bounds = new double[2][];
-                _bounds[0] = new[] { XMin, YMin, ZMin };
-                _bounds[1] = new[] { XMax, YMax, ZMax };
+                _bounds[0] = new[] {XMin, YMin, ZMin};
+                _bounds[1] = new[] {XMax, YMax, ZMax};
                 return _bounds;
             }
         }
@@ -405,7 +405,7 @@ namespace TVGL
             ZMin = vertices.Min(v => v[2]);
             ZMax = vertices.Max(v => v[2]);
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
-            SameTolerance = shortestDimension * Constants.BaseTolerance;
+            SameTolerance = shortestDimension*Constants.BaseTolerance;
         }
 
         /// <summary>
@@ -433,7 +433,7 @@ namespace TVGL
                 duplicateFaceCheck = false;
             }
             var checksumMultiplier = duplicateFaceCheck
-                ? new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices }
+                ? new List<long> {1, NumberOfVertices, NumberOfVertices*NumberOfVertices}
                 : null;
             for (var i = 0; i < NumberOfFaces; i++)
             {
@@ -445,8 +445,8 @@ namespace TVGL
                         new List<int>(faceToVertexIndexList.Select(index => Vertices[index].IndexInList));
                     orderedIndices.Sort();
                     while (orderedIndices.Count > checksumMultiplier.Count)
-                        checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
-                    var checksum = orderedIndices.Select((index, p) => index * checksumMultiplier[p]).Sum();
+                        checksumMultiplier.Add((long) Math.Pow(NumberOfVertices, checksumMultiplier.Count));
+                    var checksum = orderedIndices.Select((index, p) => index*checksumMultiplier[p]).Sum();
                     if (faceChecksums.Contains(checksum)) continue; //Duplicate face. Do not create
                     if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue;
                     // if you made it passed these to "continue" conditions, then this is a valid new face
@@ -467,10 +467,11 @@ namespace TVGL
                     if (!SolidColor.Equals(color)) HasUniformColor = false;
                 }
                 if (faceVertices.Count == 3)
-                    listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices) { Color = color });
+                    listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices) {Color = color});
                 else
                 {
-                    List<List<Vertex[]>> triangulatedListofLists = TriangulatePolygon.Run(new List<List<Vertex>> { faceVertices }, normal);
+                    List<List<Vertex[]>> triangulatedListofLists =
+                        TriangulatePolygon.Run(new List<List<Vertex>> {faceVertices}, normal);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
@@ -478,8 +479,8 @@ namespace TVGL
                         var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position);
                         var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position);
                         var face = v1.crossProduct(v2).dotProduct(normal) < 0
-                            ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }
-                            : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
+                            ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) {Color = color}
+                            : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) {Color = color};
                         listOfFaces.Add(face);
                         listOfFlatFaces.Add(face);
                     }
@@ -707,6 +708,7 @@ namespace TVGL
             foreach (var edge in Edges)
                 SetAndGetEdgeChecksum(edge);
         }
+
         #endregion
 
         #region Faces
@@ -926,7 +928,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid Copy()
         {
-            return new TessellatedSolid(Vertices.Select(vertex => (double[])vertex.Position.Clone()).ToList(),
+            return new TessellatedSolid(Vertices.Select(vertex => (double[]) vertex.Position.Clone()).ToList(),
                 Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
                 Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
                 FileName, Comments, Language);
@@ -960,21 +962,21 @@ namespace TVGL
             double[] tempCoord;
             foreach (var vert in Vertices)
             {
-                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
+                tempCoord = transformMatrix.multiply(new[] {vert.X, vert.Y, vert.Z, 1});
                 vert.Position[0] = tempCoord[0];
                 vert.Position[1] = tempCoord[1];
                 vert.Position[2] = tempCoord[2];
             }
-            tempCoord = transformMatrix.multiply(new[] { XMin, YMin, ZMin, 1 });
+            tempCoord = transformMatrix.multiply(new[] {XMin, YMin, ZMin, 1});
             XMin = tempCoord[0];
             YMin = tempCoord[1];
             ZMin = tempCoord[2];
 
-            tempCoord = transformMatrix.multiply(new[] { XMax, YMax, ZMax, 1 });
+            tempCoord = transformMatrix.multiply(new[] {XMax, YMax, ZMax, 1});
             XMax = tempCoord[0];
             YMax = tempCoord[1];
             ZMax = tempCoord[2];
-            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
+            Center = transformMatrix.multiply(new[] {Center[0], Center[1], Center[2], 1});
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             if (_inertiaTensor != null)
             {
@@ -995,7 +997,7 @@ namespace TVGL
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
         /// <returns></returns>
-        public TessellatedSolid SetToOriginAndSquareTesselatedSolid()
+        public TessellatedSolid SetToOriginAndSquareTesselatedSolid(out double[,] backTransform)
         {
             var ts = this;
 
@@ -1014,14 +1016,14 @@ namespace TVGL
             for (var i = 0; i < 3; i++)
             {
                 var direction = obbDirections[i];
-                var dotX1 = direction.dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
+                var dotX1 = direction.dotProduct(new List<double>() {1.0, 0.0, 0.0});
                 if (dotX1 > minDot)
                 {
                     minDot = dotX1;
                     xPrime = direction;
                     xPrimeIndex = i;
                 }
-                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
+                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() {1.0, 0.0, 0.0});
                 if (dotX2 > minDot)
                 {
                     minDot = dotX2;
@@ -1036,13 +1038,13 @@ namespace TVGL
             for (var i = 0; i < 2; i++)
             {
                 var direction = obbDirections[i];
-                var dotY1 = direction.dotProduct(new List<double>() { 0.0, 1.0, 0.0 });
+                var dotY1 = direction.dotProduct(new List<double>() {0.0, 1.0, 0.0});
                 if (dotY1 > minDot)
                 {
                     minDot = dotY1;
                     yPrime = direction;
                 }
-                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() { 0.0, 1.0, 0.0 });
+                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() {0.0, 1.0, 0.0});
                 if (dotY2 > minDot)
                 {
                     minDot = dotY2;
@@ -1089,24 +1091,36 @@ namespace TVGL
 
 
             //Get the translation matrix based on the local origin that we just found.
-            var translationMatrix = new[,]
-            {
-                {1.0, 0.0, 0.0, -localOrigin.X},
-                {0.0, 1.0, 0.0, -localOrigin.Y},
-                {0.0, 0.0, 1.0, -localOrigin.Z},
-                {0.0, 0.0, 0.0, 1.0}
-            };
+            //var translationMatrix = new[,]
+            //{
+            //    {1.0, 0.0, 0.0, },
+            //    {0.0, 1.0, 0.0, },
+            //    {0.0, 0.0, 1.0, },
+            //    {0.0, 0.0, 0.0, 1.0}
+            //};
 
             //Change of coordinates matrix. Easier than using 3 rotation matrices
             //Multiplying by this matrix after the transform will align "local" coordinate axis
             //with the global axis, where the local axis are defined by the directions list.
-            var rotationMatrix = new[,]
-           {
-                {xPrime[0], xPrime[1], xPrime[2], 0.0},
-                {yPrime[0], yPrime[1], yPrime[2], 0.0},
-                {zPrime[0], zPrime[1], zPrime[2], 0.0},
+            var transformationMatrix = new[,]
+            {
+                {xPrime[0], xPrime[1], xPrime[2], -localOrigin.X},
+                {yPrime[0], yPrime[1], yPrime[2], -localOrigin.Y},
+                {zPrime[0], zPrime[1], zPrime[2], -localOrigin.Z},
                 {0.0, 0.0, 0.0, 1.0}
             };
+            backTransform = transformationMatrix.inverse();
+            return TransformToGetNewSolid(transformationMatrix);
+        }
+
+        /// <summary>
+        /// Gets a new solid by transforming its vertices.
+        /// </summary>
+        /// <param name="transformationMatrix"></param>
+        /// <returns></returns>
+        public TessellatedSolid TransformToGetNewSolid(double[,] transformationMatrix)
+        {
+            var ts = this;
 
             //Transform and rotate all the vertices
             var newVertices = new List<double[]>();
@@ -1116,7 +1130,7 @@ namespace TVGL
                 {
                     vertex.X, vertex.Y, vertex.Z, 1.0
                 };
-                var newVertexPosition = rotationMatrix.multiply(translationMatrix.multiply(oldVertexPosition));
+                var newVertexPosition = transformationMatrix.multiply(oldVertexPosition);
                 newVertices.Add(newVertexPosition);
             }
 
@@ -1125,7 +1139,8 @@ namespace TVGL
             var colors = new List<Color>();
             foreach (var face in ts.Faces)
             {
-                faceToVertexIndices.Add(new[] { face.Vertices[0].IndexInList, face.Vertices[1].IndexInList, face.Vertices[2].IndexInList });
+                faceToVertexIndices.Add(new[]
+                {face.Vertices[0].IndexInList, face.Vertices[1].IndexInList, face.Vertices[2].IndexInList});
                 colors.Add(face.Color);
             }
 
