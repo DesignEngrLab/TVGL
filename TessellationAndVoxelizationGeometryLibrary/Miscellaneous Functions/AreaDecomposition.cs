@@ -575,7 +575,8 @@ namespace TVGL
                 var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentPaths);           
                 var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
                 var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
-                var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                //Simplify the paths, but remove any that are eliminated (e.g. points are all very close together)
+                var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
                 var areaAfterSimplification = MiscFunctions.AreaOfPolygon(simpleOffset);
                 if(areaPriorToOffset > areaAfterOffset) throw new Exception("Path is ordered incorrectly");
                 if(!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset*.05)) throw new Exception("Simplify Fuzzy Alterned the Geometry more than 5% of the area");
@@ -583,7 +584,7 @@ namespace TVGL
                 //Union this new set of polygons with the previous set.
                 if (previousPolygons.Any()) //If not the first iteration
                 {
-                    previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                    previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
                     try
                     {
                         currentPaths = new List<List<Point>>(PolygonOperations.Union(previousPolygons, simpleOffset));
@@ -738,13 +739,13 @@ namespace TVGL
                     //Offset if the additive accuracy is significant
                     var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
 
-                    var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                    var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList(); 
 
 
                     //Union this new set of polygons with the previous set.
                     if (previousPolygons.Any()) //If not the first iteration
                     {
-                        previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                        previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
                         try
                         {
                             currentPaths = new List<List<Point>>(PolygonOperations.Union(previousPolygons, simpleOffset));
@@ -811,12 +812,12 @@ namespace TVGL
                         //Offset if the additive accuracy is significant
                         offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
 
-                        simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                        simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
 
                         //Union this new set of polygons with the previous set.
                         if (previousPolygons.Any()) //If not the first iteration
                         {
-                            previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).ToList();
+                            previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
                             try
                             {
                                 currentPaths = new List<List<Point>>(PolygonOperations.Union(previousPolygons, simpleOffset));

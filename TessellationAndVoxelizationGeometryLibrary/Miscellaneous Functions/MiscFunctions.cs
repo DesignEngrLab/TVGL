@@ -249,6 +249,8 @@ namespace TVGL
         /// </reference>
         public static double AreaOfPolygon(IList<Point> polygon)
         {
+            //If less than three points, it is a line and has zero area.
+            if (polygon.Count < 3) return 0.0;
             #region Method 1
 
             //Method 1
