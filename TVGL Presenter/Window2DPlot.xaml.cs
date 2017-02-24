@@ -116,6 +116,38 @@ namespace TVGL
             InitializeComponent();
         }
 
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Window2DPlot" /> class.
+        ///     This version allows different markers to be set for each set of polygons.
+        /// </summary>
+        /// <param name="listOfListOfPoints2"></param>
+        /// <param name="title">The title.</param>
+        /// <param name="plot2DType">Type of the plot2 d.</param>
+        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
+        /// <param name="listOfListOfPoints1"></param>
+        /// <param name="marker1"></param>
+        /// <param name="marker2"></param>
+        public Window2DPlot(IEnumerable<List<Point>> listOfListOfPoints1, IEnumerable<List<Point>> listOfListOfPoints2, 
+            string title, Plot2DType plot2DType, bool closeShape,
+            MarkerType marker1, MarkerType marker2) : this(title)
+        {
+            foreach (var points in listOfListOfPoints1)
+            {
+                if (plot2DType == Plot2DType.Line)
+                    AddLineSeriesToModel(points, closeShape, marker1);
+                else
+                    AddScatterSeriesToModel(points, marker1);
+            }
+            foreach (var points in listOfListOfPoints2)
+            {
+                if (plot2DType == Plot2DType.Line)
+                    AddLineSeriesToModel(points, closeShape, marker2);
+                else
+                    AddScatterSeriesToModel(points, marker2);
+            }
+            InitializeComponent();
+        }
+
         public Window2DPlot(IEnumerable<List<List<Point>>> listofListOfListOfPoints, string title, Plot2DType plot2DType, bool closeShape,
             MarkerType marker) : this(title)
         {

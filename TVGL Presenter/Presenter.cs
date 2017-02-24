@@ -114,6 +114,23 @@ namespace TVGL
                 marker);
         }
 
+        /// <summary>
+        ///     Shows two different lists of polygons using a unique marker for each.
+        /// </summary>
+        /// <param name="points2"></param>
+        /// <param name="title">The title.</param>
+        /// <param name="plot2DType">Type of the plot2 d.</param>
+        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
+        /// <param name="points1"></param>
+        /// <param name="marker1"></param>
+        /// <param name="marker2"></param>
+        public static void ShowAndHang(IList<List<Point>> points1, IList<List<Point>> points2, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker1 = MarkerType.Circle, MarkerType marker2 = MarkerType.Cross)
+        {
+            var window = new Window2DPlot(points1, points2, title, plot2DType, closeShape, marker1, marker2);
+            window.ShowDialog();
+        }
+
         #endregion
 
         #region List of Series of Points
