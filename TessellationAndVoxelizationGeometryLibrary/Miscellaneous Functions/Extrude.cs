@@ -11,7 +11,7 @@ namespace TVGL
     public static class Extrude
     {
         /// <summary>
-        /// Creates a Tesselated Solid by extruding the given loop along the given normal.
+        /// Creates a Tessellated Solid by extruding the given loop along the given normal.
         /// Currently, this function recreates the Vertices, so no prior references will impact result.
         /// </summary>
         /// <param name="loops"></param>
