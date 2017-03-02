@@ -50,6 +50,11 @@ namespace TVGL
         ///     The corner points
         /// </summary>
         public Vertex[] CornerVertices;
+
+        /// <summary>
+        ///     The center point
+        /// </summary>
+        public Vertex Center;
     }
 
     /// <summary>

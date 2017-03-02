@@ -495,9 +495,22 @@ namespace TVGL
                 }
             }
 
+            //Add in the center
+            var centerPosition = new[] { 0.0, 0.0, 0.0 };
+            foreach(var vertex in cornerVertices)
+            {
+                centerPosition[0] += vertex.Position[0];
+                centerPosition[1] += vertex.Position[1];
+                centerPosition[2] += vertex.Position[2];
+            }
+            centerPosition[0] = centerPosition[0] / cornerVertices.Count();
+            centerPosition[1] = centerPosition[1] / cornerVertices.Count();
+            centerPosition[2] = centerPosition[2] / cornerVertices.Count();
+
             return new BoundingBox
             {
                 CornerVertices = cornerVertices,
+                Center = new Vertex(centerPosition),
                 Dimensions = bb.Dimensions,
                 Directions = bb.Directions,
                 PointsOnFaces = bb.PointsOnFaces,
