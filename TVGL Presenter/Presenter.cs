@@ -131,6 +131,22 @@ namespace TVGL
             window.ShowDialog();
         }
 
+
+        /// <summary>
+        ///     Shows the specified points.
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="title">The title.</param>
+        /// <param name="plot2DType">Type of the plot2 d.</param>
+        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
+        /// <param name="marker">The marker.</param>
+        public static void ShowAndHang(IList<List<double[]>> points, IList<Color> colors, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+        {
+            var window = new Window2DPlot(points, title, plot2DType, closeShape, marker, colors);
+            window.ShowDialog();
+        }
+
         #endregion
 
         #region List of Series of Points
@@ -381,6 +397,66 @@ namespace TVGL
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
+
+        /// <summary>
+        ///     Shows vertex paths. Assumes paths are closed.
+        /// </summary>
+        /// <param name="vertexPaths"></param>
+        public static void ShowGaussSphereWithIntensity(IList<Vertex> vertices, IList<Color> colors, TessellatedSolid ts)
+        {
+            var window = new Window3DPlot();
+            var pt0 = new Point3D(ts.Center[0], ts.Center[1], ts.Center[2]);
+            var x = ts.XMax - ts.XMin;
+            var y = ts.YMax - ts.YMin;
+            var z = ts.ZMax - ts.ZMin;
+            var radius = System.Math.Max(System.Math.Max(x, y), z) / 2;
+
+            //Add the solid to the visual
+            var model = MakeModelVisual3D(ts);
+            window.view1.Children.Add(model);
+            
+            //Add a transparent unit sphere to the visual
+            var sphere = new SphereVisual3D();
+            sphere.Radius = radius;
+            sphere.Center = pt0;
+            sphere.Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 15, R = 200, G = 200, B = 200 });
+            //window.view1.Children.Add(sphere);
+
+            var i = 0;
+            foreach (var point in vertices)
+            {
+                var color = colors[i];
+                var pt1 = new Point3D(pt0.X + point.X * radius, pt0.Y + point.Y * radius, pt0.Z + point.Z * radius);
+
+
+                //No create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>();
+                lineCollection.Add(pt0);
+                lineCollection.Add(pt1);
+
+                var systemColor = new System.Windows.Media.Color();
+                systemColor.A = 255;
+                systemColor.R = color.R;
+                systemColor.G = color.G;
+                systemColor.B = color.B;
+
+
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = systemColor, Thickness = 5 };
+
+               
+                var pointsVisual = new PointsVisual3D { Color = systemColor , Size = 5 };
+                pointsVisual.Points = new Point3DCollection() { pt1 };
+                window.view1.Children.Add(pointsVisual);
+                window.view1.Children.Add(lines);
+                i++;
+            }
+
+
+
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
 
         /// <summary>
         ///     Shows vertex paths. Assumes paths are closed.
@@ -658,5 +734,117 @@ namespace TVGL
         }
 
         #endregion
+
+        //A palet of distinguishable colors
+        //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
+        public static string[] ColorPalet()
+        {
+            return new[]
+            {
+                "#000000",
+                "#1CE6FF",
+                "#FF34FF",
+                "#FF4A46",
+                "#008941",
+                "#006FA6",
+                "#A30059",
+                "#FFDBE5",
+                "#7A4900",
+                "#0000A6",
+                "#63FFAC",
+                "#B79762",
+                "#004D43",
+                "#8FB0FF",
+                "#997D87",
+                "#5A0007",
+                "#809693",
+                "#FEFFE6",
+                "#1B4400",
+                "#4FC601",
+                "#3B5DFF",
+                "#4A3B53",
+                "#FF2F80",
+                "#61615A",
+                "#BA0900",
+                "#6B7900",
+                "#00C2A0",
+                "#FFAA92",
+                "#FF90C9",
+                "#B903AA",
+                "#D16100",
+                "#DDEFFF",
+                "#000035",
+                "#7B4F4B",
+                "#A1C299",
+                "#300018",
+                "#0AA6D8",
+                "#013349",
+                "#00846F",
+                "#372101",
+                "#FFB500",
+                "#C2FFED",
+                "#A079BF",
+                "#CC0744",
+                "#C0B9B2",
+                "#C2FF99",
+                "#001E09",
+                "#00489C",
+                "#6F0062",
+                "#0CBD66",
+                "#EEC3FF",
+                "#456D75",
+                "#B77B68",
+                "#7A87A1",
+                "#788D66",
+                "#885578",
+                "#FAD09F",
+                "#FF8A9A",
+                "#D157A0",
+                "#BEC459",
+                "#456648",
+                "#0086ED",
+                "#886F4C",
+                "#34362D",
+                "#B4A8BD",
+                "#00A6AA",
+                "#452C2C",
+                "#636375",
+                "#A3C8C9",
+                "#FF913F",
+                "#938A81",
+                "#575329",
+                "#00FECF",
+                "#B05B6F",
+                "#8CD0FF",
+                "#3B9700",
+                "#04F757",
+                "#C8A1A1",
+                "#1E6E00",
+                "#7900D7",
+                "#A77500",
+                "#6367A9",
+                "#A05837",
+                "#6B002C",
+                "#772600",
+                "#D790FF",
+                "#9B9700",
+                "#549E79",
+                "#FFF69F",
+                "#201625",
+                "#72418F",
+                "#BC23FF",
+                "#99ADC0",
+                "#3A2465",
+                "#922329",
+                "#5B4534",
+                "#FDE8DC",
+                "#404E55",
+                "#0089A3",
+                "#CB7E98",
+                "#A4E804",
+                "#324E72",
+                "#6A3A4C"
+            };
+        }
     }
 }

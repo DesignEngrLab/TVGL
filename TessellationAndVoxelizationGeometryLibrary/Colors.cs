@@ -876,7 +876,10 @@ namespace TVGL
                 G = System.Convert.ToByte(colorString.Substring(3, 2), 16);
                 B = System.Convert.ToByte(colorString.Substring(5, 2), 16);
                 if (colorString.Length == 9)
+                {
                     A = System.Convert.ToByte(colorString.Substring(7, 2), 16);
+                }
+                else A = 255;
             }
         }
 
@@ -901,17 +904,17 @@ namespace TVGL
         public byte A;
 
         /// <summary>
-        ///     A
+        ///     B
         /// </summary>
         public byte B;
 
         /// <summary>
-        ///     A
+        ///     R
         /// </summary>
         public byte R;
 
         /// <summary>
-        ///     A
+        ///     G
         /// </summary>
         public byte G;
 
