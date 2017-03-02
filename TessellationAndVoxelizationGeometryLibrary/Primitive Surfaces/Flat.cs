@@ -96,10 +96,21 @@ namespace TVGL
             : base(faces)
         {
             Type = PrimitiveSurfaceType.Flat;
+
+            //Set the normal by weighting each face's normal with its area
+            //This makes small faces have less effect at shifting the normal
             var normalSum = new double[3];
-            normalSum = Faces.Aggregate(normalSum, (current, face) => current.add(face.Normal));
-            Normal = normalSum.divide(Faces.Count);
-            Normal = Normal.normalize();
+            var totalArea = 0.0;
+            foreach(var face in faces)
+            {
+                totalArea += face.Area;
+                var weightedNormal = face.Normal.multiply(face.Area);
+                normalSum[0] += weightedNormal[0];
+                normalSum[1] += weightedNormal[1];
+                normalSum[2] += weightedNormal[2];
+            }
+            Normal = normalSum.normalize();
+
             DistanceToOrigin = Faces.Average(f => Normal.dotProduct(f.Vertices[0].Position));
         }
 
