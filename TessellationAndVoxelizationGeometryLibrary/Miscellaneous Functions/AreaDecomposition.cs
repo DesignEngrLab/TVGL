@@ -145,8 +145,7 @@ namespace TVGL
             }
             return outputData;
         }
-
-
+        
         /// <summary>
         ///     Runs the rectangle restricted.
         /// </summary>
@@ -435,7 +434,8 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="stepSize"></param>
         /// <returns></returns>
-        public static List<DecompositionData> UniformDirectionalDecomposition(TessellatedSolid ts, double[] direction, double stepSize)
+        public static List<DecompositionData> UniformDirectionalDecomposition(TessellatedSolid ts, double[] direction,
+            double stepSize)
         {
             var outputData = new List<DecompositionData>();
 
@@ -443,16 +443,17 @@ namespace TVGL
             var length = MinimumEnclosure.GetLengthAndExtremeVertices(direction, ts.Vertices,
                 out bottomVertices, out topVertices);
 
-            //Set step size to an evan increment over the entire length of the solid
-            stepSize = length/Math.Round(length/stepSize + 1);
+            //Set step size to an even increment over the entire length of the solid
+            stepSize = length / Math.Round(length / stepSize + 1);
 
             //make the minimum step size 1/10 of the length.
             if (length < 10 * stepSize)
             {
-                stepSize = length/10;
+                stepSize = length / 10;
             }
 
-            var minOffset = Math.Sqrt(ts.SameTolerance);
+            //Choose whichever min offset is smaller
+            var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             List<Vertex> sortedVertices;
@@ -461,82 +462,117 @@ namespace TVGL
 
             var edgeListDictionary = new Dictionary<int, Edge>();
             var firstDistance = direction.dotProduct(sortedVertices[0].Position);
-            var previousDistanceAlongAxis = firstDistance; //This value can be negative
-            foreach (var vertex in sortedVertices)
+            var furthestDistance = direction.dotProduct(sortedVertices.Last().Position);
+            var distanceAlongAxis = direction.dotProduct(sortedVertices.First().Position);
+            var currentVertexIndex = 0;
+            var inputEdgeLoops = new List<List<Edge>>();
+            while (distanceAlongAxis < furthestDistance - stepSize)
             {
-                var distanceAlongAxis = direction.dotProduct(vertex.Position); //This value can be negative
-                var difference1 = distanceAlongAxis - previousDistanceAlongAxis;
-                //If the vertex is far enough that the next step size is reached, get the cross section.
-                var i = 1;
-                var distance = previousDistanceAlongAxis;
-                var inputEdgeLoops = new List<List<Edge>>();
-                while (difference1.IsGreaterThanNonNegligible(i * stepSize + 2 * minOffset))
+                distanceAlongAxis += stepSize;
+
+                //Update vertex/edge list up until distanceAlongAxis
+                for(var i = currentVertexIndex; i < sortedVertices.Count(); i++)
                 {
-                    var counter = 0;
-                    var current3DLoops = new List<List<Vertex>>();
-                    var successfull = true;
-                    //Determine the next step distance
-                    do
+                    //Update the current vertex index so that this vertex is not visited again
+                    //unless it causes the break ( > distanceAlongAxis), then it will start the 
+                    //the next iteration.
+                    currentVertexIndex = i;
+                    var vertex = sortedVertices[i];
+                    var vertexDistanceAlong = direction.dotProduct(vertex.Position);
+                    //If a vertex is too close to the current distance, move it forward by the min offset.
+                    //Update the edge list with this vertex.
+                    if (vertexDistanceAlong.IsPracticallySame(distanceAlongAxis, minOffset))
                     {
-                        distance = previousDistanceAlongAxis + stepSize*i; //X value (distance along axis) 
-                        var cuttingPlane = new Flat(distance, direction);
-                        
-                        try
-                        {
-                            List<List<Edge>> outputEdgeLoops;
-                            current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops,
-                                inputEdgeLoops).ToList();
-
-                            
-                            //Use the same output edge loops for outer while loop, since the edge list does not change.
-                            //If there is an error, it will occur before this loop.
-                            inputEdgeLoops = outputEdgeLoops;
-                        }
-                        catch
-                        {
-                            counter++;
-                            distance = distance + minOffset;
-                            successfull = false;
-                        } 
-                    } while (counter < 2 && !successfull);
-
-                    if (successfull)
+                        //Move the distance enough so that this vertex is now less than 
+                        distanceAlongAxis = vertexDistanceAlong + minOffset * 1.1;
+                        //if (vertexDistanceAlong.IsPracticallySame(distanceAlongAxis, minOffset))
+                        //{
+                        //    throw new Exception("Error in implementation. Need to move the distance further");
+                        //}
+                    }
+                    //Else, Break after we get to a vertex that is further than the distance along axis
+                    if (vertexDistanceAlong > distanceAlongAxis)
                     {
-                        double[,] backTransform;
-                        //Get a list of 2D paths from the 3D loops
-                        var currentPaths = current3DLoops.Select(cp => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(cp, direction, out backTransform).ToList()).ToList();
-
-                        //Get the area of this layer
-                        var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
-                        if (area < 0)
-                        {
-                            //Rather than throwing an exception, just assume the polygons were the wrong direction      
-                            Debug.WriteLine("Area for a cross section in UniformDirectionalDecomposition was negative. This means there was an issue with the polygon ordering");
-                        }
-
-                        //Add the data to the output
-                        outputData.Add(new DecompositionData(currentPaths, distance));
+                        //consider this vertex again next iteration
+                        break;
                     }
 
-                    i++;
+                    //Else, it is less than the distance along. Update the edge list
+                    //Add the passed vertices to a list so that they can be removed from the sorted vertices
+  
+                    //Update the edge dictionary that is used to determine the 3D loops.
+                    foreach (var edge in vertex.Edges)
+                    {
+                        //Reset the input edge loops since we have added an edge
+                        inputEdgeLoops = new List<List<Edge>>();
+
+                        //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
+                        //and the second removes it from the list.
+                        if (edgeListDictionary.ContainsKey(edge.IndexInList))
+                        {
+                            edgeListDictionary.Remove(edge.IndexInList);
+                        }
+                        else
+                        {
+                            edgeListDictionary.Add(edge.IndexInList, edge);
+                        }
+                    }
                 }
 
-                //Update the previous distance used to make a data point
-                previousDistanceAlongAxis = distance;
-
-                //Update the edge dictionary that is used to determine the 3D loops.
-                foreach (var edge in vertex.Edges)
+                //Check to make sure that the minor shifts in the distance in the for loop above 
+                //Did not move the distance beyond the furthest distance
+                if (distanceAlongAxis > furthestDistance || !edgeListDictionary.Any()) break;
+                //Make the slice
+                var counter = 0;
+                var current3DLoops = new List<List<Vertex>>();
+                var successfull = true;
+                var cuttingPlane = new Flat(distanceAlongAxis, direction);
+                do
                 {
-                    //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
-                    //and the second removes it from the list.
-                    if (edgeListDictionary.ContainsKey(edge.IndexInList))
+                    try
                     {
-                        edgeListDictionary.Remove(edge.IndexInList);
+                        List<List<Edge>> outputEdgeLoops;
+                        current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops,
+                            inputEdgeLoops).ToList();
+
+                        //Use the same output edge loops for outer while loop, since the edge list does not change.
+                        //If there is an error, it will occur before this loop.
+                        inputEdgeLoops = outputEdgeLoops;
                     }
-                    else
+                    catch
                     {
-                        edgeListDictionary.Add(edge.IndexInList, edge);
+                        counter++;
+                        distanceAlongAxis += minOffset;
+                        successfull = false;
                     }
+                } while (!successfull && counter < 4);
+
+
+                if (successfull)
+                {
+                    double[,] backTransform;
+                    //Get a list of 2D paths from the 3D loops
+                    var currentPaths =
+                        current3DLoops.Select(
+                            cp =>
+                                MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(cp, direction,
+                                    out backTransform).ToList()).ToList();
+
+                    //Get the area of this layer
+                    var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
+                    if (area < 0)
+                    {
+                        //Rather than throwing an exception, just assume the polygons were the wrong direction      
+                        Debug.WriteLine(
+                            "Area for a cross section in UniformDirectionalDecomposition was negative. This means there was an issue with the polygon ordering");
+                    }
+
+                    //Add the data to the output
+                    outputData.Add(new DecompositionData(currentPaths, distanceAlongAxis));
+                }
+                else
+                {
+                    Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
                 }
             }
 
