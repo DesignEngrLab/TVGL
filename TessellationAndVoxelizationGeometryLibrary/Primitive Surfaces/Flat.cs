@@ -100,10 +100,8 @@ namespace TVGL
             //Set the normal by weighting each face's normal with its area
             //This makes small faces have less effect at shifting the normal
             var normalSum = new double[3];
-            var totalArea = 0.0;
             foreach(var face in faces)
             {
-                totalArea += face.Area;
                 var weightedNormal = face.Normal.multiply(face.Area);
                 normalSum[0] += weightedNormal[0];
                 normalSum[1] += weightedNormal[1];
