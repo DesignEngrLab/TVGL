@@ -57,7 +57,7 @@ namespace TVGL
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
         public static List<Flat> Flats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
-           double minSurfaceArea = 0.01)
+           double minSurfaceArea = 0.01, int minNumberOfFacesPerFlat = 2)
         {
             //Note: This function has been optimized to run very fast for large amount of faces
             //Used hashet for "Contains" function calls 
@@ -95,13 +95,16 @@ namespace TVGL
                     //This criteria includes 
                     //1. Must not already be included in the face list
                     if (flatFaces.Contains(newFace)) continue;
+
                     //2. Must have nearly the same normal
                     if (!newFace.Normal.dotProduct(startFace.Normal).IsPracticallySame(1.0, tolerance)) continue;
+
                     //3. Must be nearly the same distance from the origin (this may not be strictly neccessary 
                     //since we are wrapping along the surface by using the adjacent faces
                     //Note that the dotProduct term and distance to origin, must have the same sign, 
                     //so there is no additional need moth absolute value methods.
-                    if (newFace.Vertices.All(v => !startFace.Normal.dotProduct(v.Position).IsPracticallySame(distanceToOrigin, tolerance))) continue;
+                    //NOTE:During testing this step (3) proved to actually produce worse results.
+                    //if (newFace.Vertices.All(v => !startFace.Normal.dotProduct(v.Position).IsPracticallySame(distanceToOrigin, tolerance))) continue;
 
                     //If the face has already been used on another flat, continue
                     if (!unusedFaces.Contains(newFace)) continue;
@@ -125,7 +128,7 @@ namespace TVGL
                 var flat = new Flat(flatFaces) { Tolerance = tolerance };
 
                 //Criteria of whether it should be a flat should be inserted here.
-                if (flat.Faces.Count < 2) continue;
+                if (flat.Faces.Count < minNumberOfFacesPerFlat) continue;
                 if (flat.Area < minSurfaceArea) continue;
                 listFlats.Add(flat);
             }

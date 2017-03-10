@@ -325,7 +325,7 @@ namespace TVGL
             var doubleArray = new List<double[]>();
             for(var i = 0; i < points.Count(); i++)
             {
-                doubleArray[i] = points[i].Position;
+                doubleArray.Add(points[i].Position);
             }
             return doubleArray;
         }
