@@ -257,7 +257,7 @@ namespace TVGL
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             List<Vertex> sortedVertices;
             List<int[]> duplicateRanges;
-            MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+            MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices, out sortedVertices, out duplicateRanges);
 
             var edgeListDictionary = new Dictionary<int, Edge>();
             var firstDistance = direction.dotProduct(sortedVertices[0].Position);
@@ -265,12 +265,13 @@ namespace TVGL
             var distanceAlongAxis = direction.dotProduct(sortedVertices.First().Position);
             var currentVertexIndex = 0;
             var inputEdgeLoops = new List<List<Edge>>();
+            var n = sortedVertices.Count;
             while (distanceAlongAxis < furthestDistance - stepSize)
             {
                 distanceAlongAxis += stepSize;
 
                 //Update vertex/edge list up until distanceAlongAxis
-                for(var i = currentVertexIndex; i < sortedVertices.Count(); i++)
+                for (var i = currentVertexIndex; i < n; i++)
                 {
                     //Update the current vertex index so that this vertex is not visited again
                     //unless it causes the break ( > distanceAlongAxis), then it will start the 
@@ -332,7 +333,7 @@ namespace TVGL
                     {
                         List<List<Edge>> outputEdgeLoops;
                         current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops,
-                            inputEdgeLoops).ToList();
+                            inputEdgeLoops);
 
                         //Use the same output edge loops for outer while loop, since the edge list does not change.
                         //If there is an error, it will occur before this loop.
@@ -355,7 +356,7 @@ namespace TVGL
                         current3DLoops.Select(
                             cp =>
                                 MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(cp, direction,
-                                    out backTransform).ToList()).ToList();
+                                    out backTransform));
 
                     //Get the area of this layer
                     var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
@@ -399,6 +400,7 @@ namespace TVGL
             var previousArea = 0.0;
             var additiveVolume = 0.0;
             var i = 0;
+            var n = decompData.Count;
             foreach (var data in decompData)
             {
                 var currentPaths = data.Paths;
@@ -492,7 +494,7 @@ namespace TVGL
                 }
 
                 //This is the last iteration. Add it to the output data.
-                if (i == decompData.Count - 1)
+                if (i == n - 1)
                 {
                     outputData.Add(new DecompositionData(currentPaths, distance + additiveAccuracy));
                     additiveVolume += additiveAccuracy * area;
@@ -531,7 +533,7 @@ namespace TVGL
             return totalArea;
         }
 
-        private static IEnumerable<List<Vertex>> GetLoops(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane,
+        private static List<List<Vertex>> GetLoops(Dictionary<int, Edge> edgeListDictionary, Flat cuttingPlane,
             out List<List<Edge>> outputEdgeLoops, List<List<Edge>> intputEdgeLoops)
         {
             var edgeLoops = new List<List<Edge>>();
@@ -546,16 +548,20 @@ namespace TVGL
             else
             {
                 //Build an edge list that we can modify, without ruining the original
-                var edgeList = edgeListDictionary.ToDictionary(element => element.Key, element => element.Value);
+                //After comparing hashset versus dictionary (with known keys)
+                //Hashset was slighlty faster during creation and enumeration, 
+                //but even more slighlty slower at removing. Overall, Hashset 
+                //was about 17% faster than a dictionary.
+                var edgeList = new HashSet<Edge>(edgeListDictionary.Values);
                 while (edgeList.Any())
                 {
-                    var startEdge = edgeList.ElementAt(0).Value;
+                    var startEdge = edgeList.First();
                     var loop = new List<Vertex>();
                     var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
                         cuttingPlane.DistanceToOrigin, startEdge.To, startEdge.From);
                     loop.Add(intersectVertex);
                     var edgeLoop = new List<Edge> { startEdge };
-                    edgeList.Remove(startEdge.IndexInList);
+                    edgeList.Remove(startEdge);
                     var startFace = startEdge.OwnedFace;
                     var currentFace = startFace;
                     var previousFace = startFace; //This will be set again before its used.
@@ -566,7 +572,7 @@ namespace TVGL
                     var reverseDirection = 0.0;
                     do
                     {
-                        foreach (var edge in edgeList.Values)
+                        foreach (var edge in edgeList)
                         {
                             if (edge.OtherFace == currentFace)
                             {
@@ -595,14 +601,14 @@ namespace TVGL
                             var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector);
                             loop.Add(intersectVertex);
                             edgeLoop.Add(nextEdge);
-                            edgeList.Remove(nextEdge.IndexInList);
+                            edgeList.Remove(nextEdge);
                             //Note that removing at an index is FASTER than removing a object.
                             if (Math.Sign(dot) >= 0) correctDirection += dot;
                             else reverseDirection += (-dot);
                         }
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
-                    if(reverseDirection > 1 && correctDirection > 1) throw new Exception("Area Decomp Loop Finding needs additional work.");
+                    if (reverseDirection > 1 && correctDirection > 1) throw new Exception("Area Decomp Loop Finding needs additional work.");
                     if (reverseDirection > correctDirection)
                     {
                         loop.Reverse();
@@ -629,7 +635,7 @@ namespace TVGL
                 edgeList.Select(
                     edge =>
                         MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
-                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
+                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From));
             var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
             return MinimumEnclosure.ConvexHull2DArea(MinimumEnclosure.ConvexHull2D(points));
         }
@@ -647,7 +653,7 @@ namespace TVGL
                 edgeList.Select(
                     edge =>
                         MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
-                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From)).ToList();
+                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From));
             var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
             var boundingRectangle = MinimumEnclosure.BoundingRectangle(points, false);
             return boundingRectangle.Area;

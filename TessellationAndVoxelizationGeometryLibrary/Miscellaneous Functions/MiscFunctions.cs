@@ -41,7 +41,7 @@ namespace TVGL
         ///     or
         ///     Must provide between 1 to 3 direction vectors
         /// </exception>
-        public static void SortAlongDirection(double[][] directions, List<Vertex> vertices,
+        public static void SortAlongDirection(double[][] directions, IEnumerable<Vertex> vertices,
             out List<Vertex> sortedVertices,
             out List<int[]> duplicateRanges)
         {
@@ -292,19 +292,23 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Calculate the area of any non-intersecting polygon in 3D space
+        ///     Calculate the area of any non-intersecting polygon in 3D space (loops)
         ///     This is faster than projecting to a 2D surface first in a seperate function.
         /// </summary>
-        /// <param name="polygon">The polygon.</param>
+        /// <param name="loop"></param>
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double.</returns>
         /// <references>http://geomalgorithms.com/a01-_area.html </references>
-        public static double AreaOf3DPolygon(ICollection<Vertex> polygon, double[] normal)
+        public static double AreaOf3DPolygon(IEnumerable<Vertex> loop, double[] normal)
         {
             var ax = Math.Abs(normal[0]);
             var ay = Math.Abs(normal[1]);
             var az = Math.Abs(normal[2]);
-            var vertices = new List<Vertex>(polygon) { polygon.First() };
+
+            //Make a new list from the loop
+            var vertices = new List<Vertex>(loop);
+            //Add the first vertex to the end
+            vertices.Add(vertices.Last());
 
             //Choose the largest abs coordinate to ignore for projections
             var coord = 3; //ignore z-coord
@@ -316,7 +320,8 @@ namespace TVGL
             //if ax == ay and both are greater than az, ignore the x-coord
 
             // compute area of the 2D projection
-            var n = polygon.Count;
+            // -1 so as to not include the vertex that was added to the end of the list
+            var n = vertices.Count - 1; 
             var i = 1;
             var area = 0.0;
             switch (coord)
@@ -423,7 +428,7 @@ namespace TVGL
         /// <param name="tolerance"></param>
         /// <param name="mergeDuplicateReferences"></param>
         /// <returns></returns>
-        public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IList<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
+        public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
             bool mergeDuplicateReferences = false)
         {
             var area1 = AreaOf3DPolygon(loop, direction);
@@ -480,7 +485,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction,
+        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction,
             bool mergeDuplicateReferences = false)
         {
             var transform = TransformToXYPlane(direction);
@@ -496,7 +501,7 @@ namespace TVGL
         /// <param name="direction">The direction.</param>
         /// <param name="mergeDuplicateTolerance">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction, double mergeDuplicateTolerance)
+        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction, double mergeDuplicateTolerance)
         {
             if (mergeDuplicateTolerance.IsNegligible()) mergeDuplicateTolerance = Constants.BaseTolerance; //Minimum allowed tolerance.
             var transform = TransformToXYPlane(direction);
@@ -513,7 +518,7 @@ namespace TVGL
         /// <param name="backTransform">The back transform.</param>
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <returns>Point2D[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[] direction,
+        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[] direction,
             out double[,] backTransform,
             bool mergeDuplicateReferences = false)
         {
@@ -563,7 +568,7 @@ namespace TVGL
         /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
         /// <param name="sameTolerance">The same tolerance.</param>
         /// <returns>Point[].</returns>
-        public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[,] transform,
+        public static Point[] Get2DProjectionPoints(IEnumerable<Vertex> vertices, double[,] transform,
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Point>();
