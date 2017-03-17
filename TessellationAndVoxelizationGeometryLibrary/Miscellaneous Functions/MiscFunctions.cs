@@ -28,6 +28,7 @@ namespace TVGL
     {
         #region Sort Along Direction
 
+
         /// <summary>
         ///     Returns a list of sorted vertices along a set direction. Ties are broken by direction[1] then direction[2] if
         ///     available.
@@ -45,46 +46,75 @@ namespace TVGL
             out List<Vertex> sortedVertices,
             out List<int[]> duplicateRanges)
         {
+            List<Tuple<Vertex, double>> sortedVertexDictionary;
+            SortAlongDirection(directions, vertices, out sortedVertexDictionary, out duplicateRanges);
+            //Convert output to a list of sorted vertices
+            sortedVertices = sortedVertexDictionary.Select(element => element.Item1).ToList();
+        }
+
+
+        /// <summary>
+        ///     Returns a list of sorted vertices along a set direction. Ties are broken by direction[1] then direction[2] if
+        ///     available.
+        /// </summary>
+        /// <param name="directions">The directions.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="sortedVertices">The sorted vertices.</param>
+        /// <param name="duplicateRanges">The duplicate ranges.</param>
+        /// <exception cref="Exception">
+        ///     Must provide between 1 to 3 direction vectors
+        ///     or
+        ///     Must provide between 1 to 3 direction vectors
+        /// </exception>
+        public static void SortAlongDirection(double[][] directions, IEnumerable<Vertex> vertices,
+            out List<Tuple<Vertex, double>> sortedVertices,
+            out List<int[]> duplicateRanges)
+        {
             //Get integer values for every vertex as distance along direction
             //Split positive and negative numbers into seperate lists. 0 is 
             //considered positive.
             //This is an O(n) preprocessing step
             duplicateRanges = new List<int[]>();
-            sortedVertices = new List<Vertex>();
+            sortedVertices = new List<Tuple<Vertex, double>>();
             var points = new List<Point>();
+            var pointDistances = new Dictionary<int, double>();
+            var pointIndex = 0;
+            //Accuracy to the 15th decimal place
+            var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
             foreach (var vertex in vertices)
             {
                 //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
+                Point point;
+                var dot1 = directions[0].dotProduct(vertex.Position);
+   
                 switch (directions.Length)
-                {
+                {                   
                     case 1:
                         {
-                            var dot1 = Math.Round(directions[0].dotProduct(vertex.Position) * 1E+15);
-                            //Accuracy to the 15th decimal place
-                            var point = new Point(vertex, dot1, 0.0, 0.0);
-                            points.Add(point);
+                            point = new Point(vertex, Math.Round(dot1 * tolerance), 0.0, 0.0);
                         }
                         break;
                     case 2:
                         {
-                            var dot1 = Math.Round(directions[0].dotProduct(vertex.Position) * 1E+15);
-                            var dot2 = Math.Round(directions[1].dotProduct(vertex.Position) * 1E+15);
-                            var point = new Point(vertex, dot1, dot2, 0.0);
-                            points.Add(point);
+                            var dot2 = directions[1].dotProduct(vertex.Position);
+                            point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), 0.0);
                         }
                         break;
                     case 3:
                         {
-                            var dot1 = Math.Round(directions[0].dotProduct(vertex.Position) * 1E+15);
-                            var dot2 = Math.Round(directions[1].dotProduct(vertex.Position) * 1E+15);
-                            var dot3 = Math.Round(directions[2].dotProduct(vertex.Position) * 1E+15);
-                            var point = new Point(vertex, dot1, dot2, dot3);
-                            points.Add(point);
+                            var dot2 = directions[1].dotProduct(vertex.Position);
+                            var dot3 = directions[2].dotProduct(vertex.Position);
+                            point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), Math.Round(dot3 * tolerance));           
                         }
                         break;
                     default:
                         throw new Exception("Must provide between 1 to 3 direction vectors");
+
                 }
+                point.IndexInPath = pointIndex;
+                points.Add(point);
+                pointDistances.Add(pointIndex, dot1);
+                pointIndex++;
             }
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
@@ -95,7 +125,8 @@ namespace TVGL
             //Linear operation to locate duplicates and convert back to a list of vertices
             var previousDuplicate = false;
             var startIndex = 0;
-            sortedVertices.Add(sortedPoints[0].References[0]);
+            var startPoint = sortedPoints[0];
+            sortedVertices.Add(new Tuple<Vertex, double>(startPoint.References[0], pointDistances[startPoint.IndexInPath]));
             var counter = 0;
             int[] intRange;
             switch (directions.Length)
@@ -104,7 +135,8 @@ namespace TVGL
                     {
                         for (var i = 1; i < sortedPoints.Count; i++)
                         {
-                            sortedVertices.Add(sortedPoints[i].References[0]);
+                            var point = sortedPoints[i];
+                            sortedVertices.Add(new Tuple<Vertex, double>(point.References[0], pointDistances[point.IndexInPath]));
                             if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X))
                             {
                                 counter++;
@@ -131,7 +163,8 @@ namespace TVGL
                     {
                         for (var i = 1; i < sortedPoints.Count; i++)
                         {
-                            sortedVertices.Add(sortedPoints[i].References[0]);
+                            var point = sortedPoints[i];
+                            sortedVertices.Add(new Tuple<Vertex, double>(point.References[0], pointDistances[point.IndexInPath]));
                             if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
                                 sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y))
                             {
@@ -159,7 +192,8 @@ namespace TVGL
                     {
                         for (var i = 1; i < sortedPoints.Count; i++)
                         {
-                            sortedVertices.Add(sortedPoints[i].References[0]);
+                            var point = sortedPoints[i];
+                            sortedVertices.Add(new Tuple<Vertex, double>(point.References[0], pointDistances[point.IndexInPath]));
                             if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
                                 sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y) &&
                                 sortedPoints[i - 1].Z.IsPracticallySame(sortedPoints[i].Z))
@@ -308,7 +342,7 @@ namespace TVGL
             //Make a new list from the loop
             var vertices = new List<Vertex>(loop);
             //Add the first vertex to the end
-            vertices.Add(vertices.Last());
+            vertices.Add(vertices.First());
 
             //Choose the largest abs coordinate to ignore for projections
             var coord = 3; //ignore z-coord
@@ -431,8 +465,9 @@ namespace TVGL
         public static List<Point> Get2DProjectionPointsReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
             bool mergeDuplicateReferences = false)
         {
-            var area1 = AreaOf3DPolygon(loop, direction);
-            var path = Get2DProjectionPoints(loop, direction, out backTransform).ToList();
+            var enumerable = loop as IList<Vertex> ?? loop.ToList();
+            var area1 = AreaOf3DPolygon(enumerable, direction);
+            var path = Get2DProjectionPoints(enumerable, direction, out backTransform).ToList();
             var area2 = AreaOfPolygon(path);
             var dif = area1 - area2;
             var successful = false;

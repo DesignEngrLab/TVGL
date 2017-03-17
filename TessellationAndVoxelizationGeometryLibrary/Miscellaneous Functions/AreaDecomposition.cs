@@ -56,16 +56,17 @@ namespace TVGL
                 stepSize = minOffset * 2 + ts.SameTolerance;
             }
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            List<Vertex> sortedVertices;
+            List<Tuple<Vertex, double>> sortedVertices;
             List<int[]> duplicateRanges;
             MiscFunctions.SortAlongDirection(new[] { axis }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
 
             var edgeListDictionary = new Dictionary<int, Edge>();
-            var previousDistanceAlongAxis = axis.dotProduct(sortedVertices[0].Position); //This value can be negative
+            var previousDistanceAlongAxis = sortedVertices[0].Item2; //This value can be negative
             var previousVertexDistance = previousDistanceAlongAxis;
-            foreach (var vertex in sortedVertices)
+            foreach (var element in sortedVertices)
             {
-                var distanceAlongAxis = axis.dotProduct(vertex.Position); //This value can be negative
+                var vertex = element.Item1;
+                var distanceAlongAxis = element.Item2; //This value can be negative
                 var difference1 = distanceAlongAxis - previousDistanceAlongAxis;
                 var difference2 = distanceAlongAxis - previousVertexDistance;
                 if (difference2 > minOffset && difference1 > stepSize)
@@ -161,15 +162,16 @@ namespace TVGL
             var crossSection = new List<List<Point>>();
            
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            List<Vertex> sortedVertices;
+            List<Tuple<Vertex, double>> sortedVertices;
             List<int[]> duplicateRanges;
             MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
 
             var edgeListDictionary = new Dictionary<int, Edge>();
-            var previousVertexDistance = direction.dotProduct(sortedVertices[0].Position); //This value can be negative
-            foreach (var vertex in sortedVertices)
+            var previousVertexDistance = sortedVertices[0].Item2; //This value can be negative
+            foreach (var element in sortedVertices)
             {
-                var currentVertexDistance = direction.dotProduct(vertex.Position); //This value can be negative
+                var vertex = element.Item1;
+                var currentVertexDistance = element.Item2; //This value can be negative
 
                 if (currentVertexDistance.IsPracticallySame(distance, ts.SameTolerance) || currentVertexDistance > distance)
                 {
@@ -255,30 +257,31 @@ namespace TVGL
             var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            List<Vertex> sortedVertices;
+            List<Tuple<Vertex, double>> sortedVertices;
             List<int[]> duplicateRanges;
             MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices, out sortedVertices, out duplicateRanges);
 
             var edgeListDictionary = new Dictionary<int, Edge>();
-            var firstDistance = direction.dotProduct(sortedVertices[0].Position);
-            var furthestDistance = direction.dotProduct(sortedVertices.Last().Position);
-            var distanceAlongAxis = direction.dotProduct(sortedVertices.First().Position);
+            var firstDistance = sortedVertices.First().Item2;
+            var furthestDistance = sortedVertices.Last().Item2;
+            var distanceAlongAxis = firstDistance;
             var currentVertexIndex = 0;
             var inputEdgeLoops = new List<List<Edge>>();
-            var n = sortedVertices.Count;
+
             while (distanceAlongAxis < furthestDistance - stepSize)
             {
                 distanceAlongAxis += stepSize;
 
                 //Update vertex/edge list up until distanceAlongAxis
-                for (var i = currentVertexIndex; i < n; i++)
+                for (var i = currentVertexIndex; i < sortedVertices.Count; i++)
                 {
                     //Update the current vertex index so that this vertex is not visited again
                     //unless it causes the break ( > distanceAlongAxis), then it will start the 
                     //the next iteration.
                     currentVertexIndex = i;
-                    var vertex = sortedVertices[i];
-                    var vertexDistanceAlong = direction.dotProduct(vertex.Position);
+                    var element = sortedVertices[i];
+                    var vertex = element.Item1;
+                    var vertexDistanceAlong = element.Item2; 
                     //If a vertex is too close to the current distance, move it forward by the min offset.
                     //Update the edge list with this vertex.
                     if (vertexDistanceAlong.IsPracticallySame(distanceAlongAxis, minOffset))
@@ -379,7 +382,7 @@ namespace TVGL
             //Add the first and last cross sections. 
             //Note, these may not be great fits if step size is large
             outputData.Insert(0, new DecompositionData(outputData.First().Paths, firstDistance));
-            outputData.Add(new DecompositionData(outputData.Last().Paths, direction.dotProduct(sortedVertices.Last().Position)));
+            outputData.Add(new DecompositionData(outputData.Last().Paths, furthestDistance));
 
             return outputData;
         }
