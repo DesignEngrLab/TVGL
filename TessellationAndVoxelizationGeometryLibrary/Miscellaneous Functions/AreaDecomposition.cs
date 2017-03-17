@@ -555,16 +555,17 @@ namespace TVGL
                 //Hashset was slighlty faster during creation and enumeration, 
                 //but even more slighlty slower at removing. Overall, Hashset 
                 //was about 17% faster than a dictionary.
-                var edgeList = new HashSet<Edge>(edgeListDictionary.Values);
-                while (edgeList.Any())
+                var edges = new List<Edge>(edgeListDictionary.Values);
+                var unusedEdges = new HashSet<Edge>(edges);
+                foreach (var startEdge in edges)
                 {
-                    var startEdge = edgeList.First();
+                    if (!unusedEdges.Contains(startEdge)) continue;
+                    unusedEdges.Remove(startEdge);;
                     var loop = new List<Vertex>();
                     var intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
                         cuttingPlane.DistanceToOrigin, startEdge.To, startEdge.From);
                     loop.Add(intersectVertex);
                     var edgeLoop = new List<Edge> { startEdge };
-                    edgeList.Remove(startEdge);
                     var startFace = startEdge.OwnedFace;
                     var currentFace = startFace;
                     var previousFace = startFace; //This will be set again before its used.
@@ -575,8 +576,10 @@ namespace TVGL
                     var reverseDirection = 0.0;
                     do
                     {
-                        foreach (var edge in edgeList)
+                        //Get the next edge
+                        foreach (var edge in currentFace.Edges)
                         {
+                            if (!unusedEdges.Contains(edge)) continue;
                             if (edge.OtherFace == currentFace)
                             {
                                 previousFace = edge.OtherFace;
@@ -604,13 +607,14 @@ namespace TVGL
                             var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector);
                             loop.Add(intersectVertex);
                             edgeLoop.Add(nextEdge);
-                            edgeList.Remove(nextEdge);
+                            unusedEdges.Remove(nextEdge);
                             //Note that removing at an index is FASTER than removing a object.
                             if (Math.Sign(dot) >= 0) correctDirection += dot;
                             else reverseDirection += (-dot);
                         }
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
+
                     if (reverseDirection > 1 && correctDirection > 1) throw new Exception("Area Decomp Loop Finding needs additional work.");
                     if (reverseDirection > correctDirection)
                     {
