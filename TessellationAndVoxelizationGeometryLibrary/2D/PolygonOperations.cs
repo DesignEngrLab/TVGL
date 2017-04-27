@@ -39,6 +39,16 @@ namespace TVGL
             return length;
         }
 
+        /// <summary>
+        /// Gets the length of a path
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <returns></returns>
+        public static double Length(IList<List<Point>> paths)
+        {
+            return paths.Sum(path => Length(path));
+        }
+
         #region Clockwise / CounterClockwise Ordering
 
         /// <summary>

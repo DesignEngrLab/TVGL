@@ -1349,6 +1349,27 @@ namespace TVGL
             out List<Vertex> verticesFromSolid2InsideSolid1, out List<Vertex> verticesFromSolid2OutsideSolid1,
             bool onBoundaryIsInside = true)
         {
+            //Note: This mehtod should accurately tell you if any vertices are inside another solid, 
+            //but there may be some cases (though rare) where faces go through another solid without leaving a vertex inside.
+            //In this case, it would be better to check for face intersections with the lists rather than doing a ray cast with the vertices.
+
+            //HOW IT WORKS:
+            //The code sorts the vertices for each solid along a direction.
+            //There is no real reason to pick a random direction, except that is what I was using with 
+            //a try/catch to check another direction if it failed.Likely, that should be removed so it can actually be debugged if needed.
+
+            //Then, the search method goes through a list of all the sorted vertices
+            //If the vertex belongs to the second solid
+            //1) it updates the outsideFaceList, which is the face list for Solid2.
+            //2) It performs a ray cast to see how many Solid1 faces it intersects along a perpendicular direction to the search direction
+            //It tracks whether the face is above or below the vertex in question.
+            //3) It uses the number of faces above and below to determine whether it is inside Solid1.This is the same logic as for determining whether a point is inside a positive polygon.An even number of intercepts means the vertex is outside Solid1, while an odd number means it is inside.This should work whether the solids are convex or concave.
+
+            //If the vertex belongs to the first solid, it does the same thing but using Solid2 and the insideFaceList.
+
+
+
+
             //Set reference indices to keep track of which vertex belong to which point
             //NOTE: if the two solids are in fact the same solid, this will fail, but it
             //will work as long as it is a copy of the solid.
