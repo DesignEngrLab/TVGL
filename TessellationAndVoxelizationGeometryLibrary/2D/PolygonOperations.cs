@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL.ClipperInt;
+using ClipperLib;
 
 namespace TVGL
 {
@@ -151,41 +151,40 @@ namespace TVGL
             simplifiedPolygon = new List<Point>();
 
             //Simplify
-            var solution = Clipper.Clipper.SimplifyPolygon(new Path(polygon));
+            var solution = UnionEvenOdd(new List<List<Point>>() { polygon.ToList() });
 
             var outputLoops = new List<List<Point>>();
             foreach (var loop in solution)
             {
                 var offsetLoop = new List<Point>();
-                for (var i = 0; i < loop.Count; i++)
+                foreach (var point in loop)
                 {
-                    var Point = loop[i];
-                    var x = Point.X;
-                    var y = Point.Y;
-                    offsetLoop.Add(new Point(new List<double> {x, y, 0.0}) {References = Point.References});
+                    var x = point.X;
+                    var y = point.Y;
+                    offsetLoop.Add(new Point(new List<double> {x, y, 0.0}) {References = point.References});
                 }
                 outputLoops.Add(offsetLoop);
             }
 
-
             //If simplification split the polygon into multiple paths. Union the subject together, removing the extraneous lines
-            if (outputLoops.Count == 1)
+            switch (outputLoops.Count)
             {
-                simplifiedPolygon = outputLoops.First();
-                return true;
+                case 1:
+                    simplifiedPolygon = outputLoops.First();
+                    return true;
+                case 0:
+                    return false;
+                default:
+                    //If more than one polygon.
+                    var positiveLoops = outputLoops.Select(CCWPositive).ToList();
+                    var unionLoops = Union(positiveLoops);
+                    if (unionLoops.Count != 1)
+                    {
+                        return false;
+                    }
+                    simplifiedPolygon = unionLoops.First();
+                    return true;
             }
-            if (outputLoops.Count == 0)
-            {
-                return false;
-            }
-            var positiveLoops = outputLoops.Select(CCWPositive).ToList();
-            var unionLoops = Union(positiveLoops);
-            if (unionLoops.Count != 1)
-            {
-                return false;
-            }
-            simplifiedPolygon = unionLoops.First();
-            return true;
         }
 
         #endregion
@@ -555,7 +554,7 @@ namespace TVGL
                 subject.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
 
             //Setup Clipper
-            var clipper = new ClipperInt.Clipper() { StrictlySimple = true };
+            var clipper = new ClipperLib.Clipper() { StrictlySimple = true };
             clipper.AddPaths(clipperSubject, PolyType.ptSubject, true);
 
             if (clip != null)

@@ -1,11 +1,10 @@
 ﻿/*******************************************************************************
 *                                                                              *
 * Author    :  Angus Johnson                                                   *
-* Version   :  6.4.0                                                           *
-* Date      :  2 July 2015                                                     *
-* Last Updated : 9 November 2016                                               *
+* Version   :  6.4.2                                                           *
+* Date      :  27 February 2017                                                *
 * Website   :  http://www.angusj.com                                           *
-* Copyright :  Angus Johnson 2010-2015                                         *
+* Copyright :  Angus Johnson 2010-2017                                         *
 *                                                                              *
 * License:                                                                     *
 * Use, modification & distribution is subject to Boost Software License Ver 1. *
@@ -52,8 +51,11 @@
 
 using System;
 using System.Collections.Generic;
+//using System.Text;          //for Int128.AsString() & StringBuilder
+//using System.IO;            //debugging with streamReader & StreamWriter
+//using System.Windows.Forms; //debugging to clipboard
 
-namespace TVGL.ClipperInt
+namespace ClipperLib
 {
 
 #if use_int32
@@ -2128,7 +2130,7 @@ namespace TVGL.ClipperInt
                     prevE = e.PrevInAEL;
             }
 
-            if (prevE != null && prevE.OutIdx >= 0)
+            if (prevE != null && prevE.OutIdx >= 0 && prevE.Top.Y < pt.Y && e.Top.Y < pt.Y)
             {
                 cInt xPrev = TopX(prevE, pt.Y);
                 cInt xE = TopX(e, pt.Y);
@@ -2795,6 +2797,11 @@ namespace TVGL.ClipperInt
 
                     if (horzEdge.OutIdx >= 0 && !IsOpen)  //note: may be done multiple times
                     {
+#if use_xyz
+                  if (dir == Direction.dLeftToRight) SetZ(ref e.Curr, horzEdge, e);
+                  else SetZ(ref e.Curr, e, horzEdge);
+#endif
+
                         op1 = AddOutPt(horzEdge, e.Curr);
                         TEdge eNextHorz = m_SortedEdges;
                         while (eNextHorz != null)
@@ -3203,8 +3210,12 @@ namespace TVGL.ClipperInt
                     {
                         e.Curr.X = TopX(e, topY);
                         e.Curr.Y = topY;
+#if use_xyz
+              if (e.Top.Y == topY) e.Curr.Z = e.Top.Z;
+              else if (e.Bot.Y == topY) e.Curr.Z = e.Bot.Z;
+              else e.Curr.Z = 0;
+#endif
                     }
-
                     //When StrictlySimple and 'e' is being touched by another edge, then
                     //make sure both edges have a vertex here ...
                     if (StrictlySimple)
@@ -3917,7 +3928,7 @@ namespace TVGL.ClipperInt
             foreach (OutRec outRec in m_PolyOuts)
             {
                 OutRec firstLeft = ParseFirstLeft(outRec.FirstLeft);
-                if (outRec.Pts != null && outRec.FirstLeft == OldOutRec)
+                if (outRec.Pts != null && firstLeft == OldOutRec)
                     outRec.FirstLeft = NewOutRec;
             }
         }
