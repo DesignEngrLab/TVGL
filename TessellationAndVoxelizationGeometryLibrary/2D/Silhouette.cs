@@ -249,7 +249,7 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double minAngle = 1.0)
+        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double minAngle = 1.0, bool removeTinyPolygons = true)
         {
             if (ts.Errors?.SingledSidedEdges != null)
             {
@@ -341,7 +341,9 @@ namespace TVGL
                 loopCount++;
             }
 
-            
+
+            if (!removeTinyPolygons) return solution;
+
             //Offset by enough to account for 0.1 degree limit. 
             List<Vertex> v1, v2;
             var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out v1, out v2);
@@ -350,7 +352,6 @@ namespace TVGL
             //Remove tiny polygons and slivers 
             var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
             var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
-
             return significantSolution;
         }
 
