@@ -140,11 +140,11 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs">
       <Link>Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\ClassificationConstants.cs">
-      <Link>Primitive Classification\ClassificationConstants.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\FaceWithScores.cs">
       <Link>Primitive Classification\FaceWithScores.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Parameters.cs">
+      <Link>Primitive Classification\Parameters.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\PlanningSurface.cs">
       <Link>Primitive Classification\PlanningSurface.cs</Link>
@@ -207,6 +207,11 @@
       <Link>Verbosity.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
@@ -231,7 +236,12 @@
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

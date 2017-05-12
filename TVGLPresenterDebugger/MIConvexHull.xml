@@ -80,9 +80,9 @@
         </member>
         <member name="T:MIConvexHull.IndexBuffer">
             <summary>
+            Class IndexBuffer.
             A fancy name for a list of integers.
             </summary>
-            <seealso cref="!:MIConvexHull.SimpleList&lt;System.Int32&gt;" />
         </member>
         <member name="T:MIConvexHull.FaceList">
             <summary>
@@ -186,7 +186,6 @@
             A default convex face representation.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
-            <seealso cref="!:MIConvexHull.ConvexFace&lt;TVertex, MIConvexHull.DefaultConvexFace&lt;TVertex&gt;&gt;" />
         </member>
         <member name="T:MIConvexHull.DeferredFace">
             <summary>
@@ -636,8 +635,10 @@
             <summary>
             Finds (dimension + 1) initial points.
             </summary>
-            <param name="extremes"></param>
-            <returns></returns>
+            <returns>List&lt;System.Int32&gt;.</returns>
+            <exception cref="T:System.ArgumentException">The input data is degenerate. It appears to exist in " + NumOfDimensions +
+                                " dimensions, but it is a " + (NumOfDimensions - 1) + " dimensional set (i.e. the point of collinear,"
+                                + " coplanar, or co-hyperplanar.)</exception>
         </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.UpdateAdjacency(MIConvexHull.ConvexFaceInternal,MIConvexHull.ConvexFaceInternal)">
             <summary>
@@ -782,7 +783,7 @@
             Saves the garbage collector a lot of work.
             </summary>
         </member>
-        <member name="F:MIConvexHull.ConvexHullAlgorithm.MathHelper">
+        <member name="F:MIConvexHull.ConvexHullAlgorithm.mathHelper">
             <summary>
             Helper class for handling math related stuff.
             </summary>
@@ -899,10 +900,9 @@
             <summary>
             Returns the vector the between vertices.
             </summary>
-            <param name="fromIndex">From index.</param>
             <param name="toIndex">To index.</param>
-            <param name="target">The target.</param>
-            <returns></returns>
+            <param name="fromIndex">From index.</param>
+            <returns>System.Double[].</returns>
         </member>
         <member name="M:MIConvexHull.MathHelper.VectorBetweenVertices(System.Int32,System.Int32,System.Double[])">
             <summary>
@@ -952,18 +952,19 @@
         <member name="M:MIConvexHull.MathHelper.GetSimplexVolume(System.Double[][],System.Int32,System.Double)">
             <summary>
             Gets the simplex volume. Prior to having enough edge vectors, the method pads the remaining with all
-            "other numbers". So, yes, this method is not really finding the volume. But a relative volume-like measure. It 
+            "other numbers". So, yes, this method is not really finding the volume. But a relative volume-like measure. It
             uses the magnitude of the determinant as the volume stand-in following the Cayley-Menger theorem.
             </summary>
             <param name="edgeVectors">The edge vectors.</param>
             <param name="lastIndex">The last index.</param>
-            <returns></returns>
+            <param name="bigNumber">The big number.</param>
+            <returns>System.Double.</returns>
         </member>
         <member name="M:MIConvexHull.MathHelper.DeterminantDestructive(System.Double[])">
             <summary>
             Determinants the destructive.
             </summary>
-            <param name="buff">The buff.</param>
+            <param name="A">a.</param>
             <returns>System.Double.</returns>
         </member>
         <member name="M:MIConvexHull.MathHelper.LUFactor(System.Double[],System.Int32,System.Int32[],System.Double[])">
@@ -1118,8 +1119,8 @@
             Creates the Delaunay triangulation of the input data.
             </summary>
             <param name="data">The data.</param>
-            <param name="config">If null, default ConvexHullComputationConfig is used.</param>
             <returns>DelaunayTriangulation&lt;TVertex, TCell&gt;.</returns>
+            <exception cref="T:System.ArgumentNullException">data</exception>
             <exception cref="T:System.ArgumentNullException">data</exception>
         </member>
         <member name="T:MIConvexHull.ITriangulation`2">
@@ -1146,7 +1147,6 @@
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <param name="data">The data.</param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>ITriangulation&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.Triangulation.CreateDelaunay(System.Collections.Generic.IList{System.Double[]})">
@@ -1154,56 +1154,50 @@
             Creates the Delaunay triangulation of the input data.
             </summary>
             <param name="data">The data.</param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>ITriangulation&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.Triangulation.CreateDelaunay``2(System.Collections.Generic.IList{``0})">
             <summary>
-                Creates the Delaunay triangulation of the input data.
+            Creates the Delaunay triangulation of the input data.
             </summary>
-            <typeparam name="TVertex"></typeparam>
-            <typeparam name="TFace"></typeparam>
-            <param name="data"></param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
-            <returns></returns>
+            <typeparam name="TVertex">The type of the t vertex.</typeparam>
+            <typeparam name="TFace">The type of the t face.</typeparam>
+            <param name="data">The data.</param>
+            <returns>ITriangulation&lt;TVertex, TFace&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.Triangulation.CreateVoronoi``3(System.Collections.Generic.IList{``0})">
             <summary>
-                Create the voronoi mesh.
+            Create the voronoi mesh.
             </summary>
-            <typeparam name="TVertex"></typeparam>
-            <typeparam name="TCell"></typeparam>
-            <typeparam name="TEdge"></typeparam>
-            <param name="data"></param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
-            <returns></returns>
+            <typeparam name="TVertex">The type of the t vertex.</typeparam>
+            <typeparam name="TCell">The type of the t cell.</typeparam>
+            <typeparam name="TEdge">The type of the t edge.</typeparam>
+            <param name="data">The data.</param>
+            <returns>VoronoiMesh&lt;TVertex, TCell, TEdge&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.Triangulation.CreateVoronoi``1(System.Collections.Generic.IList{``0})">
             <summary>
-                Create the voronoi mesh.
+            Create the voronoi mesh.
             </summary>
-            <typeparam name="TVertex"></typeparam>
-            <param name="data"></param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
-            <returns></returns>
+            <typeparam name="TVertex">The type of the t vertex.</typeparam>
+            <param name="data">The data.</param>
+            <returns>VoronoiMesh&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;, VoronoiEdge&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;&gt;&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.Triangulation.CreateVoronoi(System.Collections.Generic.IList{System.Double[]})">
             <summary>
-                Create the voronoi mesh.
+            Create the voronoi mesh.
             </summary>
-            <param name="data"></param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
-            <returns></returns>
+            <param name="data">The data.</param>
+            <returns>VoronoiMesh&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;, VoronoiEdge&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;&gt;&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.Triangulation.CreateVoronoi``2(System.Collections.Generic.IList{``0})">
             <summary>
-                Create the voronoi mesh.
+            Create the voronoi mesh.
             </summary>
-            <typeparam name="TVertex"></typeparam>
-            <typeparam name="TCell"></typeparam>
-            <param name="data"></param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
-            <returns></returns>
+            <typeparam name="TVertex">The type of the t vertex.</typeparam>
+            <typeparam name="TCell">The type of the t cell.</typeparam>
+            <param name="data">The data.</param>
+            <returns>VoronoiMesh&lt;TVertex, TCell, VoronoiEdge&lt;TVertex, TCell&gt;&gt;.</returns>
         </member>
         <member name="T:MIConvexHull.TriangulationCell`2">
             <summary>
@@ -1220,7 +1214,6 @@
             Default triangulation cell.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
-            <seealso cref="!:MIConvexHull.TriangulationCell&lt;TVertex, MIConvexHull.DefaultTriangulationCell&lt;TVertex&gt;&gt;" />
         </member>
         <member name="T:MIConvexHull.VoronoiEdge`2">
             <summary>
@@ -1279,7 +1272,6 @@
             <typeparam name="TCell">The type of the t cell.</typeparam>
             <typeparam name="TEdge">The type of the t edge.</typeparam>
             <param name="data">The data.</param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>VoronoiMesh&lt;TVertex, TCell, TEdge&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.VoronoiMesh.Create``1(System.Collections.Generic.IList{``0})">
@@ -1288,7 +1280,6 @@
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <param name="data">The data.</param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>VoronoiMesh&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;, VoronoiEdge&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;&gt;&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.VoronoiMesh.Create(System.Collections.Generic.IList{System.Double[]})">
@@ -1296,7 +1287,6 @@
             Create the voronoi mesh.
             </summary>
             <param name="data">The data.</param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>VoronoiMesh&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;, VoronoiEdge&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;&gt;&gt;.</returns>
         </member>
         <member name="M:MIConvexHull.VoronoiMesh.Create``2(System.Collections.Generic.IList{``0})">
@@ -1306,7 +1296,6 @@
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <typeparam name="TCell">The type of the t cell.</typeparam>
             <param name="data">The data.</param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>VoronoiMesh&lt;TVertex, TCell, VoronoiEdge&lt;TVertex, TCell&gt;&gt;.</returns>
         </member>
         <member name="T:MIConvexHull.VoronoiMesh`3">
@@ -1340,8 +1329,8 @@
             Create a Voronoi diagram of the input data.
             </summary>
             <param name="data">The data.</param>
-            <param name="config">If null, default TriangulationComputationConfig is used.</param>
             <returns>VoronoiMesh&lt;TVertex, TCell, TEdge&gt;.</returns>
+            <exception cref="T:System.ArgumentNullException">data</exception>
             <exception cref="T:System.ArgumentNullException">data</exception>
         </member>
         <member name="T:MIConvexHull.VoronoiMesh`3.EdgeComparer">
@@ -1352,11 +1341,11 @@
         </member>
         <member name="M:MIConvexHull.VoronoiMesh`3.EdgeComparer.Equals(`2,`2)">
             <summary>
-            Determines whether the specified objects are equal.
+            Equalses the specified x.
             </summary>
-            <param name="x">The first object of type <paramref name="T" /> to compare.</param>
-            <param name="y">The second object of type <paramref name="T" /> to compare.</param>
-            <returns>true if the specified objects are equal; otherwise, false.</returns>
+            <param name="x">The x.</param>
+            <param name="y">The y.</param>
+            <returns>System.Boolean.</returns>
         </member>
         <member name="M:MIConvexHull.VoronoiMesh`3.EdgeComparer.GetHashCode(`2)">
             <summary>

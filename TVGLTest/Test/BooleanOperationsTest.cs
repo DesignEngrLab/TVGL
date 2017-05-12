@@ -1,12 +1,9 @@
-﻿using System;
+﻿using ClipperLib;
 using NUnit.Framework;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Windows.Threading;
 using StarMathLib;
+using System.Collections.Generic;
+using System.Linq;
 using TVGL;
-using TVGL.Clipper;
 
 namespace TVGLTest.Test
 {
@@ -85,7 +82,7 @@ namespace TVGLTest.Test
             int dx = 0;
             for (int i = 0; i < rows; ++i)
             {
-                if (dx == 0) dx = halfSize; else dx = 0;
+                dx = dx == 0 ? halfSize : 0;
                 for (int j = 0; j < cols; ++j)
                 {
                     int[] ints = {
@@ -193,7 +190,7 @@ namespace TVGLTest.Test
         [Test]
         public void Difference1()
         {
-            PolyFillType fillMethod = PolyFillType.Positive;
+            var fillMethod = PolyFillType.pftPositive;
             //Note: If you do not use a scaling factor for Points, 
             //if two points are close together, they will not be distinguished.
             //Clipper was meant to use a scaling factor.

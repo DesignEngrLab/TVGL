@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using ClipperLib;
 using NUnit.Framework;
 using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
-using TVGL.Clipper;
 using TVGL.IOFunctions;
 
 namespace TVGL_Test
@@ -132,7 +132,7 @@ namespace TVGL_Test
             var polytree = new PolyTree();
             var clipper = new Clipper();
 
-            PolyFillType fillMethod = PolyFillType.Positive;
+            PolyFillType fillMethod = PolyFillType.pftPositive;
             const int scalingFactor = 1000;
             int[] ints1 = { -103, -219, -103, -136, -115, -136 }; //CCW
             int[] ints2 = { -110, -155, -110, -174, -70, -174 }; //CCW
@@ -143,25 +143,25 @@ namespace TVGL_Test
             //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip }, scalingFactor);
 
             clipper.StrictlySimple = true;
-            clipper.AddPaths(subject, PolyType.Subject, true);
-            clipper.AddPaths(clip, PolyType.Clip, true);
+            clipper.AddPaths(subject, PolyType.ptSubject, true);
+            clipper.AddPaths(clip, PolyType.ptClip, true);
 
-            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
+            var result = clipper.Execute(ClipType.ctUnion, solution, fillMethod, fillMethod);
             //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(1));
 
-            result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
+            result = clipper.Execute(ClipType.ctDifference, solution, fillMethod, fillMethod);
             //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(2));
 
-            result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
+            result = clipper.Execute(ClipType.ctIntersection, solution, fillMethod, fillMethod);
             //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(1));
 
-            result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
+            result = clipper.Execute(ClipType.ctXor, solution, fillMethod, fillMethod);
             //ShowPaths(solution, scalingFactor);
             Assert.That(result, Is.True);
             Assert.That(solution.Count, Is.EqualTo(4));
