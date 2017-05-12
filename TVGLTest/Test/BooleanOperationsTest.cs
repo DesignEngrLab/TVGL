@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Threading;
+using ClipperLib;
 using StarMathLib;
 using TVGL;
 using TVGL.Clipper;
