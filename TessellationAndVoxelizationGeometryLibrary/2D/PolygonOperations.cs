@@ -201,7 +201,7 @@ namespace TVGL
         public static List<List<Point>> OffsetRound(IEnumerable<Point> path, double offset,
             double minLength = 0.0)
         {
-            return Offset(new Paths { path.ToList() }, offset, JoinType.Round, minLength);
+            return Offset(new Paths { path.ToList() }, offset, JoinType.jtRound, minLength);
         }
 
         /// <summary>
@@ -217,7 +217,7 @@ namespace TVGL
             double minLength = 0.0)
         {
             var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.Round, minLength);
+            return Offset(listPaths, offset, JoinType.jtRound, minLength);
         }
 
         /// <summary>
@@ -230,7 +230,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<Point> OffsetMiter(IEnumerable<Point> path, double offset, double minLength = 0.0)
         {
-            return Offset(new Paths { path.ToList() }, offset, JoinType.Miter, minLength).FirstOrDefault();
+            return Offset(new Paths { path.ToList() }, offset, JoinType.jtMiter, minLength).FirstOrDefault();
         }
 
         /// <summary>
@@ -245,7 +245,7 @@ namespace TVGL
         public static List<List<Point>> OffsetMiter(IEnumerable<IEnumerable<Point>> paths, double offset, double minLength = 0.0)
         {
             var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.Miter, minLength);
+            return Offset(listPaths, offset, JoinType.jtMiter, minLength);
         }
 
         /// <summary>
@@ -258,7 +258,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<List<Point>> OffsetSquare(List<Point> path, double offset, double minLength = 0.0)
         {
-            return Offset(new Paths {path.ToList()}, offset, JoinType.Square, minLength);
+            return Offset(new Paths {path.ToList()}, offset, JoinType.jtSquare, minLength);
         }
 
         /// <summary>
@@ -273,7 +273,7 @@ namespace TVGL
         public static List<List<Point>> OffsetSquare(List<List<Point>> paths, double offset, double minLength = 0.0)
         {
             var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.Square, minLength);
+            return Offset(listPaths, offset, JoinType.jtSquare, minLength);
         }
 
         private static List<List<Point>> Offset(List<List<Point>> paths, double offset, JoinType joinType,
@@ -292,7 +292,7 @@ namespace TVGL
 
             //Setup Clipper
             var clip = new ClipperOffset(2, minLength*scale);
-            clip.AddPaths(clipperSubject, joinType, EndType.ClosedPolygon);
+            clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
             var clipperSolution = new List<List<IntPoint>>();
@@ -317,7 +317,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null, bool simplifyPriorToUnion = true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Union, subject, clip, simplifyPriorToUnion);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
 
         /// <summary>
@@ -330,7 +330,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(List<Point> subject, List<Point> clip, bool simplifyPriorToUnion = true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Union, new Paths { subject }, new Paths { clip }, simplifyPriorToUnion);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctUnion, new Paths { subject }, new Paths { clip }, simplifyPriorToUnion);
         }
 
         /// <summary>
@@ -343,7 +343,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToUnion = true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Union, subject, new Paths { clip }, simplifyPriorToUnion);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctUnion, subject, new Paths { clip }, simplifyPriorToUnion);
         }
 
         /// <summary>
@@ -355,7 +355,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static Paths UnionEvenOdd(IList<List<Point>> subject, bool simplifyPriorToUnion = true)
         {
-            return BooleanOperation(PolyFillType.EvenOdd, ClipType.Union, subject, null, simplifyPriorToUnion);
+            return BooleanOperation(PolyFillType.pftEvenOdd, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
         }
         #endregion
 
@@ -370,7 +370,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Difference(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToDifference = true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Difference, subject, clip, simplifyPriorToDifference);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -383,7 +383,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Difference(List<Point> subject, List<Point> clip, bool simplifyPriorToDifference = true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Difference, new Paths { subject}, new Paths { clip}, simplifyPriorToDifference);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctDifference, new Paths { subject}, new Paths { clip}, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -396,7 +396,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Difference(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToDifference = true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Difference, subject, new Paths { clip }, simplifyPriorToDifference);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctDifference, subject, new Paths { clip }, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -409,7 +409,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Difference(List<Point> subject, IList<List<Point>> clip, bool simplifyPriorToDifference = true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Difference, new Paths { subject}, clip , simplifyPriorToDifference);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctDifference, new Paths { subject}, clip , simplifyPriorToDifference);
         }
         #endregion
 
@@ -463,7 +463,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Intersection(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToIntersection = true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Intersection, subject, clip, simplifyPriorToIntersection);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
         }
 
         #endregion
@@ -480,7 +480,7 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Xor(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToXor= true)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Xor, subject, clip, simplifyPriorToXor);
+            return BooleanOperation(PolyFillType.pftPositive, ClipType.ctXor, subject, clip, simplifyPriorToXor);
         }
 
         /// <summary>
@@ -555,13 +555,13 @@ namespace TVGL
 
             //Setup Clipper
             var clipper = new ClipperLib.Clipper() { StrictlySimple = true };
-            clipper.AddPaths(clipperSubject, PolyType.Subject, true);
+            clipper.AddPaths(clipperSubject, PolyType.ptSubject, true);
 
             if (clip != null)
             {
                 var clipperClip =
                     clip.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
-                clipper.AddPaths(clipperClip, PolyType.Clip, true);
+                clipper.AddPaths(clipperClip, PolyType.ptClip, true);
             }
 
             //Begin an evaluation
