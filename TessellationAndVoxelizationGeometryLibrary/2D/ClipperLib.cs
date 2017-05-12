@@ -440,20 +440,20 @@ namespace ClipperLib
         }
     }
 
-    public enum ClipType { ctIntersection, ctUnion, ctDifference, ctXor };
-    public enum PolyType { ptSubject, ptClip };
+    public enum ClipType { Intersection, Union, Difference, Xor };
+    public enum PolyType { Subject, Clip };
 
     //By far the most widely used winding rules for polygon filling are
     //EvenOdd & NonZero (GDI, GDI+, XLib, OpenGL, Cairo, AGG, Quartz, SVG, Gr32)
     //Others rules include Positive, Negative and ABS_GTR_EQ_TWO (only in OpenGL)
     //see http://glprogramming.com/red/chapter11.html
-    public enum PolyFillType { pftEvenOdd, pftNonZero, pftPositive, pftNegative };
+    public enum PolyFillType { EvenOdd, NonZero, Positive, Negative };
 
-    public enum JoinType { jtSquare, jtRound, jtMiter };
-    public enum EndType { etClosedPolygon, etClosedLine, etOpenButt, etOpenSquare, etOpenRound };
+    public enum JoinType { Square, Round, Miter };
+    public enum EndType { ClosedPolygon, ClosedLine, OpenButt, OpenSquare, OpenRound };
 
-    internal enum EdgeSide { esLeft, esRight };
-    internal enum Direction { dRightToLeft, dLeftToRight };
+    internal enum EdgeSide { Left, Right };
+    internal enum Direction { RightToLeft, LeftToRight };
 
     internal class TEdge
     {
@@ -882,7 +882,7 @@ namespace ClipperLib
         public bool AddPath(Path pg, PolyType polyType, bool Closed)
         {
 #if use_lines
-            if (!Closed && polyType == PolyType.ptClip)
+            if (!Closed && polyType == PolyType.Clip)
                 throw new ClipperException("AddPath: Open paths must be subject.");
 #else
       if (!Closed)
@@ -979,7 +979,7 @@ namespace ClipperLib
                 locMin.Y = E.Bot.Y;
                 locMin.LeftBound = null;
                 locMin.RightBound = E;
-                locMin.RightBound.Side = EdgeSide.esRight;
+                locMin.RightBound.Side = EdgeSide.Right;
                 locMin.RightBound.WindDelta = 0;
                 for (;;)
                 {
@@ -1024,8 +1024,8 @@ namespace ClipperLib
                     locMin.RightBound = E.Prev;
                     leftBoundIsForward = true; //Q.nextInLML = Q.next
                 }
-                locMin.LeftBound.Side = EdgeSide.esLeft;
-                locMin.RightBound.Side = EdgeSide.esRight;
+                locMin.LeftBound.Side = EdgeSide.Left;
+                locMin.RightBound.Side = EdgeSide.Right;
 
                 if (!Closed) locMin.LeftBound.WindDelta = 0;
                 else if (locMin.LeftBound.Next == locMin.RightBound)
@@ -1448,14 +1448,14 @@ namespace ClipperLib
         //------------------------------------------------------------------------------
 
         public bool Execute(ClipType clipType, Paths solution,
-            PolyFillType FillType = PolyFillType.pftEvenOdd)
+            PolyFillType FillType = PolyFillType.EvenOdd)
         {
             return Execute(clipType, solution, FillType, FillType);
         }
         //------------------------------------------------------------------------------
 
         public bool Execute(ClipType clipType, PolyTree polytree,
-            PolyFillType FillType = PolyFillType.pftEvenOdd)
+            PolyFillType FillType = PolyFillType.EvenOdd)
         {
             return Execute(clipType, polytree, FillType, FillType);
         }
@@ -1764,26 +1764,26 @@ namespace ClipperLib
 
         private bool IsEvenOddFillType(TEdge edge)
         {
-            if (edge.PolyTyp == PolyType.ptSubject)
-                return m_SubjFillType == PolyFillType.pftEvenOdd;
+            if (edge.PolyTyp == PolyType.Subject)
+                return m_SubjFillType == PolyFillType.EvenOdd;
             else
-                return m_ClipFillType == PolyFillType.pftEvenOdd;
+                return m_ClipFillType == PolyFillType.EvenOdd;
         }
         //------------------------------------------------------------------------------
 
         private bool IsEvenOddAltFillType(TEdge edge)
         {
-            if (edge.PolyTyp == PolyType.ptSubject)
-                return m_ClipFillType == PolyFillType.pftEvenOdd;
+            if (edge.PolyTyp == PolyType.Subject)
+                return m_ClipFillType == PolyFillType.EvenOdd;
             else
-                return m_SubjFillType == PolyFillType.pftEvenOdd;
+                return m_SubjFillType == PolyFillType.EvenOdd;
         }
         //------------------------------------------------------------------------------
 
         private bool IsContributing(TEdge edge)
         {
             PolyFillType pft, pft2;
-            if (edge.PolyTyp == PolyType.ptSubject)
+            if (edge.PolyTyp == PolyType.Subject)
             {
                 pft = m_SubjFillType;
                 pft2 = m_ClipFillType;
@@ -1796,53 +1796,53 @@ namespace ClipperLib
 
             switch (pft)
             {
-                case PolyFillType.pftEvenOdd:
+                case PolyFillType.EvenOdd:
                     //return false if a subj line has been flagged as inside a subj polygon
                     if (edge.WindDelta == 0 && edge.WindCnt != 1) return false;
                     break;
-                case PolyFillType.pftNonZero:
+                case PolyFillType.NonZero:
                     if (Math.Abs(edge.WindCnt) != 1) return false;
                     break;
-                case PolyFillType.pftPositive:
+                case PolyFillType.Positive:
                     if (edge.WindCnt != 1) return false;
                     break;
-                default: //PolyFillType.pftNegative
+                default: //PolyFillType.Negative
                     if (edge.WindCnt != -1) return false;
                     break;
             }
 
             switch (m_ClipType)
             {
-                case ClipType.ctIntersection:
+                case ClipType.Intersection:
                     switch (pft2)
                     {
-                        case PolyFillType.pftEvenOdd:
-                        case PolyFillType.pftNonZero:
+                        case PolyFillType.EvenOdd:
+                        case PolyFillType.NonZero:
                             return (edge.WindCnt2 != 0);
-                        case PolyFillType.pftPositive:
+                        case PolyFillType.Positive:
                             return (edge.WindCnt2 > 0);
                         default:
                             return (edge.WindCnt2 < 0);
                     }
-                case ClipType.ctUnion:
+                case ClipType.Union:
                     switch (pft2)
                     {
-                        case PolyFillType.pftEvenOdd:
-                        case PolyFillType.pftNonZero:
+                        case PolyFillType.EvenOdd:
+                        case PolyFillType.NonZero:
                             return (edge.WindCnt2 == 0);
-                        case PolyFillType.pftPositive:
+                        case PolyFillType.Positive:
                             return (edge.WindCnt2 <= 0);
                         default:
                             return (edge.WindCnt2 >= 0);
                     }
-                case ClipType.ctDifference:
-                    if (edge.PolyTyp == PolyType.ptSubject)
+                case ClipType.Difference:
+                    if (edge.PolyTyp == PolyType.Subject)
                         switch (pft2)
                         {
-                            case PolyFillType.pftEvenOdd:
-                            case PolyFillType.pftNonZero:
+                            case PolyFillType.EvenOdd:
+                            case PolyFillType.NonZero:
                                 return (edge.WindCnt2 == 0);
-                            case PolyFillType.pftPositive:
+                            case PolyFillType.Positive:
                                 return (edge.WindCnt2 <= 0);
                             default:
                                 return (edge.WindCnt2 >= 0);
@@ -1850,22 +1850,22 @@ namespace ClipperLib
                     else
                         switch (pft2)
                         {
-                            case PolyFillType.pftEvenOdd:
-                            case PolyFillType.pftNonZero:
+                            case PolyFillType.EvenOdd:
+                            case PolyFillType.NonZero:
                                 return (edge.WindCnt2 != 0);
-                            case PolyFillType.pftPositive:
+                            case PolyFillType.Positive:
                                 return (edge.WindCnt2 > 0);
                             default:
                                 return (edge.WindCnt2 < 0);
                         }
-                case ClipType.ctXor:
+                case ClipType.Xor:
                     if (edge.WindDelta == 0) //XOr always contributing unless open
                         switch (pft2)
                         {
-                            case PolyFillType.pftEvenOdd:
-                            case PolyFillType.pftNonZero:
+                            case PolyFillType.EvenOdd:
+                            case PolyFillType.NonZero:
                                 return (edge.WindCnt2 == 0);
-                            case PolyFillType.pftPositive:
+                            case PolyFillType.Positive:
                                 return (edge.WindCnt2 <= 0);
                             default:
                                 return (edge.WindCnt2 >= 0);
@@ -1885,13 +1885,13 @@ namespace ClipperLib
             if (e == null)
             {
                 PolyFillType pft;
-                pft = (edge.PolyTyp == PolyType.ptSubject ? m_SubjFillType : m_ClipFillType);
-                if (edge.WindDelta == 0) edge.WindCnt = (pft == PolyFillType.pftNegative ? -1 : 1);
+                pft = (edge.PolyTyp == PolyType.Subject ? m_SubjFillType : m_ClipFillType);
+                if (edge.WindDelta == 0) edge.WindCnt = (pft == PolyFillType.Negative ? -1 : 1);
                 else edge.WindCnt = edge.WindDelta;
                 edge.WindCnt2 = 0;
                 e = m_ActiveEdges; //ie get ready to calc WindCnt2
             }
-            else if (edge.WindDelta == 0 && m_ClipType != ClipType.ctUnion)
+            else if (edge.WindDelta == 0 && m_ClipType != ClipType.Union)
             {
                 edge.WindCnt = 1;
                 edge.WindCnt2 = e.WindCnt2;
@@ -2109,8 +2109,8 @@ namespace ClipperLib
             {
                 result = AddOutPt(e1, pt);
                 e2.OutIdx = e1.OutIdx;
-                e1.Side = EdgeSide.esLeft;
-                e2.Side = EdgeSide.esRight;
+                e1.Side = EdgeSide.Left;
+                e2.Side = EdgeSide.Right;
                 e = e1;
                 if (e.PrevInAEL == e2)
                     prevE = e2.PrevInAEL;
@@ -2121,8 +2121,8 @@ namespace ClipperLib
             {
                 result = AddOutPt(e2, pt);
                 e1.OutIdx = e2.OutIdx;
-                e1.Side = EdgeSide.esRight;
-                e2.Side = EdgeSide.esLeft;
+                e1.Side = EdgeSide.Right;
+                e2.Side = EdgeSide.Left;
                 e = e2;
                 if (e.PrevInAEL == e1)
                     prevE = e1.PrevInAEL;
@@ -2167,7 +2167,7 @@ namespace ClipperLib
                 OutRec outRec = m_PolyOuts[e.OutIdx];
                 //OutRec.Pts is the 'Left-most' point & OutRec.Pts.Prev is the 'Right-most'
                 OutPt op = outRec.Pts;
-                bool ToFront = (e.Side == EdgeSide.esLeft);
+                bool ToFront = (e.Side == EdgeSide.Left);
                 if (ToFront && pt == op.Pt) return op;
                 else if (!ToFront && pt == op.Prev.Pt) return op.Prev;
 
@@ -2187,7 +2187,7 @@ namespace ClipperLib
         private OutPt GetLastOutPt(TEdge e)
         {
             OutRec outRec = m_PolyOuts[e.OutIdx];
-            if (e.Side == EdgeSide.esLeft)
+            if (e.Side == EdgeSide.Left)
                 return outRec.Pts;
             else
                 return outRec.Pts.Prev;
@@ -2370,9 +2370,9 @@ namespace ClipperLib
             OutPt p2_rt = p2_lft.Prev;
 
             //join e2 poly onto e1 poly and delete pointers to e2 ...
-            if (e1.Side == EdgeSide.esLeft)
+            if (e1.Side == EdgeSide.Left)
             {
-                if (e2.Side == EdgeSide.esLeft)
+                if (e2.Side == EdgeSide.Left)
                 {
                     //z y x a b c
                     ReversePolyPtLinks(p2_lft);
@@ -2394,7 +2394,7 @@ namespace ClipperLib
             }
             else
             {
-                if (e2.Side == EdgeSide.esRight)
+                if (e2.Side == EdgeSide.Right)
                 {
                     //a b c z y x
                     ReversePolyPtLinks(p2_lft);
@@ -2499,7 +2499,7 @@ namespace ClipperLib
                 if (e1.WindDelta == 0 && e2.WindDelta == 0) return;
                 //if intersecting a subj line with a subj poly ...
                 else if (e1.PolyTyp == e2.PolyTyp &&
-                  e1.WindDelta != e2.WindDelta && m_ClipType == ClipType.ctUnion)
+                  e1.WindDelta != e2.WindDelta && m_ClipType == ClipType.Union)
                 {
                     if (e1.WindDelta == 0)
                     {
@@ -2521,13 +2521,13 @@ namespace ClipperLib
                 else if (e1.PolyTyp != e2.PolyTyp)
                 {
                     if ((e1.WindDelta == 0) && Math.Abs(e2.WindCnt) == 1 &&
-                      (m_ClipType != ClipType.ctUnion || e2.WindCnt2 == 0))
+                      (m_ClipType != ClipType.Union || e2.WindCnt2 == 0))
                     {
                         AddOutPt(e1, pt);
                         if (e1Contributing) e1.OutIdx = Unassigned;
                     }
                     else if ((e2.WindDelta == 0) && (Math.Abs(e1.WindCnt) == 1) &&
-                      (m_ClipType != ClipType.ctUnion || e1.WindCnt2 == 0))
+                      (m_ClipType != ClipType.Union || e1.WindCnt2 == 0))
                     {
                         AddOutPt(e2, pt);
                         if (e2Contributing) e2.OutIdx = Unassigned;
@@ -2564,7 +2564,7 @@ namespace ClipperLib
             }
 
             PolyFillType e1FillType, e2FillType, e1FillType2, e2FillType2;
-            if (e1.PolyTyp == PolyType.ptSubject)
+            if (e1.PolyTyp == PolyType.Subject)
             {
                 e1FillType = m_SubjFillType;
                 e1FillType2 = m_ClipFillType;
@@ -2574,7 +2574,7 @@ namespace ClipperLib
                 e1FillType = m_ClipFillType;
                 e1FillType2 = m_SubjFillType;
             }
-            if (e2.PolyTyp == PolyType.ptSubject)
+            if (e2.PolyTyp == PolyType.Subject)
             {
                 e2FillType = m_SubjFillType;
                 e2FillType2 = m_ClipFillType;
@@ -2588,21 +2588,21 @@ namespace ClipperLib
             int e1Wc, e2Wc;
             switch (e1FillType)
             {
-                case PolyFillType.pftPositive: e1Wc = e1.WindCnt; break;
-                case PolyFillType.pftNegative: e1Wc = -e1.WindCnt; break;
+                case PolyFillType.Positive: e1Wc = e1.WindCnt; break;
+                case PolyFillType.Negative: e1Wc = -e1.WindCnt; break;
                 default: e1Wc = Math.Abs(e1.WindCnt); break;
             }
             switch (e2FillType)
             {
-                case PolyFillType.pftPositive: e2Wc = e2.WindCnt; break;
-                case PolyFillType.pftNegative: e2Wc = -e2.WindCnt; break;
+                case PolyFillType.Positive: e2Wc = e2.WindCnt; break;
+                case PolyFillType.Negative: e2Wc = -e2.WindCnt; break;
                 default: e2Wc = Math.Abs(e2.WindCnt); break;
             }
 
             if (e1Contributing && e2Contributing)
             {
                 if ((e1Wc != 0 && e1Wc != 1) || (e2Wc != 0 && e2Wc != 1) ||
-                  (e1.PolyTyp != e2.PolyTyp && m_ClipType != ClipType.ctXor))
+                  (e1.PolyTyp != e2.PolyTyp && m_ClipType != ClipType.Xor))
                 {
                     AddLocalMaxPoly(e1, e2, pt);
                 }
@@ -2639,14 +2639,14 @@ namespace ClipperLib
                 cInt e1Wc2, e2Wc2;
                 switch (e1FillType2)
                 {
-                    case PolyFillType.pftPositive: e1Wc2 = e1.WindCnt2; break;
-                    case PolyFillType.pftNegative: e1Wc2 = -e1.WindCnt2; break;
+                    case PolyFillType.Positive: e1Wc2 = e1.WindCnt2; break;
+                    case PolyFillType.Negative: e1Wc2 = -e1.WindCnt2; break;
                     default: e1Wc2 = Math.Abs(e1.WindCnt2); break;
                 }
                 switch (e2FillType2)
                 {
-                    case PolyFillType.pftPositive: e2Wc2 = e2.WindCnt2; break;
-                    case PolyFillType.pftNegative: e2Wc2 = -e2.WindCnt2; break;
+                    case PolyFillType.Positive: e2Wc2 = e2.WindCnt2; break;
+                    case PolyFillType.Negative: e2Wc2 = -e2.WindCnt2; break;
                     default: e2Wc2 = Math.Abs(e2.WindCnt2); break;
                 }
 
@@ -2657,20 +2657,20 @@ namespace ClipperLib
                 else if (e1Wc == 1 && e2Wc == 1)
                     switch (m_ClipType)
                     {
-                        case ClipType.ctIntersection:
+                        case ClipType.Intersection:
                             if (e1Wc2 > 0 && e2Wc2 > 0)
                                 AddLocalMinPoly(e1, e2, pt);
                             break;
-                        case ClipType.ctUnion:
+                        case ClipType.Union:
                             if (e1Wc2 <= 0 && e2Wc2 <= 0)
                                 AddLocalMinPoly(e1, e2, pt);
                             break;
-                        case ClipType.ctDifference:
-                            if (((e1.PolyTyp == PolyType.ptClip) && (e1Wc2 > 0) && (e2Wc2 > 0)) ||
-                                ((e1.PolyTyp == PolyType.ptSubject) && (e1Wc2 <= 0) && (e2Wc2 <= 0)))
+                        case ClipType.Difference:
+                            if (((e1.PolyTyp == PolyType.Clip) && (e1Wc2 > 0) && (e2Wc2 > 0)) ||
+                                ((e1.PolyTyp == PolyType.Subject) && (e1Wc2 <= 0) && (e2Wc2 <= 0)))
                                 AddLocalMinPoly(e1, e2, pt);
                             break;
-                        case ClipType.ctXor:
+                        case ClipType.Xor:
                             AddLocalMinPoly(e1, e2, pt);
                             break;
                     }
@@ -2710,13 +2710,13 @@ namespace ClipperLib
             {
                 Left = HorzEdge.Bot.X;
                 Right = HorzEdge.Top.X;
-                Dir = Direction.dLeftToRight;
+                Dir = Direction.LeftToRight;
             }
             else
             {
                 Left = HorzEdge.Top.X;
                 Right = HorzEdge.Bot.X;
-                Dir = Direction.dRightToLeft;
+                Dir = Direction.RightToLeft;
             }
         }
         //------------------------------------------------------------------------
@@ -2739,7 +2739,7 @@ namespace ClipperLib
             if (currMax != null)
             {
                 //get the first maxima in range (X) ...
-                if (dir == Direction.dLeftToRight)
+                if (dir == Direction.LeftToRight)
                 {
                     while (currMax != null && currMax.X <= horzEdge.Bot.X)
                         currMax = currMax.Next;
@@ -2767,7 +2767,7 @@ namespace ClipperLib
                     //'simplifying' polygons (ie if the Simplify property is set).
                     if (currMax != null)
                     {
-                        if (dir == Direction.dLeftToRight)
+                        if (dir == Direction.LeftToRight)
                         {
                             while (currMax != null && currMax.X < e.Curr.X)
                             {
@@ -2787,8 +2787,8 @@ namespace ClipperLib
                         }
                     };
 
-                    if ((dir == Direction.dLeftToRight && e.Curr.X > horzRight) ||
-                      (dir == Direction.dRightToLeft && e.Curr.X < horzLeft)) break;
+                    if ((dir == Direction.LeftToRight && e.Curr.X > horzRight) ||
+                      (dir == Direction.RightToLeft && e.Curr.X < horzLeft)) break;
 
                     //Also break if we've got to the end of an intermediate horizontal edge ...
                     //nb: Smaller Dx's are to the right of larger Dx's ABOVE the horizontal.
@@ -2798,7 +2798,7 @@ namespace ClipperLib
                     if (horzEdge.OutIdx >= 0 && !IsOpen)  //note: may be done multiple times
                     {
 #if use_xyz
-                  if (dir == Direction.dLeftToRight) SetZ(ref e.Curr, horzEdge, e);
+                  if (dir == Direction.LeftToRight) SetZ(ref e.Curr, horzEdge, e);
                   else SetZ(ref e.Curr, e, horzEdge);
 #endif
 
@@ -2829,7 +2829,7 @@ namespace ClipperLib
                         return;
                     }
 
-                    if (dir == Direction.dLeftToRight)
+                    if (dir == Direction.LeftToRight)
                     {
                         IntPoint Pt = new IntPoint(e.Curr.X, horzEdge.Curr.Y);
                         IntersectEdges(horzEdge, e, Pt);
@@ -2912,7 +2912,7 @@ namespace ClipperLib
 
         private TEdge GetNextInAEL(TEdge e, Direction Direction)
         {
-            return Direction == Direction.dLeftToRight ? e.NextInAEL : e.PrevInAEL;
+            return Direction == Direction.LeftToRight ? e.NextInAEL : e.PrevInAEL;
         }
         //------------------------------------------------------------------------------
 
@@ -3526,9 +3526,9 @@ namespace ClipperLib
           IntPoint Pt, bool DiscardLeft)
         {
             Direction Dir1 = (op1.Pt.X > op1b.Pt.X ?
-              Direction.dRightToLeft : Direction.dLeftToRight);
+              Direction.RightToLeft : Direction.LeftToRight);
             Direction Dir2 = (op2.Pt.X > op2b.Pt.X ?
-              Direction.dRightToLeft : Direction.dLeftToRight);
+              Direction.RightToLeft : Direction.LeftToRight);
             if (Dir1 == Dir2) return false;
 
             //When DiscardLeft, we want Op1b to be on the Left of Op1, otherwise we
@@ -3536,7 +3536,7 @@ namespace ClipperLib
             //So, to facilitate this while inserting Op1b and Op2b ...
             //when DiscardLeft, make sure we're AT or RIGHT of Pt before adding Op1b,
             //otherwise make sure we're AT or LEFT of Pt. (Likewise with Op2b.)
-            if (Dir1 == Direction.dLeftToRight)
+            if (Dir1 == Direction.LeftToRight)
             {
                 while (op1.Next.Pt.X <= Pt.X &&
                   op1.Next.Pt.X >= op1.Pt.X && op1.Next.Pt.Y == Pt.Y)
@@ -3565,7 +3565,7 @@ namespace ClipperLib
                 }
             }
 
-            if (Dir2 == Direction.dLeftToRight)
+            if (Dir2 == Direction.LeftToRight)
             {
                 while (op2.Next.Pt.X <= Pt.X &&
                   op2.Next.Pt.X >= op2.Pt.X && op2.Next.Pt.Y == Pt.Y)
@@ -3594,7 +3594,7 @@ namespace ClipperLib
                 };
             };
 
-            if ((Dir1 == Direction.dLeftToRight) == DiscardLeft)
+            if ((Dir1 == Direction.LeftToRight) == DiscardLeft)
             {
                 op1.Prev = op2;
                 op2.Next = op1;
@@ -4145,25 +4145,25 @@ namespace ClipperLib
         //------------------------------------------------------------------------------
 
         public static Paths SimplifyPolygon(Path poly,
-              PolyFillType fillType = PolyFillType.pftEvenOdd)
+              PolyFillType fillType = PolyFillType.EvenOdd)
         {
             Paths result = new Paths();
             Clipper c = new Clipper();
             c.StrictlySimple = true;
-            c.AddPath(poly, PolyType.ptSubject, true);
-            c.Execute(ClipType.ctUnion, result, fillType, fillType);
+            c.AddPath(poly, PolyType.Subject, true);
+            c.Execute(ClipType.Union, result, fillType, fillType);
             return result;
         }
         //------------------------------------------------------------------------------
 
         public static Paths SimplifyPolygons(Paths polys,
-            PolyFillType fillType = PolyFillType.pftEvenOdd)
+            PolyFillType fillType = PolyFillType.EvenOdd)
         {
             Paths result = new Paths();
             Clipper c = new Clipper();
             c.StrictlySimple = true;
-            c.AddPaths(polys, PolyType.ptSubject, true);
-            c.Execute(ClipType.ctUnion, result, fillType, fillType);
+            c.AddPaths(polys, PolyType.Subject, true);
+            c.Execute(ClipType.Union, result, fillType, fillType);
             return result;
         }
         //------------------------------------------------------------------------------
@@ -4350,8 +4350,8 @@ namespace ClipperLib
         {
             Paths paths = Minkowski(pattern, path, true, pathIsClosed);
             Clipper c = new Clipper();
-            c.AddPaths(paths, PolyType.ptSubject, true);
-            c.Execute(ClipType.ctUnion, paths, PolyFillType.pftNonZero, PolyFillType.pftNonZero);
+            c.AddPaths(paths, PolyType.Subject, true);
+            c.Execute(ClipType.Union, paths, PolyFillType.NonZero, PolyFillType.NonZero);
             return paths;
         }
         //------------------------------------------------------------------------------
@@ -4372,15 +4372,15 @@ namespace ClipperLib
             for (int i = 0; i < paths.Count; ++i)
             {
                 Paths tmp = Minkowski(pattern, paths[i], true, pathIsClosed);
-                c.AddPaths(tmp, PolyType.ptSubject, true);
+                c.AddPaths(tmp, PolyType.Subject, true);
                 if (pathIsClosed)
                 {
                     Path path = TranslatePath(paths[i], pattern[0]);
-                    c.AddPath(path, PolyType.ptClip, true);
+                    c.AddPath(path, PolyType.Clip, true);
                 }
             }
-            c.Execute(ClipType.ctUnion, solution,
-              PolyFillType.pftNonZero, PolyFillType.pftNonZero);
+            c.Execute(ClipType.Union, solution,
+              PolyFillType.NonZero, PolyFillType.NonZero);
             return solution;
         }
         //------------------------------------------------------------------------------
@@ -4389,20 +4389,20 @@ namespace ClipperLib
         {
             Paths paths = Minkowski(poly1, poly2, false, true);
             Clipper c = new Clipper();
-            c.AddPaths(paths, PolyType.ptSubject, true);
-            c.Execute(ClipType.ctUnion, paths, PolyFillType.pftNonZero, PolyFillType.pftNonZero);
+            c.AddPaths(paths, PolyType.Subject, true);
+            c.Execute(ClipType.Union, paths, PolyFillType.NonZero, PolyFillType.NonZero);
             return paths;
         }
         //------------------------------------------------------------------------------
 
-        internal enum NodeType { ntAny, ntOpen, ntClosed };
+        internal enum NodeType { Any, Open, Closed };
 
         public static Paths PolyTreeToPaths(PolyTree polytree)
         {
 
             Paths result = new Paths();
             result.Capacity = polytree.Total;
-            AddPolyNodeToPaths(polytree, NodeType.ntAny, result);
+            AddPolyNodeToPaths(polytree, NodeType.Any, result);
             return result;
         }
         //------------------------------------------------------------------------------
@@ -4412,8 +4412,8 @@ namespace ClipperLib
             bool match = true;
             switch (nt)
             {
-                case NodeType.ntOpen: return;
-                case NodeType.ntClosed: match = !polynode.IsOpen; break;
+                case NodeType.Open: return;
+                case NodeType.Closed: match = !polynode.IsOpen; break;
                 default: break;
             }
 
@@ -4439,7 +4439,7 @@ namespace ClipperLib
         {
             Paths result = new Paths();
             result.Capacity = polytree.Total;
-            AddPolyNodeToPaths(polytree, NodeType.ntClosed, result);
+            AddPolyNodeToPaths(polytree, NodeType.Closed, result);
             return result;
         }
         //------------------------------------------------------------------------------
@@ -4495,7 +4495,7 @@ namespace ClipperLib
             newNode.m_endtype = endType;
 
             //strip duplicate points from path and also get index to the lowest point ...
-            if (endType == EndType.etClosedLine || endType == EndType.etClosedPolygon)
+            if (endType == EndType.ClosedLine || endType == EndType.ClosedPolygon)
                 while (highI > 0 && path[0] == path[highI]) highI--;
             newNode.m_polygon.Capacity = highI + 1;
             newNode.m_polygon.Add(path[0]);
@@ -4509,12 +4509,12 @@ namespace ClipperLib
                       (path[i].Y == newNode.m_polygon[k].Y &&
                       path[i].X < newNode.m_polygon[k].X)) k = j;
                 }
-            if (endType == EndType.etClosedPolygon && j < 2) return;
+            if (endType == EndType.ClosedPolygon && j < 2) return;
 
             m_polyNodes.AddChild(newNode);
 
             //if this path's lowest pt is lower than all the others then update m_lowest
-            if (endType != EndType.etClosedPolygon) return;
+            if (endType != EndType.ClosedPolygon) return;
             if (m_lowest.X < 0)
                 m_lowest = new IntPoint(m_polyNodes.ChildCount - 1, k);
             else
@@ -4545,8 +4545,8 @@ namespace ClipperLib
                 for (int i = 0; i < m_polyNodes.ChildCount; i++)
                 {
                     PolyNode node = m_polyNodes.Childs[i];
-                    if (node.m_endtype == EndType.etClosedPolygon ||
-                      (node.m_endtype == EndType.etClosedLine &&
+                    if (node.m_endtype == EndType.ClosedPolygon ||
+                      (node.m_endtype == EndType.ClosedLine &&
                       Clipper.Orientation(node.m_polygon)))
                         node.m_polygon.Reverse();
                 }
@@ -4556,7 +4556,7 @@ namespace ClipperLib
                 for (int i = 0; i < m_polyNodes.ChildCount; i++)
                 {
                     PolyNode node = m_polyNodes.Childs[i];
-                    if (node.m_endtype == EndType.etClosedLine &&
+                    if (node.m_endtype == EndType.ClosedLine &&
                       !Clipper.Orientation(node.m_polygon))
                         node.m_polygon.Reverse();
                 }
@@ -4590,7 +4590,7 @@ namespace ClipperLib
                 for (int i = 0; i < m_polyNodes.ChildCount; i++)
                 {
                     PolyNode node = m_polyNodes.Childs[i];
-                    if (node.m_endtype == EndType.etClosedPolygon)
+                    if (node.m_endtype == EndType.ClosedPolygon)
                         m_destPolys.Add(node.m_polygon);
                 }
                 return;
@@ -4623,14 +4623,14 @@ namespace ClipperLib
                 int len = m_srcPoly.Count;
 
                 if (len == 0 || (delta <= 0 && (len < 3 ||
-                  node.m_endtype != EndType.etClosedPolygon)))
+                  node.m_endtype != EndType.ClosedPolygon)))
                     continue;
 
                 m_destPoly = new Path();
 
                 if (len == 1)
                 {
-                    if (node.m_jointype == JoinType.jtRound)
+                    if (node.m_jointype == JoinType.Round)
                     {
                         double X = 1.0, Y = 0.0;
                         for (int j = 1; j <= steps; j++)
@@ -4665,20 +4665,20 @@ namespace ClipperLib
                 m_normals.Capacity = len;
                 for (int j = 0; j < len - 1; j++)
                     m_normals.Add(GetUnitNormal(m_srcPoly[j], m_srcPoly[j + 1]));
-                if (node.m_endtype == EndType.etClosedLine ||
-                  node.m_endtype == EndType.etClosedPolygon)
+                if (node.m_endtype == EndType.ClosedLine ||
+                  node.m_endtype == EndType.ClosedPolygon)
                     m_normals.Add(GetUnitNormal(m_srcPoly[len - 1], m_srcPoly[0]));
                 else
                     m_normals.Add(new DoublePoint(m_normals[len - 2]));
 
-                if (node.m_endtype == EndType.etClosedPolygon)
+                if (node.m_endtype == EndType.ClosedPolygon)
                 {
                     int k = len - 1;
                     for (int j = 0; j < len; j++)
                         OffsetPoint(j, ref k, node.m_jointype);
                     m_destPolys.Add(m_destPoly);
                 }
-                else if (node.m_endtype == EndType.etClosedLine)
+                else if (node.m_endtype == EndType.ClosedLine)
                 {
                     int k = len - 1;
                     for (int j = 0; j < len; j++)
@@ -4702,7 +4702,7 @@ namespace ClipperLib
                         OffsetPoint(j, ref k, node.m_jointype);
 
                     IntPoint pt1;
-                    if (node.m_endtype == EndType.etOpenButt)
+                    if (node.m_endtype == EndType.OpenButt)
                     {
                         int j = len - 1;
                         pt1 = new IntPoint((cInt)Round(m_srcPoly[j].X + m_normals[j].X *
@@ -4718,7 +4718,7 @@ namespace ClipperLib
                         k = len - 2;
                         m_sinA = 0;
                         m_normals[j] = new DoublePoint(-m_normals[j].X, -m_normals[j].Y);
-                        if (node.m_endtype == EndType.etOpenSquare)
+                        if (node.m_endtype == EndType.OpenSquare)
                             DoSquare(j, k);
                         else
                             DoRound(j, k);
@@ -4734,7 +4734,7 @@ namespace ClipperLib
                     for (int j = k - 1; j > 0; --j)
                         OffsetPoint(j, ref k, node.m_jointype);
 
-                    if (node.m_endtype == EndType.etOpenButt)
+                    if (node.m_endtype == EndType.OpenButt)
                     {
                         pt1 = new IntPoint((cInt)Round(m_srcPoly[0].X - m_normals[0].X * delta),
                           (cInt)Round(m_srcPoly[0].Y - m_normals[0].Y * delta));
@@ -4747,7 +4747,7 @@ namespace ClipperLib
                     {
                         k = 1;
                         m_sinA = 0;
-                        if (node.m_endtype == EndType.etOpenSquare)
+                        if (node.m_endtype == EndType.OpenSquare)
                             DoSquare(0, 1);
                         else
                             DoRound(0, 1);
@@ -4765,11 +4765,11 @@ namespace ClipperLib
             DoOffset(delta);
             //now clean up 'corners' ...
             Clipper clpr = new Clipper();
-            clpr.AddPaths(m_destPolys, PolyType.ptSubject, true);
+            clpr.AddPaths(m_destPolys, PolyType.Subject, true);
             if (delta > 0)
             {
-                clpr.Execute(ClipType.ctUnion, solution,
-                  PolyFillType.pftPositive, PolyFillType.pftPositive);
+                clpr.Execute(ClipType.Union, solution,
+                  PolyFillType.Positive, PolyFillType.Positive);
             }
             else
             {
@@ -4781,9 +4781,9 @@ namespace ClipperLib
                 outer.Add(new IntPoint(r.right + 10, r.top - 10));
                 outer.Add(new IntPoint(r.left - 10, r.top - 10));
 
-                clpr.AddPath(outer, PolyType.ptSubject, true);
+                clpr.AddPath(outer, PolyType.Subject, true);
                 clpr.ReverseSolution = true;
-                clpr.Execute(ClipType.ctUnion, solution, PolyFillType.pftNegative, PolyFillType.pftNegative);
+                clpr.Execute(ClipType.Union, solution, PolyFillType.Negative, PolyFillType.Negative);
                 if (solution.Count > 0) solution.RemoveAt(0);
             }
         }
@@ -4797,11 +4797,11 @@ namespace ClipperLib
 
             //now clean up 'corners' ...
             Clipper clpr = new Clipper();
-            clpr.AddPaths(m_destPolys, PolyType.ptSubject, true);
+            clpr.AddPaths(m_destPolys, PolyType.Subject, true);
             if (delta > 0)
             {
-                clpr.Execute(ClipType.ctUnion, solution,
-                  PolyFillType.pftPositive, PolyFillType.pftPositive);
+                clpr.Execute(ClipType.Union, solution,
+                  PolyFillType.Positive, PolyFillType.Positive);
             }
             else
             {
@@ -4813,9 +4813,9 @@ namespace ClipperLib
                 outer.Add(new IntPoint(r.right + 10, r.top - 10));
                 outer.Add(new IntPoint(r.left - 10, r.top - 10));
 
-                clpr.AddPath(outer, PolyType.ptSubject, true);
+                clpr.AddPath(outer, PolyType.Subject, true);
                 clpr.ReverseSolution = true;
-                clpr.Execute(ClipType.ctUnion, solution, PolyFillType.pftNegative, PolyFillType.pftNegative);
+                clpr.Execute(ClipType.Union, solution, PolyFillType.Negative, PolyFillType.Negative);
                 //remove the outer PolyNode rectangle ...
                 if (solution.ChildCount == 1 && solution.Childs[0].ChildCount > 0)
                 {
@@ -4863,15 +4863,15 @@ namespace ClipperLib
             else
                 switch (jointype)
                 {
-                    case JoinType.jtMiter:
+                    case JoinType.Miter:
                         {
                             double r = 1 + (m_normals[j].X * m_normals[k].X +
                               m_normals[j].Y * m_normals[k].Y);
                             if (r >= m_miterLim) DoMiter(j, k, r); else DoSquare(j, k);
                             break;
                         }
-                    case JoinType.jtSquare: DoSquare(j, k); break;
-                    case JoinType.jtRound: DoRound(j, k); break;
+                    case JoinType.Square: DoSquare(j, k); break;
+                    case JoinType.Round: DoRound(j, k); break;
                 }
             k = j;
         }
