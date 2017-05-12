@@ -100,13 +100,13 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Test\" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\TVGLPresenterDebugger\TVGLPresenterDebugger.csproj">
       <Project>{f6678d6c-1f71-4f4e-ac77-22f5e133a6f2}</Project>
       <Name>TVGLPresenterDebugger</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Test\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

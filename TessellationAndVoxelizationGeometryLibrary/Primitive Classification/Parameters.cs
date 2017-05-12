@@ -134,7 +134,11 @@ namespace TVGL.PrimitiveClassification
 
         private static StreamReader getStreamReader(string filepath)
         {
+#if net45
             var stream1 = Assembly.GetExecutingAssembly().GetManifestResourceStream(@"TVGL.Resources." + filepath);
+#else
+            var stream1 = Assembly.GetExecutingAssembly().GetManifestResourceStream(@"TVGL.Resources." + filepath);
+#endif
             return new StreamReader(stream1);
             //using (var reader = new StreamReader(stream1))
             //{

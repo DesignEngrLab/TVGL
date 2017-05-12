@@ -178,17 +178,17 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs">
       <Link>TVGL\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\ClassificationConstants.cs">
-      <Link>TVGL\Primitive Classification\ClassificationConstants.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Classify.cs">
+      <Link>TVGL\Primitive Classification\Classify.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\FaceWithScores.cs">
       <Link>TVGL\Primitive Classification\FaceWithScores.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Parameters.cs">
+      <Link>TVGL\Primitive Classification\Parameters.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\PlanningSurface.cs">
       <Link>TVGL\Primitive Classification\PlanningSurface.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Primitive_Classification.cs">
-      <Link>TVGL\Primitive Classification\Primitive_Classification.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\Cone.cs">
       <Link>TVGL\Primitive Surfaces\Cone.cs</Link>
@@ -256,6 +256,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
+      <Link>TVGL\Primitive Classification\NewEdgeRules.csv</Link>
+    </None>
+    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewFaRules.csv">
+      <Link>TVGL\Primitive Classification\NewFaRules.csv</Link>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

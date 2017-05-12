@@ -81,7 +81,7 @@
     <Compile Include="Primitive Classification\Parameters.cs" />
     <Compile Include="Primitive Classification\FaceWithScores.cs" />
     <Compile Include="Primitive Classification\PlanningSurface.cs" />
-    <Compile Include="Primitive Classification\Primitive_Classification.cs" />
+    <Compile Include="Primitive Classification\Classify.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Enclosure Operations\EnclosurePublicStructs.cs" />
     <Compile Include="Enclosure Operations\ConvexHull2D.cs" />

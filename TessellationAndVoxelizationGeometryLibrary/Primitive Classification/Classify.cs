@@ -22,7 +22,7 @@ namespace TVGL.PrimitiveClassification
     /// <summary>
     /// Class Primitive_Classification.
     /// </summary>
-    public static partial class Classify
+    public static class Classify
     {
         private static List<double> listOfLimitsABN, listOfLimitsMCM, listOfLimitsSM;
         private static List<List<int>> edgeRules, faceRules;
