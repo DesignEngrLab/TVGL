@@ -73,6 +73,7 @@
     <Compile Include="ExcelInterface.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Test\BooleanOperationsTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -104,9 +105,6 @@
       <Project>{f6678d6c-1f71-4f4e-ac77-22f5e133a6f2}</Project>
       <Name>TVGLPresenterDebugger</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Test\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -15,6 +15,14 @@ namespace TVGL
         Intersection
     };
 
+    public enum PolygonFillType
+    {
+        Positive, 
+        EvenOdd,
+        Negative,
+        NonZero
+    };
+
     /// <summary>
     /// A set of general operation for points and paths
     /// </summary>
@@ -151,7 +159,7 @@ namespace TVGL
             simplifiedPolygon = new List<Point>();
 
             //Simplify
-            var solution = UnionEvenOdd(new List<List<Point>>() { polygon.ToList() });
+            var solution = Union(new List<List<Point>>() { polygon.ToList() }, true, PolygonFillType.EvenOdd);
 
             var outputLoops = new List<List<Point>>();
             foreach (var loop in solution)
@@ -201,7 +209,7 @@ namespace TVGL
         public static List<List<Point>> OffsetRound(IEnumerable<Point> path, double offset,
             double minLength = 0.0)
         {
-            return Offset(new Paths { path.ToList() }, offset, JoinType.Round, minLength);
+            return Offset(new Paths { path.ToList() }, offset, JoinType.jtRound, minLength);
         }
 
         /// <summary>
@@ -217,7 +225,7 @@ namespace TVGL
             double minLength = 0.0)
         {
             var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.Round, minLength);
+            return Offset(listPaths, offset, JoinType.jtRound, minLength);
         }
 
         /// <summary>
@@ -230,7 +238,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<Point> OffsetMiter(IEnumerable<Point> path, double offset, double minLength = 0.0)
         {
-            return Offset(new Paths { path.ToList() }, offset, JoinType.Miter, minLength).FirstOrDefault();
+            return Offset(new Paths { path.ToList() }, offset, JoinType.jtMiter, minLength).FirstOrDefault();
         }
 
         /// <summary>
@@ -245,7 +253,7 @@ namespace TVGL
         public static List<List<Point>> OffsetMiter(IEnumerable<IEnumerable<Point>> paths, double offset, double minLength = 0.0)
         {
             var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.Miter, minLength);
+            return Offset(listPaths, offset, JoinType.jtMiter, minLength);
         }
 
         /// <summary>
@@ -258,7 +266,7 @@ namespace TVGL
         /// <returns></returns>
         public static List<List<Point>> OffsetSquare(List<Point> path, double offset, double minLength = 0.0)
         {
-            return Offset(new Paths {path.ToList()}, offset, JoinType.Square, minLength);
+            return Offset(new Paths {path.ToList()}, offset, JoinType.jtSquare, minLength);
         }
 
         /// <summary>
@@ -273,7 +281,7 @@ namespace TVGL
         public static List<List<Point>> OffsetSquare(List<List<Point>> paths, double offset, double minLength = 0.0)
         {
             var listPaths = paths.Select(path => path.ToList()).ToList();
-            return Offset(listPaths, offset, JoinType.Square, minLength);
+            return Offset(listPaths, offset, JoinType.jtSquare, minLength);
         }
 
         private static List<List<Point>> Offset(List<List<Point>> paths, double offset, JoinType joinType,
@@ -292,7 +300,7 @@ namespace TVGL
 
             //Setup Clipper
             var clip = new ClipperOffset(2, minLength*scale);
-            clip.AddPaths(clipperSubject, joinType, EndType.ClosedPolygon);
+            clip.AddPaths(clipperSubject, joinType, EndType.etClosedPolygon);
 
             //Begin an evaluation
             var clipperSolution = new List<List<IntPoint>>();
@@ -309,53 +317,103 @@ namespace TVGL
         #region Union
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
+        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip = null, bool simplifyPriorToUnion = true)
+        public static List<List<Point>> Union(IList<List<Point>> subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Union, subject, clip, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
         }
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
+        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(List<Point> subject, List<Point> clip, bool simplifyPriorToUnion = true)
+        public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Union, new Paths { subject }, new Paths { clip }, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
+        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Union(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToUnion = true)
+        public static List<List<Point>> Union(List<Point> subject, List<Point> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Union, subject, new Paths { clip }, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, new Paths { subject }, new Paths { clip }, simplifyPriorToUnion);
         }
 
         /// <summary>
-        /// Union based on Even/Odd methodology. Useful for correctly ordering a set of paths.
+        /// Union. Joins paths that are touching into merged larger subject.
+        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
         /// </summary>
         /// <param name="subject"></param>
+        /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static Paths UnionEvenOdd(IList<List<Point>> subject, bool simplifyPriorToUnion = true)
+        public static List<List<Point>> Union(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.EvenOdd, ClipType.Union, subject, null, simplifyPriorToUnion);
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, new Paths { clip }, simplifyPriorToUnion);
+        }
+
+        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
+        /// <summary>
+        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
+        ///  using the even/odd methodology
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToUnion"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> UnionEvenOdd(IList<List<Point>> subject, bool simplifyPriorToUnion = true)
+        {
+            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
+        }
+
+        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
+        /// <summary>
+        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
+        ///  using the even/odd methodology
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToUnion"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> UnionEvenOdd(List<Point> subject, bool simplifyPriorToUnion = true)
+        {
+            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, new List<List<Point>>() { subject }, null, simplifyPriorToUnion);
+        }
+
+        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
+        /// <summary>
+        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
+        ///  using the even/odd methodology.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <param name="simplifyPriorToUnion"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static List<List<Point>> UnionEvenOdd(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToUnion = true)
+        {
+            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
         #endregion
 
@@ -366,11 +424,12 @@ namespace TVGL
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToDifference"></param>
+        /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Difference(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToDifference = true)
+        public static List<List<Point>> Difference(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Difference, subject, clip, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -379,11 +438,12 @@ namespace TVGL
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToDifference"></param>
+        /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Difference(List<Point> subject, List<Point> clip, bool simplifyPriorToDifference = true)
+        public static List<List<Point>> Difference(List<Point> subject, List<Point> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Difference, new Paths { subject}, new Paths { clip}, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, new Paths { subject}, new Paths { clip}, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -392,11 +452,12 @@ namespace TVGL
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToDifference"></param>
+        /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Difference(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToDifference = true)
+        public static List<List<Point>> Difference(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Difference, subject, new Paths { clip }, simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, subject, new Paths { clip }, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -405,11 +466,13 @@ namespace TVGL
         /// <param name="subject"></param>
         /// <param name="clip"></param>
         /// <param name="simplifyPriorToDifference"></param>
+        /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Difference(List<Point> subject, IList<List<Point>> clip, bool simplifyPriorToDifference = true)
+        public static List<List<Point>> Difference(List<Point> subject, IList<List<Point>> clip, 
+            bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Difference, new Paths { subject}, clip , simplifyPriorToDifference);
+            return BooleanOperation(polyFill, ClipType.ctDifference, new Paths { subject}, clip , simplifyPriorToDifference);
         }
         #endregion
 
@@ -422,9 +485,9 @@ namespace TVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Intersection(List<Point> subject, List<Point> clip, bool simplifyPriorToIntersection = true)
+        public static List<List<Point>> Intersection(List<Point> subject, List<Point> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>() { clip }, simplifyPriorToIntersection);
+            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>() { clip }, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -435,9 +498,9 @@ namespace TVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Intersection(IList<List<Point>> subjects, List<Point> clip, bool simplifyPriorToIntersection = true)
+        public static List<List<Point>> Intersection(IList<List<Point>> subjects, List<Point> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new List<List<Point>>(subjects), new List<List<Point>>() { clip }, simplifyPriorToIntersection);
+            return Intersection(new List<List<Point>>(subjects), new List<List<Point>>() { clip }, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -448,9 +511,9 @@ namespace TVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Intersection(List<Point> subject, IList<List<Point>> clips, bool simplifyPriorToIntersection = true)
+        public static List<List<Point>> Intersection(List<Point> subject, IList<List<Point>> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>(clips), simplifyPriorToIntersection);
+            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>(clips), simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -461,9 +524,9 @@ namespace TVGL
         /// <param name="simplifyPriorToIntersection"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Intersection(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToIntersection = true)
+        public static List<List<Point>> Intersection(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Intersection, subject, clip, simplifyPriorToIntersection);
+            return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
         }
 
         #endregion
@@ -478,9 +541,9 @@ namespace TVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Xor(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToXor= true)
+        public static List<List<Point>> Xor(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return BooleanOperation(PolyFillType.Positive, ClipType.Xor, subject, clip, simplifyPriorToXor);
+            return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
         }
 
         /// <summary>
@@ -491,9 +554,9 @@ namespace TVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Xor(List<Point> subject, List<Point> clip, bool simplifyPriorToXor = true)
+        public static List<List<Point>> Xor(List<Point> subject, List<Point> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<Point>>() { subject }, new List<List<Point>>() { clip }, simplifyPriorToXor);
+            return Xor(new List<List<Point>>() { subject }, new List<List<Point>>() { clip }, simplifyPriorToXor, polyFill);
         }
 
         /// <summary>
@@ -504,9 +567,9 @@ namespace TVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Xor(IList<List<Point>> subjects, List<Point> clip, bool simplifyPriorToXor = true)
+        public static List<List<Point>> Xor(IList<List<Point>> subjects, List<Point> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<Point>>(subjects), new List<List<Point>>() { clip }, simplifyPriorToXor);
+            return Xor(new List<List<Point>>(subjects), new List<List<Point>>() { clip }, simplifyPriorToXor, polyFill);
         }
 
         /// <summary>
@@ -517,12 +580,37 @@ namespace TVGL
         /// <param name="simplifyPriorToXor"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<List<Point>> Xor(List<Point> subject, IList<List<Point>> clips, bool simplifyPriorToXor = true)
+        public static List<List<Point>> Xor(List<Point> subject, IList<List<Point>> clips, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Xor(new List<List<Point>>() { subject }, new List<List<Point>>(clips), simplifyPriorToXor);
+            return Xor(new List<List<Point>>() { subject }, new List<List<Point>>(clips), simplifyPriorToXor, polyFill);
         }
 
         #endregion
+
+        private static List<List<Point>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType, IEnumerable<Path> subject,
+           IEnumerable<Path> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
+        {
+            //Convert the fill type from PolygonOperations wrapper to Clipper enum types
+            PolyFillType fillType = PolyFillType.pftPositive;
+            if (fillMethod == PolygonFillType.Positive)
+            {
+                fillType = PolyFillType.pftPositive;
+            }
+            else if (fillMethod == PolygonFillType.Negative)
+            {
+                fillType = PolyFillType.pftNegative;
+            }
+            else if (fillMethod == PolygonFillType.NonZero)
+            {
+                fillType = PolyFillType.pftNonZero;
+            }
+            else if (fillMethod == PolygonFillType.EvenOdd)
+            {
+                fillType = PolyFillType.pftEvenOdd;
+            }
+            return BooleanOperation(fillType, clipType, subject, clip, simplifyPriorToBooleanOperation, scale);
+        }
+
 
         /// <summary>
         /// Performs the Boolean Operations from the Clipper Library
@@ -555,13 +643,13 @@ namespace TVGL
 
             //Setup Clipper
             var clipper = new ClipperLib.Clipper() { StrictlySimple = true };
-            clipper.AddPaths(clipperSubject, PolyType.Subject, true);
+            clipper.AddPaths(clipperSubject, PolyType.ptSubject, true);
 
             if (clip != null)
             {
                 var clipperClip =
                     clip.Select(loop => loop.Select(point => new IntPoint(point.X * scale, point.Y * scale)).ToList()).ToList();
-                clipper.AddPaths(clipperClip, PolyType.Clip, true);
+                clipper.AddPaths(clipperClip, PolyType.ptClip, true);
             }
 
             //Begin an evaluation
@@ -573,31 +661,6 @@ namespace TVGL
             return solution;
         }
         #endregion
-
-
-        /// <summary>
-        ///  Union. Joins paths that are touching into merged larger subject.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <returns></returns>
-        public static List<List<Point>> Union3(IList<List<Point>> subject, IList<List<Point>> clip = null)
-        {
-            //var subject2 = new List<List<Point>>();
-            //foreach (var path in subject)
-            //{
-            //    subject2.Add(SimplifyFuzzy(path));
-            //}
-            //var clip2 = new List<List<Point>>();
-            //if (clip != null)
-            //{
-            //    foreach (var path in clip)
-            //    {
-            //        clip2.Add(SimplifyFuzzy(path));
-            //    }
-            //}
-            return BooleanOperation(subject, clip, BooleanOperationType.Union);
-        }  
 
         private static int NumberOfLinesBelow(SweepEvent se1, SweepList sweepLines)
         {
