@@ -7,13 +7,10 @@ using NUnit.Framework;
 using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
-using TVGL.Clipper;
 using TVGL.IOFunctions;
 
 namespace TVGL_Test
 {
-    using Path = List<Point>;
-    using Paths = List<List<Point>>;
 
     internal class Program
     {
@@ -106,78 +103,12 @@ namespace TVGL_Test
             //  Console.ReadKey();
         }
 
-
-
-        public static void TestAdditiveVolumeEstimate(TessellatedSolid ts)
-        {
-            List<List<List<Point>>> outputData;
-            var volume = AreaDecomposition.AdditiveVolume(ts, new[] {-1.0, 0.0, 0.0}, 0.1, 0.0, out outputData);
-            //foreach (var output in data)
-            //{
-            //    Presenter.ShowAndHang(output);
-            //}
-        }
         public static void TestSilhouette(TessellatedSolid ts)
         {
             var silhouette = TVGL.Silhouette.Run(ts, new[] {0.5, 0.0, 0.5});
             Presenter.ShowAndHang(silhouette);
         }
 
-        public static void Difference2()
-        {
-            var subject = new Paths();
-            var subject2 = new Paths();
-            var clip = new Paths();
-            var solution = new Paths();
-            var polytree = new PolyTree();
-            var clipper = new Clipper();
-
-            PolyFillType fillMethod = PolyFillType.Positive;
-            const int scalingFactor = 1000;
-            int[] ints1 = { -103, -219, -103, -136, -115, -136 }; //CCW
-            int[] ints2 = { -110, -155, -110, -174, -70, -174 }; //CCW
-
-            subject.Add(MakePolygonFromInts(ints1, scalingFactor));
-            clip.Add(MakePolygonFromInts(ints2, scalingFactor));
-
-            //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip }, scalingFactor);
-
-            clipper.StrictlySimple = true;
-            clipper.AddPaths(subject, PolyType.Subject, true);
-            clipper.AddPaths(clip, PolyType.Clip, true);
-
-            var result = clipper.Execute(ClipType.Union, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(1));
-
-            result = clipper.Execute(ClipType.Difference, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(2));
-
-            result = clipper.Execute(ClipType.Intersection, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(1));
-
-            result = clipper.Execute(ClipType.Xor, solution, fillMethod, fillMethod);
-            //ShowPaths(solution, scalingFactor);
-            Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(4));
-        }
-
-        private static Path MakePolygonFromInts(int[] ints, double scale = 1.0)
-        {
-            var polygon = new Path();
-
-            for (var i = 0; i < ints.Length; i += 2)
-            {
-                polygon.Add(new Point(scale * ints[i], scale * ints[i + 1]));
-            }
-
-            return polygon;
-        }
 
         private static void TestPolygon(TessellatedSolid ts)
         {
