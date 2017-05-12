@@ -105,7 +105,7 @@ namespace TVGL.PrimitiveClassification
         internal static List<List<int>> readingFacesRules()
         {
             var reader = getStreamReader("NewFaRules.csv");//FaRules2.csv
-                                                           // var reader = new StreamReader(File.OpenRead("src/PrimitiveClassificationOfTessellatedSolids/NewFaRules.csv"));
+            // var reader = new StreamReader(File.OpenRead("src/PrimitiveClassificationOfTessellatedSolids/NewFaRules.csv"));
             List<List<int>> Lists = new List<List<int>>();
             bool blocker = true;
             while (!reader.EndOfStream)
@@ -135,7 +135,8 @@ namespace TVGL.PrimitiveClassification
         private static StreamReader getStreamReader(string filepath)
         {
 #if net45
-            var stream1 = Assembly.GetExecutingAssembly().GetManifestResourceStream(@"TVGL.Resources." + filepath);
+            var a = typeof(Parameters).GetTypeInfo().Assembly;
+            var stream1 =a.GetManifestResourceStream(@"TVGL.Resources." + filepath);
 #else
             var stream1 = Assembly.GetExecutingAssembly().GetManifestResourceStream(@"TVGL.Resources." + filepath);
 #endif
