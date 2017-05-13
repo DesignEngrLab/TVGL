@@ -206,12 +206,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
+    <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
       <Link>Primitive Classification\NewEdgeRules.csv</Link>
-    </None>
-    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewFaRules.csv">
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewFaRules.csv">
       <Link>Primitive Classification\NewFaRules.csv</Link>
-    </None>
+    </EmbeddedResource>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

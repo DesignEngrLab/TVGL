@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TVGL;
 
-namespace TVGL.PrimitiveClassification
+namespace TVGL.PrimitiveClassificationDetail
 {
   internal  class FaceWithScores
   {

@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
-namespace TVGL.PrimitiveClassification
+namespace TVGL.PrimitiveClassificationDetail
 {
     internal static class Parameters
     {
@@ -136,16 +137,18 @@ namespace TVGL.PrimitiveClassification
         {
 #if net45
             var a = typeof(Parameters).GetTypeInfo().Assembly;
-            var stream1 =a.GetManifestResourceStream(@"TVGL.Resources." + filepath);
 #else
-            var stream1 = Assembly.GetExecutingAssembly().GetManifestResourceStream(@"TVGL.Resources." + filepath);
+            var a = Assembly.GetExecutingAssembly();
 #endif
+            var stream1 = a.GetManifestResourceStream(@"TVGL.Primitive_Classification." + filepath);
+            if (stream1 == null)
+            {
+                var resources = a.GetManifestResourceNames();
+                filepath = resources.First(r => r.EndsWith(filepath));
+                stream1 = a.GetManifestResourceStream(filepath);
+            }
             return new StreamReader(stream1);
-            //using (var reader = new StreamReader(stream1))
-            //{
-            //    string csv = reader.ReadToEnd();
-            //    // do something with the CSV
-            //}
+
         }
 
 

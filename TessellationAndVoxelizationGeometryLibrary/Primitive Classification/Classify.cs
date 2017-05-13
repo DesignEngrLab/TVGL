@@ -16,13 +16,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
+using TVGL.PrimitiveClassificationDetail;
 
-namespace TVGL.PrimitiveClassification
+namespace TVGL
 {
     /// <summary>
     /// Class Primitive_Classification.
     /// </summary>
-    public static class Classify
+    public static class PrimitiveClassification
     {
         private static List<double> listOfLimitsABN, listOfLimitsMCM, listOfLimitsSM;
         private static List<List<int>> edgeRules, faceRules;
