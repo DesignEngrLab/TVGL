@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -23,7 +23,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;net45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
@@ -137,17 +137,17 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs">
       <Link>Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\ClassificationConstants.cs">
-      <Link>Primitive Classification\ClassificationConstants.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Classify.cs">
+      <Link>Primitive Classification\Classify.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\FaceWithScores.cs">
       <Link>Primitive Classification\FaceWithScores.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Parameters.cs">
+      <Link>Primitive Classification\Parameters.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\PlanningSurface.cs">
       <Link>Primitive Classification\PlanningSurface.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Primitive_Classification.cs">
-      <Link>Primitive Classification\Primitive_Classification.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\Cone.cs">
       <Link>Primitive Surfaces\Cone.cs</Link>
@@ -206,14 +206,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
+      <Link>Primitive Classification\NewEdgeRules.csv</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewFaRules.csv">
+      <Link>Primitive Classification\NewFaRules.csv</Link>
+    </EmbeddedResource>
     <None Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\README">
       <Link>2D\Clipper\README</Link>
-    </None>
-    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
-      <Link>Primitive Classification\NewEdgeRules.csv</Link>
-    </None>
-    <None Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewFaRules.csv">
-      <Link>Primitive Classification\NewFaRules.csv</Link>
     </None>
     <None Include="packages.config" />
   </ItemGroup>

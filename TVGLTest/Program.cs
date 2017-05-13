@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -11,7 +11,6 @@ using TVGL.IOFunctions;
 
 namespace TVGL_Test
 {
-
     internal class Program
     {
         private static readonly string[] FileNames = {
@@ -108,7 +107,6 @@ namespace TVGL_Test
             var silhouette = TVGL.Silhouette.Run(ts, new[] {0.5, 0.0, 0.5});
             Presenter.ShowAndHang(silhouette);
         }
-
 
         private static void TestPolygon(TessellatedSolid ts)
         {
