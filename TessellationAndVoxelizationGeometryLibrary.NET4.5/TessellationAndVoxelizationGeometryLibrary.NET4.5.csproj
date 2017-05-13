@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -41,8 +41,8 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\ClipperLib.cs">
-      <Link>2D\ClipperLib.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\clipper.cs">
+      <Link>2D\Clipper\clipper.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Line.cs">
       <Link>2D\Line.cs</Link>
@@ -212,6 +212,9 @@
     <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewFaRules.csv">
       <Link>Primitive Classification\NewFaRules.csv</Link>
     </EmbeddedResource>
+    <None Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\README">
+      <Link>2D\Clipper\README</Link>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -225,6 +228,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\License.txt">
+      <Link>2D\Clipper\License.txt</Link>
+    </Content>
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>

@@ -40,7 +40,7 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="2D\ClipperLib.cs" />
+    <Compile Include="2D\Clipper\clipper.cs" />
     <Compile Include="2D\Line.cs" />
     <Compile Include="2D\Polygon.cs" />
     <Compile Include="2D\PolygonTree.cs" />
@@ -122,10 +122,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="2D\Clipper\License.txt" />
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="2D\Clipper\README" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

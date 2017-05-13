@@ -81,7 +81,7 @@ namespace TVGL
                 try
                 {
                     //Do some polygon functions to clean up issues and try again
-                    paths = PolygonOperations.UnionEvenOdd(paths);
+                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
                     paths = PolygonOperations.OffsetSquare(paths, distance/1000);
                     paths = PolygonOperations.OffsetSquare(paths, -distance/1000);
 

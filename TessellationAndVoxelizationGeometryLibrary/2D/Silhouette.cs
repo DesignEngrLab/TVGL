@@ -189,7 +189,7 @@ namespace TVGL
                 }
                 if (!significantPaths.Any()) continue;
 
-                var surfaceUnion = PolygonOperations.UnionEvenOdd(significantPaths);
+                var surfaceUnion = PolygonOperations.Union(significantPaths, true, PolygonFillType.EvenOdd);
                 if (!surfaceUnion.Any()) continue;
 
                 if (area < 0)
@@ -320,7 +320,7 @@ namespace TVGL
                 }
                 if (!significantPaths.Any()) continue;
 
-                var surfaceUnion = PolygonOperations.UnionEvenOdd(significantPaths);
+                var surfaceUnion = PolygonOperations.Union(significantPaths, true, PolygonFillType.EvenOdd);
                 if (!surfaceUnion.Any()) continue;
 
                 if (area < 0)
