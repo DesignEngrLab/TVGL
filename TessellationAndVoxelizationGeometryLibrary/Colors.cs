@@ -775,6 +775,15 @@ namespace TVGL
                    && G == otherColor.G && R == otherColor.R;
         }
 
+        /// <summary>
+        ///     Gets the Hash code for the object.
+        /// </summary>
+        /// <returns>System.Int.</returns>
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
         #region Constructors
 
         /// <summary>

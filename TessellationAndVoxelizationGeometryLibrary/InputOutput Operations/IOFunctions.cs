@@ -14,13 +14,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Reflection;
-using System.ServiceModel.Channels;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace TVGL.IOFunctions

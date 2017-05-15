@@ -1,43 +1,23 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>TVGL</RootNamespace>
+    <PackageId>TVGL</PackageId>
+    <Authors>Matt Campbell, Brandon Massoni, Nima Rafibakhsh</Authors>
+    <Company>Design Engineering Lab</Company>
+    <Product>Tessellation and Voxelization Geometry Library</Product>
+    <Version>1.0.17.0515</Version>
+    <AssemblyVersion>1.0.17.0515</AssemblyVersion>
+    <Description>This dynamic library is focused on Computational Geometry functions likes the ones you would find in CGAL. As opposed to copying directly others work, we have sought to create functions from scratch that are optimized or straightforward as a C# implementation. As a .NET managed library (and a portable class library at that), the functions can be accessed from other managed code.</Description>
+    <Copyright>2014</Copyright>
+    <PackageTags>3d geometry mesh tessellation voxelization</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseUrl>https://github.com/DesignEngrLab/TVGL/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>http://designengrlab.github.io/TVGL/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DesignEngrLab/TVGL.git</RepositoryUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <AssemblyName>TessellationAndVoxelizationGeometryLibrary</AssemblyName>
-    <DefaultLanguage>en-US</DefaultLanguage>
-    <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;net45</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>net45</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\TessellationAndVoxelizationGeometryLibrary.XML</DocumentationFile>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\clipper.cs">
@@ -202,7 +182,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>Verbosity.cs</Link>
     </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
@@ -214,38 +193,16 @@
     <None Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\README">
       <Link>2D\Clipper\README</Link>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="MIConvexHull, Version=1.0.16.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.0214\lib\portable-net45+wp8+win8\MIConvexHull.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="StarMath">
-      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net45+wp8+win8\StarMath.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-  </ItemGroup>
+
   <ItemGroup>
     <Content Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\License.txt">
       <Link>2D\Clipper\License.txt</Link>
     </Content>
-    <Content Include="MIConvexHull.xml" />
-    <Content Include="StarMath.XML" />
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
-  </Target>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
+  <ItemGroup>
+    <PackageReference Include="MIConvexHull" Version="1.1.17.411" />
+    <PackageReference Include="StarMath" Version="2.0.17.413" />
+  </ItemGroup>
 </Project>
