@@ -298,6 +298,33 @@ namespace TVGL
         #endregion
 
         #region 3D Plots via Helix.Toolkit
+        public static void ShowVertexPathsWithSolid(IList<double[]> segments, IList<TessellatedSolid> solids)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+
+            foreach (var tessellatedSolid in solids)
+            {
+                var model = MakeModelVisual3D(tessellatedSolid);
+                models.Add(model);
+                window.view1.Children.Add(model);
+            }
+
+            foreach (var point in segments)
+            {
+                var lineCollection = new List<Point3D>
+                {
+                    new Point3D(point[0], point[1], point[2]),
+                    new Point3D(point[3], point[4], point[5])
+                };
+                var color = new System.Windows.Media.Color();
+                color.R = 255; //G & B default to 0 to form red
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color };
+                window.view1.Children.Add(lines);
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
         public static void ShowVertexPathsWithSolid(IList<List<List<double[]>>> vertexPaths, IList<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
@@ -327,7 +354,7 @@ namespace TVGL
                     lineCollection.Add(lineCollection.First());
                     var color = new System.Windows.Media.Color();
                     color.R = 255; //G & B default to 0 to form red
-                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color};
+                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color };
                     window.view1.Children.Add(lines);
                 }
             }
@@ -390,7 +417,7 @@ namespace TVGL
                     }
                     lineCollection.RemoveAt(0);
                     lineCollection.Add(lineCollection.First());
-                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection)};
+                    var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
                     window.view1.Children.Add(lines);
                 }
             }
@@ -414,7 +441,7 @@ namespace TVGL
             //Add the solid to the visual
             var model = MakeModelVisual3D(ts);
             window.view1.Children.Add(model);
-            
+
             //Add a transparent unit sphere to the visual
             var sphere = new SphereVisual3D();
             sphere.Radius = radius;
@@ -443,8 +470,8 @@ namespace TVGL
 
                 var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = systemColor, Thickness = 5 };
 
-               
-                var pointsVisual = new PointsVisual3D { Color = systemColor , Size = 5 };
+
+                var pointsVisual = new PointsVisual3D { Color = systemColor, Size = 5 };
                 pointsVisual.Points = new Point3DCollection() { pt1 };
                 window.view1.Children.Add(pointsVisual);
                 window.view1.Children.Add(lines);
@@ -566,7 +593,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        public static void ShowAndHangTransparentsAndSolids(IList<TessellatedSolid> transparents, IList<TessellatedSolid> solids )
+        public static void ShowAndHangTransparentsAndSolids(IList<TessellatedSolid> transparents, IList<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
             foreach (var ts in solids)
@@ -598,7 +625,7 @@ namespace TVGL
                         }
                 });
             }
-           
+
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
