@@ -121,6 +121,16 @@ namespace TVGL
             Area = Math.PI*radius*radius;
             Circumference = Constants.TwoPi*radius;
         }
+
+        public List<Point> GetCirclePath()
+        {
+            var path = new List<Point>();
+            for (var theta = 0.0; theta < Math.PI * 2; theta += Math.PI / 50.0)
+            {
+                path.Add(new Point(Radius * Math.Cos(theta) + Center.X, Radius * Math.Sin(theta) + Center.Y));
+            }
+            return path;
+        }
     }
 
     /// <summary>

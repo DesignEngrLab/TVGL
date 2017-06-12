@@ -8,14 +8,15 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
+using TVGLTest.SerializableTestCases;
 
 namespace TVGL_Test
 {
     internal class Program
     {
         private static readonly string[] FileNames = {
-        "../../../TestFiles/ABF.ply",
-       // "../../../TestFiles/Beam_Boss.STL",
+        //"../../../TestFiles/ABF.ply",
+        "../../../TestFiles/Beam_Boss.STL",
        // //"../../../TestFiles/bigmotor.amf",
        // //"../../../TestFiles/DxTopLevelPart2.shell",
        // //"../../../TestFiles/Candy.shell",
@@ -23,7 +24,7 @@ namespace TVGL_Test
        // //"../../../TestFiles/train.3mf",
        // //"../../../TestFiles/Castle.3mf",
        // //"../../../TestFiles/Raspberry Pi Case.3mf",
-       ////"../../../TestFiles/shark.ply",
+       //"../../../TestFiles/shark.ply", //Error on load-in
      // "../../../TestFiles/bunnySmall.ply",
        // "../../../TestFiles/cube.ply",
        // //"../../../TestFiles/airplane.ply",
@@ -75,7 +76,7 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*.stl");
+            //var fileNames = dir.GetFiles("*.stl");
             for (var i = 0; i < FileNames.Count(); i++)
             {
                 var filename = FileNames[i];//.FullName;
@@ -84,16 +85,18 @@ namespace TVGL_Test
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-                filename += "1.ply";
-                using (fileStream = File.OpenWrite(filename))
-                    IO.Save(fileStream, ts, FileType.PLY_Binary);
-                using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
+                //filename += "1.ply";
+                //using (fileStream = File.OpenWrite(filename))
+                //    IO.Save(fileStream, ts, FileType.PLY_Binary);
+                //using (fileStream = File.OpenRead(filename))
+                //    ts = IO.Open(fileStream, filename);
+
+                //Show the part for easy reference
+                Presenter.Show(ts[0], 1);
+                TestPolygonOperations(ts[0]);
 
 
-                //TestPolygon(ts[0]);
-
-                Presenter.ShowAndHang(ts);
+  
               //  TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
@@ -108,12 +111,41 @@ namespace TVGL_Test
             Presenter.ShowAndHang(silhouette);
         }
 
-        private static void TestPolygon(TessellatedSolid ts)
+
+        private static void TestPolygonOperations(TessellatedSolid ts)
         {
-            ContactData contactData;
-            Slice.GetContactData(ts, new Flat(10, new[] { 1.0, 0, 0 }),
-                out contactData);
-            throw new NotImplementedException();
+            var direction = new[] {1.0, 0, 0};
+            List<Vertex> bottomVertices, topVertices;
+            var length = MinimumEnclosure.GetLengthAndExtremeVertices(direction, ts.Vertices, out bottomVertices,
+                out topVertices);
+
+            //Check cross sections at the 1/4, 1/2, and 3/4 marks along the search direction
+            for (var i = 1; i < 4; i++)
+            {
+                var crossSection = AreaDecomposition.GetCrossSectionAtGivenDistance(ts, direction, length * i / 4);
+                if (crossSection == null || !crossSection.Any()) continue;
+                var points = new List<Point>();
+                //Get all the point<
+                foreach (var path in crossSection)
+                {
+                    points.AddRange(path);
+                }
+
+                //Do polygon operation
+                var boundingCircle = MinimumEnclosure.MinimumCircle(points);
+
+                //Show the cross section and the minimum bounding circle
+                Presenter.ShowAndHang(crossSection, new List<List<Point>>() { boundingCircle.GetCirclePath()});
+
+                ////Serialize the cross section. Usefull for developing tests with known solutions.
+                //var filename = ts.FileName + "crossSection" + i;
+                //var paths = new Paths(crossSection);
+                //Paths.Serialize(paths, filename);
+
+                ////This shows how to load serialized cross sections
+                //var loadedPaths = TVGLTest.SerializableTestCases.Paths.Deserialize(filename);
+                //Presenter.ShowAndHang(loadedPaths.Points, new List<List<Point>>() { boundingCircle.GetCirclePath() });
+            }
         }
 
         private static void TestOBB(string InputDir)
