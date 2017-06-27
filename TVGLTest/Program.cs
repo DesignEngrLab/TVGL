@@ -45,8 +45,11 @@ namespace TVGL_Test
         //"../../../TestFiles/ABF.STL",
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/Square_Support.STL",
         "../../../TestFiles/Beam_Clean.STL",
+        "../../../TestFiles/Square_Support.STL",
+        "../../../TestFiles/Aerospace_Beam.STL",
+
+
         "../../../TestFiles/piston.stl",
         "../../../TestFiles/Z682.stl",
         "../../../TestFiles/sth2.stl",
@@ -63,7 +66,7 @@ namespace TVGL_Test
         "../../../TestFiles/Z665.stl",
         "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
         "../../../TestFiles/mendel_extruder.stl",
-        "../../../TestFiles/Aerospace_Beam.STL",
+
        "../../../TestFiles/MV-Test files/holding-device.STL",
        "../../../TestFiles/MV-Test files/gear.STL"
         };
@@ -106,19 +109,23 @@ namespace TVGL_Test
         public static void TestSegmentation(TessellatedSolid ts)
         {
             var obb = MinimumEnclosure.OrientedBoundingBox(ts);
-            //foreach (var direction in obb.Directions)
-            //{
-            //    var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, 0.1);
-            //    foreach (var segment in segments)
-            //    {
-            //        segment.Display(ts);
-            //    }
-            //}
-            var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2], 0.1);
-            foreach (var segment in segments)
+            var startTime = DateTime.Now;
+            foreach (var direction in obb.Directions)
             {
-                segment.DisplayFaces(ts);
+                var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, 0.1);
+                //foreach (var segment in segments)
+                //{
+                //    segment.Display(ts);
+                //}
             }
+
+            //var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2], 0.1);
+            var totalTime = DateTime.Now - startTime;
+            Debug.WriteLine(totalTime.Milliseconds + " Milliseconds");
+            //foreach (var segment in segments)
+            //{
+            //    segment.DisplayFaces(ts);
+            //}
         }
 
         public static void TestSilhouette(TessellatedSolid ts)

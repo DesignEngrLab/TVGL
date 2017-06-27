@@ -983,9 +983,8 @@ namespace TVGL
                             if (allInStepSegmentVertices.Contains(otherVertex))
                             {
                                 if (otherVertex.ReferenceIndex == segment.Index) continue;
-                                //Else                         
-                                Debug.WriteLine("This otherVertex belongs to a another segment.");
-
+                                
+                                //Else, this vertex belongs to another segment                         
                                 var otherSegment = allDirectionalSegments[otherVertex.ReferenceIndex];
                                 AddConnectedSegment(otherSegment, ref connectedSegmentsIndices,
                                     ref inStepVertices, ref inStepSegmentVertexSet,
@@ -995,8 +994,7 @@ namespace TVGL
                             //Else if
                             if (otherVertex.ReferenceIndex != -1)
                             {
-                                Debug.WriteLine("This otherVertex belongs to a another segment.");
-
+                                //This vertex belongs to another segment 
                                 var otherSegment = allDirectionalSegments[otherVertex.ReferenceIndex];
                                 AddConnectedSegment(otherSegment, ref connectedSegmentsIndices,
                                      ref inStepVertices, ref inStepSegmentVertexSet,
@@ -1737,6 +1735,9 @@ namespace TVGL
 
                 //Add the polygon data group
                 AddPolygonDataGroup(polygonDataGroup, false);
+
+                //Build the next vertices with the current edges and vertex reference indices
+                UpdateNextVertices();
             }
 
 
