@@ -85,11 +85,11 @@ namespace TVGL_Test
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-                filename += "1.ply";
-                using (fileStream = File.OpenWrite(filename))
-                    IO.Save(fileStream, ts, FileType.PLY_Binary);
-                using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
+                //filename += "1.ply";
+                //using (fileStream = File.OpenWrite(filename))
+                //    IO.Save(fileStream, ts, FileType.PLY_Binary);
+                //using (fileStream = File.OpenRead(filename))
+                //    ts = IO.Open(fileStream, filename);
 
 
                 //TestPolygon(ts[0]);
