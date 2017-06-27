@@ -31,6 +31,8 @@ namespace TVGL
 
         /// <summary>
         ///     The dimensions of the bounding box. The 3 values correspond to the 3 direction.
+        ///     If this was a bounding box along a given direction, the first dimension will
+        ///     correspond with the distance along that direction.
         /// </summary>
         public double[] Dimensions;
 
@@ -43,6 +45,8 @@ namespace TVGL
 
         /// <summary>
         ///     The Directions normal are the three unit vectors that describe the orientation of the box.
+        ///     If this was a bounding box along a given direction, the first direction will
+        ///     correspond with that direction.
         /// </summary>
         public double[][] Directions;
 

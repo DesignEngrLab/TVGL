@@ -14,7 +14,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        "../../../TestFiles/ABF.ply",
+        //"../../../TestFiles/ABF.ply",
        // "../../../TestFiles/Beam_Boss.STL",
        // //"../../../TestFiles/bigmotor.amf",
        // //"../../../TestFiles/DxTopLevelPart2.shell",
@@ -28,7 +28,7 @@ namespace TVGL_Test
        // "../../../TestFiles/cube.ply",
        // //"../../../TestFiles/airplane.ply",
        // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        "../../../TestFiles/Tetrahedron.STL",
+        //"../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
        // "../../../TestFiles/Mic_Holder_SW.stl",
@@ -39,12 +39,13 @@ namespace TVGL_Test
        // "../../../TestFiles/Rook.amf",
         //"../../../TestFiles/hdodec.off",
         //"../../../TestFiles/tref.off",
-        "../../../TestFiles/mushroom.off",
-        "../../../TestFiles/vertcube.off",
-        "../../../TestFiles/trapezoid.4d.off",
-        "../../../TestFiles/ABF.STL",
-        "../../../TestFiles/Pump-1repair.STL",
-        "../../../TestFiles/Pump-1.STL",
+        //"../../../TestFiles/mushroom.off",
+        //"../../../TestFiles/vertcube.off",
+        //"../../../TestFiles/trapezoid.4d.off",
+        //"../../../TestFiles/ABF.STL",
+        //"../../../TestFiles/Pump-1repair.STL",
+        //"../../../TestFiles/Pump-1.STL",
+        "../../../TestFiles/Square_Support.STL",
         "../../../TestFiles/Beam_Clean.STL",
         "../../../TestFiles/piston.stl",
         "../../../TestFiles/Z682.stl",
@@ -92,14 +93,32 @@ namespace TVGL_Test
 
 
                 //TestPolygon(ts[0]);
-
-                Presenter.ShowAndHang(ts);
+                TestSegmentation(ts[0]);
+                //Presenter.ShowAndHang(ts);
               //  TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
 
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
+        }
+
+        public static void TestSegmentation(TessellatedSolid ts)
+        {
+            var obb = MinimumEnclosure.OrientedBoundingBox(ts);
+            //foreach (var direction in obb.Directions)
+            //{
+            //    var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, 0.1);
+            //    foreach (var segment in segments)
+            //    {
+            //        segment.Display(ts);
+            //    }
+            //}
+            var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2], 0.1);
+            foreach (var segment in segments)
+            {
+                segment.DisplayFaces(ts);
+            }
         }
 
         public static void TestSilhouette(TessellatedSolid ts)
