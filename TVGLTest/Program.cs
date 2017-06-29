@@ -45,6 +45,7 @@ namespace TVGL_Test
         //"../../../TestFiles/ABF.STL",
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
+        "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
         "../../../TestFiles/Beam_Clean.STL",
         "../../../TestFiles/Square_Support.STL",
         "../../../TestFiles/Aerospace_Beam.STL",
@@ -110,22 +111,31 @@ namespace TVGL_Test
         {
             var obb = MinimumEnclosure.OrientedBoundingBox(ts);
             var startTime = DateTime.Now;
-            foreach (var direction in obb.Directions)
-            {
-                var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, 0.1);
-                //foreach (var segment in segments)
-                //{
-                //    segment.Display(ts);
-                //}
-            }
 
-            //var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2], 0.1);
-            var totalTime = DateTime.Now - startTime;
-            Debug.WriteLine(totalTime.Milliseconds + " Milliseconds");
-            //foreach (var segment in segments)
+            var averageNumberOfSteps = 500;
+
+            //Do the average # of slices slices for each direction on a box (l == w == h).
+            //Else, weight the average # of slices based on the average obb distance
+            var obbAverageLength = (obb.Dimensions[0] + obb.Dimensions[1] + obb.Dimensions[2]) / 3;
+            //Set step size to an even increment over the entire length of the solid
+            var stepSize = obbAverageLength / averageNumberOfSteps;
+
+            //foreach (var direction in obb.Directions)
             //{
-            //    segment.DisplayFaces(ts);
+            //    var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
+            //    //foreach (var segment in segments)
+            //    //{
+            //    //    segment.Display(ts);
+            //    //}
             //}
+
+            var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2].multiply(-1), stepSize);
+            var totalTime = DateTime.Now - startTime;
+            Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
+            foreach (var segment in segments)
+            {
+                segment.DisplayFaces(ts);
+            }
         }
 
         public static void TestSilhouette(TessellatedSolid ts)

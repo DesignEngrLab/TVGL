@@ -1239,7 +1239,7 @@ namespace TVGL
 
                 //Collect all the vertices that belong to this new segment
                 //In addition, get the finished and current edges
-                var newSegmentVertices = new List<Vertex>() { startVertex };
+                var newSegmentReferenceVertices = new HashSet<Vertex>() {startVertex};
                 var finishedEdges = new HashSet<Edge>();
                 var currentEdges = new HashSet<Edge>();
                 while (verticesToConsider.Any())
@@ -1256,7 +1256,7 @@ namespace TVGL
 
                             //This vertex now belongs to the new segment
                             //Since this is a hashset, it will prevent the object from being added multiple times.
-                            newSegmentVertices.Add(otherVertex);
+                            newSegmentReferenceVertices.Add(otherVertex);
 
                             //Only add this vertex if it has not been visited before
                             //Then set its segment vertex so it is not visited again
@@ -1304,7 +1304,6 @@ namespace TVGL
                     unassignedPositivePolygonDataGroups.RemoveAt(i);
                     break;
                 }
-                if (positivePolygonDataGroup == null) throw new Exception("No positive polygon was found for this new segment");
 
                 //There does not have to be a negative polygon, but go ahead and check
                 PolygonDataGroup negativePolygonDataGroup = null;
@@ -1330,53 +1329,101 @@ namespace TVGL
                     break;
                 }
 
-                //Creat the new segment from the unused vertices and 
-                //connect the polygon data groups to the segments
-                var newSegment = new DirectionalSegment(newSegmentIndex,
-                    finishedEdges, newSegmentVertices, currentEdges, searchDirection);
-                allDirectionalSegments.Add(newSegmentIndex, newSegment);
-                //Attach the polygon data groups
-                newSegment.AddPolygonDataGroup(positivePolygonDataGroup, false);
-                if (negativePolygonDataGroup != null)
+                if (positivePolygonDataGroup == null)
                 {
-                    newSegment.AddPolygonDataGroup(negativePolygonDataGroup, false);
+                    var badFaces = new HashSet<PolygonalFace>();
+                    var badColor = new Color(KnownColors.BlueViolet);
+                    foreach (var edge in finishedEdges)
+                    {
+                        edge.OtherFace.Color = badColor;
+                        badFaces.Add(edge.OtherFace);
+
+                        edge.OwnedFace.Color = badColor;
+                        badFaces.Add(edge.OwnedFace);
+                    }
+                    if (negativePolygonDataGroup == null)
+                    {
+                        var paths = segmentationData.CrossSectionData.Select(p => p.Path2D).ToList();
+                        Presenter.ShowAndHang(paths);
+                        foreach (var segment2 in currentSegments)
+                        {
+                            segment2.DisplayFaces(ts, badFaces);
+                        }
+                    }
+                    #region Step 2c: Assign Any Blind Hole OR Hidden Pocket Polygon Data Groups
+                    //Note that cannot have a blind hole or hidden pocket with a new segment, so it is okay to check where
+                    //this negative polygon belongs before we finish creating the new segments.
+                    //This is a blind hole or pocket, not visible from the search direction should exist for pre-existing segments
+                    //Example of pockets: Aerospace Beam with search direction through side. The pockets on the opposite side are not visible.
+                    foreach (var currentSegment in currentSegments)
+                    {
+                        var paths = new List<List<Point>>();
+                        foreach (var otherPolygonDataGroup in currentSegment.CurrentPolygonDataGroups)
+                        {
+                            paths.Add(otherPolygonDataGroup.Path2D);
+                        }
+
+                        //Reverse the blind holes, so it is positive and then we can use intersection
+                        var tempPolygons = new List<Point>(negativePolygonDataGroup.Path2D);
+                        tempPolygons.Reverse();
+
+                        //IF the intersection results in any overlap, then it belongs to this segment.
+                        //As a hole, it cannot belong to multiple segments and cannot split or merge segments.
+                        //Note: you cannot just check if a point from the dataSet is inside the positive paths, 
+                        //since it the blind hole could be nested inside positive/negative pairings. (ex: a hollow rod 
+                        //down the middle of a larger hollow tube. In this case, the hollow rod is a differnt segment).
+                        var result = PolygonOperations.Intersection(paths, tempPolygons);
+                        if (result != null && result.Any())
+                        {
+                            negativePolygonDataGroup.SegmentIndex = currentSegment.Index;
+
+                            //Update the edge and vertex lists.
+                            //NextVertices will be updated with the AddPolygonDataGroup function.
+                            foreach (var edge in finishedEdges)
+                            {
+                                edge.ArbitraryReferenceIndex = currentSegment.Index;
+                                currentSegment.ReferenceEdges.Add(edge);
+                            }
+                            foreach (var edge in currentEdges)
+                            {
+                                //Don't set the current edge reference index, since it is not a completed edge
+                                currentSegment.CurrentEdges.Add(edge);
+                            }
+                            foreach (var vertex in newSegmentReferenceVertices)
+                            {
+                                vertex.ReferenceIndex = currentSegment.Index;
+                                currentSegment.ReferenceVertices.Add(vertex);
+                            }
+
+                            currentSegment.AddPolygonDataGroup(negativePolygonDataGroup, true);
+                            //Break, since it can only belong to one segment
+                            break;
+                        }
+                    }
+                    if (negativePolygonDataGroup.SegmentIndex == -1)
+                    {
+                        throw new Exception("Blind Hole was not assigned to any a pre-existing segment.");
+                    }
+                    #endregion
+                }
+                else
+                {
+                    //Creat the new segment from the unused vertices and 
+                    //connect the polygon data groups to the segments
+                    var newSegment = new DirectionalSegment(newSegmentIndex,
+                        finishedEdges, newSegmentReferenceVertices, currentEdges, searchDirection);
+                    allDirectionalSegments.Add(newSegmentIndex, newSegment);
+                    //Attach the polygon data groups
+                    newSegment.AddPolygonDataGroup(positivePolygonDataGroup, false);
+                    if (negativePolygonDataGroup != null)
+                    {
+                        newSegment.AddPolygonDataGroup(negativePolygonDataGroup, false);
+                    }
                 }
             }
             #endregion
 
-            #region Step 2c: Assign Any Blind Hole Polygon Data Groups
-            //Finish assigning polygon data groups to existing segments.
-            //At this point, only blind holes should exist for pre-existing segments
             if (unassignedPositivePolygonDataGroups.Any()) throw new Exception("At this point, only blind holes should be unassigned");
-            foreach (var blindHolePolygonDataGroup in unassignedNegativePolygonDataGroups)
-            {
-                //The polygonDataSet is the start of a blind hole. We need to determine which positive polygon it fits inside.
-                //We don't need to consider the newly created segments, since they should not have a blind hole
-                foreach (var currentSegment in currentSegments)
-                {
-                    var paths = new List<List<Point>>();
-                    foreach (var otherPolygonDataGroup in currentSegment.CurrentPolygonDataGroups)
-                    {
-                        paths.Add(otherPolygonDataGroup.Path2D);
-                    }
-
-                    //IF the intersection results in any overlap, then it belongs to this segment.
-                    //As a hole, it cannot belong to multiple segments and cannot split or merge segments.
-                    //Note: you cannot just check if a point from the dataSet is inside the positive paths, 
-                    //since it the blind hole could be nested inside positive/negative pairings. (ex: a hollow rod 
-                    //down the middle of a larger hollow tube. In this case, the hollow rod is a differnt segment).
-                    var result = PolygonOperations.Intersection(paths, blindHolePolygonDataGroup.Path2D);
-                    if (result != null && result.Any())
-                    {
-                        blindHolePolygonDataGroup.SegmentIndex = currentSegment.Index;
-                        currentSegment.CurrentPolygonDataGroups.Add(blindHolePolygonDataGroup);
-                        //Break, since it can only belong to one segment
-                        break;
-                    }
-                }
-                if (blindHolePolygonDataGroup.SegmentIndex == -1) throw new Exception("Blind Hole was not assigned to any a pre-existing segment.");
-            }
-            #endregion
 
             #region Step 3: Resolve the segment changes.
             //  Case 1: If a loop belongs to multiple segments (as identified in Step 1), end each segment
@@ -1866,11 +1913,9 @@ namespace TVGL
                         //Since this is a hashset, it will avoid adding again if it has already been added
                         if (!error) CurrentEdges.Add(edge);
                     }
-                    //if a new edge was added, Update the next vertices with the current edges and vertex reference indices
-                    if (CurrentEdges.Count != count)
-                    {
-                        UpdateNextVertices();
-                    }
+
+                    //Update the next vertices with the current edges and vertex reference indices
+                    UpdateNextVertices();
                 }
             }
 
@@ -1912,24 +1957,27 @@ namespace TVGL
                 CurrentEdges = new HashSet<Edge>(tempEdges);
             }
 
-            public void DisplayFaces(TessellatedSolid ts)
+            public void DisplayFaces(TessellatedSolid ts, HashSet<PolygonalFace> badFaces = null)
             {
                 //reset all face colors 
-                var defaultColor = new Color(KnownColors.Goldenrod);
+                var defaultColor = new Color(KnownColors.LightGray);
                 foreach (var face in ts.Faces)
                 {
-                    face.Color = defaultColor;
+                    if (badFaces == null || !badFaces.Contains(face))
+                    {
+                        face.Color = defaultColor;
+                    }
                 }
                 ts.HasUniformColor = false;
 
-                //Make current faces red. 
-                //Faces are only considered if the edge lists contain two or more edges of that face
-                //First, get all the edges.
-                var allEdges = new HashSet<Edge>(ReferenceEdges);
-                foreach (var edge in CurrentEdges)
-                {
-                    allEdges.Add(edge);
-                }
+                ////Make current faces red. 
+                ////Faces are only considered if the edge lists contain two or more edges of that face
+                ////First, get all the edges.
+                //var allEdges = new HashSet<Edge>(ReferenceEdges);
+                //foreach (var edge in CurrentEdges)
+                //{
+                //    allEdges.Add(edge);
+                //}
                 //var red = new Color(KnownColors.Red);
                 //var faceList1 = new HashSet<PolygonalFace>();
                 //foreach (var edge in allEdges)
@@ -1956,19 +2004,31 @@ namespace TVGL
                 var green = new Color(KnownColors.Green);
                 foreach (var edge in ReferenceEdges)
                 {
-                    edge.OtherFace.Color = green;
-                    edge.OwnedFace.Color = green;
+                    if (badFaces == null || !badFaces.Contains(edge.OtherFace))
+                    {
+                        edge.OtherFace.Color = green;
+                    }
+                    if (badFaces == null || !badFaces.Contains(edge.OwnedFace))
+                    {
+                        edge.OwnedFace.Color = green;
+                    }
                 }
                 var red = new Color(KnownColors.Red);
                 foreach (var edge in CurrentEdges)
                 {
-                    if (edge.OtherFace.Color != green)
+                    if (badFaces == null || !badFaces.Contains(edge.OtherFace))
                     {
-                        edge.OtherFace.Color = red;
+                        if (edge.OtherFace.Color != green)
+                        {
+                            edge.OtherFace.Color = red;
+                        }
                     }
-                    if (edge.OwnedFace.Color != green)
+                    if (badFaces == null || !badFaces.Contains(edge.OwnedFace))
                     {
-                        edge.OwnedFace.Color = red;
+                        if (edge.OwnedFace.Color != green)
+                        {
+                            edge.OwnedFace.Color = red;
+                        }
                     }
                 }
 
