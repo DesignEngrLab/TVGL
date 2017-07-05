@@ -323,12 +323,13 @@ namespace TVGL
                 else if (edge.To == removedVertex) edge.To = keepVertex;
                 keepVertex.Edges.Add(edge);
             }
-            AdjustPositionOfKeptVertex(keepVertex, removedVertex);
+           ModifyTessellation.AdjustPositionOfKeptVertex(keepVertex, removedVertex);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)
                 f.Update();
         }
+        
 
         /// <summary>
         ///     Combines the vertices of edge.
@@ -445,7 +446,7 @@ namespace TVGL
 
 
             //AdjustPositionOfKeptVertexAverage(keepVertex, removedVertex);
-            AdjustPositionOfKeptVertex(keepVertex, removedVertex);
+            ModifyTessellation.AdjustPositionOfKeptVertex(keepVertex, removedVertex);
             foreach (var e in keepVertex.Edges)
                 e.Update();
             foreach (var f in keepVertex.Faces)
@@ -456,44 +457,6 @@ namespace TVGL
             return true;
         }
 
-
-        /// <summary>
-        ///     Adjusts the position of kept vertex.
-        /// </summary>
-        /// <param name="keepVertex">The keep vertex.</param>
-        /// <param name="removedVertex">The removed vertex.</param>
-        private static void AdjustPositionOfKeptVertex(Vertex keepVertex, Vertex removedVertex)
-        {
-            //average positions
-            var newPosition = keepVertex.Position.add(removedVertex.Position);
-            keepVertex.Position = newPosition.divide(2);
-        }
-
-        /// <summary>
-        ///     Adjusts the position of kept vertex experimental.
-        /// </summary>
-        /// <param name="keepVertex">The keep vertex.</param>
-        /// <param name="removedVertex">The removed vertex.</param>
-        /// <param name="removeFace1">The remove face1.</param>
-        /// <param name="removeFace2">The remove face2.</param>
-        private static void AdjustPositionOfKeptVertexExperimental(Vertex keepVertex, Vertex removedVertex,
-            PolygonalFace removeFace1, PolygonalFace removeFace2)
-        {
-            //average positions
-            var newPosition = keepVertex.Position.add(removedVertex.Position);
-            var radius = keepVertex.Position.subtract(removedVertex.Position).norm2() / 2.0;
-            keepVertex.Position = newPosition.divide(2);
-            var avgNormal = removeFace1.Normal.add(removeFace2.Normal).normalize();
-            var otherVertexAvgDistanceToEdgePlane =
-                keepVertex.Edges.Select(e => e.OtherVertex(keepVertex).Position.dotProduct(avgNormal)).Sum() /
-                (keepVertex.Edges.Count - 1);
-            var distanceOfEdgePlane = keepVertex.Position.dotProduct(avgNormal);
-
-            // use a sigmoid function to determine how far out to move the vertex
-            var x = 0.05 * (distanceOfEdgePlane - otherVertexAvgDistanceToEdgePlane) / radius;
-            var length = 2 * radius * x / Math.Sqrt(1 + x * x) - radius;
-            keepVertex.Position = keepVertex.Position.add(avgNormal.multiply(length));
-        }
 
         internal static List<Tuple<List<Edge>, double[]>> OrganizeIntoLoops(List<Edge> singleSidedEdges,
             out List<Edge> remainingEdges)

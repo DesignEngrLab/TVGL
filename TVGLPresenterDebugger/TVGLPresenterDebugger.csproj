@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -112,6 +112,12 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs">
       <Link>TVGL\Colors.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByIndexInList.cs">
+      <Link>TVGL\Comparators\SortByIndexInList.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs">
+      <Link>TVGL\Comparators\SortByLength.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs">
       <Link>TVGL\Constants.cs</Link>
     </Compile>
@@ -178,6 +184,21 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs">
       <Link>TVGL\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\DetermineIntermediateVertex.cs">
+      <Link>TVGL\ModifyTessellation\DetermineIntermediateVertex.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\RefineTessellation.cs">
+      <Link>TVGL\ModifyTessellation\RefineTessellation.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\RepairTessellation.cs">
+      <Link>TVGL\ModifyTessellation\RepairTessellation.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\SimplifyTessellation.cs">
+      <Link>TVGL\ModifyTessellation\SimplifyTessellation.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\TessellationError.cs">
+      <Link>TVGL\ModifyTessellation\TessellationError.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Classify.cs">
       <Link>TVGL\Primitive Classification\Classify.cs</Link>
     </Compile>
@@ -210,12 +231,6 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\Torus.cs">
       <Link>TVGL\Primitive Surfaces\Torus.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Simplify and Repair\SimplifyTessellation.cs">
-      <Link>TVGL\Simplify and Repair\SimplifyTessellation.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Simplify and Repair\TessellationError.cs">
-      <Link>TVGL\Simplify and Repair\TessellationError.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Edge.cs">
       <Link>TVGL\Solid Body Classes\Edge.cs</Link>

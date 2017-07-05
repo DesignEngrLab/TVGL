@@ -14,7 +14,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        "../../../TestFiles/ABF.ply",
+        "../../../TestFiles/angle bracket.STL",
        // "../../../TestFiles/Beam_Boss.STL",
        // //"../../../TestFiles/bigmotor.amf",
        // //"../../../TestFiles/DxTopLevelPart2.shell",
@@ -81,17 +81,48 @@ namespace TVGL_Test
                 var filename = FileNames[i];//.FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
-                List<TessellatedSolid> ts;
+                TessellatedSolid ts;
                 using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
-                filename += "1.ply";
-                using (fileStream = File.OpenWrite(filename))
-                    IO.Save(fileStream, ts, FileType.PLY_Binary);
-                using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
-
+                    ts = IO.Open(fileStream, filename)[0];
+          
+                PrimitiveClassification.Run(ts);
 
                 //TestPolygon(ts[0]);
+                #region Perform Primitive Classification
+                var primitives = PrimitiveClassification.Run(ts);
+                var otherPrimitives = new List<PrimitiveSurface>();
+                //Get the large flat surfaces
+                foreach (var primitive in primitives)
+                {
+                    if (primitive.Type == PrimitiveSurfaceType.Flat)
+                    {
+                        foreach (var face in primitive.Faces)
+                        {
+                            face.Color = new Color(KnownColors.Blue);
+                        }
+                    }
+                    if (primitive.Type == PrimitiveSurfaceType.Cylinder)
+                    {
+                        foreach (var face in primitive.Faces)
+                        {
+                            face.Color = new Color(KnownColors.Red);
+                        }
+                        //If not a flat, add to this list
+                        otherPrimitives.Add(primitive);
+                    }
+                    if (primitive.Type == PrimitiveSurfaceType.Cone)
+                    {
+                        foreach (var face in primitive.Faces)
+                        {
+                            face.Color = new Color(KnownColors.Green);
+                        }
+                        //If not a flat, add to this list
+                        otherPrimitives.Add(primitive);
+                    }
+                }
+                ts.HasUniformColor = false;
+                Presenter.Show(ts);
+                #endregion
 
                 Presenter.ShowAndHang(ts);
               //  TestSilhouette(ts[0]);
@@ -101,6 +132,8 @@ namespace TVGL_Test
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
         }
+
+
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
@@ -143,7 +176,7 @@ namespace TVGL_Test
 
         private static void TestSimplify(TessellatedSolid ts)
         {
-            ts.SimplifyByPercentage(.9);
+            ts.SimplifyByPercentage(0.9);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);

@@ -46,6 +46,7 @@
     <Compile Include="2D\PolygonTree.cs" />
     <Compile Include="Boolean Operations\ContactData.cs" />
     <Compile Include="Boolean Operations\Slice.cs" />
+    <Compile Include="Comparators\SortByLength.cs" />
     <Compile Include="Enclosure Operations\GaussianSphere.cs" />
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />
@@ -66,6 +67,9 @@
     <Compile Include="Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs" />
     <Compile Include="Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs" />
     <Compile Include="2D\Point.cs" />
+    <Compile Include="ModifyTessellation\DetermineIntermediateVertex.cs" />
+    <Compile Include="ModifyTessellation\RepairTessellation.cs" />
+    <Compile Include="Comparators\SortByIndexInList.cs" />
     <Compile Include="Primitive Surfaces\Torus.cs" />
     <Compile Include="Miscellaneous Functions\MiscFunctions.cs" />
     <Compile Include="Colors.cs" />
@@ -91,8 +95,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Simplify and Repair\SimplifyTessellation.cs" />
-    <Compile Include="Simplify and Repair\TessellationError.cs" />
+    <Compile Include="ModifyTessellation\RefineTessellation.cs" />
+    <Compile Include="ModifyTessellation\SimplifyTessellation.cs" />
+    <Compile Include="ModifyTessellation\TessellationError.cs" />
     <Compile Include="Solid Body Classes\Edge.cs" />
     <Compile Include="Solid Body Classes\PolygonalFace.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.EdgeInitialization.cs" />

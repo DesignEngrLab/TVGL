@@ -6,30 +6,27 @@
 // Last Modified By : Matt Campbell
 // Last Modified On : 05-28-2016
 // ***********************************************************************
-// <copyright file="Slice.cs" company="Design Engineering Lab">
+// <copyright file="SimplifyTessellation.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
 
-using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using StarMathLib;
 
 namespace TVGL
 {
     /// <summary>
-    ///     The Slice class includes static functions for cutting a tessellated solid.
+    ///  This portion of ModifyTessellation includes the functions to simplify a tessellated solid. 
     /// </summary>
-    public static class SimplifyTessellation
+    public static partial class ModifyTessellation
     {
         /// <summary>
-        ///     Simplifies by the percentage provided. For example, is ts has 100 triangles, then passing
-        ///     a 0.2 will reduce to 80 triangles
+        /// Simplifies by the percentage provided. For example, is ts has 100 faces, then passing
+        /// a 0.2 will reduce to 80 faces.
         /// </summary>
-        /// <param name="ts">The ts.</param>
+        /// <param name="ts">The tesselated solid.</param>
         /// <param name="percentageToReduceBy">The percentage to reduce by.</param>
         public static void SimplifyByPercentage(this TessellatedSolid ts, double percentageToReduceBy)
         {
@@ -41,7 +38,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="numberOfFaces">The number of faces.</param>
-        private static void SimplifyToNFaces(this TessellatedSolid ts, int numberOfFaces)
+        public static void SimplifyToNFaces(this TessellatedSolid ts, int numberOfFaces)
         {
             if (ts.Errors != null)
                 Message.output(
@@ -52,7 +49,7 @@ namespace TVGL
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
             var removedEdges = new HashSet<Edge>();
             var removedEdgesSorted = new SortedSet<Edge>(new SortByIndexInList());
-            var removedVertices = new SortedSet< Vertex>(new SortByIndexInList());
+            var removedVertices = new SortedSet<Vertex>(new SortByIndexInList());
             var removedFaces = new SortedSet< PolygonalFace>(new SortByIndexInList());
             var i = 0;
             //var edge = sortedEdges[0];
@@ -152,15 +149,5 @@ namespace TVGL
             ts.RemoveVertices(removedVertices);
         }
 
-    }
-
-    internal class SortByIndexInList : IComparer<TessellationBaseClass>
-    {
-        public int Compare(TessellationBaseClass x, TessellationBaseClass y)
-        {
-            if (x.Equals(y)) return 0;
-            if (x.IndexInList < y.IndexInList) return -1;
-            else return 1;
-        }
     }
 }

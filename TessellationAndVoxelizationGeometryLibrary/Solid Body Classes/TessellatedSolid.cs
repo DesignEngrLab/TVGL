@@ -374,7 +374,7 @@ namespace TVGL
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)
                 v.DefineCurvature();
-            TessellationError.CheckModelIntegrity(this);
+            ModifyTessellation.CheckModelIntegrity(this);
             ConvexHull = new TVGLConvexHull(this);
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartOfConvexHull = true;
@@ -935,23 +935,6 @@ namespace TVGL
         }
 
         #endregion
-
-        /// <summary>
-        ///     Repairs this instance.
-        /// </summary>
-        /// <returns><c>true</c> if this solid is now free of errors, <c>false</c> if errors remain.</returns>
-        public bool Repair()
-        {
-            if (Errors == null)
-            {
-                Message.output("No errors to fix!", 4);
-                return true;
-            }
-            var success = Errors.Repair(this);
-            if (success) Errors = null;
-            return success;
-        }
-
 
         /// <summary>
         /// Transforms the specified transform matrix.
