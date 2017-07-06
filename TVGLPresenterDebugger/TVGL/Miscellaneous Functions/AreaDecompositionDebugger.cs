@@ -801,7 +801,7 @@ namespace TVGL
             {
                 if (segment.IsFinished) continue;
                 //Else
-                segment.IsFinished = true;
+
                 //We need to finish wrapping around all the open segments. 
                 //There should be no merging or branching if the step size was the correct size.
                 var stack = new Stack<Vertex>(segment.NextVertices);
@@ -809,6 +809,7 @@ namespace TVGL
                 {
                     var vertex = stack.Pop();
                     vertex.ReferenceIndex = segment.Index;
+                    segment.ReferenceVertices.Add(vertex);
                     foreach (var edge in vertex.Edges)
                     {
                         var otherVertex = edge.OtherVertex(vertex);
@@ -824,9 +825,9 @@ namespace TVGL
                     }
 
                 }
-                //Clear out the current edges, since by now they should have all been added to 
-                //reference edges.
-                segment.CurrentEdges.Clear();
+                //Set to IsFinished. This will clear out the current edges
+                //(by now they should have all been added to reference edges)
+                segment.IsFinished = true;
             }
 
             //Add the first and last cross sections. 
@@ -1139,7 +1140,6 @@ namespace TVGL
                             }
                         }
 
-                        otherSegment.IsFinished = true;
                         currentSegmentsToConsider.Remove(otherSegment);
                     }
 
@@ -1613,10 +1613,39 @@ namespace TVGL
                     _isFinished = value;
                     if (_isFinished)
                     {
-                        //NextVertices and Current Edges are irrelevant at this point.
-                        //Not sure if I actually want to erase the current edges or next vertices.
-                        //NextVertices = null;
-                        //CurrentEdges = null;
+                        //NextVertices are irrelevant at this point.
+                        NextVertices = null;
+                        //Current Edges need to be added to the reference edges.
+                        foreach (var edge in CurrentEdges)
+                        {
+                            ReferenceEdges.Add(edge);
+                        }
+
+                        //Faces are included if just one edge contains them. This is a 
+                        //bit overkill, but was implemented because all the edges of the .STL were
+                        //found in the segments during testing, but not all the faces or vertices.
+                        var faceList1 = new HashSet<PolygonalFace>();
+                        ReferenceFaces = new HashSet<PolygonalFace>();
+                        foreach (var edge in ReferenceEdges)
+                        {
+                            if (faceList1.Contains(edge.OtherFace))
+                            {
+                                ReferenceFaces.Add(edge.OtherFace);
+                                //ReferenceFaces.Add(edge.OwnedFace);
+                            }
+                            else
+                            {
+                                faceList1.Add(edge.OtherFace);
+                            }
+                            if (faceList1.Contains(edge.OwnedFace))
+                            {
+                                ReferenceFaces.Add(edge.OwnedFace);
+                            }
+                            else
+                            {
+                                faceList1.Add(edge.OwnedFace);
+                            }
+                        }
                     }
                 }
             }
@@ -1645,7 +1674,7 @@ namespace TVGL
             /// <summary>
             /// A list of all the faces that correspond to this segment. Some faces may be partly in this segment and partly in another.
             /// </summary>
-            public List<PolygonalFace> ReferenceFaces;
+            public HashSet<PolygonalFace> ReferenceFaces;
 
             /// <summary>
             /// A dictionary that contains all the cross sections corresponding to this segment. The integer is the step number (distance) along
@@ -1702,14 +1731,15 @@ namespace TVGL
                 ForwardAdjoinedDirectionalSegments = new List<DirectionalSegment>();
                 RearwardAdjoinedDirectionalSegments = new List<DirectionalSegment>();
                 ConnectedDirectionalSegments = new HashSet<int>();
+                CurrentPolygonDataGroups = new HashSet<PolygonDataGroup>();
+                ReferenceFaces = new HashSet<PolygonalFace>();
+
                 ReferenceEdges = new HashSet<Edge>(referenceEdges);
                 ReferenceVertices = new HashSet<Vertex>(referenceVertices);
-                CurrentPolygonDataGroups = new HashSet<PolygonDataGroup>();
 
                 //This segment has the same forward direction as its parents
                 ForwardDirection = direction;
 
-                ReferenceFaces = new List<PolygonalFace>();
                 CurrentEdges = new HashSet<Edge>(currentEdges);
                 //Build the next vertices with the current edges and vertex distance information
                 UpdateNextVertices();
@@ -1730,9 +1760,16 @@ namespace TVGL
                 IsFinished = false;
                 CrossSectionPathDictionary = new Dictionary<int, List<PolygonDataGroup>>();
                 ForwardAdjoinedDirectionalSegments = new List<DirectionalSegment>();
-                RearwardAdjoinedDirectionalSegments = new List<DirectionalSegment>(parentDirectionalSegments);
                 ConnectedDirectionalSegments = new HashSet<int>();
                 CurrentPolygonDataGroups = new HashSet<PolygonDataGroup>();
+                ReferenceFaces = new HashSet<PolygonalFace>();
+
+                //Close the parent directional segments 
+                foreach (var parentDirectionalSegment in parentDirectionalSegments)
+                {
+                    parentDirectionalSegment.IsFinished = true;
+                }
+                RearwardAdjoinedDirectionalSegments = new List<DirectionalSegment>(parentDirectionalSegments);
 
                 //Update ownership of the reference edge and vertices to the current segment
                 foreach (var edge in referenceEdges)
@@ -1749,8 +1786,8 @@ namespace TVGL
                 //This segment has the same forward direction as its parents
                 ForwardDirection = parentDirectionalSegments.First().ForwardDirection;
 
-                ReferenceFaces = new List<PolygonalFace>();
                 CurrentEdges = new HashSet<Edge>(currentEdges);
+
                 //Build the next vertices with the current edges and vertex distance information
                 UpdateNextVertices();
             }
@@ -1771,7 +1808,7 @@ namespace TVGL
                 ConnectedDirectionalSegments = new HashSet<int>();
                 CurrentPolygonDataGroups = new HashSet<PolygonDataGroup>();
                 ReferenceEdges = new HashSet<Edge>(); //this is empty. all prior edges belong to its parent.
-                ReferenceFaces = new List<PolygonalFace>();
+                ReferenceFaces = new HashSet<PolygonalFace>();
                 ReferenceVertices = new HashSet<Vertex>(); //this is empty. all prior vertices belong to its parent.
 
                 //This segment has the same forward direction as its parents
@@ -1970,67 +2007,79 @@ namespace TVGL
                 }
                 ts.HasUniformColor = false;
 
-                ////Make current faces red. 
-                ////Faces are only considered if the edge lists contain two or more edges of that face
-                ////First, get all the edges.
-                //var allEdges = new HashSet<Edge>(ReferenceEdges);
-                //foreach (var edge in CurrentEdges)
-                //{
-                //    allEdges.Add(edge);
-                //}
-                //var red = new Color(KnownColors.Red);
-                //var faceList1 = new HashSet<PolygonalFace>();
-                //foreach (var edge in allEdges)
-                //{
-                //    if (faceList1.Contains(edge.OtherFace))
-                //    {
-                //        edge.OtherFace.Color = red;
-                //    }
-                //    else
-                //    {
-                //        faceList1.Add(edge.OtherFace);
-                //    }
-                //    if (faceList1.Contains(edge.OwnedFace))
-                //    {
-                //        edge.OwnedFace.Color = red;
-                //    }
-                //    else
-                //    {
-                //        faceList1.Add(edge.OwnedFace);
-                //    }
-                //}
-
-                //This section is for debugging which edge list a trouble edge is in.
-                var green = new Color(KnownColors.Green);
-                foreach (var edge in ReferenceEdges)
+                //Make reference faces red. 
+                //Faces are only considered if the edge lists contain two or more edges of that face
+                var red = new Color(KnownColors.Red);
+                if (IsFinished)
                 {
-                    if (badFaces == null || !badFaces.Contains(edge.OtherFace))
+                    foreach (var face in ReferenceFaces)
                     {
-                        edge.OtherFace.Color = green;
-                    }
-                    if (badFaces == null || !badFaces.Contains(edge.OwnedFace))
-                    {
-                        edge.OwnedFace.Color = green;
+                        face.Color = red;
                     }
                 }
-                var red = new Color(KnownColors.Red);
-                foreach (var edge in CurrentEdges)
+                else
                 {
-                    if (badFaces == null || !badFaces.Contains(edge.OtherFace))
+                    //First, get all the edges.
+                    var allEdges = new HashSet<Edge>(ReferenceEdges);
+                    foreach (var edge in CurrentEdges)
                     {
-                        if (edge.OtherFace.Color != green)
+                        allEdges.Add(edge);
+                    }
+                    var faceList1 = new HashSet<PolygonalFace>();
+                    foreach (var edge in allEdges)
+                    {
+                        if (faceList1.Contains(edge.OtherFace))
                         {
                             edge.OtherFace.Color = red;
                         }
-                    }
-                    if (badFaces == null || !badFaces.Contains(edge.OwnedFace))
-                    {
-                        if (edge.OwnedFace.Color != green)
+                        else
+                        {
+                            faceList1.Add(edge.OtherFace);
+                        }
+                        if (faceList1.Contains(edge.OwnedFace))
                         {
                             edge.OwnedFace.Color = red;
                         }
+                        else
+                        {
+                            faceList1.Add(edge.OwnedFace);
+                        }
                     }
                 }
+
+                
+
+                ////This section is for debugging which edge list a trouble edge is in.
+                //var green = new Color(KnownColors.Green);
+                //foreach (var edge in ReferenceEdges)
+                //{
+                //    if (badFaces == null || !badFaces.Contains(edge.OtherFace))
+                //    {
+                //        edge.OtherFace.Color = green;
+                //    }
+                //    if (badFaces == null || !badFaces.Contains(edge.OwnedFace))
+                //    {
+                //        edge.OwnedFace.Color = green;
+                //    }
+                //}
+                //var red = new Color(KnownColors.Red);
+                //foreach (var edge in CurrentEdges)
+                //{
+                //    if (badFaces == null || !badFaces.Contains(edge.OtherFace))
+                //    {
+                //        if (edge.OtherFace.Color != green)
+                //        {
+                //            edge.OtherFace.Color = red;
+                //        }
+                //    }
+                //    if (badFaces == null || !badFaces.Contains(edge.OwnedFace))
+                //    {
+                //        if (edge.OwnedFace.Color != green)
+                //        {
+                //            edge.OwnedFace.Color = red;
+                //        }
+                //    }
+                //}
 
                 var allVertexPaths = new List<List<List<Vertex>>>();
                 foreach (var crossSection in CrossSectionPathDictionary.Values)

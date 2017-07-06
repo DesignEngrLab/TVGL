@@ -120,22 +120,67 @@ namespace TVGL_Test
             //Set step size to an even increment over the entire length of the solid
             var stepSize = obbAverageLength / averageNumberOfSteps;
 
-            //foreach (var direction in obb.Directions)
-            //{
-            //    var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
-            //    //foreach (var segment in segments)
-            //    //{
-            //    //    segment.Display(ts);
-            //    //}
-            //}
+            foreach (var direction in obb.Directions)
+            {
+                var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
+                foreach (var segment in segments)
+                {
+                    segment.DisplayFaces(ts);
+                }
+            }
 
-            var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2].multiply(-1), stepSize);
+            // var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2].multiply(-1), stepSize);
             var totalTime = DateTime.Now - startTime;
             Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
+            //CheckAllObjectTypes(ts, segments);
+            //foreach (var segment in segments)
+            //{
+            //    segment.DisplayFaces(ts);
+            //}
+
+
+        }
+
+        private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<AreaDecomposition.DirectionalSegment> segments)
+        {
+            var faces = new HashSet<PolygonalFace>(ts.Faces);
+            var vertices = new HashSet<Vertex>(ts.Vertices);
+            var edges = new HashSet<Edge>(ts.Edges);
+
+
+            foreach (var face in faces)
+            {
+                face.Color = new Color(KnownColors.Gray);
+            }
+
             foreach (var segment in segments)
             {
-                segment.DisplayFaces(ts);
+                foreach (var face in segment.ReferenceFaces)
+                {
+                    faces.Remove(face);
+                }
+                foreach (var edge in segment.ReferenceEdges)
+                {
+                    edges.Remove(edge);
+                }
+                foreach (var vertex in segment.ReferenceVertices)
+                {
+                    vertices.Remove(vertex);
+                }
             }
+
+            ts.HasUniformColor = false;
+            //Turn the remaining faces red
+            foreach (var face in faces)
+            {
+                face.Color = new Color(KnownColors.Red);
+            }
+            Presenter.ShowAndHang(ts);
+
+            //Make sure that every face, edge, and vertex is accounted for
+            Assert.That(!edges.Any(), "edges missed");
+            Assert.That(!faces.Any(), "faces missed");
+            Assert.That(!vertices.Any(), "vertices missed");
         }
 
         public static void TestSilhouette(TessellatedSolid ts)
