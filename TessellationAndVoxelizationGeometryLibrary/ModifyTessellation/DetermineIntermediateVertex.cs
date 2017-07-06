@@ -31,13 +31,13 @@ namespace TVGL
         /// <summary>
         ///     Adjusts the position of kept vertex.
         /// </summary>
-        /// <param name="keepVertex">The keep vertex.</param>
-        /// <param name="removedVertex">The removed vertex.</param>
-        internal static void AdjustPositionOfKeptVertex(Vertex keepVertex, Vertex removedVertex)
+        /// <param name="vertexA">The keep vertex.</param>
+        /// <param name="vertexB">The other vertex.</param>
+        internal static double[] DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB)
         {
             //average positions
-            var newPosition = keepVertex.Position.add(removedVertex.Position);
-            keepVertex.Position = newPosition.divide(2);
+            var newPosition = vertexA.Position.add(vertexB.Position);
+            return newPosition.divide(2);
         }
 
         /// <summary>

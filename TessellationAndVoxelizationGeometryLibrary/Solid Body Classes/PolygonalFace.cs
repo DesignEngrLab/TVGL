@@ -66,6 +66,10 @@ namespace TVGL
         /// </summary>
         public void Update()
         {
+            var centerX = Vertices.Average(v => v.X);
+            var centerY = Vertices.Average(v => v.Y);
+            var centerZ = Vertices.Average(v => v.Z);
+            Center = new[] { centerX, centerY, centerZ };
             bool reverseVertexOrder;
             Normal = DetermineNormal(this.Vertices, out reverseVertexOrder, Normal);
             if (reverseVertexOrder) Vertices.Reverse();
