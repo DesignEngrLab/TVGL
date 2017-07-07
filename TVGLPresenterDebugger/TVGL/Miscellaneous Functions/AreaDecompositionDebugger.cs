@@ -838,45 +838,61 @@ namespace TVGL
             return allDirectionalSegments.Values.ToList();
         }
 
+        /// <summary>
+        /// This function updates the allDirectionalSegments dictionary with the new step's segmentation data.
+        /// The segmentation data contains polygons and each of these polygons belongs to a segment. Segments
+        /// are created, added to, branched, and merged within this function.
+        /// </summary>
+        /// <param name="segmentationData"></param>
+        /// <param name="inStepVertices"></param>
+        /// <param name="vertexDistanceLookup"></param>
+        /// <param name="searchDirection"></param>
+        /// <param name="allDirectionalSegments"></param>
+        /// <param name="ts"></param>
         private static void UpdateSegments(SegmentationData segmentationData, HashSet<Vertex> inStepVertices,
             Dictionary<int, double> vertexDistanceLookup, double[] searchDirection,
             ref Dictionary<int, DirectionalSegment> allDirectionalSegments, TessellatedSolid ts)
         {
-            //Step 1: Wrap edge/vertex pairs forward for each segment until all the edges have a vertex 
-            //that is further than the current distance (pointing forward). The vertex will get
-            //a segment Index assigned to its ReferenceIndex. If a segment wants to use a vertex with 
-            //an existing reference index, then stop pursueing that segment and note that the two are connected.
+            /* There are six possible segment cases that may occur. This section describes what they are and how they are handled.  
+            
+            Segment Case 1: [Continuation] There are no new vertices. Therefore every polygon data group should belong to a
+                            current segment and there should be no merging or branching.
 
-            //Step 2: Pair each edge loop from the SegmentationData with its parent segment(s).
-            //If an edge loop does not belong to any segment, check whether it is positive or negative area (solid vs. hole respectively).
-            //If it is a positive, create a new segment. It is is a negative, use the "Intersection"
-            //polygon operation to determine which segment it belongs to. 
+            Segment Case 2: [Continuation] The current segment is not connected to another segment. This occurs If the number of positive loops 
+                            in a segment does not change (should always be = 1) and every loop it contains only belongs to this 
+                            segment. Save the stashed vertices and edges, and keep this segment open.
 
-            //Step 3: Resolve the following three cases.
-            //  Case 1: If a loop belongs to multiple segments (as identified in Step 1), end each segment
-            //          and start a new one. 
-            //  Case 2: If a positive loop is added to a existing segment (>1 +loops), close that segment and start new segments, 
-            //          one for each positive loop. It may be required to perform polygon operations to retain the correct negative
-            //          loops. 
-            //  Case 3: If the number of positive loops in a segment does not change (should always be = 1) and every loop 
-            //          it contains only belongs to this segment, save the stashed vertices and edges. Keep this segment open.
-            // In All Cases: The in-step vertices and edges belong to the parent and child segments. This does repeat information, but there
-            //               are quite a few different cases and this is the easiest solution (other than not attaching them to any segment).
+            Segment Case 3: [Merging] If a polygon's egde loop belongs to multiple segments (as identified in Wrapping Step), end 
+                            each connected segment and start a new one. 
+
+            Segment Case 4: [Blind Hole/Pocket] If a negative polygon's egde loop does NOT belongs to any segments, then it is a blind
+                            hole or pocket. To find it's segment, use the intersection polygon operation to determine overlap with existing
+                            segments. Each blind hole or pocket can only belong to one segment.
+
+            Segment Case 5: [New Segment] If a positive polygon's egde loop does NOT belongs to any segments, then it is the start of
+                            a new segement. Simply start a new segment and look through any of the unassigned negative polygons to check
+                            if they belong to this new polygon (Do this with the same wrapping technique used earlier).
+
+            Segment Case 6: [Branching] If a positive loop is added to a existing segment (>1 +loops), close that segment and start  
+                            new segments, one for each positive loop. It may be required to perform polygon operations to 
+                            retain the correct negative loops. 
+
+            In All Cases:   The in-step vertices and edges belong to the parent and child segments. This does repeat information, but there
+                            are quite a few different cases and this is the easiest solution (other than not attaching them to any segment).
+            */
 
             var distanceAlongAxis = segmentationData.DistanceAlongDirection;
 
             //Get all the current segments.
             var currentSegmentsToConsider = new HashSet<DirectionalSegment>();
-            foreach (var segment in allDirectionalSegments.Values)
+            foreach (var segment in allDirectionalSegments.Values.Where(s => !s.IsFinished))
             {
-                //Ignore segments that are already finished
-                if (segment.IsFinished) continue;
                 currentSegmentsToConsider.Add(segment);
-                //Reset the segment's current polygon data groups
                 segment.CurrentPolygonDataGroups = new HashSet<PolygonDataGroup>();
             }
             var allCurrentSegments = new HashSet<DirectionalSegment>(currentSegmentsToConsider);
 
+            #region Segment Case 1: There are no new vertices.
             //Quickly update the polygon data groups (cross sections) if there are no new vertices (or edges)
             if (!inStepVertices.Any())
             {
@@ -900,24 +916,28 @@ namespace TVGL
                 }
                 return;
             }
+            #endregion
 
-            #region Step 1: Wrap edge/vertex pairs forward for each segment.
+            #region Wrapping Step 1 (Resolves Segment Cases 2 & 3): wrap edge/vertex pairs forward for each segment.
+            //Wrap edge/vertex pairs forward for each segment until all the edges have a vertex 
+            //that is further than the current distance (pointing forward). The vertex will get
+            //a segment Index assigned to its ReferenceIndex. If a segment wants to use a vertex with 
+            //an existing reference index, then stop pursueing that segment and note that the two are connected.
             while (currentSegmentsToConsider.Any())
             {
                 var segment = currentSegmentsToConsider.First();
                 currentSegmentsToConsider.Remove(segment);
 
-                //The inStepSegmentVertices are those Vertices that are in the current step for the current segment.
-                //Most of these will also have been in segment.NextVertices,
-                //but in the case of larger flat surfaces (where we add multiple in-plane edges), 
-                //they might not have been contained in segment.NextVertices.
+                //The inStep refers to objects that are of interest in the current step.
+                //This included edges that go intersect with the current step (think of it as a cutting plane),
+                //and vertices that are within the current step. An edge that has two in-step vertices is 
+                //an "inStepSegmentEdge".
+
+                //Also, in the case of larger flat surfaces (where we add multiple in-plane edges), the
+                //connected inStep vertices may not belong to the current segment.
                 var allInStepSegmentVertices = new HashSet<Vertex>();
                 var inStepSegmentVertexSet = new Stack<Vertex>();
-
-                //This is a list of the edges that are in the current step and belong to the current segment.
                 var inStepSegmentEdges = new HashSet<Edge>();
-
-                //Initialize a new list of segments
                 var connectedSegmentsIndices = new HashSet<int>();
 
                 //Get the in-step vertices for the current segment that are contained in inStepVertices.
@@ -964,17 +984,17 @@ namespace TVGL
                         var otherVertexDistance = vertexDistanceLookup[otherVertex.IndexInList];
 
                         //Check to see where the otherVertex is located. There are 3 options:
-                        //Case 1: The other vertex is in the current step. This occurs when there is a flat surface.
+                        //Edge Case 1: The other vertex is in the current step. This occurs when there is a flat surface.
                         //        To resolve this, we need to push the other vertex onto the vertexSet and note that
                         //        this vertex has been visited. This other vertex will lead us to Case 3 if there are
                         //        connected segments.
-                        //Case 2: The other vertex is further that the current distance. Update the segement's current edges
+                        //Edge Case 2: The other vertex is further that the current distance. Update the segement's current edges
                         //        and next vertices so that we can use them later to identify edge loops.
-                        //Case 3: The other vertex is already past and belongs to a segment. Save the edge to be 
+                        //Edge Case 3: The other vertex is already past and belongs to a segment. Save the edge to be 
                         //        added to the segment's edge references. If it belongs to a segment other than the
                         //        the current segment, then those segments must be connected.
 
-                        //Case 1: It is in the current step and has not been visited yet (edge is in-step).
+                        //Edge Case 1: It is in the current step and has not been visited yet (edge is in-step).
                         if (inStepVertices.Contains(otherVertex))
                         {
                             //Since this is a hashset, we don't need to check if it is contained before adding it.
@@ -1009,7 +1029,7 @@ namespace TVGL
                             otherVertex.ReferenceIndex = segment.Index;
 
                         }
-                        //Case 2: It is after the current step (edge is pointing forward).
+                        //Edge Case 2: It is after the current step (edge is pointing forward).
                         //Add the edge and the otherVertex to the segment's "Next" lists if they do not already contain it.
                         else if (otherVertexDistance > distanceAlongAxis)
                         {
@@ -1022,7 +1042,7 @@ namespace TVGL
                             newCurrentEdges.Add(edge); 
                             newNextVertices.Add(otherVertex);
                         }
-                        //Case 3: The otherVertex is prior to the current step (edge is pointing back).
+                        //Edge Case 3: The otherVertex is prior to the current step (edge is pointing back).
                         else
                         {
                             //The edge must point back to a prior segment, so the edge is finished
@@ -1065,6 +1085,7 @@ namespace TVGL
                     }
                 }
 
+                #region Segment Case 2: Continuation because of no connected segments.
                 //If no connected segments, update the current segment
                 if (!connectedSegmentsIndices.Any())
                 {
@@ -1098,8 +1119,9 @@ namespace TVGL
                         segment.NextVertices.Add(vertex);
                     }
                 }
-                //Else, there are one or more segments that connect with the current segment 
-                //Merge them to create a new segment.
+                #endregion
+
+                #region Segment Case 3: [Merging] one or more segments that connect with the current segment 
                 else
                 {
                     connectedSegmentsIndices.Add(segment.Index);
@@ -1112,7 +1134,6 @@ namespace TVGL
                     {
                         var otherSegment = allDirectionalSegments[edge.ArbitraryReferenceIndex];
                         otherSegment.ReferenceEdges.Add(edge);
-                        //Remove all the finished edges from the current edges lists.
                         otherSegment.CurrentEdges.Remove(edge);
                     }
 
@@ -1126,7 +1147,6 @@ namespace TVGL
                         connectedSegments.Add(otherSegment);
                         otherSegment.UpdateCurrentEdges();
 
-                        //Since this is a hashset, we don't need to check if it is contained before adding it.
                         foreach (var edge in otherSegment.CurrentEdges)
                         {
                             if (edge.To.ReferenceIndex == -1 || edge.From.ReferenceIndex == -1)
@@ -1135,7 +1155,6 @@ namespace TVGL
                             }
                             else
                             {
-                                //This is a finished edge for the other segment
                                 otherSegment.ReferenceEdges.Add(edge);
                             }
                         }
@@ -1143,39 +1162,26 @@ namespace TVGL
                         currentSegmentsToConsider.Remove(otherSegment);
                     }
 
-
-
-                    //Also, create a new segment that starts from these completed segments. 
-                    //Don't add it to the current segments, yet.
-                    //inStepSegmentEdges => newSegment.ReferenceEdges
-                    //allInStepSegmentVertices => newSegment.ReferenceVertices
-                    //currentEdges => newSegment.CurrentEdges
-                    //Current vertices are set with the current edges.
+                    //Create a new segment that starts from these completed segments. 
                     var segmentIndex = allDirectionalSegments.Count();
-                    //if (segmentIndex == 6)
-                    //{
-                    //    foreach (var cSegment in connectedSegments)
-                    //    {
-                    //        cSegment.DisplayFaces(ts);
-                    //    }
-                    //}
                     var newSegment = new DirectionalSegment(segmentIndex, inStepSegmentEdges, 
                         allInStepSegmentVertices, newSegmentCurrentEdges, connectedSegments.ToList());
                    
                     allDirectionalSegments.Add(segmentIndex, newSegment);
                 }
+                #endregion
             }
             #endregion
 
-            #region Step 2a: Pair each edge loop from the SegmentationData with its parent segment(s).
+            #region Pairing Step: pair each edge loop from the SegmentationData with its parent segment(s).
+            //Pair each edge loop from the SegmentationData with its parent segment(s).
+            //If an edge loop does not belong to any segment, check whether it is positive or negative area(solid vs.hole respectively).
+
             //Get an updated list of the segments.
             var currentSegments = new HashSet<DirectionalSegment>();
-            foreach (var segment in allDirectionalSegments.Values)
+            foreach (var segment in allDirectionalSegments.Values.Where(s => !s.IsFinished))
             {
-                //Ignore segments that are already finished
-                if (segment.IsFinished) continue;
                 currentSegments.Add(segment);
-                //Reset the segment's current polygon data groups
                 segment.CurrentPolygonDataGroups = new HashSet<PolygonDataGroup>();
             }
 
@@ -1216,7 +1222,10 @@ namespace TVGL
             }
             #endregion
 
-            #region Step 2b: Create new segements from any unused vertices
+            #region Wrapping Step 2 (Resolves Segment Cases 4 & 5): wrap unused vertices to find connected vertices, edges, and polygons 
+            //If it is a positive, create a new segment.
+            //If it is is a negative, use the "Intersection" polygon operation to determine which segment it belongs to.
+
             //Get all the unassigned in-step vertices.
             var unusedInStepVertices = new HashSet<Vertex>();
             foreach (var inStepVertex in inStepVertices)
@@ -1329,32 +1338,18 @@ namespace TVGL
                     break;
                 }
 
+                #region  Segment Case 4: [Blind Hole/Pocket]
+                //Note that cannot have a blind hole or hidden pocket with a new segment, so it is okay to check where
+                //this negative polygon belongs before we finish creating the new segments.
+                //This is a blind hole or pocket, not visible from the search direction should exist for pre-existing segments
+                //Example of pockets: Aerospace Beam with search direction through side. The pockets on the opposite side are not visible.     
                 if (positivePolygonDataGroup == null)
                 {
-                    var badFaces = new HashSet<PolygonalFace>();
-                    var badColor = new Color(KnownColors.BlueViolet);
-                    foreach (var edge in finishedEdges)
-                    {
-                        edge.OtherFace.Color = badColor;
-                        badFaces.Add(edge.OtherFace);
-
-                        edge.OwnedFace.Color = badColor;
-                        badFaces.Add(edge.OwnedFace);
-                    }
                     if (negativePolygonDataGroup == null)
                     {
-                        var paths = segmentationData.CrossSectionData.Select(p => p.Path2D).ToList();
-                        Presenter.ShowAndHang(paths);
-                        foreach (var segment2 in currentSegments)
-                        {
-                            segment2.DisplayFaces(ts, badFaces);
-                        }
+                        throw new Exception("Either positive or negative polygon data group must be assigned");
                     }
-                    #region Step 2c: Assign Any Blind Hole OR Hidden Pocket Polygon Data Groups
-                    //Note that cannot have a blind hole or hidden pocket with a new segment, so it is okay to check where
-                    //this negative polygon belongs before we finish creating the new segments.
-                    //This is a blind hole or pocket, not visible from the search direction should exist for pre-existing segments
-                    //Example of pockets: Aerospace Beam with search direction through side. The pockets on the opposite side are not visible.
+
                     foreach (var currentSegment in currentSegments)
                     {
                         var paths = new List<List<Point>>();
@@ -1404,12 +1399,13 @@ namespace TVGL
                     {
                         throw new Exception("Blind Hole was not assigned to any a pre-existing segment.");
                     }
-                    #endregion
                 }
+                #endregion
+
+                #region Segment Case 5: [New Segment]
+                //Creat the new segment from the unused vertices and connect the polygon data groups to the segments
                 else
                 {
-                    //Creat the new segment from the unused vertices and 
-                    //connect the polygon data groups to the segments
                     var newSegment = new DirectionalSegment(newSegmentIndex,
                         finishedEdges, newSegmentReferenceVertices, currentEdges, searchDirection);
                     allDirectionalSegments.Add(newSegmentIndex, newSegment);
@@ -1420,48 +1416,34 @@ namespace TVGL
                         newSegment.AddPolygonDataGroup(negativePolygonDataGroup, false);
                     }
                 }
+                #endregion
             }
             #endregion
 
             if (unassignedPositivePolygonDataGroups.Any()) throw new Exception("At this point, only blind holes should be unassigned");
 
-            #region Step 3: Resolve the segment changes.
-            //  Case 1: If a loop belongs to multiple segments (as identified in Step 1), end each segment
-            //          and start a new one. 
-            //  Case 2: If a positive loop is added to a existing segment (>1 +loops), close that segment and start new segments, 
-            //          one for each positive loop. It may be required to perform polygon operations to retain the correct negative
-            //          loops. 
-            //  Case 3: If the number of positive loops in a segment does not change (should always be = 1) and every loop 
-            //          it contains only belongs to this segment, save the stashed vertices and edges. Keep this segment open.
-            //   In All Cases: The in-step vertices and edges belong to the parent and child segments. This does repeat information, but there
-            //               are quite a few different cases and this is the easiest solution (other than not attaching them to any segment).
+            #region Attach SegmentationData (Finishing Touch for Segment Case 2 and Resolves Segment Case 6)      
             foreach (var polygonDataGroup in segmentationData.CrossSectionData)
             {
-
-                if (polygonDataGroup.SegmentIndex != -1)
+                if (polygonDataGroup.SegmentIndex != -1 || polygonDataGroup.PotentialSegmentIndices.Count > 1)
                 {
-                    //This segment has already been correctly assigned
-                    continue;
-                }
-                else if (polygonDataGroup.PotentialSegmentIndices.Count > 1)
-                {
-                    //Case 1: The segments have already been set to finished during Step 1. 
-                    //ToDo: Check to see the new segment was created correctly in Step 1
+                    //The polygon data group has already been correctly assigned with a case 
+                    //that was already fully handled.
                 }
                 else if (polygonDataGroup.PotentialSegmentIndices.Count == 1)
                 {
+
                     var potentialSegment = allDirectionalSegments[polygonDataGroup.PotentialSegmentIndices.First()];
-                    //Get the number of positive polygons connected to this segment.
                     var counter = potentialSegment.CurrentPolygonDataGroups.Count(p => p.Area > 0.0);
 
                     if (counter == 1)
                     {
-                        //Case 3: Add it to the segment if the segment only has one positive polygon data group
+                        //Segment Case 2 Finishing Touch
                         potentialSegment.AddPolygonDataGroup(polygonDataGroup);
                     }
                     else if (counter > 1)
                     {
-                        //Results in Case 2. End the potential segment and start new segments for each positive polygon.
+                        //Segment Case 6 [Branching]: End the potential segment and start new segments for each positive polygon.
                         potentialSegment.BranchSegment(ref allDirectionalSegments);
                     }
                     else throw new Exception("One of the polygons must have been positive.");
@@ -1471,20 +1453,7 @@ namespace TVGL
                     throw new Exception("All the polygon data group must be assigned to a segment by this point");
                 }
             }
-
-            //if (allDirectionalSegments.Count > 1 && distanceAlongAxis > 34.8)
-            //{
-            //    allDirectionalSegments[1].DisplayFaces(ts);
-            //    //foreach (var segment in allDirectionalSegments.Values)
-            //    //{
-            //    //    if (segment.IsFinished) continue;
-            //    //    segment.DisplayFaces(ts);
-            //    //}
-            //}
-
             #endregion
-
-
         }
 
         private static void AddConnectedSegment(DirectionalSegment otherSegment, 
@@ -1594,12 +1563,13 @@ namespace TVGL
 
         /// <summary>
         /// A directional segment is one of the pieces that a part is naturally divided into along a given direction.
-        /// It is a collection of cross sections that are overlapping and faces that are connected.
-        /// A blind hole inside a solid, is also part of the segment.
-        /// A segment never may include multiple positive polygons, as long as they are attached with edge/face wrapping.
+        /// A segment never may include multiple positive polygons, but may contain multiple negative polygons (holes).
+        /// It includes a collection of cross sections that are overlapping between steps, and it contains the vertices, 
+        /// edges, and faces that are intersected by those cross sections.
         /// </summary>
         public class DirectionalSegment
         {
+            #region Properties
             private bool _isFinished;
 
             /// <summary>
@@ -1713,7 +1683,9 @@ namespace TVGL
             /// is started first along the search direction.
             /// </summary>
             public int Index;
+            #endregion
 
+            #region Constructors
             /// <summary>
             /// Starts a directional segment with no prior connected directional segments
             /// </summary>
@@ -1753,8 +1725,8 @@ namespace TVGL
             /// <param name="referenceVertices"></param>
             /// <param name="currentEdges"></param>
             /// <param name="parentDirectionalSegments"></param>
-            public DirectionalSegment(int index, IEnumerable<Edge> referenceEdges, IEnumerable<Vertex> referenceVertices,
-                IEnumerable<Edge> currentEdges, List<DirectionalSegment> parentDirectionalSegments)
+            public DirectionalSegment(int index, HashSet<Edge> referenceEdges, HashSet<Vertex> referenceVertices,
+                HashSet<Edge> currentEdges, List<DirectionalSegment> parentDirectionalSegments)
             {
                 Index = index;
                 IsFinished = false;
@@ -1823,8 +1795,9 @@ namespace TVGL
                 //Build the next vertices with the current edges and vertex reference indices
                 UpdateNextVertices();
             }
+            #endregion
 
-
+            #region Public Methods
             /// <summary>
             /// Starts a directional segment for each polygon data group assigned to this parent directional segment
             /// </summary>
@@ -1857,16 +1830,12 @@ namespace TVGL
                         if (result != null && result.Any())
                         {
                             negativePolygonDataGroup.SegmentIndex = newSegment.Index;
-                            //This Add function updates the segment's information
-                            newSegment.AddPolygonDataGroup(negativePolygonDataGroup, true);
-                            //Break, since it can only belong to one segment
+                            newSegment.AddPolygonDataGroup(negativePolygonDataGroup);
                             break;
                         }
-                        //Presenter.ShowAndHang(paths, new List<List<Point>>() { negativePolygonDataGroup.Path2D});
                     }
                     if (negativePolygonDataGroup.SegmentIndex == -1)
                     {
-                        //Presenter.ShowAndHang(allPositivePaths, negativePolygonDataGroup.Path2D);
                         throw new Exception("Blind Hole was not assigned to any a pre-existing segment.");
                     }
                 }
@@ -1879,24 +1848,6 @@ namespace TVGL
             /// <param name="updateCurrentEdgesAndNextVertices"></param>
             public void AddPolygonDataGroup(PolygonDataGroup dataGroup, bool updateCurrentEdgesAndNextVertices = true)
             {
-                var tempRemovalEdges = new HashSet<Edge>();
-                foreach (var edge in CurrentEdges)
-                {
-                    if (edge.To.ReferenceIndex != -1)
-                    {
-                        if (edge.From.ReferenceIndex != -1)
-                        {
-                            ReferenceEdges.Add(edge);
-                            tempRemovalEdges.Add(edge);
-                            //throw new Exception(
-                            //    "This edge contains two vertices that have reference indices. One must not have a ref. index");
-                        }
-                    }
-                }
-                foreach (var edge in tempRemovalEdges)
-                {
-                    CurrentEdges.Remove(edge);
-                }
                 //This data group now belongs to this segment
                 dataGroup.SegmentIndex = Index;
 
@@ -1932,28 +1883,15 @@ namespace TVGL
                     CrossSectionPathDictionary.Add(dataGroup.StepIndex, new List<PolygonDataGroup>() { dataGroup });
                 }
 
-                if (updateCurrentEdgesAndNextVertices)
+                if (!updateCurrentEdgesAndNextVertices) return;
+
+                //Else, Update current edges and next vertices 
+                //Must do current edges first, since UpdateNextVertices references current edges
+                foreach (var edge in dataGroup.EdgeLoop)
                 {
-                    var count = CurrentEdges.Count;
-                    foreach (var edge in dataGroup.EdgeLoop)
-                    {
-                        var error = false;
-                        if (edge.To.ReferenceIndex != -1)
-                        {
-                            if (edge.From.ReferenceIndex != -1)
-                            {
-                                error = true;
-                                ReferenceEdges.Add(edge);
-                            }
-                        }
-
-                        //Since this is a hashset, it will avoid adding again if it has already been added
-                        if (!error) CurrentEdges.Add(edge);
-                    }
-
-                    //Update the next vertices with the current edges and vertex reference indices
-                    UpdateNextVertices();
+                    CurrentEdges.Add(edge);
                 }
+                UpdateNextVertices();
             }
 
             /// <summary>
@@ -1983,7 +1921,6 @@ namespace TVGL
                     else throw new Exception("This edge contains two vertices that do not have reference indices. One must have a ref. index");
                 }
             }
-
 
             /// <summary>
             /// Updates the list of current edges, using the vertex reference indices.
@@ -2047,84 +1984,11 @@ namespace TVGL
                     }
                 }
 
-                
-
-                ////This section is for debugging which edge list a trouble edge is in.
-                //var green = new Color(KnownColors.Green);
-                //foreach (var edge in ReferenceEdges)
-                //{
-                //    if (badFaces == null || !badFaces.Contains(edge.OtherFace))
-                //    {
-                //        edge.OtherFace.Color = green;
-                //    }
-                //    if (badFaces == null || !badFaces.Contains(edge.OwnedFace))
-                //    {
-                //        edge.OwnedFace.Color = green;
-                //    }
-                //}
-                //var red = new Color(KnownColors.Red);
-                //foreach (var edge in CurrentEdges)
-                //{
-                //    if (badFaces == null || !badFaces.Contains(edge.OtherFace))
-                //    {
-                //        if (edge.OtherFace.Color != green)
-                //        {
-                //            edge.OtherFace.Color = red;
-                //        }
-                //    }
-                //    if (badFaces == null || !badFaces.Contains(edge.OwnedFace))
-                //    {
-                //        if (edge.OwnedFace.Color != green)
-                //        {
-                //            edge.OwnedFace.Color = red;
-                //        }
-                //    }
-                //}
-
-                var allVertexPaths = new List<List<List<Vertex>>>();
-                foreach (var crossSection in CrossSectionPathDictionary.Values)
-                {
-                    var vertexCrossSection = new List<List<Vertex>>();
-                    foreach (var polygonGroup in crossSection)
-                    {
-                        vertexCrossSection.Add(polygonGroup.Path3D);
-                    }
-                    allVertexPaths.Add(vertexCrossSection);
-                }
+                var allVertexPaths = CrossSectionPathDictionary.Values.Select(c => c.Select(p => p.Path3D).ToList()).ToList();
 
                 Presenter.ShowVertexPathsWithSolid(allVertexPaths, new List<TessellatedSolid>() { ts });
-               // Presenter.ShowAndHang(ts);
             }
-
-            /// <summary>
-            /// Displays the vertex paths for debugging.
-            /// </summary>
-            /// <param name="direction"></param>
-            /// <param name="distanceDictionary"></param>
-            /// <exception cref="NotImplementedException"></exception>
-            public void Display(TessellatedSolid ts = null)
-            {
-                var allVertexPaths = new List<List<List<Vertex>>>();
-                foreach (var crossSection in CrossSectionPathDictionary.Values)
-                {
-                    var vertexCrossSection = new List<List<Vertex>>();
-                    foreach (var polygonGroup in crossSection)
-                    {
-                        vertexCrossSection.Add(polygonGroup.Path3D);
-                    }
-                    allVertexPaths.Add(vertexCrossSection);
-                }
-                if (ts == null)
-                {
-                    //Just show the segment
-                    Presenter.ShowVertexPaths(allVertexPaths);
-                }
-                else
-                {
-                    //Show the segment overlaid onto the tesselated solid
-                    Presenter.ShowVertexPathsWithSolid(allVertexPaths, new List<TessellatedSolid>() { ts });
-                }
-            }
+            #endregion
         }
         #endregion
 

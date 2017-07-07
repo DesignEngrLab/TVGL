@@ -40,7 +40,7 @@ namespace TVGL_Test
                 //Get the forward and reverse segments. They should be mostly the same.
                 var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
                 Assert.That(segments.Count == segmentCounts[i], "Incorrect Number of Segments");
-
+               
                 //Check to make sure all the faces and edges and vertices are inlcuded into at least one segment.
                 CheckAllObjectTypes(ts, segments);
 

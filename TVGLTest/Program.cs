@@ -123,10 +123,10 @@ namespace TVGL_Test
             foreach (var direction in obb.Directions)
             {
                 var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
-                foreach (var segment in segments)
-                {
-                    segment.DisplayFaces(ts);
-                }
+                //foreach (var segment in segments)
+                //{
+                //    segment.DisplayFaces(ts);
+                //}
             }
 
             // var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2].multiply(-1), stepSize);
