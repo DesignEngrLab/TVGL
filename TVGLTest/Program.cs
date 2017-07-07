@@ -122,7 +122,7 @@ namespace TVGL_Test
 
             foreach (var direction in obb.Directions)
             {
-                var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
+                var segments = Decomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
                 //foreach (var segment in segments)
                 //{
                 //    var vertexLists = segment.DisplaySetup(ts);
@@ -136,7 +136,7 @@ namespace TVGL_Test
             //CheckAllObjectTypes(ts, segments);
         }
 
-        private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<AreaDecomposition.DirectionalSegment> segments)
+        private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<Decomposition.DirectionalSegment> segments)
         {
             var faces = new HashSet<PolygonalFace>(ts.Faces);
             var vertices = new HashSet<Vertex>(ts.Vertices);

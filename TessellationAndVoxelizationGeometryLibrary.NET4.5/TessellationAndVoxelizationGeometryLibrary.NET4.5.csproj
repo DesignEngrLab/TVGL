@@ -118,8 +118,8 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs">
       <Link>InputOutput Operations\STLFileData.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\AreaDecomposition.cs">
-      <Link>Miscellaneous Functions\AreaDecomposition.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Decomposition.cs">
+      <Link>Miscellaneous Functions\Decomposition.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Extrude.cs">
       <Link>Miscellaneous Functions\Extrude.cs</Link>

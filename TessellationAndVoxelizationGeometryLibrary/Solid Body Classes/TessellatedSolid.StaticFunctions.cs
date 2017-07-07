@@ -58,7 +58,7 @@ namespace TVGL
             var normal = new[] { 1.0, 0.0, 0.0 }; //Direction is irrellevant
             var stepSize = 0.01;
             var volume = 0.0;
-            var areas = AreaDecomposition.Run(ts, normal, stepSize);
+            var areas = Decomposition.NonUniformAreaDecomposition(ts, normal, stepSize);
             //Trapezoidal approximation. This should be accurate since the lines betweens data points are linear
             for (var i = 1; i < areas.Count; i++)
             {

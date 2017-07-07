@@ -16,17 +16,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using ClipperLib;
 using StarMathLib;
-using TVGL;
 
 namespace TVGL
 {
     /// <summary>
     ///     Outputs cross sectional area along a given axis
     /// </summary>
-    public static class AreaDecomposition
+    public static class Decomposition
     {
         #region Standard Area Decomposition. Non-uniform.
         /// <summary>
@@ -41,7 +38,7 @@ namespace TVGL
         /// <param name="boundingRectangleArea">if set to <c>true</c> [bounding rectangle area].</param>
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         /// <exception cref="Exception">Pick one or the other. Can't do both at the same time</exception>
-        public static List<double[]> Run(TessellatedSolid ts, double[] axis, double stepSize,
+        public static List<double[]> NonUniformAreaDecomposition(TessellatedSolid ts, double[] axis, double stepSize,
             double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false,
             bool boundingRectangleArea = false)
         {
@@ -134,7 +131,7 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="stepSize"></param>
         /// <returns></returns>
-        public static List<DecompositionData> UniformDirectionalDecomposition(TessellatedSolid ts, double[] direction,
+        public static List<DecompositionData> UniformAreaDecomposition(TessellatedSolid ts, double[] direction,
             double stepSize)
         {
             var outputData = new List<DecompositionData>();
@@ -587,11 +584,12 @@ namespace TVGL
             /// <summary>
             /// A data group for linking the 2D path and edge loop of cross section polygons.
             /// </summary>
-            /// <param name="path2D</param>
+            /// <param name="intersectionVertices"></param>
             /// <param name="edgeLoop"></param>
             /// <param name="area"></param>
             /// <param name="indexInCrossSection"></param>
             /// <param name="stepIndex"></param>
+            /// <param name="path2D"></param>
             public PolygonDataGroup(List<Point> path2D, List<Vertex> intersectionVertices, List<Edge> edgeLoop, double area, int indexInCrossSection, int stepIndex)
             {
                 Path2D = path2D;
@@ -629,11 +627,12 @@ namespace TVGL
             /// <summary>
             /// The Segmentation Data Class used to store information from A Directional Segmented Decomposition
             /// </summary>
-            /// <param name="paths"></param>
             /// <param name="areas"></param>
             /// <param name="distanceAlongDirection"></param>
+            /// <param name="paths3D"></param>
             /// <param name="edgeLoops"></param>
             /// <param name="stepIndex"></param>
+            /// <param name="paths2D"></param>
             public SegmentationData(List<List<Point>> paths2D, List<List<Vertex>> paths3D,
                 List<List<Edge>> edgeLoops, List<double> areas, double distanceAlongDirection, int stepIndex)
             {
