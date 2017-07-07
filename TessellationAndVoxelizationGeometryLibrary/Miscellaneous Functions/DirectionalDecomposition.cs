@@ -23,7 +23,7 @@ namespace TVGL
     /// <summary>
     ///     Outputs cross sectional area along a given axis
     /// </summary>
-    public static class Decomposition
+    public static class DirectionalDecomposition
     {
         #region Standard Area Decomposition. Non-uniform.
         /// <summary>

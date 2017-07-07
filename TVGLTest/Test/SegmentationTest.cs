@@ -38,13 +38,13 @@ namespace TVGL_Test
                 var direction = obb.Directions[i];
 
                 //Get the forward and reverse segments. They should be mostly the same.
-                var segments = Decomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
                 Assert.That(segments.Count == segmentCounts[i], "Incorrect Number of Segments");
                
                 //Check to make sure all the faces and edges and vertices are inlcuded into at least one segment.
                 CheckAllObjectTypes(ts, segments);
 
-                var reverseSegments = Decomposition.UniformDirectionalSegmentation(ts, direction.multiply(-1), stepSize);
+                var reverseSegments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction.multiply(-1), stepSize);
                 Assert.That(reverseSegments.Count == segmentCounts[i], "Incorrect Number of Segments");
                 CheckAllObjectTypes(ts, reverseSegments);
             }
@@ -52,7 +52,7 @@ namespace TVGL_Test
             //Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
         }
 
-        private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<Decomposition.DirectionalSegment> segments)
+        private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<DirectionalDecomposition.DirectionalSegment> segments)
         {
             var faces = new HashSet<PolygonalFace>(ts.Faces);
             var vertices = new HashSet<Vertex>(ts.Vertices);
