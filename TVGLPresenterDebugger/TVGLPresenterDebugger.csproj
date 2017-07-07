@@ -160,6 +160,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs">
       <Link>TVGL\InputOutput Operations\STLFileData.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\AreaDecomposition.cs">
+      <Link>TVGL\Miscellaneous Functions\TriangulatePolygon\AreaDecomposition.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Extrude.cs">
       <Link>TVGL\Miscellaneous Functions\Extrude.cs</Link>
     </Compile>
@@ -251,7 +254,6 @@
       <Link>Presenter\Window3DPlot.xaml.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TVGL\Miscellaneous Functions\AreaDecompositionDebugger.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">

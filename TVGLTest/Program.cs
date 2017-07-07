@@ -125,7 +125,8 @@ namespace TVGL_Test
                 var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
                 //foreach (var segment in segments)
                 //{
-                //    segment.DisplayFaces(ts);
+                //    var vertexLists = segment.DisplaySetup(ts);
+                //    Presenter.ShowVertexPathsWithSolid(vertexLists, new List<TessellatedSolid>() { ts });
                 //}
             }
 
@@ -133,12 +134,6 @@ namespace TVGL_Test
             var totalTime = DateTime.Now - startTime;
             Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
             //CheckAllObjectTypes(ts, segments);
-            //foreach (var segment in segments)
-            //{
-            //    segment.DisplayFaces(ts);
-            //}
-
-
         }
 
         private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<AreaDecomposition.DirectionalSegment> segments)
