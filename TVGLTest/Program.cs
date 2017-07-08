@@ -14,21 +14,21 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        "../../../TestFiles/angle bracket.STL",
+       // "../../../TestFiles/angle bracket.STL",
        // "../../../TestFiles/Beam_Boss.STL",
-       // //"../../../TestFiles/bigmotor.amf",
-       // //"../../../TestFiles/DxTopLevelPart2.shell",
-       // //"../../../TestFiles/Candy.shell",
-       // //"../../../TestFiles/amf_Cube.amf",
-       // //"../../../TestFiles/train.3mf",
-       // //"../../../TestFiles/Castle.3mf",
-       // //"../../../TestFiles/Raspberry Pi Case.3mf",
-       ////"../../../TestFiles/shark.ply",
-     // "../../../TestFiles/bunnySmall.ply",
+       //// "../../../TestFiles/bigmotor.amf",
+       // "../../../TestFiles/DxTopLevelPart2.shell",
+       // "../../../TestFiles/Candy.shell",
+       // "../../../TestFiles/amf_Cube.amf",
+       // "../../../TestFiles/train.3mf",
+       // "../../../TestFiles/Castle.3mf",
+       // "../../../TestFiles/Raspberry Pi Case.3mf",
+       //"../../../TestFiles/shark.ply",
+       ////"../../../TestFiles/bunnySmall.ply",
        // "../../../TestFiles/cube.ply",
-       // //"../../../TestFiles/airplane.ply",
+       // "../../../TestFiles/airplane.ply",
        // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        "../../../TestFiles/Tetrahedron.STL",
+       // "../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
        // "../../../TestFiles/Mic_Holder_SW.stl",
@@ -37,11 +37,11 @@ namespace TVGL_Test
        // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
        // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
        // "../../../TestFiles/Rook.amf",
-        //"../../../TestFiles/hdodec.off",
-        //"../../../TestFiles/tref.off",
-        "../../../TestFiles/mushroom.off",
-        "../../../TestFiles/vertcube.off",
-        "../../../TestFiles/trapezoid.4d.off",
+       // "../../../TestFiles/hdodec.off",
+       // "../../../TestFiles/tref.off",
+        //"../../../TestFiles/mushroom.off",
+        //"../../../TestFiles/vertcube.off",
+        //"../../../TestFiles/trapezoid.4d.off",
         "../../../TestFiles/ABF.STL",
         "../../../TestFiles/Pump-1repair.STL",
         "../../../TestFiles/Pump-1.STL",
@@ -84,49 +84,9 @@ namespace TVGL_Test
                 TessellatedSolid ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename)[0];
-          
-                PrimitiveClassification.Run(ts);
-
-                //TestPolygon(ts[0]);
-                #region Perform Primitive Classification
-                var primitives = PrimitiveClassification.Run(ts);
-                var otherPrimitives = new List<PrimitiveSurface>();
-                //Get the large flat surfaces
-                foreach (var primitive in primitives)
-                {
-                    if (primitive.Type == PrimitiveSurfaceType.Flat)
-                    {
-                        foreach (var face in primitive.Faces)
-                        {
-                            face.Color = new Color(KnownColors.Blue);
-                        }
-                    }
-                    if (primitive.Type == PrimitiveSurfaceType.Cylinder)
-                    {
-                        foreach (var face in primitive.Faces)
-                        {
-                            face.Color = new Color(KnownColors.Red);
-                        }
-                        //If not a flat, add to this list
-                        otherPrimitives.Add(primitive);
-                    }
-                    if (primitive.Type == PrimitiveSurfaceType.Cone)
-                    {
-                        foreach (var face in primitive.Faces)
-                        {
-                            face.Color = new Color(KnownColors.Green);
-                        }
-                        //If not a flat, add to this list
-                        otherPrimitives.Add(primitive);
-                    }
-                }
-                ts.HasUniformColor = false;
-                Presenter.Show(ts);
-                #endregion
-
-                Presenter.ShowAndHang(ts);
-              //  TestSilhouette(ts[0]);
-                //TestAdditiveVolumeEstimate(ts[0]);
+                //using (fileStream = File.OpenWrite(filename + ".amf"))
+                //    IO.Save(fileStream, ts, FileType.AMF);
+                TestSimplify(ts);
             }
 
             Console.WriteLine("Completed.");
@@ -137,7 +97,7 @@ namespace TVGL_Test
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL.Silhouette.Run(ts, new[] {0.5, 0.0, 0.5});
+            var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
             Presenter.ShowAndHang(silhouette);
         }
 
@@ -176,11 +136,23 @@ namespace TVGL_Test
 
         private static void TestSimplify(TessellatedSolid ts)
         {
-            ts.SimplifyByPercentage(0.9);
+            Debug.WriteLine("model:   "+ts.FileName);
+
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL.Presenter.ShowAndHang(ts);
+            //TVGL.Presenter.ShowWire(ts);
+            ts.Complexify(ts.NumberOfFaces * 5);
+            Debug.WriteLine("complexify*****");
+            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
+            //TVGL.Presenter.ShowWire(ts);
+            //ts.Simplify(ts.NumberOfFaces / 3);
+            //Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            //Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            //Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
+            //TVGL.Presenter.ShowWire(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)

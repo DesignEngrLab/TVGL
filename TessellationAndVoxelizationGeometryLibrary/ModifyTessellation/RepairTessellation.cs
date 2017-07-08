@@ -89,7 +89,7 @@ namespace TVGL
                 if (success)
                 {
                     ts.Errors = null;
-                    Message.output("Repairs functions completed successfully (errors may still occur).", 2);
+                    Message.output("Repairs functions completed successfully.", 2);
                 }
                 else Message.output("Repair did not successfully fix all the problems.", 1);
                 CheckModelIntegrity(ts, false);
@@ -420,8 +420,13 @@ namespace TVGL
             foreach (var face in ts.Faces)
             {
                 face.Normal = face.Normal.multiply(-1);
-                face.Vertices.Reverse();
+                var firstVertex = face.Vertices[0];
+                face.Vertices.RemoveAt(0);
+                face.Vertices.Insert(1,firstVertex);
                 face.Edges.Reverse();
+                var firstEdge = face.Edges[0];
+                face.Edges.RemoveAt(0);
+                face.Edges.Insert(1, firstEdge);
                 face.Curvature = (CurvatureType)(-1 * (int)face.Curvature);
             }
             foreach (var edge in ts.Edges)

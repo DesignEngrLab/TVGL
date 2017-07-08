@@ -95,7 +95,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="ModifyTessellation\RefineTessellation.cs" />
+    <Compile Include="ModifyTessellation\ComplexifyTessellation.cs" />
     <Compile Include="ModifyTessellation\SimplifyTessellation.cs" />
     <Compile Include="ModifyTessellation\TessellationError.cs" />
     <Compile Include="Solid Body Classes\Edge.cs" />
@@ -117,16 +117,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MIConvexHull, Version=1.0.16.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.0214\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="2D\Clipper\License.txt" />
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
@@ -134,6 +124,14 @@
   <ItemGroup>
     <None Include="2D\Clipper\README" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MIConvexHull, Version=1.0.17.411, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MIConvexHull.1.1.17.0411\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+    </Reference>
+    <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

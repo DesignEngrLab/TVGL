@@ -25,9 +25,9 @@ using OxyPlot;
 namespace TVGL
 {
     /// <summary>
-    ///     The Class HelixPresenter is the only class within the TVGL Helix Presenter
-    ///     project (TVGL_Presenter.dll). It is a simple static class with one main
-    ///     function, "Show".
+    /// The Class HelixPresenter is the only class within the TVGL Helix Presenter
+    /// project (TVGL_Presenter.dll). It is a simple static class with one main
+    /// function, "Show".
     /// </summary>
     public static class Presenter
     {
@@ -36,7 +36,7 @@ namespace TVGL
         #region Single Series of Points
 
         /// <summary>
-        ///     Shows the specified points.
+        /// Shows the specified points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="title">The title.</param>
@@ -51,7 +51,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the specified vertices.
+        /// Shows the specified vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -67,7 +67,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the and hang.
+        /// Shows the and hang.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="title">The title.</param>
@@ -81,6 +81,14 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// Shows the and hang.
+        /// </summary>
+        /// <param name="pointsList">The points list.</param>
+        /// <param name="title">The title.</param>
+        /// <param name="plot2DType">Type of the plot2 d.</param>
+        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
+        /// <param name="marker">The marker.</param>
         public static void ShowAndHang(IEnumerable<List<Point>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
@@ -89,6 +97,14 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// Shows the and hang.
+        /// </summary>
+        /// <param name="pointsLists">The points lists.</param>
+        /// <param name="title">The title.</param>
+        /// <param name="plot2DType">Type of the plot2 d.</param>
+        /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
+        /// <param name="marker">The marker.</param>
         public static void ShowAndHang(IEnumerable<List<List<Point>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
@@ -98,7 +114,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the and hang.
+        /// Shows the and hang.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -115,15 +131,15 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows two different lists of polygons using a unique marker for each.
+        /// Shows two different lists of polygons using a unique marker for each.
         /// </summary>
-        /// <param name="points2"></param>
+        /// <param name="points1">The points1.</param>
+        /// <param name="points2">The points2.</param>
         /// <param name="title">The title.</param>
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
-        /// <param name="points1"></param>
-        /// <param name="marker1"></param>
-        /// <param name="marker2"></param>
+        /// <param name="marker1">The marker1.</param>
+        /// <param name="marker2">The marker2.</param>
         public static void ShowAndHang(IList<List<Point>> points1, IList<List<Point>> points2, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker1 = MarkerType.Circle, MarkerType marker2 = MarkerType.Cross)
         {
@@ -133,9 +149,10 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Shows the specified points.
+        /// Shows the specified points.
         /// </summary>
         /// <param name="points">The points.</param>
+        /// <param name="colors">The colors.</param>
         /// <param name="title">The title.</param>
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
@@ -154,7 +171,7 @@ namespace TVGL
         #region for Points
 
         /// <summary>
-        ///     Shows the specified points.
+        /// Shows the specified points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="title">The title.</param>
@@ -169,7 +186,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the specified points.
+        /// Shows the specified points.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="title">The title.</param>
@@ -184,7 +201,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the and hang.
+        /// Shows the and hang.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="title">The title.</param>
@@ -200,7 +217,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the and hang.
+        /// Shows the and hang.
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="title">The title.</param>
@@ -219,7 +236,7 @@ namespace TVGL
         #region for Vertices and projection vector
 
         /// <summary>
-        ///     Shows the specified vertices.
+        /// Shows the specified vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -237,7 +254,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the specified vertices.
+        /// Shows the specified vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -256,7 +273,7 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Shows the and hang.
+        /// Shows the and hang.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -274,7 +291,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the and hang.
+        /// Shows the and hang.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -298,6 +315,11 @@ namespace TVGL
         #endregion
 
         #region 3D Plots via Helix.Toolkit
+        /// <summary>
+        /// Shows the vertex paths with solid.
+        /// </summary>
+        /// <param name="segments">The segments.</param>
+        /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IList<double[]> segments, IList<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
@@ -325,6 +347,11 @@ namespace TVGL
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
+        /// <summary>
+        /// Shows the vertex paths with solid.
+        /// </summary>
+        /// <param name="vertexPaths">The vertex paths.</param>
+        /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IList<List<List<double[]>>> vertexPaths, IList<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
@@ -362,6 +389,11 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// Shows the vertex paths with solid.
+        /// </summary>
+        /// <param name="vertexPaths">The vertex paths.</param>
+        /// <param name="solids">The solids.</param>
         public static void ShowVertexPathsWithSolid(IList<List<List<Vertex>>> vertexPaths, IList<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
@@ -398,6 +430,10 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// Shows the vertex paths.
+        /// </summary>
+        /// <param name="vertexPaths">The vertex paths.</param>
         public static void ShowVertexPaths(IList<List<List<double[]>>> vertexPaths)
         {
             var window = new Window3DPlot();
@@ -426,9 +462,36 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows vertex paths. Assumes paths are closed.
+        /// Shows the vertex paths.
         /// </summary>
-        /// <param name="vertexPaths"></param>
+        /// <param name="segments">The segments.</param>
+        public static void ShowVertexPaths(IList<double[]> segments)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+
+            foreach (var point in segments)
+            {
+                var lineCollection = new List<Point3D>
+                {
+                    new Point3D(point[0], point[1], point[2]),
+                    new Point3D(point[3], point[4], point[5])
+                };
+                var color = new System.Windows.Media.Color();
+                color.R = 255; //G & B default to 0 to form red
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color };
+                window.view1.Children.Add(lines);
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        /// <summary>
+        /// Shows vertex paths. Assumes paths are closed.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="colors">The colors.</param>
+        /// <param name="ts">The ts.</param>
         public static void ShowGaussSphereWithIntensity(IList<Vertex> vertices, IList<Color> colors, TessellatedSolid ts)
         {
             var window = new Window3DPlot();
@@ -486,9 +549,9 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Shows vertex paths. Assumes paths are closed.
+        /// Shows vertex paths. Assumes paths are closed.
         /// </summary>
-        /// <param name="vertexPaths"></param>
+        /// <param name="vertexPaths">The vertex paths.</param>
         public static void ShowVertexPaths(IList<List<List<Vertex>>> vertexPaths)
         {
             var window = new Window3DPlot();
@@ -518,7 +581,21 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the specified tessellated solid in a Helix toolkit window.
+        /// Shows the specified tessellated solid in a Helix toolkit window.
+        /// </summary>
+        /// <param name="tessellatedSolid">The tessellated solid.</param>
+        /// <param name="ShowWithSolid">if set to <c>true</c> [show with solid].</param>
+        public static void ShowWire(TessellatedSolid tessellatedSolid, bool ShowWithSolid = true)
+        {
+            if (ShowWithSolid)
+                ShowVertexPathsWithSolid(tessellatedSolid.Edges.Select(e => new[]{ e.From.X, e.From.Y, e.From.Z,
+                e.To.X, e.To.Y, e.To.Z }).ToList(), new[] { tessellatedSolid });
+            else
+                ShowVertexPaths(tessellatedSolid.Edges.Select(e => new[]{ e.From.X, e.From.Y, e.From.Z,
+                    e.To.X, e.To.Y, e.To.Z }).ToList());
+        }
+        /// <summary>
+        /// Shows the specified tessellated solid in a Helix toolkit window.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         /// <param name="seconds">The seconds.</param>
@@ -537,7 +614,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the and hang.
+        /// Shows the and hang.
         /// </summary>
         /// <param name="tessellatedSolid">The tessellated solid.</param>
         public static void ShowAndHang(TessellatedSolid tessellatedSolid)
@@ -549,7 +626,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the specified tessellated solids in a Helix toolkit window.
+        /// Shows the specified tessellated solids in a Helix toolkit window.
         /// </summary>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
         /// <param name="seconds">The seconds.</param>
@@ -575,7 +652,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Shows the and hang.
+        /// Shows the and hang.
         /// </summary>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
         public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
@@ -593,6 +670,11 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        /// <summary>
+        /// Shows the and hang transparents and solids.
+        /// </summary>
+        /// <param name="transparents">The transparents.</param>
+        /// <param name="solids">The solids.</param>
         public static void ShowAndHangTransparentsAndSolids(IList<TessellatedSolid> transparents, IList<TessellatedSolid> solids)
         {
             var window = new Window3DPlot();
@@ -630,7 +712,7 @@ namespace TVGL
             window.ShowDialog();
         }
         /// <summary>
-        ///     Shows the specified tessellated solids in a Helix toolkit window.
+        /// Shows the specified tessellated solids in a Helix toolkit window.
         /// </summary>
         /// <param name="tessellatedSolids">The tessellated solids.</param>
         /// <param name="seconds">The seconds.</param>
@@ -664,6 +746,10 @@ namespace TVGL
         }
 
 
+        /// <summary>
+        /// Shows the with convex hull.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
         public static void ShowWithConvexHull(TessellatedSolid ts)
         {
             var window = new Window3DPlot();
@@ -695,7 +781,7 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Makes the model visual3 d.
+        /// Makes the model visual3 d.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns>Visual3D.</returns>
@@ -764,6 +850,10 @@ namespace TVGL
 
         //A palet of distinguishable colors
         //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
+        /// <summary>
+        /// Colors the palet.
+        /// </summary>
+        /// <returns>System.String[].</returns>
         public static string[] ColorPalet()
         {
             return new[]

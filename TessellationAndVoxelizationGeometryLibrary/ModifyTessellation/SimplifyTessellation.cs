@@ -24,32 +24,23 @@ namespace TVGL
     public static partial class ModifyTessellation
     {
         /// <summary>
-        /// Simplifies the model by merging the vertices that are closest together
+        /// Simplifies the model by merging the eliminating edges that are closer together
+        /// than double the shortest edge length
         /// </summary>
         /// <param name="ts">The ts.</param>
         public static void Simplify(this TessellatedSolid ts)
         {
-            SimplifyByTolerance(ts, ts.Edges.Min(x => x.Length) * 2.0);
-        }
-        /// <summary>
-        /// Simplifies by the percentage provided. For example, is ts has 100 faces, then passing
-        /// a 0.2 will reduce to 80 faces.
-        /// </summary>
-        /// <param name="ts">The tesselated solid.</param>
-        /// <param name="percentageToReduceBy">The percentage to reduce by.</param>
-        public static void SimplifyByPercentage(this TessellatedSolid ts, double percentageToReduceBy)
-        {
-            SimplifyToNFewerFaces(ts, (int)((1 - percentageToReduceBy) * ts.NumberOfFaces));
+            Simplify(ts, ts.NumberOfFaces / 2, ts.Edges.Min(x => x.Length) * 2.0);
         }
 
         /// <summary>
-        /// Simplifies the tessellation by remving the  provided number of faces.
+        /// Simplifies the tessellation by removing the provided number of faces.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="numberOfFacesToRemove">The number of faces.</param>
-        public static void SimplifyToNFewerFaces(this TessellatedSolid ts, int numberOfFacesToRemove)
+        public static void Simplify(this TessellatedSolid ts, int numberOfFacesToRemove)
         {
-            SimplifyBody(ts, numberOfFacesToRemove, 0.0);
+            Simplify(ts, numberOfFacesToRemove, double.PositiveInfinity);
         }
 
         /// <summary>
@@ -57,19 +48,25 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="minLength">The minimum length.</param>
-        public static void SimplifyByMinEdgeLength(this TessellatedSolid ts, double minLength)
+        public static void Simplify(this TessellatedSolid ts, double minLength)
         {
-            SimplifyBody(ts, -1, minLength);
+            Simplify(ts, -1, minLength);
         }
 
-        private static void SimplifyBody(TessellatedSolid ts, int numberOfFaces, double minLength)
+        /// <summary>        
+        /// Simplifies the tessellation so that no edge are shorter than provided the minimum edge length
+        /// or until the provided number of faces are removed - whichever comes first.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="numberOfFaces">The number of faces.</param>
+        /// <param name="minLength">The minimum length.</param>
+        public static void Simplify(TessellatedSolid ts, int numberOfFaces, double minLength)
         {
             if (ts.Errors != null)
                 Message.output(
                     "** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",
                     1);
             var sortedEdges = new SortedSet<Edge>(ts.Edges, new SortByLength(true));
-            var removedEdges = new HashSet<Edge>();
             var removedEdgesSorted = new SortedSet<Edge>(new SortByIndexInList());
             var removedVertices = new SortedSet<Vertex>(new SortByIndexInList());
             var removedFaces = new SortedSet<PolygonalFace>(new SortByIndexInList());
@@ -79,7 +76,6 @@ namespace TVGL
             while (iterations != 0 && edge.Length <= minLength)
             {
                 sortedEdges.Remove(edge);
-                if (removedEdges.Contains(edge)) continue;
                 Edge removedEdge1, removedEdge2;
                 PolygonalFace removedFace1, removedFace2;
                 Vertex removedVertex;
@@ -87,17 +83,16 @@ namespace TVGL
                     out removedFace1,
                     out removedFace2))
                 {
-                    removedEdges.Add(edge);
                     removedEdgesSorted.Add(edge);
                     if (removedEdge1 != null)
                     {
-                        removedEdges.Add(removedEdge1);
+                        sortedEdges.Remove(removedEdge1);
                         if (!removedEdgesSorted.Contains(removedEdge1))
                             removedEdgesSorted.Add(removedEdge1);
                     }
                     if (removedEdge2 != null)
                     {
-                        removedEdges.Add(removedEdge2);
+                        sortedEdges.Remove(removedEdge2);
                         if (!removedEdgesSorted.Contains(removedEdge2))
                             removedEdgesSorted.Add(removedEdge2);
                     }
@@ -113,13 +108,14 @@ namespace TVGL
                     }
                     removedVertices.Add(removedVertex);
                 }
+                edge = sortedEdges.First();
             }
             ts.RemoveEdges(removedEdgesSorted.Select(e => e.IndexInList).ToList());
             ts.RemoveFaces(removedFaces.Select(f => f.IndexInList).ToList());
             ts.RemoveVertices(removedVertices.Select(v => v.IndexInList).ToList());
         }
 
-        
+
         /// <summary>
         ///     Combines the vertices of edge.
         /// </summary>
