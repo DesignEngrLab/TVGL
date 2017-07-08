@@ -6,7 +6,7 @@
 // Last Modified By : Design Engineering Lab
 // Last Modified On : 05-26-2016
 // ***********************************************************************
-// <copyright file="TessellationError.cs" company="Design Engineering Lab">
+// <copyright file="RepairTessellation.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
 // </copyright>
 // <summary></summary>
@@ -20,138 +20,19 @@ using StarMathLib;
 namespace TVGL
 {
     /// <summary>
-    ///     Stores errors in the tessellated solid
+    ///  This portion of ModifyTessellation includes the functions to repair a solid. It is 
+    ///  invoked during the opening of a tessellated solid from "disk", but the repair function
+    ///  may be called on its own.
     /// </summary>
-    public class TessellationError
+    public static partial class ModifyTessellation
     {
-        #region Puplic Properties
-
-        /// <summary>
-        ///     Edges that are used by more than two faces
-        /// </summary>
-        /// <value>The overused edges.</value>
-        public List<Tuple<Edge, List<PolygonalFace>>> OverusedEdges { get; private set; }
-
-        /// <summary>
-        ///     Edges that only have one face
-        /// </summary>
-        /// <value>The singled sided edges.</value>
-        public List<Edge> SingledSidedEdges { get; private set; }
-
-        /// <summary>
-        ///     Faces with errors
-        /// </summary>
-        /// <value>The degenerate faces.</value>
-        public List<int[]> DegenerateFaces { get; private set; }
-
-        /// <summary>
-        ///     Duplicate Faces
-        /// </summary>
-        /// <value>The duplicate faces.</value>
-        public List<int[]> DuplicateFaces { get; private set; }
-
-        /// <summary>
-        ///     Faces with only one vertex
-        /// </summary>
-        /// <value>The faces with one vertex.</value>
-        public List<PolygonalFace> FacesWithOneVertex { get; private set; }
-
-        /// <summary>
-        ///     Faces with only one edge
-        /// </summary>
-        /// <value>The faces with one edge.</value>
-        public List<PolygonalFace> FacesWithOneEdge { get; private set; }
-
-        /// <summary>
-        ///     Faces with only two vertices
-        /// </summary>
-        /// <value>The faces with two vertices.</value>
-        public List<PolygonalFace> FacesWithTwoVertices { get; private set; }
-
-        /// <summary>
-        ///     Faces with only two edges
-        /// </summary>
-        /// <value>The faces with two edges.</value>
-        public List<PolygonalFace> FacesWithTwoEdges { get; private set; }
-
-        /// <summary>
-        ///     Faces with negligible area (which is not necessarily an error)
-        /// </summary>
-        /// <value>The faces with negligible area.</value>
-        public List<PolygonalFace> FacesWithNegligibleArea { get; private set; }
-
-        /// <summary>
-        ///     Edges that do not link back to faces that link to them
-        /// </summary>
-        /// <value>The edges that do not link back to face.</value>
-        public List<Tuple<PolygonalFace, Edge>> EdgesThatDoNotLinkBackToFace { get; private set; }
-
-        /// <summary>
-        ///     Edges that do not link back to vertices that link to them
-        /// </summary>
-        /// <value>The edges that do not link back to vertex.</value>
-        public List<Tuple<Vertex, Edge>> EdgesThatDoNotLinkBackToVertex { get; private set; }
-
-        /// <summary>
-        ///     Vertices that do not link back to faces that link to them
-        /// </summary>
-        /// <value>The verts that do not link back to face.</value>
-        public List<Tuple<PolygonalFace, Vertex>> VertsThatDoNotLinkBackToFace { get; private set; }
-
-        /// <summary>
-        ///     Vertices that do not link back to edges that link to them
-        /// </summary>
-        /// <value>The verts that do not link back to edge.</value>
-        public List<Tuple<Edge, Vertex>> VertsThatDoNotLinkBackToEdge { get; private set; }
-
-        /// <summary>
-        ///     Faces that do not link back to edges that link to them
-        /// </summary>
-        /// <value>The faces that do not link back to edge.</value>
-        public List<Tuple<Edge, PolygonalFace>> FacesThatDoNotLinkBackToEdge { get; private set; }
-
-        /// <summary>
-        ///     Faces that do not link back to vertices that link to them
-        /// </summary>
-        /// <value>The faces that do not link back to vertex.</value>
-        public List<Tuple<Vertex, PolygonalFace>> FacesThatDoNotLinkBackToVertex { get; private set; }
-
-        /// <summary>
-        ///     Edges with bad angles
-        /// </summary>
-        /// <value>The edges with bad angle.</value>
-        public List<Edge> EdgesWithBadAngle { get; private set; }
-
-        /// <summary>
-        ///     Edges to face ratio
-        /// </summary>
-        /// <value>The edge face ratio.</value>
-        public double EdgeFaceRatio { get; private set; } = double.NaN;
-
-        /// <summary>
-        ///     Whether ts.Errors contains any errors that need to be resolved
-        /// </summary>
-        /// <value><c>true</c> if [no errors]; otherwise, <c>false</c>.</value>
-        internal bool NoErrors { get; set; }
-        /// <summary>
-        /// Gets a value indicating whether [model is inside out].
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if [model is inside out]; otherwise, <c>false</c>.
-        /// </value>
-        public bool ModelIsInsideOut { get; private set; }
-
-
-        #endregion
-
         #region Check Model Integrity
-
         /// <summary>
-        ///     Checks the model integrity.
+        /// Checks the model integrity.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="repairAutomatically">The repair automatically.</param>
-        public static void CheckModelIntegrity(TessellatedSolid ts, bool repairAutomatically = true)
+        public static void CheckModelIntegrity(this TessellatedSolid ts, bool repairAutomatically = true)
         {
             Message.output("Model Integrity Check...", 3);
             ts.Errors = new TessellationError { NoErrors = true };
@@ -204,70 +85,63 @@ namespace TVGL
             if (repairAutomatically)
             {
                 Message.output("Some errors found. Attempting to Repair...", 2);
-                var success = ts.Errors.Repair(ts);
+                var success = Repair(ts);
                 if (success)
                 {
                     ts.Errors = null;
-                    Message.output("Repairs functions completed successfully (errors may still occur).", 2);
+                    Message.output("Repairs functions completed successfully.", 2);
                 }
                 else Message.output("Repair did not successfully fix all the problems.", 1);
                 CheckModelIntegrity(ts, false);
                 return;
             }
-            ts.Errors.Report();
-        }
-
-        /// <summary>
-        ///     Report out any errors
-        /// </summary>
-        public void Report()
-        {
+            #region Report details
             if (3 > (int)Message.Verbosity) return;
             //Note that negligible faces are not truly errors.
             Message.output("Errors found in model:");
             Message.output("======================");
-            if (ModelIsInsideOut)
+            if (ts.Errors.ModelIsInsideOut)
                 Message.output("==> The model is inside-out! All the normals of the faces are pointed inward.");
-            if (!double.IsNaN(EdgeFaceRatio))
-                Message.output("==> Edges / Faces = " + EdgeFaceRatio + ", but it should be 1.5.");
-            if (OverusedEdges != null)
+            if (!double.IsNaN(ts.Errors.EdgeFaceRatio))
+                Message.output("==> Edges / Faces = " + ts.Errors.EdgeFaceRatio + ", but it should be 1.5.");
+            if (ts.Errors.OverusedEdges != null)
             {
-                Message.output("==> " + OverusedEdges.Count + " overused edges.");
+                Message.output("==> " + ts.Errors.OverusedEdges.Count + " overused edges.");
                 Message.output("    The number of faces per overused edge: " +
-                               OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
+                               ts.Errors.OverusedEdges.Select(p => p.Item2.Count).MakePrintString());
             }
-            if (SingledSidedEdges != null) Message.output("==> " + SingledSidedEdges.Count + " single-sided edges.");
-            if (DegenerateFaces != null) Message.output("==> " + DegenerateFaces.Count + " degenerate faces in file.");
-            if (DuplicateFaces != null) Message.output("==> " + DuplicateFaces.Count + " duplicate faces in file.");
-            if (FacesWithOneVertex != null)
-                Message.output("==> " + FacesWithOneVertex.Count + " faces with only one vertex.");
-            if (FacesWithOneEdge != null)
-                Message.output("==> " + FacesWithOneEdge.Count + " faces with only one edge.");
-            if (FacesWithTwoVertices != null)
-                Message.output("==> " + FacesWithTwoVertices.Count + "  faces with only two vertices.");
-            if (FacesWithTwoEdges != null)
-                Message.output("==> " + FacesWithTwoEdges.Count + " faces with only two edges.");
-            if (EdgesWithBadAngle != null) Message.output("==> " + EdgesWithBadAngle.Count + " edges with bad angles.");
-            if (EdgesThatDoNotLinkBackToFace != null)
-                Message.output("==> " + EdgesThatDoNotLinkBackToFace.Count +
+            if (ts.Errors.SingledSidedEdges != null) Message.output("==> " + ts.Errors.SingledSidedEdges.Count + " single-sided edges.");
+            if (ts.Errors.DegenerateFaces != null) Message.output("==> " + ts.Errors.DegenerateFaces.Count + " degenerate faces in file.");
+            if (ts.Errors.DuplicateFaces != null) Message.output("==> " + ts.Errors.DuplicateFaces.Count + " duplicate faces in file.");
+            if (ts.Errors.FacesWithOneVertex != null)
+                Message.output("==> " + ts.Errors.FacesWithOneVertex.Count + " faces with only one vertex.");
+            if (ts.Errors.FacesWithOneEdge != null)
+                Message.output("==> " + ts.Errors.FacesWithOneEdge.Count + " faces with only one edge.");
+            if (ts.Errors.FacesWithTwoVertices != null)
+                Message.output("==> " + ts.Errors.FacesWithTwoVertices.Count + "  faces with only two vertices.");
+            if (ts.Errors.FacesWithTwoEdges != null)
+                Message.output("==> " + ts.Errors.FacesWithTwoEdges.Count + " faces with only two edges.");
+            if (ts.Errors.EdgesWithBadAngle != null) Message.output("==> " + ts.Errors.EdgesWithBadAngle.Count + " edges with bad angles.");
+            if (ts.Errors.EdgesThatDoNotLinkBackToFace != null)
+                Message.output("==> " + ts.Errors.EdgesThatDoNotLinkBackToFace.Count +
                                " edges that do not link back to faces that link to them.");
-            if (EdgesThatDoNotLinkBackToVertex != null)
-                Message.output("==> " + EdgesThatDoNotLinkBackToVertex.Count +
+            if (ts.Errors.EdgesThatDoNotLinkBackToVertex != null)
+                Message.output("==> " + ts.Errors.EdgesThatDoNotLinkBackToVertex.Count +
                                " edges that do not link back to vertices that link to them.");
-            if (VertsThatDoNotLinkBackToFace != null)
-                Message.output("==> " + VertsThatDoNotLinkBackToFace.Count +
+            if (ts.Errors.VertsThatDoNotLinkBackToFace != null)
+                Message.output("==> " + ts.Errors.VertsThatDoNotLinkBackToFace.Count +
                                " vertices that do not link back to faces that link to them.");
-            if (VertsThatDoNotLinkBackToEdge != null)
-                Message.output("==> " + VertsThatDoNotLinkBackToEdge.Count +
+            if (ts.Errors.VertsThatDoNotLinkBackToEdge != null)
+                Message.output("==> " + ts.Errors.VertsThatDoNotLinkBackToEdge.Count +
                                " vertices that do not link back to edges that link to them.");
-            if (FacesThatDoNotLinkBackToEdge != null)
-                Message.output("==> " + FacesThatDoNotLinkBackToEdge.Count +
+            if (ts.Errors.FacesThatDoNotLinkBackToEdge != null)
+                Message.output("==> " + ts.Errors.FacesThatDoNotLinkBackToEdge.Count +
                                " faces that do not link back to edges that link to them.");
-            if (FacesThatDoNotLinkBackToVertex != null)
-                Message.output("==> " + FacesThatDoNotLinkBackToVertex.Count +
+            if (ts.Errors.FacesThatDoNotLinkBackToVertex != null)
+                Message.output("==> " + ts.Errors.FacesThatDoNotLinkBackToVertex.Count +
                                " faces that do not link back to vertices that link to them.");
+            #endregion
         }
-
         #endregion
 
         #region Error Storing
@@ -515,26 +389,44 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal bool Repair(TessellatedSolid ts)
+        public static bool Repair(this TessellatedSolid ts)
         {
+            if (ts.Errors == null)
+            {
+                Message.output("No errors to fix!", 4);
+                return true;
+            }
+            Message.output("Some errors found. Attempting to Repair...", 2);
             var completelyRepaired = true;
-            if (ModelIsInsideOut)
+            if (ts.Errors.ModelIsInsideOut)
                 completelyRepaired = TurnModelInsideOut(ts);
-            if (EdgesWithBadAngle != null)
+            if (ts.Errors.EdgesWithBadAngle != null)
                 completelyRepaired = completelyRepaired && FlipFacesBasedOnBadAngles(ts);
             //Note that negligible faces are not truly errors, so they are not repaired
+            if (completelyRepaired)
+            {
+                ts.Errors = null;
+                Message.output("Repairs functions completed successfully (errors may still occur).", 2);
+            }
+            else Message.output("Repair did not successfully fix all the problems.", 1);
             return completelyRepaired;
         }
 
-        private bool TurnModelInsideOut(TessellatedSolid ts)
+
+        private static bool TurnModelInsideOut(TessellatedSolid ts)
         {
             ts.Volume = -1 * ts.Volume;
             ts._inertiaTensor = null;
             foreach (var face in ts.Faces)
             {
                 face.Normal = face.Normal.multiply(-1);
-                face.Vertices.Reverse();
+                var firstVertex = face.Vertices[0];
+                face.Vertices.RemoveAt(0);
+                face.Vertices.Insert(1,firstVertex);
                 face.Edges.Reverse();
+                var firstEdge = face.Edges[0];
+                face.Edges.RemoveAt(0);
+                face.Edges.Insert(1, firstEdge);
                 face.Curvature = (CurvatureType)(-1 * (int)face.Curvature);
             }
             foreach (var edge in ts.Edges)
@@ -553,7 +445,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool FlipFacesBasedOnBadAngles(TessellatedSolid ts)
+        private static bool FlipFacesBasedOnBadAngles(TessellatedSolid ts)
         {
             var edgesWithBadAngles = new HashSet<Edge>(ts.Errors.EdgesWithBadAngle);
             var facesToConsider = new HashSet<PolygonalFace>(
@@ -586,8 +478,8 @@ namespace TVGL
             ts.Errors.EdgesWithBadAngle = null;
             return true;
         }
-        
-       
+
+
         #endregion
     }
 }

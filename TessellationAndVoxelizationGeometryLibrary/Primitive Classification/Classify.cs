@@ -40,7 +40,7 @@ namespace TVGL
             Debug.WriteLine("Edges and faces' rules have been read from the corresonding .csv files");
         }
 
-        public static List<PrimitiveSurface> Run(TessellatedSolid ts)
+        public static List<PrimitiveSurface> Run(this TessellatedSolid ts)
         {
             if (listOfLimitsABN == null || listOfLimitsMCM == null | listOfLimitsSM == null || edgeRules == null || faceRules == null)
                 InitializeFuzzinessRules();
