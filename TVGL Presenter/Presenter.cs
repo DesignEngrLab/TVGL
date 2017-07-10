@@ -97,6 +97,14 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        public static void ShowAndHang(IList<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+            bool closeShape = true, MarkerType marker = MarkerType.Circle)
+        {
+            var points = polygons.Select(polygon => polygon.Path).ToList();
+            var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
+            window.ShowDialog();
+        }
+
         /// <summary>
         ///     Shows the and hang.
         /// </summary>

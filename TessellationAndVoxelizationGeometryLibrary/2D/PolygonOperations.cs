@@ -57,6 +57,18 @@ namespace TVGL
             return paths.Sum(path => Length(path));
         }
 
+        /// <summary>
+        /// Gets the Shallow Polygon Trees for a given set of paths. If the paths are already ordered correctly, 
+        /// it will return shallow trees using their current order. Else, it will use Clipper's UnionEvenOdd.
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <param name="alreadyInOrder"></param>
+        /// <returns></returns>
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths, bool alreadyInOrder = false)
+        {
+            return ShallowPolygonTree.GetShallowPolygonTrees(paths, alreadyInOrder);
+        }
+
         #region Clockwise / CounterClockwise Ordering
 
         /// <summary>

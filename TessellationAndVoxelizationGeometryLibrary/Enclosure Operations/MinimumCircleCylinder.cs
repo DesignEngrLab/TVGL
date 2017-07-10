@@ -200,17 +200,7 @@ namespace TVGL
         public static BoundingCircle MaximumInnerCircle(IList<List<Point>> paths, Point centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
-            return MaximumInnerCircle(new PolygonGroup(polygons), centerPoint);
-        }
-
-        /// <summary>
-        ///     Gets the maximum inner circle given a group of polygons and a center point.
-        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
-        /// </summary>
-        /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(List<Polygon> polygons, Point centerPoint)
-        {
-            return MaximumInnerCircle(new PolygonGroup(polygons), centerPoint);
+            return MaximumInnerCircle(polygons, centerPoint);
         }
 
         /// <summary>
@@ -218,8 +208,17 @@ namespace TVGL
         ///     The circle will either be inside a negative polygon or outside a positive polygon (e.g. C channel). 
         ///     Else it returns a negligible Bounding Circle
         /// </summary>
-        public static BoundingCircle MaximumInnerCircle(PolygonGroup polyGroup, Point centerPoint)
+        /// <returns>BoundingBox.</returns>
+        public static BoundingCircle MaximumInnerCircle(List<Polygon> polygons, Point centerPoint)
         {
+            var negativePolygons = new List<Polygon>();
+            var positivePolygons = new List<Polygon>();
+            foreach (var polygon in polygons)
+            {
+                if(polygon.PathLines == null) polygon.SetPathLines();
+                if (polygon.IsPositive) positivePolygons.Add(polygon);
+                else negativePolygons.Add(polygon);
+            }
             //Check the distance from every line and point of every polygon in the group. 
             //Note: this function could possible be improved by determining which polygon is closest, 
             //but that did not seem to be a faster method. Also, a inner circle does not necessarily
@@ -229,7 +228,7 @@ namespace TVGL
             //First, check if the point is inside any negative polygon.
             var minDistance = double.MaxValue;
             Polygon closestContainingPolygon = null;
-            foreach (var negativePoly in polyGroup.NegativePolygons)
+            foreach (var negativePoly in negativePolygons)
             {
                 bool onBoundary;
                 Line closestLineAbove;
@@ -253,7 +252,7 @@ namespace TVGL
             //If not inside a negative polygon, check if the point is inside any positive polygons. If it is return null.
             else
             {
-                foreach (var positivePoly in polyGroup.PositivePolygons)
+                foreach (var positivePoly in positivePolygons)
                 {
                     bool onBoundary;
                     Line closestLineAbove;
