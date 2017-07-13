@@ -14,6 +14,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -59,6 +61,88 @@ namespace TVGL
         ///     The center point
         /// </summary>
         public Vertex Center;
+
+        /// <summary>
+        ///     Adds the corner vertices (actually 3d points) to the bounding box
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public void SetCornerVertices()
+        {
+            if (CornerVertices != null) return;
+            var cornerVertices = new Vertex[8];
+
+            ////////////////////////////////////////
+            //First, get the bottom corner.
+            ////////////////////////////////////////
+
+            //Collect all the points on faces
+            var allPointsOnFaces = new List<Vertex>();
+            foreach (var setOfPoints in PointsOnFaces)
+            {
+                allPointsOnFaces.AddRange(setOfPoints);
+            }
+
+            //Get the low extreme vertices along each direction
+            List<Vertex> vLows, vHighs;
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], allPointsOnFaces, out vLows, out vHighs);
+            var v0 = new Vertex(vLows.First().Position);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], allPointsOnFaces, out vLows, out vHighs);
+            var v1 = new Vertex(vLows.First().Position);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], allPointsOnFaces, out vLows, out vHighs);
+            var v2 = new Vertex(vLows.First().Position);
+
+            //Start with v0 and move along direction[1] by projection
+            var vector0To1 = v1.Position.subtract(v0.Position);
+            var projectionOntoD1 =Directions[1].multiply(Directions[1].dotProduct(vector0To1));
+            var v4 = v0.Position.add(projectionOntoD1);
+
+            //Move along direction[2] by projection
+            var vector4To2 = v2.Position.subtract(v4);
+            var projectionOntoD2 = Directions[2].multiply(Directions[2].dotProduct(vector4To2));
+            var bottomCorner = new Vertex(v4.add(projectionOntoD2));
+
+            //Double Check to make sure it is the bottom corner
+            allPointsOnFaces.Add(bottomCorner);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], allPointsOnFaces, out vLows, out vHighs);
+            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], allPointsOnFaces, out vLows, out vHighs);
+            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], allPointsOnFaces, out vLows, out vHighs);
+            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
+
+            //Create the vertices that make up the box and add them to the corner vertices array
+            var count = 0;
+            for (var i = 0; i < 2; i++)
+            {
+                var d0Vector = i == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[0].multiply(Dimensions[0]);
+                for (var j = 0; j < 2; j++)
+                {
+                    var d1Vector = j == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[1].multiply(Dimensions[1]);
+                    for (var k = 0; k < 2; k++)
+                    {
+                        var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[2].multiply(Dimensions[2]);
+                        var newVertex = new Vertex(bottomCorner.Position.add(d0Vector).add(d1Vector).add(d2Vector));
+                        cornerVertices[count] = newVertex;
+                        count++;
+                    }
+                }
+            }
+
+            //Add in the center
+            var centerPosition = new[] { 0.0, 0.0, 0.0 };
+            foreach (var vertex in cornerVertices)
+            {
+                centerPosition[0] += vertex.Position[0];
+                centerPosition[1] += vertex.Position[1];
+                centerPosition[2] += vertex.Position[2];
+            }
+            centerPosition[0] = centerPosition[0] / cornerVertices.Count();
+            centerPosition[1] = centerPosition[1] / cornerVertices.Count();
+            centerPosition[2] = centerPosition[2] / cornerVertices.Count();
+
+            CornerVertices = cornerVertices;
+            Center = new Vertex(centerPosition);
+        }
     }
 
     /// <summary>
@@ -70,6 +154,11 @@ namespace TVGL
         ///     The Area of the bounding box.
         /// </summary>
         public double Area;
+
+        /// <summary>
+        ///     Gets the four points of the bounding rectangle, ordered CCW positive
+        /// </summary>
+        public List<Point> CornerPoints { get; private set; }
 
         /// <summary>
         ///     The point pairs that define the bounding rectangle limits
@@ -85,6 +174,84 @@ namespace TVGL
         ///     Length and Width of Bounding Rectangle
         /// </summary>
         public double[] Dimensions;
+
+        /// <summary>
+        ///     2D Center Position of the Bounding Rectangle
+        /// </summary>
+        public double[] CenterPosition { get; private set; }
+
+        /// <summary>
+        /// Sets the corner points and center position for the bounding rectangle
+        /// </summary>
+        /// <exception cref="Exception"></exception>
+        public void SetCornerPoints()
+        {
+            var cornerPoints = new Point[4];
+            var dir0 = new double[] {Directions2D[0][0], Directions2D[0][1], 0};
+            var dir1 = new double[] { Directions2D[1][0], Directions2D[1][1], 0 };
+            var extremePoints = new List<Point>();
+            foreach (var pair in PointsOnSides)
+            {
+                extremePoints.AddRange(pair);
+            }
+
+            //Lower left point
+            List<Point> bottomPoints, topPoints;
+            MinimumEnclosure.GetLengthAndExtremePoints(Directions2D[0], extremePoints, out bottomPoints, out topPoints);
+            var bp = bottomPoints.First().Position2D;
+            var p0 = new [] {bp[0], bp[1], 0};
+            MinimumEnclosure.GetLengthAndExtremePoints(Directions2D[1], extremePoints, out bottomPoints, out topPoints);
+            bp = bottomPoints.First().Position2D;
+            var p1 = new[] { bp[0], bp[1], 0 };
+
+            //Start with v0 and move along direction[1] by projection
+            var vector0To1 = p1.subtract(p0);
+            var projectionOntoD1 = dir1.multiply(dir1.dotProduct(vector0To1));
+            var p2 = p0.add(projectionOntoD1);
+            var bottomCorner = new Point(p2);
+
+            //Double Check to make sure it is the bottom corner
+            extremePoints.Add(bottomCorner);
+            MinimumEnclosure.GetLengthAndExtremePoints(Directions2D[0], extremePoints, out bottomPoints, out topPoints);
+            if (!bottomPoints.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
+            MinimumEnclosure.GetLengthAndExtremePoints(Directions2D[1], extremePoints, out bottomPoints, out topPoints);
+            if (!bottomPoints.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
+
+            //Create the vertices that make up the box and add them to the corner vertices array
+            for (var i = 0; i < 2; i++)
+            {
+                var d0Vector = i == 0 ? new[] { 0.0, 0.0, 0.0 } : dir0.multiply(Dimensions[0]);
+                for (var j = 0; j < 2; j++)
+                {
+                    var d1Vector = j == 0 ? new[] { 0.0, 0.0, 0.0 } : dir1.multiply(Dimensions[1]);
+                    var newPoint = new Point(bottomCorner.Position.add(d0Vector).add(d1Vector));
+                    //Put the points in the correct position to be ordered CCW, starting with the bottom corner
+                    if (i == 0)
+                    {
+                        if (j == 0) cornerPoints[0] = newPoint; // i == 0, j == 0
+                        else cornerPoints[1] = newPoint; // i == 0, j == 1
+                    }
+                    else if (j == 1) cornerPoints[2] = newPoint; //i == 1, j ==1
+                    else cornerPoints[3] = newPoint;//i == 1, j == 0
+                }
+            }
+
+            //Add in the center
+            var centerPosition = new[] { 0.0, 0.0 };
+            foreach (var vertex in cornerPoints)
+            {
+                centerPosition[0] += vertex.Position[0];
+                centerPosition[1] += vertex.Position[1];
+            }
+            centerPosition[0] = centerPosition[0] / cornerPoints.Count();
+            centerPosition[1] = centerPosition[1] / cornerPoints.Count();
+
+            //Check to make sure the points are ordered correctly (within 1 %)
+            if(!MiscFunctions.AreaOfPolygon(cornerPoints).IsPracticallySame(Area, 0.01*Area)) throw new Exception("Points are ordered incorrectly");
+
+            CornerPoints = new List<Point>(cornerPoints);
+            CenterPosition = centerPosition;
+        }
     }
 
 
