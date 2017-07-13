@@ -581,6 +581,8 @@ namespace TVGL
             /// </summary>
             public List<int> PotentialSegmentIndices;
 
+            public double DistanceAlongSearchDirection;
+
             /// <summary>
             /// A data group for linking the 2D path and edge loop of cross section polygons.
             /// </summary>
@@ -590,7 +592,8 @@ namespace TVGL
             /// <param name="indexInCrossSection"></param>
             /// <param name="stepIndex"></param>
             /// <param name="path2D"></param>
-            public PolygonDataGroup(List<Point> path2D, List<Vertex> intersectionVertices, List<Edge> edgeLoop, double area, int indexInCrossSection, int stepIndex)
+            public PolygonDataGroup(List<Point> path2D, List<Vertex> intersectionVertices, 
+                List<Edge> edgeLoop, double area, int indexInCrossSection, int stepIndex, double distanceAlongSearchDirection)
             {
                 Path2D = path2D;
                 Path3D = intersectionVertices;
@@ -599,8 +602,8 @@ namespace TVGL
                 IndexInCrossSection = indexInCrossSection;
                 PotentialSegmentIndices = new List<int>();
                 StepIndex = stepIndex;
+                DistanceAlongSearchDirection = distanceAlongSearchDirection;
             }
-
         }
 
         /// <summary>
@@ -639,7 +642,7 @@ namespace TVGL
                 CrossSectionData = new List<PolygonDataGroup>();
                 for (var i = 0; i < paths2D.Count(); i++)
                 {
-                    CrossSectionData.Add(new PolygonDataGroup(paths2D[i], paths3D[i], edgeLoops[i], areas[i], i, stepIndex));
+                    CrossSectionData.Add(new PolygonDataGroup(paths2D[i], paths3D[i], edgeLoops[i], areas[i], i, stepIndex, distanceAlongDirection));
                 }
                 DistanceAlongDirection = distanceAlongDirection;
             }
@@ -647,15 +650,17 @@ namespace TVGL
         #endregion
 
         #region Uniform Directional Segmentation
+
         /// <summary>
         /// Returns the Directional Segments found from decomposing a solid along a given direction. This data is used in other methods.
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="direction"></param>
         /// <param name="stepSize"></param>
+        /// <param name="stepDistances"></param>
         /// <returns></returns>
         public static List<DirectionalSegment> UniformDirectionalSegmentation(TessellatedSolid ts, double[] direction,
-            double stepSize)
+            double stepSize, out Dictionary<int, double> stepDistances)
         {
             //Reset all the arbitrary edge references and vertex references to -1, since they may have been set in another method
             foreach (var vertex in ts.Vertices)
@@ -680,6 +685,11 @@ namespace TVGL
             {
                 stepSize = length / 10;
             }
+
+            //This is a list of all the step indices matched with its distance along the axis.
+            //This may be different that just multiplying the step index by the step size, because
+            //minor adjustments occur to avoid cutting through vertices.
+            stepDistances = new Dictionary<int, double>();
 
             //Choose whichever min offset is smaller
             var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
@@ -791,6 +801,8 @@ namespace TVGL
 
                     UpdateSegments(segmentationData, inStepVertices, vertexDistanceLookup, direction,
                         ref allDirectionalSegments, ts);
+
+                    stepDistances.Add(stepIndex, distanceAlongAxis);
                 }
                 stepIndex++;
             }
@@ -1648,6 +1660,30 @@ namespace TVGL
             /// the search direction.
             /// </summary>
             public Dictionary<int, List<PolygonDataGroup>> CrossSectionPathDictionary;
+
+            /// <summary>
+            /// Gets the start distance of this segment along the search direction
+            /// </summary>
+            public double StartDistanceAlongSearchDirection
+                => CrossSectionPathDictionary.First().Value.First().DistanceAlongSearchDirection;
+
+            /// <summary>
+            /// Gets the start index of this segment along the search direction
+            /// </summary>
+            public int StartStepIndexAlongSearchDirection
+                => CrossSectionPathDictionary.First().Value.First().StepIndex; 
+
+            /// <summary>
+            /// Gets the end distance of this segment along the search direction
+            /// </summary>
+            public double EndDistanceAlongSearchDirection
+                => CrossSectionPathDictionary.Last().Value.First().DistanceAlongSearchDirection;
+
+            /// <summary>
+            /// Gets the end index of this segment along the search direction
+            /// </summary>
+            public int EndStepIndexAlongSearchDirection
+                => CrossSectionPathDictionary.Last().Value.First().StepIndex;
 
             /// <summary>
             /// The direction by which the directional segment was defined. The cross sections and face references will be ordered

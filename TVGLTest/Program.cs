@@ -122,7 +122,8 @@ namespace TVGL_Test
 
             foreach (var direction in obb.Directions)
             {
-                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize);
+                Dictionary<int, double> stepDistances;
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize, out stepDistances);
                 //foreach (var segment in segments)
                 //{
                 //    var vertexLists = segment.DisplaySetup(ts);
