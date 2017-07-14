@@ -239,7 +239,7 @@ namespace TVGL
             //Perform a 2D caliper along each eigenvector. 
             for (var i = 0; i < 3; i++)
             {
-                var newObb = FindOBBAlongDirection(convexHullVertices, minOBB.Directions[i]);
+                var newObb = FindOBBAlongDirection(convexHullVertices, minOBB.Directions[i], true);
                 if (newObb.Volume.IsLessThanNonNegligible(minOBB.Volume))
                     minOBB = newObb;
             }
@@ -298,7 +298,7 @@ namespace TVGL
             // Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
-                var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize());
+                var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize(), true);
                 if (OBB.Volume < bestOBB.Volume)
                     bestOBB = OBB;
             }
