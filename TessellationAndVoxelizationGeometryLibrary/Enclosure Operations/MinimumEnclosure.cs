@@ -494,7 +494,7 @@ namespace TVGL
             return boundingBox;
         }
 
-        private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction, bool verticesAreConvexHull = false)
+        private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction)
         { 
             List<Vertex> bottomVertices, topVertices;
             var direction1 = direction.normalize();
@@ -502,7 +502,7 @@ namespace TVGL
 
             double[,] backTransform;
             var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, false);
-            var boundingRectangle = RotatingCalipers2DMethod(points, verticesAreConvexHull);
+            var boundingRectangle = RotatingCalipers2DMethod(points);
 
             //Get the Direction vectors from rotating caliper and projection.
             var tempDirection = new[]
