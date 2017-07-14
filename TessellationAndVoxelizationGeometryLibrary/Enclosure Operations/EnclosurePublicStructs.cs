@@ -63,6 +63,19 @@ namespace TVGL
         public Vertex Center;
 
         /// <summary>
+        ///     The Solid Representation of the bounding box. This is not set by defualt. 
+        /// </summary>
+        public TessellatedSolid SolidRepresentation;
+
+        /// <summary>
+        ///     Sets the Solid Representation of the bounding box
+        /// </summary>
+        public void SetSolidRepresentation()
+        {
+            SolidRepresentation = Extrude.FromLoops(new List<List<Vertex>>() {CornerVertices.Take(4).ToList()}, Directions[2], Dimensions[2]);
+        }
+
+        /// <summary>
         ///     Adds the corner vertices (actually 3d points) to the bounding box
         /// </summary>
         /// <returns>BoundingBox.</returns>
@@ -111,7 +124,6 @@ namespace TVGL
             if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
 
             //Create the vertices that make up the box and add them to the corner vertices array
-            var count = 0;
             for (var i = 0; i < 2; i++)
             {
                 var d0Vector = i == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[0].multiply(Dimensions[0]);
@@ -122,8 +134,19 @@ namespace TVGL
                     {
                         var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[2].multiply(Dimensions[2]);
                         var newVertex = new Vertex(bottomCorner.Position.add(d0Vector).add(d1Vector).add(d2Vector));
-                        cornerVertices[count] = newVertex;
-                        count++;
+
+                        //
+                        var b = k == 0 ? 0 : 4;
+                        if (j == 0)
+                        {
+                            if(i == 0) cornerVertices[b] = newVertex; //i == 0 && j== 0 && k == 0 or 1 
+                            else cornerVertices[b + 1] = newVertex; //i == 1 && j == 0 && k == 0 or 1 
+                        }
+                        else
+                        {
+                            if (i == 0) cornerVertices[b + 3] = newVertex; //i == 0 && j== 1 && k == 0 or 1 
+                            else cornerVertices[b + 2] = newVertex; //i == 1 && j == 1 && k == 0 or 1 
+                        }
                     }
                 }
             }
