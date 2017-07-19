@@ -72,6 +72,10 @@ namespace TVGL
         /// </summary>
         public void SetSolidRepresentation()
         {
+            if (CornerVertices == null || !CornerVertices.Any())
+            {
+                SetCornerVertices();
+            }
             SolidRepresentation = Extrude.FromLoops(new List<List<Vertex>>() {CornerVertices.Take(4).ToList()}, Directions[2], Dimensions[2]);
         }
 
@@ -81,9 +85,6 @@ namespace TVGL
         /// <returns>BoundingBox.</returns>
         public void SetCornerVertices()
         {
-            if (CornerVertices != null) return;
-            var cornerVertices = new Vertex[8];
-
             ////////////////////////////////////////
             //First, get the bottom corner.
             ////////////////////////////////////////
@@ -95,18 +96,34 @@ namespace TVGL
                 allPointsOnFaces.AddRange(setOfPoints);
             }
 
+            if(!allPointsOnFaces.Any()) throw new Exception("Must set the points on the faces prior to setting the corner vertices " +
+                                                            "(Or set the corner vertices with the convex hull");
+            SetCornerVertices(allPointsOnFaces);
+        }
+
+
+        /// <summary>
+        ///     Adds the corner vertices (actually 3d points) to the bounding box
+        ///     This method is used when the face vertices are not known.
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public void SetCornerVertices(List<Vertex> verticesOfInterest )
+        {
+            if (CornerVertices != null) return;
+            var cornerVertices = new Vertex[8];
+
             //Get the low extreme vertices along each direction
             List<Vertex> vLows, vHighs;
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], allPointsOnFaces, out vLows, out vHighs);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
             var v0 = new Vertex(vLows.First().Position);
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], allPointsOnFaces, out vLows, out vHighs);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
             var v1 = new Vertex(vLows.First().Position);
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], allPointsOnFaces, out vLows, out vHighs);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
             var v2 = new Vertex(vLows.First().Position);
 
             //Start with v0 and move along direction[1] by projection
             var vector0To1 = v1.Position.subtract(v0.Position);
-            var projectionOntoD1 =Directions[1].multiply(Directions[1].dotProduct(vector0To1));
+            var projectionOntoD1 = Directions[1].multiply(Directions[1].dotProduct(vector0To1));
             var v4 = v0.Position.add(projectionOntoD1);
 
             //Move along direction[2] by projection
@@ -115,12 +132,12 @@ namespace TVGL
             var bottomCorner = new Vertex(v4.add(projectionOntoD2));
 
             //Double Check to make sure it is the bottom corner
-            allPointsOnFaces.Add(bottomCorner);
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], allPointsOnFaces, out vLows, out vHighs);
+            verticesOfInterest.Add(bottomCorner);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
             if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], allPointsOnFaces, out vLows, out vHighs);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
             if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], allPointsOnFaces, out vLows, out vHighs);
+            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
             if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
 
             //Create the vertices that make up the box and add them to the corner vertices array
@@ -139,7 +156,7 @@ namespace TVGL
                         var b = k == 0 ? 0 : 4;
                         if (j == 0)
                         {
-                            if(i == 0) cornerVertices[b] = newVertex; //i == 0 && j== 0 && k == 0 or 1 
+                            if (i == 0) cornerVertices[b] = newVertex; //i == 0 && j== 0 && k == 0 or 1 
                             else cornerVertices[b + 1] = newVertex; //i == 1 && j == 0 && k == 0 or 1 
                         }
                         else
