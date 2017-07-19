@@ -554,6 +554,11 @@ namespace TVGL
             /// </summary>
             public double Area;
 
+            /// <summary>
+            /// The area of this loop
+            /// </summary>
+            public bool IsPositive;
+
             private int _segmentIndex = -1;//Default is negative 1.
 
             /// <summary>
@@ -592,6 +597,7 @@ namespace TVGL
             /// <param name="indexInCrossSection"></param>
             /// <param name="stepIndex"></param>
             /// <param name="path2D"></param>
+            /// <param name="distanceAlongSearchDirection"></param>
             public PolygonDataGroup(List<Point> path2D, List<Vertex> intersectionVertices, 
                 List<Edge> edgeLoop, double area, int indexInCrossSection, int stepIndex, double distanceAlongSearchDirection)
             {
@@ -603,6 +609,7 @@ namespace TVGL
                 PotentialSegmentIndices = new List<int>();
                 StepIndex = stepIndex;
                 DistanceAlongSearchDirection = distanceAlongSearchDirection;
+                IsPositive = (Area > 0);
             }
         }
 
@@ -700,7 +707,9 @@ namespace TVGL
             List<int[]> duplicateRanges;
             MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices, out sortedVertices, out duplicateRanges);
             //Create a distance lookup dictionary based on the vertex indices
-            var vertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
+            var sortedVertexDistanceLookup = sortedVertices.ToDictionary(element => element.Item1.IndexInList, element => element.Item2);
+            //A dictionary used to find the step index for each vertex. The key is the vertex index in list. The value is the step index.
+            var referenceVerticesByStepIndex = new Dictionary<int, int>();
 
             //This is a list of all the current edges, those edges which are cut at the current distance along the axis. 
             //Each edge has an IndexInList, which is used as the dictionary Key.
@@ -799,18 +808,42 @@ namespace TVGL
                         ref inputEdgeLoops, minOffset, stepIndex);
                     if (segmentationData != null) outputData.Add(segmentationData);
 
-                    UpdateSegments(segmentationData, inStepVertices, vertexDistanceLookup, direction,
+                    UpdateSegments(segmentationData, inStepVertices, sortedVertexDistanceLookup, direction,
                         ref allDirectionalSegments, ts);
 
                     stepDistances.Add(stepIndex, distanceAlongAxis);
+
+                    foreach(var vertex in inStepVertices)
+                    {
+                        referenceVerticesByStepIndex.Add(vertex.IndexInList, stepIndex);
+                    }
+
+                    //Adjust the first segments to start at the very edges of the part
+                    if (stepIndex == 0)
+                    {
+                        foreach (var segment in allDirectionalSegments.Values)
+                        {
+                            segment.StartDistanceAlongSearchDirection = firstDistance;
+                        }
+                    } 
                 }
                 stepIndex++;
+            }
+
+            //Add the remaining vertices to a final step index
+            for (var i = currentVertexIndex; i < sortedVertices.Count; i++)
+            {
+                referenceVerticesByStepIndex.Add(sortedVertices[i].Item1.IndexInList, stepIndex);
             }
 
             //We have reached the end of the part. Close all the open segments.
             foreach (var segment in allDirectionalSegments.Values)
             {
-                if (segment.IsFinished) continue;
+                if (segment.IsFinished)
+                {
+                    segment.SetReferenceVerticesByStepIndex(referenceVerticesByStepIndex);
+                    continue;
+                }
                 //Else
 
                 //We need to finish wrapping around all the open segments. 
@@ -839,12 +872,11 @@ namespace TVGL
                 //Set to IsFinished. This will clear out the current edges
                 //(by now they should have all been added to reference edges)
                 segment.IsFinished = true;
+                segment.SetReferenceVerticesByStepIndex(referenceVerticesByStepIndex);
+                
+                //Adjust the last segments to start at the very edges of the part
+                segment.EndDistanceAlongSearchDirection = furthestDistance;
             }
-
-            //Add the first and last cross sections. 
-            //Note, these may not be great fits if step size is large
-            //outputData.Insert(0, new DecompositionData(outputData.First().Paths, firstDistance));
-            //outputData.Add(new DecompositionData(outputData.Last().Paths, furthestDistance));
 
             return allDirectionalSegments.Values.ToList();
         }
@@ -1635,6 +1667,11 @@ namespace TVGL
             public HashSet<Vertex> ReferenceVertices;
 
             /// <summary>
+            /// Reference vertices by step index that they were added in (passed by the search plane)
+            /// </summary>
+            public Dictionary<int, List<Vertex>> ReferenceVerticesByStepIndex { get; internal set; }
+
+            /// <summary>
             /// A list of all the edges that correspond to this segment. Some edges may belong to multiple segments.
             /// </summary>
             public HashSet<Edge> ReferenceEdges;
@@ -1665,7 +1702,10 @@ namespace TVGL
             /// Gets the start distance of this segment along the search direction
             /// </summary>
             public double StartDistanceAlongSearchDirection
-                => CrossSectionPathDictionary.First().Value.First().DistanceAlongSearchDirection;
+            {
+                get { return CrossSectionPathDictionary.First().Value.First().DistanceAlongSearchDirection; }
+                set { CrossSectionPathDictionary.First().Value.First().DistanceAlongSearchDirection = value; }
+            }
 
             /// <summary>
             /// Gets the start index of this segment along the search direction
@@ -1677,7 +1717,10 @@ namespace TVGL
             /// Gets the end distance of this segment along the search direction
             /// </summary>
             public double EndDistanceAlongSearchDirection
-                => CrossSectionPathDictionary.Last().Value.First().DistanceAlongSearchDirection;
+            {
+                get { return CrossSectionPathDictionary.Last().Value.First().DistanceAlongSearchDirection; }
+                set { CrossSectionPathDictionary.Last().Value.First().DistanceAlongSearchDirection = value; }
+            }
 
             /// <summary>
             /// Gets the end index of this segment along the search direction
@@ -1964,6 +2007,34 @@ namespace TVGL
                 CurrentEdges = new HashSet<Edge>(tempEdges);
             }
 
+            /// <summary>
+            /// Sets the ReferenceVerticesByStepIndex. Do this when finished if the data is needed.
+            /// </summary>
+            public void SetReferenceVerticesByStepIndex(Dictionary<int, int> vertexStepIndexReference )
+            {
+                ReferenceVerticesByStepIndex = new Dictionary<int, List<Vertex>>();
+                if (!IsFinished) throw new Exception("Segment must be finished first");
+                foreach (var vertex in ReferenceVertices)
+                {
+                    var vertexStepIndex = vertexStepIndexReference[vertex.IndexInList];
+                    if (ReferenceVerticesByStepIndex.ContainsKey(vertexStepIndex))
+                    {
+                        ReferenceVerticesByStepIndex[vertexStepIndex].Add(vertex);
+                    }
+                    else
+                    {
+                        ReferenceVerticesByStepIndex.Add(vertexStepIndex, new List<Vertex>() {vertex});
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Sets the face colors for the Tesselated Solid as well as returning a list of cross section vertices.
+            /// To Display, use ShowVertexPathsWithSolid().
+            /// </summary>
+            /// <param name="ts"></param>
+            /// <param name="badFaces"></param>
+            /// <returns></returns>
             public List<List<List<Vertex>>> DisplaySetup(TessellatedSolid ts, HashSet<PolygonalFace> badFaces = null)
             {
                 //reset all face colors 
