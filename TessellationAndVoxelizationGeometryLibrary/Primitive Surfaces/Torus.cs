@@ -40,25 +40,25 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get; internal set; }
+        public double[] Center { get;  set; }
 
         /// <summary>
         ///     Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
-        public double[] Axis { get; internal set; }
+        public double[] Axis { get;  set; }
 
         /// <summary>
         ///     Gets the major radius.
         /// </summary>
         /// <value>The major radius.</value>
-        public double MajorRadius { get; internal set; }
+        public double MajorRadius { get;  set; }
 
         /// <summary>
         ///     Gets the minor radius.
         /// </summary>
         /// <value>The minor radius.</value>
-        public double MinorRadius { get; internal set; }
+        public double MinorRadius { get;  set; }
 
         /// <summary>
         ///     Determines whether [is new member of] [the specified face].
@@ -101,6 +101,11 @@ namespace TVGL
         public override void Transform(double[,] transformMatrix)
         {
             throw new NotImplementedException();
+        }
+
+        internal Torus()
+        {
+            Type=PrimitiveSurfaceType.Torus;
         }
     }
 }

@@ -40,7 +40,7 @@ namespace TVGL
             Debug.WriteLine("Edges and faces' rules have been read from the corresonding .csv files");
         }
 
-        public static List<PrimitiveSurface> Run(this TessellatedSolid ts)
+        public static List<PrimitiveSurface> ClassifyPrimitiveSurfaces(this TessellatedSolid ts, bool AddToInputSolid = true)
         {
             if (listOfLimitsABN == null || listOfLimitsMCM == null | listOfLimitsSM == null || edgeRules == null || faceRules == null)
                 InitializeFuzzinessRules();
@@ -90,6 +90,8 @@ namespace TVGL
             primitives = MinorCorrections(primitives, allEdgeWithScores);
             //PaintSurfaces(primitives, ts);
             //ReportStats(primitives);
+            if (AddToInputSolid && primitives.Any())
+                ts.Primitives = primitives;
             return primitives;
         }
 
@@ -257,16 +259,16 @@ namespace TVGL
                 ABNid.RemoveAt(0);
             e.CatProb = new Dictionary<int, double>();
             foreach (var ABNprobs in ABNid)
-            foreach (var MCMProbs in MCMid)
-            foreach (var SMProbs in SMid)
-            {
-                double Prob;
-                int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out Prob);
-                if (!e.CatProb.Keys.Contains(@group))
-                    e.CatProb.Add(@group, Prob);
-                else if (e.CatProb[@group] < Prob)
-                    e.CatProb[@group] = Prob;
-            }
+                foreach (var MCMProbs in MCMid)
+                    foreach (var SMProbs in SMid)
+                    {
+                        double Prob;
+                        int group = EdgeClassifier2(ABNprobs, MCMProbs, SMProbs, edgeRules, out Prob);
+                        if (!e.CatProb.Keys.Contains(@group))
+                            e.CatProb.Add(@group, Prob);
+                        else if (e.CatProb[@group] < Prob)
+                            e.CatProb[@group] = Prob;
+                    }
         }
 
 
@@ -642,7 +644,7 @@ namespace TVGL
                     var EdgesLead = new[] { faceRules[4][i], faceRules[5][i], faceRules[6][i] };
                     var SortedEL = EdgesLead.OrderBy(n => n).ToArray();
                     for (var t = 0; t < 3; t++)
-                        //foreach (var EL in SortedEL.Where(a => a != 1000))
+                    //foreach (var EL in SortedEL.Where(a => a != 1000))
                     {
                         if (SortedEL[t] == 1000) continue;
                         //var index = Array.IndexOf(SortedEL, EL);
@@ -1037,6 +1039,7 @@ namespace TVGL
         /// <summary>
         /// The cone
         /// </summary>
-        Cone = 1
+        Cone = 1,
+        Torus = 6
     }
 }

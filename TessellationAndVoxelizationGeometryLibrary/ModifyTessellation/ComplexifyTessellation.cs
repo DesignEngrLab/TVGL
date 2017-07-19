@@ -58,7 +58,7 @@ namespace TVGL
         /// or for adding the provided number of faces - whichever comes first
         /// </summary>
         /// <param name="ts">The ts.</param>
-        /// <param name="numberOfFaces">The number of faces.</param>
+        /// <param name="numberOfFaces">The number of new faces to add.</param>
         /// <param name="maxLength">The maximum length.</param>
         public static void Complexify(TessellatedSolid ts, int numberOfFaces, double maxLength)
         {
@@ -107,12 +107,14 @@ namespace TVGL
                     bottomEdge.OwnedFace = newLeftFace;
                 else bottomEdge.OtherFace = newLeftFace;
                 newLeftFace.AddEdge(bottomEdge);
+                bottomEdge.Update();
 
                 bottomEdge = toVertex.Edges.First(e => e.OtherVertex(toVertex) == rightFarVertex);
                 if (bottomEdge.OwnedFace == origRightFace)
                     bottomEdge.OwnedFace = newRightFace;
                 else bottomEdge.OtherFace = newRightFace;
                 newRightFace.AddEdge(bottomEdge);
+                bottomEdge.Update();
 
 
                 // need to re-add the edge. It was modified in the SplitEdge function (now, half the lenght), but
@@ -132,7 +134,6 @@ namespace TVGL
             ts.AddVertices(addedVertices);
             ts.AddEdges(addedEdges);
             ts.AddFaces(addedFaces);
-            ts.CheckModelIntegrity();
         }
     }
 

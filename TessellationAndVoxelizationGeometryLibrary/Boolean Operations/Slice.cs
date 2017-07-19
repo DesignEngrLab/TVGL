@@ -177,7 +177,7 @@ namespace TVGL.Boolean_Operations
                     negativeLoops.Add(negativeLoop);
                 }
                 //Make the group on onPlane faces
-                var groupOfOnPlaneFaces = groupOfTriangles.Select(triangle => new PolygonalFace(triangle, normal, false) { CreatedInFunction = "Slice: Triangulation" });
+                var groupOfOnPlaneFaces = groupOfTriangles.Select(triangle => new PolygonalFace(triangle, normal, false));
                 var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                 groupsOfLoops.Add(groupOfLoops);
             }
@@ -375,22 +375,11 @@ namespace TVGL.Boolean_Operations
                 if (Math.Sign(d1) == Math.Sign(d2) && Math.Sign(d1) == Math.Sign(d3))
                 {
                     if (Math.Sign(d1) == Math.Sign(isPositiveSide))
-                    {
-                        //This is an onSide face
-                        face.CreatedInFunction = "Original OnSide Face";
                         onSideFaces.Add(face);
-                    }
-                    else
-                    {
-                        face.CreatedInFunction = "Original OffSide Face";
-                    }
                 }
                 //else, it must be a straddle face
                 else
-                {
-                    face.CreatedInFunction = "Original Straddle Face";
                     straddleFaces.Add(face.IndexInList, face);
-                }
             }
             if (straddleFaces.Count != straddleEdges.Count) throw new Exception("These should be equal for closed geometry");
 
@@ -532,11 +521,6 @@ namespace TVGL.Boolean_Operations
                 if (loopOfVertices.Count < 3) throw new Exception("This could be a knife edge. But this error will likely cause errors down the line");
                 loops.Add(new Loop(loopOfVertices, newFaces, plane.Normal, straddleFaceIndices, adjOnsideFaceIndices));
                 allNewFaces.AddRange(newFaces);
-            }
-
-            foreach (var face in allNewFaces)
-            {
-                face.CreatedInFunction = "Slice: Divide up faces";
             }
             onSideFaces.AddRange(allNewFaces);
         }

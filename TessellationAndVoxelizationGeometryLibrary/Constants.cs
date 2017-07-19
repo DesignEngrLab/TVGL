@@ -237,7 +237,11 @@ namespace TVGL
         /// <summary>
         ///     Polygon File Format as Binary
         /// </summary>
-        PLY_Binary
+        PLY_Binary,
+        /// <summary>
+        ///     A serialized version of the TessellatedSolid object
+        /// </summary>
+        TVGL
     }
 
     internal enum FormatEndiannessType

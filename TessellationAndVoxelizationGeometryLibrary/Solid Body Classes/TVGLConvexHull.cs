@@ -30,7 +30,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="TVGLConvexHull" /> class.
         /// </summary>
         /// <param name="ts">The tessellated solid that the convex hull is made from.</param>
-        public TVGLConvexHull(TessellatedSolid ts):this(ts.Vertices, ts.SameTolerance)
+        public TVGLConvexHull(TessellatedSolid ts) : this(ts.Vertices, ts.SameTolerance)
         {
         }
 
@@ -45,14 +45,14 @@ namespace TVGL
             var convexHullFaceList = new List<PolygonalFace>();
             var checkSumMultipliers = new long[3];
             for (var i = 0; i < 3; i++)
-                checkSumMultipliers[i] = (long) Math.Pow(Constants.CubeRootOfLongMaxValue, i);
+                checkSumMultipliers[i] = (long)Math.Pow(Constants.CubeRootOfLongMaxValue, i);
             var alreadyCreatedFaces = new HashSet<long>();
             foreach (var cvxFace in convexHull.Faces)
             {
                 var faceVertices = cvxFace.Vertices;
                 var orderedIndices = faceVertices.Select(v => v.IndexInList).ToList();
                 orderedIndices.Sort();
-                var checksum = orderedIndices.Select((t, j) => t*checkSumMultipliers[j]).Sum();
+                var checksum = orderedIndices.Select((t, j) => t * checkSumMultipliers[j]).Sum();
                 if (alreadyCreatedFaces.Contains(checksum)) continue;
                 alreadyCreatedFaces.Add(checksum);
                 convexHullFaceList.Add(new PolygonalFace(faceVertices, cvxFace.Normal, false));
@@ -60,6 +60,39 @@ namespace TVGL
             Faces = convexHullFaceList.ToArray();
             Edges = MakeEdges(Faces, Vertices);
             TessellatedSolid.DefineCenterVolumeAndSurfaceArea(Faces, out Center, out Volume, out SurfaceArea);
+        }
+
+
+        internal TVGLConvexHull(IList<Vertex> allVertices, IList<Vertex> convexHullPoints,
+            IList<int> convexHullFaceIndices, double[] center, double volume, double surfaceArea)
+        {
+            Vertices = convexHullPoints.ToArray();
+            var numCvxHullFaces = convexHullFaceIndices.Count / 3;
+            Faces = new PolygonalFace[numCvxHullFaces];
+            var checkSumMultipliers = new long[3];
+            for (var i = 0; i < 3; i++)
+                checkSumMultipliers[i] = (long)Math.Pow(Constants.CubeRootOfLongMaxValue, i);
+            var alreadyCreatedFaces = new HashSet<long>();
+            for (int i = 0; i < numCvxHullFaces; i++)
+            {
+                var orderedIndices = new List<int>
+                    {convexHullFaceIndices[3*i], convexHullFaceIndices[3*i + 1], convexHullFaceIndices[3*i + 2]};
+                orderedIndices.Sort();
+                var checksum = orderedIndices.Select((t, j) => t * checkSumMultipliers[j]).Sum();
+                if (alreadyCreatedFaces.Contains(checksum)) continue;
+                alreadyCreatedFaces.Add(checksum);
+                var faceVertices = new[]
+                {
+                    allVertices[convexHullFaceIndices[3*i]],
+                    allVertices[convexHullFaceIndices[3*i + 1]],
+                    allVertices[convexHullFaceIndices[3*i + 2]],
+                };
+                Faces[i] = new PolygonalFace(faceVertices, false);
+            }
+            Edges = MakeEdges(Faces, Vertices);
+            Center = center;
+            Volume = volume;
+            SurfaceArea = surfaceArea;
         }
 
         private static Edge[] MakeEdges(IEnumerable<PolygonalFace> faces, IList<Vertex> vertices)
@@ -79,8 +112,8 @@ namespace TVGL
                     var toVertex = face.Vertices[j == lastIndex ? 0 : j + 1];
                     var toVertexIndex = vertexIndices[toVertex];
                     long checksum = fromVertexIndex < toVertexIndex
-                        ? fromVertexIndex + numVertices*toVertexIndex
-                        : toVertexIndex + numVertices*fromVertexIndex;
+                        ? fromVertexIndex + numVertices * toVertexIndex
+                        : toVertexIndex + numVertices * fromVertexIndex;
 
                     if (edgeDictionary.ContainsKey(checksum))
                     {

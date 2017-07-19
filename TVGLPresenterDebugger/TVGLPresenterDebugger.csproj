@@ -164,6 +164,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs">
       <Link>TVGL\InputOutput Operations\STLFileData.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs">
+      <Link>TVGL\InputOutput Operations\TVGLFileData.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\AreaDecomposition.cs">
       <Link>TVGL\Miscellaneous Functions\AreaDecomposition.cs</Link>
     </Compile>

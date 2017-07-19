@@ -30,6 +30,10 @@ namespace TVGL
         {
             Type = PrimitiveSurfaceType.Dense;
         }
+        internal DenseRegion()
+        {
+            Type = PrimitiveSurfaceType.Dense;
+        }
 
         /// <summary>
         ///     Determines whether [is new member of] [the specified face].

@@ -359,17 +359,10 @@ namespace TVGL
         /// </summary>
         /// <value>The color.</value>
         public Color Color { get; set; }
+        
 
-        ///     Gets or sets the unique ID.
-        /// </summary>
-        /// <value>The ID.</value>
-        public string ID { get; set; }
+        public PrimitiveSurface BelongsToPrimitive { get; internal set; }
 
-        /// <summary>
-        ///     Gets or sets the created in function.
-        /// </summary>
-        /// <value>The created in function.</value>
-        internal string CreatedInFunction { get; set; }
 
         /// <summary>
         ///     Gets the adjacent faces.
@@ -388,6 +381,7 @@ namespace TVGL
                 return adjacentFaces;
             }
         }
+
         #endregion
     }
 }

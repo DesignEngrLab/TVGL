@@ -143,6 +143,11 @@ namespace TVGL.IOFunctions
                 case "shell":
                     tessellatedSolids = ShellFileData.OpenSolids(s, filename);
                     break;
+                case "xml":
+                    var tvglTS = TVGLFileData.OpenSolid(s, filename);
+                    if (tvglTS == null) tessellatedSolids = null;
+                    else tessellatedSolids = new List<TessellatedSolid> { tvglTS };
+                    break;
                 default:
                     throw new Exception(
                         "Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");
@@ -836,7 +841,7 @@ namespace TVGL.IOFunctions
                 case FileType.PLY_Binary:
                     return PLYFileData.SaveSolidBinary(stream, solid);
                 default:
-                    return false;
+                    return TVGLFileData.SaveSolid(stream, solid);
             }
         }
 
