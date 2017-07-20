@@ -32,7 +32,7 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="repairAutomatically">The repair automatically.</param>
-        public static void CheckModelIntegrity(this TessellatedSolid ts, bool repairAutomatically = true)
+        public static bool CheckModelIntegrity(this TessellatedSolid ts, bool repairAutomatically = true)
         {
             Message.output("Model Integrity Check...", 3);
             ts.Errors = new TessellationError { NoErrors = true };
@@ -80,7 +80,7 @@ namespace TVGL
             {
                 Message.output("** Model contains no errors.", 3);
                 ts.Errors = null;
-                return;
+                return true;
             }
             if (repairAutomatically)
             {
@@ -92,11 +92,10 @@ namespace TVGL
                     Message.output("Repairs functions completed successfully.", 2);
                 }
                 else Message.output("Repair did not successfully fix all the problems.", 1);
-                CheckModelIntegrity(ts, false);
-                return;
+                return CheckModelIntegrity(ts, false);
             }
             #region Report details
-            if (3 > (int)Message.Verbosity) return;
+            if ((int)Message.Verbosity < 3) return false;
             //Note that negligible faces are not truly errors.
             Message.output("Errors found in model:");
             Message.output("======================");
@@ -141,6 +140,8 @@ namespace TVGL
                 Message.output("==> " + ts.Errors.FacesThatDoNotLinkBackToVertex.Count +
                                " faces that do not link back to vertices that link to them.");
             #endregion
+
+            return false;
         }
         #endregion
 
@@ -420,10 +421,10 @@ namespace TVGL
             foreach (var face in ts.Faces)
             {
                 face.Normal = face.Normal.multiply(-1);
-                var firstVertex = face.Vertices[0];
-                face.Vertices.RemoveAt(0);
-                face.Vertices.Insert(1,firstVertex);
-                face.Edges.Reverse();
+                //var firstVertex = face.Vertices[0];
+                //face.Vertices.RemoveAt(0);
+                //face.Vertices.Insert(1, firstVertex);
+                face.Vertices.Reverse();
                 var firstEdge = face.Edges[0];
                 face.Edges.RemoveAt(0);
                 face.Edges.Insert(1, firstEdge);

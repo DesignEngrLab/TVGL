@@ -29,6 +29,8 @@ namespace TVGL
         /// </summary>
         public bool IsPositive;
 
+        internal Cone()
+        { Type = PrimitiveSurfaceType.Cone; }
         /// <summary>
         ///     Cone
         /// </summary>
@@ -64,7 +66,7 @@ namespace TVGL
             axisRefPoint = axisRefPoints.Aggregate(axisRefPoint, (current, c) => current.add(c));
             axisRefPoint = axisRefPoint.divide(axisRefPoints.Count);
             /*re-attach to plane through origin */
-            var distBackToOrigin = -1*axis.dotProduct(axisRefPoint);
+            var distBackToOrigin = -1 * axis.dotProduct(axisRefPoint);
             axisRefPoint = axisRefPoint.subtract(axis.multiply(distBackToOrigin));
             // approach to find  Apex    
             var numApices = 0;
@@ -73,7 +75,7 @@ namespace TVGL
             {
                 var distToAxis = MiscFunctions.DistancePointToLine(faces[i].Center, axisRefPoint, axis);
                 var distAlongAxis = axis.dotProduct(faces[i].Center);
-                distAlongAxis += distToAxis/Math.Tan(aperture);
+                distAlongAxis += distToAxis / Math.Tan(aperture);
                 if (double.IsNaN(distAlongAxis)) continue;
                 numApices++;
                 apexDistance += distAlongAxis;
@@ -89,19 +91,19 @@ namespace TVGL
         ///     Gets the aperture.
         /// </summary>
         /// <value>The aperture.</value>
-        public double Aperture { get; internal set; }
+        public double Aperture { get;  set; }
 
         /// <summary>
         ///     Gets the apex.
         /// </summary>
         /// <value>The apex.</value>
-        public double[] Apex { get; internal set; }
+        public double[] Apex { get;  set; }
 
         /// <summary>
         ///     Gets the axis.
         /// </summary>
         /// <value>The axis.</value>
-        public double[] Axis { get; internal set; }
+        public double[] Axis { get;  set; }
 
 
         /// <summary>

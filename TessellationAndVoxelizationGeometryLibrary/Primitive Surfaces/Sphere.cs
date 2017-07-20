@@ -136,6 +136,10 @@ namespace TVGL
         {
             Type = PrimitiveSurfaceType.Sphere;
         }
+        internal Sphere()
+        {
+            Type = PrimitiveSurfaceType.Sphere;
+        }
 
         #endregion
 
@@ -150,13 +154,13 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get; internal set; }
+        public double[] Center { get;  set; }
 
         /// <summary>
         ///     Gets the radius.
         /// </summary>
         /// <value>The radius.</value>
-        public double Radius { get; internal set; }
+        public double Radius { get;  set; }
 
         #endregion
     }

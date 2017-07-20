@@ -39,43 +39,43 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get; private set; }
+        public double[] Center { get; internal set; }
 
         /// <summary>
         ///     Gets the z maximum.
         /// </summary>
         /// <value>The z maximum.</value>
-        public double ZMax { get; private set; }
+        public double ZMax { get; internal set; }
 
         /// <summary>
         ///     Gets the y maximum.
         /// </summary>
         /// <value>The y maximum.</value>
-        public double YMax { get; private set; }
+        public double YMax { get; internal set; }
 
         /// <summary>
         ///     Gets the x maximum.
         /// </summary>
         /// <value>The x maximum.</value>
-        public double XMax { get; private set; }
+        public double XMax { get; internal set; }
 
         /// <summary>
         ///     Gets the z minimum.
         /// </summary>
         /// <value>The z minimum.</value>
-        public double ZMin { get; private set; }
+        public double ZMin { get; internal set; }
 
         /// <summary>
         ///     Gets the y minimum.
         /// </summary>
         /// <value>The y minimum.</value>
-        public double YMin { get; private set; }
+        public double YMin { get; internal set; }
 
         /// <summary>
         ///     Gets the x minimum.
         /// </summary>
         /// <value>The x minimum.</value>
-        public double XMin { get; private set; }
+        public double XMin { get; internal set; }
 
         /// <summary>
         ///     Gets the bounds.
@@ -86,8 +86,8 @@ namespace TVGL
             get
             {
                 var _bounds = new double[2][];
-                _bounds[0] = new[] {XMin, YMin, ZMin};
-                _bounds[1] = new[] {XMax, YMax, ZMax};
+                _bounds[0] = new[] { XMin, YMin, ZMin };
+                _bounds[1] = new[] { XMax, YMax, ZMax };
                 return _bounds;
             }
         }
@@ -108,7 +108,7 @@ namespace TVGL
         ///     Gets the surface area.
         /// </summary>
         /// <value>The surface area.</value>
-        public double SurfaceArea { get; private set; }
+        public double SurfaceArea { get; internal set; }
 
         /// <summary>
         ///     The name of solid
@@ -212,23 +212,23 @@ namespace TVGL
         ///     length of the axis-aligned bounding box times Constants.
         /// </summary>
         /// <value>The same tolerance.</value>
-        public double SameTolerance { private set; get; }
+        public double SameTolerance { get; internal set; }
 
         /// <summary>
         ///     Errors in the tesselated solid
         /// </summary>
-        public TessellationError Errors { get; set; }
+        public TessellationError Errors { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the primitive objects that make up the solid
         /// </summary>
-        public List<PrimitiveSurface> Primitives { get; private set; }
+        public List<PrimitiveSurface> Primitives { get; internal set; }
 
         #endregion
 
         #region Constructors
 
-        private TessellatedSolid(UnitType units = UnitType.unspecified, string name = "", string filename = "",
+        internal TessellatedSolid(UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "")
         {
             //Begin Construction 
@@ -282,11 +282,107 @@ namespace TVGL
             List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
         {
             DefineAxisAlignedBoundingBoxAndTolerance(vertices);
-            MakeVertices(vertices, ref faceToVertexIndices);
+            MakeVertices(vertices, faceToVertexIndices);
             //Complete Construction with Common Functions
             MakeFaces(faceToVertexIndices, colors);
             CompleteInitiation();
         }
+
+        internal TessellatedSolid(TVGLFileData fileData, string fileName) : this(fileData.Units, fileData.Name, fileName,
+                fileData.Comments, fileData.Language)
+        {
+            XMax = fileData.XMax;
+            XMin = fileData.XMin;
+            YMax = fileData.YMax;
+            YMin = fileData.YMin;
+            ZMax = fileData.ZMax;
+            ZMin = fileData.ZMin;
+            Center = fileData.Center;
+            SameTolerance = fileData.SameTolerance;
+
+
+
+            var stringList = fileData.Vertices.Split(',');
+            var listLength = stringList.Length;
+            var coords = new double[listLength / 3][];
+            for (int i = 0; i < listLength / 3; i++)
+                coords[i] = new[]
+                {
+                    double.Parse(stringList[3*i]),
+                    double.Parse(stringList[3*i+1]),
+                    double.Parse(stringList[3*i+2])
+                };
+            stringList = fileData.Faces.Split(',');
+            listLength = stringList.Length;
+            var faceIndices = new int[listLength / 3][];
+            for (int i = 0; i < listLength / 3; i++)
+                faceIndices[i] = new[]
+                {
+                    int.Parse(stringList[3 * i]),
+                    int.Parse(stringList[3 * i + 1]),
+                    int.Parse(stringList[3 * i + 2])
+                };
+
+            if (!string.IsNullOrWhiteSpace(fileData.InertiaTensor))
+            {
+                stringList = fileData.InertiaTensor.Split(',');
+                _inertiaTensor = new double[3, 3];
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                        _inertiaTensor[i, j] = double.Parse(stringList[3 * i + j]);
+            }
+            stringList = fileData.Colors.Split(',');
+            listLength = stringList.Length;
+            var colors = new Color[listLength];
+            for (int i = 0; i < listLength; i++)
+                colors[i] = new Color(stringList[i]);
+
+            MakeVertices(coords, faceIndices);
+            MakeFaces(faceIndices, colors);
+
+            List<PolygonalFace> newFaces;
+            List<Vertex> removedVertices;
+            MakeEdges(out newFaces, out removedVertices);
+            AddFaces(newFaces);
+            RemoveVertices(removedVertices);
+            Center = fileData.Center;
+            Volume = fileData.Volume;
+            SurfaceArea = fileData.SurfaceArea;
+
+            foreach (var face in Faces)
+                face.DefineFaceCurvature();
+            foreach (var v in Vertices)
+                v.DefineCurvature();
+
+            stringList = fileData.ConvexHullVertices.Split(',');
+            listLength = stringList.Length;
+            var cvxVertices = new Vertex[listLength];
+            for (int i = 0; i < listLength; i++)
+                cvxVertices[i] = Vertices[int.Parse(stringList[i])];
+            stringList = fileData.ConvexHullFaces.Split(',');
+            listLength = stringList.Length;
+            var cvxFaceIndices = new int[listLength];
+            for (int i = 0; i < listLength; i++)
+                cvxFaceIndices[i] = int.Parse(stringList[i]);
+
+            ConvexHull = new TVGLConvexHull(Vertices, cvxVertices, cvxFaceIndices, fileData.ConvexHullCenter,
+                fileData.ConvexHullVolume, fileData.ConvexHullArea);
+            foreach (var cvxHullPt in ConvexHull.Vertices)
+                cvxHullPt.PartOfConvexHull = true;
+            foreach (var face in Faces.Where(face => face.Vertices.All(v => v.PartOfConvexHull)))
+            {
+                face.PartOfConvexHull = true;
+                foreach (var e in face.Edges)
+                    if (e != null) e.PartOfConvexHull = true;
+            }
+            if (fileData.Primitives != null && fileData.Primitives.Any())
+            {
+                Primitives = fileData.Primitives;
+                foreach (var surface in Primitives)
+                    surface.CompletePostSerialization(this);
+            }
+        }
+
 
 
         /// <summary>
@@ -405,7 +501,7 @@ namespace TVGL
             ZMin = vertices.Min(v => v[2]);
             ZMax = vertices.Max(v => v[2]);
             var shortestDimension = Math.Min(XMax - XMin, Math.Min(YMax - YMin, ZMax - ZMin));
-            SameTolerance = shortestDimension*Constants.BaseTolerance;
+            SameTolerance = shortestDimension * Constants.BaseTolerance;
         }
 
         /// <summary>
@@ -415,7 +511,7 @@ namespace TVGL
         /// <param name="colors">The colors.</param>
         /// <param name="normals">The normals.</param>
         /// <param name="doublyLinkToVertices">if set to <c>true</c> [doubly link to vertices].</param>
-        private void MakeFaces(IList<int[]> faceToVertexIndices, IList<Color> colors,
+        internal void MakeFaces(IList<int[]> faceToVertexIndices, IList<Color> colors,
             IList<double[]> normals = null, bool doublyLinkToVertices = true)
         {
             var duplicateFaceCheck = true;
@@ -433,7 +529,7 @@ namespace TVGL
                 duplicateFaceCheck = false;
             }
             var checksumMultiplier = duplicateFaceCheck
-                ? new List<long> {1, NumberOfVertices, NumberOfVertices*NumberOfVertices}
+                ? new List<long> { 1, NumberOfVertices, NumberOfVertices * NumberOfVertices }
                 : null;
             for (var i = 0; i < NumberOfFaces; i++)
             {
@@ -445,8 +541,8 @@ namespace TVGL
                         new List<int>(faceToVertexIndexList.Select(index => Vertices[index].IndexInList));
                     orderedIndices.Sort();
                     while (orderedIndices.Count > checksumMultiplier.Count)
-                        checksumMultiplier.Add((long) Math.Pow(NumberOfVertices, checksumMultiplier.Count));
-                    var checksum = orderedIndices.Select((index, p) => index*checksumMultiplier[p]).Sum();
+                        checksumMultiplier.Add((long)Math.Pow(NumberOfVertices, checksumMultiplier.Count));
+                    var checksum = orderedIndices.Select((index, p) => index * checksumMultiplier[p]).Sum();
                     if (faceChecksums.Contains(checksum)) continue; //Duplicate face. Do not create
                     if (orderedIndices.Count < 3 || ContainsDuplicateIndices(orderedIndices)) continue;
                     // if you made it passed these to "continue" conditions, then this is a valid new face
@@ -467,11 +563,11 @@ namespace TVGL
                     if (!SolidColor.Equals(color)) HasUniformColor = false;
                 }
                 if (faceVertices.Count == 3)
-                    listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices) {Color = color});
+                    listOfFaces.Add(new PolygonalFace(faceVertices, normal, doublyLinkToVertices) { Color = color });
                 else
                 {
                     List<List<Vertex[]>> triangulatedListofLists =
-                        TriangulatePolygon.Run(new List<List<Vertex>> {faceVertices}, normal);
+                        TriangulatePolygon.Run(new List<List<Vertex>> { faceVertices }, normal);
                     var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
@@ -479,8 +575,8 @@ namespace TVGL
                         var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position);
                         var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position);
                         var face = v1.crossProduct(v2).dotProduct(normal) < 0
-                            ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) {Color = color}
-                            : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) {Color = color};
+                            ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }
+                            : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
                         listOfFaces.Add(face);
                         listOfFlatFaces.Add(face);
                     }
@@ -551,7 +647,7 @@ namespace TVGL
         /// </summary>
         /// <param name="vertices"></param>
         /// <param name="faceToVertexIndices">The face to vertex indices.</param>
-        private void MakeVertices(IList<double[]> vertices, ref IList<int[]> faceToVertexIndices)
+        internal void MakeVertices(IList<double[]> vertices, IList<int[]> faceToVertexIndices)
         {
             var numDecimalPoints = 0;
             //Gets the number og decimal places, with the maximum being the StarMath Equality (1E-15)
@@ -594,7 +690,6 @@ namespace TVGL
             //Make vertices from the double arrays
             MakeVertices(listOfVertices);
         }
-
         /// <summary>
         ///     Makes the vertices, and set CheckSum multiplier
         /// </summary>
@@ -928,7 +1023,7 @@ namespace TVGL
         /// <returns>TessellatedSolid.</returns>
         public TessellatedSolid Copy()
         {
-            return new TessellatedSolid(Vertices.Select(vertex => (double[]) vertex.Position.Clone()).ToList(),
+            return new TessellatedSolid(Vertices.Select(vertex => (double[])vertex.Position.Clone()).ToList(),
                 Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),
                 Faces.Select(f => f.Color).ToList(), this.Units, Name + "_Copy",
                 FileName, Comments, Language);
@@ -945,21 +1040,21 @@ namespace TVGL
             double[] tempCoord;
             foreach (var vert in Vertices)
             {
-                tempCoord = transformMatrix.multiply(new[] {vert.X, vert.Y, vert.Z, 1});
+                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
                 vert.Position[0] = tempCoord[0];
                 vert.Position[1] = tempCoord[1];
                 vert.Position[2] = tempCoord[2];
             }
-            tempCoord = transformMatrix.multiply(new[] {XMin, YMin, ZMin, 1});
+            tempCoord = transformMatrix.multiply(new[] { XMin, YMin, ZMin, 1 });
             XMin = tempCoord[0];
             YMin = tempCoord[1];
             ZMin = tempCoord[2];
 
-            tempCoord = transformMatrix.multiply(new[] {XMax, YMax, ZMax, 1});
+            tempCoord = transformMatrix.multiply(new[] { XMax, YMax, ZMax, 1 });
             XMax = tempCoord[0];
             YMax = tempCoord[1];
             ZMax = tempCoord[2];
-            Center = transformMatrix.multiply(new[] {Center[0], Center[1], Center[2], 1});
+            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             if (_inertiaTensor != null)
             {
@@ -999,14 +1094,14 @@ namespace TVGL
             for (var i = 0; i < 3; i++)
             {
                 var direction = obbDirections[i];
-                var dotX1 = direction.dotProduct(new List<double>() {1.0, 0.0, 0.0});
+                var dotX1 = direction.dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
                 if (dotX1 > minDot)
                 {
                     minDot = dotX1;
                     xPrime = direction;
                     xPrimeIndex = i;
                 }
-                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() {1.0, 0.0, 0.0});
+                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
                 if (dotX2 > minDot)
                 {
                     minDot = dotX2;
@@ -1021,13 +1116,13 @@ namespace TVGL
             for (var i = 0; i < 2; i++)
             {
                 var direction = obbDirections[i];
-                var dotY1 = direction.dotProduct(new List<double>() {0.0, 1.0, 0.0});
+                var dotY1 = direction.dotProduct(new List<double>() { 0.0, 1.0, 0.0 });
                 if (dotY1 > minDot)
                 {
                     minDot = dotY1;
                     yPrime = direction;
                 }
-                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() {0.0, 1.0, 0.0});
+                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() { 0.0, 1.0, 0.0 });
                 if (dotY2 > minDot)
                 {
                     minDot = dotY2;

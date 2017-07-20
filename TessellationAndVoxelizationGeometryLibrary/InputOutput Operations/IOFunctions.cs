@@ -143,6 +143,9 @@ namespace TVGL.IOFunctions
                 case "shell":
                     tessellatedSolids = ShellFileData.OpenSolids(s, filename);
                     break;
+                case "xml":
+                    tessellatedSolids = TVGLFileData.OpenSolids(s, filename);
+                    break;
                 default:
                     throw new Exception(
                         "Cannot determine format from extension (not .stl, .ply, .3ds, .lwo, .obj, .objx, or .off.");
@@ -187,7 +190,7 @@ namespace TVGL.IOFunctions
             writer.Write(data);
             writer.Flush();
             stream.Position = 0;
-            var extensions = new[] { "", "STL", "STL", "3mf", "model", "amf", "off", "ply", "ply" };
+            var extensions = new[] { "", "STL", "STL", "3mf", "model", "amf", "off", "ply", "ply", "tvgl.xml" };
             var name = "data." + extensions[(int)fileType];
             return Open(stream, name);
         }
@@ -764,11 +767,9 @@ namespace TVGL.IOFunctions
         /// <param name="solids">The solids.</param>
         /// <param name="fileType">Type of the file.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType = FileType.unspecified)
+        public static bool Save(Stream stream, IList<TessellatedSolid> solids, FileType fileType = FileType.TVGL)
         {
             if (solids.Count == 0) return false;
-            if (fileType == FileType.unspecified)
-                fileType = (solids.Count == 1) ? FileType.PLY_Binary : FileType.AMF;
             switch (fileType)
             {
                 case FileType.STL_ASCII:
@@ -801,7 +802,9 @@ namespace TVGL.IOFunctions
                             "The PLY format does not support saving multiple solids to a single file.");
                     else return PLYFileData.SaveSolidBinary(stream, solids[0]);
                 default:
-                    return false;
+                    if (solids.Count > 1)
+                        return TVGLFileData.SaveSolids(stream, solids);
+                    else return TVGLFileData.SaveSolid(stream, solids[0]);
             }
         }
         /// <summary>
@@ -811,7 +814,7 @@ namespace TVGL.IOFunctions
         /// <param name="solid">The solid.</param>
         /// <param name="fileType">Type of the file.</param>
         /// <returns>System.Boolean.</returns>
-        public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType = FileType.PLY_Binary)
+        public static bool Save(Stream stream, TessellatedSolid solid, FileType fileType = FileType.TVGL)
         {
             switch (fileType)
             {
@@ -836,7 +839,7 @@ namespace TVGL.IOFunctions
                 case FileType.PLY_Binary:
                     return PLYFileData.SaveSolidBinary(stream, solid);
                 default:
-                    return false;
+                    return TVGLFileData.SaveSolid(stream, solid);
             }
         }
 
@@ -847,7 +850,7 @@ namespace TVGL.IOFunctions
         /// <param name="solid">The solid.</param>
         /// <param name="fileType">Type of the file.</param>
         /// <returns>System.String.</returns>
-        public static string SaveToString(TessellatedSolid solid, FileType fileType = FileType.PLY_Binary)
+        public static string SaveToString(TessellatedSolid solid, FileType fileType = FileType.unspecified)
         {
             var stream = new MemoryStream();
             if (!Save(stream, solid, fileType)) return "";
