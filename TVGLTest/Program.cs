@@ -28,16 +28,16 @@ namespace TVGL_Test
        // "../../../TestFiles/Raspberry Pi Case.3mf",
        //"../../../TestFiles/shark.ply",
        ////"../../../TestFiles/bunnySmall.ply",
-        "../../../TestFiles/cube.ply",
+      //  "../../../TestFiles/cube.ply",
        // "../../../TestFiles/airplane.ply",
        // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-       // "../../../TestFiles/Tetrahedron.STL",
+        "../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
        // "../../../TestFiles/Mic_Holder_SW.stl",
        // "../../../TestFiles/Mic_Holder_JR.stl",
        // "../../../TestFiles/3_bananas.amf",
-       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+      //  "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
        // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
        // "../../../TestFiles/Rook.amf",
        // "../../../TestFiles/hdodec.off",
@@ -45,7 +45,7 @@ namespace TVGL_Test
         //"../../../TestFiles/mushroom.off",
         //"../../../TestFiles/vertcube.off",
         //"../../../TestFiles/trapezoid.4d.off",
-        "../../../TestFiles/ABF.STL",
+       // "../../../TestFiles/ABF.STL",
         "../../../TestFiles/Pump-1repair.STL",
         "../../../TestFiles/Pump-1.STL",
         "../../../TestFiles/Beam_Clean.STL",
@@ -84,20 +84,18 @@ namespace TVGL_Test
                 var filename = FileNames[i]; //.FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
-                TessellatedSolid ts;
+               List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename)[0];
-                ts.ClassifyPrimitiveSurfaces();
-                filename += ".tvgl.xml";
+                    ts = IO.Open(fileStream, filename);
                 using (fileStream = File.OpenWrite(filename))
                     IO.Save(fileStream, ts, FileType.TVGL);
 
                 using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename)[0];
-                if (!ts.CheckModelIntegrity(false))
-                    Console.WriteLine("failed to open!");
-                else
-                    Presenter.Show(ts);
+                    ts = IO.Open(fileStream, filename);
+                //if (!ts.CheckModelIntegrity(true))
+                //    Console.WriteLine("failed to open!");
+                //else
+                    Presenter.ShowAndHang(ts);
                 //if (ts.CheckModelIntegrity(false))
                 //    TestSimplify(ts);
             }

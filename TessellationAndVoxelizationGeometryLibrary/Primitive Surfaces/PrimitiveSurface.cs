@@ -217,18 +217,22 @@ namespace TVGL
             for (int i = 0; i < listLength; i++)
                 Vertices.Add(ts.Vertices[int.Parse(stringList[i])]);
 
-            _innerEdges = new List<Edge>();
-            stringList = _innerEdgeIndices.Split(',');
-            listLength = stringList.Length;
-            for (int i = 0; i < listLength; i++)
-                _innerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
-
-            _outerEdges = new List<Edge>();
-            stringList = _outerEdgeIndices.Split(',');
-            listLength = stringList.Length;
-            for (int i = 0; i < listLength; i++)
-                _outerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
-
+            if (!string.IsNullOrWhiteSpace(_innerEdgeIndices))
+            {
+                _innerEdges = new List<Edge>();
+                stringList = _innerEdgeIndices.Split(',');
+                listLength = stringList.Length;
+                for (int i = 0; i < listLength; i++)
+                    _innerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
+            }
+            if (!string.IsNullOrWhiteSpace(_outerEdgeIndices))
+            {
+                _outerEdges = new List<Edge>();
+                stringList = _outerEdgeIndices.Split(',');
+                listLength = stringList.Length;
+                for (int i = 0; i < listLength; i++)
+                    _outerEdges.Add(ts.Edges[int.Parse(stringList[i])]);
+            }
             Area = Faces.Sum(f => f.Area);
         }
     }

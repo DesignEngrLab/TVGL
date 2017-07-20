@@ -28,7 +28,7 @@ namespace TVGL.IOFunctions
     /// Class TVGLFileData.
     /// </summary>
     /// <seealso cref="TVGL.IOFunctions.IO" />
-    [XmlRoot("tvgl")]
+    [XmlType("TessellatedSolid")]
 #if help
     internal class TVGLFileData : IO
 #else
@@ -87,10 +87,13 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The volume.</value>
         public double Volume;
+        /// <summary>
+        /// The convex hull volume
+        /// </summary>
         public double ConvexHullVolume;
 
         /// <summary>
-        ///     Gets and sets the mass.
+        /// Gets and sets the mass.
         /// </summary>
         /// <value>The mass.</value>
         public double Mass;
@@ -100,6 +103,9 @@ namespace TVGL.IOFunctions
         /// </summary>
         /// <value>The surface area.</value>
         public double SurfaceArea;
+        /// <summary>
+        /// The convex hull area
+        /// </summary>
         public double ConvexHullArea;
 
         /// <summary>
@@ -120,19 +126,23 @@ namespace TVGL.IOFunctions
         /// <value>The convex hull.</value>
         public string ConvexHullVertices;
 
+        /// <summary>
+        /// The convex hull faces
+        /// </summary>
         public string ConvexHullFaces;
         /// <summary>
         ///     The has uniform color
         /// </summary>
         public bool HasUniformColor;
 
+
         /// <summary>
-        ///     The has uniform color
+        /// The inertia tensor
         /// </summary>
         public string InertiaTensor;
 
         /// <summary>
-        ///     The solid color
+        /// The colors
         /// </summary>
         public string Colors;
 
@@ -152,21 +162,38 @@ namespace TVGL.IOFunctions
 
 
         #region Open Solids
+
         /// <summary>
-        /// Opens the specified s.
+        /// Opens the f00.tvgl.xml file as a list of tessellated solids.
         /// </summary>
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static TessellatedSolid OpenSolid(Stream s, string filename)
+        internal static List<TessellatedSolid> OpenSolids(Stream s, string filename)
         {
             var now = DateTime.Now;
-            TessellatedSolid solid1;
+            List<TessellatedSolid> solids = new List<TessellatedSolid>();
             try
             {
-                var streamReader = new StreamReader(s);
                 var tvglDeserializer = new XmlSerializer(typeof(TVGLFileData));
-                solid1 = new TessellatedSolid((TVGLFileData)tvglDeserializer.Deserialize(streamReader), filename);
+                if (tvglDeserializer.CanDeserialize(XmlReader.Create(s)))
+                {
+                    s.Position = 0;
+                    var streamReader = new StreamReader(s);
+                    solids = new List<TessellatedSolid>()
+                    {
+                    new TessellatedSolid((TVGLFileData) tvglDeserializer.Deserialize(streamReader),
+                        filename)
+                    };
+                }
+                else
+                {
+                    s.Position = 0;
+                    var streamReader = new StreamReader(s);
+                    tvglDeserializer = new XmlSerializer(typeof(List<TVGLFileData>));
+                    var fileDataList = (List<TVGLFileData>)tvglDeserializer.Deserialize(streamReader);
+                    solids = fileDataList.Select(fileData => new TessellatedSolid(fileData, filename)).ToList();
+                }
                 Message.output("Successfully read in TVGL file (" + (DateTime.Now - now) + ").", 3);
             }
             catch (Exception exception)
@@ -175,11 +202,49 @@ namespace TVGL.IOFunctions
                 Message.output("Exception: " + exception.Message, 3);
                 return null;
             }
-            return solid1;
+            return solids;
         }
 
         #endregion
         #region Save Solid
+
+
+
+        /// <summary>
+        /// Saves the solids.
+        /// </summary>
+        /// <param name="stream">The stream.</param>
+        /// <param name="solids">The solids.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        internal static bool SaveSolids(Stream stream, IList<TessellatedSolid> solids)
+        {
+            try
+            {
+                var fileDataList = solids.Select(MakeFileData).ToList();
+                using (var writer = XmlWriter.Create(stream))
+                {
+                    writer.WriteComment(tvglDateMarkText);
+                    if (!string.IsNullOrWhiteSpace(solids[0].FileName))
+                        writer.WriteComment("Originally loaded from " + solids[0].FileName);
+                    //writer.WriteStartElement("ListOfTessellatedSolids");
+                    var serializer = new XmlSerializer(typeof(List<TVGLFileData>));
+                    serializer.Serialize(writer, fileDataList);
+                    //foreach (var solid in solids)
+                    //    serializer.Serialize(writer, MakeFileData(solid));
+                    //writer.WriteEndElement();
+                }
+                Message.output("Successfully wrote TVGL file to stream.", 3);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Message.output("Unable to write in model file.", 1);
+                Message.output("Exception: " + exception.Message, 3);
+                return false;
+            }
+        }
+
+
         /// <summary>
         /// Saves the specified stream.
         /// </summary>

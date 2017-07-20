@@ -318,9 +318,9 @@ namespace TVGL
             for (int i = 0; i < listLength / 3; i++)
                 faceIndices[i] = new[]
                 {
-                    int.Parse(stringList[ 3*i]),
-                    int.Parse(stringList[3* i + 1]),
-                    int.Parse(stringList[3* i + 2])
+                    int.Parse(stringList[3 * i]),
+                    int.Parse(stringList[3 * i + 1]),
+                    int.Parse(stringList[3 * i + 2])
                 };
 
             if (!string.IsNullOrWhiteSpace(fileData.InertiaTensor))
