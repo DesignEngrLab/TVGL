@@ -70,9 +70,19 @@ namespace TVGL
             var centerY = Vertices.Average(v => v.Y);
             var centerZ = Vertices.Average(v => v.Z);
             Center = new[] { centerX, centerY, centerZ };
-            bool reverseVertexOrder;
-            Normal = DetermineNormal(this.Vertices, out reverseVertexOrder, Normal);
-            if (reverseVertexOrder) Vertices.Reverse();
+            #region determine normal
+            var edgeVectors = new[]
+            {
+                Vertices[0].Position.subtract(Vertices[2].Position),
+                Vertices[1].Position.subtract(Vertices[0].Position),
+                Vertices[2].Position.subtract(Vertices[1].Position),
+                Vertices[0].Position.subtract(Vertices[2].Position)
+            };
+            var normals = new double[3][];
+            for (var i = 0; i < 3; i++)
+                normals[i] = edgeVectors[i].crossProduct(edgeVectors[i + 1]).normalize();
+            Normal = normals.Aggregate((current, c) => current.add(c)).normalize();
+            #endregion
             Area = DetermineArea();
         }
 
@@ -187,7 +197,7 @@ namespace TVGL
         /// <param name="connectVerticesBackToFace">if set to <c>true</c> [connect vertices back to face].</param>
         public PolygonalFace(IEnumerable<Vertex> vertices, bool connectVerticesBackToFace = true)
             : this(vertices, null, connectVerticesBackToFace)
-        {           
+        {
         }
 
         /// <summary>
@@ -280,8 +290,10 @@ namespace TVGL
 
             n = normals.Count;
             if (n == 0) // this would happen if the face collapse to a line.
-                return new[] { double.NaN, double.NaN, double.NaN };
-            // before we just average these normals, let's check that they agree.
+            {
+                if (normal != null) return normal;
+                else return new[] { double.NaN, double.NaN, double.NaN };
+            } // before we just average these normals, let's check that they agree.
             // the dotProductsOfNormals simply takes the dot product of adjacent
             // normals. If they're all close to one, then we can average and return.
             var dotProductsOfNormals = new List<double>();
@@ -359,7 +371,7 @@ namespace TVGL
         /// </summary>
         /// <value>The color.</value>
         public Color Color { get; set; }
-        
+
 
         public PrimitiveSurface BelongsToPrimitive { get; internal set; }
 

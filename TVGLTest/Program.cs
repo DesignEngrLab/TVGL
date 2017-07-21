@@ -78,26 +78,18 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            for (var i = 0; i < FileNames.Count(); i++)
+            var fileNames = dir.GetFiles("*.stl");
+            for (var i = 0; i < fileNames.Count(); i++)
             {
-                var filename = FileNames[i]; //.FullName;
+                var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
-               List<TessellatedSolid> ts;
+                TessellatedSolid ts;
                 using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
-                using (fileStream = File.OpenWrite(filename))
-                    IO.Save(fileStream, ts, FileType.TVGL);
-
-                using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
-                //if (!ts.CheckModelIntegrity(true))
-                //    Console.WriteLine("failed to open!");
-                //else
-                    Presenter.ShowAndHang(ts);
-                //if (ts.CheckModelIntegrity(false))
-                //    TestSimplify(ts);
+                    ts = IO.Open(fileStream, filename)[0];
+                if (!ts.CheckModelIntegrity(true))
+                    continue;
+                TestSimplify(ts);
             }
 
             Console.WriteLine("Completed.");
@@ -152,20 +144,21 @@ namespace TVGL_Test
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            // TVGL.Presenter.ShowWire(ts);
-            ts.Complexify((int)(0.33 * ts.NumberOfFaces));
-            if (!ts.CheckModelIntegrity(false)) Console.WriteLine("------------------>Failed to complexify " + ts.Name);
-            Debug.WriteLine("complexify*****");
-            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
-            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
-            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
+            TVGL.Presenter.ShowWire(ts);
+            ts.Complexify(ts.NumberOfFaces);
+            //if (!ts.CheckModelIntegrity(false)) Console.WriteLine("------------------>Failed to complexify " + ts.Name);
+            //Debug.WriteLine("complexify*****");
+            //Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            //Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            //Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             //TVGL.Presenter.ShowWire(ts);
-            ts.Simplify(ts.NumberOfFaces / 4);
+            Debug.WriteLine("simplify*****");
+            ts.Simplify(15);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             if (!ts.CheckModelIntegrity(false)) Console.WriteLine("=============>Failed to simplify " + ts.Name);
-            //TVGL.Presenter.ShowWire(ts);
+            TVGL.Presenter.ShowWire(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)

@@ -52,7 +52,7 @@ namespace TVGL
             edgeList.AddRange(CreateMissingEdgesAndFaces(loops, out newFaces, out moreRemainingEdges));
             remainingEdges.AddRange(moreRemainingEdges); //Add two remaining lists together
 
-            // well, the edgelist is definitely going to work out so, we are going to need to make
+            // well, the edge list is definitely going to work out so, we are going to need to make
             // sure that they are known to their vertices for the next few steps - so here we take 
             // a moment to stitch these to the vertices
             foreach (var tuple in edgeList)

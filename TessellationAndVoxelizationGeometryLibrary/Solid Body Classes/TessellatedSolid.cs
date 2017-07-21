@@ -470,7 +470,7 @@ namespace TVGL
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)
                 v.DefineCurvature();
-            ModifyTessellation.CheckModelIntegrity(this);
+            this.CheckModelIntegrity();
             ConvexHull = new TVGLConvexHull(this);
             foreach (var cvxHullPt in ConvexHull.Vertices)
                 cvxHullPt.PartOfConvexHull = true;
