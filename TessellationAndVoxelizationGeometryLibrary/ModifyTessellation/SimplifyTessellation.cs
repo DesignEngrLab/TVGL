@@ -121,7 +121,7 @@ namespace TVGL
                     foreach (var face in removedVertex.Faces)
                     {
                         if (face == leftFace || face == rightFace) continue;
-                        var index = face.Vertices.IndexOf(removedVertex);
+                        var index = face.VertexIndex(removedVertex);
                         face.Vertices[index] = keepVertex;
                         face.Update();
                         keepVertex.Faces.Add(face);

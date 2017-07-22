@@ -92,8 +92,8 @@ namespace TVGL
         /// <param name="edge">The edge.</param>
         internal void AddEdge(Edge edge)
         {
-            var vertFromIndex = Vertices.IndexOf(edge.From);
-            var vertToIndex = Vertices.IndexOf(edge.To);
+            var vertFromIndex = VertexIndex(edge.From);
+            var vertToIndex = VertexIndex(edge.To);
             int index;
             var lastIndex = Vertices.Count - 1;
             if ((vertFromIndex == 0 && vertToIndex == lastIndex)
@@ -148,13 +148,13 @@ namespace TVGL
         /// <summary>
         ///     Nexts the vertex CCW.
         /// </summary>
-        /// <param name="v1">The v1.</param>
+        /// <param name="v">The v.</param>
         /// <returns>Vertex.</returns>
-        internal Vertex NextVertexCCW(Vertex v1)
+        internal Vertex NextVertexCCW(Vertex v)
         {
-            var index = Vertices.IndexOf(v1);
-            if (index < 0) return null; //Vertex is not part of this face
-            return index == Vertices.Count - 1 ? Vertices[0] : Vertices[index + 1];
+            if (Vertices[0] == v) return Vertices[1];
+            if (Vertices[1] == v) return Vertices[2];
+            return Vertices[0];
         }
 
         #region Constructors
@@ -393,7 +393,18 @@ namespace TVGL
                 return adjacentFaces;
             }
         }
-
+        internal int VertexIndex(Vertex vertex)
+        {
+            return Vertices[0] == vertex ? 0
+                : Vertices[1] == vertex ? 1
+                : Vertices[2] == vertex ? 2 : -1;
+        }
+        internal int EdgeIndex(Edge edge)
+        {
+            return Edges[0] == edge ? 0
+                : Edges[1] == edge ? 1
+                : Edges[2] == edge ? 2 : -1;
+        }
         #endregion
     }
 }

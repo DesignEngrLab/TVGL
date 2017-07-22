@@ -314,7 +314,7 @@ namespace TVGL
             foreach (var face in removedVertex.Faces)
             {
                 keepVertex.Faces.Add(face);
-                var index = face.Vertices.IndexOf(removedVertex);
+                var index = face.VertexIndex(removedVertex);
                 face.Vertices[index] = keepVertex;
             }
             foreach (var edge in removedVertex.Edges)

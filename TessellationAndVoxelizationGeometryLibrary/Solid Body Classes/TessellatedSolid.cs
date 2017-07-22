@@ -991,12 +991,12 @@ namespace TVGL
             }
             if (edge.OwnedFace != null)
             {
-                index = edge.OwnedFace.Edges.IndexOf(edge);
+                index = edge.OwnedFace.EdgeIndex(edge);
                 if (index >= 0) edge.OwnedFace.Edges.RemoveAt(index);
             }
             if (edge.OtherFace != null)
             {
-                index = edge.OtherFace.Edges.IndexOf(edge);
+                index = edge.OtherFace.EdgeIndex(edge);
                 if (index >= 0) edge.OtherFace.Edges.RemoveAt(index);
             }
         }

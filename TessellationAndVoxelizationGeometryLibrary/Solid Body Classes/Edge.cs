@@ -218,7 +218,7 @@ namespace TVGL
                 return;
             }
             // is this edge truly owned by the ownedFace? if not reverse
-            var faceToIndex = _ownedFace.Vertices.IndexOf(To);
+            var faceToIndex = _ownedFace.VertexIndex(To);
             var faceNextIndex = faceToIndex + 1 == _ownedFace.Vertices.Count ? 0 : faceToIndex + 1;
             var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
             var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
@@ -234,7 +234,7 @@ namespace TVGL
                 Vector = Vector.multiply(-1);
                 // it would be messed up if both faces thought they owned this edge. If this is the 
                 // case, return the edge has no angle.
-                faceToIndex = _otherFace.Vertices.IndexOf(To);
+                faceToIndex = _otherFace.VertexIndex(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
                 nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
@@ -251,7 +251,7 @@ namespace TVGL
             {
                 // it would be messed up if both faces thought they owned this edge. If this is the 
                 // case, return the edge has no angle.
-                faceToIndex = _otherFace.Vertices.IndexOf(To);
+                faceToIndex = _otherFace.VertexIndex(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
                 nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);

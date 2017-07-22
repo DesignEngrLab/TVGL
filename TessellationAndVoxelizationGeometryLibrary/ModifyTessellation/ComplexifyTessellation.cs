@@ -79,11 +79,11 @@ namespace TVGL
                 var toVertex = edge.To;
                 var addedVertex = new Vertex(DetermineIntermediateVertexPosition(fromVertex, toVertex));
                 // modify original faces with new intermediate vertex
-                var index = origLeftFace.Vertices.IndexOf(toVertex);
+                var index = origLeftFace.VertexIndex(toVertex);
                 origLeftFace.Vertices[index] = addedVertex;
                 origLeftFace.Update();
                 addedVertex.Faces.Add(origLeftFace);
-                index = origRightFace.Vertices.IndexOf(toVertex);
+                index = origRightFace.VertexIndex(toVertex);
                 origRightFace.Vertices[index] = addedVertex;
                 origRightFace.Update();
                 addedVertex.Faces.Add(origRightFace);
