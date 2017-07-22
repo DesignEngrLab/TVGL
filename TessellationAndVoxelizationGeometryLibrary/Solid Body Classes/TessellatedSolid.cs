@@ -877,7 +877,7 @@ namespace TVGL
                 while (offset < numToRemove && i + offset == removeIndices[offset])
                     offset++;
                 newFaces[i] = Faces[i + offset];
-                newFaces[i].IndexInList = i;
+                    newFaces[i].IndexInList = i;
             }
             Faces = newFaces;
         }

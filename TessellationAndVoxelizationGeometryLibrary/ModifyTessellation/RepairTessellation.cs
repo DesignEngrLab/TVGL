@@ -421,9 +421,6 @@ namespace TVGL
             foreach (var face in ts.Faces)
             {
                 face.Normal = face.Normal.multiply(-1);
-                //var firstVertex = face.Vertices[0];
-                //face.Vertices.RemoveAt(0);
-                //face.Vertices.Insert(1, firstVertex);
                 face.Vertices.Reverse();
                 var firstEdge = face.Edges[0];
                 face.Edges.RemoveAt(0);
@@ -465,8 +462,10 @@ namespace TVGL
                 }
                 if (edgesToUpdate.Count < face.Edges.Count) continue;
                 face.Normal = face.Normal.multiply(-1);
-                face.Edges.Reverse();
                 face.Vertices.Reverse();
+                var firstEdge = face.Edges[0];
+                face.Edges.RemoveAt(0);
+                face.Edges.Insert(1, firstEdge);
                 foreach (var edge in edgesToUpdate)
                     if (!allEdgesToUpdate.Contains(edge)) allEdgesToUpdate.Add(edge);
             }
