@@ -77,6 +77,9 @@ namespace TVGL
                 var rightFarVertex = origRightFace.OtherVertex(edge);
                 var fromVertex = edge.From;
                 var toVertex = edge.To;
+                double[] position;
+                DetermineIntermediateVertexPosition(fromVertex, toVertex, out position,
+                    (new []{origLeftFace.BelongsToPrimitive,origRightFace.BelongsToPrimitive}).Distinct());
                 var addedVertex = new Vertex(DetermineIntermediateVertexPosition(fromVertex, toVertex));
                 // modify original faces with new intermediate vertex
                 var index = origLeftFace.VertexIndex(toVertex);

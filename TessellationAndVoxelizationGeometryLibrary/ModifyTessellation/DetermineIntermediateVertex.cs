@@ -40,6 +40,23 @@ namespace TVGL
             return newPosition.divide(2);
         }
 
+        private static bool DetermineIntermediateVertexPosition(Vertex vertexA, Vertex vertexB, out double[] position,
+            IEnumerable<PrimitiveSurface> primitives)
+        {
+            //if (primitives == null || !primitives.Any())
+            //{
+                position = DetermineIntermediateVertexPosition(vertexA, vertexB);
+                return true;
+            //}
+            //if (primitives.Count() > 3)
+            //{
+            //    position = null;
+            //    return false;
+            //}
+            //position = null;
+            //return false;
+        }
+
         /// <summary>
         ///     Adjusts the position of kept vertex experimental.
         /// </summary>
