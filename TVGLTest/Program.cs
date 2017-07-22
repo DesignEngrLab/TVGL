@@ -78,7 +78,7 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*.stl");
+            var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 var filename = fileNames[i].FullName;
@@ -153,7 +153,7 @@ namespace TVGL_Test
             //Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             //TVGL.Presenter.ShowWire(ts);
             Debug.WriteLine("simplify*****");
-            ts.Simplify(15);
+            ts.Simplify(ts.NumberOfFaces);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);

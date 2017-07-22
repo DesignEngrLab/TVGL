@@ -22,13 +22,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>
+    </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
@@ -106,13 +108,9 @@
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.NET4.5\TessellationAndVoxelizationGeometryLibrary.NET4.5.csproj">
-      <Project>{b2d2586a-5f3b-4122-b10e-4ac143c05ea4}</Project>
-      <Name>TessellationAndVoxelizationGeometryLibrary.NET4.5</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj">
-      <Project>{8c1364cc-908a-4174-b62c-21ec4839584d}</Project>
-      <Name>TVGL Presenter</Name>
+    <ProjectReference Include="..\TVGLPresenterDebugger\TVGLPresenterDebugger.csproj">
+      <Project>{f6678d6c-1f71-4f4e-ac77-22f5e133a6f2}</Project>
+      <Name>TVGLPresenterDebugger</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

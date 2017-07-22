@@ -67,9 +67,9 @@ namespace TVGL
                     "** The model should be free of errors before running this routine (run TessellatedSolid.Repair()).",
                     1);
             var sortedEdges = ts.Edges.OrderBy(e => e.Length).ToList();
-            var removedEdges = new SortedSet<Edge>(new SortByIndexInList());
-            var removedVertices = new SortedSet<Vertex>(new SortByIndexInList());
-            var removedFaces = new SortedSet<PolygonalFace>(new SortByIndexInList());
+            var removedEdges = new List<Edge>();
+            var removedVertices = new List<Vertex>();
+            var removedFaces = new List<PolygonalFace>();
 
             var edge = sortedEdges[0];
             var iterations = numberOfFaces > 0 ? (int)Math.Ceiling(numberOfFaces / 2.0) : numberOfFaces;
