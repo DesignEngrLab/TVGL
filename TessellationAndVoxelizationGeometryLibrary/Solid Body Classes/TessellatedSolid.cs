@@ -736,26 +736,26 @@ namespace TVGL
             NumberOfVertices += numToAdd;
         }
 
-        internal void ReplaceVertex(Vertex removeVertex, Vertex newVertex, bool removeReferecesToVertex = true)
+        internal void ReplaceVertex(Vertex removeVertex, Vertex newVertex, bool removeReferencesInOtherElements = true)
         {
-            ReplaceVertex(Vertices.FindIndex(removeVertex), newVertex, removeReferecesToVertex);
+            ReplaceVertex(Vertices.FindIndex(removeVertex), newVertex, removeReferencesInOtherElements);
         }
 
-        internal void ReplaceVertex(int removeVIndex, Vertex newVertex, bool removeReferecesToVertex = true)
+        internal void ReplaceVertex(int removeVIndex, Vertex newVertex, bool removeReferencesInOtherElements = true)
         {
-            if (removeReferecesToVertex) RemoveReferencesToVertex(Vertices[removeVIndex]);
+            if (removeReferencesInOtherElements) RemoveReferencesToVertex(Vertices[removeVIndex]);
             newVertex.IndexInList = removeVIndex;
             Vertices[removeVIndex] = newVertex;
         }
 
-        internal void RemoveVertex(Vertex removeVertex, bool removeReferecesToVertex = true)
+        internal void RemoveVertex(Vertex removeVertex, bool removeReferencesInOtherElements = true)
         {
-            RemoveVertex(Vertices.FindIndex(removeVertex), removeReferecesToVertex);
+            RemoveVertex(Vertices.FindIndex(removeVertex), removeReferencesInOtherElements);
         }
 
-        internal void RemoveVertex(int removeVIndex, bool removeReferecesToVertex = true)
+        internal void RemoveVertex(int removeVIndex, bool removeReferencesInOtherElements = true)
         {
-            if (removeReferecesToVertex) RemoveReferencesToVertex(Vertices[removeVIndex]);
+            if (removeReferencesInOtherElements) RemoveReferencesToVertex(Vertices[removeVIndex]);
             NumberOfVertices--;
             var newVertices = new Vertex[NumberOfVertices];
             for (var i = 0; i < removeVIndex; i++)
@@ -770,17 +770,16 @@ namespace TVGL
             UpdateAllEdgeCheckSums();
         }
 
-        internal void RemoveVertices(IEnumerable<Vertex> removeVertices)
+        internal void RemoveVertices(IEnumerable<Vertex> removeVertices, bool removeReferencesInOtherElements = true)
         {
-            RemoveVertices(removeVertices.Select(Vertices.FindIndex).ToList());
+            RemoveVertices(removeVertices.Select(Vertices.FindIndex).ToList(), removeReferencesInOtherElements);
         }
 
-        internal void RemoveVertices(List<int> removeIndices)
+        internal void RemoveVertices(List<int> removeIndices, bool removeReferencesInOtherElements = true)
         {
-            foreach (var vertexIndex in removeIndices)
-            {
-                RemoveReferencesToVertex(Vertices[vertexIndex]);
-            }
+            if (removeReferencesInOtherElements)
+                foreach (var vertexIndex in removeIndices)
+                    RemoveReferencesToVertex(Vertices[vertexIndex]);
             var offset = 0;
             var numToRemove = removeIndices.Count;
             removeIndices.Sort();
@@ -834,15 +833,16 @@ namespace TVGL
             NumberOfFaces += numToAdd;
         }
 
-        internal void RemoveFace(PolygonalFace removeFace)
+        internal void RemoveFace(PolygonalFace removeFace, bool removeReferencesInOtherElements = true)
         {
-            RemoveFace(Faces.FindIndex(removeFace));
+            RemoveFace(Faces.FindIndex(removeFace), removeReferencesInOtherElements);
         }
 
-        internal void RemoveFace(int removeFaceIndex)
+        internal void RemoveFace(int removeFaceIndex, bool removeReferencesInOtherElements = true)
         {
-            //First. Remove all the references to each edge and vertex.
-            RemoveReferencesToFace(removeFaceIndex);
+            if (removeReferencesInOtherElements)
+                //First. Remove all the references to each edge and vertex.
+                RemoveReferencesToFace(removeFaceIndex);
             NumberOfFaces--;
             var newFaces = new PolygonalFace[NumberOfFaces];
             for (var i = 0; i < removeFaceIndex; i++)
@@ -855,18 +855,17 @@ namespace TVGL
             Faces = newFaces;
         }
 
-        internal void RemoveFaces(IEnumerable<PolygonalFace> removeFaces)
+        internal void RemoveFaces(IEnumerable<PolygonalFace> removeFaces, bool removeReferencesInOtherElements = true)
         {
-            RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList());
+            RemoveFaces(removeFaces.Select(Faces.FindIndex).ToList(), removeReferencesInOtherElements);
         }
 
-        internal void RemoveFaces(List<int> removeIndices)
+        internal void RemoveFaces(List<int> removeIndices, bool removeReferencesInOtherElements = true)
         {
             //First. Remove all the references to each edge and vertex.
-            foreach (var faceIndex in removeIndices)
-            {
-                RemoveReferencesToFace(faceIndex);
-            }
+            if (removeReferencesInOtherElements)
+                foreach (var faceIndex in removeIndices)
+                    RemoveReferencesToFace(faceIndex);
             var offset = 0;
             var numToRemove = removeIndices.Count;
             removeIndices.Sort();
@@ -877,7 +876,7 @@ namespace TVGL
                 while (offset < numToRemove && i + offset == removeIndices[offset])
                     offset++;
                 newFaces[i] = Faces[i + offset];
-                    newFaces[i].IndexInList = i;
+                newFaces[i].IndexInList = i;
             }
             Faces = newFaces;
         }
@@ -928,14 +927,15 @@ namespace TVGL
             NumberOfEdges += numToAdd;
         }
 
-        internal void RemoveEdge(Edge removeEdge)
+        internal void RemoveEdge(Edge removeEdge, bool removeReferencesInOtherElements = true)
         {
-            RemoveEdge(Edges.FindIndex(removeEdge));
+            RemoveEdge(Edges.FindIndex(removeEdge), removeReferencesInOtherElements);
         }
 
-        internal void RemoveEdge(int removeEdgeIndex)
+        internal void RemoveEdge(int removeEdgeIndex, bool removeReferencesInOtherElements = true)
         {
-            RemoveReferencesToEdge(removeEdgeIndex);
+            if (removeReferencesInOtherElements)
+                RemoveReferencesToEdge(removeEdgeIndex);
             NumberOfEdges--;
             var newEdges = new Edge[NumberOfEdges];
             for (var i = 0; i < removeEdgeIndex; i++)
@@ -948,18 +948,17 @@ namespace TVGL
             Edges = newEdges;
         }
 
-        internal void RemoveEdges(IEnumerable<Edge> removeEdges)
+        internal void RemoveEdges(IEnumerable<Edge> removeEdges, bool removeReferencesInOtherElements = true)
         {
-            RemoveEdges(removeEdges.Select(Edges.FindIndex).ToList());
+            RemoveEdges(removeEdges.Select(Edges.FindIndex).ToList(), removeReferencesInOtherElements);
         }
 
-        internal void RemoveEdges(List<int> removeIndices)
+        internal void RemoveEdges(List<int> removeIndices, bool removeReferencesInOtherElements = true)
         {
-            //First. Remove all the references to each edge and vertex.
-            foreach (var edgeIndex in removeIndices)
-            {
-                RemoveReferencesToEdge(edgeIndex);
-            }
+            if (removeReferencesInOtherElements)
+                //First. Remove all the references to each edge and vertex.
+                foreach (var edgeIndex in removeIndices)
+                    RemoveReferencesToEdge(edgeIndex);
             var offset = 0;
             var numToRemove = removeIndices.Count;
             removeIndices.Sort();

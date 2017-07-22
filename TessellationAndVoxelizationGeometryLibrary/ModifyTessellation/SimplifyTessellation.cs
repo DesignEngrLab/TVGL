@@ -70,7 +70,8 @@ namespace TVGL
             var removedEdges = new List<Edge>();
             var removedVertices = new List<Vertex>();
             var removedFaces = new List<PolygonalFace>();
-
+            List<PrimitiveSurface> primitives = new List<PrimitiveSurface>();
+            bool WithPrimitives = ts.Primitives != null && ts.Primitives.Any();
             var edge = sortedEdges[0];
             var iterations = numberOfFaces > 0 ? (int)Math.Ceiling(numberOfFaces / 2.0) : numberOfFaces;
             while (iterations != 0 && edge.Length <= minLength)
@@ -99,13 +100,17 @@ namespace TVGL
                         .Intersect(otherEdgesOnTheRemoveSide.Select(e => e.OtherVertex(removedVertex)))
                         .Any())
                 {
-                    iterations--; //now that we passed that test, we can be assured that the reduction will go through
-                    // move the keepVertex
-                    var primitives = removedVertex.Faces.Select(f => f.BelongsToPrimitive).Distinct()
-                        .Union(keepVertex.Faces.Select(f => f.BelongsToPrimitive));
+                    if (WithPrimitives)
+                    {
+                        primitives.Clear();
+                        primitives.AddRange(removedVertex.Faces.Select(f => f.BelongsToPrimitive));
+                        primitives.AddRange(keepVertex.Faces.Select(f => f.BelongsToPrimitive));
+                        primitives = primitives.Distinct().ToList();
+                    }
                     double[] position;
                     if (DetermineIntermediateVertexPosition(removedVertex, keepVertex, out position, primitives))
                     {
+                        iterations--; //now that we passed that test, we can be assured that the reduction will go through
                         keepVertex.Position = position;
                         // add and remove to the lists at the top of this method
                         removedEdges.Add(edge);
@@ -173,9 +178,9 @@ namespace TVGL
                 if (sortedEdges.Any()) edge = sortedEdges[0];
                 else break;
             }
-            ts.RemoveEdges(removedEdges.Select(e => e.IndexInList).ToList());
-            ts.RemoveFaces(removedFaces.Select(f => f.IndexInList).ToList());
-            ts.RemoveVertices(removedVertices.Select(v => v.IndexInList).ToList());
+            ts.RemoveEdges(removedEdges.Select(e => e.IndexInList).ToList(), false);
+            ts.RemoveFaces(removedFaces.Select(f => f.IndexInList).ToList(), false);
+            ts.RemoveVertices(removedVertices.Select(v => v.IndexInList).ToList(), false);
         }
     }
 }

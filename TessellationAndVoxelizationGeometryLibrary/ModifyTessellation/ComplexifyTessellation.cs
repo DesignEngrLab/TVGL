@@ -54,7 +54,7 @@ namespace TVGL
 
 
         /// <summary>
-        /// Complexifies the tesssellation so that no edge is longer than provided the maximum edge length
+        /// Complexifies the tessellation so that no edge is longer than provided the maximum edge length
         /// or for adding the provided number of faces - whichever comes first
         /// </summary>
         /// <param name="ts">The ts.</param>
@@ -67,6 +67,8 @@ namespace TVGL
             var addedVertices = new List<Vertex>();
             var addedFaces = new List<PolygonalFace>();
             var edge = sortedEdges.First();
+            List<PrimitiveSurface> primitives = new List<PrimitiveSurface>();
+            bool WithPrimitives = ts.Primitives != null && ts.Primitives.Any();
             var iterations = numberOfFaces > 0 ? (int)Math.Ceiling(numberOfFaces / 2.0) : numberOfFaces;
             while (iterations-- != 0 && edge.Length >= maxLength)
             {
@@ -78,9 +80,16 @@ namespace TVGL
                 var fromVertex = edge.From;
                 var toVertex = edge.To;
                 double[] position;
-                DetermineIntermediateVertexPosition(fromVertex, toVertex, out position,
-                    (new []{origLeftFace.BelongsToPrimitive,origRightFace.BelongsToPrimitive}).Distinct());
-                var addedVertex = new Vertex(DetermineIntermediateVertexPosition(fromVertex, toVertex));
+                if (WithPrimitives)
+                {
+                    primitives.Clear();
+                    if (origLeftFace.BelongsToPrimitive != null) primitives.Add(origLeftFace.BelongsToPrimitive);
+                    if (origRightFace.BelongsToPrimitive != null && origRightFace.BelongsToPrimitive != origLeftFace.BelongsToPrimitive)
+                        primitives.Add(origRightFace.BelongsToPrimitive);
+                    DetermineIntermediateVertexPosition(fromVertex, toVertex, out position, primitives);
+                }
+                else position = DetermineIntermediateVertexPosition(fromVertex, toVertex);
+                var addedVertex = new Vertex(position);
                 // modify original faces with new intermediate vertex
                 var index = origLeftFace.VertexIndex(toVertex);
                 origLeftFace.Vertices[index] = addedVertex;
