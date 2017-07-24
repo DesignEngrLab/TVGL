@@ -28,18 +28,18 @@ namespace TVGL
         /// Complexifies the model by splitting the any edges that are half or more than the longest edge. 
         /// </summary>
         /// <param name="ts">The ts.</param>
-        public static void Complexify(this TessellatedSolid ts)
+        public static void Complexify(this TessellatedSolid ts, bool usePrimitives = true)
         {
-            Complexify(ts, ts.NumberOfFaces / 2, ts.Edges.Max(x => x.Length) * 0.5);
+            Complexify(ts, ts.NumberOfFaces / 2, ts.Edges.Max(x => x.Length) * 0.5, usePrimitives);
         }
         /// <summary>
         /// Complexifies the tessellation by adding more faces of the provided number.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="numberOfNewFaces">The number of faces.</param>
-        public static void Complexify(this TessellatedSolid ts, int numberOfNewFaces)
+        public static void Complexify(this TessellatedSolid ts, int numberOfNewFaces, bool usePrimitives = true)
         {
-            Complexify(ts, numberOfNewFaces, 0.0);
+            Complexify(ts, numberOfNewFaces, 0.0, usePrimitives);
         }
 
         /// <summary>
@@ -47,9 +47,9 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="maxLength">The tolerance.</param>
-        public static void Complexify(this TessellatedSolid ts, double maxLength)
+        public static void Complexify(this TessellatedSolid ts, double maxLength, bool usePrimitives = true)
         {
-            Complexify(ts, -1, maxLength);
+            Complexify(ts, -1, maxLength, usePrimitives);
         }
 
 
@@ -60,15 +60,17 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         /// <param name="numberOfFaces">The number of new faces to add.</param>
         /// <param name="maxLength">The maximum length.</param>
-        public static void Complexify(TessellatedSolid ts, int numberOfFaces, double maxLength)
+        public static void Complexify(TessellatedSolid ts, int numberOfFaces, double maxLength, bool usePrimitives = true)
         {
             var sortedEdges = new SortedSet<Edge>(ts.Edges, new SortByLength(false));
             var addedEdges = new List<Edge>();
             var addedVertices = new List<Vertex>();
             var addedFaces = new List<PolygonalFace>();
-            var edge = sortedEdges.First();
             List<PrimitiveSurface> primitives = new List<PrimitiveSurface>();
-            bool WithPrimitives = ts.Primitives != null && ts.Primitives.Any();
+            if (usePrimitives && (ts.Primitives == null || !ts.Primitives.Any()))
+                ts.ClassifyPrimitiveSurfaces();
+            usePrimitives = usePrimitives && ts.Primitives.Any();
+            var edge = sortedEdges.First();
             var iterations = numberOfFaces > 0 ? (int)Math.Ceiling(numberOfFaces / 2.0) : numberOfFaces;
             while (iterations-- != 0 && edge.Length >= maxLength)
             {
@@ -80,7 +82,7 @@ namespace TVGL
                 var fromVertex = edge.From;
                 var toVertex = edge.To;
                 double[] position;
-                if (WithPrimitives)
+                if (usePrimitives)
                 {
                     primitives.Clear();
                     if (origLeftFace.BelongsToPrimitive != null && origLeftFace.BelongsToPrimitive.Type!=PrimitiveSurfaceType.Dense)

@@ -28,9 +28,9 @@ namespace TVGL
         /// than double the shortest edge length
         /// </summary>
         /// <param name="ts">The ts.</param>
-        public static void Simplify(this TessellatedSolid ts)
+        public static void Simplify(this TessellatedSolid ts, bool usePrimitives = true)
         {
-            Simplify(ts, ts.NumberOfFaces / 2, ts.Edges.Min(x => x.Length) * 2.0);
+            Simplify(ts, ts.NumberOfFaces / 2, ts.Edges.Min(x => x.Length) * 2.0, usePrimitives);
         }
 
         /// <summary>
@@ -38,9 +38,9 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="numberOfFacesToRemove">The number of faces.</param>
-        public static void Simplify(this TessellatedSolid ts, int numberOfFacesToRemove)
+        public static void Simplify(this TessellatedSolid ts, int numberOfFacesToRemove, bool usePrimitives = true)
         {
-            Simplify(ts, numberOfFacesToRemove, double.PositiveInfinity);
+            Simplify(ts, numberOfFacesToRemove, double.PositiveInfinity, usePrimitives);
         }
 
         /// <summary>
@@ -48,19 +48,20 @@ namespace TVGL
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="minLength">The minimum length.</param>
-        public static void Simplify(this TessellatedSolid ts, double minLength)
+        public static void Simplify(this TessellatedSolid ts, double minLength, bool usePrimitives = true)
         {
-            Simplify(ts, -1, minLength);
+            Simplify(ts, -1, minLength, usePrimitives);
         }
 
-        /// <summary>        
+        /// <summary>
         /// Simplifies the tessellation so that no edge are shorter than provided the minimum edge length
         /// or until the provided number of faces are removed - whichever comes first.
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="numberOfFaces">The number of faces to remove.</param>
         /// <param name="minLength">The minimum length.</param>
-        public static void Simplify(TessellatedSolid ts, int numberOfFaces, double minLength)
+        /// <param name="usePrimitives">if set to <c>true</c> [use primitives].</param>
+        public static void Simplify(TessellatedSolid ts, int numberOfFaces, double minLength, bool usePrimitives = true)
         {
             if (ts.Errors != null)
                 Message.output(
@@ -71,13 +72,15 @@ namespace TVGL
             var removedVertices = new List<Vertex>();
             var removedFaces = new List<PolygonalFace>();
             List<PrimitiveSurface> primitives = new List<PrimitiveSurface>();
-            bool WithPrimitives = ts.Primitives != null && ts.Primitives.Any();
+            if (usePrimitives && (ts.Primitives == null || !ts.Primitives.Any()))
+                ts.ClassifyPrimitiveSurfaces();
+            usePrimitives = usePrimitives && ts.Primitives.Any();
             var edge = sortedEdges[0];
             var iterations = numberOfFaces > 0 ? (int)Math.Ceiling(numberOfFaces / 2.0) : numberOfFaces;
             while (iterations != 0 && edge.Length <= minLength)
             {
                 sortedEdges.RemoveAt(0);
-                if (WithPrimitives)
+                if (usePrimitives)
                 {
                     primitives.Clear();
                     primitives.AddRange(edge.To.Faces.Select(f => f.BelongsToPrimitive));

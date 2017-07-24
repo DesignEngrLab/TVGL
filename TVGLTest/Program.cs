@@ -78,7 +78,7 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("Casing*");
+            var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 var filename = fileNames[i].FullName;
@@ -145,20 +145,20 @@ namespace TVGL_Test
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             //TVGL.Presenter.ShowWire(ts);
-            //ts.Complexify(ts.NumberOfFaces);
-            //if (!ts.CheckModelIntegrity(false)) Console.WriteLine("------------------>Failed to complexify " + ts.Name);
-            //Debug.WriteLine("complexify*****");
-            //Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
-            //Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
-            //Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            //TVGL.Presenter.ShowWire(ts);
+            ts.Complexify(ts.NumberOfFaces, false);
+            if (!ts.CheckModelIntegrity(false)) Console.WriteLine("------------------>Failed to complexify " + ts.Name);
+            Debug.WriteLine("complexify*****");
+            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
+            TVGL.Presenter.ShowWire(ts);
             Debug.WriteLine("simplify*****");
-            ts.Simplify(ts.NumberOfFaces);
+            ts.Simplify(ts.NumberOfFaces, false);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             if (!ts.CheckModelIntegrity(false)) Console.WriteLine("=============>Failed to simplify " + ts.Name);
-           // TVGL.Presenter.ShowWire(ts);
+            TVGL.Presenter.ShowWire(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)
