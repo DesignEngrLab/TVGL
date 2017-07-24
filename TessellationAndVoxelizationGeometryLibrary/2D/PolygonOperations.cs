@@ -36,6 +36,7 @@ namespace TVGL
         /// <returns></returns>
         public static double Length(IList<Point> path)
         {
+            if (path.Count < 2) return 0.0;
             var editPath = new List<Point>(path) {path.First()};
             var length = 0.0;
             for (var i = 0; i < editPath.Count - 1; i++)

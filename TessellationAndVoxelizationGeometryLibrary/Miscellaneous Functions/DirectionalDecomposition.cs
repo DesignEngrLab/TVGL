@@ -530,6 +530,11 @@ namespace TVGL
             public List<Point> Path2D;
 
             /// <summary>
+            /// Gets the length of the path
+            /// </summary>
+            public double Length => PolygonOperations.Length(Path2D);
+
+            /// <summary>
             /// The 3D list of intersection vertices that define this polygon in the cross section
             /// </summary>
             public List<Vertex> Path3D;
@@ -685,7 +690,10 @@ namespace TVGL
                 out bottomVertices, out topVertices);
 
             //Set step size to an even increment over the entire length of the solid
-            stepSize = length / Math.Round(length / stepSize + 1);
+            //This will produce Math.Round(length/stepSize) - 1 number of steps, 
+            //With a start and finish that are somewhat different, since they do not
+            //slice through the part.
+            stepSize = length / Math.Round(length / stepSize);
 
             //make the minimum step size 1/10 of the length.
             if (length < 10 * stepSize)
@@ -696,6 +704,9 @@ namespace TVGL
             //This is a list of all the step indices matched with its distance along the axis.
             //This may be different that just multiplying the step index by the step size, because
             //minor adjustments occur to avoid cutting through vertices.
+            //The first step distance will be with 0 movement, and the last will be at the end of the part.
+            //These two outer distances are somewhat undefined, since they do not slice through the part.
+            //For these, we will assume that their cross section is the same as the closest slice.
             stepDistances = new Dictionary<int, double>();
 
             //Choose whichever min offset is smaller
@@ -727,11 +738,13 @@ namespace TVGL
             var furthestDistance = sortedVertices.Last().Item2;
             var distanceAlongAxis = firstDistance;
             var currentVertexIndex = 0;
-            var stepIndex = 0;
 
+            //The step index will start at 1, since we will add step 0 at the same time for the first cross section.
+            var stepIndex = 1;
             while (distanceAlongAxis < furthestDistance - stepSize)
             {
                 //This is the current distance along the axis. It will move forward by the step size during each iteration.
+                //
                 distanceAlongAxis += stepSize;
 
                 //inPlaneEdges is a list of edges that are added to the edge list and removed in the same step.
@@ -811,21 +824,25 @@ namespace TVGL
                     UpdateSegments(segmentationData, inStepVertices, sortedVertexDistanceLookup, direction,
                         ref allDirectionalSegments, ts);
 
+                    //Adjust the first segments to start at the very edges of the part
+                    //This adjustment is only done for the first and last step. Other sections of the part, 
+                    //will start or end slightly out of the segments bounds, but never with a thickness of a full step size.
+                    //So, I chose to ignore the those other sections. If you need to find the exact start and end distance 
+                    //Of a segment, use its vertices and the vertexDistanceDictionary
+                    if (stepIndex == 1)
+                    {
+                        stepDistances.Add(0, firstDistance);
+                        foreach (var segment in allDirectionalSegments.Values)
+                        {
+                            segment.InsertCrossSectionDataGroupAtStart(firstDistance);
+                        }
+                    }
                     stepDistances.Add(stepIndex, distanceAlongAxis);
 
-                    foreach(var vertex in inStepVertices)
+                    foreach (var vertex in inStepVertices)
                     {
                         referenceVerticesByStepIndex.Add(vertex.IndexInList, stepIndex);
                     }
-
-                    //Adjust the first segments to start at the very edges of the part
-                    if (stepIndex == 0)
-                    {
-                        foreach (var segment in allDirectionalSegments.Values)
-                        {
-                            segment.StartDistanceAlongSearchDirection = firstDistance;
-                        }
-                    } 
                 }
                 stepIndex++;
             }
@@ -875,8 +892,9 @@ namespace TVGL
                 segment.SetReferenceVerticesByStepIndex(referenceVerticesByStepIndex);
                 
                 //Adjust the last segments to start at the very edges of the part
-                segment.EndDistanceAlongSearchDirection = furthestDistance;
+                segment.AddCrossSectionDataGroupToEnd(furthestDistance);
             }
+            stepDistances.Add(stepIndex, furthestDistance);
 
             return allDirectionalSegments.Values.ToList();
         }
@@ -1701,32 +1719,30 @@ namespace TVGL
             /// <summary>
             /// Gets the start distance of this segment along the search direction
             /// </summary>
-            public double StartDistanceAlongSearchDirection
-            {
-                get { return CrossSectionPathDictionary.First().Value.First().DistanceAlongSearchDirection; }
-                set { CrossSectionPathDictionary.First().Value.First().DistanceAlongSearchDirection = value; }
-            }
+            public double StartDistanceAlongSearchDirection => 
+                CrossSectionPathDictionary[StartStepIndexAlongSearchDirection].First().DistanceAlongSearchDirection;
 
             /// <summary>
             /// Gets the start index of this segment along the search direction
             /// </summary>
-            public int StartStepIndexAlongSearchDirection
-                => CrossSectionPathDictionary.First().Value.First().StepIndex; 
+            //Note: calling First() on a dictionary is calling for trouble 
+            //(https://stackoverflow.com/questions/13979966/get-first-element-from-a-dictionary)
+            //Instead, use the minimum key (stepIndex)
+            public int StartStepIndexAlongSearchDirection => CrossSectionPathDictionary.Keys.Min();
 
             /// <summary>
             /// Gets the end distance of this segment along the search direction
             /// </summary>
-            public double EndDistanceAlongSearchDirection
-            {
-                get { return CrossSectionPathDictionary.Last().Value.First().DistanceAlongSearchDirection; }
-                set { CrossSectionPathDictionary.Last().Value.First().DistanceAlongSearchDirection = value; }
-            }
+            public double EndDistanceAlongSearchDirection => 
+                CrossSectionPathDictionary[EndStepIndexAlongSearchDirection].First().DistanceAlongSearchDirection;
 
             /// <summary>
             /// Gets the end index of this segment along the search direction
             /// </summary>
-            public int EndStepIndexAlongSearchDirection
-                => CrossSectionPathDictionary.Last().Value.First().StepIndex;
+            ///  //Note: calling Last() on a dictionary is calling for trouble 
+            //(https://stackoverflow.com/questions/13979966/get-first-element-from-a-dictionary)
+            //Instead, use the maximum key (stepIndex)
+            public int EndStepIndexAlongSearchDirection => CrossSectionPathDictionary.Keys.Max();
 
             /// <summary>
             /// The direction by which the directional segment was defined. The cross sections and face references will be ordered
@@ -1913,6 +1929,131 @@ namespace TVGL
                     if (negativePolygonDataGroup.SegmentIndex == -1)
                     {
                         throw new Exception("Blind Hole was not assigned to any a pre-existing segment.");
+                    }
+                }
+            }
+
+            internal void AddCrossSectionDataGroupToEnd(double furthestDistance)
+            {
+                //The cross section path dictionary should contain an cross section at the step index of 1.
+                var crossSectionDataGroup = CrossSectionPathDictionary[EndStepIndexAlongSearchDirection];
+                foreach (var polygonDataGroup in crossSectionDataGroup)
+                {
+                    //This data group now belongs to this segment
+                    //Since it does not correspond exactly with the 3D vertices or edges, 
+                    //set them to null so they are not accidently used.
+                    var newPolygonDataGroup = new PolygonDataGroup(
+                        polygonDataGroup.Path2D,
+                        null,
+                        null,
+                        polygonDataGroup.Area,
+                        polygonDataGroup.IndexInCrossSection,
+                        EndStepIndexAlongSearchDirection + 1,
+                        furthestDistance);
+
+                    //Update the cross section path dictionary
+                    if (CrossSectionPathDictionary.ContainsKey(newPolygonDataGroup.StepIndex))
+                    {
+                        //Add negative polygon data groups 
+                        if (newPolygonDataGroup.Area < 0.0)
+                        {
+                            CrossSectionPathDictionary[newPolygonDataGroup.StepIndex].Add(newPolygonDataGroup);
+                        }
+                        else
+                        {
+                            //This is a positive polygon
+                            //Check to make sure that we are not addind a second positive polygon to the same step index 
+                            //We can only have one per segment per step 
+                            if (CrossSectionPathDictionary[newPolygonDataGroup.StepIndex].Any(p => p.Area > 0.0))
+                            {
+                                //if there are any other positive polygon data groups, throw an error
+                                throw new Exception("Multiple Positive Polygons in same step of segment. " +
+                                                    "We can only have one per segment per step.");
+                            }
+                            CrossSectionPathDictionary[newPolygonDataGroup.StepIndex].Add(newPolygonDataGroup);
+                        }
+                    }
+                    else
+                    {
+                        //Note: We don't actually have to insert (you can't do that on a dictionary), but it is irrelevant, 
+                        //Since the order of the dictionary items is not gauranteed. 
+                        //https://stackoverflow.com/questions/4802737/how-to-find-minimum-key-in-dictionary
+                        CrossSectionPathDictionary.Add(newPolygonDataGroup.StepIndex, new List<PolygonDataGroup>() { newPolygonDataGroup });
+                    }
+                }
+            }
+
+
+            /// <summary>
+            /// Gets the first fully defined cross section (StepIndex == 0 is not fully defined)
+            /// </summary>
+            /// <returns></returns>
+            public List<PolygonDataGroup> FirstFullyDefinedCrossSection()
+            {
+                return StartStepIndexAlongSearchDirection == 0 ? CrossSectionPathDictionary[1] : 
+                    CrossSectionPathDictionary[StartStepIndexAlongSearchDirection];
+            }
+
+
+            /// <summary>
+            /// Gets the last fully defined cross section (The very last StepIndex for a part is not fully defined)
+            /// </summary>
+            /// <returns></returns>
+            public List<PolygonDataGroup> LastFullyDefinedCrossSection()
+            {
+                var polygonDataGroup = CrossSectionPathDictionary[EndStepIndexAlongSearchDirection].First();
+                return polygonDataGroup.Path3D == null ? CrossSectionPathDictionary[EndStepIndexAlongSearchDirection - 1] 
+                    : CrossSectionPathDictionary[EndStepIndexAlongSearchDirection];
+            }
+
+            /// <summary>
+            /// Adds a polygon data group and updates the segment accordingly
+            /// </summary>
+            public void InsertCrossSectionDataGroupAtStart(double firstDistance)
+            {
+                //The cross section path dictionary should contain an cross section at the step index of 1.
+                var crossSectionDataGroup = CrossSectionPathDictionary[1];
+                foreach (var polygonDataGroup in crossSectionDataGroup)
+                {
+                    //Since it does not correspond exactly with the 3D vertices or edges, 
+                    //set them to null so they are not accidently used.
+                    var newPolygonDataGroup = new PolygonDataGroup(
+                        polygonDataGroup.Path2D,
+                        null,
+                        null, 
+                        polygonDataGroup.Area, 
+                        polygonDataGroup.IndexInCrossSection, 
+                        0, 
+                        firstDistance);
+
+                    //Update the cross section path dictionary
+                    if (CrossSectionPathDictionary.ContainsKey(newPolygonDataGroup.StepIndex))
+                    {
+                        //Add negative polygon data groups 
+                        if (newPolygonDataGroup.Area < 0.0)
+                        {
+                            CrossSectionPathDictionary[newPolygonDataGroup.StepIndex].Add(newPolygonDataGroup);
+                        }
+                        else
+                        {
+                            //This is a positive polygon
+                            //Check to make sure that we are not addind a second positive polygon to the same step index 
+                            //We can only have one per segment per step 
+                            if (CrossSectionPathDictionary[newPolygonDataGroup.StepIndex].Any(p => p.Area > 0.0))
+                            {
+                                //if there are any other positive polygon data groups, throw an error
+                                throw new Exception("Multiple Positive Polygons in same step of segment. " +
+                                                    "We can only have one per segment per step.");
+                            }
+                            CrossSectionPathDictionary[newPolygonDataGroup.StepIndex].Add(newPolygonDataGroup);
+                        }
+                    }
+                    else
+                    {
+                        //Note: We don't actually have to insert (you can't do that on a dictionary), but it is irrelevant, 
+                        //Since the order of the dictionary items is not gauranteed. 
+                        //https://stackoverflow.com/questions/4802737/how-to-find-minimum-key-in-dictionary
+                        CrossSectionPathDictionary.Add(newPolygonDataGroup.StepIndex, new List<PolygonDataGroup>() { newPolygonDataGroup });
                     }
                 }
             }
