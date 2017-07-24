@@ -83,10 +83,12 @@ namespace TVGL
                 if (WithPrimitives)
                 {
                     primitives.Clear();
-                    if (origLeftFace.BelongsToPrimitive != null) primitives.Add(origLeftFace.BelongsToPrimitive);
-                    if (origRightFace.BelongsToPrimitive != null && origRightFace.BelongsToPrimitive != origLeftFace.BelongsToPrimitive)
+                    if (origLeftFace.BelongsToPrimitive != null && origLeftFace.BelongsToPrimitive.Type!=PrimitiveSurfaceType.Dense)
+                        primitives.Add(origLeftFace.BelongsToPrimitive);
+                    if (origRightFace.BelongsToPrimitive != null && origLeftFace.BelongsToPrimitive.Type != PrimitiveSurfaceType.Dense 
+                        && origRightFace.BelongsToPrimitive != origLeftFace.BelongsToPrimitive)
                         primitives.Add(origRightFace.BelongsToPrimitive);
-                    DetermineIntermediateVertexPosition(fromVertex, toVertex, out position, primitives);
+                    DetermineIntermediateVertexPosition(edge, out position, primitives);
                 }
                 else position = DetermineIntermediateVertexPosition(fromVertex, toVertex);
                 var addedVertex = new Vertex(position);

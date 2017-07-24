@@ -925,7 +925,7 @@ namespace TVGL
             }
             var normalOfGaussPlane = new double[3];
             normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current.add(c));
-            normalOfGaussPlane = normalOfGaussPlane.divide(normalsOfGaussPlane.Count);
+            normalOfGaussPlane = normalOfGaussPlane.normalize();
 
             var distance = faces.Sum(face => face.Normal.dotProduct(normalOfGaussPlane));
             if (distance < 0)
@@ -938,8 +938,8 @@ namespace TVGL
                 distance /= n;
                 axis = normalOfGaussPlane;
             }
-            coneAngle = Math.Asin(distance);
-            return (Math.Abs(distance) >= Parameters.MinConeGaussPlaneOffset);
+            coneAngle = 2 * Math.Asin(distance);
+            return distance >= Parameters.MinConeGaussPlaneOffset;
         }
 
         private static bool IsReallyATorus(IEnumerable<PolygonalFace> faces)

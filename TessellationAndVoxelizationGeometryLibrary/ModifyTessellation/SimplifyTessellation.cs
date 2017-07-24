@@ -77,38 +77,38 @@ namespace TVGL
             while (iterations != 0 && edge.Length <= minLength)
             {
                 sortedEdges.RemoveAt(0);
-                // naming conventions to ease the latter topological changes
-                var removedVertex = edge.From;
-                var keepVertex = edge.To;
-                var leftFace = edge.OtherFace;
-                var rightFace = edge.OwnedFace;
-                var leftRemoveEdge = leftFace.OtherEdge(keepVertex);
-                var rightRemoveEdge = rightFace.OtherEdge(keepVertex);
-                var leftKeepEdge = leftFace.OtherEdge(removedVertex);
-                var rightKeepEdge = rightFace.OtherEdge(removedVertex);
-                var leftFarVertex = leftFace.OtherVertex(edge);
-                var rightFarVertex = rightFace.OtherVertex(edge);
-
-                // this is a topologically important check. It ensures that the edge is not deleted if
-                // it serves an important role in ensuring the proper topology of the solid
-                var otherEdgesOnTheKeepSide = keepVertex.Edges.Where(e => e != edge && e != leftKeepEdge && e != rightKeepEdge).ToList();
-                otherEdgesOnTheKeepSide.Remove(edge);
-                var otherEdgesOnTheRemoveSide = removedVertex.Edges.Where(e => e != edge && e != leftRemoveEdge && e != rightRemoveEdge).ToList();
-                otherEdgesOnTheRemoveSide.Remove(edge);
-                if (leftFarVertex != rightFarVertex &&
-                    !otherEdgesOnTheKeepSide.Select(e => e.OtherVertex(keepVertex))
-                        .Intersect(otherEdgesOnTheRemoveSide.Select(e => e.OtherVertex(removedVertex)))
-                        .Any())
+                if (WithPrimitives)
                 {
-                    if (WithPrimitives)
-                    {
-                        primitives.Clear();
-                        primitives.AddRange(removedVertex.Faces.Select(f => f.BelongsToPrimitive));
-                        primitives.AddRange(keepVertex.Faces.Select(f => f.BelongsToPrimitive));
-                        primitives = primitives.Distinct().ToList();
-                    }
-                    double[] position;
-                    if (DetermineIntermediateVertexPosition(removedVertex, keepVertex, out position, primitives))
+                    primitives.Clear();
+                    primitives.AddRange(edge.To.Faces.Select(f => f.BelongsToPrimitive));
+                    primitives.AddRange(edge.From.Faces.Select(f => f.BelongsToPrimitive));
+                    primitives = primitives.Distinct().ToList();
+                }
+                double[] position;
+                if (DetermineIntermediateVertexPosition(edge, out position, primitives))
+                {
+                    // naming conventions to ease the latter topological changes
+                    var removedVertex = edge.From;
+                    var keepVertex = edge.To;
+                    var leftFace = edge.OtherFace;
+                    var rightFace = edge.OwnedFace;
+                    var leftRemoveEdge = leftFace.OtherEdge(keepVertex);
+                    var rightRemoveEdge = rightFace.OtherEdge(keepVertex);
+                    var leftKeepEdge = leftFace.OtherEdge(removedVertex);
+                    var rightKeepEdge = rightFace.OtherEdge(removedVertex);
+                    var leftFarVertex = leftFace.OtherVertex(edge);
+                    var rightFarVertex = rightFace.OtherVertex(edge);
+
+                    // this is a topologically important check. It ensures that the edge is not deleted if
+                    // it serves an important role in ensuring the proper topology of the solid
+                    var otherEdgesOnTheKeepSide = keepVertex.Edges.Where(e => e != edge && e != leftKeepEdge && e != rightKeepEdge).ToList();
+                    otherEdgesOnTheKeepSide.Remove(edge);
+                    var otherEdgesOnTheRemoveSide = removedVertex.Edges.Where(e => e != edge && e != leftRemoveEdge && e != rightRemoveEdge).ToList();
+                    otherEdgesOnTheRemoveSide.Remove(edge);
+                    if (leftFarVertex != rightFarVertex &&
+                        !otherEdgesOnTheKeepSide.Select(e => e.OtherVertex(keepVertex))
+                            .Intersect(otherEdgesOnTheRemoveSide.Select(e => e.OtherVertex(removedVertex)))
+                            .Any())
                     {
                         iterations--; //now that we passed that test, we can be assured that the reduction will go through
                         keepVertex.Position = position;

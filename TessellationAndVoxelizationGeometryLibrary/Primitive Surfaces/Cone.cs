@@ -90,7 +90,8 @@ namespace TVGL
         /// <summary>
         ///     Gets the aperture.
         /// </summary>
-        /// <value>The aperture.</value>
+        /// <value>The aperture is the angle at the top of the cone. It is the widest angle - not to the central axis.
+        /// Thus the max value is pi or 180-degrees as this corresponds to a disc.</value>
         public double Aperture { get;  set; }
 
         /// <summary>
