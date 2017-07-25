@@ -83,8 +83,12 @@ namespace TVGL
                 if (usePrimitives)
                 {
                     primitives.Clear();
-                    primitives.AddRange(edge.To.Faces.Select(f => f.BelongsToPrimitive));
-                    primitives.AddRange(edge.From.Faces.Select(f => f.BelongsToPrimitive));
+                    primitives.AddRange(edge.To.Faces.Where(f => f.BelongsToPrimitive != null
+                                                                 && f.BelongsToPrimitive.Type != PrimitiveSurfaceType.Dense)
+                        .Select(f => f.BelongsToPrimitive));
+                    primitives.AddRange(edge.From.Faces.Where(f => f.BelongsToPrimitive != null
+                                                                 && f.BelongsToPrimitive.Type != PrimitiveSurfaceType.Dense)
+                        .Select(f => f.BelongsToPrimitive));
                     primitives = primitives.Distinct().ToList();
                 }
                 double[] position;

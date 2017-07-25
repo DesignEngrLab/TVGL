@@ -187,6 +187,8 @@ namespace TVGL
             Area += face.Area;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
                 Vertices.Add(v);
+            Faces.Add(face);
+            if (_outerEdges == null) return;
             foreach (var e in face.Edges.Where(e => !InnerEdges.Contains(e)))
             {
                 if (_outerEdges.Contains(e))
@@ -196,7 +198,34 @@ namespace TVGL
                 }
                 else _outerEdges.Add(e);
             }
-            Faces.Add(face);
+        }
+
+        /// <summary>
+        ///     Updates surface by adding face
+        /// </summary>
+        /// <param name="face">The face.</param>
+        public virtual void RemoveFace(PolygonalFace face)
+        {
+            Area -= face.Area;
+            Faces.Remove(face);
+            if (_outerEdges == null) return;
+            var lastEdgeExternal = _outerEdges.Contains(face.Edges[0]);
+            for (var i = face.Edges.Count - 1; i >= 0; i--)
+            {
+                var e = face.Edges[i];
+                if (_innerEdges.Contains(e))
+                {
+                    _outerEdges.Add(e);
+                    _innerEdges.Remove(e);
+                    lastEdgeExternal = false;
+                }
+                else
+                {
+                    _outerEdges.Remove(e);
+                    if (lastEdgeExternal) Vertices.Remove(face.Vertices[i]);
+                    lastEdgeExternal = true;
+                }
+            }
         }
 
         public void CompletePostSerialization(TessellatedSolid ts)
