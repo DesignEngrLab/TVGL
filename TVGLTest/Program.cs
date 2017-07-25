@@ -151,14 +151,14 @@ namespace TVGL_Test
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL.Presenter.ShowWire(ts);
+            //TVGL.Presenter.ShowWire(ts);
             Debug.WriteLine("simplify*****");
             ts.Simplify(ts.NumberOfFaces, false);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             if (!ts.CheckModelIntegrity(false)) Console.WriteLine("=============>Failed to simplify " + ts.Name);
-            TVGL.Presenter.ShowWire(ts);
+            //TVGL.Presenter.ShowWire(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)

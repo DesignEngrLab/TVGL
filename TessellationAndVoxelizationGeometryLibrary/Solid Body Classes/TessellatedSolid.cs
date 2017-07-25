@@ -921,7 +921,7 @@ namespace TVGL
             {
                 newEdges[NumberOfEdges + i] = edgesToAdd[i];
                 if (newEdges[NumberOfEdges + i].EdgeReference <= 0) SetAndGetEdgeChecksum(newEdges[NumberOfEdges + i]);
-                newEdges[NumberOfEdges + i].IndexInList = NumberOfEdges;
+                newEdges[NumberOfEdges + i].IndexInList = NumberOfEdges + i;
             }
             Edges = newEdges;
             NumberOfEdges += numToAdd;
