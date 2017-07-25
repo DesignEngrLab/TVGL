@@ -113,30 +113,40 @@ namespace TVGL
                 {
                     var cyl1 = (Cylinder)primitives.First();
                     var cyl2 = (Cylinder)primitives.Last();
+                    position = DetermineIntermediateVertexPosition(edge.To, edge.From);
+                    return true;
                     throw new NotImplementedException();
                 }
                 else if (primitives.All(p => p.Type == PrimitiveSurfaceType.Sphere))
                 {
                     var s1 = (Sphere)primitives.First();
                     var s2 = (Sphere)primitives.Last();
+                    position = DetermineIntermediateVertexPosition(edge.To, edge.From);
+                    return true;
                     throw new NotImplementedException();
                 }
                 else if (primitives.All(p => p.Type == PrimitiveSurfaceType.Cone))
                 {
                     var c1 = (Cone)primitives.First();
                     var c2 = (Cone)primitives.Last();
+                    position = DetermineIntermediateVertexPosition(edge.To, edge.From);
+                    return true;
                     throw new NotImplementedException();
                 }
                 else if (primitives.All(p => p.Type == PrimitiveSurfaceType.Torus))
                 {
                     var t1 = (Torus)primitives.First();
                     var t2 = (Torus)primitives.Last();
+                    position = DetermineIntermediateVertexPosition(edge.To, edge.From);
+                    return true;
                     throw new NotImplementedException();
                 }
                 #endregion
                 #region Two Different Primitives (25 possibilities!)
 
 
+                position = DetermineIntermediateVertexPosition(edge.To, edge.From);
+                return true;
                 #endregion
             }
 

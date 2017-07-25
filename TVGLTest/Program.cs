@@ -153,7 +153,7 @@ namespace TVGL_Test
             //Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             //TVGL.Presenter.ShowWire(ts);
             Debug.WriteLine("simplify*****");
-            ts.Simplify(ts.NumberOfFaces, true);
+            ts.Simplify(ts.NumberOfFaces / 4, true);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
