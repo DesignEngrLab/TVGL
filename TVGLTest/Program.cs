@@ -141,17 +141,17 @@ namespace TVGL_Test
         {
             Debug.WriteLine("model:   " + ts.FileName);
 
-            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
-            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
-            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL.Presenter.ShowWire(ts);
-            ts.Complexify(ts.NumberOfFaces, true);
-            if (!ts.CheckModelIntegrity(false)) Console.WriteLine("------------------>Failed to complexify " + ts.Name);
-            Debug.WriteLine("complexify*****");
-            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
-            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
-            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            TVGL.Presenter.ShowWire(ts);
+            //Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            //Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            //Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
+            //TVGL.Presenter.ShowWire(ts);
+            //ts.Complexify(ts.NumberOfFaces, true);
+            //if (!ts.CheckModelIntegrity(false)) Console.WriteLine("------------------>Failed to complexify " + ts.Name);
+            //Debug.WriteLine("complexify*****");
+            //Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            //Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            //Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
+            //TVGL.Presenter.ShowWire(ts);
             Debug.WriteLine("simplify*****");
             ts.Simplify(ts.NumberOfFaces, true);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);

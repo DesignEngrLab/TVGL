@@ -60,9 +60,9 @@ namespace TVGL
                 if (primitives.All(p => p.Type == PrimitiveSurfaceType.Flat))
                 {
                     var flats = primitives.Cast<Flat>().ToArray();
-                    if (flats[0].Normal.dotProduct(flats[1].Normal, 3).IsPracticallySame(1.0)) return false;
-                    if (flats[0].Normal.dotProduct(flats[2].Normal, 3).IsPracticallySame(1.0)) return false;
-                    if (flats[1].Normal.dotProduct(flats[2].Normal, 3).IsPracticallySame(1.0)) return false;
+                    if (Math.Abs(flats[0].Normal.dotProduct(flats[1].Normal, 3)).IsPracticallySame(1.0)) return false;
+                    if (Math.Abs(flats[0].Normal.dotProduct(flats[2].Normal, 3)).IsPracticallySame(1.0)) return false;
+                    if (Math.Abs(flats[1].Normal.dotProduct(flats[2].Normal, 3)).IsPracticallySame(1.0)) return false;
                     position = MiscFunctions.PointCommonToThreePlanes(flats[0].Normal, flats[0].DistanceToOrigin,
                         flats[1].Normal, flats[1].DistanceToOrigin,
                         flats[2].Normal, flats[2].DistanceToOrigin);
@@ -85,14 +85,14 @@ namespace TVGL
                     var flat2Normal = flat2.Normal;
                     var flat2Distance = flat2.DistanceToOrigin;
                     var onlyOneViableFace = false;
-                    if (flat1.Normal.dotProduct(flat2.Normal, 3).IsPracticallySame(1.0)) return false;
-                    if (edgeUnitVector.dotProduct(flat1.Normal, 3).IsPracticallySame(1.0))
+                    if (Math.Abs(flat1.Normal.dotProduct(flat2.Normal, 3)).IsPracticallySame(1.0)) return false;
+                    if (Math.Abs(edgeUnitVector.dotProduct(flat1.Normal, 3)).IsPracticallySame(1.0))
                     {
                         flat1Normal = edgeUnitVector;
                         flat1Distance = midpoint.dotProduct(edgeUnitVector);
                         onlyOneViableFace = true;
                     }
-                    else if (edgeUnitVector.dotProduct(flat2.Normal, 3).IsPracticallySame(1.0))
+                    else if (Math.Abs(edgeUnitVector.dotProduct(flat2.Normal, 3)).IsPracticallySame(1.0))
                     {
                         flat2Normal = edgeUnitVector;
                         flat2Distance = midpoint.dotProduct(edgeUnitVector);
@@ -146,6 +146,7 @@ namespace TVGL
                 if (primitives.First().Type == PrimitiveSurfaceType.Flat)
                 {
                     var flat1 = (Flat)primitives.First();
+                    if (Math.Abs(flat1.Normal.dotProduct(edgeUnitVector, 3)).IsPracticallySame(1.0)) return false;
                     double[] pointOnLine, directionOfLine;
                     MiscFunctions.LineIntersectingTwoPlanes(edgeUnitVector,
                         midpoint.dotProduct(edgeUnitVector), flat1.Normal, flat1.DistanceToOrigin, out directionOfLine,
