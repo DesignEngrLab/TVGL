@@ -63,6 +63,9 @@
       <HintPath>..\packages\PropertyTools.Wpf.2015.2.0\lib\net45\PropertyTools.Wpf.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="StarMath.NET4.5, Version=2.0.17.725, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StarMath.2.0.17.0725\lib\portable-net45+win8\StarMath.NET4.5.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
@@ -292,12 +295,6 @@
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\StarMath\StarMath\StarMath.4.5.csproj">
-      <Project>{6d899048-f44f-430b-b66a-a75ecf68a986}</Project>
-      <Name>StarMath.4.5</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

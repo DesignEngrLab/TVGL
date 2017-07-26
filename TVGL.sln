@@ -13,8 +13,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TessellationAndVoxelization
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGLPresenterDebugger", "TVGLPresenterDebugger\TVGLPresenterDebugger.csproj", "{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StarMath.4.5", "..\StarMath\StarMath\StarMath.4.5.csproj", "{6D899048-F44F-430B-B66A-A75ECF68A986}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,14 +61,6 @@ Global
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Nsis|Any CPU.Build.0 = Release|Any CPU
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6D899048-F44F-430B-B66A-A75ECF68A986}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6D899048-F44F-430B-B66A-A75ECF68A986}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6D899048-F44F-430B-B66A-A75ECF68A986}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
-		{6D899048-F44F-430B-B66A-A75ECF68A986}.Documentation|Any CPU.Build.0 = Debug|Any CPU
-		{6D899048-F44F-430B-B66A-A75ECF68A986}.Nsis|Any CPU.ActiveCfg = Release|Any CPU
-		{6D899048-F44F-430B-B66A-A75ECF68A986}.Nsis|Any CPU.Build.0 = Release|Any CPU
-		{6D899048-F44F-430B-B66A-A75ECF68A986}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6D899048-F44F-430B-B66A-A75ECF68A986}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

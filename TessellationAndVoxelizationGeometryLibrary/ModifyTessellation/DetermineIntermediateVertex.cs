@@ -15,6 +15,7 @@
 using System;
 using StarMathLib;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace TVGL
@@ -43,41 +44,47 @@ namespace TVGL
         private static bool DetermineIntermediateVertexPosition(Edge edge, out double[] position,
             IEnumerable<PrimitiveSurface> primitives)
         {
+            var midpoint = DetermineIntermediateVertexPosition(edge.From, edge.To);
             position = null;
+            #region no primitives
             if (primitives == null || !primitives.Any())
             {
-                position = DetermineIntermediateVertexPosition(edge.To, edge.From);
+                position = midpoint;
                 return true;
             }
+            #endregion
+            #region More than 3 primitives
             if (primitives.Count() > 3)
             {
                 return false;
             }
-            var midpoint = DetermineIntermediateVertexPosition(edge.From, edge.To);
-            var edgeUnitVector = edge.Vector.normalize();
+            #endregion
+            #region Three Primitives
             if (primitives.Count() == 3)
             {
                 if (primitives.All(p => p.Type == PrimitiveSurfaceType.Flat))
                 {
                     var flats = primitives.Cast<Flat>().ToArray();
-                    if (Math.Abs(flats[0].Normal.dotProduct(flats[1].Normal, 3)).IsPracticallySame(1.0)) return false;
-                    if (Math.Abs(flats[0].Normal.dotProduct(flats[2].Normal, 3)).IsPracticallySame(1.0)) return false;
-                    if (Math.Abs(flats[1].Normal.dotProduct(flats[2].Normal, 3)).IsPracticallySame(1.0)) return false;
+                    if (RedundantSurfaces(flats[0], flats[1])) return false;
+                    if (RedundantSurfaces(flats[1], flats[2])) return false;
+                    if (RedundantSurfaces(flats[2], flats[0])) return false;
                     position = MiscFunctions.PointCommonToThreePlanes(flats[0].Normal, flats[0].DistanceToOrigin,
                         flats[1].Normal, flats[1].DistanceToOrigin,
                         flats[2].Normal, flats[2].DistanceToOrigin);
-                    var midpt = DetermineIntermediateVertexPosition(edge.From, edge.To);
-                    if (midpt.subtract(position).norm2() > MaxDistanceFactor * edge.Length)
-                        return false;
-                    else return true;
+                    return WithinReasonableDistanceToMidPoint(midpoint, position, edge);
                 }
-                return false;
+                Debug.WriteLine("Not implemented: find intersection between: " +
+                    string.Join(", ", primitives.Select(p => p.Type.ToString())));
+                position = midpoint;
+                return true;
             }
-            else if (primitives.Count() == 2)
+            #endregion
+            if (primitives.Count() == 2)
             {
                 #region Two Primitives of the Same Type (5 possibilities)
                 if (primitives.All(p => p.Type == PrimitiveSurfaceType.Flat))
                 {
+                    var edgeUnitVector = edge.Vector.normalize();
                     var flat1 = (Flat)primitives.First();
                     var flat1Normal = flat1.Normal;
                     var flat1Distance = flat1.DistanceToOrigin;
@@ -85,14 +92,14 @@ namespace TVGL
                     var flat2Normal = flat2.Normal;
                     var flat2Distance = flat2.DistanceToOrigin;
                     var onlyOneViableFace = false;
-                    if (Math.Abs(flat1.Normal.dotProduct(flat2.Normal, 3)).IsPracticallySame(1.0)) return false;
-                    if (Math.Abs(edgeUnitVector.dotProduct(flat1.Normal, 3)).IsPracticallySame(1.0))
+                    if (RedundantSurfaces(flat1, flat2)) return false;
+                    if (RedundantSurfaces(flat1, edgeUnitVector))
                     {
                         flat1Normal = edgeUnitVector;
                         flat1Distance = midpoint.dotProduct(edgeUnitVector);
                         onlyOneViableFace = true;
                     }
-                    else if (Math.Abs(edgeUnitVector.dotProduct(flat2.Normal, 3)).IsPracticallySame(1.0))
+                    else if (RedundantSurfaces(flat2, edgeUnitVector))
                     {
                         flat2Normal = edgeUnitVector;
                         flat2Distance = midpoint.dotProduct(edgeUnitVector);
@@ -105,11 +112,13 @@ namespace TVGL
                             out directionOfLine, out pointOnLine);
                         MiscFunctions.DistancePointToLine(midpoint, pointOnLine, directionOfLine, out position);
                     }
-                    else position = MiscFunctions.PointCommonToThreePlanes(edgeUnitVector,
+                    else
+                        position = MiscFunctions.PointCommonToThreePlanes(edgeUnitVector,
                          midpoint.dotProduct(edgeUnitVector),
                          flat1.Normal, flat1.DistanceToOrigin, flat2.Normal, flat2.DistanceToOrigin);
+                    return WithinReasonableDistanceToMidPoint(midpoint, position, edge);
                 }
-                else if (primitives.All(p => p.Type == PrimitiveSurfaceType.Cylinder))
+                if (primitives.All(p => p.Type == PrimitiveSurfaceType.Cylinder))
                 {
                     var cyl1 = (Cylinder)primitives.First();
                     var cyl2 = (Cylinder)primitives.Last();
@@ -117,7 +126,7 @@ namespace TVGL
                     return true;
                     throw new NotImplementedException();
                 }
-                else if (primitives.All(p => p.Type == PrimitiveSurfaceType.Sphere))
+                if (primitives.All(p => p.Type == PrimitiveSurfaceType.Sphere))
                 {
                     var s1 = (Sphere)primitives.First();
                     var s2 = (Sphere)primitives.Last();
@@ -125,7 +134,7 @@ namespace TVGL
                     return true;
                     throw new NotImplementedException();
                 }
-                else if (primitives.All(p => p.Type == PrimitiveSurfaceType.Cone))
+                if (primitives.All(p => p.Type == PrimitiveSurfaceType.Cone))
                 {
                     var c1 = (Cone)primitives.First();
                     var c2 = (Cone)primitives.Last();
@@ -133,7 +142,7 @@ namespace TVGL
                     return true;
                     throw new NotImplementedException();
                 }
-                else if (primitives.All(p => p.Type == PrimitiveSurfaceType.Torus))
+                if (primitives.All(p => p.Type == PrimitiveSurfaceType.Torus))
                 {
                     var t1 = (Torus)primitives.First();
                     var t2 = (Torus)primitives.Last();
@@ -142,25 +151,94 @@ namespace TVGL
                     throw new NotImplementedException();
                 }
                 #endregion
-                #region Two Different Primitives (25 possibilities!)
+                #region Two Different Primitives (10 possibilities!)
+                if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Flat))
+                {
+                    if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Cylinder))
+                    {
+                        var flat = primitives.First(p => p.Type == PrimitiveSurfaceType.Flat) as Flat;
+                        var cyl = primitives.First(p => p.Type == PrimitiveSurfaceType.Cylinder) as Cylinder;
+                        double[] pointOnAxis;
+                        MiscFunctions.DistancePointToLine(midpoint, cyl.Anchor, cyl.Axis, out pointOnAxis);
+                        var unitDirection = midpoint.subtract(pointOnAxis).normalize();
+                        position = pointOnAxis.add(unitDirection.multiply(cyl.Radius));
+                        position = MiscFunctions.PointOnPlaneFromRay(flat.Normal, flat.DistanceToOrigin, position, cyl.Axis);
+                        return WithinReasonableDistanceToMidPoint(midpoint, position, edge);
+                    }
+                    if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Sphere))
+                    {
+                        var edgeUnitVector = edge.Vector.normalize();
+                        var flat = primitives.First(p => p.Type == PrimitiveSurfaceType.Flat) as Flat;
+                        var sphere = primitives.First(p => p.Type == PrimitiveSurfaceType.Sphere) as Sphere;
+                        var distanceFromCenter = midpoint.subtract(sphere.Center).norm2();
+                        var distanceToGo = sphere.Radius - distanceFromCenter;
+                        var direction = flat.Normal.crossProduct(edgeUnitVector).normalize(3);
+                        position = midpoint.add(direction.multiply(distanceToGo));
+                        return WithinReasonableDistanceToMidPoint(midpoint, position, edge);
+                    }
+                    if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Cone))
+                    {
+                        var flat = primitives.First(p => p.Type == PrimitiveSurfaceType.Flat) as Flat;
+                        var cone = primitives.First(p => p.Type == PrimitiveSurfaceType.Cone) as Cone;
+                        double[] pointOnAxis;
+                        MiscFunctions.DistancePointToLine(midpoint, cone.Apex, cone.Axis, out pointOnAxis);
+                        var unitDirection = midpoint.subtract(pointOnAxis).normalize();
+                        var radius = Math.Tan(cone.Aperture / 2) * (pointOnAxis.subtract(cone.Apex).norm2());
+                        position = pointOnAxis.add(unitDirection.multiply(radius));
+                        var vectorAlongCone = position.subtract(cone.Apex);
+                        position = MiscFunctions.PointOnPlaneFromRay(flat.Normal, flat.DistanceToOrigin, position, vectorAlongCone);
+                        return WithinReasonableDistanceToMidPoint(midpoint, position, edge);
+                    }
+                    if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Torus))
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+                if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Cylinder))
+                {
+                    if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Sphere))
+                    { }
 
-
-                position = DetermineIntermediateVertexPosition(edge.To, edge.From);
-                return true;
+                    else if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Cone))
+                    { }
+                    else if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Torus))
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+                if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Sphere))
+                {
+                    if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Cone))
+                    { }
+                    else if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Torus))
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+                if (primitives.Any(p => p.Type == PrimitiveSurfaceType.Cone)
+                    && primitives.Any(p => p.Type == PrimitiveSurfaceType.Torus))
+                {
+                    throw new NotImplementedException();
+                }
                 #endregion
             }
-
             #region One Primitives (5 possibilities)
-            else if (primitives.Count() == 1)
+            if (primitives.Count() == 1)
             {
                 if (primitives.First().Type == PrimitiveSurfaceType.Flat)
                 {
+                    var edgeUnitVector = edge.Vector.normalize();
                     var flat1 = (Flat)primitives.First();
-                    if (Math.Abs(flat1.Normal.dotProduct(edgeUnitVector, 3)).IsPracticallySame(1.0)) return false;
+                    if (RedundantSurfaces(flat1, edgeUnitVector)) return false;
+                    if (flat1.Normal.dotProduct(edgeUnitVector, 3).IsNegligible())
+                    {
+                        position = midpoint;
+                        return true;
+                    }
                     double[] pointOnLine, directionOfLine;
                     MiscFunctions.LineIntersectingTwoPlanes(edgeUnitVector,
                         midpoint.dotProduct(edgeUnitVector), flat1.Normal, flat1.DistanceToOrigin, out directionOfLine,
-                        out pointOnLine);
+                                    out pointOnLine);
                     MiscFunctions.DistancePointToLine(midpoint, pointOnLine, directionOfLine, out position);
                 }
                 if (primitives.First().Type == PrimitiveSurfaceType.Cylinder)
@@ -198,6 +276,26 @@ namespace TVGL
             if (midpoint.subtract(position).norm2() > MaxDistanceFactor * edge.Length)
                 return false;
             return true;
+        }
+
+        private static bool WithinReasonableDistanceToMidPoint(double[] midpoint, double[] position,
+            Edge edge)
+        {
+            if (position == null || position.Any(x => double.IsNaN(x))) return false;
+            return (midpoint.subtract(position).norm2() <= MaxDistanceFactor * edge.Length);
+        }
+
+        static bool RedundantSurfaces(Flat f1, Flat f2)
+        {
+            return ((Math.Abs(f1.Normal.dotProduct(f2.Normal, 3))).IsPracticallySame(1.0));
+        }
+        static bool RedundantSurfaces(Flat f1, double[] normal)
+        {
+            return ((Math.Abs(f1.Normal.dotProduct(normal, 3))).IsPracticallySame(1.0));
+        }
+        static bool RedundantSurfaces(Cylinder c1, Cylinder c2)
+        {
+            return ((Math.Abs(c1.Axis.dotProduct(c2.Axis, 3))).IsPracticallySame(1.0));
         }
 
         /// <summary>
