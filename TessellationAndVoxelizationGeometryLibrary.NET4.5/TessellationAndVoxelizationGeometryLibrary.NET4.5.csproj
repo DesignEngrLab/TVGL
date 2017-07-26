@@ -193,6 +193,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\Torus.cs">
       <Link>Primitive Surfaces\Torus.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Properties\AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Edge.cs">
       <Link>Solid Body Classes\Edge.cs</Link>
     </Compile>
@@ -220,7 +223,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>Verbosity.cs</Link>
     </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">

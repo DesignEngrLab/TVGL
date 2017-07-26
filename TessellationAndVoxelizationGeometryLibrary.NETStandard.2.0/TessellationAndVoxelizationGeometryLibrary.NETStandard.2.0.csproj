@@ -7,10 +7,10 @@
     <Authors>Matt Campbell, Brandon Massoni, Nima Rafibakhsh</Authors>
     <Company>Design Engineering Lab</Company>
     <Product>Tessellation and Voxelization Geometry Library</Product>
-    <Version>1.0.17.0515</Version>
-    <AssemblyVersion>1.0.17.0515</AssemblyVersion>
+    <Version>1.0.17.0725</Version>
+    <AssemblyVersion>1.0.17.0725</AssemblyVersion>
     <Description>This dynamic library is focused on Computational Geometry functions likes the ones you would find in CGAL. As opposed to copying directly others work, we have sought to create functions from scratch that are optimized or straightforward as a C# implementation. As a .NET managed library (and a portable class library at that), the functions can be accessed from other managed code.</Description>
-    <Copyright>2014</Copyright>
+    <Copyright>2017</Copyright>
     <PackageTags>3d geometry mesh tessellation voxelization</PackageTags>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseUrl>https://github.com/DesignEngrLab/TVGL/blob/master/LICENSE</PackageLicenseUrl>
@@ -50,6 +50,8 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs">
       <Link>Colors.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByIndexInList.cs" Link="Comparators\SortByIndexInList.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs" Link="Comparators\SortByLength.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs">
       <Link>Constants.cs</Link>
     </Compile>
@@ -98,6 +100,7 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs">
       <Link>InputOutput Operations\STLFileData.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs" Link="InputOutput Operations\TVGLFileData.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\AreaDecomposition.cs">
       <Link>Miscellaneous Functions\AreaDecomposition.cs</Link>
     </Compile>
@@ -116,6 +119,11 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs">
       <Link>Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\ComplexifyTessellation.cs" Link="ModifyTessellation\ComplexifyTessellation.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\DetermineIntermediateVertex.cs" Link="ModifyTessellation\DetermineIntermediateVertex.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\RepairTessellation.cs" Link="ModifyTessellation\RepairTessellation.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\SimplifyTessellation.cs" Link="ModifyTessellation\SimplifyTessellation.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\TessellationError.cs" Link="ModifyTessellation\TessellationError.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Classify.cs">
       <Link>Primitive Classification\Classify.cs</Link>
     </Compile>
@@ -148,12 +156,6 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\Torus.cs">
       <Link>Primitive Surfaces\Torus.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Simplify and Repair\SimplifyTessellation.cs">
-      <Link>Simplify and Repair\SimplifyTessellation.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Simplify and Repair\TessellationError.cs">
-      <Link>Simplify and Repair\TessellationError.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Edge.cs">
       <Link>Solid Body Classes\Edge.cs</Link>
@@ -203,6 +205,11 @@
 
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.17.411" />
-    <PackageReference Include="StarMath" Version="2.0.17.413" />
+    <PackageReference Include="StarMath" Version="2.0.17.725" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ModifyTessellation\" />
+    <Folder Include="Comparators\" />
   </ItemGroup>
 </Project>
