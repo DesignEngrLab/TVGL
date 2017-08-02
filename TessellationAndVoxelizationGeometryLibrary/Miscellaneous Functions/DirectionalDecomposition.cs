@@ -2236,7 +2236,7 @@ namespace TVGL
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
 
-                    if (reverseDirection > 1 && correctDirection > 1) throw new Exception("Area Decomp Loop Finding needs additional work.");
+                    //if (reverseDirection > 2 && correctDirection > 2) throw new Exception("Area Decomp Loop Finding needs additional work.");
                     if (reverseDirection > correctDirection)
                     {
                         loop.Reverse();
