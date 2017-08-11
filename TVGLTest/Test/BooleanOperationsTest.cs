@@ -178,7 +178,7 @@ namespace TVGL_Test
             //Incorrect ShallowTree ordering, so we can check create function.
             var paths = new List<List<Point>> { subjectList3, clipperList2, subjectList4 , subjectList, subjectList2, clipperList3, clipperList };
             //Presenter.ShowAndHang(paths);
-            var trees = PolygonOperations.GetShallowPolygonTrees(paths, false);
+            var trees = PolygonOperations.GetShallowPolygonTrees(paths);
             Assert.That(trees.Count == 4);
             for (var i = 0; i < 3; i++)
             {
@@ -361,12 +361,6 @@ namespace TVGL_Test
             Assert.That(solution.Count, Is.EqualTo(1));
 
             solution = PolygonOperations.Union(subject, clip, false, PolygonFillType.EvenOdd);
-            result = solution.Count > 0;
-            //ShowPaths(solution);
-            Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(1));
-
-            solution = PolygonOperations.UnionEvenOdd(solution, clip, false);
             result = solution.Count > 0;
             //ShowPaths(solution);
             Assert.That(result, Is.True);

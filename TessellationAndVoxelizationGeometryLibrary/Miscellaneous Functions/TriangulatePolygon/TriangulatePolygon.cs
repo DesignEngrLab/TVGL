@@ -58,8 +58,8 @@ namespace TVGL
 
         /// <summary>
         /// Triangulates a list of loops into faces in O(n*log(n)) time.
-        /// Ignoring the negative space, fills in holes. DO NOT USE this
-        /// parameter for watertight geometry.
+        /// If ignoring negative space, the function will fill in holes. 
+        /// DO NOT USE "ignoreNegativeSpace" for watertight geometry.
         /// </summary>
         /// <param name="points2D">The points2 d.</param>
         /// <param name="groupsOfLoops">The groups of loops.</param>
@@ -359,7 +359,7 @@ namespace TVGL
                                 //If any point (just check the first one) is NOT inside positive loop 2, then keep positive loop 1
                                 //Note: If this occues, any loops inside loop 1 will also be inside loop 2, so no information is lost.
                                 if (!MiscFunctions.IsPointInsidePolygon(points2D[positiveLoop2.First().LoopID].ToList(),
-                                    positiveLoop1.First().Point, false)) continue;
+                                    positiveLoop1.First().Point)) continue;
                                 isInside = true;
                                 break;
                             }

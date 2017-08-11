@@ -1849,90 +1849,6 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Determines if a point is inside a polygon.
-        /// </summary>
-        public static bool IsPointInsidePolygon(Polygon polygon, Point pointInQuestion, out Line closestLineAbove, out Line closestLineBelow, out bool onBoundary,
-            bool onBoundaryIsInside = true)
-        {
-            closestLineAbove = null;
-            closestLineBelow = null;
-            onBoundary = false;
-            //Check if center point is within bounding box of each polygon
-            if (!pointInQuestion.X.IsLessThanNonNegligible(polygon.MaxX) ||
-                !pointInQuestion.X.IsGreaterThanNonNegligible(polygon.MinX) ||
-                !pointInQuestion.Y.IsLessThanNonNegligible(polygon.MaxY) ||
-                !pointInQuestion.Y.IsGreaterThanNonNegligible(polygon.MinY)) return false;
-
-            var points = new List<Point> (polygon.Path);
-            
-            //If the point in question is == a point in points, then it is inside the polygon
-            if (
-                points.Any(
-                    point =>
-                        point.X.IsPracticallySame(pointInQuestion.X) && point.Y.IsPracticallySame(pointInQuestion.Y)))
-            {
-                onBoundary = true;
-                return onBoundaryIsInside;
-            }
-
-            //Make sure polygon indices are set properly
-            if (polygon.Index == -1) polygon.Index = 0;
-            foreach (var point in points.Where(point => point.PolygonIndex != polygon.Index))
-            {
-                point.PolygonIndex = polygon.Index;
-            }
-            //Force the point in question not to have the same index, if it does.
-            if (pointInQuestion.PolygonIndex == polygon.Index) pointInQuestion.PolygonIndex = -1; 
-
-            //Sort points ascending x, then by ascending y.
-            points.Add(pointInQuestion);
-            var sortedPoints = points.OrderBy(p => p.X).ThenBy(p=> p.Y).ToList();
-            var lineList = new HashSet<Line>();
-
-            //Use Line sweep to determine if the polygon contains the point.
-            //An odd number of lines above and below a point, means the point is inside the polygon.
-            //Note: either above or below should work. Checks both to catch errors.
-            foreach (var point in sortedPoints)
-            {
-                if (point.PolygonIndex == polygon.Index)
-                {
-                    //Add to or remove from Line Sweep
-                    foreach (var line in point.Lines)
-                    {
-                        if (lineList.Contains(line))
-                        {
-                            lineList.Remove(line);
-                        }
-                        else
-                        {
-                            lineList.Add(line);
-                        }
-                    }
-                }
-                else
-                {
-                    //If reached the point in question, then find intercepts on the lineList 
-                    bool isOnLine;
-                    var numberOfLinesAbove = NumberOfLinesAbovePoint(pointInQuestion, lineList, out closestLineAbove, out isOnLine);
-                    //Check if the point is on the left line or right line (note that one direction search is sufficient).
-                    if (isOnLine)
-                    {
-                        onBoundary = true;
-                        return onBoundaryIsInside;
-                    }
-
-                    //Else, not on a boundary, so check to see that it is in between an odd number of lines to left and right
-                    if (numberOfLinesAbove % 2 == 0) return false;
-                    var numberOfLinesBelow = NumberOfLinesBelowPoint(pointInQuestion, lineList, out closestLineBelow, out isOnLine);
-                    //No need to check isOnLine, since it is the same lines and point as the lines above check.
-                    return numberOfLinesBelow % 2 != 0;
-                }
-            }
-            //If not returned, throw error
-            throw new Exception("Failed to return intercept information");
-        }
-
-        /// <summary>
         /// Returns the number of lines above a point in question. Also returns the closest line above, if any is above.
         /// </summary>
         /// <param name="pointInQuestion"></param>
@@ -2003,84 +1919,198 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
-        ///     And the polygon is not self-intersecting
+        ///     Determines if a polygon is inside another polygon.
+        ///     
+        ///     Assumptions:
+        ///     1) Polygon ordering does not matter.
+        ///     2) The polygons do not intersect
+        /// 
+        ///     Updated by Brandon Massoni: 8.11.2017
         /// </summary>
-        /// <param name="points">The points.</param>
-        /// <param name="pointInQuestion">The point in question.</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        /// <returns><c>true</c> if [is point inside polygon] [the specified points]; otherwise, <c>false</c>.</returns>
-        /// <exception cref="Exception">Failed to return intercept information</exception>
-        public static bool IsPointInsidePolygon(List<Point> points, Point pointInQuestion,
+        public static bool IsPolygonInsidePolygon(Polygon outerPolygon, Polygon possibleInnerPolygon)
+        {
+            //The inner polygon can only fully be inside a polygon that has a larger absolute area.
+            if (Math.Abs(outerPolygon.Area) < Math.Abs(possibleInnerPolygon.Area)) return false;
+
+            //Since the polygons are assumed not the intersect, we only need to test if one point is from the
+            // possibleInnerPolygon is inside the outer polygon.
+            return IsPointInsidePolygon(outerPolygon, possibleInnerPolygon.Path.First());
+        }
+
+        /// <summary>
+        ///     Determines if a point is inside a polygon, using ray casting. This is slower than the method
+        ///     below, but does allow determination of whether a point is on the boundary.
+        /// </summary>
+        public static bool IsPointInsidePolygon(Polygon polygon, Point pointInQuestion, out Line closestLineAbove, out Line closestLineBelow, out bool onBoundary,
             bool onBoundaryIsInside = true)
         {
-            //If the point in question is == a point in points, then it is inside the polygon
+            //This function has three layers of checks. 
+            //(1) Check if the point is inside the axis aligned bouning box. If it is not, then return false.
+            //(2) Check if the point is == to a polygon point, return onBoundaryIsInside.
+            //(3) Use line-sweeping / ray casting to determine if the polygon contains the point.
+            closestLineAbove = null;
+            closestLineBelow = null;
+            onBoundary = false;
+            //1) Check if center point is within bounding box of each polygon
+            if (!pointInQuestion.X.IsLessThanNonNegligible(polygon.MaxX) ||
+                !pointInQuestion.X.IsGreaterThanNonNegligible(polygon.MinX) ||
+                !pointInQuestion.Y.IsLessThanNonNegligible(polygon.MaxY) ||
+                !pointInQuestion.Y.IsGreaterThanNonNegligible(polygon.MinY)) return false;
+
+            var points = new List<Point>(polygon.Path);
+
+            //2) If the point in question is == a point in points, then it is inside the polygon
             if (
                 points.Any(
                     point =>
                         point.X.IsPracticallySame(pointInQuestion.X) && point.Y.IsPracticallySame(pointInQuestion.Y)))
             {
+                onBoundary = true;
                 return onBoundaryIsInside;
             }
 
-            //Create nodes and add them to a list
-            var nodes = points.Select(point => new Node(point, 0, 0)).ToList();
-
-            //Create first line and update nodes with information
-            var line = new NodeLine(nodes.Last(), nodes[0]);
-            nodes.Last().StartLine = line;
-            nodes[0].EndLine = line;
-            //Create all other lines 
-            for (var i = 1; i < points.Count; i++)
+            //Make sure polygon indices are set properly
+            if (polygon.Index == -1) polygon.Index = 0;
+            foreach (var point in points.Where(point => point.PolygonIndex != polygon.Index))
             {
-                line = new NodeLine(nodes[i - 1], nodes[i]);
-                nodes[i - 1].StartLine = line;
-                nodes[i].EndLine = line;
+                point.PolygonIndex = polygon.Index;
             }
+            //Force the point in question not to have the same index, if it does.
+            if (pointInQuestion.PolygonIndex == polygon.Index) pointInQuestion.PolygonIndex = -1;
 
-            //sort points by descending y, then descending x
-            nodes.Add(new Node(pointInQuestion, 0, 0));
-            var sortedNodes = nodes.OrderByDescending(node => node.Y).ThenByDescending(node => node.X).ToList();
-            var lineList = new HashSet<NodeLine>();
+            //Sort points ascending x, then by ascending y.
+            points.Add(pointInQuestion);
+            var sortedPoints = points.OrderBy(p => p.X).ThenBy(p => p.Y).ToList();
+            var lineList = new HashSet<Line>();
 
-            //Use red-black tree sweep to determine which lines should be tested for intersection
-            foreach (var node in sortedNodes)
+            //3) Use Line sweep to determine if the polygon contains the point.
+            //An odd number of lines above and below a point, means the point is inside the polygon.
+            //Note: either above or below should work. Checks both to catch errors.
+            foreach (var point in sortedPoints)
             {
-                //Add to or remove from Red-Black Tree
-                //If reached the point in question, then find intercepts on the lineList
-                if (node.StartLine == null)
+                if (point.PolygonIndex == polygon.Index)
                 {
-                    if (lineList.Count % 2 != 0 || lineList.Count < 1) return false;
-                    NodeLine leftLine, rightLine;
+                    //Add to or remove from Line Sweep
+                    foreach (var line in point.Lines)
+                    {
+                        if (lineList.Contains(line))
+                        {
+                            lineList.Remove(line);
+                        }
+                        else
+                        {
+                            lineList.Add(line);
+                        }
+                    }
+                }
+                else
+                {
+                    //If reached the point in question, then find intercepts on the lineList 
                     bool isOnLine;
-                    var numberOfLinesToLeft = TriangulatePolygon.LinesToLeft(node, lineList, out leftLine, out isOnLine);
+                    var numberOfLinesAbove = NumberOfLinesAbovePoint(pointInQuestion, lineList, out closestLineAbove, out isOnLine);
                     //Check if the point is on the left line or right line (note that one direction search is sufficient).
-                    if (isOnLine) return onBoundaryIsInside;
+                    if (isOnLine)
+                    {
+                        onBoundary = true;
+                        return onBoundaryIsInside;
+                    }
+
                     //Else, not on a boundary, so check to see that it is in between an odd number of lines to left and right
-                    if (numberOfLinesToLeft % 2 == 0) return false;
-                    return TriangulatePolygon.LinesToRight(node, lineList, out rightLine, out isOnLine) % 2 != 0;
-                }
-                if (lineList.Contains(node.StartLine))
-                {
-                    lineList.Remove(node.StartLine);
-                }
-                else
-                {
-                    lineList.Add(node.StartLine);
-                }
-                if (lineList.Contains(node.EndLine))
-                {
-                    lineList.Remove(node.EndLine);
-                }
-                else
-                {
-                    lineList.Add(node.EndLine);
+                    if (numberOfLinesAbove % 2 == 0) return false;
+                    var numberOfLinesBelow = NumberOfLinesBelowPoint(pointInQuestion, lineList, out closestLineBelow, out isOnLine);
+                    //No need to check isOnLine, since it is the same lines and point as the lines above check.
+                    return numberOfLinesBelow % 2 != 0;
                 }
             }
             //If not returned, throw error
             throw new Exception("Failed to return intercept information");
         }
 
+        /// <summary>
+        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
+        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
+        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        ///     Major Assumptions: 
+        ///     1) The polygon can be convex
+        ///     2) The direction of the polygon does not matter  
+        /// 
+        ///     Updated by Brandon Massoni: 8.11.2017
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        public static bool IsPointInsidePolygon(Polygon polygon, Point p)
+        {
+            //1) Check if center point is within bounding box of each polygon
+            if (!p.X.IsLessThanNonNegligible(polygon.MaxX) ||
+                !p.X.IsGreaterThanNonNegligible(polygon.MinX) ||
+                !p.Y.IsLessThanNonNegligible(polygon.MaxY) ||
+                !p.Y.IsGreaterThanNonNegligible(polygon.MinY)) return false;
+
+            //2) Next, see how many lines are to the left of the point, using a fixed y value.
+            //This compact, effecient 7 lines of code is from W. Randolph Franklin
+            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
+            var path = polygon.Path;
+            var inside = false;
+            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            {
+                if ((path[i].Y > p.Y) != (path[j].Y > p.Y) &&
+                     p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                {
+                    inside = !inside;
+                }
+            }
+
+            return inside;
+        }
+
+        /// <summary>
+        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
+        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
+        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        ///     Major Assumptions: 
+        ///     1) The polygon can be convex
+        ///     2) The direction of the polygon does not matter  
+        /// 
+        ///     Updated by Brandon Massoni: 8.11.2017
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="p"></param>
+        public static bool IsPointInsidePolygon(List<Point> path, Point p)
+        {
+            //1) Get the axis aligned bounding box of the path. This is super fast.
+            //If the point is inside the bounding box, continue to check with more detailed methods, 
+            //Else, retrun false.
+            var xMax = double.NegativeInfinity;
+            var yMax = double.NegativeInfinity;
+            var xMin = double.PositiveInfinity;
+            var yMin = double.PositiveInfinity;
+            foreach (var point in path)
+            {
+                if (point.X < xMin) xMin = point.X;
+                if (point.X > xMax) xMax = point.X;
+                if (point.Y < yMin) yMin = point.Y;
+                if (point.Y > yMax) yMax = point.Y;
+            }
+            if (p.Y < yMin || p.Y > yMax || p.X < xMin || p.X > xMax) return false;
+
+            //2) Next, see how many lines are to the left of the point, using a fixed y value.
+            //This compact, effecient 7 lines of code is from W. Randolph Franklin
+            //<https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html>
+            var inside = false;
+            for (int i = 0, j = path.Count - 1; i < path.Count; j = i++)
+            {
+                if ((path[i].Y > p.Y) != (path[j].Y > p.Y) &&
+                     p.X < (path[j].X - path[i].X) * (p.Y - path[i].Y) / (path[j].Y - path[i].Y) + path[i].X)
+                {
+                    inside = !inside;
+                }
+            }
+
+            return inside;
+        }
     }
     #endregion
 }

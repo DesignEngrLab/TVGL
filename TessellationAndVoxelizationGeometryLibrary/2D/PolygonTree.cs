@@ -27,6 +27,11 @@ namespace TVGL
         public IList<Polygon> AllPolygons => new List<Polygon>(InnerPolygons) {OuterPolygon};
 
         /// <summary>
+        /// A list of all the polygons in this tree.
+        /// </summary>
+        public IList<List<Point>> AllPaths => AllPolygons.Select(polygon => polygon.Path).ToList();
+
+        /// <summary>
         /// Gets the area of the shallow polygon tree (OuterPolygon - InnerPolygons)
         /// </summary>
         public double Area => AllPolygons.Sum(p => p.Area);
@@ -66,37 +71,73 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the Shallow Polygon Trees for a given set of paths. If the paths are already ordered correctly, 
-        /// it will return shallow trees using their current order. Else, it will use Clipper's UnionEvenOdd.
+        /// Gets the Shallow Polygon Trees for a given set of polygons. 
         /// </summary>
-        /// <param name="paths"></param>
-        /// <param name="alreadyInOrder"></param>
+        /// <param name="polygons"></param>
         /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths, bool alreadyInOrder = false)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<Polygon> polygons)
         {
+            //Note: Clipper's UnionEvenOdd function does not order polygons correctly for a shallow tree.
+            //The PolygonOperation.UnionEvenOdd calls this function to ensure they are ordered correctly
+
             //The correct order for shallow polygon trees is as follows.
             //The first polygon in the list is always positive. The next positive polygon signals the start of a new 
             //shallow tree. Any polygons in-between those belong to the earlier shallow tree.
-            var result = !alreadyInOrder ? PolygonOperations.Union(paths, false, PolygonFillType.EvenOdd) : paths;
 
+            //Assumption: Ordered even-odd polygons. 
+            //Example: A negative polygon must be between two concentric positive polygons.
+
+            //By ordering the polygons, we are gauranteed to do the outermost positive polygons first.
+            var orderedPolygons = polygons.OrderBy(p => p.Area);
+
+            //1) Make a list of all the shallow polygon trees from the positive polygons
             var shallowPolygonTrees = new List<ShallowPolygonTree>();
-            foreach (var path in result)
+            foreach (var polygon in orderedPolygons)
             {
-                var newPolygon = new Polygon(path);
-                if (newPolygon.IsPositive)
+                if (!polygon.IsPositive) break; //We reached the negative polygons
+                shallowPolygonTrees.Add(new ShallowPolygonTree(polygon));
+            }
+
+            //This puts the smallest positive polygons first.
+            shallowPolygonTrees.Reverse();
+
+            //2) Find the positive polygon that this negative polygon is inside.
+            //The negative polygon belongs to the smallest positive polygon that it fits inside.
+            //The absolute area of the polygons (which is accounted for in the IsPolygonInsidePolygon function) 
+            //and the reversed ordering, gaurantee that we get the correct shallow tree.
+            foreach (var negativePolygon in orderedPolygons)
+            {
+                if (!negativePolygon.IsPositive) continue;
+                var isInside = false;
+
+                //Start with the smallest positive polygon           
+                foreach (var shallowTree in shallowPolygonTrees)
                 {
-                    shallowPolygonTrees.Add(new ShallowPolygonTree(newPolygon));
+                    if (MiscFunctions.IsPolygonInsidePolygon(shallowTree.OuterPolygon, negativePolygon))
+                    {
+                        shallowTree.InnerPolygons.Add(negativePolygon);
+                        negativePolygon.Parent = shallowTree.OuterPolygon;
+                        shallowTree.OuterPolygon.Childern.Add(negativePolygon);
+                        //The negative polygon ONLY belongs to the smallest positive polygon that it fits inside.
+                        isInside = true;
+                        break;
+                    }
                 }
-                else
-                {
-                    var shallowTree = shallowPolygonTrees.Last();
-                    shallowTree.InnerPolygons.Add(newPolygon);
-                    newPolygon.Parent = shallowTree.OuterPolygon;
-                    shallowTree.OuterPolygon.Childern.Add(newPolygon);
-                }
+
+                if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
             }
 
             return shallowPolygonTrees;
+        }
+
+        /// <summary>
+        /// Gets the Shallow Polygon Trees for a given set of paths. 
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <returns></returns>
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths)
+        {
+            return GetShallowPolygonTrees(paths.Select(path => new Polygon(path)).ToList());
         }
     }
 }

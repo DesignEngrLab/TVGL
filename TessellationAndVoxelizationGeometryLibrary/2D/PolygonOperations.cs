@@ -59,15 +59,13 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Gets the Shallow Polygon Trees for a given set of paths. If the paths are already ordered correctly, 
-        /// it will return shallow trees using their current order. Else, it will use Clipper's UnionEvenOdd.
+        /// Gets the Shallow Polygon Trees for a given set of paths. 
         /// </summary>
         /// <param name="paths"></param>
-        /// <param name="alreadyInOrder"></param>
         /// <returns></returns>
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths, bool alreadyInOrder = false)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths)
         {
-            return ShallowPolygonTree.GetShallowPolygonTrees(paths, alreadyInOrder);
+            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
         }
 
         #region Clockwise / CounterClockwise Ordering
@@ -328,13 +326,14 @@ namespace TVGL
         #region Boolean Operations
 
         #region Union
+
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
-        /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
+        /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
@@ -344,7 +343,7 @@ namespace TVGL
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
@@ -358,7 +357,7 @@ namespace TVGL
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
@@ -372,7 +371,7 @@ namespace TVGL
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
@@ -382,51 +381,6 @@ namespace TVGL
         public static List<List<Point>> Union(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, new Paths { clip }, simplifyPriorToUnion);
-        }
-
-        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
-        /// <summary>
-        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
-        ///  using the even/odd methodology
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> UnionEvenOdd(IList<List<Point>> subject, bool simplifyPriorToUnion = true)
-        {
-            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
-        }
-
-        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
-        /// <summary>
-        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
-        ///  using the even/odd methodology
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> UnionEvenOdd(List<Point> subject, bool simplifyPriorToUnion = true)
-        {
-            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, new List<List<Point>>() { subject }, null, simplifyPriorToUnion);
-        }
-
-        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
-        /// <summary>
-        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
-        ///  using the even/odd methodology.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> UnionEvenOdd(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToUnion = true)
-        {
-            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
         #endregion
 

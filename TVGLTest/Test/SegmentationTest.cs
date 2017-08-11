@@ -39,13 +39,16 @@ namespace TVGL_Test
 
                 //Get the forward and reverse segments. They should be mostly the same.
                 Dictionary<int, double> stepDistances;
-                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize, out stepDistances);
+                Dictionary<int, double> sortedVertexDistanceLookup;
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, stepSize, 
+                    out stepDistances, out sortedVertexDistanceLookup);
                 Assert.That(segments.Count == segmentCounts[i], "Incorrect Number of Segments");
                
                 //Check to make sure all the faces and edges and vertices are inlcuded into at least one segment.
                 CheckAllObjectTypes(ts, segments);
 
-                var reverseSegments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction.multiply(-1), stepSize, out stepDistances);
+                var reverseSegments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction.multiply(-1), stepSize, 
+                    out stepDistances, out sortedVertexDistanceLookup);
                 Assert.That(reverseSegments.Count == segmentCounts[i], "Incorrect Number of Segments");
                 CheckAllObjectTypes(ts, reverseSegments);
             }
