@@ -88,7 +88,7 @@ namespace TVGL
             //Example: A negative polygon must be between two concentric positive polygons.
 
             //By ordering the polygons, we are gauranteed to do the outermost positive polygons first.
-            var orderedPolygons = polygons.OrderBy(p => p.Area);
+            var orderedPolygons = polygons.OrderByDescending(p => p.Area);
 
             //1) Make a list of all the shallow polygon trees from the positive polygons
             var shallowPolygonTrees = new List<ShallowPolygonTree>();
@@ -107,7 +107,7 @@ namespace TVGL
             //and the reversed ordering, gaurantee that we get the correct shallow tree.
             foreach (var negativePolygon in orderedPolygons)
             {
-                if (!negativePolygon.IsPositive) continue;
+                if (negativePolygon.IsPositive) continue;
                 var isInside = false;
 
                 //Start with the smallest positive polygon           
