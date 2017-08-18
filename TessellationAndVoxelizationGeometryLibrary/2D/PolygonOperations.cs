@@ -147,7 +147,7 @@ namespace TVGL
         private static bool NegligibleLine(Point pt1, Point pt2, double tolerance = 0.0)
         {
             if (tolerance.IsNegligible()) tolerance = StarMath.EqualityTolerance;
-            return MiscFunctions.DistancePointToPoint(pt1.Position2D, pt2.Position2D).IsNegligible(tolerance);
+            return MiscFunctions.DistancePointToPoint2D(pt1, pt2).IsNegligible(tolerance);
         }
 
         private static bool LineSlopesEqual(Point pt1, Point pt2, Point pt3, double tolerance = 0.0)

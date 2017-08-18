@@ -238,8 +238,7 @@ namespace TVGL
             for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
             {
                 perimeter = perimeter +
-                            DistancePointToPoint(listWithStartPointAtEnd[i - 1].Position2D,
-                                listWithStartPointAtEnd[i].Position2D);
+                            DistancePointToPoint2D(listWithStartPointAtEnd[i - 1], listWithStartPointAtEnd[i]);
             }
             return perimeter;
         }
@@ -1562,6 +1561,19 @@ namespace TVGL
             pointOnLine = new[]
             {lineRefPt[0] + lineVector[0]*t, lineRefPt[1] + lineVector[1]*t, lineRefPt[2] + lineVector[2]*t};
             return DistancePointToPoint(qPoint, pointOnLine);
+        }
+
+        /// <summary>
+        ///     Distances the point to point.
+        /// </summary>
+        /// <param name="p1">point, p1.</param>
+        /// <param name="p2">point, p2.</param>
+        /// <returns>the distance between the two 3D points.</returns>
+        public static double DistancePointToPoint2D(Point p1, Point p2)
+        {
+            var dX = p1[0] - p2[0];
+            var dY = p1[1] - p2[1];
+            return Math.Sqrt(dX * dX + dY * dY);
         }
 
         /// <summary>

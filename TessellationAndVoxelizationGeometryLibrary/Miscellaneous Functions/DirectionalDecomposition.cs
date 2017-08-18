@@ -2029,7 +2029,7 @@ namespace TVGL
             {
                 var tempEdges = CurrentEdges.Where(edge => edge.To.ReferenceIndex == -1 || edge.From.ReferenceIndex == -1).ToList();
                 CurrentEdges = new HashSet<Edge>(tempEdges);
-            }
+            }  
 
             /// <summary>
             /// Sets the ReferenceVerticesByStepIndex. Do this when finished if the data is needed.
