@@ -34,7 +34,7 @@ namespace TVGL_Test
             clipper = new Clipper();
         }
 
-        private Path MakePolygonFromInts(int[] ints)
+        public static Path MakePathFromInts(int[] ints)
         {
             var polygon = new Path();
 
@@ -46,7 +46,23 @@ namespace TVGL_Test
             return polygon;
         }
 
-        private void MakeSquarePolygons(int size, int totalWidth, int totalHeight, Paths result)
+        public static List<Point> MakeRectangularPolygon(int width, int height, int[] centerPoint)
+        {
+            var x1 = centerPoint[0] - width/2;
+            var x2 = centerPoint[0] + width / 2;
+            var y1 = centerPoint[0] - height / 2;
+            var y2 = centerPoint[0] + height / 2;
+            int[] intPath =
+            {
+                x1, y1,
+                x2, y1,
+                x2, y2,
+                x1, y2
+            };
+            return MakePathFromInts(intPath);
+        }
+
+        private static void MakeSquarePolygons(int size, int totalWidth, int totalHeight, ref Paths result)
         {
             int cols = totalWidth / size;
             int rows = totalHeight / size;
@@ -66,7 +82,7 @@ namespace TVGL_Test
                         (i+1) * size
                     };
 
-                    paths[j * rows + i] = MakePolygonFromInts(ints);
+                    paths[j * rows + i] = MakePathFromInts(ints);
                 }
             }
 
@@ -98,7 +114,7 @@ namespace TVGL_Test
                         i * halfSize + halfSize *2
                     };
 
-                    paths[j * rows + i] = MakePolygonFromInts(ints);
+                    paths[j * rows + i] = MakePathFromInts(ints);
                 }
             }
 
@@ -130,7 +146,7 @@ namespace TVGL_Test
                 {
                     var points = new List<Point>();
                     if (scalingFactor < 1) scalingFactor = 1;
-                    points.AddRange(path.Select(Point => new Point(new List<double>() { Point.X / scalingFactor, Point.Y / scalingFactor, 0.0 })));
+                    points.AddRange(path.Select(point => new Point(new List<double>() { point.X / scalingFactor, point.Y / scalingFactor, 0.0 })));
                     pointPathList.Add(points);
                 }
                 pointPathLists.Add(pointPathList);
@@ -138,12 +154,53 @@ namespace TVGL_Test
             Presenter.ShowAndHang(pointPathLists);
         }
 
+        [Test]
+        public static void ShallowPolygonTreeCreation()
+        {
+            int[] ints1 = { -150, 0, -115, 0, -115, 165, 115, 165, 115, 0, 150, 0, 150, 200, -150, 200 };  //CCW  == Solid
+            int[] ints2 = { -145, 5, -120, 5, -120, 170, 120, 170, 120, 5, 145, 5, 145, 190, -145, 190 }; //CCW  == Solid
+            var subjectList = MakePathFromInts(ints1);
+            var clipperList = MakePathFromInts(ints2);
+            clipperList.Reverse();//CW  == Hole
+
+
+            int[] intPoint = { 0, 0 };
+            var subjectList2 = MakeRectangularPolygon(100, 80, intPoint);
+            var clipperList2 = MakeRectangularPolygon(80, 60, intPoint);
+
+            //A square inside the first sqaure
+            var subjectList3 = MakeRectangularPolygon(50, 50, intPoint);
+            var clipperList3 = MakeRectangularPolygon(30, 30, intPoint);
+
+            //A square inside the second square (for testing Nesting)
+            var subjectList4 = MakeRectangularPolygon(20, 20, intPoint);
+
+            //Incorrect ShallowTree ordering, so we can check create function.
+            var paths = new List<List<Point>> { subjectList3, clipperList2, subjectList4 , subjectList, subjectList2, clipperList3, clipperList };
+            //Presenter.ShowAndHang(paths);
+            var trees = PolygonOperations.GetShallowPolygonTrees(paths);
+            Assert.That(trees.Count == 4);
+            for (var i = 0; i < 3; i++)
+            {
+                Assert.That(trees[i].OuterPolygon != null);
+                Assert.That(trees[i].InnerPolygons.Count == 1);
+                Assert.That(trees[i].AllPolygons.Count == 2);
+            }
+
+            Assert.That(trees[0].Area.IsPracticallySame(8000));
+            Assert.That(trees[1].Area.IsPracticallySame(3200));
+            Assert.That(trees[2].Area.IsPracticallySame(1600));
+
+            Assert.That(trees[3].OuterPolygon != null);
+            Assert.That(trees[3].InnerPolygons.Count == 0);
+            Assert.That(trees[3].Area.IsPracticallySame(400));
+        }
 
         [Test]
-        public void InnerBoundingCircle()
+        public static void InnerBoundingCircle()
         {
             int[] ints1 = { -150, 0, -115, 0, -115, 165, 115, 165, 115, 0, 150, 0, 150, 200, -150, 200 }; //CCW  == Solid
-            var subjectList = MakePolygonFromInts(ints1);
+            var subjectList = MakePathFromInts(ints1);
 
             var maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 90));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(75.0));
@@ -204,8 +261,8 @@ namespace TVGL_Test
             //int[] ints4 = { 97, 174, 99, 132, 60, 124, 58, 160 }; //CW Red
             int[] ints4 = { 97, 174, 58, 160, 60, 124, 99, 132 }; //CCW Red
 
-            var subjectList = MakePolygonFromInts(ints1);
-            var clipList = new List<List<Point>>() { MakePolygonFromInts(ints2), MakePolygonFromInts(ints3), MakePolygonFromInts(ints4) };
+            var subjectList = MakePathFromInts(ints1);
+            var clipList = new List<List<Point>>() { MakePathFromInts(ints2), MakePathFromInts(ints3), MakePathFromInts(ints4) };
 
             //ShowPaths(new Paths() {subjectList});
             //ShowPaths(clipList);
@@ -243,8 +300,8 @@ namespace TVGL_Test
             //clip.Add(MakePolygonFromInts(ints2));
             //ShowPathListsAsDifferentColors(new List<List<Path>>() { subject, clip });
 
-            var subjectList = MakePolygonFromInts(ints1);
-            var clipList = MakePolygonFromInts(ints2);
+            var subjectList = MakePathFromInts(ints1);
+            var clipList = MakePathFromInts(ints2);
 
             //clipper.StrictlySimple = true;
             //clipper.AddPaths(subject, PolyType.ptSubject, true);
@@ -289,8 +346,8 @@ namespace TVGL_Test
             int[] ints1 = { 450, 260, 320, 200, 490, 540, 130, 400, 450, 280, 380, 280 };//CCW
             int[] ints2 = { 350, 260, 520, 600, 100, 300 }; //CCW
 
-            subject.Add(MakePolygonFromInts(ints1));
-            clip.Add(MakePolygonFromInts(ints2));
+            subject.Add(MakePathFromInts(ints1));
+            clip.Add(MakePathFromInts(ints2));
 
             var allPaths = new Paths(subject);
             allPaths.AddRange(clip);
@@ -304,12 +361,6 @@ namespace TVGL_Test
             Assert.That(solution.Count, Is.EqualTo(1));
 
             solution = PolygonOperations.Union(subject, clip, false, PolygonFillType.EvenOdd);
-            result = solution.Count > 0;
-            //ShowPaths(solution);
-            Assert.That(result, Is.True);
-            Assert.That(solution.Count, Is.EqualTo(1));
-
-            solution = PolygonOperations.UnionEvenOdd(solution, clip, false);
             result = solution.Count > 0;
             //ShowPaths(solution);
             Assert.That(result, Is.True);

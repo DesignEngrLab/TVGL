@@ -36,6 +36,7 @@ namespace TVGL
         /// <returns></returns>
         public static double Length(IList<Point> path)
         {
+            if (path.Count < 2) return 0.0;
             var editPath = new List<Point>(path) {path.First()};
             var length = 0.0;
             for (var i = 0; i < editPath.Count - 1; i++)
@@ -55,6 +56,16 @@ namespace TVGL
         public static double Length(IList<List<Point>> paths)
         {
             return paths.Sum(path => Length(path));
+        }
+
+        /// <summary>
+        /// Gets the Shallow Polygon Trees for a given set of paths. 
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <returns></returns>
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths)
+        {
+            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
         }
 
         #region Clockwise / CounterClockwise Ordering
@@ -136,7 +147,7 @@ namespace TVGL
         private static bool NegligibleLine(Point pt1, Point pt2, double tolerance = 0.0)
         {
             if (tolerance.IsNegligible()) tolerance = StarMath.EqualityTolerance;
-            return MiscFunctions.DistancePointToPoint(pt1.Position2D, pt2.Position2D).IsNegligible(tolerance);
+            return MiscFunctions.DistancePointToPoint2D(pt1, pt2).IsNegligible(tolerance);
         }
 
         private static bool LineSlopesEqual(Point pt1, Point pt2, Point pt3, double tolerance = 0.0)
@@ -315,13 +326,14 @@ namespace TVGL
         #region Boolean Operations
 
         #region Union
+
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
-        /// <param name="clip"></param>
         /// <param name="simplifyPriorToUnion"></param>
+        /// <param name="polyFill"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
@@ -331,7 +343,7 @@ namespace TVGL
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
@@ -345,7 +357,7 @@ namespace TVGL
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
@@ -359,7 +371,7 @@ namespace TVGL
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
-        /// Use the Even/Odd PolygonFillMethod to correctly ordering a set of paths.
+        /// Use GetShallowPolygonTrees to correctly order the polygons inside one another.
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="clip"></param>
@@ -369,51 +381,6 @@ namespace TVGL
         public static List<List<Point>> Union(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, new Paths { clip }, simplifyPriorToUnion);
-        }
-
-        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
-        /// <summary>
-        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
-        ///  using the even/odd methodology
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> UnionEvenOdd(IList<List<Point>> subject, bool simplifyPriorToUnion = true)
-        {
-            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
-        }
-
-        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
-        /// <summary>
-        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
-        ///  using the even/odd methodology
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> UnionEvenOdd(List<Point> subject, bool simplifyPriorToUnion = true)
-        {
-            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, new List<List<Point>>() { subject }, null, simplifyPriorToUnion);
-        }
-
-        [System.Obsolete("Use Union with PolygonFillType.EvenOdd")]
-        /// <summary>
-        ///  The Even/Odd PolygonFillMethod correctly orders a set of paths, 
-        ///  using the even/odd methodology.
-        /// </summary>
-        /// <param name="subject"></param>
-        /// <param name="clip"></param>
-        /// <param name="simplifyPriorToUnion"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static List<List<Point>> UnionEvenOdd(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToUnion = true)
-        {
-            return BooleanOperation(PolygonFillType.EvenOdd, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
         #endregion
 

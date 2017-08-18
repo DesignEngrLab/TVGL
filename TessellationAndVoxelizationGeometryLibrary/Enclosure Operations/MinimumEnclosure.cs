@@ -89,7 +89,8 @@ namespace TVGL
                 minVolume = box.Volume;
                 minBox = box;
             }
-            return AddInCornerVertices(minBox);
+            minBox.SetCornerVertices();
+            return minBox;
         }
 
         #region ChanTan AABB Approach
@@ -127,7 +128,7 @@ namespace TVGL
 
         /// <summary>
         ///     Given a Direction, dir, this function returns the maximum length along this Direction
-        ///     for the provided vertices as well as the two vertices that represent the extremes.
+        ///     for the provided vertices as well as the vertices that represent the extremes.
         /// </summary>
         /// <param name="direction">The direction.</param>
         /// <param name="vertices">The vertices.</param>
@@ -160,6 +161,49 @@ namespace TVGL
                 {
                     topVertices.Clear();
                     topVertices.Add(v);
+                    maxD = distance;
+                }
+            }
+            return maxD - minD;
+        }
+
+        /// <summary>
+        ///     Given a Direction, dir, this function returns the maximum length along this Direction
+        ///     for the provided points as well as the points that represent the extremes.
+        /// </summary>
+        /// <param name="direction2D">The direction.</param>
+        /// <param name="points">The vertices.</param>
+        /// <param name="bottomPoints">The bottom vertices.</param>
+        /// <param name="topPoints">The top vertices.</param>
+        /// <returns>System.Double.</returns>
+        public static double GetLengthAndExtremePoints(double[] direction2D, IList<Point> points,
+            out List<Point> bottomPoints,
+            out List<Point> topPoints)
+        {
+            var direction3D = new[] { direction2D[0], direction2D[1], 0 };
+            var dir = direction3D.normalize();
+            var minD = double.PositiveInfinity;
+            bottomPoints = new List<Point>();
+            topPoints = new List<Point>();
+            var maxD = double.NegativeInfinity;
+            foreach (var point in points)
+            {
+                var position3D = new[] {point.Position2D[0], point.Position2D[1], 0};
+                var distance = dir.dotProduct(position3D);
+                if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
+                    bottomPoints.Add(point);
+                else if (distance < minD)
+                {
+                    bottomPoints.Clear();
+                    bottomPoints.Add(point);
+                    minD = distance;
+                }
+                if (distance.IsPracticallySame(maxD, Constants.BaseTolerance))
+                    bottomPoints.Add(point);
+                else if (distance > maxD)
+                {
+                    topPoints.Clear();
+                    topPoints.Add(point);
                     maxD = distance;
                 }
             }
@@ -422,101 +466,13 @@ namespace TVGL
 
             if (bestRectangle.Area.IsNegligible())
                 throw new Exception("Area should never be negligilbe unless data is messed up.");
+            bestRectangle.SetCornerPoints();
             return bestRectangle;
         }
 
         #endregion
 
-        /// <summary>
-        ///     Adds the corner vertices (actually 3d points) to the bounding box
-        /// </summary>
-        /// <param name="bb">The bb.</param>
-        /// <returns>BoundingBox.</returns>
-        //ToDo: Fix this function. It does not currently give the correct vertices
-        public static BoundingBox AddInCornerVertices(BoundingBox bb)
-        {
-            if (bb.CornerVertices != null) return bb;
-            var cornerVertices = new Vertex[8];
-
-            ////////////////////////////////////////
-            //First, get the bottom corner.
-            ////////////////////////////////////////
-            
-            //Collect all the points on faces
-            var allPointsOnFaces = new List<Vertex>();
-            foreach (var setOfPoints in bb.PointsOnFaces)
-            {
-                allPointsOnFaces.AddRange(setOfPoints);
-            }
-
-            //Get the low extreme vertices along each direction
-            List<Vertex> vLows, vHighs;
-            GetLengthAndExtremeVertices(bb.Directions[0], allPointsOnFaces, out vLows, out vHighs);
-            var v0 = new Vertex(vLows.First().Position);
-            GetLengthAndExtremeVertices(bb.Directions[1], allPointsOnFaces, out vLows, out vHighs);
-            var v1 = new Vertex(vLows.First().Position);
-            GetLengthAndExtremeVertices(bb.Directions[2], allPointsOnFaces, out vLows, out vHighs);
-            var v2 = new Vertex(vLows.First().Position);
-
-            //Start with v0 and move along direction[1] by projection
-            var vector0To1 = v1.Position.subtract(v0.Position);
-            var projectionOntoD1 = bb.Directions[1].multiply(bb.Directions[1].dotProduct(vector0To1));
-            var v4 = v0.Position.add(projectionOntoD1);
-
-            //Move along direction[2] by projection
-            var vector4To2 = v2.Position.subtract(v4);
-            var projectionOntoD2 = bb.Directions[2].multiply(bb.Directions[2].dotProduct(vector4To2));
-            var bottomCorner = new Vertex(v4.add(projectionOntoD2));
-
-            //Double Check to make sure it is the bottom corner
-            allPointsOnFaces.Add(bottomCorner);
-            GetLengthAndExtremeVertices(bb.Directions[0], allPointsOnFaces, out vLows, out vHighs);
-            if(!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-            GetLengthAndExtremeVertices(bb.Directions[1], allPointsOnFaces, out vLows, out vHighs);
-            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-            GetLengthAndExtremeVertices(bb.Directions[2], allPointsOnFaces, out vLows, out vHighs);
-            if (!vLows.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-
-            //Create the vertices that make up the box and add them to the corner vertices array
-            var count = 0;
-            for (var i = 0; i < 2; i++)
-            {
-                var d0Vector = i == 0 ? new[] {0.0, 0.0, 0.0} : bb.Directions[0].multiply(bb.Dimensions[0]);
-                for (var j = 0; j < 2; j++)
-                {
-                    var d1Vector = j == 0 ? new[] { 0.0, 0.0, 0.0 } : bb.Directions[1].multiply(bb.Dimensions[1]);
-                    for (var k = 0; k < 2; k++)
-                    {
-                        var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : bb.Directions[2].multiply(bb.Dimensions[2]);
-                        var newVertex = new Vertex(bottomCorner.Position.add(d0Vector).add(d1Vector).add(d2Vector));
-                        cornerVertices[count] = newVertex;
-                        count++;
-                    }
-                }
-            }
-
-            //Add in the center
-            var centerPosition = new[] { 0.0, 0.0, 0.0 };
-            foreach(var vertex in cornerVertices)
-            {
-                centerPosition[0] += vertex.Position[0];
-                centerPosition[1] += vertex.Position[1];
-                centerPosition[2] += vertex.Position[2];
-            }
-            centerPosition[0] = centerPosition[0] / cornerVertices.Count();
-            centerPosition[1] = centerPosition[1] / cornerVertices.Count();
-            centerPosition[2] = centerPosition[2] / cornerVertices.Count();
-
-            return new BoundingBox
-            {
-                CornerVertices = cornerVertices,
-                Center = new Vertex(centerPosition),
-                Dimensions = bb.Dimensions,
-                Directions = bb.Directions,
-                PointsOnFaces = bb.PointsOnFaces,
-                Volume = bb.Volume
-            };
-        }
+        
 
         #region Find OBB Along Direction
 
@@ -533,7 +489,9 @@ namespace TVGL
         /// <exception cref="System.Exception"></exception>
         public static BoundingBox OBBAlongDirection(IList<Vertex> vertices, double[] direction)
         {
-            return AddInCornerVertices(FindOBBAlongDirection(vertices, direction));
+            var boundingBox = FindOBBAlongDirection(vertices, direction);
+            boundingBox.SetCornerVertices();
+            return boundingBox;
         }
 
         private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction)

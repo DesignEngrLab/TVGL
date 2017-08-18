@@ -3,52 +3,54 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Xml;
-using System.Xml.Serialization;
+using NUnit.Framework;
+using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
-using TVGL.IOFunctions.threemfclasses;
-using Vertex = TVGL.Vertex;
 
 namespace TVGL_Test
 {
     internal class Program
     {
         private static readonly string[] FileNames = {
-       // "../../../TestFiles/turbine_blade.off",
-       // "../../../TestFiles/angle bracket.STL",
+        //"../../../TestFiles/ABF.ply",
        // "../../../TestFiles/Beam_Boss.STL",
-       //// "../../../TestFiles/bigmotor.amf",
-       // "../../../TestFiles/DxTopLevelPart2.shell",
-       // "../../../TestFiles/Candy.shell",
-       // "../../../TestFiles/amf_Cube.amf",
-       // "../../../TestFiles/train.3mf",
-       // "../../../TestFiles/Castle.3mf",
-       // "../../../TestFiles/Raspberry Pi Case.3mf",
-       //"../../../TestFiles/shark.ply",
-       ////"../../../TestFiles/bunnySmall.ply",
-      //  "../../../TestFiles/cube.ply",
-       // "../../../TestFiles/airplane.ply",
+       // //"../../../TestFiles/bigmotor.amf",
+       // //"../../../TestFiles/DxTopLevelPart2.shell",
+       // //"../../../TestFiles/Candy.shell",
+       // //"../../../TestFiles/amf_Cube.amf",
+       // //"../../../TestFiles/train.3mf",
+       // //"../../../TestFiles/Castle.3mf",
+       // //"../../../TestFiles/Raspberry Pi Case.3mf",
+       ////"../../../TestFiles/shark.ply",
+     // "../../../TestFiles/bunnySmall.ply",
+       // "../../../TestFiles/cube.ply",
+       // //"../../../TestFiles/airplane.ply",
        // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        "../../../TestFiles/Tetrahedron.STL",
+        //"../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
        // "../../../TestFiles/Mic_Holder_SW.stl",
        // "../../../TestFiles/Mic_Holder_JR.stl",
        // "../../../TestFiles/3_bananas.amf",
-      //  "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
        // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
        // "../../../TestFiles/Rook.amf",
-       // "../../../TestFiles/hdodec.off",
-       // "../../../TestFiles/tref.off",
+        //"../../../TestFiles/hdodec.off",
+        //"../../../TestFiles/tref.off",
         //"../../../TestFiles/mushroom.off",
         //"../../../TestFiles/vertcube.off",
         //"../../../TestFiles/trapezoid.4d.off",
-       // "../../../TestFiles/ABF.STL",
-        "../../../TestFiles/Pump-1repair.STL",
-        "../../../TestFiles/Pump-1.STL",
+        //"../../../TestFiles/ABF.STL",
+        //"../../../TestFiles/Pump-1repair.STL",
+        //"../../../TestFiles/Pump-1.STL",
+        "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
         "../../../TestFiles/Beam_Clean.STL",
+        "../../../TestFiles/Square_Support.STL",
+        "../../../TestFiles/Aerospace_Beam.STL",
+
+
         "../../../TestFiles/piston.stl",
         "../../../TestFiles/Z682.stl",
         "../../../TestFiles/sth2.stl",
@@ -65,7 +67,7 @@ namespace TVGL_Test
         "../../../TestFiles/Z665.stl",
         "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
         "../../../TestFiles/mendel_extruder.stl",
-        "../../../TestFiles/Aerospace_Beam.STL",
+
        "../../../TestFiles/MV-Test files/holding-device.STL",
        "../../../TestFiles/MV-Test files/gear.STL"
         };
@@ -78,37 +80,110 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
+            var fileNames = dir.GetFiles("*.stl");
             for (var i = 0; i < FileNames.Count(); i++)
             {
-                var filename = FileNames[i]; //.FullName;
+                var filename = FileNames[i];//.FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
-               List<TessellatedSolid> ts;
+                List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-                using (fileStream = File.OpenWrite(filename))
-                    IO.Save(fileStream, ts, FileType.TVGL);
+                //filename += "1.ply";
+                //using (fileStream = File.OpenWrite(filename))
+                //    IO.Save(fileStream, ts, FileType.PLY_Binary);
+                //using (fileStream = File.OpenRead(filename))
+                //    ts = IO.Open(fileStream, filename);
 
-                using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
-                //if (!ts.CheckModelIntegrity(true))
-                //    Console.WriteLine("failed to open!");
-                //else
-                    Presenter.ShowAndHang(ts);
-                //if (ts.CheckModelIntegrity(false))
-                //    TestSimplify(ts);
+
+                //TestPolygon(ts[0]);
+                TestSegmentation(ts[0]);
+                //Presenter.ShowAndHang(ts);
+              //  TestSilhouette(ts[0]);
+                //TestAdditiveVolumeEstimate(ts[0]);
             }
 
             Console.WriteLine("Completed.");
-            Console.ReadKey();
+            //  Console.ReadKey();
         }
 
+        public static void TestSegmentation(TessellatedSolid ts)
+        {
+            var obb = MinimumEnclosure.OrientedBoundingBox(ts);
+            var startTime = DateTime.Now;
 
+            var averageNumberOfSteps = 500;
+
+            //Do the average # of slices slices for each direction on a box (l == w == h).
+            //Else, weight the average # of slices based on the average obb distance
+            var obbAverageLength = (obb.Dimensions[0] + obb.Dimensions[1] + obb.Dimensions[2]) / 3;
+            //Set step size to an even increment over the entire length of the solid
+            var stepSize = obbAverageLength / averageNumberOfSteps;
+
+            foreach (var direction in obb.Directions)
+            {
+                Dictionary<int, double> stepDistances;
+                Dictionary<int, double> sortedVertexDistanceLookup;
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, 
+                    stepSize, out stepDistances, out sortedVertexDistanceLookup);
+                //foreach (var segment in segments)
+                //{
+                //    var vertexLists = segment.DisplaySetup(ts);
+                //    Presenter.ShowVertexPathsWithSolid(vertexLists, new List<TessellatedSolid>() { ts });
+                //}
+            }
+
+            // var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2].multiply(-1), stepSize);
+            var totalTime = DateTime.Now - startTime;
+            Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
+            //CheckAllObjectTypes(ts, segments);
+        }
+
+        private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<DirectionalDecomposition.DirectionalSegment> segments)
+        {
+            var faces = new HashSet<PolygonalFace>(ts.Faces);
+            var vertices = new HashSet<Vertex>(ts.Vertices);
+            var edges = new HashSet<Edge>(ts.Edges);
+
+
+            foreach (var face in faces)
+            {
+                face.Color = new Color(KnownColors.Gray);
+            }
+
+            foreach (var segment in segments)
+            {
+                foreach (var face in segment.ReferenceFaces)
+                {
+                    faces.Remove(face);
+                }
+                foreach (var edge in segment.ReferenceEdges)
+                {
+                    edges.Remove(edge);
+                }
+                foreach (var vertex in segment.ReferenceVertices)
+                {
+                    vertices.Remove(vertex);
+                }
+            }
+
+            ts.HasUniformColor = false;
+            //Turn the remaining faces red
+            foreach (var face in faces)
+            {
+                face.Color = new Color(KnownColors.Red);
+            }
+            Presenter.ShowAndHang(ts);
+
+            //Make sure that every face, edge, and vertex is accounted for
+            Assert.That(!edges.Any(), "edges missed");
+            Assert.That(!faces.Any(), "faces missed");
+            Assert.That(!vertices.Any(), "vertices missed");
+        }
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
+            var silhouette = TVGL.Silhouette.Run(ts, new[] {0.5, 0.0, 0.5});
             Presenter.ShowAndHang(silhouette);
         }
 
@@ -147,25 +222,11 @@ namespace TVGL_Test
 
         private static void TestSimplify(TessellatedSolid ts)
         {
-            Debug.WriteLine("model:   " + ts.FileName);
-
+            ts.SimplifyByPercentage(.9);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            // TVGL.Presenter.ShowWire(ts);
-            ts.Complexify((int)(0.33 * ts.NumberOfFaces));
-            if (!ts.CheckModelIntegrity(false)) Console.WriteLine("------------------>Failed to complexify " + ts.Name);
-            Debug.WriteLine("complexify*****");
-            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
-            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
-            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            //TVGL.Presenter.ShowWire(ts);
-            ts.Simplify(ts.NumberOfFaces / 4);
-            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
-            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
-            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
-            if (!ts.CheckModelIntegrity(false)) Console.WriteLine("=============>Failed to simplify " + ts.Name);
-            //TVGL.Presenter.ShowWire(ts);
+            TVGL.Presenter.ShowAndHang(ts);
         }
 
         //private static void TestClassification(TessellatedSolid ts)
