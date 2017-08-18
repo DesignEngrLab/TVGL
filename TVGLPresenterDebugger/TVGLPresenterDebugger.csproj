@@ -46,6 +46,9 @@
       <HintPath>..\packages\MIConvexHull.1.1.17.0214\lib\portable-net45+wp8+win8\MIConvexHull.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="MIConvexHull.NET4.5, Version=1.0.17.411, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\MIConvexHull.1.1.17.0412\lib\portable-net45+win8\MIConvexHull.NET4.5.dll</HintPath>
+    </Reference>
     <Reference Include="OxyPlot, Version=1.0.0.0, Culture=neutral, PublicKeyToken=638079a8f0bd61e9, processorArchitecture=MSIL">
       <HintPath>..\packages\OxyPlot.Core.1.0.0\lib\net45\OxyPlot.dll</HintPath>
       <Private>True</Private>
@@ -112,6 +115,12 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs">
       <Link>TVGL\Colors.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByIndexInList.cs">
+      <Link>TVGL\Comparators\SortByIndexInList.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs">
+      <Link>TVGL\Comparators\SortByLength.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs">
       <Link>TVGL\Constants.cs</Link>
     </Compile>
@@ -160,6 +169,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs">
       <Link>TVGL\InputOutput Operations\STLFileData.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs">
+      <Link>TVGL\InputOutput Operations\TVGLFileData.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\DirectionalDecomposition.cs">
       <Link>TVGL\Miscellaneous Functions\DirectionalDecomposition.cs</Link>
     </Compile>
@@ -177,6 +189,21 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs">
       <Link>TVGL\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\ComplexifyTessellation.cs">
+      <Link>TVGL\ModifyTessellation\ComplexifyTessellation.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\DetermineIntermediateVertex.cs">
+      <Link>TVGL\ModifyTessellation\DetermineIntermediateVertex.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\RepairTessellation.cs">
+      <Link>TVGL\ModifyTessellation\RepairTessellation.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\SimplifyTessellation.cs">
+      <Link>TVGL\ModifyTessellation\SimplifyTessellation.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\TessellationError.cs">
+      <Link>TVGL\ModifyTessellation\TessellationError.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Classify.cs">
       <Link>TVGL\Primitive Classification\Classify.cs</Link>
@@ -210,12 +237,6 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Surfaces\Torus.cs">
       <Link>TVGL\Primitive Surfaces\Torus.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Simplify and Repair\SimplifyTessellation.cs">
-      <Link>TVGL\Simplify and Repair\SimplifyTessellation.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Simplify and Repair\TessellationError.cs">
-      <Link>TVGL\Simplify and Repair\TessellationError.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Edge.cs">
       <Link>TVGL\Solid Body Classes\Edge.cs</Link>

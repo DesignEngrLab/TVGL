@@ -97,9 +97,9 @@ namespace TVGL_Test
 
 
                 //TestPolygon(ts[0]);
-                TestSegmentation(ts[0]);
+                //TestSegmentation(ts[0]);
                 //Presenter.ShowAndHang(ts);
-              //  TestSilhouette(ts[0]);
+                TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
 
@@ -222,7 +222,7 @@ namespace TVGL_Test
 
         private static void TestSimplify(TessellatedSolid ts)
         {
-            ts.SimplifyByPercentage(.9);
+            ts.Simplify(.9);
             Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
