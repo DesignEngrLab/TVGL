@@ -591,6 +591,9 @@ namespace TVGL
             /// </summary>
             public List<int> PotentialSegmentIndices;
 
+            /// <summary>
+            /// Get/set the distance along the search direction (Should match stepIndex)
+            /// </summary>
             public double DistanceAlongSearchDirection;
 
             /// <summary>
@@ -733,10 +736,14 @@ namespace TVGL
             var furthestDistance = sortedVertices.Last().Item2;
             var distanceAlongAxis = firstDistance;
             var currentVertexIndex = 0;
-            var stepIndex = 0;
+            //Start the step index at -1, so that the increment can be at the start of the while loop, 
+            //making the final stepIndex correct for use in a later function.
+            var stepIndex = -1;
 
             while (distanceAlongAxis < furthestDistance - stepSize)
             {
+                stepIndex++;
+
                 //This is the current distance along the axis. It will move forward by the step size during each iteration.
                 distanceAlongAxis += stepSize;
 
@@ -824,7 +831,6 @@ namespace TVGL
                         referenceVerticesByStepIndex.Add(vertex.IndexInList, stepIndex);
                     }
                 }
-                stepIndex++;
             }
 
             //Add the remaining vertices to a final step index
@@ -841,11 +847,23 @@ namespace TVGL
                     segment.SetReferenceVerticesByStepIndex(referenceVerticesByStepIndex);
                     continue;
                 }
-                //Else
 
-                //We need to finish wrapping around all the open segments. 
-                //There should be no merging or branching if the step size was the correct size.
-                var stack = new Stack<Vertex>(segment.NextVertices);
+                /*  We need to finish wrapping around all the open segments. There are two types
+                of open segments; those that ended before the final step and those that ended
+                at the final step. In both cases, there should be no merging or branching if 
+                the step size was the correct size.
+                    
+                For segments that ended before the final step, we cannot use NextVertices or 
+                CurrentEdges, since they are removed during the UpdateSegment function calls, 
+                so instead we use ReferenceVertices to determine which vertices belonging to the 
+                segment are further along the direction than the segment's final step.
+                
+                For segments that end at the final step, we cannot use ReferenceVertices since it 
+                has not been updated with the NextVertices, but we can use NextVertices.
+                The GetFinalVertices function takes care of these two different approaches.  */
+
+                var endingVertices = segment.GetFinalVertices(sortedVertexDistanceLookup);
+                var stack = new Stack<Vertex>(endingVertices);
                 while (stack.Any())
                 {
                     var vertex = stack.Pop();
@@ -859,12 +877,21 @@ namespace TVGL
                             //We have not visited this vertex yet, so push it onto the stack
                             //We will update its index when we pop it off.
                             stack.Push(otherVertex);
+                            endingVertices.Add(otherVertex);
                         }
                         //All these edges will be reference edges, since they are complete.
                         //Since this is a hashset, we do not need to see if it contains the edges.
                         segment.ReferenceEdges.Add(edge);
                     }
+                }
 
+                //Now we need to set the step index for these vertices. We want it to be the last
+                //index of the segment.
+                var endIndex = segment.EndStepIndexAlongSearchDirection;
+                foreach (var vertex in endingVertices)
+                {
+                    //var priorInt = referenceVerticesByStepIndex[vertex.IndexInList];
+                    referenceVerticesByStepIndex[vertex.IndexInList] = endIndex;
                 }
                 //Set to IsFinished. This will clear out the current edges
                 //(by now they should have all been added to reference edges)
@@ -1668,6 +1695,9 @@ namespace TVGL
 
             /// <summary>
             /// Reference vertices by step index that they were added in (passed by the search plane)
+            /// New segments not attached to prior segments will have their first set of vertices added
+            /// at their first defined step (cross section). Segments that end with no children segments
+            /// will have their last set of vertices added to their last defined step.
             /// </summary>
             public Dictionary<int, List<Vertex>> ReferenceVerticesByStepIndex { get; internal set; }
 
@@ -1995,6 +2025,23 @@ namespace TVGL
             }
 
             /// <summary>
+            /// Gets the list of the final vertices (those on the other side of the segment's final step index).
+            /// </summary>
+            public HashSet<Vertex> GetFinalVertices(Dictionary<int, double> sortedVertexDistanceLookup)
+            {
+                var finalVertices = new HashSet<Vertex>(NextVertices);
+                foreach (var vertex in ReferenceVertices)
+                {
+                    var vertexDistance = sortedVertexDistanceLookup[vertex.IndexInList];
+                    if (vertexDistance > EndDistanceAlongSearchDirection)
+                    {
+                        finalVertices.Add(vertex);
+                    }
+                }
+                return finalVertices;
+            }
+
+            /// <summary>
             /// Updates the list of next vertices, using the vertex reference indices and current edges.
             /// </summary>
             public void UpdateNextVertices()
@@ -2117,6 +2164,42 @@ namespace TVGL
                 return allVertexPaths;
             }
             #endregion
+
+            /// <summary>
+            /// Reverses the direction and all associated dictionaries. It is assumed that the steps are to be 
+            /// ordered along the reversed direction. The total number of steps along the direction must be given.
+            /// </summary>
+            public void Reverse(int maxStepIndex,  Dictionary<int, double> stepDistances)
+            {
+                ForwardDirection = ForwardDirection.multiply(-1);
+                var tempSegmentsSet = ForwardAdjoinedDirectionalSegments;
+                ForwardAdjoinedDirectionalSegments = RearwardAdjoinedDirectionalSegments;
+                RearwardAdjoinedDirectionalSegments = tempSegmentsSet;
+
+                var tempReferenceVertices = ReferenceVerticesByStepIndex.Reverse();
+                var reversedReferenceVerticesByStepIndex = new Dictionary<int, List<Vertex>>();
+                foreach (var referenceItem in tempReferenceVertices)
+                {
+                    var i = maxStepIndex - referenceItem.Key;
+                    reversedReferenceVerticesByStepIndex.Add(i, referenceItem.Value);
+                }
+                ReferenceVerticesByStepIndex = reversedReferenceVerticesByStepIndex;
+
+                var tempCrossSections = CrossSectionPathDictionary.Reverse();
+                var reversedCrossSectionPathDictionary = new Dictionary<int, List<PolygonDataGroup>>();
+                foreach (var crossSectionItem in tempCrossSections)
+                {
+                    var i = maxStepIndex - crossSectionItem.Key;
+                    var distanceAlongSearchDirection = stepDistances[i];
+                    foreach (var polygonDataGroup in crossSectionItem.Value)
+                    {
+                        polygonDataGroup.StepIndex = i;
+                        polygonDataGroup.DistanceAlongSearchDirection = distanceAlongSearchDirection;
+                    }
+                    reversedCrossSectionPathDictionary.Add(i, crossSectionItem.Value);
+                }
+                CrossSectionPathDictionary = reversedCrossSectionPathDictionary;
+            }
         }
         #endregion
 
