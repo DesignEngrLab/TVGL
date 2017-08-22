@@ -13,28 +13,32 @@ namespace TVGL
         /// <summary>
         /// Creates a Tessellated Solid by extruding the given loop along the given normal.
         /// Currently, this function recreates the Vertices, so no prior references will impact result.
+        /// Setting midPlane to true, extrudes half forward and half reverse.
         /// </summary>
         /// <param name="loops"></param>
         /// <param name="normal"></param>
         /// <param name="distance"></param>
+        /// <param name="midPlane"></param>
         /// <returns></returns>
         public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<Vertex>> loops, double[] normal,
-            double distance)
+            double distance, bool midPlane = false)
         {
             var enumerable = loops as IEnumerable<Vertex>[] ?? loops.ToArray();
             var loopsWithoutVertices = enumerable.Select(loop => loop.Select(vertex => vertex.Position).ToList()).ToList();
-            return FromLoops(loopsWithoutVertices, normal, distance);
+            return FromLoops(loopsWithoutVertices, normal, distance, midPlane);
         }
 
         /// <summary>
         /// Creates a Tesselated Solid by extruding the given loop along the given normal.
+        /// Setting midPlane to true, extrudes half forward and half reverse.
         /// </summary>
         /// <param name="loops"></param>
         /// <param name="extrudeDirection"></param>
         /// <param name="distance"></param>
+        /// <param name="midPlane"></param>
         /// <returns></returns>
         public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<double[]>> loops, double[] extrudeDirection, 
-            double distance)
+            double distance, bool midPlane = false)
         {
             //This simplifies the cases we have to handle by always extruding in the positive direction
             if (distance < 0)
@@ -43,7 +47,7 @@ namespace TVGL
                 extrudeDirection = extrudeDirection.multiply(-1);
             }
 
-            //First, make sure we are using "clean" loops. (e.g. not connected to any faces or edges
+            //First, make sure we are using "clean" loops. (e.g. not connected to any faces or edges)
             var cleanLoops = new List<List<Vertex>>();
             var i = 0;
             foreach (var loop in loops)
@@ -51,7 +55,15 @@ namespace TVGL
                 var cleanLoop = new List<Vertex>();
                 foreach (var vertexPosition in loop)
                 {
-                    cleanLoop.Add(new Vertex(vertexPosition, i));
+                    //If a midPlane extrusion, move the original vertices backwards by 1/2 the extrude distance.
+                    //These vertices will be used as the base for offsetting the paired vertices forward by the 
+                    //entire extrude distance.
+                    if (midPlane)
+                    {
+                        var midPlaneVertexPosition = vertexPosition.add(extrudeDirection.multiply(-distance/2));
+                        cleanLoop.Add(new Vertex(midPlaneVertexPosition, i));
+                    }
+                    else cleanLoop.Add(new Vertex(vertexPosition, i));
                     i++;
                 }
                 cleanLoops.Add(cleanLoop);
@@ -126,18 +138,13 @@ namespace TVGL
                 }
             }
             
-            
-
             //Second, build up the a set of duplicate vertices
-            var pairedVertices = new Dictionary<Vertex, Vertex>();
             var vertices = new HashSet<Vertex>();
-            foreach (var loop in cleanLoops)
+            foreach (var vertex in cleanLoops.SelectMany(loop => loop))
             {
-                foreach (var vertex in loop)
-                {
-                    vertices.Add(vertex);  
-                }
+                vertices.Add(vertex);
             }
+            var pairedVertices = new Dictionary<Vertex, Vertex>();
             foreach (var vertex in vertices)
             {
                 var newVertex = new Vertex(vertex.Position.add(extrudeDirection.multiply(distance)));
