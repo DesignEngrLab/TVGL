@@ -736,6 +736,7 @@ namespace TVGL
             var furthestDistance = sortedVertices.Last().Item2;
             var distanceAlongAxis = firstDistance;
             var currentVertexIndex = 0;
+            var debugCounter = 0;
             //Start the step index at -1, so that the increment can be at the start of the while loop, 
             //making the final stepIndex correct for use in a later function.
             var stepIndex = -1;
@@ -822,7 +823,8 @@ namespace TVGL
                     if (segmentationData != null) outputData.Add(segmentationData);
 
                     UpdateSegments(segmentationData, inStepVertices, sortedVertexDistanceLookup, direction,
-                        ref allDirectionalSegments, ts);
+                        ref allDirectionalSegments, debugCounter);
+                    debugCounter++;
 
                     stepDistances.Add(stepIndex, distanceAlongAxis);
 
@@ -899,6 +901,11 @@ namespace TVGL
                 segment.SetReferenceVerticesByStepIndex(referenceVerticesByStepIndex);
             }
 
+            foreach (var segment in allDirectionalSegments)
+            {
+                if(segment.Value.CrossSectionPathDictionary.Count == 0) throw new Exception("A segment must have cross sections");
+            }
+
             return allDirectionalSegments.Values.ToList();
         }
 
@@ -912,10 +919,10 @@ namespace TVGL
         /// <param name="vertexDistanceLookup"></param>
         /// <param name="searchDirection"></param>
         /// <param name="allDirectionalSegments"></param>
-        /// <param name="ts"></param>
+        /// <param name="debugCounter"></param>
         private static void UpdateSegments(SegmentationData segmentationData, HashSet<Vertex> inStepVertices,
             Dictionary<int, double> vertexDistanceLookup, double[] searchDirection,
-            ref Dictionary<int, DirectionalSegment> allDirectionalSegments, TessellatedSolid ts)
+            ref Dictionary<int, DirectionalSegment> allDirectionalSegments, int debugCounter)
         {
             /* There are six possible segment cases that may occur. This section describes what they are and how they are handled.  
             
@@ -944,7 +951,7 @@ namespace TVGL
             In All Cases:   The in-step vertices and edges belong to the parent and child segments. This does repeat information, but there
                             are quite a few different cases and this is the easiest solution (other than not attaching them to any segment).
             */
-
+            if(debugCounter == 145) Debug.WriteLine("Bug Stop Hit");
             var distanceAlongAxis = segmentationData.DistanceAlongDirection;
 
             //Get all the current segments.
@@ -1251,7 +1258,7 @@ namespace TVGL
             //example: Blind holes and a branching segment have not been captured up to this point.
             //First, we need to connect each path (polygonDataSet stores the path and the edge loop) to its segment
             var unassignedPositivePolygonDataGroups = new List<PolygonDataGroup>();
-            var unassignedNegativePolygonDataGroups = new List<PolygonDataGroup>();
+            var unassignedNegativePolygonDataGroups = new HashSet<PolygonDataGroup>();
             foreach (var polygonDataGroup in segmentationData.CrossSectionData)
             {
                 //It does not matter which edge we check, so just use the first one.
@@ -1378,11 +1385,11 @@ namespace TVGL
 
                 //There does not have to be a negative polygon, but go ahead and check
                 //There can only be one positive polygon data group, but there may be multiple negative ones.
+                //For this reason, we need to check all of them and cannot break early.
+                //We will then have a loop to remove the newly assigned data groups from the list of unnassigned ones.
                 var negativePolygonDataGroups = new HashSet<PolygonDataGroup>();
-                for (var i = 0; i < unassignedNegativePolygonDataGroups.Count; i++)
+                foreach (var polygonDataGroup in unassignedNegativePolygonDataGroups)
                 {
-                    var polygonDataGroup = unassignedNegativePolygonDataGroups[i];
-
                     //It does not matter which edge we check, so just use the first one.
                     var edge = polygonDataGroup.EdgeLoop.First();
 
@@ -1391,14 +1398,11 @@ namespace TVGL
 
                     //Else,  Great. This is the polygon we were looking for
                     polygonDataGroup.SegmentIndex = newSegmentIndex;
-
                     negativePolygonDataGroups.Add(polygonDataGroup);
-
-                    //Remove it from the list. This would normally cause an error in for loop because
-                    //it is modifying the enumerator, but it does not matter because we are breaking 
-                    //out of the for loop.
-                    unassignedNegativePolygonDataGroups.RemoveAt(i);
-                    break;
+                }
+                foreach (var assignedNegativePolygonDataGroup in negativePolygonDataGroups)
+                {
+                    unassignedNegativePolygonDataGroups.Remove(assignedNegativePolygonDataGroup);
                 }
 
                 #region  Segment Case 4: [Blind Hole/Pocket]
@@ -1470,7 +1474,7 @@ namespace TVGL
                 }
                 #endregion
 
-                #region Segment Case 5: [New Segment]
+                #region Segment Case 5: [New Segment (with and without holes)]
                 //Create the new segment from the unused vertices and connect the polygon data groups to the segments
                 else
                 {
@@ -1512,13 +1516,14 @@ namespace TVGL
                     else if (counter > 1)
                     {
                         //Segment Case 6 [Branching]: End the potential segment and start new segments for each positive polygon.
+                        //If the merger needs to be branched, this function will handle that too.
                         potentialSegment.BranchSegment(ref allDirectionalSegments);
                     }
                     else throw new Exception("One of the polygons must have been positive.");
                 }
                 else
                 {
-                    throw new Exception("All the polygon data group must be assigned to a segment by this point");
+                    throw new Exception("All the polygon data groups must be assigned to a segment by this point");
                 }
             }
             #endregion
@@ -1788,6 +1793,9 @@ namespace TVGL
             /// </summary>
             public int Index;
 
+            //A segment temporarily created, that is to be deleted. (Ex. Branching a merged segment in the same step)
+            public bool IsDummySegment;
+
             /// <summary>
             /// Gets the first cross section 
             /// </summary>
@@ -1934,15 +1942,95 @@ namespace TVGL
             /// <param name="allDirectionalSegments"></param>
             public void BranchSegment(ref Dictionary<int, DirectionalSegment> allDirectionalSegments)
             {
+                //If a merger resulted in a new segment (this) that needs to be branched, it will have no cross sections set by this point.
+                //Replace this segment with new segments. 
+                if (!this.CrossSectionPathDictionary.Any())
+                {
+                    allDirectionalSegments.Remove(this.Index);
+                    IsDummySegment = true;
+                }
+
                 IsFinished = true;
                 var newSegments = new List<DirectionalSegment>();
-                foreach (var positivePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area > 0.0))
+                if (!IsDummySegment)
                 {
-                    var newSegmentIndex = allDirectionalSegments.Count;
-                    var newSegment = new DirectionalSegment(newSegmentIndex, positivePolygonDataGroup, this);
-                    allDirectionalSegments.Add(newSegmentIndex, newSegment);
-                    newSegments.Add(newSegment);
+                    foreach (var positivePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area > 0.0))
+                    {
+                        var newSegmentIndex = allDirectionalSegments.Count;
+                        var newSegment = new DirectionalSegment(newSegmentIndex, positivePolygonDataGroup, this);
+                        allDirectionalSegments.Add(newSegmentIndex, newSegment);
+                        newSegments.Add(newSegment);
+                    }
                 }
+                else
+                {
+                    //We need to match up the positive polygons with the parents of this segment.
+                    //If the intersection results in any overlap, then it belongs to this segment.
+                    //It can belong to multiple segments, or just one.
+                    foreach (var positivePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area > 0.0))
+                    {
+                        var parentSegments = new List<DirectionalSegment>();
+                        foreach (var parentSegment in RearwardAdjoinedDirectionalSegments)
+                        {
+                            //Get the last positive polygon data group from the parent segment.
+                            //There can only be one.
+                            var positiveParentPolygonDataGroup =
+                                parentSegment.CrossSectionPathDictionary.Last().Value.FirstOrDefault(p => p.Area > 0.0);
+                            if (positiveParentPolygonDataGroup == null)
+                                throw new Exception(
+                                    "No positive polygon found for parent. Check how the parent was created");
+
+                            //Check if the parent's polygon overlaps with the new polygon
+                            var result = PolygonOperations.Intersection(positiveParentPolygonDataGroup.Path2D, positivePolygonDataGroup.Path2D);
+                            if (result != null && result.Any())
+                            {
+                                parentSegments.Add(parentSegment);
+                            }
+                        }
+
+                        //Now that we have all the parent segments fo the current positivePolygonDataGroup, 
+                        //we can create the new segment.
+                        var newSegmentIndex = allDirectionalSegments.Count;
+
+                        //For the reference Edges and Vertices, all should belong to the parents.
+                        //The current edges are those in the polygon data group
+                        //Negative loop edges will be added later.
+                        var currentEdges = new HashSet<Edge>(positivePolygonDataGroup.EdgeLoop);
+                        var referenceVertices = new HashSet<Vertex>();
+                        foreach (var edge in currentEdges)
+                        {
+                            if (edge.To.ReferenceIndex == -1)
+                            {
+                                referenceVertices.Add(edge.From);
+                                ReferenceVertices.Remove(edge.From);
+                            }
+                            else
+                            {
+                                referenceVertices.Add(edge.To);
+                                ReferenceVertices.Remove(edge.To);
+                            }
+                        }
+                        var referenceEdges = new HashSet<Edge>();
+                        var newSegment = new DirectionalSegment(newSegmentIndex, referenceEdges, referenceVertices, currentEdges, parentSegments);
+                        newSegment.AddPolygonDataGroup(positivePolygonDataGroup);
+                        allDirectionalSegments.Add(newSegmentIndex, newSegment);
+                        newSegments.Add(newSegment);
+                    }
+
+                    //Attach the reference edges and remaining reference vertices to all the parent segments 
+                    foreach (var parent in RearwardAdjoinedDirectionalSegments)
+                    {
+                        foreach (var vertex in ReferenceVertices)
+                        {
+                            parent.ReferenceVertices.Add(vertex);
+                        }
+                        foreach (var edge in ReferenceEdges)
+                        {
+                            parent.ReferenceEdges.Add(edge);
+                        }
+                    }
+                }
+
                 //Now we need to match up the negative polygon data groups
                 foreach (var negativePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area < 0.0))
                 {
