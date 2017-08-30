@@ -867,18 +867,18 @@ namespace TVGL
             window.view1.Children.Add(model);
 
             var lines = DrawVoxel(voxelOctree.Root, level, status);
-            foreach (var lineVisual in lines)
-            {
-                window.view1.Children.Add(lineVisual);
-            }
+            var color = new System.Windows.Media.Color { R = 255 }; //G & B default to 0 to form red
+            var lineVisual = new LinesVisual3D {Points = new Point3DCollection(lines), Color = color};
+            window.view1.Children.Add(lineVisual);
+
 
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
 
-        private static IEnumerable<LinesVisual3D> DrawVoxel(VoxelizingOctreeCell v, int level, CellStatus status)
+        private static IEnumerable<Point3D> DrawVoxel(VoxelizingOctreeCell v, int level, CellStatus status)
         {
-            var lines = new List<LinesVisual3D>();
+            var lines = new List<Point3D>();
             if (status == v.Status && level == 0)
             {
                 //Now create a line collection by doubling up the points
@@ -913,8 +913,7 @@ namespace TVGL
                     new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ)
                 };
 
-                var color = new System.Windows.Media.Color {R = 255}; //G & B default to 0 to form red
-                lines.Add(new LinesVisual3D {Points = new Point3DCollection(lineCollection), Color = color});
+                lines.AddRange(lineCollection);
             }
             else
             {
