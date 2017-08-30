@@ -22,12 +22,11 @@ namespace TVGL.Voxelization
 
         public AABB(IEnumerable<PolygonalFace> triangles)
         {
-            var box = new AABB();
             foreach (var t in triangles)
             {
-                box.Add(t.Vertices[0]);
-                box.Add(t.Vertices[1]);
-                box.Add(t.Vertices[2]);
+                Add(t.Vertices[0]);
+                Add(t.Vertices[1]);
+                Add(t.Vertices[2]);
             }
         }
 

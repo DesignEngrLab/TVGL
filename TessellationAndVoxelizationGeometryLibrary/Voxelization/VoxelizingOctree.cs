@@ -14,6 +14,9 @@ using TVGL;
 
 namespace TVGL.Voxelization
 {
+    /// <summary>
+    /// Voxel Cell Status Enum Values
+    /// </summary>
     public enum CellStatus
     {
         Inside,
@@ -47,15 +50,17 @@ namespace TVGL.Voxelization
             Length = length;
             Level = level;
 
-            double half_length = length / 2.0f;
+            var halfLength = length / 2.0f;
 
-            Bounds = new AABB();
-            Bounds.MinX = center.X - half_length;
-            Bounds.MinY = center.Y - half_length;
-            Bounds.MinZ = center.Z - half_length;
-            Bounds.MaxX = center.X + half_length;
-            Bounds.MaxY = center.Y + half_length;
-            Bounds.MaxZ = center.Z + half_length;
+            Bounds = new AABB
+            {
+                MinX = center.X - halfLength,
+                MinY = center.Y - halfLength,
+                MinZ = center.Z - halfLength,
+                MaxX = center.X + halfLength,
+                MaxY = center.Y + halfLength,
+                MaxZ = center.Z + halfLength
+            };
 
             VoxelBounds = new AABBi(
                 (int)Math.Round((Bounds.MinX - tree.VoxelBounds.MinX) / tree.SmallestVoxelSideLength, MidpointRounding.AwayFromZero),
@@ -97,7 +102,7 @@ namespace TVGL.Voxelization
             var boxcenter = new [] {Bounds.MinX + boxhalfsize[0], Bounds.MinY + boxhalfsize[1], Bounds.MinZ + boxhalfsize[2]};
 
             //return VoxelizerCPU.IsTriangleCollidingWithVoxel(ref triangle, ref deltap, ref minpt);
-            return VoxelizingOctree.triBoxOverlap(ref boxcenter, ref boxhalfsize, ref triangle);
+            return VoxelizingOctree.TriBoxOverlap(ref boxcenter, ref boxhalfsize, ref triangle);
         }
 
         public bool IntersectsMeshBounds()
@@ -292,7 +297,7 @@ namespace TVGL.Voxelization
     {
         public readonly int CellStatusAccumulationConfirmationThreshold;
 
-        private int m_maxLevels;
+        private readonly int _maxLevels;
         private VoxelizingOctreeCell m_root;
 
         public AABB MeshBounds;
@@ -309,7 +314,7 @@ namespace TVGL.Voxelization
 
             CellStatusAccumulationConfirmationThreshold = 1 << (maxLevels - 1);
 
-            m_maxLevels = maxLevels;
+            _maxLevels = maxLevels;
         }
 
         public VoxelizingOctreeCell Root
@@ -319,7 +324,7 @@ namespace TVGL.Voxelization
 
         public int MaxLevels
         {
-            get { return m_maxLevels; }
+            get { return _maxLevels; }
         }
 
         public void AccumulateChildren(out List<List<VoxelizingOctreeCell>> cellList)
@@ -337,14 +342,8 @@ namespace TVGL.Voxelization
                 return false;
 
             // Create a list of triangles from the list of faces in the model
-            List<PolygonalFace> triangles = new List<PolygonalFace>();
-            for (int i = 0; i < mesh.NumberOfFaces; i++)
-            {
-                var face = mesh.Faces[i];
-
-                var tri = face.Copy();
-                triangles.Add(tri);
-            }
+            // We want these linked to the actual tesselated solid's faces, not copies.
+            var triangles = new List<PolygonalFace>(mesh.Faces);
 
             // Determine the axis-aligned bounding box for the triangles
             Vertex center;
@@ -352,14 +351,14 @@ namespace TVGL.Voxelization
 
             {
                 SmallestVoxelSideLength = SideLength;
-                for (int i = 1; i < m_maxLevels; i++)
+                for (int i = 1; i < _maxLevels; i++)
                     SmallestVoxelSideLength *= 0.5;
 
                 VoxelSize = new[]
                 {
-                    (int)Math.Pow(2, m_maxLevels),
-                    (int)Math.Pow(2, m_maxLevels),
-                    (int)Math.Pow(2, m_maxLevels)
+                    (int)Math.Pow(2, _maxLevels),
+                    (int)Math.Pow(2, _maxLevels),
+                    (int)Math.Pow(2, _maxLevels)
                 };
             }
 
@@ -367,7 +366,7 @@ namespace TVGL.Voxelization
             m_root.Root = m_root;
             m_root.Triangles = new List<PolygonalFace>(triangles);
             m_root.Status = CellStatus.IntersectingBounds;
-            m_root.RecursiveSubdivide(m_maxLevels - 1);
+            m_root.RecursiveSubdivide(_maxLevels - 1);
 
             WorldVoxelOffset = new double[]
             {
@@ -379,7 +378,7 @@ namespace TVGL.Voxelization
             return true;
         }
 
-        private void CreateUniformBoundingBox(List<PolygonalFace> triangles, 
+        private static void CreateUniformBoundingBox(IEnumerable<PolygonalFace> triangles, 
             out AABB originalBounds, out AABB voxelBounds, out Vertex center, out double length)
         {
             originalBounds = new AABB(triangles);
@@ -400,13 +399,15 @@ namespace TVGL.Voxelization
 
             length = maxSize;
 
-            voxelBounds = new AABB();
-            voxelBounds.MinX = center.X - (length * 0.5f);
-            voxelBounds.MinY = center.Y - (length * 0.5f);
-            voxelBounds.MinZ = center.Z - (length * 0.5f);
-            voxelBounds.MaxX = center.X + (length * 0.5f);
-            voxelBounds.MaxY = center.Y + (length * 0.5f);
-            voxelBounds.MaxZ = center.Z + (length * 0.5f);
+            voxelBounds = new AABB
+            {
+                MinX = center.X - (length*0.5f),
+                MinY = center.Y - (length*0.5f),
+                MinZ = center.Z - (length*0.5f),
+                MaxX = center.X + (length*0.5f),
+                MaxY = center.Y + (length*0.5f),
+                MaxZ = center.Z + (length*0.5f)
+            };
         }
 
         //public void Draw(int level, CellStatus status, Vector4 color, double width)
@@ -421,7 +422,7 @@ namespace TVGL.Voxelization
             return cellList;
         }
 
-        public static void FINDMINMAX(double x0, double x1, double x2, out double min, out double max)
+        public static void FindMinMax(double x0, double x1, double x2, out double min, out double max)
         {
             min = max = x0;
             if (x1 < min) min = x1;
@@ -430,7 +431,7 @@ namespace TVGL.Voxelization
             if (x2 > max) max = x2;
         }
 
-        public static bool planeBoxOverlap(double[] normal, double d, double[] maxbox)
+        public static bool PlaneBoxOverlap(double[] normal, double d, double[] maxbox)
         {
             var vmin = new Vertex(new[]
             {
@@ -529,7 +530,7 @@ namespace TVGL.Voxelization
             return false;
         }
 
-        public static bool triBoxOverlap(ref double[] boxcenter, ref double[] boxhalfsize, ref PolygonalFace tri)
+        public static bool TriBoxOverlap(ref double[] boxcenter, ref double[] boxhalfsize, ref PolygonalFace tri)
         {
             /*    use separating axis theorem to test overlap between triangle and box */
             /*    need to test for overlap in these directions: */
@@ -590,17 +591,17 @@ namespace TVGL.Voxelization
 
             /* test in X-direction */
             double min, max;
-            FINDMINMAX(v0.X, v1.X, v2.X, out min, out max);
+            FindMinMax(v0.X, v1.X, v2.X, out min, out max);
             if (min > boxhalfsize[0] || max < -boxhalfsize[0])
                 return false;
 
             /* test in Y-direction */
-            FINDMINMAX(v0.Y, v1.Y, v2.Y, out min, out max);
+            FindMinMax(v0.Y, v1.Y, v2.Y, out min, out max);
             if (min > boxhalfsize[1] || max < -boxhalfsize[1])
                 return false;
 
             /* test in Z-direction */
-            FINDMINMAX(v0.Z, v1.Z, v2.Z, out min, out max);
+            FindMinMax(v0.Z, v1.Z, v2.Z, out min, out max);
             if (min > boxhalfsize[2] || max < -boxhalfsize[2])
                 return false;
 
@@ -610,7 +611,7 @@ namespace TVGL.Voxelization
             var normal = e0.Position.crossProduct(e1.Position);
             var d = normal.dotProduct(v0.Position);/* plane eq: normal.x+d=0 */
             d = -d;
-            if (!planeBoxOverlap(normal, d, boxhalfsize))
+            if (!PlaneBoxOverlap(normal, d, boxhalfsize))
                 return false;
 
             return true;   /* box and triangle overlaps */
