@@ -108,6 +108,9 @@
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />
     <Compile Include="Verbosity.cs" />
+    <Compile Include="Voxelization\AABB.cs" />
+    <Compile Include="Voxelization\AABBi.cs" />
+    <Compile Include="Voxelization\VoxelizingOctree.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />
