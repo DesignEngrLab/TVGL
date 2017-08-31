@@ -59,6 +59,7 @@
     <Compile Include="InputOutput Operations\OFFFileData.cs" />
     <Compile Include="InputOutput Operations\AMFFileData.cs" />
     <Compile Include="InputOutput Operations\SHELLFileData.cs" />
+    <Compile Include="Math Operations\Proximity.cs" />
     <Compile Include="Miscellaneous Functions\DirectionalDecomposition.cs" />
     <Compile Include="Miscellaneous Functions\Extrude.cs" />
     <Compile Include="Miscellaneous Functions\ListFunctions.cs">
@@ -107,6 +108,11 @@
     <Compile Include="Solid Body Classes\TVGLConvexHull.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />
+    <Compile Include="Sparse Voxelization\InternalNode.cs" />
+    <Compile Include="Sparse Voxelization\LeafNode.cs" />
+    <Compile Include="Sparse Voxelization\MeshToVoxel.cs" />
+    <Compile Include="Sparse Voxelization\RootNode.cs" />
+    <Compile Include="Sparse Voxelization\Tree.cs" />
     <Compile Include="Verbosity.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1592,6 +1592,21 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Distances the point to point.
+        /// </summary>
+        /// <param name="p1">point, p1.</param>
+        /// <param name="p2">point, p2.</param>
+        /// <returns>the distance between the two 3D points.</returns>
+        public static double SquareDistancePointToPoint(double[] p1, double[] p2)
+        {
+            var dX = p1[0] - p2[0];
+            var dY = p1[1] - p2[1];
+            if (p1.Length == 2) return dX*dX + dY*dY;
+            var dZ = p1[2] - p2[2];
+            return dX * dX + dY * dY + dZ * dZ;
+        }
+
+        /// <summary>
         ///     Returns the signed distance of the point to the plane.
         /// </summary>
         /// <param name="point">The point.</param>

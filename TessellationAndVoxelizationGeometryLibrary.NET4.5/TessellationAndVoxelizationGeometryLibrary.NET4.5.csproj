@@ -127,6 +127,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs">
       <Link>InputOutput Operations\TVGLFileData.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Math Operations\Proximity.cs">
+      <Link>Math Operations\Proximity.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\DirectionalDecomposition.cs">
       <Link>Miscellaneous Functions\DirectionalDecomposition.cs</Link>
     </Compile>
@@ -216,6 +219,21 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Vertex.cs">
       <Link>Solid Body Classes\Vertex.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\InternalNode.cs">
+      <Link>SparseVoxelization\InternalNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\LeafNode.cs">
+      <Link>SparseVoxelization\LeafNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\MeshToVoxel.cs">
+      <Link>SparseVoxelization\MeshToVoxel.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\RootNode.cs">
+      <Link>SparseVoxelization\RootNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Tree.cs">
+      <Link>SparseVoxelization\Tree.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>Verbosity.cs</Link>

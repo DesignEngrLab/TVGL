@@ -337,6 +337,25 @@ namespace TVGL
         public List<Vertex> Vertices { get; internal set; }
 
         /// <summary>
+        ///     Gets the first vertex
+        /// </summary>
+        /// <value>The vertices.</value>
+        public Vertex A => Vertices[0];
+
+        /// <summary>
+        ///     Gets the second vertex
+        /// </summary>
+        /// <value>The vertices.</value>
+        public Vertex B => Vertices[1];
+
+        /// <summary>
+        ///     Gets the third vertex
+        /// </summary>
+        /// <value>The vertices.</value>
+        public Vertex C => Vertices[2];
+
+
+        /// <summary>
         ///     Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
@@ -381,6 +400,7 @@ namespace TVGL
                 return adjacentFaces;
             }
         }
+
 
         #endregion
     }

@@ -8,6 +8,7 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
+using TVGL.SparseVoxelization;
 
 namespace TVGL_Test
 {
@@ -99,12 +100,19 @@ namespace TVGL_Test
                 //TestPolygon(ts[0]);
                 //TestSegmentation(ts[0]);
                 //Presenter.ShowAndHang(ts);
-                TestSilhouette(ts[0]);
+                TestVoxelsBasedOnVDB(ts[0]);
+                //TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
 
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
+        }
+
+        public static void TestVoxelsBasedOnVDB(TessellatedSolid ts)
+        {
+            var voxels = new MeshToVoxel();
+            voxels.VoxelizeMesh(ts);
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
