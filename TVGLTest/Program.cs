@@ -9,6 +9,8 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.SparseVoxelization;
+using TVGL.Voxelization;
+
 
 namespace TVGL_Test
 {
@@ -96,11 +98,13 @@ namespace TVGL_Test
                 //using (fileStream = File.OpenRead(filename))
                 //    ts = IO.Open(fileStream, filename);
 
-
+                
                 //TestPolygon(ts[0]);
                 //TestSegmentation(ts[0]);
                 //Presenter.ShowAndHang(ts);
                 TestVoxelsBasedOnVDB(ts[0]);
+                TestVoxelization(ts[0]);
+            
                 //TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
@@ -109,10 +113,25 @@ namespace TVGL_Test
             //  Console.ReadKey();
         }
 
+
         public static void TestVoxelsBasedOnVDB(TessellatedSolid ts)
         {
-            var voxels = new MeshToVoxel();
+            var voxels = new VoxelSpace();
             voxels.VoxelizeMesh(ts);
+
+            Presenter.ShowVoxelization(ts, voxels);
+        }
+
+        public static void TestVoxelization(TessellatedSolid ts)
+        {
+            //Level 0 has one voxel. 
+            //Level 1 is the outermost octree, with 8 voxels.
+            //Level 2 has 64 voxels and so on...
+            //Settings max Level to 3, with set level 0, 1, and 2.
+            const int maxLevel = 6;
+            var octree = new VoxelizingOctree(maxLevel);
+            octree.GenerateOctree(ts);
+            Presenter.ShowVoxelization(ts, octree, maxLevel-1, CellStatus.Intersecting);
         }
 
         public static void TestSegmentation(TessellatedSolid ts)

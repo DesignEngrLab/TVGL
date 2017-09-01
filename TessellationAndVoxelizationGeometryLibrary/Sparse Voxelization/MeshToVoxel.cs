@@ -1,33 +1,91 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using MIConvexHull;
 using StarMathLib;
 using TVGL.MathOperations;
+using TVGL.Voxelization;
 
 namespace TVGL.SparseVoxelization
 {
-    public class MeshToVoxel
+    public class Voxel
+    {
+        public Vertex Center;
+
+        public AABB Bounds { get; set; }
+
+        public int[] Index { get; set; }
+
+        public string StringIndex { get; set; }
+
+        public Voxel(string voxelString, double scale)
+        {
+            StringIndex = voxelString;
+
+            var halfLength = scale/2;
+            string[] words = voxelString.Split('|');
+            Index = new int[3];
+            for (var i = 0; i < 3; i++)
+            {
+                Index[i] = int.Parse(words[i]) ;
+                if(Index[i] < 0) Debug.WriteLine("Negative Values work properly");
+            }
+
+            Center = new Vertex(new double[] { Index[0]*scale, Index[1]*scale, Index[2]*scale});
+            Bounds = new AABB
+            {
+                MinX = Center.X - halfLength,
+                MinY = Center.Y - halfLength,
+                MinZ = Center.Z - halfLength,
+                MaxX = Center.X + halfLength,
+                MaxY = Center.Y + halfLength,
+                MaxZ = Center.Z + halfLength
+            };
+        }
+    }
+
+    public class VoxelSpace
     {
         public TessellatedSolid Solid;   //mMesh 
         public int PolygonLimit;
         public VoxelizationData Data;
         public double VoxelSizeInIntSpace;
         public double ScaleToIntSpace;
+        public List<Voxel> Voxels;
 
         public void VoxelizeMesh(TessellatedSolid solid)
         {
+            PolygonLimit = 1000;
             Solid = solid;
             var dx = solid.XMax - solid.XMin;
             var dy = solid.YMax - solid.YMin;
             var dz = solid.ZMax - solid.ZMin;
-            var maxDim = Math.Max(dx, Math.Max(dy, dz));
-            var numberOfVoxelsAlongMaxDirection = 10;
+            var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
+            var numberOfVoxelsAlongMaxDirection = 50;
             ScaleToIntSpace = numberOfVoxelsAlongMaxDirection / maxDim;
+
             VoxelSizeInIntSpace = 1.0; 
 
             Data = new VoxelizationData(); 
             VoxelizePolygons(solid.Faces);
+
+            //Make all the voxels
+            Voxels = new List<Voxel>();
+            foreach (var voxelString in Data.IntersectingVoxels)
+            {
+                var newVoxel = new Voxel(voxelString, 1/ScaleToIntSpace);
+        
+                var intersectingFace = Data.Triangles[Data.ClosestFaceToVoxel[voxelString]];
+                if (ComputeDistance(newVoxel.Index, intersectingFace, ref Data))
+                {
+                    Voxels.Add(newVoxel);
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
         }
 
         private void VoxelizePolygons(IEnumerable<PolygonalFace> triangles)
@@ -42,12 +100,12 @@ namespace TVGL.SparseVoxelization
 
         private void EvaluateTriangle(PolygonalFace face, ref VoxelizationData data)
         {
-            var triangle = new Triangle(face.A.Position, face.B.Position, face.C.Position, ScaleToIntSpace);
-            //ToDo: Is polygon count needed? It is not used anywhere.
+            var triangle = new Triangle(face.A.Position, face.B.Position, face.C.Position, face.Normal, ScaleToIntSpace);
             var polygonCount = Solid.NumberOfFaces;
-            //ToDo: Do I need to consider ever not doing subdivision? Isn't it always required?
-            //var subdivisionCount = polygonCount < 1000 ? evalSubdivisionCount(triangle) : 0;
-            var subdivisionCount = GetSubdivisionCount(triangle);
+
+            //Note: Subdividing takes much longer than using the coordinate stack in Voxelize Triangle.
+            //Only do subdivision if the solid is not detailed enough (less than the polygon limit)
+            var subdivisionCount = polygonCount < PolygonLimit ? GetSubdivisionCount(triangle) : 0;
 
             if (subdivisionCount <= 0)
             {
@@ -55,7 +113,7 @@ namespace TVGL.SparseVoxelization
             }
             else
             {
-                //ToDo: we still need to voxelize these triangles.
+
                 SubdivideAndVoxelizeTriangle(triangle, ref data, subdivisionCount, polygonCount);
             }
         }
@@ -78,13 +136,13 @@ namespace TVGL.SparseVoxelization
         /// This is a recursive operation to subdivide a triangle into four smaller triangles, reducing
         /// the max dim of a triangle by half with each division.
         /// </summary>
-        private static void SubdivideAndVoxelizeTriangle(Triangle mainPrim, ref VoxelizationData data, int subdivisionCount, int polygonCount)
+        private void SubdivideAndVoxelizeTriangle(Triangle mainPrim, ref VoxelizationData data, int subdivisionCount, int polygonCount)
         {
             //ToDo: This function was parallel, using a tast.Run for each recursive call. See "spawnTasks"
             subdivisionCount --;
             if (subdivisionCount == 0)
             {
-                //VoxelizeTriangle(mainPrim, ref data);
+                VoxelizeTriangle(mainPrim, ref data);
                 return;
             }
             polygonCount *= 4; //Number of polygons goes up by four.
@@ -125,6 +183,8 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         private void VoxelizeTriangle(Triangle prim, ref VoxelizationData data)
         {
+            var coordindateList = new Stack<int[]>();
+
             //Gets the integer coordinates, rounded down for point A on the triangle 
             //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
             //this coordinate. 
@@ -140,24 +200,31 @@ namespace TVGL.SparseVoxelization
             var primId = data.GetNewPrimId();
             prim.ID = primId;
             ComputeDistance(ijk, prim, ref data);
+            data.Triangles.Add(primId, prim);
             data.SetClosestFaceToVoxel(ijk, primId);
-          
-            // For every surrounding voxel (6+12+8=26)
-            // 6 Voxel-face adjacent neghbours
-            // 12 Voxel-edge adjacent neghbours
-            // 8 Voxel-corner adjacent neghbours
-            // Voxels are in IntSpace, so we just use 
-            // every combination of -1, 0, and 1 for offsets
-            for (var i = 0; i < 26; ++i)
+            coordindateList.Push(ijk);
+
+            while (coordindateList.Any())
             {
-                var nijk = ijk.add(Utilities.CoordinateOffsets[i]);
-                //Locate the voxel using the primitive ID accessor for voxels (stored in data)
-                //If the voxel has not already been checked with this primitive,
-                //set the primIdAcc so that we don't repeat this voxel for this primitive. 
-                if (!data.ClosestFaceToVoxel.ContainsKey(nijk) || primId != data.ClosestFaceToVoxel[nijk])
+                ijk = coordindateList.Pop();
+                // For every surrounding voxel (6+12+8=26)
+                // 6 Voxel-face adjacent neghbours
+                // 12 Voxel-edge adjacent neghbours
+                // 8 Voxel-corner adjacent neghbours
+                // Voxels are in IntSpace, so we just use 
+                // every combination of -1, 0, and 1 for offsets
+                for (var i = 0; i < 26; ++i)
                 {
-                    data.SetClosestFaceToVoxel(nijk, primId);
-                    ComputeDistance(nijk, prim, ref data);
+                    var nijk = ijk.add(Utilities.CoordinateOffsets[i]);
+                    //Locate the voxel using the primitive ID accessor for voxels (stored in data)
+                    //If the voxel has not already been checked with this primitive,
+                    //set the primIdAcc so that we don't repeat this voxel for this primitive. 
+                    var voxelIndexString = data.GetStringFromIndex(nijk);
+                    if (!data.ClosestFaceToVoxel.ContainsKey(voxelIndexString) || primId != data.ClosestFaceToVoxel[voxelIndexString])
+                    {
+                        data.SetClosestFaceToVoxel(nijk, primId);
+                        if(ComputeDistance(nijk, prim, ref data)) coordindateList.Push(nijk);
+                    }
                 }
             }
         }
@@ -168,25 +235,23 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         private bool ComputeDistance(int[] ijk, Triangle prim, ref VoxelizationData data)
         {
-            //uvw is just initialized, not set. 
-            double[] uvw;
-
-            //ToDo: figure out voxel coordinates and indices
-            //The voxels are set on real world coordinates ?? Voxel Center gets the RealWorld coordinates for the voxel, given its index-space.
+            //Voxel center is simply converting the integers to doubles.
             var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2]};
 
             //Closest Point on Triangle is not restricted to A,B,C. 
             //It may be any point on the triangle.
             //Square this length, so we can compare it to 0.75 rather than  
             //√.75 = 0.866025...
-            var dist = MiscFunctions.SquareDistancePointToPoint(voxelCenter, Proximity.ClosestVertexOnTriangleToVertex(prim.A,
-                prim.B, prim.C, voxelCenter, out uvw));
+            var dist = MiscFunctions.DistancePointToPoint(voxelCenter, 
+                Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter));
+            //var dist = Proximity.SquareDistancesPointToTriangle(voxelCenter, prim);
 
             //Get the best distance of this voxel that has been set so far.
             var oldDist = double.MaxValue;
-            if (data.VoxelToFaceDistances.ContainsKey(ijk))
+            var voxelIndexString = data.GetStringFromIndex(ijk);
+            if (data.VoxelToFaceDistances.ContainsKey(voxelIndexString))
             {
-                oldDist = data.VoxelToFaceDistances[ijk];
+                oldDist = data.VoxelToFaceDistances[voxelIndexString];
             }
 
             //If the distance of the voxel to this triangle is closer than the 
@@ -201,7 +266,7 @@ namespace TVGL.SparseVoxelization
             {
                 // Make the reduction deterministic when different polygons are equally
                 // close to this voxel. Arbitrarily choose the face with the lower index.
-                if (prim.ID < data.ClosestFaceToVoxel[ijk])
+                if (prim.ID < data.ClosestFaceToVoxel[voxelIndexString])
                 {
                     data.SetClosestFaceToVoxel(ijk, prim.ID);
                 }
@@ -210,8 +275,10 @@ namespace TVGL.SparseVoxelization
             //This assumes each voxel has a size of 1x1x1.
             //If the squared distance < 0.75 then it must intersect the voxel.
             //Returns true if the face intersects the voxel.
-            if(!(dist > 0.75 * VoxelSizeInIntSpace)) data.IntersectingVoxels.Add(ijk);
-            return !(dist > 0.75 * VoxelSizeInIntSpace); 
+            if (dist > 0.75) return false;
+            //Since IntersectingVoxels is a hashset, it will not add a duplicate voxel.
+            data.IntersectingVoxels.Add(voxelIndexString);
+            return true;
         }
     }
 
@@ -235,14 +302,16 @@ namespace TVGL.SparseVoxelization
         /// <summary>
         /// Stores the min distance found between the voxel and any face
         /// </summary>
-        public Dictionary<int[], double> VoxelToFaceDistances;  //distAcc
+        public Dictionary<string, double> VoxelToFaceDistances;  //distAcc
 
         /// <summary>
         /// Stores the closest face to the voxel, using the face index
         /// </summary>
-        public Dictionary<int[], int> ClosestFaceToVoxel; //primIdAcc
+        public Dictionary<string, int> ClosestFaceToVoxel; //primIdAcc
 
-        public HashSet<int[]> IntersectingVoxels;  
+        public Dictionary<int, Triangle> Triangles; 
+
+        public HashSet<string> IntersectingVoxels;  
 
         public int PrimCount;
 
@@ -253,9 +322,10 @@ namespace TVGL.SparseVoxelization
         {
             PrimCount = 0;
             MaxPrimId = 0;
-            VoxelToFaceDistances = new Dictionary<int[], double>();
-            ClosestFaceToVoxel = new Dictionary<int[], int>();
-            IntersectingVoxels = new HashSet<int[]>();
+            VoxelToFaceDistances = new Dictionary<string, double>();
+            ClosestFaceToVoxel = new Dictionary<string, int>();
+            IntersectingVoxels = new HashSet<string>();
+            Triangles = new Dictionary<int, Triangle>();
         }
 
         public int GetNewPrimId()
@@ -271,27 +341,36 @@ namespace TVGL.SparseVoxelization
 
         public void SetClosestFaceToVoxel(int[] ijk, int primId)
         {
-            if (ClosestFaceToVoxel.ContainsKey(ijk))
+            var stringIndex = GetStringFromIndex(ijk);
+            if (ClosestFaceToVoxel.ContainsKey(stringIndex))
             {
-                ClosestFaceToVoxel[ijk] = primId;
+                ClosestFaceToVoxel[stringIndex] = primId;
             }
             else
             {
-                ClosestFaceToVoxel.Add(ijk, primId);
+                ClosestFaceToVoxel.Add(stringIndex, primId);
             }
         }
 
         public void SetVoxelToFaceDistance(int[] ijk, double d)
         {
-            if (VoxelToFaceDistances.ContainsKey(ijk))
+            var stringIndex = GetStringFromIndex(ijk);
+            if (VoxelToFaceDistances.ContainsKey(stringIndex))
             {
-                VoxelToFaceDistances[ijk] = d;
+                VoxelToFaceDistances[stringIndex] = d;
             }
             else
             {
-                VoxelToFaceDistances.Add(ijk, d);
+                VoxelToFaceDistances.Add(stringIndex, d);
             }
         }
+        public string GetStringFromIndex(int[] ijk)
+        {
+            return ijk[0] + "|"
+                + ijk[1] + "|"
+                + ijk[2];
+        }
+
     }
 
     /// <summary>
@@ -317,60 +396,20 @@ namespace TVGL.SparseVoxelization
         /// <value>The vertices.</value>
         public double[] C;
 
+        public double[] Normal;
+
         /// <summary>
         ///     The index 
         /// </summary>
         public int ID;
 
-        public Triangle(double[] a, double[] b, double[] c, double scale = 1.0)
+        public Triangle(double[] a, double[] b, double[] c, double[] normal, double scale = 1.0)
         {
             A = a.multiply(scale);
             B = b.multiply(scale);
             C = c.multiply(scale);
+            Normal = normal;
             ID = -1;
         }
-    }
-
-    public class Coord
-    {
-        public double X => Coordinates[0];
-        public double Y => Coordinates[1];
-        public double Z => Coordinates[2];
-        public double[] Coordinates;
-
-        public Coord(double[] coordinate)
-        {
-            Coordinates = coordinate;
-        }
-
-        public Coord(double x , double y , double z)
-        {
-            Coordinates = new[] {x, y, z};
-        }
-
-        public Coord(int x, int y, int z)
-        {
-            Coordinates = new double[] { x, y, z };
-        }
-
-        public Coord(IVertex vertex)
-        {
-            Coordinates = vertex.Position;
-        }
-
-        public Coord Add(Coord c)
-        {
-            return new Coord(Coordinates.add(c.Coordinates));
-        }
-
-        public Coord Subtract(Coord c)
-        {
-            return new Coord(Coordinates.subtract(c.Coordinates));
-        }
-}
-
-    public class VoxelizationDataType
-    {
-        
     }
 }

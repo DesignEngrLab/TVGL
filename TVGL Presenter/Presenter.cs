@@ -21,6 +21,8 @@ using System.Threading;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
+using TVGL.SparseVoxelization;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -856,12 +858,146 @@ namespace TVGL
 
         #endregion
 
-        //A palet of distinguishable colors
-        //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
-        /// <summary>
-        /// Colors the palet.
-        /// </summary>
-        /// <returns>System.String[].</returns>
+        #region 3D Voxelization Plots
+        public static void ShowVoxelization(TessellatedSolid solid, VoxelSpace voxelSpace)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(solid);
+            models.Add(model);
+            window.view1.Children.Add(model);
+            
+            var lines = new List<Point3D>();
+            foreach (var voxel in voxelSpace.Voxels)
+            {
+                 lines.AddRange(DrawVoxel(voxel));
+            }
+            var color = new System.Windows.Media.Color { R = 255 }; //G & B default to 0 to form red
+            var lineVisual = new LinesVisual3D { Points = new Point3DCollection(lines), Color = color };
+            window.view1.Children.Add(lineVisual);
+
+
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        private static IEnumerable<Point3D> DrawVoxel(Voxel v)
+        {
+            var lines = new List<Point3D>();
+
+            //Now create a line collection by doubling up the points
+            var lineCollection = new List<Point3D>()
+            {
+                //Top
+                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                //Bottom
+                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
+                //Sides
+                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
+                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ)
+            };
+
+            lines.AddRange(lineCollection);
+           
+            return lines;
+        }
+
+        public static void ShowVoxelization(TessellatedSolid solid, VoxelizingOctree voxelOctree, int level, CellStatus status)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(solid);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            var lines = DrawVoxel(voxelOctree.Root, level, status);
+            var color = new System.Windows.Media.Color { R = 255 }; //G & B default to 0 to form red
+            var lineVisual = new LinesVisual3D { Points = new Point3DCollection(lines), Color = color };
+            window.view1.Children.Add(lineVisual);
+
+
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        private static IEnumerable<Point3D> DrawVoxel(VoxelizingOctreeCell v, int level, CellStatus status)
+        {
+            var lines = new List<Point3D>();
+            if (status == v.Status && level == 0)
+            {
+                //Now create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>()
+                {
+                    //Top
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                    //Bottom
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
+                    //Sides
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
+                    new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ)
+                };
+
+                lines.AddRange(lineCollection);
+            }
+            else
+            {
+                foreach (var cell in v.Children)
+                {
+                    lines.AddRange(DrawVoxel(cell, level - 1, status));
+                }
+            }
+
+            return lines;
+        }
+
+        #endregion
+
+            //A palet of distinguishable colors
+            //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
+            /// <summary>
+            /// Colors the palet.
+            /// </summary>
+            /// <returns>System.String[].</returns>
         public static string[] ColorPalet()
         {
             return new[]

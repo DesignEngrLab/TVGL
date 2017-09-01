@@ -114,6 +114,9 @@
     <Compile Include="Sparse Voxelization\RootNode.cs" />
     <Compile Include="Sparse Voxelization\Tree.cs" />
     <Compile Include="Verbosity.cs" />
+    <Compile Include="Voxelization\AABB.cs" />
+    <Compile Include="Voxelization\AABBi.cs" />
+    <Compile Include="Voxelization\VoxelizingOctree.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />

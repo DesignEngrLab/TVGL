@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
+using TVGL.SparseVoxelization;
 
 namespace TVGL
 {
@@ -1750,6 +1751,18 @@ namespace TVGL
             return IsPointInsideTriangle(triangle.Vertices, vertexInQuestion, onBoundaryIsInside);
         }
 
+        public static bool IsPointInsideTriangle(Triangle triangle, Vertex vertexInQuestion,
+         bool onBoundaryIsInside = true)
+        {
+            var p = vertexInQuestion.Position;
+            var a = triangle.A;
+            var b = triangle.B;
+            var c = triangle.C;
+            return SameSide(p, a, b, c, onBoundaryIsInside) && 
+                SameSide(p, b, a, c, onBoundaryIsInside) && 
+                SameSide(p, c, a, b, onBoundaryIsInside);
+        }
+
         /// <summary>
         ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
         ///     triangle are considered "inside."
@@ -1771,7 +1784,9 @@ namespace TVGL
             var a = vertices[0].Position;
             var b = vertices[1].Position;
             var c = vertices[2].Position;
-            return SameSide(p, a, b, c) && SameSide(p, b, a, c) && SameSide(p, c, a, b);
+            return SameSide(p, a, b, c, onBoundaryIsInside) && 
+                SameSide(p, b, a, c, onBoundaryIsInside) && 
+                SameSide(p, c, a, b, onBoundaryIsInside);
         }
 
         /// <summary>
