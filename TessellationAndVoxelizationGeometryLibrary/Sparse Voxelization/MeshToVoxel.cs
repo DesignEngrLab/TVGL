@@ -56,13 +56,13 @@ namespace TVGL.SparseVoxelization
 
         public void VoxelizeMesh(TessellatedSolid solid)
         {
-            PolygonLimit = 1000;
+            PolygonLimit = 50;
             Solid = solid;
             var dx = solid.XMax - solid.XMin;
             var dy = solid.YMax - solid.YMin;
             var dz = solid.ZMax - solid.ZMin;
             var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
-            var numberOfVoxelsAlongMaxDirection = 50;
+            var numberOfVoxelsAlongMaxDirection = 100;
             ScaleToIntSpace = numberOfVoxelsAlongMaxDirection / maxDim;
 
             VoxelSizeInIntSpace = 1.0; 
@@ -74,17 +74,7 @@ namespace TVGL.SparseVoxelization
             Voxels = new List<Voxel>();
             foreach (var voxelString in Data.IntersectingVoxels)
             {
-                var newVoxel = new Voxel(voxelString, 1/ScaleToIntSpace);
-        
-                var intersectingFace = Data.Triangles[Data.ClosestFaceToVoxel[voxelString]];
-                if (ComputeDistance(newVoxel.Index, intersectingFace, ref Data))
-                {
-                    Voxels.Add(newVoxel);
-                }
-                else
-                {
-                    throw new Exception();
-                }
+                Voxels.Add(new Voxel(voxelString, 1/ScaleToIntSpace));
             }
         }
 
@@ -246,6 +236,7 @@ namespace TVGL.SparseVoxelization
                 Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter));
             //var dist = Proximity.SquareDistancesPointToTriangle(voxelCenter, prim);
 
+
             //Get the best distance of this voxel that has been set so far.
             var oldDist = double.MaxValue;
             var voxelIndexString = data.GetStringFromIndex(ijk);
@@ -275,10 +266,21 @@ namespace TVGL.SparseVoxelization
             //This assumes each voxel has a size of 1x1x1.
             //If the squared distance < 0.75 then it must intersect the voxel.
             //Returns true if the face intersects the voxel.
-            if (dist > 0.75) return false;
-            //Since IntersectingVoxels is a hashset, it will not add a duplicate voxel.
-            data.IntersectingVoxels.Add(voxelIndexString);
-            return true;
+            //if (dist > 0.75) return false;
+
+            var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
+            if (Math.Round(closestPoint[0]) == ijk[0]
+                && Math.Round(closestPoint[1]) == ijk[1]
+                && Math.Round(closestPoint[2]) == ijk[2])
+            {
+                //Since IntersectingVoxels is a hashset, it will not add a duplicate voxel.
+                data.IntersectingVoxels.Add(voxelIndexString);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 
