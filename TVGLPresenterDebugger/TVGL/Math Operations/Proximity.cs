@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using StarMathLib;
@@ -181,116 +182,38 @@ namespace TVGL.MathOperations
         //Returns the closest point of a triangle to a point in question. 
         //Based on http://cs.swan.ac.uk/~csmark/PDFS/1995_3D_distance_point_to_triangle
         public static double[] ClosestPointOnTriangle(double[] p, Triangle prim)
-        {   
-            //ToDo: precompute the transformation matrix for every triangle
-            //Calculate the translation and rotation matrices so that A lies on the origin, B, 
-            //lies on the Y axis, and C lies in the xy plane.
-            var xDir = prim.B[0] - prim.A[0];
-            var yDir = prim.B[1] - prim.A[1];
-            var zDir = prim.B[2] - prim.A[2];
-            var originToB = Math.Sqrt(xDir *xDir + yDir*yDir + zDir*zDir);
-
-            //Rotate Z, then X, then Y
-            double[,] rotateX, rotateY, rotateZ, backRotateZ, backRotateX, backRotateY;
-            //if (xDir.IsNegligible() && zDir.IsNegligible())
-            //{
-            //    rotateX = StarMath.RotationX(Math.Sign(yDir) * Math.PI / 2, true);
-            //    backRotateX = StarMath.RotationX(-Math.Sign(yDir) * Math.PI / 2, true);
-            //    backRotateY = rotateY = StarMath.makeIdentity(4);
-            //}
-            //else if (zDir.IsNegligible())
-            //{
-            //    rotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
-            //    backRotateY = StarMath.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
-            //    var rotXAngle = Math.Atan(yDir / Math.Abs(xDir));
-            //    rotateX = StarMath.RotationX(rotXAngle, true);
-            //    backRotateX = StarMath.RotationX(-rotXAngle, true);
-            //}
-            //else
-            //{
-
-            var rotZAngle = -Math.Atan(xDir / yDir);
-            rotateZ = StarMath.RotationY(rotZAngle, true);
-            backRotateZ = StarMath.RotationY(-rotZAngle, true);
-
-            var rotXAngle = Math.Sign(zDir) * Math.Asin(zDir / originToB);
-            rotateX = StarMath.RotationX(rotXAngle, true);
-            backRotateX = StarMath.RotationX(-rotXAngle, true);
-
-            //At this point, C is very difficult to determine. Just do the rotation first
-            var tempR = rotateX.multiply(rotateZ);
-            var tempC = tempR.multiply(prim.C);
-            var rotYAngle = -Math.Atan(tempC[1] / tempC[2]);
-            rotateY = StarMath.RotationY(rotYAngle, true);
-            backRotateY = StarMath.RotationY(-rotYAngle, true);        
-      
-            var rotationTransform = rotateY.multiply(rotateX.multiply(rotateZ));
-            var transformationMatrix = new[,]
-            {
-                {rotationTransform[0,0], rotationTransform[0,1], rotationTransform[0,2], -prim.A[0]},
-                {rotationTransform[1,0], rotationTransform[1,1], rotationTransform[1,2], -prim.A[1]},
-                {rotationTransform[2,0], rotationTransform[2,1], rotationTransform[2,2], -prim.A[2]},
-                {0.0, 0.0, 0.0, 1.0}
-            };
-            
-            //Rotate all the points. A is at 0,0,0.
-            var oldVertexPosition = new double[]
+        {
+            var oldPLocation = new double[]
             {
                 p[0], p[1], p[2], 1.0
             };
-            //We can ignore this point's Z coordinate to put it on the XY plane
-            var newPLocation = transformationMatrix.multiply(oldVertexPosition);
-            var pPrime = new Point(newPLocation[2], newPLocation[1]);
+            var newPointLocation = prim.RotTransMatrixTo2D.multiply(oldPLocation);
+            var oldP = prim.RotTransMatrixTo3D.multiply(newPointLocation);
+            //Since this point is moved onto the YZ plane, set Point.X = Y' & Point.Y = Z'
+            var pPrime = new[] {newPointLocation[1], newPointLocation[2]};
 
-            //ZY plane
-            var aPrime = new Point(0.0, 0.0);
-            var oldBPosition = new[]
-            {
-                prim.B[0], prim.B[1], prim.B[2], 1.0
-            };
-            var newBLocation = transformationMatrix.multiply(oldBPosition);
-            if(!newBLocation[2].IsNegligible()) throw new Exception("Point B should be on the Y axis, and have Z = 0");
-            var bPrime = new Point(newBLocation[2], newBLocation[1]);
-            var oldCPosition = new[]
-{
-                prim.C[0], prim.C[1], prim.C[2], 1.0
-            };
-            var newCLocation = transformationMatrix.multiply(oldCPosition);
-            var cPrime = new Point(newCLocation[2], newCLocation[1]);
-
-
-            //If the 2D version of the new point is inside the new 2D triangle,
-            //Then the distance is simply its X value.
-            var poly = new Polygon(new List<Point>() {aPrime, bPrime, cPrime});
-            if (!poly.IsPositive) poly.Reverse();
-            if (MiscFunctions.IsPointInsidePolygon(new List<Point>() {aPrime, bPrime, cPrime}, pPrime))
-            {
-                return new double[] { };
-            }
-
-            //If not inside, then check edges (ToDo: edges should be precomputed).
-            poly.SetPathLines();
             var onEdge = false;
             var numRightEdges = 0;
-            foreach (var line in poly.PathLines)
+            var rightLines = new List<Line>();
+            Line onThisLine = null;
+            foreach (var line in prim.Polygon2D.PathLines)
             {
                 //Use the edge function from http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.4621&rep=rep1&type=pdf
-                var edgeFunctionValue = (pPrime.X - line.FromPoint.X) * line.dY - (pPrime.Y - line.FromPoint.Y) * line.dX;
+                var edgeFunctionValue = (pPrime[0] - line.FromPoint.X) * line.dY - (pPrime[1] - line.FromPoint.Y) * line.dX;
                 if (edgeFunctionValue.IsNegligible())
                 {
                     //It is exactly on the line. 
                     onEdge = true;
+                    onThisLine = line;
                     break; 
                 }
                 else if (edgeFunctionValue > 0)
                 {
                     //It is to the right side, which is outside 
                     numRightEdges++;
+                    rightLines.Add(line);
                 }
-                else
-                {
-                    //It is to the left side.
-                }
+                // else it is to the left side.
             }
 
             //If the point is on an edge, then find the closest point.
@@ -298,28 +221,122 @@ namespace TVGL.MathOperations
             //If it is to the right of only one edge, that edge is the closest.
             //If it is the right of two edges, it is in a corner, closest to whichever point is in the corner.
             //It cannot ever be to the right of 3 edges, unless the triangle is a hole, which we prevent.
+            var tempResult = new double[] {};
             if (onEdge)
             {
-                 //Use the To/From Points to define the point on the edge.
-            }
+                var pointOnLine = ClosestPointOnLineSegmentToPoint(onThisLine, pPrime);
+                //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
+                tempResult = new[] { 0.0, pointOnLine[0], pointOnLine[1], 1.0 }; 
+            } 
             else if (numRightEdges == 0)
             {
-                 //The closest point on the triangle has the X,Y coordinates of pPrime and Z == 0. 
-                 //To find the 3D point, use the backtransform matrix.
+                //The closest point on the triangle has the Y, Z coordinates of pPrime's X',Y' coordinates and X == 0. 
+                tempResult = new[] { 0.0, pPrime[0], pPrime[1], 1.0 };
+                //result = backRotationMatrix.multiply(tempResult).subtract(transformVector);
             }
             else if (numRightEdges == 1)
-            {
-                
+            {   
+                var line = rightLines[0];
+                var pointOnLine = ClosestPointOnLineSegmentToPoint(line, pPrime);
+                //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
+                tempResult = new[] { 0.0, pointOnLine[0], pointOnLine[1], 1.0 };                
             }
             if (numRightEdges == 2)
             {
-                
+                //If it is to the right of two edges, then we need to use the perpendicular edge cases to determine
+                //which edge is closest to the point.
+                var closerToLineThanCorner = false;
+                var foundCorner = false;
+                foreach (var line in rightLines)
+                {
+                    var c = 0;
+                    foreach (var perpendicular in prim.PerpendicularLines[line.IndexInList])
+                    {
+                        var edgeFunctionValue = (pPrime[0] - perpendicular.FromPoint.X) * perpendicular.dY - (pPrime[1] - perpendicular.FromPoint.Y) * perpendicular.dX;
+                        if (edgeFunctionValue.IsNegligible())
+                        {
+                            //It is closest to this perpendicular line's fromPoint
+                            tempResult = new[] { 0.0, perpendicular.FromPoint[0], perpendicular.FromPoint[1], 1.0 };
+                            foundCorner = true;
+                            break;
+                        }
+                        else if (edgeFunctionValue > 0)
+                        {
+                            c++;
+                        }
+                        else
+                        {
+                            c--;
+                        }    
+                    }
+                    //It is between the two perpendiculars of this line, so use this line
+                    if (c == 0)
+                    {
+                        var pointOnLine = ClosestPointOnLineSegmentToPoint(line, pPrime);
+                        //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
+                        tempResult = new[] { 0.0, pointOnLine[0], pointOnLine[1], 1.0 };
+                        closerToLineThanCorner = true;
+                        break;
+                    }
+                    if (foundCorner) break;
+                }
+                if (!closerToLineThanCorner && !foundCorner)
+                {
+                    //It must be the shared point
+                    if (rightLines[0].ToPoint == rightLines[1].FromPoint)
+                    {
+                        //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
+                        tempResult = new[] { 0.0, rightLines[0].ToPoint.X, rightLines[0].ToPoint.Y, 1.0 };
+                    }
+                    else
+                    {
+                        tempResult = new[] { 0.0, rightLines[0].FromPoint.X, rightLines[0].FromPoint.Y, 1.0 };
+                    }
+                }               
             }
+            
+            var result = prim.RotTransMatrixTo3D.multiply(tempResult);
+            //allPointsOfInterest.Add(new List<double[]>() {tempResult.Take(3).ToArray(), result.Take(3).ToArray()});
+            //Presenter.ShowVertexPaths(allPointsOfInterest);
+
+            return result.Take(3).ToArray();
+        }
 
 
+        /// <summary>
+        /// Gets the closest point on the line segment from the given point (p). 
+        /// </summary>
+        /// <param name="line"></param>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        public static double[] ClosestPointOnLineSegmentToPoint(Line line, double[] p)
+        {
+            //First, project the point in question onto the infinite line, getting its distance on the line from 
+            //the line.FromPoint
+            //There are three possible results:
+            //(1) If the distance is <= 0, the infinite line intersection is outside the line segment interval, on the FromPoint side.
+            //(2) If the distance is >= the line.Length, the infinite line intersection is outside the line segment interval, on the ToPoint side.
+            //(3) Otherwise, the infinite line intersection is inside the line segment interval.
+            var fromPoint = line.FromPoint.Position2D;
+            var lineVector = line.ToPoint.Position2D.subtract(line.FromPoint.Position2D);
+            var distanceToSegment = p.subtract(fromPoint).dotProduct(lineVector)/line.Length;
 
+            if (distanceToSegment <= 0.0)
+            {
+                return fromPoint;
+            }
+            if (distanceToSegment >= line.Length)
+            {
+                return line.ToPoint.Position2D;
+            }
+            distanceToSegment = distanceToSegment / line.Length;
+            return fromPoint.add(lineVector.multiply(distanceToSegment));
 
-            return new double[] {};
+            //var t = (lineVector[0] * (p[0] - fromPoint[0]) + lineVector[1] * (p[1] - fromPoint[1]))
+            //           / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1]);
+            //var pointOnInfiniteLine = new[] { fromPoint[0] + lineVector[0] * t, fromPoint[1] + lineVector[1] * t };
+            //var ap2 = MiscFunctions.SquareDistancePointToPoint(pointOnInfiniteLine, fromPoint);
+            //var bp2 = MiscFunctions.SquareDistancePointToPoint(pointOnInfiniteLine, line.ToPoint.Position2D);
         }
     }
 }

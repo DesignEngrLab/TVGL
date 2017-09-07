@@ -325,6 +325,50 @@ namespace TVGL
         #endregion
 
         #region 3D Plots via Helix.Toolkit
+
+        /// <summary>
+        /// Shows the vertex paths with solid.
+        /// </summary>
+        /// <param name="paths"></param>
+        /// <param name="closePaths"></param>
+        /// <param name="solid"></param>
+        public static void ShowVertexPaths(IList<List<double[]>> paths, bool closePaths = true, TessellatedSolid solid = null)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+           
+            if(solid != null)
+            {
+                var model = MakeModelVisual3D(solid);
+                models.Add(model);
+                window.view1.Children.Add(model);
+            }
+
+            foreach (var path in paths)
+            {
+                var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
+
+                //Now create a line collection by doubling up the points
+                var lineCollection = new List<Point3D>();
+                foreach (var t in contour)
+                {
+                    lineCollection.Add(t);
+                    lineCollection.Add(t);
+                }
+                lineCollection.RemoveAt(0);
+
+                if (closePaths)
+                {
+                    lineCollection.Add(lineCollection.First());
+                }
+
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
+                window.view1.Children.Add(lines);
+            }
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
         /// <summary>
         /// Shows the vertex paths with solid.
         /// </summary>
@@ -351,7 +395,7 @@ namespace TVGL
                 };
                 var color = new System.Windows.Media.Color();
                 color.R = 255; //G & B default to 0 to form red
-                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color };
+                var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection) };
                 window.view1.Children.Add(lines);
             }
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
@@ -380,7 +424,7 @@ namespace TVGL
                 {
                     var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
 
-                    //No create a line collection by doubling up the points
+                    //Now create a line collection by doubling up the points
                     var lineCollection = new List<Point3D>();
                     foreach (var t in contour)
                     {
@@ -422,7 +466,7 @@ namespace TVGL
                 {
                     var contour = path.Select(point => new Point3D(point.X, point.Y, point.Z)).ToList();
 
-                    //No create a line collection by doubling up the points
+                    //Now create a line collection by doubling up the points
                     var lineCollection = new List<Point3D>();
                     foreach (var t in contour)
                     {
@@ -454,7 +498,7 @@ namespace TVGL
                 {
                     var contour = path.Select(point => new Point3D(point[0], point[1], point[2])).ToList();
 
-                    //No create a line collection by doubling up the points
+                    //Now create a line collection by doubling up the points
                     var lineCollection = new List<Point3D>();
                     foreach (var t in contour)
                     {

@@ -169,9 +169,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs">
       <Link>TVGL\InputOutput Operations\TVGLFileData.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Math Operations\Proximity.cs">
-      <Link>TVGL\Math Operations\Proximity.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\DirectionalDecomposition.cs">
       <Link>TVGL\Miscellaneous Functions\DirectionalDecomposition.cs</Link>
     </Compile>
@@ -283,9 +280,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Tree.cs">
       <Link>TVGL\Sparse Voxelization\Tree.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Voxelization.cs">
-      <Link>TVGL\Sparse Voxelization\Voxelization.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>TVGL\Verbosity.cs</Link>
     </Compile>
@@ -299,6 +293,8 @@
       <Link>Presenter\Window3DPlot.xaml.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TVGL\Math Operations\Proximity.cs" />
+    <Compile Include="TVGL\Sparse Voxelization\VoxelizationDebug.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
@@ -325,6 +321,7 @@
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

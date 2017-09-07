@@ -22,16 +22,16 @@ namespace TVGL.SparseVoxelization
         {
             StringIndex = voxelString;
 
-            var halfLength = scale/2;
+            var halfLength = scale / 2;
             string[] words = voxelString.Split('|');
             Index = new int[3];
             for (var i = 0; i < 3; i++)
             {
-                Index[i] = int.Parse(words[i]) ;
-                if(Index[i] < 0) Debug.WriteLine("Negative Values work properly");
+                Index[i] = int.Parse(words[i]);
+                if (Index[i] < 0) Debug.WriteLine("Negative Values work properly");
             }
 
-            Center = new Vertex(new double[] { Index[0]*scale, Index[1]*scale, Index[2]*scale});
+            Center = new Vertex(new double[] { Index[0] * scale, Index[1] * scale, Index[2] * scale });
             Bounds = new AABB
             {
                 MinX = Center.X - halfLength,
@@ -46,7 +46,7 @@ namespace TVGL.SparseVoxelization
 
     public class VoxelSpace
     {
-        public TessellatedSolid Solid; 
+        public TessellatedSolid Solid;
         public VoxelizationData Data;
         public double VoxelSizeInIntSpace;
         public double ScaleToIntSpace;
@@ -83,7 +83,7 @@ namespace TVGL.SparseVoxelization
             var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
             ScaleToIntSpace = numberOfVoxelsAlongMaxDirection / maxDim;
 
-            VoxelSizeInIntSpace = 1.0; 
+            VoxelSizeInIntSpace = 1.0;
 
             Data = new VoxelizationData();
             foreach (var face in solid.Faces)
@@ -98,7 +98,7 @@ namespace TVGL.SparseVoxelization
             Voxels = new List<Voxel>();
             foreach (var voxelString in Data.IntersectingVoxels)
             {
-                Voxels.Add(new Voxel(voxelString, 1/ScaleToIntSpace));
+                Voxels.Add(new Voxel(voxelString, 1 / ScaleToIntSpace));
             }
         }
 
@@ -109,14 +109,14 @@ namespace TVGL.SparseVoxelization
         /// voxels. In this way, it wraps along the face collecting all the intersecting voxels.
         /// </summary>
         private void VoxelizeTriangle(Triangle triangle, ref VoxelizationData data)
-        {          
+        {
             var consideredVoxels = new HashSet<string>();
             var coordindateList = new Stack<int[]>();
 
             //Gets the integer coordinates, rounded down for point A on the triangle 
             //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
             //this coordinate. 
-            var ijk = new[] 
+            var ijk = new[]
             {
                 (int)Math.Floor(triangle.A[0]), //X
                 (int)Math.Floor(triangle.A[1]), //Y
@@ -148,7 +148,7 @@ namespace TVGL.SparseVoxelization
                     if (!consideredVoxels.Contains(voxelIndexString))
                     {
                         consideredVoxels.Add(voxelIndexString);
-                        if(IsTriangleIntersectingVoxel(nijk, triangle, ref data)) coordindateList.Push(nijk);
+                        if (IsTriangleIntersectingVoxel(nijk, triangle, ref data)) coordindateList.Push(nijk);
                     }
                 }
             }
@@ -161,7 +161,7 @@ namespace TVGL.SparseVoxelization
         private static bool IsTriangleIntersectingVoxel(int[] ijk, Triangle prim, ref VoxelizationData data)
         {
             //Voxel center is simply converting the integers to doubles.
-            var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2]};
+            var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2] };
             var voxelIndexString = data.GetStringFromIndex(ijk);
 
             //This assumes each voxel has a size of 1x1x1 and is in an interger grid.
@@ -172,10 +172,10 @@ namespace TVGL.SparseVoxelization
             //It may be any point on the triangle.
             var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
             var closestPointMethod2 = Proximity.ClosestPointOnTriangle(voxelCenter, prim);
-            if(!closestPoint[0].IsPracticallySame(closestPointMethod2[0]) || 
-               !closestPoint[1].IsPracticallySame(closestPointMethod2[1]) || 
-               !closestPoint[2].IsPracticallySame(closestPointMethod2[2]))
-               throw new Exception("Methods do not match");
+            if (!closestPoint[0].IsPracticallySame(closestPointMethod2[0], 0.5) ||
+               !closestPoint[1].IsPracticallySame(closestPointMethod2[1], 0.5) ||
+               !closestPoint[2].IsPracticallySame(closestPointMethod2[2], 0.5))
+                throw new Exception("Methods do not match");
 
             if ((int)Math.Round(closestPoint[0]) == ijk[0]
                 && (int)Math.Round(closestPoint[1]) == ijk[1]
@@ -202,13 +202,13 @@ namespace TVGL.SparseVoxelization
         /// Stores the faces that intersect a voxel, using the face index, which is the same
         /// as the the Triangle.ID.  
         /// </summary>                                          
-        public readonly Dictionary<string, HashSet<int>> FacesIntersectingVoxels; 
+        public readonly Dictionary<string, HashSet<int>> FacesIntersectingVoxels;
 
-        public HashSet<string> IntersectingVoxels;  
+        public HashSet<string> IntersectingVoxels;
 
         public VoxelizationData()
         {
- 
+
             FacesIntersectingVoxels = new Dictionary<string, HashSet<int>>();
             IntersectingVoxels = new HashSet<string>();
         }
@@ -227,8 +227,8 @@ namespace TVGL.SparseVoxelization
             }
             else
             {
-                FacesIntersectingVoxels.Add(voxelIndex, new HashSet<int>{primId});
-            } 
+                FacesIntersectingVoxels.Add(voxelIndex, new HashSet<int> { primId });
+            }
         }
 
         public string GetStringFromIndex(int[] ijk)
@@ -273,6 +273,7 @@ namespace TVGL.SparseVoxelization
         public Polygon Polygon2D { get; set; }
         public double[,] RotTransMatrixTo2D { get; set; }
         public double[,] RotTransMatrixTo3D { get; set; }
+        public Dictionary<int, List<Line>> PerpendicularLines { get; set; }
 
         /// <summary>
         /// Builds a Triangle from points. Scales accordingly.
@@ -289,6 +290,7 @@ namespace TVGL.SparseVoxelization
             Polygon2D = null;
             RotTransMatrixTo2D = new double[,] { };
             RotTransMatrixTo3D = new double[,] { };
+            PerpendicularLines = new Dictionary<int, List<Line>>();
             SetTransformationMatrix();
         }
 
@@ -309,6 +311,7 @@ namespace TVGL.SparseVoxelization
             Polygon2D = null;
             RotTransMatrixTo2D = new double[,] { };
             RotTransMatrixTo3D = new double[,] { };
+            PerpendicularLines = new Dictionary<int, List<Line>>();
             SetTransformationMatrix();
         }
 
@@ -322,20 +325,23 @@ namespace TVGL.SparseVoxelization
             var zDir = B[2] - A[2];
             var originToB = Math.Sqrt(xDir * xDir + yDir * yDir + zDir * zDir);
 
-            //Get the full transformation matrix
-            var transformVector = new[]
-            {
-                -A[0],
-                -A[1],
-                -A[2],
-                 0.0
-            };
+            //Get the transformation matrix
+            var transformMatrix = StarMath.makeIdentity(4);
+            transformMatrix[0, 3] = -A[0];
+            transformMatrix[1, 3] = -A[1];
+            transformMatrix[2, 3] = -A[2];
 
             var tempB = new[]
             {
                 xDir, yDir, zDir, 1.0
             };
 
+            var showTrianglesForDebug = false;
+            if (ID == 38)
+            {
+                showTrianglesForDebug = true;
+                Debug.WriteLine("Error Triangle Reached");
+            }
 
             //Rotate Z, then X, then Y
             double[,] rotateX, rotateY, rotateZ, backRotateZ, backRotateX, backRotateY;
@@ -349,19 +355,24 @@ namespace TVGL.SparseVoxelization
             //Rotate PI/2*Sign(xDir) on the Z axis 
             else if (zDir.IsNegligible() && yDir.IsNegligible())
             {
+                //Validated
                 rotateZ = StarMath.RotationZ(Math.Sign(xDir) * Math.PI / 2, true);
                 backRotateZ = StarMath.RotationZ(-Math.Sign(xDir) * Math.PI / 2, true);
 
+                //var tempB2 = rotateZ.multiply(tempB);
                 backRotateX = rotateX = StarMath.makeIdentity(4);
             }
             //If xDir and yDir are negligible, then point B lies along the Z axis
             //Rotate PI/2*Sign(xDir) on the X axis 
             else if (xDir.IsNegligible() && yDir.IsNegligible())
             {
+                //Validated
                 backRotateZ = rotateZ = StarMath.makeIdentity(4);
 
-                rotateX = StarMath.RotationX(Math.Sign(xDir) * Math.PI / 2, true);
-                backRotateX = StarMath.RotationX(-Math.Sign(xDir) * Math.PI / 2, true);
+                rotateX = StarMath.RotationX(-Math.Sign(zDir) * Math.PI / 2, true);
+                backRotateX = StarMath.RotationX(Math.Sign(zDir) * Math.PI / 2, true);
+
+                //var tempB2 = rotateX.multiply(tempB);
             }
             //Point B lies on the xy plane, X rotation is zero.
             else if (zDir.IsNegligible())
@@ -385,12 +396,13 @@ namespace TVGL.SparseVoxelization
             else if (yDir.IsNegligible())
             {
                 //ToDo? Validated
+                //Rotate on Z to put B in the Positive Y direction
                 rotateZ = StarMath.RotationZ(Math.Sign(xDir) * Math.PI / 2, true);
                 backRotateZ = StarMath.RotationZ(-Math.Sign(xDir) * Math.PI / 2, true);
 
                 var tempB2 = rotateZ.multiply(tempB);
-
-                var rotXAngle = -Math.Atan(zDir / xDir);
+                
+                var rotXAngle = -Math.Atan(zDir / Math.Abs(xDir));
                 rotateX = StarMath.RotationX(rotXAngle, true);
                 backRotateX = StarMath.RotationX(-rotXAngle, true);
 
@@ -398,11 +410,14 @@ namespace TVGL.SparseVoxelization
             }
             else
             {
-                var rotZAngle = -Math.Atan(xDir / yDir);
+                //If Sign(yDir) = 1, then B will be rotated toward the positive Y axis, since it is closest.
+                //If = 1-, then it will go to the negative Y axis. 
+                var rotZAngle = Math.Atan(xDir / yDir);
                 rotateZ = StarMath.RotationZ(rotZAngle, true);
                 backRotateZ = StarMath.RotationZ(-rotZAngle, true);
 
-                var rotXAngle = Math.Sign(zDir) * Math.Asin(zDir / originToB);
+
+                var rotXAngle = -Math.Sign(yDir) * Math.Asin(zDir / originToB);
                 rotateX = StarMath.RotationX(rotXAngle, true);
                 backRotateX = StarMath.RotationX(-rotXAngle, true);
             }
@@ -414,13 +429,13 @@ namespace TVGL.SparseVoxelization
             {
                 C[0], C[1], C[2], 1.0
             };
-            var tempC = tempR.multiply(oldCPosition.add(transformVector));
+            var tempC = tempR.multiply(transformMatrix.multiply(oldCPosition));
             //Then, rotate along the yAxis. 
             //If C has a negligible Z value, then rotate by Pi/2 
             if (tempC[2].IsNegligible())
             {
-                rotateY = StarMath.RotationY(Math.Sign(xDir) * Math.PI / 2, true);
-                backRotateY = StarMath.RotationY(-Math.Sign(xDir) * Math.PI / 2, true);
+                rotateY = StarMath.RotationY(-Math.Sign(tempC[0]) * Math.PI / 2, true);
+                backRotateY = StarMath.RotationY(Math.Sign(tempC[0]) * Math.PI / 2, true);
             }
             else
             {
@@ -434,36 +449,51 @@ namespace TVGL.SparseVoxelization
             //Transformation Matrices read from right to left. So first, transform so that point A is at the origin, 
             //Then rotate Z, X, and lastly Y.
             var rotationMatrix = rotateY.multiply(rotateX.multiply(rotateZ));
-            var transformMatrix = StarMath.makeIdentity(4);
-            transformMatrix[0, 3] = transformVector[0];
-            transformMatrix[1, 3] = transformVector[1];
-            transformMatrix[2, 3] = transformVector[2];
+
             RotTransMatrixTo2D = rotationMatrix.multiply(transformMatrix);
             var backRotationMatrix = backRotateZ.multiply(backRotateX.multiply(backRotateY));
+            transformMatrix = StarMath.makeIdentity(4);
+            transformMatrix[0, 3] = A[0];
+            transformMatrix[1, 3] = A[1];
+            transformMatrix[2, 3] = A[2];
             RotTransMatrixTo3D = transformMatrix.multiply(backRotateZ.multiply(backRotateX.multiply(backRotateY)));
 
             //ZY plane
-            var aPrime = new Point(0.0, 0.0);
             var oldAPosition = new[]
             {
                    A[0], A[1], A[2] , 1.0
             };
             var newALocation = RotTransMatrixTo2D.multiply(oldAPosition);
             var testA = RotTransMatrixTo3D.multiply(newALocation);
-            if (!newALocation[0].IsNegligible() && !newALocation[1].IsNegligible() && !newALocation[2].IsNegligible())
-                throw new Exception("Point A should be on the origin");
+            if (!newALocation[0].IsNegligible(0.000001) &&
+                !newALocation[1].IsNegligible(0.000001) &&
+                !newALocation[2].IsNegligible(0.000001))
+            {
+                showTrianglesForDebug = true;
+                Debug.WriteLine("Point A should be on the origin");
+            }
+            var aPrime = new Point(newALocation[1], newALocation[2]);
 
             var oldBPosition = new[]
             {
                    B[0], B[1], B[2] , 1.0
             };
             var newBLocation = RotTransMatrixTo2D.multiply(oldBPosition);
-            if (!newBLocation[0].IsNegligible() && !newBLocation[2].IsNegligible()) throw new Exception("Point B should be on the Y axis, and have X = Z = 0");
-            var bPrime = new Point(newBLocation[1], 0.0);
+            var testB = RotTransMatrixTo3D.multiply(newBLocation);
+            if (!newBLocation[0].IsNegligible() && !newBLocation[2].IsNegligible(0.000001))
+            {
+                showTrianglesForDebug = true;
+                Debug.WriteLine("Point B should be on the Y axis, and have X = Z = 0");
+            }
+            var bPrime = new Point(newBLocation[1], newBLocation[2]);
 
             var newCLocation = RotTransMatrixTo2D.multiply(oldCPosition);
             var testC = RotTransMatrixTo3D.multiply(newCLocation);
-            if (!newCLocation[0].IsNegligible()) throw new Exception("Point C should be on the YZ plane (X = 0)");
+            if (!newCLocation[0].IsNegligible(0.000001))
+            {
+                showTrianglesForDebug = true;
+                Debug.WriteLine("Point C should be on the YZ plane (X = 0)");
+            }
             var cPrime = new Point(newCLocation[1], newCLocation[2]);
 
 
@@ -475,9 +505,28 @@ namespace TVGL.SparseVoxelization
             Polygon2D = new Polygon(new List<Point>() { aPrime, bPrime, cPrime });
             //Make sure the polygon is positive, in case it got rotated so that it was backwards.
             if (!Polygon2D.IsPositive) Polygon2D.Reverse();
-            var oldVertexList = new List<Vertex>() {new Vertex(A), new Vertex(B), new Vertex(C)};
-            if (!Polygon2D.Area.IsPracticallySame(MiscFunctions.AreaOf3DPolygon(oldVertexList, Normal))) throw new Exception("Areas do not match");
+            var oldVertexList = new List<Vertex>() { new Vertex(A), new Vertex(B), new Vertex(C) };
+            var oldArea = MiscFunctions.AreaOf3DPolygon(oldVertexList, Normal);
+            if (!Polygon2D.Area.IsPracticallySame(oldArea, 0.01*oldArea)) Debug.WriteLine("Areas do not match");
             Polygon2D.SetPathLines();
+
+            
+            foreach (var line in Polygon2D.PathLines)
+            {
+                var leftHandPerpendicular = new [] {line.dY, -line.dX};
+                var leftHandPerpendicularLines = new List<Line>
+                {
+                    new Line(line.FromPoint, leftHandPerpendicular),
+                    new Line(line.ToPoint, leftHandPerpendicular)
+                };
+                PerpendicularLines.Add(line.IndexInList, leftHandPerpendicularLines);
+            }
+
+            if (showTrianglesForDebug)
+            {
+                var allPathsOfInterest = new List<List<double[]>> { Triangle2D, new List<double[]> { A, B, C } };
+                Presenter.ShowVertexPaths(allPathsOfInterest);
+            }
         }
     }
 }

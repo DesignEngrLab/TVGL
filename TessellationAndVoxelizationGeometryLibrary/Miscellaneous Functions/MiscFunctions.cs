@@ -1521,7 +1521,7 @@ namespace TVGL
         #region Distance Methods (between point, line, and plane)
 
         /// <summary>
-        ///     Returns the distance the point to line.
+        ///     Returns the distance the point on an infinite line.
         /// </summary>
         /// <param name="qPoint">The q point that is off of the line.</param>
         /// <param name="lineRefPt">The line reference point on the line.</param>
@@ -1534,7 +1534,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Distances the point to line.
+        ///     Returns the distance the point on an infinite line.
         /// </summary>
         /// <param name="qPoint">q is the point that is off of the line.</param>
         /// <param name="lineRefPt">p is a reference point on the line.</param>
