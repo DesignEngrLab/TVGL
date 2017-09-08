@@ -28,7 +28,7 @@ namespace TVGL.SparseVoxelization
             for (var i = 0; i < 3; i++)
             {
                 Index[i] = int.Parse(words[i]);
-                if (Index[i] < 0) Debug.WriteLine("Negative Values work properly");
+                //if (Index[i] < 0) Debug.WriteLine("Negative Values work properly");
             }
 
             Center = new Vertex(new double[] { Index[0] * scale, Index[1] * scale, Index[2] * scale });
@@ -170,12 +170,12 @@ namespace TVGL.SparseVoxelization
             //rounding, not floor or ceiling) then it must intersect the voxel.
             //Closest Point on Triangle is not restricted to A,B,C. 
             //It may be any point on the triangle.
-            var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
-            var closestPointMethod2 = Proximity.ClosestPointOnTriangle(voxelCenter, prim);
-            if (!closestPoint[0].IsPracticallySame(closestPointMethod2[0], 0.5) ||
-               !closestPoint[1].IsPracticallySame(closestPointMethod2[1], 0.5) ||
-               !closestPoint[2].IsPracticallySame(closestPointMethod2[2], 0.5))
-                throw new Exception("Methods do not match");
+            //var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
+            var closestPoint = Proximity.ClosestPointOnTriangle(voxelCenter, prim);
+            //if (!closestPoint[0].IsPracticallySame(closestPointMethod2[0], 0.001) ||
+            //   !closestPoint[1].IsPracticallySame(closestPointMethod2[1], 0.001) ||
+            //   !closestPoint[2].IsPracticallySame(closestPointMethod2[2], 0.001))
+            //    throw new Exception("Methods do not match");
 
             if ((int)Math.Round(closestPoint[0]) == ijk[0]
                 && (int)Math.Round(closestPoint[1]) == ijk[1]
@@ -231,6 +231,7 @@ namespace TVGL.SparseVoxelization
             }
         }
 
+        //ToDo: Using a single index value would reduce total voxelization time by 50%
         public string GetStringFromIndex(int[] ijk)
         {
             return ijk[0] + "|"
@@ -337,11 +338,11 @@ namespace TVGL.SparseVoxelization
             };
 
             var showTrianglesForDebug = false;
-            if (ID == 38)
-            {
-                showTrianglesForDebug = true;
-                Debug.WriteLine("Error Triangle Reached");
-            }
+            //if (ID == 29)
+            //{
+            //    showTrianglesForDebug = true;
+            //    Debug.WriteLine("Error Triangle Reached");
+            //}
 
             //Rotate Z, then X, then Y
             double[,] rotateX, rotateY, rotateZ, backRotateZ, backRotateX, backRotateY;
@@ -355,7 +356,6 @@ namespace TVGL.SparseVoxelization
             //Rotate PI/2*Sign(xDir) on the Z axis 
             else if (zDir.IsNegligible() && yDir.IsNegligible())
             {
-                //Validated
                 rotateZ = StarMath.RotationZ(Math.Sign(xDir) * Math.PI / 2, true);
                 backRotateZ = StarMath.RotationZ(-Math.Sign(xDir) * Math.PI / 2, true);
 
@@ -366,7 +366,6 @@ namespace TVGL.SparseVoxelization
             //Rotate PI/2*Sign(xDir) on the X axis 
             else if (xDir.IsNegligible() && yDir.IsNegligible())
             {
-                //Validated
                 backRotateZ = rotateZ = StarMath.makeIdentity(4);
 
                 rotateX = StarMath.RotationX(-Math.Sign(zDir) * Math.PI / 2, true);
@@ -377,7 +376,7 @@ namespace TVGL.SparseVoxelization
             //Point B lies on the xy plane, X rotation is zero.
             else if (zDir.IsNegligible())
             {
-                var rotZAngle = -Math.Atan(xDir / yDir);
+                var rotZAngle = Math.Atan(xDir / yDir);
                 rotateZ = StarMath.RotationZ(rotZAngle, true);
                 backRotateZ = StarMath.RotationZ(-rotZAngle, true);
 
@@ -391,22 +390,23 @@ namespace TVGL.SparseVoxelization
                 var rotXAngle = -Math.Atan(zDir / yDir);
                 rotateX = StarMath.RotationX(rotXAngle, true);
                 backRotateX = StarMath.RotationX(-rotXAngle, true);
+
+                //var tempB2 = rotateX.multiply(tempB);
             }
             //Point B lies on the xz plane. Z rotation is PI/2 and X rotation is simple.
             else if (yDir.IsNegligible())
             {
-                //ToDo? Validated
                 //Rotate on Z to put B in the Positive Y direction
                 rotateZ = StarMath.RotationZ(Math.Sign(xDir) * Math.PI / 2, true);
                 backRotateZ = StarMath.RotationZ(-Math.Sign(xDir) * Math.PI / 2, true);
 
-                var tempB2 = rotateZ.multiply(tempB);
+                //var tempB2 = rotateZ.multiply(tempB);
                 
                 var rotXAngle = -Math.Atan(zDir / Math.Abs(xDir));
                 rotateX = StarMath.RotationX(rotXAngle, true);
                 backRotateX = StarMath.RotationX(-rotXAngle, true);
 
-                var tempB3 = rotateX.multiply(tempB2);
+                //var tempB3 = rotateX.multiply(tempB2);
             }
             else
             {
@@ -443,15 +443,13 @@ namespace TVGL.SparseVoxelization
                 rotateY = StarMath.RotationY(rotYAngle, true);
                 backRotateY = StarMath.RotationY(-rotYAngle, true);
 
-                var tempC2 = rotateY.multiply(tempC);
+                //var tempC2 = rotateY.multiply(tempC);
             }
 
             //Transformation Matrices read from right to left. So first, transform so that point A is at the origin, 
             //Then rotate Z, X, and lastly Y.
             var rotationMatrix = rotateY.multiply(rotateX.multiply(rotateZ));
-
             RotTransMatrixTo2D = rotationMatrix.multiply(transformMatrix);
-            var backRotationMatrix = backRotateZ.multiply(backRotateX.multiply(backRotateY));
             transformMatrix = StarMath.makeIdentity(4);
             transformMatrix[0, 3] = A[0];
             transformMatrix[1, 3] = A[1];
@@ -464,7 +462,7 @@ namespace TVGL.SparseVoxelization
                    A[0], A[1], A[2] , 1.0
             };
             var newALocation = RotTransMatrixTo2D.multiply(oldAPosition);
-            var testA = RotTransMatrixTo3D.multiply(newALocation);
+            //var testA = RotTransMatrixTo3D.multiply(newALocation);
             if (!newALocation[0].IsNegligible(0.000001) &&
                 !newALocation[1].IsNegligible(0.000001) &&
                 !newALocation[2].IsNegligible(0.000001))
@@ -479,7 +477,7 @@ namespace TVGL.SparseVoxelization
                    B[0], B[1], B[2] , 1.0
             };
             var newBLocation = RotTransMatrixTo2D.multiply(oldBPosition);
-            var testB = RotTransMatrixTo3D.multiply(newBLocation);
+            //var testB = RotTransMatrixTo3D.multiply(newBLocation);
             if (!newBLocation[0].IsNegligible() && !newBLocation[2].IsNegligible(0.000001))
             {
                 showTrianglesForDebug = true;
@@ -488,7 +486,7 @@ namespace TVGL.SparseVoxelization
             var bPrime = new Point(newBLocation[1], newBLocation[2]);
 
             var newCLocation = RotTransMatrixTo2D.multiply(oldCPosition);
-            var testC = RotTransMatrixTo3D.multiply(newCLocation);
+            //var testC = RotTransMatrixTo3D.multiply(newCLocation);
             if (!newCLocation[0].IsNegligible(0.000001))
             {
                 showTrianglesForDebug = true;
@@ -506,8 +504,8 @@ namespace TVGL.SparseVoxelization
             //Make sure the polygon is positive, in case it got rotated so that it was backwards.
             if (!Polygon2D.IsPositive) Polygon2D.Reverse();
             var oldVertexList = new List<Vertex>() { new Vertex(A), new Vertex(B), new Vertex(C) };
-            var oldArea = MiscFunctions.AreaOf3DPolygon(oldVertexList, Normal);
-            if (!Polygon2D.Area.IsPracticallySame(oldArea, 0.01*oldArea)) Debug.WriteLine("Areas do not match");
+            //var oldArea = MiscFunctions.AreaOf3DPolygon(oldVertexList, Normal);
+            //if (!Polygon2D.Area.IsPracticallySame(oldArea, 0.1*oldArea)) Debug.WriteLine("Areas do not match");
             Polygon2D.SetPathLines();
 
             

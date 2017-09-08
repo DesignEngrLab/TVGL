@@ -183,178 +183,184 @@ namespace TVGL.MathOperations
         //Based on http://cs.swan.ac.uk/~csmark/PDFS/1995_3D_distance_point_to_triangle
         public static double[] ClosestPointOnTriangle(double[] p, Triangle prim)
         {
-            var oldPLocation = new double[]
-            {
-                p[0], p[1], p[2], 1.0
-            };
+            //ToDo: To cut down the time by 26%, avoid back transform and ToArray call. 
+            //ToDo: Changing AddRange to Add First may reduce the time a bit. 
+            //Use the edge function from http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.4621&rep=rep1&type=pdf
+            //To determine if the point is inside the triangle, is closest to an edge, or closest to a corner vertex.
+            //Case 1: The point is to the left of every triangle edge (it is inside the triangle).
+            //        The closest point can be defined by p's coordinates.
+            //Case 2: The point is to the right of only one edge. 
+            //        (2a) The point is between the perpendicular lines of a line that had the point to its right.
+            //        (2b) The point is between the perpendicular lines of a triangle corner.
+            //        In both sub-cases, the closest point must be on this line segment, which includes the triangle corner.
+            //Case 3: The point is to the right of two edges. This can have many special cases if you implement 
+            //        it differently, but I strived to implement it so it had as few sub-cases as possible.
+            //        (3a) The point is on a perpendicular line.
+            //        The closest point must be the perpendicular line.FromPoint, which is a triangle corner. 
+            //        (3b) The point is between the perpendicular lines of a line that had the point to its right.
+            //        The closest point must be on this line segment.
+            //        (3c) The point is between the perpendicular lines of a triangle corner.
+            //        The closest point must be this triangle corner.
+
+            //Other Notes: If the point is on a triangle edge or vertex, it will be taken care of with one of these cases.
+            //It cannot ever be to the right of 3 edges, unless the triangle is a hole, which we prevent by making
+            //sure the triangles are positive.
+
+            var oldPLocation = new[] {p[0], p[1], p[2], 1.0};
             var newPointLocation = prim.RotTransMatrixTo2D.multiply(oldPLocation);
-            var oldP = prim.RotTransMatrixTo3D.multiply(newPointLocation);
             //Since this point is moved onto the YZ plane, set Point.X = Y' & Point.Y = Z'
             var pPrime = new[] {newPointLocation[1], newPointLocation[2]};
 
-            var onEdge = false;
             var numRightEdges = 0;
-            var rightLines = new List<Line>();
-            Line onThisLine = null;
+            var rightLines = new List<Line>(); //Lines that have point "p" to their right.
             var tempResult = new double[] { };
-            var closestPointFound = false;
-
-            //If the point is to the left of every triangle edge, or on any triangle edge, then the closest
-            //point is found from the point's coordinates, with Z' = 0.
-            //Otherwise, it is to the right of at least one, but not more than two lines (triangle edge).
-            //Foreach line that has the point to its right, check that line's perpendicular lines to see
-            //if the point is between them. If it is between them, then the closest point is on that triangle line.
-            
-            //
-
-            //If the point is on an edge, then find the closest point.
-            //If the point is to the left of all the edges, then it is inside.
-            //If it is to the right of only one edge, that edge is the closest.
-            //If it is the right of two edges, it is in a corner, closest to whichever point is in the corner.
-            //It cannot ever be to the right of 3 edges, unless the triangle is a hole, which we prevent.
-            var priorPerpHasPointToRight = false;
-            Line priorPerpLine = null;
+            var leftLinePerpendicularLines = new List<Line>();
             foreach (var line in prim.Polygon2D.PathLines)
             {
-                //Use the edge function from http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.4621&rep=rep1&type=pdf
-                var edgeFunctionValue = (pPrime[0] - line.FromPoint.X) * line.dY - (pPrime[1] - line.FromPoint.Y) * line.dX;
+                //If the edgeFunction == 0, then it is on the line. > 0 is to the right, and < 0 to the left.
+                var edgeFunctionValue = (pPrime[0] - line.FromPoint.X)*line.dY - (pPrime[1] - line.FromPoint.Y)*line.dX;
                 if (edgeFunctionValue.IsNegligible())
                 {
-                    //It is exactly on the line. 
-                    onEdge = true;
-                    onThisLine = line;
-                    break; 
+                    //The point intersects the infinite line of this triangle edge. This does not mean it 
+                    //is closest to this edge, unless it actually intersects the edge segment. Treat it as
+                    //a right line and the other cases will take care of it.
+                    numRightEdges++;
+                    rightLines.Add(line);
                 }
                 else if (edgeFunctionValue > 0)
                 {
-                    //It is to the right side, which is outside 
-                    //Check if it is within this line's perpendiculars
-                    //The First Perpendicular Line is based on the Line's FromPoint, the second is based on its ToPoint.
-                    var currentPerpHasPointToRight = false;
-                    foreach (var perpendicular in prim.PerpendicularLines[line.IndexInList])
-                    {
-                        var edgeFunctionValue2 = (pPrime[0] - perpendicular.FromPoint.X) * perpendicular.dY - (pPrime[1] - perpendicular.FromPoint.Y) * perpendicular.dX;
-                        if (edgeFunctionValue2.IsNegligible())
-                        {
-                            //It is closest to this perpendicular line's fromPoint
-                            tempResult = new[] { 0.0, perpendicular.FromPoint[0], perpendicular.FromPoint[1], 1.0 };
-                            closestPointFound = true;
-                            break;
-                        }
-                        else if (edgeFunctionValue > 0)
-                        {
-                            currentPerpHasPointToRight = true;
-                        }
-                        else
-                        {
-                            currentPerpHasPointToRight = false;
-                        }
-                        if (priorPerpLine == null)
-                        {
-                            //This is the first perpendicular edge we have checked, so just update the prior
-                            priorPerpHasPointToRight = currentPerpHasPointToRight;
-                            priorPerpLine = perpendicular;
-                        }
-                        else if (!priorPerpHasPointToRight && currentPerpHasPointToRight)
-                        {
-                            //If the prior perpendicular had the point to its left and the current had it to its right, 
-                            //then the point is between the current perpendicular and the prior.
-                            //If they belong to the same line, use that line.
-                            //Otherwise, they will share the same FromPoint
-
-                        }
-                    }
-
-                   
-                    //It is between the two perpendiculars of this line, so use this line
-                    if (c == 0)
-                    {
-                        var pointOnLine = ClosestPointOnLineSegmentToPoint(line, pPrime);
-                        //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
-                        tempResult = new[] { 0.0, pointOnLine[0], pointOnLine[1], 1.0 };
-                        closestPointFound = true;
-                        break;
-                    }
+                    numRightEdges++;
+                    rightLines.Add(line);   
                 }
                 // else it is to the left side.
-
-                if (closestPointFound) break;
+                else
+                {
+                    leftLinePerpendicularLines.AddRange(prim.PerpendicularLines[line.IndexInList]);
+                }
             }
 
 
-            if (onEdge)
+            if (numRightEdges == 0)
             {
-                var pointOnLine = ClosestPointOnLineSegmentToPoint(onThisLine, pPrime);
-                //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
-                tempResult = new[] { 0.0, pointOnLine[0], pointOnLine[1], 1.0 }; 
-            } 
-            else if (numRightEdges == 0)
-            {
+                //Case 1: The point is to the left of every triangle edge. It must be inside the triangle.
                 //The closest point on the triangle has the Y, Z coordinates of pPrime's X',Y' coordinates and X == 0. 
                 tempResult = new[] { 0.0, pPrime[0], pPrime[1], 1.0 };
-                //result = backRotationMatrix.multiply(tempResult).subtract(transformVector);
             }
             else if (numRightEdges == 1)
-            {   
-                var line = rightLines[0];
-                var pointOnLine = ClosestPointOnLineSegmentToPoint(line, pPrime);
+            {
+                //Case 2: The point is to the right of only one edge. 
+                var pointOnLine = ClosestPointOnLineSegmentToPoint(rightLines[0], pPrime);
                 //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
-                tempResult = new[] { 0.0, pointOnLine[0], pointOnLine[1], 1.0 };                
+                tempResult = new[] { 0.0, pointOnLine[0], pointOnLine[1], 1.0 };
             }
             else if (numRightEdges == 2)
             {
-                //If it is to the right of two edges, then we need to use the perpendicular edge cases to determine
-                //which edge is closest to the point.
-                var closerToLineThanCorner = false;
-                var foundCorner = false;
-                foreach (var line in rightLines)
+                //Case 3: The point is to the right of two edges.
+                //This works for one or two right lines.
+                //If Left then Right, we found the correct section
+                //If the two perpendiculars have the same FromPoint, then the closest point is that FromPoint
+                //Else the two perpendiculars have the same Line, which is used to find the closest point.
+
+                //First, correctly order the right lines. This will help properly order the perpendicular lines.
+                if (rightLines[0].ToPoint == rightLines[1].FromPoint)
                 {
-                    var c = 0;
-                    foreach (var perpendicular in prim.PerpendicularLines[line.IndexInList])
+                    //It is correctly ordered [CCW] (Example: AB to BC or BC to CA)
+                }
+                else if (rightLines[1].ToPoint == rightLines[0].FromPoint)
+                {
+                    //It needs to be reversed (Example: CA to AB)
+                    var temp = rightLines[0];
+                    rightLines[0] = rightLines[1];
+                    rightLines[1] = temp;
+                }
+                else throw new NotImplementedException("I don't believe this can ever be the case");
+
+                //Now get the perpendicular lines in the correct order
+                //Add to start the other perpendicular line for the starting point
+                //Add to the end, the other perpendicular line for the ending point
+                var perpendicularLinesOfInterest = new List<Line>();
+                var startPoint = rightLines[0].FromPoint;
+                var endPoint = rightLines[1].ToPoint;
+                perpendicularLinesOfInterest.AddRange(
+                    leftLinePerpendicularLines.Where(perp => perp.FromPoint == startPoint));
+                if (perpendicularLinesOfInterest.Count != 1) throw new Exception("Should only have added one line");
+                foreach (var rightLine in rightLines)
+                {
+                    perpendicularLinesOfInterest.AddRange(prim.PerpendicularLines[rightLine.IndexInList]);
+                }
+                var count = perpendicularLinesOfInterest.Count;
+                perpendicularLinesOfInterest.AddRange(
+                    leftLinePerpendicularLines.Where(perp => perp.FromPoint == endPoint));
+                if (perpendicularLinesOfInterest.Count != count + 1)
+                    throw new Exception("Should only have added one line");
+
+                Line priorPerpendicular = null;
+                var priorPerpendicularHadPointToLeft = false;
+                var c = 0; //0 at left line , 1 at first side right line, 2 at second side of right line, 4 at second side of second right line
+                foreach (var perpendicular in perpendicularLinesOfInterest)
+                {
+                    bool currentPerpendicularHadPointToLeft;
+                    var edgeFunctionValue = (pPrime[0] - perpendicular.FromPoint.X)*perpendicular.dY -
+                                            (pPrime[1] - perpendicular.FromPoint.Y)*perpendicular.dX;
+                    if (edgeFunctionValue.IsNegligible()) 
                     {
-                        var edgeFunctionValue = (pPrime[0] - perpendicular.FromPoint.X) * perpendicular.dY - (pPrime[1] - perpendicular.FromPoint.Y) * perpendicular.dX;
-                        if (edgeFunctionValue.IsNegligible())
+                        if (c == 0)
                         {
-                            //It is closest to this perpendicular line's fromPoint
-                            tempResult = new[] { 0.0, perpendicular.FromPoint[0], perpendicular.FromPoint[1], 1.0 };
-                            foundCorner = true;
-                            break;
+                            //If it intersects the perp of a left line, the left line is not the closest.
+                            //If the shared corner vertex is the closest, then it will also intersect the perp
+                            //of the right line, which would be handled below. Say it is to right, so that it 
+                            //does not put it in the corner in the next iteration.
+                            currentPerpendicularHadPointToLeft = false;
                         }
-                        else if (edgeFunctionValue > 0)
-                        {
-                            c++;
-                        }
+                        else if (c == 5 ) throw new Exception("I don't believe this case should ever happen.");
                         else
                         {
-                            c--;
-                        }    
+                            //(3a) The point is on a perpendicular line.
+                            //The closest point must be the perpendicular line.FromPoint, which is a triangle corner. 
+                            tempResult = new[] { 0.0, perpendicular.FromPoint[0], perpendicular.FromPoint[1], 1.0 };
+                            break;
+                        }
                     }
-                    //It is between the two perpendiculars of this line, so use this line
-                    if (c == 0)
+                    else if (edgeFunctionValue > 0)
                     {
-                        var pointOnLine = ClosestPointOnLineSegmentToPoint(line, pPrime);
-                        //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
-                        tempResult = new[] { 0.0, pointOnLine[0], pointOnLine[1], 1.0 };
-                        closerToLineThanCorner = true;
-                        break;
-                    }
-                    if (foundCorner) break;
-                }
-                if (!closerToLineThanCorner && !foundCorner)
-                {
-                    //It must be the shared point
-                    if (rightLines[0].ToPoint == rightLines[1].FromPoint)
-                    {
-                        //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
-                        tempResult = new[] { 0.0, rightLines[0].ToPoint.X, rightLines[0].ToPoint.Y, 1.0 };
+                        currentPerpendicularHadPointToLeft = false;
                     }
                     else
                     {
-                        tempResult = new[] { 0.0, rightLines[0].FromPoint.X, rightLines[0].FromPoint.Y, 1.0 };
+                        currentPerpendicularHadPointToLeft = true;
                     }
-                }               
+
+                    if (priorPerpendicular != null && priorPerpendicularHadPointToLeft &&
+                        !currentPerpendicularHadPointToLeft)
+                    {
+                        if (priorPerpendicular.FromPoint == perpendicular.FromPoint)
+                        {
+                            //(3c) The point is between the perpendicular lines of a triangle corner.
+                            //The closest point must be this triangle corner.
+                            tempResult = new[] {0.0, perpendicular.FromPoint[0], perpendicular.FromPoint[1], 1.0};
+                        }
+                        else
+                        {
+                            //(3b) The point is between the perpendicular lines of a line that had the point to its right.
+                            //The closest point must be on this line segment.
+                            var line = rightLines[(c/2) - 1];
+                            var pointOnLine = ClosestPointOnLineSegmentToPoint(line, pPrime);
+                            //Since this is the YZ plane, X' corresponds to Y and Y' to Z. The X value is 0.0;
+                            tempResult = new[] {0.0, pointOnLine[0], pointOnLine[1], 1.0};
+                        }
+                        break;
+                    }
+
+                    priorPerpendicular = perpendicular;
+                    priorPerpendicularHadPointToLeft = currentPerpendicularHadPointToLeft;
+                    c++;
+                }
             }
-            
+            else
+            {
+                throw new Exception("There cannot be three right lines");
+            }
+
             var result = prim.RotTransMatrixTo3D.multiply(tempResult);
             //allPointsOfInterest.Add(new List<double[]>() {tempResult.Take(3).ToArray(), result.Take(3).ToArray()});
             //Presenter.ShowVertexPaths(allPointsOfInterest);

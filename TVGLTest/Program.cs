@@ -39,7 +39,6 @@ namespace TVGL_Test
        // "../../../TestFiles/3_bananas.amf",
        // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
        // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-       // "../../../TestFiles/Rook.amf",
         //"../../../TestFiles/hdodec.off",
         //"../../../TestFiles/tref.off",
         //"../../../TestFiles/mushroom.off",
@@ -48,31 +47,32 @@ namespace TVGL_Test
         //"../../../TestFiles/ABF.STL",
         //"../../../TestFiles/Pump-1repair.STL",
         //"../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
-        "../../../TestFiles/Beam_Clean.STL",
+        //"../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
+        //"../../../TestFiles/Beam_Clean.STL",
         "../../../TestFiles/Square_Support.STL",
-        "../../../TestFiles/Aerospace_Beam.STL",
+        //"../../../TestFiles/Aerospace_Beam.STL",
+        //"../../../TestFiles/Rook.amf",
+        //"../../../TestFiles/bunny.ply",
 
+       // "../../../TestFiles/piston.stl",
+       // "../../../TestFiles/Z682.stl",
+       // "../../../TestFiles/sth2.stl",
+       // "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
+       // "../../../TestFiles/new/5.STL",
+       //"../../../TestFiles/new/2.stl", //Note that this is an assembly 
+       // "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
+       //"../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
+       // "../../../TestFiles/radiobox.stl",
+       // "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
+       // "../../../TestFiles/G0.stl",
+       // "../../../TestFiles/GKJ0.stl",
+       // "../../../TestFiles/testblock2.stl",
+       // "../../../TestFiles/Z665.stl",
+       // "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
+       // "../../../TestFiles/mendel_extruder.stl",
 
-        "../../../TestFiles/piston.stl",
-        "../../../TestFiles/Z682.stl",
-        "../../../TestFiles/sth2.stl",
-        "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
-        "../../../TestFiles/new/5.STL",
-       "../../../TestFiles/new/2.stl", //Note that this is an assembly 
-        "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
-       "../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
-        "../../../TestFiles/radiobox.stl",
-        "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
-        "../../../TestFiles/G0.stl",
-        "../../../TestFiles/GKJ0.stl",
-        "../../../TestFiles/testblock2.stl",
-        "../../../TestFiles/Z665.stl",
-        "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
-        "../../../TestFiles/mendel_extruder.stl",
-
-       "../../../TestFiles/MV-Test files/holding-device.STL",
-       "../../../TestFiles/MV-Test files/gear.STL"
+       //"../../../TestFiles/MV-Test files/holding-device.STL",
+       //"../../../TestFiles/MV-Test files/gear.STL"
         };
 
         [STAThread]
@@ -117,9 +117,13 @@ namespace TVGL_Test
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var voxels = new VoxelSpace();
-            voxels.VoxelizeSolid(ts);
 
-            Presenter.ShowVoxelization(ts, voxels);
+            var startTime = DateTime.Now;
+            voxels.VoxelizeSolid(ts, 1000);
+            var totalTime = DateTime.Now - startTime;
+            Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
+
+            //Presenter.ShowVoxelization(ts, voxels);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)
