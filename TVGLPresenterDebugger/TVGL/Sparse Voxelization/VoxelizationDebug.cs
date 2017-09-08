@@ -18,18 +18,23 @@ namespace TVGL.SparseVoxelization
 
         public string StringIndex { get; set; }
 
-        public Voxel(string voxelString, double scale)
+        public Voxel(int uniqueCoordIndex, int xm, int ym, double scale)
         {
-            StringIndex = voxelString;
-
             var halfLength = scale / 2;
-            string[] words = voxelString.Split('|');
-            Index = new int[3];
-            for (var i = 0; i < 3; i++)
-            {
-                Index[i] = int.Parse(words[i]);
-                //if (Index[i] < 0) Debug.WriteLine("Negative Values work properly");
-            }
+            //var x = uniqueCoordIndex/xm;
+            //uniqueCoordIndex - x
+            //var y = uniqueCoordIndex/ym;
+            int z;
+            Math.DivRem(uniqueCoordIndex, ym, out z);
+            uniqueCoordIndex -= z;
+            int yTemp;
+            Math.DivRem(uniqueCoordIndex, xm, out yTemp);
+            uniqueCoordIndex -= yTemp;
+            var y = yTemp / ym;
+         
+            var x = uniqueCoordIndex/xm;
+
+            Index = new int[3] {x, y, z};
 
             Center = new Vertex(new double[] { Index[0] * scale, Index[1] * scale, Index[2] * scale });
             Bounds = new AABB
@@ -83,9 +88,16 @@ namespace TVGL.SparseVoxelization
             var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
             ScaleToIntSpace = numberOfVoxelsAlongMaxDirection / maxDim;
 
+            //To get a unique integer value for each voxel based on its index, 
+            //multiply x by the magnitude^2, add y*magnitude, and then add z to get a unique value.
+            //Example: for a max magnitude of 1000, with x = 3, y = 345, z = 12
+            //3000000 + 345000 + 12 = 3345012 => 3|345|012
+            var YM = (int)Math.Pow(10, Math.Ceiling(Math.Log10(maxDim)));
+            var XM = (int)Math.Pow(YM, 2);
+
             VoxelSizeInIntSpace = 1.0;
 
-            Data = new VoxelizationData();
+            Data = new VoxelizationData(XM, YM);
             foreach (var face in solid.Faces)
             {
                 //Create a triangle, which is a simple and light version of the face class. 
@@ -96,9 +108,9 @@ namespace TVGL.SparseVoxelization
 
             //Make all the voxels
             Voxels = new List<Voxel>();
-            foreach (var voxelString in Data.IntersectingVoxels)
+            foreach (var uniqueCoordIndex in Data.IntersectingVoxels)
             {
-                Voxels.Add(new Voxel(voxelString, 1 / ScaleToIntSpace));
+                Voxels.Add(new Voxel(uniqueCoordIndex, XM, YM, 1 / ScaleToIntSpace));
             }
         }
 
@@ -110,7 +122,7 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         private void VoxelizeTriangle(Triangle triangle, ref VoxelizationData data)
         {
-            var consideredVoxels = new HashSet<string>();
+            var consideredVoxels = new HashSet<int>();
             var coordindateList = new Stack<int[]>();
 
             //Gets the integer coordinates, rounded down for point A on the triangle 
@@ -127,7 +139,7 @@ namespace TVGL.SparseVoxelization
             //if the subdivision of faces is used.
             IsTriangleIntersectingVoxel(ijk, triangle, ref data);
             coordindateList.Push(ijk);
-            consideredVoxels.Add(data.GetStringFromIndex(ijk));
+            consideredVoxels.Add(data.GetUniqueCoordIndexFromIndices(ijk));
 
             while (coordindateList.Any())
             {
@@ -144,7 +156,7 @@ namespace TVGL.SparseVoxelization
 
                     //If the voxel has not already been checked with this primitive,
                     //consider it and add it to the list of considered voxels. 
-                    var voxelIndexString = data.GetStringFromIndex(nijk);
+                    var voxelIndexString = data.GetUniqueCoordIndexFromIndices(nijk);
                     if (!consideredVoxels.Contains(voxelIndexString))
                     {
                         consideredVoxels.Add(voxelIndexString);
@@ -162,7 +174,7 @@ namespace TVGL.SparseVoxelization
         {
             //Voxel center is simply converting the integers to doubles.
             var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2] };
-            var voxelIndexString = data.GetStringFromIndex(ijk);
+            var voxelIndex = data.GetUniqueCoordIndexFromIndices(ijk);
 
             //This assumes each voxel has a size of 1x1x1 and is in an interger grid.
             //First, find the closest point on the triangle to the center of the voxel.
@@ -170,8 +182,8 @@ namespace TVGL.SparseVoxelization
             //rounding, not floor or ceiling) then it must intersect the voxel.
             //Closest Point on Triangle is not restricted to A,B,C. 
             //It may be any point on the triangle.
-            //var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
-            var closestPoint = Proximity.ClosestPointOnTriangle(voxelCenter, prim);
+            var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
+            //var closestPoint = Proximity.ClosestPointOnTriangle(voxelCenter, prim);
             //if (!closestPoint[0].IsPracticallySame(closestPointMethod2[0], 0.001) ||
             //   !closestPoint[1].IsPracticallySame(closestPointMethod2[1], 0.001) ||
             //   !closestPoint[2].IsPracticallySame(closestPointMethod2[2], 0.001))
@@ -182,8 +194,8 @@ namespace TVGL.SparseVoxelization
                 && (int)Math.Round(closestPoint[2]) == ijk[2])
             {
                 //Since IntersectingVoxels is a hashset, it will not add a duplicate voxel.
-                data.IntersectingVoxels.Add(voxelIndexString);
-                data.AddFaceVoxelIntersection(voxelIndexString, prim.ID);
+                data.IntersectingVoxels.Add(voxelIndex);
+                data.AddFaceVoxelIntersection(voxelIndex, prim.ID);
                 return true;
             }
             return false;
@@ -202,15 +214,18 @@ namespace TVGL.SparseVoxelization
         /// Stores the faces that intersect a voxel, using the face index, which is the same
         /// as the the Triangle.ID.  
         /// </summary>                                          
-        public readonly Dictionary<string, HashSet<int>> FacesIntersectingVoxels;
+        public readonly Dictionary<int, HashSet<int>> FacesIntersectingVoxels;
+        public int XM;
+        public int YM;
 
-        public HashSet<string> IntersectingVoxels;
+        public HashSet<int> IntersectingVoxels;
 
-        public VoxelizationData()
+        public VoxelizationData(int xm, int ym)
         {
-
-            FacesIntersectingVoxels = new Dictionary<string, HashSet<int>>();
-            IntersectingVoxels = new HashSet<string>();
+            XM = xm;
+            YM = ym;
+            FacesIntersectingVoxels = new Dictionary<int, HashSet<int>>();
+            IntersectingVoxels = new HashSet<int>();
         }
 
         /// <summary>
@@ -218,7 +233,7 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         /// <param name="voxelIndex"></param>
         /// <param name="primId"></param>
-        public void AddFaceVoxelIntersection(string voxelIndex, int primId)
+        public void AddFaceVoxelIntersection(int voxelIndex, int primId)
         {
             if (FacesIntersectingVoxels.ContainsKey(voxelIndex))
             {
@@ -232,11 +247,9 @@ namespace TVGL.SparseVoxelization
         }
 
         //ToDo: Using a single index value would reduce total voxelization time by 50%
-        public string GetStringFromIndex(int[] ijk)
+        public int GetUniqueCoordIndexFromIndices(int[] ijk)
         {
-            return ijk[0] + "|"
-                + ijk[1] + "|"
-                + ijk[2];
+            return ijk[0]*XM + ijk[1]*YM + ijk[2];
         }
     }
 
@@ -292,7 +305,7 @@ namespace TVGL.SparseVoxelization
             RotTransMatrixTo2D = new double[,] { };
             RotTransMatrixTo3D = new double[,] { };
             PerpendicularLines = new Dictionary<int, List<Line>>();
-            SetTransformationMatrix();
+            //SetTransformationMatrix();
         }
 
         /// <summary>
@@ -313,7 +326,7 @@ namespace TVGL.SparseVoxelization
             RotTransMatrixTo2D = new double[,] { };
             RotTransMatrixTo3D = new double[,] { };
             PerpendicularLines = new Dictionary<int, List<Line>>();
-            SetTransformationMatrix();
+            //SetTransformationMatrix();
         }
 
         public void SetTransformationMatrix()
