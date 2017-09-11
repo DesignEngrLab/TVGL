@@ -8,128 +8,6 @@ using TVGL.Voxelization;
 
 namespace TVGL.SparseVoxelization
 {
-    //public class VoxelIndexDictionary
-    //{
-    //    /// <summary>
-    //    /// A dictionary of all the indices. Every X value has a dictionary of Y values.
-    //    /// Every Y value has a HashSet of Z values.
-    //    /// </summary>
-    //    private Dictionary<int, Dictionary<int, HashSet<int>>> XToYToZ;
-
-    //    public VoxelIndexDictionary()
-    //    {
-    //        XToYToZ = new Dictionary<int, Dictionary<int, HashSet<int>>>();
-    //    }
-
-    //    /// <summary>
-    //    /// Returns whether the coordinate index is contained in the Dictionary. 
-    //    /// Fast iteration, using 2 Dictionary Keys and one HashSet Contains function.
-    //    /// </summary>
-    //    /// <param name="index"></param>
-    //    /// <returns></returns>
-    //    public bool Contains(int[] index)
-    //    {
-    //        var x = index[0];
-    //        var y = index[1];
-    //        var z = index[2];
-    //        if (!XToYToZ.ContainsKey(x)) return false;
-    //        var YtoZ = XToYToZ[x];
-    //        return YtoZ.ContainsKey(y) && YtoZ[y].Contains(z);
-    //    }
-
-    //    /// <summary>
-    //    /// Safely adds a voxel index, handles duplicates (never adds one that is already in the 
-    //    /// dictionary) 
-    //    /// </summary>
-    //    /// <param name="index"></param>
-    //    public void Add(int[] index)
-    //    {
-    //        var x = index[0];
-    //        var y = index[1];
-    //        var z = index[2];
-    //        if (XToYToZ.ContainsKey(x))
-    //        {
-    //            var YtoZ = XToYToZ[x];
-    //            if (YtoZ.ContainsKey(y))
-    //            {
-    //                //We don't need to make a newZ or even check if it is contained, since HashSet.Add()
-    //                //prevents duplicates
-    //                YtoZ[y].Add(z);
-    //            }
-    //            else
-    //            {
-    //                //new Y and new Z for an existing X 
-    //                var newZ = new HashSet<int> {z};
-    //                YtoZ.Add(y, newZ);
-    //            }
-    //        }
-    //        else
-    //        {
-    //            var newZ = new HashSet<int> { z };
-    //            var newY = new Dictionary<int, HashSet<int>>();
-    //            newY.Add(y, newZ);
-    //            XToYToZ.Add(x, newY);
-    //        }
-    //    }
-    //}
-
-    public class Coord
-    {
-        public int[] Index;
-
-        public Coord(int[] xyz, int magnitude )
-        {
-            Index = xyz;
-            coordToOffset(magnitude);
-        }
-
-        public long coordToOffset(int Log2Dim)
-        {
-
-            Log2Dim = 3;
-            var xyz = Index;
-            var DIM = 1 << Log2Dim; //Literally shifts the binary by Log2Dim bits. Mathematically: 1*2^Log2Dim
-            // dimension along one coordinate direction
-
-            var x = xyz[0] & (DIM - 1u);
-            var y = xyz[1] & (DIM - 1u);
-            var z = xyz[2] & (DIM - 1u);
-
-            //Shift X value by 2x BitShift, y by 1x, and leave z where it is.
-            var value = ((xyz[0] & (DIM - 1u)) << 2 * Log2Dim)    
-                + ((xyz[1] & (DIM - 1u)) << Log2Dim)
-                + (xyz[2] & (DIM - 1u));
-
-            //assert(n < (1 << 3 * Log2Dim));
-            var n = value;
-            xyz[0] = (int) (n >> 2 * Log2Dim);
-            n &= ((1 << 2 * Log2Dim) - 1);
-            xyz[1] = (int)(n >> Log2Dim);
-            xyz[2] = (int)(n & ((1 << Log2Dim) - 1));
-
-            return value;
-
-            //Log2Dim = 3;
-            //var xyz = Index;
-            //var xComp = (xyz[0] << 2*Log2Dim);
-            //var yComp = (xyz[1] << Log2Dim);
-            //var zComp = (xyz[2]);
-            //var all = xComp + yComp + zComp;
-        }
-
-
-       //public int[] offsetToLocalCoord(long index) 
-       // {
-       //     assert(n < (1 << 3*Log2Dim));
-       //     Coord xyz;
-       //     xyz.setX(n >> 2*Log2Dim);
-       //     n &= ((1 << 2*Log2Dim) - 1);
-       //     xyz.setY(n >> Log2Dim);
-       //     xyz.setZ(n & ((1 << Log2Dim) - 1));
-       //     return xyz;
-       // }
-    }
-
     public class Voxel
     {
         public Vertex Center;
@@ -140,20 +18,54 @@ namespace TVGL.SparseVoxelization
 
         public string StringIndex { get; set; }
 
-        public Voxel(Coord coord, long xm, long ym, double scale)
+        public Voxel(long uniqueCoordIndex, long sm, long xm, long ym, double scale)
         {
             var halfLength = scale / 2;
-            
-            //var x = uniqueCoordIndex/xm;
-            //uniqueCoordIndex - x
-            //var y = uniqueCoordIndex/ym;
-            //var z = (int)(uniqueCoordIndex % ym);
-            //uniqueCoordIndex -= z;
-            //var y = (int)((uniqueCoordIndex % xm)/ym);
-            //uniqueCoordIndex -= y;
-            //var x = (int)(uniqueCoordIndex / xm);
 
-            Index = coord.Index;
+            var z = (int)(uniqueCoordIndex % ym);
+            //uniqueCoordIndex -= z;
+            var y = (int)((uniqueCoordIndex % xm) / ym);
+            //uniqueCoordIndex -= y*ym;
+            var x = (int)((uniqueCoordIndex % sm) / xm);
+            //uniqueCoordIndex -= x*xm;
+            var s = (int)(uniqueCoordIndex / sm);
+
+            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            //-X = 1, -Y = 3, -Z = 5;
+            switch (s)
+            {
+                case 0: //(+X+Y+Z)
+                    break;
+                case 1: //(-X+Y+Z)
+                    x = -x;
+                    break;
+                case 3: //(+X-Y+Z)
+                    y = -y;
+                    break;
+                case 5: //(+X+Y-Z)
+                    z = -z;
+                    break;
+                case 4: //(-X-Y+Z)
+                    x = -x;
+                    y = -y;
+                    break;
+                case 6: //(-X+Y-Z)
+                    x = -x;
+                    z = -z;
+                    break;
+                case 8: //(+X-Y-Z)
+                    y = -y;
+                    z = -z;
+                    break;
+                case 9: //(-X-Y-Z)
+                    x = -x;
+                    y = -y;
+                    z = -z;
+                    break;
+            }
+            
+
+            Index =new int[] {x, y, z};
             Center = new Vertex(new double[] { Index[0] * scale, Index[1] * scale, Index[2] * scale });
             Bounds = new AABB
             {
@@ -174,7 +86,7 @@ namespace TVGL.SparseVoxelization
         public double VoxelSizeInIntSpace;
         public double ScaleToIntSpace;
         public List<Voxel> Voxels;
-        public int YM;
+        public long YM;
 
         /// <summary>
         /// This method creates a hollow voxel grid of a solid. It is done by voxelizing each triangle 
@@ -198,7 +110,7 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         /// <param name="solid"></param>
         /// <param name="numberOfVoxelsAlongMaxDirection"></param>
-        public void VoxelizeSolid(TessellatedSolid solid, int numberOfVoxelsAlongMaxDirection = 100000)
+        public void VoxelizeSolid(TessellatedSolid solid, int numberOfVoxelsAlongMaxDirection = 100)
         {
             Solid = solid;
             var dx = solid.XMax - solid.XMin;
@@ -208,17 +120,23 @@ namespace TVGL.SparseVoxelization
             ScaleToIntSpace = numberOfVoxelsAlongMaxDirection / maxDim;
 
             //To get a unique integer value for each voxel based on its index, 
-            //multiply x by the magnitude^2, add y*magnitude, and then add z to get a unique value.
-            //Example: for a max magnitude of 1000, with x = 3, y = 345, z = 12
+            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
+            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
             //3000000 + 345000 + 12 = 3345012 => 3|345|012
-            YM = (int)Math.Pow(10, Math.Ceiling(Math.Log10(maxDim*ScaleToIntSpace)));
+            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            //-X = 1, -Y = 3, -Z = 5; //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
+            //OpenVDB does this more compactly with binaries, using the &, <<, and >> functions to 
+            //manipulate the X,Y,Z values to store them. Their function is called "coordToOffset" and is 
+            //in the LeafNode.h file around lines 1050-1070. I could not understand this.
+            YM = (long)Math.Pow(10, Math.Ceiling(Math.Log10(maxDim*ScaleToIntSpace)) + 1);
             var maxInt = Math.Pow(long.MaxValue, 1.0/3);
-            if (YM > maxInt) throw new Exception("Int64 will not work for a voxel space this large, using the current index setup"); 
+            if (YM*10 > maxInt) throw new Exception("Int64 will not work for a voxel space this large, using the current index setup"); 
             var XM = (long)Math.Pow(YM, 2);
+            var SMM = (long)Math.Pow(YM, 3); //Sign Magnitude Multiplier
 
             VoxelSizeInIntSpace = 1.0;
 
-            Data = new VoxelizationData(XM, YM);
+            Data = new VoxelizationData(SMM, XM, YM);
             foreach (var face in solid.Faces)
             {
                 //Create a triangle, which is a simple and light version of the face class. 
@@ -231,8 +149,7 @@ namespace TVGL.SparseVoxelization
             Voxels = new List<Voxel>();
             foreach (var uniqueCoordIndex in Data.IntersectingVoxels)
             {
-                uniqueCoordIndex.coordToOffset((int)YM);
-                Voxels.Add(new Voxel(uniqueCoordIndex, XM, YM, 1 / ScaleToIntSpace));
+                Voxels.Add(new Voxel(uniqueCoordIndex, SMM, XM, YM, 1 / ScaleToIntSpace));
             }
         }
 
@@ -244,7 +161,7 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         private void VoxelizeTriangle(Triangle triangle, ref VoxelizationData data)
         {
-            var consideredVoxels = new HashSet<Coord>();
+            var consideredVoxels = new HashSet<long>();
             var coordindateList = new Stack<int[]>();
 
             //Gets the integer coordinates, rounded down for point A on the triangle 
@@ -262,7 +179,7 @@ namespace TVGL.SparseVoxelization
             //if the subdivision of faces is used.
             IsTriangleIntersectingVoxel(ijk, triangle, ref data);
             coordindateList.Push(ijk);
-            consideredVoxels.Add(new Coord(ijk, YM));
+            consideredVoxels.Add(data.GetUniqueCoordIndexFromIndices(ijk));
 
             while (coordindateList.Any())
             {
@@ -279,7 +196,7 @@ namespace TVGL.SparseVoxelization
 
                     //If the voxel has not already been checked with this primitive,
                     //consider it and add it to the list of considered voxels. 
-                    var voxelIndexString = new Coord(nijk, YM);
+                    var voxelIndexString = data.GetUniqueCoordIndexFromIndices(nijk);
                     if (!consideredVoxels.Contains(voxelIndexString))
                     {
                         consideredVoxels.Add(voxelIndexString);
@@ -297,7 +214,7 @@ namespace TVGL.SparseVoxelization
         {
             //Voxel center is simply converting the integers to doubles.
             var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2] };
-            var voxelIndex = new Coord(ijk, YM);
+            var voxelIndex = data.GetUniqueCoordIndexFromIndices(ijk);
 
             //This assumes each voxel has a size of 1x1x1 and is in an interger grid.
             //First, find the closest point on the triangle to the center of the voxel.
@@ -337,18 +254,20 @@ namespace TVGL.SparseVoxelization
         /// Stores the faces that intersect a voxel, using the face index, which is the same
         /// as the the Triangle.ID.  
         /// </summary>                                          
-        public readonly Dictionary<Coord, HashSet<int>> FacesIntersectingVoxels;
+        public readonly Dictionary<long, HashSet<int>> FacesIntersectingVoxels;
         public long XM;
         public long YM;
+        public long SMM;
 
-        public HashSet<Coord> IntersectingVoxels;
+        public HashSet<long> IntersectingVoxels;
 
-        public VoxelizationData(long xm, long ym)
+        public VoxelizationData(long smm, long xm, long ym)
         {
             XM = xm;
             YM = ym;
-            FacesIntersectingVoxels = new Dictionary<Coord, HashSet<int>>();
-            IntersectingVoxels = new HashSet<Coord>();
+            SMM = smm;
+            FacesIntersectingVoxels = new Dictionary<long, HashSet<int>>();
+            IntersectingVoxels = new HashSet<long>();
         }
 
         /// <summary>
@@ -356,7 +275,7 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         /// <param name="voxelIndex"></param>
         /// <param name="primId"></param>
-        public void AddFaceVoxelIntersection(Coord voxelIndex, int primId)
+        public void AddFaceVoxelIntersection(long voxelIndex, int primId)
         {
             if (FacesIntersectingVoxels.ContainsKey(voxelIndex))
             {
@@ -369,10 +288,21 @@ namespace TVGL.SparseVoxelization
             }
         }
 
-        //ToDo: Using a single index value would reduce total voxelization time by 50%
         public long GetUniqueCoordIndexFromIndices(int[] ijk)
         {
-            return ijk[0] * XM + ijk[1] * YM + ijk[2];
+            //To get a unique integer value for each voxel based on its index, 
+            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
+            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
+            //3000000 + 345000 + 12 = 3345012 => 3|345|012
+            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            //-X = 1, -Y = 3, -Z = 5;
+            //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
+            // 4 = (-X-Y+Z); 6 = (-X+Y-Z);  8 = (+X-Y-Z);  9 = (-X-Y-Z)
+            var signValue = 0;
+            if (Math.Sign(ijk[0]) < 0) signValue += 1;
+            if (Math.Sign(ijk[1]) < 0) signValue += 3;
+            if (Math.Sign(ijk[2]) < 0) signValue += 5;
+            return SMM* signValue + Math.Abs(ijk[0]) * XM + Math.Abs(ijk[1]) * YM + Math.Abs(ijk[2]);
         }
     }
 
