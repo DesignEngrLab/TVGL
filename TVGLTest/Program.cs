@@ -119,7 +119,7 @@ namespace TVGL_Test
             var voxels = new VoxelSpace();
 
             var startTime = DateTime.Now;
-            voxels.VoxelizeSolid(ts, 1000);
+            voxels.VoxelizeSolid(ts, 100);
             var totalTime = DateTime.Now - startTime;
             Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
 

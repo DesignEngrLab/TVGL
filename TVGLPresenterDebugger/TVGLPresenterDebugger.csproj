@@ -280,6 +280,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Tree.cs">
       <Link>TVGL\Sparse Voxelization\Tree.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Voxelization.cs">
+      <Link>TVGL\Sparse Voxelization\Voxelization.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>TVGL\Verbosity.cs</Link>
     </Compile>
@@ -294,7 +297,6 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TVGL\Math Operations\Proximity.cs" />
-    <Compile Include="TVGL\Sparse Voxelization\VoxelizationDebug.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
