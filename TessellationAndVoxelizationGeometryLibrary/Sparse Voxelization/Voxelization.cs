@@ -18,54 +18,58 @@ namespace TVGL.SparseVoxelization
 
         public string StringIndex { get; set; }
 
-        public Voxel(long uniqueCoordIndex, long sm, long xm, long ym, double scale)
+        public Voxel(ulong uniqueCoordIndex, long sm, long xm, long ym, double scale)
         {
             var halfLength = scale / 2;
 
-            var z = (int)(uniqueCoordIndex % ym);
-            //uniqueCoordIndex -= z;
-            var y = (int)((uniqueCoordIndex % xm) / ym);
-            //uniqueCoordIndex -= y*ym;
-            var x = (int)((uniqueCoordIndex % sm) / xm);
-            //uniqueCoordIndex -= x*xm;
-            var s = (int)(uniqueCoordIndex / sm);
+            //var z = (int)(uniqueCoordIndex % ym);
+            ////uniqueCoordIndex -= z;
+            //var y = (int)((uniqueCoordIndex % xm) / ym);
+            ////uniqueCoordIndex -= y*ym;
+            //var x = (int)((uniqueCoordIndex % sm) / xm);
+            ////uniqueCoordIndex -= x*xm;
+            //var s = (int)(uniqueCoordIndex / sm);
 
-            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
-            //-X = 1, -Y = 3, -Z = 5;
-            switch (s)
-            {
-                case 0: //(+X+Y+Z)
-                    break;
-                case 1: //(-X+Y+Z)
-                    x = -x;
-                    break;
-                case 3: //(+X-Y+Z)
-                    y = -y;
-                    break;
-                case 5: //(+X+Y-Z)
-                    z = -z;
-                    break;
-                case 4: //(-X-Y+Z)
-                    x = -x;
-                    y = -y;
-                    break;
-                case 6: //(-X+Y-Z)
-                    x = -x;
-                    z = -z;
-                    break;
-                case 8: //(+X-Y-Z)
-                    y = -y;
-                    z = -z;
-                    break;
-                case 9: //(-X-Y-Z)
-                    x = -x;
-                    y = -y;
-                    z = -z;
-                    break;
-            }
-            
+            ////In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            ////-X = 1, -Y = 3, -Z = 5;
+            //switch (s)
+            //{
+            //    case 0: //(+X+Y+Z)
+            //        break;
+            //    case 1: //(-X+Y+Z)
+            //        x = -x;
+            //        break;
+            //    case 3: //(+X-Y+Z)
+            //        y = -y;
+            //        break;
+            //    case 5: //(+X+Y-Z)
+            //        z = -z;
+            //        break;
+            //    case 4: //(-X-Y+Z)
+            //        x = -x;
+            //        y = -y;
+            //        break;
+            //    case 6: //(-X+Y-Z)
+            //        x = -x;
+            //        z = -z;
+            //        break;
+            //    case 8: //(+X-Y-Z)
+            //        y = -y;
+            //        z = -z;
+            //        break;
+            //    case 9: //(-X-Y-Z)
+            //        x = -x;
+            //        y = -y;
+            //        z = -z;
+            //        break;
+            //}
 
-            Index =new int[] {x, y, z};
+
+            //Index =new int[] {x, y, z};
+            //MortonCode = EncodeMorton((uint)x, (uint)y, (uint)z);
+            Index = DecodeMorton(uniqueCoordIndex);
+            //if (index[0] != x && index[1] != y && index[2] != z) throw new Exception();
+
             Center = new Vertex(new double[] { Index[0] * scale, Index[1] * scale, Index[2] * scale });
             Bounds = new AABB
             {
@@ -76,6 +80,75 @@ namespace TVGL.SparseVoxelization
                 MaxY = Center.Y + halfLength,
                 MaxZ = Center.Z + halfLength
             };
+        }
+
+        /// <summary>
+        /// Compact storage of the x,y,z coordinates into a single 64 bit ulong.
+        /// </summary>
+        //public ulong MortonCode;
+
+        private const uint EightBitMask = 0xFF;
+
+        /// <summary>
+        /// Encodes the coordinate to a Morton Code, using a pre-shifted table. Implemented 
+        /// from Jeroen Baert's LibMorton Repo: https://github.com/Forceflow/libmorton
+        /// http://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/
+        /// </summary>
+        /// <returns></returns>
+        public static ulong EncodeMorton(uint[] coord)
+        {
+            return EncodeMorton(coord[0], coord[1], coord[2]);
+        }
+
+        /// <summary>
+        /// Encodes the coordinate to a Morton Code, using a pre-shifted table. Implemented 
+        /// from Jeroen Baert's LibMorton Repo: https://github.com/Forceflow/libmorton
+        /// http://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <returns></returns>
+        public static ulong EncodeMorton(uint x, uint y, uint z)
+        {
+            ulong answer = 0;
+            for (var i = sizeof(uint); i > 0; --i)
+            {
+                var shift = (i - 1) * 8;
+                answer =
+                    answer << 24 |
+                    (MortonLUT.z256[(z >> shift) & EightBitMask] |
+                        MortonLUT.y256[(y >> shift) & EightBitMask] |
+                        MortonLUT.x256[(x >> shift) & EightBitMask]);
+            }
+            return answer;
+        }
+
+
+        /// <summary>
+        ///  Get the 3D Coordinates from the Morton code : Shifted LUT
+        /// </summary>
+        /// <param name="mortonNumber"></param>
+        /// <returns></returns>
+        public int[] DecodeMorton(ulong mortonNumber)
+        {
+            var x = DecodeCoord_LUT256(mortonNumber, MortonLUT.Morton3D_decode_x_512);
+            var y = DecodeCoord_LUT256(mortonNumber, MortonLUT.Morton3D_decode_y_512);
+            var z = DecodeCoord_LUT256(mortonNumber, MortonLUT.Morton3D_decode_z_512);
+            return new[] { x, y, z };
+        }
+
+        private static int DecodeCoord_LUT256(ulong m, uint[] lookUpTable, int startShift = 0)
+        {
+            //With pre-shifted lookup tables, startShift is always 0;
+            ulong a = 0;
+            const ulong nineBitMask = 0x000001ff;
+            const uint loops = 7; //Assume the morton number is a ulong. 7 is floor for 64bit
+            for (var i = 0; i < loops; ++i)
+            {
+                a |= (lookUpTable[(m >> ((i * 9) + startShift)) & nineBitMask] << (3 * i));
+            }
+            return (int)a;
         }
     }
 
@@ -161,17 +234,17 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         private void VoxelizeTriangle(Triangle triangle, ref VoxelizationData data)
         {
-            var consideredVoxels = new HashSet<long>();
-            var coordindateList = new Stack<int[]>();
+            var consideredVoxels = new HashSet<ulong>();
+            var coordindateList = new Stack<uint[]>();
 
             //Gets the integer coordinates, rounded down for point A on the triangle 
             //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
             //this coordinate. 
             var ijk = new[]
             {
-                (int)Math.Floor(triangle.A[0]), //X
-                (int)Math.Floor(triangle.A[1]), //Y
-                (int)Math.Floor(triangle.A[2])  //Z
+                (uint)Math.Floor(triangle.A[0]), //X
+                (uint)Math.Floor(triangle.A[1]), //Y
+                (uint)Math.Floor(triangle.A[2])  //Z
             };
     
 
@@ -179,7 +252,7 @@ namespace TVGL.SparseVoxelization
             //if the subdivision of faces is used.
             IsTriangleIntersectingVoxel(ijk, triangle, ref data);
             coordindateList.Push(ijk);
-            consideredVoxels.Add(data.GetUniqueCoordIndexFromIndices(ijk));
+            consideredVoxels.Add(Voxel.EncodeMorton(ijk));
 
             while (coordindateList.Any())
             {
@@ -192,29 +265,42 @@ namespace TVGL.SparseVoxelization
                 // every combination of -1, 0, and 1 for offsets
                 for (var i = 0; i < 26; ++i)
                 {
-                    var nijk = ijk.add(Utilities.CoordinateOffsets[i]);
+                    var nijk = CoordinateOffset(ijk, i);
+                    if (nijk == null) continue; //It incremented into the neg X,Y,Z, which is undefined
 
                     //If the voxel has not already been checked with this primitive,
                     //consider it and add it to the list of considered voxels. 
-                    var voxelIndexString = data.GetUniqueCoordIndexFromIndices(nijk);
-                    if (!consideredVoxels.Contains(voxelIndexString))
+                    var mortonCode = Voxel.EncodeMorton(nijk);
+                    if (!consideredVoxels.Contains(mortonCode))
                     {
-                        consideredVoxels.Add(voxelIndexString);
+                        consideredVoxels.Add(mortonCode);
                         if (IsTriangleIntersectingVoxel(nijk, triangle, ref data)) coordindateList.Push(nijk);
                     }
                 }
             }
         }
 
+        //ToDo: there are better ways to offset using the morton code directly
+        //http://www.volumesoffun.com/implementing-morton-ordering-for-chunked-voxel-data/
+        //https://fgiesen.wordpress.com/2011/01/17/texture-tiling-and-swizzling/
+        public uint[] CoordinateOffset(uint[] ijk, int i)
+        {
+            var x = (int)ijk[0] + Utilities.CoordinateOffsets[i][0];
+            var y = (int)ijk[1] + Utilities.CoordinateOffsets[i][1];
+            var z = (int)ijk[2] + Utilities.CoordinateOffsets[i][2];
+            if (x < 0 || y < 0 || z < 0) return null;
+            return new[] {(uint) x, (uint) y, (uint) z};
+        }
+
         /// <summary>
         /// Determines whether the voxel is intersected by the triangle.
         /// If it is, it adds the information to the VoxelizationData.
         /// </summary>
-        private bool IsTriangleIntersectingVoxel(int[] ijk, Triangle prim, ref VoxelizationData data)
+        private bool IsTriangleIntersectingVoxel(uint[] ijk, Triangle prim, ref VoxelizationData data)
         {
             //Voxel center is simply converting the integers to doubles.
             var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2] };
-            var voxelIndex = data.GetUniqueCoordIndexFromIndices(ijk);
+            var voxelIndex = Voxel.EncodeMorton(ijk);
 
             //This assumes each voxel has a size of 1x1x1 and is in an interger grid.
             //First, find the closest point on the triangle to the center of the voxel.
@@ -254,20 +340,20 @@ namespace TVGL.SparseVoxelization
         /// Stores the faces that intersect a voxel, using the face index, which is the same
         /// as the the Triangle.ID.  
         /// </summary>                                          
-        public readonly Dictionary<long, HashSet<int>> FacesIntersectingVoxels;
+        public readonly Dictionary<ulong, HashSet<int>> FacesIntersectingVoxels;
         public long XM;
         public long YM;
         public long SMM;
 
-        public HashSet<long> IntersectingVoxels;
+        public HashSet<ulong> IntersectingVoxels;
 
         public VoxelizationData(long smm, long xm, long ym)
         {
             XM = xm;
             YM = ym;
             SMM = smm;
-            FacesIntersectingVoxels = new Dictionary<long, HashSet<int>>();
-            IntersectingVoxels = new HashSet<long>();
+            FacesIntersectingVoxels = new Dictionary<ulong, HashSet<int>>();
+            IntersectingVoxels = new HashSet<ulong>();
         }
 
         /// <summary>
@@ -275,7 +361,7 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         /// <param name="voxelIndex"></param>
         /// <param name="primId"></param>
-        public void AddFaceVoxelIntersection(long voxelIndex, int primId)
+        public void AddFaceVoxelIntersection(ulong voxelIndex, int primId)
         {
             if (FacesIntersectingVoxels.ContainsKey(voxelIndex))
             {
