@@ -33,6 +33,9 @@ namespace TVGL.SparseVoxelization
         public VoxelTreeBase(VoxelSpace space)
         {
             //(4,3,2) => ~1.5^n 
+
+            //We could insted do a 3x3x3, 4x4x4, 5x5x5, = 60 voxels to a side, so for 1000, 
+            //you would have 17 SecondInternalNodes along one direction.
             var branchingFactors = new int[] {2, 3, 4};//4, 8, 16
             var leafNodeVoxelsAlongSide = Math.Pow(2, branchingFactors[0]);  // 4 along side, 64 total voxels.
             var internalNode1VoxelsAlongSide = Math.Pow(2, branchingFactors[1]) * leafNodeVoxelsAlongSide; //32 along side, 32,768 total
@@ -41,8 +44,13 @@ namespace TVGL.SparseVoxelization
 
             //Determine the number of second internal nodes, given the size of the space.
             //This could result in a 1*3*1, 2*2*2, or similar arrangment. It is not explicitly restricted in size or shape.
-            
-            //Perform a solid fill of the space??
+
+            //Perform a dense fill of the space??
+
+
+            //If a leaf contains no border voxels, then it must be either dense or empty.
+            //Check one voxel index, and if it is contained in the dense fill, set leaf node to dense, 
+            //else set it to empty. 
 
             //Foreach second internal node, create all its first internal nodes by dividing its volume into the pre-specified sizes
             //Foreach (var internalNode2 )
@@ -56,6 +64,32 @@ namespace TVGL.SparseVoxelization
 
             //If all the leafNodes were empty or filled, set the first internal node accordingly.
             //If all the first internalNodes were empty or filled, set the second internal node accordingly.
+
+        }
+
+
+        public HashSet<ulong> DenseFill(VoxelSpace space)
+        {
+            //First make some lookup tables of the voxel indices
+            //Dictionary(x, HashSet(yzValue), where yzValue could be the full Morton code. 
+            //Dictionary(y, HashSet(xzValue), where yzValue could be the full Morton code. 
+            //zSpace = Dictionary(z, HashSet(xyValue), where yzValue could be the full Morton code. 
+
+            //Start at min(x, y, z)
+            //Check for fill along the X direction, then shift +Y. When done with the row, 
+            //Shift up +Z and set Y back to the start
+
+            //Get all the Z and Y voxels at this level. 
+            //var voxelsAtZ = new HashSet(zSpace[z]);
+            //var voxelsAtY = new HashSet(ySpace[y]);
+
+            //If the voxel is contained in both voxelsAtZ && voxelsAtY, 
+            //then it is part of the current ray. sort them by X value.
+            //Assume no knife edges (there is always negative space in the shell)
+            //Use a bool turning on and off every time a cavity is reached. 
+            //If the bool is on, then store all the voxel indices in that region.
+
+            throw new NotImplementedException();
         }
     }
 }
