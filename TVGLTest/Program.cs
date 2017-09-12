@@ -49,10 +49,10 @@ namespace TVGL_Test
         //"../../../TestFiles/Pump-1.STL",
         //"../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
         //"../../../TestFiles/Beam_Clean.STL",
-        //"../../../TestFiles/Square_Support.STL",
+        "../../../TestFiles/Square_Support.STL",
         //"../../../TestFiles/Aerospace_Beam.STL",
         //"../../../TestFiles/Rook.amf",
-        "../../../TestFiles/bunny.ply",
+       // "../../../TestFiles/bunny.ply",
 
        // "../../../TestFiles/piston.stl",
        // "../../../TestFiles/Z682.stl",
@@ -119,7 +119,7 @@ namespace TVGL_Test
             var voxels = new VoxelSpace();
 
             var startTime = DateTime.Now;
-            voxels.VoxelizeSolid(ts, 300);
+            voxels.VoxelizeSolid(ts, 1000);
             var totalTime = DateTime.Now - startTime;
             Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
 

@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading.Tasks;   
+
 
 namespace TVGL.SparseVoxelization
 {
@@ -27,34 +28,34 @@ namespace TVGL.SparseVoxelization
         /// Return the total amount of memory in bytes occupied by this tree.
         public long MemUsage = 0;
 
-//        /// A tree with only a root node and leaf nodes has depth 2, for example.
-//        Index treeDepth() const override { return DEPTH; }
-//    /// Return the number of leaf nodes.
-//    Index32 leafCount() const override { return mRoot.leafCount(); }
-///// Return the number of non-leaf nodes.
-//Index32 nonLeafCount() const override { return mRoot.nonLeafCount(); }
-//    /// Return the number of active voxels stored in leaf nodes.
-//    Index64 activeLeafVoxelCount() const override { return mRoot.onLeafVoxelCount(); }
-//    /// Return the number of inactive voxels stored in leaf nodes.
-//    Index64 inactiveLeafVoxelCount() const override { return mRoot.offLeafVoxelCount(); }
-//    /// Return the total number of active voxels.
-//    Index64 activeVoxelCount() const override { return mRoot.onVoxelCount(); }
-//    /// Return the number of inactive voxels within the bounding box of all active voxels.
-//    Index64 inactiveVoxelCount() const override;
-//    /// Return the total number of active tiles.
-//    Index64 activeTileCount() const override { return mRoot.onTileCount(); }
-
-//    /// Return the minimum and maximum active values in this tree.
-//    void evalMinMax(ValueType &min, ValueType &max) const;
-
-//Index64 memUsage() const override { return sizeof(* this) + mRoot.memUsage(); }
-
-
-public VoxelTreeBase()
+        //This tree is currently set up to work on 1000+ vertices along a direction. For smaller spaces, 
+        //internalNode2 should probably be ignored?
+        public VoxelTreeBase(VoxelSpace space)
         {
+            //(4,3,2) => ~1.5^n 
+            var branchingFactors = new int[] {2, 3, 4};//4, 8, 16
+            var leafNodeVoxelsAlongSide = Math.Pow(2, branchingFactors[0]);  // 4 along side, 64 total voxels.
+            var internalNode1VoxelsAlongSide = Math.Pow(2, branchingFactors[1]) * leafNodeVoxelsAlongSide; //32 along side, 32,768 total
+            var internalNode2VoxelsAlongSide = Math.Pow(2, branchingFactors[2]) * internalNode1VoxelsAlongSide;  //512 along side.  
+            var scaleToLeafNode2 = space.ScaleToIntSpace*8;
+
+            //Determine the number of second internal nodes, given the size of the space.
+            //This could result in a 1*3*1, 2*2*2, or similar arrangment. It is not explicitly restricted in size or shape.
+            
+            //Perform a solid fill of the space??
+
+            //Foreach second internal node, create all its first internal nodes by dividing its volume into the pre-specified sizes
+            //Foreach (var internalNode2 )
+            //internalNode2.GenerateChildren(space)
+
+            //Foreach first internal nodes, create all its leaf nodes by dividing its volume into the pre-specified sizes.
+
+            //Foreach leafNode, check all the possible voxel indices to see if they are in the VoxelSpace.
+            //If none are active, set the leafNode to empty. If all are active, set the leafNode to filled.
+            //Any calls to a leafNode that is empty or filled, won't actually visit the voxel level. 
+
+            //If all the leafNodes were empty or filled, set the first internal node accordingly.
+            //If all the first internalNodes were empty or filled, set the second internal node accordingly.
         }
-
-
-
     }
 }

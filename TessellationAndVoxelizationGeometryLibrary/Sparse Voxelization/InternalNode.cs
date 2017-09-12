@@ -5,7 +5,15 @@ using System.Text;
 
 namespace TVGL.SparseVoxelization
 {
-    class InternalNode
+    public class InternalNode
     {
+        public bool IsUniform { get; set; }
+
+        public int Level;
+
+        public InternalNode(int level)
+        {
+            Level = level;
+        }
     }
 }
