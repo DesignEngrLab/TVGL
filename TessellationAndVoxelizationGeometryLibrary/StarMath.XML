@@ -1902,7 +1902,7 @@
             <exception cref="T:System.ArithmeticException">Matrix cannot be inverted. Can only invert sqyare matrices.</exception>
             <exception cref="T:System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         </member>
-        <member name="M:StarMathLib.StarMath.LUDecomposition(System.Double[0:,0:],System.Int32[]@,System.Int32,System.Boolean,System.Int32[])">
+        <member name="M:StarMathLib.StarMath.LUDecomposition(System.Double[0:,0:],System.Int32[]@,System.Int32,System.Boolean,System.Collections.Generic.List{System.Int32}[])">
             <summary>
             Returns the LU decomposition of A in a new matrix.
             </summary>
@@ -1929,7 +1929,7 @@
             <exception cref="T:System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
             <exception cref="T:System.ArithmeticException">LU Decomposition can only be determined for square matrices.</exception>
         </member>
-        <member name="M:StarMathLib.StarMath.LUDecomposition(System.Int32[0:,0:],System.Int32[]@,System.Int32,System.Boolean,System.Int32[])">
+        <member name="M:StarMathLib.StarMath.LUDecomposition(System.Int32[0:,0:],System.Int32[]@,System.Int32,System.Boolean,System.Collections.Generic.List{System.Int32}[])">
             <summary>
             Returns the LU decomposition of A in a new matrix.
             </summary>
@@ -1939,7 +1939,7 @@
             <param name="length">The length/order/number of rows of matrix, A.</param>
             <param name="robustReorder">if set to <c>true</c> [robust reorder]. But this is an internal recursive call
             and should not be set outside.</param>
-            <param name="lastZeroIndices">The last zero indices - is calculated in this function, but if it is already
+            <param name="zeroIndices">The last zero indices - is calculated in this function, but if it is already
             known, then...by all means.</param>
             <returns>A matrix of equal size to A that combines the L and U. Here the diagonals belongs to L and the U's diagonal
             elements are all 1.</returns>

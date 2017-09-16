@@ -142,7 +142,7 @@ namespace TVGL.SparseVoxelization
                 //Create a triangle, which is a simple and light version of the face class. 
                 //It is required because we need to scale all the vertices/faces.
                 var triangle = new Triangle(face, ScaleToIntSpace);
-                VoxelizeTriangle(triangle, ref Data);
+                VoxelizeTriangle(triangle, Data);
             }
 
             //Make all the voxels
@@ -159,10 +159,10 @@ namespace TVGL.SparseVoxelization
         /// are found to be intersecting, they are added to a stack to search their 26 adjacent 
         /// voxels. In this way, it wraps along the face collecting all the intersecting voxels.
         /// </summary>
-        private void VoxelizeTriangle(Triangle triangle, ref VoxelizationData data)
+        private void VoxelizeTriangle(Triangle triangle, VoxelizationData data)
         {
             var consideredVoxels = new HashSet<long>();
-            var coordindateList = new Stack<int[]>();
+            var coordinateList = new Stack<int[]>();
 
             //Gets the integer coordinates, rounded down for point A on the triangle 
             //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
@@ -173,21 +173,21 @@ namespace TVGL.SparseVoxelization
                 (int)Math.Floor(triangle.A[1]), //Y
                 (int)Math.Floor(triangle.A[2])  //Z
             };
-    
 
-            //Set a new ID. This may not match up with TesselatedSolid.Faces.IDs,
+
+            //Set a new ID. This may not match up with TessellatedSolid.Faces.IDs,
             //if the subdivision of faces is used.
-            IsTriangleIntersectingVoxel(ijk, triangle, ref data);
-            coordindateList.Push(ijk);
+            IsTriangleIntersectingVoxel(ijk, triangle, data);
+            coordinateList.Push(ijk);
             consideredVoxels.Add(data.GetUniqueCoordIndexFromIndices(ijk));
 
-            while (coordindateList.Any())
+            while (coordinateList.Any())
             {
-                ijk = coordindateList.Pop();
+                ijk = coordinateList.Pop();
                 // For every surrounding voxel (6+12+8=26)
-                // 6 Voxel-face adjacent neghbours
-                // 12 Voxel-edge adjacent neghbours
-                // 8 Voxel-corner adjacent neghbours
+                // 6 Voxel-face adjacent neighbors
+                // 12 Voxel-edge adjacent neighbors
+                // 8 Voxel-corner adjacent neighbors
                 // Voxels are in IntSpace, so we just use 
                 // every combination of -1, 0, and 1 for offsets
                 for (var i = 0; i < 26; ++i)
@@ -200,7 +200,7 @@ namespace TVGL.SparseVoxelization
                     if (!consideredVoxels.Contains(voxelIndexString))
                     {
                         consideredVoxels.Add(voxelIndexString);
-                        if (IsTriangleIntersectingVoxel(nijk, triangle, ref data)) coordindateList.Push(nijk);
+                        if (IsTriangleIntersectingVoxel(nijk, triangle,  data)) coordinateList.Push(nijk);
                     }
                 }
             }
@@ -210,13 +210,13 @@ namespace TVGL.SparseVoxelization
         /// Determines whether the voxel is intersected by the triangle.
         /// If it is, it adds the information to the VoxelizationData.
         /// </summary>
-        private bool IsTriangleIntersectingVoxel(int[] ijk, Triangle prim, ref VoxelizationData data)
+        private bool IsTriangleIntersectingVoxel(int[] ijk, Triangle prim,  VoxelizationData data)
         {
             //Voxel center is simply converting the integers to doubles.
             var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2] };
             var voxelIndex = data.GetUniqueCoordIndexFromIndices(ijk);
 
-            //This assumes each voxel has a size of 1x1x1 and is in an interger grid.
+            //This assumes each voxel has a size of 1x1x1 and is in an integer grid.
             //First, find the closest point on the triangle to the center of the voxel.
             //Second, if that point is in the same integer grid as the voxel (using regular
             //rounding, not floor or ceiling) then it must intersect the voxel.
