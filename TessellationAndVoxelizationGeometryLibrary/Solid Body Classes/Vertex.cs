@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MIConvexHull;
+using TVGL.SparseVoxelization;
 
 namespace TVGL
 {

@@ -10,25 +10,291 @@ namespace TVGL.SparseVoxelization
 {
     public class Voxel
     {
-        public Vertex Center;
+        public double[] Center;
 
         public AABB Bounds { get; set; }
 
         public int[] Index { get; set; }
 
-        public string StringIndex { get; set; }
+        public long ID { get; set; }
+        public List<TessellationBaseClass> TessellationElements { get; internal set; }
 
-        public Voxel(long uniqueCoordIndex, long sm, long xm, long ym, double scale)
+        public Voxel(int[] index, long ID, double voxelLength, TessellationBaseClass tessellationObject = null)
         {
-            var halfLength = scale / 2;
+            var halfLength = voxelLength / 2;
+            TessellationElements = new List<TessellationBaseClass>();
+            if (tessellationObject != null) TessellationElements.Add(tessellationObject);
+            Index = index;
+            this.ID = ID;
+            Center = new[] { Index[0] * voxelLength, Index[1] * voxelLength, Index[2] * voxelLength };
+            Bounds = new AABB
+            {
+                MinX = Center[0] - halfLength,
+                MinY = Center[1] - halfLength,
+                MinZ = Center[2] - halfLength,
+                MaxX = Center[0] + halfLength,
+                MaxY = Center[1] + halfLength,
+                MaxZ = Center[2] + halfLength
+            };
+        }
+    }
 
-            var z = (int)(uniqueCoordIndex % ym);
+    public class VoxelSpace
+    {
+        public TessellatedSolid Solid;
+        public HashSet<long> VoxelIDHashSet;
+
+        /// <summary>
+        /// Stores the faces that intersect a voxel, using the face index, which is the same
+        /// as the the Triangle.ID.  
+        /// </summary>                                          
+        public Dictionary<long, Voxel> Voxels;
+
+        long xIndexOffset;
+        long yIndexOffset;
+        long signIndexOffset;
+        double voxelLength;
+        public double ScaleToIntSpace;
+
+        /// <summary>
+        /// This method creates a hollow voxel grid of a solid. It is done by voxelizing each triangle 
+        /// in the solid. To voxelize a triangle, start with the voxel group (3x3x3) that is guaranteed
+        /// to intersect the face, then wrap along the face, collecting all the intersecting voxels. 
+        /// This method is based on the implementation in OpenVDB, however, none of the code in this file 
+        /// is verbatim. It has been simplified and adjusted to work better with exact geometry. The three 
+        /// primary differences are 
+        /// 
+        /// (1) We determine voxel/face intersection using the rounded position of 
+        /// the closest point on the triangle, not by comparing its distance to 0.75 (which is the squared
+        /// distance from the center of a voxel to a corner). OpenVDB's approach is actually checking if the
+        /// face intersects the sphere of squared radius = 0.75, centered at the voxel center. Our implementation
+        /// checks for intersection based on the voxel cube, preventing false positives.   
+        /// 
+        /// (2) We do not consider triangle subdivision. It added complexity and was much slower in every 
+        /// test we ran.
+        /// 
+        /// (3) We handle the voxels as integer strings and have a different set of stored information
+        /// Example: OpenVDB captures the closest face to a voxel center, while we keep all the voxel/face intersections.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="numberOfVoxelsAlongMaxDirection"></param>
+        public void VoxelizeSolid(TessellatedSolid ts, int numberOfVoxelsAlongMaxDirection = 100)
+        {
+            Solid = ts;
+            SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
+            Voxels = new Dictionary<long, Voxel>(); //todo:approximate capacity based on tessellated volume
+            VoxelIDHashSet = new HashSet<long>();
+            var vertices = new double[Solid.NumberOfVertices][];
+            for (int i = 0; i < Solid.NumberOfVertices; i++)
+            {
+                var vertex = Solid.Vertices[i];
+                var coord = vertex.Position.multiply(ScaleToIntSpace);
+                //Gets the integer coordinates, rounded down for point A on the triangle 
+                //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
+                //this coordinate. 
+                var ijk = new[]
+                { (int) Math.Round(coord[0]),(int) Math.Round(coord[1]),(int) Math.Round(coord[2]) };
+                storeVoxel(ijk, vertex);
+                vertices[i] = coord;
+            }
+
+            foreach (var face in Solid.Faces)
+            {
+                if (noIntermediateVoxels(face)) continue;
+                var xLength = Math.Max(Math.Max(Math.Abs(face.A.X - face.B.X), Math.Abs(face.B.X - face.C.X)),
+                    Math.Abs(face.C.X - face.A.X));
+                var yLength = Math.Max(Math.Max(Math.Abs(face.A.Y - face.B.Y), Math.Abs(face.B.Y - face.C.Y)),
+                    Math.Abs(face.C.Y - face.A.Y));
+                var zLength = Math.Max(Math.Max(Math.Abs(face.A.Z - face.B.Z), Math.Abs(face.B.Z - face.C.Z)),
+                    Math.Abs(face.C.Z - face.A.Z));
+                var sweepDim = 0;
+                var dim1 = 1;
+                var dim2 = 2;
+                if (yLength > xLength)
+                {
+                    sweepDim = 1;
+                    dim1 = 2;
+                    dim2 = 0;
+                }
+                if (zLength > yLength && zLength > xLength)
+                {
+                    sweepDim = 2;
+                    dim1 = 0;
+                    dim2 = 1;
+                }
+                var startVertex = face.A;
+                var leftVertex = face.B;
+                var leftEdge = face.Edges[0];
+                var rightVertex = face.C;
+                var rightEdge = face.Edges[2];
+                if (face.B.Position[sweepDim] < face.A.Position[sweepDim])
+                {
+                    startVertex = face.B;
+                    leftVertex = face.C;
+                    leftEdge = face.Edges[1];
+                    rightVertex = face.A;
+                    rightEdge = face.Edges[0];
+                }
+                if (face.C.Position[sweepDim] < face.B.Position[sweepDim] &&
+                    face.C.Position[sweepDim] < face.A.Position[sweepDim])
+                {
+                    startVertex = face.C;
+                    leftVertex = face.A;
+                    leftEdge = face.Edges[2];
+                    rightVertex = face.B;
+                    rightEdge = face.Edges[1];
+                }
+                var startPoint = vertices[startVertex.IndexInList];
+                var valueSweepDim = (int)Math.Ceiling(startPoint[sweepDim]);
+                var leftPoint = vertices[leftVertex.IndexInList];
+                double leftCoordD1, leftCoordD2;
+                findWhereLineCrossesPlane(startPoint, leftPoint, sweepDim, valueSweepDim, out leftCoordD1, out leftCoordD2);
+                getIDsIn2DPlane(startPoint[dim1], startPoint[dim2], leftCoordD1, leftCoordD2, valueSweepDim, dim1, dim2, sweepDim, leftEdge);
+                getIDsIn2DPlane(startPoint[dim2], startPoint[dim1], leftCoordD2, leftCoordD1, valueSweepDim, dim2, dim1, sweepDim, leftEdge);
+
+                var rightPoint = vertices[rightVertex.IndexInList];
+                double rightCoordD1, rightCoordD2;
+                findWhereLineCrossesPlane(startPoint, rightPoint, sweepDim, valueSweepDim, out rightCoordD1, out rightCoordD2);
+                getIDsIn2DPlane(startPoint[dim1], startPoint[dim2], rightCoordD1, rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, rightEdge);
+                getIDsIn2DPlane(startPoint[dim2], startPoint[dim1], rightCoordD2, rightCoordD1, valueSweepDim, dim2, dim1, sweepDim, rightEdge);
+
+                getIDsIn2DPlane(leftCoordD1, leftCoordD2, rightCoordD1, rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, face);
+                getIDsIn2DPlane(leftCoordD2, leftCoordD1, rightCoordD2, rightCoordD1, valueSweepDim, dim2, dim1, sweepDim, face);
+            }
+        }
+
+        private bool noIntermediateVoxels(PolygonalFace face)
+        {
+            if (face.A.Voxels[0] == face.B.Voxels[0] && face.A.Voxels[0] == face.C.Voxels[0])
+            {
+                var voxel = face.A.Voxels[0];
+                face.AddVoxel(voxel);
+                foreach (var edge in face.Edges)
+                    edge.AddVoxel(voxel);
+                return true;
+            }
+            /*
+            else if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] && face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
+                     face.A.Voxel.Index[1] == face.B.Voxel.Index[1] && face.A.Voxel.Index[1] == face.C.Voxel.Index[1] &&
+                     face.A.Voxel.Index[2] == face.B.Voxel.Index[2] && face.A.Voxel.Index[2] == face.C.Voxel.Index[2])
+            {
+
+            }
+            */
+            return false;
+        }
+
+        private void getIDsIn2DPlane(double startX, double startY, double endX, double endY, int valueSweepDim,
+            int xDim, int yDim, int sweepDim, TessellationBaseClass tsObject)
+        {
+            var xRange = endX - startX;
+            if (Math.Abs(xRange) < 0.5) return; //then there are not crossings
+            var yRange = endY - startY;
+            var increment = Math.Sign(xRange);
+            var nextX = startX;
+            var ijk = new int[3];
+            do
+            {
+                nextX += increment;
+                var x = Math.Round(nextX);
+                var y = (int)((yRange * (x - startX) / xRange) + startY);
+                if (y <= endY)
+                {
+                    ijk[xDim] = (int)x;
+                    ijk[yDim] = y;
+                    ijk[sweepDim] = valueSweepDim;
+                    storeVoxel(ijk, tsObject);
+                }
+                else return;
+            } while (increment * nextX < increment * endX);
+        }
+
+        private void storeVoxel(int[] ijk, TessellationBaseClass tsObject)
+        {
+            var voxelID = IndicesToVoxelID(ijk);
+            Voxel voxel;
+            if (VoxelIDHashSet.Contains(voxelID))
+            {
+                voxel = Voxels[voxelID];
+                if (voxel.TessellationElements.Contains(tsObject))
+                    return;
+                voxel.TessellationElements.Add(tsObject);
+            }
+            else
+            {
+                VoxelIDHashSet.Add(voxelID);
+                voxel = new Voxel(ijk, voxelID, voxelLength, tsObject);
+                Voxels.Add(voxelID, voxel);
+            }
+            tsObject.AddVoxel(voxel);
+        }
+
+        private void findWhereLineCrossesPlane(double[] startPoint, double[] endPoint, int sweepDim, double valueSweepDim, out double valueD1, out double valueD2)
+        {
+            if (endPoint[sweepDim] < valueSweepDim || endPoint[sweepDim].IsPracticallySame(startPoint[sweepDim]))
+            {
+                valueD1 = endPoint[(sweepDim + 1) % 3];
+                valueD2 = endPoint[(sweepDim + 2) % 3];
+                return;
+            }
+            var fraction = (valueSweepDim - startPoint[sweepDim]) / (endPoint[sweepDim] - startPoint[sweepDim]);
+            var dim = (sweepDim + 1) % 3;
+            valueD1 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
+            dim = (dim + 1) % 3;
+            valueD2 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
+        }
+        #region Indexing Functions
+        private void SetUpIndexingParameters(int numberOfVoxelsAlongMaxDirection)
+        {
+            var dx = Solid.XMax - Solid.XMin;
+            var dy = Solid.YMax - Solid.YMin;
+            var dz = Solid.ZMax - Solid.ZMin;
+            var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
+            voxelLength = maxDim / numberOfVoxelsAlongMaxDirection;
+            ScaleToIntSpace = 1 / voxelLength;
+            //To get a unique integer value for each voxel based on its index, 
+            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
+            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
+            //3000000 + 345000 + 12 = 3345012 => 3|345|012
+            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            //-X = 1, -Y = 3, -Z = 5; //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
+            //OpenVDB does this more compactly with binaries, using the &, <<, and >> functions to 
+            //manipulate the X,Y,Z values to store them. Their function is called "coordToOffset" and is 
+            //in the LeafNode.h file around lines 1050-1070. I could not understand this.
+            yIndexOffset = (long)Math.Pow(10, Math.Ceiling(Math.Log10(maxDim * ScaleToIntSpace)) + 1);
+            var maxInt = Math.Pow(long.MaxValue, 1.0 / 3);
+            if (yIndexOffset * 10 > maxInt)
+                throw new Exception("Int64 will not work for a voxel space this large, using the current index setup");
+            xIndexOffset = (long)Math.Pow(yIndexOffset, 2);
+            signIndexOffset = (long)Math.Pow(yIndexOffset, 3); //Sign Magnitude Multiplier
+        }
+
+        public long IndicesToVoxelID(int[] ijk)
+        {
+            //To get a unique integer value for each voxel based on its index, 
+            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
+            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
+            //3000000 + 345000 + 12 = 3345012 => 3|345|012
+            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            //-X = 1, -Y = 3, -Z = 5;
+            //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
+            // 4 = (-X-Y+Z); 6 = (-X+Y-Z);  8 = (+X-Y-Z);  9 = (-X-Y-Z)
+            var signValue = 0;
+            if (Math.Sign(ijk[0]) < 0) signValue += 1;
+            if (Math.Sign(ijk[1]) < 0) signValue += 3;
+            if (Math.Sign(ijk[2]) < 0) signValue += 5;
+            return signIndexOffset * signValue + Math.Abs(ijk[0]) * xIndexOffset + Math.Abs(ijk[1]) * yIndexOffset + Math.Abs(ijk[2]);
+        }
+
+        public int[] VoxelIDToIndices(long voxelID)
+        {
+            var z = (int)(voxelID % yIndexOffset);
             //uniqueCoordIndex -= z;
-            var y = (int)((uniqueCoordIndex % xm) / ym);
+            var y = (int)((voxelID % xIndexOffset) / yIndexOffset);
             //uniqueCoordIndex -= y*ym;
-            var x = (int)((uniqueCoordIndex % sm) / xm);
+            var x = (int)((voxelID % signIndexOffset) / xIndexOffset);
             //uniqueCoordIndex -= x*xm;
-            var s = (int)(uniqueCoordIndex / sm);
+            var s = (int)(voxelID / signIndexOffset);
 
             //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
             //-X = 1, -Y = 3, -Z = 5;
@@ -63,534 +329,8 @@ namespace TVGL.SparseVoxelization
                     z = -z;
                     break;
             }
-            
-
-            Index =new int[] {x, y, z};
-            Center = new Vertex(new double[] { Index[0] * scale, Index[1] * scale, Index[2] * scale });
-            Bounds = new AABB
-            {
-                MinX = Center.X - halfLength,
-                MinY = Center.Y - halfLength,
-                MinZ = Center.Z - halfLength,
-                MaxX = Center.X + halfLength,
-                MaxY = Center.Y + halfLength,
-                MaxZ = Center.Z + halfLength
-            };
+            return new[] { x, y, z };
         }
-    }
-
-    public class VoxelSpace
-    {
-        public TessellatedSolid Solid;
-        public VoxelizationData Data;
-        public double VoxelSizeInIntSpace;
-        public double ScaleToIntSpace;
-        public List<Voxel> Voxels;
-        public long YM;
-
-        /// <summary>
-        /// This method creates a hollow voxel grid of a solid. It is done by voxelizing each triangle 
-        /// in the solid. To voxelize a triangle, start with the voxel group (3x3x3) that is gauranteed
-        /// to intersect the face, then wrap along the face, collecting all the intersecting voxels. 
-        /// This method is based on the implementation in OpenVDB, however, none of the code in this file 
-        /// is verbatim. It has been simplified and adjusted to work better with exact geometry. The three 
-        /// primary differences are 
-        /// 
-        /// (1) We determine voxel/face intersection using the rounded position of 
-        /// the closest point on the triangle, not by comparing its distance to 0.75 (which is the squared
-        /// distance from the center of a voxel to a corner). OpenVDB's approach is actually checking if the
-        /// face intersects the sphere of squared radius = 0.75, centered at the voxel center. Our implementation
-        /// checks for intersection based on the voxel cube, preventing false positives.   
-        /// 
-        /// (2) We do not consider triangle subdivision. It added complexity and was much slower in every 
-        /// test we ran.
-        /// 
-        /// (3) We handle the voxels as integer strings and have a different set of stored information
-        /// Example: OpenVDB captures the closest face to a voxel center, while we keep all the voxel/face intersections.
-        /// </summary>
-        /// <param name="solid"></param>
-        /// <param name="numberOfVoxelsAlongMaxDirection"></param>
-        public void VoxelizeSolid(TessellatedSolid solid, int numberOfVoxelsAlongMaxDirection = 100)
-        {
-            Solid = solid;
-            var dx = solid.XMax - solid.XMin;
-            var dy = solid.YMax - solid.YMin;
-            var dz = solid.ZMax - solid.ZMin;
-            var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
-            ScaleToIntSpace = numberOfVoxelsAlongMaxDirection / maxDim;
-
-            //To get a unique integer value for each voxel based on its index, 
-            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
-            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
-            //3000000 + 345000 + 12 = 3345012 => 3|345|012
-            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
-            //-X = 1, -Y = 3, -Z = 5; //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
-            //OpenVDB does this more compactly with binaries, using the &, <<, and >> functions to 
-            //manipulate the X,Y,Z values to store them. Their function is called "coordToOffset" and is 
-            //in the LeafNode.h file around lines 1050-1070. I could not understand this.
-            YM = (long)Math.Pow(10, Math.Ceiling(Math.Log10(maxDim*ScaleToIntSpace)) + 1);
-            var maxInt = Math.Pow(long.MaxValue, 1.0/3);
-            if (YM*10 > maxInt) throw new Exception("Int64 will not work for a voxel space this large, using the current index setup"); 
-            var XM = (long)Math.Pow(YM, 2);
-            var SMM = (long)Math.Pow(YM, 3); //Sign Magnitude Multiplier
-
-            VoxelSizeInIntSpace = 1.0;
-
-            Data = new VoxelizationData(SMM, XM, YM);
-            foreach (var face in solid.Faces)
-            {
-                //Create a triangle, which is a simple and light version of the face class. 
-                //It is required because we need to scale all the vertices/faces.
-                var triangle = new Triangle(face, ScaleToIntSpace);
-                VoxelizeTriangle(triangle, Data);
-            }
-
-            //Make all the voxels
-            Voxels = new List<Voxel>();
-            foreach (var uniqueCoordIndex in Data.IntersectingVoxels)
-            {
-                Voxels.Add(new Voxel(uniqueCoordIndex, SMM, XM, YM, 1 / ScaleToIntSpace));
-            }
-        }
-
-        /// <summary>
-        /// Voxelizes a triangle starting with the voxel at the Floor of the first point in 
-        /// the triangle, and then checks the 26 adjacent voxel. If any of the adjacent voxels
-        /// are found to be intersecting, they are added to a stack to search their 26 adjacent 
-        /// voxels. In this way, it wraps along the face collecting all the intersecting voxels.
-        /// </summary>
-        private void VoxelizeTriangle(Triangle triangle, VoxelizationData data)
-        {
-            var consideredVoxels = new HashSet<long>();
-            var coordinateList = new Stack<int[]>();
-
-            //Gets the integer coordinates, rounded down for point A on the triangle 
-            //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
-            //this coordinate. 
-            var ijk = new[]
-            {
-                (int)Math.Floor(triangle.A[0]), //X
-                (int)Math.Floor(triangle.A[1]), //Y
-                (int)Math.Floor(triangle.A[2])  //Z
-            };
-
-
-            //Set a new ID. This may not match up with TessellatedSolid.Faces.IDs,
-            //if the subdivision of faces is used.
-            IsTriangleIntersectingVoxel(ijk, triangle, data);
-            coordinateList.Push(ijk);
-            consideredVoxels.Add(data.GetUniqueCoordIndexFromIndices(ijk));
-
-            while (coordinateList.Any())
-            {
-                ijk = coordinateList.Pop();
-                // For every surrounding voxel (6+12+8=26)
-                // 6 Voxel-face adjacent neighbors
-                // 12 Voxel-edge adjacent neighbors
-                // 8 Voxel-corner adjacent neighbors
-                // Voxels are in IntSpace, so we just use 
-                // every combination of -1, 0, and 1 for offsets
-                for (var i = 0; i < 26; ++i)
-                {
-                    var nijk = ijk.add(Utilities.CoordinateOffsets[i]);
-
-                    //If the voxel has not already been checked with this primitive,
-                    //consider it and add it to the list of considered voxels. 
-                    var voxelIndexString = data.GetUniqueCoordIndexFromIndices(nijk);
-                    if (!consideredVoxels.Contains(voxelIndexString))
-                    {
-                        consideredVoxels.Add(voxelIndexString);
-                        if (IsTriangleIntersectingVoxel(nijk, triangle,  data)) coordinateList.Push(nijk);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Determines whether the voxel is intersected by the triangle.
-        /// If it is, it adds the information to the VoxelizationData.
-        /// </summary>
-        private bool IsTriangleIntersectingVoxel(int[] ijk, Triangle prim,  VoxelizationData data)
-        {
-            //Voxel center is simply converting the integers to doubles.
-            var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2] };
-            var voxelIndex = data.GetUniqueCoordIndexFromIndices(ijk);
-
-            //This assumes each voxel has a size of 1x1x1 and is in an integer grid.
-            //First, find the closest point on the triangle to the center of the voxel.
-            //Second, if that point is in the same integer grid as the voxel (using regular
-            //rounding, not floor or ceiling) then it must intersect the voxel.
-            //Closest Point on Triangle is not restricted to A,B,C. 
-            //It may be any point on the triangle.
-            var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
-            //var closestPoint = Proximity.ClosestPointOnTriangle(voxelCenter, prim);
-            //if (!closestPoint[0].IsPracticallySame(closestPointMethod2[0], 0.001) ||
-            //   !closestPoint[1].IsPracticallySame(closestPointMethod2[1], 0.001) ||
-            //   !closestPoint[2].IsPracticallySame(closestPointMethod2[2], 0.001))
-            //    throw new Exception("Methods do not match");
-
-            if ((int)Math.Round(closestPoint[0]) == ijk[0]
-                && (int)Math.Round(closestPoint[1]) == ijk[1]
-                && (int)Math.Round(closestPoint[2]) == ijk[2])
-            {
-                //Since IntersectingVoxels is a hashset, it will not add a duplicate voxel.
-                data.IntersectingVoxels.Add(voxelIndex);
-                data.AddFaceVoxelIntersection(voxelIndex, prim.ID);
-                return true;
-            }
-            return false;
-        }
-    }
-
-    /// @brief TBB body object to voxelize a mesh of triangles and/or quads into a collection
-    /// of VDB grids, namely a squared distance grid, a closest primitive grid and an
-    /// intersecting voxels grid (masks the mesh intersecting voxels)
-    /// @note Only the leaf nodes that intersect the mesh are allocated, and only voxels in
-    /// a narrow band (of two to three voxels in proximity to the mesh's surface) are activated.
-    /// They are populated with distance values and primitive indices.
-    public class VoxelizationData
-    {
-        /// <summary>
-        /// Stores the faces that intersect a voxel, using the face index, which is the same
-        /// as the the Triangle.ID.  
-        /// </summary>                                          
-        public readonly Dictionary<long, HashSet<int>> FacesIntersectingVoxels;
-        public long XM;
-        public long YM;
-        public long SMM;
-
-        public HashSet<long> IntersectingVoxels;
-
-        public VoxelizationData(long smm, long xm, long ym)
-        {
-            XM = xm;
-            YM = ym;
-            SMM = smm;
-            FacesIntersectingVoxels = new Dictionary<long, HashSet<int>>();
-            IntersectingVoxels = new HashSet<long>();
-        }
-
-        /// <summary>
-        /// Adds a voxel / face intersection to the dictionary of intersections
-        /// </summary>
-        /// <param name="voxelIndex"></param>
-        /// <param name="primId"></param>
-        public void AddFaceVoxelIntersection(long voxelIndex, int primId)
-        {
-            if (FacesIntersectingVoxels.ContainsKey(voxelIndex))
-            {
-                //HashSets take care of duplicates, so they do not need to be checked
-                FacesIntersectingVoxels[voxelIndex].Add(primId);
-            }
-            else
-            {
-                FacesIntersectingVoxels.Add(voxelIndex, new HashSet<int> { primId });
-            }
-        }
-
-        public long GetUniqueCoordIndexFromIndices(int[] ijk)
-        {
-            //To get a unique integer value for each voxel based on its index, 
-            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
-            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
-            //3000000 + 345000 + 12 = 3345012 => 3|345|012
-            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
-            //-X = 1, -Y = 3, -Z = 5;
-            //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
-            // 4 = (-X-Y+Z); 6 = (-X+Y-Z);  8 = (+X-Y-Z);  9 = (-X-Y-Z)
-            var signValue = 0;
-            if (Math.Sign(ijk[0]) < 0) signValue += 1;
-            if (Math.Sign(ijk[1]) < 0) signValue += 3;
-            if (Math.Sign(ijk[2]) < 0) signValue += 5;
-            return SMM* signValue + Math.Abs(ijk[0]) * XM + Math.Abs(ijk[1]) * YM + Math.Abs(ijk[2]);
-        }
-    }
-
-    /// <summary>
-    /// A very light structure, used to represent triangles in the voxelization routines.
-    /// </summary>
-    public struct Triangle
-    {
-        /// <summary>
-        ///     Gets the first vertex
-        /// </summary>
-        /// <value>The vertices.</value>
-        public double[] A;
-
-        /// <summary>
-        ///     Gets the second vertex
-        /// </summary>
-        /// <value>The vertices.</value>
-        public double[] B;
-
-        /// <summary>
-        ///     Gets the third vertex
-        /// </summary>
-        /// <value>The vertices.</value>
-        public double[] C;
-
-        public double[] Normal;
-
-        /// <summary>
-        ///     The index 
-        /// </summary>
-        public int ID;
-
-        public List<double[]> Triangle2D { get; set; }
-        public Polygon Polygon2D { get; set; }
-        public double[,] RotTransMatrixTo2D { get; set; }
-        public double[,] RotTransMatrixTo3D { get; set; }
-        public Dictionary<int, List<Line>> PerpendicularLines { get; set; }
-
-        /// <summary>
-        /// Builds a Triangle from points. Scales accordingly.
-        /// </summary>
-        public Triangle(double[] a, double[] b, double[] c, double[] normal, double scale = 1.0)
-        {
-            A = a.multiply(scale);
-            B = b.multiply(scale);
-            C = c.multiply(scale);
-            Normal = normal;
-            ID = -1;
-
-            Triangle2D = null;
-            Polygon2D = null;
-            RotTransMatrixTo2D = new double[,] { };
-            RotTransMatrixTo3D = new double[,] { };
-            PerpendicularLines = new Dictionary<int, List<Line>>();
-            //SetTransformationMatrix();
-        }
-
-        /// <summary>
-        /// Builds a Triangle from a face. Scales accordingly.
-        /// </summary>
-        /// <param name="face"></param>
-        /// <param name="scale"></param>
-        public Triangle(PolygonalFace face, double scale = 1.0)
-        {
-            A = face.A.Position.multiply(scale);
-            B = face.B.Position.multiply(scale);
-            C = face.C.Position.multiply(scale);
-            Normal = face.Normal;
-            ID = face.IndexInList;
-
-            Triangle2D = null;
-            Polygon2D = null;
-            RotTransMatrixTo2D = new double[,] { };
-            RotTransMatrixTo3D = new double[,] { };
-            PerpendicularLines = new Dictionary<int, List<Line>>();
-            //SetTransformationMatrix();
-        }
-
-        public void SetTransformationMatrix()
-        {
-            //ToDo: precompute the transformation matrix for every triangle
-            //Calculate the translation and rotation matrices so that A lies on the origin, B, 
-            //lies on the Y axis, and C lies in the zy plane.
-            var xDir = B[0] - A[0];
-            var yDir = B[1] - A[1];
-            var zDir = B[2] - A[2];
-            var originToB = Math.Sqrt(xDir * xDir + yDir * yDir + zDir * zDir);
-
-            //Get the transformation matrix
-            var transformMatrix = StarMath.makeIdentity(4);
-            transformMatrix[0, 3] = -A[0];
-            transformMatrix[1, 3] = -A[1];
-            transformMatrix[2, 3] = -A[2];
-
-            var tempB = new[]
-            {
-                xDir, yDir, zDir, 1.0
-            };
-
-            var showTrianglesForDebug = false;
-            //if (ID == 29)
-            //{
-            //    showTrianglesForDebug = true;
-            //    Debug.WriteLine("Error Triangle Reached");
-            //}
-
-            //Rotate Z, then X, then Y
-            double[,] rotateX, rotateY, rotateZ, backRotateZ, backRotateX, backRotateY;
-            //If xDir and zDir are negligible, then B is already in the correct position, 
-            //we just need to rotate in the y direction to put C on the zy plane.
-            if (xDir.IsNegligible() && zDir.IsNegligible())
-            {
-                backRotateX = rotateX = backRotateZ = rotateZ = StarMath.makeIdentity(4);
-            }
-            //If zDir and yDir are negligible, then point B lies along the X axis
-            //Rotate PI/2*Sign(xDir) on the Z axis 
-            else if (zDir.IsNegligible() && yDir.IsNegligible())
-            {
-                rotateZ = StarMath.RotationZ(Math.Sign(xDir) * Math.PI / 2, true);
-                backRotateZ = StarMath.RotationZ(-Math.Sign(xDir) * Math.PI / 2, true);
-
-                //var tempB2 = rotateZ.multiply(tempB);
-                backRotateX = rotateX = StarMath.makeIdentity(4);
-            }
-            //If xDir and yDir are negligible, then point B lies along the Z axis
-            //Rotate PI/2*Sign(xDir) on the X axis 
-            else if (xDir.IsNegligible() && yDir.IsNegligible())
-            {
-                backRotateZ = rotateZ = StarMath.makeIdentity(4);
-
-                rotateX = StarMath.RotationX(-Math.Sign(zDir) * Math.PI / 2, true);
-                backRotateX = StarMath.RotationX(Math.Sign(zDir) * Math.PI / 2, true);
-
-                //var tempB2 = rotateX.multiply(tempB);
-            }
-            //Point B lies on the xy plane, X rotation is zero.
-            else if (zDir.IsNegligible())
-            {
-                var rotZAngle = Math.Atan(xDir / yDir);
-                rotateZ = StarMath.RotationZ(rotZAngle, true);
-                backRotateZ = StarMath.RotationZ(-rotZAngle, true);
-
-                backRotateX = rotateX = StarMath.makeIdentity(4);
-            }
-            //Point B lies on the yx plane, Z rotation is zero.
-            else if (xDir.IsNegligible())
-            {
-                backRotateZ = rotateZ = StarMath.makeIdentity(4);
-
-                var rotXAngle = -Math.Atan(zDir / yDir);
-                rotateX = StarMath.RotationX(rotXAngle, true);
-                backRotateX = StarMath.RotationX(-rotXAngle, true);
-
-                //var tempB2 = rotateX.multiply(tempB);
-            }
-            //Point B lies on the xz plane. Z rotation is PI/2 and X rotation is simple.
-            else if (yDir.IsNegligible())
-            {
-                //Rotate on Z to put B in the Positive Y direction
-                rotateZ = StarMath.RotationZ(Math.Sign(xDir) * Math.PI / 2, true);
-                backRotateZ = StarMath.RotationZ(-Math.Sign(xDir) * Math.PI / 2, true);
-
-                //var tempB2 = rotateZ.multiply(tempB);
-
-                var rotXAngle = -Math.Atan(zDir / Math.Abs(xDir));
-                rotateX = StarMath.RotationX(rotXAngle, true);
-                backRotateX = StarMath.RotationX(-rotXAngle, true);
-
-                //var tempB3 = rotateX.multiply(tempB2);
-            }
-            else
-            {
-                //If Sign(yDir) = 1, then B will be rotated toward the positive Y axis, since it is closest.
-                //If = 1-, then it will go to the negative Y axis. 
-                var rotZAngle = Math.Atan(xDir / yDir);
-                rotateZ = StarMath.RotationZ(rotZAngle, true);
-                backRotateZ = StarMath.RotationZ(-rotZAngle, true);
-
-
-                var rotXAngle = -Math.Sign(yDir) * Math.Asin(zDir / originToB);
-                rotateX = StarMath.RotationX(rotXAngle, true);
-                backRotateX = StarMath.RotationX(-rotXAngle, true);
-            }
-
-            //Do the final rotation to put point C on the zy plane. 
-            //First, apply the transformation thus far
-            var tempR = rotateX.multiply(rotateZ);
-            var oldCPosition = new[]
-            {
-                C[0], C[1], C[2], 1.0
-            };
-            var tempC = tempR.multiply(transformMatrix.multiply(oldCPosition));
-            //Then, rotate along the yAxis. 
-            //If C has a negligible Z value, then rotate by Pi/2 
-            if (tempC[2].IsNegligible())
-            {
-                rotateY = StarMath.RotationY(-Math.Sign(tempC[0]) * Math.PI / 2, true);
-                backRotateY = StarMath.RotationY(Math.Sign(tempC[0]) * Math.PI / 2, true);
-            }
-            else
-            {
-                var rotYAngle = -Math.Atan(tempC[0] / tempC[2]); // -arcTan(X/Z)
-                rotateY = StarMath.RotationY(rotYAngle, true);
-                backRotateY = StarMath.RotationY(-rotYAngle, true);
-
-                //var tempC2 = rotateY.multiply(tempC);
-            }
-
-            //Transformation Matrices read from right to left. So first, transform so that point A is at the origin, 
-            //Then rotate Z, X, and lastly Y.
-            var rotationMatrix = rotateY.multiply(rotateX.multiply(rotateZ));
-            RotTransMatrixTo2D = rotationMatrix.multiply(transformMatrix);
-            transformMatrix = StarMath.makeIdentity(4);
-            transformMatrix[0, 3] = A[0];
-            transformMatrix[1, 3] = A[1];
-            transformMatrix[2, 3] = A[2];
-            RotTransMatrixTo3D = transformMatrix.multiply(backRotateZ.multiply(backRotateX.multiply(backRotateY)));
-
-            //ZY plane
-            var oldAPosition = new[]
-            {
-                   A[0], A[1], A[2] , 1.0
-            };
-            var newALocation = RotTransMatrixTo2D.multiply(oldAPosition);
-            //var testA = RotTransMatrixTo3D.multiply(newALocation);
-            if (!newALocation[0].IsNegligible(0.000001) &&
-                !newALocation[1].IsNegligible(0.000001) &&
-                !newALocation[2].IsNegligible(0.000001))
-            {
-                showTrianglesForDebug = true;
-                Debug.WriteLine("Point A should be on the origin");
-            }
-            var aPrime = new Point(newALocation[1], newALocation[2]);
-
-            var oldBPosition = new[]
-            {
-                   B[0], B[1], B[2] , 1.0
-            };
-            var newBLocation = RotTransMatrixTo2D.multiply(oldBPosition);
-            //var testB = RotTransMatrixTo3D.multiply(newBLocation);
-            if (!newBLocation[0].IsNegligible() && !newBLocation[2].IsNegligible(0.000001))
-            {
-                showTrianglesForDebug = true;
-                Debug.WriteLine("Point B should be on the Y axis, and have X = Z = 0");
-            }
-            var bPrime = new Point(newBLocation[1], newBLocation[2]);
-
-            var newCLocation = RotTransMatrixTo2D.multiply(oldCPosition);
-            //var testC = RotTransMatrixTo3D.multiply(newCLocation);
-            if (!newCLocation[0].IsNegligible(0.000001))
-            {
-                showTrianglesForDebug = true;
-                Debug.WriteLine("Point C should be on the YZ plane (X = 0)");
-            }
-            var cPrime = new Point(newCLocation[1], newCLocation[2]);
-
-
-            Triangle2D = new List<double[]>() { newALocation, newBLocation, newCLocation };
-
-
-            //If the 2D version of the new point is inside the new 2D triangle,
-            //Then the distance is simply its X value.
-            Polygon2D = new Polygon(new List<Point>() { aPrime, bPrime, cPrime });
-            //Make sure the polygon is positive, in case it got rotated so that it was backwards.
-            if (!Polygon2D.IsPositive) Polygon2D.Reverse();
-            var oldVertexList = new List<Vertex>() { new Vertex(A), new Vertex(B), new Vertex(C) };
-            //var oldArea = MiscFunctions.AreaOf3DPolygon(oldVertexList, Normal);
-            //if (!Polygon2D.Area.IsPracticallySame(oldArea, 0.1*oldArea)) Debug.WriteLine("Areas do not match");
-            Polygon2D.SetPathLines();
-
-
-            foreach (var line in Polygon2D.PathLines)
-            {
-                var leftHandPerpendicular = new[] { line.dY, -line.dX };
-                var leftHandPerpendicularLines = new List<Line>
-                {
-                    new Line(line.FromPoint, leftHandPerpendicular),
-                    new Line(line.ToPoint, leftHandPerpendicular)
-                };
-                PerpendicularLines.Add(line.IndexInList, leftHandPerpendicularLines);
-            }
-
-            //if (showTrianglesForDebug)
-            //{
-            //    var allPathsOfInterest = new List<List<double[]>> { Triangle2D, new List<double[]> { A, B, C } };
-            //    Presenter.ShowVertexPaths(allPathsOfInterest);
-            //}
-        }
+        #endregion
     }
 }

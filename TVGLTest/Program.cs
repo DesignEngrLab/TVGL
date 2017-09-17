@@ -31,7 +31,7 @@ namespace TVGL_Test
        // "../../../TestFiles/cube.ply",
        // //"../../../TestFiles/airplane.ply",
        // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        //"../../../TestFiles/Tetrahedron.STL",
+        "../../../TestFiles/Tetrahedron.STL",
        // "../../../TestFiles/off_axis_box.STL",
        // "../../../TestFiles/Wedge.STL",
        // "../../../TestFiles/Mic_Holder_SW.stl",

@@ -1751,18 +1751,6 @@ namespace TVGL
             return IsPointInsideTriangle(triangle.Vertices, vertexInQuestion, onBoundaryIsInside);
         }
 
-        public static bool IsPointInsideTriangle(Triangle triangle, Vertex vertexInQuestion,
-         bool onBoundaryIsInside = true)
-        {
-            var p = vertexInQuestion.Position;
-            var a = triangle.A;
-            var b = triangle.B;
-            var c = triangle.C;
-            return SameSide(p, a, b, c, onBoundaryIsInside) && 
-                SameSide(p, b, a, c, onBoundaryIsInside) && 
-                SameSide(p, c, a, b, onBoundaryIsInside);
-        }
-
         /// <summary>
         ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
         ///     triangle are considered "inside."

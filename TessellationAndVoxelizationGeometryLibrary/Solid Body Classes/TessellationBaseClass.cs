@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TVGL.SparseVoxelization;
 
 namespace TVGL
 {
@@ -28,8 +29,14 @@ namespace TVGL
         ///     Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        public double[] Normal { get;internal set; }
+        public double[] Normal { get; internal set; }
+        public List<Voxel> Voxels { get; private set; }
 
+        internal void AddVoxel(Voxel v)
+        {
+            if (Voxels == null) Voxels = new List<Voxel> { v };
+            else if (!Voxels.Contains(v)) Voxels.Add(v);
+        }
 
     }
 }
