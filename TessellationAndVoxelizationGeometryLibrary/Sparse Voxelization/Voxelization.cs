@@ -100,7 +100,7 @@ namespace TVGL.SparseVoxelization
 
             foreach (var face in Solid.Faces)
             {
-                if (noIntermediateVoxels(face)) continue;
+                if (simpleCase(face)) continue;
                 var xLength = Math.Max(Math.Max(Math.Abs(face.A.X - face.B.X), Math.Abs(face.B.X - face.C.X)),
                     Math.Abs(face.C.X - face.A.X));
                 var yLength = Math.Max(Math.Max(Math.Abs(face.A.Y - face.B.Y), Math.Abs(face.B.Y - face.C.Y)),
@@ -127,6 +127,7 @@ namespace TVGL.SparseVoxelization
                 var leftEdge = face.Edges[0];
                 var rightVertex = face.C;
                 var rightEdge = face.Edges[2];
+                var maxSweepValue = (int)Math.Ceiling(Math.Max(vertices[face.B.IndexInList][sweepDim], vertices[face.C.IndexInList][sweepDim]));
                 if (face.B.Position[sweepDim] < face.A.Position[sweepDim])
                 {
                     startVertex = face.B;
@@ -134,6 +135,7 @@ namespace TVGL.SparseVoxelization
                     leftEdge = face.Edges[1];
                     rightVertex = face.A;
                     rightEdge = face.Edges[0];
+                    maxSweepValue = (int)Math.Ceiling(Math.Max(vertices[face.C.IndexInList][sweepDim], vertices[face.A.IndexInList][sweepDim]));
                 }
                 if (face.C.Position[sweepDim] < face.B.Position[sweepDim] &&
                     face.C.Position[sweepDim] < face.A.Position[sweepDim])
@@ -143,27 +145,61 @@ namespace TVGL.SparseVoxelization
                     leftEdge = face.Edges[2];
                     rightVertex = face.B;
                     rightEdge = face.Edges[1];
+                    maxSweepValue = (int)Math.Ceiling(Math.Max(vertices[face.A.IndexInList][sweepDim], vertices[face.B.IndexInList][sweepDim]));
                 }
-                var startPoint = vertices[startVertex.IndexInList];
-                var valueSweepDim = (int)Math.Ceiling(startPoint[sweepDim]);
+                var leftStartPoint = vertices[startVertex.IndexInList];
+                var rightStartPoint = vertices[startVertex.IndexInList];
+                var valueSweepDim = (int)Math.Ceiling(leftStartPoint[sweepDim]);
                 var leftPoint = vertices[leftVertex.IndexInList];
-                double leftCoordD1, leftCoordD2;
-                findWhereLineCrossesPlane(startPoint, leftPoint, sweepDim, valueSweepDim, out leftCoordD1, out leftCoordD2);
-                getIDsIn2DPlane(startPoint[dim1], startPoint[dim2], leftCoordD1, leftCoordD2, valueSweepDim, dim1, dim2, sweepDim, leftEdge);
-                getIDsIn2DPlane(startPoint[dim2], startPoint[dim1], leftCoordD2, leftCoordD1, valueSweepDim, dim2, dim1, sweepDim, leftEdge);
-
                 var rightPoint = vertices[rightVertex.IndexInList];
-                double rightCoordD1, rightCoordD2;
-                findWhereLineCrossesPlane(startPoint, rightPoint, sweepDim, valueSweepDim, out rightCoordD1, out rightCoordD2);
-                getIDsIn2DPlane(startPoint[dim1], startPoint[dim2], rightCoordD1, rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, rightEdge);
-                getIDsIn2DPlane(startPoint[dim2], startPoint[dim1], rightCoordD2, rightCoordD1, valueSweepDim, dim2, dim1, sweepDim, rightEdge);
-
-                getIDsIn2DPlane(leftCoordD1, leftCoordD2, rightCoordD1, rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, face);
-                getIDsIn2DPlane(leftCoordD2, leftCoordD1, rightCoordD2, rightCoordD1, valueSweepDim, dim2, dim1, sweepDim, face);
+                while (valueSweepDim <= maxSweepValue)
+                {
+                    double leftCoordD1, leftCoordD2;
+                    var reachedOtherVertex = findWhereLineCrossesPlane(leftStartPoint, leftPoint, sweepDim, valueSweepDim, out leftCoordD1,
+                           out leftCoordD2);
+                    makeVoxelsAlongLineInPlane(leftStartPoint[dim1], leftStartPoint[dim2], leftCoordD1, leftCoordD2, valueSweepDim,
+                        dim1, dim2, sweepDim, leftEdge);
+                    makeVoxelsAlongLineInPlane(leftStartPoint[dim2], leftStartPoint[dim1], leftCoordD2, leftCoordD1, valueSweepDim,
+                        dim2, dim1, sweepDim, leftEdge);
+                    if (reachedOtherVertex)
+                    {
+                        leftStartPoint = leftPoint;
+                        leftPoint = rightPoint;
+                    }
+                    else
+                    {
+                        leftStartPoint[dim1] = leftCoordD1;
+                        leftStartPoint[dim2] = leftCoordD2;
+                        leftStartPoint[sweepDim] = valueSweepDim;
+                    }
+                    double rightCoordD1, rightCoordD2;
+                    reachedOtherVertex = findWhereLineCrossesPlane(rightStartPoint, rightPoint, sweepDim, valueSweepDim, out rightCoordD1,
+                        out rightCoordD2);
+                    makeVoxelsAlongLineInPlane(rightStartPoint[dim1], rightStartPoint[dim2], rightCoordD1, rightCoordD2,
+                        valueSweepDim, dim1, dim2, sweepDim, rightEdge);
+                    makeVoxelsAlongLineInPlane(rightStartPoint[dim2], rightStartPoint[dim1], rightCoordD2, rightCoordD1,
+                        valueSweepDim, dim2, dim1, sweepDim, rightEdge);
+                    if (reachedOtherVertex)
+                    {
+                        rightStartPoint = rightPoint;
+                        rightPoint = leftPoint;
+                    }
+                    else
+                    {
+                        rightStartPoint[dim1] = rightCoordD1;
+                        rightStartPoint[dim2] = rightCoordD2;
+                        rightStartPoint[sweepDim] = valueSweepDim;
+                    }
+                    makeVoxelsAlongLineInPlane(leftCoordD1, leftCoordD2, rightCoordD1, rightCoordD2, valueSweepDim, dim1, dim2,
+                        sweepDim, face);
+                    makeVoxelsAlongLineInPlane(leftCoordD2, leftCoordD1, rightCoordD2, rightCoordD1, valueSweepDim, dim2, dim1,
+                        sweepDim, face);
+                    valueSweepDim++;
+                }
             }
         }
 
-        private bool noIntermediateVoxels(PolygonalFace face)
+        private bool simpleCase(PolygonalFace face)
         {
             if (face.A.Voxels[0] == face.B.Voxels[0] && face.A.Voxels[0] == face.C.Voxels[0])
             {
@@ -173,18 +209,64 @@ namespace TVGL.SparseVoxelization
                     edge.AddVoxel(voxel);
                 return true;
             }
-            /*
-            else if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] && face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
-                     face.A.Voxel.Index[1] == face.B.Voxel.Index[1] && face.A.Voxel.Index[1] == face.C.Voxel.Index[1] &&
-                     face.A.Voxel.Index[2] == face.B.Voxel.Index[2] && face.A.Voxel.Index[2] == face.C.Voxel.Index[2])
+            if (face.A.Voxels[0].Index[0] == face.B.Voxels[0].Index[0] &&
+                     face.A.Voxels[0].Index[0] == face.C.Voxels[0].Index[0] &&
+                     face.A.Voxels[0].Index[1] == face.B.Voxels[0].Index[1] &&
+                     face.A.Voxels[0].Index[1] == face.C.Voxels[0].Index[1])
             {
-
+                makeVoxelsForFaceInCardinalLine(face, 2);
+                return true;
             }
-            */
+            if (face.A.Voxels[0].Index[0] == face.B.Voxels[0].Index[0] &&
+                     face.A.Voxels[0].Index[0] == face.C.Voxels[0].Index[0] &&
+                     face.A.Voxels[0].Index[2] == face.B.Voxels[0].Index[2] &&
+                     face.A.Voxels[0].Index[2] == face.C.Voxels[0].Index[2])
+            {
+                makeVoxelsForFaceInCardinalLine(face, 1);
+                return true;
+            }
+            if (face.A.Voxels[0].Index[2] == face.B.Voxels[0].Index[2] &&
+                     face.A.Voxels[0].Index[2] == face.C.Voxels[0].Index[2] &&
+                     face.A.Voxels[0].Index[1] == face.B.Voxels[0].Index[1] &&
+                     face.A.Voxels[0].Index[1] == face.C.Voxels[0].Index[1])
+            {
+                makeVoxelsForFaceInCardinalLine(face, 0);
+                return true;
+            }
             return false;
         }
 
-        private void getIDsIn2DPlane(double startX, double startY, double endX, double endY, int valueSweepDim,
+        private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim)
+        {
+            var minIndex = int.MaxValue;
+            var maxIndex = int.MinValue;
+            var voxelIndex = (int[])face.A.Voxels[0].Index.Clone();
+            foreach (var faceEdge in face.Edges)
+            {
+                var lowVIndex = faceEdge.From.Voxels[0].Index[dim];
+                var highVIndex = faceEdge.To.Voxels[0].Index[dim];
+                if (highVIndex < lowVIndex)
+                {
+                    var temp = highVIndex;
+                    highVIndex = lowVIndex;
+                    lowVIndex = temp;
+                }
+                if (minIndex > lowVIndex) minIndex = lowVIndex;
+                if (maxIndex < highVIndex) maxIndex = highVIndex;
+                for (int i = lowVIndex; i <= highVIndex; i++)
+                {
+                    voxelIndex[dim] = i;
+                    storeVoxel(voxelIndex, faceEdge);
+                }
+            }
+            for (int i = minIndex; i <= maxIndex; i++)
+            {
+                voxelIndex[dim] = i;
+                storeVoxel(voxelIndex, face);
+            }
+        }
+
+        private void makeVoxelsAlongLineInPlane(double startX, double startY, double endX, double endY, int valueSweepDim,
             int xDim, int yDim, int sweepDim, TessellationBaseClass tsObject)
         {
             var xRange = endX - startX;
@@ -229,19 +311,20 @@ namespace TVGL.SparseVoxelization
             tsObject.AddVoxel(voxel);
         }
 
-        private void findWhereLineCrossesPlane(double[] startPoint, double[] endPoint, int sweepDim, double valueSweepDim, out double valueD1, out double valueD2)
+        private bool findWhereLineCrossesPlane(double[] startPoint, double[] endPoint, int sweepDim, double valueSweepDim, out double valueD1, out double valueD2)
         {
             if (endPoint[sweepDim] < valueSweepDim || endPoint[sweepDim].IsPracticallySame(startPoint[sweepDim]))
             {
                 valueD1 = endPoint[(sweepDim + 1) % 3];
                 valueD2 = endPoint[(sweepDim + 2) % 3];
-                return;
+                return true;
             }
             var fraction = (valueSweepDim - startPoint[sweepDim]) / (endPoint[sweepDim] - startPoint[sweepDim]);
             var dim = (sweepDim + 1) % 3;
             valueD1 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
             dim = (dim + 1) % 3;
             valueD2 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
+            return false;
         }
         #region Indexing Functions
         private void SetUpIndexingParameters(int numberOfVoxelsAlongMaxDirection)
