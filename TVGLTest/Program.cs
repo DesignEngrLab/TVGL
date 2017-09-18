@@ -52,7 +52,7 @@ namespace TVGL_Test
         //"../../../TestFiles/Square_Support.STL",
         //"../../../TestFiles/Aerospace_Beam.STL",
         //"../../../TestFiles/Rook.amf",
-        "../../../TestFiles/bunny.ply",
+       // "../../../TestFiles/bunny.ply",
 
        // "../../../TestFiles/piston.stl",
        // "../../../TestFiles/Z682.stl",
@@ -98,13 +98,13 @@ namespace TVGL_Test
                 //using (fileStream = File.OpenRead(filename))
                 //    ts = IO.Open(fileStream, filename);
 
-                
+
                 //TestPolygon(ts[0]);
                 //TestSegmentation(ts[0]);
                 //Presenter.ShowAndHang(ts);
                 TestVoxelization(ts[0]);
                 //TestOctreeVoxelization(ts[0]);
-            
+
                 //TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
@@ -117,9 +117,10 @@ namespace TVGL_Test
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var voxels = new VoxelSpace();
-
+            double[,] backtransform;
+            //ts = ts.SetToOriginAndSquareTesselatedSolid(out backtransform);
             var startTime = DateTime.Now;
-            voxels.VoxelizeSolid(ts, 300);
+            voxels.VoxelizeSolid(ts, 10);
             var totalTime = DateTime.Now - startTime;
             Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
 
@@ -135,7 +136,7 @@ namespace TVGL_Test
             const int maxLevel = 6;
             var octree = new VoxelizingOctree(maxLevel);
             octree.GenerateOctree(ts);
-            Presenter.ShowVoxelization(ts, octree, maxLevel-1, CellStatus.Intersecting);
+            Presenter.ShowVoxelization(ts, octree, maxLevel - 1, CellStatus.Intersecting);
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
@@ -155,7 +156,7 @@ namespace TVGL_Test
             {
                 Dictionary<int, double> stepDistances;
                 Dictionary<int, double> sortedVertexDistanceLookup;
-                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, 
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
                     stepSize, out stepDistances, out sortedVertexDistanceLookup);
                 //foreach (var segment in segments)
                 //{
@@ -214,7 +215,7 @@ namespace TVGL_Test
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL.Silhouette.Run(ts, new[] {0.5, 0.0, 0.5});
+            var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
             Presenter.ShowAndHang(silhouette);
         }
 

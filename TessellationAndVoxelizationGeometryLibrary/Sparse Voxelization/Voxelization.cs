@@ -93,11 +93,12 @@ namespace TVGL.SparseVoxelization
                 //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
                 //this coordinate. 
                 var ijk = new[]
-                { (int) Math.Round(coord[0]),(int) Math.Round(coord[1]),(int) Math.Round(coord[2]) };
+                { (int) Math.Round(coord[0],MidpointRounding.AwayFromZero),
+                    (int) Math.Round(coord[1],MidpointRounding.AwayFromZero),
+                    (int) Math.Round(coord[2],MidpointRounding.AwayFromZero) };
                 storeVoxel(ijk, vertex);
                 vertices[i] = coord;
             }
-
             foreach (var face in Solid.Faces)
             {
                 if (simpleCase(face)) continue;
@@ -147,24 +148,34 @@ namespace TVGL.SparseVoxelization
                     rightEdge = face.Edges[1];
                     maxSweepValue = (int)Math.Ceiling(Math.Max(vertices[face.A.IndexInList][sweepDim], vertices[face.B.IndexInList][sweepDim]));
                 }
-                var leftStartPoint = vertices[startVertex.IndexInList];
-                var rightStartPoint = vertices[startVertex.IndexInList];
+                var leftStartPoint = (double[])vertices[startVertex.IndexInList].Clone();
+                var rightStartPoint = (double[])leftStartPoint.Clone();
                 var valueSweepDim = (int)Math.Ceiling(leftStartPoint[sweepDim]);
-                var leftPoint = vertices[leftVertex.IndexInList];
-                var rightPoint = vertices[rightVertex.IndexInList];
+                var leftEndPoint = vertices[leftVertex.IndexInList];
+                var rightEndPoint = vertices[rightVertex.IndexInList];
+                var voxelizeLeft = leftEdge.Voxels == null || !leftEdge.Voxels.Any();
+                var voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                 while (valueSweepDim <= maxSweepValue)
                 {
                     double leftCoordD1, leftCoordD2;
-                    var reachedOtherVertex = findWhereLineCrossesPlane(leftStartPoint, leftPoint, sweepDim, valueSweepDim, out leftCoordD1,
-                           out leftCoordD2);
-                    makeVoxelsAlongLineInPlane(leftStartPoint[dim1], leftStartPoint[dim2], leftCoordD1, leftCoordD2, valueSweepDim,
-                        dim1, dim2, sweepDim, leftEdge);
-                    makeVoxelsAlongLineInPlane(leftStartPoint[dim2], leftStartPoint[dim1], leftCoordD2, leftCoordD1, valueSweepDim,
-                        dim2, dim1, sweepDim, leftEdge);
+                    var reachedOtherVertex = findWhereLineCrossesPlane(leftStartPoint, leftEndPoint, sweepDim,
+                        valueSweepDim, out leftCoordD1,
+                        out leftCoordD2);
+                    if (voxelizeLeft)
+                    {
+                        makeVoxelsAlongLineInPlane(leftStartPoint[dim1], leftStartPoint[dim2], leftCoordD1, leftCoordD2,
+                            valueSweepDim,
+                            dim1, dim2, sweepDim, leftEdge);
+                        makeVoxelsAlongLineInPlane(leftStartPoint[dim2], leftStartPoint[dim1], leftCoordD2, leftCoordD1,
+                            valueSweepDim,
+                            dim2, dim1, sweepDim, leftEdge);
+                    }
                     if (reachedOtherVertex)
                     {
-                        leftStartPoint = leftPoint;
-                        leftPoint = rightPoint;
+                        leftStartPoint = (double[])leftEndPoint.Clone();
+                        leftEndPoint = rightEndPoint;
+                        leftEdge = face.OtherEdge(startVertex);
+                        voxelizeLeft = leftEdge.Voxels == null || !leftEdge.Voxels.Any();
                     }
                     else
                     {
@@ -173,16 +184,22 @@ namespace TVGL.SparseVoxelization
                         leftStartPoint[sweepDim] = valueSweepDim;
                     }
                     double rightCoordD1, rightCoordD2;
-                    reachedOtherVertex = findWhereLineCrossesPlane(rightStartPoint, rightPoint, sweepDim, valueSweepDim, out rightCoordD1,
+                    reachedOtherVertex = findWhereLineCrossesPlane(rightStartPoint, rightEndPoint, sweepDim, valueSweepDim,
+                        out rightCoordD1,
                         out rightCoordD2);
-                    makeVoxelsAlongLineInPlane(rightStartPoint[dim1], rightStartPoint[dim2], rightCoordD1, rightCoordD2,
-                        valueSweepDim, dim1, dim2, sweepDim, rightEdge);
-                    makeVoxelsAlongLineInPlane(rightStartPoint[dim2], rightStartPoint[dim1], rightCoordD2, rightCoordD1,
-                        valueSweepDim, dim2, dim1, sweepDim, rightEdge);
+                    if (voxelizeRight)
+                    {
+                        makeVoxelsAlongLineInPlane(rightStartPoint[dim1], rightStartPoint[dim2], rightCoordD1,
+                           rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, rightEdge);
+                        makeVoxelsAlongLineInPlane(rightStartPoint[dim2], rightStartPoint[dim1], rightCoordD2, rightCoordD1,
+                            valueSweepDim, dim2, dim1, sweepDim, rightEdge);
+                    }
                     if (reachedOtherVertex)
                     {
-                        rightStartPoint = rightPoint;
-                        rightPoint = leftPoint;
+                        rightStartPoint = (double[])rightEndPoint.Clone();
+                        rightEndPoint = leftEndPoint;
+                        rightEdge = face.OtherEdge(startVertex);
+                        voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                     }
                     else
                     {
@@ -196,6 +213,8 @@ namespace TVGL.SparseVoxelization
                         sweepDim, face);
                     valueSweepDim++;
                 }
+                //break;
+                    Presenter.ShowVoxelization(ts, this);
             }
         }
 
@@ -277,18 +296,18 @@ namespace TVGL.SparseVoxelization
             var ijk = new int[3];
             do
             {
-                nextX += increment;
-                var x = Math.Round(nextX);
-                var y = (int)((yRange * (x - startX) / xRange) + startY);
-                if (y <= endY)
+                var x = (int)Math.Round(nextX, MidpointRounding.AwayFromZero);
+                var y = (int)Math.Round(yRange * (x - startX) / xRange + startY, MidpointRounding.AwayFromZero);
+                if (increment * y <= increment * Math.Round(endY, MidpointRounding.AwayFromZero))
                 {
-                    ijk[xDim] = (int)x;
+                    ijk[xDim] = x;
                     ijk[yDim] = y;
                     ijk[sweepDim] = valueSweepDim;
                     storeVoxel(ijk, tsObject);
                 }
                 else return;
-            } while (increment * nextX < increment * endX);
+                nextX += increment;
+            } while (increment * nextX <= increment * Math.Round(endX,MidpointRounding.AwayFromZero));
         }
 
         private void storeVoxel(int[] ijk, TessellationBaseClass tsObject)
@@ -313,7 +332,7 @@ namespace TVGL.SparseVoxelization
 
         private bool findWhereLineCrossesPlane(double[] startPoint, double[] endPoint, int sweepDim, double valueSweepDim, out double valueD1, out double valueD2)
         {
-            if (endPoint[sweepDim] < valueSweepDim || endPoint[sweepDim].IsPracticallySame(startPoint[sweepDim]))
+            if (endPoint[sweepDim] <= valueSweepDim)
             {
                 valueD1 = endPoint[(sweepDim + 1) % 3];
                 valueD2 = endPoint[(sweepDim + 2) % 3];
