@@ -30,13 +30,9 @@ namespace TVGL
         /// </summary>
         /// <value>The normal.</value>
         public double[] Normal { get; internal set; }
-        public List<Voxel> Voxels { get; private set; }
 
-        internal void AddVoxel(Voxel v)
-        {
-            if (Voxels == null) Voxels = new List<Voxel> { v };
-            else if (!Voxels.Contains(v)) Voxels.Add(v);
-        }
+        internal abstract void AddVoxel(Voxel v);
+
 
     }
 }

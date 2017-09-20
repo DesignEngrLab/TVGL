@@ -17,42 +17,42 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        //"../../../TestFiles/ABF.ply",
-       // "../../../TestFiles/Beam_Boss.STL",
-       // //"../../../TestFiles/bigmotor.amf",
-       // //"../../../TestFiles/DxTopLevelPart2.shell",
-       // //"../../../TestFiles/Candy.shell",
-       // //"../../../TestFiles/amf_Cube.amf",
-       // //"../../../TestFiles/train.3mf",
-       // //"../../../TestFiles/Castle.3mf",
-       // //"../../../TestFiles/Raspberry Pi Case.3mf",
-       ////"../../../TestFiles/shark.ply",
-     // "../../../TestFiles/bunnySmall.ply",
-       // "../../../TestFiles/cube.ply",
-       // //"../../../TestFiles/airplane.ply",
-       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
+        "../../../TestFiles/ABF.ply",
+        "../../../TestFiles/Beam_Boss.STL",
+        //"../../../TestFiles/bigmotor.amf",
+        //"../../../TestFiles/DxTopLevelPart2.shell",
+        //"../../../TestFiles/Candy.shell",
+        //"../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/train.3mf",
+        //"../../../TestFiles/Castle.3mf",
+        //"../../../TestFiles/Raspberry Pi Case.3mf",
+       //"../../../TestFiles/shark.ply",
+       //"../../../TestFiles/bunnySmall.ply",
+        "../../../TestFiles/cube.ply",
+        //"../../../TestFiles/airplane.ply",
+        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
         "../../../TestFiles/Tetrahedron.STL",
-       // "../../../TestFiles/off_axis_box.STL",
-       // "../../../TestFiles/Wedge.STL",
-       // "../../../TestFiles/Mic_Holder_SW.stl",
-       // "../../../TestFiles/Mic_Holder_JR.stl",
-       // "../../../TestFiles/3_bananas.amf",
-       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-       // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-        //"../../../TestFiles/hdodec.off",
-        //"../../../TestFiles/tref.off",
-        //"../../../TestFiles/mushroom.off",
-        //"../../../TestFiles/vertcube.off",
-        //"../../../TestFiles/trapezoid.4d.off",
-        //"../../../TestFiles/ABF.STL",
-        //"../../../TestFiles/Pump-1repair.STL",
-        //"../../../TestFiles/Pump-1.STL",
-        //"../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
-        //"../../../TestFiles/Beam_Clean.STL",
-        //"../../../TestFiles/Square_Support.STL",
-        //"../../../TestFiles/Aerospace_Beam.STL",
-        //"../../../TestFiles/Rook.amf",
-       // "../../../TestFiles/bunny.ply",
+        "../../../TestFiles/off_axis_box.STL",
+        "../../../TestFiles/Wedge.STL",
+        "../../../TestFiles/Mic_Holder_SW.stl",
+        "../../../TestFiles/Mic_Holder_JR.stl",
+        "../../../TestFiles/3_bananas.amf",
+        "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+        "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+        "../../../TestFiles/hdodec.off",
+        "../../../TestFiles/tref.off",
+        "../../../TestFiles/mushroom.off",
+        "../../../TestFiles/vertcube.off",
+        "../../../TestFiles/trapezoid.4d.off",
+        "../../../TestFiles/ABF.STL",
+        "../../../TestFiles/Pump-1repair.STL",
+        "../../../TestFiles/Pump-1.STL",
+        "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
+        "../../../TestFiles/Beam_Clean.STL",
+        "../../../TestFiles/Square_Support.STL",
+        "../../../TestFiles/Aerospace_Beam.STL",
+        "../../../TestFiles/Rook.amf",
+        "../../../TestFiles/bunny.ply",
 
        // "../../../TestFiles/piston.stl",
        // "../../../TestFiles/Z682.stl",
@@ -84,9 +84,9 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < FileNames.Count(); i++)
+            for (var i = 0; i < fileNames.Count(); i++)
             {
-                var filename = FileNames[i];//.FullName;
+                var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
@@ -109,7 +109,7 @@ namespace TVGL_Test
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
 
-            Console.WriteLine("Completed.");
+          //  Console.WriteLine("Completed.");
             //  Console.ReadKey();
         }
 
@@ -117,14 +117,12 @@ namespace TVGL_Test
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var voxels = new VoxelSpace();
-            double[,] backtransform;
-            //ts = ts.SetToOriginAndSquareTesselatedSolid(out backtransform);
             var startTime = DateTime.Now;
-            voxels.VoxelizeSolid(ts, 10);
+            voxels.VoxelizeSolid(ts, 300);
             var totalTime = DateTime.Now - startTime;
             Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
 
-            Presenter.ShowVoxelization(ts, voxels);
+           // Presenter.ShowVoxelization(ts, voxels);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)

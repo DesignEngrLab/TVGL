@@ -151,5 +151,10 @@ namespace TVGL
         public int ReferenceIndex { get; set; }
 
         #endregion
+        public Voxel Voxel { get; private set; }
+        internal override void AddVoxel(Voxel v)
+        {
+            Voxel = v;
+        }
     }
 }

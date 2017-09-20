@@ -21,20 +21,23 @@ namespace TVGL.SparseVoxelization
 
         public Voxel(int[] index, long ID, double voxelLength, TessellationBaseClass tessellationObject = null)
         {
+            Index = index;
+            this.ID = ID;
+            var minX = Index[0] * voxelLength;
+            var minY = Index[1] * voxelLength;
+            var minZ = Index[2] * voxelLength;
             var halfLength = voxelLength / 2;
             TessellationElements = new List<TessellationBaseClass>();
             if (tessellationObject != null) TessellationElements.Add(tessellationObject);
-            Index = index;
-            this.ID = ID;
-            Center = new[] { Index[0] * voxelLength, Index[1] * voxelLength, Index[2] * voxelLength };
+            Center = new[] { minX + halfLength, minY + halfLength, minZ + halfLength };
             Bounds = new AABB
             {
-                MinX = Center[0] - halfLength,
-                MinY = Center[1] - halfLength,
-                MinZ = Center[2] - halfLength,
-                MaxX = Center[0] + halfLength,
-                MaxY = Center[1] + halfLength,
-                MaxZ = Center[2] + halfLength
+                MinX = minX,
+                MinY = minY,
+                MinZ = minZ,
+                MaxX = minX + voxelLength,
+                MaxY = minY + voxelLength,
+                MaxZ = minZ + voxelLength
             };
         }
     }
@@ -93,9 +96,7 @@ namespace TVGL.SparseVoxelization
                 //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
                 //this coordinate. 
                 var ijk = new[]
-                { (int) Math.Round(coord[0],MidpointRounding.AwayFromZero),
-                    (int) Math.Round(coord[1],MidpointRounding.AwayFromZero),
-                    (int) Math.Round(coord[2],MidpointRounding.AwayFromZero) };
+                { (int) Math.Floor(coord[0]), (int) Math.Floor(coord[1]), (int) Math.Floor(coord[2]) };
                 storeVoxel(ijk, vertex);
                 vertices[i] = coord;
             }
@@ -159,16 +160,13 @@ namespace TVGL.SparseVoxelization
                 {
                     double leftCoordD1, leftCoordD2;
                     var reachedOtherVertex = findWhereLineCrossesPlane(leftStartPoint, leftEndPoint, sweepDim,
-                        valueSweepDim, out leftCoordD1,
-                        out leftCoordD2);
+                        valueSweepDim, out leftCoordD1, out leftCoordD2);
                     if (voxelizeLeft)
                     {
                         makeVoxelsAlongLineInPlane(leftStartPoint[dim1], leftStartPoint[dim2], leftCoordD1, leftCoordD2,
-                            valueSweepDim,
-                            dim1, dim2, sweepDim, leftEdge);
+                            valueSweepDim, dim1, dim2, sweepDim, leftEdge);
                         makeVoxelsAlongLineInPlane(leftStartPoint[dim2], leftStartPoint[dim1], leftCoordD2, leftCoordD1,
-                            valueSweepDim,
-                            dim2, dim1, sweepDim, leftEdge);
+                            valueSweepDim, dim2, dim1, sweepDim, leftEdge);
                     }
                     if (reachedOtherVertex)
                     {
@@ -176,6 +174,19 @@ namespace TVGL.SparseVoxelization
                         leftEndPoint = rightEndPoint;
                         leftEdge = face.OtherEdge(startVertex);
                         voxelizeLeft = leftEdge.Voxels == null || !leftEdge.Voxels.Any();
+
+                        findWhereLineCrossesPlane(leftStartPoint, leftEndPoint, sweepDim,
+                            valueSweepDim, out leftCoordD1, out leftCoordD2);
+                        if (voxelizeLeft)
+                        {
+                            makeVoxelsAlongLineInPlane(leftStartPoint[dim1], leftStartPoint[dim2], leftCoordD1, leftCoordD2,
+                                valueSweepDim, dim1, dim2, sweepDim, leftEdge);
+                            makeVoxelsAlongLineInPlane(leftStartPoint[dim2], leftStartPoint[dim1], leftCoordD2, leftCoordD1,
+                               valueSweepDim, dim2, dim1, sweepDim, leftEdge);
+                        }
+                        leftStartPoint[dim1] = leftCoordD1;
+                        leftStartPoint[dim2] = leftCoordD2;
+                        leftStartPoint[sweepDim] = valueSweepDim;
                     }
                     else
                     {
@@ -185,8 +196,7 @@ namespace TVGL.SparseVoxelization
                     }
                     double rightCoordD1, rightCoordD2;
                     reachedOtherVertex = findWhereLineCrossesPlane(rightStartPoint, rightEndPoint, sweepDim, valueSweepDim,
-                        out rightCoordD1,
-                        out rightCoordD2);
+                        out rightCoordD1, out rightCoordD2);
                     if (voxelizeRight)
                     {
                         makeVoxelsAlongLineInPlane(rightStartPoint[dim1], rightStartPoint[dim2], rightCoordD1,
@@ -200,6 +210,19 @@ namespace TVGL.SparseVoxelization
                         rightEndPoint = leftEndPoint;
                         rightEdge = face.OtherEdge(startVertex);
                         voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
+
+                        findWhereLineCrossesPlane(rightStartPoint, rightEndPoint, sweepDim, valueSweepDim,
+                            out rightCoordD1, out rightCoordD2);
+                        if (voxelizeRight)
+                        {
+                            makeVoxelsAlongLineInPlane(rightStartPoint[dim1], rightStartPoint[dim2], rightCoordD1,
+                                rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, rightEdge);
+                            makeVoxelsAlongLineInPlane(rightStartPoint[dim2], rightStartPoint[dim1], rightCoordD2, rightCoordD1,
+                                valueSweepDim, dim2, dim1, sweepDim, rightEdge);
+                        }
+                        rightStartPoint[dim1] = rightCoordD1;
+                        rightStartPoint[dim2] = rightCoordD2;
+                        rightStartPoint[sweepDim] = valueSweepDim;
                     }
                     else
                     {
@@ -213,41 +236,39 @@ namespace TVGL.SparseVoxelization
                         sweepDim, face);
                     valueSweepDim++;
                 }
-                //break;
-                    Presenter.ShowVoxelization(ts, this);
             }
         }
 
         private bool simpleCase(PolygonalFace face)
         {
-            if (face.A.Voxels[0] == face.B.Voxels[0] && face.A.Voxels[0] == face.C.Voxels[0])
+            if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
             {
-                var voxel = face.A.Voxels[0];
+                var voxel = face.A.Voxel;
                 face.AddVoxel(voxel);
                 foreach (var edge in face.Edges)
                     edge.AddVoxel(voxel);
                 return true;
             }
-            if (face.A.Voxels[0].Index[0] == face.B.Voxels[0].Index[0] &&
-                     face.A.Voxels[0].Index[0] == face.C.Voxels[0].Index[0] &&
-                     face.A.Voxels[0].Index[1] == face.B.Voxels[0].Index[1] &&
-                     face.A.Voxels[0].Index[1] == face.C.Voxels[0].Index[1])
+            if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
+                     face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
+                     face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
+                     face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
             {
                 makeVoxelsForFaceInCardinalLine(face, 2);
                 return true;
             }
-            if (face.A.Voxels[0].Index[0] == face.B.Voxels[0].Index[0] &&
-                     face.A.Voxels[0].Index[0] == face.C.Voxels[0].Index[0] &&
-                     face.A.Voxels[0].Index[2] == face.B.Voxels[0].Index[2] &&
-                     face.A.Voxels[0].Index[2] == face.C.Voxels[0].Index[2])
+            if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
+                     face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
+                     face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
+                     face.A.Voxel.Index[2] == face.C.Voxel.Index[2])
             {
                 makeVoxelsForFaceInCardinalLine(face, 1);
                 return true;
             }
-            if (face.A.Voxels[0].Index[2] == face.B.Voxels[0].Index[2] &&
-                     face.A.Voxels[0].Index[2] == face.C.Voxels[0].Index[2] &&
-                     face.A.Voxels[0].Index[1] == face.B.Voxels[0].Index[1] &&
-                     face.A.Voxels[0].Index[1] == face.C.Voxels[0].Index[1])
+            if (face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
+                     face.A.Voxel.Index[2] == face.C.Voxel.Index[2] &&
+                     face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
+                     face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
             {
                 makeVoxelsForFaceInCardinalLine(face, 0);
                 return true;
@@ -259,11 +280,11 @@ namespace TVGL.SparseVoxelization
         {
             var minIndex = int.MaxValue;
             var maxIndex = int.MinValue;
-            var voxelIndex = (int[])face.A.Voxels[0].Index.Clone();
+            var voxelIndex = (int[])face.A.Voxel.Index.Clone();
             foreach (var faceEdge in face.Edges)
             {
-                var lowVIndex = faceEdge.From.Voxels[0].Index[dim];
-                var highVIndex = faceEdge.To.Voxels[0].Index[dim];
+                var lowVIndex = faceEdge.From.Voxel.Index[dim];
+                var highVIndex = faceEdge.To.Voxel.Index[dim];
                 if (highVIndex < lowVIndex)
                 {
                     var temp = highVIndex;
@@ -288,26 +309,32 @@ namespace TVGL.SparseVoxelization
         private void makeVoxelsAlongLineInPlane(double startX, double startY, double endX, double endY, int valueSweepDim,
             int xDim, int yDim, int sweepDim, TessellationBaseClass tsObject)
         {
-            var xRange = endX - startX;
-            if (Math.Abs(xRange) < 0.5) return; //then there are not crossings
-            var yRange = endY - startY;
-            var increment = Math.Sign(xRange);
-            var nextX = startX;
             var ijk = new int[3];
-            do
+            var x = (int)Math.Floor(startX);
+            ijk[xDim] = x;
+            var y = (int)Math.Floor(startY);
+            ijk[yDim] = y;
+            ijk[sweepDim] = valueSweepDim - 1;
+            storeVoxel(ijk, tsObject);
+            var xRange = endX - startX;
+            if (xRange.IsNegligible()) return;
+            var yRange = endY - startY;
+            var incrementX = Math.Sign(xRange);
+            if (incrementX > 0) x++;
+            while (incrementX * x < incrementX * endX)
             {
-                var x = (int)Math.Round(nextX, MidpointRounding.AwayFromZero);
-                var y = (int)Math.Round(yRange * (x - startX) / xRange + startY, MidpointRounding.AwayFromZero);
-                if (increment * y <= increment * Math.Round(endY, MidpointRounding.AwayFromZero))
+                ijk[xDim] = x - (incrementX < 0 ? 1 : 0);
+                var yDouble = yRange * (x - startX) / xRange + startY;
+                y = (int)Math.Floor(yDouble);
+                ijk[yDim] = y;
+                storeVoxel(ijk, tsObject);
+                if (yDouble.IsPracticallySame(y))
                 {
-                    ijk[xDim] = x;
-                    ijk[yDim] = y;
-                    ijk[sweepDim] = valueSweepDim;
+                    ijk[yDim] = y - 1;
                     storeVoxel(ijk, tsObject);
                 }
-                else return;
-                nextX += increment;
-            } while (increment * nextX <= increment * Math.Round(endX,MidpointRounding.AwayFromZero));
+                x += incrementX;
+            }
         }
 
         private void storeVoxel(int[] ijk, TessellationBaseClass tsObject)
@@ -326,6 +353,7 @@ namespace TVGL.SparseVoxelization
                 VoxelIDHashSet.Add(voxelID);
                 voxel = new Voxel(ijk, voxelID, voxelLength, tsObject);
                 Voxels.Add(voxelID, voxel);
+                //if (VoxelIDHashSet.Count % 1000 == 0) Console.WriteLine(VoxelIDHashSet.Count);
             }
             tsObject.AddVoxel(voxel);
         }
