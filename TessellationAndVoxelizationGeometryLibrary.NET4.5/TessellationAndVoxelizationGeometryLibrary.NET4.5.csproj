@@ -273,7 +273,7 @@
       <HintPath>..\packages\MIConvexHull.1.1.17.0412\lib\portable-net45+win8\MIConvexHull.NET4.5.dll</HintPath>
     </Reference>
     <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net45+wp8+win8\StarMath.dll</HintPath>
+      <HintPath>..\packages\StarMath.2.0.17.0413\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
