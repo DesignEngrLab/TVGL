@@ -42,7 +42,7 @@ namespace TVGL.SparseVoxelization
         }
     }
 
-    public class VoxelSpace
+    public partial class VoxelSpace
     {
         public TessellatedSolid Solid;
         public HashSet<long> VoxelIDHashSet;

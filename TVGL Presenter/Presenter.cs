@@ -912,7 +912,7 @@ namespace TVGL
             window.view1.Children.Add(model);
             
             var lines = new List<Point3D>();
-            foreach (var voxel in voxelSpace.Voxels.Values)
+            foreach (var voxel in voxelSpace.Voxels.Values) ;
             {
                  lines.AddRange(DrawVoxel(voxel));
             }
