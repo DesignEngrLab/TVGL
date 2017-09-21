@@ -109,20 +109,27 @@ namespace TVGL_Test
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
 
-          //  Console.WriteLine("Completed.");
-            //  Console.ReadKey();
+            Console.WriteLine("Completed.");
+            Console.ReadKey();
         }
 
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var voxels = new VoxelSpace();
+            var voxSpace1 = new VoxelSpace();
             var startTime = DateTime.Now;
-            voxels.VoxelizeSolid(ts, 300);
+            voxSpace1.VoxelizeSolid(ts, 100);
             var totalTime = DateTime.Now - startTime;
-            Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
+            Console.WriteLine("MC method: {0} milliseconds and {1} voxels.", totalTime.TotalMilliseconds, voxSpace1.Voxels.Count);
+            // Presenter.ShowVoxelization(ts, voxSpace1);
+            var voxSpace2 = new VoxelSpace();
+            ts.Transform(new[,] { { 1.0, 0, 0, -0.5 }, { 0.0, 1.0, 0, -0.5 }, { 0.0, 0, 1.0, -0.5 }, { 0, 0, 0, 1 } });
+            startTime = DateTime.Now;
+            voxSpace2.VoxelizeSolidBrute(ts, 100);
+            totalTime = DateTime.Now - startTime;
+            Console.WriteLine("Distance method: {0} milliseconds and {1} voxels.\n\n", totalTime.TotalMilliseconds, voxSpace2.Voxels.Count);
 
-           // Presenter.ShowVoxelization(ts, voxels);
+           //  Presenter.ShowVoxelization(ts, voxSpace2);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)

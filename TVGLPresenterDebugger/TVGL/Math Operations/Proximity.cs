@@ -13,6 +13,16 @@ namespace TVGL.MathOperations
     /// </summary>
     public class Proximity
     {
+
+        /// <summary>
+        /// Finds the closest vertex (3D Point) on a triangle to the given vertex (p).
+        /// </summary>
+        public static double[] ClosestVertexOnTriangleToVertex(Triangle t, double[] p)
+        {
+            double[] uvw;
+            return ClosestVertexOnTriangleToVertex(t.A, t.B, t.C, p, out uvw);
+        }
+
         /// <summary>
         /// Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (p).
         /// It may be one of the three given points (a,b,c), a point on the edge, 

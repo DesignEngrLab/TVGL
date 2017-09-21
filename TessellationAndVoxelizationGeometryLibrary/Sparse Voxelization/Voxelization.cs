@@ -34,11 +34,14 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         /// <param name="solid"></param>
         /// <param name="numberOfVoxelsAlongMaxDirection"></param>
-        public void VoxelizeSolidBrute(TessellatedSolid solid, int numberOfVoxelsAlongMaxDirection = 100)
+        public void VoxelizeSolidBrute(TessellatedSolid ts, int numberOfVoxelsAlongMaxDirection = 100)
         {
-            Solid = solid;
+            Solid = ts;
             SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
-            foreach (var face in solid.Faces)
+            Voxels = new Dictionary<long, Voxel>(); //todo:approximate capacity based on tessellated volume
+            VoxelIDHashSet = new HashSet<long>();
+            FacesIntersectingVoxels = new Dictionary<long, HashSet<int>>();
+            foreach (var face in Solid.Faces)
             {
                 //Create a triangle, which is a simple and light version of the face class. 
                 //It is required because we need to scale all the vertices/faces.
@@ -48,7 +51,7 @@ namespace TVGL.SparseVoxelization
 
             //Make all the voxels
             Voxels = new Dictionary<long, Voxel>();
-            foreach (var uniqueCoordIndex in IntersectingVoxels)
+            foreach (var uniqueCoordIndex in VoxelIDHashSet)
             {
                 Voxels.Add(uniqueCoordIndex, new Voxel(VoxelIDToIndices(uniqueCoordIndex), uniqueCoordIndex, voxelLength, null));
             }
@@ -135,7 +138,7 @@ namespace TVGL.SparseVoxelization
                 && (int)Math.Round(closestPoint[2]) == ijk[2])
             {
                 //Since IntersectingVoxels is a hashset, it will not add a duplicate voxel.
-                IntersectingVoxels.Add(voxelIndex);
+                VoxelIDHashSet.Add(voxelIndex);
                 AddFaceVoxelIntersection(voxelIndex, prim.ID);
                 return true;
             }
@@ -146,12 +149,10 @@ namespace TVGL.SparseVoxelization
         /// Stores the faces that intersect a voxel, using the face index, which is the same
         /// as the the Triangle.ID.  
         /// </summary>                                          
-        public readonly Dictionary<long, HashSet<int>> FacesIntersectingVoxels;
-        public long XM;
-        public long YM;
-        public long SMM;
-
-        public HashSet<long> IntersectingVoxels;
+        public Dictionary<long, HashSet<int>> FacesIntersectingVoxels;
+        //public long XM;
+        //public long YM;
+        //public long SMM;
 
         /// <summary>
         /// Adds a voxel / face intersection to the dictionary of intersections
