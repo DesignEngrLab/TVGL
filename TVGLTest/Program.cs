@@ -17,8 +17,11 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-       // "../../../TestFiles/ABF.ply",
-       // "../../../TestFiles/Beam_Boss.STL",
+            //"../../../TestFiles/Binary.stl",
+            // "../../../TestFiles/ABF.ply",
+            // "../../../TestFiles/Beam_Boss.STL",
+             "../../../TestFiles/Beam_Clean.STL",
+
         //"../../../TestFiles/bigmotor.amf",
         //"../../../TestFiles/DxTopLevelPart2.shell",
         //"../../../TestFiles/Candy.shell",
@@ -33,8 +36,8 @@ namespace TVGL_Test
         //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
        // "../../../TestFiles/Tetrahedron.STL",
         //"../../../TestFiles/off_axis_box.STL",
-        "../../../TestFiles/Wedge.STL",
-        //"../../../TestFiles/Mic_Holder_SW.stl",
+       //    "../../../TestFiles/Wedge.STL",
+        "../../../TestFiles/Mic_Holder_SW.stl",
         //"../../../TestFiles/Mic_Holder_JR.stl",
         //"../../../TestFiles/3_bananas.amf",
         //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
@@ -118,20 +121,18 @@ namespace TVGL_Test
         {
             var voxSpace1 = new VoxelSpace();
             var startTime = DateTime.Now;
-           // ts.Transform(new[,] { { 1.0, 0, 0, 0.345 }, { 0.0, 1.0, 0, 0.345 }, { 0.0, 0, 1.0, 0.345 }, { 0, 0, 0, 1 } });
-           ts.Faces[4].Color = new Color(KnownColors.AliceBlue);
-            ts.HasUniformColor = false;
-            voxSpace1.VoxelizeSolid(ts, 5, false);
+            // ts.Transform(new[,] { { 1.0, 0, 0, 0.345 }, { 0.0, 1.0, 0, 0.345 }, { 0.0, 0, 1.0, 0.345 }, { 0, 0, 0, 1 } });
+            voxSpace1.VoxelizeSolid(ts, 300, false);
             var totalTime1 = DateTime.Now - startTime;
-             Console.WriteLine("MC method: {0} milliseconds and {1} voxels.", totalTime1.TotalMilliseconds, voxSpace1.Voxels.Count);
-            Presenter.ShowAndHangVoxelization(ts, voxSpace1);
+            //  Console.WriteLine("MC method: {0} milliseconds and {1} voxels.", totalTime1.TotalMilliseconds, voxSpace1.Voxels.Count);
+            //Presenter.ShowAndHangVoxelization(ts, voxSpace1);
             var voxSpace2 = new VoxelSpace();
             var ts2 = ts;
             // var ts2 = ts.TransformToGetNewSolid(new[,] { { 1.0, 0, 0, 0.25 }, { 0.0, 1.0, 0, 0.25 }, { 0.0, 0, 1.0, 0.25 }, { 0, 0, 0, 1 } });
             startTime = DateTime.Now;
-            voxSpace2.VoxelizeSolidBrute(ts2, 5);
+            voxSpace2.VoxelizeSolidBrute(ts2, 300);
             var totalTime2 = DateTime.Now - startTime;
-             Console.WriteLine("Distance method: {0} milliseconds and {1} voxels.\n\n", totalTime1.TotalMilliseconds, voxSpace2.Voxels.Count);
+            // Console.WriteLine("Distance method: {0} milliseconds and {1} voxels.\n\n", totalTime1.TotalMilliseconds, voxSpace2.Voxels.Count);
             int counter1 = 0;
             foreach (var key in voxSpace1.VoxelIDHashSet)
             {
@@ -141,7 +142,7 @@ namespace TVGL_Test
                 }
                 else counter1++;
             }
-           // Presenter.ShowAndHangVoxelization(ts, voxSpace1);
+            //Presenter.ShowAndHangVoxelization(ts, voxSpace1);
             var counter2 = 0;
             foreach (var key in voxSpace2.VoxelIDHashSet)
             {

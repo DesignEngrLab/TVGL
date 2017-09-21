@@ -162,16 +162,21 @@ namespace TVGL.SparseVoxelization
                 var voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                 while (valueSweepDim <= maxSweepValue)
                 {
-                    //Presenter.ShowAndHangVoxelization(Solid,this);
+
+                    makeVoxelsAlongLineInPlane(leftStartPoint[dim1], leftStartPoint[dim2], rightStartPoint[dim1], rightStartPoint[dim2], valueSweepDim, dim1, dim2,
+                        sweepDim, LinkToTessellatedSolid ? face : null);
+                    makeVoxelsAlongLineInPlane(leftStartPoint[dim2], leftStartPoint[dim1], rightStartPoint[dim2], rightStartPoint[dim1], valueSweepDim, dim2, dim1,
+                        sweepDim, LinkToTessellatedSolid ? face : null);
+
                     double leftCoordD1, leftCoordD2;
                     var reachedOtherVertex = findWhereLineCrossesPlane(leftStartPoint, leftEndPoint, sweepDim,
                         valueSweepDim, out leftCoordD1, out leftCoordD2);
                     if (voxelizeLeft)
                     {
                         makeVoxelsAlongLineInPlane(leftStartPoint[dim1], leftStartPoint[dim2], leftCoordD1, leftCoordD2,
-                            valueSweepDim, dim1, dim2, sweepDim, leftEdge);
+                            valueSweepDim, dim1, dim2, sweepDim, LinkToTessellatedSolid ? leftEdge : null);
                         makeVoxelsAlongLineInPlane(leftStartPoint[dim2], leftStartPoint[dim1], leftCoordD2, leftCoordD1,
-                            valueSweepDim, dim2, dim1, sweepDim, leftEdge);
+                            valueSweepDim, dim2, dim1, sweepDim, LinkToTessellatedSolid ? leftEdge : null);
                     }
                     if (reachedOtherVertex)
                     {
@@ -185,9 +190,9 @@ namespace TVGL.SparseVoxelization
                         if (voxelizeLeft)
                         {
                             makeVoxelsAlongLineInPlane(leftStartPoint[dim1], leftStartPoint[dim2], leftCoordD1, leftCoordD2,
-                                valueSweepDim, dim1, dim2, sweepDim, leftEdge);
+                                valueSweepDim, dim1, dim2, sweepDim, LinkToTessellatedSolid ? leftEdge : null);
                             makeVoxelsAlongLineInPlane(leftStartPoint[dim2], leftStartPoint[dim1], leftCoordD2, leftCoordD1,
-                               valueSweepDim, dim2, dim1, sweepDim, leftEdge);
+                               valueSweepDim, dim2, dim1, sweepDim, LinkToTessellatedSolid ? leftEdge : null);
                         }
                         leftStartPoint[dim1] = leftCoordD1;
                         leftStartPoint[dim2] = leftCoordD2;
@@ -205,9 +210,9 @@ namespace TVGL.SparseVoxelization
                     if (voxelizeRight)
                     {
                         makeVoxelsAlongLineInPlane(rightStartPoint[dim1], rightStartPoint[dim2], rightCoordD1,
-                           rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, rightEdge);
+                           rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, LinkToTessellatedSolid ? rightEdge : null);
                         makeVoxelsAlongLineInPlane(rightStartPoint[dim2], rightStartPoint[dim1], rightCoordD2, rightCoordD1,
-                            valueSweepDim, dim2, dim1, sweepDim, rightEdge);
+                            valueSweepDim, dim2, dim1, sweepDim, LinkToTessellatedSolid ? rightEdge : null);
                     }
                     if (reachedOtherVertex)
                     {
@@ -221,9 +226,9 @@ namespace TVGL.SparseVoxelization
                         if (voxelizeRight)
                         {
                             makeVoxelsAlongLineInPlane(rightStartPoint[dim1], rightStartPoint[dim2], rightCoordD1,
-                                rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, rightEdge);
+                                rightCoordD2, valueSweepDim, dim1, dim2, sweepDim, LinkToTessellatedSolid ? rightEdge : null);
                             makeVoxelsAlongLineInPlane(rightStartPoint[dim2], rightStartPoint[dim1], rightCoordD2, rightCoordD1,
-                                valueSweepDim, dim2, dim1, sweepDim, rightEdge);
+                                valueSweepDim, dim2, dim1, sweepDim, LinkToTessellatedSolid ? rightEdge : null);
                         }
                         rightStartPoint[dim1] = rightCoordD1;
                         rightStartPoint[dim2] = rightCoordD2;
@@ -236,9 +241,9 @@ namespace TVGL.SparseVoxelization
                         rightStartPoint[sweepDim] = valueSweepDim;
                     }
                     makeVoxelsAlongLineInPlane(leftCoordD1, leftCoordD2, rightCoordD1, rightCoordD2, valueSweepDim, dim1, dim2,
-                        sweepDim, face);
+                        sweepDim, LinkToTessellatedSolid ? face : null);
                     makeVoxelsAlongLineInPlane(leftCoordD2, leftCoordD1, rightCoordD2, rightCoordD1, valueSweepDim, dim2, dim1,
-                        sweepDim, face);
+                        sweepDim, LinkToTessellatedSolid ? face : null);
                     valueSweepDim++;
                 }
             }
