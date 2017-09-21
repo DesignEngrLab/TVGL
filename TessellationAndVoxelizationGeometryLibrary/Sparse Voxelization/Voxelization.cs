@@ -117,7 +117,7 @@ namespace TVGL.SparseVoxelization
         private bool IsTriangleIntersectingVoxel(int[] ijk, Triangle prim)
         {
             //Voxel center is simply converting the integers to doubles.
-            var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2] };
+            var voxelCenter = new [] { ijk[0] + 0.5, ijk[1] + 0.5, ijk[2] + 0.5 };
             var voxelIndex = IndicesToVoxelID(ijk);
 
             //This assumes each voxel has a size of 1x1x1 and is in an integer grid.
@@ -133,9 +133,9 @@ namespace TVGL.SparseVoxelization
             //   !closestPoint[2].IsPracticallySame(closestPointMethod2[2], 0.001))
             //    throw new Exception("Methods do not match");
 
-            if ((int)Math.Round(closestPoint[0]) == ijk[0]
-                && (int)Math.Round(closestPoint[1]) == ijk[1]
-                && (int)Math.Round(closestPoint[2]) == ijk[2])
+            if ((int)Math.Floor(closestPoint[0]) == ijk[0]
+                && (int)Math.Floor(closestPoint[1]) == ijk[1]
+                && (int)Math.Floor(closestPoint[2]) == ijk[2])
             {
                 //Since IntersectingVoxels is a hashset, it will not add a duplicate voxel.
                 VoxelIDHashSet.Add(voxelIndex);

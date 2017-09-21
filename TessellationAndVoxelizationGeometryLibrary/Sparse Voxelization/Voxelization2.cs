@@ -27,8 +27,11 @@ namespace TVGL.SparseVoxelization
             var minY = Index[1] * voxelLength;
             var minZ = Index[2] * voxelLength;
             var halfLength = voxelLength / 2;
-            TessellationElements = new List<TessellationBaseClass>();
-            if (tessellationObject != null) TessellationElements.Add(tessellationObject);
+            if (tessellationObject != null)
+            {
+                TessellationElements = new List<TessellationBaseClass>();
+                TessellationElements.Add(tessellationObject);
+            }
             Center = new[] { minX + halfLength, minY + halfLength, minZ + halfLength };
             Bounds = new AABB
             {
@@ -81,7 +84,8 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="numberOfVoxelsAlongMaxDirection"></param>
-        public void VoxelizeSolid(TessellatedSolid ts, int numberOfVoxelsAlongMaxDirection = 100)
+        public void VoxelizeSolid(TessellatedSolid ts, int numberOfVoxelsAlongMaxDirection = 100,
+            bool LinkToTessellatedSolid = true)
         {
             Solid = ts;
             SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
@@ -102,7 +106,7 @@ namespace TVGL.SparseVoxelization
             }
             foreach (var face in Solid.Faces)
             {
-                if (simpleCase(face)) continue;
+                if (simpleCase(face, LinkToTessellatedSolid)) continue;
                 var xLength = Math.Max(Math.Max(Math.Abs(face.A.X - face.B.X), Math.Abs(face.B.X - face.C.X)),
                     Math.Abs(face.C.X - face.A.X));
                 var yLength = Math.Max(Math.Max(Math.Abs(face.A.Y - face.B.Y), Math.Abs(face.B.Y - face.C.Y)),
@@ -158,6 +162,7 @@ namespace TVGL.SparseVoxelization
                 var voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                 while (valueSweepDim <= maxSweepValue)
                 {
+                    //Presenter.ShowAndHangVoxelization(Solid,this);
                     double leftCoordD1, leftCoordD2;
                     var reachedOtherVertex = findWhereLineCrossesPlane(leftStartPoint, leftEndPoint, sweepDim,
                         valueSweepDim, out leftCoordD1, out leftCoordD2);
@@ -239,14 +244,24 @@ namespace TVGL.SparseVoxelization
             }
         }
 
-        private bool simpleCase(PolygonalFace face)
+        /// <summary>
+        /// If it is a simple case, just solve it and return true.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="linkToTessellatedSolid"></param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool simpleCase(PolygonalFace face, bool linkToTessellatedSolid)
         {
+            // The first simple case is that all vertices are within the same voxel. 
             if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
             {
-                var voxel = face.A.Voxel;
-                face.AddVoxel(voxel);
-                foreach (var edge in face.Edges)
-                    edge.AddVoxel(voxel);
+                if (linkToTessellatedSolid)
+                {
+                    var voxel = face.A.Voxel;
+                    face.AddVoxel(voxel);
+                    foreach (var edge in face.Edges)
+                        edge.AddVoxel(voxel);
+                }
                 return true;
             }
             if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
@@ -254,7 +269,11 @@ namespace TVGL.SparseVoxelization
                      face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
                      face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
             {
-                makeVoxelsForFaceInCardinalLine(face, 2);
+
+                if (linkToTessellatedSolid)
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 2);
+                }
                 return true;
             }
             if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
@@ -262,7 +281,11 @@ namespace TVGL.SparseVoxelization
                      face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
                      face.A.Voxel.Index[2] == face.C.Voxel.Index[2])
             {
-                makeVoxelsForFaceInCardinalLine(face, 1);
+
+                if (linkToTessellatedSolid)
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 1);
+                }
                 return true;
             }
             if (face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
@@ -270,7 +293,11 @@ namespace TVGL.SparseVoxelization
                      face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
                      face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
             {
-                makeVoxelsForFaceInCardinalLine(face, 0);
+
+                if (linkToTessellatedSolid)
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 0);
+                }
                 return true;
             }
             return false;
@@ -341,6 +368,16 @@ namespace TVGL.SparseVoxelization
         {
             var voxelID = IndicesToVoxelID(ijk);
             Voxel voxel;
+            if (tsObject == null)
+            {
+                if (!VoxelIDHashSet.Contains(voxelID))
+                {
+                    VoxelIDHashSet.Add(voxelID);
+                    voxel = new Voxel(ijk, voxelID, voxelLength, null);
+                    Voxels.Add(voxelID, voxel);
+                }
+                return;
+            }
             if (VoxelIDHashSet.Contains(voxelID))
             {
                 voxel = Voxels[voxelID];
@@ -353,7 +390,6 @@ namespace TVGL.SparseVoxelization
                 VoxelIDHashSet.Add(voxelID);
                 voxel = new Voxel(ijk, voxelID, voxelLength, tsObject);
                 Voxels.Add(voxelID, voxel);
-                //if (VoxelIDHashSet.Count % 1000 == 0) Console.WriteLine(VoxelIDHashSet.Count);
             }
             tsObject.AddVoxel(voxel);
         }

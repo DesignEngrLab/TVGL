@@ -17,8 +17,8 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        "../../../TestFiles/ABF.ply",
-        "../../../TestFiles/Beam_Boss.STL",
+       // "../../../TestFiles/ABF.ply",
+       // "../../../TestFiles/Beam_Boss.STL",
         //"../../../TestFiles/bigmotor.amf",
         //"../../../TestFiles/DxTopLevelPart2.shell",
         //"../../../TestFiles/Candy.shell",
@@ -28,31 +28,31 @@ namespace TVGL_Test
         //"../../../TestFiles/Raspberry Pi Case.3mf",
        //"../../../TestFiles/shark.ply",
        //"../../../TestFiles/bunnySmall.ply",
-        "../../../TestFiles/cube.ply",
+       // "../../../TestFiles/cube.ply",
         //"../../../TestFiles/airplane.ply",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        "../../../TestFiles/Tetrahedron.STL",
-        "../../../TestFiles/off_axis_box.STL",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
+       // "../../../TestFiles/Tetrahedron.STL",
+        //"../../../TestFiles/off_axis_box.STL",
         "../../../TestFiles/Wedge.STL",
-        "../../../TestFiles/Mic_Holder_SW.stl",
-        "../../../TestFiles/Mic_Holder_JR.stl",
-        "../../../TestFiles/3_bananas.amf",
-        "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-        "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-        "../../../TestFiles/hdodec.off",
-        "../../../TestFiles/tref.off",
-        "../../../TestFiles/mushroom.off",
-        "../../../TestFiles/vertcube.off",
-        "../../../TestFiles/trapezoid.4d.off",
-        "../../../TestFiles/ABF.STL",
-        "../../../TestFiles/Pump-1repair.STL",
-        "../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
-        "../../../TestFiles/Beam_Clean.STL",
-        "../../../TestFiles/Square_Support.STL",
-        "../../../TestFiles/Aerospace_Beam.STL",
-        "../../../TestFiles/Rook.amf",
-        "../../../TestFiles/bunny.ply",
+        //"../../../TestFiles/Mic_Holder_SW.stl",
+        //"../../../TestFiles/Mic_Holder_JR.stl",
+        //"../../../TestFiles/3_bananas.amf",
+        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+        //"../../../TestFiles/hdodec.off",
+        //"../../../TestFiles/tref.off",
+        //"../../../TestFiles/mushroom.off",
+        //"../../../TestFiles/vertcube.off",
+        //"../../../TestFiles/trapezoid.4d.off",
+        //"../../../TestFiles/ABF.STL",
+        //"../../../TestFiles/Pump-1repair.STL",
+        //"../../../TestFiles/Pump-1.STL",
+        //"../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
+        //"../../../TestFiles/Beam_Clean.STL",
+        //"../../../TestFiles/Square_Support.STL",
+        //"../../../TestFiles/Aerospace_Beam.STL",
+        //"../../../TestFiles/Rook.amf",
+        //"../../../TestFiles/bunny.ply",
 
        // "../../../TestFiles/piston.stl",
        // "../../../TestFiles/Z682.stl",
@@ -84,10 +84,10 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < fileNames.Count(); i++)
+            for (var i = 0; i < FileNames.Count(); i++)
             {
-                var filename = fileNames[i].FullName;
-                Console.WriteLine("Attempting: " + filename);
+                var filename = FileNames[i];//.FullName;
+                // Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
@@ -118,18 +118,43 @@ namespace TVGL_Test
         {
             var voxSpace1 = new VoxelSpace();
             var startTime = DateTime.Now;
-            voxSpace1.VoxelizeSolid(ts, 100);
-            var totalTime = DateTime.Now - startTime;
-            Console.WriteLine("MC method: {0} milliseconds and {1} voxels.", totalTime.TotalMilliseconds, voxSpace1.Voxels.Count);
-            // Presenter.ShowVoxelization(ts, voxSpace1);
+           // ts.Transform(new[,] { { 1.0, 0, 0, 0.345 }, { 0.0, 1.0, 0, 0.345 }, { 0.0, 0, 1.0, 0.345 }, { 0, 0, 0, 1 } });
+           ts.Faces[4].Color = new Color(KnownColors.AliceBlue);
+            ts.HasUniformColor = false;
+            voxSpace1.VoxelizeSolid(ts, 5, false);
+            var totalTime1 = DateTime.Now - startTime;
+             Console.WriteLine("MC method: {0} milliseconds and {1} voxels.", totalTime1.TotalMilliseconds, voxSpace1.Voxels.Count);
+            Presenter.ShowAndHangVoxelization(ts, voxSpace1);
             var voxSpace2 = new VoxelSpace();
-            ts.Transform(new[,] { { 1.0, 0, 0, -0.5 }, { 0.0, 1.0, 0, -0.5 }, { 0.0, 0, 1.0, -0.5 }, { 0, 0, 0, 1 } });
+            var ts2 = ts;
+            // var ts2 = ts.TransformToGetNewSolid(new[,] { { 1.0, 0, 0, 0.25 }, { 0.0, 1.0, 0, 0.25 }, { 0.0, 0, 1.0, 0.25 }, { 0, 0, 0, 1 } });
             startTime = DateTime.Now;
-            voxSpace2.VoxelizeSolidBrute(ts, 100);
-            totalTime = DateTime.Now - startTime;
-            Console.WriteLine("Distance method: {0} milliseconds and {1} voxels.\n\n", totalTime.TotalMilliseconds, voxSpace2.Voxels.Count);
-
-           //  Presenter.ShowVoxelization(ts, voxSpace2);
+            voxSpace2.VoxelizeSolidBrute(ts2, 5);
+            var totalTime2 = DateTime.Now - startTime;
+             Console.WriteLine("Distance method: {0} milliseconds and {1} voxels.\n\n", totalTime1.TotalMilliseconds, voxSpace2.Voxels.Count);
+            int counter1 = 0;
+            foreach (var key in voxSpace1.VoxelIDHashSet)
+            {
+                if (voxSpace2.VoxelIDHashSet.Contains(key))
+                {
+                    voxSpace1.Voxels.Remove(key);
+                }
+                else counter1++;
+            }
+           // Presenter.ShowAndHangVoxelization(ts, voxSpace1);
+            var counter2 = 0;
+            foreach (var key in voxSpace2.VoxelIDHashSet)
+            {
+                if (voxSpace1.VoxelIDHashSet.Contains(key))
+                {
+                    voxSpace2.Voxels.Remove(key);
+                }
+                else counter2++;
+            }
+            Presenter.ShowAndHangVoxelization(ts2, voxSpace2);
+            Console.WriteLine("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}", ts.FileName, ts.NumberOfVertices, totalTime1.TotalMilliseconds, totalTime2.TotalMilliseconds,
+                voxSpace1.VoxelIDHashSet.Count,
+                voxSpace2.VoxelIDHashSet.Count, counter1, counter2);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)
