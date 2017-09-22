@@ -33,10 +33,10 @@ namespace TVGL_Test
        // "../../../TestFiles/cube.ply",
         //"../../../TestFiles/airplane.ply",
         //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        "../../../TestFiles/Tetrahedron.STL",
+       // "../../../TestFiles/Tetrahedron.STL",
         //"../../../TestFiles/off_axis_box.STL",
-       //    "../../../TestFiles/Wedge.STL",
-        "../../../TestFiles/Mic_Holder_SW.stl",
+           "../../../TestFiles/Wedge.STL",
+        //"../../../TestFiles/Mic_Holder_SW.stl",
         //"../../../TestFiles/Mic_Holder_JR.stl",
         //"../../../TestFiles/3_bananas.amf",
         //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
@@ -86,9 +86,9 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < FileNames.Count(); i++)
+            for (var i = 0; i < 3; i++) //fileNames.Count(); i++)
             {
-                var filename = FileNames[i];//.FullName;
+                var filename = fileNames[i].FullName;
                 // Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
@@ -112,17 +112,18 @@ namespace TVGL_Test
             }
 
             Console.WriteLine("Completed.");
-            Console.ReadKey();
+           // Console.ReadKey();
         }
 
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var startTime = DateTime.Now;
-            // ts.Transform(new[,] { { 1.0, 0, 0, 0.345 }, { 0.0, 1.0, 0, 0.345 }, { 0.0, 0, 1.0, 0.345 }, { 0, 0, 0, 1 } });
-            var voxSpace1 = new VoxelizedSolid(ts, 10, false);
+            var voxSpace1 = new VoxelizedSolid(ts, 300, true);
             var totalTime1 = DateTime.Now - startTime;
-            Console.WriteLine("MC method: {0} milliseconds and {1} voxels.", totalTime1.TotalMilliseconds, voxSpace1.Voxels.Count);
+            Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
+                totalTime1.TotalMilliseconds,
+                voxSpace1.VoxelIDHashSet.Count);
             Presenter.ShowAndHangVoxelization(ts, voxSpace1);
         }
 

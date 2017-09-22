@@ -144,7 +144,8 @@ namespace TVGL.Voxelization
                 var voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                 while (sweepValue <= maxSweepValue) // this is the sweep along the face
                 {
-                    // first fill in any voxels for face betwen the start points. Why do this here?! These 2 lines of code  were
+                    // Presenter.ShowAndHangVoxelization(tessellatedSolid,this);
+                    // first fill in any voxels for face between the start points. Why do this here?! These 2 lines of code  were
                     // the last added. There are cases (not in the first loop, mind you) where it is necessary. Note this happens again
                     // at the bottom of the while-loop for the same sweep value
                     makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
@@ -153,11 +154,10 @@ namespace TVGL.Voxelization
                         sweepDim, linkToTessellatedSolid ? face : null);
                     // now two big calls for the edges: one for the left edge and one for the right. by the way, the naming of left and right are 
                     // completely arbitrary here. They are not indicative of any real position.
-                    voxelizeLeft = makeVoxelsForEdgeWithinSweep(leftStartPoint, leftEndPoint, sweepValue, sweepDim, uDim, vDim, linkToTessellatedSolid, voxelizeLeft,
-                        leftEdge, face, rightEndPoint, startVertex);
-                    voxelizeRight = makeVoxelsForEdgeWithinSweep(rightStartPoint, rightEndPoint, sweepValue, sweepDim,
-                        uDim, vDim, linkToTessellatedSolid, voxelizeRight,
-                        rightEdge, face, leftEndPoint, startVertex);
+                    voxelizeLeft = makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue, sweepDim, uDim, vDim, linkToTessellatedSolid,
+                        voxelizeLeft, leftEdge, face, rightEndPoint, startVertex);
+                    voxelizeRight = makeVoxelsForEdgeWithinSweep(ref rightStartPoint, ref rightEndPoint, sweepValue, sweepDim, uDim, vDim, linkToTessellatedSolid,
+                        voxelizeRight, rightEdge, face, leftEndPoint, startVertex);
                     // now that the end points of the edges have moved, fill in more of the faces.
                     makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
                         sweepDim, linkToTessellatedSolid ? face : null);
@@ -247,7 +247,7 @@ namespace TVGL.Voxelization
         /// <param name="nextEndPoint">The next end point.</param>
         /// <param name="startVertex">The start vertex.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool makeVoxelsForEdgeWithinSweep(double[] startPoint, double[] endPoint, int sweepValue, int sweepDim, int uDim, int vDim,
+        private bool makeVoxelsForEdgeWithinSweep(ref double[] startPoint, ref double[] endPoint, int sweepValue, int sweepDim, int uDim, int vDim,
             bool linkToTessellatedSolid, bool voxelize, Edge edge, PolygonalFace face, double[] nextEndPoint, Vertex startVertex)
         {
             double u, v;
@@ -317,19 +317,45 @@ namespace TVGL.Voxelization
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private bool simpleCase(PolygonalFace face, bool linkToTessellatedSolid)
         {
+            if (!linkToTessellatedSolid)
+            {
+                var aIndices = vertices[face.A.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+                var aID = IndicesToVoxelID(aIndices);
+                var bIndices = vertices[face.B.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+                var bID = IndicesToVoxelID(bIndices);
+                var cIndices = vertices[face.C.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+                var cID = IndicesToVoxelID(cIndices);
+                if (aID == bID && aID == cID) return true;
+                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
+                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 2, false);
+                    return true;
+                }
+                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
+                    aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2])
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 1, false);
+                    return true;
+                }
+                if (aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2] &&
+                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 0, false);
+                    return true;
+                }
+                return false;
+            }
             // The first simple case is that all vertices are within the same voxel. 
             if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
             {
-                if (linkToTessellatedSolid)
-                {
-                    var voxel = face.A.Voxel;
-                    face.AddVoxel(voxel);
-                    foreach (var edge in face.Edges)
-                        edge.AddVoxel(voxel);
-                }
+                var voxel = face.A.Voxel;
+                face.AddVoxel(voxel);
+                foreach (var edge in face.Edges)
+                    edge.AddVoxel(voxel);
                 return true;
             }
-            // the second, third, and fourth simple cases are if the trinangle
+            // the second, third, and fourth simple cases are if the triangle
             // fits within a line of voxels.
             // this condition checks that all voxels have same x & y values (hence aligned in z-direction)
             if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
@@ -337,7 +363,7 @@ namespace TVGL.Voxelization
                      face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
                      face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
             {
-                makeVoxelsForFaceInCardinalLine(face, 2, linkToTessellatedSolid);
+                makeVoxelsForFaceInCardinalLine(face, 2, true);
                 return true;
             }
             // this condition checks that all voxels have same x & z values (hence aligned in y-direction)
@@ -346,7 +372,7 @@ namespace TVGL.Voxelization
                      face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
                      face.A.Voxel.Index[2] == face.C.Voxel.Index[2])
             {
-                makeVoxelsForFaceInCardinalLine(face, 1, linkToTessellatedSolid);
+                makeVoxelsForFaceInCardinalLine(face, 1, true);
                 return true;
             }
             // this condition checks that all voxels have same y & z values (hence aligned in x-direction)
@@ -355,7 +381,7 @@ namespace TVGL.Voxelization
                      face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
                      face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
             {
-                makeVoxelsForFaceInCardinalLine(face, 0, linkToTessellatedSolid);
+                makeVoxelsForFaceInCardinalLine(face, 0, true);
                 return true;
             }
             return false;
