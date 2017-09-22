@@ -81,12 +81,164 @@ namespace TVGL.SparseVoxelization
 
     public class VoxelSpace
     {
-        public TessellatedSolid Solid;
+        #region Properties
+        /// <summary>
+        /// Gets tessellated solid that this voxelized solid was built from.
+        /// </summary>
+        public TessellatedSolid tessellatedSolid { get; private set; }
+        /// <summary>
+        /// Gets the voxel identifier hash set.
+        /// </summary>
+        /// <value>The voxel identifier hash set.</value>
+        public HashSet<long> VoxelIDHashSet { get; private set; }
+
+
+        /// <summary>
+        /// The voxels are stored as a dictionary - accessible by their voxelID.
+        /// </summary>
+        public Dictionary<long, Voxel> Voxels { get; private set; }
+
+        /// <summary>
+        /// Gets the scale to integer space.
+        /// </summary>
+        /// <value>The scale to int space.</value>
+        public double ScaleToIntSpace { get; private set; }
+        #endregion
+
+        #region Private Fields
+        /// <summary>
+        /// The x identifier multiplier
+        /// </summary>
+        long xIDMultiplier;
+        /// <summary>
+        /// The y identifier multiplier
+        /// </summary>
+        long yIDMultiplier;
+
+        /// <summary>
+        /// The sign identifier multiplier
+        /// </summary>
+        long signIDMultiplier;
+
+        /// <summary>
+        /// The voxel side length. It's a square, so all sides are the same length.
+        /// </summary>
+        double voxelSideLength;
+
+        /// <summary>
+        /// The transformed array of vertex coordinates. These correspond in position to the vertices
+        /// in the linked tessellated solid.
+        /// </summary>
+        private readonly double[][] vertices;
+        #endregion
+
+        #region Indexing Functions
+        /// <summary>
+        /// Sets up indexing parameters.
+        /// </summary>
+        /// <param name="numberOfVoxelsAlongMaxDirection">The number of voxels along maximum direction.</param>
+        /// <exception cref="System.Exception">Int64 will not work for a voxel space this large, using the current index setup</exception>
+        private void SetUpIndexingParameters(int numberOfVoxelsAlongMaxDirection)
+        {
+            var dx = tessellatedSolid.XMax - tessellatedSolid.XMin;
+            var dy = tessellatedSolid.YMax - tessellatedSolid.YMin;
+            var dz = tessellatedSolid.ZMax - tessellatedSolid.ZMin;
+            var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
+            voxelSideLength = maxDim / numberOfVoxelsAlongMaxDirection;
+            ScaleToIntSpace = 1 / voxelSideLength;
+            //To get a unique integer value for each voxel based on its index, 
+            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
+            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
+            //3000000 + 345000 + 12 = 3345012 => 3|345|012
+            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            //-X = 1, -Y = 3, -Z = 5; //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
+            //OpenVDB does this more compactly with binaries, using the &, <<, and >> functions to 
+            //manipulate the X,Y,Z values to store them. Their function is called "coordToOffset" and is 
+            //in the LeafNode.h file around lines 1050-1070. I could not understand this.
+            yIDMultiplier = (long)Math.Pow(10, Math.Ceiling(Math.Log10(maxDim * ScaleToIntSpace)) + 1);
+            var maxInt = Math.Pow(long.MaxValue, 1.0 / 3);
+            if (yIDMultiplier * 10 > maxInt)
+                throw new Exception("Int64 will not work for a voxel space this large, using the current index setup");
+            xIDMultiplier = yIDMultiplier * yIDMultiplier;
+            signIDMultiplier = xIDMultiplier * yIDMultiplier; //Sign Magnitude Multiplier
+        }
+
+        /// <summary>
+        /// Indiceses to voxel identifier.
+        /// </summary>
+        /// <param name="ijk">The ijk.</param>
+        /// <returns>System.Int64.</returns>
+        public long IndicesToVoxelID(int[] ijk)
+        {
+            //To get a unique integer value for each voxel based on its index, 
+            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
+            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
+            //3000000 + 345000 + 12 = 3345012 => 3|345|012
+            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            //-X = 1, -Y = 3, -Z = 5;
+            //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
+            // 4 = (-X-Y+Z); 6 = (-X+Y-Z);  8 = (+X-Y-Z);  9 = (-X-Y-Z)
+            var signValue = 0;
+            if (Math.Sign(ijk[0]) < 0) signValue += 1;
+            if (Math.Sign(ijk[1]) < 0) signValue += 3;
+            if (Math.Sign(ijk[2]) < 0) signValue += 5;
+            return signIDMultiplier * signValue + Math.Abs(ijk[0]) * xIDMultiplier + Math.Abs(ijk[1]) * yIDMultiplier + Math.Abs(ijk[2]);
+        }
+
+        /// <summary>
+        /// Voxels the identifier to indices.
+        /// </summary>
+        /// <param name="voxelID">The voxel identifier.</param>
+        /// <returns>System.Int32[].</returns>
+        public int[] VoxelIDToIndices(long voxelID)
+        {
+            var z = (int)(voxelID % yIDMultiplier);
+            //uniqueCoordIndex -= z;
+            var y = (int)((voxelID % xIDMultiplier) / yIDMultiplier);
+            //uniqueCoordIndex -= y*ym;
+            var x = (int)((voxelID % signIDMultiplier) / xIDMultiplier);
+            //uniqueCoordIndex -= x*xm;
+            var s = (int)(voxelID / signIDMultiplier);
+
+            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+            //-X = 1, -Y = 3, -Z = 5;
+            switch (s)
+            {
+                case 0: //(+X+Y+Z)
+                    break;
+                case 1: //(-X+Y+Z)
+                    x = -x;
+                    break;
+                case 3: //(+X-Y+Z)
+                    y = -y;
+                    break;
+                case 5: //(+X+Y-Z)
+                    z = -z;
+                    break;
+                case 4: //(-X-Y+Z)
+                    x = -x;
+                    y = -y;
+                    break;
+                case 6: //(-X+Y-Z)
+                    x = -x;
+                    z = -z;
+                    break;
+                case 8: //(+X-Y-Z)
+                    y = -y;
+                    z = -z;
+                    break;
+                case 9: //(-X-Y-Z)
+                    x = -x;
+                    y = -y;
+                    z = -z;
+                    break;
+            }
+            return new[] { x, y, z };
+        }
+        #endregion
+
         public VoxelizationData Data;
         public double VoxelSizeInIntSpace;
-        public double ScaleToIntSpace;
-        public List<Voxel2> Voxels;
-        public long YM;
 
         /// <summary>
         /// This method creates a hollow voxel grid of a solid. It is done by voxelizing each triangle 
@@ -112,31 +264,11 @@ namespace TVGL.SparseVoxelization
         /// <param name="numberOfVoxelsAlongMaxDirection"></param>
         public void VoxelizeSolid(TessellatedSolid solid, int numberOfVoxelsAlongMaxDirection = 100)
         {
-            Solid = solid;
-            var dx = solid.XMax - solid.XMin;
-            var dy = solid.YMax - solid.YMin;
-            var dz = solid.ZMax - solid.ZMin;
-            var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
-            ScaleToIntSpace = numberOfVoxelsAlongMaxDirection / maxDim;
-
-            //To get a unique integer value for each voxel based on its index, 
-            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
-            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
-            //3000000 + 345000 + 12 = 3345012 => 3|345|012
-            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
-            //-X = 1, -Y = 3, -Z = 5; //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
-            //OpenVDB does this more compactly with binaries, using the &, <<, and >> functions to 
-            //manipulate the X,Y,Z values to store them. Their function is called "coordToOffset" and is 
-            //in the LeafNode.h file around lines 1050-1070. I could not understand this.
-            YM = (long)Math.Pow(10, Math.Ceiling(Math.Log10(maxDim*ScaleToIntSpace)) + 1);
-            var maxInt = Math.Pow(long.MaxValue, 1.0/3);
-            if (YM*10 > maxInt) throw new Exception("Int64 will not work for a voxel space this large, using the current index setup"); 
-            var XM = (long)Math.Pow(YM, 2);
-            var SMM = (long)Math.Pow(YM, 3); //Sign Magnitude Multiplier
-
+            tessellatedSolid = solid;
+            SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
             VoxelSizeInIntSpace = 1.0;
 
-            Data = new VoxelizationData(SMM, XM, YM);
+            Data = new VoxelizationData(signIDMultiplier, xIDMultiplier, yIDMultiplier);
             foreach (var face in solid.Faces)
             {
                 //Create a triangle, which is a simple and light version of the face class. 
@@ -146,10 +278,12 @@ namespace TVGL.SparseVoxelization
             }
 
             //Make all the voxels
-            Voxels = new List<Voxel2>();
+            Voxels = new Dictionary<long, Voxel>();
+            VoxelIDHashSet = new HashSet<long>(Data.IntersectingVoxels);
             foreach (var uniqueCoordIndex in Data.IntersectingVoxels)
             {
-                Voxels.Add(new Voxel2(uniqueCoordIndex, SMM, XM, YM, 1 / ScaleToIntSpace));
+                var index = VoxelIDToIndices(uniqueCoordIndex);
+                Voxels.Add(uniqueCoordIndex, new Voxel(index, uniqueCoordIndex, voxelSideLength));
             }
         }
 
@@ -213,7 +347,7 @@ namespace TVGL.SparseVoxelization
         private bool IsTriangleIntersectingVoxel(int[] ijk, Triangle prim, ref VoxelizationData data)
         {
             //Voxel center is simply converting the integers to doubles.
-            var voxelCenter = new double[] { ijk[0], ijk[1], ijk[2] };
+            var voxelCenter = new double[] { ijk[0] + 0.5, ijk[1] + 0.5, ijk[2] + 0.5 };
             var voxelIndex = data.GetUniqueCoordIndexFromIndices(ijk);
 
             //This assumes each voxel has a size of 1x1x1 and is in an interger grid.
@@ -223,15 +357,10 @@ namespace TVGL.SparseVoxelization
             //Closest Point on Triangle is not restricted to A,B,C. 
             //It may be any point on the triangle.
             var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
-            //var closestPoint = Proximity.ClosestPointOnTriangle(voxelCenter, prim);
-            //if (!closestPoint[0].IsPracticallySame(closestPointMethod2[0], 0.001) ||
-            //   !closestPoint[1].IsPracticallySame(closestPointMethod2[1], 0.001) ||
-            //   !closestPoint[2].IsPracticallySame(closestPointMethod2[2], 0.001))
-            //    throw new Exception("Methods do not match");
 
-            if ((int)Math.Round(closestPoint[0]) == ijk[0]
-                && (int)Math.Round(closestPoint[1]) == ijk[1]
-                && (int)Math.Round(closestPoint[2]) == ijk[2])
+            if ((int)Math.Floor(closestPoint[0]) == ijk[0]
+                && (int)Math.Floor(closestPoint[1]) == ijk[1]
+                && (int)Math.Floor(closestPoint[2]) == ijk[2])
             {
                 //Since IntersectingVoxels is a hashset, it will not add a duplicate voxel.
                 data.IntersectingVoxels.Add(voxelIndex);

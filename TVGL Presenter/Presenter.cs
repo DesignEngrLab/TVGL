@@ -927,27 +927,15 @@ namespace TVGL
 
         public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelSpace voxelSpace)
         {
-            var window = new Window3DPlot();
-            var models = new List<Visual3D>();
-            var model = MakeModelVisual3D(solid);
-            models.Add(model);
-            window.view1.Children.Add(model);
-
-            var lines = new List<Point3D>();
-            foreach (var voxel in voxelSpace.Voxels)
-            {
-                lines.AddRange(DrawVoxel(voxel));
-            }
-            var color = new System.Windows.Media.Color { R = 255 }; //G & B default to 0 to form red
-            var lineVisual = new LinesVisual3D { Points = new Point3DCollection(lines), Color = color };
-            window.view1.Children.Add(lineVisual);
-
-
-            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
-            window.ShowDialog();
+            ShowAndHangVoxelization(solid, voxelSpace.Voxels.Values.ToList());
         }
 
         public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSpace)
+        {
+            ShowAndHangVoxelization(solid, voxelSpace.Voxels.Values.ToList());
+        }
+
+        public static void ShowAndHangVoxelization(TessellatedSolid solid, IList<Voxel> voxels)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -956,7 +944,7 @@ namespace TVGL
             window.view1.Children.Add(model);
 
             var lines = new List<Point3D>();
-            foreach (var voxel in voxelSpace.Voxels.Values)
+            foreach (var voxel in voxels)
             {
                 lines.AddRange(DrawVoxel(voxel));
             }

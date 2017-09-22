@@ -135,6 +135,48 @@ namespace TVGL_Test
                 totalTime2.TotalSeconds,
                 voxelSpace2.Voxels.Count);
             //Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
+
+            int counter1 = 0;
+            foreach (var key in voxelSpace1.VoxelIDHashSet)
+            {
+                if (voxelSpace2.VoxelIDHashSet.Contains(key))
+                {
+                    voxelSpace1.Voxels.Remove(key);
+                }
+                else counter1++;
+            }
+            //Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
+            Voxel voxelOfInterest = null;
+            int maxYalongMinZ = Int32.MinValue;
+            int minZ = Int32.MaxValue;
+            foreach (var voxel in voxelSpace1.Voxels)
+            {
+                if (voxel.Value.Index[2] < minZ)
+                {
+                    minZ = voxel.Value.Index[2];
+                    maxYalongMinZ = voxel.Value.Index[1];
+                }
+                else if (voxel.Value.Index[2] == minZ)
+                {
+                    if (voxel.Value.Index[1] > maxYalongMinZ)
+                    {
+                        maxYalongMinZ = voxel.Value.Index[1];
+                        voxelOfInterest = voxel.Value;
+                    }
+                }
+            }
+            Presenter.ShowAndHangVoxelization(ts, new List<Voxel>() {voxelOfInterest});
+
+            var counter2 = 0;
+            foreach (var key in voxelSpace2.VoxelIDHashSet)
+            {
+                if (voxelSpace1.VoxelIDHashSet.Contains(key))
+                {
+                    //voxelSpace2.Voxels.Remove(key);
+                }
+                else counter2++;
+            }
+            Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)
