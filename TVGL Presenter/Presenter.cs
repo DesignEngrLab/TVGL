@@ -21,7 +21,6 @@ using System.Threading;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
-using TVGL.SparseVoxelization;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -903,7 +902,7 @@ namespace TVGL
         #endregion
 
         #region 3D Voxelization Plots
-        public static void ShowVoxelization(TessellatedSolid solid, VoxelSpace voxelSpace)
+        public static void ShowVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSpace)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -925,7 +924,7 @@ namespace TVGL
             window.Show();
         }
 
-        public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelSpace voxelSpace)
+        public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSpace)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();

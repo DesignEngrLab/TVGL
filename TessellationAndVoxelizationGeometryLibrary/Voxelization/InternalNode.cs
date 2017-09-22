@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TVGL.SparseVoxelization
+namespace TVGL.Voxelization
 {
-    class LeafNode
+    class InternalNode
     {
     }
 }

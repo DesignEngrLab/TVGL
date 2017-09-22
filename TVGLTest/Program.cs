@@ -8,7 +8,6 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
-using TVGL.SparseVoxelization;
 using TVGL.Voxelization;
 
 
@@ -20,7 +19,7 @@ namespace TVGL_Test
             //"../../../TestFiles/Binary.stl",
             // "../../../TestFiles/ABF.ply",
             // "../../../TestFiles/Beam_Boss.STL",
-             "../../../TestFiles/Beam_Clean.STL",
+           //  "../../../TestFiles/Beam_Clean.STL",
 
         //"../../../TestFiles/bigmotor.amf",
         //"../../../TestFiles/DxTopLevelPart2.shell",
@@ -34,7 +33,7 @@ namespace TVGL_Test
        // "../../../TestFiles/cube.ply",
         //"../../../TestFiles/airplane.ply",
         //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-       // "../../../TestFiles/Tetrahedron.STL",
+        "../../../TestFiles/Tetrahedron.STL",
         //"../../../TestFiles/off_axis_box.STL",
        //    "../../../TestFiles/Wedge.STL",
         "../../../TestFiles/Mic_Holder_SW.stl",
@@ -119,43 +118,12 @@ namespace TVGL_Test
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var voxSpace1 = new VoxelSpace();
             var startTime = DateTime.Now;
             // ts.Transform(new[,] { { 1.0, 0, 0, 0.345 }, { 0.0, 1.0, 0, 0.345 }, { 0.0, 0, 1.0, 0.345 }, { 0, 0, 0, 1 } });
-            voxSpace1.VoxelizeSolid(ts, 300, false);
+            var voxSpace1 = new VoxelizedSolid(ts, 10, false);
             var totalTime1 = DateTime.Now - startTime;
-            //  Console.WriteLine("MC method: {0} milliseconds and {1} voxels.", totalTime1.TotalMilliseconds, voxSpace1.Voxels.Count);
-            //Presenter.ShowAndHangVoxelization(ts, voxSpace1);
-            var voxSpace2 = new VoxelSpace();
-            var ts2 = ts;
-            // var ts2 = ts.TransformToGetNewSolid(new[,] { { 1.0, 0, 0, 0.25 }, { 0.0, 1.0, 0, 0.25 }, { 0.0, 0, 1.0, 0.25 }, { 0, 0, 0, 1 } });
-            startTime = DateTime.Now;
-            voxSpace2.VoxelizeSolidBrute(ts2, 300);
-            var totalTime2 = DateTime.Now - startTime;
-            // Console.WriteLine("Distance method: {0} milliseconds and {1} voxels.\n\n", totalTime1.TotalMilliseconds, voxSpace2.Voxels.Count);
-            int counter1 = 0;
-            foreach (var key in voxSpace1.VoxelIDHashSet)
-            {
-                if (voxSpace2.VoxelIDHashSet.Contains(key))
-                {
-                    voxSpace1.Voxels.Remove(key);
-                }
-                else counter1++;
-            }
-            //Presenter.ShowAndHangVoxelization(ts, voxSpace1);
-            var counter2 = 0;
-            foreach (var key in voxSpace2.VoxelIDHashSet)
-            {
-                if (voxSpace1.VoxelIDHashSet.Contains(key))
-                {
-                    voxSpace2.Voxels.Remove(key);
-                }
-                else counter2++;
-            }
-            Presenter.ShowAndHangVoxelization(ts2, voxSpace2);
-            Console.WriteLine("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}", ts.FileName, ts.NumberOfVertices, totalTime1.TotalMilliseconds, totalTime2.TotalMilliseconds,
-                voxSpace1.VoxelIDHashSet.Count,
-                voxSpace2.VoxelIDHashSet.Count, counter1, counter2);
+            Console.WriteLine("MC method: {0} milliseconds and {1} voxels.", totalTime1.TotalMilliseconds, voxSpace1.Voxels.Count);
+            Presenter.ShowAndHangVoxelization(ts, voxSpace1);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)

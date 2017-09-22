@@ -16,7 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
-using TVGL.SparseVoxelization;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
