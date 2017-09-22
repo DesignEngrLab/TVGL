@@ -163,15 +163,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\TessellationError.cs">
       <Link>ModifyTessellation\TessellationError.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Octree Voxelization\AABB.cs">
-      <Link>Octree Voxelization\AABB.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Octree Voxelization\AABBi.cs">
-      <Link>Octree Voxelization\AABBi.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Octree Voxelization\VoxelizingOctree.cs">
-      <Link>Octree Voxelization\VoxelizingOctree.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Classify.cs">
       <Link>Primitive Classification\Classify.cs</Link>
     </Compile>
@@ -229,23 +220,35 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Vertex.cs">
       <Link>Solid Body Classes\Vertex.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\InternalNode.cs">
-      <Link>SparseVoxelization\InternalNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\LeafNode.cs">
-      <Link>SparseVoxelization\LeafNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\RootNode.cs">
-      <Link>SparseVoxelization\RootNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Tree.cs">
-      <Link>SparseVoxelization\Tree.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Voxelization.cs">
-      <Link>SparseVoxelization\Voxelization.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>Verbosity.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\AABB.cs">
+      <Link>Voxelization\AABB.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\AABBi.cs">
+      <Link>Voxelization\AABBi.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\InternalNode.cs">
+      <Link>Voxelization\InternalNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\LeafNode.cs">
+      <Link>Voxelization\LeafNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\RootNode.cs">
+      <Link>Voxelization\RootNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Tree.cs">
+      <Link>Voxelization\Tree.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Voxel.cs">
+      <Link>Voxelization\Voxel.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
+      <Link>Voxelization\VoxelizedSolid.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizingOctree.cs">
+      <Link>Voxelization\VoxelizingOctree.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -262,18 +265,21 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\packages\MIConvexHull.1.1.17.0911\content\MIConvexHull.xml">
+      <Link>MIConvexHull.xml</Link>
+    </Content>
     <Content Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\License.txt">
       <Link>2D\Clipper\License.txt</Link>
     </Content>
-    <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MIConvexHull.NET4.5, Version=1.0.17.411, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.0412\lib\portable-net45+win8\MIConvexHull.NET4.5.dll</HintPath>
+    <Reference Include="MIConvexHull.NET4.5">
+      <HintPath>..\packages\MIConvexHull.1.1.17.0911\lib\portable-net45+win8\MIConvexHull.NET4.5.dll</HintPath>
     </Reference>
-    <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net45+wp8+win8\StarMath.dll</HintPath>
+    <Reference Include="StarMath.NET4.5, Version=2.0.17.725, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StarMath.2.0.17.0725\lib\portable-net45+win8\StarMath.NET4.5.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

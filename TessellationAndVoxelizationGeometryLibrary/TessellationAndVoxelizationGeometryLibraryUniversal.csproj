@@ -108,15 +108,16 @@
     <Compile Include="Solid Body Classes\TVGLConvexHull.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />
-    <Compile Include="Sparse Voxelization\InternalNode.cs" />
-    <Compile Include="Sparse Voxelization\LeafNode.cs" />
-    <Compile Include="Sparse Voxelization\Voxelization.cs" />
-    <Compile Include="Sparse Voxelization\RootNode.cs" />
-    <Compile Include="Sparse Voxelization\Tree.cs" />
+    <Compile Include="Voxelization\InternalNode.cs" />
+    <Compile Include="Voxelization\LeafNode.cs" />
+    <Compile Include="Voxelization\VoxelizedSolid.cs" />
+    <Compile Include="Voxelization\RootNode.cs" />
+    <Compile Include="Voxelization\Tree.cs" />
+    <Compile Include="Voxelization\Voxel.cs" />
     <Compile Include="Verbosity.cs" />
-    <Compile Include="Octree Voxelization\AABB.cs" />
-    <Compile Include="Octree Voxelization\AABBi.cs" />
-    <Compile Include="Octree Voxelization\VoxelizingOctree.cs" />
+    <Compile Include="Voxelization\AABB.cs" />
+    <Compile Include="Voxelization\AABBi.cs" />
+    <Compile Include="Voxelization\VoxelizingOctree.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />
@@ -136,11 +137,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MIConvexHull, Version=1.0.17.411, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.0412\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+    <Reference Include="MIConvexHull">
+      <HintPath>..\packages\MIConvexHull.1.1.17.0911\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
     </Reference>
-    <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+    <Reference Include="StarMath, Version=2.0.17.725, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StarMath.2.0.17.0725\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

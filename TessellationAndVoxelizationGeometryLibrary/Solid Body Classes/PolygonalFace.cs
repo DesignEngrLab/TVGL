@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using StarMathLib;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -401,7 +402,12 @@ namespace TVGL
             }
         }
 
-
+        public HashSet<Voxel> Voxels { get; private set; }
         #endregion
+        internal override void AddVoxel(Voxel v)
+        {
+            if (Voxels == null) Voxels = new HashSet<Voxel> { v };
+            else if (!Voxels.Contains(v)) Voxels.Add(v);
+        }
     }
 }

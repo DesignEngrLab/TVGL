@@ -8,7 +8,6 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
-using TVGL.SparseVoxelization;
 using TVGL.Voxelization;
 
 
@@ -17,28 +16,31 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-        //"../../../TestFiles/ABF.ply",
-       // "../../../TestFiles/Beam_Boss.STL",
-       // //"../../../TestFiles/bigmotor.amf",
-       // //"../../../TestFiles/DxTopLevelPart2.shell",
-       // //"../../../TestFiles/Candy.shell",
-       // //"../../../TestFiles/amf_Cube.amf",
-       // //"../../../TestFiles/train.3mf",
-       // //"../../../TestFiles/Castle.3mf",
-       // //"../../../TestFiles/Raspberry Pi Case.3mf",
-       ////"../../../TestFiles/shark.ply",
-     // "../../../TestFiles/bunnySmall.ply",
+            //"../../../TestFiles/Binary.stl",
+            // "../../../TestFiles/ABF.ply",
+            // "../../../TestFiles/Beam_Boss.STL",
+           //  "../../../TestFiles/Beam_Clean.STL",
+
+        //"../../../TestFiles/bigmotor.amf",
+        //"../../../TestFiles/DxTopLevelPart2.shell",
+        //"../../../TestFiles/Candy.shell",
+        //"../../../TestFiles/amf_Cube.amf",
+        //"../../../TestFiles/train.3mf",
+        //"../../../TestFiles/Castle.3mf",
+        //"../../../TestFiles/Raspberry Pi Case.3mf",
+       //"../../../TestFiles/shark.ply",
+       //"../../../TestFiles/bunnySmall.ply",
        // "../../../TestFiles/cube.ply",
-       // //"../../../TestFiles/airplane.ply",
-       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        //"../../../TestFiles/Tetrahedron.STL",
-       // "../../../TestFiles/off_axis_box.STL",
-       // "../../../TestFiles/Wedge.STL",
-       // "../../../TestFiles/Mic_Holder_SW.stl",
-       // "../../../TestFiles/Mic_Holder_JR.stl",
-       // "../../../TestFiles/3_bananas.amf",
-       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-       // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+        //"../../../TestFiles/airplane.ply",
+        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
+       // "../../../TestFiles/Tetrahedron.STL",
+        //"../../../TestFiles/off_axis_box.STL",
+        //   "../../../TestFiles/Wedge.STL",
+        //"../../../TestFiles/Mic_Holder_SW.stl",
+        //"../../../TestFiles/Mic_Holder_JR.stl",
+        //"../../../TestFiles/3_bananas.amf",
+        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
         //"../../../TestFiles/hdodec.off",
         //"../../../TestFiles/tref.off",
         //"../../../TestFiles/mushroom.off",
@@ -50,9 +52,9 @@ namespace TVGL_Test
         //"../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
         //"../../../TestFiles/Beam_Clean.STL",
         "../../../TestFiles/Square_Support.STL",
-        //"../../../TestFiles/Aerospace_Beam.STL",
-        //"../../../TestFiles/Rook.amf",
-       // "../../../TestFiles/bunny.ply",
+        "../../../TestFiles/Aerospace_Beam.STL",
+        "../../../TestFiles/Rook.amf",
+       "../../../TestFiles/bunny.ply",
 
        // "../../../TestFiles/piston.stl",
        // "../../../TestFiles/Z682.stl",
@@ -84,10 +86,10 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < FileNames.Count(); i++)
+            for (var i = 0; i < 3; i++) //fileNames.Count(); i++)
             {
-                var filename = FileNames[i];//.FullName;
-                Console.WriteLine("Attempting: " + filename);
+                var filename = fileNames[i].FullName;
+                // Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
                 using (fileStream = File.OpenRead(filename))
@@ -98,32 +100,31 @@ namespace TVGL_Test
                 //using (fileStream = File.OpenRead(filename))
                 //    ts = IO.Open(fileStream, filename);
 
-                
+
                 //TestPolygon(ts[0]);
                 //TestSegmentation(ts[0]);
                 //Presenter.ShowAndHang(ts);
                 TestVoxelization(ts[0]);
                 //TestOctreeVoxelization(ts[0]);
-            
+
                 //TestSilhouette(ts[0]);
                 //TestAdditiveVolumeEstimate(ts[0]);
             }
 
             Console.WriteLine("Completed.");
-            //  Console.ReadKey();
+           // Console.ReadKey();
         }
 
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var voxels = new VoxelSpace();
-
             var startTime = DateTime.Now;
-            voxels.VoxelizeSolid(ts, 1000);
-            var totalTime = DateTime.Now - startTime;
-            Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
-
-            Presenter.ShowVoxelization(ts, voxels);
+            var voxSpace1 = new VoxelizedSolid(ts, 300, true);
+            var totalTime1 = DateTime.Now - startTime;
+            Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
+                totalTime1.TotalMilliseconds,
+                voxSpace1.VoxelIDHashSet.Count);
+            Presenter.ShowVoxelization(ts, voxSpace1);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)
@@ -135,7 +136,7 @@ namespace TVGL_Test
             const int maxLevel = 6;
             var octree = new VoxelizingOctree(maxLevel);
             octree.GenerateOctree(ts);
-            Presenter.ShowVoxelization(ts, octree, maxLevel-1, CellStatus.Intersecting);
+            Presenter.ShowVoxelization(ts, octree, maxLevel - 1, CellStatus.Intersecting);
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
@@ -155,7 +156,7 @@ namespace TVGL_Test
             {
                 Dictionary<int, double> stepDistances;
                 Dictionary<int, double> sortedVertexDistanceLookup;
-                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, 
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
                     stepSize, out stepDistances, out sortedVertexDistanceLookup);
                 //foreach (var segment in segments)
                 //{
@@ -214,7 +215,7 @@ namespace TVGL_Test
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL.Silhouette.Run(ts, new[] {0.5, 0.0, 0.5});
+            var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
             Presenter.ShowAndHang(silhouette);
         }
 

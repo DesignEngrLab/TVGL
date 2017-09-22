@@ -64,8 +64,8 @@
       <HintPath>..\packages\PropertyTools.Wpf.2015.2.0\lib\net45\PropertyTools.Wpf.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="StarMath, Version=2.0.14.1114, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.16.0529\lib\portable-net45+wp8+win8\StarMath.dll</HintPath>
+    <Reference Include="StarMath.NET4.5, Version=2.0.17.725, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StarMath.2.0.17.0725\lib\portable-net45+win8\StarMath.NET4.5.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -202,15 +202,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\ModifyTessellation\TessellationError.cs">
       <Link>TVGL\ModifyTessellation\TessellationError.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Octree Voxelization\AABB.cs">
-      <Link>TVGL\Octree Voxelization\AABB.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Octree Voxelization\AABBi.cs">
-      <Link>TVGL\Octree Voxelization\AABBi.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Octree Voxelization\VoxelizingOctree.cs">
-      <Link>TVGL\Octree Voxelization\VoxelizingOctree.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\Classify.cs">
       <Link>TVGL\Primitive Classification\Classify.cs</Link>
     </Compile>
@@ -268,23 +259,35 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Vertex.cs">
       <Link>TVGL\Solid Body Classes\Vertex.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\InternalNode.cs">
-      <Link>TVGL\Sparse Voxelization\InternalNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\LeafNode.cs">
-      <Link>TVGL\Sparse Voxelization\LeafNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\RootNode.cs">
-      <Link>TVGL\Sparse Voxelization\RootNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Tree.cs">
-      <Link>TVGL\Sparse Voxelization\Tree.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Sparse Voxelization\Voxelization.cs">
-      <Link>TVGL\Sparse Voxelization\Voxelization.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>TVGL\Verbosity.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\AABB.cs">
+      <Link>TVGL\Voxelization\AABB.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\AABBi.cs">
+      <Link>TVGL\Voxelization\AABBi.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\InternalNode.cs">
+      <Link>TVGL\Voxelization\InternalNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\LeafNode.cs">
+      <Link>TVGL\Voxelization\LeafNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\RootNode.cs">
+      <Link>TVGL\Voxelization\RootNode.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Tree.cs">
+      <Link>TVGL\Voxelization\Tree.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Voxel.cs">
+      <Link>TVGL\Voxelization\Voxel.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
+      <Link>TVGL\Voxelization\VoxelizedSolid.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizingOctree.cs">
+      <Link>TVGL\Voxelization\VoxelizingOctree.cs</Link>
     </Compile>
     <Compile Include="..\TVGL Presenter\Presenter.cs">
       <Link>Presenter\Presenter.cs</Link>

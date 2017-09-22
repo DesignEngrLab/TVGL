@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;   
 
 
-namespace TVGL.SparseVoxelization
+namespace TVGL.Voxelization
 {
     public class VoxelTreeBase
     {
@@ -30,7 +30,7 @@ namespace TVGL.SparseVoxelization
 
         //This tree is currently set up to work on 1000+ vertices along a direction. For smaller spaces, 
         //internalNode2 should probably be ignored?
-        public VoxelTreeBase(VoxelSpace space)
+        public VoxelTreeBase(VoxelizedSolid space)
         {
             //(4,3,2) => ~1.5^n 
 
@@ -68,7 +68,7 @@ namespace TVGL.SparseVoxelization
         }
 
 
-        public HashSet<ulong> DenseFill(VoxelSpace space)
+        public HashSet<ulong> DenseFill(VoxelizedSolid space)
         {
             //First make some lookup tables of the voxel indices
             //Dictionary(x, HashSet(yzValue), where yzValue could be the full Morton code. 

@@ -21,7 +21,6 @@ using System.Threading;
 using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
-using TVGL.SparseVoxelization;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -903,18 +902,40 @@ namespace TVGL
         #endregion
 
         #region 3D Voxelization Plots
-        public static void ShowVoxelization(TessellatedSolid solid, VoxelSpace voxelSpace)
+        public static void ShowVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSpace)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
             var model = MakeModelVisual3D(solid);
             models.Add(model);
             window.view1.Children.Add(model);
-            
+
             var lines = new List<Point3D>();
-            foreach (var voxel in voxelSpace.Voxels)
+            foreach (var voxel in voxelSpace.Voxels.Values)
             {
-                 lines.AddRange(DrawVoxel(voxel));
+                lines.AddRange(DrawVoxel(voxel));
+            }
+            var color = new System.Windows.Media.Color { R = 255 }; //G & B default to 0 to form red
+            var lineVisual = new LinesVisual3D { Points = new Point3DCollection(lines), Color = color };
+            window.view1.Children.Add(lineVisual);
+
+
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.Show();
+        }
+
+        public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSpace)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(solid);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            var lines = new List<Point3D>();
+            foreach (var voxel in voxelSpace.Voxels.Values)
+            {
+                lines.AddRange(DrawVoxel(voxel));
             }
             var color = new System.Windows.Media.Color { R = 255 }; //G & B default to 0 to form red
             var lineVisual = new LinesVisual3D { Points = new Point3DCollection(lines), Color = color };

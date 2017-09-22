@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
-using TVGL.SparseVoxelization;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -1749,18 +1749,6 @@ namespace TVGL
             bool onBoundaryIsInside = true)
         {
             return IsPointInsideTriangle(triangle.Vertices, vertexInQuestion, onBoundaryIsInside);
-        }
-
-        public static bool IsPointInsideTriangle(Triangle triangle, Vertex vertexInQuestion,
-         bool onBoundaryIsInside = true)
-        {
-            var p = vertexInQuestion.Position;
-            var a = triangle.A;
-            var b = triangle.B;
-            var c = triangle.C;
-            return SameSide(p, a, b, c, onBoundaryIsInside) && 
-                SameSide(p, b, a, c, onBoundaryIsInside) && 
-                SameSide(p, c, a, b, onBoundaryIsInside);
         }
 
         /// <summary>
