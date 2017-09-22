@@ -8,6 +8,7 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
+using TVGL.SparseVoxelization;
 using TVGL.Voxelization;
 
 
@@ -86,9 +87,9 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < 3; i++) //fileNames.Count(); i++)
+            for (var i = 0; i < FileNames.Count(); i++) //fileNames.Count(); i++)
             {
-                var filename = fileNames[i].FullName;
+                var filename = FileNames[i]; //fileNames[i].FullName;
                 // Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
@@ -112,19 +113,28 @@ namespace TVGL_Test
             }
 
             Console.WriteLine("Completed.");
-           // Console.ReadKey();
+            // Console.ReadKey();
         }
 
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var startTime = DateTime.Now;
-            var voxSpace1 = new VoxelizedSolid(ts, 300, true);
+            var voxelSpace1 = new VoxelizedSolid(ts, 100, true);
             var totalTime1 = DateTime.Now - startTime;
             Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
-                totalTime1.TotalMilliseconds,
-                voxSpace1.VoxelIDHashSet.Count);
-            Presenter.ShowVoxelization(ts, voxSpace1);
+                totalTime1.TotalSeconds,
+                voxelSpace1.VoxelIDHashSet.Count);
+            //Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
+
+            startTime = DateTime.Now;
+            var voxelSpace2 = new VoxelSpace();  
+            voxelSpace2.VoxelizeSolid(ts, 100);
+            var totalTime2 = DateTime.Now - startTime;
+            Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
+                totalTime2.TotalSeconds,
+                voxelSpace2.Voxels.Count);
+            //Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)

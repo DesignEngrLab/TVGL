@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using StarMathLib;
+using TVGL.SparseVoxelization;
 using TVGL.Voxelization;
 
 namespace TVGL.MathOperations
@@ -13,6 +14,12 @@ namespace TVGL.MathOperations
     /// </summary>
     public class Proximity
     {
+        public static double[] ClosestVertexOnTriangleToVertex(Triangle prim, double[] p)
+        {
+            double[] uvw;
+            return ClosestVertexOnTriangleToVertex(prim.A, prim.B, prim.C, p, out uvw);
+        }
+
 
         /// <summary>
         /// Finds the closest vertex (3D Point) on a triangle (a,b,c) to the given vertex (p).

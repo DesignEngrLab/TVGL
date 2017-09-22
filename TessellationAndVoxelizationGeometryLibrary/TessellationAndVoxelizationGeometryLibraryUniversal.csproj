@@ -110,6 +110,7 @@
     <Compile Include="Solid Body Classes\Vertex.cs" />
     <Compile Include="Voxelization\InternalNode.cs" />
     <Compile Include="Voxelization\LeafNode.cs" />
+    <Compile Include="Voxelization\Voxelization.cs" />
     <Compile Include="Voxelization\VoxelizedSolid.cs" />
     <Compile Include="Voxelization\RootNode.cs" />
     <Compile Include="Voxelization\Tree.cs" />
