@@ -286,9 +286,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Voxel.cs">
       <Link>TVGL\Voxelization\Voxel.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Voxelization.cs">
-      <Link>TVGL\Voxelization\Voxelization.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
       <Link>TVGL\Voxelization\VoxelizedSolid.cs</Link>
     </Compile>

@@ -8,8 +8,8 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
-using TVGL.SparseVoxelization;
 using TVGL.Voxelization;
+using TVGL.VoxelizationTesting;
 
 
 namespace TVGL_Test
@@ -120,63 +120,64 @@ namespace TVGL_Test
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var startTime = DateTime.Now;
-            var voxelSpace1 = new VoxelizedSolid(ts, 100, true);
+            var voxelizedSolid = new VoxelizedSolid(ts, 100, true);
             var totalTime1 = DateTime.Now - startTime;
             Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
                 totalTime1.TotalSeconds,
-                voxelSpace1.VoxelIDHashSet.Count);
+                voxelizedSolid.VoxelIDHashSet.Count);
             //Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
 
             startTime = DateTime.Now;
-            var voxelSpace2 = new VoxelSpace();  
-            voxelSpace2.VoxelizeSolid(ts, 100);
+            var tempVoxelSpace = new VoxelSpace();  
+            var voxelizedSolid2 = tempVoxelSpace.VoxelizeSolid(ts, 100);
             var totalTime2 = DateTime.Now - startTime;
             Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
                 totalTime2.TotalSeconds,
-                voxelSpace2.Voxels.Count);
+                voxelizedSolid2.Voxels.Count);
             //Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
 
             int counter1 = 0;
-            foreach (var key in voxelSpace1.VoxelIDHashSet)
+            foreach (var key in voxelizedSolid.VoxelIDHashSet)
             {
-                if (voxelSpace2.VoxelIDHashSet.Contains(key))
+                if (voxelizedSolid2.VoxelIDHashSet.Contains(key))
                 {
-                    voxelSpace1.Voxels.Remove(key);
+                    voxelizedSolid.Voxels.Remove(key);
                 }
                 else counter1++;
             }
-            //Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
-            Voxel voxelOfInterest = null;
-            int maxYalongMinZ = Int32.MinValue;
-            int minZ = Int32.MaxValue;
-            foreach (var voxel in voxelSpace1.Voxels)
-            {
-                if (voxel.Value.Index[2] < minZ)
-                {
-                    minZ = voxel.Value.Index[2];
-                    maxYalongMinZ = voxel.Value.Index[1];
-                }
-                else if (voxel.Value.Index[2] == minZ)
-                {
-                    if (voxel.Value.Index[1] > maxYalongMinZ)
-                    {
-                        maxYalongMinZ = voxel.Value.Index[1];
-                        voxelOfInterest = voxel.Value;
-                    }
-                }
-            }
-            if(counter1 > 0) Presenter.ShowAndHangVoxelization(ts, new List<Voxel>() {voxelOfInterest});
+            if (counter1 > 0) Presenter.ShowAndHangVoxelization(ts, voxelizedSolid);
+
+            //Voxel voxelOfInterest = null;
+            //int maxYalongMinZ = Int32.MinValue;
+            //int minZ = Int32.MaxValue;
+            //foreach (var voxel in voxelizedSolid.Voxels)
+            //{
+            //    if (voxel.Value.Index[2] < minZ)
+            //    {
+            //        minZ = voxel.Value.Index[2];
+            //        maxYalongMinZ = voxel.Value.Index[1];
+            //    }
+            //    else if (voxel.Value.Index[2] == minZ)
+            //    {
+            //        if (voxel.Value.Index[1] > maxYalongMinZ)
+            //        {
+            //            maxYalongMinZ = voxel.Value.Index[1];
+            //            voxelOfInterest = voxel.Value;
+            //        }
+            //    }
+            //}
+            //if(counter1 > 0) Presenter.ShowAndHangVoxelization(ts, new List<Voxel>() {voxelOfInterest});
 
             var counter2 = 0;
-            foreach (var key in voxelSpace2.VoxelIDHashSet)
+            foreach (var key in voxelizedSolid2.VoxelIDHashSet)
             {
-                if (voxelSpace1.VoxelIDHashSet.Contains(key))
+                if (voxelizedSolid.VoxelIDHashSet.Contains(key))
                 {
-                    voxelSpace2.Voxels.Remove(key);
+                    voxelizedSolid2.Voxels.Remove(key);
                 }
                 else counter2++;
             }
-            if(counter2 > 0) Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
+            if(counter2 > 0) Presenter.ShowAndHangVoxelization(ts, voxelizedSolid2);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)

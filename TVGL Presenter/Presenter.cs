@@ -22,7 +22,6 @@ using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
 using TVGL.Voxelization;
-using TVGL.SparseVoxelization;
 
 namespace TVGL
 {
@@ -925,14 +924,9 @@ namespace TVGL
             window.Show();
         }
 
-        public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelSpace voxelSpace)
+        public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSolid)
         {
-            ShowAndHangVoxelization(solid, voxelSpace.Voxels.Values.ToList());
-        }
-
-        public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSpace)
-        {
-            ShowAndHangVoxelization(solid, voxelSpace.Voxels.Values.ToList());
+            ShowAndHangVoxelization(solid, voxelSolid.Voxels.Values.ToList());
         }
 
         public static void ShowAndHangVoxelization(TessellatedSolid solid, IList<Voxel> voxels)
@@ -956,48 +950,6 @@ namespace TVGL
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
-
-        private static IEnumerable<Point3D> DrawVoxel(Voxel2 v)
-        {
-            var lines = new List<Point3D>();
-
-            //Now create a line collection by doubling up the points
-            var lineCollection = new List<Point3D>()
-            {
-                //Top
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                //Bottom
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
-                //Sides
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ)
-            };
-
-            lines.AddRange(lineCollection);
-
-            return lines;
-        }
-
 
         private static IEnumerable<Point3D> DrawVoxel(Voxel v)
         {
