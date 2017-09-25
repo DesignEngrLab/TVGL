@@ -165,18 +165,18 @@ namespace TVGL_Test
                     }
                 }
             }
-            Presenter.ShowAndHangVoxelization(ts, new List<Voxel>() {voxelOfInterest});
+            if(counter1 > 0) Presenter.ShowAndHangVoxelization(ts, new List<Voxel>() {voxelOfInterest});
 
             var counter2 = 0;
             foreach (var key in voxelSpace2.VoxelIDHashSet)
             {
                 if (voxelSpace1.VoxelIDHashSet.Contains(key))
                 {
-                    //voxelSpace2.Voxels.Remove(key);
+                    voxelSpace2.Voxels.Remove(key);
                 }
                 else counter2++;
             }
-            Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
+            if(counter2 > 0) Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)
