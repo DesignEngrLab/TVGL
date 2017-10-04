@@ -1704,7 +1704,7 @@ namespace TVGL
             /// at their first defined step (cross section). Segments that end with no children segments
             /// will have their last set of vertices added to their last defined step.
             /// </summary>
-            public Dictionary<int, List<Vertex>> ReferenceVerticesByStepIndex { get; internal set; }
+            public Dictionary<int, List<Vertex>> ReferenceVerticesByStepIndex { get; private set; }
 
             /// <summary>
             /// A list of all the edges that correspond to this segment. Some edges may belong to multiple segments.
