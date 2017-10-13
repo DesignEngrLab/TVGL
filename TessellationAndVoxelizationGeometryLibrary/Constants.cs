@@ -75,7 +75,7 @@ namespace TVGL
         /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in 
         /// a tessellated model.
         /// </summary>
-        internal static double MaxAllowableEdgeSimilarityScore = 0.2;
+        internal const double MaxAllowableEdgeSimilarityScore = 0.2;
 
         /// <summary>
         ///     Finds the index.

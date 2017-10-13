@@ -72,7 +72,7 @@ namespace TVGL.Voxelization
         /// The transformed array of vertex coordinates. These correspond in position to the vertices
         /// in the linked tessellated solid.
         /// </summary>
-        private readonly double[][] vertices;
+        private readonly double[][] transformedCoordinates;
         #endregion
 
         #region Constructor and "makeVoxels..." functions
@@ -91,7 +91,7 @@ namespace TVGL.Voxelization
             SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
             Voxels = new Dictionary<long, Voxel>(); //todo:approximate capacity based on tessellated volume
             VoxelIDHashSet = new HashSet<long>();
-            vertices = new double[tessellatedSolid.NumberOfVertices][];
+            transformedCoordinates = new double[tessellatedSolid.NumberOfVertices][];
             makeVoxelsForEachVertex(linkToTessellatedSolid);
             makeVoxelsForFacesAndEdges(linkToTessellatedSolid);
             if (!onlyDefineBoundary)  //todo: change default of "onlyDefineBoundary" to false
@@ -132,11 +132,12 @@ namespace TVGL.Voxelization
                 double maxSweepValue;
                 setUpFaceSweepDetails(face, out startVertex, out leftVertex, out rightVertex, out leftEdge, out rightEdge, out uDim, out vDim,
                   out sweepDim, out maxSweepValue);
-                var leftStartPoint = (double[])vertices[startVertex.IndexInList].Clone();
+                var leftStartPoint = (double[])transformedCoordinates[startVertex.IndexInList].Clone();
                 var rightStartPoint = (double[])leftStartPoint.Clone();
-                var sweepValue = (int)Math.Ceiling(leftStartPoint[sweepDim]);
-                var leftEndPoint = vertices[leftVertex.IndexInList];
-                var rightEndPoint = vertices[rightVertex.IndexInList];
+                var sweepValue = (int)(atIntegerValue(leftStartPoint[sweepDim]) ? leftStartPoint[sweepDim] + 1 :
+                    Math.Ceiling(leftStartPoint[sweepDim]));
+                var leftEndPoint = transformedCoordinates[leftVertex.IndexInList];
+                var rightEndPoint = transformedCoordinates[rightVertex.IndexInList];
 
                 // the following 2 booleans determine if the edge needs to be voxelized as it may have
                 // been done in a previous visited face
@@ -144,10 +145,10 @@ namespace TVGL.Voxelization
                 var voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                 while (sweepValue <= maxSweepValue) // this is the sweep along the face
                 {
-                    // Presenter.ShowAndHangVoxelization(tessellatedSolid,this);
+                    Presenter.ShowAndHangVoxelization(tessellatedSolid, this);
                     // first fill in any voxels for face between the start points. Why do this here?! These 2 lines of code  were
                     // the last added. There are cases (not in the first loop, mind you) where it is necessary. Note this happens again
-                    // at the bottom of the while-loop for the same sweep value
+                    // at the bottom of the while-loop for the same sweep value, but for the next startpoints
                     makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
                         sweepDim, linkToTessellatedSolid ? face : null);
                     makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim], rightStartPoint[uDim], sweepValue, vDim, uDim,
@@ -209,7 +210,7 @@ namespace TVGL.Voxelization
             leftEdge = face.Edges[0];
             rightVertex = face.C;
             rightEdge = face.Edges[2];
-            maxSweepValue = (int)Math.Ceiling(Math.Max(vertices[face.B.IndexInList][sweepDim], vertices[face.C.IndexInList][sweepDim]));
+            maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.B.IndexInList][sweepDim], transformedCoordinates[face.C.IndexInList][sweepDim]));
             if (face.B.Position[sweepDim] < face.A.Position[sweepDim])
             {
                 startVertex = face.B;
@@ -217,7 +218,7 @@ namespace TVGL.Voxelization
                 leftEdge = face.Edges[1];
                 rightVertex = face.A;
                 rightEdge = face.Edges[0];
-                maxSweepValue = (int)Math.Ceiling(Math.Max(vertices[face.C.IndexInList][sweepDim], vertices[face.A.IndexInList][sweepDim]));
+                maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.C.IndexInList][sweepDim], transformedCoordinates[face.A.IndexInList][sweepDim]));
             }
             if (face.C.Position[sweepDim] < face.B.Position[sweepDim] &&
                 face.C.Position[sweepDim] < face.A.Position[sweepDim])
@@ -227,7 +228,7 @@ namespace TVGL.Voxelization
                 leftEdge = face.Edges[2];
                 rightVertex = face.B;
                 rightEdge = face.Edges[1];
-                maxSweepValue = (int)Math.Ceiling(Math.Max(vertices[face.A.IndexInList][sweepDim], vertices[face.B.IndexInList][sweepDim]));
+                maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.A.IndexInList][sweepDim], transformedCoordinates[face.B.IndexInList][sweepDim]));
             }
         }
 
@@ -299,13 +300,26 @@ namespace TVGL.Voxelization
             {
                 var vertex = tessellatedSolid.Vertices[i];
                 var coordinates = vertex.Position.multiply(ScaleToIntSpace);
-                //Gets the integer coordinates, rounded down for point A on the triangle 
-                //This is a voxelCenter. We will check all voxels in a -1,+1 box around 
-                //this coordinate. 
-                var ijk = new[]
-                    { (int) Math.Floor(coordinates[0]), (int) Math.Floor(coordinates[1]), (int) Math.Floor(coordinates[2]) };
-                storeVoxel(ijk, linkToTessellatedSolid ? vertex : null);
-                vertices[i] = coordinates;
+                transformedCoordinates[i] = coordinates;
+                var ijk = new int[3];
+                if (coordinates.Any(atIntegerValue))
+                {
+                    var edgeVectors = vertex.Edges.Select(e => e.To == vertex ? e.Vector : e.Vector.multiply(-1));
+                    for (int j = 0; j < 3; j++)
+                    {
+                        if (atIntegerValue(coordinates[j]) && edgeVectors.All(ev => ev[j] >= 0))
+                            ijk[j] = (int)(coordinates[j] - 1);
+                        else ijk[j] = (int)Math.Floor(coordinates[j]);
+                    }
+                }
+                else
+                {
+                    //Gets the integer coordinates, rounded down for the point.
+                    ijk[0] = (int)Math.Floor(coordinates[0]);
+                    ijk[1] = (int)Math.Floor(coordinates[1]);
+                    ijk[2] = (int)Math.Floor(coordinates[2]);
+                }
+                storeVoxel(ijk, linkToTessellatedSolid ? tessellatedSolid.Vertices[i] : null);
             }
         }
 
@@ -319,33 +333,33 @@ namespace TVGL.Voxelization
         {
             if (!linkToTessellatedSolid)
             {
-                var aIndices = vertices[face.A.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var aID = IndicesToVoxelID(aIndices);
-                var bIndices = vertices[face.B.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var bID = IndicesToVoxelID(bIndices);
-                var cIndices = vertices[face.C.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var cID = IndicesToVoxelID(cIndices);
-                if (aID == bID && aID == cID) return true;
-                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
-                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 2, false);
-                    return true;
-                }
-                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
-                    aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 1, false);
-                    return true;
-                }
-                if (aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2] &&
-                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 0, false);
-                    return true;
-                }
-                return false;
+                var aIndices = transformedCoordinates[face.A.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+            var aID = IndicesToVoxelID(aIndices);
+            var bIndices = transformedCoordinates[face.B.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+            var bID = IndicesToVoxelID(bIndices);
+            var cIndices = transformedCoordinates[face.C.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+            var cID = IndicesToVoxelID(cIndices);
+            if (aID == bID && aID == cID) return true;
+            if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
+                aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
+            {
+                makeVoxelsForFaceInCardinalLine(face, 2, false);
+                return true;
             }
+            if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
+                aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2])
+            {
+                makeVoxelsForFaceInCardinalLine(face, 1, false);
+                return true;
+            }
+            if (aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2] &&
+                aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
+            {
+                makeVoxelsForFaceInCardinalLine(face, 0, false);
+                return true;
+            }
+            return false;
+        }
             // The first simple case is that all vertices are within the same voxel. 
             if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
             {
@@ -544,7 +558,7 @@ namespace TVGL.Voxelization
             var dz = tessellatedSolid.ZMax - tessellatedSolid.ZMin;
             var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
             voxelSideLength = maxDim / numberOfVoxelsAlongMaxDirection;
-            ScaleToIntSpace = 1 / voxelSideLength;
+            ScaleToIntSpace = 1.0 / voxelSideLength;
             //To get a unique integer value for each voxel based on its index, 
             //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
             //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
@@ -635,5 +649,15 @@ namespace TVGL.Voxelization
             return new[] { x, y, z };
         }
         #endregion
+
+        /// <summary>
+        /// Is the double currently at an integer value?
+        /// </summary>
+        /// <param name="d">The d.</param>
+        /// <returns></returns>
+        private static bool atIntegerValue(double d)
+        {
+            return Math.Ceiling(d) == d;
+        }
     }
 }

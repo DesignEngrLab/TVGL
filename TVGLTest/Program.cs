@@ -17,10 +17,10 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-            //"../../../TestFiles/Binary.stl",
-            // "../../../TestFiles/ABF.ply",
-            // "../../../TestFiles/Beam_Boss.STL",
-           //  "../../../TestFiles/Beam_Clean.STL",
+           "../../../TestFiles/Binary.stl",
+         //   "../../../TestFiles/ABF.ply",
+        //     "../../../TestFiles/Beam_Boss.STL",
+        //     "../../../TestFiles/Beam_Clean.STL",
 
         //"../../../TestFiles/bigmotor.amf",
         //"../../../TestFiles/DxTopLevelPart2.shell",
@@ -32,30 +32,30 @@ namespace TVGL_Test
        //"../../../TestFiles/shark.ply",
        //"../../../TestFiles/bunnySmall.ply",
        // "../../../TestFiles/cube.ply",
-        //"../../../TestFiles/airplane.ply",
-        //"../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-       // "../../../TestFiles/Tetrahedron.STL",
-        //"../../../TestFiles/off_axis_box.STL",
-        //   "../../../TestFiles/Wedge.STL",
-        //"../../../TestFiles/Mic_Holder_SW.stl",
-        //"../../../TestFiles/Mic_Holder_JR.stl",
-        //"../../../TestFiles/3_bananas.amf",
-        //"../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-        //"../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-        //"../../../TestFiles/hdodec.off",
-        //"../../../TestFiles/tref.off",
-        //"../../../TestFiles/mushroom.off",
-        //"../../../TestFiles/vertcube.off",
-        //"../../../TestFiles/trapezoid.4d.off",
-        //"../../../TestFiles/ABF.STL",
-        //"../../../TestFiles/Pump-1repair.STL",
-        //"../../../TestFiles/Pump-1.STL",
-        //"../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
-        //"../../../TestFiles/Beam_Clean.STL",
-        "../../../TestFiles/Square_Support.STL",
-        "../../../TestFiles/Aerospace_Beam.STL",
-        "../../../TestFiles/Rook.amf",
-       "../../../TestFiles/bunny.ply",
+       // "../../../TestFiles/airplane.ply",
+       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
+        "../../../TestFiles/Tetrahedron.STL",
+       // "../../../TestFiles/off_axis_box.STL",
+       //    "../../../TestFiles/Wedge.STL",
+       // "../../../TestFiles/Mic_Holder_SW.stl",
+       // "../../../TestFiles/Mic_Holder_JR.stl",
+       // "../../../TestFiles/3_bananas.amf",
+       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+       // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+       // "../../../TestFiles/hdodec.off",
+       // "../../../TestFiles/tref.off",
+       // "../../../TestFiles/mushroom.off",
+       // "../../../TestFiles/vertcube.off",
+       // "../../../TestFiles/trapezoid.4d.off",
+       // "../../../TestFiles/ABF.STL",
+       // "../../../TestFiles/Pump-1repair.STL",
+       // "../../../TestFiles/Pump-1.STL",
+       // "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
+       // "../../../TestFiles/Beam_Clean.STL",
+       // "../../../TestFiles/Square_Support.STL",
+       // "../../../TestFiles/Aerospace_Beam.STL",
+       // "../../../TestFiles/Rook.amf",
+       //"../../../TestFiles/bunny.ply",
 
        // "../../../TestFiles/piston.stl",
        // "../../../TestFiles/Z682.stl",
@@ -93,6 +93,7 @@ namespace TVGL_Test
                 // Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
+                if (!File.Exists(filename)) continue;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
                 //filename += "1.ply";
@@ -120,21 +121,21 @@ namespace TVGL_Test
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var startTime = DateTime.Now;
-            var voxelSpace1 = new VoxelizedSolid(ts, 100, true);
+            var voxelSpace1 = new VoxelizedSolid(ts, 2, true);
             var totalTime1 = DateTime.Now - startTime;
-            Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
-                totalTime1.TotalSeconds,
-                voxelSpace1.VoxelIDHashSet.Count);
-            //Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
-
+            //Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
+            //    totalTime1.TotalSeconds,
+            //    voxelSpace1.VoxelIDHashSet.Count);
+            Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
+            return;
             startTime = DateTime.Now;
-            var voxelSpace2 = new VoxelSpace();  
+            var voxelSpace2 = new VoxelSpace();
             voxelSpace2.VoxelizeSolid(ts, 100);
             var totalTime2 = DateTime.Now - startTime;
             Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
                 totalTime2.TotalSeconds,
                 voxelSpace2.Voxels.Count);
-            //Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
+            Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
 
             int counter1 = 0;
             foreach (var key in voxelSpace1.VoxelIDHashSet)
@@ -145,8 +146,10 @@ namespace TVGL_Test
                 }
                 else counter1++;
             }
-            //Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
-            Voxel voxelOfInterest = null;
+            //Console.WriteLine(counter1+" voxels in new that are not in old.");
+            // Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
+            /*
+             Voxel voxelOfInterest = null;
             int maxYalongMinZ = Int32.MinValue;
             int minZ = Int32.MaxValue;
             foreach (var voxel in voxelSpace1.Voxels)
@@ -166,17 +169,21 @@ namespace TVGL_Test
                 }
             }
             Presenter.ShowAndHangVoxelization(ts, new List<Voxel>() {voxelOfInterest});
-
+*/
             var counter2 = 0;
             foreach (var key in voxelSpace2.VoxelIDHashSet)
             {
                 if (voxelSpace1.VoxelIDHashSet.Contains(key))
                 {
-                    //voxelSpace2.Voxels.Remove(key);
+                    voxelSpace2.Voxels.Remove(key);
                 }
                 else counter2++;
             }
-            Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
+            if (counter2 > 0)
+            {
+                Console.WriteLine(counter2 + " voxels in old that are not in new.");
+                Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
+            }
         }
 
         public static void TestOctreeVoxelization(TessellatedSolid ts)
