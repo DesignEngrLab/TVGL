@@ -98,6 +98,15 @@ namespace TVGL.Voxelization
                 makeVoxelsInInterior();
         }
 
+        public VoxelizedSolid(TessellatedSolid ts, Dictionary<long, Voxel> voxels, HashSet<long> voxelIDHashSet, 
+            int numberOfVoxelsAlongMaxDirection = 100)
+        {
+            tessellatedSolid = ts;
+            SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
+            Voxels = voxels;
+            VoxelIDHashSet = voxelIDHashSet;
+        }
+
         /// <summary>
         /// Makes the voxels in interior.
         /// </summary>

@@ -6,78 +6,8 @@ using StarMathLib;
 using TVGL.MathOperations;
 using TVGL.Voxelization;
 
-namespace TVGL.SparseVoxelization
+namespace TVGL.VoxelizationTesting
 {
-    public class Voxel2
-    {
-        public Vertex Center;
-
-        public AABB Bounds { get; set; }
-
-        public int[] Index { get; set; }
-
-        public string StringIndex { get; set; }
-
-        public Voxel2(long uniqueCoordIndex, long sm, long xm, long ym, double scale)
-        {
-            var halfLength = scale / 2;
-
-            var z = (int)(uniqueCoordIndex % ym);
-            //uniqueCoordIndex -= z;
-            var y = (int)((uniqueCoordIndex % xm) / ym);
-            //uniqueCoordIndex -= y*ym;
-            var x = (int)((uniqueCoordIndex % sm) / xm);
-            //uniqueCoordIndex -= x*xm;
-            var s = (int)(uniqueCoordIndex / sm);
-
-            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
-            //-X = 1, -Y = 3, -Z = 5;
-            switch (s)
-            {
-                case 0: //(+X+Y+Z)
-                    break;
-                case 1: //(-X+Y+Z)
-                    x = -x;
-                    break;
-                case 3: //(+X-Y+Z)
-                    y = -y;
-                    break;
-                case 5: //(+X+Y-Z)
-                    z = -z;
-                    break;
-                case 4: //(-X-Y+Z)
-                    x = -x;
-                    y = -y;
-                    break;
-                case 6: //(-X+Y-Z)
-                    x = -x;
-                    z = -z;
-                    break;
-                case 8: //(+X-Y-Z)
-                    y = -y;
-                    z = -z;
-                    break;
-                case 9: //(-X-Y-Z)
-                    x = -x;
-                    y = -y;
-                    z = -z;
-                    break;
-            }
-
-
-            Index = new int[] { x, y, z };
-            Center = new Vertex(new double[] { Index[0] * scale, Index[1] * scale, Index[2] * scale });
-            Bounds = new AABB
-            {
-                MinX = Center.X - halfLength,
-                MinY = Center.Y - halfLength,
-                MinZ = Center.Z - halfLength,
-                MaxX = Center.X + halfLength,
-                MaxY = Center.Y + halfLength,
-                MaxZ = Center.Z + halfLength
-            };
-        }
-    }
 
     public class VoxelSpace
     {
@@ -262,7 +192,7 @@ namespace TVGL.SparseVoxelization
         /// </summary>
         /// <param name="solid"></param>
         /// <param name="numberOfVoxelsAlongMaxDirection"></param>
-        public void VoxelizeSolid(TessellatedSolid solid, int numberOfVoxelsAlongMaxDirection = 100)
+        public VoxelizedSolid VoxelizeSolid(TessellatedSolid solid, int numberOfVoxelsAlongMaxDirection = 100)
         {
             tessellatedSolid = solid;
             SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
@@ -285,6 +215,9 @@ namespace TVGL.SparseVoxelization
                 var index = VoxelIDToIndices(uniqueCoordIndex);
                 Voxels.Add(uniqueCoordIndex, new Voxel(index, uniqueCoordIndex, voxelSideLength));
             }
+
+            //Convert this voxelSpace to a VoxelizedSolid
+            return new VoxelizedSolid(solid, Voxels, VoxelIDHashSet, numberOfVoxelsAlongMaxDirection);
         }
 
         /// <summary>
@@ -356,7 +289,7 @@ namespace TVGL.SparseVoxelization
             //rounding, not floor or ceiling) then it must intersect the voxel.
             //Closest Point on Triangle is not restricted to A,B,C. 
             //It may be any point on the triangle.
-            var closestPoint = Proximity.ClosestVertexOnTriangleToVertex(prim, voxelCenter);
+            var closestPoint = ClosestVertexOnTriangleToVertex(prim, voxelCenter);
 
             if ((int)Math.Floor(closestPoint[0]) == ijk[0]
                 && (int)Math.Floor(closestPoint[1]) == ijk[1]
@@ -368,6 +301,13 @@ namespace TVGL.SparseVoxelization
                 return true;
             }
             return false;
+        }
+
+
+        public static double[] ClosestVertexOnTriangleToVertex(Triangle prim, double[] p)
+        {
+            double[] uvw;
+            return Proximity.ClosestVertexOnTriangleToVertex(prim.A, prim.B, prim.C, p, out uvw);
         }
     }
 
