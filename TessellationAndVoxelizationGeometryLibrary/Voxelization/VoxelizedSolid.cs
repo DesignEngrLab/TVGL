@@ -98,7 +98,7 @@ namespace TVGL.Voxelization
                 makeVoxelsInInterior();
         }
 
-        public VoxelizedSolid(TessellatedSolid ts, Dictionary<long, Voxel> voxels, HashSet<long> voxelIDHashSet, 
+        public VoxelizedSolid(TessellatedSolid ts, Dictionary<long, Voxel> voxels, HashSet<long> voxelIDHashSet,
             int numberOfVoxelsAlongMaxDirection = 100)
         {
             tessellatedSolid = ts;
@@ -154,14 +154,14 @@ namespace TVGL.Voxelization
                 var voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                 while (sweepValue <= maxSweepValue) // this is the sweep along the face
                 {
-                    Presenter.ShowAndHangVoxelization(tessellatedSolid, this);
+                    var isInsideLowerV = face.Normal[vDim] >= 0;
                     // first fill in any voxels for face between the start points. Why do this here?! These 2 lines of code  were
                     // the last added. There are cases (not in the first loop, mind you) where it is necessary. Note this happens again
                     // at the bottom of the while-loop for the same sweep value, but for the next startpoints
                     makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
-                        sweepDim, linkToTessellatedSolid ? face : null);
+                        sweepDim, isInsideLowerV, linkToTessellatedSolid ? face : null);
                     makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim], rightStartPoint[uDim], sweepValue, vDim, uDim,
-                        sweepDim, linkToTessellatedSolid ? face : null);
+                        sweepDim, isInsideLowerV, linkToTessellatedSolid ? face : null);
                     // now two big calls for the edges: one for the left edge and one for the right. by the way, the naming of left and right are 
                     // completely arbitrary here. They are not indicative of any real position.
                     voxelizeLeft = makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue, sweepDim, uDim, vDim, linkToTessellatedSolid,
@@ -170,11 +170,12 @@ namespace TVGL.Voxelization
                         voxelizeRight, rightEdge, face, leftEndPoint, startVertex);
                     // now that the end points of the edges have moved, fill in more of the faces.
                     makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
-                        sweepDim, linkToTessellatedSolid ? face : null);
+                        sweepDim, isInsideLowerV, linkToTessellatedSolid ? face : null);
                     makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim], rightStartPoint[uDim], sweepValue, vDim, uDim,
-                        sweepDim, linkToTessellatedSolid ? face : null);
+                        sweepDim, isInsideLowerV, linkToTessellatedSolid ? face : null);
                     sweepValue++; //increment sweepValue and repeat!
                 }
+                    Presenter.ShowAndHangVoxelization(tessellatedSolid, this);
             }
         }
 
@@ -261,14 +262,15 @@ namespace TVGL.Voxelization
             bool linkToTessellatedSolid, bool voxelize, Edge edge, PolygonalFace face, double[] nextEndPoint, Vertex startVertex)
         {
             double u, v;
+            bool insideIsLowerV = face.Normal[vDim] >= 0;
             var reachedOtherVertex = findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
-                sweepValue, out u, out v);
+                 sweepValue, out u, out v);
             if (voxelize)
             {
                 makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                    sweepValue, uDim, vDim, sweepDim, linkToTessellatedSolid ? edge : null);
+                    sweepValue, uDim, vDim, sweepDim, insideIsLowerV, linkToTessellatedSolid ? edge : null);
                 makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                    sweepValue, vDim, uDim, sweepDim, linkToTessellatedSolid ? edge : null);
+                    sweepValue, vDim, uDim, sweepDim, insideIsLowerV, linkToTessellatedSolid ? edge : null);
             }
             if (reachedOtherVertex)
             {
@@ -282,9 +284,9 @@ namespace TVGL.Voxelization
                 if (voxelize)
                 {
                     makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                        sweepValue, uDim, vDim, sweepDim, linkToTessellatedSolid ? edge : null);
+                        sweepValue, uDim, vDim, sweepDim, insideIsLowerV, linkToTessellatedSolid ? edge : null);
                     makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                       sweepValue, vDim, uDim, sweepDim, linkToTessellatedSolid ? edge : null);
+                       sweepValue, vDim, uDim, sweepDim, insideIsLowerV, linkToTessellatedSolid ? edge : null);
                 }
                 startPoint[uDim] = u;
                 startPoint[vDim] = v;
@@ -343,32 +345,32 @@ namespace TVGL.Voxelization
             if (!linkToTessellatedSolid)
             {
                 var aIndices = transformedCoordinates[face.A.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-            var aID = IndicesToVoxelID(aIndices);
-            var bIndices = transformedCoordinates[face.B.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-            var bID = IndicesToVoxelID(bIndices);
-            var cIndices = transformedCoordinates[face.C.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-            var cID = IndicesToVoxelID(cIndices);
-            if (aID == bID && aID == cID) return true;
-            if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
-                aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
-            {
-                makeVoxelsForFaceInCardinalLine(face, 2, false);
-                return true;
+                var aID = IndicesToVoxelID(aIndices);
+                var bIndices = transformedCoordinates[face.B.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+                var bID = IndicesToVoxelID(bIndices);
+                var cIndices = transformedCoordinates[face.C.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+                var cID = IndicesToVoxelID(cIndices);
+                if (aID == bID && aID == cID) return true;
+                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
+                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 2, false);
+                    return true;
+                }
+                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
+                    aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2])
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 1, false);
+                    return true;
+                }
+                if (aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2] &&
+                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
+                {
+                    makeVoxelsForFaceInCardinalLine(face, 0, false);
+                    return true;
+                }
+                return false;
             }
-            if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
-                aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2])
-            {
-                makeVoxelsForFaceInCardinalLine(face, 1, false);
-                return true;
-            }
-            if (aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2] &&
-                aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
-            {
-                makeVoxelsForFaceInCardinalLine(face, 0, false);
-                return true;
-            }
-            return false;
-        }
             // The first simple case is that all vertices are within the same voxel. 
             if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
             {
@@ -444,7 +446,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Makes the voxels along line in plane. This is a tricky little function that took a lot of debugging.
         /// At this point, we are looking at a simple 2D problem. The startU, startV, endU, and endV are the
-        /// local/barycentric coordinates and correspond to actual x, y, and z via the uDim, and yDim. The 
+        /// local/barycentric coordinates and correspond to actual x, y, and z via the uDim, and yDim. The
         /// out-of-plane dimension is the sweepDim and its value (sweepValue) are provided as read only parameters.
         /// This works by finding where the v values are that cross the u integer lines. There are some subtle
         /// issues working in the negative direction (indicated by increment parameter).
@@ -457,35 +459,34 @@ namespace TVGL.Voxelization
         /// <param name="uDim">The x dim.</param>
         /// <param name="vDim">The y dim.</param>
         /// <param name="sweepDim">The sweep dim.</param>
+        /// <param name="insideIsLowerV">if set to <c>true</c> [inside is lower v].</param>
         /// <param name="tsObject">The ts object.</param>
         private void makeVoxelsAlongLineInPlane(double startU, double startV, double endU, double endV, int sweepValue,
-            int uDim, int vDim, int sweepDim, TessellationBaseClass tsObject)
+            int uDim, int vDim, int sweepDim, bool insideIsLowerV, TessellationBaseClass tsObject)
         {
-            var ijk = new int[3];
-            var u = (int)Math.Floor(startU);
-            ijk[uDim] = u;
-            var v = (int)Math.Floor(startV);
-            ijk[vDim] = v;
-            ijk[sweepDim] = sweepValue - 1;
-            storeVoxel(ijk, tsObject);
             var uRange = endU - startU;
             if (uRange.IsNegligible()) return;
-            var vRange = endV - startV;
             var increment = Math.Sign(uRange);
-            if (increment > 0) u++;
+            var u = atIntegerValue(startU) && uRange <= 0 ? (int)(startU - 1) : (int)Math.Floor(startU);
+            var vRange = endV - startV;
+
+            var ijk = new int[3];
+            ijk[sweepDim] = sweepValue - 1;
             while (increment * u < increment * endU)
             {
-                ijk[uDim] = u - (increment < 0 ? 1 : 0);
+                ijk[uDim] = u;  // - (increment < 0 ? 1 : 0);
                 var yDouble = vRange * (u - startU) / uRange + startV;
-                v = (int)Math.Floor(yDouble);
+                var v = atIntegerValue(yDouble) && vRange <= 0 && insideIsLowerV ? (int)(yDouble - 1) : (int)Math.Floor(yDouble);
                 ijk[vDim] = v;
                 storeVoxel(ijk, tsObject);
-                if (yDouble.IsPracticallySame(v))
-                {
-                    ijk[vDim] = v - 1;
-                    storeVoxel(ijk, tsObject);
-                }
+
                 u += increment;
+                //storeVoxel(ijk, tsObject);
+                //if (yDouble.IsPracticallySame(v))
+                //{
+                //    ijk[vDim] = v - 1;
+                //    storeVoxel(ijk, tsObject);
+                //}
             }
         }
 
