@@ -154,14 +154,13 @@ namespace TVGL.Voxelization
                 var voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                 while (sweepValue <= maxSweepValue) // this is the sweep along the face
                 {
-                    var isInsideLowerV = face.Normal[vDim] >= 0;
                     // first fill in any voxels for face between the start points. Why do this here?! These 2 lines of code  were
                     // the last added. There are cases (not in the first loop, mind you) where it is necessary. Note this happens again
                     // at the bottom of the while-loop for the same sweep value, but for the next startpoints
                     makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
-                        sweepDim, isInsideLowerV, linkToTessellatedSolid ? face : null);
+                        sweepDim, face.Normal[vDim] >= 0, linkToTessellatedSolid ? face : null);
                     makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim], rightStartPoint[uDim], sweepValue, vDim, uDim,
-                        sweepDim, isInsideLowerV, linkToTessellatedSolid ? face : null);
+                        sweepDim, face.Normal[uDim] >= 0, linkToTessellatedSolid ? face : null);
                     // now two big calls for the edges: one for the left edge and one for the right. by the way, the naming of left and right are 
                     // completely arbitrary here. They are not indicative of any real position.
                     voxelizeLeft = makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue, sweepDim, uDim, vDim, linkToTessellatedSolid,
@@ -170,12 +169,11 @@ namespace TVGL.Voxelization
                         voxelizeRight, rightEdge, face, leftEndPoint, startVertex);
                     // now that the end points of the edges have moved, fill in more of the faces.
                     makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
-                        sweepDim, isInsideLowerV, linkToTessellatedSolid ? face : null);
+                        sweepDim, face.Normal[vDim] >= 0, linkToTessellatedSolid ? face : null);
                     makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim], rightStartPoint[uDim], sweepValue, vDim, uDim,
-                        sweepDim, isInsideLowerV, linkToTessellatedSolid ? face : null);
+                        sweepDim, face.Normal[uDim] >= 0, linkToTessellatedSolid ? face : null);
                     sweepValue++; //increment sweepValue and repeat!
                 }
-                    Presenter.ShowAndHangVoxelization(tessellatedSolid, this);
             }
         }
 
@@ -262,15 +260,14 @@ namespace TVGL.Voxelization
             bool linkToTessellatedSolid, bool voxelize, Edge edge, PolygonalFace face, double[] nextEndPoint, Vertex startVertex)
         {
             double u, v;
-            bool insideIsLowerV = face.Normal[vDim] >= 0;
             var reachedOtherVertex = findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
                  sweepValue, out u, out v);
             if (voxelize)
             {
                 makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                    sweepValue, uDim, vDim, sweepDim, insideIsLowerV, linkToTessellatedSolid ? edge : null);
+                    sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, linkToTessellatedSolid ? edge : null);
                 makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                    sweepValue, vDim, uDim, sweepDim, insideIsLowerV, linkToTessellatedSolid ? edge : null);
+                    sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, linkToTessellatedSolid ? edge : null);
             }
             if (reachedOtherVertex)
             {
@@ -284,9 +281,9 @@ namespace TVGL.Voxelization
                 if (voxelize)
                 {
                     makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                        sweepValue, uDim, vDim, sweepDim, insideIsLowerV, linkToTessellatedSolid ? edge : null);
+                        sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, linkToTessellatedSolid ? edge : null);
                     makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                       sweepValue, vDim, uDim, sweepDim, insideIsLowerV, linkToTessellatedSolid ? edge : null);
+                       sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, linkToTessellatedSolid ? edge : null);
                 }
                 startPoint[uDim] = u;
                 startPoint[vDim] = v;

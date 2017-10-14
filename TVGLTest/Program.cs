@@ -16,7 +16,7 @@ namespace TVGL_Test
     internal class Program
     {
         private static readonly string[] FileNames = {
-           "../../../TestFiles/Binary.stl",
+         //  "../../../TestFiles/Binary.stl",
          //   "../../../TestFiles/ABF.ply",
         //     "../../../TestFiles/Beam_Boss.STL",
         //     "../../../TestFiles/Beam_Clean.STL",
@@ -120,7 +120,7 @@ namespace TVGL_Test
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var startTime = DateTime.Now;
-            var voxelSpace1 = new VoxelizedSolid(ts, 8, true);
+            var voxelSpace1 = new VoxelizedSolid(ts, 4, true);
             var totalTime1 = DateTime.Now - startTime;
             //Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
             //    totalTime1.TotalSeconds,
