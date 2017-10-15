@@ -132,19 +132,21 @@ namespace TVGL.Voxelization
         /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
         private void makeVoxelsForFacesAndEdges(bool linkToTessellatedSolid)
         {
-            foreach (var face in tessellatedSolid.Faces)   //loop over the faces
+            foreach (var face in tessellatedSolid.Faces) //loop over the faces
             {
                 if (simpleCase(face, linkToTessellatedSolid)) continue;
                 Vertex startVertex, leftVertex, rightVertex;
                 Edge leftEdge, rightEdge;
                 int uDim, vDim, sweepDim;
                 double maxSweepValue;
-                setUpFaceSweepDetails(face, out startVertex, out leftVertex, out rightVertex, out leftEdge, out rightEdge, out uDim, out vDim,
-                  out sweepDim, out maxSweepValue);
+                setUpFaceSweepDetails(face, out startVertex, out leftVertex, out rightVertex, out leftEdge,
+                    out rightEdge, out uDim, out vDim,
+                    out sweepDim, out maxSweepValue);
                 var leftStartPoint = (double[])transformedCoordinates[startVertex.IndexInList].Clone();
                 var rightStartPoint = (double[])leftStartPoint.Clone();
-                var sweepValue = (int)(atIntegerValue(leftStartPoint[sweepDim]) ? leftStartPoint[sweepDim] + 1 :
-                    Math.Ceiling(leftStartPoint[sweepDim]));
+                var sweepValue = (int)(atIntegerValue(leftStartPoint[sweepDim])
+                    ? leftStartPoint[sweepDim] + 1
+                    : Math.Ceiling(leftStartPoint[sweepDim]));
                 var leftEndPoint = transformedCoordinates[leftVertex.IndexInList];
                 var rightEndPoint = transformedCoordinates[rightVertex.IndexInList];
 
@@ -157,20 +159,26 @@ namespace TVGL.Voxelization
                     // first fill in any voxels for face between the start points. Why do this here?! These 2 lines of code  were
                     // the last added. There are cases (not in the first loop, mind you) where it is necessary. Note this happens again
                     // at the bottom of the while-loop for the same sweep value, but for the next startpoints
-                    makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
+                    makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
+                        rightStartPoint[vDim], sweepValue, uDim, vDim,
                         sweepDim, face.Normal[vDim] >= 0, linkToTessellatedSolid ? face : null);
-                    makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim], rightStartPoint[uDim], sweepValue, vDim, uDim,
+                    makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
+                        rightStartPoint[uDim], sweepValue, vDim, uDim,
                         sweepDim, face.Normal[uDim] >= 0, linkToTessellatedSolid ? face : null);
                     // now two big calls for the edges: one for the left edge and one for the right. by the way, the naming of left and right are 
                     // completely arbitrary here. They are not indicative of any real position.
-                    voxelizeLeft = makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue, sweepDim, uDim, vDim, linkToTessellatedSolid,
+                    voxelizeLeft = makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue,
+                        sweepDim, uDim, vDim, linkToTessellatedSolid,
                         voxelizeLeft, leftEdge, face, rightEndPoint, startVertex);
-                    voxelizeRight = makeVoxelsForEdgeWithinSweep(ref rightStartPoint, ref rightEndPoint, sweepValue, sweepDim, uDim, vDim, linkToTessellatedSolid,
+                    voxelizeRight = makeVoxelsForEdgeWithinSweep(ref rightStartPoint, ref rightEndPoint, sweepValue,
+                        sweepDim, uDim, vDim, linkToTessellatedSolid,
                         voxelizeRight, rightEdge, face, leftEndPoint, startVertex);
                     // now that the end points of the edges have moved, fill in more of the faces.
-                    makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim], rightStartPoint[vDim], sweepValue, uDim, vDim,
+                    makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
+                        rightStartPoint[vDim], sweepValue, uDim, vDim,
                         sweepDim, face.Normal[vDim] >= 0, linkToTessellatedSolid ? face : null);
-                    makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim], rightStartPoint[uDim], sweepValue, vDim, uDim,
+                    makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
+                        rightStartPoint[uDim], sweepValue, vDim, uDim,
                         sweepDim, face.Normal[uDim] >= 0, linkToTessellatedSolid ? face : null);
                     sweepValue++; //increment sweepValue and repeat!
                 }
@@ -283,18 +291,12 @@ namespace TVGL.Voxelization
                     makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
                         sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, linkToTessellatedSolid ? edge : null);
                     makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                       sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, linkToTessellatedSolid ? edge : null);
+                        sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, linkToTessellatedSolid ? edge : null);
                 }
-                startPoint[uDim] = u;
-                startPoint[vDim] = v;
-                startPoint[sweepDim] = sweepValue;
             }
-            else
-            {
-                startPoint[uDim] = u;
-                startPoint[vDim] = v;
-                startPoint[sweepDim] = sweepValue;
-            }
+            startPoint[uDim] = u;
+            startPoint[vDim] = v;
+            startPoint[sweepDim] = sweepValue;
             return voxelize;
         }
 
@@ -444,19 +446,21 @@ namespace TVGL.Voxelization
         /// Makes the voxels along line in plane. This is a tricky little function that took a lot of debugging.
         /// At this point, we are looking at a simple 2D problem. The startU, startV, endU, and endV are the
         /// local/barycentric coordinates and correspond to actual x, y, and z via the uDim, and yDim. The
-        /// out-of-plane dimension is the sweepDim and its value (sweepValue) are provided as read only parameters.
-        /// This works by finding where the v values are that cross the u integer lines. There are some subtle
-        /// issues working in the negative direction (indicated by increment parameter).
+        /// out-of-plane dimension is the sweepDim and its value (sweepValue) are provided as "read only" parameters.
+        /// - meaning they are given as constants that are used only to define the voxels. This method works by 
+        /// finding where the v values are that cross the u integer lines. There are some subtle
+        /// issues working in the negative direction (indicated by uRange and vRange) as you need to create the voxel
+        /// at the next lower integer cell - not the one specified by the line crossing.
         /// </summary>
         /// <param name="startU">The start x.</param>
         /// <param name="startV">The start y.</param>
         /// <param name="endU">The end x.</param>
         /// <param name="endV">The end y.</param>
-        /// <param name="sweepValue">The value sweep dim.</param>
-        /// <param name="uDim">The x dim.</param>
-        /// <param name="vDim">The y dim.</param>
-        /// <param name="sweepDim">The sweep dim.</param>
-        /// <param name="insideIsLowerV">if set to <c>true</c> [inside is lower v].</param>
+        /// <param name="sweepValue">The value sweep dimension.</param>
+        /// <param name="uDim">The index of the u dimension.</param>
+        /// <param name="vDim">The index of the v dimension.</param>
+        /// <param name="sweepDim">The index of the sweep dimension.</param>
+        /// <param name="insideIsLowerV">if set to <c>true</c> [then the inside of the part is on the lower-side of the v-value].</param>
         /// <param name="tsObject">The ts object.</param>
         private void makeVoxelsAlongLineInPlane(double startU, double startV, double endU, double endV, int sweepValue,
             int uDim, int vDim, int sweepDim, bool insideIsLowerV, TessellationBaseClass tsObject)
@@ -465,25 +469,23 @@ namespace TVGL.Voxelization
             if (uRange.IsNegligible()) return;
             var increment = Math.Sign(uRange);
             var u = atIntegerValue(startU) && uRange <= 0 ? (int)(startU - 1) : (int)Math.Floor(startU);
+            // if you are starting an integer value for u, but you're going in the negative directive, then decrement u to the next lower value
+            // this is because voxels are defined by their lowest index values.
             var vRange = endV - startV;
-
+            var v = atIntegerValue(startV) && (vRange < 0 || (vRange == 0 && insideIsLowerV)) ? (int)(startV - 1) : (int)Math.Floor(startV);
+            // likewise for v. if you are starting an integer value and you're going in the negative directive, OR if you're at an integer
+            // value and happen to be vertical line then decrement v to the next lower value
             var ijk = new int[3];
             ijk[sweepDim] = sweepValue - 1;
             while (increment * u < increment * endU)
             {
-                ijk[uDim] = u;  // - (increment < 0 ? 1 : 0);
-                var yDouble = vRange * (u - startU) / uRange + startV;
-                var v = atIntegerValue(yDouble) && vRange <= 0 && insideIsLowerV ? (int)(yDouble - 1) : (int)Math.Floor(yDouble);
+                ijk[uDim] = u;
                 ijk[vDim] = v;
                 storeVoxel(ijk, tsObject);
-
+                // now move to the next increment, of course, you may not use it if the while condition is not met
                 u += increment;
-                //storeVoxel(ijk, tsObject);
-                //if (yDouble.IsPracticallySame(v))
-                //{
-                //    ijk[vDim] = v - 1;
-                //    storeVoxel(ijk, tsObject);
-                //}
+                var vDouble = vRange * (u - startU) / uRange + startV;
+                v = atIntegerValue(vDouble) && (vRange < 0 || (vRange == 0 && insideIsLowerV)) ? (int)(vDouble - 1) : (int)Math.Floor(vDouble);
             }
         }
 
