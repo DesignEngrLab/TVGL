@@ -3,8 +3,6 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Threading;
-using ClipperLib;
 using StarMathLib;
 using TVGL;
 
@@ -20,8 +18,6 @@ namespace TVGL_Test
         Paths subject2;
         Paths clip;
         Paths solution;
-        PolyTree polytree;
-        Clipper clipper;
 
         [SetUp]
         public void TestSetup()
@@ -30,8 +26,6 @@ namespace TVGL_Test
             subject2 = new Paths();
             clip = new Paths();
             solution = new Paths();
-            polytree = new PolyTree();
-            clipper = new Clipper();
         }
 
         public static Path MakePathFromInts(int[] ints)

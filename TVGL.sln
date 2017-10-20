@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.6
+VisualStudioVersion = 15.0.27004.2002
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGLTest", "TVGLTest\TVGLTest.csproj", "{4425901E-ED04-45A8-B16E-C8EE7F9B95B6}"
 EndProject
@@ -9,9 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TessellationAndVoxelization
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGL Presenter", "TVGL Presenter\TVGL Presenter.csproj", "{8C1364CC-908A-4174-B62C-21EC4839584D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TessellationAndVoxelizationGeometryLibrary.NET4.5", "TessellationAndVoxelizationGeometryLibrary.NET4.5\TessellationAndVoxelizationGeometryLibrary.NET4.5.csproj", "{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGLPresenterDebugger", "TVGLPresenterDebugger\TVGLPresenterDebugger.csproj", "{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TessellationAndVoxelizationGeometryLibrary.Standard", "TessellationAndVoxelizationGeometryLibrary.Standard\TessellationAndVoxelizationGeometryLibrary.Standard.csproj", "{B73A4731-FF89-4A3D-B803-14B016196C4A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,14 +45,6 @@ Global
 		{8C1364CC-908A-4174-B62C-21EC4839584D}.Nsis|Any CPU.Build.0 = Release|Any CPU
 		{8C1364CC-908A-4174-B62C-21EC4839584D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C1364CC-908A-4174-B62C-21EC4839584D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Documentation|Any CPU.Build.0 = Debug|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Nsis|Any CPU.ActiveCfg = Release|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Nsis|Any CPU.Build.0 = Release|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B2D2586A-5F3B-4122-B10E-4AC143C05EA4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
@@ -61,8 +53,19 @@ Global
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Nsis|Any CPU.Build.0 = Release|Any CPU
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B73A4731-FF89-4A3D-B803-14B016196C4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B73A4731-FF89-4A3D-B803-14B016196C4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B73A4731-FF89-4A3D-B803-14B016196C4A}.Documentation|Any CPU.ActiveCfg = Debug|Any CPU
+		{B73A4731-FF89-4A3D-B803-14B016196C4A}.Documentation|Any CPU.Build.0 = Debug|Any CPU
+		{B73A4731-FF89-4A3D-B803-14B016196C4A}.Nsis|Any CPU.ActiveCfg = Debug|Any CPU
+		{B73A4731-FF89-4A3D-B803-14B016196C4A}.Nsis|Any CPU.Build.0 = Debug|Any CPU
+		{B73A4731-FF89-4A3D-B803-14B016196C4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B73A4731-FF89-4A3D-B803-14B016196C4A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2A71D9AE-2A81-41C0-B7BE-D9A0A41FC231}
 	EndGlobalSection
 EndGlobal

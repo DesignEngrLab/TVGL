@@ -85,22 +85,13 @@ namespace TVGL_Test
             {
                 var filename = FileNames[i];//.FullName;
                 Console.WriteLine("Attempting: " + filename);
-                Stream fileStream;
-                List<TessellatedSolid> ts;
-                using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
-                //filename += "1.ply";
-                //using (fileStream = File.OpenWrite(filename))
-                //    IO.Save(fileStream, ts, FileType.PLY_Binary);
-                //using (fileStream = File.OpenRead(filename))
-                //    ts = IO.Open(fileStream, filename);
+                List<TessellatedSolid> solids = IO.Open(filename);
 
-
-                //TestPolygon(ts[0]);
-                //TestSegmentation(ts[0]);
-                //Presenter.ShowAndHang(ts);
-                TestSilhouette(ts[0]);
-                //TestAdditiveVolumeEstimate(ts[0]);
+                //TestPolygon(solids[0]);
+                //TestSegmentation(solids[0]);
+                //TestSilhouette(solids[0]);
+                //TestAdditiveVolumeEstimate(solids[0]);
+                Presenter.ShowAndHang(solids);
             }
 
             Console.WriteLine("Completed.");
