@@ -904,6 +904,7 @@ namespace TVGL
             foreach (var segment in allDirectionalSegments)
             {
                 if(segment.Value.CrossSectionPathDictionary.Count == 0) throw new Exception("A segment must have cross sections");
+                //if(segment.Value.StartStepIndexAlongSearchDirection == segment.Value.EndStepIndexAlongSearchDirection) throw new Exception("This segment has zero thickness");
             }
 
             return allDirectionalSegments.Values.ToList();
@@ -933,14 +934,14 @@ namespace TVGL
                             in a segment does not change (should always be = 1) and every loop it contains only belongs to this 
                             segment. Save the stashed vertices and edges, and keep this segment open.
 
-            Segment Case 3: [Merging] If a polygon's egde loop belongs to multiple segments (as identified in Wrapping Step), end 
+            Segment Case 3: [Merging] If a polygon's edge loop belongs to multiple segments (as identified in Wrapping Step), end 
                             each connected segment and start a new one. 
 
-            Segment Case 4: [Blind Hole/Pocket] If a negative polygon's egde loop does NOT belongs to any segments, then it is a blind
+            Segment Case 4: [Blind Hole/Pocket] If a negative polygon's edge loop does NOT belongs to any segments, then it is a blind
                             hole or pocket. To find it's segment, use the intersection polygon operation to determine overlap with existing
                             segments. Each blind hole or pocket can only belong to one segment.
 
-            Segment Case 5: [New Segment] If a positive polygon's egde loop does NOT belongs to any segments, then it is the start of
+            Segment Case 5: [New Segment] If a positive polygon's edge loop does NOT belongs to any segments, then it is the start of
                             a new segement. Simply start a new segment and look through any of the unassigned negative polygons to check
                             if they belong to this new polygon (Do this with the same wrapping technique used earlier).
 
@@ -950,6 +951,15 @@ namespace TVGL
 
             In All Cases:   The in-step vertices and edges belong to the parent and child segments. This does repeat information, but there
                             are quite a few different cases and this is the easiest solution (other than not attaching them to any segment).
+            
+            Fast Transititions: A segment starts at the index after its parent end. If this segment merges with another segment in the next
+                                iteration, then it will only be defined for one step (zero thickness). This may also happen if a brand new 
+                                segment (A) immediately merges with another segment (B). In this case, segment A will only be defined for the 
+                                first step index, since segment B takes over at the next step index. Otherwise, there would be multiple cross
+                                sections for a step in an index. 
+                                
+            Implications:   A segment may only be defined for one step, but its volume should be thought of as extending a half-step forward
+                            and backward from that step to form a volume.  
             */
             if(debugCounter == 145) Debug.WriteLine("Bug Stop Hit");
             var distanceAlongAxis = segmentationData.DistanceAlongDirection;
