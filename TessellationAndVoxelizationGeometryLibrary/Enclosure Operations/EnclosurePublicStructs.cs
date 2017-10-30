@@ -79,6 +79,87 @@ namespace TVGL
             SolidRepresentation = Extrude.FromLoops(new List<List<Vertex>>() {CornerVertices.Take(4).ToList()}, Directions[2], Dimensions[2]);
         }
 
+        private IList<int> _sortedDirectionIndicesByLength;
+        /// <summary>
+        ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
+        /// </summary>
+        public IList<int> SortedDirectionIndicesByLength
+        {
+            get
+            {
+                if (_sortedDirectionsListsHaveBeenSet) return _sortedDirectionIndicesByLength;
+                //Else
+                SetSortedDirections();
+                return _sortedDirectionIndicesByLength;
+            }
+        }
+
+        private IList<double[]> _sortedDirectionsByLength;
+        /// <summary>
+        ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
+        /// </summary>
+        public IList<double[]> SortedDirectionsByLength
+        {
+            get
+            {
+                if (_sortedDirectionsListsHaveBeenSet) return _sortedDirectionsByLength;
+                //Else
+                SetSortedDirections();
+                return _sortedDirectionsByLength;
+            }
+        }
+
+        private IList<double> _sortedDimensions;
+        /// <summary>
+        ///     The sorted dimensions. This is not set by defualt. 
+        /// </summary>
+        public IList<double> SortedDimensions
+        {
+            get
+            {
+                if (_sortedDirectionsListsHaveBeenSet) return _sortedDimensions;
+                //Else
+                SetSortedDirections();
+                return _sortedDimensions;
+            }
+        }
+
+        /// <summary>
+        /// If false, need to call SetSortedDirections() to get above three properties.
+        /// Default for booleans is false.
+        /// </summary>
+        private bool _sortedDirectionsListsHaveBeenSet;
+
+        /// <summary>
+        /// Sorts the directions by the distance along that direction. Smallest to largest.
+        /// </summary>
+        public void SetSortedDirections()
+        {
+            var dimensions = new Dictionary<int, double>
+            {
+                {0, Dimensions[0]},
+                {1, Dimensions[1]},
+                {2, Dimensions[2]}
+            };
+
+            // Order by values. Use LINQ to specify sorting by value.
+            var sortedDimensions = from pair in dimensions
+                        orderby pair.Value ascending
+                        select pair;
+
+            //Set the sorted lists
+            _sortedDirectionIndicesByLength = sortedDimensions.Select(pair => pair.Key).ToList();
+            _sortedDirectionsByLength = new List<double[]>();
+            _sortedDimensions = new List<double>();
+            foreach (var index in SortedDirectionIndicesByLength)
+            {
+                _sortedDirectionsByLength.Add(Directions[index]);
+                _sortedDimensions.Add(Dimensions[index]);
+            }
+
+            _sortedDirectionsListsHaveBeenSet = true;
+        }
+
         /// <summary>
         ///     Adds the corner vertices (actually 3d points) to the bounding box
         /// </summary>
