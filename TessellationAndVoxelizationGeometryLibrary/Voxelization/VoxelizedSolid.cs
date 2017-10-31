@@ -46,6 +46,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The scale to int space.</value>
         public double ScaleToIntSpace { get; private set; }
+        public int NumVoxels { get; private set; }
         #endregion
 
         #region Private Fields
@@ -96,6 +97,7 @@ namespace TVGL.Voxelization
             makeVoxelsForFacesAndEdges(linkToTessellatedSolid);
             if (!onlyDefineBoundary)  //todo: change default of "onlyDefineBoundary" to false
                 makeVoxelsInInterior();
+            NumVoxels = VoxelIDHashSet.Count;
         }
 
         public VoxelizedSolid(TessellatedSolid ts, Dictionary<long, Voxel> voxels, HashSet<long> voxelIDHashSet,

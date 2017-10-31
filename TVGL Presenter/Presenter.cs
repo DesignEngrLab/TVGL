@@ -335,8 +335,8 @@ namespace TVGL
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
-           
-            if(solid != null)
+
+            if (solid != null)
             {
                 var model = MakeModelVisual3D(solid);
                 models.Add(model);
@@ -832,6 +832,22 @@ namespace TVGL
             window.ShowDialog();
         }
 
+        private static Visual3D MakeModelVisual3D(VoxelizedSolid solid, Material material)
+        {
+            var builder = new MeshBuilder();
+            foreach (var voxel in solid.Voxels.Values)
+                builder.AddBox(new Point3D(voxel.Center[0], voxel.Center[1], voxel.Center[2]), voxel.SideLength,
+                    voxel.SideLength, voxel.SideLength);
+            return new ModelVisual3D
+            {
+                Content =
+                    new GeometryModel3D
+                    {
+                        Geometry = builder.ToMesh(),
+                        Material = material
+                    }
+            };
+        }
 
         /// <summary>
         /// Makes the model visual3 d.
@@ -902,7 +918,7 @@ namespace TVGL
         #endregion
 
         #region 3D Voxelization Plots
-        public static void ShowVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSpace)
+        public static void ShowVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSolid)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -910,86 +926,28 @@ namespace TVGL
             models.Add(model);
             window.view1.Children.Add(model);
 
-            var lines = new List<Point3D>();
-            foreach (var voxel in voxelSpace.Voxels.Values)
-            {
-                lines.AddRange(DrawVoxel(voxel));
-            }
-            var color = new System.Windows.Media.Color { R = 255 }; //G & B default to 0 to form red
-            var lineVisual = new LinesVisual3D { Points = new Point3DCollection(lines), Color = color };
-            window.view1.Children.Add(lineVisual);
-
-
+            model = MakeModelVisual3D(voxelSolid,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 255, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.Show();
         }
 
         public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSolid)
         {
-            ShowAndHangVoxelization(solid, voxelSolid.Voxels.Values.ToList());
-        }
-
-        public static void ShowAndHangVoxelization(TessellatedSolid solid, IList<Voxel> voxels)
-        {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
             var model = MakeModelVisual3D(solid);
             models.Add(model);
+          //  window.view1.Children.Add(model);
+
+            model = MakeModelVisual3D(voxelSolid,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color {A = 255, G = 189, B = 189}));
+            models.Add(model);
             window.view1.Children.Add(model);
-
-            var lines = new List<Point3D>();
-            foreach (var voxel in voxels)
-            {
-                lines.AddRange(DrawVoxel(voxel));
-            }
-            var color = new System.Windows.Media.Color { R = 255 }; //G & B default to 0 to form red
-            var lineVisual = new LinesVisual3D { Points = new Point3DCollection(lines), Color = color };
-            window.view1.Children.Add(lineVisual);
-
-
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
-        }
-
-        private static IEnumerable<Point3D> DrawVoxel(Voxel v)
-        {
-            var lines = new List<Point3D>();
-
-            //Now create a line collection by doubling up the points
-            var lineCollection = new List<Point3D>()
-            {
-                //Top
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                //Bottom
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
-                //Sides
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MaxZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MinX, v.Bounds.MinY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MaxY, v.Bounds.MinZ),
-                new Point3D(v.Bounds.MaxX, v.Bounds.MinY, v.Bounds.MinZ)
-            };
-
-            lines.AddRange(lineCollection);
-           
-            return lines;
         }
 
         public static void ShowVoxelization(TessellatedSolid solid, VoxelizingOctree voxelOctree, int level, CellStatus status)
@@ -1062,12 +1020,12 @@ namespace TVGL
 
         #endregion
 
-            //A palet of distinguishable colors
-            //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
-            /// <summary>
-            /// Colors the palet.
-            /// </summary>
-            /// <returns>System.String[].</returns>
+        //A palet of distinguishable colors
+        //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
+        /// <summary>
+        /// Colors the palet.
+        /// </summary>
+        /// <returns>System.String[].</returns>
         public static string[] ColorPalet()
         {
             return new[]

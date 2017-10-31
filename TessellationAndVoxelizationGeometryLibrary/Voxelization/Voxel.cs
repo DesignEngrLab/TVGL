@@ -23,25 +23,29 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The center
         /// </summary>
-        public double[] Center;
+        public readonly double[] Center;
+        /// <summary>
+        /// The side length of the voxel cube
+        /// </summary>
+        internal readonly double SideLength;
 
         /// <summary>
         /// Gets or sets the bounds.
         /// </summary>
         /// <value>The bounds.</value>
-        public AABB Bounds { get; set; }
+        public readonly AABB Bounds;
 
         /// <summary>
         /// Gets or sets the index.
         /// </summary>
         /// <value>The index.</value>
-        public int[] Index { get; set; }
+        public readonly int[] Index;
 
         /// <summary>
         /// Gets or sets the identifier.
         /// </summary>
         /// <value>The identifier.</value>
-        public long ID { get; set; }
+        public readonly long ID;
         /// <summary>
         /// Gets the tessellation elements that areoverlapping with this voxel.
         /// </summary>
@@ -57,6 +61,7 @@ namespace TVGL.Voxelization
         {
             Index = index;
             this.ID = ID;
+            SideLength = voxelLength;
             var minX = Index[0] * voxelLength;
             var minY = Index[1] * voxelLength;
             var minZ = Index[2] * voxelLength;
