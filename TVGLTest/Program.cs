@@ -86,7 +86,7 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < fileNames.Count(); i++) 
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -126,7 +126,11 @@ namespace TVGL_Test
             //Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
             //    totalTime1.TotalSeconds,
             //    voxelSpace1.VoxelIDHashSet.Count);
-            Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
+            // Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
+            startTime = DateTime.Now;
+            var voxelSpace2 = new VoxelizedSolid(ts, 100, false);
+            var totalTime2 = DateTime.Now - startTime;
+            Console.WriteLine("{0}", 2*(totalTime1.TotalSeconds- totalTime2.TotalSeconds)/(totalTime1.TotalSeconds + totalTime2.TotalSeconds));
             //return;
             //startTime = DateTime.Now;
             //var voxelSpace2 = new VoxelSpace();

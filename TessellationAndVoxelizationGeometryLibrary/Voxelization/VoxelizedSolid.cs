@@ -16,6 +16,7 @@ using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace TVGL.Voxelization
 {
@@ -46,7 +47,14 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The scale to int space.</value>
         public double ScaleToIntSpace { get; private set; }
-        public int NumVoxels { get; private set; }
+        public int NumVoxelsTotal { get; private set; }
+        public int LongestDimensionIndex { get; private set; }
+        public int[] NumVoxels { get; private set; }
+
+        /// <summary>
+        /// The voxel side length. It's a square, so all sides are the same length.
+        /// </summary>
+        public double VoxelSideLength { get; private set; }
         #endregion
 
         #region Private Fields
@@ -64,10 +72,6 @@ namespace TVGL.Voxelization
         /// </summary>
         long signIDMultiplier;
 
-        /// <summary>
-        /// The voxel side length. It's a square, so all sides are the same length.
-        /// </summary>
-        double voxelSideLength;
 
         /// <summary>
         /// The transformed array of vertex coordinates. These correspond in position to the vertices
@@ -86,7 +90,7 @@ namespace TVGL.Voxelization
         /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
         /// <param name="onlyDefineBoundary">if set to <c>true</c> [only define boundary].</param>
         public VoxelizedSolid(TessellatedSolid ts, int numberOfVoxelsAlongMaxDirection = 100,
-            bool linkToTessellatedSolid = true, bool onlyDefineBoundary = true)
+            bool linkToTessellatedSolid = true, bool onlyDefineBoundary = false)
         {
             tessellatedSolid = ts;
             SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
@@ -95,9 +99,9 @@ namespace TVGL.Voxelization
             transformedCoordinates = new double[tessellatedSolid.NumberOfVertices][];
             makeVoxelsForEachVertex(linkToTessellatedSolid);
             makeVoxelsForFacesAndEdges(linkToTessellatedSolid);
-            if (!onlyDefineBoundary)  //todo: change default of "onlyDefineBoundary" to false
+            if (!onlyDefineBoundary)
                 makeVoxelsInInterior();
-            NumVoxels = VoxelIDHashSet.Count;
+            NumVoxelsTotal = VoxelIDHashSet.Count;
         }
 
         public VoxelizedSolid(TessellatedSolid ts, Dictionary<long, Voxel> voxels, HashSet<long> voxelIDHashSet,
@@ -115,8 +119,73 @@ namespace TVGL.Voxelization
         /// <exception cref="System.NotImplementedException"></exception>
         private void makeVoxelsInInterior()
         {
-            //todo: does this depend on infrastructure first?
-            throw new NotImplementedException();
+            var sweepDim = LongestDimensionIndex;
+            var uDim = (sweepDim != 0) ? 0 : 1;
+            var vDim = (sweepDim == 2) ? 1 : 2;
+            var positiveFaceVoxels = new SortedSet<Voxel>[NumVoxels[uDim], NumVoxels[vDim]];
+            var negativeFaceVoxels = new SortedSet<Voxel>[NumVoxels[uDim], NumVoxels[vDim]];
+            var listOfNegatives = new List<SortedSet<Voxel>>();
+            Parallel.ForEach(Voxels.Values, voxel =>
+            {
+                var u = voxel.Index[uDim];
+                var v = voxel.Index[vDim];
+                var faces = voxel.TessellationElements.Where(te => te is PolygonalFace);
+                if (faces.Any(f => f.Normal[sweepDim] >= 0))
+                {
+                    var sortedSet = positiveFaceVoxels[u, v];
+                    if (sortedSet == null)
+                    {
+                        sortedSet = new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim));
+                        lock (positiveFaceVoxels) positiveFaceVoxels[u, v] = sortedSet;
+                    }
+                    lock (sortedSet) sortedSet.Add(voxel);
+                }
+                if (faces.Any(f => f.Normal[sweepDim] <= 0))
+                {
+                    var sortedSet = negativeFaceVoxels[u, v];
+                    if (sortedSet == null)
+                    {
+                        sortedSet = new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim));
+                        lock (negativeFaceVoxels) negativeFaceVoxels[u, v] = sortedSet;
+                        lock (listOfNegatives) listOfNegatives.Add(sortedSet);
+                    }
+                    lock (sortedSet) sortedSet.Add(voxel);
+                }
+            });
+            var interiorVoxels = listOfNegatives.SelectMany(sortedNegatives
+                => MakeInteriorVoxelsAlongLine(sortedNegatives, positiveFaceVoxels, uDim, vDim, sweepDim))
+                .AsParallel();
+            foreach (var interiorVoxel in interiorVoxels)
+                Voxels.Add(IndicesToVoxelID(interiorVoxel.Index), interiorVoxel);
+        }
+
+        private List<Voxel> MakeInteriorVoxelsAlongLine(SortedSet<Voxel> sortedNegatives,
+            SortedSet<Voxel>[,] positiveFaceVoxels, int uDim, int vDim, int sweepDim)
+        {
+            var index = (int[])sortedNegatives.First().Index.Clone();
+            var u = index[uDim];
+            var v = index[vDim];
+            var newVoxels = new List<Voxel>();
+            var negativeQueue = new Queue<Voxel>(sortedNegatives);
+            var positiveQueue = new Queue<Voxel>(positiveFaceVoxels[u, v]);
+            while (negativeQueue.Any())
+            {
+                var startIndex = negativeQueue.Dequeue().Index[sweepDim];
+                if (negativeQueue.Peek().Index[sweepDim] - startIndex <= 1) continue;
+                int endIndex;
+                do
+                {
+                    endIndex = positiveQueue.Dequeue().Index[sweepDim];
+                } while (endIndex < startIndex);
+
+                for (int i = startIndex + 1; i < endIndex; i++)
+                {
+                    index[sweepDim] = i;
+                    newVoxels.Add(new Voxel(index, IndicesToVoxelID(index), VoxelSideLength, VoxelRoleTypes.Interior,
+                        null));
+                }
+            }
+            return newVoxels;
         }
 
         /// <summary>
@@ -506,7 +575,7 @@ namespace TVGL.Voxelization
                 if (!VoxelIDHashSet.Contains(voxelID))
                 {
                     VoxelIDHashSet.Add(voxelID);
-                    voxel = new Voxel(ijk, voxelID, voxelSideLength);
+                    voxel = new Voxel(ijk, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior);
                     Voxels.Add(voxelID, voxel);
                 }
                 return;
@@ -522,7 +591,7 @@ namespace TVGL.Voxelization
             else
             {
                 VoxelIDHashSet.Add(voxelID);
-                voxel = new Voxel(ijk, voxelID, voxelSideLength, tsObject);
+                voxel = new Voxel(ijk, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior, tsObject);
                 Voxels.Add(voxelID, voxel);
             }
             tsObject.AddVoxel(voxel);
@@ -564,12 +633,16 @@ namespace TVGL.Voxelization
         /// <exception cref="System.Exception">Int64 will not work for a voxel space this large, using the current index setup</exception>
         private void SetUpIndexingParameters(int numberOfVoxelsAlongMaxDirection)
         {
-            var dx = tessellatedSolid.XMax - tessellatedSolid.XMin;
-            var dy = tessellatedSolid.YMax - tessellatedSolid.YMin;
-            var dz = tessellatedSolid.ZMax - tessellatedSolid.ZMin;
-            var maxDim = Math.Ceiling(Math.Max(dx, Math.Max(dy, dz)));
-            voxelSideLength = maxDim / numberOfVoxelsAlongMaxDirection;
-            ScaleToIntSpace = 1.0 / voxelSideLength;
+            var dimensions = new double[3];
+            for (int i = 0; i < 3; i++)
+                dimensions[i] = tessellatedSolid.Bounds[1][i] - tessellatedSolid.Bounds[0][i];
+            var maxDim = dimensions.Max();
+            LongestDimensionIndex = dimensions.FindIndex(d => d == maxDim);
+            VoxelSideLength = maxDim / numberOfVoxelsAlongMaxDirection;
+            NumVoxels = new int[3];
+            for (int i = 0; i < 3; i++)
+                NumVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLength);
+            ScaleToIntSpace = 1.0 / VoxelSideLength;
             //To get a unique integer value for each voxel based on its index, 
             //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
             //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12

@@ -16,6 +16,15 @@ using System.Collections.Generic;
 namespace TVGL.Voxelization
 {
     /// <summary>
+    /// Indicates the role of the voxel in the solids. Is it on the surface (exterior) or is
+    /// it inside (interior)?
+    /// </summary>
+    public enum VoxelRoleTypes
+    {
+        Interior,
+        Exterior
+    };
+    /// <summary>
     /// Class Voxel.
     /// </summary>
     public class Voxel
@@ -27,7 +36,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The side length of the voxel cube
         /// </summary>
-        internal readonly double SideLength;
+        public readonly double SideLength;
 
         /// <summary>
         /// Gets or sets the bounds.
@@ -35,6 +44,10 @@ namespace TVGL.Voxelization
         /// <value>The bounds.</value>
         public readonly AABB Bounds;
 
+        /// <summary>
+        /// The voxel role (interior or exterior)
+        /// </summary>
+        public VoxelRoleTypes VoxelRole;
         /// <summary>
         /// Gets or sets the index.
         /// </summary>
@@ -52,20 +65,25 @@ namespace TVGL.Voxelization
         /// <value>The tessellation elements.</value>
         public List<TessellationBaseClass> TessellationElements { get; internal set; }
 
-        /// <summary> Initializes a new instance of the <see cref="Voxel"/> class. </summary>
-        /// <param name="index">The index.</param>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Voxel" /> class.
+        /// </summary>
+        /// <param name="Index">The index.</param>
         /// <param name="ID">The identifier.</param>
-        /// <param name="voxelLength">Length of the voxel.</param>
+        /// <param name="SideLength">Length of the voxel.</param>
+        /// <param name="VoxelRole">The voxel role.</param>
         /// <param name="tessellationObject">The tessellation object.</param>
-        public Voxel(int[] index, long ID, double voxelLength, TessellationBaseClass tessellationObject = null)
+        public Voxel(int[] Index, long ID, double SideLength, VoxelRoleTypes VoxelRole,
+            TessellationBaseClass tessellationObject = null)
         {
-            Index = index;
+            this.Index = Index;
             this.ID = ID;
-            SideLength = voxelLength;
-            var minX = Index[0] * voxelLength;
-            var minY = Index[1] * voxelLength;
-            var minZ = Index[2] * voxelLength;
-            var halfLength = voxelLength / 2;
+            this.SideLength = SideLength;
+            this.VoxelRole = VoxelRole;;
+            var minX = Index[0] * SideLength;
+            var minY = Index[1] * SideLength;
+            var minZ = Index[2] * SideLength;
+            var halfLength = SideLength / 2;
             if (tessellationObject != null)
             {
                 TessellationElements = new List<TessellationBaseClass>();
@@ -77,9 +95,9 @@ namespace TVGL.Voxelization
                 MinX = minX,
                 MinY = minY,
                 MinZ = minZ,
-                MaxX = minX + voxelLength,
-                MaxY = minY + voxelLength,
-                MaxZ = minZ + voxelLength
+                MaxX = minX + SideLength,
+                MaxY = minY + SideLength,
+                MaxZ = minZ + SideLength
             };
         }
     }

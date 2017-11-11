@@ -46,6 +46,7 @@
     <Compile Include="2D\PolygonTree.cs" />
     <Compile Include="Boolean Operations\ContactData.cs" />
     <Compile Include="Boolean Operations\Slice.cs" />
+    <Compile Include="Comparators\SortByVoxelIndex.cs" />
     <Compile Include="Comparators\SortByLength.cs" />
     <Compile Include="Enclosure Operations\GaussianSphere.cs" />
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
@@ -138,12 +139,14 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MIConvexHull, Version=1.0.17.411, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.1009\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
+      <HintPath>..\packages\MIConvexHull.1.1.17.1019\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
     </Reference>
     <Reference Include="StarMath, Version=2.0.17.725, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.17.0725\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>..\packages\StarMath.2.0.17.1019\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

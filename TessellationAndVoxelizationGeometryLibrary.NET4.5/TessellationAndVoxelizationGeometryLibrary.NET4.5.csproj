@@ -76,6 +76,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs">
       <Link>Comparators\SortByLength.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByVoxelIndex.cs">
+      <Link>Comparators\SortByVoxelIndex.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs">
       <Link>Constants.cs</Link>
     </Compile>
@@ -274,12 +277,11 @@
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="MIConvexHull.NET4.5">
-      <HintPath>..\packages\MIConvexHull.1.1.17.0911\lib\portable-net45+win8\MIConvexHull.NET4.5.dll</HintPath>
+    <Reference Include="MIConvexHull, Version=1.0.17.411, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
+      <HintPath>..\packages\MIConvexHull.1.1.17.1019\lib\portable-net4+sl4+wp7+win8\MIConvexHull.dll</HintPath>
     </Reference>
-    <Reference Include="StarMath.NET4.5, Version=2.0.17.725, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.17.0725\lib\portable-net45+win8\StarMath.NET4.5.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="StarMath, Version=2.0.17.725, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StarMath.2.0.17.1019\lib\portable-net4+sl5+wp8+win8\StarMath.dll</HintPath>
     </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />

@@ -33,16 +33,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MIConvexHull.NET4.5, Version=1.0.17.411, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
-      <HintPath>..\packages\MIConvexHull.1.1.17.1009\lib\portable-net45+win8\MIConvexHull.NET4.5.dll</HintPath>
+    <Reference Include="MIConvexHull, Version=1.0.17.1019, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
+      <HintPath>..\packages\MIConvexHull.1.1.17.1019\lib\netstandard1.0\MIConvexHull.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
-    <Reference Include="nunit.framework, Version=3.8.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
-      <HintPath>..\packages\NUnit.3.8.1\lib\net45\nunit.framework.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="nunit.framework, Version=3.9.0.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.9.0\lib\net45\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="OxyPlot, Version=1.0.0.0, Culture=neutral, PublicKeyToken=638079a8f0bd61e9, processorArchitecture=MSIL">
       <HintPath>..\packages\OxyPlot.Core.1.0.0\lib\net45\OxyPlot.dll</HintPath>
@@ -60,9 +59,8 @@
       <HintPath>..\packages\PropertyTools.Wpf.2015.2.0\lib\net45\PropertyTools.Wpf.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="StarMath.NET4.5, Version=2.0.17.725, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\StarMath.2.0.17.0725\lib\portable-net45+win8\StarMath.NET4.5.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="StarMath, Version=1.0.17.725, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\StarMath.2.0.17.1019\lib\netstandard1.0\StarMath.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -79,7 +77,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Test\BooleanOperationsTest.cs" />
     <Compile Include="Test\SegmentationTest.cs" />
-    <Compile Include="Test\VoxelizationAlternateMethod1.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
