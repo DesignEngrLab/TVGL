@@ -79,7 +79,7 @@ namespace TVGL.Voxelization
             this.Index = Index;
             this.ID = ID;
             this.SideLength = SideLength;
-            this.VoxelRole = VoxelRole;;
+            this.VoxelRole = VoxelRole;
             var minX = Index[0] * SideLength;
             var minY = Index[1] * SideLength;
             var minZ = Index[2] * SideLength;

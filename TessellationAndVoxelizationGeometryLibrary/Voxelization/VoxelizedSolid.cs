@@ -122,56 +122,50 @@ namespace TVGL.Voxelization
             var sweepDim = LongestDimensionIndex;
             var uDim = (sweepDim != 0) ? 0 : 1;
             var vDim = (sweepDim == 2) ? 1 : 2;
-            var positiveFaceVoxels = new SortedSet<Voxel>[NumVoxels[uDim], NumVoxels[vDim]];
-            var negativeFaceVoxels = new SortedSet<Voxel>[NumVoxels[uDim], NumVoxels[vDim]];
-            var listOfNegatives = new List<SortedSet<Voxel>>();
-            Parallel.ForEach(Voxels.Values, voxel =>
+            var dict = new Dictionary<long, Tuple<SortedSet<Voxel>, SortedSet<Voxel>>>();
+            foreach (var voxel in Voxels.Values)
             {
                 var u = voxel.Index[uDim];
                 var v = voxel.Index[vDim];
-                var faces = voxel.TessellationElements.Where(te => te is PolygonalFace);
+                var id = u + yIDMultiplier * v;
+                SortedSet<Voxel> positiveFaceVoxels, negativeFaceVoxels;
+                if (dict.ContainsKey(id))
+                {
+                    var sortedSets = dict[id];
+                    negativeFaceVoxels = sortedSets.Item1;
+                    positiveFaceVoxels = sortedSets.Item2;
+                }
+                else
+                {
+                    negativeFaceVoxels = new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim));
+                    positiveFaceVoxels = new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim));
+                    dict.Add(id,
+                        new Tuple<SortedSet<Voxel>, SortedSet<Voxel>>(negativeFaceVoxels, positiveFaceVoxels));
+                }
+                var faces = voxel.TessellationElements.Where(te => te is PolygonalFace).ToList();
                 if (faces.Any(f => f.Normal[sweepDim] >= 0))
-                {
-                    var sortedSet = positiveFaceVoxels[u, v];
-                    if (sortedSet == null)
-                    {
-                        sortedSet = new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim));
-                        lock (positiveFaceVoxels) positiveFaceVoxels[u, v] = sortedSet;
-                    }
-                    lock (sortedSet) sortedSet.Add(voxel);
-                }
+                    positiveFaceVoxels.Add(voxel);
                 if (faces.Any(f => f.Normal[sweepDim] <= 0))
-                {
-                    var sortedSet = negativeFaceVoxels[u, v];
-                    if (sortedSet == null)
-                    {
-                        sortedSet = new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim));
-                        lock (negativeFaceVoxels) negativeFaceVoxels[u, v] = sortedSet;
-                        lock (listOfNegatives) listOfNegatives.Add(sortedSet);
-                    }
-                    lock (sortedSet) sortedSet.Add(voxel);
-                }
-            });
-            var interiorVoxels = listOfNegatives.SelectMany(sortedNegatives
-                => MakeInteriorVoxelsAlongLine(sortedNegatives, positiveFaceVoxels, uDim, vDim, sweepDim))
+                    negativeFaceVoxels.Add(voxel);
+            }
+            var interiorVoxels = dict.Values.SelectMany(entry
+                => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim))
                 .AsParallel();
             foreach (var interiorVoxel in interiorVoxels)
                 Voxels.Add(IndicesToVoxelID(interiorVoxel.Index), interiorVoxel);
         }
 
         private List<Voxel> MakeInteriorVoxelsAlongLine(SortedSet<Voxel> sortedNegatives,
-            SortedSet<Voxel>[,] positiveFaceVoxels, int uDim, int vDim, int sweepDim)
+            SortedSet<Voxel> sortedPositives, int sweepDim)
         {
             var index = (int[])sortedNegatives.First().Index.Clone();
-            var u = index[uDim];
-            var v = index[vDim];
             var newVoxels = new List<Voxel>();
             var negativeQueue = new Queue<Voxel>(sortedNegatives);
-            var positiveQueue = new Queue<Voxel>(positiveFaceVoxels[u, v]);
+            var positiveQueue = new Queue<Voxel>(sortedPositives);
             while (negativeQueue.Any())
             {
                 var startIndex = negativeQueue.Dequeue().Index[sweepDim];
-                if (negativeQueue.Peek().Index[sweepDim] - startIndex <= 1) continue;
+                if (negativeQueue.Any() && negativeQueue.Peek().Index[sweepDim] - startIndex <= 1) continue;
                 int endIndex;
                 do
                 {
