@@ -130,9 +130,7 @@ namespace TVGL_Test
             //startTime = DateTime.Now;
             var voxelSpace2 = new VoxelizedSolid(ts, 200);
             var totalTime2 = DateTime.Now - startTime;
-            Console.WriteLine(" {0} sec\t{1} million voxels",
-                totalTime2.TotalSeconds,
-                voxelSpace2.ExteriorVoxelIDHashSet.Count / 1000000.0);
+            Console.WriteLine(" {1}\t{0}", totalTime2.TotalSeconds, voxelSpace2.NumVoxelsTotal / 1000000.0);
             //Console.WriteLine("{0}\t{1}", totalTime1.TotalSeconds, totalTime2.TotalSeconds);
             // Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
             //return;
