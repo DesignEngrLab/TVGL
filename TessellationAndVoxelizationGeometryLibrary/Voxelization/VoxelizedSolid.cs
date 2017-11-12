@@ -34,13 +34,20 @@ namespace TVGL.Voxelization
         /// Gets the voxel identifier hash set.
         /// </summary>
         /// <value>The voxel identifier hash set.</value>
-        public HashSet<long> VoxelIDHashSet { get; private set; }
-
-
+        public HashSet<long> ExteriorVoxelIDHashSet { get; private set; }
         /// <summary>
         /// The voxels are stored as a dictionary - accessible by their voxelID.
         /// </summary>
-        public Dictionary<long, Voxel> Voxels { get; private set; }
+        public Dictionary<long, Voxel> ExteriorVoxels { get; private set; }
+        /// <summary>
+        /// Gets the voxel identifier hash set.
+        /// </summary>
+        /// <value>The voxel identifier hash set.</value>
+        public HashSet<long> InteriorVoxelIDHashSet { get; private set; }
+        /// <summary>
+        /// The voxels are stored as a dictionary - accessible by their voxelID.
+        /// </summary>
+        public Dictionary<long, Voxel> InteriorVoxels { get; private set; }
 
         /// <summary>
         /// Gets the scale to integer space.
@@ -96,14 +103,14 @@ namespace TVGL.Voxelization
             // that is, you can't define the interior without linking to the tessellated solid
             tessellatedSolid = ts;
             SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
-            Voxels = new Dictionary<long, Voxel>(); //todo:approximate capacity based on tessellated volume
-            VoxelIDHashSet = new HashSet<long>();
+            ExteriorVoxels = new Dictionary<long, Voxel>(); //todo:approximate capacity based on tessellated volume
+            ExteriorVoxelIDHashSet = new HashSet<long>();
             transformedCoordinates = new double[tessellatedSolid.NumberOfVertices][];
             makeVoxelsForEachVertex(linkToTessellatedSolid);
             makeVoxelsForFacesAndEdges(linkToTessellatedSolid);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior();
-            NumVoxelsTotal = VoxelIDHashSet.Count;
+            NumVoxelsTotal = ExteriorVoxelIDHashSet.Count;
         }
 
         public VoxelizedSolid(TessellatedSolid ts, Dictionary<long, Voxel> voxels, HashSet<long> voxelIDHashSet,
@@ -111,8 +118,8 @@ namespace TVGL.Voxelization
         {
             tessellatedSolid = ts;
             SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
-            Voxels = voxels;
-            VoxelIDHashSet = voxelIDHashSet;
+            ExteriorVoxels = voxels;
+            ExteriorVoxelIDHashSet = voxelIDHashSet;
         }
 
         /// <summary>
@@ -124,39 +131,42 @@ namespace TVGL.Voxelization
             var sweepDim = LongestDimensionIndex;
             var uDim = (sweepDim != 0) ? 0 : 1;
             var vDim = (sweepDim == 2) ? 1 : 2;
-            var dict = new Dictionary<long, Tuple<SortedSet<Voxel>, SortedSet<Voxel>>>();
-            foreach (var voxel in Voxels.Values)
+            //var dict = new Dictionary<long, Tuple<SortedSet<Voxel>, SortedSet<Voxel>>>();
+            var ids = ExteriorVoxels.Values.Select(vx => IndicesToVoxelID(0, vx.Index[uDim], vx.Index[vDim])).Distinct()
+                .AsParallel();
+            var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel>, SortedSet<Voxel>>(
+                  new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim)),
+                  new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim))));//.AsParallel();
+            /*
+        foreach (var id in ids)
+            dict.Add(id,
+                    new Tuple<SortedSet<Voxel>, SortedSet<Voxel>>(
+                        new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim)),
+                        new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim))));
+                        */
+            Parallel.ForEach(ExteriorVoxels.Values, voxel =>
+            //foreach (var voxel in Voxels.Values)
             {
                 var id = IndicesToVoxelID(0, voxel.Index[uDim], voxel.Index[vDim]);
-                SortedSet<Voxel> positiveFaceVoxels, negativeFaceVoxels;
-                if (dict.ContainsKey(id))
-                {
-                    var sortedSets = dict[id];
-                    negativeFaceVoxels = sortedSets.Item1;
-                    positiveFaceVoxels = sortedSets.Item2;
-                }
-                else
-                {
-                    negativeFaceVoxels = new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim));
-                    positiveFaceVoxels = new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim));
-                    dict.Add(id,
-                        new Tuple<SortedSet<Voxel>, SortedSet<Voxel>>(negativeFaceVoxels, positiveFaceVoxels));
-                }
+                var sortedSets = dict[id];
+                var negativeFaceVoxels = sortedSets.Item1;
+                var positiveFaceVoxels = sortedSets.Item2;
                 var faces = voxel.TessellationElements.Where(te => te is PolygonalFace).ToList();
                 if (faces.Any(f => f.Normal[sweepDim] >= 0))
-                    positiveFaceVoxels.Add(voxel);
+                    lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
                 if (faces.Any(f => f.Normal[sweepDim] <= 0))
-                    negativeFaceVoxels.Add(voxel);
+                    lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
             }
+            );
             var interiorVoxels = dict.Values
                 .Where(entry => entry.Item1.Any() && entry.Item2.Any())
                 .SelectMany(entry => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim))
                 .AsParallel();
             foreach (var interiorVoxel in interiorVoxels)
             {
-                if (VoxelIDHashSet.Contains(interiorVoxel.ID)) continue;
-                VoxelIDHashSet.Add(interiorVoxel.ID);
-                Voxels.Add(interiorVoxel.ID, interiorVoxel);
+                if (ExteriorVoxelIDHashSet.Contains(interiorVoxel.ID)) continue;
+                ExteriorVoxelIDHashSet.Add(interiorVoxel.ID);
+                ExteriorVoxels.Add(interiorVoxel.ID, interiorVoxel);
             }
         }
 
@@ -569,27 +579,27 @@ namespace TVGL.Voxelization
             Voxel voxel;
             if (tsObject == null)
             {
-                if (!VoxelIDHashSet.Contains(voxelID))
+                if (!ExteriorVoxelIDHashSet.Contains(voxelID))
                 {
-                    VoxelIDHashSet.Add(voxelID);
+                    ExteriorVoxelIDHashSet.Add(voxelID);
                     voxel = new Voxel(ijk, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior);
-                    Voxels.Add(voxelID, voxel);
+                    ExteriorVoxels.Add(voxelID, voxel);
                 }
                 return;
             }
             // a bit more complicated if tsObject is provided
-            if (VoxelIDHashSet.Contains(voxelID))
+            if (ExteriorVoxelIDHashSet.Contains(voxelID))
             {
-                voxel = Voxels[voxelID];
+                voxel = ExteriorVoxels[voxelID];
                 if (voxel.TessellationElements.Contains(tsObject))
                     return;
                 voxel.TessellationElements.Add(tsObject);
             }
             else
             {
-                VoxelIDHashSet.Add(voxelID);
+                ExteriorVoxelIDHashSet.Add(voxelID);
                 voxel = new Voxel(ijk, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior, tsObject);
-                Voxels.Add(voxelID, voxel);
+                ExteriorVoxels.Add(voxelID, voxel);
             }
             tsObject.AddVoxel(voxel);
         }
