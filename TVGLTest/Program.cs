@@ -114,23 +114,27 @@ namespace TVGL_Test
             }
 
             Console.WriteLine("Completed.");
-            // Console.ReadKey();
+             Console.ReadKey();
         }
 
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var startTime = DateTime.Now;
-            var voxelSpace1 = new VoxelizedSolid(ts, 100, true);
-            var totalTime1 = DateTime.Now - startTime;
-            //Console.WriteLine("{0}\t\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
+            //var voxelSpace1 = new VoxelizedSolid(ts, 200, true);
+            //var totalTime1 = DateTime.Now - startTime;
+            //Console.WriteLine("{0}\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
             //    totalTime1.TotalSeconds,
             //    voxelSpace1.VoxelIDHashSet.Count);
             // Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
-            startTime = DateTime.Now;
-            var voxelSpace2 = new VoxelizedSolid(ts, 100, false);
+            //startTime = DateTime.Now;
+            var voxelSpace2 = new VoxelizedSolid(ts, 200);
             var totalTime2 = DateTime.Now - startTime;
-            Console.WriteLine("{0}", 2*(totalTime1.TotalSeconds- totalTime2.TotalSeconds)/(totalTime1.TotalSeconds + totalTime2.TotalSeconds));
+            Console.WriteLine(" {0} sec\t{1} million voxels",
+                totalTime2.TotalSeconds,
+                voxelSpace2.VoxelIDHashSet.Count / 1000000.0);
+            //Console.WriteLine("{0}\t{1}", totalTime1.TotalSeconds, totalTime2.TotalSeconds);
+            // Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
             //return;
             //startTime = DateTime.Now;
             //var voxelSpace2 = new VoxelSpace();

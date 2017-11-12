@@ -76,7 +76,7 @@ namespace TVGL.Voxelization
         public Voxel(int[] Index, long ID, double SideLength, VoxelRoleTypes VoxelRole,
             TessellationBaseClass tessellationObject = null)
         {
-            this.Index = Index;
+            this.Index = (int[])Index.Clone();
             this.ID = ID;
             this.SideLength = SideLength;
             this.VoxelRole = VoxelRole;

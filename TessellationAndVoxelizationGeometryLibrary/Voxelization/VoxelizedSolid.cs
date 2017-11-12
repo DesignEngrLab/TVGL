@@ -87,11 +87,13 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="numberOfVoxelsAlongMaxDirection">The number of voxels along maximum direction.</param>
-        /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
         /// <param name="onlyDefineBoundary">if set to <c>true</c> [only define boundary].</param>
+        /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
         public VoxelizedSolid(TessellatedSolid ts, int numberOfVoxelsAlongMaxDirection = 100,
-            bool linkToTessellatedSolid = true, bool onlyDefineBoundary = false)
+            bool onlyDefineBoundary = false, bool linkToTessellatedSolid = true)
         {
+            linkToTessellatedSolid = (!onlyDefineBoundary) || linkToTessellatedSolid;
+            // that is, you can't define the interior without linking to the tessellated solid
             tessellatedSolid = ts;
             SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
             Voxels = new Dictionary<long, Voxel>(); //todo:approximate capacity based on tessellated volume
@@ -125,9 +127,7 @@ namespace TVGL.Voxelization
             var dict = new Dictionary<long, Tuple<SortedSet<Voxel>, SortedSet<Voxel>>>();
             foreach (var voxel in Voxels.Values)
             {
-                var u = voxel.Index[uDim];
-                var v = voxel.Index[vDim];
-                var id = u + yIDMultiplier * v;
+                var id = IndicesToVoxelID(0, voxel.Index[uDim], voxel.Index[vDim]);
                 SortedSet<Voxel> positiveFaceVoxels, negativeFaceVoxels;
                 if (dict.ContainsKey(id))
                 {
@@ -148,11 +148,16 @@ namespace TVGL.Voxelization
                 if (faces.Any(f => f.Normal[sweepDim] <= 0))
                     negativeFaceVoxels.Add(voxel);
             }
-            var interiorVoxels = dict.Values.SelectMany(entry
-                => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim))
+            var interiorVoxels = dict.Values
+                .Where(entry => entry.Item1.Any() && entry.Item2.Any())
+                .SelectMany(entry => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim))
                 .AsParallel();
             foreach (var interiorVoxel in interiorVoxels)
-                Voxels.Add(IndicesToVoxelID(interiorVoxel.Index), interiorVoxel);
+            {
+                if (VoxelIDHashSet.Contains(interiorVoxel.ID)) continue;
+                VoxelIDHashSet.Add(interiorVoxel.ID);
+                Voxels.Add(interiorVoxel.ID, interiorVoxel);
+            }
         }
 
         private List<Voxel> MakeInteriorVoxelsAlongLine(SortedSet<Voxel> sortedNegatives,
@@ -162,20 +167,18 @@ namespace TVGL.Voxelization
             var newVoxels = new List<Voxel>();
             var negativeQueue = new Queue<Voxel>(sortedNegatives);
             var positiveQueue = new Queue<Voxel>(sortedPositives);
-            while (negativeQueue.Any())
+            while (negativeQueue.Any() && positiveQueue.Any())
             {
                 var startIndex = negativeQueue.Dequeue().Index[sweepDim];
                 if (negativeQueue.Any() && negativeQueue.Peek().Index[sweepDim] - startIndex <= 1) continue;
-                int endIndex;
-                do
-                {
+                int endIndex = Int32.MinValue;
+                while (endIndex < startIndex && positiveQueue.Any())
                     endIndex = positiveQueue.Dequeue().Index[sweepDim];
-                } while (endIndex < startIndex);
-
                 for (int i = startIndex + 1; i < endIndex; i++)
                 {
                     index[sweepDim] = i;
-                    newVoxels.Add(new Voxel(index, IndicesToVoxelID(index), VoxelSideLength, VoxelRoleTypes.Interior,
+                    var voxelID = IndicesToVoxelID(index);
+                    newVoxels.Add(new Voxel(index, voxelID, VoxelSideLength, VoxelRoleTypes.Interior,
                         null));
                 }
             }
@@ -661,6 +664,20 @@ namespace TVGL.Voxelization
         /// <returns>System.Int64.</returns>
         public long IndicesToVoxelID(int[] ijk)
         {
+            return IndicesToVoxelID(ijk[0], ijk[1], ijk[2]);
+        }
+
+        /// <summary>
+        /// Indiceses to voxel identifier.
+        /// </summary>
+        /// <param name="i">The i.</param>
+        /// <param name="j">The j.</param>
+        /// <param name="k">The k.</param>
+        /// <returns>
+        /// System.Int64.
+        /// </returns>
+        public long IndicesToVoxelID(int i, int j, int k)
+        {
             //To get a unique integer value for each voxel based on its index, 
             //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
             //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
@@ -670,10 +687,11 @@ namespace TVGL.Voxelization
             //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
             // 4 = (-X-Y+Z); 6 = (-X+Y-Z);  8 = (+X-Y-Z);  9 = (-X-Y-Z)
             var signValue = 0;
-            if (Math.Sign(ijk[0]) < 0) signValue += 1;
-            if (Math.Sign(ijk[1]) < 0) signValue += 3;
-            if (Math.Sign(ijk[2]) < 0) signValue += 5;
-            return signIDMultiplier * signValue + Math.Abs(ijk[0]) * xIDMultiplier + Math.Abs(ijk[1]) * yIDMultiplier + Math.Abs(ijk[2]);
+            if (Math.Sign(i) < 0) signValue += 1;
+            if (Math.Sign(j) < 0) signValue += 3;
+            if (Math.Sign(k) < 0) signValue += 5;
+            return signIDMultiplier * signValue + Math.Abs(i) * xIDMultiplier + Math.Abs(j) * yIDMultiplier
+                + Math.Abs(k);
         }
 
         /// <summary>
