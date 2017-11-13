@@ -15,6 +15,7 @@
 using StarMathLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -126,27 +127,26 @@ namespace TVGL.Voxelization
                 .AsParallel();
             var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel>, SortedSet<Voxel>>(
                   new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim)),
-                  new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim))));//.AsParallel();
+                  new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim))));
             Parallel.ForEach(Voxels.Values, voxel =>
-                   {
-                       var id = IndicesToVoxelID(0, voxel.Index[uDim], voxel.Index[vDim]);
-                       var sortedSets = dict[id];
-                       var negativeFaceVoxels = sortedSets.Item1;
-                       var positiveFaceVoxels = sortedSets.Item2;
-                       var faces = voxel.TessellationElements.Where(te => te is PolygonalFace).ToList();
-                       if (faces.Any(f => f.Normal[sweepDim] >= 0))
-                           lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
-                       if (faces.Any(f => f.Normal[sweepDim] <= 0))
-                           lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
-                   }
-                   );
+                         {
+                             var id = IndicesToVoxelID(0, voxel.Index[uDim], voxel.Index[vDim]);
+                             var sortedSets = dict[id];
+                             var negativeFaceVoxels = sortedSets.Item1;
+                             var positiveFaceVoxels = sortedSets.Item2;
+                             var faces = voxel.TessellationElements.Where(te => te is PolygonalFace).ToList();
+                             if (faces.Any(f => f.Normal[sweepDim] >= 0))
+                                 lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
+                             if (faces.Any(f => f.Normal[sweepDim] <= 0))
+                                 lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
+                         });
             var interiorVoxels = dict.Values
                 .Where(entry => entry.Item1.Any() && entry.Item2.Any())
                 .SelectMany(entry => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim))
                 .AsParallel();
             foreach (var interiorVoxel in interiorVoxels)
             {
-                if (VoxelIDHashSet.Contains(interiorVoxel.ID)) continue;
+                if (VoxelIDHashSet.Contains(interiorVoxel.ID)) continue; // why would this happen though?
                 VoxelIDHashSet.Add(interiorVoxel.ID);
                 Voxels.Add(interiorVoxel.ID, interiorVoxel);
             }

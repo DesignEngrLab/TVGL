@@ -90,15 +90,15 @@ namespace TVGL.Voxelization
                 TessellationElements.Add(tessellationObject);
             }
             Center = new[] { minX + halfLength, minY + halfLength, minZ + halfLength };
-            Bounds = new AABB
-            {
-                MinX = minX,
-                MinY = minY,
-                MinZ = minZ,
-                MaxX = minX + SideLength,
-                MaxY = minY + SideLength,
-                MaxZ = minZ + SideLength
-            };
+            //Bounds = new AABB
+            //{
+            //    MinX = minX,
+            //    MinY = minY,
+            //    MinZ = minZ,
+            //    MaxX = minX + SideLength,
+            //    MaxY = minY + SideLength,
+            //    MaxZ = minZ + SideLength
+            //};
         }
     }
 

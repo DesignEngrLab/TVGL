@@ -86,7 +86,7 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < fileNames.Count(); i++)
+            for (var i = 0; i < 10; i++) // fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -114,7 +114,7 @@ namespace TVGL_Test
             }
 
             Console.WriteLine("Completed.");
-             Console.ReadKey();
+            Console.ReadKey();
         }
 
 
