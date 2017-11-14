@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace TVGL
@@ -164,7 +165,7 @@ namespace TVGL
             lines.Reverse();
             for (var i = 0; i < lines.Count; i++)
             {
-                lines[i].IndexInList = i;
+                lines[i].IndexInPath = i;
             }
             PathLines = lines;
         }
@@ -190,7 +191,7 @@ namespace TVGL
             lines.Reverse();
             for (var i = 0; i < lines.Count; i++)
             {
-                lines[i].IndexInList = i;
+                lines[i].IndexInPath = i;
             }
             PathLines = lines;
         }
@@ -211,9 +212,69 @@ namespace TVGL
             for (var i = 0; i < n; i++)
             {
                 var j = (i + 1) % n;
-                lines.Add(new Line(Path[i], Path[j], true) { IndexInList = i });
+                lines.Add(new Line(Path[i], Path[j], true) { IndexInPath = i });
             }
             PathLines = new List<Line>(lines);
+        }
+
+        /// <summary>
+        /// Gets the next point in the path, given the current point index. 
+        /// This function automatically wraps back to the first point.
+        /// </summary>
+        /// <param name="currentPointIndex"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public Point NextPoint(int currentPointIndex)
+        {
+            return Path[NextPointIndex(currentPointIndex)];
+        }
+
+        /// <summary>
+        /// Gets the index of the next point in the path, given the current point index. 
+        /// This function automatically wraps back to index 0.
+        /// </summary>
+        /// <param name="currentPointIndex"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public int NextPointIndex(int currentPointIndex)
+        {
+            if(Path[currentPointIndex].IndexInPath != currentPointIndex)
+                throw new Exception("Path has been altered and the indices do not match up");
+            if (Path.Count == currentPointIndex + 1)
+            {
+                return 0;
+            }
+            return currentPointIndex + 1;
+        }
+
+        /// <summary>
+        /// Gets the next line in the path, given the current line index. 
+        /// This function automatically wraps back to the first line.
+        /// </summary>
+        /// <param name="currentLineIndex"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public Line NextLine(int currentLineIndex)
+        {
+            return PathLines[NextLineIndex(currentLineIndex)];
+        }
+
+        /// <summary>
+        /// Gets the index of the next line in the path, given the current line index. 
+        /// This function automatically wraps back to index 0.
+        /// </summary>
+        /// <param name="currentLineIndex"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public int NextLineIndex(int currentLineIndex)
+        {
+            if (PathLines[currentLineIndex].IndexInPath != currentLineIndex)
+                throw new Exception("Path has been altered and the indices do not match up");
+            if (PathLines.Count == currentLineIndex + 1)
+            {
+                return 0;
+            }
+            return currentLineIndex + 1;
         }
     }
 }

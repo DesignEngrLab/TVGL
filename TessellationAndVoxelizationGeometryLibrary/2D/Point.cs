@@ -119,7 +119,11 @@ namespace TVGL
             }
         }
 
-        
+        /// <summary>
+        ///     Gets or sets an arbitrary ReferenceIndex to track point
+        /// </summary>
+        /// <value>The reference index.</value>
+        public int ReferenceIndex { get; set; }
 
         #endregion
 

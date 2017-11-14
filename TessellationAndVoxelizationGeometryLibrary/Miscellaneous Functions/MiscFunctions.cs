@@ -223,6 +223,94 @@ namespace TVGL
             }
         }
 
+        /// <summary>
+        ///     Returns a list of sorted points along a set direction. Ties are broken by direction[1] if
+        ///     available.
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="points"></param>
+        /// <param name="sortedPoints"></param>
+        /// <exception cref="Exception">
+        ///     Must provide between 1 to 3 direction vectors
+        ///     or
+        ///     Must provide between 1 to 3 direction vectors
+        /// </exception>
+        public static void SortAlongDirection(double[] direction, IList<Point> points,
+               out List<Tuple<Point, double>> sortedPoints)
+        {
+            var directions = new[] {direction};
+            SortAlongDirection(directions, points, out sortedPoints);
+        }
+
+        /// <summary>
+        ///     Returns a list of sorted points along a set direction. Ties are broken by direction[1] if
+        ///     available.
+        /// </summary>
+        /// <param name="directions">The directions.</param>
+        /// <param name="points"></param>
+        /// <param name="sortedPoints"></param>
+        /// <exception cref="Exception">
+        ///     Must provide between 1 to 3 direction vectors
+        ///     or
+        ///     Must provide between 1 to 3 direction vectors
+        /// </exception>
+        public static void SortAlongDirection(double[][] directions, IList<Point> points,
+            out List<Tuple<Point, double>> sortedPoints)
+        {
+            //Get integer values for every vertex as distance along direction
+            //Split positive and negative numbers into seperate lists. 0 is 
+            //considered positive.
+            //This is an O(n) preprocessing step
+            sortedPoints = new List<Tuple<Point, double>>();
+            var tempPoints = new List<Point>();
+            var pointDistances = new Dictionary<int, double>();
+            var pointReferences = new Dictionary<int, Point>();
+            var pointIndex = 0;
+            //Accuracy to the 15th decimal place
+            var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
+            foreach (var point in points)
+            {
+                //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
+                Point rotatedPoint;
+                var dot1 = directions[0][0]*point.X + directions[0][1] * point.Y; //2D dot product
+
+                switch (directions.Length)
+                {
+                    case 1:
+                        {
+                            rotatedPoint = new Point(Math.Round(dot1 * tolerance), 0.0);
+                        }
+                        break;
+                    case 2:
+                        {
+                            var dot2 = directions[1][0] * point.X + directions[1][1] * point.Y; //2D dot product
+                            rotatedPoint = new Point(Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance));
+                        }
+                        break;
+                    default:
+                        throw new Exception("Must provide between 1 to 2 direction vectors");
+
+                }
+                tempPoints.Add(rotatedPoint);
+                rotatedPoint.ReferenceIndex = pointIndex;
+                pointDistances.Add(pointIndex, dot1);
+                pointReferences.Add(pointIndex, point);
+                pointIndex++;
+            }
+            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
+            //tolerance as the "isNeglible" star math function 
+            var sortedPointsTemp = tempPoints.OrderBy(point => point.X).ThenBy(point => point.Y).ToList();
+
+            //Build the output list
+            foreach (var rotatedPoint in sortedPointsTemp)
+            {
+                var originalPoint = pointReferences[rotatedPoint.ReferenceIndex];
+                var distance = pointDistances[rotatedPoint.ReferenceIndex];
+                sortedPoints.Add(new Tuple<Point, double>(originalPoint, distance));
+            }
+        }
+
+
         #endregion
 
         #region Perimeter
@@ -1641,6 +1729,30 @@ namespace TVGL
                     throw new Exception("This should never occur. Prevent this from happening");
             }
             return new Vertex(position);
+        }
+
+        /// <summary>
+        ///     Finds the point on the plane made by a line intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane. Can be 2D or 3D. </param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="line"></param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static Point PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
+        {
+            var d1 = normalOfPlane[0] * line.ToPoint.X + normalOfPlane[1] * line.ToPoint.Y; //2D Dot product
+            var d2 = normalOfPlane[0] * line.FromPoint.X + normalOfPlane[1] * line.FromPoint.Y;  //For a point, Position[2] = 0.0
+            var fraction = (d1 - distOfPlane) / (d1 - d2);
+            var position2D = new double[2];
+            for (var i = 0; i < 2; i++)
+            {
+                position2D[i] = line.FromPoint.Position[i] * fraction + line.ToPoint.Position[i] * (1 - fraction);
+                if (double.IsNaN(position2D[i]))
+                    throw new Exception("This should never occur. Prevent this from happening");
+            }
+            return new Point(position2D[0], position2D[1]);
         }
 
         /// <summary>

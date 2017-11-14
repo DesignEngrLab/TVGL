@@ -59,7 +59,7 @@ namespace TVGL
             Length = line.Length;
             IsHorizontal = line.IsHorizontal;
             IsVertical = line.IsVertical;
-            IndexInList = line.IndexInList;
+            IndexInPath = line.IndexInPath;
             Slope = line.Slope;
             Yintercept = line.Yintercept;
         }
@@ -111,12 +111,19 @@ namespace TVGL
         /// <summary>
         /// Get or set its index in a list.
         /// </summary>
-        public int IndexInList { get; set; }
+        public int IndexInPath { get; set; }
 
         /// <summary>
         /// Gets the length of the line
         /// </summary>
         public double Length { get; private set; }
+
+        /// <summary>
+        ///     Gets or sets an arbitrary ReferenceIndex to track this line
+        /// </summary>
+        /// <value>The reference index.</value>
+        public int ReferenceIndex { get; set; }
+
         #endregion
 
         #region Public Methods        

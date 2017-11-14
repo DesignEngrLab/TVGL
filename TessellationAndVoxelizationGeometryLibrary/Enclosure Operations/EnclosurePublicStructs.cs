@@ -151,7 +151,7 @@ namespace TVGL
             _sortedDirectionIndicesByLength = sortedDimensions.Select(pair => pair.Key).ToList();
             _sortedDirectionsByLength = new List<double[]>();
             _sortedDimensions = new List<double>();
-            foreach (var index in SortedDirectionIndicesByLength)
+            foreach (var index in _sortedDirectionIndicesByLength)
             {
                 _sortedDirectionsByLength.Add(Directions[index]);
                 _sortedDimensions.Add(Dimensions[index]);
