@@ -27,7 +27,7 @@ namespace TVGL.Voxelization
     /// <summary>
     /// Class Voxel.
     /// </summary>
-    public class Voxel
+    public class VoxelBin
     {
         /// <summary>
         /// The center
@@ -66,14 +66,14 @@ namespace TVGL.Voxelization
         public List<TessellationBaseClass> TessellationElements { get; internal set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel" /> class.
+        /// Initializes a new instance of the <see cref="VoxelBin" /> class.
         /// </summary>
         /// <param name="Index">The index.</param>
         /// <param name="ID">The identifier.</param>
         /// <param name="SideLength">Length of the voxel.</param>
         /// <param name="VoxelRole">The voxel role.</param>
         /// <param name="tessellationObject">The tessellation object.</param>
-        public Voxel(int[] Index, long ID, double SideLength, VoxelRoleTypes VoxelRole,
+        public VoxelBin(int[] Index, long ID, double SideLength, VoxelRoleTypes VoxelRole,
             TessellationBaseClass tessellationObject = null)
         {
             this.Index = (int[])Index.Clone();

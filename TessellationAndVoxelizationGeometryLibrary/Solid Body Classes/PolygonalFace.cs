@@ -402,11 +402,11 @@ namespace TVGL
             }
         }
 
-        public HashSet<Voxel> Voxels { get; private set; }
+        public HashSet<VoxelBin> Voxels { get; private set; }
         #endregion
-        internal override void AddVoxel(Voxel v)
+        internal override void AddVoxel(VoxelBin v)
         {
-            if (Voxels == null) Voxels = new HashSet<Voxel> { v };
+            if (Voxels == null) Voxels = new HashSet<VoxelBin> { v };
             else if (!Voxels.Contains(v)) Voxels.Add(v);
         }
     }

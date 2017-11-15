@@ -31,7 +31,7 @@ namespace TVGL
         /// <value>The normal.</value>
         public double[] Normal { get; internal set; }
 
-        internal abstract void AddVoxel(Voxel v);
+        internal abstract void AddVoxel(VoxelBin v);
 
 
     }
