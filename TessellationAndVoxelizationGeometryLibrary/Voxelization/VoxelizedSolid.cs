@@ -49,7 +49,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The scale to int space.</value>
         public double ScaleToIntSpace { get; private set; }
-        public object Offset { get; private set; }
+        public double[] Offset { get; private set; }
         public int NumVoxelsTotal { get; private set; }
         public int LongestDimensionIndex { get; private set; }
         public int[] NumVoxels { get; private set; }
@@ -95,7 +95,7 @@ namespace TVGL.Voxelization
         public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization)
         {
             tessellatedSolid = ts;
-this.            voxelDiscretization = voxelDiscretization;
+            this.voxelDiscretization = voxelDiscretization;
             SetUpIndexingParameters();
             VoxelBins = new Dictionary<long, VoxelBin>(); //todo:approximate capacity based on tessellated volume
             VoxelIDHashSet = new HashSet<long>();
@@ -368,388 +368,391 @@ this.            voxelDiscretization = voxelDiscretization;
         /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
         private void makeVoxelsForEachVertex()
         {
-            for (int i = 0; i < tessellatedSolid.NumberOfVertices; i++)
+            Parallel.For(0, tessellatedSolid.NumberOfVertices, i =>
             {
                 var vertex = tessellatedSolid.Vertices[i];
-                var coordinates = vertex.Position.multiply(ScaleToIntSpace);
+                var coordinates = vertex.Position.multiply(ScaleToIntSpace).add(Offset);
                 transformedCoordinates[i] = coordinates;
-                var ijk = new int[3];
+                int x, y, z;
                 if (coordinates.Any(atIntegerValue))
                 {
                     var edgeVectors = vertex.Edges.Select(e => e.To == vertex ? e.Vector : e.Vector.multiply(-1));
-                    for (int j = 0; j < 3; j++)
-                    {
-                        if (atIntegerValue(coordinates[j]) && edgeVectors.All(ev => ev[j] >= 0))
-                            ijk[j] = (int)(coordinates[j] - 1);
-                        else ijk[j] = (int)Math.Floor(coordinates[j]);
-                    }
+                    if (edgeVectors.All(ev => ev[0] >= 0))
+                        x = (int) (coordinates[0] - 1);
+                    else x = (int) Math.Floor(coordinates[0]);
+                    if (edgeVectors.All(ev => ev[1] >= 0))
+                        y = (int) (coordinates[1] - 1);
+                    else y = (int) Math.Floor(coordinates[1]);
+                    if (edgeVectors.All(ev => ev[2] >= 0))
+                        z = (int) (coordinates[2] - 1);
+                    else z = (int) Math.Floor(coordinates[2]);
                 }
                 else
                 {
                     //Gets the integer coordinates, rounded down for the point.
-                    ijk[0] = (int)Math.Floor(coordinates[0]);
-                    ijk[1] = (int)Math.Floor(coordinates[1]);
-                    ijk[2] = (int)Math.Floor(coordinates[2]);
+                    x = ((int) Math.Floor(coordinates[0]);
+                    y = (int) Math.Floor(coordinates[1]);
+                    z = (int) Math.Floor(coordinates[2]);
                 }
-                storeVoxel(ijk, linkToTessellatedSolid ? tessellatedSolid.Vertices[i] : null);
-            }
+                MakeAndStoreVoxelBin(x, y, z, vertex);
+            });
         }
 
-        /// <summary>
-        /// If it is a simple case, just solve it and return true.
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool simpleCase(PolygonalFace face, bool linkToTessellatedSolid)
+    /// <summary>
+    /// If it is a simple case, just solve it and return true.
+    /// </summary>
+    /// <param name="face">The face.</param>
+    /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
+    /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+    private bool simpleCase(PolygonalFace face, bool linkToTessellatedSolid)
+    {
+        if (!linkToTessellatedSolid)
         {
-            if (!linkToTessellatedSolid)
+            var aIndices = transformedCoordinates[face.A.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+            var aID = IndicesToVoxelID(aIndices);
+            var bIndices = transformedCoordinates[face.B.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+            var bID = IndicesToVoxelID(bIndices);
+            var cIndices = transformedCoordinates[face.C.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
+            var cID = IndicesToVoxelID(cIndices);
+            if (aID == bID && aID == cID) return true;
+            if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
+                aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
             {
-                var aIndices = transformedCoordinates[face.A.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var aID = IndicesToVoxelID(aIndices);
-                var bIndices = transformedCoordinates[face.B.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var bID = IndicesToVoxelID(bIndices);
-                var cIndices = transformedCoordinates[face.C.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var cID = IndicesToVoxelID(cIndices);
-                if (aID == bID && aID == cID) return true;
-                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
-                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 2, false);
-                    return true;
-                }
-                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
-                    aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 1, false);
-                    return true;
-                }
-                if (aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2] &&
-                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 0, false);
-                    return true;
-                }
-                return false;
-            }
-            // The first simple case is that all vertices are within the same voxel. 
-            if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
-            {
-                var voxel = face.A.Voxel;
-                face.AddVoxel(voxel);
-                foreach (var edge in face.Edges)
-                    edge.AddVoxel(voxel);
+                makeVoxelsForFaceInCardinalLine(face, 2, false);
                 return true;
             }
-            // the second, third, and fourth simple cases are if the triangle
-            // fits within a line of voxels.
-            // this condition checks that all voxels have same x & y values (hence aligned in z-direction)
-            if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
-                     face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
-                     face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
-                     face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
+            if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
+                aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2])
             {
-                makeVoxelsForFaceInCardinalLine(face, 2, true);
+                makeVoxelsForFaceInCardinalLine(face, 1, false);
                 return true;
             }
-            // this condition checks that all voxels have same x & z values (hence aligned in y-direction)
-            if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
-                     face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
-                     face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
-                     face.A.Voxel.Index[2] == face.C.Voxel.Index[2])
+            if (aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2] &&
+                aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
             {
-                makeVoxelsForFaceInCardinalLine(face, 1, true);
-                return true;
-            }
-            // this condition checks that all voxels have same y & z values (hence aligned in x-direction)
-            if (face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
-                     face.A.Voxel.Index[2] == face.C.Voxel.Index[2] &&
-                     face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
-                     face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
-            {
-                makeVoxelsForFaceInCardinalLine(face, 0, true);
+                makeVoxelsForFaceInCardinalLine(face, 0, false);
                 return true;
             }
             return false;
         }
-
-        /// <summary>
-        /// Makes the voxels for face in cardinal line. This is only called by the preceding function, simpleCase.
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="dim">The dim.</param>
-        /// <param name="linkToTessellatedSolid"></param>
-        private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim, bool linkToTessellatedSolid)
+        // The first simple case is that all vertices are within the same voxel. 
+        if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
         {
-            var minIndex = Math.Min(face.A.Voxel.Index[dim],     // stores the index of the voxel along dim that is the smallest
-                    Math.Min(face.B.Voxel.Index[dim], face.C.Voxel.Index[dim]));
-            var maxIndex = Math.Max(face.A.Voxel.Index[dim],     // stores the index of the voxel along dim that is the largest
-                Math.Max(face.B.Voxel.Index[dim], face.C.Voxel.Index[dim]));
-            var voxelIndex = (int[])face.A.Voxel.Index.Clone();
-            for (int i = minIndex; i <= maxIndex; i++)
-            {   // set up voxels for the face
+            var voxel = face.A.Voxel;
+            face.AddVoxel(voxel);
+            foreach (var edge in face.Edges)
+                edge.AddVoxel(voxel);
+            return true;
+        }
+        // the second, third, and fourth simple cases are if the triangle
+        // fits within a line of voxels.
+        // this condition checks that all voxels have same x & y values (hence aligned in z-direction)
+        if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
+                 face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
+                 face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
+                 face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
+        {
+            makeVoxelsForFaceInCardinalLine(face, 2, true);
+            return true;
+        }
+        // this condition checks that all voxels have same x & z values (hence aligned in y-direction)
+        if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
+                 face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
+                 face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
+                 face.A.Voxel.Index[2] == face.C.Voxel.Index[2])
+        {
+            makeVoxelsForFaceInCardinalLine(face, 1, true);
+            return true;
+        }
+        // this condition checks that all voxels have same y & z values (hence aligned in x-direction)
+        if (face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
+                 face.A.Voxel.Index[2] == face.C.Voxel.Index[2] &&
+                 face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
+                 face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
+        {
+            makeVoxelsForFaceInCardinalLine(face, 0, true);
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Makes the voxels for face in cardinal line. This is only called by the preceding function, simpleCase.
+    /// </summary>
+    /// <param name="face">The face.</param>
+    /// <param name="dim">The dim.</param>
+    /// <param name="linkToTessellatedSolid"></param>
+    private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim, bool linkToTessellatedSolid)
+    {
+        var minIndex = Math.Min(face.A.Voxel.Index[dim],     // stores the index of the voxel along dim that is the smallest
+                Math.Min(face.B.Voxel.Index[dim], face.C.Voxel.Index[dim]));
+        var maxIndex = Math.Max(face.A.Voxel.Index[dim],     // stores the index of the voxel along dim that is the largest
+            Math.Max(face.B.Voxel.Index[dim], face.C.Voxel.Index[dim]));
+        var voxelIndex = (int[])face.A.Voxel.Index.Clone();
+        for (int i = minIndex; i <= maxIndex; i++)
+        {   // set up voxels for the face
+            voxelIndex[dim] = i;
+            storeVoxel(voxelIndex, linkToTessellatedSolid ? face : null);
+        }
+        if (!linkToTessellatedSolid) return;
+        foreach (var faceEdge in face.Edges)
+        {   // cycle over the edges to link them to the voxels, may need to make new voxels
+            var lowVIndex = Math.Min(faceEdge.From.Voxel.Index[dim], faceEdge.To.Voxel.Index[dim]);
+            var highVIndex = Math.Max(faceEdge.From.Voxel.Index[dim], faceEdge.To.Voxel.Index[dim]);
+            for (int i = lowVIndex; i <= highVIndex; i++)
+            {
                 voxelIndex[dim] = i;
-                storeVoxel(voxelIndex, linkToTessellatedSolid ? face : null);
+                storeVoxel(voxelIndex, linkToTessellatedSolid ? faceEdge : null);
             }
-            if (!linkToTessellatedSolid) return;
-            foreach (var faceEdge in face.Edges)
-            {   // cycle over the edges to link them to the voxels, may need to make new voxels
-                var lowVIndex = Math.Min(faceEdge.From.Voxel.Index[dim], faceEdge.To.Voxel.Index[dim]);
-                var highVIndex = Math.Max(faceEdge.From.Voxel.Index[dim], faceEdge.To.Voxel.Index[dim]);
-                for (int i = lowVIndex; i <= highVIndex; i++)
-                {
-                    voxelIndex[dim] = i;
-                    storeVoxel(voxelIndex, linkToTessellatedSolid ? faceEdge : null);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Makes the voxels along line in plane. This is a tricky little function that took a lot of debugging.
-        /// At this point, we are looking at a simple 2D problem. The startU, startV, endU, and endV are the
-        /// local/barycentric coordinates and correspond to actual x, y, and z via the uDim, and yDim. The
-        /// out-of-plane dimension is the sweepDim and its value (sweepValue) are provided as "read only" parameters.
-        /// - meaning they are given as constants that are used only to define the voxels. This method works by 
-        /// finding where the v values are that cross the u integer lines. There are some subtle
-        /// issues working in the negative direction (indicated by uRange and vRange) as you need to create the voxel
-        /// at the next lower integer cell - not the one specified by the line crossing.
-        /// </summary>
-        /// <param name="startU">The start x.</param>
-        /// <param name="startV">The start y.</param>
-        /// <param name="endU">The end x.</param>
-        /// <param name="endV">The end y.</param>
-        /// <param name="sweepValue">The value sweep dimension.</param>
-        /// <param name="uDim">The index of the u dimension.</param>
-        /// <param name="vDim">The index of the v dimension.</param>
-        /// <param name="sweepDim">The index of the sweep dimension.</param>
-        /// <param name="insideIsLowerV">if set to <c>true</c> [then the inside of the part is on the lower-side of the v-value].</param>
-        /// <param name="tsObject">The ts object.</param>
-        private void makeVoxelsAlongLineInPlane(double startU, double startV, double endU, double endV, int sweepValue,
-            int uDim, int vDim, int sweepDim, bool insideIsLowerV, TessellationBaseClass tsObject)
-        {
-            var uRange = endU - startU;
-            if (uRange.IsNegligible()) return;
-            var increment = Math.Sign(uRange);
-            var u = atIntegerValue(startU) && uRange <= 0 ? (int)(startU - 1) : (int)Math.Floor(startU);
-            // if you are starting an integer value for u, but you're going in the negative directive, then decrement u to the next lower value
-            // this is because voxels are defined by their lowest index values.
-            var vRange = endV - startV;
-            var v = atIntegerValue(startV) && (vRange < 0 || (vRange == 0 && insideIsLowerV)) ? (int)(startV - 1) : (int)Math.Floor(startV);
-            // likewise for v. if you are starting an integer value and you're going in the negative directive, OR if you're at an integer
-            // value and happen to be vertical line then decrement v to the next lower value
-            var ijk = new int[3];
-            ijk[sweepDim] = sweepValue - 1;
-            while (increment * u < increment * endU)
-            {
-                ijk[uDim] = u;
-                ijk[vDim] = v;
-                storeVoxel(ijk, tsObject);
-                // now move to the next increment, of course, you may not use it if the while condition is not met
-                u += increment;
-                var vDouble = vRange * (u - startU) / uRange + startV;
-                v = atIntegerValue(vDouble) && (vRange < 0 || (vRange == 0 && insideIsLowerV)) ? (int)(vDouble - 1) : (int)Math.Floor(vDouble);
-            }
-        }
-
-        /// <summary>
-        /// Stores the voxel and links them to the tessellated object (vertex,
-        /// edge, or face) if it is provided.
-        /// </summary>
-        /// <param name="ijk">The ijk.</param>
-        /// <param name="tsObject">The ts object.</param>
-        private void storeVoxel(int[] ijk, TessellationBaseClass tsObject)
-        {
-            var voxelID = IndicesToVoxelID(ijk);
-            VoxelBin voxel;
-            if (tsObject == null)
-            {
-                if (!VoxelIDHashSet.Contains(voxelID))
-                {
-                    VoxelIDHashSet.Add(voxelID);
-                    voxel = new VoxelBin(ijk, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior);
-                    Voxels.Add(voxelID, voxel);
-                }
-                return;
-            }
-            // a bit more complicated if tsObject is provided
-            if (VoxelIDHashSet.Contains(voxelID))
-            {
-                voxel = Voxels[voxelID];
-                if (voxel.TessellationElements.Contains(tsObject))
-                    return;
-                voxel.TessellationElements.Add(tsObject);
-            }
-            else
-            {
-                VoxelIDHashSet.Add(voxelID);
-                voxel = new VoxelBin(ijk, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior, tsObject);
-                Voxels.Add(voxelID, voxel);
-            }
-            tsObject.AddVoxel(voxel);
-        }
-
-        /// <summary>
-        /// Finds the where line that is the edge length crosses sweep plane. It may be that the edge terminates
-        /// before the plane. If that is the case, then this function returns true to inform the big loop above.
-        /// </summary>
-        /// <param name="startPoint">The start point.</param>
-        /// <param name="endPoint">The end point.</param>
-        /// <param name="sweepDim">The sweep dim.</param>
-        /// <param name="valueSweepDim">The value sweep dim.</param>
-        /// <param name="valueD1">The value d1.</param>
-        /// <param name="valueD2">The value d2.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool findWhereLineCrossesPlane(double[] startPoint, double[] endPoint, int sweepDim, double valueSweepDim, out double valueD1, out double valueD2)
-        {
-            if (endPoint[sweepDim] <= valueSweepDim)
-            {
-                valueD1 = endPoint[(sweepDim + 1) % 3];
-                valueD2 = endPoint[(sweepDim + 2) % 3];
-                return true;
-            }
-            var fraction = (valueSweepDim - startPoint[sweepDim]) / (endPoint[sweepDim] - startPoint[sweepDim]);
-            var dim = (sweepDim + 1) % 3;
-            valueD1 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
-            dim = (dim + 1) % 3;
-            valueD2 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
-            return false;
-        }
-        #endregion
-
-        #region Indexing Functions
-        /// <summary>
-        /// Sets up indexing parameters.
-        /// </summary>
-        /// <exception cref="System.Exception">Int64 will not work for a voxel space this large, using the current index setup</exception>
-        private void SetUpIndexingParameters()
-        {
-            var dimensions = new double[3];
-            for (int i = 0; i < 3; i++)
-                dimensions[i] = tessellatedSolid.Bounds[1][i] - tessellatedSolid.Bounds[0][i];
-            var maxDim = dimensions.Max();
-            LongestDimensionIndex = dimensions.FindIndex(d => d == maxDim);
-            if (voxelDiscretization == VoxelDiscretization.Coarse)
-                VoxelSideLength = maxDim / 4096;
-            else VoxelSideLength = maxDim / 1048576;
-            NumVoxels = new int[3];
-            for (int i = 0; i < 3; i++)
-                NumVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLength);
-            ScaleToIntSpace = 1.0 / VoxelSideLength;
-            Offset = tessellatedSolid.Bounds[0].multiply(ScaleToIntSpace);
-        }
-
-        /// <summary>
-        /// Indiceses to voxel identifier.
-        /// </summary>
-        /// <param name="ijk">The ijk.</param>
-        /// <returns>System.Int64.</returns>
-        public long IndicesToVoxelID(int[] ijk)
-        {
-            return IndicesToVoxelID(ijk[0], ijk[1], ijk[2]);
-        }
-
-        /// <summary>
-        /// Indiceses to voxel identifier.
-        /// </summary>
-        /// <param name="i">The i.</param>
-        /// <param name="j">The j.</param>
-        /// <param name="k">The k.</param>
-        /// <returns>
-        /// System.Int64.
-        /// </returns>
-        public long IndicesToVoxelID(int i, int j, int k)
-        {
-            //To get a unique integer value for each voxel based on its index, 
-            //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
-            //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
-            //3000000 + 345000 + 12 = 3345012 => 3|345|012
-            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
-            //-X = 1, -Y = 3, -Z = 5;
-            //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
-            // 4 = (-X-Y+Z); 6 = (-X+Y-Z);  8 = (+X-Y-Z);  9 = (-X-Y-Z)
-            var signValue = 0;
-            if (Math.Sign(i) < 0) signValue += 1;
-            if (Math.Sign(j) < 0) signValue += 3;
-            if (Math.Sign(k) < 0) signValue += 5;
-            return signIDMultiplier * signValue + Math.Abs(i) * xIDMultiplier + Math.Abs(j) * yIDMultiplier
-                + Math.Abs(k);
-        }
-
-        /// <summary>
-        /// Voxels the identifier to indices.
-        /// </summary>
-        /// <param name="voxelID">The voxel identifier.</param>
-        /// <returns>System.Int32[].</returns>
-        public int[] VoxelIDToIndices(long voxelID)
-        {
-            var z = (int)(voxelID % yIDMultiplier);
-            //uniqueCoordIndex -= z;
-            var y = (int)((voxelID % xIDMultiplier) / yIDMultiplier);
-            //uniqueCoordIndex -= y*ym;
-            var x = (int)((voxelID % signIDMultiplier) / xIDMultiplier);
-            //uniqueCoordIndex -= x*xm;
-            var s = (int)(voxelID / signIDMultiplier);
-
-            //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
-            //-X = 1, -Y = 3, -Z = 5;
-            switch (s)
-            {
-                case 0: //(+X+Y+Z)
-                    break;
-                case 1: //(-X+Y+Z)
-                    x = -x;
-                    break;
-                case 3: //(+X-Y+Z)
-                    y = -y;
-                    break;
-                case 5: //(+X+Y-Z)
-                    z = -z;
-                    break;
-                case 4: //(-X-Y+Z)
-                    x = -x;
-                    y = -y;
-                    break;
-                case 6: //(-X+Y-Z)
-                    x = -x;
-                    z = -z;
-                    break;
-                case 8: //(+X-Y-Z)
-                    y = -y;
-                    z = -z;
-                    break;
-                case 9: //(-X-Y-Z)
-                    x = -x;
-                    y = -y;
-                    z = -z;
-                    break;
-            }
-            return new[] { x, y, z };
-        }
-        #endregion
-
-        /// <summary>
-        /// Is the double currently at an integer value?
-        /// </summary>
-        /// <param name="d">The d.</param>
-        /// <returns></returns>
-        private static bool atIntegerValue(double d)
-        {
-            return Math.Ceiling(d) == d;
         }
     }
 
     /// <summary>
-    /// The discretization type for the voxelized solid. 
+    /// Makes the voxels along line in plane. This is a tricky little function that took a lot of debugging.
+    /// At this point, we are looking at a simple 2D problem. The startU, startV, endU, and endV are the
+    /// local/barycentric coordinates and correspond to actual x, y, and z via the uDim, and yDim. The
+    /// out-of-plane dimension is the sweepDim and its value (sweepValue) are provided as "read only" parameters.
+    /// - meaning they are given as constants that are used only to define the voxels. This method works by 
+    /// finding where the v values are that cross the u integer lines. There are some subtle
+    /// issues working in the negative direction (indicated by uRange and vRange) as you need to create the voxel
+    /// at the next lower integer cell - not the one specified by the line crossing.
     /// </summary>
-    public enum VoxelDiscretization
+    /// <param name="startU">The start x.</param>
+    /// <param name="startV">The start y.</param>
+    /// <param name="endU">The end x.</param>
+    /// <param name="endV">The end y.</param>
+    /// <param name="sweepValue">The value sweep dimension.</param>
+    /// <param name="uDim">The index of the u dimension.</param>
+    /// <param name="vDim">The index of the v dimension.</param>
+    /// <param name="sweepDim">The index of the sweep dimension.</param>
+    /// <param name="insideIsLowerV">if set to <c>true</c> [then the inside of the part is on the lower-side of the v-value].</param>
+    /// <param name="tsObject">The ts object.</param>
+    private void makeVoxelsAlongLineInPlane(double startU, double startV, double endU, double endV, int sweepValue,
+        int uDim, int vDim, int sweepDim, bool insideIsLowerV, TessellationBaseClass tsObject)
     {
-        /// <summary>
-        /// The coarse discretization is up to 4096 voxels on a side.
-        /// </summary>
-        Coarse,
-        /// <summary>
-        /// The fine discretization is up to 2^20 (~1million) voxels on a side.
-        /// </summary>
-        Fine
-    };
+        var uRange = endU - startU;
+        if (uRange.IsNegligible()) return;
+        var increment = Math.Sign(uRange);
+        var u = atIntegerValue(startU) && uRange <= 0 ? (int)(startU - 1) : (int)Math.Floor(startU);
+        // if you are starting an integer value for u, but you're going in the negative directive, then decrement u to the next lower value
+        // this is because voxels are defined by their lowest index values.
+        var vRange = endV - startV;
+        var v = atIntegerValue(startV) && (vRange < 0 || (vRange == 0 && insideIsLowerV)) ? (int)(startV - 1) : (int)Math.Floor(startV);
+        // likewise for v. if you are starting an integer value and you're going in the negative directive, OR if you're at an integer
+        // value and happen to be vertical line then decrement v to the next lower value
+        var ijk = new int[3];
+        ijk[sweepDim] = sweepValue - 1;
+        while (increment * u < increment * endU)
+        {
+            ijk[uDim] = u;
+            ijk[vDim] = v;
+            storeVoxel(ijk, tsObject);
+            // now move to the next increment, of course, you may not use it if the while condition is not met
+            u += increment;
+            var vDouble = vRange * (u - startU) / uRange + startV;
+            v = atIntegerValue(vDouble) && (vRange < 0 || (vRange == 0 && insideIsLowerV)) ? (int)(vDouble - 1) : (int)Math.Floor(vDouble);
+        }
+    }
+
+    /// <summary>
+    /// Stores the voxel and links them to the tessellated object (vertex,
+    /// edge, or face) if it is provided.
+    /// </summary>
+    /// <param name="ijk">The ijk.</param>
+    /// <param name="tsObject">The ts object.</param>
+    private void storeVoxel(int[] ijk, TessellationBaseClass tsObject)
+    {
+        var voxelID = IndicesToVoxelID(ijk);
+        VoxelBin voxel;
+        if (tsObject == null)
+        {
+            if (!VoxelIDHashSet.Contains(voxelID))
+            {
+                VoxelIDHashSet.Add(voxelID);
+                voxel = new VoxelBin(ijk, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior);
+                Voxels.Add(voxelID, voxel);
+            }
+            return;
+        }
+        // a bit more complicated if tsObject is provided
+        if (VoxelIDHashSet.Contains(voxelID))
+        {
+            voxel = Voxels[voxelID];
+            if (voxel.TessellationElements.Contains(tsObject))
+                return;
+            voxel.TessellationElements.Add(tsObject);
+        }
+        else
+        {
+            VoxelIDHashSet.Add(voxelID);
+            voxel = new VoxelBin(ijk, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior, tsObject);
+            Voxels.Add(voxelID, voxel);
+        }
+        tsObject.AddVoxel(voxel);
+    }
+
+    /// <summary>
+    /// Finds the where line that is the edge length crosses sweep plane. It may be that the edge terminates
+    /// before the plane. If that is the case, then this function returns true to inform the big loop above.
+    /// </summary>
+    /// <param name="startPoint">The start point.</param>
+    /// <param name="endPoint">The end point.</param>
+    /// <param name="sweepDim">The sweep dim.</param>
+    /// <param name="valueSweepDim">The value sweep dim.</param>
+    /// <param name="valueD1">The value d1.</param>
+    /// <param name="valueD2">The value d2.</param>
+    /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+    private bool findWhereLineCrossesPlane(double[] startPoint, double[] endPoint, int sweepDim, double valueSweepDim, out double valueD1, out double valueD2)
+    {
+        if (endPoint[sweepDim] <= valueSweepDim)
+        {
+            valueD1 = endPoint[(sweepDim + 1) % 3];
+            valueD2 = endPoint[(sweepDim + 2) % 3];
+            return true;
+        }
+        var fraction = (valueSweepDim - startPoint[sweepDim]) / (endPoint[sweepDim] - startPoint[sweepDim]);
+        var dim = (sweepDim + 1) % 3;
+        valueD1 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
+        dim = (dim + 1) % 3;
+        valueD2 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
+        return false;
+    }
+    #endregion
+
+    #region Indexing Functions
+    /// <summary>
+    /// Sets up indexing parameters.
+    /// </summary>
+    /// <exception cref="System.Exception">Int64 will not work for a voxel space this large, using the current index setup</exception>
+    private void SetUpIndexingParameters()
+    {
+        var dimensions = new double[3];
+        for (int i = 0; i < 3; i++)
+            dimensions[i] = tessellatedSolid.Bounds[1][i] - tessellatedSolid.Bounds[0][i];
+        var maxDim = dimensions.Max();
+        LongestDimensionIndex = dimensions.FindIndex(d => d == maxDim);
+        if (voxelDiscretization == VoxelDiscretization.Coarse)
+            VoxelSideLength = maxDim / 4096;
+        else VoxelSideLength = maxDim / 1048576;
+        NumVoxels = new int[3];
+        for (int i = 0; i < 3; i++)
+            NumVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLength);
+        ScaleToIntSpace = 1.0 / VoxelSideLength;
+        Offset = tessellatedSolid.Bounds[0].multiply(ScaleToIntSpace);
+    }
+
+    /// <summary>
+    /// Indiceses to voxel identifier.
+    /// </summary>
+    /// <param name="ijk">The ijk.</param>
+    /// <returns>System.Int64.</returns>
+    public long IndicesToVoxelID(int[] ijk)
+    {
+        return IndicesToVoxelID(ijk[0], ijk[1], ijk[2]);
+    }
+
+    /// <summary>
+    /// Indiceses to voxel identifier.
+    /// </summary>
+    /// <param name="i">The i.</param>
+    /// <param name="j">The j.</param>
+    /// <param name="k">The k.</param>
+    /// <returns>
+    /// System.Int64.
+    /// </returns>
+    public long IndicesToVoxelID(int i, int j, int k)
+    {
+        //To get a unique integer value for each voxel based on its index, 
+        //multiply x by the (magnitude)^2, add y*(magnitude), and then add z to get a unique value.
+        //Example: for a max magnitude of 1000, with x = -3, y = 345, z = -12
+        //3000000 + 345000 + 12 = 3345012 => 3|345|012
+        //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+        //-X = 1, -Y = 3, -Z = 5;
+        //Example 0 = (+X+Y+Z); 1 = (-X+Y+Z); 3 = (+X-Y+Z);  5 = (+X+Y-Z); 
+        // 4 = (-X-Y+Z); 6 = (-X+Y-Z);  8 = (+X-Y-Z);  9 = (-X-Y-Z)
+        var signValue = 0;
+        if (Math.Sign(i) < 0) signValue += 1;
+        if (Math.Sign(j) < 0) signValue += 3;
+        if (Math.Sign(k) < 0) signValue += 5;
+        return signIDMultiplier * signValue + Math.Abs(i) * xIDMultiplier + Math.Abs(j) * yIDMultiplier
+            + Math.Abs(k);
+    }
+
+    /// <summary>
+    /// Voxels the identifier to indices.
+    /// </summary>
+    /// <param name="voxelID">The voxel identifier.</param>
+    /// <returns>System.Int32[].</returns>
+    public int[] VoxelIDToIndices(long voxelID)
+    {
+        var z = (int)(voxelID % yIDMultiplier);
+        //uniqueCoordIndex -= z;
+        var y = (int)((voxelID % xIDMultiplier) / yIDMultiplier);
+        //uniqueCoordIndex -= y*ym;
+        var x = (int)((voxelID % signIDMultiplier) / xIDMultiplier);
+        //uniqueCoordIndex -= x*xm;
+        var s = (int)(voxelID / signIDMultiplier);
+
+        //In addition, we want to capture sign in one digit. So add (magnitude)^3*(negInt) where
+        //-X = 1, -Y = 3, -Z = 5;
+        switch (s)
+        {
+            case 0: //(+X+Y+Z)
+                break;
+            case 1: //(-X+Y+Z)
+                x = -x;
+                break;
+            case 3: //(+X-Y+Z)
+                y = -y;
+                break;
+            case 5: //(+X+Y-Z)
+                z = -z;
+                break;
+            case 4: //(-X-Y+Z)
+                x = -x;
+                y = -y;
+                break;
+            case 6: //(-X+Y-Z)
+                x = -x;
+                z = -z;
+                break;
+            case 8: //(+X-Y-Z)
+                y = -y;
+                z = -z;
+                break;
+            case 9: //(-X-Y-Z)
+                x = -x;
+                y = -y;
+                z = -z;
+                break;
+        }
+        return new[] { x, y, z };
+    }
+    #endregion
+
+    /// <summary>
+    /// Is the double currently at an integer value?
+    /// </summary>
+    /// <param name="d">The d.</param>
+    /// <returns></returns>
+    private static bool atIntegerValue(double d)
+    {
+        return Math.Ceiling(d) == d;
+    }
+}
+
+/// <summary>
+/// The discretization type for the voxelized solid. 
+/// </summary>
+public enum VoxelDiscretization
+{
+    /// <summary>
+    /// The coarse discretization is up to 4096 voxels on a side.
+    /// </summary>
+    Coarse,
+    /// <summary>
+    /// The fine discretization is up to 2^20 (~1million) voxels on a side.
+    /// </summary>
+    Fine
+};
 }
