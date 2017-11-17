@@ -21,8 +21,8 @@ namespace TVGL.Voxelization
     /// </summary>
     public enum VoxelRoleTypes
     {
-        Interior,
-        Exterior
+        Full,
+        Partial
     };
     /// <summary>
     /// Class Voxel.
