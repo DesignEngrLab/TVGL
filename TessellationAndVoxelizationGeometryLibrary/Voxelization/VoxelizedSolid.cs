@@ -26,15 +26,13 @@ namespace TVGL.Voxelization
     /// </summary>
     public class VoxelizedSolid
     {
-        private const int MaxVoxelsAlongASide = 1048576; //2^20
-
         #region Properties
         /// <summary>
         /// Gets tessellated solid that this voxelized solid was built from.
         /// </summary>
         public TessellatedSolid tessellatedSolid { get; private set; }
 
-        private VoxelDiscretization voxelDiscretization;
+        private VoxelDiscretization Discretization;
 
         /// <summary>
         /// Gets the voxel identifier hash set.
@@ -45,7 +43,8 @@ namespace TVGL.Voxelization
         /// The voxels are stored as a dictionary - accessible by their voxelID.
         /// </summary>
         public Dictionary<long, VoxelBin> VoxelBins { get; private set; }
-        private HashSet<long> voxelBinHashSet { get; private set; }
+
+        private HashSet<long> voxelBinHashSet;
         /// <summary>
         /// Gets the scale to integer space.
         /// </summary>
@@ -86,7 +85,6 @@ namespace TVGL.Voxelization
         #endregion
 
         #region Constructor and "makeVoxels..." functions
-
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
         /// </summary>
@@ -97,7 +95,7 @@ namespace TVGL.Voxelization
         public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization)
         {
             tessellatedSolid = ts;
-            this.voxelDiscretization = voxelDiscretization;
+            Discretization = voxelDiscretization;
             SetUpIndexingParameters();
             VoxelBins = new Dictionary<long, VoxelBin>(); //todo:approximate capacity based on tessellated volume
             VoxelIDHashSet = new HashSet<long>();
@@ -106,21 +104,11 @@ namespace TVGL.Voxelization
             makeVoxelsInInterior();
             NumVoxelsTotal = VoxelIDHashSet.Count;
         }
-
-        public VoxelizedSolid(TessellatedSolid ts, Dictionary<long, VoxelBin> voxels, HashSet<long> voxelIDHashSet,
-            int numberOfVoxelsAlongMaxDirection = 100)
-        {
-            tessellatedSolid = ts;
-            SetUpIndexingParameters(numberOfVoxelsAlongMaxDirection);
-            Voxels = voxels;
-            VoxelIDHashSet = voxelIDHashSet;
-        }
-
         /// <summary>
         /// Makes the voxels in interior.
         /// </summary>
         /// <exception cref="System.NotImplementedException"></exception>
-        private void makeVoxelsInInterior()
+        private void makeVoxelBinsInInterior()
         {
             var sweepDim = LongestDimensionIndex;
             var uDim = (sweepDim != 0) ? 0 : 1;
@@ -154,6 +142,30 @@ namespace TVGL.Voxelization
             }
         }
 
+        private List<VoxelBin> MakeInteriorVoxelBinsAlongLine(SortedSet<VoxelBin> sortedNegatives,
+            SortedSet<VoxelBin> sortedPositives, int sweepDim)
+        {
+            var index = (int[])sortedNegatives.First().Index.Clone();
+            var newVoxels = new List<VoxelBin>();
+            var negativeQueue = new Queue<VoxelBin>(sortedNegatives);
+            var positiveQueue = new Queue<VoxelBin>(sortedPositives);
+            while (negativeQueue.Any() && positiveQueue.Any())
+            {
+                var startIndex = negativeQueue.Dequeue().Index[sweepDim];
+                if (negativeQueue.Any() && negativeQueue.Peek().Index[sweepDim] - startIndex <= 1) continue;
+                int endIndex = Int32.MinValue;
+                while (endIndex < startIndex && positiveQueue.Any())
+                    endIndex = positiveQueue.Dequeue().Index[sweepDim];
+                for (int i = startIndex + 1; i < endIndex; i++)
+                {
+                    index[sweepDim] = i;
+                    var voxelID = IndicesToVoxelID(index);
+                    newVoxels.Add(new VoxelBin(index, voxelID, VoxelSideLength, VoxelRoleTypes.Full,
+                        null));
+                }
+            }
+            return newVoxels;
+        }
         private List<VoxelBin> MakeInteriorVoxelsAlongLine(SortedSet<VoxelBin> sortedNegatives,
             SortedSet<VoxelBin> sortedPositives, int sweepDim)
         {
@@ -192,11 +204,11 @@ namespace TVGL.Voxelization
         /// on the wiki page: https://github.com/DesignEngrLab/TVGL/wiki/Creating-Voxels-from-Tessellation
         /// </summary>
         /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
-        private void makeVoxelsForFacesAndEdges(bool linkToTessellatedSolid)
+        private void makeVoxelBinsForFacesAndEdges()
         {
             foreach (var face in tessellatedSolid.Faces) //loop over the faces
             {
-                if (simpleCase(face, linkToTessellatedSolid)) continue;
+                if (simpleCase(face)) continue;
                 Vertex startVertex, leftVertex, rightVertex;
                 Edge leftEdge, rightEdge;
                 int uDim, vDim, sweepDim;
@@ -399,8 +411,10 @@ namespace TVGL.Voxelization
         }
 
         private void MakeAndStoreVoxelBin(int x, int y, int z, TessellationBaseClass tsObject, int level)
+        { MakeAndStoreVoxelBin(MakeVoxelID(x, y, z, level, VoxelRoleTypes.Partial), tsObject, level); }
+
+        private void MakeAndStoreVoxelBin(long voxelID, TessellationBaseClass tsObject, int level)
         {
-            var voxelID = MakeVoxelID(x, y, z, level, VoxelRoleTypes.Partial);
             VoxelBin voxel;
             if (tsObject == null)
             {
@@ -415,7 +429,7 @@ namespace TVGL.Voxelization
             // a bit more complicated if tsObject is provided
             if (VoxelIDHashSet.Contains(voxelID))
             {
-                voxel = VoxelBinss[voxelID];
+                voxel = VoxelBins[voxelID];
                 if (voxel.TessellationElements.Contains(tsObject))
                     return;
                 voxel.TessellationElements.Add(tsObject);
@@ -429,8 +443,8 @@ namespace TVGL.Voxelization
             tsObject.AddVoxel(voxel);
         }
 
-        private long MakeVoxelID(int x, int y, int z,int level, VoxelRoleTypes level0, VoxelRoleTypes level1 = VoxelRoleTypes.Full,
-            VoxelRoleTypes level2 = VoxelRoleTypes.Full, VoxelRoleTypes level3 = VoxelRoleTypes.Full, VoxelRoleTypes level4=VoxelRoleTypes.Full)
+        private long MakeVoxelID(int x, int y, int z, int level, VoxelRoleTypes level0, VoxelRoleTypes level1 = VoxelRoleTypes.Full,
+            VoxelRoleTypes level2 = VoxelRoleTypes.Full, VoxelRoleTypes level3 = VoxelRoleTypes.Full, VoxelRoleTypes level4 = VoxelRoleTypes.Full)
         {
             var shift = 4 * (4 - level);
             x = x >> shift;
@@ -442,7 +456,7 @@ namespace TVGL.Voxelization
             //    x0   x1    x2   x3    x4   y0   y1    y2   y3    y4    z0   z1    z2   z3    z4  flags
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            
+            return x + y + z + (long)level4 + (int)level3 << 1 + (int)level2 << 2 + (int)level1 << 3;
         }
 
         /// <summary>
@@ -451,76 +465,66 @@ namespace TVGL.Voxelization
         /// <param name="face">The face.</param>
         /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool simpleCase(PolygonalFace face, bool linkToTessellatedSolid)
+        private bool simpleCase(PolygonalFace face)
         {
-            if (!linkToTessellatedSolid)
-            {
-                var aIndices = transformedCoordinates[face.A.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var aID = IndicesToVoxelID(aIndices);
-                var bIndices = transformedCoordinates[face.B.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var bID = IndicesToVoxelID(bIndices);
-                var cIndices = transformedCoordinates[face.C.IndexInList].Select(x => (int)Math.Floor(x)).ToArray();
-                var cID = IndicesToVoxelID(cIndices);
-                if (aID == bID && aID == cID) return true;
-                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
-                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 2, false);
-                    return true;
-                }
-                if (aIndices[0] == bIndices[0] && aIndices[0] == cIndices[0] &&
-                    aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 1, false);
-                    return true;
-                }
-                if (aIndices[2] == bIndices[2] && aIndices[2] == cIndices[2] &&
-                    aIndices[1] == bIndices[1] && aIndices[1] == cIndices[1])
-                {
-                    makeVoxelsForFaceInCardinalLine(face, 0, false);
-                    return true;
-                }
-                return false;
-            }
+            var level = 0;
             // The first simple case is that all vertices are within the same voxel. 
             if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
             {
                 var voxel = face.A.Voxel;
                 face.AddVoxel(voxel);
+                voxel.TessellationElements.Add(face);
                 foreach (var edge in face.Edges)
+                {
                     edge.AddVoxel(voxel);
+                    voxel.TessellationElements.Add(edge);
+                }
                 return true;
             }
             // the second, third, and fourth simple cases are if the triangle
             // fits within a line of voxels.
             // this condition checks that all voxels have same x & y values (hence aligned in z-direction)
-            if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
-                     face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
-                     face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
-                     face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
+            if (GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.B.Voxel.ID, 0, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.C.Voxel.ID, 0, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.B.Voxel.ID, 1, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.C.Voxel.ID, 1, level))
             {
-                makeVoxelsForFaceInCardinalLine(face, 2, true);
+                makeVoxelsForFaceInCardinalLine(face, 2, level);
                 return true;
             }
             // this condition checks that all voxels have same x & z values (hence aligned in y-direction)
-            if (face.A.Voxel.Index[0] == face.B.Voxel.Index[0] &&
-                     face.A.Voxel.Index[0] == face.C.Voxel.Index[0] &&
-                     face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
-                     face.A.Voxel.Index[2] == face.C.Voxel.Index[2])
+            if (GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.B.Voxel.ID, 0, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.C.Voxel.ID, 0, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.B.Voxel.ID, 2, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.C.Voxel.ID, 2, level))
             {
-                makeVoxelsForFaceInCardinalLine(face, 1, true);
+                makeVoxelsForFaceInCardinalLine(face, 1, level);
                 return true;
             }
             // this condition checks that all voxels have same y & z values (hence aligned in x-direction)
-            if (face.A.Voxel.Index[2] == face.B.Voxel.Index[2] &&
-                     face.A.Voxel.Index[2] == face.C.Voxel.Index[2] &&
-                     face.A.Voxel.Index[1] == face.B.Voxel.Index[1] &&
-                     face.A.Voxel.Index[1] == face.C.Voxel.Index[1])
+            if (GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.B.Voxel.ID, 1, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.C.Voxel.ID, 1, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.B.Voxel.ID, 2, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.C.Voxel.ID, 2, level))
             {
-                makeVoxelsForFaceInCardinalLine(face, 0, true);
+                makeVoxelsForFaceInCardinalLine(face, 0, level);
                 return true;
             }
             return false;
+        }
+
+        private int GetCoordinateFromID(long id, int dimension, int level)
+        {
+            if (dimension == 0) //x starts at 44 and goes to the end,64
+                return (int)(id >> (44 + 4 * (4 - level)));
+            if (dimension == 1) // y starts at 24 and goes to 44, so the x amount from (44 to 64 needs to be subtracted off
+            {
+                var yShift = 24 + 4 * (4 - level);
+                return (int)((id >> yShift) - (id >> 44 << yShift));
+            }
+            var zShift = 4 * (5 - level); //this is like y,but note the simplification (the 5) in this equation
+            return (int)((id >> zShift) - (id >> 24 << zShift));
+
         }
 
         /// <summary>
@@ -529,19 +533,25 @@ namespace TVGL.Voxelization
         /// <param name="face">The face.</param>
         /// <param name="dim">The dim.</param>
         /// <param name="linkToTessellatedSolid"></param>
-        private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim, bool linkToTessellatedSolid)
+        private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim, int level)
         {
-            var minIndex = Math.Min(face.A.Voxel.Index[dim],     // stores the index of the voxel along dim that is the smallest
-                    Math.Min(face.B.Voxel.Index[dim], face.C.Voxel.Index[dim]));
-            var maxIndex = Math.Max(face.A.Voxel.Index[dim],     // stores the index of the voxel along dim that is the largest
-                Math.Max(face.B.Voxel.Index[dim], face.C.Voxel.Index[dim]));
-            var voxelIndex = (int[])face.A.Voxel.Index.Clone();
-            for (int i = minIndex; i <= maxIndex; i++)
+            var voxelIndex = face.A.Voxel.ID;
+            var coordA = GetCoordinateFromID(face.A.Voxel.ID, dim, level);
+            var coordB = GetCoordinateFromID(face.B.Voxel.ID, dim, level);
+            var coordC = GetCoordinateFromID(face.C.Voxel.ID, dim, level);
+            var minCoord = coordA;
+            var maxCoord = coordA;
+            if (coordB < minCoord) minCoord = coordB;
+            else if (coordB > maxCoord) maxCoord = coordB;
+            if (coordC < minCoord) minCoord = coordC;
+            else if (coordC > maxCoord) maxCoord = coordC;
+
+            for (int i = minCoord; i <= maxCoord; i++)
             {   // set up voxels for the face
                 voxelIndex[dim] = i;
-                storeVoxel(voxelIndex, linkToTessellatedSolid ? face : null);
+                MakeAndStoreVoxelBin()
+                storeVoxel(voxelIndex, face);
             }
-            if (!linkToTessellatedSolid) return;
             foreach (var faceEdge in face.Edges)
             {   // cycle over the edges to link them to the voxels, may need to make new voxels
                 var lowVIndex = Math.Min(faceEdge.From.Voxel.Index[dim], faceEdge.To.Voxel.Index[dim]);
@@ -678,7 +688,7 @@ namespace TVGL.Voxelization
                 dimensions[i] = tessellatedSolid.Bounds[1][i] - tessellatedSolid.Bounds[0][i];
             var maxDim = dimensions.Max();
             LongestDimensionIndex = dimensions.FindIndex(d => d == maxDim);
-            VoxelSideLength = maxDim / MaxVoxelsAlongASide;
+            VoxelSideLength = maxDim / (int)Discretization;
             ScaleToIntSpace = 1.0 / VoxelSideLength;
             Offset = tessellatedSolid.Bounds[0].multiply(ScaleToIntSpace);
         }
@@ -789,12 +799,24 @@ namespace TVGL.Voxelization
     public enum VoxelDiscretization
     {
         /// <summary>
-        /// The coarse discretization is up to 4096 voxels on a side.
+        /// The extra coarse discretization is up to 16 voxels on a side.
         /// </summary>
-        Coarse,
+        ExtraCoarse = 16,
         /// <summary>
-        /// The fine discretization is up to 2^20 (~1million) voxels on a side.
+        /// The coarse discretization is up to 256 voxels on a side.
         /// </summary>
-        Fine
+        Coarse = 256,
+        /// <summary>
+        /// The medium discretization is up to 4096 voxels on a side.
+        /// </summary>
+        Medium = 4096,
+        /// <summary>
+        /// The fine discretization is up to 65,536 voxels on a side (2^16)
+        /// </summary>
+        Fine = 65536,
+        /// <summary>
+        /// The extra fine is up to 2^20 (~1million) voxels on a side.
+        /// </summary>
+        ExtraFine = 1048576
     };
 }
