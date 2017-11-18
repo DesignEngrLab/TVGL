@@ -40,7 +40,7 @@ namespace TVGL.Voxelization
             var leafNodeVoxelsAlongSide = Math.Pow(2, branchingFactors[0]);  // 4 along side, 64 total voxels.
             var internalNode1VoxelsAlongSide = Math.Pow(2, branchingFactors[1]) * leafNodeVoxelsAlongSide; //32 along side, 32,768 total
             var internalNode2VoxelsAlongSide = Math.Pow(2, branchingFactors[2]) * internalNode1VoxelsAlongSide;  //512 along side.  
-            var scaleToLeafNode2 = space.ScaleToIntSpace*8;
+            var scaleToLeafNode2 = space.ScaleToIntegerSpace*8;
 
             //Determine the number of second internal nodes, given the size of the space.
             //This could result in a 1*3*1, 2*2*2, or similar arrangment. It is not explicitly restricted in size or shape.

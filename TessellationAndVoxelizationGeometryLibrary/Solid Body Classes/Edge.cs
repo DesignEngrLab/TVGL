@@ -44,27 +44,21 @@ namespace TVGL
             if (v == From) return To;
             throw new Exception("OtherVertex: Vertex thought to connect to edge, but it doesn't.");
         }
-        public HashSet<VoxelBin> Voxels { get; private set; }
-        internal override void AddVoxel(VoxelBin v)
-        {
-            if (Voxels == null) Voxels = new HashSet<VoxelBin> { v };
-            else if (!Voxels.Contains(v)) Voxels.Add(v);
-        }
 
-#region Constructor
+        #region Constructor
 
-/// <summary>
-///     Initializes a new instance of the <see cref="Edge" /> class.
-/// </summary>
-/// <param name="fromVertex">From vertex.</param>
-/// <param name="toVertex">To vertex.</param>
-/// <param name="ownedFace">The face.</param>
-/// <param name="otherFace">The other face.</param>
-/// <param name="doublyLinkedVertices">if set to <c>true</c> [doubly linked vertices].</param>
-/// <param name="edgeReference">The edge reference.</param>
-/// <exception cref="Exception"></exception>
-public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            bool doublyLinkedVertices, long edgeReference = 0) : this(fromVertex, toVertex, doublyLinkedVertices)
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Edge" /> class.
+        /// </summary>
+        /// <param name="fromVertex">From vertex.</param>
+        /// <param name="toVertex">To vertex.</param>
+        /// <param name="ownedFace">The face.</param>
+        /// <param name="otherFace">The other face.</param>
+        /// <param name="doublyLinkedVertices">if set to <c>true</c> [doubly linked vertices].</param>
+        /// <param name="edgeReference">The edge reference.</param>
+        /// <exception cref="Exception"></exception>
+        public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
+                    bool doublyLinkedVertices, long edgeReference = 0) : this(fromVertex, toVertex, doublyLinkedVertices)
         {
             if (edgeReference > 0)
                 EdgeReference = edgeReference;

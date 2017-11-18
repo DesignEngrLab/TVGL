@@ -28,63 +28,60 @@ namespace TVGL.Voxelization
     {
         #region Properties
         /// <summary>
-        /// Gets tessellated solid that this voxelized solid was built from.
+        /// The discretization
         /// </summary>
-        //public TessellatedSolid tessellatedSolid { get; private set; }
-
-        private VoxelDiscretization Discretization;
-
+        public VoxelDiscretization Discretization { get; private set; }
         /// <summary>
-        /// Gets the voxel identifier hash set.
+        /// Gets the number voxels total.
         /// </summary>
-        /// <value>The voxel identifier hash set.</value>
-        public HashSet<long> VoxelIDHashSet { get; private set; }
+        /// <value>
+        /// The number voxels total.
+        /// </value>
+        public int NumVoxelsTotal => VoxelHashSetLevel0.Count + VoxelDictionaryLevel0.Values.Sum(voxel => voxel.Voxels.Count);
         /// <summary>
-        /// The voxels are stored as a dictionary - accessible by their voxelID.
+        /// Gets the number voxels.
         /// </summary>
-        public Dictionary<long, Voxel> Voxels { get; private set; }
-
-        private HashSet<long> VoxelHashSet;
-        /// <summary>
-        /// Gets the scale to integer space.
-        /// </summary>
-        /// <value>The scale to int space.</value>
-        public double ScaleToIntSpace { get; private set; }
-        public double[] Offset { get; private set; }
-        public int NumVoxelsTotal { get; private set; }
-        public int LongestDimensionIndex { get; private set; }
+        /// <value>
+        /// The number voxels.
+        /// </value>
         public int[] NumVoxels { get; private set; }
-
         /// <summary>
         /// The voxel side length. It's a square, so all sides are the same length.
         /// </summary>
         public double VoxelSideLength { get; private set; }
+        /// <summary>
+        /// Gets the scale to integer space.
+        /// </summary>
+        /// <value>The scale to int space.</value>
+        public double ScaleToIntegerSpace { get; private set; }
+        /// <summary>
+        /// Gets the offset that moves the model s.t. the lowest elements are at 0,0,0.
+        /// </summary>
+        /// <value>
+        /// The offset.
+        /// </value>
+        public double[] Offset { get; private set; }
         #endregion
 
         #region Private Fields
-        /// <summary>
-        /// The x identifier multiplier
-        /// </summary>
-        long xIDMultiplier;
-        /// <summary>
-        /// The y identifier multiplier
-        /// </summary>
-        long yIDMultiplier;
-
-        /// <summary>
-        /// The sign identifier multiplier
-        /// </summary>
-        long signIDMultiplier;
-
-
         /// <summary>
         /// The transformed array of vertex coordinates. These correspond in position to the vertices
         /// in the linked tessellated solid.
         /// </summary>
         private readonly double[][] transformedCoordinates;
+        private int LongestDimensionIndex;
+
+        /// <summary>
+        /// The voxels are stored as a dictionary - accessible by their voxelID for the first two levels 
+        /// </summary>
+        private readonly Dictionary<long, Voxel> VoxelDictionaryLevel0;
+        private readonly Dictionary<long, Voxel> VoxelDictionaryLevel1;
+        private readonly HashSet<long> VoxelHashSetLevel0;
+
         #endregion
 
-        #region Constructor and "makeVoxels..." functions
+        #region Constructor from Tessellated Solid (the "makeVoxels..." functions)
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
         /// </summary>
@@ -92,24 +89,26 @@ namespace TVGL.Voxelization
         /// <param name="numberOfVoxelsAlongMaxDirection">The number of voxels along maximum direction.</param>
         /// <param name="onlyDefineBoundary">if set to <c>true</c> [only define boundary].</param>
         /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
-        public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization)
+        public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization, bool onlyDefineBoundary = false)
         {
             var level = 0;
             // tessellatedSolid = ts;
             Discretization = voxelDiscretization;
             SetUpIndexingParameters(ts);
-            Voxels = new Dictionary<long, Voxel>(); //todo:approximate capacity based on tessellated volume
-            VoxelIDHashSet = new HashSet<long>();
+            VoxelDictionaryLevel0 = new Dictionary<long, Voxel>(); //todo:approximate capacity based on tessellated volume
+            VoxelHashSetLevel0 = new HashSet<long>();
             transformedCoordinates = new double[ts.NumberOfVertices][];
             Parallel.For(0, ts.NumberOfVertices, i =>
             {
                 var vertex = ts.Vertices[i];
-                var coordinates = vertex.Position.multiply(ScaleToIntSpace).add(Offset);
+                var coordinates = vertex.Position.multiply(ScaleToIntegerSpace).add(Offset);
                 transformedCoordinates[i] = coordinates;
-                makeVoxelForVertex(vertex, coordinates, level);
+                makeVoxelForVertexLevel0And1(vertex, coordinates);
             });
+            makeVoxelsForFacesAndEdges(ts);
+            if (!onlyDefineBoundary)
+                makeVoxelsInInterior();
             makeVoxelsInInterior();
-            NumVoxelsTotal = VoxelIDHashSet.Count;
         }
 
         /// <summary>
@@ -125,11 +124,11 @@ namespace TVGL.Voxelization
             var maxDim = dimensions.Max();
             LongestDimensionIndex = dimensions.FindIndex(d => d == maxDim);
             VoxelSideLength = maxDim / (int)Discretization;
-            ScaleToIntSpace = 1.0 / VoxelSideLength;
-            Offset = ts.Bounds[0].multiply(ScaleToIntSpace);
+            ScaleToIntegerSpace = 1.0 / VoxelSideLength;
+            Offset = ts.Bounds[0].multiply(ScaleToIntegerSpace);
         }
-
-        private void makeVoxelForVertex(Vertex vertex, double[] coordinates, int level)
+        #region Making Voxels for Levels 0 and 1
+        private void makeVoxelForVertexLevel0And1(Vertex vertex, double[] coordinates)
         {
             int x, y, z;
             if (coordinates.Any(atIntegerValue))
@@ -152,74 +151,102 @@ namespace TVGL.Voxelization
                 y = (int)Math.Floor(coordinates[1]);
                 z = (int)Math.Floor(coordinates[2]);
             }
-            MakeAndStoreVoxel(x, y, z, level, vertex);
+            MakeAndStoreVoxelLevel0And1(x, y, z, vertex);
         }
 
+        #region making Vertices into Voxels 
+        /// <summary>
+        /// If it is a simple case, just solve it and return true.
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        private bool simpleCase(PolygonalFace face)
+        {
+            var level = 0;
+            // The first simple case is that all vertices are within the same voxel. 
+            if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
+            {
+                var voxel = face.A.Voxel;
+                face.AddVoxel(voxel);
+                voxel.TessellationElements.Add(face);
+                foreach (var edge in face.Edges)
+                {
+                    edge.AddVoxel(voxel);
+                    voxel.TessellationElements.Add(edge);
+                }
+                return true;
+            }
+            // the second, third, and fourth simple cases are if the triangle
+            // fits within a line of voxels.
+            // this condition checks that all voxels have same x & y values (hence aligned in z-direction)
+            if (GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.B.Voxel.ID, 0, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.C.Voxel.ID, 0, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.B.Voxel.ID, 1, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.C.Voxel.ID, 1, level))
+            {
+                makeVoxelsForFaceInCardinalLine(face, 2, level);
+                return true;
+            }
+            // this condition checks that all voxels have same x & z values (hence aligned in y-direction)
+            if (GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.B.Voxel.ID, 0, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.C.Voxel.ID, 0, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.B.Voxel.ID, 2, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.C.Voxel.ID, 2, level))
+            {
+                makeVoxelsForFaceInCardinalLine(face, 1, level);
+                return true;
+            }
+            // this condition checks that all voxels have same y & z values (hence aligned in x-direction)
+            if (GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.B.Voxel.ID, 1, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.C.Voxel.ID, 1, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.B.Voxel.ID, 2, level) &&
+                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.C.Voxel.ID, 2, level))
+            {
+                makeVoxelsForFaceInCardinalLine(face, 0, level);
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
-        /// Makes the voxels in interior.
+        /// Makes the voxels for face in cardinal line. This is only called by the preceding function, simpleCase.
         /// </summary>
-        /// <exception cref="System.NotImplementedException"></exception>
-        private void makeVoxelsInInterior()
+        /// <param name="face">The face.</param>
+        /// <param name="dim">The dim.</param>
+        /// <param name="linkToTessellatedSolid"></param>
+        private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim, int level)
         {
-            var sweepDim = LongestDimensionIndex;
-            var uDim = (sweepDim != 0) ? 0 : 1;
-            var vDim = (sweepDim == 2) ? 1 : 2;
-            var ids = Voxels.Values.Select(vx => IndicesToVoxelID(0, vx.Index[uDim], vx.Index[vDim])).Distinct()
-                .AsParallel();
-            var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel>, SortedSet<Voxel>>(
-                  new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim)),
-                  new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim))));
-            Parallel.ForEach(Voxels.Values, voxel =>
-                         {
-                             var id = IndicesToVoxelID(0, voxel.Index[uDim], voxel.Index[vDim]);
-                             var sortedSets = dict[id];
-                             var negativeFaceVoxels = sortedSets.Item1;
-                             var positiveFaceVoxels = sortedSets.Item2;
-                             var faces = voxel.TessellationElements.Where(te => te is PolygonalFace).ToList();
-                             if (faces.Any(f => f.Normal[sweepDim] >= 0))
-                                 lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
-                             if (faces.Any(f => f.Normal[sweepDim] <= 0))
-                                 lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
-                         });
-            var interiorVoxels = dict.Values
-                .Where(entry => entry.Item1.Any() && entry.Item2.Any())
-                .SelectMany(entry => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim))
-                .AsParallel();
-            foreach (var interiorVoxel in interiorVoxels)
-            {
-                if (VoxelIDHashSet.Contains(interiorVoxel.ID)) continue; // why would this happen though?
-                VoxelIDHashSet.Add(interiorVoxel.ID);
-                Voxels.Add(interiorVoxel.ID, interiorVoxel);
+            var coordA = GetCoordinateFromID(face.A.Voxel.ID, dim, level);
+            var coordB = GetCoordinateFromID(face.B.Voxel.ID, dim, level);
+            var coordC = GetCoordinateFromID(face.C.Voxel.ID, dim, level);
+            var minCoord = coordA;
+            var maxCoord = coordA;
+            if (coordB < minCoord) minCoord = coordB;
+            else if (coordB > maxCoord) maxCoord = coordB;
+            if (coordC < minCoord) minCoord = coordC;
+            else if (coordC > maxCoord) maxCoord = coordC;
+            var coordinates = GetCoordinatesFromID(face.A.Voxel.ID, level);
+            for (int i = minCoord; i <= maxCoord; i++)
+            {   // set up voxels for the face
+                coordinates[dim] = i;
+                MakeAndStoreVoxelLevel0And1(coordinates[0], coordinates[1], coordinates[2], face);
             }
-        }
-
-
-        private List<Voxel> MakeInteriorVoxelsAlongLine(SortedSet<Voxel> sortedNegatives,
-            SortedSet<Voxel> sortedPositives, int sweepDim)
-        {
-            var index = (int[])sortedNegatives.First().Index.Clone();
-            var newVoxels = new List<Voxel>();
-            var negativeQueue = new Queue<Voxel>(sortedNegatives);
-            var positiveQueue = new Queue<Voxel>(sortedPositives);
-            while (negativeQueue.Any() && positiveQueue.Any())
-            {
-                var startIndex = negativeQueue.Dequeue().Index[sweepDim];
-                if (negativeQueue.Any() && negativeQueue.Peek().Index[sweepDim] - startIndex <= 1) continue;
-                int endIndex = Int32.MinValue;
-                while (endIndex < startIndex && positiveQueue.Any())
-                    endIndex = positiveQueue.Dequeue().Index[sweepDim];
-                for (int i = startIndex + 1; i < endIndex; i++)
+            foreach (var faceEdge in face.Edges)
+            {   // cycle over the edges to link them to the voxels
+                var fromIndex = GetCoordinateFromID(faceEdge.From.Voxel.ID, dim, level);
+                var toIndex = GetCoordinateFromID(faceEdge.To.Voxel.ID, dim, level);
+                var step = Math.Sign(toIndex - fromIndex);
+                for (int i = fromIndex; i <= toIndex; i += step)
                 {
-                    index[sweepDim] = i;
-                    var voxelID = IndicesToVoxelID(index);
-                    newVoxels.Add(new Voxel(index, voxelID, VoxelSideLength, VoxelRoleTypes.Full,
-                        null));
+                    coordinates[dim] = i;
+                    MakeAndStoreVoxelLevel0And1(coordinates[0], coordinates[1], coordinates[2], faceEdge);
                 }
             }
-            return newVoxels;
         }
+        #endregion
 
+        #region the Level 0 and 1 Face and Edge Sweep Functions
         /// <summary>
         /// Makes the voxels for faces and edges. This is a complicated function! Originally, the scheme used in 
         /// OpenVDB was employed where a voxel group (3x3x3) is initiated at one of the vertices of a face so that 
@@ -298,11 +325,13 @@ namespace TVGL.Voxelization
         /// <param name="uDim">The u dim.</param>
         /// <param name="vDim">The v dim.</param>
         /// <param name="maxSweepValue">The maximum sweep value.</param>
-        private void setUpFaceSweepDetails(PolygonalFace face, out Vertex startVertex, out Vertex leftVertex, out Vertex rightVertex,
-            out Edge leftEdge, out Edge rightEdge, out int uDim, out int vDim, out int sweepDim, out double maxSweepValue)
+        private void setUpFaceSweepDetails(PolygonalFace face, out Vertex startVertex, out Vertex leftVertex,
+            out Vertex rightVertex,
+            out Edge leftEdge, out Edge rightEdge, out int uDim, out int vDim, out int sweepDim,
+            out double maxSweepValue)
         {
             var xLength = Math.Max(Math.Max(Math.Abs(face.A.X - face.B.X), Math.Abs(face.B.X - face.C.X)),
-                      Math.Abs(face.C.X - face.A.X));
+                Math.Abs(face.C.X - face.A.X));
             var yLength = Math.Max(Math.Max(Math.Abs(face.A.Y - face.B.Y), Math.Abs(face.B.Y - face.C.Y)),
                 Math.Abs(face.C.Y - face.A.Y));
             var zLength = Math.Max(Math.Max(Math.Abs(face.A.Z - face.B.Z), Math.Abs(face.B.Z - face.C.Z)),
@@ -327,7 +356,8 @@ namespace TVGL.Voxelization
             leftEdge = face.Edges[0];
             rightVertex = face.C;
             rightEdge = face.Edges[2];
-            maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.B.IndexInList][sweepDim], transformedCoordinates[face.C.IndexInList][sweepDim]));
+            maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.B.IndexInList][sweepDim],
+                transformedCoordinates[face.C.IndexInList][sweepDim]));
             if (face.B.Position[sweepDim] < face.A.Position[sweepDim])
             {
                 startVertex = face.B;
@@ -335,7 +365,8 @@ namespace TVGL.Voxelization
                 leftEdge = face.Edges[1];
                 rightVertex = face.A;
                 rightEdge = face.Edges[0];
-                maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.C.IndexInList][sweepDim], transformedCoordinates[face.A.IndexInList][sweepDim]));
+                maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.C.IndexInList][sweepDim],
+                    transformedCoordinates[face.A.IndexInList][sweepDim]));
             }
             if (face.C.Position[sweepDim] < face.B.Position[sweepDim] &&
                 face.C.Position[sweepDim] < face.A.Position[sweepDim])
@@ -345,7 +376,8 @@ namespace TVGL.Voxelization
                 leftEdge = face.Edges[2];
                 rightVertex = face.B;
                 rightEdge = face.Edges[1];
-                maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.A.IndexInList][sweepDim], transformedCoordinates[face.B.IndexInList][sweepDim]));
+                maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.A.IndexInList][sweepDim],
+                    transformedCoordinates[face.B.IndexInList][sweepDim]));
             }
         }
 
@@ -365,12 +397,14 @@ namespace TVGL.Voxelization
         /// <param name="nextEndPoint">The next end point.</param>
         /// <param name="startVertex">The start vertex.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool makeVoxelsForEdgeWithinSweep(ref double[] startPoint, ref double[] endPoint, int sweepValue, int sweepDim, int uDim, int vDim,
-            bool linkToTessellatedSolid, bool voxelize, Edge edge, PolygonalFace face, double[] nextEndPoint, Vertex startVertex)
+        private bool makeVoxelsForEdgeWithinSweep(ref double[] startPoint, ref double[] endPoint, int sweepValue,
+            int sweepDim, int uDim, int vDim,
+            bool linkToTessellatedSolid, bool voxelize, Edge edge, PolygonalFace face, double[] nextEndPoint,
+            Vertex startVertex)
         {
             double u, v;
             var reachedOtherVertex = findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
-                 sweepValue, out u, out v);
+                sweepValue, out u, out v);
             if (voxelize)
             {
                 makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
@@ -399,161 +433,6 @@ namespace TVGL.Voxelization
             startPoint[vDim] = v;
             startPoint[sweepDim] = sweepValue;
             return voxelize;
-        }
-
-
-        private void MakeAndStoreVoxel(int x, int y, int z, int level, TessellationBaseClass tsObject)
-        { MakeAndStoreVoxel(MakeVoxelID(x, y, z, level, VoxelRoleTypes.Partial), level, tsObject); }
-
-        private void MakeAndStoreVoxel(long voxelID, int level, HashSet<long> voxelHashSet, TessellationBaseClass tsObject=null)
-        {
-            Voxel voxel;
-            if (tsObject == null)
-            {
-                if (!voxelHashSet.Contains(voxelID))
-                {
-                    VoxelIDHashSet.Add(voxelID);
-                    voxel = new Voxel(voxelID, VoxelRoleTypes.Partial);
-                    Voxels.Add(voxelID, voxel);
-                }
-                return;
-            }
-            // a bit more complicated if tsObject is provided
-            if (VoxelIDHashSet.Contains(voxelID))
-            {
-                voxel = Voxels[voxelID];
-                if (voxel.TessellationElements.Contains(tsObject))
-                    return;
-                voxel.TessellationElements.Add(tsObject);
-            }
-            else
-            {
-                VoxelIDHashSet.Add(voxelID);
-                voxel = new Voxel(voxelID, VoxelRoleTypes.Partial, tsObject);
-                Voxels.Add(voxelID, voxel);
-            }
-            tsObject.AddVoxel(voxel);
-        }
-
-        private long MakeVoxelID(int x, int y, int z, int level, VoxelRoleTypes level0, VoxelRoleTypes level1 = VoxelRoleTypes.Full,
-            VoxelRoleTypes level2 = VoxelRoleTypes.Full, VoxelRoleTypes level3 = VoxelRoleTypes.Full, VoxelRoleTypes level4 = VoxelRoleTypes.Full)
-        {
-            var shift = 4 * (4 - level);
-            x = x >> shift;
-            y = y >> shift;
-            z = z >> shift;
-            x = x << (44 + shift); //can't you combine with the above? no. The shift is doing both division
-            y = y << (24 + shift); // and remainder. What I mean to say is that e.g. 7>>2<<2 = 4
-            z = z << (4 + shift);
-            //    x0   x1    x2   x3    x4   y0   y1    y2   y3    y4    z0   z1    z2   z3    z4  flags
-            // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
-            // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            return x + y + z + (long)level4 + (int)level3 << 1 + (int)level2 << 2 + (int)level1 << 3;
-        }
-
-        /// <summary>
-        /// If it is a simple case, just solve it and return true.
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool simpleCase(PolygonalFace face)
-        {
-            var level = 0;
-            // The first simple case is that all vertices are within the same voxel. 
-            if (face.A.Voxel == face.B.Voxel && face.A.Voxel == face.C.Voxel)
-            {
-                var voxel = face.A.Voxel;
-                face.AddVoxel(voxel);
-                voxel.TessellationElements.Add(face);
-                foreach (var edge in face.Edges)
-                {
-                    edge.AddVoxel(voxel);
-                    voxel.TessellationElements.Add(edge);
-                }
-                return true;
-            }
-            // the second, third, and fourth simple cases are if the triangle
-            // fits within a line of voxels.
-            // this condition checks that all voxels have same x & y values (hence aligned in z-direction)
-            if (GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.B.Voxel.ID, 0, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.C.Voxel.ID, 0, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.B.Voxel.ID, 1, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.C.Voxel.ID, 1, level))
-            {
-                makeVoxelsForFaceInCardinalLine(face, 2, level);
-                return true;
-            }
-            // this condition checks that all voxels have same x & z values (hence aligned in y-direction)
-            if (GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.B.Voxel.ID, 0, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 0, level) == GetCoordinateFromID(face.C.Voxel.ID, 0, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.B.Voxel.ID, 2, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.C.Voxel.ID, 2, level))
-            {
-                makeVoxelsForFaceInCardinalLine(face, 1, level);
-                return true;
-            }
-            // this condition checks that all voxels have same y & z values (hence aligned in x-direction)
-            if (GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.B.Voxel.ID, 1, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 1, level) == GetCoordinateFromID(face.C.Voxel.ID, 1, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.B.Voxel.ID, 2, level) &&
-                GetCoordinateFromID(face.A.Voxel.ID, 2, level) == GetCoordinateFromID(face.C.Voxel.ID, 2, level))
-            {
-                makeVoxelsForFaceInCardinalLine(face, 0, level);
-                return true;
-            }
-            return false;
-        }
-
-        private int GetCoordinateFromID(long id, int dimension, int level)
-        {
-            if (dimension == 0) //x starts at 44 and goes to the end,64
-                return (int)(id >> (44 + 4 * (4 - level)));
-            if (dimension == 1) // y starts at 24 and goes to 44, so the x amount from (44 to 64 needs to be subtracted off
-            {
-                var yShift = 24 + 4 * (4 - level);
-                return (int)((id >> yShift) - (id >> 44 << yShift));
-            }
-            var zShift = 4 * (5 - level); //this is like y,but note the simplification (the 5) in this equation
-            return (int)((id >> zShift) - (id >> 24 << zShift));
-
-        }
-
-        /// <summary>
-        /// Makes the voxels for face in cardinal line. This is only called by the preceding function, simpleCase.
-        /// </summary>
-        /// <param name="face">The face.</param>
-        /// <param name="dim">The dim.</param>
-        /// <param name="linkToTessellatedSolid"></param>
-        private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim, int level)
-        {
-            var voxelIndex = face.A.Voxel.ID;
-            var coordA = GetCoordinateFromID(face.A.Voxel.ID, dim, level);
-            var coordB = GetCoordinateFromID(face.B.Voxel.ID, dim, level);
-            var coordC = GetCoordinateFromID(face.C.Voxel.ID, dim, level);
-            var minCoord = coordA;
-            var maxCoord = coordA;
-            if (coordB < minCoord) minCoord = coordB;
-            else if (coordB > maxCoord) maxCoord = coordB;
-            if (coordC < minCoord) minCoord = coordC;
-            else if (coordC > maxCoord) maxCoord = coordC;
-
-            for (int i = minCoord; i <= maxCoord; i++)
-            {   // set up voxels for the face
-                voxelIndex[dim] = i;
-                MakeAndStoreVoxel()
-                storeVoxel(voxelIndex, face);
-            }
-            foreach (var faceEdge in face.Edges)
-            {   // cycle over the edges to link them to the voxels, may need to make new voxels
-                var lowVIndex = Math.Min(faceEdge.From.Voxel.Index[dim], faceEdge.To.Voxel.Index[dim]);
-                var highVIndex = Math.Max(faceEdge.From.Voxel.Index[dim], faceEdge.To.Voxel.Index[dim]);
-                for (int i = lowVIndex; i <= highVIndex; i++)
-                {
-                    voxelIndex[dim] = i;
-                    storeVoxel(voxelIndex, linkToTessellatedSolid ? faceEdge : null);
-                }
-            }
         }
 
         /// <summary>
@@ -602,7 +481,7 @@ namespace TVGL.Voxelization
                 v = atIntegerValue(vDouble) && (vRange < 0 || (vRange == 0 && insideIsLowerV)) ? (int)(vDouble - 1) : (int)Math.Floor(vDouble);
             }
         }
-        
+
 
         /// <summary>
         /// Finds the where line that is the edge length crosses sweep plane. It may be that the edge terminates
@@ -630,9 +509,197 @@ namespace TVGL.Voxelization
             valueD2 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
             return false;
         }
+
+
+        #endregion
+        #region Level 0 and 1 Interior Voxel Creation
+        /// <summary>
+        /// Makes the voxels in interior.
+        /// </summary>
+        /// <exception cref="System.NotImplementedException"></exception>
+        private void makeVoxelsInInterior()
+        {
+            var sweepDim = LongestDimensionIndex;
+            var uDim = (sweepDim != 0) ? 0 : 1;
+            var vDim = (sweepDim == 2) ? 1 : 2;
+            var ids = VoxelDictionaryLevel0.Values.Select(vx => IndicesToVoxelID(0, vx.Index[uDim], vx.Index[vDim]))
+                .Distinct()
+                .AsParallel();
+            var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel>, SortedSet<Voxel>>(
+                new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim)),
+                new SortedSet<Voxel>(new SortByVoxelIndex(sweepDim))));
+            Parallel.ForEach(VoxelDictionaryLevel0.Values, voxel =>
+            {
+                var id = IndicesToVoxelID(0, voxel.Index[uDim], voxel.Index[vDim]);
+                var sortedSets = dict[id];
+                var negativeFaceVoxels = sortedSets.Item1;
+                var positiveFaceVoxels = sortedSets.Item2;
+                var faces = voxel.TessellationElements.Where(te => te is PolygonalFace).ToList();
+                if (faces.Any(f => f.Normal[sweepDim] >= 0))
+                    lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
+                if (faces.Any(f => f.Normal[sweepDim] <= 0))
+                    lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
+            });
+            var interiorVoxels = dict.Values
+                .Where(entry => entry.Item1.Any() && entry.Item2.Any())
+                .SelectMany(entry => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim))
+                .AsParallel();
+            foreach (var interiorVoxel in interiorVoxels)
+            {
+                if (VoxelIDHashSet.Contains(interiorVoxel.ID)) continue; // why would this happen though?
+                VoxelIDHashSet.Add(interiorVoxel.ID);
+                VoxelDictionaryLevel0.Add(interiorVoxel.ID, interiorVoxel);
+            }
+        }
+
+
+        private List<Voxel> MakeInteriorVoxelsAlongLine(SortedSet<Voxel> sortedNegatives,
+            SortedSet<Voxel> sortedPositives, int sweepDim)
+        {
+            var index = (int[])sortedNegatives.First().Index.Clone();
+            var newVoxels = new List<Voxel>();
+            var negativeQueue = new Queue<Voxel>(sortedNegatives);
+            var positiveQueue = new Queue<Voxel>(sortedPositives);
+            while (negativeQueue.Any() && positiveQueue.Any())
+            {
+                var startIndex = negativeQueue.Dequeue().Index[sweepDim];
+                if (negativeQueue.Any() && negativeQueue.Peek().Index[sweepDim] - startIndex <= 1) continue;
+                int endIndex = Int32.MinValue;
+                while (endIndex < startIndex && positiveQueue.Any())
+                    endIndex = positiveQueue.Dequeue().Index[sweepDim];
+                for (int i = startIndex + 1; i < endIndex; i++)
+                {
+                    index[sweepDim] = i;
+                    var voxelID = IndicesToVoxelID(index);
+                    newVoxels.Add(new Voxel(index, voxelID, VoxelSideLength, VoxelRoleTypes.Full,
+                        null));
+                }
+            }
+            return newVoxels;
+        }
         #endregion
 
-        
+        private void MakeAndStoreVoxelLevel0And1(int x, int y, int z, TessellationBaseClass tsObject)
+        {
+            var voxelID = MakeVoxelID(x, y, z, 0, VoxelRoleTypes.Partial);
+            if (VoxelHashSetLevel0.Contains(voxelID))
+            {   // the level 0 voxel is already made, just add the tsObject to it
+                var voxelLevel0 = VoxelDictionaryLevel0[voxelID];
+                if (!voxelLevel0.TessellationElements.Contains(tsObject))
+                {
+                    voxelLevel0.TessellationElements.Add(tsObject);
+                    tsObject.AddVoxel(voxelLevel0);
+                }
+                voxelID = MakeVoxelID(x, y, z, 1, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial);
+                if (voxelLevel0.Voxels.Contains(voxelID))
+                { // and the level1 voxel is already made, so just add the tsObject there as well
+                    var voxelLevel1 = VoxelDictionaryLevel1[voxelID];
+                    if (!voxelLevel1.TessellationElements.Contains(tsObject))
+                    {
+                        voxelLevel0.TessellationElements.Add(tsObject);
+                        tsObject.AddVoxel(voxelLevel0);
+                    }
+                }
+                // okay, the voxelLevel0 exists, but not the voxelLevel1
+                voxelLevel0.Voxels.Add(voxelID);
+                VoxelDictionaryLevel1.Add(voxelID, new Voxel(voxelID, VoxelRoleTypes.Partial, 1, tsObject));
+            }
+            else
+            { //voxel at level 0 doesn't exist, which means the voxel at level 1 also doesn't exist. Add both
+                VoxelHashSetLevel0.Add(voxelID);
+                var voxelLevel0 = new Voxel(voxelID, VoxelRoleTypes.Partial, 0, tsObject);
+                VoxelDictionaryLevel0.Add(voxelID, voxelLevel0);
+                voxelID = MakeVoxelID(x, y, z, 1, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial);
+                voxelLevel0.Voxels.Add(voxelID);
+                VoxelDictionaryLevel1.Add(voxelID, new Voxel(voxelID, VoxelRoleTypes.Partial, 1, tsObject));
+            }
+        }
+        #endregion
+
+
+        #endregion
+
+        #region converting IDs and back again
+        private long MakeVoxelID(int x, int y, int z, int level, params VoxelRoleTypes[] levels)
+        {
+            var shift = 4 * (4 - level);
+            x = x >> shift;
+            y = y >> shift;
+            z = z >> shift;
+            x = x << (44 + shift); //can't you combine with the above? no. The shift is doing both division
+            y = y << (24 + shift); // and remainder. What I mean to say is that e.g. 7>>2<<2 = 4
+            z = z << (4 + shift);
+            //    x0   x1    x2   x3    x4   y0   y1    y2   y3    y4    z0   z1    z2   z3    z4  flags
+            // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
+            // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
+            return x + y + z + SetRoleFlags(levels);
+        }
+
+        private byte SetRoleFlags(VoxelRoleTypes[] levels)
+        {
+            if (levels == null || !levels.Any()) return 0; //no role is specified
+            if (levels[0] == VoxelRoleTypes.Empty) return 1; //the rest of the levels would also be empty
+            if (levels[0] == VoxelRoleTypes.Full) return 2;  // the rest of the levels would also be full
+            if (levels[0] == VoxelRoleTypes.Partial && levels.Length == 1) return 3;
+            // level 0 is partial but the smaller voxels could be full, empty of partial. 
+            // they are not specified if the length is only one. If the length is more
+            // than 1, then go to next level
+            if (levels[1] == VoxelRoleTypes.Empty) return 4; //the rest are empty
+            if (levels[1] == VoxelRoleTypes.Full) return 5;  // the rest are full
+            if (levels[1] == VoxelRoleTypes.Partial && levels.Length == 2) return 6;
+            if (levels[2] == VoxelRoleTypes.Empty) return 7; //the rest are empty
+            if (levels[2] == VoxelRoleTypes.Full) return 8;  // the rest are full
+            if (levels[2] == VoxelRoleTypes.Partial && levels.Length == 3) return 9;
+            if (levels[3] == VoxelRoleTypes.Empty) return 10; //the rest are empty
+            if (levels[3] == VoxelRoleTypes.Full) return 11;  // the rest are full
+            if (levels[3] == VoxelRoleTypes.Partial && levels.Length == 4) return 12;
+            if (levels[3] == VoxelRoleTypes.Empty) return 13;
+            if (levels[4] == VoxelRoleTypes.Full) return 14;
+            return 15;
+        }
+        private VoxelRoleTypes[] GetRoleFlags(byte flags)
+        {
+            if (flags == 0) return new VoxelRoleTypes[0]; //no role is specified
+            if (flags == 1) return new[] { VoxelRoleTypes.Empty }; // could add a bunch more empties. is this necessary?
+            if (flags == 2) return new[] { VoxelRoleTypes.Full };
+            if (flags == 3) return new[] { VoxelRoleTypes.Partial };
+            if (flags == 4) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Empty }; //the rest are empty
+            if (flags == 5) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Full };  // the rest are full
+            if (flags == 6) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial };
+            if (flags == 7) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Empty };
+            if (flags == 8) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Full };
+            if (flags == 9) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial };
+            if (flags == 10) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Empty };
+            if (flags == 11) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Full };
+            if (flags == 12) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial };
+            if (flags == 13) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Empty };
+            if (flags == 14) return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Full };
+            return new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial };
+        }
+
+        private int[] GetCoordinatesFromID(long ID, int level)
+        {
+            return new[]
+            {
+                GetCoordinateFromID(ID, 0, level), GetCoordinateFromID(ID, 1, level), GetCoordinateFromID(ID, 2, level)
+            };
+        }
+        private int GetCoordinateFromID(long id, int dimension, int level)
+        {
+            if (dimension == 0) //x starts at 44 and goes to the end,64
+                return (int)(id >> (44 + 4 * (4 - level)));
+            if (dimension == 1) // y starts at 24 and goes to 44, so the x amount from (44 to 64 needs to be subtracted off
+            {
+                var yShift = 24 + 4 * (4 - level);
+                return (int)((id >> yShift) - (id >> 44 << yShift));
+            }
+            var zShift = 4 * (5 - level); //this is like y,but note the simplification (the 5) in this equation
+            return (int)((id >> zShift) - (id >> 24 << zShift));
+
+        }
+        #endregion
+
+
         /// <summary>
         /// Is the double currently at an integer value?
         /// </summary>

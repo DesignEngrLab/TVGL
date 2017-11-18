@@ -96,7 +96,10 @@ namespace TVGL.Voxelization
             if (VoxelRole == VoxelRoleTypes.Partial && level == 0)
                 Voxels = new HashSet<long>();
             if (tsObject != null)
+            {
                 TessellationElements = new List<TessellationBaseClass> { tsObject };
+                tsObject.AddVoxel(this);
+            }
         }
     }
 }
