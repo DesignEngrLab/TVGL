@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using TVGLPresenterDebugger.TVGL.Voxelization;
 
 namespace TVGL.Voxelization
 {
@@ -736,6 +737,18 @@ namespace TVGL.Voxelization
             }
             return new[] { x, y, z };
         }
+
+        /// <summary>
+        /// Gets a particular voxel index value.
+        /// </summary>
+        /// <param name="voxelID">The voxel identifier.</param>
+        /// <param name="directionIndex"></param>
+        /// <returns>System.Int32[].</returns>
+        public int VoxelIndexValue(long voxelID, int directionIndex)
+        {
+            //ToDo: This is a bit stupid. It should only do the calculations for one index.
+            return VoxelIDToIndices(voxelID)[directionIndex];
+        }
         #endregion
 
         /// <summary>
@@ -746,6 +759,70 @@ namespace TVGL.Voxelization
         private static bool atIntegerValue(double d)
         {
             return Math.Ceiling(d) == d;
+        }
+
+        public SortedDictionary<int, HashSet<long>> GetVoxelsOrderedAlongDirection(int dimensionIndex)
+        {
+            var sortedDict = new SortedDictionary<int, HashSet<long>>(); //Key = SweepDim Value, value = voxel ID
+            foreach (var voxel in Voxels.Values)
+            {
+                if (sortedDict.ContainsKey(voxel.Index[dimensionIndex]))
+                {
+                    sortedDict[voxel.Index[dimensionIndex]].Add(voxel.ID);
+                }
+                else
+                {
+                    sortedDict.Add(voxel.Index[dimensionIndex], new HashSet<long> { voxel.ID });
+                }
+            }
+            return sortedDict;
+        }
+
+        public void RoundAllEdges(int r)
+        {
+            //First, to round all edges, apply spheres to the center of every voxel in the shell.
+            //Second, get all the new outer voxels (but don't convert to a shell).
+            //Third, a negative sphere of the same size, will be applied to all the voxels in the new shell.
+            //Fourth, generate the final shell.
+            //Memory Management Note: To limit the number of voxel we generate, steps 1-2 will be applied
+            //for a depth r(i+1) along the longest update direction (X,Y, or Z), and steps 3-4 will be at r(i), 
+            //one full radius behind steps 1-2.
+            var sweepDim = LongestDimensionIndex;
+            var sortedVoxels = GetVoxelsOrderedAlongDirection(sweepDim);
+            var startDistance = sortedVoxels.Keys.First();
+            var endDistance = sortedVoxels.Keys.Last();
+            var offsets = VoxelOperations.GetSolidSphereOffsets(r);
+
+            var nSteps = (endDistance - startDistance) / r;
+            for (var i = 0; i < nSteps + 1; i++)
+            {
+                var d = startDistance + i * r; //iterationStartDistance
+                var newVoxelsInIteration = new HashSet<long>();
+                if (i < nSteps) //Skips the last i in the outer for loop
+                {
+                    while (d < startDistance + (i + 1) * r) //Less than the next iteration start distance
+                    {
+                        foreach (var voxel in sortedVoxels[d])
+                        {
+                            var newVoxels = VoxelOperations.GetSphereCenteredOnVoxel(voxel, this, offsets);
+                            foreach (var newVoxel in newVoxels)
+                            {
+                                newVoxelsInIteration.Add(newVoxel);
+                            }
+                        }
+                        d++;
+                    }
+                }
+                if (i == 0) continue; //Skips the first i in the outer for loop
+
+                //Else, get the outer shell of the last index, i
+                //Note: only voxels that were only added once will be in the outer shell. However, this same
+                //criteria forms an inner shell.
+
+
+                //Run a negative sphere along the outer shell
+
+            }
         }
     }
 }
