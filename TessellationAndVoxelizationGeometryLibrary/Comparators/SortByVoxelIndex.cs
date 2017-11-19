@@ -14,7 +14,8 @@ namespace TVGL
         public int Compare(Voxel x, Voxel y)
         {
             //if (x.Index[dimension].Equals(y.Index[dimension])) return 0;
-            if (x.Index[dimension] < y.Index[dimension]) return -1;
+            if (VoxelizedSolid.GetCoordinateFromID(x.ID, dimension, 4) <
+                VoxelizedSolid.GetCoordinateFromID(y.ID, dimension, 4)) return -1;
             else return 1;
         }
     }

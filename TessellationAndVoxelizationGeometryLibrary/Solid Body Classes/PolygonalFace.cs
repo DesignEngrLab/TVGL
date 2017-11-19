@@ -402,7 +402,6 @@ namespace TVGL
             }
         }
 
-        public HashSet<VoxelBin> Voxels { get; private set; }
         #endregion
     }
 }

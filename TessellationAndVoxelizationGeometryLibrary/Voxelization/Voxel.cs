@@ -12,6 +12,7 @@
 // <summary></summary>
 // ***********************************************************************
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TVGL.Voxelization
 {
@@ -63,43 +64,72 @@ namespace TVGL.Voxelization
     /// <summary>
     /// Class Voxel.
     /// </summary>
-    public class Voxel
+    public struct Voxel
     {
         /// <summary>
         /// The voxel role (interior or exterior)
         /// </summary>
         public VoxelRoleTypes VoxelRole;
 
+        public readonly byte Level;
         /// <summary>
         /// Gets or sets the identifier.
         /// </summary>
         /// <value>The identifier.</value>
-        public long ID;
+        public readonly long ID;
 
         /// <summary>
         /// Gets the tessellation elements that areoverlapping with this voxel.
         /// </summary>
         /// <value>The tessellation elements.</value>
-        public List<TessellationBaseClass> TessellationElements { get; internal set; }
+        private readonly List<TessellationBaseClass> TessellationElements;
+
         /// <summary>
         /// Gets the voxels.
         /// </summary>
         /// <value>
         /// The voxels.
         /// </value>
-        public HashSet<long> Voxels { get; internal set; }
+        private readonly HashSet<long> Voxels;
 
+        internal void AddVoxel(long voxelID)
+        {
+            if (Voxels.Contains(voxelID)) return;
+            if (Voxels.Count == 4095)
+            {
+                VoxelRole = VoxelRoleTypes.Full;
+                Voxels.Clear();
+            }
+            Voxels.Add(voxelID);
+        }
+
+        internal bool RemoveVoxel(long voxelID)
+        {
+            if (Voxels.Any())
+                return Voxels.Remove(voxelID);
+        
+        }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Voxel"/> struct.
+        /// </summary>
+        /// <param name="voxelID">The voxel identifier.</param>
+        /// <param name="voxelRole">The voxel role.</param>
+        /// <param name="level">The level.</param>
+        /// <param name="tsObject">The ts object.</param>
         public Voxel(long voxelID, VoxelRoleTypes voxelRole, int level, TessellationBaseClass tsObject = null)
         {
             ID = voxelID;
             VoxelRole = voxelRole;
+            Level = (byte)level;
             if (VoxelRole == VoxelRoleTypes.Partial && level == 0)
                 Voxels = new HashSet<long>();
+            else Voxels = null;
             if (tsObject != null)
             {
-                TessellationElements = new List<TessellationBaseClass> { tsObject };
+                TessellationElements = new List<TessellationBaseClass> {tsObject};
                 tsObject.AddVoxel(this);
             }
+            else TessellationElements = null;
         }
     }
 }
