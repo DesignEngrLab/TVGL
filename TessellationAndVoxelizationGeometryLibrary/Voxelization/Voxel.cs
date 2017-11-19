@@ -11,6 +11,8 @@
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -76,23 +78,55 @@ namespace TVGL.Voxelization
         /// Gets or sets the identifier.
         /// </summary>
         /// <value>The identifier.</value>
-        public readonly long ID;
+        public long ID; //is this ever used?
 
+        #region TessellatedElements functions
         /// <summary>
         /// Gets the tessellation elements that areoverlapping with this voxel.
         /// </summary>
         /// <value>The tessellation elements.</value>
-        private readonly List<TessellationBaseClass> TessellationElements;
+        private List<TessellationBaseClass> TessellationElements;
 
+        internal void Add(TessellationBaseClass tsObject)
+        {
+            if (TessellationElements == null) TessellationElements = new List<TessellationBaseClass>();
+            else if (TessellationElements.Contains(tsObject)) return;
+            TessellationElements.Add(tsObject);
+            tsObject.AddVoxel(this);
+        }
+
+        internal bool Remove(TessellationBaseClass tsObject)
+        {
+            if (TessellationElements == null) return false;
+            if (TessellationElements.Count == 1 && TessellationElements.Contains(tsObject))
+            {
+                TessellationElements = null;
+                return true;
+            }
+            return TessellationElements.Remove(tsObject);
+        }
+
+        internal bool Contains(TessellationBaseClass tsObject)
+        {
+            if (TessellationElements == null) return false;
+            return TessellationElements.Contains(tsObject);
+        }
+        internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
+        internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
+        internal List<Vertex> Vertices => TessellationElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
+
+        #endregion
+        #region sub-voxel functions
         /// <summary>
         /// Gets the voxels.
         /// </summary>
         /// <value>
         /// The voxels.
         /// </value>
-        private readonly HashSet<long> Voxels;
+        private HashSet<long> Voxels;
 
-        internal void AddVoxel(long voxelID)
+
+        internal void Add(long voxelID)
         {
             if (Voxels.Contains(voxelID)) return;
             if (Voxels.Count == 4095)
@@ -103,12 +137,33 @@ namespace TVGL.Voxelization
             Voxels.Add(voxelID);
         }
 
-        internal bool RemoveVoxel(long voxelID)
+        internal bool Remove(long voxelID)
         {
             if (Voxels.Any())
                 return Voxels.Remove(voxelID);
-        
+            if (Voxels.Count == 1 && Voxels.Contains(voxelID))
+            { //then this is the last subvoxel, so this goes empty
+                Voxels = null;
+                VoxelRole = VoxelRoleTypes.Empty;
+                //change ID? is it necessary
+                return true;
+            }
+            throw new NotImplementedException("removing a voxel from a full means having to create all the sub-voxels minus 1.");
         }
+
+        internal bool Contains(long voxelID)
+        {
+            if (Voxels == null) return false;
+            return Voxels.Contains(voxelID);
+        }
+
+        internal int Count()
+        {
+            if (Voxels == null) return 0;
+            return Voxels.Count;
+        }
+        #endregion
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Voxel"/> struct.
         /// </summary>
@@ -126,7 +181,7 @@ namespace TVGL.Voxelization
             else Voxels = null;
             if (tsObject != null)
             {
-                TessellationElements = new List<TessellationBaseClass> {tsObject};
+                TessellationElements = new List<TessellationBaseClass> { tsObject };
                 tsObject.AddVoxel(this);
             }
             else TessellationElements = null;
