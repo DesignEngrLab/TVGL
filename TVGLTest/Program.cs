@@ -84,7 +84,7 @@ namespace TVGL_Test
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            var dir = new DirectoryInfo("../../../TestFiles");
+            var dir = new DirectoryInfo("../../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
             for (var i = 0; i < 10; i++) // fileNames.Count(); i++)
             {
@@ -129,11 +129,11 @@ namespace TVGL_Test
             // Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
             //startTime = DateTime.Now;
             var voxelSpace2 = new VoxelizedSolid(ts, 200);
-            voxelSpace2.RoundAllEdges(5);
+            voxelSpace2 = voxelSpace2.RoundAllEdges(4);
             var totalTime2 = DateTime.Now - startTime;
             Console.WriteLine(" {1}\t{0}", totalTime2.TotalSeconds, voxelSpace2.NumVoxelsTotal / 1000000.0);
             //Console.WriteLine("{0}\t{1}", totalTime1.TotalSeconds, totalTime2.TotalSeconds);
-            // Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
+            Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
             //return;
             //startTime = DateTime.Now;
             //var voxelSpace2 = new VoxelSpace();

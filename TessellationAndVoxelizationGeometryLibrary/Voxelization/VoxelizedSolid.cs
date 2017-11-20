@@ -115,6 +115,39 @@ namespace TVGL.Voxelization
             VoxelIDHashSet = voxelIDHashSet;
         }
 
+        public VoxelizedSolid(VoxelizedSolid voxelSolid, HashSet<long> voxelIDHashSet)
+        {
+            tessellatedSolid = voxelSolid.tessellatedSolid;
+
+            //SetUpIndexingParameters
+            var dimensions = new double[3];
+            for (int i = 0; i < 3; i++)
+                dimensions[i] = tessellatedSolid.Bounds[1][i] - tessellatedSolid.Bounds[0][i];
+            var maxDim = dimensions.Max();
+            LongestDimensionIndex = voxelSolid.LongestDimensionIndex;
+            VoxelSideLength = voxelSolid.VoxelSideLength;
+            NumVoxels = new int[3];
+            for (int i = 0; i < 3; i++)
+                NumVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLength);
+            ScaleToIntSpace = 1.0 / VoxelSideLength;
+            
+            yIDMultiplier = (long)Math.Pow(10, Math.Ceiling(Math.Log10(maxDim * ScaleToIntSpace)) + 1);
+            var maxInt = Math.Pow(long.MaxValue, 1.0 / 3);
+            if (yIDMultiplier * 10 > maxInt)
+                throw new Exception("Int64 will not work for a voxel space this large, using the current index setup");
+            xIDMultiplier = yIDMultiplier * yIDMultiplier;
+            signIDMultiplier = xIDMultiplier * yIDMultiplier;
+
+            VoxelIDHashSet = voxelIDHashSet;
+            Voxels = new Dictionary<long, Voxel>();
+            foreach (var voxelID in voxelIDHashSet)
+            {
+                var voxelIndex = VoxelIDToIndices(voxelID);
+                var voxel = new Voxel(voxelIndex, voxelID, VoxelSideLength, VoxelRoleTypes.Exterior);
+                Voxels.Add(voxelID, voxel);
+            }
+        }
+
         /// <summary>
         /// Makes the voxels in interior.
         /// </summary>
@@ -778,7 +811,7 @@ namespace TVGL.Voxelization
             return sortedDict;
         }
 
-        public void RoundAllEdges(int r)
+        public VoxelizedSolid RoundAllEdges(int r)
         {
             //First, to round all edges, apply spheres to the center of every voxel in the shell.
             //Second, get all the new outer voxels (but don't convert to a shell).
@@ -791,7 +824,7 @@ namespace TVGL.Voxelization
             var sortedVoxels = GetVoxelsOrderedAlongDirection(sweepDim);
             var startDistance = sortedVoxels.Keys.First();
             var endDistance = sortedVoxels.Keys.Last();
-            var offsets = VoxelOperations.GetSolidSphereOffsets(r);
+            var offsets = VoxelOperations.GetHollowSphereOffsets(r);
 
             var nSteps = (endDistance - startDistance) / r;
             for (var i = 0; i < nSteps + 1; i++)
@@ -813,6 +846,10 @@ namespace TVGL.Voxelization
                         d++;
                     }
                 }
+                foreach (var voxel in newVoxelsInIteration)
+                {
+                    VoxelIDHashSet.Add(voxel);
+                }
                 if (i == 0) continue; //Skips the first i in the outer for loop
 
                 //Else, get the outer shell of the last index, i
@@ -823,6 +860,79 @@ namespace TVGL.Voxelization
                 //Run a negative sphere along the outer shell
 
             }
+            return new VoxelizedSolid(this, VoxelIDHashSet);
+        }
+
+        public VoxelizedSolid RoundAllEdges2(int r)
+        {
+            //First, apply offsets (1d), circles (2d), partial spheres (3d) to each voxel in the shell,
+            //depending on the number of exposed faces for each voxel in the shell.
+            //If only non-adjacent exposed faces, add new voxel at center + exposedFaceDirection*r
+            //If two or more adjacent face, using 2/3 directions (X, Y, Z), then add a partial circle.
+            //If three adjacent faces or more faces, using all three directions (X, Y, Z), then add a partial sphere.
+
+            //Second, clean the new shell/ir solid.
+            //Note: This considers way less voxels, BUT it does not mean that all the new offset voxels
+            //should be part of the new shell (e.g. near a concave edge).
+
+            //Third, apply offsets (1d), circles (2d), partial spheres (3d) to each voxel in the new shell,
+            //depending on the number of inner-exposed faces for each voxel in the shell, using r = r+1.
+            
+            //Fourth, generate the final shell.
+
+            //Memory Management Note: To limit the number of voxel we generate, steps 1-2 will be applied
+            //for a depth r(i+1) along the longest update direction (X,Y, or Z), and steps 3-4 will be at r(i), 
+            //one full radius behind steps 1-2.
+            var sweepDim = LongestDimensionIndex;
+            var sortedVoxels = GetVoxelsOrderedAlongDirection(sweepDim);
+            var startDistance = sortedVoxels.Keys.First();
+            var endDistance = sortedVoxels.Keys.Last();
+            var offsets = VoxelOperations.GetHollowSphereOffsets(r);
+
+            var nSteps = (endDistance - startDistance) / r;
+            for (var i = 0; i < nSteps + 1; i++)
+            {
+                var d = startDistance + i * r; //iterationStartDistance
+                var newVoxelsInIteration = new HashSet<long>();
+                if (i < nSteps) //Skips the last i in the outer for loop
+                {
+                    while (d < startDistance + (i + 1) * r) //Less than the next iteration start distance
+                    {
+                        foreach (var voxel in sortedVoxels[d])
+                        {
+                            var newVoxels = VoxelOperations.GetSphereCenteredOnVoxel(voxel, this, offsets);
+                            foreach (var newVoxel in newVoxels)
+                            {
+                                newVoxelsInIteration.Add(newVoxel);
+                            }
+                        }
+                        d++;
+                    }
+                }
+                foreach (var voxel in newVoxelsInIteration)
+                {
+                    VoxelIDHashSet.Add(voxel);
+                }
+                if (i == 0) continue; //Skips the first i in the outer for loop
+
+                //Else, get the outer shell of the last index, i
+                //Note: only voxels that were only added once will be in the outer shell. However, this same
+                //criteria forms an inner shell.
+
+
+                //Run a negative sphere along the outer shell
+
+            }
+            return new VoxelizedSolid(this, VoxelIDHashSet);
+        }
+
+
+        public void GetExposedVoxelFaceDirections(long voxelID)
+        {
+            //If a face is exposed, set its index value = 1.
+            var faces = new int[] {0, 0, 0, 0, 0, 0}; //+X, +Y, +Z, -X, -Y, -Z.
+
+            //ToDo: Requires tree structure with dense fill for this to tell me which faces are exposed on the shell.
         }
     }
 }
