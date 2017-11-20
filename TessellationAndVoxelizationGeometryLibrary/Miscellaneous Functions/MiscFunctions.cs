@@ -756,6 +756,19 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Gets the 2D projection vector
+        /// </summary>
+        /// <param name="vector3D"></param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>System.Double[][].</returns>
+        public static double[] Get2DProjectionVector(double[] vector3D, double[] direction)
+        {
+            var transform = TransformToXYPlane(direction);
+            var vectorAs4 = transform.multiply(new[] {vector3D[0], vector3D[1], vector3D[2], 1.0});
+            return new[] {vectorAs4[0], vectorAs4[1]};
+        }
+
+        /// <summary>
         ///     Transforms to xy plane.
         /// </summary>
         /// <param name="direction">The direction.</param>
@@ -807,6 +820,42 @@ namespace TVGL
             return rotateX.multiply(rotateY);
         }
 
+        /// <summary>
+        /// Backtransforms a 2D vector from an XY plane. Return 3D vector.
+        /// </summary>
+        /// <param name="direction2D"></param>
+        /// <param name="backTransform"></param>
+        /// <returns></returns>
+        public static double[] Convert2DVectorTo3DVector(double[] direction2D, double[,] backTransform)
+        {
+            var tempVector = new[] { direction2D[0], direction2D[1], 0.0, 1.0 };
+            return backTransform.multiply(tempVector).Take(3).ToArray().normalize();
+        }
+
+        /// <summary>
+        /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="direction"></param>
+        /// <param name="distanceAlongDirection"></param>
+        /// <returns></returns>
+        public static List<Vertex> GetVerticesFrom2DPoints(List<Point> points, double[] direction, double distanceAlongDirection)
+        {
+            //Rotate axis back to the original, and then transform points along the given direction.
+            double[,] backTransform;
+            TransformToXYPlane(direction, out backTransform);
+            var contour = new List<Vertex>();
+            foreach (var point in points)
+            {
+                var position = new[] { point.X, point.Y, 0.0, 1.0 };
+                var untransformedPosition = backTransform.multiply(position);
+                var vertexPosition = untransformedPosition.Take(3).ToArray().add(direction.multiply(distanceAlongDirection));
+
+                contour.Add(new Vertex(vertexPosition));
+            }
+
+            return new List<Vertex>(contour);
+        }
         #endregion
 
         #region Angle between Edges/Lines
