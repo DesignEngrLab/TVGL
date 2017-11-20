@@ -56,7 +56,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs" Link="InputOutput Operations\TVGLFileData.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\DirectionalDecomposition.cs" Link="Miscellaneous Functions\DirectionalDecomposition.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Extrude.cs" Link="Miscellaneous Functions\Extrude.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\ListFunctions.cs" Link="Miscellaneous Functions\ListFunctions.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs" Link="Miscellaneous Functions\MiscFunctions.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs" Link="Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs" Link="Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs" />

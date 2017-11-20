@@ -72,7 +72,7 @@ namespace TVGL
         /// <summary>
         ///     The tolerance for the same normal of a face when two are dot-producted.
         /// </summary>
-        public const double SameFaceNormalDotTolerance = 1e-1;
+        public const double SameFaceNormalDotTolerance = 1e-2;
         /// <summary>
         /// The maximum allowable edge similarity score. This is used when trying to match stray edges when loading in 
         /// a tessellated model.

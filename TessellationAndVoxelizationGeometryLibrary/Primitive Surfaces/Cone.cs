@@ -43,7 +43,7 @@ namespace TVGL
             Type = PrimitiveSurfaceType.Cone;
             Axis = axis;
             Aperture = aperture;
-            var faces = ListFunctions.FacesWithDistinctNormals(facesAll);
+            var faces = MiscFunctions.FacesWithDistinctNormals(facesAll);
             var numFaces = faces.Count;
             var axisRefPoints = new List<double[]>();
             double[] axisRefPoint;

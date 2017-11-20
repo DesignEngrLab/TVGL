@@ -61,9 +61,6 @@
     <Compile Include="InputOutput Operations\SHELLFileData.cs" />
     <Compile Include="Miscellaneous Functions\DirectionalDecomposition.cs" />
     <Compile Include="Miscellaneous Functions\Extrude.cs" />
-    <Compile Include="Miscellaneous Functions\ListFunctions.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Include="2D\Silhouette.cs" />
     <Compile Include="Miscellaneous Functions\TriangulatePolygon\SpecialClasses.cs" />
     <Compile Include="Miscellaneous Functions\TriangulatePolygon\TriangulatePolygon.cs" />

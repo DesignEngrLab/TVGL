@@ -173,9 +173,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Extrude.cs">
       <Link>TVGL\Miscellaneous Functions\Extrude.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\ListFunctions.cs">
-      <Link>TVGL\Miscellaneous Functions\ListFunctions.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs">
       <Link>TVGL\Miscellaneous Functions\MiscFunctions.cs</Link>
     </Compile>
