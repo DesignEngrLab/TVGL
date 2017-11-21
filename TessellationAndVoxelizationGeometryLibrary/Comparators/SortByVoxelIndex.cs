@@ -3,7 +3,7 @@ using TVGL.Voxelization;
 
 namespace TVGL
 {
-    internal class SortByVoxelIndex : IComparer<Voxel>
+    internal class SortByVoxelIndex : IComparer<VoxelClass>
     {
         private int dimension;
 
@@ -11,7 +11,7 @@ namespace TVGL
         {
             this.dimension = dimension;
         }
-        public int Compare(Voxel x, Voxel y)
+        public int Compare(VoxelClass x, VoxelClass y)
         {
             //if (x.Index[dimension].Equals(y.Index[dimension])) return 0;
             if (VoxelizedSolid.GetCoordinateFromID(x.ID, dimension, 4) <

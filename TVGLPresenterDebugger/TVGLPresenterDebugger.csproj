@@ -266,32 +266,11 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>TVGL\Verbosity.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\AABB.cs">
-      <Link>TVGL\Voxelization\AABB.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\AABBi.cs">
-      <Link>TVGL\Voxelization\AABBi.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\InternalNode.cs">
-      <Link>TVGL\Voxelization\InternalNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\LeafNode.cs">
-      <Link>TVGL\Voxelization\LeafNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\RootNode.cs">
-      <Link>TVGL\Voxelization\RootNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Tree.cs">
-      <Link>TVGL\Voxelization\Tree.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Voxel.cs">
       <Link>TVGL\Voxelization\Voxel.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
       <Link>TVGL\Voxelization\VoxelizedSolid.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizingOctree.cs">
-      <Link>TVGL\Voxelization\VoxelizingOctree.cs</Link>
     </Compile>
     <Compile Include="..\TVGL Presenter\Presenter.cs">
       <Link>Presenter\Presenter.cs</Link>

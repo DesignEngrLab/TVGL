@@ -226,32 +226,11 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>Verbosity.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\AABB.cs">
-      <Link>Voxelization\AABB.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\AABBi.cs">
-      <Link>Voxelization\AABBi.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\InternalNode.cs">
-      <Link>Voxelization\InternalNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\LeafNode.cs">
-      <Link>Voxelization\LeafNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\RootNode.cs">
-      <Link>Voxelization\RootNode.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Tree.cs">
-      <Link>Voxelization\Tree.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Voxel.cs">
       <Link>Voxelization\Voxel.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
       <Link>Voxelization\VoxelizedSolid.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizingOctree.cs">
-      <Link>Voxelization\VoxelizingOctree.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

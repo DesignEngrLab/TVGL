@@ -66,19 +66,19 @@ namespace TVGL.Voxelization
     /// <summary>
     /// Class Voxel.
     /// </summary>
-    public struct Voxel
+    public class VoxelClass
     {
         /// <summary>
         /// The voxel role (interior or exterior)
         /// </summary>
-        public VoxelRoleTypes VoxelRole;
+        public VoxelRoleTypes VoxelRole { get; internal set; }
 
-        public readonly byte Level;
+        public byte Level { get; internal set; }
         /// <summary>
         /// Gets or sets the identifier.
         /// </summary>
         /// <value>The identifier.</value>
-        public long ID; //is this ever used?
+        public long ID { get; internal set; } //is this ever used?
 
         #region TessellatedElements functions
         /// <summary>
@@ -123,7 +123,7 @@ namespace TVGL.Voxelization
         /// <value>
         /// The voxels.
         /// </value>
-        private HashSet<long> Voxels;
+        internal HashSet<long> Voxels;
 
 
         internal void Add(long voxelID)
@@ -162,22 +162,36 @@ namespace TVGL.Voxelization
             if (Voxels == null) return 0;
             return Voxels.Count;
         }
+
+
+        internal IEnumerable<double[]> GetVoxels(byte targetFlags, VoxelizedSolid voxelizedSolid, int level)
+        {
+            foreach (var voxel in Voxels)
+            {
+                var flags = voxel & 15; //get rid of every but the flags
+                if (flags==targetFlags)
+                    yield return voxelizedSolid.MakeCenterAndWidth(voxel, level);
+            }
+        }
+
+
+
         #endregion
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel"/> struct.
+        /// Initializes a new instance of the <see cref="VoxelClass"/> struct.
         /// </summary>
         /// <param name="voxelID">The voxel identifier.</param>
         /// <param name="voxelRole">The voxel role.</param>
         /// <param name="level">The level.</param>
         /// <param name="tsObject">The ts object.</param>
-        public Voxel(long voxelID, VoxelRoleTypes voxelRole, int level, TessellationBaseClass tsObject = null)
+        public VoxelClass(long voxelID, VoxelRoleTypes voxelRole, int level, TessellationBaseClass tsObject = null)
         {
             ID = voxelID;
             VoxelRole = voxelRole;
             Level = (byte)level;
             if (VoxelRole == VoxelRoleTypes.Partial && level == 0)
-                Voxels = new HashSet<long>();
+                Voxels = new HashSet<long> { voxelID };
             else Voxels = null;
             if (tsObject != null)
             {
@@ -186,5 +200,6 @@ namespace TVGL.Voxelization
             }
             else TessellationElements = null;
         }
+
     }
 }

@@ -109,16 +109,9 @@
     <Compile Include="Solid Body Classes\TVGLConvexHull.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />
-    <Compile Include="Voxelization\InternalNode.cs" />
-    <Compile Include="Voxelization\LeafNode.cs" />
     <Compile Include="Voxelization\VoxelizedSolid.cs" />
-    <Compile Include="Voxelization\RootNode.cs" />
-    <Compile Include="Voxelization\Tree.cs" />
     <Compile Include="Voxelization\Voxel.cs" />
     <Compile Include="Verbosity.cs" />
-    <Compile Include="Voxelization\AABB.cs" />
-    <Compile Include="Voxelization\AABBi.cs" />
-    <Compile Include="Voxelization\VoxelizingOctree.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />

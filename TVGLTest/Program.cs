@@ -191,18 +191,7 @@ namespace TVGL_Test
                 Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
             }*/
         }
-
-        public static void TestOctreeVoxelization(TessellatedSolid ts)
-        {
-            //Level 0 has one voxel. 
-            //Level 1 is the outermost octree, with 8 voxels.
-            //Level 2 has 64 voxels and so on...
-            //Settings max Level to 3, with set level 0, 1, and 2.
-            const int maxLevel = 6;
-            var octree = new VoxelizingOctree(maxLevel);
-            octree.GenerateOctree(ts);
-            Presenter.ShowVoxelization(ts, octree, maxLevel - 1, CellStatus.Intersecting);
-        }
+        
 
         public static void TestSegmentation(TessellatedSolid ts)
         {
