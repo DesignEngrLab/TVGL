@@ -95,17 +95,19 @@ namespace TVGL.Voxelization
             Discretization = voxelDiscretization;
             discretizationLevel = Enum.GetNames(typeof(VoxelDiscretization)).FindIndex(Discretization.ToString());
             SetUpIndexingParameters(ts);
-            voxelDictionaryLevel0 =
-                new Dictionary<long, VoxelClass>(); //todo:approximate capacity based on tessellated volume
+            voxelDictionaryLevel0 = new Dictionary<long, VoxelClass>();
+            voxelDictionaryLevel1 = new Dictionary<long, VoxelClass>();
             voxelHashSetLevel0 = new HashSet<long>();
             transformedCoordinates = new double[ts.NumberOfVertices][];
-            Parallel.For(0, ts.NumberOfVertices, i =>
+            //Parallel.For(0, ts.NumberOfVertices, i =>
+            for (int i = 0; i < ts.NumberOfVertices; i++)
             {
                 var vertex = ts.Vertices[i];
-                var coordinates = vertex.Position.multiply(ScaleToIntegerSpace).add(Offset);
+                var coordinates = vertex.Position.multiply(ScaleToIntegerSpace).subtract(Offset);
                 transformedCoordinates[i] = coordinates;
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
-            });
+            }
+            //);
             makeVoxelsForFacesAndEdges(ts);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior();
@@ -126,10 +128,10 @@ namespace TVGL.Voxelization
             longestDimensionIndex = dimensions.FindIndex(d => d == maxDim);
             VoxelSideLength = new List<double>();
             VoxelSideLength.Add(maxDim / (int)Discretization);
-            for (int i = 1; i < VoxelSideLength.Count; i++)
+            for (int i = 1; i < discretizationLevel + 1; i++)
                 VoxelSideLength.Add(16 * VoxelSideLength.Last());
             VoxelSideLength.Reverse();
-            ScaleToIntegerSpace = 1.0 / VoxelSideLength[0];
+            ScaleToIntegerSpace = 1.0 / VoxelSideLength.Last();
             Offset = ts.Bounds[0].multiply(ScaleToIntegerSpace);
         }
 
@@ -317,7 +319,8 @@ namespace TVGL.Voxelization
                 var fromIndex = GetCoordinateFromID(faceEdge.From.Voxels.First(v => v.Level == level).ID, dim, level);
                 var toIndex = GetCoordinateFromID(faceEdge.To.Voxels.First(v => v.Level == level).ID, dim, level);
                 var step = Math.Sign(toIndex - fromIndex);
-                for (int i = fromIndex; i <= toIndex; i += step)
+                if (step==0) continue;
+                for (int i = fromIndex; i != toIndex; i += step)
                 {
                     coordinates[dim] = i;
                     MakeAndStorePartialVoxelLevel0And1(coordinates[0], coordinates[1], coordinates[2], faceEdge);
@@ -544,7 +547,8 @@ namespace TVGL.Voxelization
             var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<VoxelClass>, SortedSet<VoxelClass>>(
                 new SortedSet<VoxelClass>(new SortByVoxelIndex(sweepDim)),
                 new SortedSet<VoxelClass>(new SortByVoxelIndex(sweepDim))));
-            Parallel.ForEach(voxelDictionaryLevel0.Values, voxel =>
+            //Parallel.ForEach(voxelDictionaryLevel0.Values, voxel =>
+            foreach (var voxel in voxelDictionaryLevel1.Values)
             {
                 var id = MakeCoordinateZero(voxel.ID, sweepDim);
                 var sortedSets = dict[id];
@@ -555,7 +559,8 @@ namespace TVGL.Voxelization
                     lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
                 if (faces.Any(f => f.Normal[sweepDim] <= 0))
                     lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
-            });
+            }
+            //);
             var interiorVoxels = dict.Values
                 .Where(entry => entry.Item1.Any() && entry.Item2.Any())
                 .SelectMany(entry => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim))
@@ -836,7 +841,7 @@ namespace TVGL.Voxelization
 
         internal double[] MakeCenterAndWidth(long id, int level)
         {
-            var bottomCoordinate = GetCoordinatesFromID(id, level).multiply(VoxelSideLength[level]).subtract(Offset);
+            var bottomCoordinate = GetCoordinatesFromID(id, level).multiply(VoxelSideLength[level]).add(Offset);
             return new[] { bottomCoordinate[0], bottomCoordinate[1], bottomCoordinate[2], VoxelSideLength[level] };
         }
 
