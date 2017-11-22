@@ -170,7 +170,7 @@ namespace TVGL.Voxelization
             {
                 var flags = voxel & 15; //get rid of every but the flags
                 if (flags==targetFlags)
-                    yield return voxelizedSolid.MakeCenterAndWidth(voxel, level);
+                    yield return voxelizedSolid.GetBottomAndWidth(voxel, level);
             }
         }
 

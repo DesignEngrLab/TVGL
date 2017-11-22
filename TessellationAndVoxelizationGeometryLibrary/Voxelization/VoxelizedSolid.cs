@@ -53,7 +53,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The voxel side length. It's a square, so all sides are the same length.
         /// </summary>
-        public List<double> VoxelSideLength { get; private set; }
+        public double[] VoxelSideLength { get; private set; }
 
         /// <summary>
         /// Gets the scale to integer space.
@@ -126,13 +126,12 @@ namespace TVGL.Voxelization
                 dimensions[i] = ts.Bounds[1][i] - ts.Bounds[0][i];
             var maxDim = dimensions.Max();
             longestDimensionIndex = dimensions.FindIndex(d => d == maxDim);
-            VoxelSideLength = new List<double>();
-            VoxelSideLength.Add(maxDim / (int)Discretization);
-            for (int i = 1; i < discretizationLevel + 1; i++)
-                VoxelSideLength.Add(16 * VoxelSideLength.Last());
-            VoxelSideLength.Reverse();
-            ScaleToIntegerSpace = 1.0 / VoxelSideLength.Last();
-            Offset = ts.Bounds[0].multiply(ScaleToIntegerSpace);
+            ScaleToIntegerSpace = Constants.VoxelScaleSize / maxDim;
+            Offset = ts.Bounds[0].multiply(ScaleToIntegerSpace).subtract(new[] { 0.1, 0.1, 0.1 });
+            VoxelSideLength = new double[5];
+            VoxelSideLength[4] = 1.0 / ScaleToIntegerSpace;
+            for (int i = 3; i >= 0; i--)
+                VoxelSideLength[i] = 16 * VoxelSideLength[i + 1];
         }
 
         #region Making Voxels for Levels 0 and 1
@@ -226,7 +225,7 @@ namespace TVGL.Voxelization
                     makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
                         rightStartPoint[uDim], sweepValue, vDim, uDim,
                         sweepDim, face.Normal[uDim] >= 0, face);
-                    sweepValue++; //increment sweepValue and repeat!
+                    sweepValue+= 4096; //increment sweepValue and repeat!
                 }
             }
         }
@@ -319,7 +318,7 @@ namespace TVGL.Voxelization
                 var fromIndex = GetCoordinateFromID(faceEdge.From.Voxels.First(v => v.Level == level).ID, dim, level);
                 var toIndex = GetCoordinateFromID(faceEdge.To.Voxels.First(v => v.Level == level).ID, dim, level);
                 var step = Math.Sign(toIndex - fromIndex);
-                if (step==0) continue;
+                if (step == 0) continue;
                 for (int i = fromIndex; i != toIndex; i += step)
                 {
                     coordinates[dim] = i;
@@ -674,16 +673,16 @@ namespace TVGL.Voxelization
         private static long MakeVoxelID(int x, int y, int z, int level, params VoxelRoleTypes[] levels)
         {
             var shift = 4 * (4 - level);
-            x = x >> shift;
-            y = y >> shift;
-            z = z >> shift;
-            x = x << (44 + shift); //can't you combine with the above? no. The shift is doing both division
-            y = y << (24 + shift); // and remainder. What I mean to say is that e.g. 7>>2<<2 = 4
-            z = z << (4 + shift);
+            var xLong = (long)x >> shift;
+            var yLong = (long)y >> shift;
+            var zLong = (long)z >> shift;
+            xLong = xLong << (44 + shift); //can't you combine with the above? no. The shift is doing both division
+            yLong = yLong << (24 + shift); // and remainder. What I mean to say is that e.g. 7>>2<<2 = 4
+            zLong = zLong << (4 + shift);
             //    x0   x1    x2   x3    x4   y0   y1    y2   y3    y4    z0   z1    z2   z3    z4  flags
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            return x + y + z + SetRoleFlags(levels);
+            return xLong + yLong + zLong + SetRoleFlags(levels);
         }
 
         internal static byte SetRoleFlags(VoxelRoleTypes[] levels)
@@ -827,9 +826,9 @@ namespace TVGL.Voxelization
         public IEnumerable<double[]> GetVoxels(VoxelRoleTypes role = VoxelRoleTypes.Partial, int level = 4)
         {
             if (level == 0)
-                voxelDictionaryLevel0.Values.Where(v => v.VoxelRole == role).Select(v => MakeCenterAndWidth(v.ID, 0));
+                voxelDictionaryLevel0.Values.Where(v => v.VoxelRole == role).Select(v => GetBottomAndWidth(v.ID, 0));
             if (level == 1)
-                voxelDictionaryLevel1.Values.Where(v => v.VoxelRole == role).Select(v => MakeCenterAndWidth(v.ID, 1));
+                voxelDictionaryLevel1.Values.Where(v => v.VoxelRole == role).Select(v => GetBottomAndWidth(v.ID, 1));
             if (level > discretizationLevel) level = discretizationLevel;
             var flags = new VoxelRoleTypes[level];
             for (int i = 0; i < level - 1; i++)
@@ -839,7 +838,7 @@ namespace TVGL.Voxelization
             return voxelDictionaryLevel0.Values.SelectMany(voxDict => voxDict.GetVoxels(targetFlags, this, level));
         }
 
-        internal double[] MakeCenterAndWidth(long id, int level)
+        internal double[] GetBottomAndWidth(long id, int level)
         {
             var bottomCoordinate = GetCoordinatesFromID(id, level).multiply(VoxelSideLength[level]).add(Offset);
             return new[] { bottomCoordinate[0], bottomCoordinate[1], bottomCoordinate[2], VoxelSideLength[level] };

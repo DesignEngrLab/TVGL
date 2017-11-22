@@ -76,6 +76,8 @@ namespace TVGL
         /// </summary>
         internal const double MaxAllowableEdgeSimilarityScore = 0.2;
 
+        internal const double VoxelScaleSize = 1048575.8; // Math.Pow(2, 20) - 0.2;
+
         /// <summary>
         ///     Finds the index.
         /// </summary>
