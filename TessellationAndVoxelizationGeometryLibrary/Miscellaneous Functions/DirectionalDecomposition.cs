@@ -667,16 +667,20 @@ namespace TVGL
         #region Uniform Directional Segmentation
 
         /// <summary>
-        /// Returns the Directional Segments found from decomposing a solid along a given direction. This data is used in other methods.
+        /// Returns the Directional Segments found from decomposing a solid along a given direction. 
+        /// This data is used in other methods. Optional parameter "orderedforcedSteps" adds in steps at the 
+        /// given distances, but it must be ordered.
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="direction"></param>
         /// <param name="stepSize"></param>
         /// <param name="stepDistances"></param>
         /// <param name="sortedVertexDistanceLookup"></param>
+        /// <param name="orderedForcedSteps"></param>
         /// <returns></returns>
         public static List<DirectionalSegment> UniformDirectionalSegmentation(TessellatedSolid ts, double[] direction,
-            double stepSize, out Dictionary<int, double> stepDistances, out Dictionary<int, double> sortedVertexDistanceLookup)
+            double stepSize, out Dictionary<int, double> stepDistances, 
+            out Dictionary<int, double> sortedVertexDistanceLookup, List<double> orderedForcedSteps = null)
         {
             //Reset all the arbitrary edge references and vertex references to -1, since they may have been set in another method
             foreach (var vertex in ts.Vertices)
@@ -740,13 +744,46 @@ namespace TVGL
             //Start the step index at -1, so that the increment can be at the start of the while loop, 
             //making the final stepIndex correct for use in a later function.
             var stepIndex = -1;
-
+            var nextForcedDistance = double.MaxValue;
+            var forcedDistanceIndex = 0;
+            var numberOfForcedDistances = 0;
+            var cleanOrderedForcedSteps = new List<double>();
+            if (orderedForcedSteps != null)
+            {
+                numberOfForcedDistances = orderedForcedSteps.Count();
+                nextForcedDistance = orderedForcedSteps[forcedDistanceIndex];
+                cleanOrderedForcedSteps.Add(nextForcedDistance);
+                for (var i = 1; i < numberOfForcedDistances; i++)
+                {
+                    //Remove duplicates
+                    if (!orderedForcedSteps[i].IsPracticallySame(cleanOrderedForcedSteps.Last(), minOffset))
+                    {
+                        cleanOrderedForcedSteps.Add(orderedForcedSteps[i]);
+                    }
+                }
+                numberOfForcedDistances = cleanOrderedForcedSteps.Count;
+                forcedDistanceIndex ++;
+            }
+            var priorNonForcedDistanceAlongAxis = distanceAlongAxis;
             while (distanceAlongAxis < furthestDistance - stepSize)
             {
                 stepIndex++;
 
                 //This is the current distance along the axis. It will move forward by the step size during each iteration.
-                distanceAlongAxis += stepSize;
+                distanceAlongAxis = priorNonForcedDistanceAlongAxis + stepSize;
+
+                if (orderedForcedSteps != null && forcedDistanceIndex < numberOfForcedDistances
+                    && (distanceAlongAxis > nextForcedDistance || distanceAlongAxis.IsPracticallySame(nextForcedDistance)))
+                {
+                    distanceAlongAxis = nextForcedDistance;
+                    nextForcedDistance = cleanOrderedForcedSteps[forcedDistanceIndex];
+                    forcedDistanceIndex++;
+                    //Don't update priorNonForcedDistanceAlongAxis
+                }
+                else
+                {
+                    priorNonForcedDistanceAlongAxis = distanceAlongAxis;
+                }
 
                 //inPlaneEdges is a list of edges that are added to the edge list and removed in the same step.
                 //This means that they are basically in the current plane. This list will be reset every time we take another step.
