@@ -193,7 +193,7 @@ namespace TVGL
         {
             var i = 0;
             
-            var colorPalet = Presenter.ColorPalet();
+            var colorPalet = Presenter.ColorPalette();
             var maxLength = colorPalet.Length;
             foreach (var listOfListOfPoints in listofListOfListOfPoints)
             {

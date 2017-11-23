@@ -45,23 +45,23 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The extra coarse discretization is up to 16 voxels on a side.
         /// </summary>
-        ExtraCoarse = 16,
+        ExtraCoarse = 0, //= 16,
         /// <summary>
         /// The coarse discretization is up to 256 voxels on a side.
         /// </summary>
-        Coarse = 256,
+        Coarse = 1, // 256,
         /// <summary>
         /// The medium discretization is up to 4096 voxels on a side.
         /// </summary>
-        Medium = 4096,
+        Medium = 2,  //4096,
         /// <summary>
         /// The fine discretization is up to 65,536 voxels on a side (2^16)
         /// </summary>
-        Fine = 65536,
+        Fine = 3,  //65536,
         /// <summary>
         /// The extra fine is up to 2^20 (~1million) voxels on a side.
         /// </summary>
-        ExtraFine = 1048576
+        ExtraFine = 4, // 1048576
     };
     /// <summary>
     /// Class Voxel.
@@ -169,7 +169,7 @@ namespace TVGL.Voxelization
             foreach (var voxel in Voxels)
             {
                 var flags = voxel & 15; //get rid of every but the flags
-                if (flags==targetFlags)
+                if (flags == targetFlags)
                     yield return voxelizedSolid.GetBottomAndWidth(voxel, level);
             }
         }

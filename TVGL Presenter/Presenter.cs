@@ -839,8 +839,9 @@ namespace TVGL
             foreach (var voxel in solid.GetVoxels(VoxelRoleTypes.Partial, 1))
             {
                 var sideLength = voxel[3];
-                var center = voxel.add((new[] { 0.5, 0.5, 0.5 }).multiply(voxel[3]));
-                builder.AddBox(new Point3D(center[0], center[1], center[2]), sideLength, sideLength, sideLength);
+                builder.AddBox(new Point3D(voxel[0]+0.5*sideLength,
+                    voxel[1] + 0.5 * sideLength,
+                voxel[2] + 0.5 * sideLength), sideLength, sideLength, sideLength);
             }
             return new ModelVisual3D
             {
@@ -959,10 +960,10 @@ namespace TVGL
         //A palet of distinguishable colors
         //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
         /// <summary>
-        /// Colors the palet.
+        /// Colors the palette.
         /// </summary>
         /// <returns>System.String[].</returns>
-        public static string[] ColorPalet()
+        public static string[] ColorPalette()
         {
             return new[]
             {
