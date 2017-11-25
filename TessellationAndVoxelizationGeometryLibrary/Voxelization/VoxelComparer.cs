@@ -25,13 +25,17 @@ namespace TVGL.Voxelization
 
         public int GetHashCode(long obj)
         {
-            long x = obj & VoxelizedSolid.maskOutCoarsePlusSomeSuperFine;
-            // 1111 1111 1110 0000 0000 1111 1111 1100 0000 0000 1111 1111 1100
+            long x = obj & VoxelizedSolid.maskOutCoarse;
+            // 1111 1111 1111 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111
             // x-3  x-4  x-5            y-3  y-4  y-5            z-3  z-4  z-4
-            var xValuesToStart = x >> 41;
-            var yValuesOnly = (x & VoxelizedSolid.maskOutZ) >> 1;
-            var zValuesToMid = x << 9;
+            var xValuesToStart = x >> 40;
+            var yValuesOnly = (x & VoxelizedSolid.maskOutZ) >> 1; // the very last bit in an int32
+            // is not used in hash sets so shift to lower 31 bits
+            var zValuesToMid = x << 10;
             return (int)(yValuesOnly + zValuesToMid + xValuesToStart);
+            // as a result the last 3 y value bits overlap with the first 3 z bits
+            // and the last 2 z bits overlap with the first 2 x bits. oh well, this is the 
+            // best we can do in compressing 36 bits into 31. The overlap is quite minimal.
         }
     }
     internal class VoxelComparerCoarse : IEqualityComparer<long>

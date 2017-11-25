@@ -571,9 +571,9 @@ namespace TVGL.Voxelization
         }
 
 
-        internal static long maskOutCoarsePlusSomeSuperFine = Int64.Parse("000FFE00FFC00FFC",
+        internal static long maskOutCoarse = Int64.Parse("000FFF00FFF00FFF",
             System.Globalization.NumberStyles.HexNumber);   // re move the flags, and levels 1 and 2 and four 
-        // of the highest values 1111 1111 1110 0000 0000 1111 1111 1100 0000 0000 1111 1111 1100
+        // of the highest values 1111 1111 1111 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111
         //                        x-3  x-4  x-5            y-3  y-4  y-5            z-3  z-4  z-4
         internal static long maskOutFlags = Int64.Parse("0FFFFFFFFFFFFFFF",
             System.Globalization.NumberStyles.HexNumber);   // remove the flags with # 0,FFFFF,FFFFF,FFFFF
