@@ -164,7 +164,7 @@ namespace TVGL.Voxelization
         }
 
 
-        internal IEnumerable<double[]> GetVoxels(byte targetFlags, VoxelizedSolid voxelizedSolid, int level)
+        internal IEnumerable<double[]> GetVoxels(long targetFlags, VoxelizedSolid voxelizedSolid, int level)
         {
             foreach (var voxel in Voxels)
             {

@@ -36,11 +36,11 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Gets the number voxels total.
         /// </summary>
-        /// <value>
+        /// <value> 
         /// The number voxels total.
         /// </value>
-        public int NumVoxelsTotal =>
-            voxelHashSetLevel0.Count + voxelDictionaryLevel0.Values.Sum(voxel => voxel.Count());
+        public int NumVoxelsTotal => voxelDictionaryLevel0.Count+voxelDictionaryLevel1.Count+
+            voxelDictionaryLevel0.Values.Sum(voxel => voxel.Count());
 
         /// <summary>
         /// Gets the number voxels.
@@ -77,7 +77,6 @@ namespace TVGL.Voxelization
         private int longestDimensionIndex;
         private readonly Dictionary<long, VoxelClass> voxelDictionaryLevel0;
         private readonly Dictionary<long, VoxelClass> voxelDictionaryLevel1;
-        private readonly HashSet<long> voxelHashSetLevel0;
 
         #endregion
 
@@ -96,7 +95,6 @@ namespace TVGL.Voxelization
             SetUpIndexingParameters(ts);
             voxelDictionaryLevel0 = new Dictionary<long, VoxelClass>();
             voxelDictionaryLevel1 = new Dictionary<long, VoxelClass>();
-            voxelHashSetLevel0 = new HashSet<long>();
             transformedCoordinates = new double[ts.NumberOfVertices][];
             //Parallel.For(0, ts.NumberOfVertices, i =>
             for (int i = 0; i < ts.NumberOfVertices; i++)
@@ -105,8 +103,7 @@ namespace TVGL.Voxelization
                 var coordinates = vertex.Position.multiply(ScaleToIntegerSpace).subtract(Offset);
                 transformedCoordinates[i] = coordinates;
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
-            }
-            //);
+            }  //);
             makeVoxelsForFacesAndEdges(ts);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior(1, 1);
@@ -574,10 +571,12 @@ namespace TVGL.Voxelization
         }
 
 
+        private static long maskOutFlags = Int64.Parse("0FFFFFFFFFFFFFFF",
+            System.Globalization.NumberStyles.HexNumber);   // remove the flags with # 0,FFFFF,FFFFF,FFFFF
         private List<VoxelClass> MakeInteriorVoxelsAlongLine(SortedSet<VoxelClass> sortedNegatives,
             SortedSet<VoxelClass> sortedPositives, int sweepDim, int level, int startDiscretizationLevel)
         {
-            var baseID = sortedNegatives.First().ID & -16; // remove the flags
+            var baseID = sortedNegatives.First().ID & maskOutFlags; // remove the flags with # 0,FFFFF,FFFFF,FFFFF
             var newVoxels = new List<VoxelClass>();
             var negativeQueue = new Queue<VoxelClass>(sortedNegatives);
             var positiveQueue = new Queue<VoxelClass>(sortedPositives);
@@ -592,7 +591,7 @@ namespace TVGL.Voxelization
                     endIndex = GetCoordinateFromID(positiveQueue.Dequeue().ID, sweepDim, level, startDiscretizationLevel);
                 for (int i = startIndex + 1; i < endIndex; i++)
                 {
-                    var voxelID = ChangeCoordinate(baseID, i, sweepDim, level);
+                    var voxelID = ChangeCoordinate(baseID, i, sweepDim, level, startDiscretizationLevel);
                     MakeAndStoreFullVoxelLevel0And1(voxelID);
                 }
             }
@@ -601,9 +600,10 @@ namespace TVGL.Voxelization
 
         private void MakeAndStoreFullVoxelLevel0And1(long voxIDLevel1)
         {
-            var voxIDLevel0 = voxIDLevel1 & -1152905011916701696; //zero out the other level values
-            if (voxelHashSetLevel0.Contains(voxIDLevel0 + SetRoleFlags(new[] { VoxelRoleTypes.Full }))) return;
-            if (voxelHashSetLevel0.Contains(voxIDLevel0 + SetRoleFlags(new[] { VoxelRoleTypes.Partial })))
+            var voxIDLevel0 = voxIDLevel1 & maskAllButLevel1; //zero out the other level values with 0,F0000,F0000,F0000
+            if (voxelDictionaryLevel0.ContainsKey(voxIDLevel0 + SetRoleFlags(new[] { VoxelRoleTypes.Full }))) return;
+            //todo: make special dictionary or comparer for these
+            if (voxelDictionaryLevel0.ContainsKey(voxIDLevel0 + SetRoleFlags(new[] { VoxelRoleTypes.Partial })))
             {
                 // the level 0 voxel is already made, just add the tsObject to it
                 var voxelLevel0 = voxelDictionaryLevel0[voxIDLevel0 + SetRoleFlags(new[] { VoxelRoleTypes.Partial })];
@@ -619,7 +619,6 @@ namespace TVGL.Voxelization
             {
                 //voxel at level 0 doesn't exist, which means the voxel at level 1 also doesn't exist. Add both
                 voxIDLevel0 += SetRoleFlags(new[] { VoxelRoleTypes.Partial });
-                voxelHashSetLevel0.Add(voxIDLevel0);
                 var voxelLevel0 = new VoxelClass(voxIDLevel0, VoxelRoleTypes.Partial, 0);
                 voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
                 voxIDLevel1 += SetRoleFlags(new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Full });
@@ -633,7 +632,7 @@ namespace TVGL.Voxelization
         private void MakeAndStorePartialVoxelLevel0And1(int x, int y, int z, TessellationBaseClass tsObject)
         {
             var voxelID = MakeVoxelID(x, y, z, 0, 1, VoxelRoleTypes.Partial);
-            if (voxelHashSetLevel0.Contains(voxelID))
+            if (voxelDictionaryLevel0.ContainsKey(voxelID))
             {
                 // the level 0 voxel is already made, just add the tsObject to it
                 var voxelLevel0 = voxelDictionaryLevel0[voxelID];
@@ -654,7 +653,6 @@ namespace TVGL.Voxelization
             else
             {
                 //voxel at level 0 doesn't exist, which means the voxel at level 1 also doesn't exist. Add both
-                voxelHashSetLevel0.Add(voxelID);
                 var voxelLevel0 = new VoxelClass(voxelID, VoxelRoleTypes.Partial, 0, tsObject);
                 voxelDictionaryLevel0.Add(voxelID, voxelLevel0);
                 voxelID = MakeVoxelID(x, y, z, 1, 1, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial);
@@ -677,40 +675,41 @@ namespace TVGL.Voxelization
             var xLong = (long)x >> shift;
             var yLong = (long)y >> shift;
             var zLong = (long)z >> shift;
-            xLong = xLong << (44 + shift); //can't you combine with the above? no. The shift is doing both division
-            yLong = yLong << (24 + shift); // and remainder. What I mean to say is that e.g. 7>>2<<2 = 4
-            zLong = zLong << (4 + shift);
-            //    x0   x1    x2   x3    x4   y0   y1    y2   y3    y4    z0   z1    z2   z3    z4  flags
+            xLong = xLong << (40 + shift); //can't you combine with the above? no. The shift is doing both division
+            yLong = yLong << (20 + shift); // and remainder. What I mean to say is that e.g. 7>>2<<2 = 4
+            zLong = zLong << (shift);
+            //  flags  x0   x1    x2   x3    x4   y0   y1    y2   y3    y4    z0   z1    z2   z3    z4 
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
             return xLong + yLong + zLong + SetRoleFlags(levels);
         }
 
-        internal static byte SetRoleFlags(VoxelRoleTypes[] levels)
+        internal static long SetRoleFlags(VoxelRoleTypes[] levels)
         {
-            if (levels == null || !levels.Any()) return 0; //no role is specified
-            if (levels[0] == VoxelRoleTypes.Empty) return 1; //the rest of the levels would also be empty
-            if (levels[0] == VoxelRoleTypes.Full) return 2; // the rest of the levels would also be full
-            if (levels[0] == VoxelRoleTypes.Partial && levels.Length == 1) return 3;
+            if (levels == null || !levels.Any()) return 0 << 60; //no role is specified
+            if (levels[0] == VoxelRoleTypes.Empty) return 1 << 60; //the rest of the levels would also be empty
+            if (levels[0] == VoxelRoleTypes.Full) return 2 << 60; // the rest of the levels would also be full
+            if (levels[0] == VoxelRoleTypes.Partial && levels.Length == 1) return 3 << 60;
             // level 0 is partial but the smaller voxels could be full, empty of partial. 
             // they are not specified if the length is only one. If the length is more
             // than 1, then go to next level
-            if (levels[1] == VoxelRoleTypes.Empty) return 4; //the rest are empty
-            if (levels[1] == VoxelRoleTypes.Full) return 5; // the rest are full
-            if (levels[1] == VoxelRoleTypes.Partial && levels.Length == 2) return 6;
-            if (levels[2] == VoxelRoleTypes.Empty) return 7; //the rest are empty
-            if (levels[2] == VoxelRoleTypes.Full) return 8; // the rest are full
-            if (levels[2] == VoxelRoleTypes.Partial && levels.Length == 3) return 9;
-            if (levels[3] == VoxelRoleTypes.Empty) return 10; //the rest are empty
-            if (levels[3] == VoxelRoleTypes.Full) return 11; // the rest are full
-            if (levels[3] == VoxelRoleTypes.Partial && levels.Length == 4) return 12;
-            if (levels[3] == VoxelRoleTypes.Empty) return 13;
-            if (levels[4] == VoxelRoleTypes.Full) return 14;
-            return 15;
+            if (levels[1] == VoxelRoleTypes.Empty) return 4 << 60; //the rest are empty
+            if (levels[1] == VoxelRoleTypes.Full) return 5 << 60; // the rest are full
+            if (levels[1] == VoxelRoleTypes.Partial && levels.Length == 2) return 6 << 60;
+            if (levels[2] == VoxelRoleTypes.Empty) return 7 << 60; //the rest are empty
+            if (levels[2] == VoxelRoleTypes.Full) return 8 << 60; // the rest are full
+            if (levels[2] == VoxelRoleTypes.Partial && levels.Length == 3) return 9 << 60;
+            if (levels[3] == VoxelRoleTypes.Empty) return 10 << 60; //the rest are empty
+            if (levels[3] == VoxelRoleTypes.Full) return 11 << 60; // the rest are full
+            if (levels[3] == VoxelRoleTypes.Partial && levels.Length == 4) return 12 << 60;
+            if (levels[3] == VoxelRoleTypes.Empty) return 13 << 60;
+            if (levels[4] == VoxelRoleTypes.Full) return 14 << 60;
+            return 15 << 60;
         }
 
-        internal static VoxelRoleTypes[] GetRoleFlags(byte flags)
+        internal static VoxelRoleTypes[] GetRoleFlags(long flags)
         {
+            flags = flags >> 60;
             if (flags == 0) return new VoxelRoleTypes[0]; //no role is specified
             if (flags == 1) return new[] { VoxelRoleTypes.Empty }; // could add a bunch more empties. is this necessary?
             if (flags == 2) return new[] { VoxelRoleTypes.Full };
@@ -761,49 +760,78 @@ namespace TVGL.Voxelization
 
         internal static int GetCoordinateFromID(long id, int dimension, int level, int startDiscretizationLevel)
         {
-            if (dimension == 0) //x starts at 44 and goes to the end,64
-                return (int)(id >> (44 + 4 * (startDiscretizationLevel - level)));
-            if (dimension == 1
-            ) // y starts at 24 and goes to 44, so the x amount from (44 to 64 needs to be subtracted off
+            if (dimension == 0) //x starts at 40 and goes to the end,60
             {
-                var yShift = 24 + 4 * (startDiscretizationLevel - level);
-                return (int)((id >> yShift) - (id >> 44 << yShift));
+                var xShift = 40 + 4 * (startDiscretizationLevel - level);
+                var xCoord = id >> xShift;
+                xCoord = xCoord & maskAllButZ;
+                return (int)xCoord; //the & is to clear out the flags
             }
-            var zShift = 4 + 4 * (startDiscretizationLevel - level); //this is like y,but note the simplification (the 5) in this equation
-            return (int)((id >> zShift) - (id >> 24 << zShift));
-
+            if (dimension == 1) // y starts at 20 and goes to 40
+            {
+                var yShift = 20 + 4 * (startDiscretizationLevel - level);
+                var yCoord = id >> yShift;
+                yCoord = yCoord & maskAllButZ;
+                return (int)yCoord‬; // the & is to clear out the x value and the flags
+            }
+            var zShift = 4 * (startDiscretizationLevel - level);
+            var zCoord = id >> zShift;
+            zCoord = zCoord & maskAllButZ;
+            return (int)zCoord; // the & is to clear out the x and y values and the flags
         }
+
+        private static long maskOutX = Int64.Parse("000000FFFFFFFFFF",
+            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,00000,FFFFF,FFFFF
+        private static long maskOutY = Int64.Parse("0FFFFF00000FFFFF",
+                System.Globalization.NumberStyles.HexNumber); // clears out Y since = #0,FFFFF,00000,FFFFF
+        private static long maskOutZ = Int64.Parse("0FFFFFFFFFF00000",
+            System.Globalization.NumberStyles.HexNumber); // clears out Z since = #0,FFFFF,FFFFF,00000
+        private static long maskAllButZ = Int64.Parse("FFFFF",
+            System.Globalization.NumberStyles.HexNumber); // clears out Z since = #0,00000,00000,FFFFF or 1048575
 
         internal static long MakeCoordinateZero(long id, int dimension)
         {
-            switch (dimension)
+            if (dimension == 0)
             {
-                case 0: return id & -16777201;
-                case 1: return id & -17592169267201;
-                case 2: return id & 17592186044415;
+                var idwoX = id & maskOutX;
+                return idwoX;
             }
-            throw new ArgumentOutOfRangeException("dimension must be 0, 1, or 2");
+            if (dimension == 1)
+            {
+                var idwoY = id & maskOutY;
+                return idwoY;
+            }
+            var idwoZ = id & maskOutZ;
+            return idwoZ;
         }
 
-        internal static long ChangeCoordinate(long id, int newValue, int dimension, int level)
+        internal static long ChangeCoordinate(long id, int newValue, int dimension, int level, int startDiscretizationLevel)
         {
-            newValue = newValue << (4 + 20 * (2 - dimension) + 4 * (4 - level));
+            newValue = newValue << (20 * (2 - dimension) + 4 * (startDiscretizationLevel - level));
             return newValue + MakeCoordinateZero(id, dimension);
         }
 
+        private static long maskAllButLevel1 = Int64.Parse("0F0000F0000F0000",
+            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
+        private static long maskAllButLevel1and2 = Int64.Parse("0FF000FF000FF000",
+            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
+        private static long maskAllButLevel12and3 = Int64.Parse("0FFF00FFF00FFF00",
+            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
+        private static long maskLevel5 = Int64.Parse("0FFFF0FFFF0FFFF0",
+            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
         internal static long GetContainingVoxel(long id, int level)
         {
             switch (level)
             {
-                case 0: return (id & -1152905011916701696) + SetRoleFlags(new[] { VoxelRoleTypes.Partial });
+                case 0: return (id & maskAllButLevel1) + SetRoleFlags(new[] { VoxelRoleTypes.Partial });
                 case 1:
-                    return (id & -72040070554648576) +
+                    return (id & maskAllButLevel1and2) +
                            SetRoleFlags(new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial });
                 case 2:
-                    return (id & -4486011719520256) + SetRoleFlags(new[]
+                    return (id & maskAllButLevel12and3) + SetRoleFlags(new[]
                                {VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial});
                 case 3:
-                    return (id & -263883042324736) + SetRoleFlags(new[]
+                    return (id & maskLevel5) + SetRoleFlags(new[]
                     {
                         VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial
                     });

@@ -109,7 +109,6 @@
     <Compile Include="Solid Body Classes\TVGLConvexHull.cs" />
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />
-    <Compile Include="Voxelization\BitHelper.cs" />
     <Compile Include="Voxelization\HashHelpers.cs" />
     <Compile Include="Voxelization\HashSetLongCustom.cs" />
     <Compile Include="Voxelization\VoxelizedSolid.cs" />
