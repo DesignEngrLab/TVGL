@@ -93,8 +93,8 @@ namespace TVGL.Voxelization
         {
             Discretization = voxelDiscretization;
             SetUpIndexingParameters(ts);
-            voxelDictionaryLevel0 = new Dictionary<long, VoxelClass>();
-            voxelDictionaryLevel1 = new Dictionary<long, VoxelClass>();
+            voxelDictionaryLevel0 = new Dictionary<long, VoxelClass>(new VoxelComparerCoarse());
+            voxelDictionaryLevel1 = new Dictionary<long, VoxelClass>(new VoxelComparerCoarse());
             transformedCoordinates = new double[ts.NumberOfVertices][];
             //Parallel.For(0, ts.NumberOfVertices, i =>
             for (int i = 0; i < ts.NumberOfVertices; i++)
@@ -571,7 +571,11 @@ namespace TVGL.Voxelization
         }
 
 
-        private static long maskOutFlags = Int64.Parse("0FFFFFFFFFFFFFFF",
+        internal static long maskOutCoarsePlusSomeSuperFine = Int64.Parse("000FFE00FFC00FFC",
+            System.Globalization.NumberStyles.HexNumber);   // re move the flags, and levels 1 and 2 and four 
+        // of the highest values 1111 1111 1110 0000 0000 1111 1111 1100 0000 0000 1111 1111 1100
+        //                        x-3  x-4  x-5            y-3  y-4  y-5            z-3  z-4  z-4
+        internal static long maskOutFlags = Int64.Parse("0FFFFFFFFFFFFFFF",
             System.Globalization.NumberStyles.HexNumber);   // remove the flags with # 0,FFFFF,FFFFF,FFFFF
         private List<VoxelClass> MakeInteriorVoxelsAlongLine(SortedSet<VoxelClass> sortedNegatives,
             SortedSet<VoxelClass> sortedPositives, int sweepDim, int level, int startDiscretizationLevel)
@@ -784,7 +788,7 @@ namespace TVGL.Voxelization
             System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,00000,FFFFF,FFFFF
         private static long maskOutY = Int64.Parse("0FFFFF00000FFFFF",
                 System.Globalization.NumberStyles.HexNumber); // clears out Y since = #0,FFFFF,00000,FFFFF
-        private static long maskOutZ = Int64.Parse("0FFFFFFFFFF00000",
+        internal static long maskOutZ = Int64.Parse("0FFFFFFFFFF00000",
             System.Globalization.NumberStyles.HexNumber); // clears out Z since = #0,FFFFF,FFFFF,00000
         private static long maskAllButZ = Int64.Parse("FFFFF",
             System.Globalization.NumberStyles.HexNumber); // clears out Z since = #0,00000,00000,FFFFF or 1048575
@@ -813,12 +817,12 @@ namespace TVGL.Voxelization
 
         private static long maskAllButLevel1 = Int64.Parse("0F0000F0000F0000",
             System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
-        private static long maskAllButLevel1and2 = Int64.Parse("0FF000FF000FF000",
-            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
+        internal static long maskAllButLevel1and2 = Int64.Parse("0FF000FF000FF000",
+            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,FF000,FF000,FF000
         private static long maskAllButLevel12and3 = Int64.Parse("0FFF00FFF00FFF00",
-            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
+            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,FFF00,FFF00,FFF00
         private static long maskLevel5 = Int64.Parse("0FFFF0FFFF0FFFF0",
-            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
+            System.Globalization.NumberStyles.HexNumber);  // clears out X since = #0,FFFF0,FFFF0,FFFF0
         internal static long GetContainingVoxel(long id, int level)
         {
             switch (level)

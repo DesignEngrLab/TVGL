@@ -191,7 +191,7 @@ namespace TVGL.Voxelization
             VoxelRole = voxelRole;
             Level = (byte)level;
             if (VoxelRole == VoxelRoleTypes.Partial && level == 0)
-                Voxels = new HashSet<long> { voxelID };
+                Voxels = new HashSet<long>(new VoxelComparerFine()) { voxelID };
             else Voxels = null;
             if (tsObject != null)
             {
