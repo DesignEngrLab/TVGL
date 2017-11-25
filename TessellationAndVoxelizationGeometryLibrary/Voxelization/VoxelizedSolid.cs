@@ -690,25 +690,25 @@ namespace TVGL.Voxelization
 
         internal static long SetRoleFlags(VoxelRoleTypes[] levels)
         {
-            if (levels == null || !levels.Any()) return 0 << 60; //no role is specified
-            if (levels[0] == VoxelRoleTypes.Empty) return 1 << 60; //the rest of the levels would also be empty
-            if (levels[0] == VoxelRoleTypes.Full) return 2 << 60; // the rest of the levels would also be full
-            if (levels[0] == VoxelRoleTypes.Partial && levels.Length == 1) return 3 << 60;
+            if (levels == null || !levels.Any()) return 0L << 60; //no role is specified
+            if (levels[0] == VoxelRoleTypes.Empty) return 1L << 60; //the rest of the levels would also be empty
+            if (levels[0] == VoxelRoleTypes.Full) return 2L << 60; // the rest of the levels would also be full
+            if (levels[0] == VoxelRoleTypes.Partial && levels.Length == 1) return 3L << 60;
             // level 0 is partial but the smaller voxels could be full, empty of partial. 
             // they are not specified if the length is only one. If the length is more
             // than 1, then go to next level
-            if (levels[1] == VoxelRoleTypes.Empty) return 4 << 60; //the rest are empty
-            if (levels[1] == VoxelRoleTypes.Full) return 5 << 60; // the rest are full
-            if (levels[1] == VoxelRoleTypes.Partial && levels.Length == 2) return 6 << 60;
-            if (levels[2] == VoxelRoleTypes.Empty) return 7 << 60; //the rest are empty
-            if (levels[2] == VoxelRoleTypes.Full) return 8 << 60; // the rest are full
-            if (levels[2] == VoxelRoleTypes.Partial && levels.Length == 3) return 9 << 60;
-            if (levels[3] == VoxelRoleTypes.Empty) return 10 << 60; //the rest are empty
-            if (levels[3] == VoxelRoleTypes.Full) return 11 << 60; // the rest are full
-            if (levels[3] == VoxelRoleTypes.Partial && levels.Length == 4) return 12 << 60;
-            if (levels[3] == VoxelRoleTypes.Empty) return 13 << 60;
-            if (levels[4] == VoxelRoleTypes.Full) return 14 << 60;
-            return 15 << 60;
+            if (levels[1] == VoxelRoleTypes.Empty) return 4L << 60; //the rest are empty
+            if (levels[1] == VoxelRoleTypes.Full) return 5L << 60; // the rest are full
+            if (levels[1] == VoxelRoleTypes.Partial && levels.Length == 2) return 6L << 60;
+            if (levels[2] == VoxelRoleTypes.Empty) return 7L << 60; //the rest are empty
+            if (levels[2] == VoxelRoleTypes.Full) return 8L << 60; // the rest are full
+            if (levels[2] == VoxelRoleTypes.Partial && levels.Length == 3) return 9L << 60;
+            if (levels[3] == VoxelRoleTypes.Empty) return 10L << 60; //the rest are empty
+            if (levels[3] == VoxelRoleTypes.Full) return 11L << 60; // the rest are full
+            if (levels[3] == VoxelRoleTypes.Partial && levels.Length == 4) return 12L << 60;
+            if (levels[3] == VoxelRoleTypes.Empty) return 13L << 60;
+            if (levels[4] == VoxelRoleTypes.Full) return 14L << 60;
+            return 15L << 60;
         }
 
         internal static VoxelRoleTypes[] GetRoleFlags(long flags)

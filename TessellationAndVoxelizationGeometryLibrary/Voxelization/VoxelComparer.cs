@@ -16,7 +16,7 @@ using System.Collections.Generic;
 
 namespace TVGL.Voxelization
 {
-    internal class VoxelComparerFine : IEqualityComparer<long>
+    public class VoxelComparerFine : IEqualityComparer<long>
     {
         public bool Equals(long x, long y)
         {
@@ -38,7 +38,7 @@ namespace TVGL.Voxelization
             // best we can do in compressing 36 bits into 31. The overlap is quite minimal.
         }
     }
-    internal class VoxelComparerCoarse : IEqualityComparer<long>
+    public class VoxelComparerCoarse : IEqualityComparer<long>
     {
         public bool Equals(long x, long y)
         {

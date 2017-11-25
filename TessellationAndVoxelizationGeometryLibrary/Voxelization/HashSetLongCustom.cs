@@ -48,7 +48,7 @@ namespace TVGL.Voxelization
     /// <typeparam name="T"></typeparam>
     [DebuggerDisplay("Count = {Count}")]
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix", Justification = "By design")]
-    public class HashSet<T> : ICollection<T>, ISet<T>
+    public class VoxelHashSet<T> : ICollection<T>, ISet<T>
     {
 
         // store lower 31 bits of hash code
@@ -73,10 +73,10 @@ namespace TVGL.Voxelization
 
         #region Constructors
 
-        public HashSet()
+        public VoxelHashSet()
             : this(EqualityComparer<T>.Default) { }
 
-        public HashSet(IEqualityComparer<T> comparer)
+        public VoxelHashSet(IEqualityComparer<T> comparer)
         {
             if (comparer == null)
             {
@@ -90,7 +90,7 @@ namespace TVGL.Voxelization
             version = 0;
         }
 
-        public HashSet(IEnumerable<T> collection)
+        public VoxelHashSet(IEnumerable<T> collection)
             : this(collection, EqualityComparer<T>.Default) { }
 
         /// <summary>
@@ -100,7 +100,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="collection"></param>
         /// <param name="comparer"></param>
-        public HashSet(IEnumerable<T> collection, IEqualityComparer<T> comparer)
+        public VoxelHashSet(IEnumerable<T> collection, IEqualityComparer<T> comparer)
             : this(comparer)
         {
             if (collection == null)
@@ -355,7 +355,7 @@ namespace TVGL.Voxelization
                     return;
                 }
 
-                HashSet<T> otherAsSet = other as HashSet<T>;
+                var otherAsSet = other as VoxelHashSet<T>;
                 // faster if other is a hashset using same equality comparer; so check 
                 // that other is a hashset using the same equality comparer.
                 if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
@@ -364,7 +364,7 @@ namespace TVGL.Voxelization
                     return;
                 }
             }
-            throw new NotImplementedException("unable to compare with other enumerables other than hashset");
+            throw new NotImplementedException("unable to compare with other enumerables other than voxelhashset");
         }
 
         /// <summary>
@@ -425,7 +425,7 @@ namespace TVGL.Voxelization
                 return;
             }
 
-            HashSet<T> otherAsSet = other as HashSet<T>;
+            var otherAsSet = other as VoxelHashSet<T>;
             // If other is a HashSet, it has unique elements according to its equality comparer,
             // but if they're using different equality comparers, then assumption of uniqueness
             // will fail. So first check if other is a hashset using the same equality comparer;
@@ -437,7 +437,7 @@ namespace TVGL.Voxelization
             }
             else
             {
-                throw new NotImplementedException("unable to compare with enumerables other than hashset");
+                throw new NotImplementedException("unable to compare with enumerables other than voxelhashset");
             }
         }
 
@@ -469,7 +469,7 @@ namespace TVGL.Voxelization
                 return true;
             }
 
-            HashSet<T> otherAsSet = other as HashSet<T>;
+            var otherAsSet = other as VoxelHashSet<T>;
             // faster if other has unique elements according to this equality comparer; so check 
             // that other is a hashset using the same equality comparer.
             if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
@@ -521,7 +521,7 @@ namespace TVGL.Voxelization
                 {
                     return otherAsCollection.Count > 0;
                 }
-                HashSet<T> otherAsSet = other as HashSet<T>;
+                var otherAsSet = other as VoxelHashSet<T>;
                 // faster if other is a hashset (and we're using same equality comparer)
                 if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
                 {
@@ -567,7 +567,7 @@ namespace TVGL.Voxelization
                 {
                     return true;
                 }
-                HashSet<T> otherAsSet = other as HashSet<T>;
+                var otherAsSet = other as VoxelHashSet<T>;
                 // try to compare based on counts alone if other is a hashset with
                 // same equality comparer
                 if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
@@ -625,7 +625,7 @@ namespace TVGL.Voxelization
                     // note that this has at least one element, based on above check
                     return true;
                 }
-                HashSet<T> otherAsSet = other as HashSet<T>;
+                var otherAsSet = other as VoxelHashSet<T>;
                 // faster if other is a hashset with the same equality comparer
                 if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
                 {
@@ -682,7 +682,7 @@ namespace TVGL.Voxelization
             }
             Contract.EndContractBlock();
 
-            HashSet<T> otherAsSet = other as HashSet<T>;
+            var otherAsSet = other as VoxelHashSet<T>;
             // faster if other is a hashset and we're using same equality comparer
             if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
             {
@@ -1020,7 +1020,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        private bool IsSubsetOfHashSetWithSameEC(HashSet<T> other)
+        private bool IsSubsetOfHashSetWithSameEC(VoxelHashSet<T> other)
         {
 
             foreach (T item in this)
@@ -1038,7 +1038,7 @@ namespace TVGL.Voxelization
         /// because we can use other's Contains
         /// </summary>
         /// <param name="other"></param>
-        private void IntersectWithHashSetWithSameEC(HashSet<T> other)
+        private void IntersectWithHashSetWithSameEC(VoxelHashSet<T> other)
         {
             for (int i = 0; i < lastIndex; i++)
             {
@@ -1084,7 +1084,7 @@ namespace TVGL.Voxelization
         /// same equality comparer.
         /// </summary>
         /// <param name="other"></param>
-        private void SymmetricExceptWithUniqueHashSet(HashSet<T> other)
+        private void SymmetricExceptWithUniqueHashSet(VoxelHashSet<T> other)
         {
             foreach (T item in other)
             {
@@ -1170,7 +1170,7 @@ namespace TVGL.Voxelization
         /// <param name="set2"></param>
         /// <param name="comparer"></param>
         /// <returns></returns>
-        internal static bool HashSetEquals(HashSet<T> set1, HashSet<T> set2, IEqualityComparer<T> comparer)
+        internal static bool HashSetEquals(VoxelHashSet<T> set1, VoxelHashSet<T> set2, IEqualityComparer<T> comparer)
         {
             // handle null cases first
             if (set1 == null)
@@ -1230,7 +1230,7 @@ namespace TVGL.Voxelization
         /// <param name="set1"></param>
         /// <param name="set2"></param>
         /// <returns></returns>
-        private static bool AreEqualityComparersEqual(HashSet<T> set1, HashSet<T> set2)
+        private static bool AreEqualityComparersEqual(VoxelHashSet<T> set1, VoxelHashSet<T> set2)
         {
             return set1.Comparer.Equals(set2.Comparer);
         }
@@ -1267,12 +1267,12 @@ namespace TVGL.Voxelization
 
         public struct Enumerator : IEnumerator<T>, System.Collections.IEnumerator
         {
-            private HashSet<T> set;
+            private VoxelHashSet<T> set;
             private int index;
             private int version;
             private T current;
 
-            internal Enumerator(HashSet<T> set)
+            internal Enumerator(VoxelHashSet<T> set)
             {
                 this.set = set;
                 index = 0;

@@ -226,8 +226,17 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>Verbosity.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\HashHelpers.cs">
+      <Link>Voxelization\HashHelpers.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\HashSetLongCustom.cs">
+      <Link>Voxelization\HashSetLongCustom.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Voxel.cs">
       <Link>Voxelization\Voxel.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelComparer.cs">
+      <Link>Voxelization\VoxelComparer.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
       <Link>Voxelization\VoxelizedSolid.cs</Link>
