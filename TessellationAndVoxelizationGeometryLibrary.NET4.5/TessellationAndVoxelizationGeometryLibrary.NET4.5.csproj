@@ -226,9 +226,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>Verbosity.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\HashHelpers.cs">
-      <Link>Voxelization\HashHelpers.cs</Link>
-    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\HashSetLongCustom.cs">
       <Link>Voxelization\HashSetLongCustom.cs</Link>
     </Compile>

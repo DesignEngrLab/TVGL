@@ -50,9 +50,6 @@ namespace TVGL.Voxelization
     [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix", Justification = "By design")]
     public class VoxelHashSet<T> : ICollection<T>, ISet<T>
     {
-
-        // store lower 31 bits of hash code
-        private const int Lower31BitMask = 0x7FFFFFFF;
         // cutoff point, above which we won't do stackallocs. This corresponds to 100 integers.
         private const int StackAllocThreshold = 100;
         // when constructing a hashset from an existing collection, it may contain duplicates, 
@@ -73,25 +70,20 @@ namespace TVGL.Voxelization
 
         #region Constructors
 
-        public VoxelHashSet()
-            : this(EqualityComparer<T>.Default) { }
-
-        public VoxelHashSet(IEqualityComparer<T> comparer)
+        public VoxelHashSet(IEqualityComparer<T> comparer, int level)
         {
-            if (comparer == null)
-            {
-                comparer = EqualityComparer<T>.Default;
-            }
-
             this.comparer = comparer;
             lastIndex = 0;
             count = 0;
             freeList = -1;
             version = 0;
+            var suggestedCapacity = primes[0];
+            if (level == 3) suggestedCapacity = primes[7];
+            if (level == 4) suggestedCapacity = primes[13];
+            Initialize(suggestedCapacity);
+
         }
 
-        public VoxelHashSet(IEnumerable<T> collection)
-            : this(collection, EqualityComparer<T>.Default) { }
 
         /// <summary>
         /// Implementation Notes:
@@ -101,19 +93,9 @@ namespace TVGL.Voxelization
         /// <param name="collection"></param>
         /// <param name="comparer"></param>
         public VoxelHashSet(IEnumerable<T> collection, IEqualityComparer<T> comparer)
-            : this(comparer)
         {
-            if (collection == null)
-            {
-                throw new ArgumentNullException("collection");
-            }
-            Contract.EndContractBlock();
-
-            // to avoid excess resizes, first set size based on collection's count. Collection
-            // may contain duplicates, so call TrimExcess if resulting hashset is larger than
-            // threshold
             int suggestedCapacity = 0;
-            ICollection<T> coll = collection as ICollection<T>;
+            var coll = collection as ICollection<T>;
             if (coll != null)
             {
                 suggestedCapacity = coll.Count;
@@ -121,12 +103,39 @@ namespace TVGL.Voxelization
             Initialize(suggestedCapacity);
 
             this.UnionWith(collection);
-            if ((count == 0 && slots.Length > HashHelpers.GetMinPrime()) ||
+            if ((count == 0 && slots.Length > primes[0]) ||
                 (count > 0 && slots.Length / count > ShrinkThreshold))
             {
                 TrimExcess();
             }
+            this.comparer = comparer;
+            lastIndex = 0;
+            count = 0;
+            freeList = -1;
+            version = 0;
         }
+        #endregion
+        #region New Methods not found in HashSet
+        public VoxelRoleTypes[] ReadFlags(T item)
+        {
+            if (buckets != null)
+            {
+                int hashCode = InternalGetHashCode(item);
+                // see note at "HashSet" level describing why "- 1" appears in for loop
+                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                {
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
+                    {
+                        return VoxelizedSolid.GetRoleFlags(slots[i].value);
+                    }
+                }
+            }
+            // either m_buckets is null or wasn't found
+            return new VoxelRoleTypes[0];
+        }
+
+
+
         #endregion
 
         #region ICollection<T> methods
@@ -811,8 +820,6 @@ namespace TVGL.Voxelization
         /// </summary>
         public void TrimExcess()
         {
-            Debug.Assert(count >= 0, "m_count is negative");
-
             if (count == 0)
             {
                 // if count is zero, clear references
@@ -822,11 +829,10 @@ namespace TVGL.Voxelization
             }
             else
             {
-                Debug.Assert(buckets != null, "m_buckets was null but m_count > 0");
-
                 // similar to IncreaseCapacity but moves down elements in case add/remove/etc
                 // caused fragmentation
-                int newSize = HashHelpers.GetPrime(count);
+                int newSize = count;
+                while (!IsPrime(newSize)) { newSize++; }
                 Slot[] newSlots = new Slot[newSize];
                 int[] newBuckets = new int[newSize];
 
@@ -861,6 +867,53 @@ namespace TVGL.Voxelization
 
         #region Helper methods
 
+        static readonly int[] primes = {
+            251,//0 // these primes are made by starting with the max int32 size and going down to zero. If a prime is found
+            673, // then it is divided by e (2.71...) so that the next one would be about a geometric distance away and
+            1801, // going by 'e' is a nice ramp up. Here is the code:
+            4871,             //    int prime = int.MaxValue;
+            13217,            //    while (prime > 0)
+            35869,//5         //    {
+            97501,            //        if (IsPrime(prime))
+            265037,           //        {
+            720413,           //            Console.WriteLine(prime);
+            1958287,          //            prime = (int)(prime / Math.E);
+            5323093,//10      //        }
+            14469667,         //    }
+            39332593,
+            59999999,   //these 5 (this one and the next 4) are added to approach the commonly arrived at 
+            74699993,   //maximum for a hashset which is around 89.4 million. This is created by the midpoint
+            82049983,  //15 //of the last one with the max (39332593+89399987) and then finding the nearest prime
+            85724993,   // this is repeated for ever decreasing limits approach 89.4million so as to be careful to not exceed
+            89399987,   // 89.4 million
+            106916951,  // these remaining set would require one to set the attribute of the gcAllowVeryLargeObjects 
+            290630341,  // to true in runtime environment.
+            790015099, //20
+            1468749377,  // like the same approach above, 5 new values are placed bewteen 790015099 and the int.MaxValue
+            1808116511,  // which is 2147483647 in a sort of arrow's pardox of values half as close as the previous.
+            1977800081,  // 
+            2062641871,  // 
+            2105062777,  // 25
+            2147483647  // the int.MaxValue happens to be a prime. cool
+        };
+
+        // here is the same IsPrime(int candidate) function from the .NET implementation of a HashTable
+        // http://referencesource.microsoft.com/#mscorlib/system/collections/hashtable.cs,964b5528f9dcae0f
+        static bool IsPrime(int candidate)
+        {
+            if ((candidate & 1) != 0)
+            {
+                int limit = (int)Math.Sqrt(candidate);
+                for (int divisor = 3; divisor <= limit; divisor += 2)
+                {
+                    if ((candidate % divisor) == 0)
+                        return false;
+                }
+                return true;
+            }
+            return (candidate == 2);
+        }
+
         /// <summary>
         /// Initializes buckets and slots arrays. Uses suggested capacity by finding next prime
         /// greater than or equal to capacity.
@@ -868,14 +921,20 @@ namespace TVGL.Voxelization
         /// <param name="capacity"></param>
         private void Initialize(int capacity)
         {
-            Debug.Assert(buckets == null, "Initialize was called but m_buckets was non-null");
-
-            int size = HashHelpers.GetPrime(capacity);
+            int i = 0;
+            while (i < primes.Length && primes[i] < count) { i++; }
+            if (i == primes.Length)
+            {
+                i--;
+                CapacityMaxedOut = true;
+            }
+            int size = primes[i];
 
             buckets = new int[size];
             slots = new Slot[size];
         }
 
+        private bool CapacityMaxedOut;
         /// <summary>
         /// Expand to new capacity. New capacity is next prime greater than or equal to suggested 
         /// size. This is called when the underlying array is filled. This performs no 
@@ -885,14 +944,15 @@ namespace TVGL.Voxelization
         /// <param name="sizeSuggestion"></param>
         private void IncreaseCapacity()
         {
-            Debug.Assert(buckets != null, "IncreaseCapacity called on a set with no elements");
-
-            int newSize = HashHelpers.ExpandPrime(count);
-            if (newSize <= count)
+            if (CapacityMaxedOut) return;
+            int i = 0;
+            while (i < primes.Length && primes[i] <= count) { i++; }
+            if (i == primes.Length)
             {
-                throw new ArgumentException();
+                i--;
+                CapacityMaxedOut = true;
             }
-
+            int newSize = primes[i];
             // Able to increase capacity; copy elements to larger array and rehash
             SetCapacity(newSize, false);
         }
@@ -904,10 +964,6 @@ namespace TVGL.Voxelization
         /// </summary>
         private void SetCapacity(int newSize, bool forceNewHashCodes)
         {
-            Contract.Assert(HashHelpers.IsPrime(newSize), "New size is not prime!");
-
-            Contract.Assert(buckets != null, "SetCapacity called on a set with no elements");
-
             Slot[] newSlots = new Slot[newSize];
             if (slots != null)
             {
@@ -944,11 +1000,6 @@ namespace TVGL.Voxelization
         /// <returns></returns>
         private bool AddIfNotPresent(T value)
         {
-            if (buckets == null)
-            {
-                Initialize(0);
-            }
-
             int hashCode = InternalGetHashCode(value);
             int bucket = hashCode % buckets.Length;
 
@@ -1246,7 +1297,7 @@ namespace TVGL.Voxelization
             {
                 return 0;
             }
-            return comparer.GetHashCode(item) & Lower31BitMask;
+            return comparer.GetHashCode(item);
         }
 
         #endregion

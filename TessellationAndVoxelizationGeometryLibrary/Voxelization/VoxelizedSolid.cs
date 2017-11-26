@@ -39,7 +39,7 @@ namespace TVGL.Voxelization
         /// <value> 
         /// The number voxels total.
         /// </value>
-        public int NumVoxelsTotal => voxelDictionaryLevel0.Count+voxelDictionaryLevel1.Count+
+        public int NumVoxelsTotal => voxelDictionaryLevel0.Count + voxelDictionaryLevel1.Count +
             voxelDictionaryLevel0.Values.Sum(voxel => voxel.Count());
 
         /// <summary>
@@ -679,6 +679,7 @@ namespace TVGL.Voxelization
             var xLong = (long)x >> shift;
             var yLong = (long)y >> shift;
             var zLong = (long)z >> shift;
+            shift = 4 * (4 - level);
             xLong = xLong << (40 + shift); //can't you combine with the above? no. The shift is doing both division
             yLong = yLong << (20 + shift); // and remainder. What I mean to say is that e.g. 7>>2<<2 = 4
             zLong = zLong << (shift);
@@ -709,6 +710,11 @@ namespace TVGL.Voxelization
             if (levels[3] == VoxelRoleTypes.Empty) return 13L << 60;
             if (levels[4] == VoxelRoleTypes.Full) return 14L << 60;
             return 15L << 60;
+        }
+
+        internal static VoxelRoleTypes[] GetRoleFlags(object flags)
+        {
+            return GetRoleFlags((long)flags);
         }
 
         internal static VoxelRoleTypes[] GetRoleFlags(long flags)
@@ -764,23 +770,22 @@ namespace TVGL.Voxelization
 
         internal static int GetCoordinateFromID(long id, int dimension, int level, int startDiscretizationLevel)
         {
+            var shift = 4 * (4 - startDiscretizationLevel) - 4 * (startDiscretizationLevel - level);
+            shift += 20 * (2 - dimension);
             if (dimension == 0) //x starts at 40 and goes to the end,60
             {
-                var xShift = 40 + 4 * (startDiscretizationLevel - level);
-                var xCoord = id >> xShift;
-                xCoord = xCoord & maskAllButZ;
+                var xCoord = id & maskAllButX;
+                xCoord = xCoord >> shift;
                 return (int)xCoord; //the & is to clear out the flags
             }
             if (dimension == 1) // y starts at 20 and goes to 40
             {
-                var yShift = 20 + 4 * (startDiscretizationLevel - level);
-                var yCoord = id >> yShift;
-                yCoord = yCoord & maskAllButZ;
-                return (int)yCoord‬; // the & is to clear out the x value and the flags
+                var yCoord = id & maskAllButY;
+                yCoord = yCoord >> shift;
+                return (int)yCoord; // the & is to clear out the x value and the flags
             }
-            var zShift = 4 * (startDiscretizationLevel - level);
-            var zCoord = id >> zShift;
-            zCoord = zCoord & maskAllButZ;
+            var zCoord = id & maskAllButZ;
+            zCoord = zCoord >> shift;
             return (int)zCoord; // the & is to clear out the x and y values and the flags
         }
 
@@ -790,8 +795,12 @@ namespace TVGL.Voxelization
                 System.Globalization.NumberStyles.HexNumber); // clears out Y since = #0,FFFFF,00000,FFFFF
         internal static long maskOutZ = Int64.Parse("0FFFFFFFFFF00000",
             System.Globalization.NumberStyles.HexNumber); // clears out Z since = #0,FFFFF,FFFFF,00000
+        private static long maskAllButX = Int64.Parse("FFFFF0000000000",
+            System.Globalization.NumberStyles.HexNumber); // clears all but X
+        private static long maskAllButY = Int64.Parse("FFFFF00000",
+            System.Globalization.NumberStyles.HexNumber); // clears all but Y
         private static long maskAllButZ = Int64.Parse("FFFFF",
-            System.Globalization.NumberStyles.HexNumber); // clears out Z since = #0,00000,00000,FFFFF or 1048575
+            System.Globalization.NumberStyles.HexNumber); // clears all but Z
 
         internal static long MakeCoordinateZero(long id, int dimension)
         {
@@ -809,9 +818,11 @@ namespace TVGL.Voxelization
             return idwoZ;
         }
 
-        internal static long ChangeCoordinate(long id, int newValue, int dimension, int level, int startDiscretizationLevel)
+        internal static long ChangeCoordinate(long id, long newValue, int dimension, int level, int startDiscretizationLevel)
         {
-            newValue = newValue << (20 * (2 - dimension) + 4 * (startDiscretizationLevel - level));
+            var shift = 4 * (4 - startDiscretizationLevel) - 4 * (startDiscretizationLevel - level);
+            shift += 20 * (2 - dimension);
+            newValue = newValue << shift;
             return newValue + MakeCoordinateZero(id, dimension);
         }
 
