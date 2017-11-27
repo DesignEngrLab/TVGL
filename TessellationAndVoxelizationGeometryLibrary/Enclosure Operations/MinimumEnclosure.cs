@@ -226,10 +226,12 @@ namespace TVGL
         private static BoundingRectangle RotatingCalipers2DMethod(IList<Point> points, bool pointsAreConvexHull = false)
         {
             #region Initialization
-
+            if(points.Count < 3) throw new Exception("Rotating Calipers requires at least 3 points.");
             var cvxPoints = pointsAreConvexHull ? points : ConvexHull2D(points);
             //Simplify the points to make sure they are the minimal convex hull
-            cvxPoints = PolygonOperations.SimplifyFuzzy(cvxPoints);
+            //Only set it as the convex hull if it contains more than three points.
+            var cvxPointsSimple = PolygonOperations.SimplifyFuzzy(cvxPoints);
+            if (cvxPointsSimple.Count >= 3) cvxPoints = cvxPointsSimple;
             /* the cvxPoints will be arranged from a point with minimum X-value around in a CCW loop to the last point */
             //First, check to make sure the given convex hull has the min x-value at 0.
             var minX = cvxPoints[0].X;
