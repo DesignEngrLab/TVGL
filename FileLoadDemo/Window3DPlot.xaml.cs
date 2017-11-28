@@ -7,22 +7,26 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace FileLoadDemo
+using System.Windows.Media.Media3D;
+using HelixToolkit.Wpf.SharpDX;
+
+namespace TVGLPresenterDX
 {
+    using System.Collections.Generic;
     using System.Windows;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class Window3DPlot : Window
     {
-        public MainWindow()
+        public Window3DPlot()
         {
             InitializeComponent();
-            var Main = new MainViewModel();
-             Main.modelView = this.view;
-      this.DataContext = Main;
-            
+            //var Main = new MainViewModel();
+            //Main.modelView = this.view;
+            //this.DataContext = Main;
+
         }
     }
 }

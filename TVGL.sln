@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TessellationAndVoxelization
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGLPresenterDebugger", "TVGLPresenterDebugger\TVGLPresenterDebugger.csproj", "{F6678D6C-1F71-4F4E-AC77-22F5E133A6F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGL Presenter SharpDX", "FileLoadDemo\TVGL Presenter SharpDX.csproj", "{04A4763C-907A-45EE-9270-2ECB1453770F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TVGL PresenterDX", "FileLoadDemo\TVGL PresenterDX.csproj", "{04A4763C-907A-45EE-9270-2ECB1453770F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
