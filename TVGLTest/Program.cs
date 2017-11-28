@@ -105,7 +105,7 @@ namespace TVGL_Test
 
                 //TestPolygon(ts[0]);
                 //TestSegmentation(ts[0]);
-                //Presenter.ShowAndHang(ts);
+                Presenter.ShowAndHang(ts);
                 TestVoxelization(ts[0]);
                 //TestOctreeVoxelization(ts[0]);
 
@@ -270,7 +270,7 @@ namespace TVGL_Test
         public static void TestSilhouette(TessellatedSolid ts)
         {
             var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
-            Presenter.ShowAndHang(silhouette);
+          //  Presenter.ShowAndHang(silhouette);
         }
 
         private static void TestPolygon(TessellatedSolid ts)

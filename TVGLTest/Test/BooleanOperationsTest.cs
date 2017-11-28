@@ -132,7 +132,7 @@ namespace TVGL_Test
                 points.AddRange(path.Select(Point => new Point(new List<double>() { Point.X / scalingFactor, Point.Y / scalingFactor, 0.0 })));
                 pointPaths.Add(points);
             }
-            Presenter.ShowAndHang(pointPaths);
+          //  Presenter.ShowAndHang(pointPaths);
         }
 
         private static void ShowPathListsAsDifferentColors(IEnumerable<IEnumerable<Path>> pathLists, int scalingFactor = 1)
@@ -151,7 +151,7 @@ namespace TVGL_Test
                 }
                 pointPathLists.Add(pointPathList);
             }
-            Presenter.ShowAndHang(pointPathLists);
+         //   Presenter.ShowAndHang(pointPathLists);
         }
 
         [Test]
