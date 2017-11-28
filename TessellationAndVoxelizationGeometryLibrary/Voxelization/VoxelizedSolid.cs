@@ -869,7 +869,7 @@ namespace TVGL.Voxelization
 
         #region Public Enumerations
 
-        public IEnumerable<double[]> GetVoxelsAs4Doubles(VoxelRoleTypes role = VoxelRoleTypes.Partial, int level = 4)
+        public IEnumerable<double[]> GetVoxelsAsAABBDoubles(VoxelRoleTypes role = VoxelRoleTypes.Partial, int level = 4)
         {
             if (level == 0)
                 return voxelDictionaryLevel0.Values.Where(v => v.VoxelRole == role).Select(v => GetBottomAndWidth(v.ID, 0));

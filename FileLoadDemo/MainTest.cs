@@ -34,7 +34,7 @@ namespace TVGLPresenterDX
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < 1; i++) // fileNames.Count(); i++)
+            for (var i = 1; i < 2; i++) // fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
