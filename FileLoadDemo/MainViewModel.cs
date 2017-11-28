@@ -4,7 +4,15 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace FileLoadDemo
+using System;
+using System.Linq;
+using HelixToolkit.Wpf.SharpDX.Core;
+using SharpDX;
+using TVGL;
+using TVGL.Voxelization;
+using Color = TVGL.Color;
+
+namespace TVGLPresenterDX
 {
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
@@ -41,10 +49,8 @@ namespace FileLoadDemo
         }
     }
 
-    public class MainViewModel : ObservableObject
+    public partial class MainViewModel : ObservableObject
     {
-        private const string OpenFileFilter = "3D model files (*.obj;*.3ds)|*.obj;*.3ds";
-
         public Element3DCollection ModelGeometry { get; private set; }
         public Transform3D ModelTransform { get; private set; }
         public Viewport3DX modelView
@@ -63,7 +69,6 @@ namespace FileLoadDemo
         public DefaultRenderTechniquesManager RenderTechniquesManager { get; private set; }
         public MainViewModel()
         {
-            this.OpenFileCommand = new DelegateCommand(this.OpenFile);
             this.ModelTransform = new TranslateTransform3D(0, 0, 0);
 
             this.ModelGeometry = new Element3DCollection();
@@ -71,66 +76,48 @@ namespace FileLoadDemo
             EffectsManager = new DefaultEffectsManager(RenderTechniquesManager);
         }
 
-        private void OpenFile()
-        {
-            string path = OpenFileDialog(OpenFileFilter);
-            if (path == null)
-            {
-                return;
-            }
-            if (Path.GetExtension(path).ToLower() == ".3ds")
-            {
-                Load3ds(path);
-            }
-            else
-            {
-                LoadObj(path);
-            }
-        }
-        public void Load3ds(string path)
-        {
-            var reader = new StudioReader();
-            var objCol = reader.Read(path);
-            AttachModelList(objCol);
 
-        }
-        public void LoadObj(string path)
+
+        private void Present(TessellatedSolid ts, VoxelizedSolid vs)
         {
-            var reader = new ObjReader();
-            var objCol = reader.Read(path);
-            AttachModelList(objCol);
+            AttachModelList
+            (new[]
+            {
+                ConvertTessellatedSolidtoObject3D(ts, new Color(KnownColors.Aquamarine)),
+                ConvertVoxelizedSolidtoObject3D(vs)
+            });
         }
-        public void AttachModelList(List<Object3D> objs)
+
+        private MeshGeometryModel3D ConvertTessellatedSolidtoObject3D(TessellatedSolid ts, Color color)
+        {
+            var result = new MeshGeometryModel3D();
+            result.Material = new PhongMaterial() { DiffuseColor = new SharpDX.Color4(color.Rf, color.Gf, color.Bf, color.Af) };
+            result.Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
+           {
+                Positions =new Vector3Collection(ts.Vertices.Select(v=>new Vector3((float)v.X, (float)v.Y, (float)v.Z))),
+                Indices = new IntCollection(ts.Faces.SelectMany(f=>f.Vertices.Select(v=>v.IndexInList))),
+                Normals =new Vector3Collection(ts.Faces.Select(f=>new Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])))
+            };
+            return result;
+        }
+
+        private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
+        {
+            vs.GetVoxels(VoxelRoleTypes.Partial, 2);
+        }
+
+        public void AttachModelList(IList<MeshGeometryModel3D> model3Ds)
         {
             this.ModelTransform = new TranslateTransform3D(0, 0, 0);
             this.ModelGeometry = new Element3DCollection();
-            foreach (var ob in objs)
+            foreach (var model3D in model3Ds)
             {
-                var s = new MeshGeometryModel3D
-                {
-                    Geometry = ob.Geometry,
-                    Material = ob.Material,
-                };
-                this.ModelGeometry.Add(s);
-                s.Attach(modelView.RenderHost);
+                this.ModelGeometry.Add(model3D);
+              //  model3D.Attach(modelView.RenderHost);
             }
             this.OnPropertyChanged("ModelGeometry");
         }
-        private string OpenFileDialog(string filter)
-        {
-            var d = new OpenFileDialog();
-            d.CustomPlaces.Clear();
 
-
-            d.Filter = filter;
-
-            if (!d.ShowDialog().Value)
-            {
-                return null;
-            }
-
-            return d.FileName;
-        }
     }
 
 }

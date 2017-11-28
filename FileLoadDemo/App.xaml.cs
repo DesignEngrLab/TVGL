@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Windows;
 
-namespace FileLoadDemo
+namespace TVGL
 {
     /// <summary>
     /// Interaction logic for App.xaml
