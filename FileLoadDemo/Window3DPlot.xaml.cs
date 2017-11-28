@@ -7,26 +7,58 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-using System.Windows.Media.Media3D;
-using HelixToolkit.Wpf.SharpDX;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using TVGL.IOFunctions;
+using TVGL.Voxelization;
 
 namespace TVGLPresenterDX
 {
-    using System.Collections.Generic;
     using System.Windows;
+    using TVGL;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class Window3DPlot : Window
+    public partial class MainWindow : Window
     {
-        public Window3DPlot()
+        private MainViewModel viewModel;
+
+        public MainWindow()
         {
             InitializeComponent();
-            //var Main = new MainViewModel();
-            //Main.modelView = this.view;
-            //this.DataContext = Main;
+            viewModel = new MainViewModel();
+            viewModel.modelView = this.view1;
+            this.DataContext = viewModel;
 
+        }
+
+        /// <summary>
+        ///     Handles the OnChecked event of the GridLines control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="RoutedEventArgs" /> instance containing the event data.</param>
+        //private void GridLines_OnChecked(object sender, RoutedEventArgs e)
+        //{
+        //    GridLines.Visible = true;
+        //}
+
+        ///// <summary>
+        /////     Handles the OnUnChecked event of the GridLines control.
+        ///// </summary>
+        ///// <param name="sender">The source of the event.</param>
+        ///// <param name="e">The <see cref="RoutedEventArgs" /> instance containing the event data.</param>
+        //private void GridLines_OnUnChecked(object sender, RoutedEventArgs e)
+        //{
+        //    GridLines.Visible = false;
+        //}
+
+
+        private void main(object sender, RoutedEventArgs e)
+        {
+            viewModel.Test();
         }
     }
 }

@@ -314,6 +314,12 @@
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.NET4.5\TessellationAndVoxelizationGeometryLibrary.NET4.5.csproj">
+      <Project>{b2d2586a-5f3b-4122-b10e-4ac143c05ea4}</Project>
+      <Name>TessellationAndVoxelizationGeometryLibrary.NET4.5</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
