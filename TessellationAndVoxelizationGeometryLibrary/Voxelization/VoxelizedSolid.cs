@@ -39,8 +39,7 @@ namespace TVGL.Voxelization
         /// <value> 
         /// The number voxels total.
         /// </value>
-        public int NumVoxelsTotal => voxelDictionaryLevel0.Count + voxelDictionaryLevel1.Count +
-            voxelDictionaryLevel0.Values.Sum(voxel => voxel.Count());
+        public int NumVoxelsTotal => voxelDictionaryLevel0.Count + voxelDictionaryLevel0.Values.Sum(voxel => voxel.Count());
 
         /// <summary>
         /// Gets the number voxels.
@@ -543,7 +542,7 @@ namespace TVGL.Voxelization
             var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<VoxelClass>, SortedSet<VoxelClass>>(
                 new SortedSet<VoxelClass>(new SortByVoxelIndex(sweepDim)),
                 new SortedSet<VoxelClass>(new SortByVoxelIndex(sweepDim))));
-            //Parallel.ForEach(voxelDictionaryLevel0.Values, voxel =>
+            // Parallel.ForEach(voxelDictionaryLevel0.Values, voxel =>
             foreach (var voxel in voxelDictionaryLevel1.Values)
             {
                 var id = MakeCoordinateZero(voxel.ID, sweepDim);
@@ -555,19 +554,10 @@ namespace TVGL.Voxelization
                     lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
                 if (faces.Any(f => f.Normal[sweepDim] <= 0))
                     lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
-            }
-            //);
-            var interiorVoxels = dict.Values
-                .Where(entry => entry.Item1.Any() && entry.Item2.Any())
-                .SelectMany(entry => MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim, level, startDiscretizationLevel))
-                .AsParallel();
-            foreach (var interiorVoxel in interiorVoxels)
-            {
-                if (voxelDictionaryLevel1.ContainsKey(interiorVoxel.ID)) continue; // why would this happen though?
-                voxelDictionaryLevel1.Add(interiorVoxel.ID, interiorVoxel);
-                var containingVoxel = voxelDictionaryLevel0[GetContainingVoxel(interiorVoxel.ID, 0)];
-                containingVoxel.Add(interiorVoxel.ID);
-            }
+            } //);
+            //Parallel.ForEach(dict.Values.Where(entry => entry.Item1.Any() && entry.Item2.Any()), entry =>
+            foreach (var entry in dict.Values)
+                MakeInteriorVoxelsAlongLine(entry.Item1, entry.Item2, sweepDim, level, startDiscretizationLevel); //);
         }
 
 
@@ -577,11 +567,10 @@ namespace TVGL.Voxelization
         //                        x-3  x-4  x-5            y-3  y-4  y-5            z-3  z-4  z-4
         internal static long maskOutFlags = Int64.Parse("0FFFFFFFFFFFFFFF",
             System.Globalization.NumberStyles.HexNumber);   // remove the flags with # 0,FFFFF,FFFFF,FFFFF
-        private List<VoxelClass> MakeInteriorVoxelsAlongLine(SortedSet<VoxelClass> sortedNegatives,
+        private void MakeInteriorVoxelsAlongLine(SortedSet<VoxelClass> sortedNegatives,
             SortedSet<VoxelClass> sortedPositives, int sweepDim, int level, int startDiscretizationLevel)
         {
             var baseID = sortedNegatives.First().ID & maskOutFlags; // remove the flags with # 0,FFFFF,FFFFF,FFFFF
-            var newVoxels = new List<VoxelClass>();
             var negativeQueue = new Queue<VoxelClass>(sortedNegatives);
             var positiveQueue = new Queue<VoxelClass>(sortedPositives);
             while (negativeQueue.Any() && positiveQueue.Any())
@@ -599,36 +588,32 @@ namespace TVGL.Voxelization
                     MakeAndStoreFullVoxelLevel0And1(voxelID);
                 }
             }
-            return newVoxels;
         }
 
         private void MakeAndStoreFullVoxelLevel0And1(long voxIDLevel1)
         {
             var voxIDLevel0 = voxIDLevel1 & maskAllButLevel1; //zero out the other level values with 0,F0000,F0000,F0000
-            if (voxelDictionaryLevel0.ContainsKey(voxIDLevel0 + SetRoleFlags(new[] { VoxelRoleTypes.Full }))) return;
-            //todo: make special dictionary or comparer for these
-            if (voxelDictionaryLevel0.ContainsKey(voxIDLevel0 + SetRoleFlags(new[] { VoxelRoleTypes.Partial })))
-            {
-                // the level 0 voxel is already made, just add the tsObject to it
-                var voxelLevel0 = voxelDictionaryLevel0[voxIDLevel0 + SetRoleFlags(new[] { VoxelRoleTypes.Partial })];
-                voxIDLevel1 += SetRoleFlags(new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Full });
-                if (!voxelLevel0.Contains(voxIDLevel1))
-                {
-                    // okay, the voxelLevel0 exists, but not the voxelLevel1
-                    voxelLevel0.Add(voxIDLevel1);
-                    voxelDictionaryLevel1.Add(voxIDLevel1, new VoxelClass(voxIDLevel1, VoxelRoleTypes.Full, 1));
-                }
-            }
-            else
+            var voxelLevel0 = voxelDictionaryLevel0.ContainsKey(voxIDLevel0) ? voxelDictionaryLevel0[voxIDLevel0] : null;
+            if (voxelLevel0 == null)
             {
                 //voxel at level 0 doesn't exist, which means the voxel at level 1 also doesn't exist. Add both
                 voxIDLevel0 += SetRoleFlags(new[] { VoxelRoleTypes.Partial });
-                var voxelLevel0 = new VoxelClass(voxIDLevel0, VoxelRoleTypes.Partial, 0);
+                voxelLevel0 = new VoxelClass(voxIDLevel0, VoxelRoleTypes.Partial, 0);
                 voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
                 voxIDLevel1 += SetRoleFlags(new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Full });
                 voxelLevel0.Add(voxIDLevel1);
                 voxelDictionaryLevel1.Add(voxIDLevel1, new VoxelClass(voxIDLevel1, VoxelRoleTypes.Full, 1));
             }
+            else if (voxelLevel0.VoxelRole == VoxelRoleTypes.Partial)
+            {
+                if (!voxelLevel0.Contains(voxIDLevel1))
+                {   // okay, the voxelLevel0 exists, but not the voxelLevel1
+                    voxIDLevel1 += SetRoleFlags(new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Full });
+                    voxelLevel0.Add(voxIDLevel1);
+                    voxelDictionaryLevel1.Add(voxIDLevel1, new VoxelClass(voxIDLevel1, VoxelRoleTypes.Full, 1));
+                }
+            }
+            //else the level 0 voxel is full and thus there is nothing to do.
         }
 
         #endregion
@@ -886,7 +871,7 @@ namespace TVGL.Voxelization
 
         internal double[] GetBottomAndWidth(long id, int level)
         {
-            var bottomCoordinate = GetCoordinatesFromID(id, level, (int)Discretization).multiply(VoxelSideLength[level]).add(Offset);
+            var bottomCoordinate = GetCoordinatesFromID(id, level, (int)Discretization).add(Offset).multiply(VoxelSideLength[level]);
             return new[] { bottomCoordinate[0], bottomCoordinate[1], bottomCoordinate[2], VoxelSideLength[level] };
         }
 

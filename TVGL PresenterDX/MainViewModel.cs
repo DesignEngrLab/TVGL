@@ -83,8 +83,8 @@ namespace TVGLPresenterDX
             AttachModelList
             (new[]
             {
-                ConvertTessellatedSolidtoObject3D(ts, new Color(KnownColors.Yellow)),
-                ConvertVoxelizedSolidtoObject3D(vs, new Color(KnownColors.Aquamarine)),
+                ConvertTessellatedSolidtoObject3D(ts, new Color(KnownColors.White)),
+                ConvertVoxelizedSolidtoObject3D(vs, new Color(KnownColors.LightBlue)),
             });
         }
 
@@ -101,8 +101,8 @@ namespace TVGLPresenterDX
                     Positions = new Vector3Collection(ts.Vertices.Select(v =>
                         new Vector3((float)v.X, (float)v.Y, (float)v.Z))),
                     Indices = new IntCollection(ts.Faces.SelectMany(f => f.Vertices.Select(v => v.IndexInList))),
-                    //Normals = new Vector3Collection(ts.Faces.Select(f =>
-                    //    new Vector3((float) f.Normal[0], (float) f.Normal[1], (float) f.Normal[2])))
+                    Normals = new Vector3Collection(ts.Faces.Select(f =>
+                        new Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])))
                 }
             };
             return result;
@@ -112,11 +112,12 @@ namespace TVGLPresenterDX
         {
             var boxFaceIndices = new[]
             {
-                0, 1, 2, 2, 1, 4, 1, 6, 4, 4, 6, 7, 2, 4, 5, 4, 7, 5, 0, 2, 3, 3, 2, 5,
+                0, 1, 2,  2, 1, 4,  1, 6, 4,  4, 6, 7,  2, 4, 5,  4, 7, 5,  0, 2, 3, 3, 2, 5,
                 5, 7, 3, 7, 6, 3, 3, 1, 0, 1, 3, 6
             };
             var positions = new Vector3Collection();
             var indices = new IntCollection();
+            var normals = new Vector3Collection();
             var boxVoxels = vs.GetVoxelsAsAABBDoubles(VoxelRoleTypes.Partial, 1);
             foreach (var boxVoxel in boxVoxels)
             {
@@ -135,6 +136,18 @@ namespace TVGLPresenterDX
                 positions.Add(new Vector3(x + s, y + s, z + s));//7
                 foreach (var boxFaceIndex in boxFaceIndices)
                     indices.Add(i + boxFaceIndex);
+                normals.Add(new Vector3(0f, 0f, -1f));
+                normals.Add(new Vector3(0f, 0f, -1f));
+                normals.Add(new Vector3(1f, 0f, 0f));
+                normals.Add(new Vector3(1f, 0f, 0f));
+                normals.Add(new Vector3(0f, 1f, 0f));
+                normals.Add(new Vector3(0f, 1f, 0f));
+                normals.Add(new Vector3(-1f, 0f, 0f));
+                normals.Add(new Vector3(-1f, 0f, 0f));
+                normals.Add(new Vector3(0f, 0f, 1f));
+                normals.Add(new Vector3(0f, 0f, 1f));
+                normals.Add(new Vector3(0f, -1f, 0f));
+                normals.Add(new Vector3(0f, -1f, 0f));
             }
 
             return new MeshGeometryModel3D
@@ -146,7 +159,8 @@ namespace TVGLPresenterDX
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
                 {
                     Positions = positions,
-                    Indices = indices
+                    Indices = indices,
+                    Normals = normals
                 }
             };
 

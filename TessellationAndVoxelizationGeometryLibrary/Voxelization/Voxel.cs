@@ -68,6 +68,35 @@ namespace TVGL.Voxelization
     /// </summary>
     public class VoxelClass
     {
+        #region Constructor
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelClass"/> struct.
+        /// </summary>
+        /// <param name="voxelID">The voxel identifier.</param>
+        /// <param name="voxelRole">The voxel role.</param>
+        /// <param name="level">The level.</param>
+        /// <param name="tsObject">The ts object.</param>
+        public VoxelClass(long voxelID, VoxelRoleTypes voxelRole, int level, TessellationBaseClass tsObject = null)
+        {
+            ID = voxelID;
+            VoxelRole = voxelRole;
+            Level = level;
+            if (VoxelRole == VoxelRoleTypes.Partial && level == 0)
+            {
+                NextLevelVoxels = new VoxelHashSet<long>(new VoxelComparerCoarse(), level);
+                HighLevelVoxels = new VoxelHashSet<long>(new VoxelComparerFine(), level);
+            }
+            if (tsObject != null)
+            {
+                TessellationElements = new List<TessellationBaseClass> { tsObject };
+                tsObject.AddVoxel(this);
+            }
+            else TessellationElements = null;
+        }
+        #endregion
+
+        #region Properties
+
         /// <summary>
         /// The voxel role (interior or exterior)
         /// </summary>
@@ -86,6 +115,16 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The tessellation elements.</value>
         private List<TessellationBaseClass> TessellationElements;
+
+        internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
+        internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
+        internal List<Vertex> Vertices => TessellationElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
+
+        #endregion
+        #region sub-voxel functions
+        internal VoxelHashSet<long> HighLevelVoxels;
+        internal VoxelHashSet<long> NextLevelVoxels;
+        #endregion
 
         internal void Add(TessellationBaseClass tsObject)
         {
@@ -111,16 +150,6 @@ namespace TVGL.Voxelization
             if (TessellationElements == null) return false;
             return TessellationElements.Contains(tsObject);
         }
-        internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
-        internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
-        internal List<Vertex> Vertices => TessellationElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
-
-        #endregion
-        #region sub-voxel functions
-        VoxelHashSet<long> HighLevelVoxels;
-        VoxelHashSet<long> NextLevelVoxels;
-
-
         internal void Add(long voxelID)
         {
             if (voxelID < 0)
@@ -134,13 +163,13 @@ namespace TVGL.Voxelization
             else
             {
                 if (NextLevelVoxels.Contains(voxelID)) return;
-                if (NextLevelVoxels.Count == 4095)
-                {
-                    VoxelRole = VoxelRoleTypes.Full;
-                    HighLevelVoxels.Clear();
-                    NextLevelVoxels.Clear();
-                }
-                NextLevelVoxels.Add(voxelID);
+                //if (NextLevelVoxels.Count == 4095)
+                //{
+                //    VoxelRole = VoxelRoleTypes.Full;
+                //    HighLevelVoxels.Clear();
+                //    NextLevelVoxels.Clear();
+                //}
+                else NextLevelVoxels.Add(voxelID);
             }
         }
 
@@ -211,31 +240,6 @@ namespace TVGL.Voxelization
 
 
         #endregion
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelClass"/> struct.
-        /// </summary>
-        /// <param name="voxelID">The voxel identifier.</param>
-        /// <param name="voxelRole">The voxel role.</param>
-        /// <param name="level">The level.</param>
-        /// <param name="tsObject">The ts object.</param>
-        public VoxelClass(long voxelID, VoxelRoleTypes voxelRole, int level, TessellationBaseClass tsObject = null)
-        {
-            ID = voxelID;
-            VoxelRole = voxelRole;
-            Level = level;
-            if (VoxelRole == VoxelRoleTypes.Partial && level == 0)
-            {
-                NextLevelVoxels = new VoxelHashSet<long>(new VoxelComparerCoarse(), level) ;
-                HighLevelVoxels = new VoxelHashSet<long>(new VoxelComparerFine(), level) ;
-            }
-            if (tsObject != null)
-            {
-                TessellationElements = new List<TessellationBaseClass> { tsObject };
-                tsObject.AddVoxel(this);
-            }
-            else TessellationElements = null;
-        }
 
     }
 }

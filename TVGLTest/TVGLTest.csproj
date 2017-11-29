@@ -100,10 +100,6 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FileLoadDemo\TVGL PresenterDX.csproj">
-      <Project>{04a4763c-907a-45ee-9270-2ecb1453770f}</Project>
-      <Name>TVGL PresenterDX</Name>
-    </ProjectReference>
     <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.NET4.5\TessellationAndVoxelizationGeometryLibrary.NET4.5.csproj">
       <Project>{b2d2586a-5f3b-4122-b10e-4ac143c05ea4}</Project>
       <Name>TessellationAndVoxelizationGeometryLibrary.NET4.5</Name>

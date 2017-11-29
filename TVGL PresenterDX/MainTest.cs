@@ -24,7 +24,7 @@ namespace TVGLPresenterDX
 
     public partial class MainViewModel : ObservableObject
     {
-     
+
         public void Test()
         {
 
@@ -34,7 +34,7 @@ namespace TVGLPresenterDX
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*.stl");
-            for (var i = 1; i < 2; i++) // fileNames.Count(); i++)
+            for (var i = 0; i < fileNames.Length; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -68,18 +68,18 @@ namespace TVGLPresenterDX
 
         public void TestVoxelization(TessellatedSolid ts)
         {
-            var startTime = DateTime.Now;
-            //var voxelSpace1 = new VoxelizedSolid(ts, 200, true);
+            //var startTime = DateTime.Now;
+            //var voxelSpace1 = new OldVoxelization.VoxelizedSolid(ts, 200, true);
             //var totalTime1 = DateTime.Now - startTime;
             //Console.WriteLine("{0}\t|  {1} verts  |  {2} ms  |  {3} voxels", ts.FileName, ts.NumberOfVertices,
             //    totalTime1.TotalSeconds,
             //    voxelSpace1.VoxelIDHashSet.Count);
             // Presenter.ShowAndHangVoxelization(ts, voxelSpace1);
-            //startTime = DateTime.Now;
+            var startTime = DateTime.Now;
             var voxelSpace2 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
             var totalTime2 = DateTime.Now - startTime;
-            Console.WriteLine("{1}\t{0}", totalTime2.TotalSeconds, voxelSpace2.NumVoxelsTotal / 1000000.0);
-            Present(ts, voxelSpace2);
+            Console.WriteLine("{2}:{1}\t{0}", totalTime2.TotalSeconds, voxelSpace2.NumVoxelsTotal / 1000000.0, ts.FileName);
+            //Present(ts, voxelSpace2);
             //Console.WriteLine("{0}\t{1}", totalTime1.TotalSeconds, totalTime2.TotalSeconds);
             // Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
             //return;
