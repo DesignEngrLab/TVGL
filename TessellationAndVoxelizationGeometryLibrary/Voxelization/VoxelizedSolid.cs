@@ -52,13 +52,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The voxel side length. It's a square, so all sides are the same length.
         /// </summary>
-        public double[] VoxelSideLength { get; private set; }
-
-        /// <summary>
-        /// Gets the scale to integer space.
-        /// </summary>
-        /// <value>The scale to int space.</value>
-        public double ScaleToIntegerSpace { get; private set; }
+        public double[] ScaleFactors { get; private set; }
 
         /// <summary>
         /// Gets the offset that moves the model s.t. the lowest elements are at 0,0,0.
@@ -99,7 +93,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < ts.NumberOfVertices; i++)
             {
                 var vertex = ts.Vertices[i];
-                var coordinates = vertex.Position.multiply(ScaleToIntegerSpace).subtract(Offset);
+                var coordinates = vertex.Position.multiply(ScaleFactors[1]).subtract(Offset);
                 transformedCoordinates[i] = coordinates;
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
             }  //);
@@ -120,14 +114,18 @@ namespace TVGL.Voxelization
                 dimensions[i] = ts.Bounds[1][i] - ts.Bounds[0][i];
             var maxDim = dimensions.Max();
             longestDimensionIndex = dimensions.FindIndex(d => d == maxDim);
-            ScaleToIntegerSpace = Constants.VoxelScaleSize / maxDim;
-            Offset = ts.Bounds[0].multiply(ScaleToIntegerSpace).subtract(new[] { 0.1, 0.1, 0.1 });
-            VoxelSideLength = new double[5];
-            VoxelSideLength[1] = 1.0 / ScaleToIntegerSpace;
-            VoxelSideLength[0] = 16 * VoxelSideLength[1];
-            VoxelSideLength[2] = VoxelSideLength[1] / 16;
-            VoxelSideLength[3] = VoxelSideLength[2] / 16;
-            VoxelSideLength[4] = VoxelSideLength[3] / 16;
+            var maxNumberOfVoxelsOnSide = 1048575.0;
+            var wouldBeBottomLevelSize = maxDim / maxNumberOfVoxelsOnSide;
+            var buffer = 0.1 * wouldBeBottomLevelSize; //one-tenth of smallest voxel will be whitespace around tessellated solid
+            ScaleFactors = new double[5];
+            ScaleFactors[4] = (maxNumberOfVoxelsOnSide - 2 * buffer) / maxDim;
+            ScaleFactors[3] = ScaleFactors[4] / 16;
+            ScaleFactors[2] = ScaleFactors[3] / 16;
+            ScaleFactors[1] = ScaleFactors[2] / 16;
+            ScaleFactors[0] = ScaleFactors[1] / 16;
+
+            buffer = (256.0 - maxDim * ScaleFactors[1]) / 2;
+            Offset = ts.Bounds[0].multiply(ScaleFactors[1]).subtract(new[] { buffer, buffer, buffer });
         }
 
         #region Making Voxels for Levels 0 and 1
@@ -871,8 +869,8 @@ namespace TVGL.Voxelization
 
         internal double[] GetBottomAndWidth(long id, int level)
         {
-            var bottomCoordinate = GetCoordinatesFromID(id, level, (int)Discretization).add(Offset).multiply(VoxelSideLength[level]);
-            return new[] { bottomCoordinate[0], bottomCoordinate[1], bottomCoordinate[2], VoxelSideLength[level] };
+            var bottomCoordinate = GetCoordinatesFromID(id, level, (int)Discretization).add(Offset).divide(ScaleFactors[level]);
+            return new[] { bottomCoordinate[0], bottomCoordinate[1], bottomCoordinate[2], 1.0 / ScaleFactors[level] };
         }
 
         #endregion
