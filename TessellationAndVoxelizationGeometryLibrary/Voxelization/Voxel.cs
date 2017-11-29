@@ -76,9 +76,9 @@ namespace TVGL.Voxelization
         /// <param name="voxelRole">The voxel role.</param>
         /// <param name="level">The level.</param>
         /// <param name="tsObject">The ts object.</param>
-        public VoxelClass(long voxelID, VoxelRoleTypes voxelRole, int level, TessellationBaseClass tsObject = null)
+        public VoxelClass(int x, int y, int z, VoxelRoleTypes voxelRole, int level, TessellationBaseClass tsObject = null)
         {
-            ID = voxelID;
+            Coordinates = new[] {(byte)x, (byte)y, (byte)z };
             VoxelRole = voxelRole;
             Level = level;
             if (VoxelRole == VoxelRoleTypes.Partial && level == 0)
@@ -107,8 +107,12 @@ namespace TVGL.Voxelization
         /// Gets or sets the identifier.
         /// </summary>
         /// <value>The identifier.</value>
-        public long ID { get; internal set; } //is this ever used?
+       // public long ID { get; internal set; } //is this ever used?
 
+        internal byte[] Coordinates;
+        //internal byte X;
+        //internal byte Y;
+        //internal byte Z;
         #region TessellatedElements functions
         /// <summary>
         /// Gets the tessellation elements that areoverlapping with this voxel.

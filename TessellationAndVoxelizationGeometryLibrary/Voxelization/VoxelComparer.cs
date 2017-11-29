@@ -47,7 +47,7 @@ namespace TVGL.Voxelization
 
         public int GetHashCode(long obj)
         {
-            long x = obj & VoxelizedSolid.maskAllButLevel1and2;
+            long x = obj & VoxelizedSolid.maskAllButLevel0and1;
             //#0,FF000,FF000,FF000
             return (int)((x >> 12) + (x >> 40));
             // this moves the z levels into the first position and then
