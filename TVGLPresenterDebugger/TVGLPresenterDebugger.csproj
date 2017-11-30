@@ -278,6 +278,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
       <Link>TVGL\Voxelization\VoxelizedSolid.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs">
+      <Link>TVGL\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs</Link>
+    </Compile>
     <Compile Include="..\TVGL Presenter\Presenter.cs">
       <Link>Presenter\Presenter.cs</Link>
     </Compile>

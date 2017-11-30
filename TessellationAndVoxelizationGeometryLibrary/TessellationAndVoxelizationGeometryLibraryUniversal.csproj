@@ -111,6 +111,7 @@
     <Compile Include="Solid Body Classes\Vertex.cs" />
     <Compile Include="Voxelization\VoxelHashSet.cs" />
     <Compile Include="Voxelization\VoxelComparer.cs" />
+    <Compile Include="Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs" />
     <Compile Include="Voxelization\VoxelizedSolid.cs" />
     <Compile Include="Voxelization\Voxel.cs" />
     <Compile Include="Verbosity.cs" />
