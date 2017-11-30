@@ -30,7 +30,7 @@ namespace TVGL.Voxelization
         {
             if (voxel.TessellationElements == null) voxel.TessellationElements = new List<TessellationBaseClass>();
             else if (voxel.TessellationElements.Contains(tsObject)) return;
-            voxel.TessellationElements.Add(tsObject);
+            lock (voxel.TessellationElements) voxel.TessellationElements.Add(tsObject);
             tsObject.AddVoxel(voxel);
         }
 
@@ -60,7 +60,7 @@ namespace TVGL.Voxelization
                 if (voxel.HighLevelVoxels.Contains(voxelID)) return;
                 lock (voxel.HighLevelVoxels) voxel.HighLevelVoxels.Add(voxelID);
 
-                //todo: need to figure out how to check if 
+                //todo: need to figure out how to check if a level 1, 2, or 3 parent gets full
             }
             else if ((voxelID < 4611686018427387904 && level == -1) || level == 0)
                 throw new ArgumentException("Attempting to add a level 0 voxel to another level 0 voxel.");
@@ -72,9 +72,8 @@ namespace TVGL.Voxelization
                     voxel.VoxelRole = VoxelRoleTypes.Full;
                     // also have to change the key in the level-0 dictionary. to do this, we need to add and remove
                     voxel.HighLevelVoxels.Clear();
-                    VoxelClass oldVoxel;
                     foreach (var nextLevelVoxel in voxel.NextLevelVoxels)
-                        voxelDictionaryLevel1.TryRemove(nextLevelVoxel, out oldVoxel);
+                        voxelDictionaryLevel1[nextLevelVoxel].VoxelRole=VoxelRoleTypes.Empty;
                     voxel.NextLevelVoxels.Clear();
                 }
                 else lock (voxel.NextLevelVoxels) voxel.NextLevelVoxels.Add(voxelID);
@@ -100,6 +99,8 @@ namespace TVGL.Voxelization
                 }
                 if (voxel.HighLevelVoxels.Any())
                     return voxel.HighLevelVoxels.Remove(voxelID);
+                //todo: need to figure out how to check if a level 1, 2, or 3 parent gets full
+
                 throw new NotImplementedException("even though there are no high level voxels, we need to check next level, and create the subvoxels");
             }
             if (voxel.NextLevelVoxels.Count == 1 && voxel.NextLevelVoxels.Contains(voxelID))

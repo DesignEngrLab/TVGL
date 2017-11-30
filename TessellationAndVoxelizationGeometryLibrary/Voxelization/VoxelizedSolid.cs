@@ -14,7 +14,6 @@
 
 using StarMathLib;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -28,28 +27,15 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
         #region Properties
-
         /// <summary>
         /// The discretization
         /// </summary>
-        public VoxelDiscretization Discretization { get; private set; }
-
-        private int discretizationLevel = 0;
-        /// <summary>
-        /// Gets the number voxels total.
-        /// </summary>
-        /// <value> 
-        /// The number voxels total.
-        /// </value>
-        public int NumVoxelsTotal => voxelDictionaryLevel0.Count + voxelDictionaryLevel0.Values.Sum(voxel => Count(voxel));
-
-        /// <summary>
-        /// Gets the number voxels.
-        /// </summary>
-        /// <value>
-        /// The number voxels.
-        /// </value>
-        public int[] NumVoxels { get; private set; }
+        public VoxelDiscretization Discretization
+        {
+            get => (VoxelDiscretization)discretizationLevel;
+            private set => discretizationLevel = (int)value;
+        }
+        private int discretizationLevel;
 
         /// <summary>
         /// The voxel side length. It's a square, so all sides are the same length.
@@ -70,10 +56,10 @@ namespace TVGL.Voxelization
 
         private readonly double[][] transformedCoordinates;
         private int longestDimensionIndex;
-        //private readonly Dictionary<long, VoxelClass> voxelDictionaryLevel0;
-        //private readonly Dictionary<long, VoxelClass> voxelDictionaryLevel1;
-        private readonly ConcurrentDictionary<long, VoxelClass> voxelDictionaryLevel0;
-        private readonly ConcurrentDictionary<long, VoxelClass> voxelDictionaryLevel1;
+        private readonly Dictionary<long, VoxelClass> voxelDictionaryLevel0;
+        private readonly Dictionary<long, VoxelClass> voxelDictionaryLevel1;
+        //private readonly ConcurrentDictionary<long, VoxelClass> voxelDictionaryLevel0;
+        //private readonly ConcurrentDictionary<long, VoxelClass> voxelDictionaryLevel1;
 
         #endregion
 
@@ -90,8 +76,8 @@ namespace TVGL.Voxelization
         {
             Discretization = voxelDiscretization;
             SetUpIndexingParameters(ts);
-            voxelDictionaryLevel0 = new ConcurrentDictionary<long, VoxelClass>(new VoxelComparerCoarse());
-            voxelDictionaryLevel1 = new ConcurrentDictionary<long, VoxelClass>(new VoxelComparerCoarse());
+            voxelDictionaryLevel0 = new Dictionary<long, VoxelClass>(new VoxelComparerCoarse());
+            voxelDictionaryLevel1 = new Dictionary<long, VoxelClass>(new VoxelComparerCoarse());
             transformedCoordinates = new double[ts.NumberOfVertices][];
             //Parallel.For(0, ts.NumberOfVertices, i =>
             for (int i = 0; i < ts.NumberOfVertices; i++)
@@ -589,85 +575,110 @@ namespace TVGL.Voxelization
             }
         }
 
+
+
+
         private void MakeAndStoreFullVoxelLevel0And1(int x, int y, int z)
         {
-            var voxIDLevel0 = MakeVoxelID0(x, y, z); //zero out the other level values with 0,F0000,F0000,F0000
-            var voxelLevel0 = voxelDictionaryLevel0.ContainsKey(voxIDLevel0) ? voxelDictionaryLevel0[voxIDLevel0] : null;
+            bool level1AlreadyMade = false;
+            var voxIDLevel0 = MakeVoxelID0(x, y, z);
             var voxIDLevel1 = MakeVoxelID1(x, y, z);
-            if (voxelLevel0 == null)
+            lock (voxelDictionaryLevel1)
             {
-                //voxel at level 0 doesn't exist, which means the voxel at level 1 also doesn't exist. Add both
-                voxelLevel0 = new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0);
-                if (!voxelDictionaryLevel0.TryAdd(voxIDLevel0, voxelLevel0))
-                    ;//  Debug.WriteLine("can't add voxel to dict already there?");
-                //throw new NotImplementedException();
-                // todo: should the tryAdd's fail then we should update the existing entry with  tessellated object
-                Add(voxelLevel0, voxIDLevel1, 1);
-                if (!voxelDictionaryLevel1.TryAdd(voxIDLevel1, new VoxelClass(x, y, z, VoxelRoleTypes.Full, 1)))
-                    ;//   Debug.WriteLine("can't add voxel to dict already there?");
-                //throw new NotImplementedException();
-                // todo: should the tryAdd's fail then we should update the existing entry with  tessellated object
-            }
-            else if (voxelLevel0.VoxelRole == VoxelRoleTypes.Partial)
-            {
-                if (!Contains(voxelLevel0, voxIDLevel1))
-                {   // okay, the voxelLevel0 exists, but not the voxelLevel1
-                    Add(voxelLevel0, voxIDLevel1, 1);
-                    if (!voxelDictionaryLevel1.TryAdd(voxIDLevel1, new VoxelClass(x, y, z, VoxelRoleTypes.Full, 1)))
-                        ;//     Debug.WriteLine("can't add voxel to dict already there?");
-                    //throw new NotImplementedException();
-                    // todo: should the tryAdd's fail then we should update the existing entry with  tessellated object
-                }
-            }
-            //else the level 0 voxel is full and thus there is nothing to do.
-        }
-
-        #endregion
-
-        private void MakeAndStorePartialVoxelLevel0And1(int x, int y, int z, TessellationBaseClass tsObject)
-        {
-            var voxelID = MakeVoxelID0(x, y, z);
-            if (voxelDictionaryLevel0.ContainsKey(voxelID))
-            {
-                // the level 0 voxel is already made, just add the tsObject to it
-                var voxelLevel0 = voxelDictionaryLevel0[voxelID];
-                Add(voxelLevel0, tsObject);
-                voxelID = MakeVoxelID1(x, y, z);
-                if (Contains(voxelLevel0, voxelID))
-                {
-                    // and the level1 voxel is already made, so just add the tsObject there as well
-                    Add(voxelDictionaryLevel1[voxelID], tsObject);
-                }
+                if (voxelDictionaryLevel1.ContainsKey(voxIDLevel1))
+                    level1AlreadyMade = true;
                 else
-                {
-                    // okay, the voxelLevel0 exists, but not the voxelLevel1
-                    Add(voxelLevel0, voxelID, 1);
-                    if (!voxelDictionaryLevel1.TryAdd(voxelID,
-                        new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 1, tsObject)))
-                        ;//Debug.WriteLine("can't add voxel to dict already there?");
-                    //throw new NotImplementedException();
-                    // todo: should the tryAdd's fail then we should update the existing entry with  tessellated object
-                }
+                    voxelDictionaryLevel1.Add(voxIDLevel1, new VoxelClass(x, y, z, VoxelRoleTypes.Full, 1));
+            }
+            if (level1AlreadyMade)
+            {
+                //actually don't need to do anything here as partial is a stronger conviction than full
+                // and we shouldn't change that thus there really isn't anything to do
+                //  voxelDictionaryLevel0[voxIDLevel0].VoxelRole = VoxelRoleTypes.Full;
             }
             else
             {
-                //voxel at level 0 doesn't exist, which means the voxel at level 1 also doesn't exist. Add both
-                var voxelLevel0 = new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0, tsObject);
-                if (!voxelDictionaryLevel0.TryAdd(voxelID, voxelLevel0))
-                    ;//Debug.WriteLine("can't add voxel to dict already there?");
-                //throw new NotImplementedException();
-                // todo: should the tryAdd's fail then we should update the existing entry with  tessellated object
-                voxelID = MakeVoxelID1(x, y, z);
-                Add(voxelLevel0, voxelID, 1);
-                if (!voxelDictionaryLevel1.TryAdd(voxelID,
-                    new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 1, tsObject)))
-                    ;//Debug.WriteLine("can't add voxel to dict already there?");
-                //throw new NotImplementedException();
-                // todo: should the tryAdd's fail then we should update the existing entry with  tessellated object
+                VoxelClass voxelLevel0;
+                lock (voxelDictionaryLevel0)
+                {
+                    if (voxelDictionaryLevel0.ContainsKey(voxIDLevel0))
+                        voxelLevel0 = voxelDictionaryLevel0[voxIDLevel0];
+                    else
+                    {
+                        voxelLevel0 = new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0);
+                        voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
+                    }
+                }
+                Add(voxelLevel0, voxIDLevel1, 1);
             }
         }
+        #endregion
 
+        //private void MakeAndStoreFullVoxelLevel0And1Concurrent(int x, int y, int z)
+        //{
+        //    var voxIDLevel0 = MakeVoxelID0(x, y, z);
+        //    var voxelLevel0 =
+        //        voxelDictionaryLevel0.GetOrAdd(voxIDLevel0, new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0));
+        //    if (voxelLevel0.VoxelRole == VoxelRoleTypes.Full) return;
+        //    var voxIDLevel1 = MakeVoxelID1(x, y, z);
+        //    voxelDictionaryLevel1.TryAdd(voxIDLevel1, new VoxelClass(x, y, z, VoxelRoleTypes.Full, 1));
+        //    if (!Contains(voxelLevel0, voxIDLevel1, 1))
+        //        Add(voxelLevel0, voxIDLevel1, 1);
+        //}
 
+        private void MakeAndStorePartialVoxelLevel0And1(int x, int y, int z, TessellationBaseClass tsObject)
+        {
+            bool level1AlreadyMade = false;
+            VoxelClass voxelLevel0, voxelLevel1;
+            var voxIDLevel0 = MakeVoxelID0(x, y, z);
+            var voxIDLevel1 = MakeVoxelID1(x, y, z);
+            lock (voxelDictionaryLevel1)
+            {
+                if (voxelDictionaryLevel1.ContainsKey(voxIDLevel1))
+                {
+                    voxelLevel1 = voxelDictionaryLevel1[voxIDLevel1];
+                    level1AlreadyMade = true;
+                }
+                else
+                {
+                    voxelLevel1 = new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 1);
+                    voxelDictionaryLevel1.Add(voxIDLevel1, voxelLevel1);
+                }
+            }
+            if (level1AlreadyMade)
+                voxelLevel0 = voxelDictionaryLevel0[voxIDLevel0];
+            else
+            {
+                lock (voxelDictionaryLevel0)
+                {
+                    if (voxelDictionaryLevel0.ContainsKey(voxIDLevel0))
+                        voxelLevel0 = voxelDictionaryLevel0[voxIDLevel0];
+                    else
+                    {
+                        voxelLevel0 = new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0);
+                        voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
+                    }
+                }
+                Add(voxelLevel0, voxIDLevel1, 1);
+            }
+            Add(voxelLevel0, tsObject);
+            Add(voxelLevel1, tsObject);
+            if (tsObject is Vertex &&  tsObject.Voxels.Count<2) Debug.WriteLine("");
+        }
+
+        //private void MakeAndStorePartialVoxelLevel0And1Concurrent(int x, int y, int z, TessellationBaseClass tsObject)
+        //{
+        //    var voxIDLevel0 = MakeVoxelID0(x, y, z);
+        //    var voxelLevel0 =
+        //        voxelDictionaryLevel0.GetOrAdd(voxIDLevel0, new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0));
+        //    Add(voxelLevel0, tsObject);
+        //    if (voxelLevel0.VoxelRole == VoxelRoleTypes.Full) return;
+        //    var voxIDLevel1 = MakeVoxelID1(x, y, z);
+        //    var voxelLevel1 = voxelDictionaryLevel1.GetOrAdd(voxIDLevel1, new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 1));
+        //    Add(voxelLevel1, tsObject);
+        //    if (!Contains(voxelLevel0, voxIDLevel1, 1))
+        //        Add(voxelLevel0, voxIDLevel1, 1);
+        //}
         #endregion
 
 
@@ -703,7 +714,7 @@ namespace TVGL.Voxelization
 
         private static long MakeVoxelID0(int x, int y, int z)
         {
-            var xLong = (long)x >> 4;
+            var xLong = (long)x >> 4; //this shift is to clear out the level-1 values
             var yLong = (long)y >> 4;
             var zLong = (long)z >> 4;
             xLong = xLong << 56;

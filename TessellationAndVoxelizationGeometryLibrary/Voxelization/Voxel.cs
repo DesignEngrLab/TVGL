@@ -76,7 +76,7 @@ namespace TVGL.Voxelization
         /// <param name="voxelRole">The voxel role.</param>
         /// <param name="level">The level.</param>
         /// <param name="tsObject">The ts object.</param>
-        public VoxelClass(int x, int y, int z, VoxelRoleTypes voxelRole, int level, TessellationBaseClass tsObject = null)
+        public VoxelClass(int x, int y, int z, VoxelRoleTypes voxelRole, int level) //, TessellationBaseClass tsObject = null)
         {
             Coordinates = new[] {(byte)x, (byte)y, (byte)z };
             VoxelRole = voxelRole;
@@ -86,12 +86,12 @@ namespace TVGL.Voxelization
                 NextLevelVoxels = new VoxelHashSet<long>(new VoxelComparerCoarse(), level);
                 HighLevelVoxels = new VoxelHashSet<long>(new VoxelComparerFine(), level);
             }
-            if (tsObject != null)
-            {
-                TessellationElements = new List<TessellationBaseClass> { tsObject };
-                tsObject.AddVoxel(this);
-            }
-            else TessellationElements = null;
+            //if (tsObject != null)
+            //{
+            //    TessellationElements = new List<TessellationBaseClass> { tsObject };
+            //    tsObject.AddVoxel(this);
+            //}
+            //else TessellationElements = null;
         }
         #endregion
         

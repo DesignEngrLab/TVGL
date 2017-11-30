@@ -78,7 +78,7 @@ namespace TVGLPresenterDX
             var startTime = DateTime.Now;
             var voxelSpace2 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
             var totalTime2 = DateTime.Now - startTime;
-            Console.WriteLine("{2}:{1}\t{0}", totalTime2.TotalSeconds, voxelSpace2.NumVoxelsTotal / 1000000.0, ts.FileName);
+            Console.WriteLine("{2}:{1}\t{0}", totalTime2.TotalSeconds, (int)voxelSpace2.Discretization / 1000000.0, ts.FileName);
             //Present(ts, voxelSpace2);
             //Console.WriteLine("{0}\t{1}", totalTime1.TotalSeconds, totalTime2.TotalSeconds);
             // Presenter.ShowAndHangVoxelization(ts, voxelSpace2);
