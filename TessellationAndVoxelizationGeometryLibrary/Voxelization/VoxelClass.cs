@@ -18,55 +18,26 @@ using System.Linq;
 
 namespace TVGL.Voxelization
 {
-    /// <summary>
-    /// Indicates the role of the voxel in the solid.
-    /// it inside (interior)?
-    /// </summary>
-    public enum VoxelRoleTypes
+    public interface IVoxel
     {
-        /// <summary>
-        /// The eoxel is empty or is completely outside the part
-        /// </summary>
-        Empty = -1,
-        /// <summary>
-        /// The voxel is fully within the material or is inside the part
-        /// </summary>
-        Full = 1,
-        /// <summary>
-        /// The partial fill or on the surface or exterior of the part
-        /// </summary>
-        Partial = 0
-    };
-    /// <summary>
-    /// The discretization type for the voxelized solid. 
-    /// </summary>
-    public enum VoxelDiscretization
+        long ID { get; }
+        double X { get; }
+        double Y { get; }
+        double Z { get; }
+        double SideLength { get; }
+        VoxelRoleTypes Role { get; set; }
+}
+
+    public struct Voxel : IVoxel
     {
-        /// <summary>
-        /// The extra coarse discretization is up to 16 voxels on a side.
-        /// </summary>
-        ExtraCoarse = 0, //= 16,
-        /// <summary>
-        /// The coarse discretization is up to 256 voxels on a side.
-        /// </summary>
-        Coarse = 1, // 256,
-        /// <summary>
-        /// The medium discretization is up to 4096 voxels on a side.
-        /// </summary>
-        Medium = 2,  //4096,
-        /// <summary>
-        /// The fine discretization is up to 65,536 voxels on a side (2^16)
-        /// </summary>
-        Fine = 3,  //65536,
-        /// <summary>
-        /// The extra fine is up to 2^20 (~1million) voxels on a side.
-        /// </summary>
-        ExtraFine = 4, // 1048576
-    };
-    /// <summary>
-    /// Class Voxel.
-    /// </summary>
-    public class VoxelClass
+        public long ID { get; }
+        public double X { get; }
+        public double Y { get; }
+        public double Z { get; }
+        public double SideLength { get; }
+        public VoxelRoleTypes Role { get; set; }
+    }
+    public class VoxelClass:IVoxel
     {
         #region Constructor
         /// <summary>
@@ -76,7 +47,7 @@ namespace TVGL.Voxelization
         /// <param name="voxelRole">The voxel role.</param>
         /// <param name="level">The level.</param>
         /// <param name="tsObject">The ts object.</param>
-        public VoxelClass(int x, int y, int z, VoxelRoleTypes voxelRole, int level) //, TessellationBaseClass tsObject = null)
+        public VoxelClass(int x, int y, int z, VoxelRoleTypes voxelRole, int level) 
         {
             Coordinates = new[] {(byte)x, (byte)y, (byte)z };
             VoxelRole = voxelRole;
@@ -94,7 +65,6 @@ namespace TVGL.Voxelization
             //else TessellationElements = null;
         }
         #endregion
-        
 
         /// <summary>
         /// The voxel role (interior or exterior)
@@ -120,12 +90,20 @@ namespace TVGL.Voxelization
         internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
         internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
         internal List<Vertex> Vertices => TessellationElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
+
+        public long ID => throw new NotImplementedException();
+
+        public double X => throw new NotImplementedException();
+
+        public double Y => throw new NotImplementedException();
+
+        public double Z => throw new NotImplementedException();
+
+        public double SideLength => throw new NotImplementedException();
+
+        public VoxelRoleTypes Role { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         #endregion
         internal VoxelHashSet<long> HighLevelVoxels;
         internal VoxelHashSet<long> NextLevelVoxels;
-        
-
-        
-
     }
 }

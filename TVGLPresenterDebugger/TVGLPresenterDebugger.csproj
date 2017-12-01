@@ -263,14 +263,20 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Vertex.cs">
       <Link>TVGL\Solid Body Classes\Vertex.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid.cs">
+      <Link>TVGL\Solid.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>TVGL\Verbosity.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\Voxel.cs">
-      <Link>TVGL\Voxelization\Voxel.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelClass.cs">
+      <Link>TVGL\Voxelization\VoxelClass.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelComparer.cs">
       <Link>TVGL\Voxelization\VoxelComparer.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelConstantsAndEnumerators.cs">
+      <Link>TVGL\Voxelization\VoxelConstantsAndEnumerators.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelHashSet.cs">
       <Link>TVGL\Voxelization\VoxelHashSet.cs</Link>
@@ -278,8 +284,14 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
       <Link>TVGL\Voxelization\VoxelizedSolid.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidfromTessellatedSolid.cs">
+      <Link>TVGL\Voxelization\VoxelizedSolidfromTessellatedSolid.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs">
       <Link>TVGL\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs</Link>
+    </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_PublicFunctions.cs">
+      <Link>TVGL\Voxelization\VoxelizedSolid_PublicFunctions.cs</Link>
     </Compile>
     <Compile Include="..\TVGL Presenter\Presenter.cs">
       <Link>Presenter\Presenter.cs</Link>
@@ -316,12 +328,6 @@
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.NET4.5\TessellationAndVoxelizationGeometryLibrary.NET4.5.csproj">
-      <Project>{b2d2586a-5f3b-4122-b10e-4ac143c05ea4}</Project>
-      <Name>TessellationAndVoxelizationGeometryLibrary.NET4.5</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -124,30 +124,11 @@ namespace TVGL.Voxelization
                 if (voxel.HighLevelVoxels == null) return false;
                 return voxel.HighLevelVoxels.Contains(voxelID);
             }
-            else if ((voxelID < 4611686018427387904 && level == -1) || level == 0)
+            if ((voxelID < 4611686018427387904 && level == -1) || level == 0)
                 return false;
             if (voxel.NextLevelVoxels == null) return false;
             return voxel.NextLevelVoxels.Contains(voxelID);
         }
         #endregion
-
-        internal int Count(VoxelClass voxel)
-        {
-            return (voxel.HighLevelVoxels?.Count ?? 0)
-                + (voxel.NextLevelVoxels?.Count ?? 0);
-        }
-
-
-        internal static IEnumerable<double[]> GetVoxels(VoxelClass voxel, long targetFlags, VoxelizedSolid voxelizedSolid, int level)
-        {
-            foreach (var vx in voxel.HighLevelVoxels)
-            {
-                var flags = vx & -1152921504606846976; //get rid of every but the flags
-                if (flags == targetFlags)
-                    yield return voxelizedSolid.GetBottomAndWidth(vx, level);
-            }
-        }
-
-
     }
 }

@@ -104,6 +104,10 @@
       <Project>{b2d2586a-5f3b-4122-b10e-4ac143c05ea4}</Project>
       <Name>TessellationAndVoxelizationGeometryLibrary.NET4.5</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj">
+      <Project>{8c1364cc-908a-4174-b62c-21ec4839584d}</Project>
+      <Name>TVGL Presenter</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="MIConvexHull.xml" />
