@@ -23,23 +23,53 @@ namespace TVGL.Voxelization
     /// <summary>
     /// Class VoxelizedSolid.
     /// </summary>
-    public partial class VoxelizedSolid:Solid
+    public partial class VoxelizedSolid : Solid
     {
+        public int Count => voxelDictionaryLevel0.Count + (voxelDictionaryLevel1?.Count ?? 0) +
+                            voxelDictionaryLevel0.Sum(dict => dict.Value.HighLevelVoxels?.Count ?? 0);
+        public override double Volume { 
+            get
+            {
+                var totals = GetTotals();
+                var volume = 0.0;
+                for (int i = 0; i < discretizationLevel; i++)
+                {
+                    volume += Math.Pow(VoxelSideLength[i], 3) * totals[2 * i];
+                }
+                return volume + Math.Pow(VoxelSideLength[discretizationLevel], 3) * totals[2 * discretizationLevel + 1];
+            }
+        }
 
-        public override double Volume { get; internal set; }
+        public int[] GetTotals()
+        {
+            return new[]
+            {
+                voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Full),
+                voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
+                voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Full),
+                voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
+                voxelDictionaryLevel0.Values.Sum(dict => dict.HighLevelVoxels
+                .Count(vx => vx <= -8070450532247928833 && vx >= -9223372036854775808)),
+                voxelDictionaryLevel0.Values.Sum(dict => dict.HighLevelVoxels
+                .Count(vx => vx <= -6917529027641081857 && vx >= -8070450532247928832)),
+                voxelDictionaryLevel0.Values.Sum(dict => dict.HighLevelVoxels
+                .Count(vx => vx <= -4611686018427387905 && vx >= -5764607523034234880)),
+                voxelDictionaryLevel0.Values.Sum(dict => dict.HighLevelVoxels
+                .Count(vx => vx <= -3458764513820540929 && vx >= -4611686018427387904)),
+                voxelDictionaryLevel0.Values.Sum(dict => dict.HighLevelVoxels
+                .Count(vx => vx <= -1152921504606846977 && vx >= -2305843009213693952)),
+                voxelDictionaryLevel0.Values.Sum(dict => dict.HighLevelVoxels
+                .Count(vx => vx <= -1 && vx >= -1152921504606846976))
+            };
+        }
         #region Public Enumerations
 
-        public IEnumerable<double[]> GetVoxelsAsAABBDoubles(VoxelRoleTypes role = VoxelRoleTypes.Any, int level = -1)
+        public IEnumerable<double[]> GetVoxelsAsAABBDoubles(VoxelRoleTypes role = VoxelRoleTypes.Partial, int level = 4)
         {
-            if (level == -1|| level == 0)
-                foreach (var voxel in voxelDictionaryLevel0.Values.Where(v => v.VoxelRole == role))
-                    yield return GetBottomAndWidth(voxel.Coordinates, 0);
-            if (level == -1 || level == 1)
-                foreach(var voxel in voxelDictionaryLevel1.Values.Where(v => v.VoxelRole == role))
-                    yield return GetBottomAndWidth(voxel.Coordinates, 1);
-            var flags = new List<VoxelRoleTypes>;
-
-            if (level==-1||level==2)
+            if (level == 0)
+                return voxelDictionaryLevel0.Values.Where(v => v.VoxelRole == role).Select(v => GetBottomAndWidth(v.Coordinates, 0));
+            if (level == 1)
+                return voxelDictionaryLevel1.Values.Where(v => v.VoxelRole == role).Select(v => GetBottomAndWidth(v.Coordinates, 1));
             if (level > discretizationLevel) level = discretizationLevel;
             var flags = new VoxelRoleTypes[level];
             for (int i = 0; i < level - 1; i++)
@@ -74,13 +104,7 @@ namespace TVGL.Voxelization
         }
 
         #endregion
-
-        public int Count(VoxelClass voxel)
-        {
-            return (voxel.HighLevelVoxels?.Count ?? 0)
-                + (voxel.NextLevelVoxels?.Count ?? 0);
-        }
-
+        
 
         public static IEnumerable<double[]> GetVoxels(VoxelClass voxel, long targetFlags, VoxelizedSolid voxelizedSolid, int level)
         {
@@ -93,7 +117,6 @@ namespace TVGL.Voxelization
         }
 
 
-        public override double Volume { get; internal set; }
 
         public override void Transform(double[,] transformMatrix)
         {

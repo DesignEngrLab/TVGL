@@ -48,7 +48,7 @@ namespace TVGL.Voxelization
             Bounds = new double[2][];
             Bounds[0] = bounds[0].subtract(new[] { delta, delta, delta });
             Bounds[1] = bounds[1].add(new[] { delta, delta, delta });
-            VoxelSideLength = new []{ longestSide / 1048576, longestSide / 65536, longestSide / 4096, longestSide / 256, longestSide / 16 };
+            VoxelSideLength = new[] { longestSide / 16, longestSide / 256, longestSide / 4096, longestSide / 65536, longestSide / 1048576 };
             #endregion
 
             voxelDictionaryLevel0 = new Dictionary<long, VoxelClass>(new VoxelComparerCoarse());
@@ -61,12 +61,12 @@ namespace TVGL.Voxelization
                 var coordinates = vertex.Position.subtract(Offset).divide(VoxelSideLength[1]);
                 transformedCoordinates[i] = coordinates;
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
-            });
+            }  );
             makeVoxelsForFacesAndEdges(ts);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior();
         }
-        
+
         #region Making Voxels for Levels 0 and 1
 
         private void makeVoxelForVertexLevel0And1(Vertex vertex, double[] coordinates)

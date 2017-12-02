@@ -87,7 +87,7 @@ namespace TVGL
         ///     Gets the volume.
         /// </summary>
         /// <value>The volume.</value>
-        public abstract double Volume { get; internal set; }
+        public abstract double Volume { get; }
 
         /// <summary>
         ///     Gets and sets the mass.
