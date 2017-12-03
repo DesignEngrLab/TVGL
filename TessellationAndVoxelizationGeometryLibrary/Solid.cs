@@ -39,55 +39,28 @@ namespace TVGL
         ///     Gets the center.
         /// </summary>
         /// <value>The center.</value>
-        public double[] Center { get; internal set; }
+        public double[] Center { get; protected set; }
 
-        /// <summary>
-        ///     Gets the z maximum.
-        /// </summary>
-        /// <value>The z maximum.</value>
-        public double ZMax { get; internal set; }
-
-        /// <summary>
-        ///     Gets the y maximum.
-        /// </summary>
-        /// <value>The y maximum.</value>
-        public double YMax { get; internal set; }
-
-        /// <summary>
-        ///     Gets the x maximum.
-        /// </summary>
-        /// <value>The x maximum.</value>
-        public double XMax { get; internal set; }
-
-        /// <summary>
-        ///     Gets the z minimum.
-        /// </summary>
-        /// <value>The z minimum.</value>
-        public double ZMin { get; internal set; }
-
-        /// <summary>
-        ///     Gets the y minimum.
-        /// </summary>
-        /// <value>The y minimum.</value>
-        public double YMin { get; internal set; }
-
-        /// <summary>
-        ///     Gets the x minimum.
-        /// </summary>
-        /// <value>The x minimum.</value>
-        public double XMin { get; internal set; }
 
         /// <summary>
         ///     Gets the bounds.
         /// </summary>
         /// <value>The bounds.</value>
-        public double[][] Bounds { get; }
+        public double[][] Bounds { get; protected set; } = new double[2][];
 
+        public double XMin { get => Bounds[0][0]; protected set => Bounds[0][0] = value; }
+        public double XMax { get => Bounds[1][0]; protected set => Bounds[1][0] = value; }
+        public double YMin { get => Bounds[0][1]; protected set => Bounds[0][1] = value; }
+        public double YMax { get => Bounds[1][1]; protected set => Bounds[1][1] = value; }
+        public double ZMin { get => Bounds[0][2]; protected set => Bounds[0][2] = value; }
+        public double ZMax { get => Bounds[1][2]; protected set => Bounds[1][2] = value; }
+       
+        
         /// <summary>
         ///     Gets the volume.
         /// </summary>
         /// <value>The volume.</value>
-        public abstract double Volume { get; }
+        public double Volume { get; internal set; }
 
         /// <summary>
         ///     Gets and sets the mass.
@@ -110,57 +83,57 @@ namespace TVGL
         /// <summary>
         /// The comments
         /// </summary>
-        public readonly List<string> Comments;
+        public List<string> Comments { get; set; }
 
         /// <summary>
         /// The file name
         /// </summary>
-        public readonly string FileName;
+        public string FileName { get; set; }
 
         /// <summary>
         /// Gets or sets the units.
         /// </summary>
         /// <value>The units.</value>
-        public UnitType Units;
+        public UnitType Units { get; set; }
 
         /// <summary>
         /// The language
         /// </summary>
-        public readonly string Language;
+        public string Language { get; set; }
 
         /// <summary>
         ///     Gets the convex hull.
         /// </summary>
         /// <value>The convex hull.</value>
-        public TVGLConvexHull ConvexHull { get; private set; }
+        public TVGLConvexHull ConvexHull { get; protected set; }
 
         /// <summary>
         ///     The has uniform color
         /// </summary>
-        public bool HasUniformColor = true;
+        public bool HasUniformColor { get; set; }
 
         /// <summary>
         ///     The has uniform color
         /// </summary>
-        public double[,] InertiaTensor { get; }
-        
+        public virtual double[,] InertiaTensor { get; protected set; }
+
 
         /// <summary>
         ///     The solid color
         /// </summary>
-        public Color SolidColor = new Color(Constants.DefaultColor);
-        
+        public Color SolidColor { get; set; }
+
         /// <summary>
         ///     Gets or sets the primitive objects that make up the solid
         /// </summary>
-        public List<PrimitiveSurface> Primitives { get; internal set; }
+        public  List<PrimitiveSurface> Primitives { get; internal set; }
 
         #endregion
 
         #region Constructor
 
-        internal Solid(UnitType units = UnitType.unspecified, string name = "", string filename = "",
-            List<string> comments = null, string language = "")
+        protected Solid(UnitType units = UnitType.unspecified, string name = "", 
+            string filename = "", List<string> comments = null, string language = "")
         {
             Name = name;
             FileName = filename;
@@ -169,6 +142,11 @@ namespace TVGL
                 Comments.AddRange(comments);
             Language = language;
             Units = units;
+            HasUniformColor = true;
+            SolidColor = new Color(Constants.DefaultColor);
+            Bounds = new double[2][];
+            Bounds[0] = new double[3];
+            Bounds[1] = new double[3];
         }
         #endregion
 
@@ -177,12 +155,14 @@ namespace TVGL
         /// </summary>
         /// <param name="transformMatrix">The transform matrix.</param>
         public abstract void Transform(double[,] transformMatrix);
+        // here's a good reference for this: http://www.cs.brandeis.edu/~cs155/Lecture_07_6.pdf
+       
 
         /// <summary>
         /// Gets a new solid by transforming its vertices.
         /// </summary>
         /// <param name="transformationMatrix"></param>
         /// <returns></returns>
-        public abstract Solid TransformToGetNewSolid(double[,] transformationMatrix);
+        public abstract Solid TransformToNewSolid(double[,] transformationMatrix);
     }
 }

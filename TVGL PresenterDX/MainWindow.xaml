@@ -4,7 +4,7 @@
         xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
         xmlns:pt="clr-namespace:PropertyTools.Wpf;assembly=PropertyTools.Wpf"
         xmlns:h="http://helix-toolkit.org/wpf"
-        Title="FileLoadDemo" Height="350" Width="525" Loaded="main">
+        Title="TVGL PresenterDX" Height="350" Width="525">
     
   
     <Grid>

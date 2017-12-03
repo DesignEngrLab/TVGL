@@ -44,15 +44,16 @@ namespace TVGL.Voxelization
                 dimensions[i] = bounds[1][i] - bounds[0][i];
             var longestSide = dimensions.Max();
             longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
-            var delta = longestSide / Constants.fractionOfWhiteSpaceAroundFinestVoxelFactor;
+            var delta = longestSide * Constants.fractionOfWhiteSpaceAroundFinestVoxelFactor;
             Bounds = new double[2][];
             Bounds[0] = bounds[0].subtract(new[] { delta, delta, delta });
             Bounds[1] = bounds[1].add(new[] { delta, delta, delta });
+            longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
             VoxelSideLength = new[] { longestSide / 16, longestSide / 256, longestSide / 4096, longestSide / 65536, longestSide / 1048576 };
             #endregion
 
-            voxelDictionaryLevel0 = new Dictionary<long, VoxelClass>(new VoxelComparerCoarse());
-            voxelDictionaryLevel1 = new Dictionary<long, VoxelClass>(new VoxelComparerCoarse());
+            voxelDictionaryLevel0 = new Dictionary<long, Voxel_Level0_Class>(new VoxelComparerCoarse());
+            voxelDictionaryLevel1 = new Dictionary<long, Voxel_Level1_Class>(new VoxelComparerCoarse());
             transformedCoordinates = new double[ts.NumberOfVertices][];
             Parallel.For(0, ts.NumberOfVertices, i =>
             //for (int i = 0; i < ts.NumberOfVertices; i++)
@@ -473,9 +474,9 @@ namespace TVGL.Voxelization
             var ids = voxelDictionaryLevel1.Keys.Select(vxID => MakeCoordinateZero(vxID, sweepDim))
                 .Distinct()
                 .AsParallel();
-            var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<VoxelClass>, SortedSet<VoxelClass>>(
-                new SortedSet<VoxelClass>(new SortByVoxelIndex(sweepDim)),
-                new SortedSet<VoxelClass>(new SortByVoxelIndex(sweepDim))));
+            var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>>(
+                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim)),
+                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim))));
             Parallel.ForEach(voxelDictionaryLevel1, voxelKeyValuePair =>
             //foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
             {
@@ -495,12 +496,12 @@ namespace TVGL.Voxelization
                 MakeInteriorVoxelsAlongLine(v.Item1, v.Item2, sweepDim));
         }
 
-        private void MakeInteriorVoxelsAlongLine(SortedSet<VoxelClass> sortedNegatives,
-            SortedSet<VoxelClass> sortedPositives, int sweepDim)
+        private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> sortedNegatives,
+            SortedSet<Voxel_Level1_Class> sortedPositives, int sweepDim)
         {
             var coords = (byte[])sortedNegatives.First().Coordinates.Clone();
-            var negativeQueue = new Queue<VoxelClass>(sortedNegatives);
-            var positiveQueue = new Queue<VoxelClass>(sortedPositives);
+            var negativeQueue = new Queue<Voxel_Level1_Class>(sortedNegatives);
+            var positiveQueue = new Queue<Voxel_Level1_Class>(sortedPositives);
             while (negativeQueue.Any() && positiveQueue.Any())
             {
                 var startIndex = negativeQueue.Dequeue().Coordinates[sweepDim];
@@ -529,7 +530,7 @@ namespace TVGL.Voxelization
                 if (voxelDictionaryLevel1.ContainsKey(voxIDLevel1))
                     level1AlreadyMade = true;
                 else
-                    voxelDictionaryLevel1.Add(voxIDLevel1, new VoxelClass(x, y, z, VoxelRoleTypes.Full, 1));
+                    voxelDictionaryLevel1.Add(voxIDLevel1, new Voxel_Level1_Class(x, y, z, VoxelRoleTypes.Full));
             }
             if (level1AlreadyMade)
             {
@@ -539,14 +540,14 @@ namespace TVGL.Voxelization
             }
             else
             {
-                VoxelClass voxelLevel0;
+                Voxel_Level0_Class voxelLevel0;
                 lock (voxelDictionaryLevel0)
                 {
                     if (voxelDictionaryLevel0.ContainsKey(voxIDLevel0))
                         voxelLevel0 = voxelDictionaryLevel0[voxIDLevel0];
                     else
                     {
-                        voxelLevel0 = new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0);
+                        voxelLevel0 = new Voxel_Level0_Class(x, y, z, VoxelRoleTypes.Partial);
                         voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
                     }
                 }
@@ -570,7 +571,8 @@ namespace TVGL.Voxelization
         private void MakeAndStorePartialVoxelLevel0And1(int x, int y, int z, TessellationBaseClass tsObject)
         {
             bool level1AlreadyMade = false;
-            VoxelClass voxelLevel0, voxelLevel1;
+            Voxel_Level0_Class voxelLevel0;
+            Voxel_Level1_Class voxelLevel1;
             var voxIDLevel0 = MakeVoxelID0(x, y, z);
             var voxIDLevel1 = MakeVoxelID1(x, y, z);
             lock (voxelDictionaryLevel1)
@@ -582,7 +584,7 @@ namespace TVGL.Voxelization
                 }
                 else
                 {
-                    voxelLevel1 = new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 1);
+                    voxelLevel1 = new Voxel_Level1_Class(x, y, z, VoxelRoleTypes.Partial);
                     voxelDictionaryLevel1.Add(voxIDLevel1, voxelLevel1);
                 }
             }
@@ -596,7 +598,7 @@ namespace TVGL.Voxelization
                         voxelLevel0 = voxelDictionaryLevel0[voxIDLevel0];
                     else
                     {
-                        voxelLevel0 = new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0);
+                        voxelLevel0 = new Voxel_Level0_Class(x, y, z, VoxelRoleTypes.Partial);
                         voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
                     }
                 }

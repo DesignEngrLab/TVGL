@@ -10,44 +10,6 @@ using System.Security;
 namespace TVGL.Voxelization
 {
 
-    /// <summary>
-    /// Implementation notes:
-    /// This uses an array-based implementation similar to Dictionary<T>, using a buckets array
-    /// to map hash values to the Slots array. Items in the Slots array that hash to the same value
-    /// are chained together through the "next" indices. 
-    /// 
-    /// The capacity is always prime; so during resizing, the capacity is chosen as the next prime
-    /// greater than double the last capacity. 
-    /// 
-    /// The underlying data structures are lazily initialized. Because of the observation that, 
-    /// in practice, hashtables tend to contain only a few elements, the initial capacity is
-    /// set very small (3 elements) unless the ctor with a collection is used.
-    /// 
-    /// The +/- 1 modifications in methods that add, check for containment, etc allow us to 
-    /// distinguish a hash code of 0 from an uninitialized bucket. This saves us from having to 
-    /// reset each bucket to -1 when resizing. See Contains, for example.
-    /// 
-    /// Set methods such as UnionWith, IntersectWith, ExceptWith, and SymmetricExceptWith modify
-    /// this set.
-    /// 
-    /// Some operations can perform faster if we can assume "other" contains unique elements
-    /// according to this equality comparer. The only times this is efficient to check is if
-    /// other is a hashset. Note that checking that it's a hashset alone doesn't suffice; we
-    /// also have to check that the hashset is using the same equality comparer. If other 
-    /// has a different equality comparer, it will have unique elements according to its own
-    /// equality comparer, but not necessarily according to ours. Therefore, to go these 
-    /// optimized routes we check that other is a hashset using the same equality comparer.
-    /// 
-    /// A HashSet with no elements has the properties of the empty set. (See IsSubset, etc. for 
-    /// special empty set checks.)
-    /// 
-    /// A couple of methods have a special case if other is this (e.g. SymmetricExceptWith). 
-    /// If we didn't have these checks, we could be iterating over the set and modifying at
-    /// the same time. 
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    [DebuggerDisplay("Count = {Count}")]
-    [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix", Justification = "By design")]
     public class VoxelHashSet<T> : ICollection<T>, ISet<T>
     {
         // cutoff point, above which we won't do stackallocs. This corresponds to 100 integers.

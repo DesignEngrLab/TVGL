@@ -22,12 +22,23 @@ namespace TVGL.Voxelization
     internal static class Constants
     {
         /// <summary>
-        /// The fraction of white space around finest voxel (2^20 along longest side)
+        /// The fraction of white space around the finest voxel (2^20 along longest side)
         /// </summary>
-        internal const double fractionOfWhiteSpaceAroundFinestVoxel = 0.1;
-
+        internal const double fractionOfWhiteSpaceAroundFinestVoxel = 0.981;
+        // we call this f for short
+        // to find this delta, we have two equations & two unknowns
+        // Eq1: length_of_model + 2*delta = length_of_box
+        // where delta is the border added around the model, which is f of smallest voxel
+        // Eq2: smallestVoxelLength = length_of_box / 1048576 = length_of_model / (1048576 - 2*f)
+        // using the latter two expressions and isolating length_of_box yields
+        // length_of_box = 1048576*length_of_model/(1048576-2f)
+        // plugging this into Eq 1, and solving for delta
+        // delta = 0.5*[(1048576*length_of_model/(1048576-2f))-length_of_model]
+        // or more simply as
+        // delta = ([(1048576/(1048576-2f))-1]/2)*length_of_model
+        // this factor multiplying "length_of_model" is what is stored in the next constant
         internal const double fractionOfWhiteSpaceAroundFinestVoxelFactor =
-            1048576 / fractionOfWhiteSpaceAroundFinestVoxel - 2;
+           ((1048576 / (1048576 - 2 * fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
 
         internal static readonly long maskAllButLevel0 = Int64.Parse("0F0000F0000F0000",
             NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
@@ -77,7 +88,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Positive Z Direction
         /// </summary>
-        ZPositive = 1 ,
+        ZPositive = 1,
         /// <summary>
         /// Negative X Direction
         /// </summary>

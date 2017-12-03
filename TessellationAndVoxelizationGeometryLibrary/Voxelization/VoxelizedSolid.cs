@@ -49,17 +49,14 @@ namespace TVGL.Voxelization
         /// The offset.
         /// </value>
         public double[] Offset => Bounds[0];
-        private double[][] Bounds;
-
         #endregion
 
         #region Private Fields
-
         private readonly double[][] transformedCoordinates;
         private readonly double[] dimensions;
         private readonly int longestDimensionIndex;
-        private readonly Dictionary<long, VoxelClass> voxelDictionaryLevel0;
-        private readonly Dictionary<long, VoxelClass> voxelDictionaryLevel1;
+        private readonly Dictionary<long, Voxel_Level0_Class> voxelDictionaryLevel0;
+        private readonly Dictionary<long, Voxel_Level1_Class> voxelDictionaryLevel1;
         #endregion
         
         #region converting IDs and back again

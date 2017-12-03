@@ -31,112 +31,9 @@ namespace TVGL
     ///     and
     ///     all interesting operations work on the TessellatedSolid.
     /// </remarks>
-    public partial class TessellatedSolid
+    public partial class TessellatedSolid : Solid
     {
         #region Fields and Properties
-
-        /// <summary>
-        ///     Gets the center.
-        /// </summary>
-        /// <value>The center.</value>
-        public double[] Center { get; internal set; }
-
-        /// <summary>
-        ///     Gets the z maximum.
-        /// </summary>
-        /// <value>The z maximum.</value>
-        public double ZMax { get; internal set; }
-
-        /// <summary>
-        ///     Gets the y maximum.
-        /// </summary>
-        /// <value>The y maximum.</value>
-        public double YMax { get; internal set; }
-
-        /// <summary>
-        ///     Gets the x maximum.
-        /// </summary>
-        /// <value>The x maximum.</value>
-        public double XMax { get; internal set; }
-
-        /// <summary>
-        ///     Gets the z minimum.
-        /// </summary>
-        /// <value>The z minimum.</value>
-        public double ZMin { get; internal set; }
-
-        /// <summary>
-        ///     Gets the y minimum.
-        /// </summary>
-        /// <value>The y minimum.</value>
-        public double YMin { get; internal set; }
-
-        /// <summary>
-        ///     Gets the x minimum.
-        /// </summary>
-        /// <value>The x minimum.</value>
-        public double XMin { get; internal set; }
-
-        /// <summary>
-        ///     Gets the bounds.
-        /// </summary>
-        /// <value>The bounds.</value>
-        public double[][] Bounds
-        {
-            get
-            {
-                var _bounds = new double[2][];
-                _bounds[0] = new[] { XMin, YMin, ZMin };
-                _bounds[1] = new[] { XMax, YMax, ZMax };
-                return _bounds;
-            }
-        }
-
-        /// <summary>
-        ///     Gets the volume.
-        /// </summary>
-        /// <value>The volume.</value>
-        public double Volume { get; internal set; }
-
-        /// <summary>
-        ///     Gets and sets the mass.
-        /// </summary>
-        /// <value>The mass.</value>
-        public double Mass { get; set; }
-
-        /// <summary>
-        ///     Gets the surface area.
-        /// </summary>
-        /// <value>The surface area.</value>
-        public double SurfaceArea { get; internal set; }
-
-        /// <summary>
-        ///     The name of solid
-        /// </summary>
-        /// <value>The name.</value>
-        public string Name { get; set; }
-
-        /// <summary>
-        /// The comments
-        /// </summary>
-        public readonly List<string> Comments;
-
-        /// <summary>
-        /// The file name
-        /// </summary>
-        public readonly string FileName;
-
-        /// <summary>
-        /// Gets or sets the units.
-        /// </summary>
-        /// <value>The units.</value>
-        public UnitType Units;
-
-        /// <summary>
-        /// The language
-        /// </summary>
-        public readonly string Language;
-
         /// <summary>
         ///     Gets the faces.
         /// </summary>
@@ -176,21 +73,11 @@ namespace TVGL
         /// <value>The number of edges.</value>
         public int NumberOfEdges { get; private set; }
 
-        /// <summary>
-        ///     Gets the convex hull.
-        /// </summary>
-        /// <value>The convex hull.</value>
-        public TVGLConvexHull ConvexHull { get; private set; }
 
         /// <summary>
         ///     The has uniform color
         /// </summary>
-        public bool HasUniformColor = true;
-
-        /// <summary>
-        ///     The has uniform color
-        /// </summary>
-        public double[,] InertiaTensor
+        public override double[,] InertiaTensor
         {
             get
             {
@@ -199,13 +86,7 @@ namespace TVGL
                 return _inertiaTensor;
             }
         }
-
         internal double[,] _inertiaTensor;
-
-        /// <summary>
-        ///     The solid color
-        /// </summary>
-        public Color SolidColor = new Color(Constants.DefaultColor);
 
         /// <summary>
         ///     The tolerance is set during the initiation (constructor phase). This is based on the maximum
@@ -213,34 +94,13 @@ namespace TVGL
         /// </summary>
         /// <value>The same tolerance.</value>
         public double SameTolerance { get; internal set; }
-
         /// <summary>
         ///     Errors in the tesselated solid
         /// </summary>
         public TessellationError Errors { get; internal set; }
-
-        /// <summary>
-        ///     Gets or sets the primitive objects that make up the solid
-        /// </summary>
-        public List<PrimitiveSurface> Primitives { get; internal set; }
-
         #endregion
 
         #region Constructors
-
-        internal TessellatedSolid(UnitType units = UnitType.unspecified, string name = "", string filename = "",
-            List<string> comments = null, string language = "")
-        {
-            //Begin Construction 
-            Name = name;
-            FileName = filename;
-            Comments = new List<string>();
-            if (comments != null)
-                Comments.AddRange(comments);
-            Language = language;
-            Units = units;
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This is the one that
         /// matches with the STL format.
@@ -255,7 +115,8 @@ namespace TVGL
         /// <param name="language">The language.</param>
         public TessellatedSolid(IList<double[]> normals, IList<List<double[]>> vertsPerFace,
             IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
-            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
+            List<string> comments = null, string language = "")
+            : base(units, name, filename, comments, language)
         {
             List<int[]> faceToVertexIndices;
             DefineAxisAlignedBoundingBoxAndTolerance(vertsPerFace.SelectMany(v => v));
@@ -279,7 +140,7 @@ namespace TVGL
         /// <param name="language">The language.</param>
         public TessellatedSolid(IList<double[]> vertices, IList<int[]> faceToVertexIndices,
             IList<Color> colors, UnitType units = UnitType.unspecified, string name = "", string filename = "",
-            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
+            List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
             DefineAxisAlignedBoundingBoxAndTolerance(vertices);
             MakeVertices(vertices, faceToVertexIndices);
@@ -288,7 +149,7 @@ namespace TVGL
             CompleteInitiation();
         }
 
-        internal TessellatedSolid(TVGLFileData fileData, string fileName) : this(fileData.Units, fileData.Name, fileName,
+        internal TessellatedSolid(TVGLFileData fileData, string fileName) : base(fileData.Units, fileData.Name, fileName,
                 fileData.Comments, fileData.Language)
         {
             XMax = fileData.XMax;
@@ -399,7 +260,7 @@ namespace TVGL
         /// <param name="language">The language.</param>
         public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null,
             IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
-            List<string> comments = null, string language = "") : this(units, name, filename, comments, language)
+            List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
             if (vertices == null)
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
@@ -1031,56 +892,35 @@ namespace TVGL
 
         #endregion
 
-        /// <summary>
-        /// Transforms the specified transform matrix.
-        /// </summary>
-        /// <param name="transformMatrix">The transform matrix.</param>
-        public void Transform(double[,] transformMatrix)
-        {
-            double[] tempCoord;
-            foreach (var vert in Vertices)
-            {
-                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
-                vert.Position[0] = tempCoord[0];
-                vert.Position[1] = tempCoord[1];
-                vert.Position[2] = tempCoord[2];
-            }
-            tempCoord = transformMatrix.multiply(new[] { XMin, YMin, ZMin, 1 });
-            XMin = tempCoord[0];
-            YMin = tempCoord[1];
-            ZMin = tempCoord[2];
 
-            tempCoord = transformMatrix.multiply(new[] { XMax, YMax, ZMax, 1 });
-            XMax = tempCoord[0];
-            YMax = tempCoord[1];
-            ZMax = tempCoord[2];
-            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
-            // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
-            if (_inertiaTensor != null)
-            {
-                var rotMatrix = new double[3, 3];
-                for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                        rotMatrix[i, j] = transformMatrix[i, j];
-                _inertiaTensor = rotMatrix.multiply(_inertiaTensor);
-            }
-            if (Primitives != null)
-                foreach (var primitive in Primitives)
-                    primitive.Transform(transformMatrix);
-        }
 
-        //http://www.cs.brandeis.edu/~cs155/Lecture_07_6.pdf
+
+        #region Transform
         /// <summary>
         /// Translates and Squares Tesselated Solid based on its oriented bounding box. 
         /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
         /// </summary>
         /// <returns></returns>
-        public TessellatedSolid SetToOriginAndSquareTesselatedSolid(out double[,] backTransform)
+        public TessellatedSolid SetToOriginAndSquareToNewSolid(out double[,] backTransform)
         {
-            var ts = this;
+            var transformationMatrix = getSquaredandOriginTransform(out backTransform);
+            return (TessellatedSolid)TransformToNewSolid(transformationMatrix);
+        }
+        /// <summary>
+        /// Translates and Squares Tesselated Solid based on its oriented bounding box. 
+        /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
+        /// </summary>
+        /// <returns></returns>
+        public void SetToOriginAndSquare(out double[,] backTransform)
+        {
+            var transformationMatrix = getSquaredandOriginTransform(out backTransform);
+            Transform(transformationMatrix);
+        }
 
+        private double[,] getSquaredandOriginTransform(out double[,] backTransform)
+        {
             //First, get the oriented bounding box directions. 
-            var obb = MinimumEnclosure.OrientedBoundingBox(ts);
+            var obb = MinimumEnclosure.OrientedBoundingBox(this);
             var obbDirections = obb.Directions.ToList();
 
             //The bounding box directions are in no particular order.
@@ -1181,22 +1021,59 @@ namespace TVGL
             //Multiplying by this matrix after the transform will align "local" coordinate axis
             //with the global axis, where the local axis are defined by the directions list.
             var transformationMatrix = new[,]
-            {
+               {
                 {xPrime[0], xPrime[1], xPrime[2], -localOrigin.X},
                 {yPrime[0], yPrime[1], yPrime[2], -localOrigin.Y},
                 {zPrime[0], zPrime[1], zPrime[2], -localOrigin.Z},
                 {0.0, 0.0, 0.0, 1.0}
             };
             backTransform = transformationMatrix.inverse();
-            return TransformToGetNewSolid(transformationMatrix);
+            return transformationMatrix;
         }
 
+        /// <summary>
+        /// Transforms the specified transform matrix.
+        /// </summary>
+        /// <param name="transformMatrix">The transform matrix.</param>
+        public override void Transform(double[,] transformMatrix)
+        {
+            double[] tempCoord;
+            foreach (var vert in Vertices)
+            {
+                tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
+                vert.Position[0] = tempCoord[0];
+                vert.Position[1] = tempCoord[1];
+                vert.Position[2] = tempCoord[2];
+            }
+            tempCoord = transformMatrix.multiply(new[] { XMin, YMin, ZMin, 1 });
+            XMin = tempCoord[0];
+            YMin = tempCoord[1];
+            ZMin = tempCoord[2];
+
+            tempCoord = transformMatrix.multiply(new[] { XMax, YMax, ZMax, 1 });
+            XMax = tempCoord[0];
+            YMax = tempCoord[1];
+            ZMax = tempCoord[2];
+            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
+            // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
+            if (_inertiaTensor != null)
+            {
+                var rotMatrix = new double[3, 3];
+                for (int i = 0; i < 3; i++)
+                    for (int j = 0; j < 3; j++)
+                        rotMatrix[i, j] = transformMatrix[i, j];
+                _inertiaTensor = rotMatrix.multiply(_inertiaTensor);
+            }
+            if (Primitives != null)
+                foreach (var primitive in Primitives)
+                    primitive.Transform(transformMatrix);
+        }
         /// <summary>
         /// Gets a new solid by transforming its vertices.
         /// </summary>
         /// <param name="transformationMatrix"></param>
         /// <returns></returns>
-        public TessellatedSolid TransformToGetNewSolid(double[,] transformationMatrix)
+        public override Solid TransformToNewSolid(double[,] transformationMatrix)
         {
             var ts = this;
 
@@ -1224,5 +1101,6 @@ namespace TVGL
 
             return new TessellatedSolid(newVertices, faceToVertexIndices, colors, ts.Units, ts.Name, ts.FileName);
         }
+        #endregion
     }
 }

@@ -30,7 +30,7 @@ namespace TVGL
     ///     find some
     ///     error with the file. Here we attempt to patch those up..
     /// </remarks>
-    public partial class TessellatedSolid
+    public partial class TessellatedSolid:Solid
     {
         private void MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices)
         {

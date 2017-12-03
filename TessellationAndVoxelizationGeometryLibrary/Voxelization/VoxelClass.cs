@@ -21,89 +21,71 @@ namespace TVGL.Voxelization
     public interface IVoxel
     {
         long ID { get; }
-        double X { get; }
-        double Y { get; }
-        double Z { get; }
+        byte[] Coordinates { get; }
         double SideLength { get; }
-        VoxelRoleTypes Role { get; set; }
-}
+        VoxelRoleTypes Role { get; }
+        int Level { get; }
+    }
 
     public struct Voxel : IVoxel
     {
-        public long ID { get; }
-        public double X { get; }
-        public double Y { get; }
-        public double Z { get; }
-        public double SideLength { get; }
-        public VoxelRoleTypes Role { get; set; }
-    }
-    public class VoxelClass:IVoxel
-    {
-        #region Constructor
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelClass"/> struct.
-        /// </summary>
-        /// <param name="voxelID">The voxel identifier.</param>
-        /// <param name="voxelRole">The voxel role.</param>
-        /// <param name="level">The level.</param>
-        /// <param name="tsObject">The ts object.</param>
-        public VoxelClass(int x, int y, int z, VoxelRoleTypes voxelRole, int level) 
-        {
-            Coordinates = new[] {(byte)x, (byte)y, (byte)z };
-            VoxelRole = voxelRole;
-            Level = level;
-            if (VoxelRole == VoxelRoleTypes.Partial && level == 0)
-            {
-                NextLevelVoxels = new VoxelHashSet<long>(new VoxelComparerCoarse(), level);
-                HighLevelVoxels = new VoxelHashSet<long>(new VoxelComparerFine(), level);
-            }
-            //if (tsObject != null)
-            //{
-            //    TessellationElements = new List<TessellationBaseClass> { tsObject };
-            //    tsObject.AddVoxel(this);
-            //}
-            //else TessellationElements = null;
-        }
-        #endregion
-
-        /// <summary>
-        /// The voxel role (interior or exterior)
-        /// </summary>
-        public VoxelRoleTypes VoxelRole { get; internal set; }
-
+        public long ID { get; internal set; }
+        public byte[] Coordinates { get; internal set; }
+        public double SideLength { get; internal set; }
+        public VoxelRoleTypes Role { get; internal set; }
         public int Level { get; internal set; }
-        /// <summary>
-        /// Gets or sets the identifier.
-        /// </summary>
-        /// <value>The identifier.</value>
-       // public long ID { get; internal set; } //is this ever used?
 
-        internal byte[] Coordinates;
+    }
+    public abstract class VoxelWithTessellationLinks : IVoxel
+    {
+        protected VoxelWithTessellationLinks(int x, int y, int z, VoxelRoleTypes voxelRole)
+        {
+            Coordinates = new[] { (byte)x, (byte)y, (byte)z };
+            Role = voxelRole;
+        }
+        public abstract int Level { get; }
+        public long ID { get; internal set; }
 
-        #region TessellatedElements propoerties
-        /// <summary>
-        /// Gets the tessellation elements that areoverlapping with this voxel.
-        /// </summary>
-        /// <value>The tessellation elements.</value>
+        public byte[] Coordinates { get; internal set; }
+        public double SideLength { get; internal set; }
+
+        public VoxelRoleTypes Role { get; internal set; }
         internal List<TessellationBaseClass> TessellationElements;
 
         internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
         internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
         internal List<Vertex> Vertices => TessellationElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
+    }
 
-        public long ID => throw new NotImplementedException();
+    public class Voxel_Level0_Class : VoxelWithTessellationLinks
+    {
+        public override int Level => 0;
 
-        public double X => throw new NotImplementedException();
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Voxel_Level0_Class"/> struct.
+        /// </summary>
+        /// <param name="voxelID">The voxel identifier.</param>
+        /// <param name="voxelRole">The voxel role.</param>
+        internal Voxel_Level0_Class(int x, int y, int z, VoxelRoleTypes voxelRole) : base(x, y, z, voxelRole)
+        {
+            if (voxelRole == VoxelRoleTypes.Partial)
+            {
+                NextLevelVoxels = new VoxelHashSet<long>(new VoxelComparerCoarse(), 0);
+                HighLevelVoxels = new VoxelHashSet<long>(new VoxelComparerFine(), 0);
+            }
+        }
 
-        public double Y => throw new NotImplementedException();
 
-        public double Z => throw new NotImplementedException();
 
-        public double SideLength => throw new NotImplementedException();
-
-        public VoxelRoleTypes Role { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-        #endregion
         internal VoxelHashSet<long> HighLevelVoxels;
         internal VoxelHashSet<long> NextLevelVoxels;
+    }
+
+
+    public class Voxel_Level1_Class : VoxelWithTessellationLinks
+    {
+        internal Voxel_Level1_Class(int x, int y, int z, VoxelRoleTypes voxelRole) : base(x, y, z, voxelRole) { }
+        public override int Level => 1;
+
     }
 }

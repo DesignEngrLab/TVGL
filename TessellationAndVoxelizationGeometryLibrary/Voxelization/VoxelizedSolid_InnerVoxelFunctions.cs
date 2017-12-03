@@ -26,15 +26,18 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
         #region Tessellation References functions
-        internal static void Add(VoxelClass voxel, TessellationBaseClass tsObject)
+        internal static void Add(IVoxel voxelbase, TessellationBaseClass tsObject)
         {
+            if (!(voxelbase is VoxelWithTessellationLinks)) return;
+            var voxel = (VoxelWithTessellationLinks)voxelbase;
             if (voxel.TessellationElements == null) voxel.TessellationElements = new List<TessellationBaseClass>();
             else if (voxel.TessellationElements.Contains(tsObject)) return;
             lock (voxel.TessellationElements) voxel.TessellationElements.Add(tsObject);
             tsObject.AddVoxel(voxel);
         }
 
-        internal bool Remove(VoxelClass voxel, TessellationBaseClass tsObject)
+
+        internal bool Remove(VoxelWithTessellationLinks voxel, TessellationBaseClass tsObject)
         {
             if (voxel.TessellationElements == null) return false;
             if (voxel.TessellationElements.Count == 1 && voxel.TessellationElements.Contains(tsObject))
@@ -45,7 +48,7 @@ namespace TVGL.Voxelization
             return voxel.TessellationElements.Remove(tsObject);
         }
 
-        internal bool Contains(VoxelClass voxel, TessellationBaseClass tsObject)
+        internal bool Contains(VoxelWithTessellationLinks voxel, TessellationBaseClass tsObject)
         {
             if (voxel.TessellationElements == null) return false;
             return voxel.TessellationElements.Contains(tsObject);
@@ -53,7 +56,7 @@ namespace TVGL.Voxelization
         #endregion
 
         #region Add/Remove Functions
-        internal void Add(VoxelClass voxel, long voxelID, int level = -1)
+        internal void Add(Voxel_Level0_Class voxel, long voxelID, int level = -1)
         {
             if (voxelID < 0 || level >= 2)
             {
@@ -69,23 +72,23 @@ namespace TVGL.Voxelization
                 if (voxel.NextLevelVoxels.Contains(voxelID)) return;
                 if (voxel.NextLevelVoxels.Count == 4095)
                 {
-                    voxel.VoxelRole = VoxelRoleTypes.Full;
+                    voxel.Role = VoxelRoleTypes.Full;
                     // also have to change the key in the level-0 dictionary. to do this, we need to add and remove
                     voxel.HighLevelVoxels.Clear();
                     foreach (var nextLevelVoxel in voxel.NextLevelVoxels)
-                        voxelDictionaryLevel1[nextLevelVoxel].VoxelRole=VoxelRoleTypes.Empty;
+                        voxelDictionaryLevel1[nextLevelVoxel].Role = VoxelRoleTypes.Empty;
                     voxel.NextLevelVoxels.Clear();
                 }
                 else lock (voxel.NextLevelVoxels) voxel.NextLevelVoxels.Add(voxelID);
             }
         }
 
-        internal bool Remove(VoxelClass voxel, long voxelID)
+        internal bool Remove(Voxel_Level0_Class voxel, long voxelID)
         {
             if (voxelID < 4611686018427387904 && voxelID >= 0)
                 throw new ArgumentException("Attempting to remove a level 0 voxel to another level 0 voxel.");
-            if (voxel.VoxelRole == VoxelRoleTypes.Empty) return true;
-            if (voxel.VoxelRole == VoxelRoleTypes.Full)
+            if (voxel.Role == VoxelRoleTypes.Empty) return true;
+            if (voxel.Role == VoxelRoleTypes.Full)
                 throw new NotImplementedException(
                     "removing a voxel from a full means having to create all the sub-voxels minus 1.");
             if (voxelID < 0)
@@ -94,7 +97,7 @@ namespace TVGL.Voxelization
                 {
                     //then this is the last subvoxel, so this goes empty
                     voxel.HighLevelVoxels = null;
-                    voxel.VoxelRole = VoxelRoleTypes.Empty;
+                    voxel.Role = VoxelRoleTypes.Empty;
                     return true;
                 }
                 if (voxel.HighLevelVoxels.Any())
@@ -108,7 +111,7 @@ namespace TVGL.Voxelization
                 //then this is the last subvoxel, so this goes empty
                 voxel.NextLevelVoxels = null;
                 voxel.HighLevelVoxels = null;
-                voxel.VoxelRole = VoxelRoleTypes.Empty;
+                voxel.Role = VoxelRoleTypes.Empty;
                 return true;
             }
             if (voxel.NextLevelVoxels.Any())
@@ -117,7 +120,7 @@ namespace TVGL.Voxelization
                 "removing a voxel from a full means having to create all the sub-voxels minus 1.");
         }
 
-        internal bool Contains(VoxelClass voxel, long voxelID, int level = -1)
+        internal bool Contains(Voxel_Level0_Class voxel, long voxelID, int level = -1)
         {
             if (voxelID < 0 || level >= 2)
             {

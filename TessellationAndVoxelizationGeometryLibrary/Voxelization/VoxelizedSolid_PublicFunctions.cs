@@ -27,18 +27,20 @@ namespace TVGL.Voxelization
     {
         public int Count => voxelDictionaryLevel0.Count + (voxelDictionaryLevel1?.Count ?? 0) +
                             voxelDictionaryLevel0.Sum(dict => dict.Value.HighLevelVoxels?.Count ?? 0);
-        public override double Volume { 
+        public new double Volume { 
             get
             {
                 var totals = GetTotals();
                 var volume = 0.0;
-                for (int i = 0; i < discretizationLevel; i++)
+                for (int i = 0; i <= discretizationLevel; i++)
                 {
                     volume += Math.Pow(VoxelSideLength[i], 3) * totals[2 * i];
                 }
                 return volume + Math.Pow(VoxelSideLength[discretizationLevel], 3) * totals[2 * discretizationLevel + 1];
             }
+            internal set { _volume = value; }
         }
+        double _volume;
 
         public int[] GetTotals()
         {
@@ -67,9 +69,9 @@ namespace TVGL.Voxelization
         public IEnumerable<double[]> GetVoxelsAsAABBDoubles(VoxelRoleTypes role = VoxelRoleTypes.Partial, int level = 4)
         {
             if (level == 0)
-                return voxelDictionaryLevel0.Values.Where(v => v.VoxelRole == role).Select(v => GetBottomAndWidth(v.Coordinates, 0));
+                return voxelDictionaryLevel0.Values.Where(v => v.Role == role).Select(v => GetBottomAndWidth(v.Coordinates, 0));
             if (level == 1)
-                return voxelDictionaryLevel1.Values.Where(v => v.VoxelRole == role).Select(v => GetBottomAndWidth(v.Coordinates, 1));
+                return voxelDictionaryLevel1.Values.Where(v => v.Role == role).Select(v => GetBottomAndWidth(v.Coordinates, 1));
             if (level > discretizationLevel) level = discretizationLevel;
             var flags = new VoxelRoleTypes[level];
             for (int i = 0; i < level - 1; i++)
@@ -106,7 +108,7 @@ namespace TVGL.Voxelization
         #endregion
         
 
-        public static IEnumerable<double[]> GetVoxels(VoxelClass voxel, long targetFlags, VoxelizedSolid voxelizedSolid, int level)
+        public static IEnumerable<double[]> GetVoxels(Voxel_Level0_Class voxel, long targetFlags, VoxelizedSolid voxelizedSolid, int level)
         {
             foreach (var vx in voxel.HighLevelVoxels)
             {
@@ -123,9 +125,12 @@ namespace TVGL.Voxelization
             throw new NotImplementedException();
         }
 
-        public override Solid TransformToGetNewSolid(double[,] transformationMatrix)
+        public override Solid TransformToNewSolid(double[,] transformationMatrix)
         {
             throw new NotImplementedException();
         }
+
+
+
     }
 }
