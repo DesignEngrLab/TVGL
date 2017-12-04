@@ -164,5 +164,7 @@ namespace TVGL
         /// <param name="transformationMatrix"></param>
         /// <returns></returns>
         public abstract Solid TransformToNewSolid(double[,] transformationMatrix);
+
+        public abstract Solid Copy();
     }
 }

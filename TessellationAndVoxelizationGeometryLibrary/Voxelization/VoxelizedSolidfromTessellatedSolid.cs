@@ -475,8 +475,8 @@ namespace TVGL.Voxelization
                 .Distinct()
                 .AsParallel();
             var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>>(
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim)),
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim))));
+                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim+1)), // why the plus one? see the comparator. it is usually to line up with the
+                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim+1))));  //VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
             Parallel.ForEach(voxelDictionaryLevel1, voxelKeyValuePair =>
             //foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
             {

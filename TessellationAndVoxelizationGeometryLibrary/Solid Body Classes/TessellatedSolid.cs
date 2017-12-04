@@ -882,7 +882,7 @@ namespace TVGL
         ///     Copies this instance.
         /// </summary>
         /// <returns>TessellatedSolid.</returns>
-        public TessellatedSolid Copy()
+        public override Solid Copy()
         {
             return new TessellatedSolid(Vertices.Select(vertex => (double[])vertex.Position.Clone()).ToList(),
                 Faces.Select(f => f.Vertices.Select(vertex => vertex.IndexInList).ToArray()).ToList(),

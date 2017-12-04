@@ -80,7 +80,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Positive X Direction
         /// </summary>
-        XPositive = 4,
+        XPositive = 1,
         /// <summary>
         /// Positive Y Direction
         /// </summary>
@@ -88,11 +88,11 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Positive Z Direction
         /// </summary>
-        ZPositive = 1,
+        ZPositive = 3,
         /// <summary>
         /// Negative X Direction
         /// </summary>
-        XNegative = -4,
+        XNegative = -1,
         /// <summary>
         /// Negative Y Direction
         /// </summary>
@@ -100,7 +100,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Negative Z Direction
         /// </summary>
-        ZNegative = -1
+        ZNegative = -3
     }
 
     /// <summary>

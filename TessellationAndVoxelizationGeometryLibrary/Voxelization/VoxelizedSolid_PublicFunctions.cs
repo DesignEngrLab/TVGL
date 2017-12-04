@@ -113,7 +113,7 @@ namespace TVGL.Voxelization
         }
 
 
-
+        #region Solid Method Overrides (Transforms & Copy)
         public override void Transform(double[,] transformMatrix)
         {
             throw new NotImplementedException();
@@ -124,7 +124,50 @@ namespace TVGL.Voxelization
             throw new NotImplementedException();
         }
 
+        public override Solid Copy()
+        {
+            throw new NotImplementedException();
+        }
 
+        #endregion
+
+        #region Draft
+
+        public VoxelizedSolid DraftToNewSolid(VoxelDirections direction)
+        {
+            var copy = (VoxelizedSolid) Copy();
+            copy.Draft(direction);
+            return copy;
+        }
+
+        public void Draft(VoxelDirections direction)
+        {
+            var sortedPartials = new List<Voxel_Level0_Class>[16];
+
+            Parallel.ForEach(voxelDictionaryLevel0.Values, voxel0 =>
+                //foreach (var voxel0 in voxelDictionaryLevel0.Values)
+            {
+                if (voxel0.Role == VoxelRoleTypes.Full)
+                {
+                    var neighbor = FindNeighbor(voxel0,direction);
+                    while (neighbor?.Role != VoxelRoleTypes.Full)
+                    {
+                        MakeVoxelFull(neighbor);
+                        neighbor = FindNeighbor(neighbor, direction);
+                    }
+                }
+                else if (voxel0.Role == VoxelRoleTypes.Partial)
+                    sortedPartials.Add(voxel0);
+            });
+
+        }
+
+        #endregion
+
+        public IVoxel FindNeighbor(IVoxel voxel, VoxelDirections direction)
+        {
+            
+        }
 
     }
 }

@@ -133,5 +133,17 @@ namespace TVGL.Voxelization
             return voxel.NextLevelVoxels.Contains(voxelID);
         }
         #endregion
+
+
+        private void MakeVoxelFull(IVoxel neighbor)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ClearOutEmpties(int level = -1)
+        {
+            throw new NotImplementedException();
+
+        }
     }
 }
