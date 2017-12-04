@@ -84,8 +84,11 @@ namespace TVGL.Voxelization
 
         private double[] GetBottomAndWidth(int[] coordinates, int level)
         {
+            if (level == 0)
+                coordinates = coordinates.Select(x => x >> 4 << 4).ToArray();
+
             var doubleCoords = coordinates.Select(Convert.ToDouble).ToArray();
-            doubleCoords = doubleCoords.multiply(VoxelSideLength[level]).add(Offset);
+            doubleCoords = doubleCoords.multiply(VoxelSideLength[1]).add(Offset);
 
             return new[] { doubleCoords[0], doubleCoords[1], doubleCoords[2], VoxelSideLength[level] };
         }

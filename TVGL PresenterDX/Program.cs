@@ -133,7 +133,7 @@ namespace TVGLPresenterDX
             var totalTime2 = DateTime.Now - startTime;
             Console.WriteLine("tsvol:{0}\tvol:{1}\ttime{2}",ts.Volume, voxelSpace2.Volume, totalTime2.TotalSeconds);
             //Console.WriteLine("{0}\t{1}", totalTime1.TotalSeconds, totalTime2.TotalSeconds);
-           //  PresenterShowAndHang(new Solid[] { ts, voxelSpace2 });
+            PresenterShowAndHang(new Solid[] { ts, voxelSpace2 });
             //return;
             //startTime = DateTime.Now;
             //var voxelSpace2 = new VoxelSpace();

@@ -85,7 +85,7 @@ namespace TVGLPresenterDX
             var positions = new Vector3Collection();
             var indices = new IntCollection();
             var normals = new Vector3Collection();
-            var boxVoxels = vs.GetVoxelsAsAABBDoubles(VoxelRoleTypes.Partial, 1);
+            var boxVoxels = vs.GetVoxelsAsAABBDoubles(VoxelRoleTypes.Partial, 0);
             foreach (var boxVoxel in boxVoxels)
             {
                 var i = positions.Count;
