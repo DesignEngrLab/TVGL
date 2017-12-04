@@ -27,7 +27,8 @@ namespace TVGL.Voxelization
     {
         public int Count => voxelDictionaryLevel0.Count + (voxelDictionaryLevel1?.Count ?? 0) +
                             voxelDictionaryLevel0.Sum(dict => dict.Value.HighLevelVoxels?.Count ?? 0);
-        public new double Volume { 
+        public new double Volume
+        {
             get
             {
                 var totals = GetTotals();
@@ -81,22 +82,12 @@ namespace TVGL.Voxelization
             return voxelDictionaryLevel0.Values.SelectMany(voxDict => GetVoxels(voxDict, targetFlags, this, level));
         }
 
-        private double[] GetBottomAndWidth(byte[] coordinates, int level)
+        private double[] GetBottomAndWidth(int[] coordinates, int level)
         {
-            double x, y, z;
-            if (level == 0)
-            {
-                x = coordinates[0] >> 4;
-                y = coordinates[1] >> 4;
-                z = coordinates[2] >> 4;
-            }
-            else
-            {
-                x = coordinates[0];
-                y = coordinates[1];
-                z = coordinates[2];
-            }
-            return new[] { x, y, z, VoxelSideLength[level] };
+            var doubleCoords = coordinates.Select(Convert.ToDouble).ToArray();
+            doubleCoords = doubleCoords.multiply(VoxelSideLength[level]).add(Offset);
+
+            return new[] { doubleCoords[0], doubleCoords[1], doubleCoords[2], VoxelSideLength[level] };
         }
 
         internal double[] GetBottomAndWidth(long id, int level)
@@ -106,7 +97,7 @@ namespace TVGL.Voxelization
         }
 
         #endregion
-        
+
 
         public static IEnumerable<double[]> GetVoxels(Voxel_Level0_Class voxel, long targetFlags, VoxelizedSolid voxelizedSolid, int level)
         {

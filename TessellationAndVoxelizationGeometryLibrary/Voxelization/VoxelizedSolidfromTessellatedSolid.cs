@@ -240,7 +240,7 @@ namespace TVGL.Voxelization
             for (var i = minCoord; i <= maxCoord; i++)
             {
                 // set up voxels for the face
-                coordinates[dim] = (byte)i;
+                coordinates[dim] = i;
                 MakeAndStorePartialVoxelLevel0And1(coordinates[0], coordinates[1], coordinates[2], face);
             }
             foreach (var faceEdge in face.Edges)
@@ -252,7 +252,7 @@ namespace TVGL.Voxelization
                 if (step == 0) continue;
                 for (var i = fromIndex; i != toIndex; i += step)
                 {
-                    coordinates[dim] = (byte)i;
+                    coordinates[dim] = i;
                     MakeAndStorePartialVoxelLevel0And1(coordinates[0], coordinates[1], coordinates[2], faceEdge);
                 }
             }
@@ -499,7 +499,7 @@ namespace TVGL.Voxelization
         private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> sortedNegatives,
             SortedSet<Voxel_Level1_Class> sortedPositives, int sweepDim)
         {
-            var coords = (byte[])sortedNegatives.First().Coordinates.Clone();
+            var coords = (int[])sortedNegatives.First().Coordinates.Clone();
             var negativeQueue = new Queue<Voxel_Level1_Class>(sortedNegatives);
             var positiveQueue = new Queue<Voxel_Level1_Class>(sortedPositives);
             while (negativeQueue.Any() && positiveQueue.Any())
@@ -511,7 +511,7 @@ namespace TVGL.Voxelization
                     endIndex = positiveQueue.Dequeue().Coordinates[sweepDim];
                 for (var i = startIndex + 1; i < endIndex; i++)
                 {
-                    coords[sweepDim] = (byte)i;
+                    coords[sweepDim] = i;
                     MakeAndStoreFullVoxelLevel0And1(coords[0], coords[1], coords[2]);
                 }
             }

@@ -21,7 +21,7 @@ namespace TVGL.Voxelization
     public interface IVoxel
     {
         long ID { get; }
-        byte[] Coordinates { get; }
+        int[] Coordinates { get; }
         double SideLength { get; }
         VoxelRoleTypes Role { get; }
         int Level { get; }
@@ -30,7 +30,7 @@ namespace TVGL.Voxelization
     public struct Voxel : IVoxel
     {
         public long ID { get; internal set; }
-        public byte[] Coordinates { get; internal set; }
+        public int[] Coordinates { get; internal set; }
         public double SideLength { get; internal set; }
         public VoxelRoleTypes Role { get; internal set; }
         public int Level { get; internal set; }
@@ -40,13 +40,13 @@ namespace TVGL.Voxelization
     {
         protected VoxelWithTessellationLinks(int x, int y, int z, VoxelRoleTypes voxelRole)
         {
-            Coordinates = new[] { (byte)x, (byte)y, (byte)z };
+            Coordinates = new[] {x, y, z };
             Role = voxelRole;
         }
         public abstract int Level { get; }
         public long ID { get; internal set; }
 
-        public byte[] Coordinates { get; internal set; }
+        public int[] Coordinates { get; internal set; }
         public double SideLength { get; internal set; }
 
         public VoxelRoleTypes Role { get; internal set; }
@@ -75,8 +75,6 @@ namespace TVGL.Voxelization
             }
         }
 
-
-
         internal VoxelHashSet<long> HighLevelVoxels;
         internal VoxelHashSet<long> NextLevelVoxels;
     }
@@ -86,6 +84,5 @@ namespace TVGL.Voxelization
     {
         internal Voxel_Level1_Class(int x, int y, int z, VoxelRoleTypes voxelRole) : base(x, y, z, voxelRole) { }
         public override int Level => 1;
-
     }
 }
