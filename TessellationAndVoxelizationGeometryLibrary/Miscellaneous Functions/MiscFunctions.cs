@@ -86,9 +86,9 @@ namespace TVGL
                 //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
                 Point point;
                 var dot1 = directions[0].dotProduct(vertex.Position);
-   
+
                 switch (directions.Length)
-                {                   
+                {
                     case 1:
                         {
                             point = new Point(vertex, Math.Round(dot1 * tolerance), 0.0, 0.0);
@@ -104,7 +104,7 @@ namespace TVGL
                         {
                             var dot2 = directions[1].dotProduct(vertex.Position);
                             var dot3 = directions[2].dotProduct(vertex.Position);
-                            point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), Math.Round(dot3 * tolerance));           
+                            point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), Math.Round(dot3 * tolerance));
                         }
                         break;
                     default:
@@ -262,6 +262,101 @@ namespace TVGL
         }
         #endregion
 
+        #region Dealing with Flat Patches
+        /// <summary>
+        /// Gets a collection of faces with distinct normals. These are the largest faces within the set with common normal. 
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="removeOpposites">if set to <c>true</c> [remove opposites].</param>
+        /// <returns>List&lt;PolygonalFace&gt;.</returns>
+        public static List<PolygonalFace> FacesWithDistinctNormals(IEnumerable<PolygonalFace> faces,
+            double tolerance = Constants.SameFaceNormalDotTolerance, bool removeOpposites = true)
+        {
+            // This is done by sorting the normals first by the x-component, then by the y and then the z. 
+            // This is to avoid the O(n^2) and be more like O(n). It is a necessary but not sufficient
+            // condition that faces with similar x-values in the normal (and then y and then z) will
+            // likely be the same normal. So, in this manner we can then check adjacent faces in a sorted
+            // set. However, sorting just in x alone may not be sufficient as the list may jump around. 
+            // For example, a portion of the list may look like: { ... [0 .3 .4], [0 -.3 .4], [0, .29999, .4] }
+            // comparing adjacent pairs will miss the fact that 1 and 3 and similar. But - since they have the
+            // same x-component as 2, then they are not compared. Here, the chance to catch such cases by sorting
+            // about all 3 cardinal directions. One could continue sorting by a dot-product with an arbitrary normal,
+            // but cases where this function have failed have not been observed.
+            var distinctList = faces.ToList();
+            for (int k = 0; k < 3; k++)
+            {
+                distinctList = distinctList.OrderBy(f => f.Normal[k]).ToList();
+                for (var i = distinctList.Count - 1; i > 0; i--)
+                {
+                    if (distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(1.0, tolerance) ||
+                        (removeOpposites && distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(-1, tolerance)))
+                    {
+                        if (distinctList[i].Area <= distinctList[i - 1].Area) distinctList.RemoveAt(i);
+                        else distinctList.RemoveAt(i - 1);
+                    }
+                }
+            }
+            return distinctList;
+        }
+
+        /// <summary>
+        ///     Gets a list of flats for a given list of faces.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="minSurfaceArea">The minimum surface area.</param>
+        /// <returns>List&lt;Flat&gt;.</returns>
+        public static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+               int minNumberOfFacesPerFlat = 3)
+        {
+            //Note: This function has been optimized to run very fast for large amount of faces
+            //Used hashet for "Contains" function calls 
+            var unusedFaces = new HashSet<PolygonalFace>(faces);
+            var listFlats = new List<Flat>();
+
+            //Use an IEnumerable class (List) for iterating through each part, and then the 
+            //"Contains" function to see if it was already used. This is actually much faster
+            //than using a while loop with a ".Any" and ".First" call on the Hashset.
+            foreach (var startFace in faces)
+            {
+                //If this faces has already been used, continue to the next face
+                if (!unusedFaces.Contains(startFace)) continue;
+                //Get all the faces that should be used on this flat
+                //Use a hashset so we can use the ".Contains" function
+                var flatFaces = new HashSet<PolygonalFace> { startFace };
+                var flat = new Flat(flatFaces);
+                //Stacks a fast for "Push" and "Pop".
+                //Add all the adjecent faces from the first face to the stack for 
+                //consideration in the while loop below.
+                var stack = new Stack<PolygonalFace>(flatFaces);
+                while (stack.Any())
+                {
+                    var newFace = stack.Pop();
+                    //Add new adjacent faces to the stack for consideration
+                    //if the faces are already listed in the flat faces, the first
+                    //"if" statement in the while loop will ignore them.
+                    foreach (var adjacentFace in newFace.AdjacentFaces)
+                    {
+                        if (!flatFaces.Contains(adjacentFace) && unusedFaces.Contains(adjacentFace) &&
+                            !stack.Contains(adjacentFace) && flat.IsNewMemberOf(adjacentFace))
+                        {
+                            flat.UpdateWith(adjacentFace);
+                            flatFaces.Add(newFace);
+                            stack.Push(adjacentFace);
+                        }
+                    }
+                }
+                //Criteria of whether it should be a flat should be inserted here.
+                if (flat.Faces.Count < minNumberOfFacesPerFlat) continue;
+                listFlats.Add(flat);
+                foreach (var polygonalFace in flat.Faces)
+                    unusedFaces.Remove(polygonalFace);
+            }
+            return listFlats;
+        }
+        #endregion
+
 
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
@@ -354,7 +449,7 @@ namespace TVGL
 
             // compute area of the 2D projection
             // -1 so as to not include the vertex that was added to the end of the list
-            var n = vertices.Count - 1; 
+            var n = vertices.Count - 1;
             var i = 1;
             var area = 0.0;
             switch (coord)
@@ -505,8 +600,8 @@ namespace TVGL
             if (attempts > 0 && attempts < 4) Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
             else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
 
-            return path ;
-    }
+            return path;
+        }
 
 
 
@@ -938,7 +1033,7 @@ namespace TVGL
             var p2 = pt2.Position2D;
             var q = pt3.Position2D;
             var q2 = pt4.Position2D;
-            var points = new List<Point> {pt1, pt2, pt3, pt4};
+            var points = new List<Point> { pt1, pt2, pt3, pt4 };
             intersectionPoint = null;
             var r = p2.subtract(p);
             var s = q2.subtract(q);
@@ -956,10 +1051,10 @@ namespace TVGL
                 // then the two lines are collinear but disjoint.
                 var qpr = qp[0] * r[0] + qp[1] * r[1];
                 var pqs = p.subtract(q)[0] * s[0] + p.subtract(q)[1] * s[1];
-                var overlapping = (0 <= qpr && qpr <= r[0]*r[0] + r[1]*r[1]) ||
-                                  (0 <= pqs && pqs <= s[0]*s[0] + s[1]*s[1]);
+                var overlapping = (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) ||
+                                  (0 <= pqs && pqs <= s[0] * s[0] + s[1] * s[1]);
                 if (rxs.IsNegligible() && qpxr.IsNegligible())
-                    // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
+                // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
                 {
                     if (!considerCollinearOverlapAsIntersect) return false;
                     return overlapping;
@@ -988,14 +1083,14 @@ namespace TVGL
                 }
                 else slope2 = (pt4.Y - pt3.Y) / (pt4.X - pt3.X);
                 //Foreach line, check the Y intercepts of the X values from the other line. If the intercepts match the point.Y values, then it is collinear
-                if ((slope1*(pt3.X - pt1.X) + pt1.Y).IsPracticallySame(pt3.Y) &&
-                    (slope1*(pt4.X - pt1.X) + pt1.Y).IsPracticallySame(pt4.Y))
+                if ((slope1 * (pt3.X - pt1.X) + pt1.Y).IsPracticallySame(pt3.Y) &&
+                    (slope1 * (pt4.X - pt1.X) + pt1.Y).IsPracticallySame(pt4.Y))
                 {
                     if (!considerCollinearOverlapAsIntersect) return false;
                     return true;
                 }
-                if ((slope2*(pt1.X - pt3.X) + pt3.Y).IsPracticallySame(pt1.Y) &&
-                    (slope2*(pt2.X - pt3.X) + pt3.Y).IsPracticallySame(pt2.Y))
+                if ((slope2 * (pt1.X - pt3.X) + pt3.Y).IsPracticallySame(pt1.Y) &&
+                    (slope2 * (pt2.X - pt3.X) + pt3.Y).IsPracticallySame(pt2.Y))
                 {
                     if (!considerCollinearOverlapAsIntersect) return false;
                     return true;
@@ -1028,11 +1123,11 @@ namespace TVGL
 
             // 5. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
             // the two line segments meet at the point p + t r = q + u s.
-            if (!rxs.IsNegligible() && 
+            if (!rxs.IsNegligible() &&
                 !t[2].IsLessThanNonNegligible() && !t[2].IsGreaterThanNonNegligible(1.0) &&
                 !u[2].IsLessThanNonNegligible() && !u[2].IsGreaterThanNonNegligible(1.0))
-            {    
-                
+            {
+
                 ////Tthe intersection point may be one of the existing points
                 ////This is needed because the x,y calculated below can be off by a very slight amount, caused by rounding error.
                 ////Check if any of the points are on the other line.
@@ -1098,7 +1193,7 @@ namespace TVGL
                     intersectionPoint = new Point(x, y);
                     return true;
                 }
-                
+
                 //Values are not even close
                 if (!x.IsPracticallySame(x2, 0.0001) || !y.IsPracticallySame(y2, 0.00001)) throw new NotImplementedException();
 
@@ -1550,7 +1645,7 @@ namespace TVGL
                 * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
                 t = (lineVector[0] * (qPoint[0] - lineRefPt[0]) + lineVector[1] * (qPoint[1] - lineRefPt[1]))
                         / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1]);
-                pointOnLine = new[] {lineRefPt[0] + lineVector[0]*t, lineRefPt[1] + lineVector[1]*t};
+                pointOnLine = new[] { lineRefPt[0] + lineVector[0] * t, lineRefPt[1] + lineVector[1] * t };
                 return DistancePointToPoint(qPoint, pointOnLine);
             }
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
@@ -1902,7 +1997,7 @@ namespace TVGL
                 }
 
                 if (d < 0) continue; //line is below
-                
+
                 //Else, line is above
                 count++;
                 if (d > minD) continue;

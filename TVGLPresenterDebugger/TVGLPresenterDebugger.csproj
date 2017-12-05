@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TVGLPresenterDebugger</RootNamespace>
     <AssemblyName>TVGLPresenterDebugger</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -178,9 +178,6 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Extrude.cs">
       <Link>TVGL\Miscellaneous Functions\Extrude.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\ListFunctions.cs">
-      <Link>TVGL\Miscellaneous Functions\ListFunctions.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs">
       <Link>TVGL\Miscellaneous Functions\MiscFunctions.cs</Link>

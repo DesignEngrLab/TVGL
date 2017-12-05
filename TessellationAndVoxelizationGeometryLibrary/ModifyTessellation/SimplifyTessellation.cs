@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -23,6 +24,57 @@ namespace TVGL
     /// </summary>
     public static partial class ModifyTessellation
     {
+        /// <summary>
+        /// Simplifies the model by merging the eliminating edges that are closer together
+        /// than double the shortest edge length
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        public static void SimplifyFlatPatches(this TessellatedSolid ts)
+        {
+         //   throw new NotImplementedException();
+            var edgesToRemove = new List<Edge>();
+            var edgesToAdd = new List<Edge>();
+            var facesToRemove = new List<PolygonalFace>();
+            var facesToAdd = new List<PolygonalFace>();
+            var flats = TVGL.MiscFunctions.FindFlats(ts.Faces);
+            foreach (var flat in flats)
+            {
+                if (flat.InnerEdges.Count < flat.Faces.Count) continue;
+                if (ts.Primitives != null && ts.Primitives.Contains(flat)) ts.Primitives.Remove(flat);
+                ts.RemoveFaces(flat.Faces);
+                // problem is, the vertices need to make a proper polygon
+                var vertices = flat.OuterEdges.SelectMany(oe => new[] { oe.To, oe.From }).Distinct().ToList();
+                List<List<Vertex[]>> triangulatedListofLists =
+                TriangulatePolygon.Run(new List<List<Vertex>> { vertices }, flat.Normal);
+                var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
+                var newFaces = new List<PolygonalFace>();
+                foreach (var vertexSet in triangulatedList)
+                {
+                    // need to attach to existing outeredges
+                    // need to make new faces and edges on the inside.
+                    // make a new Flat with this info
+                    //edgesToAdd.Add(new Edge());
+                    newFaces.Add(new PolygonalFace());
+                    //var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position);
+                    //var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position);
+                    //var face = v1.crossProduct(v2).dotProduct(flat.Normal) < 0
+                    //    ? new PolygonalFace(vertexSet.Reverse(), flat.Normal, doublyLinkToVertices) { Color = color }
+                    //    : new PolygonalFace(vertexSet, flat.Normal, doublyLinkToVertices) { Color = color };
+                    //listOfFaces.Add(face);
+                    //listOfFlatFaces.Add(face);
+                }
+                edgesToRemove.AddRange(flat.InnerEdges);
+                facesToRemove.AddRange(flat.Faces);
+                facesToAdd.AddRange(newFaces);
+                if (ts.Primitives == null) ts.Primitives = new List<PrimitiveSurface>();
+                ts.Primitives.Add(new Flat(newFaces));
+            }
+            ts.RemoveFaces(facesToRemove);
+            ts.AddFaces(facesToAdd);
+            ts.RemoveEdges(edgesToRemove);
+            ts.AddEdges(edgesToAdd);
+        }
+
         /// <summary>
         /// Simplifies the model by merging the eliminating edges that are closer together
         /// than double the shortest edge length
@@ -100,7 +152,7 @@ namespace TVGL
                     .Any())
                 {
                     iterations--; //now that we passed that test, we can be assured that the reduction will go through
-                    // move the keepVertex
+                                  // move the keepVertex
                     keepVertex.Position = DetermineIntermediateVertexPosition(removedVertex, keepVertex);
                     // add and remove to the lists at the top of this method
                     removedEdges.Add(edge);

@@ -851,12 +851,12 @@ namespace TVGL
 
         private static bool IsReallyAFlat(IEnumerable<PolygonalFace> faces)
         {
-            return (ListFunctions.FacesWithDistinctNormals(faces.ToList()).Count == 1);
+            return (MiscFunctions.FacesWithDistinctNormals(faces.ToList()).Count == 1);
         }
 
         private static bool IsReallyACone(IEnumerable<PolygonalFace> facesAll, out double[] axis, out double coneAngle)
         {
-            var faces = ListFunctions.FacesWithDistinctNormals(facesAll.ToList());
+            var faces = MiscFunctions.FacesWithDistinctNormals(facesAll.ToList());
             var n = faces.Count;
             if (faces.Count <= 1)
             {

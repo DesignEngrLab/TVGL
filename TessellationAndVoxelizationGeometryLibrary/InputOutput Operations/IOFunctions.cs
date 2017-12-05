@@ -87,12 +87,29 @@ namespace TVGL.IOFunctions
 
         #region Open/Load/Read
 
+#if net40
+#else
+        /// <summary>
+        /// Opens the 3D solid or solids from a provided file name.
+        /// </summary>
+        /// <param name="filename">The filename.</param>
+        /// <returns>
+        /// A list of TessellatedSolids.
+        /// </returns>
+        /// <exception cref="FileNotFoundException">The file was not found at: " + filename</exception>
+        public static List<TessellatedSolid> Open(string filename)
+        {
+            if (File.Exists(filename))
+                using (var fileStream = File.OpenRead(filename))
+                    return Open(fileStream, filename);
+            else throw new FileNotFoundException("The file was not found at: " + filename);
+        }
+#endif
         /// <summary>
         ///     Opens the specified stream, s. Note that as a Portable class library
         /// </summary>
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
-        /// <param name="inParallel">The in parallel.</param>
         /// <returns>TessellatedSolid.</returns>
         /// <exception cref="Exception">
         ///     Cannot open file without extension (e.g. f00.stl).
@@ -106,11 +123,10 @@ namespace TVGL.IOFunctions
         ///     or
         ///     Cannot determine format from extension (not .stl, .3ds, .lwo, .obj, .objx, or .off.
         /// </exception>
-        public static List<TessellatedSolid> Open(Stream s, string filename, bool inParallel = false)
+        public static List<TessellatedSolid> Open(Stream s, string filename)
         {
             var extension = GetExtensionFromFileName(filename);
             List<TessellatedSolid> tessellatedSolids;
-            if (inParallel) throw new Exception("This function has been recently removed.");
             switch (extension)
             {
                 case "stl":
@@ -217,8 +233,41 @@ namespace TVGL.IOFunctions
         {
             var lastIndexOfDot = filename.LastIndexOf('.');
             if (lastIndexOfDot < 0 || lastIndexOfDot >= filename.Length - 1)
-                throw new Exception("Cannot open file without extension (e.g. f00.stl).");
+                return "";
             return filename.Substring(lastIndexOfDot + 1).ToLower();
+        }
+
+
+        private static FileType GetFileTypeFromExtension(string extension)
+        {
+            switch (extension)
+            {
+                case "stl": return FileType.STL_ASCII;
+                case "3mf": return FileType.ThreeMF;
+                case "model": return FileType.Model3MF;
+                case "amf": return FileType.AMF;
+                case "off": return FileType.OFF;
+                case "ply": return FileType.PLY_ASCII;
+                case "xml": return FileType.TVGL;
+                default: return FileType.unspecified;
+            }
+        }
+
+        private static string GetExtensionFromFileType(FileType fileType)
+        {
+            switch (fileType)
+            {
+                case FileType.STL_ASCII:
+                case FileType.STL_Binary: return "stl";
+                case FileType.ThreeMF: return "3mf";
+                case FileType.Model3MF: return "model";
+                case FileType.AMF: return "amf";
+                case FileType.OFF: return "off";
+                case FileType.PLY_ASCII:
+                case FileType.PLY_Binary: return "ply";
+                case FileType.TVGL: return "xml";
+                default: return "";
+            }
         }
         /// <summary>
         ///     Parses the ID and values from the specified line.
@@ -760,6 +809,45 @@ namespace TVGL.IOFunctions
 
         #region Save/Write
 
+#if net40
+#else
+        /// <summary>
+        /// Saves the specified solids to a file.
+        /// </summary>
+        /// <param name="solids">The solids.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="fileType">Type of the file.</param>
+        /// <returns></returns>
+        public static bool Save(IList<TessellatedSolid> solids, string filename, FileType fileType = FileType.unspecified)
+        {
+            var extension = GetExtensionFromFileName(filename);
+            if (fileType != FileType.unspecified)
+                fileType = GetFileTypeFromExtension(extension);
+            var filenameLocal = filename;
+            if (string.IsNullOrWhiteSpace(extension))
+                filenameLocal += "." + GetExtensionFromFileType(fileType);
+            using (var fileStream = File.OpenWrite(filenameLocal))
+                return Save(fileStream, solids, fileType);
+        }
+        /// <summary>
+        /// Saves the specified solid to a file.
+        /// </summary>
+        /// <param name="solid">The solid.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="fileType">Type of the file.</param>
+        /// <returns></returns>
+        public static bool Save(TessellatedSolid solid, string filename, FileType fileType = FileType.unspecified)
+        {
+            var extension = GetExtensionFromFileName(filename);
+            if (fileType != FileType.unspecified)
+                fileType = GetFileTypeFromExtension(extension);
+            var filenameLocal = filename;
+            if (string.IsNullOrWhiteSpace(extension))
+                filenameLocal += "." + GetExtensionFromFileType(fileType);
+            using (var fileStream = File.OpenWrite(filenameLocal))
+                return Save(fileStream, solid, fileType);
+        }
+#endif
         /// <summary>
         ///     Saves the specified stream.
         /// </summary>
