@@ -135,6 +135,7 @@ namespace TVGL.Voxelization
         #endregion
 
 
+
         private void MakeVoxelFull(IVoxel neighbor)
         {
             throw new NotImplementedException();

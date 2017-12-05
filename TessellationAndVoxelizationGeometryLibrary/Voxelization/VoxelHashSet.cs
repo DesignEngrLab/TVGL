@@ -155,6 +155,23 @@ namespace TVGL.Voxelization
             // either m_buckets is null or wasn't found
             return false;
         }
+        //public T GetID(T item)
+        //{
+        //    if (buckets != null)
+        //    {
+        //        int hashCode = InternalGetHashCode(item);
+        //        // see note at "HashSet" level describing why "-1" appears in for loop
+        //        for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+        //        {
+        //            if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
+        //            {
+        //                return slots[i].value;
+        //            }
+        //        }
+        //    }
+        //    // either m_buckets is null or wasn't found
+        //    //return ;
+        //}
 
         /// <summary>
         /// Copy items in this hashset to array, starting at arrayIndex

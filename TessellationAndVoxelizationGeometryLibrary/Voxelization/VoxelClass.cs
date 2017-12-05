@@ -22,7 +22,7 @@ namespace TVGL.Voxelization
     {
         long ID { get; }
         int[] Coordinates { get; }
-        double SideLength { get; }
+       // double SideLength { get; }
         VoxelRoleTypes Role { get; }
         int Level { get; }
     }
@@ -31,9 +31,19 @@ namespace TVGL.Voxelization
     {
         public long ID { get; internal set; }
         public int[] Coordinates { get; internal set; }
-        public double SideLength { get; internal set; }
+        //public double SideLength { get; internal set; }
         public VoxelRoleTypes Role { get; internal set; }
         public int Level { get; internal set; }
+
+        internal Voxel(long ID,int startDiscretizationLevel)
+        {
+            this.ID = ID;
+            var roleFlags = VoxelizedSolid.GetRoleFlags(ID);
+            Role = roleFlags.Last();
+            Level = roleFlags.Length - 1;
+            Coordinates = VoxelizedSolid.GetCoordinatesFromID(ID, Level, startDiscretizationLevel);
+
+        }
 
     }
     public abstract class VoxelWithTessellationLinks : IVoxel

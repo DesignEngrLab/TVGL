@@ -38,16 +38,30 @@ namespace TVGL.Voxelization
         {
             Discretization = voxelDiscretization;
             #region Setting Up Parameters 
-            if (bounds == null) bounds = ts.Bounds;
-            dimensions = new double[3];
-            for (int i = 0; i < 3; i++)
-                dimensions[i] = bounds[1][i] - bounds[0][i];
-            var longestSide = dimensions.Max();
-            longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
-            var delta = longestSide * Constants.fractionOfWhiteSpaceAroundFinestVoxelFactor;
+
+            double longestSide;
             Bounds = new double[2][];
-            Bounds[0] = bounds[0].subtract(new[] { delta, delta, delta });
-            Bounds[1] = bounds[1].add(new[] { delta, delta, delta });
+            if (bounds != null)
+            {
+                Bounds[0] = (double[])bounds[0].Clone();
+                Bounds[1] = (double[])bounds[1].Clone();
+                dimensions = new double[3];
+                for (int i = 0; i < 3; i++)
+                    dimensions[i] = Bounds[1][i] - Bounds[0][i];
+                longestSide = dimensions.Max();
+                longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
+            }
+            else
+            {  // add a small buffer only if no bounds are provided.
+                dimensions = new double[3];
+                for (int i = 0; i < 3; i++)
+                    dimensions[i] = ts.Bounds[1][i] - ts.Bounds[0][i];
+                longestSide = dimensions.Max();
+                longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
+                var delta = longestSide * Constants.fractionOfWhiteSpaceAroundFinestVoxelFactor;
+                Bounds[0] = ts.Bounds[0].subtract(new[] { delta, delta, delta });
+                Bounds[1] = ts.Bounds[1].add(new[] { delta, delta, delta });
+            }
             longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
             VoxelSideLength = new[] { longestSide / 16, longestSide / 256, longestSide / 4096, longestSide / 65536, longestSide / 1048576 };
             #endregion
@@ -62,7 +76,7 @@ namespace TVGL.Voxelization
                 var coordinates = vertex.Position.subtract(Offset).divide(VoxelSideLength[1]);
                 transformedCoordinates[i] = coordinates;
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
-            }  );
+            });
             makeVoxelsForFacesAndEdges(ts);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior();
@@ -475,8 +489,8 @@ namespace TVGL.Voxelization
                 .Distinct()
                 .AsParallel();
             var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>>(
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim+1)), // why the plus one? see the comparator. it is usually to line up with the
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim+1))));  //VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
+                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)), // why the plus one? see the comparator. it is usually to line up with the
+                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1))));  //VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
             Parallel.ForEach(voxelDictionaryLevel1, voxelKeyValuePair =>
             //foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
             {
