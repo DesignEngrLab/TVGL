@@ -15,14 +15,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using StarMathLib;
 
 namespace TVGL.Voxelization
 {
     public interface IVoxel
     {
         long ID { get; }
-        int[] Coordinates { get; }
-       // double SideLength { get; }
+        int[] CoordinateIndices { get; }
+        double[] BottomCoordinate { get; }
+        double SideLength { get; }
         VoxelRoleTypes Role { get; }
         int Level { get; }
     }
@@ -30,33 +32,38 @@ namespace TVGL.Voxelization
     public struct Voxel : IVoxel
     {
         public long ID { get; internal set; }
-        public int[] Coordinates { get; internal set; }
-        //public double SideLength { get; internal set; }
+        public int[] CoordinateIndices { get; internal set; }
+        public double SideLength { get; internal set; }
         public VoxelRoleTypes Role { get; internal set; }
         public int Level { get; internal set; }
+        public double[] BottomCoordinate { get; internal set; }
 
-        internal Voxel(long ID,int startDiscretizationLevel)
+        internal Voxel(long ID, int startDiscretizationLevel, double[] voxelSideLengths, double[] offset)
         {
             this.ID = ID;
             var roleFlags = VoxelizedSolid.GetRoleFlags(ID);
             Role = roleFlags.Last();
             Level = roleFlags.Length - 1;
-            Coordinates = VoxelizedSolid.GetCoordinatesFromID(ID, Level, startDiscretizationLevel);
-
+            CoordinateIndices = VoxelizedSolid.GetCoordinatesFromID(ID, Level, startDiscretizationLevel);
+            SideLength = voxelSideLengths[Level];
+            BottomCoordinate = CoordinateIndices.multiply(SideLength).add(offset);
         }
 
     }
     public abstract class VoxelWithTessellationLinks : IVoxel
     {
-        protected VoxelWithTessellationLinks(int x, int y, int z, VoxelRoleTypes voxelRole)
+        protected VoxelWithTessellationLinks(int x, int y, int z, VoxelRoleTypes voxelRole, double sideLength, double[] offset)
         {
-            Coordinates = new[] {x, y, z };
+            CoordinateIndices = new[] { x, y, z };
             Role = voxelRole;
+            SideLength = sideLength;
+            BottomCoordinate = CoordinateIndices.multiply(SideLength).add(offset);
         }
         public abstract int Level { get; }
         public long ID { get; internal set; }
 
-        public int[] Coordinates { get; internal set; }
+        public int[] CoordinateIndices { get; internal set; }
+        public double[] BottomCoordinate { get; internal set; }
         public double SideLength { get; internal set; }
 
         public VoxelRoleTypes Role { get; internal set; }
@@ -70,29 +77,26 @@ namespace TVGL.Voxelization
     public class Voxel_Level0_Class : VoxelWithTessellationLinks
     {
         public override int Level => 0;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel_Level0_Class"/> struct.
-        /// </summary>
-        /// <param name="voxelID">The voxel identifier.</param>
-        /// <param name="voxelRole">The voxel role.</param>
-        internal Voxel_Level0_Class(int x, int y, int z, VoxelRoleTypes voxelRole) : base(x, y, z, voxelRole)
+        
+        internal Voxel_Level0_Class(int x, int y, int z, VoxelRoleTypes voxelRole, int startDiscretizationLevel, double[] voxelSideLengths, double[] offset)
+            : base(x, y, z, voxelRole,voxelSideLengths[0], offset)
         {
             if (voxelRole == VoxelRoleTypes.Partial)
             {
-                NextLevelVoxels = new VoxelHashSet<long>(new VoxelComparerCoarse(), 0);
-                HighLevelVoxels = new VoxelHashSet<long>(new VoxelComparerFine(), 0);
+                NextLevelVoxels = new VoxelHashSet(new VoxelComparerCoarse(), 0);
+                HighLevelVoxels = new VoxelHashSet(new VoxelComparerFine(), 0);
             }
         }
 
-        internal VoxelHashSet<long> HighLevelVoxels;
-        internal VoxelHashSet<long> NextLevelVoxels;
+        internal VoxelHashSet HighLevelVoxels;
+        internal VoxelHashSet NextLevelVoxels;
     }
 
 
     public class Voxel_Level1_Class : VoxelWithTessellationLinks
     {
-        internal Voxel_Level1_Class(int x, int y, int z, VoxelRoleTypes voxelRole) : base(x, y, z, voxelRole) { }
+        internal Voxel_Level1_Class(int x, int y, int z, VoxelRoleTypes voxelRole, int startDiscretizationLevel, double[] voxelSideLengths, double[] offset)
+        : base(x, y, z, voxelRole, voxelSideLengths[1], offset) { }
         public override int Level => 1;
     }
 }

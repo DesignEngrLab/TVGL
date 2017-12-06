@@ -95,7 +95,8 @@ namespace TVGLPresenterDX
                 if (!File.Exists(filename)) continue;
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
-               // PresenterShowAndHang(ts);
+                ts[0].SolidColor = new Color(KnownColors.DeepPink);
+                PresenterShowAndHang(ts);
                 TestVoxelization(ts[0]);
             }
 

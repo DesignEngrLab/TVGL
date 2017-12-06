@@ -35,9 +35,9 @@ namespace TVGL.Voxelization
                 var volume = 0.0;
                 for (int i = 0; i <= discretizationLevel; i++)
                 {
-                    volume += Math.Pow(VoxelSideLength[i], 3) * totals[2 * i];
+                    volume += Math.Pow(VoxelSideLengths[i], 3) * totals[2 * i];
                 }
-                return volume + Math.Pow(VoxelSideLength[discretizationLevel], 3) * totals[2 * discretizationLevel + 1];
+                return volume + Math.Pow(VoxelSideLengths[discretizationLevel], 3) * totals[2 * discretizationLevel + 1];
             }
             internal set { _volume = value; }
         }
@@ -49,14 +49,14 @@ namespace TVGL.Voxelization
             {
                 voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Full),
                 voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
-                  voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Full),
-                  voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
-                  voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel2)),
-                 voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel2)),
-                  voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel3)),
-                  voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel3)),
-                 voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel4)),
-                  voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel4))
+                voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Full),
+                voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
+                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel2)),
+                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel2)),
+                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel3)),
+                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel3)),
+                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel4)),
+                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel4))
             };
         }
 
@@ -73,50 +73,7 @@ namespace TVGL.Voxelization
 
         #region Public Enumerations
 
-        public IEnumerable<double[]> GetVoxelsAsAABBDoubles(VoxelRoleTypes role = VoxelRoleTypes.Partial, int level = 4)
-        {
-            if (level == 0)
-                return voxelDictionaryLevel0.Values.Where(v => v.Role == role).Select(v => GetBottomAndWidth(v.Coordinates, 0));
-            if (level == 1)
-                return voxelDictionaryLevel1.Values.Where(v => v.Role == role).Select(v => GetBottomAndWidth(v.Coordinates, 1));
-            if (level > discretizationLevel) level = discretizationLevel;
-            var flags = new VoxelRoleTypes[level];
-            for (int i = 0; i < level - 1; i++)
-                flags[i] = VoxelRoleTypes.Partial;
-            flags[level - 1] = role;
-            var targetFlags = SetRoleFlags(flags);
-            return voxelDictionaryLevel0.Values.SelectMany(voxDict => GetVoxels(voxDict, targetFlags, this, level));
-        }
-
-        private double[] GetBottomAndWidth(int[] coordinates, int level)
-        {
-            if (level == 0)
-                coordinates = coordinates.Select(x => x >> 4 << 4).ToArray();
-
-            var doubleCoords = coordinates.Select(Convert.ToDouble).ToArray();
-            doubleCoords = doubleCoords.multiply(VoxelSideLength[1]).add(Offset);
-
-            return new[] { doubleCoords[0], doubleCoords[1], doubleCoords[2], VoxelSideLength[level] };
-        }
-
-        internal double[] GetBottomAndWidth(long id, int level)
-        {
-            var bottomCoordinate = GetCoordinatesFromID(id, level, discretizationLevel).multiply(VoxelSideLength[level]).add(Offset);
-            return new[] { bottomCoordinate[0], bottomCoordinate[1], bottomCoordinate[2], VoxelSideLength[level] };
-        }
-
         #endregion
-
-
-        public static IEnumerable<double[]> GetVoxels(Voxel_Level0_Class voxel, long targetFlags, VoxelizedSolid voxelizedSolid, int level)
-        {
-            foreach (var vx in voxel.HighLevelVoxels)
-            {
-                var flags = vx & -1152921504606846976; //get rid of every but the flags
-                if (flags == targetFlags)
-                    yield return voxelizedSolid.GetBottomAndWidth(vx, level);
-            }
-        }
 
 
         #region Solid Method Overrides (Transforms & Copy)
@@ -146,41 +103,106 @@ namespace TVGL.Voxelization
             return copy;
         }
 
-        public void Draft(VoxelDirections direction, IVoxel parent = null, int level = 0)
+        public void Draft(VoxelDirections direction, IVoxel parent = null)
         {
+            var positiveStep = direction > 0;
+            var dimension = Math.Abs((int)direction) - 1;
             var voxels = GetChildVoxels(parent);
-            var sortedPartials = new List<IVoxel>[16];
+            var layerOfVoxels = new List<IVoxel>[16];
 
             Parallel.ForEach(voxels, v =>
             //foreach (var voxel0 in voxelDictionaryLevel0.Values)
             {
-                var index = 0; //todo: how to find the right index?
-                sortedPartials[index].Add(v);
+                var layer = (v.CoordinateIndices[dimension] >> (4 - v.Level)) & 15;
+                if (positiveStep) layer = 15 - layer;
+                lock (layerOfVoxels[layer])
+                    layerOfVoxels[layer].Add(v);
             });
-            //sortedPartials.Add(voxel0));
-            Parallel.ForEach(voxelDictionaryLevel0.Values, voxel0 =>
-            //foreach (var voxel0 in voxelDictionaryLevel0.Values)
+            for (int i = 0; i < 16; i++)
             {
-                if (voxel0.Role == VoxelRoleTypes.Full)
+                Parallel.ForEach(layerOfVoxels[i], voxel =>
                 {
-                    var neighbor = FindNeighbor(voxel0, direction);
-                    while (neighbor?.Role != VoxelRoleTypes.Full)
+                    if (voxel.Role == VoxelRoleTypes.Full ||
+                        (voxel.Role == VoxelRoleTypes.Partial && voxel.Level == discretizationLevel))
                     {
-                        MakeVoxelFull(neighbor);
-                        neighbor = FindNeighbor(neighbor, direction);
+                        var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
+                        while (neighbor?.Role != VoxelRoleTypes.Full)
+                        {
+                            MakeVoxelFull(neighbor);
+                            if (neighborHasDifferentParent) break;
+                            neighbor = GetNeighbor(neighbor, direction, out neighborHasDifferentParent);
+                        }
                     }
-                }
-
-            });
-
+                    else if (voxel.Role == VoxelRoleTypes.Partial)
+                        Draft(direction, voxel);
+                });
+            }
         }
 
         #endregion
+        #region Get Functions
 
-        public IVoxel FindNeighbor(IVoxel voxel, VoxelDirections direction)
+        public IEnumerable<IVoxel> Voxels(VoxelDiscretization upToAndIncludingLevelEnum = VoxelDiscretization.ExtraFine)
         {
-            throw new NotImplementedException();
+            var upToAndIncludingLevel = (int) upToAndIncludingLevelEnum;
+            if (upToAndIncludingLevel > discretizationLevel) upToAndIncludingLevel = discretizationLevel;
+            foreach (var v in voxelDictionaryLevel0.Values.Where(v => v.Role == VoxelRoleTypes.Full))
+                yield return v;
+            if (upToAndIncludingLevel == 0)
+                foreach (var v in voxelDictionaryLevel0.Values.Where(v => v.Role == VoxelRoleTypes.Partial))
+                    yield return v;
+            if (upToAndIncludingLevel >= 1)
+                foreach (var v in voxelDictionaryLevel1.Values.Where(v => v.Role == VoxelRoleTypes.Full))
+                    yield return v;
+            if (upToAndIncludingLevel == 1)
+                foreach (var v in voxelDictionaryLevel1.Values.Where(v => v.Role == VoxelRoleTypes.Partial))
+                    yield return v;
+            if (upToAndIncludingLevel == 2)
+                return voxelDictionaryLevel0.Values.SelectMany(voxDict =>
+                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -8070450532247928832));
+            if (upToAndIncludingLevel == 3)
+                return voxelDictionaryLevel0.Values.SelectMany(voxDict =>
+                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -5764607523034234880, -4611686018427387904));
+            if (upToAndIncludingLevel == 4)
+                return voxelDictionaryLevel0.Values.SelectMany(voxDict =>
+                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -5764607523034234880, -2305843009213693952, -1152921504606846976));
+        }
 
+        public IEnumerable<IVoxel> GetVoxels(VoxelRoleTypes role, int level)
+        {
+            if (level == 0)
+                return voxelDictionaryLevel0.Values.Where(v => v.Role == role);
+            if (level == 1)
+                return voxelDictionaryLevel1.Values.Where(v => v.Role == role);
+            if (level > discretizationLevel) level = discretizationLevel;
+            var flags = new VoxelRoleTypes[level];
+            for (int i = 0; i < level - 1; i++)
+                flags[i] = VoxelRoleTypes.Partial;
+            flags[level - 1] = role;
+            var targetFlags = SetRoleFlags(flags);
+            return voxelDictionaryLevel0.Values.SelectMany(voxDict => GetHighLevelVoxelsFromLevel0(voxDict, targetFlags));
+        }
+        
+        internal IEnumerable<IVoxel> GetHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,params long[] targetFlags)
+        {
+            foreach (var vx in voxel.HighLevelVoxels)
+            {
+                var flags = vx & -1152921504606846976; //get rid of every but the flags
+                if (targetFlags.Contains(flags))
+                    yield return new Voxel(vx, discretizationLevel, VoxelSideLengths, Offset);
+            }
+        }
+        public IVoxel GetNeighbor(IVoxel voxel, VoxelDirections direction, out bool neighborHasDifferentParent)
+        {
+            var positiveStep = direction > 0;
+            var dimension = Math.Abs((int)direction) - 1;
+            var coordValue = (voxel.CoordinateIndices[dimension] >> (4 - voxel.Level)) & 15;
+            neighborHasDifferentParent = ((coordValue == 0 && !positiveStep) || (coordValue == 15 && positiveStep));
+            if (voxel.Level == 0 & neighborHasDifferentParent) return null;
+            var delta = 1L;
+            delta = delta << (20 * dimension) + (4 - voxel.Level);
+            var newID = (positiveStep) ? voxel.ID + delta : voxel.ID - delta;
+            return new Voxel(newID, discretizationLevel, VoxelSideLengths, Offset);
         }
 
         public IVoxel GetParentVoxel(IVoxel child)
@@ -191,10 +213,10 @@ namespace TVGL.Voxelization
                 case 2: return voxelDictionaryLevel1[GetContainingVoxel(child.ID, 1)];
                 case 3:
                     var roles3 = new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial };
-                    return new Voxel(GetContainingVoxel(child.ID, 2) + SetRoleFlags(roles3), this.discretizationLevel);
+                    return new Voxel(GetContainingVoxel(child.ID, 2) + SetRoleFlags(roles3), this.discretizationLevel, VoxelSideLengths, Offset);
                 case 4:
                     var roles4 = new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial };
-                    return new Voxel(GetContainingVoxel(child.ID, 3) + SetRoleFlags(roles4), this.discretizationLevel);
+                    return new Voxel(GetContainingVoxel(child.ID, 3) + SetRoleFlags(roles4), this.discretizationLevel, VoxelSideLengths, Offset);
                 default: return null;
             }
 
@@ -214,7 +236,7 @@ namespace TVGL.Voxelization
                 var level0 = voxelDictionaryLevel0[GetContainingVoxel(parent.ID, 0)];
                 var IDs = level0.HighLevelVoxels;
                 voxels.AddRange(IDs.Where(v => isPartialLevel2(v) || isFullLevel2(v))
-                    .Select(id => (IVoxel)new Voxel(id, this.discretizationLevel)));
+                    .Select(id => (IVoxel)new Voxel(id, this.discretizationLevel, VoxelSideLengths, Offset)));
             }
             else
             {
@@ -222,17 +244,22 @@ namespace TVGL.Voxelization
                 var IDs = level0.HighLevelVoxels;
                 if (parent.Level == 2)
                     voxels.AddRange(IDs.Where(v => isPartialLevel3(v) || isFullLevel3(v))
-                        .Select(id => (IVoxel)new Voxel(id, this.discretizationLevel)));
+                        .Select(id => (IVoxel)new Voxel(id, this.discretizationLevel, VoxelSideLengths, Offset)));
                 else
                     voxels.AddRange(IDs.Where(v => isPartialLevel4(v) || isFullLevel4(v))
-                        .Select(id => (IVoxel)new Voxel(id, this.discretizationLevel)));
+                        .Select(id => (IVoxel)new Voxel(id, this.discretizationLevel, VoxelSideLengths, Offset)));
             }
             return voxels;
         }
+        /// <summary>
+        /// Gets the sibling voxels.
+        /// </summary>
+        /// <param name="siblingVoxel">The sibling voxel.</param>
+        /// <returns>List&lt;IVoxel&gt;.</returns>
         public List<IVoxel> GetSiblingVoxels(IVoxel siblingVoxel)
         {
             return GetChildVoxels(GetParentVoxel(siblingVoxel));
         }
-
+        #endregion
     }
 }

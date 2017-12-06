@@ -85,14 +85,13 @@ namespace TVGLPresenterDX
             var positions = new Vector3Collection();
             var indices = new IntCollection();
             var normals = new Vector3Collection();
-            var boxVoxels = vs.GetVoxelsAsAABBDoubles(VoxelRoleTypes.Partial, 0);
-            foreach (var boxVoxel in boxVoxels)
+            foreach (var v in vs.GetVoxels(VoxelRoleTypes.Partial, 1))
             {
                 var i = positions.Count;
-                var x = (float)boxVoxel[0];
-                var y = (float)boxVoxel[1];
-                var z = (float)boxVoxel[2];
-                var s = (float)boxVoxel[3];
+                var x = (float)v.BottomCoordinate[0];
+                var y = (float)v.BottomCoordinate[1];
+                var z = (float)v.BottomCoordinate[2];
+                var s = (float) v.SideLength;
                 positions.Add(new Vector3(x, y, z));//0
                 positions.Add(new Vector3(x + s, y, z));//1
                 positions.Add(new Vector3(x, y + s, z));//2

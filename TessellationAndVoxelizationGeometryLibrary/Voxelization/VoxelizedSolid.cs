@@ -40,7 +40,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The voxel side length. It's a square, so all sides are the same length.
         /// </summary>
-        public double[] VoxelSideLength { get; private set; }
+        public double[] VoxelSideLengths { get; private set; }
 
         /// <summary>
         /// Gets the offset that moves the model s.t. the lowest elements are at 0,0,0.
@@ -58,7 +58,7 @@ namespace TVGL.Voxelization
         private readonly Dictionary<long, Voxel_Level0_Class> voxelDictionaryLevel0;
         private readonly Dictionary<long, Voxel_Level1_Class> voxelDictionaryLevel1;
         #endregion
-        
+
         #region converting IDs and back again
 
         private static long MakeVoxelID(int x, int y, int z, int level, int startDiscretizationLevel, params VoxelRoleTypes[] levels)
@@ -124,11 +124,6 @@ namespace TVGL.Voxelization
             return 15L << 60;
         }
 
-        internal static VoxelRoleTypes[] GetRoleFlags(object flags)
-        {
-            return GetRoleFlags((long)flags);
-        }
-
         internal static VoxelRoleTypes[] GetRoleFlags(long flags)
         {
             flags = flags >> 60;
@@ -170,35 +165,18 @@ namespace TVGL.Voxelization
             };
         }
 
-        internal static int[] GetCoordinatesFromID(long ID, int level, int startDiscretizationLevel)
-        {
-            return new[]
-            {
-                GetCoordinateFromID(ID, 0, level,startDiscretizationLevel),
-                GetCoordinateFromID(ID, 1, level,startDiscretizationLevel),
-                GetCoordinateFromID(ID, 2, level,startDiscretizationLevel)
-            };
-        }
-
-        internal static int GetCoordinateFromID(long id, int dimension, int level, int startDiscretizationLevel)
-        {
-            var shift = 4 * (4 - startDiscretizationLevel) - 4 * (startDiscretizationLevel - level);
-            shift += 20 * (2 - dimension);
-            if (dimension == 0) //x starts at 40 and goes to the end,60
-            {
-                var xCoord = id & Constants.maskAllButX;
-                xCoord = xCoord >> shift;
-                return (int)xCoord; //the & is to clear out the flags
-            }
-            if (dimension == 1) // y starts at 20 and goes to 40
-            {
-                var yCoord = id & Constants.maskAllButY;
-                yCoord = yCoord >> shift;
-                return (int)yCoord; // the & is to clear out the x value and the flags
-            }
+        internal static int[] GetCoordinatesFromID(long id, int level, int startDiscretizationLevel)
+        { 
+            var shift = 4 * (4 - startDiscretizationLevel);
             var zCoord = id & Constants.maskAllButZ;
             zCoord = zCoord >> shift;
-            return (int)zCoord; // the & is to clear out the x and y values and the flags
+            shift += 20;
+            var yCoord = id & Constants.maskAllButY;
+            yCoord = yCoord >> shift;
+            shift += 20;
+            var xCoord = id & Constants.maskAllButX;
+            xCoord = xCoord >> shift;
+            return new[] { (int)xCoord, (int)yCoord, (int)zCoord }; // the & is to clear out the x and y values and the flags
         }
 
 

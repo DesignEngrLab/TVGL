@@ -10,7 +10,7 @@ using System.Security;
 namespace TVGL.Voxelization
 {
 
-    public class VoxelHashSet<T> : ICollection<T>, ISet<T>
+    public class VoxelHashSet : IEnumerable<long>
     {
         // cutoff point, above which we won't do stackallocs. This corresponds to 100 integers.
         private const int StackAllocThreshold = 100;
@@ -26,13 +26,13 @@ namespace TVGL.Voxelization
         private int count;
         private int lastIndex;
         private int freeList;
-        private IEqualityComparer<T> comparer;
+        private IEqualityComparer<long> comparer;
         private int version;
 
 
         #region Constructors
 
-        public VoxelHashSet(IEqualityComparer<T> comparer, int level)
+        public VoxelHashSet(IEqualityComparer<long> comparer, int level)
         {
             this.comparer = comparer;
             lastIndex = 0;
@@ -54,10 +54,10 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="collection"></param>
         /// <param name="comparer"></param>
-        public VoxelHashSet(IEnumerable<T> collection, IEqualityComparer<T> comparer)
+        public VoxelHashSet(IEnumerable<long> collection, IEqualityComparer<long> comparer)
         {
             int suggestedCapacity = 0;
-            var coll = collection as ICollection<T>;
+            var coll = collection as ICollection<long>;
             if (coll != null)
             {
                 suggestedCapacity = coll.Count;
@@ -78,7 +78,7 @@ namespace TVGL.Voxelization
         }
         #endregion
         #region New Methods not found in HashSet
-        public VoxelRoleTypes[] ReadFlags(T item)
+        public VoxelRoleTypes[] ReadFlags(long item)
         {
             if (buckets != null)
             {
@@ -100,18 +100,7 @@ namespace TVGL.Voxelization
 
         #endregion
 
-        #region ICollection<T> methods
-
-        /// <summary>
-        /// Add item to this hashset. This is the explicit implementation of the ICollection<T>
-        /// interface. The other Add method returns bool indicating whether item was added.
-        /// </summary>
-        /// <param name="item">item to add</param>
-        void ICollection<T>.Add(T item)
-        {
-            AddIfNotPresent(item);
-        }
-
+        #region ICollection<T> method
         /// <summary>
         /// Remove all items from this set. This clears the elements but not the underlying 
         /// buckets and slots array. Follow this call by TrimExcess to release these.
@@ -138,7 +127,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item">item to check for containment</param>
         /// <returns>true if item contained; false if not</returns>
-        public bool Contains(T item)
+        public bool Contains(long item)
         {
             if (buckets != null)
             {
@@ -178,7 +167,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="array">array to add items to</param>
         /// <param name="arrayIndex">index to start at</param>
-        public void CopyTo(T[] array, int arrayIndex)
+        public void CopyTo(long[] array, int arrayIndex)
         {
             CopyTo(array, arrayIndex, count);
         }
@@ -188,7 +177,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item">item to remove</param>
         /// <returns>true if removed; false if not (i.e. if the item wasn't in the HashSet)</returns>
-        public bool Remove(T item)
+        public bool Remove(long item)
         {
             if (buckets != null)
             {
@@ -210,7 +199,7 @@ namespace TVGL.Voxelization
                             slots[last].next = slots[i].next;
                         }
                         slots[i].hashCode = -1;
-                        slots[i].value = default(T);
+                        slots[i].value = 0L;
                         slots[i].next = freeList;
 
                         count--;
@@ -239,35 +228,8 @@ namespace TVGL.Voxelization
         {
             get { return count; }
         }
-
-        /// <summary>
-        /// Whether this is readonly
-        /// </summary>
-        bool ICollection<T>.IsReadOnly
-        {
-            get { return false; }
-        }
-
         #endregion
 
-        #region IEnumerable methods
-
-        public Enumerator GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
-
-        #endregion
 
         #region HashSet methods
 
@@ -277,7 +239,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item"></param>
         /// <returns>true if added, false if already present</returns>
-        public bool Add(T item)
+        public bool Add(long item)
         {
             return AddIfNotPresent(item);
         }
@@ -290,7 +252,7 @@ namespace TVGL.Voxelization
         /// point where it's a wasteful check.
         /// </summary>
         /// <param name="other">enumerable with items to add</param>
-        public void UnionWith(IEnumerable<T> other)
+        public void UnionWith(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -298,7 +260,7 @@ namespace TVGL.Voxelization
             }
             Contract.EndContractBlock();
 
-            foreach (T item in other)
+            foreach (var item in other)
             {
                 AddIfNotPresent(item);
             }
@@ -318,7 +280,7 @@ namespace TVGL.Voxelization
         /// intersection of anything with the empty set is the empty set.
         /// </summary>
         /// <param name="other">enumerable with items to add </param>
-        public void IntersectWith(IEnumerable<T> other)
+        public void IntersectWith(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -334,7 +296,7 @@ namespace TVGL.Voxelization
 
             // if other is empty, intersection is empty set; remove all elements and we're done
             // can only figure this out if implements ICollection<T>. (IEnumerable<T> has no count)
-            ICollection<T> otherAsCollection = other as ICollection<T>;
+            var otherAsCollection = other as ICollection<long>;
             if (otherAsCollection != null)
             {
                 if (otherAsCollection.Count == 0)
@@ -343,7 +305,7 @@ namespace TVGL.Voxelization
                     return;
                 }
 
-                var otherAsSet = other as VoxelHashSet<T>;
+                var otherAsSet = other as VoxelHashSet;
                 // faster if other is a hashset using same equality comparer; so check 
                 // that other is a hashset using the same equality comparer.
                 if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
@@ -359,7 +321,7 @@ namespace TVGL.Voxelization
         /// Remove items in other from this set. Modifies this set.
         /// </summary>
         /// <param name="other">enumerable with items to remove</param>
-        public void ExceptWith(IEnumerable<T> other)
+        public void ExceptWith(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -381,7 +343,7 @@ namespace TVGL.Voxelization
             }
 
             // remove every element in other from this
-            foreach (T element in other)
+            foreach (var element in other)
             {
                 Remove(element);
             }
@@ -391,7 +353,7 @@ namespace TVGL.Voxelization
         /// Takes symmetric difference (XOR) with other and this set. Modifies this set.
         /// </summary>
         /// <param name="other">enumerable with items to XOR</param>
-        public void SymmetricExceptWith(IEnumerable<T> other)
+        public void SymmetricExceptWith(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -413,7 +375,7 @@ namespace TVGL.Voxelization
                 return;
             }
 
-            var otherAsSet = other as VoxelHashSet<T>;
+            var otherAsSet = other as VoxelHashSet;
             // If other is a HashSet, it has unique elements according to its equality comparer,
             // but if they're using different equality comparers, then assumption of uniqueness
             // will fail. So first check if other is a hashset using the same equality comparer;
@@ -443,7 +405,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns>true if this is a subset of other; false if not</returns>
-        public bool IsSubsetOf(IEnumerable<T> other)
+        public bool IsSubsetOf(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -457,7 +419,7 @@ namespace TVGL.Voxelization
                 return true;
             }
 
-            var otherAsSet = other as VoxelHashSet<T>;
+            var otherAsSet = other as VoxelHashSet;
             // faster if other has unique elements according to this equality comparer; so check 
             // that other is a hashset using the same equality comparer.
             if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
@@ -493,7 +455,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns>true if this is a proper subset of other; false if not</returns>
-        public bool IsProperSubsetOf(IEnumerable<T> other)
+        public bool IsProperSubsetOf(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -501,7 +463,7 @@ namespace TVGL.Voxelization
             }
             Contract.EndContractBlock();
 
-            ICollection<T> otherAsCollection = other as ICollection<T>;
+            var otherAsCollection = other as ICollection<long>;
             if (otherAsCollection != null)
             {
                 // the empty set is a proper subset of anything but the empty set
@@ -509,7 +471,7 @@ namespace TVGL.Voxelization
                 {
                     return otherAsCollection.Count > 0;
                 }
-                var otherAsSet = other as VoxelHashSet<T>;
+                var otherAsSet = other as VoxelHashSet;
                 // faster if other is a hashset (and we're using same equality comparer)
                 if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
                 {
@@ -538,7 +500,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns>true if this is a superset of other; false if not</returns>
-        public bool IsSupersetOf(IEnumerable<T> other)
+        public bool IsSupersetOf(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -547,7 +509,7 @@ namespace TVGL.Voxelization
             Contract.EndContractBlock();
 
             // try to fall out early based on counts
-            ICollection<T> otherAsCollection = other as ICollection<T>;
+            var otherAsCollection = other as ICollection<long>;
             if (otherAsCollection != null)
             {
                 // if other is the empty set then this is a superset
@@ -555,7 +517,7 @@ namespace TVGL.Voxelization
                 {
                     return true;
                 }
-                var otherAsSet = other as VoxelHashSet<T>;
+                var otherAsSet = other as VoxelHashSet;
                 // try to compare based on counts alone if other is a hashset with
                 // same equality comparer
                 if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
@@ -590,7 +552,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns>true if this is a proper superset of other; false if not</returns>
-        public bool IsProperSupersetOf(IEnumerable<T> other)
+        public bool IsProperSupersetOf(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -604,7 +566,7 @@ namespace TVGL.Voxelization
                 return false;
             }
 
-            ICollection<T> otherAsCollection = other as ICollection<T>;
+            var otherAsCollection = other as ICollection<long>;
             if (otherAsCollection != null)
             {
                 // if other is the empty set then this is a superset
@@ -613,7 +575,7 @@ namespace TVGL.Voxelization
                     // note that this has at least one element, based on above check
                     return true;
                 }
-                var otherAsSet = other as VoxelHashSet<T>;
+                var otherAsSet = other as VoxelHashSet;
                 // faster if other is a hashset with the same equality comparer
                 if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
                 {
@@ -633,7 +595,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns>true if these have at least one common element; false if disjoint</returns>
-        public bool Overlaps(IEnumerable<T> other)
+        public bool Overlaps(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -646,7 +608,7 @@ namespace TVGL.Voxelization
                 return false;
             }
 
-            foreach (T element in other)
+            foreach (var element in other)
             {
                 if (Contains(element))
                 {
@@ -662,7 +624,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        public bool SetEquals(IEnumerable<T> other)
+        public bool SetEquals(IEnumerable<long> other)
         {
             if (other == null)
             {
@@ -670,7 +632,7 @@ namespace TVGL.Voxelization
             }
             Contract.EndContractBlock();
 
-            var otherAsSet = other as VoxelHashSet<T>;
+            var otherAsSet = other as VoxelHashSet;
             // faster if other is a hashset and we're using same equality comparer
             if (otherAsSet != null && AreEqualityComparersEqual(this, otherAsSet))
             {
@@ -687,7 +649,7 @@ namespace TVGL.Voxelization
             }
             else
             {
-                ICollection<T> otherAsCollection = other as ICollection<T>;
+                var otherAsCollection = other as ICollection<long>;
                 if (otherAsCollection != null)
                 {
                     // if this count is 0 but other contains at least one element, they can't be equal
@@ -700,9 +662,9 @@ namespace TVGL.Voxelization
             }
         }
 
-        public void CopyTo(T[] array) { CopyTo(array, 0, count); }
+        public void CopyTo(long[] array) { CopyTo(array, 0, count); }
 
-        public void CopyTo(T[] array, int arrayIndex, int count)
+        public void CopyTo(long[] array, int arrayIndex, int count)
         {
             if (array == null)
             {
@@ -746,7 +708,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public int RemoveWhere(Predicate<T> match)
+        public int RemoveWhere(Predicate<long> match)
         {
             if (match == null)
             {
@@ -760,7 +722,7 @@ namespace TVGL.Voxelization
                 if (slots[i].hashCode >= 0)
                 {
                     // cache value in case delegate removes it
-                    T value = slots[i].value;
+                    var value = slots[i].value;
                     if (match(value))
                     {
                         // check again that remove actually removed it
@@ -778,7 +740,7 @@ namespace TVGL.Voxelization
         /// Gets the IEqualityComparer that is used to determine equality of keys for 
         /// the HashSet.
         /// </summary>
-        public IEqualityComparer<T> Comparer
+        public IEqualityComparer<long> Comparer
         {
             get
             {
@@ -977,7 +939,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="value">value to find</param>
         /// <returns></returns>
-        private bool AddIfNotPresent(T value)
+        private bool AddIfNotPresent(long value)
         {
             int hashCode = InternalGetHashCode(value);
             int bucket = hashCode % buckets.Length;
@@ -1025,9 +987,9 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        private bool ContainsAllElements(IEnumerable<T> other)
+        private bool ContainsAllElements(IEnumerable<long> other)
         {
-            foreach (T element in other)
+            foreach (var element in other)
             {
                 if (!Contains(element))
                 {
@@ -1050,10 +1012,10 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="other"></param>
         /// <returns></returns>
-        private bool IsSubsetOfHashSetWithSameEC(VoxelHashSet<T> other)
+        private bool IsSubsetOfHashSetWithSameEC(VoxelHashSet other)
         {
 
-            foreach (T item in this)
+            foreach (var item in this)
             {
                 if (!other.Contains(item))
                 {
@@ -1068,13 +1030,13 @@ namespace TVGL.Voxelization
         /// because we can use other's Contains
         /// </summary>
         /// <param name="other"></param>
-        private void IntersectWithHashSetWithSameEC(VoxelHashSet<T> other)
+        private void IntersectWithHashSetWithSameEC(VoxelHashSet other)
         {
             for (int i = 0; i < lastIndex; i++)
             {
                 if (slots[i].hashCode >= 0)
                 {
-                    T item = slots[i].value;
+                    var item = slots[i].value;
                     if (!other.Contains(item))
                     {
                         Remove(item);
@@ -1090,7 +1052,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        private int InternalIndexOf(T item)
+        private int InternalIndexOf(long item)
         {
             Debug.Assert(buckets != null, "m_buckets was null; callers should check first");
 
@@ -1114,9 +1076,9 @@ namespace TVGL.Voxelization
         /// same equality comparer.
         /// </summary>
         /// <param name="other"></param>
-        private void SymmetricExceptWithUniqueHashSet(VoxelHashSet<T> other)
+        private void SymmetricExceptWithUniqueHashSet(VoxelHashSet other)
         {
-            foreach (T item in other)
+            foreach (var item in other)
             {
                 if (!Remove(item))
                 {
@@ -1136,7 +1098,7 @@ namespace TVGL.Voxelization
         /// <param name="value"></param>
         /// <param name="location"></param>
         /// <returns></returns>
-        private bool AddOrGetLocation(T value, out int location)
+        private bool AddOrGetLocation(long value, out int location)
         {
             Debug.Assert(buckets != null, "m_buckets is null, callers should have checked");
 
@@ -1182,9 +1144,9 @@ namespace TVGL.Voxelization
         /// Copies this to an array. Used for DebugView
         /// </summary>
         /// <returns></returns>
-        internal T[] ToArray()
+        internal long[] ToArray()
         {
-            T[] newArray = new T[Count];
+            long[] newArray = new long[Count];
             CopyTo(newArray);
             return newArray;
         }
@@ -1200,7 +1162,7 @@ namespace TVGL.Voxelization
         /// <param name="set2"></param>
         /// <param name="comparer"></param>
         /// <returns></returns>
-        internal static bool HashSetEquals(VoxelHashSet<T> set1, VoxelHashSet<T> set2, IEqualityComparer<T> comparer)
+        internal static bool HashSetEquals(VoxelHashSet set1, VoxelHashSet set2, IEqualityComparer<long> comparer)
         {
             // handle null cases first
             if (set1 == null)
@@ -1221,7 +1183,7 @@ namespace TVGL.Voxelization
                     return false;
                 }
                 // suffices to check subset
-                foreach (T item in set2)
+                foreach (long item in set2)
                 {
                     if (!set1.Contains(item))
                     {
@@ -1232,10 +1194,10 @@ namespace TVGL.Voxelization
             }
             else
             {  // n^2 search because items are hashed according to their respective ECs
-                foreach (T set2Item in set2)
+                foreach (long set2Item in set2)
                 {
                     bool found = false;
-                    foreach (T set1Item in set1)
+                    foreach (long set1Item in set1)
                     {
                         if (comparer.Equals(set2Item, set1Item))
                         {
@@ -1260,7 +1222,7 @@ namespace TVGL.Voxelization
         /// <param name="set1"></param>
         /// <param name="set2"></param>
         /// <returns></returns>
-        private static bool AreEqualityComparersEqual(VoxelHashSet<T> set1, VoxelHashSet<T> set2)
+        private static bool AreEqualityComparersEqual(VoxelHashSet set1, VoxelHashSet set2)
         {
             return set1.Comparer.Equals(set2.Comparer);
         }
@@ -1270,7 +1232,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item"></param>
         /// <returns>hash code</returns>
-        private int InternalGetHashCode(T item)
+        private int InternalGetHashCode(long item)
         {
             if (item == null)
             {
@@ -1279,6 +1241,18 @@ namespace TVGL.Voxelization
             return comparer.GetHashCode(item);
         }
 
+        #region IEnumerable methods
+
+        public IEnumerator<long> GetEnumerator()
+        {
+            return new Enumerator(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return new Enumerator(this);
+        }
+        #endregion
         #endregion
 
         // used for set checking operations (using enumerables) that rely on counting
@@ -1291,23 +1265,23 @@ namespace TVGL.Voxelization
         internal struct Slot
         {
             internal int hashCode;      // Lower 31 bits of hash code, -1 if unused
-            internal T value;
+            internal long value;
             internal int next;          // Index of next entry, -1 if last
         }
 
-        public struct Enumerator : IEnumerator<T>, System.Collections.IEnumerator
+        public struct Enumerator : IEnumerator<long>, System.Collections.IEnumerator
         {
-            private VoxelHashSet<T> set;
+            private VoxelHashSet set;
             private int index;
             private int version;
-            private T current;
+            private long current;
 
-            internal Enumerator(VoxelHashSet<T> set)
+            internal Enumerator(VoxelHashSet set)
             {
                 this.set = set;
                 index = 0;
                 version = set.version;
-                current = default(T);
+                current = 0L;
             }
 
             public void Dispose()
@@ -1332,11 +1306,11 @@ namespace TVGL.Voxelization
                     index++;
                 }
                 index = set.lastIndex + 1;
-                current = default(T);
+                current = 0L;
                 return false;
             }
 
-            public T Current
+            public long Current
             {
                 get
                 {
@@ -1364,7 +1338,7 @@ namespace TVGL.Voxelization
                 }
 
                 index = 0;
-                current = default(T);
+                current = 0L;
             }
         }
     }

@@ -16,7 +16,7 @@ namespace TVGL
         }
         public int Compare(IVoxel x, IVoxel y)
         {
-            if (x.Coordinates[dimension] > y.Coordinates[dimension]) return sense;
+            if (x.CoordinateIndices[dimension] > y.CoordinateIndices[dimension]) return sense;
             else return -sense;
         }
     }
