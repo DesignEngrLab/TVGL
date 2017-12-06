@@ -141,9 +141,66 @@ namespace TVGL.Voxelization
             throw new NotImplementedException();
         }
 
-        private void ClearOutEmpties(int level = -1)
+        private void FinalizeChange(int level = -1)
         {
-            throw new NotImplementedException();
+            #region  Clear out empties
+
+            var voxel0Keys = voxelDictionaryLevel0.Keys.ToList();
+            foreach (var key in voxel0Keys)
+            {
+                var voxel0Value = voxelDictionaryLevel0[key];
+                if (voxel0Value.Role == VoxelRoleTypes.Empty)
+                {
+                    foreach (var voxel1Key in voxel0Value.NextLevelVoxels)
+                        voxelDictionaryLevel1.Remove(voxel1Key);
+                    voxelDictionaryLevel0.Remove(key);
+                }
+                else
+                {
+                    if (voxel0Value.HighLevelVoxels != null) continue;
+                    var highLevelEmptyFlags =
+                        new List<long> { 0L << 60, 1L << 60, 4L << 60, 7L << 60, 10L << 60, 13L << 60 };
+                    voxel0Value.HighLevelVoxels.RemoveWhere(vx =>
+                        highLevelEmptyFlags.Contains(vx & Constants.maskAllButFlags));
+                }
+            }
+            var voxel1Keys = voxelDictionaryLevel1.Keys.ToList();
+            foreach (var key in voxel1Keys)
+            {
+                var voxel1Value = voxelDictionaryLevel1[key];
+                if (voxel1Value.Role == VoxelRoleTypes.Empty)
+                {
+                    voxelDictionaryLevel1.Remove(key);
+                    //todo:how to be sure to remove level 2-4 voxels
+                }
+             
+            }
+
+
+
+            #endregion
+
+            #region update time consuming properties
+            _count = (long)voxelDictionaryLevel0.Count + (long)(voxelDictionaryLevel1?.Count ?? 0) +
+            (long)voxelDictionaryLevel0.Sum(dict => (long)(dict.Value.HighLevelVoxels?.Count ?? 0));
+            _totals = new[]
+                        {
+                            voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Full),
+                            voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
+                            voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Full),
+                            voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
+                            voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel2)),
+                            voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel2)),
+                            voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel3)),
+                            voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel3)),
+                            voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel4)),
+                            voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel4))
+                        };
+            _volume = 0.0;
+            for (int i = 0; i <= discretizationLevel; i++)
+                _volume += Math.Pow(VoxelSideLengths[i], 3) * _totals[2 * i];
+            _volume += Math.Pow(VoxelSideLengths[discretizationLevel], 3) * _totals[2 * discretizationLevel + 1];
+            #endregion
 
         }
     }

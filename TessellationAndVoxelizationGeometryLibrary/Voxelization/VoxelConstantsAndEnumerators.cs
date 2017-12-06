@@ -70,6 +70,8 @@ namespace TVGL.Voxelization
 
         internal static long maskOutFlags = Int64.Parse("0FFFFFFFFFFFFFFF",
             System.Globalization.NumberStyles.HexNumber);   // remove the flags with # 0,FFFFF,FFFFF,FFFFF
+        internal static long maskAllButFlags = Int64.Parse("F000000000000000",
+            System.Globalization.NumberStyles.HexNumber);   // remove the flags with # F,00000,00000,00000
     }
 
     /// <summary>

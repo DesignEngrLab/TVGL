@@ -80,6 +80,7 @@ namespace TVGL.Voxelization
             makeVoxelsForFacesAndEdges(ts);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior();
+            FinalizeChange();
         }
 
         #region Making Voxels for Levels 0 and 1
@@ -569,18 +570,7 @@ namespace TVGL.Voxelization
             }
         }
         #endregion
-
-        //private void MakeAndStoreFullVoxelLevel0And1Concurrent(int x, int y, int z)
-        //{
-        //    var voxIDLevel0 = MakeVoxelID0(x, y, z);
-        //    var voxelLevel0 =
-        //        voxelDictionaryLevel0.GetOrAdd(voxIDLevel0, new VoxelClass(x, y, z, VoxelRoleTypes.Partial, 0));
-        //    if (voxelLevel0.VoxelRole == VoxelRoleTypes.Full) return;
-        //    var voxIDLevel1 = MakeVoxelID1(x, y, z);
-        //    voxelDictionaryLevel1.TryAdd(voxIDLevel1, new VoxelClass(x, y, z, VoxelRoleTypes.Full, 1));
-        //    if (!Contains(voxelLevel0, voxIDLevel1, 1))
-        //        Add(voxelLevel0, voxIDLevel1, 1);
-        //}
+        
 
         private void MakeAndStorePartialVoxelLevel0And1(int x, int y, int z, TessellationBaseClass tsObject)
         {

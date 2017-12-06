@@ -25,40 +25,14 @@ namespace TVGL.Voxelization
     /// </summary>
     public partial class VoxelizedSolid : Solid
     {
-        public long Count => (long)voxelDictionaryLevel0.Count + (long)(voxelDictionaryLevel1?.Count ?? 0) +
-                             (long)voxelDictionaryLevel0.Sum(dict => (long)(dict.Value.HighLevelVoxels?.Count ?? 0));
-        public new double Volume
-        {
-            get
-            {
-                var totals = GetTotals();
-                var volume = 0.0;
-                for (int i = 0; i <= discretizationLevel; i++)
-                {
-                    volume += Math.Pow(VoxelSideLengths[i], 3) * totals[2 * i];
-                }
-                return volume + Math.Pow(VoxelSideLengths[discretizationLevel], 3) * totals[2 * discretizationLevel + 1];
-            }
-            internal set { _volume = value; }
-        }
+        public long Count => _count;
+        private long _count;
+        public new double Volume => _volume;
         double _volume;
 
-        public long[] GetTotals()
-        {
-            return new[]
-            {
-                voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Full),
-                voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
-                voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Full),
-                voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
-                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel2)),
-                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel2)),
-                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel3)),
-                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel3)),
-                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isFullLevel4)),
-                voxelDictionaryLevel0.Values.Sum(dict => (long)dict.HighLevelVoxels.Count(isPartialLevel4))
-            };
-        }
+        public long[] GetTotals => _totals;
+        long[] _totals;
+
 
         bool isFullLevel0(long ID) { return ID >= 2305843009213693952 && ID <= 3458764513820540927; }
         bool isPartialLevel0(long ID) { return ID >= 3458764513820540928 && ID <= 4611686018427387903; }
@@ -142,30 +116,33 @@ namespace TVGL.Voxelization
         #endregion
         #region Get Functions
 
-        public IEnumerable<IVoxel> Voxels(VoxelDiscretization upToAndIncludingLevelEnum = VoxelDiscretization.ExtraFine)
+        public IEnumerable<IVoxel> Voxels(VoxelDiscretization upToAndIncludingLevel = VoxelDiscretization.ExtraFine)
         {
-            var upToAndIncludingLevel = (int) upToAndIncludingLevelEnum;
-            if (upToAndIncludingLevel > discretizationLevel) upToAndIncludingLevel = discretizationLevel;
+            var level = (int)upToAndIncludingLevel;
+            if (level > discretizationLevel) level = discretizationLevel;
             foreach (var v in voxelDictionaryLevel0.Values.Where(v => v.Role == VoxelRoleTypes.Full))
                 yield return v;
-            if (upToAndIncludingLevel == 0)
+            if (level == 0)
                 foreach (var v in voxelDictionaryLevel0.Values.Where(v => v.Role == VoxelRoleTypes.Partial))
                     yield return v;
-            if (upToAndIncludingLevel >= 1)
+            if (level >= 1)
                 foreach (var v in voxelDictionaryLevel1.Values.Where(v => v.Role == VoxelRoleTypes.Full))
                     yield return v;
-            if (upToAndIncludingLevel == 1)
+            if (level == 1)
                 foreach (var v in voxelDictionaryLevel1.Values.Where(v => v.Role == VoxelRoleTypes.Partial))
                     yield return v;
-            if (upToAndIncludingLevel == 2)
-                return voxelDictionaryLevel0.Values.SelectMany(voxDict =>
-                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -8070450532247928832));
-            if (upToAndIncludingLevel == 3)
-                return voxelDictionaryLevel0.Values.SelectMany(voxDict =>
-                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -5764607523034234880, -4611686018427387904));
-            if (upToAndIncludingLevel == 4)
-                return voxelDictionaryLevel0.Values.SelectMany(voxDict =>
-                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -5764607523034234880, -2305843009213693952, -1152921504606846976));
+            if (level == 2)
+                foreach (var v in voxelDictionaryLevel0.Values.SelectMany(voxDict =>
+                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -8070450532247928832)))
+                    yield return v;
+            if (level == 3)
+                foreach (var v in voxelDictionaryLevel0.Values.SelectMany(voxDict =>
+                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -5764607523034234880, -4611686018427387904)))
+                    yield return v;
+            if (level == 4)
+                foreach (var v in voxelDictionaryLevel0.Values.SelectMany(voxDict =>
+                    GetHighLevelVoxelsFromLevel0(voxDict, -9223372036854775808, -5764607523034234880, -2305843009213693952, -1152921504606846976)))
+                    yield return v;
         }
 
         public IEnumerable<IVoxel> GetVoxels(VoxelRoleTypes role, int level)
@@ -182,8 +159,8 @@ namespace TVGL.Voxelization
             var targetFlags = SetRoleFlags(flags);
             return voxelDictionaryLevel0.Values.SelectMany(voxDict => GetHighLevelVoxelsFromLevel0(voxDict, targetFlags));
         }
-        
-        internal IEnumerable<IVoxel> GetHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,params long[] targetFlags)
+
+        internal IEnumerable<IVoxel> GetHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel, params long[] targetFlags)
         {
             foreach (var vx in voxel.HighLevelVoxels)
             {
