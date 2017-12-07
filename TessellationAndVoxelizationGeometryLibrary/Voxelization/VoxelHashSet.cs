@@ -28,22 +28,26 @@ namespace TVGL.Voxelization
         private int freeList;
         private IEqualityComparer<long> comparer;
         private int version;
+        private double[] voxelSideLengths;
+        private double[] offset;
 
 
         #region Constructors
 
-        public VoxelHashSet(IEqualityComparer<long> comparer, int level)
+        public VoxelHashSet(IEqualityComparer<long> comparer)
         {
             this.comparer = comparer;
             lastIndex = 0;
             count = 0;
             freeList = -1;
             version = 0;
-            var suggestedCapacity = primes[0];
-            if (level == 3) suggestedCapacity = primes[7];
-            if (level == 4) suggestedCapacity = primes[13];
-            Initialize(suggestedCapacity);
-
+            Initialize(primes[0]);
+        }
+        public VoxelHashSet(IEqualityComparer<long> comparer, double[] voxelSideLengths, double[] offset)
+            :this(comparer)
+        {
+            this.voxelSideLengths = voxelSideLengths;
+            this.offset = offset;
         }
 
 
@@ -95,7 +99,40 @@ namespace TVGL.Voxelization
             // either m_buckets is null or wasn't found
             return new VoxelRoleTypes[0];
         }
-
+        public long GetFullVoxelID(long item)
+        {
+            if (buckets != null)
+            {
+                int hashCode = InternalGetHashCode(item);
+                // see note at "HashSet" level describing why "- 1" appears in for loop
+                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                {
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
+                    {
+                        return slots[i].value;
+                    }
+                }
+            }
+            // either m_buckets is null or wasn't found
+            return 0;
+        }
+        public IVoxel GetVoxel(long item)
+        {
+            if (buckets != null)
+            {
+                int hashCode = InternalGetHashCode(item);
+                // see note at "HashSet" level describing why "- 1" appears in for loop
+                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                {
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
+                    {
+                        return new Voxel(slots[i].value, 4, voxelSideLengths, offset);
+                    }
+                }
+            }
+            // either m_buckets is null or wasn't found
+            return null;
+        }
 
 
         #endregion
@@ -876,6 +913,7 @@ namespace TVGL.Voxelization
         }
 
         private bool CapacityMaxedOut;
+
         /// <summary>
         /// Expand to new capacity. New capacity is next prime greater than or equal to suggested 
         /// size. This is called when the underlying array is filled. This performs no 

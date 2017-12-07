@@ -836,12 +836,12 @@ namespace TVGL
         private static Visual3D MakeModelVisual3D(VoxelizedSolid solid, Material material)
         {
             var builder = new MeshBuilder();
-            foreach (var voxel in solid.GetVoxelsAsAABBDoubles(VoxelRoleTypes.Partial, 1))
+            foreach (var voxel in solid.GetVoxels(VoxelRoleTypes.Partial, 1))
             {
-                var sideLength = voxel[3];
-                builder.AddBox(new Point3D(voxel[0]+0.5*sideLength,
-                    voxel[1] + 0.5 * sideLength,
-                voxel[2] + 0.5 * sideLength), sideLength, sideLength, sideLength);
+                var sideLength = voxel.SideLength;
+                builder.AddBox(new Point3D(voxel.BottomCoordinate[0]+0.5*sideLength,
+                    voxel.BottomCoordinate[1] + 0.5 * sideLength,
+                voxel.BottomCoordinate[2] + 0.5 * sideLength), sideLength, sideLength, sideLength);
             }
             return new ModelVisual3D
             {

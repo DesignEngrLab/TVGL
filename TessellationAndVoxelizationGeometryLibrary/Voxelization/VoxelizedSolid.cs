@@ -76,7 +76,7 @@ namespace TVGL.Voxelization
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
             return xLong + yLong + zLong + SetRoleFlags(levels);
         }
-        private static long MakeVoxelID1(int x, int y, int z)
+        private static long MakeVoxelID1(byte x, byte y, byte z)
         {
             var xLong = (long)x << 52;
             var yLong = (long)y << 32;
@@ -87,7 +87,7 @@ namespace TVGL.Voxelization
             return xLong + yLong + zLong;
         }
 
-        private static long MakeVoxelID0(int x, int y, int z)
+        private static long MakeVoxelID0(byte x, byte y, byte z)
         {
             var xLong = (long)x >> 4; //this shift is to clear out the level-1 values
             var yLong = (long)y >> 4;
@@ -164,22 +164,6 @@ namespace TVGL.Voxelization
                 VoxelRoleTypes.Partial
             };
         }
-
-        internal static int[] GetCoordinatesFromID(long id, int level, int startDiscretizationLevel)
-        { 
-            var shift = 4 * (4 - startDiscretizationLevel);
-            var zCoord = id & Constants.maskAllButZ;
-            zCoord = zCoord >> shift;
-            shift += 20;
-            var yCoord = id & Constants.maskAllButY;
-            yCoord = yCoord >> shift;
-            shift += 20;
-            var xCoord = id & Constants.maskAllButX;
-            xCoord = xCoord >> shift;
-            return new[] { (int)xCoord, (int)yCoord, (int)zCoord }; // the & is to clear out the x and y values and the flags
-        }
-
-
         internal static long MakeCoordinateZero(long id, int dimension)
         {
             if (dimension == 0)
@@ -204,7 +188,7 @@ namespace TVGL.Voxelization
             return newValue + MakeCoordinateZero(id, dimension);
         }
 
-        internal static long GetContainingVoxel(long id, int level)
+        internal static long MakeContainingVoxelID(long id, int level)
         {
             switch (level)
             {

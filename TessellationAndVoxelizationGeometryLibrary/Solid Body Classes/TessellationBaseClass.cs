@@ -32,11 +32,11 @@ namespace TVGL
         public double[] Normal { get; internal set; }
 
 
-        public HashSet<IVoxel> Voxels { get; protected set; }
+        public HashSet<VoxelWithTessellationLinks> Voxels { get; protected set; }
 
-        internal void AddVoxel(IVoxel v)
+        internal void AddVoxel(VoxelWithTessellationLinks v)
         {
-            if (Voxels == null) Voxels = new HashSet<IVoxel> { v };
+            if (Voxels == null) Voxels = new HashSet<VoxelWithTessellationLinks> { v };
             else if (!Voxels.Contains(v)) Voxels.Add(v);
         }
 
