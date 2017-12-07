@@ -426,6 +426,12 @@ namespace TVGL
             List<Tuple<Vertex, double>> sortedVertices;
             List<int[]> duplicateRanges;
             MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+            if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
+                distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
+            {
+                //Distance is out of range of this solid.
+                return null;
+            }
 
             var edgeListDictionary = new Dictionary<int, Edge>();
             var previousVertexDistance = sortedVertices[0].Item2; //This value can be negative
