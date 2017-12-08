@@ -161,7 +161,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Adds the corner vertices (actually 3d points) to the bounding box
+        ///     Adds the corner vertices to the bounding box
         /// </summary>
         /// <returns>BoundingBox.</returns>
         public void SetCornerVertices()
@@ -182,13 +182,12 @@ namespace TVGL
             SetCornerVertices(allPointsOnFaces);
         }
 
-
         /// <summary>
-        ///     Adds the corner vertices (actually 3d points) to the bounding box
+        ///     Adds the corner vertices  to the bounding box
         ///     This method is used when the face vertices are not known.
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public void SetCornerVertices(List<Vertex> verticesOfInterest )
+        public void SetCornerVertices(List<Vertex> verticesOfInterest)
         {
             if (CornerVertices != null) return;
             var cornerVertices = new Vertex[8];
