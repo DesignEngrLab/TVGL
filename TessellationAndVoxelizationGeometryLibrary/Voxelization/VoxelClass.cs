@@ -38,7 +38,7 @@ namespace TVGL.Voxelization
         public int Level { get; internal set; }
         public double[] BottomCoordinate { get; internal set; }
 
-        internal Voxel(long ID, int startDiscretizationLevel, double[] voxelSideLengths, double[] offset)
+        internal Voxel(long ID, double[] voxelSideLengths, double[] offset)
         {
             this.ID = ID;
             var roleFlags = VoxelizedSolid.GetRoleFlags(ID);
@@ -89,11 +89,10 @@ namespace TVGL.Voxelization
         {
             if (voxelRole == VoxelRoleTypes.Partial)
             {
-                NextLevelVoxels = new VoxelHashSet(new VoxelComparerCoarse());
+                NextLevelVoxels = new VoxelHashSet(new VoxelComparerCoarse(), voxelSideLengths, offset);
                 HighLevelVoxels = new VoxelHashSet(new VoxelComparerFine(), voxelSideLengths, offset);
             }
         }
-
         internal VoxelHashSet HighLevelVoxels;
         internal VoxelHashSet NextLevelVoxels;
     }

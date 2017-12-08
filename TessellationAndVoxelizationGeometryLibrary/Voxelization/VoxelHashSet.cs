@@ -34,7 +34,7 @@ namespace TVGL.Voxelization
 
         #region Constructors
 
-        public VoxelHashSet(IEqualityComparer<long> comparer)
+        private VoxelHashSet(IEqualityComparer<long> comparer)
         {
             this.comparer = comparer;
             lastIndex = 0;
@@ -126,7 +126,7 @@ namespace TVGL.Voxelization
                 {
                     if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
                     {
-                        return new Voxel(slots[i].value, 4, voxelSideLengths, offset);
+                        return new Voxel(slots[i].value, voxelSideLengths, offset);
                     }
                 }
             }

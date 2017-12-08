@@ -34,7 +34,7 @@ namespace TVGL.Voxelization
         /// <param name="bounds">The bounds.</param>
         /// <param name="onlyDefineBoundary">if set to <c>true</c> [only define boundary].</param>
         public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization, double[][] bounds = null,
-            bool onlyDefineBoundary = false)
+            bool onlyDefineBoundary = false) : base(ts.Units, ts.Name, "", ts.Comments, ts.Language)
         {
             Discretization = voxelDiscretization;
             #region Setting Up Parameters 
@@ -102,7 +102,7 @@ namespace TVGL.Voxelization
                     makeVoxelForVertexLevel0And1(vertex, coordinates);
                 });
             }
-            FinalizeChange();
+            UpdateProperties();
         }
 
         #region Making Voxels for Levels 0 and 1
@@ -467,7 +467,7 @@ namespace TVGL.Voxelization
                 if (discretizationLevel == 0)
                     MakeAndStorePartialVoxelLevel0(ijk[0], ijk[1], ijk[2], tsObject);
                 else
-                MakeAndStorePartialVoxelLevel0And1(ijk[0], ijk[1], ijk[2], tsObject);
+                    MakeAndStorePartialVoxelLevel0And1(ijk[0], ijk[1], ijk[2], tsObject);
                 // now move to the next increment, of course, you may not use it if the while condition is not met
                 u += increment;
                 var vDouble = vRange * (u - startU) / uRange + startV;
@@ -598,7 +598,11 @@ namespace TVGL.Voxelization
                         voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
                     }
                 }
-                Add(voxelLevel0, voxIDLevel1, 1);
+                if (!voxelLevel0.NextLevelVoxels.Contains(voxIDLevel1))
+                {
+                    if (voxelLevel0.NextLevelVoxels.Count == 4095) MakeVoxelFull(voxelLevel0);
+                    else lock (voxelLevel0.NextLevelVoxels) voxelLevel0.NextLevelVoxels.Add(voxIDLevel1);
+                }
             }
         }
         #endregion
@@ -669,7 +673,11 @@ namespace TVGL.Voxelization
                         voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
                     }
                 }
-                Add(voxelLevel0, voxIDLevel1, 1);
+                if (!voxelLevel0.NextLevelVoxels.Contains(voxIDLevel1))
+                {
+                    if (voxelLevel0.NextLevelVoxels.Count == 4095) MakeVoxelFull(voxelLevel0);
+                    else lock (voxelLevel0.NextLevelVoxels) voxelLevel0.NextLevelVoxels.Add(voxIDLevel1);
+                }
             }
             Add(voxelLevel0, tsObject);
             Add(voxelLevel1, tsObject);

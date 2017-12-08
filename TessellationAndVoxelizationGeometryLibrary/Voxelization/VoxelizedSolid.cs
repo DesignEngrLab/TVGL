@@ -51,6 +51,29 @@ namespace TVGL.Voxelization
         public double[] Offset => Bounds[0];
         #endregion
 
+        #region Constructor (from another voxelized solid, or maybe from a file)
+
+        public VoxelizedSolid(VoxelDiscretization voxelDiscretization, double[][] bounds, UnitType units = UnitType.unspecified, string name = "",
+            string filename = "", List<string> comments = null, string language = "") : base(units, name, filename,
+            comments, language)
+        {
+            Discretization = voxelDiscretization;
+            Bounds = new double[2][];
+            Bounds[0] = (double[])bounds[0].Clone();
+            Bounds[1] = (double[])bounds[1].Clone();
+            var dimensions = new double[3];
+            for (int i = 0; i < 3; i++)
+                dimensions[i] = Bounds[1][i] - Bounds[0][i];
+            var longestSide = dimensions.Max();
+            longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
+            longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
+            VoxelSideLengths = new[] { longestSide / 16, longestSide / 256, longestSide / 4096, longestSide / 65536, longestSide / 1048576 };
+            voxelDictionaryLevel0 = new Dictionary<long, Voxel_Level0_Class>(new VoxelComparerCoarse());
+            voxelDictionaryLevel1 = new Dictionary<long, Voxel_Level1_Class>(new VoxelComparerCoarse());
+            UpdateProperties();
+        }
+        #endregion
+
         #region Private Fields
         private readonly double[][] transformedCoordinates;
         private readonly double[] dimensions;
@@ -101,24 +124,29 @@ namespace TVGL.Voxelization
             return xLong + yLong + zLong;
         }
 
-        internal static long SetRoleFlags(VoxelRoleTypes[] levels)
+        internal static long SetRoleFlags(params VoxelRoleTypes[] levels)
         {
-            if (levels == null || !levels.Any()) return 0L << 60; //no role is specified
+            return SetRoleFlags(levels);
+        }
+
+        internal static long SetRoleFlags(IList<VoxelRoleTypes> levels)
+            {
+                if (levels == null || !levels.Any()) return 0L << 60; //no role is specified
             if (levels[0] == VoxelRoleTypes.Empty) return 1L << 60; //the rest of the levels would also be empty
             if (levels[0] == VoxelRoleTypes.Full) return 2L << 60; // the rest of the levels would also be full
-            if (levels[0] == VoxelRoleTypes.Partial && levels.Length == 1) return 3L << 60;
+            if (levels[0] == VoxelRoleTypes.Partial && levels.Count == 1) return 3L << 60;
             // level 0 is partial but the smaller voxels could be full, empty of partial. 
             // they are not specified if the length is only one. If the length is more
             // than 1, then go to next level
             if (levels[1] == VoxelRoleTypes.Empty) return 4L << 60; //the rest are empty
             if (levels[1] == VoxelRoleTypes.Full) return 5L << 60; // the rest are full
-            if (levels[1] == VoxelRoleTypes.Partial && levels.Length == 2) return 6L << 60;
+            if (levels[1] == VoxelRoleTypes.Partial && levels.Count == 2) return 6L << 60;
             if (levels[2] == VoxelRoleTypes.Empty) return 7L << 60; //the rest are empty
             if (levels[2] == VoxelRoleTypes.Full) return 8L << 60; // the rest are full
-            if (levels[2] == VoxelRoleTypes.Partial && levels.Length == 3) return 9L << 60;
+            if (levels[2] == VoxelRoleTypes.Partial && levels.Count == 3) return 9L << 60;
             if (levels[3] == VoxelRoleTypes.Empty) return 10L << 60; //the rest are empty
             if (levels[3] == VoxelRoleTypes.Full) return 11L << 60; // the rest are full
-            if (levels[3] == VoxelRoleTypes.Partial && levels.Length == 4) return 12L << 60;
+            if (levels[3] == VoxelRoleTypes.Partial && levels.Count == 4) return 12L << 60;
             if (levels[3] == VoxelRoleTypes.Empty) return 13L << 60;
             if (levels[4] == VoxelRoleTypes.Full) return 14L << 60;
             return 15L << 60;

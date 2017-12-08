@@ -55,132 +55,223 @@ namespace TVGL.Voxelization
         }
         #endregion
 
-        #region Add/Remove Functions
-        internal void Add(Voxel_Level0_Class voxel, long voxelID, int level = -1)
+        #region Functions to make voxel full, empty or partial
+        private void MakeVoxelFull(IVoxel voxel)
         {
-            if (voxelID < 0 || level >= 2)
+            if (voxel.Role == VoxelRoleTypes.Full) return;
+            if (voxel.Level == 0)
             {
-                if (voxel.HighLevelVoxels.Contains(voxelID)) return;
-                lock (voxel.HighLevelVoxels) voxel.HighLevelVoxels.Add(voxelID);
-
-                //todo: need to figure out how to check if a level 1, 2, or 3 parent gets full
+                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Full;
+                ((Voxel_Level0_Class)voxel).HighLevelVoxels.Clear();
+                foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
+                    voxelDictionaryLevel1.Remove(nextLevelVoxel);
+                ((Voxel_Level0_Class)voxel).NextLevelVoxels.Clear();
             }
-            else if ((voxelID < 4611686018427387904 && level == -1) || level == 0)
-                throw new ArgumentException("Attempting to add a level 0 voxel to another level 0 voxel.");
-            else
+            else if (voxel.Level == 1)
             {
-                if (voxel.NextLevelVoxels.Contains(voxelID)) return;
-                if (voxel.NextLevelVoxels.Count == 4095)
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Full;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
+                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
+            }
+            else if (voxel.Level == 2)
+            {
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
                 {
-                    voxel.Role = VoxelRoleTypes.Full;
-                    // also have to change the key in the level-0 dictionary. to do this, we need to add and remove
-                    voxel.HighLevelVoxels.Clear();
-                    foreach (var nextLevelVoxel in voxel.NextLevelVoxels)
-                        voxelDictionaryLevel1[nextLevelVoxel].Role = VoxelRoleTypes.Empty;
-                    voxel.NextLevelVoxels.Clear();
-                }
-                else lock (voxel.NextLevelVoxels) voxel.NextLevelVoxels.Add(voxelID);
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Full
+                }));
             }
-        }
-
-        internal bool Remove(Voxel_Level0_Class voxel, long voxelID)
-        {
-            if (voxelID < 4611686018427387904 && voxelID >= 0)
-                throw new ArgumentException("Attempting to remove a level 0 voxel to another level 0 voxel.");
-            if (voxel.Role == VoxelRoleTypes.Empty) return true;
-            if (voxel.Role == VoxelRoleTypes.Full)
-                throw new NotImplementedException(
-                    "removing a voxel from a full means having to create all the sub-voxels minus 1.");
-            if (voxelID < 0)
+            else if (voxel.Level == 3)
             {
-                if (voxel.HighLevelVoxels.Count == 1 && voxel.HighLevelVoxels.Contains(voxelID))
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
                 {
-                    //then this is the last subvoxel, so this goes empty
-                    voxel.HighLevelVoxels = null;
-                    voxel.Role = VoxelRoleTypes.Empty;
-                    return true;
-                }
-                if (voxel.HighLevelVoxels.Any())
-                    return voxel.HighLevelVoxels.Remove(voxelID);
-                //todo: need to figure out how to check if a level 1, 2, or 3 parent gets full
-
-                throw new NotImplementedException("even though there are no high level voxels, we need to check next level, and create the subvoxels");
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Full
+                }));
             }
-            if (voxel.NextLevelVoxels.Count == 1 && voxel.NextLevelVoxels.Contains(voxelID))
+            else //if (voxel.Level == 4)
             {
-                //then this is the last subvoxel, so this goes empty
-                voxel.NextLevelVoxels = null;
-                voxel.HighLevelVoxels = null;
-                voxel.Role = VoxelRoleTypes.Empty;
-                return true;
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
+                {
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Full
+                }));
             }
-            if (voxel.NextLevelVoxels.Any())
-                return voxel.NextLevelVoxels.Remove(voxelID);
-            throw new NotImplementedException(
-                "removing a voxel from a full means having to create all the sub-voxels minus 1.");
         }
 
-        internal bool Contains(Voxel_Level0_Class voxel, long voxelID, int level = -1)
-        {
-            if (voxelID < 0 || level >= 2)
-            {
-                if (voxel.HighLevelVoxels == null) return false;
-                return voxel.HighLevelVoxels.Contains(voxelID);
-            }
-            if ((voxelID < 4611686018427387904 && level == -1) || level == 0)
-                return false;
-            if (voxel.NextLevelVoxels == null) return false;
-            return voxel.NextLevelVoxels.Contains(voxelID);
-        }
-        #endregion
-
-
-
-        private void MakeVoxelFull(IVoxel neighbor)
+        private void MakeVoxelFull(long id)
         {
             throw new NotImplementedException();
         }
 
-        private void FinalizeChange(int level = -1)
+        private void MakeVoxelPartial(IVoxel voxel)
         {
-            #region  Clear out empties
-
-            var voxel0Keys = voxelDictionaryLevel0.Keys.ToList();
-            foreach (var key in voxel0Keys)
+            if (voxel.Role == VoxelRoleTypes.Partial) return;
+            if (voxel.Level == 0)
             {
-                var voxel0Value = voxelDictionaryLevel0[key];
-                if (voxel0Value.Role == VoxelRoleTypes.Empty)
+                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
+            }
+            else if (voxel.Level == 1)
+            {
+                ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
+            }
+            else if (voxel.Level == 2)
+            {
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
                 {
-                    foreach (var voxel1Key in voxel0Value.NextLevelVoxels)
-                        voxelDictionaryLevel1.Remove(voxel1Key);
-                    voxelDictionaryLevel0.Remove(key);
-                }
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial
+                }));
+            }
+            else if (voxel.Level == 3)
+            {
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
+                {
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial
+                }));
+            }
+            else //if (voxel.Level == 4)
+            {
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
+                {
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial
+                }));
+            }
+        }
+
+        private void MakeVoxelPartial(long id)
+        {
+            throw new NotImplementedException();
+        }
+
+
+
+        //todo: this function and next. we are emptying a voxel and any children it has, but there are two more
+        //cases that need to be included: 1) we empty the last voxel of the parent (actually, this is already 
+        //done for level1), and 2)we are emptying a voxel but the parent is currently full. these functions can
+        //and should recurse (again just like level 1)
+        private void MakeVoxelEmpty(IVoxel voxel)
+        {
+            if (voxel.Role == VoxelRoleTypes.Empty) return;
+            if (voxel.Level == 0)
+            {
+                foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
+                    voxelDictionaryLevel1.Remove(nextLevelVoxel);
+                voxelDictionaryLevel0.Remove(voxel.ID);
+            }
+            else if (voxel.Level == 1)
+            {
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
+                if (!voxel0.NextLevelVoxels.Any()) MakeVoxelEmpty(voxel0);
                 else
                 {
-                    if (voxel0Value.HighLevelVoxels != null) continue;
-                    var highLevelEmptyFlags =
-                        new List<long> { 0L << 60, 1L << 60, 4L << 60, 7L << 60, 10L << 60, 13L << 60 };
-                    voxel0Value.HighLevelVoxels.RemoveWhere(vx =>
-                        highLevelEmptyFlags.Contains(vx & Constants.maskAllButFlags));
+                    voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
+                    voxelDictionaryLevel1.Remove(voxel.ID);
                 }
             }
-            var voxel1Keys = voxelDictionaryLevel1.Keys.ToList();
-            foreach (var key in voxel1Keys)
+            else if (voxel.Level == 2)
             {
-                var voxel1Value = voxelDictionaryLevel1[key];
-                if (voxel1Value.Role == VoxelRoleTypes.Empty)
-                {
-                    voxelDictionaryLevel1.Remove(key);
-                    //todo:how to be sure to remove level 2-4 voxels
-                }
-             
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
             }
+            else if (voxel.Level == 3)
+            {
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
+            }
+            else //if (voxel.Level == 4)
+            {
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+            }
+        }
 
-
-
-            #endregion
-
-            #region update time consuming properties
+        private void MakeVoxelEmpty(long id)
+        {
+            var flags = GetRoleFlags(id);
+            var role = flags.Last();
+            var level = flags.Length - 1;
+            if (role == VoxelRoleTypes.Empty) return;
+            if (level == 0)
+            {
+                var voxel = voxelDictionaryLevel0[id];
+                foreach (var nextLevelVoxel in voxel.NextLevelVoxels)
+                    voxelDictionaryLevel1.Remove(nextLevelVoxel);
+                voxelDictionaryLevel0.Remove(id);
+            }
+            else if (level == 1)
+            {
+                var thisIDwoFlags = id & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
+                if (!voxel0.NextLevelVoxels.Any()) MakeVoxelEmpty(voxel0);
+                else
+                {
+                    voxel0.HighLevelVoxels.RemoveWhere(vx => (vx & Constants.maskAllButLevel0and1) == thisIDwoFlags);
+                    voxelDictionaryLevel1.Remove(id);
+                }
+            }
+            else if (level == 2)
+            {
+                var thisIDwoFlags = id & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.RemoveWhere(vx => (vx & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+            }
+            else if (level == 3)
+            {
+                var thisIDwoFlags = id & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.RemoveWhere(vx => (vx & Constants.maskLevel4) == thisIDwoFlags);
+            }
+            else //if (voxel.Level == 4)
+            {
+                var thisIDwoFlags = id & Constants.maskOutFlags;
+                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                voxel0.HighLevelVoxels.Remove(id);
+            }
+        }
+        #endregion
+        private void UpdateProperties(int level = -1)
+        {
             _count = (long)voxelDictionaryLevel0.Count + (long)(voxelDictionaryLevel1?.Count ?? 0) +
             (long)voxelDictionaryLevel0.Sum(dict => (long)(dict.Value.HighLevelVoxels?.Count ?? 0));
             _totals = new[]
@@ -200,8 +291,6 @@ namespace TVGL.Voxelization
             for (int i = 0; i <= discretizationLevel; i++)
                 _volume += Math.Pow(VoxelSideLengths[i], 3) * _totals[2 * i];
             _volume += Math.Pow(VoxelSideLengths[discretizationLevel], 3) * _totals[2 * discretizationLevel + 1];
-            #endregion
-
         }
     }
 }
