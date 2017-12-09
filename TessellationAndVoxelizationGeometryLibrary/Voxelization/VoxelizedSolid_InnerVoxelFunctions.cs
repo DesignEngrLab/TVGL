@@ -61,136 +61,138 @@ namespace TVGL.Voxelization
             if (voxel.Role == VoxelRoleTypes.Full) return;
             if (voxel.Level == 0)
             {
+                if (voxel.Role == VoxelRoleTypes.Empty) //then you may need to add it
+                {
+                    if (!(voxel is Voxel_Level0_Class))
+                        //voxel = new Voxel_Level0_Class(???);
+                        throw new NotImplementedException("This was not implemented because"
+                                                          + " I wasn't sure it'd ever happen and the input arguments needed for the" +
+                                                          "Voxel_Level0_Class are not readily available here.");
+                    if (!voxelDictionaryLevel0.ContainsKey(voxel.ID))
+                        voxelDictionaryLevel0.Add(voxel.ID, (Voxel_Level0_Class)voxel);
+                }
+                else
+                {
+                    ((Voxel_Level0_Class)voxel).HighLevelVoxels.Clear();
+                    foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
+                        voxelDictionaryLevel1.Remove(nextLevelVoxel);
+                    ((Voxel_Level0_Class)voxel).NextLevelVoxels.Clear();
+                }
                 ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Full;
-                ((Voxel_Level0_Class)voxel).HighLevelVoxels.Clear();
-                foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
-                    voxelDictionaryLevel1.Remove(nextLevelVoxel);
-                ((Voxel_Level0_Class)voxel).NextLevelVoxels.Clear();
             }
             else if (voxel.Level == 1)
             {
                 var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var id0 = MakeContainingVoxelID(thisIDwoFlags, 0);
+                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0));
+                var voxel0 = voxelDictionaryLevel0[id0];
+                if (voxel0.Role == VoxelRoleTypes.Full) return;
+                if (voxel.Role == VoxelRoleTypes.Empty)
+                {
+                    if (!(voxel is Voxel_Level1_Class))
+                        //voxel = new Voxel_Level1_Class(???);
+                        throw new NotImplementedException("This was not implemented because"
+                                                          + " I wasn't sure it'd ever happen and the input arguments needed for the" +
+                                                          "Voxel_Level1_Class are not readily available here.");
+                    if (!voxelDictionaryLevel1.ContainsKey(voxel.ID))
+                    {
+                        voxelDictionaryLevel1.Add(voxel.ID, (Voxel_Level1_Class)voxel);
+                        voxel0.NextLevelVoxels.Add(voxel.ID);
+                    }
+                }
+                else  //then it was partial
+                    voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
                 ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Full;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
-                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
+                if (voxel0.NextLevelVoxels.Count(v => voxelDictionaryLevel1[v].Role == VoxelRoleTypes.Full) == 4096)
+                    MakeVoxelFull(voxel0);
             }
             else if (voxel.Level == 2)
             {
                 var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
-                {
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Full
-                }));
+                var id0 = MakeContainingVoxelID(thisIDwoFlags, 0);
+                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0));
+                var voxel0 = voxelDictionaryLevel0[id0];
+                if (voxel0.Role == VoxelRoleTypes.Full) return;
+
+                var id1 = MakeContainingVoxelID(thisIDwoFlags, 1);
+                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1));
+                var voxel1 = voxelDictionaryLevel1[id0];
+                if (voxel1.Role == VoxelRoleTypes.Full) return;
+
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                if (voxel.Role == VoxelRoleTypes.Partial)
+                    voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Full));
+                if (voxel0.HighLevelVoxels.Count(isFullLevel2) == 4096)
+                    MakeVoxelFull(GetParentVoxel(voxel));
             }
             else if (voxel.Level == 3)
             {
                 var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
-                {
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Full
-                }));
+                var id0 = MakeContainingVoxelID(thisIDwoFlags, 0);
+                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0));
+                var voxel0 = voxelDictionaryLevel0[id0];
+                if (voxel0.Role == VoxelRoleTypes.Full) return;
+
+                var id1 = MakeContainingVoxelID(thisIDwoFlags, 1);
+                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1));
+                var voxel1 = voxelDictionaryLevel1[id0];
+                if (voxel1.Role == VoxelRoleTypes.Full) return;
+
+                var id2 = MakeContainingVoxelID(thisIDwoFlags, 2);
+                if (!isFullLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2))) return;
+                if (!isPartialLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2)))
+                        MakeVoxelPartial(new Voxel(id2));
+
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                if (voxel.Role == VoxelRoleTypes.Partial)
+                    voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial, VoxelRoleTypes.Full));
+                if (GetSiblingVoxels(voxel).Count(v => isFullLevel3(v.ID)) == 4096)
+                    MakeVoxelFull(GetParentVoxel(voxel));
             }
             else //if (voxel.Level == 4)
             {
                 var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
+                var id0 = MakeContainingVoxelID(thisIDwoFlags, 0);
+                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0));
+                var voxel0 = voxelDictionaryLevel0[id0];
+                if (voxel0.Role == VoxelRoleTypes.Full) return;
+
+                var id1 = MakeContainingVoxelID(thisIDwoFlags, 1);
+                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1));
+                var voxel1 = voxelDictionaryLevel1[id0];
+                if (voxel1.Role == VoxelRoleTypes.Full) return;
+
+                var id2 = MakeContainingVoxelID(thisIDwoFlags, 2);
+                if (!isFullLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2))) return;
+                if (!isPartialLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2)))
+                    MakeVoxelPartial(new Voxel(id2));
+
+                var id3 = MakeContainingVoxelID(thisIDwoFlags, 3);
+                if (!isFullLevel3(voxel0.HighLevelVoxels.GetFullVoxelID(id3))) return;
+                if (!isPartialLevel3(voxel0.HighLevelVoxels.GetFullVoxelID(id3)))
+                    MakeVoxelPartial(new Voxel(id3));
+
+
                 voxel0.HighLevelVoxels.Remove(voxel.ID);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
-                {
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Full
-                }));
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
+                                               VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Full));
+                if (GetSiblingVoxels(voxel).Count(v => isFullLevel4(v.ID)) == 4096)
+                    MakeVoxelFull(GetParentVoxel(voxel));
             }
         }
 
-        private void MakeVoxelFull(long id)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void MakeVoxelPartial(IVoxel voxel)
-        {
-            if (voxel.Role == VoxelRoleTypes.Partial) return;
-            if (voxel.Level == 0)
-            {
-                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
-            }
-            else if (voxel.Level == 1)
-            {
-                ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
-            }
-            else if (voxel.Level == 2)
-            {
-                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
-                {
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial
-                }));
-            }
-            else if (voxel.Level == 3)
-            {
-                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
-                {
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial
-                }));
-            }
-            else //if (voxel.Level == 4)
-            {
-                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(new[]
-                {
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial
-                }));
-            }
-        }
-
-        private void MakeVoxelPartial(long id)
-        {
-            throw new NotImplementedException();
-        }
-
-
-
-        //todo: this function and next. we are emptying a voxel and any children it has, but there are two more
-        //cases that need to be included: 1) we empty the last voxel of the parent (actually, this is already 
-        //done for level1), and 2)we are emptying a voxel but the parent is currently full. these functions can
-        //and should recurse (again just like level 1)
         private void MakeVoxelEmpty(IVoxel voxel)
         {
             if (voxel.Role == VoxelRoleTypes.Empty) return;
             if (voxel.Level == 0)
             {
-                foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
-                    voxelDictionaryLevel1.Remove(nextLevelVoxel);
+                if (voxel.Role == VoxelRoleTypes.Partial)
+                    foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
+                        voxelDictionaryLevel1.Remove(nextLevelVoxel);
                 voxelDictionaryLevel0.Remove(voxel.ID);
             }
             else if (voxel.Level == 1)
@@ -199,76 +201,130 @@ namespace TVGL.Voxelization
                 var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
                 voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
                 if (!voxel0.NextLevelVoxels.Any()) MakeVoxelEmpty(voxel0);
-                else
+                else if (voxel.Role == VoxelRoleTypes.Partial)
                 {
                     voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
                     voxelDictionaryLevel1.Remove(voxel.ID);
                 }
             }
-            else if (voxel.Level == 2)
-            {
-                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
-            }
-            else if (voxel.Level == 3)
-            {
-                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
-            }
-            else //if (voxel.Level == 4)
+            else
             {
                 var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
                 var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
                 voxel0.HighLevelVoxels.Remove(voxel.ID);
+                if (!GetSiblingVoxels(voxel).Any()) MakeVoxelEmpty(GetParentVoxel(voxel));
+                if (voxel.Role == VoxelRoleTypes.Partial)
+                {
+                    if (voxel.Level == 2)
+                        voxel0.HighLevelVoxels.RemoveWhere(
+                            id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+                    else if (voxel.Level == 3)
+                        voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
+                }
             }
         }
 
-        private void MakeVoxelEmpty(long id)
+
+        private void MakeVoxelPartial(IVoxel voxel)
         {
-            var flags = GetRoleFlags(id);
-            var role = flags.Last();
-            var level = flags.Length - 1;
-            if (role == VoxelRoleTypes.Empty) return;
-            if (level == 0)
+            if (voxel.Role == VoxelRoleTypes.Partial) return;
+            if (voxel.Level == 0)
             {
-                var voxel = voxelDictionaryLevel0[id];
-                foreach (var nextLevelVoxel in voxel.NextLevelVoxels)
-                    voxelDictionaryLevel1.Remove(nextLevelVoxel);
-                voxelDictionaryLevel0.Remove(id);
+                if (!(voxel is Voxel_Level0_Class))
+                    //voxel = new Voxel_Level0_Class(???);
+                    throw new NotImplementedException("This was not implemented because"
+                                                      + " I wasn't sure it'd ever happen and the input arguments needed for the" +
+                                                      "Voxel_Level0_Class are not readily available here.");
+                if (!voxelDictionaryLevel0.ContainsKey(voxel.ID))
+                    voxelDictionaryLevel0.Add(voxel.ID, (Voxel_Level0_Class)voxel);
+                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
             }
-            else if (level == 1)
+            else if (voxel.Level == 1)
             {
-                var thisIDwoFlags = id & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
-                if (!voxel0.NextLevelVoxels.Any()) MakeVoxelEmpty(voxel0);
-                else
+                var id0 = MakeContainingVoxelID(voxel.ID, 0);
+                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0));
+                var voxel0 = voxelDictionaryLevel0[id0];
+                if (voxel0.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel0);
+                if (!(voxel is Voxel_Level1_Class))
+                    //voxel = new Voxel_Level1_Class(???);
+                    throw new NotImplementedException("This was not implemented because"
+                                                      + " I wasn't sure it'd ever happen and the input arguments needed for the" +
+                                                      "Voxel_Level1_Class are not readily available here.");
+                if (!voxelDictionaryLevel1.ContainsKey(voxel.ID))
                 {
-                    voxel0.HighLevelVoxels.RemoveWhere(vx => (vx & Constants.maskAllButLevel0and1) == thisIDwoFlags);
-                    voxelDictionaryLevel1.Remove(id);
+                    voxelDictionaryLevel1.Add(voxel.ID, (Voxel_Level1_Class)voxel);
+                    voxel0.NextLevelVoxels.Add(voxel.ID);
                 }
+                ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
             }
-            else if (level == 2)
+            else if (voxel.Level == 2)
             {
-                var thisIDwoFlags = id & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.RemoveWhere(vx => (vx & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var id0 = MakeContainingVoxelID(thisIDwoFlags, 0);
+                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0));
+                var voxel0 = voxelDictionaryLevel0[id0];
+                if (voxel0.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel0);
+
+                var id1 = MakeContainingVoxelID(thisIDwoFlags, 1);
+                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1));
+                var voxel1 = voxelDictionaryLevel1[id0];
+                if (voxel1.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel1);
+
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                    VoxelRoleTypes.Partial, VoxelRoleTypes.Partial));
             }
-            else if (level == 3)
+            else if (voxel.Level == 3)
             {
-                var thisIDwoFlags = id & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.RemoveWhere(vx => (vx & Constants.maskLevel4) == thisIDwoFlags);
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var id0 = MakeContainingVoxelID(thisIDwoFlags, 0);
+                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0));
+                var voxel0 = voxelDictionaryLevel0[id0];
+                if (voxel0.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel0);
+
+                var id1 = MakeContainingVoxelID(thisIDwoFlags, 1);
+                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1));
+                var voxel1 = voxelDictionaryLevel1[id0];
+                if (voxel1.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel1);
+
+                var id2 = MakeContainingVoxelID(thisIDwoFlags, 2);
+                if (!isPartialLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2)))
+                    MakeVoxelPartial(new Voxel(id2));
+
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                                               VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial));
             }
             else //if (voxel.Level == 4)
             {
-                var thisIDwoFlags = id & Constants.maskOutFlags;
-                var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.Remove(id);
+                var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
+                var id0 = MakeContainingVoxelID(thisIDwoFlags, 0);
+                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0));
+                var voxel0 = voxelDictionaryLevel0[id0];
+                if (voxel0.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel0);
+
+                var id1 = MakeContainingVoxelID(thisIDwoFlags, 1);
+                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1));
+                var voxel1 = voxelDictionaryLevel1[id0];
+                if (voxel1.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel1);
+
+                var id2 = MakeContainingVoxelID(thisIDwoFlags, 2);
+                if (!isPartialLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2)))
+                    MakeVoxelPartial(new Voxel(id2));
+
+                var id3 = MakeContainingVoxelID(thisIDwoFlags, 3);
+                if (!isPartialLevel3(voxel0.HighLevelVoxels.GetFullVoxelID(id3)))
+                    MakeVoxelPartial(new Voxel(id3));
+
+                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                                               VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial));
             }
         }
+
+
+
+
         #endregion
         private void UpdateProperties(int level = -1)
         {

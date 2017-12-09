@@ -559,6 +559,8 @@ namespace TVGL.Voxelization
                 for (var i = (int)startIndex + 1; i < endIndex; i++)
                 {
                     coords[sweepDim] = (byte)i;
+                    if (discretizationLevel == 0)
+                        MakeAndStoreFullVoxelLevel0(coords[0], coords[1], coords[2]);
                     MakeAndStoreFullVoxelLevel0And1(coords[0], coords[1], coords[2]);
                 }
             }

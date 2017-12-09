@@ -38,22 +38,28 @@ namespace TVGL.Voxelization
         public int Level { get; internal set; }
         public double[] BottomCoordinate { get; internal set; }
 
-        internal Voxel(long ID, double[] voxelSideLengths, double[] offset)
+        internal Voxel(long ID, double[] voxelSideLengths=null, double[] offset=null)
         {
             this.ID = ID;
             var roleFlags = VoxelizedSolid.GetRoleFlags(ID);
             Role = roleFlags.Last();
             Level = roleFlags.Length - 1;
-            SideLength = voxelSideLengths[Level];
-            BottomCoordinate = new[]
-             {
-                (double) ((ID & Constants.maskAllButX) >> 40),
-                (double) ((ID & Constants.maskAllButX) >> 20),
-                (double) (ID & Constants.maskAllButX)
-            };
-            BottomCoordinate = BottomCoordinate.multiply(voxelSideLengths[4]).add(offset);
+            if (voxelSideLengths != null)
+            {
+                SideLength = voxelSideLengths[Level];
+                BottomCoordinate = new[]
+                {
+                    (double) ((ID & Constants.maskAllButX) >> 40),
+                    (double) ((ID & Constants.maskAllButX) >> 20),
+                    (double) (ID & Constants.maskAllButX)
+                };
+                BottomCoordinate = BottomCoordinate.multiply(voxelSideLengths[4]).add(offset);
+            }
+            else
+            {
+                SideLength = double.NaN; BottomCoordinate = null;
+            }
         }
-
     }
     public abstract class VoxelWithTessellationLinks : IVoxel
     {

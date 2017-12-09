@@ -224,13 +224,9 @@ namespace TVGL.Voxelization
                 case 1:
                     return id & Constants.maskAllButLevel0and1;
                 case 2:
-                    return (id & Constants.maskAllButLevel01and2) + SetRoleFlags(new[]
-                               {VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial});
+                    return id & Constants.maskAllButLevel01and2;
                 case 3:
-                    return (id & Constants.maskLevel4) + SetRoleFlags(new[]
-                    {
-                        VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial
-                    });
+                    return id & Constants.maskLevel4;
             }
             throw new ArgumentOutOfRangeException("containing level must be 0, 1, 2, or 3");
         }
