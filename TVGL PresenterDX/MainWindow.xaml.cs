@@ -120,7 +120,9 @@ namespace TVGLPresenterDX
             {
                 Material = new PhongMaterial()
                 {
-                    DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf, (float)0.75 * vs.SolidColor.Af)
+                    DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf, 
+                    1f)
+                    //(float)0.75 * vs.SolidColor.Af)
                 },
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
                 {

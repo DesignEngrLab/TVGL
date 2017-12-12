@@ -84,8 +84,8 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("ada*");
-            for (var i = 0; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("*");
+            for (var i = 10; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
                     ts = IO.Open(fileStream, filename);
                 if (!ts.Any()) continue;
                 ts[0].SolidColor = new Color(KnownColors.DeepPink);
-                PresenterShowAndHang(ts);
+                //PresenterShowAndHang(ts);
                 TestVoxelization(ts[0]);
             }
 
@@ -121,21 +121,41 @@ namespace TVGLPresenterDX
 
 
 
-        public static void TestVoxelization(TessellatedSolid ts)
+        public static void TestVoxelization(TessellatedSolid ts1)
         {
             var stopWatch = new Stopwatch();
+            //stopWatch.Restart();
+            //var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.ExtraCoarse);
+            //stopWatch.Stop();
+            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+            //    ts.Volume, vs1.Volume,vs1.Count, stopWatch.Elapsed.TotalSeconds);
+            //PresenterShowAndHang(new Solid[] { ts, vs1 });
+            //stopWatch.Restart();
+            // var vs2 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
+            //stopWatch.Stop();
+            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+            //    ts.Volume, vs2.Volume, vs2.Count, stopWatch.Elapsed.TotalSeconds);
+            //var ts2 = (TessellatedSolid)ts1.TransformToNewSolid(new double[,]
+            //  {
+            //    {1,0,0,(ts1.XMax - ts1.XMin)/2},
+            //    {0,1,0,(ts1.YMax-ts1.YMin)/2},
+            //    {0,0,1,(ts1.ZMax-ts1.ZMin)/2},
+            //  });
+            //var bounds = new double[2][];
+            //bounds[0] = ts1.Bounds[0];
+            //bounds[1] = ts2.Bounds[1];
+            var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.Coarse);//, bounds);
+                                                                          // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
+            //PresenterShowAndHang(new Solid[] { ts1, vs1 });
+
+            //PresenterShowAndHang(new Solid[] { ts, vs2 });
+            //vs1.Intersect(vs2);
+
             stopWatch.Restart();
-            var voxelSpace1 = new VoxelizedSolid(ts, VoxelDiscretization.ExtraCoarse);
+            vs1.Draft(VoxelDirections.XPositive);
             stopWatch.Stop();
-            Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
-                ts.Volume, voxelSpace1.Volume,voxelSpace1.Count, stopWatch.Elapsed.TotalSeconds);
-            PresenterShowAndHang(new Solid[] { ts, voxelSpace1 });
-            stopWatch.Restart();
-            var voxelSpace2 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
-            stopWatch.Stop();
-            Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
-                ts.Volume, voxelSpace2.Volume, voxelSpace2.Count, stopWatch.Elapsed.TotalSeconds);
-            PresenterShowAndHang(new Solid[] { ts, voxelSpace2 });
+            Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
+           // PresenterShowAndHang(new Solid[] { vs1 });
         }
     }
 }

@@ -38,7 +38,7 @@ namespace TVGL.Voxelization
         public int Level { get; internal set; }
         public double[] BottomCoordinate { get; internal set; }
 
-        internal Voxel(long ID, double[] voxelSideLengths=null, double[] offset=null)
+        internal Voxel(long ID, double[] voxelSideLengths = null, double[] offset = null)
         {
             this.ID = ID;
             var roleFlags = VoxelizedSolid.GetRoleFlags(ID);
@@ -60,17 +60,17 @@ namespace TVGL.Voxelization
                 SideLength = double.NaN; BottomCoordinate = null;
             }
         }
+        internal Voxel(long ID, int level)
+        {
+            this.ID = ID;
+            Role = VoxelRoleTypes.Empty;
+            Level = level;
+            SideLength = double.NaN;
+            BottomCoordinate = null;
+        }
     }
     public abstract class VoxelWithTessellationLinks : IVoxel
     {
-        protected VoxelWithTessellationLinks(byte x, byte y, byte z, VoxelRoleTypes voxelRole, double[] sideLengths, int level, double[] offset)
-        {
-            var coords = (level == 0) ? new[] { x & 240, y & 240, z & 240 } : new[] { (int)x, (int)y, (int)z };
-            CoordinateIndices = (level == 0) ? new[] { (byte)coords[0], (byte)coords[1], (byte)coords[2] } : new[] { x, y, z };
-            Role = voxelRole;
-            SideLength = sideLengths[level];
-            BottomCoordinate = coords.multiply(sideLengths[1]).add(offset);
-        }
         public abstract int Level { get; }
         public long ID { get; internal set; }
 
@@ -90,9 +90,32 @@ namespace TVGL.Voxelization
     {
         public override int Level => 0;
 
-        internal Voxel_Level0_Class(byte x, byte y, byte z, VoxelRoleTypes voxelRole, double[] voxelSideLengths, double[] offset)
-            : base(x, y, z, voxelRole, voxelSideLengths, 0, offset)
+        public Voxel_Level0_Class(long ID, VoxelRoleTypes voxelRole, double[] voxelSideLengths, double[] offset)
         {
+            this.ID = ID;
+            Role = voxelRole;
+            byte x = (byte)((ID & Constants.maskAllButX) >> 52);
+            byte y = (byte)((ID & Constants.maskAllButX) >> 32);
+            byte z = (byte)((ID & Constants.maskAllButX) >> 12);
+            var coords = new[] { x & 240, y & 240, z & 240 };
+            CoordinateIndices = new[] { (byte)coords[0], (byte)coords[1], (byte)coords[2] };
+            SideLength = voxelSideLengths[0];
+            BottomCoordinate = coords.multiply(voxelSideLengths[1]).add(offset);
+            if (Role == VoxelRoleTypes.Partial)
+            {
+                NextLevelVoxels = new VoxelHashSet(new VoxelComparerCoarse(), voxelSideLengths, offset);
+                HighLevelVoxels = new VoxelHashSet(new VoxelComparerFine(), voxelSideLengths, offset);
+            }
+        }
+
+        internal Voxel_Level0_Class(byte x, byte y, byte z, VoxelRoleTypes voxelRole, double[] voxelSideLengths, double[] offset)
+        {
+            var coords = new[] { x & 240, y & 240, z & 240 };
+            CoordinateIndices = new[] { (byte)coords[0], (byte)coords[1], (byte)coords[2] };
+            Role = voxelRole;
+            SideLength = voxelSideLengths[0];
+            ID = VoxelizedSolid.MakeVoxelID0(x, y, z);
+            BottomCoordinate = coords.multiply(voxelSideLengths[1]).add(offset);
             if (voxelRole == VoxelRoleTypes.Partial)
             {
                 NextLevelVoxels = new VoxelHashSet(new VoxelComparerCoarse(), voxelSideLengths, offset);
@@ -106,8 +129,28 @@ namespace TVGL.Voxelization
 
     public class Voxel_Level1_Class : VoxelWithTessellationLinks
     {
+        public Voxel_Level1_Class(long ID, VoxelRoleTypes voxelRole, double[] voxelSideLengths, double[] offset)
+        {
+            this.ID = ID;
+            Role = voxelRole;
+            byte x = (byte)((ID & Constants.maskAllButX) >> 52);
+            byte y = (byte)((ID & Constants.maskAllButX) >> 32);
+            byte z = (byte)((ID & Constants.maskAllButX) >> 12);
+            CoordinateIndices = new[] { x, y, z };
+            SideLength = voxelSideLengths[1];
+            var coords = new[] { (int)x, (int)y, (int)z };
+            BottomCoordinate = coords.multiply(voxelSideLengths[1]).add(offset);
+        }
+
         internal Voxel_Level1_Class(byte x, byte y, byte z, VoxelRoleTypes voxelRole, double[] voxelSideLengths, double[] offset)
-        : base(x, y, z, voxelRole, voxelSideLengths, 1, offset) { }
+        {
+            CoordinateIndices = new[] { x, y, z };
+            Role = voxelRole;
+            ID = VoxelizedSolid.MakeVoxelID1(x, y, z);
+            SideLength = voxelSideLengths[1];
+            var coords = new[] { (int)x, (int)y, (int)z };
+            BottomCoordinate = coords.multiply(voxelSideLengths[1]).add(offset);
+        }
         public override int Level => 1;
     }
 }

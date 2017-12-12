@@ -56,4 +56,41 @@ namespace TVGL.Voxelization
             // 0yyxx0zz
         }
     }
+    public class VoxelComparerTwoDimension : IEqualityComparer<long>
+    {
+        private long mask;
+        private int dimensionToSkip;
+
+        internal VoxelComparerTwoDimension(int dimensionToSkip)
+        {
+            this.dimensionToSkip = dimensionToSkip;
+            switch (dimensionToSkip)
+            {
+                case 0:
+                    mask = Constants.maskOutX;
+                    break;
+                case 1:
+                    mask = Constants.maskOutY;
+                    break;
+                default:
+                    mask = Constants.maskOutZ;
+                    break;
+            }
+        }
+        public bool Equals(long x, long y)
+        {
+            return (x & mask) == (y & mask);
+        }
+
+        public int GetHashCode(long obj)
+        {
+            long x = obj & mask;
+            //#0,FF000,FF000,FF000
+            return (int)(x + (x >> 15) + (x >> 31));
+            // this moves the z levels into the first position and then
+            //x's value for levels 1 and 2 between y and z
+            // converting to int remove the higher values
+            // 0yyxx0zz
+        }
+    }
 }

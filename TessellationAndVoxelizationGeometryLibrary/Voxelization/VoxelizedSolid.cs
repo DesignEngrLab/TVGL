@@ -99,7 +99,7 @@ namespace TVGL.Voxelization
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
             return xLong + yLong + zLong + SetRoleFlags(levels);
         }
-        private static long MakeVoxelID1(byte x, byte y, byte z)
+        internal static long MakeVoxelID1(byte x, byte y, byte z)
         {
             var xLong = (long)x << 52;
             var yLong = (long)y << 32;
@@ -110,7 +110,7 @@ namespace TVGL.Voxelization
             return xLong + yLong + zLong;
         }
 
-        private static long MakeVoxelID0(byte x, byte y, byte z)
+        internal static long MakeVoxelID0(byte x, byte y, byte z)
         {
             var xLong = (long)x >> 4; //this shift is to clear out the level-1 values
             var yLong = (long)y >> 4;
@@ -126,7 +126,7 @@ namespace TVGL.Voxelization
 
         internal static long SetRoleFlags(params VoxelRoleTypes[] levels)
         {
-            return SetRoleFlags(levels);
+            return SetRoleFlags(levels.ToList());
         }
 
         internal static long SetRoleFlags(IList<VoxelRoleTypes> levels)
