@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
                     ts = IO.Open(fileStream, filename);
                 if (!ts.Any()) continue;
                 ts[0].SolidColor = new Color(KnownColors.DeepPink);
-                //PresenterShowAndHang(ts);
+               // PresenterShowAndHang(ts);
                 TestVoxelization(ts[0]);
             }
 
@@ -146,7 +146,7 @@ namespace TVGLPresenterDX
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.Coarse);//, bounds);
                                                                           // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
-            //PresenterShowAndHang(new Solid[] { ts1, vs1 });
+            PresenterShowAndHang(new Solid[] { ts1, vs1 });
 
             //PresenterShowAndHang(new Solid[] { ts, vs2 });
             //vs1.Intersect(vs2);
@@ -155,7 +155,7 @@ namespace TVGLPresenterDX
             vs1.Draft(VoxelDirections.XPositive);
             stopWatch.Stop();
             Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
-           // PresenterShowAndHang(new Solid[] { vs1 });
+            PresenterShowAndHang(new Solid[] { vs1 });
         }
     }
 }

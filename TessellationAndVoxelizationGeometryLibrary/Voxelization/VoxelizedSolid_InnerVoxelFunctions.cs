@@ -99,9 +99,7 @@ namespace TVGL.Voxelization
                 else  //then it was partial
                     voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
                 ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Full;
-                if (voxel0.NextLevelVoxels.Count
-                     //v => voxelDictionaryLevel1[v].Role == VoxelRoleTypes.Full
-                     == 4096)
+                if (voxel0.NextLevelVoxels.Count == 4096 && voxel0.NextLevelVoxels.All(v => voxelDictionaryLevel1[v].Role == VoxelRoleTypes.Full))
                     MakeVoxelFull(voxel0);
             }
             else if (voxel.Level == 2)
