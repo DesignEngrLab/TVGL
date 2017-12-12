@@ -15,9 +15,9 @@ namespace TVGLPresenterDX
     internal class Program
     {
         private static readonly string[] FileNames = {
-           "../../../TestFiles/Binary.stl",
-            "../../../TestFiles/ABF.ply",
-             "../../../TestFiles/Beam_Boss.STL",
+           //"../../../TestFiles/Binary.stl",
+         //   "../../../TestFiles/ABF.ply",
+          //   "../../../TestFiles/Beam_Boss.STL",
              "../../../TestFiles/Beam_Clean.STL",
 
         "../../../TestFiles/bigmotor.amf",
@@ -83,7 +83,7 @@ namespace TVGLPresenterDX
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            var dir = new DirectoryInfo("../../../TestFiles");
+            var dir = new DirectoryInfo("../../../../TestFiles");
             var fileNames = dir.GetFiles("*");
             for (var i = 10; i < fileNames.Count(); i++)
             {
@@ -146,7 +146,7 @@ namespace TVGLPresenterDX
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.Coarse);//, bounds);
                                                                           // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
-            //PresenterShowAndHang(new Solid[] { ts1, vs1 });
+            PresenterShowAndHang(new Solid[] { ts1, vs1 });
 
             //PresenterShowAndHang(new Solid[] { ts, vs2 });
             //vs1.Intersect(vs2);

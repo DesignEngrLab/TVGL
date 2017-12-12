@@ -17,9 +17,14 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>3d, solid moedling, computaional geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
     <NeutralLanguage />
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard2.0\TessellationAndVoxelizationGeometryLibrary.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DocumentationFile>bin\Release\netstandard2.0\TessellationAndVoxelizationGeometryLibrary.xml</DocumentationFile>
   </PropertyGroup>
 
