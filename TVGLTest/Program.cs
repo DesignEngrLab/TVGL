@@ -133,7 +133,7 @@ namespace TVGL_Test
             vs1.Draft(VoxelDirections.XPositive);
             stopWatch.Stop();
             Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
-            PresenterShowAndHang(new Solid[] { vs1 });
+            Presenter.ShowAndHang(new TessellatedSolid[] { vs1.ConvertToTessellatedSolid() });
 
         }
         public static void TestSegmentation(TessellatedSolid ts)

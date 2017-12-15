@@ -16,6 +16,7 @@ using StarMathLib;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
@@ -507,7 +508,7 @@ namespace TVGL.Voxelization
             for (int i = 0; i < 16; i++)
             {
                 if (parent == null)
-                    Console.WriteLine("layer: {0}", i);
+                    Debug.WriteLine("layer: {0}", i);
                 //Parallel.ForEach(layerOfVoxels[i], voxel =>
                 foreach (var voxel in layerOfVoxels[i])
                 {

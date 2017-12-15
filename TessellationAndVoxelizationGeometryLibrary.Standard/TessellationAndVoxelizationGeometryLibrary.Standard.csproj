@@ -94,6 +94,7 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidfromTessellatedSolid.cs" Link="Voxelization\VoxelizedSolidfromTessellatedSolid.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs" Link="Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_PublicFunctions.cs" Link="Voxelization\VoxelizedSolid_PublicFunctions.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_to_TessellatedSolid.cs" Link="Voxelization\VoxelizedSolid_to_TessellatedSolid.cs" />
   </ItemGroup>
 
   <ItemGroup>
