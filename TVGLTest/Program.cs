@@ -8,6 +8,7 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
+using TVGL.Voxelization;
 
 namespace TVGL_Test
 {
@@ -98,6 +99,43 @@ namespace TVGL_Test
             //  Console.ReadKey();
         }
 
+        public static void TestVoxelizatoin(TessellatedSolid ts)
+        {
+            var stopWatch = new Stopwatch();
+            //stopWatch.Restart();
+            //var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.ExtraCoarse);
+            //stopWatch.Stop();
+            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+            //    ts.Volume, vs1.Volume,vs1.Count, stopWatch.Elapsed.TotalSeconds);
+            //PresenterShowAndHang(new Solid[] { ts, vs1 });
+            //stopWatch.Restart();
+            // var vs2 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
+            //stopWatch.Stop();
+            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+            //    ts.Volume, vs2.Volume, vs2.Count, stopWatch.Elapsed.TotalSeconds);
+            //var ts2 = (TessellatedSolid)ts1.TransformToNewSolid(new double[,]
+            //  {
+            //    {1,0,0,(ts1.XMax - ts1.XMin)/2},
+            //    {0,1,0,(ts1.YMax-ts1.YMin)/2},
+            //    {0,0,1,(ts1.ZMax-ts1.ZMin)/2},
+            //  });
+            //var bounds = new double[2][];
+            //bounds[0] = ts1.Bounds[0];
+            //bounds[1] = ts2.Bounds[1];
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
+            // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
+            Presenter.ShowAndHang(new [] { ts, vs1.ConvertToTessellatedSolid() });
+
+            //PresenterShowAndHang(new Solid[] { ts, vs2 });
+            //vs1.Intersect(vs2);
+
+            stopWatch.Restart();
+            vs1.Draft(VoxelDirections.XPositive);
+            stopWatch.Stop();
+            Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
+            PresenterShowAndHang(new Solid[] { vs1 });
+
+        }
         public static void TestSegmentation(TessellatedSolid ts)
         {
             var obb = MinimumEnclosure.OrientedBoundingBox(ts);

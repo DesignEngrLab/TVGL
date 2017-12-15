@@ -30,56 +30,76 @@ namespace TVGL.Voxelization
 
         public TessellatedSolid ConvertToTessellatedSolid(double minEdgeLength = -1)
         {
-            var bag = new ConcurrentBag<PolygonalFace>();
-            var verticesDict = new Dictionary<long, Vertex>();
-            foreach (var v in this.Voxels(VoxelRoleTypes.Partial))
+            var faceCollection = new ConcurrentBag<PolygonalFace>();
+            var voxelVertexDictionary = Voxels(VoxelRoleTypes.Partial).ToDictionary(v => v.ID, v => new Vertex(v.BottomCoordinate));
+            var boundaryVertexDictionary = new Dictionary<long, Vertex>();
+
+            Parallel.ForEach(Voxels(VoxelRoleTypes.Partial), v =>
             {
                 var neighbors = GetNeighbors(v);
                 var neighborX = neighbors[3];
                 var neighborY = neighbors[4];
                 var neighborZ = neighbors[5];
                 var neighborXY = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.YPositive);
-                var neighborXZ = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.ZPositive);
                 var neighborYZ = neighborY == null ? null : GetNeighbor(neighborY, VoxelDirections.ZPositive);
+                var neighborZX = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.ZPositive);
                 var neighborXYZ = neighborXY == null ? null : GetNeighbor(neighborXZ, VoxelDirections.ZPositive);
-                //todo: oh! we may need to add the faces at the positive extremees
+                var sideLength = VoxelSideLengths[v.Level];
+                var vertexbase = voxelVertexDictionary[v.ID];
+                var vertexX = neighborX != null ? voxelVertexDictionary[neighborX.ID]
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, 0, 0 });
+                var vertexY = neighborY != null ? voxelVertexDictionary[neighborY.ID]
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, sideLength, 0 });
+                var vertexZ = neighborZ != null ? voxelVertexDictionary[neighborZ.ID]
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, 0.0, sideLength });
+                var vertexXY = neighborXY != null ? voxelVertexDictionary[neighborXY.ID]
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, sideLength, 0 });
+                var vertexYZ = neighborYZ != null ? voxelVertexDictionary[neighborYZ.ID]
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, sideLength, sideLength, });
+                var vertexZX = neighborZX != null ? voxelVertexDictionary[neighborZX.ID]
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, 0.0, sideLength });
+                var vertexXYZ = neighborXYZ != null ? voxelVertexDictionary[neighborXYZ.ID]
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, sideLength, sideLength });
                 if (neighbors[0] == null || neighbors[0].Role == VoxelRoleTypes.Empty)
-                    MakeFaces(bag, verticesDict, neighborX, v, neighborY, neighborXY);
+                {
+                    faceCollection.Add(new PolygonalFace(new[] { vbl, vbr, vtl }));
+                    faceCollection.Add(new PolygonalFace(new[] { vbr, vtr, vtl }));
+                }
                 if (neighbors[1] == null || neighbors[1].Role == VoxelRoleTypes.Empty)
-                    MakeFaces(bag, verticesDict, v, neighborX, neighborXZ, neighborZ);
+                    MakeFaces(v, neighborX, neighborXZ, neighborZ);
                 if (neighbors[2] == null || neighbors[2].Role == VoxelRoleTypes.Empty)
-                    MakeFaces(bag, verticesDict, v, neighborZ, neighborYZ, neighborY);
+                    MakeFaces(faceCollection, voxelVertexDictionary, boundaryVertexDictionary, v, neighborZ, neighborYZ, neighborY);
                 if (neighborX == null || neighborX.Role == VoxelRoleTypes.Empty)
-                    MakeFaces(bag, verticesDict,neighborXZ, neighborX, neighborXY,neighborXYZ);
+                    MakeFaces(faceCollection, voxelVertexDictionary, boundaryVertexDictionary, neighborXZ, neighborX, neighborXY, neighborXYZ);
                 if (neighborY == null || neighborY.Role == VoxelRoleTypes.Empty)
-                    MakeFaces(bag, verticesDict,neighborYZ,neighborXYZ, neighborXY, neighborY);
+                    MakeFaces(faceCollection, voxelVertexDictionary, boundaryVertexDictionary, neighborYZ, neighborXYZ, neighborXY, neighborY);
                 if (neighborZ == null || neighborZ.Role == VoxelRoleTypes.Empty)
-                    MakeFaces(bag, verticesDict, neighborZ, neighborXZ, neighborXYZ, neighborYZ);
-            }
-            return new TessellatedSolid(bag.ToList(), verticesDict.Values.ToList());
+                    MakeFaces(faceCollection, voxelVertexDictionary, boundaryVertexDictionary, neighborZ, neighborXZ, neighborXYZ, neighborYZ);
+            });
+            return new TessellatedSolid(faceCollection.ToList(), voxelVertexDictionary.Values.ToList());
         }
 
-        private void MakeFaces(ConcurrentBag<PolygonalFace> faceCollection, Dictionary<long, Vertex> verticesDict, IVoxel btmLeft, IVoxel btmRight, IVoxel topRight, IVoxel topLeft)
+        private void MakeFaces(ConcurrentBag<PolygonalFace> faceCollection, Vertex v1, Vertex v2, Vertex v3, Vertex v4)
         {
-            Vertex vbl = GetOrMakeVertex(btmLeft, verticesDict);
-            Vertex vbr = GetOrMakeVertex(btmRight, verticesDict);
-            Vertex vtr = GetOrMakeVertex(topRight, verticesDict);
-            Vertex vtl = GetOrMakeVertex(topLeft, verticesDict);
-            faceCollection.Add(new PolygonalFace(new[] { vbl, vbr, vtl }));
-            faceCollection.Add(new PolygonalFace(new[] { vbr, vtr, vtl }));
+            faceCollection.Add(new PolygonalFace(new[] { v1, v2, v3 }));
+            faceCollection.Add(new PolygonalFace(new[] { v1, v3, v4 }));
         }
 
-        Vertex GetOrMakeVertex(IVoxel voxel, Dictionary<long, Vertex> verticesDict)
+        private Vertex MakeBoundaryVertex(IVoxel baseVoxel, Dictionary<long, Vertex> boundaryDictionary, double[] shift)
         {
-            lock (verticesDict)
+            var hash = baseVoxel.ID;
+            if (shift[0] > 0) hash = hash & Constants.maskOutX;
+            if (shift[1] > 0) hash = hash & Constants.maskOutY;
+            if (shift[2] > 0) hash = hash & Constants.maskOutZ;
+            lock (boundaryDictionary)
             {
-                if (verticesDict.ContainsKey(voxel.ID))
-                    return verticesDict[voxel.ID];
-                var newVertex = new Vertex(voxel.BottomCoordinate);
-                verticesDict.Add(voxel.ID, newVertex);
+                if (boundaryDictionary.ContainsKey(hash))
+                    return boundaryDictionary[hash];
+                var newVertex = new Vertex(baseVoxel.BottomCoordinate.add(shift));
+                boundaryDictionary.Add(hash, newVertex);
                 return newVertex;
             }
-
         }
+
     }
 }

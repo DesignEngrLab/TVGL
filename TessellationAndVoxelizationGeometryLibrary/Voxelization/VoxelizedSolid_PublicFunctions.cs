@@ -269,12 +269,12 @@ namespace TVGL.Voxelization
             if (voxel.Level == 0)
             {
                 if (voxelDictionaryLevel0.ContainsKey(newID)) return voxelDictionaryLevel0[newID];
-                return new Voxel(newID + SetRoleFlags(VoxelRoleTypes.Empty));
+                return new Voxel(newID + SetRoleFlags(VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
             }
             if (voxel.Level == 1)
             {
                 if (voxelDictionaryLevel1.ContainsKey(newID)) return voxelDictionaryLevel1[newID];
-                return new Voxel(newID + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Empty));
+                return new Voxel(newID + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
             }
             var level0ParentID = MakeContainingVoxelID(newID, 0);
             if (voxelDictionaryLevel0.ContainsKey(level0ParentID) &&
@@ -283,7 +283,7 @@ namespace TVGL.Voxelization
             var flags = new List<VoxelRoleTypes>();
             for (int i = 0; i < voxel.Level; i++) flags.Add(VoxelRoleTypes.Partial);
             flags.Add(VoxelRoleTypes.Empty);
-            return new Voxel(newID + SetRoleFlags(flags));
+            return new Voxel(newID + SetRoleFlags(flags), VoxelSideLengths, Offset);
         }
 
         public IVoxel[] GetNeighbors(IVoxel voxel)

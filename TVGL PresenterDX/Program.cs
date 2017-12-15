@@ -123,9 +123,6 @@ namespace TVGLPresenterDX
 
         public static void TestVoxelization(TessellatedSolid ts1)
         {
-
-            foreach (var direction in Enum.GetValues(typeof(VoxelDirections)))
-                Console.WriteLine((VoxelDirections) direction);
             var stopWatch = new Stopwatch();
             //stopWatch.Restart();
             //var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.ExtraCoarse);
@@ -147,7 +144,7 @@ namespace TVGLPresenterDX
             //var bounds = new double[2][];
             //bounds[0] = ts1.Bounds[0];
             //bounds[1] = ts2.Bounds[1];
-            var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.Coarse);//, bounds);
+            var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.ExtraCoarse);//, bounds);
                                                                           // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
             PresenterShowAndHang(new Solid[] { ts1, vs1 });
 
