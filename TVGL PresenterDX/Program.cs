@@ -84,8 +84,8 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            for (var i = 10; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("br*");
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -109,11 +109,11 @@ namespace TVGLPresenterDX
         {
             PresenterShowAndHang(ts.Cast<Solid>().ToList());
         }
-        private static void PresenterShowAndHang(IList<Solid> ts)
+        private static void PresenterShowAndHang(IList<Solid> solids)
         {
             var mainWindow = new MainWindow
             {
-                Solids = ts.ToList()
+                Solids = solids.ToList()
             };
             mainWindow.ShowDialog();
         }
@@ -123,6 +123,9 @@ namespace TVGLPresenterDX
 
         public static void TestVoxelization(TessellatedSolid ts1)
         {
+
+            foreach (var direction in Enum.GetValues(typeof(VoxelDirections)))
+                Console.WriteLine((VoxelDirections) direction);
             var stopWatch = new Stopwatch();
             //stopWatch.Restart();
             //var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.ExtraCoarse);

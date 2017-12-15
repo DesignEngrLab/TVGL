@@ -134,6 +134,11 @@ namespace TVGL.Voxelization
                     yield return v;
         }
 
+        public IEnumerable<IVoxel> Voxels(VoxelRoleTypes role, VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine)
+        {
+            return Voxels(voxelLevel, role);
+        }
+
         public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel, VoxelRoleTypes role)
         {
             var level = (int)voxelLevel;
@@ -292,7 +297,7 @@ namespace TVGL.Voxelization
             neighborsHaveDifferentParent = new bool[6];
             var i = 0;
             foreach (var direction in Enum.GetValues(typeof(VoxelDirections)))
-                neighbors[i++] = GetNeighbor(voxel, (VoxelDirections)direction, out neighborsHaveDifferentParent[i]);
+                neighbors[i] = GetNeighbor(voxel, (VoxelDirections)direction, out neighborsHaveDifferentParent[i++]);
             return neighbors;
         }
 

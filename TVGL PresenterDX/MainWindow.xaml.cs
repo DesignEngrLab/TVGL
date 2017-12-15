@@ -77,6 +77,13 @@ namespace TVGLPresenterDX
 
         private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
         {
+            var ts = vs.ConvertToTessellatedSolid();
+            ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
+            {
+                Af = 0.80f
+            };
+            return ConvertTessellatedSolidtoObject3D(ts);
+            /*
             var boxFaceIndices = new[]
             {
                 0, 1, 2,  2, 1, 4,  1, 6, 4,  4, 6, 7,  2, 4, 5,  4, 7, 5,  0, 2, 3, 3, 2, 5,
@@ -114,14 +121,15 @@ namespace TVGLPresenterDX
                 normals.Add(new Vector3(0f, 0f, 1f));
                 normals.Add(new Vector3(0f, -1f, 0f));
                 normals.Add(new Vector3(0f, -1f, 0f));
-            }
+                
+        }
 
             return new MeshGeometryModel3D
             {
                 Material = new PhongMaterial()
-                {
-                    DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf, 
-                    1f)
+        {
+            DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf,
+            1f)
                     //(float)0.75 * vs.SolidColor.Af)
                 },
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
@@ -129,9 +137,9 @@ namespace TVGLPresenterDX
                     Positions = positions,
                     Indices = indices,
                     Normals = normals
-                }
-            };
-
+    }
+};
+*/
         }
 
 

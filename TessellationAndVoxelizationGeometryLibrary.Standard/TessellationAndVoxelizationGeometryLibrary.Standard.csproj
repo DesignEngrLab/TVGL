@@ -104,7 +104,6 @@
     <Folder Include="InputOutput Operations\" />
     <Folder Include="Miscellaneous Functions\TriangulatePolygon\" />
     <Folder Include="ModifyTessellation\" />
-    <Folder Include="Voxelization\" />
     <Folder Include="Primitive Classification\" />
     <Folder Include="Primitive Surfaces\" />
     <Folder Include="Solid Body Classes\" />

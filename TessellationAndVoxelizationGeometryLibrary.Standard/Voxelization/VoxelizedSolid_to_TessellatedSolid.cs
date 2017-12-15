@@ -40,8 +40,9 @@ namespace TVGL.Voxelization
                 var neighborZ = neighbors[5];
                 var neighborXY = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.YPositive);
                 var neighborXZ = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.ZPositive);
-                var neighborYZ = neighborY == null ? null : GetNeighbor(neighborX, VoxelDirections.ZPositive);
+                var neighborYZ = neighborY == null ? null : GetNeighbor(neighborY, VoxelDirections.ZPositive);
                 var neighborXYZ = neighborXY == null ? null : GetNeighbor(neighborXZ, VoxelDirections.ZPositive);
+                //todo: oh! we may need to add the faces at the positive extremees
                 if (neighbors[0] == null || neighbors[0].Role == VoxelRoleTypes.Empty)
                     MakeFaces(bag, verticesDict, neighborX, v, neighborY, neighborXY);
                 if (neighbors[1] == null || neighbors[1].Role == VoxelRoleTypes.Empty)
