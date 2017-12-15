@@ -152,6 +152,7 @@ namespace TVGLPresenterDX
             //vs1.Intersect(vs2);
 
             stopWatch.Restart();
+            PresenterShowAndHang(new []{ts1});
             vs1.Draft(VoxelDirections.XPositive);
             stopWatch.Stop();
             Console.WriteLine(stopWatch.Elapsed.TotalSeconds);

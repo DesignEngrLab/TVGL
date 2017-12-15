@@ -161,9 +161,6 @@
     <AppDesigner Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\packages\HelixToolkit.Wpf.SharpDX.1.0.0\Content\x86\d3dcompiler_47.dll">
-      <Link>x86\d3dcompiler_47.dll</Link>
-    </Content>
     <Resource Include="MIConvexHull.xml" />
     <Resource Include="StarMath.XML" />
   </ItemGroup>
