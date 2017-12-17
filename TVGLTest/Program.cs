@@ -81,18 +81,13 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < FileNames.Count(); i++)
+            var fileNames = dir.GetFiles("r*.stl");
+            for (var i = 0; i < fileNames.Count(); i++)
             {
-                var filename = FileNames[i];//.FullName;
+                var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 List<TessellatedSolid> solids = IO.Open(filename);
-
-                //TestPolygon(solids[0]);
-                //TestSegmentation(solids[0]);
-                //TestSilhouette(solids[0]);
-                //TestAdditiveVolumeEstimate(solids[0]);
-                Presenter.ShowAndHang(solids);
+                TestVoxelizatoin(solids[0]);
             }
 
             Console.WriteLine("Completed.");
@@ -123,8 +118,10 @@ namespace TVGL_Test
             //bounds[0] = ts1.Bounds[0];
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
-            // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
-            Presenter.ShowAndHang(new [] { ts, vs1.ConvertToTessellatedSolid() });
+            var tsFromVS = vs1.ConvertToTessellatedSolid();
+            tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
+
+            Presenter.ShowAndHang(new [] { tsFromVS });
 
             //PresenterShowAndHang(new Solid[] { ts, vs2 });
             //vs1.Intersect(vs2);

@@ -31,20 +31,21 @@ namespace TVGL.Voxelization
         public TessellatedSolid ConvertToTessellatedSolid(double minEdgeLength = -1)
         {
             var faceCollection = new ConcurrentBag<PolygonalFace>();
-            var voxelVertexDictionary = Voxels(VoxelRoleTypes.Partial).ToDictionary(v => v.ID, v => new Vertex(v.BottomCoordinate));
+            var voxelVertexDictionary = Voxels(this.Discretization, VoxelRoleTypes.Partial, true)
+                .ToDictionary(v => v.ID, v => new Vertex(v.BottomCoordinate));
             var boundaryVertexDictionary = new Dictionary<long, Vertex>();
 
             //Parallel.ForEach(Voxels(VoxelRoleTypes.Partial), v =>
-            foreach(var v in Voxels(VoxelRoleTypes.Partial))
+            foreach (var v in Voxels(this.Discretization, VoxelRoleTypes.Partial, true))
             {
                 var neighbors = GetNeighbors(v);
-                var neighborX = neighbors[3];
-                var neighborY = neighbors[4];
-                var neighborZ = neighbors[5];
+                var neighborX = neighbors[0];
+                var neighborY = neighbors[1];
+                var neighborZ = neighbors[2];
                 var neighborXY = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.YPositive);
                 var neighborYZ = neighborY == null ? null : GetNeighbor(neighborY, VoxelDirections.ZPositive);
                 var neighborZX = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.ZPositive);
-                var neighborXYZ = neighborXY == null ? null : GetNeighbor(neighborZX, VoxelDirections.ZPositive);
+                var neighborXYZ = neighborXY == null ? null : GetNeighbor(neighborXY, VoxelDirections.ZPositive);
                 var sideLength = VoxelSideLengths[v.Level];
                 var vertexbase = voxelVertexDictionary[v.ID];
                 var vertexX = neighborX != null ? GetOrMakeVoxelVertex(neighborX, voxelVertexDictionary)
@@ -61,16 +62,22 @@ namespace TVGL.Voxelization
                     : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, 0.0, sideLength });
                 var vertexXYZ = neighborXYZ != null ? GetOrMakeVoxelVertex(neighborXYZ, voxelVertexDictionary)
                     : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, sideLength, sideLength });
-                if (neighbors[0] == null || neighbors[0].Role == VoxelRoleTypes.Empty)
-                    MakeFaces(faceCollection, vertexX,vertexbase, vertexY, vertexXY);
-                if (neighbors[1] == null || neighbors[1].Role == VoxelRoleTypes.Empty)
-                    MakeFaces(faceCollection, vertexbase, vertexX, vertexZX, vertexZ);
-                if (neighbors[2] == null || neighbors[2].Role == VoxelRoleTypes.Empty)
+                // negative X face
+                if (neighbors[3] == null || neighbors[3].Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexbase, vertexZ, vertexYZ, vertexY);
+                // negative Y face
+                if (neighbors[4] == null || neighbors[4].Role == VoxelRoleTypes.Empty)
+                    MakeFaces(faceCollection, vertexbase, vertexX, vertexZX, vertexZ);
+                // negative Z face
+                if (neighbors[5] == null || neighbors[5].Role == VoxelRoleTypes.Empty)
+                    MakeFaces(faceCollection, vertexbase, vertexY, vertexXY, vertexX);
+                // positive X face
                 if (neighborX == null || neighborX.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexZX, vertexX, vertexXY, vertexXYZ);
+                // positive Y face
                 if (neighborY == null || neighborY.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexYZ, vertexXYZ, vertexXY, vertexY);
+                // positive Z face
                 if (neighborZ == null || neighborZ.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexZ, vertexZX, vertexXYZ, vertexYZ);
             } //);
@@ -88,9 +95,16 @@ namespace TVGL.Voxelization
         private Vertex MakeBoundaryVertex(IVoxel baseVoxel, Dictionary<long, Vertex> boundaryDictionary, double[] shift)
         {
             var hash = baseVoxel.ID;
-            if (shift[0] > 0) hash = hash & Constants.maskOutX;
-            if (shift[1] > 0) hash = hash & Constants.maskOutY;
-            if (shift[2] > 0) hash = hash & Constants.maskOutZ;
+            if (shift.All(x => x > 0)) hash = long.MinValue; //the single upper corner point
+            else if (shift.Count(x => x == 0) == 1)
+            { // the three lines on the edges
+                if (shift[0] > 0) hash = (hash & Constants.maskOutX) + 4611686018427387904;
+                if (shift[1] > 0) hash = (hash & Constants.maskOutY) + 2305843009213693952;
+                if (shift[2] > 0) hash = (hash & Constants.maskOutZ) + 1152921504606846976;
+            }
+            else if (shift[0] > 0) hash = hash & Constants.maskOutX;
+            else if (shift[1] > 0) hash = hash & Constants.maskOutY;
+            else if (shift[2] > 0) hash = hash & Constants.maskOutZ;
             lock (boundaryDictionary)
             {
                 if (boundaryDictionary.ContainsKey(hash))

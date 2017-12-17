@@ -287,11 +287,36 @@ namespace TVGL.Voxelization
             return new Voxel(newID + SetRoleFlags(flags), VoxelSideLengths, Offset);
         }
 
+        /// <summary>
+        /// Gets the neighbors of the given voxel. This returns an array in the order:
+        /// { Xpositive, YPositive, ZPositive, XNegative, YNegative, ZNegative }.
+        /// If no voxel existed at a neigboring spot, then an empty voxel is produced;
+        /// however, these will be of type Voxel even if it is Level0 or Leve1. Unless,
+        /// of course, an existing partial or full Level0 or Level1 voxel is present.
+        /// A null can appear in the neighbor array if the would-be neighbor is outisde
+        /// of the bounds of the voxelized solid.
+        /// </summary>
+        /// <param name="voxel">The voxel.</param>
+        /// <returns>IVoxel[].</returns>
         public IVoxel[] GetNeighbors(IVoxel voxel)
         {
             return GetNeighbors(voxel, out bool[] neighborsHaveDifferentParent);
         }
 
+        /// <summary>
+        /// Gets the neighbors of the given voxel. This returns an array in the order:
+        /// { Xpositive, YPositive, ZPositive, XNegative, YNegative, ZNegative }.
+        /// If no voxel existed at a neigboring spot, then an empty voxel is produced;
+        /// however, these will be of type Voxel even if it is Level0 or Leve1. Unless,
+        /// of course, an existing partial or full Level0 or Level1 voxel is present.
+        /// A null can appear in the neighbor array if the would-be neighbor is outisde
+        /// of the bounds of the voxelized solid.
+        /// The additional boolean array corresponding to each neighbor is produced to
+        /// indicate whether or not the neighbor has a different parent.
+        /// </summary>
+        /// <param name="voxel">The voxel.</param>
+        /// <param name="neighborsHaveDifferentParent">The neighbors have different parent.</param>
+        /// <returns>IVoxel[].</returns>
         public IVoxel[] GetNeighbors(IVoxel voxel, out bool[] neighborsHaveDifferentParent)
         {
             var neighbors = new IVoxel[6];
@@ -500,9 +525,9 @@ namespace TVGL.Voxelization
             Parallel.ForEach(voxels, v =>
             //foreach (var v in voxels)
             {
-                var layer = draftLayer(v, dimension, positiveStep);
-                lock (layerOfVoxels[layer])
-                    layerOfVoxels[layer].Add(v);
+                var layerIndex = getLayerIndex(v, dimension, positiveStep);
+                lock (layerOfVoxels[layerIndex])
+                    layerOfVoxels[layerIndex].Add(v);
             });
             var nextLayerCount = 0;
             for (int i = 0; i < 16; i++)
@@ -522,7 +547,7 @@ namespace TVGL.Voxelization
                         {
                             neighbor = GetNeighbor(neighbor, direction, out neighborHasDifferentParent);
                             if (neighbor == null) break; // null happens when you go outside of bounds (of coarsest voxels)
-                            var neighborlayer = draftLayer(neighbor, dimension, positiveStep);
+                            var neighborlayer = getLayerIndex(neighbor, dimension, positiveStep);
                             layerOfVoxels[neighborlayer].Remove(neighbor);
                             MakeVoxelFull(neighbor);
                         } while (!neighborHasDifferentParent);
@@ -533,14 +558,14 @@ namespace TVGL.Voxelization
                             var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
                             if (neighbor == null) break; // null happens when you go outside of bounds (of coarsest voxels)
                             if (neighbor.Role == VoxelRoleTypes.Empty)
-                                layerOfVoxels[draftLayer(neighbor, dimension, positiveStep)].Add(neighbor);
+                                layerOfVoxels[getLayerIndex(neighbor, dimension, positiveStep)].Add(neighbor);
                             MakeVoxelFull(neighbor);
                         }
                 } //);
             }
             return nextLayerCount == 256;
         }
-        int draftLayer(IVoxel v, int dimension, bool positiveStep)
+        int getLayerIndex(IVoxel v, int dimension, bool positiveStep)
         {
             var layer = (int)((v.ID >> ((20 * (2 - dimension)) + 4 * (4 - v.Level))) & 15);
             if (positiveStep) return layer;
@@ -702,7 +727,6 @@ namespace TVGL.Voxelization
         }
 
         #endregion
-
         #region Union
         /// <exclude />
         public VoxelizedSolid UnionToNewSolid(VoxelizedSolid reference)

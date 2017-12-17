@@ -84,7 +84,7 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("br*");
+            var fileNames = dir.GetFiles("r*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -146,7 +146,8 @@ namespace TVGLPresenterDX
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.ExtraCoarse);//, bounds);
                                                                           // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
-            PresenterShowAndHang(new Solid[] { ts1, vs1 });
+            PresenterShowAndHang(new Solid[] { vs1 });
+            //PresenterShowAndHang(new Solid[] { ts1, vs1 });
 
             //PresenterShowAndHang(new Solid[] { ts, vs2 });
             //vs1.Intersect(vs2);
