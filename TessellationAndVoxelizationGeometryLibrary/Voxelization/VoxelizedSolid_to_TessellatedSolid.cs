@@ -44,7 +44,7 @@ namespace TVGL.Voxelization
                 var neighborZ = neighbors[2];
                 var neighborXY = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.YPositive);
                 var neighborYZ = neighborY == null ? null : GetNeighbor(neighborY, VoxelDirections.ZPositive);
-                var neighborZX = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.ZPositive);
+                var neighborZX = neighborZ == null ? null : GetNeighbor(neighborZ, VoxelDirections.XPositive);
                 var neighborXYZ = neighborXY == null ? null : GetNeighbor(neighborXY, VoxelDirections.ZPositive);
                 var sideLength = VoxelSideLengths[v.Level];
                 var vertexbase = voxelVertexDictionary[v.ID];

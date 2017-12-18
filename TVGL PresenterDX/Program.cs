@@ -84,7 +84,7 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("r*");
+            var fileNames = dir.GetFiles("Aero*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
                     ts = IO.Open(fileStream, filename);
                 if (!ts.Any()) continue;
                 ts[0].SolidColor = new Color(KnownColors.DeepPink);
-               // PresenterShowAndHang(ts);
+                // PresenterShowAndHang(ts);
                 TestVoxelization(ts[0]);
             }
 
@@ -105,16 +105,15 @@ namespace TVGLPresenterDX
         }
 
 
-        private static void PresenterShowAndHang(List<TessellatedSolid> ts)
+        //private static void PresenterShowAndHang(List<TessellatedSolid> ts)
+        //{
+        //    PresenterShowAndHang(ts.Cast<Solid>().ToList());
+        //}
+
+        private static void PresenterShowAndHang(IList<Solid> solids, bool dsal)
         {
-            PresenterShowAndHang(ts.Cast<Solid>().ToList());
-        }
-        private static void PresenterShowAndHang(IList<Solid> solids)
-        {
-            var mainWindow = new MainWindow
-            {
-                Solids = solids.ToList()
-            };
+            var mainWindow = new MainWindow();
+            mainWindow.AddSolids(solids, dsal);
             mainWindow.ShowDialog();
         }
 
@@ -144,19 +143,20 @@ namespace TVGLPresenterDX
             //var bounds = new double[2][];
             //bounds[0] = ts1.Bounds[0];
             //bounds[1] = ts2.Bounds[1];
-            var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.ExtraCoarse);//, bounds);
+            var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.Coarse);//, bounds);
                                                                           // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
-            PresenterShowAndHang(new Solid[] { vs1 });
+            PresenterShowAndHang(new Solid[] { vs1 }, false);
+            PresenterShowAndHang(new Solid[] { vs1 }, true);
             //PresenterShowAndHang(new Solid[] { ts1, vs1 });
 
             //PresenterShowAndHang(new Solid[] { ts, vs2 });
             //vs1.Intersect(vs2);
 
-            stopWatch.Restart();
-            vs1.Draft(VoxelDirections.XPositive);
-            stopWatch.Stop();
-            Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
-            PresenterShowAndHang(new Solid[] { vs1 });
+            //stopWatch.Restart();
+            //vs1.Draft(VoxelDirections.XPositive);
+            //stopWatch.Stop();
+            //Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
+            //PresenterShowAndHang(new Solid[] { vs1 });
         }
     }
 }
