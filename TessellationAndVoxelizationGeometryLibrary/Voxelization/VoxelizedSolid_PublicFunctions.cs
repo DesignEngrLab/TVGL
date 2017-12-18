@@ -916,127 +916,205 @@ namespace TVGL.Voxelization
 
         #region Offset
 
-        public SortedDictionary<int, HashSet<IVoxel>> GetPartialVoxelsOrderedAlongDirection(int dimensionIndex, int voxelLevel)
+        /// <summary>
+        /// Get the partial voxels ordered along X, Y, or Z, with a dictionary of their distance. X == 0, Y == 1, Z == 2. 
+        /// This function does not sort along negative axis.
+        /// </summary>
+        /// <param name="directionIndex"></param>
+        /// <param name="voxelLevel"></param>
+        /// <returns></returns>
+        private SortedDictionary<long, HashSet<IVoxel>> GetPartialVoxelsOrderedAlongDirection(int directionIndex, int voxelLevel)
         {
-            //var sortedDict = new SortedDictionary<int, HashSet<IVoxel>>(); //Key = SweepDim Value, value = voxel ID
-            //foreach (var voxel in this.Voxels())
-            //{
-            //    if (voxel.Level != voxelLevel || voxel.Role != VoxelRoleTypes.Partial) continue;
-            //    var coordinateValue = GetVoxelIDCoordinate(voxel.ID, dimensionIndex);
-            //    if (sortedDict.ContainsKey(coordinateValue))
-            //    {
-            //        sortedDict[coordinateValue].Add(voxel);
-            //    }
-            //    else
-            //    {
-            //        sortedDict.Add(coordinateValue, new HashSet<IVoxel> { voxel });
-            //    }
-            //}
-            //return sortedDict;
-            return null;
-        }
-
-        public VoxelizedSolid OffsetLevel1(int r)
-        {
-            var voxelSolid = (VoxelizedSolid) Copy();
-
-            //First, to round all edges, apply spheres to the center of every voxel in the shell.
-            //Second, get all the new outer voxels.
-
-            var sweepDim = voxelSolid.longestDimensionIndex;
-            var sortedVoxels = GetPartialVoxelsOrderedAlongDirection(sweepDim, 1);
-            var startDistance = sortedVoxels.Keys.First();
-            var endDistance = sortedVoxels.Keys.Last();
-            var offsetValues = GetSolidSphereOffsets(r);
-            var layers = new Dictionary<int, List<long>>();
-            var voxelValues = new Dictionary<long, int>();
-            var rSquared = r * r;
-            var voxelIDHashSet = new HashSet<long>();
-
-            var firstUnfinishedLayer = startDistance - r;
-            for (var i = startDistance; i <= endDistance + 1; i++)
+            var sortedDict = new SortedDictionary<long, HashSet<IVoxel>>(); //Key = SweepDim Value, value = voxel ID
+            foreach (var voxel in Voxels())
             {
-                //Get all the possible offset voxels
-                if (i != endDistance + 1) //Skips the last i in the outer for loop
+                //Partial voxels will exist on every level (unlike full or empty), we just want those on the given level.
+                if (voxel.Level != voxelLevel || voxel.Role != VoxelRoleTypes.Partial) continue;
+
+                //Instead of findind the actual coordinate value, get the IDMask for the value because it is faster.
+                var coordinateMaskValue = MaskAllBut(voxel.ID, directionIndex);
+                if (sortedDict.ContainsKey(coordinateMaskValue))
                 {
-                    foreach (var voxel in sortedVoxels[i])
-                    {
-                        //ToDo: Use adjacency to determine open faces. Apply either a line, partial circle, or partial sphere.
-                        var newVoxels = GetSphereCenteredOnLevel1Voxel(voxel, this, offsetValues);
-                        foreach (var newVoxelTuple in newVoxels)
-                        {
-                            var ID = 0;//voxelSolid.MakeVoxelID(newVoxelTuple.Item1);
-                            //If this voxel already exists, keep the lower value
-                            if (voxelValues.ContainsKey(ID))
-                            {
-                                voxelValues[ID] = Math.Min(voxelValues[ID], newVoxelTuple.Item2);
-                            }
-                            //Else, add this voxel.
-                            else
-                            {
-                                voxelValues.Add(ID, newVoxelTuple.Item2);
-                                //Also, add the voxels to the correct layer
-                                var distanceAlong = newVoxelTuple.Item1[sweepDim];
-                                if (layers.ContainsKey(distanceAlong))
-                                {
-                                    layers[distanceAlong].Add(ID);
-                                }
-                                else
-                                {
-                                    layers.Add(distanceAlong, new List<long> {ID});
-                                }
-                            }
-                        }
-                    }
+                    sortedDict[coordinateMaskValue].Add(voxel);
                 }
                 else
                 {
-                    i = i + r; //jump i forward, so that the first unfinished layer will work up to last voxel
-                }
-
-                //Once i > first layer distance, we can start eliminating inner voxels from the layers.
-                while (firstUnfinishedLayer < i - r)
-                {
-                    //Get the outer shell of the last index, i
-                    var voxelsInLayer = layers[firstUnfinishedLayer];
-                    layers.Remove(firstUnfinishedLayer);
-
-                    foreach (var voxel in voxelsInLayer)
-                    {
-                        //Note: only voxels that have a value of r^2 are in the outer shell. Delete all other from memory.
-                        if (voxelValues[voxel] == rSquared)
-                        {
-                            voxelIDHashSet.Add(voxel);
-                        }
-                        voxelValues.Remove(voxel);
-                    }
-
-                    firstUnfinishedLayer++;
+                    sortedDict.Add(coordinateMaskValue, new HashSet<IVoxel> { voxel });
                 }
             }
-            return null;
-            //return new VoxelizedSolid(voxelSolid, voxelIDHashSet);
+            return sortedDict;           
         }
 
-        public static List<Tuple<int[], int>> GetSphereCenteredOnLevel1Voxel(IVoxel voxel, VoxelizedSolid voxelizedSolid,
-            List<Tuple<int[], int>> sphereOffsets)
+        private long MaskAllBut(long ID, int directionIndex)
         {
-            //Voxel
-            //var voxels = new List<Tuple<int[], int>>();
-            //foreach (var offset in sphereOffsets)
+            switch (directionIndex)
+            {
+                case 0:
+                    return ID & Constants.maskAllButX;
+                case 1:
+                    return ID & Constants.maskAllButY;
+                default:
+                    return ID & Constants.maskAllButZ;
+            }
+        }
+
+        /// <summary>
+        /// Offsets all the surfaces by a given radius
+        /// </summary>
+        /// <param name="r"></param>
+        /// <param name="level"></param>
+        /// <returns></returns>
+        public VoxelizedSolid OffsetByRadius(int r, int level)
+        {
+            var voxelSolid = this;//(VoxelizedSolid) Copy();
+
+            //First, to round all edges, apply spheres to the center of every voxel in the shell.
+            //Second, get all the new outer voxels.
+            var offsetValues = GetPartialSolidSphereOffsets(r);
+
+            //By using a concurrent dictionary rather than a bag, we can prevent duplicates. Use byte to only take 1 bit.
+             //  var innerVoxels = new ConcurrentDictionary<long, byte>();
+            var possibleShellVoxels = new ConcurrentDictionary<long, bool>(); //True = on shell. False = inner.
+            //Parallel.ForEach(voxelSolid.Voxels(), (voxel) =>
             //{
-            //    var voxel = AddIntArrays(voxelizedSolid.VoxelIDToIndices(voxelID),
-            //        offset.Item1);
-            //    voxels.Add(new Tuple<int[], int>(voxel, offset.Item2));
-            //}
-            //return voxels;
-            return null;
+            foreach (var voxel in voxelSolid.Voxels())
+            {
+
+                if (voxel.Level != level || voxel.Role != VoxelRoleTypes.Partial) continue;//return;
+                //ToDo: Use adjacency to determine open faces. Apply either a line, partial circle, or partial sphere.
+
+                var sphereVoxels = GetVoxelOffsetsBasedOnNeighbors(voxel, offsetValues);
+
+                foreach (var sphereVoxel in sphereVoxels)
+                {
+                    //Add the voxelID. If it is already in the list, update the value:
+                    //If oldValue == true && newValue == true => true. If either is false, return false.
+                    possibleShellVoxels.AddOrUpdate(sphereVoxel.Key, sphereVoxel.Value,
+                        (key, oldValue) => oldValue && sphereVoxel.Value);
+                }
+            }
+            //});
+
+            //ToDo: Can this be parallelized???
+            foreach (var voxelItem in possibleShellVoxels)
+            {
+                if(voxelItem.Value) voxelSolid.MakeVoxelPartial(new Voxel(voxelItem.Key, level));
+                else voxelSolid.MakeVoxelFull(new Voxel(voxelItem.Key, level));
+            }
+            return voxelSolid;
+        }
+
+        /// <summary>
+        /// Get the voxel IDs for any voxel within a sphere offset from the given voxel. 
+        /// Voxels on the shell of the sphere are returned with a true.
+        /// </summary>
+        /// <param name="iVoxel"></param>
+        /// <param name="sphereOffsets"></param>
+        /// <returns></returns>
+        private static Dictionary<long, bool> GetSphereCenteredOnVoxel(IVoxel iVoxel, List<Tuple<int[], bool>> sphereOffsets)
+        {
+            var voxel = (Voxel) iVoxel;
+            return sphereOffsets.ToDictionary(offsetTuple => AddDeltaToID(voxel.ID, offsetTuple.Item1), offsetTuple => offsetTuple.Item2);
+        }
+
+        private Dictionary<long, bool> GetVoxelOffsetsBasedOnNeighbors(IVoxel iVoxel, 
+            Dictionary<int, List<Tuple<int[], bool>>> offsetsByDirectionCombinations)
+        {
+            //Initialize
+            IVoxel voxel;
+            try
+            {
+                voxel = (Voxel)iVoxel;
+            }
+            catch
+            {
+                voxel = (Voxel_Level1_Class) iVoxel;
+            }
+            var outputVoxels = new Dictionary<long, bool>();
+
+            //Get all the directions that have a non-empty neighbor
+            var exposedDirections = GetExposedFaces(voxel);
+            if (!exposedDirections.Any()) return outputVoxels;
+            
+            //Get the direction combination value.
+            //If not along a primary axis, add 0.
+            //Otherwise, add 1 for negative and 2 for positive.
+            //The unique int value will be x*100 + y*10 + z
+            var xdirs = new List<int>();
+            if (exposedDirections.Contains(VoxelDirections.XNegative)) xdirs.Add(1);
+            if (exposedDirections.Contains(VoxelDirections.XPositive)) xdirs.Add(2);
+            if (!xdirs.Any()) xdirs.Add(0);
+
+            var ydirs = new List<int>();
+            if (exposedDirections.Contains(VoxelDirections.YNegative)) ydirs.Add(1);
+            if (exposedDirections.Contains(VoxelDirections.YPositive)) ydirs.Add(2);
+            if (!ydirs.Any()) ydirs.Add(0);
+
+            var zdirs = new List<int>();
+            if (exposedDirections.Contains(VoxelDirections.ZNegative)) zdirs.Add(1);
+            if (exposedDirections.Contains(VoxelDirections.ZPositive)) zdirs.Add(2);
+            if (!zdirs.Any()) zdirs.Add(0);
+
+            foreach (var xdir in xdirs)
+            {
+                foreach (var ydir in ydirs)
+                {
+                    foreach (var zdir in zdirs)
+                    {
+                        var combinationKey = 100*xdir + 10*ydir + zdir;
+                        var offsetTuples = offsetsByDirectionCombinations[combinationKey];
+                        foreach (var offsetTuple in offsetTuples)
+                        {
+                            outputVoxels.Add(AddDeltaToID(voxel.ID, offsetTuple.Item1), offsetTuple.Item2);
+                        }
+                    }
+                }
+            }
+
+            return outputVoxels;
+        }
+
+        private List<VoxelDirections> GetExposedFaces(IVoxel voxel)
+        {
+            var directions = Enum.GetValues(typeof(VoxelDirections)).Cast<VoxelDirections>().ToList();
+            return directions.Where(direction => GetNeighbor(voxel, direction).Role == VoxelRoleTypes.Empty).ToList();
+        }
+
+        private static long AddDeltaToID(long ID, VoxelDirections voxelDirection, int r)
+        {
+            var voxelDirectionInt = (int) voxelDirection;
+            switch (Math.Abs(voxelDirectionInt))
+            {
+                case 1:
+                    var deltaXlong = (long)(voxelDirectionInt > 0 ? r << 40 : -r << 40);
+                    return ID + deltaXlong;
+                case 2:
+                    var deltaYlong = (long)(voxelDirectionInt > 0 ? r << 20 : -r << 20);
+                    return ID + deltaYlong;
+                default:
+                    var deltaZlong = (long)(voxelDirectionInt > 0 ? r : -r);
+                    return ID + deltaZlong;
+            }
+        }
+
+        private static long AddDeltaToID(long ID, int[] delta)
+        {
+            return AddDeltaToID(ID, delta[0], delta[1], delta[2]);
+        }
+
+        private static long AddDeltaToID(long ID, int deltaX, int deltaY, int deltaZ)
+        {
+            var deltaXLong = (long)(deltaX > 0 ? Math.Abs(deltaX) << 40 : -Math.Abs(deltaX) << 40);
+            var deltaYLong = (long)(deltaY > 0 ? Math.Abs(deltaY) << 20 : -Math.Abs(deltaY) << 20);
+            var deltaZLong = (long)deltaZ;
+            return ID + deltaXLong + deltaYLong + deltaZLong;
         }
 
         //Returns the offsets for a solid sphere with each offset's sqaured distance to the center
-        public static List<Tuple<int[], int>> GetSolidSphereOffsets(int r)
+        //true if on shell. false if inside.
+        private static List<Tuple<int[], bool>> GetSolidSphereOffsets(int r)
         {
-            var voxelOffsets = new List<Tuple<int[], int>>();
+            var voxelOffsets = new List<Tuple<int[], bool>>();
             var rSqaured = r * r;
 
             //Do all the square operations before we start.
@@ -1044,7 +1122,7 @@ namespace TVGL.Voxelization
             // Generate a sequence of integers from -r to r 
             var offsets = Enumerable.Range(-r, 2 * r + 1).ToArray();
             // and then generate their squares.
-            var squares = offsets.Select(val => val * val).ToArray();
+            var squares = offsets.Select(val => (double)val * val).ToArray();
             var xi = -1;
             foreach (var xOffset in offsets)
             {
@@ -1059,13 +1137,119 @@ namespace TVGL.Voxelization
                         //Count at start rather than at end so that if we continue, zi is correct.
                         zi++;
                         //Euclidean distance sqrt(x^2 + y^2 + z^2) must be less than r. Square both sides to get the following.
-                        var dSqaured = squares[xi] + squares[yi] + squares[zi];
+                        //By using sqrt(int), the resulting values are rounded to the floor. This gaurantees than any voxel 
+                        //intersecting the sphere is set to the outer shell, but creates a 2 voxel thick portion in certain
+                        //sections. For this reason, we are using regular rounding. It does not completely encompass the circle
+                        //but does gaurantee a thin shell.
+                        var dSqaured = (int)Math.Round(squares[xi] + squares[yi] + squares[zi]);
                         if (dSqaured > rSqaured) continue; //Not within the sphere.
-                        voxelOffsets.Add(new Tuple<int[], int>(new[] {xOffset, yOffset, zOffset}, dSqaured));
+                        voxelOffsets.Add(new Tuple<int[], bool>(new[] {xOffset, yOffset, zOffset}, dSqaured == rSqaured));
                     }
                 }
             }
             return voxelOffsets;
+        }
+
+        //This function pre-builds all the possible offsets for every direction combination
+        //This function should only need to be called once during the offset function, so it
+        //does not need to be that optimized.
+        private static Dictionary<int, List<Tuple<int[], bool>>> GetPartialSolidSphereOffsets(int r)
+        {
+            var partialSolidSphereOffsets = new Dictionary<int, List<Tuple<int[], bool>>>();
+
+            // Generate a sequence of integers from -r to r 
+            var zero = new[] { 0 };
+            var negOffsets = Enumerable.Range(-r, r + 1).ToArray(); //-r to 0
+            var posOffsets = Enumerable.Range(0, r + 1).ToArray(); //0 to r 
+
+            var arrays = new List<int[]>
+            {
+                zero,
+                negOffsets,
+                posOffsets,
+            };
+
+            //Get all the combinations and set their int values.
+            //Use the same criteria as GetVoxelOffsetsBasedOnNeighbors
+            var combinations = new Dictionary<int, List<int[]>>();
+            for (var xdir = 0; xdir < arrays.Count; xdir++)
+            {
+                for(var ydir = 0; ydir < arrays.Count; ydir++) 
+                {
+                    for (var zdir = 0; zdir < arrays.Count; zdir++)
+                    {
+                        var combinationKey = 100 * xdir + 10 * ydir + zdir;
+                        combinations.Add(combinationKey, new List<int[]> {arrays[xdir], arrays[ydir], arrays[zdir] });
+                    }
+                }
+            }
+
+            foreach (var combination in combinations)
+            {
+                var key = combination.Key;
+                var xOffsets = combination.Value[0];
+                var yOffsets = combination.Value[1];
+                var zOffsets = combination.Value[2];
+                //The offsets only do positive or negative at one time, 
+                //so getting the unsigned max is preferred for checking if dominated
+                var maxX = xOffsets.Max(Math.Abs);
+                var maxY = yOffsets.Max(Math.Abs);
+                var maxZ = zOffsets.Max(Math.Abs);
+
+                var voxelOffsets = new List<Tuple<int[], bool>>();
+                foreach (var xOffset in xOffsets)
+                {
+
+                    foreach (var yOffset in yOffsets)
+                    {
+                        foreach (var zOffset in zOffsets)
+                        {
+                            //Euclidean distance sqrt(x^2 + y^2 + z^2) must be less than r. Square both sides to get the following.
+                            //By using sqrt(int), the resulting values are rounded to the floor. This gaurantees than any voxel 
+                            //intersecting the sphere is set to the outer shell, but creates a 2 voxel thick portion in certain
+                            //sections. Regular rounding does not completely encompass the circle and cannot gaurantee a thin shell.
+                            //For this reason, we use case to int and then check for dominated voxels (larger x,y, and z value)
+                            var onShell = false;
+                            var r2 = (int)Math.Sqrt(xOffset * xOffset + yOffset * yOffset + zOffset * zOffset);
+                            if (r2 == r)
+                            {
+                                //Check if adding +1 to the active X,Y,Z axis (active if max>0) results in radius also == r. 
+                                //Do this one at a time for each of the active axis. If r3 == r for all the active axis, 
+                                //then the then the voxel in question is dominated.
+                                var x = Math.Abs(xOffset);
+                                var y = Math.Abs(yOffset);
+                                var z = Math.Abs(zOffset);
+                                if (maxX > 0)
+                                {
+                                    x++;
+                                    var r3 = (int)Math.Sqrt(x * x + y * y + z * z);
+                                    if (r3 > r) onShell = true;
+                                    x--;
+                                }
+                                //If we still don't know if the voxel is on the shell and Y is active
+                                if (!onShell && maxY > 0)
+                                {
+                                    y++;
+                                    var r3 = (int)Math.Sqrt(x * x + y * y + z * z);
+                                    if (r3 > r) onShell = true;
+                                    y--;
+                                }
+                                //If we still don't know if the voxel is on the shell and Z is active
+                                if (!onShell && maxZ > 0)
+                                {
+                                    z++;
+                                    var r3 = (int)Math.Sqrt(x * x + y * y + z * z);
+                                    if (r3 > r) onShell = true;
+                                }
+                            }
+                            voxelOffsets.Add(new Tuple<int[], bool>(new[] { xOffset, yOffset, zOffset }, onShell));
+                        }
+                    }
+                }
+                partialSolidSphereOffsets.Add(key, voxelOffsets);
+            }
+            
+            return partialSolidSphereOffsets;
         }
 
         public static List<int[]> GetHollowSphereOffsets(int r)
