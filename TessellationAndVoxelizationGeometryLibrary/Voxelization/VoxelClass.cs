@@ -50,8 +50,8 @@ namespace TVGL.Voxelization
                 BottomCoordinate = new[]
                 {
                     (double) ((ID & Constants.maskAllButX) >> 40),
-                    (double) ((ID & Constants.maskAllButX) >> 20),
-                    (double) (ID & Constants.maskAllButX)
+                    (double) ((ID & Constants.maskAllButY) >> 20),
+                    (double) (ID & Constants.maskAllButZ)
                 };
                 BottomCoordinate = BottomCoordinate.multiply(voxelSideLengths[4]).add(offset);
             }

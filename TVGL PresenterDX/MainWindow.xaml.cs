@@ -42,17 +42,15 @@ namespace TVGLPresenterDX
 
 
 
-        public List<Solid> Solids
+        public void AddSolids(IList<Solid> solids, bool gjrka)
         {
-            set
-            {
-                viewModel.AttachModelList(value.Select(solid => ConvertToObject3D(solid)).ToList());
-            }
+            viewModel.AttachModelList(solids.Select(solid => ConvertToObject3D(solid, gjrka)).ToList());
         }
-        private MeshGeometryModel3D ConvertToObject3D(Solid solid)
+
+        private MeshGeometryModel3D ConvertToObject3D(Solid solid, bool tesrf)
         {
             if (solid is TessellatedSolid) return ConvertTessellatedSolidtoObject3D((TessellatedSolid)solid);
-            if (solid is VoxelizedSolid) return ConvertVoxelizedSolidtoObject3D((VoxelizedSolid)solid);
+            if (solid is VoxelizedSolid) return ConvertVoxelizedSolidtoObject3D((VoxelizedSolid)solid, tesrf);
             throw new ArgumentException("Solid must be TessellatedSolid or VoxelizedSolid");
         }
         private MeshGeometryModel3D ConvertTessellatedSolidtoObject3D(TessellatedSolid ts)
@@ -75,8 +73,18 @@ namespace TVGLPresenterDX
             return result;
         }
 
-        private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
+        private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs, bool wetgatghs)
         {
+            if (wetgatghs)
+            {
+                var ts = vs.ConvertToTessellatedSolid();
+                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
+                {
+                    Af = 0.80f
+                };
+                return ConvertTessellatedSolidtoObject3D(ts);
+            }
+
             var boxFaceIndices = new[]
             {
                 0, 1, 2,  2, 1, 4,  1, 6, 4,  4, 6, 7,  2, 4, 5,  4, 7, 5,  0, 2, 3, 3, 2, 5,
@@ -91,7 +99,7 @@ namespace TVGLPresenterDX
                 var x = (float)v.BottomCoordinate[0];
                 var y = (float)v.BottomCoordinate[1];
                 var z = (float)v.BottomCoordinate[2];
-                var s = (float) v.SideLength;
+                var s = (float)v.SideLength;
                 positions.Add(new Vector3(x, y, z));//0
                 positions.Add(new Vector3(x + s, y, z));//1
                 positions.Add(new Vector3(x, y + s, z));//2
@@ -114,14 +122,15 @@ namespace TVGLPresenterDX
                 normals.Add(new Vector3(0f, 0f, 1f));
                 normals.Add(new Vector3(0f, -1f, 0f));
                 normals.Add(new Vector3(0f, -1f, 0f));
+
             }
 
             return new MeshGeometryModel3D
             {
                 Material = new PhongMaterial()
                 {
-                    DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf, 
-                    1f)
+                    DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf,
+            1f)
                     //(float)0.75 * vs.SolidColor.Af)
                 },
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
@@ -154,6 +163,6 @@ namespace TVGLPresenterDX
         //{
         //    GridLines.Visible = false;
         //}
-        
+
     }
 }

@@ -335,6 +335,8 @@ namespace TVGL
             out List<Edge> remainingEdges)
         {
             remainingEdges = new List<Edge>(singleSidedEdges);
+            remainingEdges.Clear();
+            return new List<Tuple<List<Edge>, double[]>>();
             var attempts = 0;
             var listOfLoops = new List<Tuple<List<Edge>, double[]>>();
             while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
