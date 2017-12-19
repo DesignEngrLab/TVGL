@@ -263,7 +263,8 @@ namespace TVGL.Voxelization
             #endregion
 
             var delta = 1L;
-            delta = delta << ((20 * (2 - dimension)) + 4 * (4 - voxel.Level));
+            var shift = ((20 * (2 - dimension)) + 4 * (4 - voxel.Level));
+            delta = delta << shift;
             var newID = (positiveStep)
                 ? (voxel.ID & Constants.maskOutFlags) + delta
                 : (voxel.ID & Constants.maskOutFlags) - delta;
@@ -274,7 +275,10 @@ namespace TVGL.Voxelization
             }
             if (voxel.Level == 1)
             {
-                if (voxelDictionaryLevel1.ContainsKey(newID)) return voxelDictionaryLevel1[newID];
+                if (voxelDictionaryLevel1.ContainsKey(newID))
+                {
+                    return voxelDictionaryLevel1[newID];
+                }
                 return new Voxel(newID + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
             }
             var level0ParentID = MakeContainingVoxelID(newID, 0);
@@ -980,14 +984,16 @@ namespace TVGL.Voxelization
                 if (voxel.Level != voxelLevel || voxel.Role != VoxelRoleTypes.Partial) continue;
 
                 //Instead of findind the actual coordinate value, get the IDMask for the value because it is faster.
-                var coordinateMaskValue = MaskAllBut(voxel.ID, directionIndex);
-                if (sortedDict.ContainsKey(coordinateMaskValue))
+                //var coordinateMaskValue = MaskAllBut(voxel.ID, directionIndex);
+                //The actual coordinate value
+                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4*(4-voxelLevel))) & Constants.maskAllButZ;
+                if (sortedDict.ContainsKey(coordValue))
                 {
-                    sortedDict[coordinateMaskValue].Add(voxel);
+                    sortedDict[coordValue].Add(voxel);
                 }
                 else
                 {
-                    sortedDict.Add(coordinateMaskValue, new HashSet<IVoxel> { voxel });
+                    sortedDict.Add(coordValue, new HashSet<IVoxel> { voxel });
                 }
             }
             return sortedDict;           
@@ -1012,7 +1018,7 @@ namespace TVGL.Voxelization
         /// <param name="r"></param>
         /// <param name="level"></param>
         /// <returns></returns>
-        public VoxelizedSolid OffsetByRadius(int r, int level)
+        public VoxelizedSolid OffsetByRadius(int r, int voxelLevel)
         {
             var voxelSolid = this;//(VoxelizedSolid) Copy();
 
@@ -1021,34 +1027,63 @@ namespace TVGL.Voxelization
             var offsetValues = GetPartialSolidSphereOffsets(r);
 
             //By using a concurrent dictionary rather than a bag, we can prevent duplicates. Use byte to only take 1 bit.
-             //  var innerVoxels = new ConcurrentDictionary<long, byte>();
-            var possibleShellVoxels = new ConcurrentDictionary<long, bool>(); //True = on shell. False = inner.
-            //Parallel.ForEach(voxelSolid.Voxels(), (voxel) =>
-            //{
-            foreach (var voxel in voxelSolid.Voxels())
+            var possibleShellVoxels = new ConcurrentDictionary<long, ConcurrentDictionary<long, bool>>(); //True = on shell. False = inner.
+            var directionIndex = longestDimensionIndex;                                                        //{
+            int counter = 0;
+
+            var sortedVoxelLayers = GetPartialVoxelsOrderedAlongDirection(directionIndex, 1);
+            var nextUpdateLayer = sortedVoxelLayers.Keys.Min() - r; //The first layer will be set back by the offset r.
+            var maxLayerIndex = sortedVoxelLayers.Keys.Max();
+            foreach (var layerIndex in sortedVoxelLayers.Keys)
             {
-
-                if (voxel.Level != level || voxel.Role != VoxelRoleTypes.Partial) continue;//return;
-                //ToDo: Use adjacency to determine open faces. Apply either a line, partial circle, or partial sphere.
-
-                var sphereVoxels = GetVoxelOffsetsBasedOnNeighbors(voxel, offsetValues);
-
-                foreach (var sphereVoxel in sphereVoxels)
+                Parallel.ForEach(sortedVoxelLayers[layerIndex], (voxel) =>
+                //foreach (var voxel in sortedVoxelLayers[layerIndex])
                 {
-                    //Add the voxelID. If it is already in the list, update the value:
-                    //If oldValue == true && newValue == true => true. If either is false, return false.
-                    possibleShellVoxels.AddOrUpdate(sphereVoxel.Key, sphereVoxel.Value,
-                        (key, oldValue) => oldValue && sphereVoxel.Value);
+                    counter++;
+                    if (voxel.Level != voxelLevel || voxel.Role != VoxelRoleTypes.Partial) return; // continue;//
+
+                    //Use adjacency to determine open faces. Apply either a line, partial circle, or partial sphere.
+                    var sphereVoxels = GetVoxelOffsetsBasedOnNeighbors(voxel, offsetValues, voxelLevel);
+                    foreach (var sphereVoxel in sphereVoxels)
+                    {
+                        //Add the voxelID. If it is already in the list, update the value:
+                        //If oldValue == true && newValue == true => true. If either is false, return false.
+                        long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel))) & Constants.maskAllButZ;
+                        if (possibleShellVoxels.ContainsKey(coordValue))
+                        {
+                            possibleShellVoxels[coordValue].AddOrUpdate(sphereVoxel.Key, sphereVoxel.Value,
+                                (key, oldValue) => oldValue && sphereVoxel.Value);
+                        }
+                        else
+                        {
+                            possibleShellVoxels[coordValue] = new ConcurrentDictionary<long, bool>();
+                            possibleShellVoxels[coordValue].AddOrUpdate(sphereVoxel.Key, sphereVoxel.Value,
+                                (key, oldValue) => oldValue && sphereVoxel.Value);
+                        }
+                    }
+                });
+                if (layerIndex == maxLayerIndex)
+                {
+                    r = -r; //ensures all the final layers are updated
+                }
+
+                //To be able to update a layer, the current layerIndex must be at least r distance away.
+                while (layerIndex > nextUpdateLayer + r)
+                {
+                    ConcurrentDictionary<long, bool> removedLayer;
+                    possibleShellVoxels.TryRemove(nextUpdateLayer, out removedLayer);
+                    nextUpdateLayer++;
+                    if (removedLayer == null) continue;
+
+                    //ToDo: Can this be parallelized???
+                    foreach (var voxelItem in removedLayer)
+                    {
+                        if (voxelItem.Value) voxelSolid.MakeVoxelPartial(new Voxel(voxelItem.Key, voxelLevel));
+                        else voxelSolid.MakeVoxelFull(new Voxel(voxelItem.Key, voxelLevel));
+                    }
                 }
             }
-            //});
-
-            //ToDo: Can this be parallelized???
-            foreach (var voxelItem in possibleShellVoxels)
-            {
-                if(voxelItem.Value) voxelSolid.MakeVoxelPartial(new Voxel(voxelItem.Key, level));
-                else voxelSolid.MakeVoxelFull(new Voxel(voxelItem.Key, level));
-            }
+            
             return voxelSolid;
         }
 
@@ -1066,42 +1101,57 @@ namespace TVGL.Voxelization
         }
 
         private Dictionary<long, bool> GetVoxelOffsetsBasedOnNeighbors(IVoxel iVoxel, 
-            Dictionary<int, List<Tuple<int[], bool>>> offsetsByDirectionCombinations)
+            Dictionary<int, List<Tuple<int[], bool>>> offsetsByDirectionCombinations, int voxelLevel)
         {
             //Initialize
             IVoxel voxel;
-            try
-            {
-                voxel = (Voxel)iVoxel;
-            }
-            catch
+            if (voxelLevel == 1)
             {
                 voxel = (Voxel_Level1_Class) iVoxel;
             }
+            else
+            {
+                throw new NotImplementedException();
+                
+            }
+                
             var outputVoxels = new Dictionary<long, bool>();
 
             //Get all the directions that have a non-empty neighbor
             var exposedDirections = GetExposedFaces(voxel);
             if (!exposedDirections.Any()) return outputVoxels;
-            
+
             //Get the direction combination value.
             //If not along a primary axis, add 0.
             //Otherwise, add 1 for negative and 2 for positive.
             //The unique int value will be x*100 + y*10 + z
+            var numActiveAxis = 3;
             var xdirs = new List<int>();
             if (exposedDirections.Contains(VoxelDirections.XNegative)) xdirs.Add(1);
             if (exposedDirections.Contains(VoxelDirections.XPositive)) xdirs.Add(2);
-            if (!xdirs.Any()) xdirs.Add(0);
+            if (!xdirs.Any())
+            {
+                xdirs.Add(0);
+                numActiveAxis--;
+            }
 
             var ydirs = new List<int>();
             if (exposedDirections.Contains(VoxelDirections.YNegative)) ydirs.Add(1);
             if (exposedDirections.Contains(VoxelDirections.YPositive)) ydirs.Add(2);
-            if (!ydirs.Any()) ydirs.Add(0);
+            if (!ydirs.Any())
+            {
+                ydirs.Add(0);
+                numActiveAxis--;
+            }
 
             var zdirs = new List<int>();
             if (exposedDirections.Contains(VoxelDirections.ZNegative)) zdirs.Add(1);
             if (exposedDirections.Contains(VoxelDirections.ZPositive)) zdirs.Add(2);
-            if (!zdirs.Any()) zdirs.Add(0);
+            if (!zdirs.Any())
+            {
+                zdirs.Add(0);
+                numActiveAxis--;
+            }
 
             foreach (var xdir in xdirs)
             {
@@ -1109,11 +1159,21 @@ namespace TVGL.Voxelization
                 {
                     foreach (var zdir in zdirs)
                     {
+                        //If there are three active axis, we only want to consider the spherical combinations
+                        if (numActiveAxis == 3 && xdir * ydir * zdir == 0) continue;
+                        //If there are two active axis, we only want to consider the circular combination
+                        if (numActiveAxis == 2 && xdir * ydir == 0 && xdir * zdir == 0 && ydir * zdir == 0) continue;
                         var combinationKey = 100*xdir + 10*ydir + zdir;
                         var offsetTuples = offsetsByDirectionCombinations[combinationKey];
                         foreach (var offsetTuple in offsetTuples)
                         {
-                            outputVoxels.Add(AddDeltaToID(voxel.ID, offsetTuple.Item1), offsetTuple.Item2);
+                            var key = AddDeltaToID(voxel.ID, offsetTuple.Item1);
+                            //Check if it is already in the dictionary, since the sphere octants
+                            //will overlap if next to one another. (same for circle quadrants)
+                            if (!outputVoxels.ContainsKey(key))
+                            {
+                                outputVoxels.Add(key, offsetTuple.Item2);
+                            }
                         }
                     }
                 }
@@ -1125,7 +1185,16 @@ namespace TVGL.Voxelization
         private List<VoxelDirections> GetExposedFaces(IVoxel voxel)
         {
             var directions = Enum.GetValues(typeof(VoxelDirections)).Cast<VoxelDirections>().ToList();
-            return directions.Where(direction => GetNeighbor(voxel, direction).Role == VoxelRoleTypes.Empty).ToList();
+            var exposedDirections = new List<VoxelDirections>();
+            foreach (var direction in directions)
+            {
+                var neighbor = GetNeighbor(voxel, direction);
+                if (neighbor == null || neighbor.Role == VoxelRoleTypes.Empty)
+                {
+                    exposedDirections.Add(direction);
+                }
+            }
+            return exposedDirections;
         }
 
         private static long AddDeltaToID(long ID, VoxelDirections voxelDirection, int r)
