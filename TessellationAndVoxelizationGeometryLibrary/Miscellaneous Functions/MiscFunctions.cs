@@ -1797,6 +1797,31 @@ namespace TVGL
                 : new Vertex(vertex.Position.add(direction.multiply(signedDistance)));
             return IsPointInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint.Position : null;
         }
+
+        /// <summary>
+        ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
+        ///     that triangle, then null is returned. The signed distance is positive if the vertex points to
+        ///     the triangle along the direction (ray). User can also specify whether the edges of the triangle
+        ///     are considered "inside."
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="point3D"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="signedDistance">The signed distance.</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, double[] direction,
+            out double signedDistance, bool onBoundaryIsInside = true)
+        {
+            var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
+            signedDistance = -(point3D.dotProduct(face.Normal) - distanceToOrigin) /
+                             direction.dotProduct(face.Normal);
+            //Note that if t == 0, then it is on the plane
+            //else, find the intersection point and determine if it is inside the polygon (face)
+            var newPoint = signedDistance.IsNegligible()
+                ? point3D
+                : point3D.add(direction.multiply(signedDistance));
+            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+        }
         #endregion
 
         #region Create 2D Circle Paths
@@ -1861,14 +1886,29 @@ namespace TVGL
         public static bool IsPointInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
+            return IsPointInsideTriangle(vertices, vertexInQuestion.Position, onBoundaryIsInside);
+        }
+
+        /// <summary>
+        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+        ///     triangle are considered "inside."
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="vertexInQuestion"></param>
+        /// <param name="onBoundaryIsInside"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static bool IsPointInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
+            bool onBoundaryIsInside = true)
+        {
             if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
-            var p = vertexInQuestion.Position;
+            var p = vertexInQuestion;
             var a = vertices[0].Position;
             var b = vertices[1].Position;
             var c = vertices[2].Position;
-            return SameSide(p, a, b, c, onBoundaryIsInside) && 
-                SameSide(p, b, a, c, onBoundaryIsInside) && 
-                SameSide(p, c, a, b, onBoundaryIsInside);
+            return SameSide(p, a, b, c, onBoundaryIsInside) &&
+                   SameSide(p, b, a, c, onBoundaryIsInside) &&
+                   SameSide(p, c, a, b, onBoundaryIsInside);
         }
 
         /// <summary>
