@@ -533,6 +533,7 @@ namespace TVGL.Voxelization
                 var negativeFaceVoxels = sortedSets.Item1;
                 var positiveFaceVoxels = sortedSets.Item2;
                 var faces = voxel.Faces;
+                //ToDo: A voxel could be considered both positive and negative if Normal[sweepDim] == 0
                 if (faces.Any(f => f.Normal[sweepDim] >= 0))
                     lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
                 if (faces.Any(f => f.Normal[sweepDim] <= 0))
@@ -542,6 +543,34 @@ namespace TVGL.Voxelization
             foreach (var v in dict.Values.Where(v => v.Item1.Any() && v.Item2.Any()))
                 MakeInteriorVoxelsAlongLine(v.Item1, v.Item2, sweepDim);
         }
+
+
+        //Sort partial voxels along a given direction and then consider rows along that direction 
+        //Start a new line anytime there is a voxel with any faces pointed away from the search direction
+        //and the next voxel is fully inside the solid (not a partial). 
+        //End that line at every partial voxel, regardless of face orientation. This voxel may start a new 
+        //line if it has faces in both directions.
+        //Add any face that is passed into a list of faces for this row.
+
+        //While row.Any() of partial voxels ordered along a given direction,
+        //  current partial voxel = row.Pop() // Get and remove the first voxel.
+        //  If an existing line, end the line. 
+        //  If any face of the current partial voxel points away from the search direction
+        //      If nextVoxel(currentVoxel, direction, level) is fully inside solid
+        //          start a new voxel line.
+
+        //To Determine if a voxel is fully inside the solid, use the normal of the closest
+        //face cast back from the voxel in question. 
+        //foreach faceSetFromVoxel in rowFaces.Reverse()
+        //  foreach face in faceSetFromVoxel
+        //      dot = face.Normal[SearchDirection]
+        //      if dot.IsNegligible() continue and use a different face because this face is inconclusive.
+        //      minDistance = int.Max
+        //      isInside 
+        //      if PointOnTriangleFromLine(reversedSearchDirection, out signedDistance, OnBoundaryIsInside =true) != null 
+        //          if signedDistance < minDistance
+        //               minDistance = signedDistance
+        //               isInside = dot < 0; 
 
         private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> sortedNegatives,
             SortedSet<Voxel_Level1_Class> sortedPositives, int sweepDim)
