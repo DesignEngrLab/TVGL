@@ -275,16 +275,28 @@ namespace TVGL.Voxelization
             if (voxel.Level == 1)
             {
                 if (voxelDictionaryLevel1.ContainsKey(newID)) return voxelDictionaryLevel1[newID];
-                return new Voxel(newID + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
+                var neighborsParent = GetParentVoxel(new Voxel(newID, 1));
+                if (neighborsParent.Role == VoxelRoleTypes.Partial)
+                    return new Voxel(newID + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Empty),
+                        VoxelSideLengths, Offset);
+                return neighborsParent;
             }
             var level0ParentID = MakeContainingVoxelID(newID, 0);
-            if (voxelDictionaryLevel0.ContainsKey(level0ParentID) &&
-                voxelDictionaryLevel0[level0ParentID].HighLevelVoxels.Contains(newID))
-                return voxelDictionaryLevel0[level0ParentID].HighLevelVoxels.GetVoxel(newID);
-            var flags = new List<VoxelRoleTypes>();
-            for (int i = 0; i < voxel.Level; i++) flags.Add(VoxelRoleTypes.Partial);
-            flags.Add(VoxelRoleTypes.Empty);
-            return new Voxel(newID + SetRoleFlags(flags), VoxelSideLengths, Offset);
+            if (voxelDictionaryLevel0.ContainsKey(level0ParentID))
+            {
+                var neighbor = voxelDictionaryLevel0[level0ParentID].HighLevelVoxels.GetVoxel(newID);
+                if (neighbor != null) return neighbor;
+                var neighborsParent = GetParentVoxel(new Voxel(newID, voxel.Level));
+                if (neighborsParent.Role == VoxelRoleTypes.Partial)
+                {
+                    var flags = new List<VoxelRoleTypes>();
+                    for (int i = 0; i < voxel.Level; i++) flags.Add(VoxelRoleTypes.Partial);
+                    flags.Add(VoxelRoleTypes.Empty);
+                    return new Voxel(newID + SetRoleFlags(flags), VoxelSideLengths, Offset);
+                }
+                return neighborsParent;
+            }
+            return new Voxel(level0ParentID + SetRoleFlags(VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
         }
 
         /// <summary>
@@ -329,24 +341,42 @@ namespace TVGL.Voxelization
 
         public IVoxel GetParentVoxel(IVoxel child)
         {
+            long parentID;
+            IVoxel parent;
             switch (child.Level)
             {
-                case 1: return voxelDictionaryLevel0[MakeContainingVoxelID(child.ID, 0)];
-                case 2: return voxelDictionaryLevel1[MakeContainingVoxelID(child.ID, 1)];
+                case 1:
+                    parentID = MakeContainingVoxelID(child.ID, 0);
+                    if (voxelDictionaryLevel0.ContainsKey(parentID))
+                        return voxelDictionaryLevel0[parentID];
+                    return new Voxel(parentID + SetRoleFlags(VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
+                case 2:
+                    parentID = MakeContainingVoxelID(child.ID, 1);
+                    if (voxelDictionaryLevel1.ContainsKey(parentID))
+                        return voxelDictionaryLevel1[parentID];
+                    return GetParentVoxel(new Voxel(parentID, 1));
                 case 3:
-                    var roles3 = new[] { VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial };
-                    return new Voxel(MakeContainingVoxelID(child.ID, 2) + SetRoleFlags(roles3), VoxelSideLengths,
-                        Offset);
-                case 4:
-                    var roles4 = new[]
+                    parentID = MakeContainingVoxelID(child.ID, 0);
+                    if (voxelDictionaryLevel0.ContainsKey(parentID))
                     {
-                        VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial
-                    };
-                    return new Voxel(MakeContainingVoxelID(child.ID, 3) + SetRoleFlags(roles4), VoxelSideLengths,
-                        Offset);
+                        var level0Voxel = voxelDictionaryLevel0[parentID];
+                        parentID = MakeContainingVoxelID(child.ID, 2);
+                        parent = level0Voxel.HighLevelVoxels.GetVoxel(parentID);
+                        if (parent != null) return parent;
+                    }
+                    return GetParentVoxel(new Voxel(parentID, 2));
+                case 4:
+                    parentID = MakeContainingVoxelID(child.ID, 0);
+                    if (voxelDictionaryLevel0.ContainsKey(parentID))
+                    {
+                        var level0Voxel = voxelDictionaryLevel0[parentID];
+                        parentID = MakeContainingVoxelID(child.ID, 3);
+                        parent = level0Voxel.HighLevelVoxels.GetVoxel(parentID);
+                        if (parent != null) return parent;
+                    }
+                    return GetParentVoxel(new Voxel(parentID, 3));
                 default: return null;
             }
-
         }
 
         public List<IVoxel> GetChildVoxelslist(IVoxel parent)
