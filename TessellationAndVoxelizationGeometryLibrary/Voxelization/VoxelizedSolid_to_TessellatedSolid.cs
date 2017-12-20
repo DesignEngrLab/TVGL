@@ -38,10 +38,10 @@ namespace TVGL.Voxelization
             //Parallel.ForEach(Voxels(VoxelRoleTypes.Partial), v =>
             foreach (var v in Voxels(this.Discretization, VoxelRoleTypes.Partial, true))
             {
-                var neighbors = GetNeighbors(v);
-                var neighborX = neighbors[0];
-                var neighborY = neighbors[1];
-                var neighborZ = neighbors[2];
+                //var neighbors = GetNeighbors(v);
+                var neighborX = GetNeighbor(v, VoxelDirections.XPositive);
+                var neighborY = GetNeighbor(v, VoxelDirections.YPositive);
+                var neighborZ = GetNeighbor(v, VoxelDirections.ZPositive);
                 var neighborXY = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.YPositive);
                 var neighborYZ = neighborY == null ? null : GetNeighbor(neighborY, VoxelDirections.ZPositive);
                 var neighborZX = neighborZ == null ? null : GetNeighbor(neighborZ, VoxelDirections.XPositive);
@@ -63,13 +63,16 @@ namespace TVGL.Voxelization
                 var vertexXYZ = neighborXYZ != null ? GetOrMakeVoxelVertex(neighborXYZ, voxelVertexDictionary)
                     : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, sideLength, sideLength });
                 // negative X face
-                if (neighbors[3] == null || neighbors[3].Role == VoxelRoleTypes.Empty)
+                IVoxel negativeNeighbor = GetNeighbor(v, VoxelDirections.XNegative);
+                if (negativeNeighbor == null || negativeNeighbor.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexbase, vertexZ, vertexYZ, vertexY);
                 // negative Y face
-                if (neighbors[4] == null || neighbors[4].Role == VoxelRoleTypes.Empty)
+                 negativeNeighbor = GetNeighbor(v, VoxelDirections.YNegative);
+                if (negativeNeighbor == null || negativeNeighbor.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexbase, vertexX, vertexZX, vertexZ);
                 // negative Z face
-                if (neighbors[5] == null || neighbors[5].Role == VoxelRoleTypes.Empty)
+                 negativeNeighbor = GetNeighbor(v, VoxelDirections.ZNegative);
+                if (negativeNeighbor == null || negativeNeighbor.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexbase, vertexY, vertexXY, vertexX);
                 // positive X face
                 if (neighborX == null || neighborX.Role == VoxelRoleTypes.Empty)

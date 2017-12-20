@@ -274,7 +274,7 @@ namespace TVGL.Voxelization
             else if (coordB > maxCoord) maxCoord = coordB;
             if (coordC < minCoord) minCoord = coordC;
             else if (coordC > maxCoord) maxCoord = coordC;
-            var coordinates = face.A.Voxels.First(v => v.Level == discretizationLevel).CoordinateIndices;
+            var coordinates = (byte[])face.A.Voxels.First(v => v.Level == discretizationLevel).CoordinateIndices.Clone();
             for (var i = minCoord; i <= maxCoord; i++)
             {
                 // set up voxels for the face
