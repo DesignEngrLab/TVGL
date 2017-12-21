@@ -18,7 +18,7 @@ namespace TVGLPresenterDX
            //"../../../TestFiles/Binary.stl",
          //   "../../../TestFiles/ABF.ply",
           //   "../../../TestFiles/Beam_Boss.STL",
-             "../../../TestFiles/Beam_Clean.STL",
+         "../../../TestFiles/Beam_Clean.STL",
 
         "../../../TestFiles/bigmotor.amf",
         "../../../TestFiles/DxTopLevelPart2.shell",
@@ -86,10 +86,10 @@ namespace TVGLPresenterDX
 
             var dir = new DirectoryInfo("../../../../TestFiles");
             var fileNames = dir.GetFiles("*");
-            for (var i = 10; i < fileNames.Count(); i++)
+            for (var i = 14; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
-                var filename = fileNames[i].FullName;
+                var filename = fileNames[i].FullName;                
                 Console.WriteLine("Attempting: " + filename);
                 Stream fileStream;
                 List<TessellatedSolid> ts;
@@ -146,7 +146,7 @@ namespace TVGLPresenterDX
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.Coarse);//, bounds);
                                                                           // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
-
+            //vs1.OffsetByRadius(3, 1);
             PresenterShowAndHang(new Solid[] { vs1 }, false);
             //PresenterShowAndHang(new Solid[] { vs1 }, true);
             //PresenterShowAndHang(new Solid[] { ts1, vs1 });

@@ -1761,15 +1761,19 @@ namespace TVGL
         /// <param name="distOfPlane">The dist of plane.</param>
         /// <param name="rayPosition">The ray position.</param>
         /// <param name="rayDirection">The ray direction.</param>
+        /// <param name="signedDistance"></param>
         /// <returns>Vertex.</returns>
         public static double[] PointOnPlaneFromRay(double[] normalOfPlane, double distOfPlane, double[] rayPosition,
-            double[] rayDirection)
+            double[] rayDirection, out double signedDistance)
         {
+            var dot = rayDirection.dotProduct(normalOfPlane);
+            signedDistance = 0.0;
+            if (dot.IsNegligible()) return null;
+
             var d1 = -DistancePointToPlane(rayDirection, normalOfPlane, distOfPlane);
-            var angle = SmallerAngleBetweenEdges(normalOfPlane, rayDirection);
-            var d2 = d1 / Math.Cos(angle);
-            if (d2 < 0) return null;
-            return rayPosition.add(rayDirection.multiply(d2));
+            signedDistance = d1 / dot;
+            if (signedDistance.IsNegligible()) return rayPosition;
+            return rayPosition.add(rayDirection.multiply(signedDistance));
         }
 
         /// <summary>
@@ -1812,9 +1816,21 @@ namespace TVGL
         public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, double[] direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
+
             var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-            signedDistance = -(point3D.dotProduct(face.Normal) - distanceToOrigin) /
-                             direction.dotProduct(face.Normal);
+            
+            signedDistance = -DistancePointToPlane(point3D, face.Normal, distanceToOrigin) / direction.dotProduct(face.Normal);
+
+            //var angle = SmallerAngleBetweenEdges(face.Normal, direction);
+            //var d2 = -DistancePointToPlane(point3D, face.Normal, distanceToOrigin) / Math.Cos(angle);
+            //var point2 = point3D.add(direction.multiply(d2));
+            //if (!signedDistance.IsPracticallySame(d2, 100))
+            //{
+            //    var direction2 = direction.multiply(-1);
+            //    angle = SmallerAngleBetweenEdges(face.Normal, direction2);
+            //    d2 = -DistancePointToPlane(point3D, face.Normal, distanceToOrigin) / Math.Cos(angle);
+            //    point2 = point3D.add(direction2.multiply(d2));
+            //}
             //Note that if t == 0, then it is on the plane
             //else, find the intersection point and determine if it is inside the polygon (face)
             var newPoint = signedDistance.IsNegligible()

@@ -412,8 +412,8 @@ namespace TVGL
                 var faceVertices =
                     faceToVertexIndexList.Select(vertexMatchingIndex => Vertices[vertexMatchingIndex]).ToList();
                 bool reverseVertexOrder;
-                var normal = PolygonalFace.DetermineNormal(faceVertices, out reverseVertexOrder,
-                    normals != null ? normals[i] : null);
+                //We do not trust .STL file normals to be accurate enough. Recalculate.
+                var normal = PolygonalFace.DetermineNormal(faceVertices, out reverseVertexOrder);
                 if (reverseVertexOrder) faceVertices.Reverse();
 
                 var color = SolidColor;
