@@ -26,6 +26,8 @@ namespace TVGL.Voxelization
     /// </summary>
     public partial class VoxelizedSolid
     {
+        public TessellatedSolid OriginalTessellatedSolid;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
         /// </summary>
@@ -36,6 +38,7 @@ namespace TVGL.Voxelization
         public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization, bool onlyDefineBoundary = false,
             double[][] bounds = null) : base(ts.Units, ts.Name, "", ts.Comments, ts.Language)
         {
+            OriginalTessellatedSolid = ts;
             Discretization = voxelDiscretization;
             #region Setting Up Parameters 
 
@@ -527,6 +530,7 @@ namespace TVGL.Voxelization
                 new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)),
                 new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)),
                 new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1))));  //VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
+            var all = new List<Voxel_Level1_Class>();
             Parallel.ForEach(voxelDictionaryLevel1, voxelKeyValuePair =>
             //foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
             {
@@ -548,6 +552,20 @@ namespace TVGL.Voxelization
                 lock (allVoxels) allVoxels.Add(voxel);
             });
             // Parallel.ForEach(dict.Values.Where(v => v.Item1.Any() && v.Item2.Any()), v =>
+            var allFaces = new HashSet<PolygonalFace>();
+            foreach (var voxel in voxelDictionaryLevel1.Values)
+            {
+                foreach (var face in voxel.Faces)
+                {
+                    allFaces.Add(face);
+                }
+            }
+            var count = 0;
+            foreach (var face in OriginalTessellatedSolid.Faces)
+            {
+                if (!allFaces.Contains(face)) count++;
+            }
+            if(count > 0) throw new Exception("Voxels do not capture all the faces.");
             foreach (var v in dict.Values.Where(v => v.Item4.Any()))
                 MakeInteriorVoxelsAlongLine(v.Item1, v.Item2, v.Item4, sweepDim);
         }
@@ -628,6 +646,7 @@ namespace TVGL.Voxelization
                 realCoordinate[sweepDim] += VoxelSideLengths[voxelLevel];
                 var facesToConsider = priorVoxels.SelectMany(v => v.Faces).Distinct().ToList();
                 var minDistance = double.MaxValue;
+                var intersectionPoints = new Dictionary<double, double[]>();
                 foreach (var face in facesToConsider)
                 {
                     var dot = face.Normal[sweepDim];
@@ -637,7 +656,18 @@ namespace TVGL.Voxelization
                     var intersectionPoint = MiscFunctions.PointOnTriangleFromLine(face, realCoordinate, direction.multiply(-1),
                         out signedDistance,
                         true);
+
                     if (intersectionPoint == null) continue;
+                    var duplicateFound = false;
+                    foreach (var key in intersectionPoints.Keys)
+                    {
+                        if (key.IsNegligible(signedDistance))
+                        {
+                            //Duplicate found, such as when intersecting an edge or vertex. Ignore.
+                            duplicateFound = true;
+                        }
+                    }
+                    if (!duplicateFound) intersectionPoints.Add(signedDistance, intersectionPoint);
                     Debug.WriteLine(signedDistance);
 
                     if (signedDistance < minDistance)
