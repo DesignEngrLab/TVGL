@@ -647,7 +647,7 @@ namespace TVGL.Voxelization
                         isInside = dot < 0;
                     }
                 }
-                //Debug.WriteLine(isInside);
+                Debug.WriteLine(isInside);
                 if (isInside) lineStartIndex = currentIndex;
 
                 //    for (var i = priorVoxels.Count - 1; i >= 0 ; i--)
