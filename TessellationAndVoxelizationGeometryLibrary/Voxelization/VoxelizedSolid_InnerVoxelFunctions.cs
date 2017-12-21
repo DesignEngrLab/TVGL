@@ -28,9 +28,10 @@ namespace TVGL.Voxelization
         #region Tessellation References functions
         internal static void Add(IVoxel voxelbase, TessellationBaseClass tsObject)
         {
+            if (tsObject == null) return;
             if (!(voxelbase is VoxelWithTessellationLinks)) return;
             var voxel = (VoxelWithTessellationLinks)voxelbase;
-            if (voxel.TessellationElements == null) voxel.TessellationElements = new List<TessellationBaseClass>();
+            if (voxel.TessellationElements == null) voxel.TessellationElements = new HashSet<TessellationBaseClass>();
             else if (voxel.TessellationElements.Contains(tsObject)) return;
             lock (voxel.TessellationElements) voxel.TessellationElements.Add(tsObject);
             tsObject.AddVoxel(voxel);

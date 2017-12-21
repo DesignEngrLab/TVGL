@@ -82,7 +82,7 @@ namespace TVGL.Voxelization
                 // defining partial and full voxels by first looking at the vertices, edges, and faces and then
                 // filling up inward is often fooled when there are too many of the tessellation objects
                 // in one voxel.
-                transformedCoordinates[i] = coordinates;
+                transformedCoordinates[i] = coordinates; //i == vertex.IndexInList
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
             }  //);
             makeVoxelsForFacesAndEdges(ts);
@@ -451,8 +451,8 @@ namespace TVGL.Voxelization
         {
             var uRange = endU - startU;
             if (uRange.IsNegligible()) return;
-            var increment = Math.Sign(uRange);
             var u = atIntegerValue(startU) && uRange <= 0 ? (int)(startU - 1) : (int)Math.Floor(startU);
+            var increment = Math.Sign(endU - u);
             // if you are starting an integer value for u, but you're going in the negative directive, then decrement u to the next lower value
             // this is because voxels are defined by their lowest index values.
             var vRange = endV - startV;
@@ -524,7 +524,7 @@ namespace TVGL.Voxelization
             var ids = voxelDictionaryLevel1.Keys.Select(vxID => MakeCoordinateZero(vxID, sweepDim))
                 .Distinct()
                 .AsParallel();
-            var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel_Level1_Class>, 
+            var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel_Level1_Class>,
                 SortedSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>>(
                 new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)), // why the plus one? see the comparator. it is usually to line up with the
                 new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)),
@@ -552,20 +552,6 @@ namespace TVGL.Voxelization
                 lock (allVoxels) allVoxels.Add(voxel);
             });
             // Parallel.ForEach(dict.Values.Where(v => v.Item1.Any() && v.Item2.Any()), v =>
-            var allFaces = new HashSet<PolygonalFace>();
-            foreach (var voxel in voxelDictionaryLevel1.Values)
-            {
-                foreach (var face in voxel.Faces)
-                {
-                    allFaces.Add(face);
-                }
-            }
-            var count = 0;
-            foreach (var face in OriginalTessellatedSolid.Faces)
-            {
-                if (!allFaces.Contains(face)) count++;
-            }
-            if(count > 0) throw new Exception("Voxels do not capture all the faces.");
             foreach (var v in dict.Values.Where(v => v.Item4.Any()))
                 MakeInteriorVoxelsAlongLine(v.Item1, v.Item2, v.Item4, sweepDim);
         }
@@ -581,7 +567,7 @@ namespace TVGL.Voxelization
         private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> sortedNegatives,
             SortedSet<Voxel_Level1_Class> sortedPositives, SortedSet<Voxel_Level1_Class> all, int sweepDim)
         {
-            var direction = new [] { 0.0, 0.0, 0.0 };
+            var direction = new[] { 0.0, 0.0, 0.0 };
             direction[sweepDim] = 1;
             const int voxelLevel = 1;
             var coords = (byte[])all.First().CoordinateIndices.Clone();
@@ -619,7 +605,7 @@ namespace TVGL.Voxelization
                 //If it is the last voxel, then it cannot start a new line 
                 if (finalIndex == currentIndex) break;
                 //If it is positive, then it must be outside. Do not make a new line.
-                if (positiveFaceVoxels.Contains(currentVoxel)) continue;  
+                if (positiveFaceVoxels.Contains(currentVoxel)) continue;
                 //If the next partial voxel is adjacent, then the current voxel cannot start a new line.
                 if (sortedVoxelsInRow.Peek().CoordinateIndices[sweepDim] - currentIndex == 1) continue;
                 //If the current voxel is negative, then it must be inside. Start a new line.
@@ -636,11 +622,11 @@ namespace TVGL.Voxelization
                 var isInside = false;
                 //var validIntersectionFound = false;
                 //var lastVoxelToConsider = false;
-                var realCoordinate = new []
+                var realCoordinate = new[]
                 {
                     //ToDo: If Offset is changed to Transform, then the direction will need to be set differently
-                    currentVoxel.BottomCoordinate[0],//+ 0.5*VoxelSideLengths[voxelLevel]
-                    currentVoxel.BottomCoordinate[1],//+ 0.5*VoxelSideLengths[voxelLevel]
+                    currentVoxel.BottomCoordinate[0] ,//+ 0.5*VoxelSideLengths[voxelLevel],
+                    currentVoxel.BottomCoordinate[1] ,//+ 0.5*VoxelSideLengths[voxelLevel],
                     currentVoxel.BottomCoordinate[2] //+ 0.5*VoxelSideLengths[voxelLevel]
                 };
                 realCoordinate[sweepDim] += VoxelSideLengths[voxelLevel];
@@ -661,7 +647,7 @@ namespace TVGL.Voxelization
                     var duplicateFound = false;
                     foreach (var key in intersectionPoints.Keys)
                     {
-                        if (key.IsNegligible(signedDistance))
+                        if (key.IsPracticallySame(signedDistance))
                         {
                             //Duplicate found, such as when intersecting an edge or vertex. Ignore.
                             duplicateFound = true;
@@ -850,8 +836,19 @@ namespace TVGL.Voxelization
                     voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
                 }
             }
-
             Add(voxelLevel0, tsObject);
+            if (tsObject is Vertex)
+            {
+                foreach (var edge in ((Vertex)tsObject).Edges)
+                    Add(voxelLevel0, edge);
+                foreach (var face in ((Vertex)tsObject).Faces)
+                    Add(voxelLevel0, face);
+            }
+            else if (tsObject is Edge)
+            {
+                Add(voxelLevel0, ((Edge)tsObject).OtherFace);
+                Add(voxelLevel0, ((Edge)tsObject).OwnedFace);
+            }
         }
 
         private void MakeAndStorePartialVoxelLevel0And1(byte x, byte y, byte z, TessellationBaseClass tsObject)
@@ -861,6 +858,7 @@ namespace TVGL.Voxelization
             Voxel_Level1_Class voxelLevel1;
             var voxIDLevel0 = MakeVoxelID0(x, y, z);
             var voxIDLevel1 = MakeVoxelID1(x, y, z);
+            if (voxIDLevel1 == 22518247245242368) { }
             lock (voxelDictionaryLevel1)
             {
                 if (voxelDictionaryLevel1.ContainsKey(voxIDLevel1))
@@ -896,6 +894,26 @@ namespace TVGL.Voxelization
             }
             Add(voxelLevel0, tsObject);
             Add(voxelLevel1, tsObject);
+            if (tsObject is Vertex)
+            {
+                foreach (var edge in ((Vertex)tsObject).Edges)
+                {
+                    Add(voxelLevel0, edge);
+                    Add(voxelLevel1, edge);
+                }
+                foreach (var face in ((Vertex)tsObject).Faces)
+                {
+                    Add(voxelLevel0, face);
+                    Add(voxelLevel1, face);
+                }
+            }
+            else if (tsObject is Edge)
+            {
+                Add(voxelLevel0, ((Edge)tsObject).OtherFace);
+                Add(voxelLevel0, ((Edge)tsObject).OwnedFace);
+                Add(voxelLevel1, ((Edge)tsObject).OtherFace);
+                Add(voxelLevel1, ((Edge)tsObject).OwnedFace);
+            }
         }
 
         #endregion

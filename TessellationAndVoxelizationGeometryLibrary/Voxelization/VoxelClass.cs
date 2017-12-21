@@ -79,7 +79,7 @@ namespace TVGL.Voxelization
         public double SideLength { get; internal set; }
 
         public VoxelRoleTypes Role { get; internal set; }
-        internal List<TessellationBaseClass> TessellationElements;
+        internal HashSet<TessellationBaseClass> TessellationElements;
 
         internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
         internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();

@@ -80,10 +80,11 @@ namespace TVGL_Test
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("r*.stl");
-            for (var i = 0; i < fileNames.Count(); i++)
+            var dir = new DirectoryInfo("../../../../TestFiles");
+            var fileNames = dir.GetFiles("*");
+            for (var i = 14; i < fileNames.Count(); i++)
             {
+                //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 List<TessellatedSolid> solids = IO.Open(filename);
@@ -118,6 +119,9 @@ namespace TVGL_Test
             //bounds[0] = ts1.Bounds[0];
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
+
+            Presenter.ShowAndHang(ts);
+
             var tsFromVS = vs1.ConvertToTessellatedSolid();
             tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
 
