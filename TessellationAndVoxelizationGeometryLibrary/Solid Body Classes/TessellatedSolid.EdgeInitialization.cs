@@ -335,8 +335,6 @@ namespace TVGL
             out List<Edge> remainingEdges)
         {
             remainingEdges = new List<Edge>(singleSidedEdges);
-            remainingEdges.Clear();
-            return new List<Tuple<List<Edge>, double[]>>();
             var attempts = 0;
             var listOfLoops = new List<Tuple<List<Edge>, double[]>>();
             while (remainingEdges.Count > 0 && attempts < remainingEdges.Count)
@@ -428,8 +426,16 @@ namespace TVGL
                 else
                 {
                     var edgeDic = edges.ToDictionary(SetAndGetEdgeChecksum);
-                    var triangleFaceList = TriangulatePolygon.Run(new List<List<Vertex>>
-                    {edges.Select(e => e.To).ToList()}, normal); ;
+                    List<List<Vertex[]>> triangleFaceList = null;
+                    try
+                    {
+                        triangleFaceList = TriangulatePolygon.Run(new List<List<Vertex>>
+                            {edges.Select(e => e.To).ToList()}, normal);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
                     var triangles = triangleFaceList.SelectMany(tl => tl).ToList();
                     if (triangles.Any())
                     {

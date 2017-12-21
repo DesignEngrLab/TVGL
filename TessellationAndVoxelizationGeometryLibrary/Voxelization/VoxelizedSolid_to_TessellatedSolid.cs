@@ -34,42 +34,48 @@ namespace TVGL.Voxelization
             var voxelVertexDictionary = Voxels(this.Discretization, VoxelRoleTypes.Partial, true)
                 .ToDictionary(v => v.ID, v => new Vertex(v.BottomCoordinate));
             var boundaryVertexDictionary = new Dictionary<long, Vertex>();
+            var sideLength = VoxelSideLengths[discretizationLevel];
+            var deltaX = 1L << (40 + 4 * (4 - discretizationLevel));
+            var deltaY = 1L << (20 + 4 * (4 - discretizationLevel));
+            var deltaZ = 1L << (4 * (4 - discretizationLevel));
 
             //Parallel.ForEach(Voxels(VoxelRoleTypes.Partial), v =>
             foreach (var v in Voxels(this.Discretization, VoxelRoleTypes.Partial, true))
             {
-                var neighbors = GetNeighbors(v);
-                var neighborX = neighbors[0];
-                var neighborY = neighbors[1];
-                var neighborZ = neighbors[2];
+                var neighborX = GetNeighbor(v, VoxelDirections.XPositive);
+                var neighborY = GetNeighbor(v, VoxelDirections.YPositive);
+                var neighborZ = GetNeighbor(v, VoxelDirections.ZPositive);
                 var neighborXY = neighborX == null ? null : GetNeighbor(neighborX, VoxelDirections.YPositive);
                 var neighborYZ = neighborY == null ? null : GetNeighbor(neighborY, VoxelDirections.ZPositive);
                 var neighborZX = neighborZ == null ? null : GetNeighbor(neighborZ, VoxelDirections.XPositive);
                 var neighborXYZ = neighborXY == null ? null : GetNeighbor(neighborXY, VoxelDirections.ZPositive);
-                var sideLength = VoxelSideLengths[v.Level];
                 var vertexbase = voxelVertexDictionary[v.ID];
                 var vertexX = neighborX != null ? GetOrMakeVoxelVertex(neighborX, voxelVertexDictionary)
-                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, 0, 0 });
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, 0, 0 }, deltaX);
                 var vertexY = neighborY != null ? GetOrMakeVoxelVertex(neighborY, voxelVertexDictionary)
-                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, sideLength, 0 });
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, sideLength, 0 }, deltaY);
                 var vertexZ = neighborZ != null ? GetOrMakeVoxelVertex(neighborZ, voxelVertexDictionary)
-                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, 0.0, sideLength });
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, 0.0, sideLength }, deltaZ);
                 var vertexXY = neighborXY != null ? GetOrMakeVoxelVertex(neighborXY, voxelVertexDictionary)
-                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, sideLength, 0 });
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, sideLength, 0 }, deltaX + deltaY);
                 var vertexYZ = neighborYZ != null ? GetOrMakeVoxelVertex(neighborYZ, voxelVertexDictionary)
-                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, sideLength, sideLength, });
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { 0.0, sideLength, sideLength }, deltaZ + deltaY);
                 var vertexZX = neighborZX != null ? GetOrMakeVoxelVertex(neighborZX, voxelVertexDictionary)
-                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, 0.0, sideLength });
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, 0.0, sideLength }, deltaX + deltaZ);
                 var vertexXYZ = neighborXYZ != null ? GetOrMakeVoxelVertex(neighborXYZ, voxelVertexDictionary)
-                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, sideLength, sideLength });
+                    : MakeBoundaryVertex(v, boundaryVertexDictionary, new[] { sideLength, sideLength, sideLength }, deltaX + deltaY + deltaZ);
+
                 // negative X face
-                if (neighbors[3] == null || neighbors[3].Role == VoxelRoleTypes.Empty)
+                IVoxel negativeNeighbor = GetNeighbor(v, VoxelDirections.XNegative);
+                if (negativeNeighbor == null || negativeNeighbor.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexbase, vertexZ, vertexYZ, vertexY);
                 // negative Y face
-                if (neighbors[4] == null || neighbors[4].Role == VoxelRoleTypes.Empty)
+                negativeNeighbor = GetNeighbor(v, VoxelDirections.YNegative);
+                if (negativeNeighbor == null || negativeNeighbor.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexbase, vertexX, vertexZX, vertexZ);
                 // negative Z face
-                if (neighbors[5] == null || neighbors[5].Role == VoxelRoleTypes.Empty)
+                negativeNeighbor = GetNeighbor(v, VoxelDirections.ZNegative);
+                if (negativeNeighbor == null || negativeNeighbor.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexbase, vertexY, vertexXY, vertexX);
                 // positive X face
                 if (neighborX == null || neighborX.Role == VoxelRoleTypes.Empty)
@@ -92,19 +98,12 @@ namespace TVGL.Voxelization
             faceCollection.Add(new PolygonalFace(new[] { v1, v3, v4 }));
         }
 
-        private Vertex MakeBoundaryVertex(IVoxel baseVoxel, Dictionary<long, Vertex> boundaryDictionary, double[] shift)
+        private Vertex MakeBoundaryVertex(IVoxel baseVoxel, Dictionary<long, Vertex> boundaryDictionary, double[] shift, long delta)
         {
-            var hash = baseVoxel.ID;
-            if (shift.All(x => x > 0)) hash = long.MinValue; //the single upper corner point
-            else if (shift.Count(x => x == 0) == 1)
-            { // the three lines on the edges
-                if (shift[0] > 0) hash = (hash & Constants.maskOutX) + 4611686018427387904;
-                if (shift[1] > 0) hash = (hash & Constants.maskOutY) + 2305843009213693952;
-                if (shift[2] > 0) hash = (hash & Constants.maskOutZ) + 1152921504606846976;
-            }
-            else if (shift[0] > 0) hash = hash & Constants.maskOutX;
-            else if (shift[1] > 0) hash = hash & Constants.maskOutY;
-            else if (shift[2] > 0) hash = hash & Constants.maskOutZ;
+            var hash = (baseVoxel.ID & Constants.maskOutFlags) + delta;
+            // I really over-thought this function for a long time, but I now realize that even thought the delta will cause the 
+            // voxel coordinates to rollover and cause entries into the flags area - this is all totally fine as boundaryDictionary
+            // is empty of regular voxels.
             lock (boundaryDictionary)
             {
                 if (boundaryDictionary.ContainsKey(hash))

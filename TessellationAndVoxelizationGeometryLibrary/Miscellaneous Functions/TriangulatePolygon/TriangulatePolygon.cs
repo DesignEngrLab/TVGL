@@ -839,8 +839,7 @@ namespace TVGL
                 {
                     if (attempts >= 3)
                     {
-                        Message.output("Triangulation failed after " + attempts + " attempts.", 1);
-                        throw new Exception();
+                        throw new Exception("Triangulation failed after " + attempts + " attempts.");
                     }
                     isPositive = null;
                     attempts++;

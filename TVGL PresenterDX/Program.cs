@@ -83,7 +83,6 @@ namespace TVGLPresenterDX
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-
             var dir = new DirectoryInfo("../../../../TestFiles");
             var fileNames = dir.GetFiles("*");
             for (var i = 14; i < fileNames.Count(); i++)
@@ -149,6 +148,7 @@ namespace TVGLPresenterDX
             //vs1.OffsetByRadius(3, 1);
             PresenterShowAndHang(new Solid[] { vs1 }, false);
             //PresenterShowAndHang(new Solid[] { vs1 }, true);
+
             //PresenterShowAndHang(new Solid[] { ts1, vs1 });
 
             //PresenterShowAndHang(new Solid[] { ts, vs2 });

@@ -31,10 +31,10 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="ts">The ts.</param>
         /// <param name="voxelDiscretization">The voxel discretization.</param>
-        /// <param name="bounds">The bounds.</param>
         /// <param name="onlyDefineBoundary">if set to <c>true</c> [only define boundary].</param>
-        public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization, double[][] bounds = null,
-            bool onlyDefineBoundary = false) : base(ts.Units, ts.Name, "", ts.Comments, ts.Language)
+        /// <param name="bounds">The bounds.</param>
+        public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization, bool onlyDefineBoundary = false,
+            double[][] bounds = null) : base(ts.Units, ts.Name, "", ts.Comments, ts.Language)
         {
             Discretization = voxelDiscretization;
             #region Setting Up Parameters 
@@ -783,7 +783,9 @@ namespace TVGL.Voxelization
                 }
                 if (!voxelLevel0.NextLevelVoxels.Contains(voxIDLevel1))
                 {
-                    if (voxelLevel0.NextLevelVoxels.Count == 4095) MakeVoxelFull(voxelLevel0);
+                    if (voxelLevel0.NextLevelVoxels.Count == 4095
+                        && voxelLevel0.NextLevelVoxels.All(v => voxelDictionaryLevel1[v].Role == VoxelRoleTypes.Full))
+                        MakeVoxelFull(voxelLevel0);
                     else lock (voxelLevel0.NextLevelVoxels) voxelLevel0.NextLevelVoxels.Add(voxIDLevel1);
                 }
             }
