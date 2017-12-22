@@ -94,6 +94,8 @@ namespace TVGL.Voxelization
 
         private void MakeFaces(ConcurrentBag<PolygonalFace> faceCollection, Vertex v1, Vertex v2, Vertex v3, Vertex v4)
         {
+            //var f1=new PolygonalFace(new[] { v1, v2, v3 });
+            //faceCollection.Add(f1);
             faceCollection.Add(new PolygonalFace(new[] { v1, v2, v3 }));
             faceCollection.Add(new PolygonalFace(new[] { v1, v3, v4 }));
         }

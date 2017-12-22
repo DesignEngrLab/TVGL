@@ -95,8 +95,8 @@ namespace TVGL.Voxelization
             this.ID = ID;
             Role = voxelRole;
             byte x = (byte)((ID & Constants.maskAllButX) >> 52);
-            byte y = (byte)((ID & Constants.maskAllButX) >> 32);
-            byte z = (byte)((ID & Constants.maskAllButX) >> 12);
+            byte y = (byte)((ID & Constants.maskAllButY) >> 32);
+            byte z = (byte)((ID & Constants.maskAllButZ) >> 12);
             var coords = new[] { x & 240, y & 240, z & 240 };
             CoordinateIndices = new[] { (byte)coords[0], (byte)coords[1], (byte)coords[2] };
             SideLength = voxelSideLengths[0];
@@ -134,8 +134,8 @@ namespace TVGL.Voxelization
             this.ID = ID;
             Role = voxelRole;
             byte x = (byte)((ID & Constants.maskAllButX) >> 52);
-            byte y = (byte)((ID & Constants.maskAllButX) >> 32);
-            byte z = (byte)((ID & Constants.maskAllButX) >> 12);
+            byte y = (byte)((ID & Constants.maskAllButY) >> 32);
+            byte z = (byte)((ID & Constants.maskAllButZ) >> 12);
             CoordinateIndices = new[] { x, y, z };
             SideLength = voxelSideLengths[1];
             var coords = new[] { (int)x, (int)y, (int)z };

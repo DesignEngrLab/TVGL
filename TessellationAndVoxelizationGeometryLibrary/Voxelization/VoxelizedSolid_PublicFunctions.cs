@@ -276,11 +276,11 @@ namespace TVGL.Voxelization
             if (voxel.Level == 1)
             {
                 if (voxelDictionaryLevel1.ContainsKey(newID)) return voxelDictionaryLevel1[newID];
-                var neighborsParent = GetParentVoxel(new Voxel(newID, 1));
-                if (neighborsParent.Role == VoxelRoleTypes.Partial)
+                //var neighborsParent = GetParentVoxel(new Voxel(newID, 1));
+                //if (neighborsParent.Role == VoxelRoleTypes.Partial)
                     return new Voxel(newID + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Empty),
                         VoxelSideLengths, Offset);
-                return neighborsParent;
+                //return neighborsParent;
             }
             var level0ParentID = MakeContainingVoxelID(newID, 0);
             if (voxelDictionaryLevel0.ContainsKey(level0ParentID))

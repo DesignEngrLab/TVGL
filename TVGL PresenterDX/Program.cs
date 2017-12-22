@@ -83,9 +83,9 @@ namespace TVGLPresenterDX
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            var dir = new DirectoryInfo("../../../../TestFiles");
+            var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*");
-            for (var i = 11; i < fileNames.Count(); i++)
+            for (var i = 14; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;                
@@ -148,7 +148,8 @@ namespace TVGLPresenterDX
            
             
             //vs1.OffsetByRadius(3, 1);
-            PresenterShowAndHang(new Solid[] { vs1 }, false);
+         //   PresenterShowAndHang(new Solid[] { vs1 }, false);
+          //  PresenterShowAndHang(new Solid[] { vs1 }, true);
 
 
             //PresenterShowAndHang(new Solid[] { ts1, vs1 });
@@ -156,12 +157,12 @@ namespace TVGLPresenterDX
             //PresenterShowAndHang(new Solid[] { ts, vs2 });
             //vs1.Intersect(vs2);
 
-           // PresenterShowAndHang(new Solid[] { vs1 });
-            //stopWatch.Restart();
-            //vs1.Draft(VoxelDirections.XPositive);
-            //stopWatch.Stop();
-            //Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
-            //PresenterShowAndHang(new Solid[] { vs1 });
+            // PresenterShowAndHang(new Solid[] { vs1 });
+            stopWatch.Restart();
+            vs1.Draft(VoxelDirections.XPositive);
+            stopWatch.Stop();
+            Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
+            PresenterShowAndHang(new Solid[] { vs1 }, false);
         }
     }
 }
