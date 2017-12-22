@@ -110,59 +110,39 @@ namespace TVGLPresenterDX
         //    PresenterShowAndHang(ts.Cast<Solid>().ToList());
         //}
 
-        private static void PresenterShowAndHang(IList<Solid> solids, bool dsal)
+        private static void PresenterShowAndHang(IList<Solid> solids)
         {
             var mainWindow = new MainWindow();
-            mainWindow.AddSolids(solids, dsal);
+            mainWindow.AddSolids(solids);
             mainWindow.ShowDialog();
         }
 
 
 
 
-        public static void TestVoxelization(TessellatedSolid ts1)
+        public static void TestVoxelization(TessellatedSolid ts)
         {
+            var ts2 = (TessellatedSolid)ts.TransformToNewSolid(new double[,]
+              {
+                {1,0,0,(ts.XMax - ts.XMin)/2},
+                {0,1,0,(ts.YMax-ts.YMin)/2},
+                {0,0,1,(ts.ZMax-ts.ZMin)/2},
+              });
+            var bounds = new double[2][];
+            bounds[0] = ts.Bounds[0];
+            bounds[1] = ts2.Bounds[1];
             var stopWatch = new Stopwatch();
-            //stopWatch.Restart();
-            //var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.ExtraCoarse);
-            //stopWatch.Stop();
-            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
-            //    ts.Volume, vs1.Volume,vs1.Count, stopWatch.Elapsed.TotalSeconds);
-            //PresenterShowAndHang(new Solid[] { ts, vs1 });
-            //stopWatch.Restart();
-            // var vs2 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
-            //stopWatch.Stop();
-            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
-            //    ts.Volume, vs2.Volume, vs2.Count, stopWatch.Elapsed.TotalSeconds);
-            //var ts2 = (TessellatedSolid)ts1.TransformToNewSolid(new double[,]
-            //  {
-            //    {1,0,0,(ts1.XMax - ts1.XMin)/2},
-            //    {0,1,0,(ts1.YMax-ts1.YMin)/2},
-            //    {0,0,1,(ts1.ZMax-ts1.ZMin)/2},
-            //  });
-            //var bounds = new double[2][];
-            //bounds[0] = ts1.Bounds[0];
-            //bounds[1] = ts2.Bounds[1];
-            var vs1 = new VoxelizedSolid(ts1, VoxelDiscretization.Coarse);//, bounds);
-                                                                          // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, bounds);
-           
-            
-            //vs1.OffsetByRadius(3, 1);
-         //   PresenterShowAndHang(new Solid[] { vs1 }, false);
-          //  PresenterShowAndHang(new Solid[] { vs1 }, true);
-
-
-            //PresenterShowAndHang(new Solid[] { ts1, vs1 });
-
-            //PresenterShowAndHang(new Solid[] { ts, vs2 });
-            //vs1.Intersect(vs2);
-
-            // PresenterShowAndHang(new Solid[] { vs1 });
             stopWatch.Restart();
-            vs1.Draft(VoxelDirections.YPositive);
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false, bounds);
             stopWatch.Stop();
-            Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
-            PresenterShowAndHang(new Solid[] { vs1 }, false);
+            Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+                ts.Volume, vs1.Volume, vs1.Count, stopWatch.Elapsed.TotalSeconds);
+           // PresenterShowAndHang(new Solid[] { ts, vs1 });
+            var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
+
+            vs1.Union(vs2);
+            
+            PresenterShowAndHang(new Solid[] { vs1 });
         }
     }
 }

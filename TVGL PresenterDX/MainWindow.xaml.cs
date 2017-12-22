@@ -42,15 +42,15 @@ namespace TVGLPresenterDX
 
 
 
-        public void AddSolids(IList<Solid> solids, bool gjrka)
+        public void AddSolids(IList<Solid> solids)
         {
-            viewModel.AttachModelList(solids.Select(solid => ConvertToObject3D(solid, gjrka)).ToList());
+            viewModel.AttachModelList(solids.Select(solid => ConvertToObject3D(solid)).ToList());
         }
 
-        private MeshGeometryModel3D ConvertToObject3D(Solid solid, bool tesrf)
+        private MeshGeometryModel3D ConvertToObject3D(Solid solid)
         {
             if (solid is TessellatedSolid) return ConvertTessellatedSolidtoObject3D((TessellatedSolid)solid);
-            if (solid is VoxelizedSolid) return ConvertVoxelizedSolidtoObject3D((VoxelizedSolid)solid, tesrf);
+            if (solid is VoxelizedSolid) return ConvertVoxelizedSolidtoObject3D((VoxelizedSolid)solid);
             throw new ArgumentException("Solid must be TessellatedSolid or VoxelizedSolid");
         }
         private MeshGeometryModel3D ConvertTessellatedSolidtoObject3D(TessellatedSolid ts)
@@ -73,9 +73,9 @@ namespace TVGLPresenterDX
             return result;
         }
 
-        private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs, bool wetgatghs)
+        private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
         {
-            if (wetgatghs)
+            if (false)
             {
                 var ts = vs.ConvertToTessellatedSolid();
                 ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
