@@ -176,8 +176,6 @@ namespace TVGL.Voxelization
 
                 // the following 2 booleans determine if the edge needs to be voxelized as it may have
                 // been done in a previous visited face
-                var voxelizeLeft = leftEdge.Voxels == null || !leftEdge.Voxels.Any();
-                var voxelizeRight = rightEdge.Voxels == null || !rightEdge.Voxels.Any();
                 while (sweepValue <= maxSweepValue) // this is the sweep along the face
                 {
                     // first fill in any voxels for face between the start points. Why do this here?! These 2 lines of code  were
@@ -191,10 +189,10 @@ namespace TVGL.Voxelization
                         sweepDim, face.Normal[uDim] >= 0, face);
                     // now two big calls for the edges: one for the left edge and one for the right. by the way, the naming of left and right are 
                     // completely arbitrary here. They are not indicative of any real position.
-                    voxelizeLeft = makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue,
-                        sweepDim, uDim, vDim, voxelizeLeft, leftEdge, face, rightEndPoint, startVertex);
-                    voxelizeRight = makeVoxelsForEdgeWithinSweep(ref rightStartPoint, ref rightEndPoint, sweepValue,
-                        sweepDim, uDim, vDim, voxelizeRight, rightEdge, face, leftEndPoint, startVertex);
+                    makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue,
+                        sweepDim, uDim, vDim, leftEdge, face, rightEndPoint, startVertex);
+                    makeVoxelsForEdgeWithinSweep(ref rightStartPoint, ref rightEndPoint, sweepValue,
+                        sweepDim, uDim, vDim, rightEdge, face, leftEndPoint, startVertex);
                     // now that the end points of the edges have moved, fill in more of the faces.
                     makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
                         rightStartPoint[vDim], sweepValue, uDim, vDim,
@@ -389,41 +387,37 @@ namespace TVGL.Voxelization
         /// <param name="nextEndPoint">The next end point.</param>
         /// <param name="startVertex">The start vertex.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool makeVoxelsForEdgeWithinSweep(ref double[] startPoint, ref double[] endPoint, int sweepValue,
-            int sweepDim, int uDim, int vDim, bool voxelize, Edge edge, PolygonalFace face, double[] nextEndPoint,
+        private void makeVoxelsForEdgeWithinSweep(ref double[] startPoint, ref double[] endPoint, int sweepValue,
+            int sweepDim, int uDim, int vDim, Edge edge, PolygonalFace face, double[] nextEndPoint,
             Vertex startVertex)
         {
             double u, v;
             var reachedOtherVertex = findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
                 sweepValue, out u, out v);
-            if (voxelize)
-            {
-                makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                    sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
-                makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                    sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
-            }
+
+            makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
+                sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
+            makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
+                sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
+        
             if (reachedOtherVertex)
             {
                 startPoint = (double[])endPoint.Clone();
                 endPoint = nextEndPoint;
                 edge = face.OtherEdge(startVertex);
-                voxelize = edge.Voxels == null || !edge.Voxels.Any();
+
 
                 findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
                     sweepValue, out u, out v);
-                if (voxelize)
-                {
-                    makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                        sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
-                    makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                        sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
-                }
+
+                makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
+                    sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
+                makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
+                    sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);      
             }
             startPoint[uDim] = u;
             startPoint[vDim] = v;
             startPoint[sweepDim] = sweepValue;
-            return voxelize;
         }
 
         /// <summary>
@@ -837,17 +831,17 @@ namespace TVGL.Voxelization
                 }
             }
             Add(voxelLevel0, tsObject);
-            if (tsObject is Vertex)
+            if (tsObject is Vertex vertex)
             {
-                foreach (var edge in ((Vertex)tsObject).Edges)
+                foreach (var edge in vertex.Edges)
                     Add(voxelLevel0, edge);
-                foreach (var face in ((Vertex)tsObject).Faces)
+                foreach (var face in vertex.Faces)
                     Add(voxelLevel0, face);
             }
-            else if (tsObject is Edge)
+            else if (tsObject is Edge edge)
             {
-                Add(voxelLevel0, ((Edge)tsObject).OtherFace);
-                Add(voxelLevel0, ((Edge)tsObject).OwnedFace);
+                Add(voxelLevel0, edge.OtherFace);
+                Add(voxelLevel0, edge.OwnedFace);
             }
         }
 
@@ -894,25 +888,25 @@ namespace TVGL.Voxelization
             }
             Add(voxelLevel0, tsObject);
             Add(voxelLevel1, tsObject);
-            if (tsObject is Vertex)
+            if (tsObject is Vertex vertex)
             {
-                foreach (var edge in ((Vertex)tsObject).Edges)
+                foreach (var edge in vertex.Edges)
                 {
                     Add(voxelLevel0, edge);
                     Add(voxelLevel1, edge);
                 }
-                foreach (var face in ((Vertex)tsObject).Faces)
+                foreach (var face in vertex.Faces)
                 {
                     Add(voxelLevel0, face);
                     Add(voxelLevel1, face);
                 }
             }
-            else if (tsObject is Edge)
+            else if (tsObject is Edge edge)
             {
-                Add(voxelLevel0, ((Edge)tsObject).OtherFace);
-                Add(voxelLevel0, ((Edge)tsObject).OwnedFace);
-                Add(voxelLevel1, ((Edge)tsObject).OtherFace);
-                Add(voxelLevel1, ((Edge)tsObject).OwnedFace);
+                Add(voxelLevel0, edge.OtherFace);
+                Add(voxelLevel0, edge.OwnedFace);
+                Add(voxelLevel1, edge.OtherFace);
+                Add(voxelLevel1, edge.OwnedFace);
             }
         }
 
