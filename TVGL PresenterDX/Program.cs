@@ -84,8 +84,8 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            for (var i = 14; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("br*");
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;                
@@ -159,7 +159,7 @@ namespace TVGLPresenterDX
 
             // PresenterShowAndHang(new Solid[] { vs1 });
             stopWatch.Restart();
-            vs1.Draft(VoxelDirections.XPositive);
+            vs1.Draft(VoxelDirections.YPositive);
             stopWatch.Stop();
             Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
             PresenterShowAndHang(new Solid[] { vs1 }, false);
