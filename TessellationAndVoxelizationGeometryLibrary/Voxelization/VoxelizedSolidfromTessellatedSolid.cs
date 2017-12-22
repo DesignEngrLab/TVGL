@@ -518,36 +518,31 @@ namespace TVGL.Voxelization
             var ids = voxelDictionaryLevel1.Keys.Select(vxID => MakeCoordinateZero(vxID, sweepDim))
                 .Distinct()
                 .AsParallel();
-            var dict = ids.ToDictionary(id => id, id => new Tuple<SortedSet<Voxel_Level1_Class>,
-                SortedSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>>(
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)), // why the plus one? see the comparator. it is usually to line up with the
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)),
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)),
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1))));  //VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
-            var all = new List<Voxel_Level1_Class>();
+            var rows = ids.ToDictionary(id => id, id => new Tuple<HashSet<Voxel_Level1_Class>,
+                HashSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>>(
+                new HashSet<Voxel_Level1_Class>(), // why the plus one? see the comparator. it is usually to line up with the
+                new HashSet<Voxel_Level1_Class>(),
+                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1))));//VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
             Parallel.ForEach(voxelDictionaryLevel1, voxelKeyValuePair =>
             //foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
             {
                 var voxel = voxelKeyValuePair.Value;
                 var id = MakeCoordinateZero(voxelKeyValuePair.Key, sweepDim);
 
-                var sortedSets = dict[id];
+                var sortedSets = rows[id];
                 var negativeFaceVoxels = sortedSets.Item1;
                 var positiveFaceVoxels = sortedSets.Item2;
-                //var bothFaceVoxels = sortedSets.Item3;
-                var allVoxels = sortedSets.Item4;
+                var allVoxels = sortedSets.Item3;
                 var faces = voxel.Faces;
                 if (faces.All(f => f.Normal[sweepDim] > 0))
                     lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
                 if (faces.All(f => f.Normal[sweepDim] < 0))
                     lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
-                //else
-                //    lock (bothFaceVoxels) bothFaceVoxels.Add(voxel);
                 lock (allVoxels) allVoxels.Add(voxel);
             });
             // Parallel.ForEach(dict.Values.Where(v => v.Item1.Any() && v.Item2.Any()), v =>
-            foreach (var v in dict.Values.Where(v => v.Item4.Any()))
-                MakeInteriorVoxelsAlongLine(v.Item1, v.Item2, v.Item4, sweepDim);
+            foreach (var v in rows.Values.Where(v => v.Item3.Any()))
+                MakeInteriorVoxelsAlongLine(v.Item1, v.Item2, v.Item3, sweepDim);
         }
 
         //Sort partial voxels along a given direction and then consider rows along that direction 
@@ -558,15 +553,13 @@ namespace TVGL.Voxelization
         //OR if it contains faces pointing both ways and the next voxel is fully inside the solid.
         //To Determine if a voxel is fully inside the solid, use the normal of the closest
         //face cast back from the voxel in question. 
-        private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> sortedNegatives,
-            SortedSet<Voxel_Level1_Class> sortedPositives, SortedSet<Voxel_Level1_Class> all, int sweepDim)
+        private void MakeInteriorVoxelsAlongLine(HashSet<Voxel_Level1_Class> negativeFaceVoxels,
+            HashSet<Voxel_Level1_Class> positiveFaceVoxels, SortedSet<Voxel_Level1_Class> all, int sweepDim)
         {
             var direction = new[] { 0.0, 0.0, 0.0 };
             direction[sweepDim] = 1;
             const int voxelLevel = 1;
             var coords = (byte[])all.First().CoordinateIndices.Clone();
-            var negativeFaceVoxels = new HashSet<Voxel_Level1_Class>(sortedNegatives);
-            var positiveFaceVoxels = new HashSet<Voxel_Level1_Class>(sortedPositives);
             var sortedVoxelsInRow = new Queue<Voxel_Level1_Class>(all);
             var priorVoxels = new List<Voxel_Level1_Class>();
             var lineStartIndex = int.MinValue;
@@ -619,9 +612,9 @@ namespace TVGL.Voxelization
                 var realCoordinate = new[]
                 {
                     //ToDo: If Offset is changed to Transform, then the direction will need to be set differently
-                    currentVoxel.BottomCoordinate[0] ,//+ 0.5*VoxelSideLengths[voxelLevel],
-                    currentVoxel.BottomCoordinate[1] ,//+ 0.5*VoxelSideLengths[voxelLevel],
-                    currentVoxel.BottomCoordinate[2] //+ 0.5*VoxelSideLengths[voxelLevel]
+                    currentVoxel.BottomCoordinate[0] + 0.5*VoxelSideLengths[voxelLevel],
+                    currentVoxel.BottomCoordinate[1] + 0.5*VoxelSideLengths[voxelLevel],
+                    currentVoxel.BottomCoordinate[2] + 0.5*VoxelSideLengths[voxelLevel]
                 };
                 realCoordinate[sweepDim] += VoxelSideLengths[voxelLevel];
                 var facesToConsider = priorVoxels.SelectMany(v => v.Faces).Distinct().ToList();
@@ -657,7 +650,8 @@ namespace TVGL.Voxelization
                         isInside = dot < 0;
                     }
                 }
-                Debug.WriteLine(isInside);
+
+                if(isInside == (intersectionPoints.Count % 2 == 0)) Debug.WriteLine("There must be an odd number of intersections if it is inside");
                 if (isInside) lineStartIndex = currentIndex;
 
                 //    for (var i = priorVoxels.Count - 1; i >= 0 ; i--)
