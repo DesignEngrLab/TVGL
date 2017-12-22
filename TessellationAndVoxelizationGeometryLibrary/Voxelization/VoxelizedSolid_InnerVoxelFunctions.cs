@@ -72,10 +72,13 @@ namespace TVGL.Voxelization
                 }
                 else
                 {
-                    ((Voxel_Level0_Class)voxel).HighLevelVoxels.Clear();
+                    lock (((Voxel_Level0_Class)voxel).HighLevelVoxels)
+                        ((Voxel_Level0_Class)voxel).HighLevelVoxels.Clear();
                     foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
-                        voxelDictionaryLevel1.Remove(nextLevelVoxel);
-                    ((Voxel_Level0_Class)voxel).NextLevelVoxels.Clear();
+                        lock (voxelDictionaryLevel1)
+                            voxelDictionaryLevel1.Remove(nextLevelVoxel);
+                    lock (((Voxel_Level0_Class)voxel).NextLevelVoxels)
+                        ((Voxel_Level0_Class)voxel).NextLevelVoxels.Clear();
                 }
                 ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Full;
             }
@@ -98,7 +101,8 @@ namespace TVGL.Voxelization
                         }
                 }
                 else  //then it was partial
-                    voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
+                    lock (voxel0.HighLevelVoxels)
+                        voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
                 ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Full;
                 if (voxel0.NextLevelVoxels.Count == 4096 && voxel0.NextLevelVoxels.All(v => voxelDictionaryLevel1[v].Role == VoxelRoleTypes.Full))
                     MakeVoxelFull(voxel0);
@@ -115,14 +119,19 @@ namespace TVGL.Voxelization
                 if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1, 1));
                 var voxel1 = voxelDictionaryLevel1[id0];
                 if (voxel1.Role == VoxelRoleTypes.Full) return;
-
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                if (voxel.Role == VoxelRoleTypes.Partial)
-                    voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Full));
-                if (voxel0.HighLevelVoxels.Count(isFullLevel2) == 4096)
-                    MakeVoxelFull(GetParentVoxel(voxel));
+                var makeParentFull = false;
+                lock (voxel0.HighLevelVoxels)
+                {
+                    voxel0.HighLevelVoxels.Remove(voxel.ID);
+                    if (voxel.Role == VoxelRoleTypes.Partial)
+                        voxel0.HighLevelVoxels.RemoveWhere(id =>
+                            (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+                    voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Full));
+                    makeParentFull = (voxel0.HighLevelVoxels.Count(isFullLevel2) == 4096);
+                }
+                if (makeParentFull) MakeVoxelFull(GetParentVoxel(voxel));
             }
             else if (voxel.Level == 3)
             {
@@ -141,14 +150,18 @@ namespace TVGL.Voxelization
                 if (!isFullLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2))) return;
                 if (!isPartialLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2)))
                     MakeVoxelPartial(new Voxel(id2, 2));
-
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                if (voxel.Role == VoxelRoleTypes.Partial)
-                    voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial, VoxelRoleTypes.Full));
-                if (GetSiblingVoxels(voxel).Count(v => isFullLevel3(v.ID)) == 4096)
-                    MakeVoxelFull(GetParentVoxel(voxel));
+                var makeParentFull = false;
+                lock (voxel0.HighLevelVoxels)
+                {
+                    voxel0.HighLevelVoxels.Remove(voxel.ID);
+                    if (voxel.Role == VoxelRoleTypes.Partial)
+                        voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
+                    voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial, VoxelRoleTypes.Full));
+                    makeParentFull = (GetSiblingVoxels(voxel).Count(v => isFullLevel3(v.ID)) == 4096);
+                }
+                if (makeParentFull) MakeVoxelFull(GetParentVoxel(voxel));
             }
             else //if (voxel.Level == 4)
             {
@@ -173,12 +186,17 @@ namespace TVGL.Voxelization
                 if (!isPartialLevel3(voxel0.HighLevelVoxels.GetFullVoxelID(id3)))
                     MakeVoxelPartial(new Voxel(id3, 3));
 
-
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
-                                               VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Full));
-                if (GetSiblingVoxels(voxel).Count(v => isFullLevel4(v.ID)) == 4096)
-                    MakeVoxelFull(GetParentVoxel(voxel));
+                var makeParentFull = false;
+                lock (voxel0.HighLevelVoxels)
+                {
+                    voxel0.HighLevelVoxels.Remove(voxel.ID);
+                    voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Full));
+                    makeParentFull = (GetSiblingVoxels(voxel).Count(v => isFullLevel4(v.ID)) == 4096);
+                }
+                if (makeParentFull) MakeVoxelFull(GetParentVoxel(voxel));
             }
         }
 
@@ -188,35 +206,42 @@ namespace TVGL.Voxelization
             if (voxel.Level == 0)
             {
                 if (voxel.Role == VoxelRoleTypes.Partial)
-                    foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
-                        voxelDictionaryLevel1.Remove(nextLevelVoxel);
-                voxelDictionaryLevel0.Remove(voxel.ID);
+                    lock (voxelDictionaryLevel1)
+                        foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
+                            voxelDictionaryLevel1.Remove(nextLevelVoxel);
+                lock (voxelDictionaryLevel0)
+                    voxelDictionaryLevel0.Remove(voxel.ID);
             }
             else if (voxel.Level == 1)
             {
                 var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
                 var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
-                if (!voxel0.NextLevelVoxels.Any()) MakeVoxelEmpty(voxel0);
+                lock (voxel0.NextLevelVoxels)
+                    voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
+                if (voxel0.NextLevelVoxels.Count == 0) MakeVoxelEmpty(voxel0);
                 else if (voxel.Role == VoxelRoleTypes.Partial)
                 {
-                    voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
-                    voxelDictionaryLevel1.Remove(voxel.ID);
+                    lock (voxel0.HighLevelVoxels)
+                        voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
+                    lock (voxelDictionaryLevel1) voxelDictionaryLevel1.Remove(voxel.ID);
                 }
             }
             else
             {
                 var thisIDwoFlags = voxel.ID & Constants.maskOutFlags;
                 var voxel0 = voxelDictionaryLevel0[MakeContainingVoxelID(thisIDwoFlags, 0)];
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
+                lock (voxel0.HighLevelVoxels)
+                    voxel0.HighLevelVoxels.Remove(voxel.ID);
                 if (!GetSiblingVoxels(voxel).Any()) MakeVoxelEmpty(GetParentVoxel(voxel));
                 if (voxel.Role == VoxelRoleTypes.Partial)
                 {
                     if (voxel.Level == 2)
-                        voxel0.HighLevelVoxels.RemoveWhere(
-                            id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+                        lock (voxel0.HighLevelVoxels)
+                            voxel0.HighLevelVoxels.RemoveWhere(
+                                id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
                     else if (voxel.Level == 3)
-                        voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
+                        lock (voxel0.HighLevelVoxels)
+                            voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
                 }
             }
         }
@@ -262,10 +287,12 @@ namespace TVGL.Voxelization
                 if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1, 1));
                 var voxel1 = voxelDictionaryLevel1[id0];
                 if (voxel1.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel1);
-
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
-                    VoxelRoleTypes.Partial, VoxelRoleTypes.Partial));
+                lock (voxel0.HighLevelVoxels)
+                {
+                    voxel0.HighLevelVoxels.Remove(voxel.ID);
+                    voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial, VoxelRoleTypes.Partial));
+                }
             }
             else if (voxel.Level == 3)
             {
@@ -283,10 +310,13 @@ namespace TVGL.Voxelization
                 var id2 = MakeContainingVoxelID(thisIDwoFlags, 2);
                 if (!isPartialLevel2(voxel0.HighLevelVoxels.GetFullVoxelID(id2)))
                     MakeVoxelPartial(new Voxel(id2, 2));
-
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
-                                               VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial));
+                lock (voxel0.HighLevelVoxels)
+                {
+                    voxel0.HighLevelVoxels.Remove(voxel.ID);
+                    voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial));
+                }
             }
             else //if (voxel.Level == 4)
             {
@@ -308,10 +338,14 @@ namespace TVGL.Voxelization
                 var id3 = MakeContainingVoxelID(thisIDwoFlags, 3);
                 if (!isPartialLevel3(voxel0.HighLevelVoxels.GetFullVoxelID(id3)))
                     MakeVoxelPartial(new Voxel(id3, 3));
-
-                voxel0.HighLevelVoxels.Remove(voxel.ID);
-                voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
-                                               VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial, VoxelRoleTypes.Partial));
+                lock (voxel0.HighLevelVoxels)
+                {
+                    voxel0.HighLevelVoxels.Remove(voxel.ID);
+                    voxel0.HighLevelVoxels.Add(thisIDwoFlags + SetRoleFlags(VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial, VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial,
+                                                   VoxelRoleTypes.Partial));
+                }
             }
         }
 

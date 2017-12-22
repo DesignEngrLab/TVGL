@@ -130,8 +130,8 @@ namespace TVGL.Voxelization
         }
 
         internal static long SetRoleFlags(IList<VoxelRoleTypes> levels)
-            {
-                if (levels == null || !levels.Any()) return 0L << 60; //no role is specified
+        {
+            if (levels == null || levels.Count == 0) return 0L << 60; //no role is specified
             if (levels[0] == VoxelRoleTypes.Empty) return 1L << 60; //the rest of the levels would also be empty
             if (levels[0] == VoxelRoleTypes.Full) return 2L << 60; // the rest of the levels would also be full
             if (levels[0] == VoxelRoleTypes.Partial && levels.Count == 1) return 3L << 60;

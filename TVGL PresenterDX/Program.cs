@@ -84,8 +84,8 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("br*");
-            for (var i = 0; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("*");
+            for (var i = 25; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;                
@@ -138,11 +138,10 @@ namespace TVGLPresenterDX
             Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
                 ts.Volume, vs1.Volume, vs1.Count, stopWatch.Elapsed.TotalSeconds);
            // PresenterShowAndHang(new Solid[] { ts, vs1 });
-            var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
-
-            vs1.Union(vs2);
-            
-            PresenterShowAndHang(new Solid[] { vs1 });
+            //var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
+            //vs1.ExclusiveOr(vs2);
+            vs1.Draft(VoxelDirections.XPositive);
+            //PresenterShowAndHang(new Solid[] { vs1 });
         }
     }
 }
