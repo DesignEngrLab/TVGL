@@ -40,6 +40,9 @@ namespace TVGL.Voxelization
         internal const double fractionOfWhiteSpaceAroundFinestVoxelFactor =
            ((1048576 / (1048576 - 2 * fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
 
+        internal const int NumberOfInteriorAttempts = 3;
+
+
         internal static readonly long maskAllButLevel0 = Int64.Parse("0F0000F0000F0000",
             NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
         internal static readonly long maskAllButLevel0and1 = Int64.Parse("0FF000FF000FF000",
@@ -72,6 +75,7 @@ namespace TVGL.Voxelization
             System.Globalization.NumberStyles.HexNumber);   // remove the flags with # 0,FFFFF,FFFFF,FFFFF
         internal static long maskAllButFlags = Int64.Parse("F000000000000000",
             System.Globalization.NumberStyles.HexNumber);   // remove the flags with # F,00000,00000,00000
+
     }
 
     /// <summary>

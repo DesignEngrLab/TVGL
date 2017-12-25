@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -1696,7 +1697,7 @@ namespace TVGL
         {
             var dX = p1[0] - p2[0];
             var dY = p1[1] - p2[1];
-            if (p1.Length == 2) return dX*dX + dY*dY;
+            if (p1.Length == 2) return dX * dX + dY * dY;
             var dZ = p1[2] - p2[2];
             return dX * dX + dY * dY + dZ * dZ;
         }
@@ -1810,6 +1811,48 @@ namespace TVGL
         {
             var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
+            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+        }
+
+        /// <summary>
+        ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
+        ///     that triangle, then null is returned. The signed distance is positive if the vertex points to
+        ///     the triangle along the direction (ray). User can also specify whether the edges of the triangle
+        ///     are considered "inside."
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="point3D"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="signedDistance">The signed distance.</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, VoxelDirections direction,
+            out double signedDistance, bool onBoundaryIsInside = true)
+        {
+            var newPoint = (double[])point3D.Clone();
+            signedDistance = double.NaN;
+            var d = face.Normal.dotProduct(face.Vertices[0].Position);
+            var n = face.Normal;
+            switch (direction)
+            {
+                case VoxelDirections.XNegative:
+                case VoxelDirections.XPositive:
+                    if (face.Normal[0].IsNegligible()) return null;
+                    newPoint = new[] { (d - n[1] * point3D[1] - n[2] * point3D[2]) / n[0], point3D[1], point3D[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[0] - point3D[0]);
+                    break;
+                case VoxelDirections.YNegative:
+                case VoxelDirections.YPositive:
+                    if (face.Normal[1].IsNegligible()) return null;
+                    newPoint = new[] { point3D[0], (d - n[0] * point3D[0] - n[2] * point3D[2]) / n[1], point3D[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[1] - point3D[1]);
+                    break;
+                default:
+                    if (face.Normal[2].IsNegligible()) return null;
+                    newPoint = new[] { point3D[0], point3D[1], (d - n[0] * point3D[0] - n[1] * point3D[1]) / n[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[2] - point3D[2]);
+                    break;
+            }
+
             return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
         #endregion

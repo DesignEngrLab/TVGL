@@ -26,7 +26,6 @@ namespace TVGL.Voxelization
     /// </summary>
     public partial class VoxelizedSolid
     {
-        public TessellatedSolid OriginalTessellatedSolid;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
@@ -38,7 +37,6 @@ namespace TVGL.Voxelization
         public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization, bool onlyDefineBoundary = false,
             double[][] bounds = null) : base(ts.Units, ts.Name, "", ts.Comments, ts.Language)
         {
-            OriginalTessellatedSolid = ts;
             Discretization = voxelDiscretization;
             #region Setting Up Parameters 
 
@@ -399,7 +397,7 @@ namespace TVGL.Voxelization
                 sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
             makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
                 sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
-        
+
             if (reachedOtherVertex)
             {
                 startPoint = (double[])endPoint.Clone();
@@ -413,7 +411,7 @@ namespace TVGL.Voxelization
                 makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
                     sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
                 makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                    sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);      
+                    sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
             }
             startPoint[uDim] = u;
             startPoint[vDim] = v;
@@ -518,31 +516,20 @@ namespace TVGL.Voxelization
             var ids = voxelDictionaryLevel1.Keys.Select(vxID => MakeCoordinateZero(vxID, sweepDim))
                 .Distinct()
                 .AsParallel();
-            var rows = ids.ToDictionary(id => id, id => new Tuple<HashSet<Voxel_Level1_Class>,
-                HashSet<Voxel_Level1_Class>, SortedSet<Voxel_Level1_Class>>(
-                new HashSet<Voxel_Level1_Class>(), // why the plus one? see the comparator. it is usually to line up with the
-                new HashSet<Voxel_Level1_Class>(),
-                new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1))));//VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
+            var rows = ids.ToDictionary(id => id,
+                id => new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)));
+            //VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
             Parallel.ForEach(voxelDictionaryLevel1, voxelKeyValuePair =>
             //foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
             {
                 var voxel = voxelKeyValuePair.Value;
                 var id = MakeCoordinateZero(voxelKeyValuePair.Key, sweepDim);
-
-                var sortedSets = rows[id];
-                var negativeFaceVoxels = sortedSets.Item1;
-                var positiveFaceVoxels = sortedSets.Item2;
-                var allVoxels = sortedSets.Item3;
-                var faces = voxel.Faces;
-                if (faces.All(f => f.Normal[sweepDim] > 0))
-                    lock (positiveFaceVoxels) positiveFaceVoxels.Add(voxel);
-                if (faces.All(f => f.Normal[sweepDim] < 0))
-                    lock (negativeFaceVoxels) negativeFaceVoxels.Add(voxel);
-                lock (allVoxels) allVoxels.Add(voxel);
+                var sortedSet = rows[id];
+                lock (sortedSet) sortedSet.Add(voxel);
             });
             // Parallel.ForEach(dict.Values.Where(v => v.Item1.Any() && v.Item2.Any()), v =>
-            foreach (var v in rows.Values.Where(v => v.Item3.Any()))
-                MakeInteriorVoxelsAlongLine(v.Item1, v.Item2, v.Item3, sweepDim);
+            foreach (var v in rows.Values.Where(v => v.Any()))
+                MakeInteriorVoxelsAlongLine(v, sweepDim);
         }
 
         //Sort partial voxels along a given direction and then consider rows along that direction 
@@ -553,19 +540,13 @@ namespace TVGL.Voxelization
         //OR if it contains faces pointing both ways and the next voxel is fully inside the solid.
         //To Determine if a voxel is fully inside the solid, use the normal of the closest
         //face cast back from the voxel in question. 
-        private void MakeInteriorVoxelsAlongLine(HashSet<Voxel_Level1_Class> negativeFaceVoxels,
-            HashSet<Voxel_Level1_Class> positiveFaceVoxels, SortedSet<Voxel_Level1_Class> all, int sweepDim)
+        private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> all, int sweepDim)
         {
-            var direction = new[] { 0.0, 0.0, 0.0 };
-            direction[sweepDim] = 1;
-            const int voxelLevel = 1;
             var coords = (byte[])all.First().CoordinateIndices.Clone();
             var sortedVoxelsInRow = new Queue<Voxel_Level1_Class>(all);
-            var priorVoxels = new List<Voxel_Level1_Class>();
+            var consecutiveVoxels = new List<Voxel_Level1_Class>();
             var lineStartIndex = int.MinValue;
-            var startIndex = sortedVoxelsInRow.First().CoordinateIndices[sweepDim];
             var finalIndex = sortedVoxelsInRow.Last().CoordinateIndices[sweepDim];
-            var faceVoxelIntersectionDict = new Dictionary<int, Tuple<int, double, bool>>(); //Key = faceIndex, Value = <coordinateIndex[sweepDim], intersection distance, isInside>
             while (sortedVoxelsInRow.Any())
             {
                 var currentVoxel = sortedVoxelsInRow.Dequeue();
@@ -575,8 +556,9 @@ namespace TVGL.Voxelization
                 //line if it has faces in both directions.
                 if (lineStartIndex != int.MinValue)
                 {
+                    consecutiveVoxels.Clear();
                     //Construct the line
-                    for (var i = (int)lineStartIndex + 1; i < currentIndex; i++)
+                    for (int i = lineStartIndex + 1; i < currentIndex; i++)
                     {
                         coords[sweepDim] = (byte)i;
                         if (discretizationLevel == 0)
@@ -585,174 +567,90 @@ namespace TVGL.Voxelization
                     }
                     lineStartIndex = int.MinValue;
                 }
-
-                //Start a new line anytime there is a voxel with any faces pointed away from the search direction
-                //and the next voxel is fully inside the solid (not a partial). 
-                priorVoxels.Add(currentVoxel);
                 //If it is the last voxel, then it cannot start a new line 
                 if (finalIndex == currentIndex) break;
+                //Start a new line anytime there is a voxel with any faces pointed away from the search direction
+                //and the next voxel is fully inside the solid (not a partial). 
+                consecutiveVoxels.Add(currentVoxel);
                 //If it is positive, then it must be outside. Do not make a new line.
-                if (positiveFaceVoxels.Contains(currentVoxel)) continue;
+                if (currentVoxel.Faces.All(f => f.Normal[sweepDim] >= 0)) continue;
                 //If the next partial voxel is adjacent, then the current voxel cannot start a new line.
                 if (sortedVoxelsInRow.Peek().CoordinateIndices[sweepDim] - currentIndex == 1) continue;
                 //If the current voxel is negative, then it must be inside. Start a new line.
-                if (negativeFaceVoxels.Contains(currentVoxel))
+                var nextVoxel = sortedVoxelsInRow.Peek();
+                if (nextVoxel.Faces.All(f => f.Normal[sweepDim] <= 0)) continue;
+                if (currentVoxel.Faces.All(f => f.Normal[sweepDim] <= 0)
+                    && (nextVoxel.Faces.All(f => f.Normal[sweepDim] >= 0)))
                 {
                     lineStartIndex = currentIndex;
                     continue;
                 }
-
-                //Else, the current voxel contains both positive and negative faces. 
+                //Else, the current voxel contains both positive and negative faces - as does the next voxel
                 //We need to determine if the next voxel is fully inside the solid or empty
                 //Check the reversed prior voxels, looking for the closest face that intersects
                 //a ray casted from the next voxel
-                var isInside = false;
-                //var validIntersectionFound = false;
-                //var lastVoxelToConsider = false;
-                var realCoordinate = new[]
+                var prevFacesToConsider = consecutiveVoxels.SelectMany(v => v.Faces).Distinct().ToList();
+                consecutiveVoxels.Clear();
+                List<PolygonalFace> nextFacesToConsider = new List<PolygonalFace>();
+                var nextIndex = nextVoxel.CoordinateIndices[sweepDim];
+                do
                 {
-                    //ToDo: If Offset is changed to Transform, then the direction will need to be set differently
-                    currentVoxel.BottomCoordinate[0] + 0.5*VoxelSideLengths[voxelLevel],
-                    currentVoxel.BottomCoordinate[1] + 0.5*VoxelSideLengths[voxelLevel],
-                    currentVoxel.BottomCoordinate[2] + 0.5*VoxelSideLengths[voxelLevel]
-                };
-                realCoordinate[sweepDim] += VoxelSideLengths[voxelLevel];
-                var facesToConsider = priorVoxels.SelectMany(v => v.Faces).Distinct().ToList();
-                var minDistance = double.MaxValue;
-                var intersectionPoints = new Dictionary<double, double[]>();
-                foreach (var face in facesToConsider)
+                    nextVoxel = sortedVoxelsInRow.Dequeue();
+                    consecutiveVoxels.Add(nextVoxel);
+                    nextFacesToConsider.AddRange(nextVoxel.Faces);
+                } while (sortedVoxelsInRow.Any() && sortedVoxelsInRow.Peek().CoordinateIndices[sweepDim] == ++nextIndex);
+                nextFacesToConsider = nextFacesToConsider.Distinct().ToList();
+                var random = new Random();
+                for (int i = 0; i < Constants.NumberOfInteriorAttempts; i++)
                 {
-                    var dot = face.Normal[sweepDim];
-                    if (dot == 0) continue; //Use a different face because this face is inconclusive.
-
-                    double signedDistance;
-                    var intersectionPoint = MiscFunctions.PointOnTriangleFromLine(face, realCoordinate, direction.multiply(-1),
-                        out signedDistance,
-                        true);
-
-                    if (intersectionPoint == null) continue;
-                    var duplicateFound = false;
-                    foreach (var key in intersectionPoints.Keys)
+                    var randDelta = new[] { random.NextDouble(), random.NextDouble(), random.NextDouble() };
+                    var randCoordinate = currentVoxel.BottomCoordinate.add(randDelta);
+                    PolygonalFace prevFace = ClosestIntersectingFace(prevFacesToConsider, randCoordinate,
+                        (VoxelDirections)(-(sweepDim + 1)), out double distancePrev);
+                    var nextFace = ClosestIntersectingFace(nextFacesToConsider, randCoordinate,
+                        (VoxelDirections)(sweepDim + 1), out double distanceNext);
+                    if (prevFace != null && nextFace != null && prevFace.Normal[sweepDim] < 0
+                        && nextFace.Normal[sweepDim] > 0)
                     {
-                        if (key.IsPracticallySame(signedDistance))
-                        {
-                            //Duplicate found, such as when intersecting an edge or vertex. Ignore.
-                            duplicateFound = true;
-                        }
+                        lineStartIndex = currentIndex;
+                        break;
                     }
-                    if (!duplicateFound) intersectionPoints.Add(signedDistance, intersectionPoint);
-                    Debug.WriteLine(signedDistance);
-
-                    if (signedDistance < minDistance)
+                    if ((prevFace != null && nextFace != null && prevFace.Normal[sweepDim] > 0
+                              && nextFace.Normal[sweepDim] < 0)
+                             || (prevFace == null && nextFace != null && nextFace.Normal[sweepDim] < 0)
+                             || (nextFace == null && prevFace != null && prevFace.Normal[sweepDim] > 0))
                     {
-                        //Debug.WriteLine(signedDistance);
-                        minDistance = signedDistance;
-                        isInside = dot < 0;
+                        break;
                     }
                 }
-
-                if(isInside == (intersectionPoints.Count % 2 == 0)) Debug.WriteLine("There must be an odd number of intersections if it is inside");
-                if (isInside) lineStartIndex = currentIndex;
-
-                //    for (var i = priorVoxels.Count - 1; i >= 0 ; i--)
-                //    {
-                //        var priorVoxel = priorVoxels[i];
-
-                //        //If we get to the first item in this list [0] and it is in the positive or negative hashes,
-                //        //then we don't need to do any geomtry.
-                //        if (i == 0)
-                //        {
-                //            if (negativeFaceVoxels.Contains(priorVoxel))
-                //            {
-                //                isInside = true;
-                //                validIntersectionFound = true;
-                //            }
-                //            else if (positiveFaceVoxels.Contains(priorVoxel))
-                //            {
-                //                isInside = false;
-                //                validIntersectionFound = true;
-                //            }
-                //        }
-                //        if (validIntersectionFound) break;
-
-                //        //This section determines if a ray from the next voxel, cast along the reversed search direction, 
-                //        //intersects any of the voxels faces. If it does intersect a face(s), choose the closest intersection's 
-                //        //face to determine isInside based on the normal of that face.
-                //        //Once we get to a voxel that contains a valid intersection, then we can stop (lastVoxelToConsider = true). 
-                //        //This IS the partial voxel with the closest intersection to the voxel in question. 
-                //        //Note that we still want to consider all new faces that this voxel adds to the hash consideredFaces,
-                //        //since it may contain another intersection.
-                //        var minDistance = double.MaxValue;
-                //        var priorVoxelIndex = priorVoxel.CoordinateIndices[sweepDim];
-                //        foreach (var face in priorVoxel.Faces)
-                //        {
-                //            //We only need to calculate the intersection for each face once.
-                //            if (faceVoxelIntersectionDict.ContainsKey(face.IndexInList))
-                //            {
-                //                var intersectionInfo = faceVoxelIntersectionDict[face.IndexInList];
-
-                //                //If this voxel is the intersection voxel for this face, then this is the last voxel to consider.
-                //                //Otherwise, continue. 
-                //                if (intersectionInfo.Item1 != priorVoxelIndex) continue;
-                //                lastVoxelToConsider = true;
-
-                //                //We have already calculated the intersection for this face in a previous partial along this row.
-                //                if (intersectionInfo.Item2 < minDistance)
-                //                {
-                //                    minDistance = intersectionInfo.Item2;
-                //                    isInside = intersectionInfo.Item3;
-                //                    validIntersectionFound = true;
-                //                } 
-                //            }
-                //            else
-                //            {
-                //                var dot = face.Normal[sweepDim];
-                //                if (dot == 0) continue; //Use a different face because this face is inconclusive.
-
-
-                //                double signedDistance;
-                //                var intersectionPoint = MiscFunctions.PointOnTriangleFromLine(face, realCoordinate, direction,
-                //                    out signedDistance,
-                //                    true);
-
-                //                if (intersectionPoint == null) continue;
-                //                //var distanceToOrigin = -face.Normal.dotProduct(face.Vertices[0].Position);
-                //                //var intersectionPoint2 = MiscFunctions.PointOnPlaneFromRay(face.Normal, distanceToOrigin,
-                //                //    realCoordinate, direction.multiply(-1));
-
-                //                //ToDo: If Offset is changed to Transform, then this distance will need to be set differently
-                //                var val = (intersectionPoint.subtract(Offset)[sweepDim] / VoxelSideLengths[voxelLevel]);
-                //                var intersectionIndex = (int) val;
-                //                if(intersectionIndex < startIndex) throw new Exception("Error in implementation.");
-                //                faceVoxelIntersectionDict.Add(face.IndexInList, new Tuple<int, double, bool>(intersectionIndex, signedDistance, dot < 0));
-                //                if (signedDistance < minDistance)
-                //                {
-                //                    minDistance = signedDistance;
-                //                    isInside = dot < 0;
-                //                    validIntersectionFound = true;
-                //                }
-                //                //Check if it intersected in this voxel. If it did, this is the last voxel we need to check. 
-                //                //Otherwise we need to iterate until we go past the voxel that contains the intersection.
-                //                if (intersectionIndex == priorVoxelIndex)
-                //                {
-                //                    lastVoxelToConsider = true;
-                //                }
-                //            }
-
-                //        }
-                //        if (lastVoxelToConsider)  break;
-                //    }
-                //    if (isInside) lineStartIndex = currentVoxel.CoordinateIndices[sweepDim];
-                //    if (!validIntersectionFound)
-                //    {
-                //        //It may not have a valid intersection => empty
-                //        //throw new Exception();
-                //    }
             }
         }
 
+        private PolygonalFace ClosestIntersectingFace(List<PolygonalFace> faces, double[] coordinate,
+            VoxelDirections direction, out double distance)
+        {
+            PolygonalFace closestFace = null;
+            distance = double.MaxValue;
+            var sweepDim = Math.Abs((int)direction) - 1;
+            foreach (var face in faces)
+            {
+                var dot = face.Normal[sweepDim];
+                if (dot == 0) continue; //Use a different face because this face is inconclusive.
 
+                double signedDistance;
+                var intersectionPoint = MiscFunctions.PointOnTriangleFromLine(face, coordinate, direction,
+                    out signedDistance, true);
 
+                if (intersectionPoint == null || signedDistance <= 0) continue;
+
+                if (signedDistance < distance)
+                {
+                    closestFace = face;
+                    distance = signedDistance;
+                }
+            }
+            return closestFace;
+        }
 
         private void MakeAndStoreFullVoxelLevel0And1(byte x, byte y, byte z)
         {
