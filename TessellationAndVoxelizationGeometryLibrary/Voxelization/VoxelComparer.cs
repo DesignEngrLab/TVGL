@@ -25,17 +25,12 @@ namespace TVGL.Voxelization
 
         public int GetHashCode(long obj)
         {
-            long x = obj & Constants.maskOutCoarse;
-            // 1111 1111 1111 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111
-            // x-3  x-4  x-5            y-3  y-4  y-5            z-3  z-4  z-4
-            var xValuesToStart = x >> 40;
-            var yValuesOnly = (x & Constants.maskOutZ) >> 1; // the very last bit in an int32
-            // is not used in hash sets so shift to lower 31 bits
-            var zValuesToMid = x << 10;
-            return (int)(yValuesOnly + zValuesToMid + xValuesToStart);
-            // as a result the last 3 y value bits overlap with the first 3 z bits
-            // and the last 2 z bits overlap with the first 2 x bits. oh well, this is the 
-            // best we can do in compressing 36 bits into 31. The overlap is quite minimal.
+            // 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111 0000
+            //           z-3  z-4  z-5            y-3  y-4  y-5            x-3  x-4  x-4  flags
+            var xValuesLevels234 = (obj >> 4) & 4096;
+            var yValuesLevels234 = (obj >> 24) & 4096; 
+            var zValuesLevels234 = (obj >> 44) & 4096;
+            return (int)(xValuesLevels234 + (yValuesLevels234 <<10) + (zValuesLevels234 << 19));
         }
     }
     public class VoxelComparerCoarse : IEqualityComparer<long>
@@ -47,33 +42,41 @@ namespace TVGL.Voxelization
 
         public int GetHashCode(long obj)
         {
-            long x = obj & Constants.maskAllButLevel0and1;
-            //#0,FF000,FF000,FF000
-            return (int)((x >> 12) + (x >> 40));
-            // this moves the z levels into the first position and then
-            //x's value for levels 1 and 2 between y and z
-            // converting to int remove the higher values
-            // 0yyxx0zz
+            //long x = obj & Constants.maskAllButLevel0and1;
+            long x = (obj >> 16) & 255;
+            long y = (obj >> 36) & 255;
+            long z = (obj >> 56) & 255;
+            //#FF000,FF000,FF000,0
+            return (int)(x+ (y<<10) + (z << 20));
+            // this moves the x levels into the first position and then
+            // z's value for levels 1 and 2 between y and x
+            // converting to int remove the higher values 
+            // 000 zzzz zzzz 00 yyyy yyyyy 00 xxxx xxxx
         }
     }
     public class VoxelComparerTwoDimension : IEqualityComparer<long>
     {
         private long mask;
-        private int dimensionToSkip;
+        private int shift1, shift2;
 
         internal VoxelComparerTwoDimension(int dimensionToSkip)
         {
-            this.dimensionToSkip = dimensionToSkip;
             switch (dimensionToSkip)
             {
                 case 0:
                     mask = Constants.maskOutX;
+                    shift1 = 24;
+                    shift2 = 44;
                     break;
                 case 1:
                     mask = Constants.maskOutY;
+                    shift1 = 4;
+                    shift2 = 44;
                     break;
                 default:
                     mask = Constants.maskOutZ;
+                    shift1 = 4;
+                    shift2 = 24;
                     break;
             }
         }
@@ -84,13 +87,10 @@ namespace TVGL.Voxelization
 
         public int GetHashCode(long obj)
         {
-            long x = obj & mask;
-            //#0,FF000,FF000,FF000
-            return (int)(x + (x >> 15) + (x >> 31));
-            // this moves the z levels into the first position and then
-            //x's value for levels 1 and 2 between y and z
-            // converting to int remove the higher values
-            // 0yyxx0zz
+            var x = obj & mask;
+            var comp1 = (x >> shift1) & Constants.MaxForSingleCoordinate;
+            var comp2 = (x >> shift2) & Constants.MaxForSingleCoordinate;
+            return (int)(comp1 + (comp2 << 11));
         }
     }
 }

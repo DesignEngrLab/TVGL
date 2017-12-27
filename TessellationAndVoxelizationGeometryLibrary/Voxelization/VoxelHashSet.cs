@@ -82,23 +82,6 @@ namespace TVGL.Voxelization
         }
         #endregion
         #region New Methods not found in HashSet
-        public VoxelRoleTypes[] ReadFlags(long item)
-        {
-            if (buckets != null)
-            {
-                int hashCode = InternalGetHashCode(item);
-                // see note at "HashSet" level describing why "- 1" appears in for loop
-                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
-                {
-                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
-                    {
-                        return VoxelizedSolid.GetRoleFlags(slots[i].value);
-                    }
-                }
-            }
-            // either m_buckets is null or wasn't found
-            return new VoxelRoleTypes[0];
-        }
         public long GetFullVoxelID(long item)
         {
             if (buckets != null)

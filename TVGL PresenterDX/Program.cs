@@ -85,7 +85,7 @@ namespace TVGLPresenterDX
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*");
-            for (var i = 16; i < fileNames.Count(); i++)
+            for (var i = 3; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;                

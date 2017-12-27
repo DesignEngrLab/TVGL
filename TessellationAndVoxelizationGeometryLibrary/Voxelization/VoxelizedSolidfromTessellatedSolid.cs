@@ -540,16 +540,17 @@ namespace TVGL.Voxelization
         //OR if it contains faces pointing both ways and the next voxel is fully inside the solid.
         //To Determine if a voxel is fully inside the solid, use the normal of the closest
         //face cast back from the voxel in question. 
-        private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> all, int sweepDim)
+        private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> sortedVoxelsInRow, int sweepDim)
         {
-            var coords = (byte[])all.First().CoordinateIndices.Clone();
-            var sortedVoxelsInRow = new Queue<Voxel_Level1_Class>(all);
+            var voxelsInRow = new List<Voxel_Level1_Class>(sortedVoxelsInRow);
+            var coords = (byte[])sortedVoxelsInRow.First().CoordinateIndices.Clone();
             var consecutiveVoxels = new List<Voxel_Level1_Class>();
             var lineStartIndex = int.MinValue;
-            var finalIndex = sortedVoxelsInRow.Last().CoordinateIndices[sweepDim];
-            while (sortedVoxelsInRow.Any())
+            var finalIndex = voxelsInRow.Last().CoordinateIndices[sweepDim];
+            while (voxelsInRow.Any())
             {
-                var currentVoxel = sortedVoxelsInRow.Dequeue();
+                var currentVoxel = voxelsInRow[0];
+                voxelsInRow.RemoveAt(0);
                 var currentIndex = currentVoxel.CoordinateIndices[sweepDim];
 
                 //End that line at every partial voxel, regardless of face orientation. This voxel may start a new 
@@ -575,9 +576,9 @@ namespace TVGL.Voxelization
                 //If it is positive, then it must be outside. Do not make a new line.
                 if (currentVoxel.Faces.All(f => f.Normal[sweepDim] >= 0)) continue;
                 //If the next partial voxel is adjacent, then the current voxel cannot start a new line.
-                if (sortedVoxelsInRow.Peek().CoordinateIndices[sweepDim] - currentIndex == 1) continue;
+                var nextVoxel = voxelsInRow[0];
+                if (nextVoxel.CoordinateIndices[sweepDim] - currentIndex == 1) continue;
                 //If the current voxel is negative, then it must be inside. Start a new line.
-                var nextVoxel = sortedVoxelsInRow.Peek();
                 if (nextVoxel.Faces.All(f => f.Normal[sweepDim] <= 0)) continue;
                 if (currentVoxel.Faces.All(f => f.Normal[sweepDim] <= 0)
                     && (nextVoxel.Faces.All(f => f.Normal[sweepDim] >= 0)))
@@ -591,16 +592,19 @@ namespace TVGL.Voxelization
                 //a ray casted from the next voxel
                 var prevFacesToConsider = consecutiveVoxels.SelectMany(v => v.Faces).Distinct().ToList();
                 consecutiveVoxels.Clear();
-                List<PolygonalFace> nextFacesToConsider = new List<PolygonalFace>();
+                var nextFacesToConsider = new List<PolygonalFace>();
                 var nextIndex = nextVoxel.CoordinateIndices[sweepDim];
                 do
                 {
-                    nextVoxel = sortedVoxelsInRow.Dequeue();
+                voxelsInRow.RemoveAt(0);
                     consecutiveVoxels.Add(nextVoxel);
                     nextFacesToConsider.AddRange(nextVoxel.Faces);
-                } while (sortedVoxelsInRow.Any() && sortedVoxelsInRow.Peek().CoordinateIndices[sweepDim] == ++nextIndex);
+                    nextVoxel = (voxelsInRow.Count > 1) ? voxelsInRow[1] : null;
+                } while (nextVoxel!=null && nextVoxel.CoordinateIndices[sweepDim] == ++nextIndex);
+                voxelsInRow.Insert(0,consecutiveVoxels.Last());
                 nextFacesToConsider = nextFacesToConsider.Distinct().ToList();
                 var random = new Random();
+                int successes = 0;
                 for (int i = 0; i < Constants.NumberOfInteriorAttempts; i++)
                 {
                     var randDelta = new[] { random.NextDouble(), random.NextDouble(), random.NextDouble() };
@@ -611,18 +615,10 @@ namespace TVGL.Voxelization
                         (VoxelDirections)(sweepDim + 1), out double distanceNext);
                     if (prevFace != null && nextFace != null && prevFace.Normal[sweepDim] < 0
                         && nextFace.Normal[sweepDim] > 0)
-                    {
-                        lineStartIndex = currentIndex;
-                        break;
-                    }
-                    if ((prevFace != null && nextFace != null && prevFace.Normal[sweepDim] > 0
-                              && nextFace.Normal[sweepDim] < 0)
-                             || (prevFace == null && nextFace != null && nextFace.Normal[sweepDim] < 0)
-                             || (nextFace == null && prevFace != null && prevFace.Normal[sweepDim] > 0))
-                    {
-                        break;
-                    }
+                        successes++;
                 }
+                if (successes >= Constants.NumberOfInteriorSuccesses)
+                    lineStartIndex = currentIndex;
             }
         }
 

@@ -35,9 +35,9 @@ namespace TVGL.Voxelization
                 .ToDictionary(v => v.ID, v => new Vertex(v.BottomCoordinate));
             var boundaryVertexDictionary = new Dictionary<long, Vertex>();
             var sideLength = VoxelSideLengths[discretizationLevel];
-            var deltaX = 1L << (40 + 4 * (4 - discretizationLevel));
-            var deltaY = 1L << (20 + 4 * (4 - discretizationLevel));
-            var deltaZ = 1L << (4 * (4 - discretizationLevel));
+            var deltaX = 1L << (4 + 4 * (4 - discretizationLevel));
+            var deltaY = 1L << (24 + 4 * (4 - discretizationLevel));
+            var deltaZ = 1L << (44 + 4 * (4 - discretizationLevel));
 
             //Parallel.ForEach(Voxels(VoxelRoleTypes.Partial), v =>
             foreach (var v in Voxels(this.Discretization, VoxelRoleTypes.Partial, true))
