@@ -36,21 +36,47 @@ namespace TVGL.Voxelization
         public long[] GetTotals => _totals;
         long[] _totals;
 
-        public IVoxel GetVoxel(long ID)
+        /// <summary>
+        /// Gets the voxel.
+        /// </summary>
+        /// <param name="newID">The new identifier.</param>
+        /// <param name="level">The level.</param>
+        /// <returns>IVoxel.</returns>
+        public IVoxel GetVoxel(long newID, int level=-1)
         {
-            if (voxelDictionaryLevel0.ContainsKey(ID)) return voxelDictionaryLevel0[ID];
-            if (voxelDictionaryLevel1.ContainsKey(ID)) return voxelDictionaryLevel1[ID];
-            Voxel_Level0_Class[] level0Voxels;
-            lock (voxelDictionaryLevel0) level0Voxels = voxelDictionaryLevel0.Values.ToArray();
-            foreach (var voxelLevel0 in level0Voxels)
+            Constants.GetRoleFlags(newID, out var levelFromID, out var role, out var btmIsInside);
+            if (level == -1) level = levelFromID;
+            if (level == 0)
             {
-                IVoxel voxel;
-                lock (voxelLevel0.HighLevelVoxels)
-                    voxel = voxelLevel0.HighLevelVoxels.GetVoxel(ID);
-                if (voxel != null) return voxel;
+                if (voxelDictionaryLevel0.ContainsKey(newID)) return voxelDictionaryLevel0[newID];
+                return new Voxel(newID + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
             }
-            return null;
+            if (level == 1)
+            {
+                if (voxelDictionaryLevel1.ContainsKey(newID)) return voxelDictionaryLevel1[newID];
+                var parentID = Constants.MakeContainingVoxelID(newID, 0);
+                var neighborsParent = voxelDictionaryLevel0.ContainsKey(parentID)
+                    ? voxelDictionaryLevel0[parentID] : null;
+                if (neighborsParent != null && neighborsParent.Role == VoxelRoleTypes.Full)
+                    return new Voxel(newID + Constants.SetRoleFlags(1, VoxelRoleTypes.Full), VoxelSideLengths, Offset);
+                return new Voxel(newID + Constants.SetRoleFlags(1, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
+            }
+            var level0ParentID = Constants.MakeContainingVoxelID(newID, 0);
+            var neighborsLevel0Parent = voxelDictionaryLevel0.ContainsKey(level0ParentID)
+                ? voxelDictionaryLevel0[level0ParentID] : null;
+            if (neighborsLevel0Parent != null)
+            {
+                var neighbor = neighborsLevel0Parent.HighLevelVoxels.GetVoxel(newID);
+                if (neighbor != null) return neighbor;
+                var neighborsParent = GetParentVoxel(new Voxel(newID, level));
+                if (neighborsParent.Role == VoxelRoleTypes.Full)
+                    return new Voxel(newID + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), VoxelSideLengths, Offset);
+            }
+            return new Voxel(newID + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
         }
+
+
+    
         #region Get Functions
 
         public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine)
@@ -140,7 +166,7 @@ namespace TVGL.Voxelization
             if (level == 1)
                 return voxelDictionaryLevel1.Values.Where(v => v.Role == role);
             if (level > discretizationLevel) level = discretizationLevel;
-            var targetFlags = SetRoleFlags(level, role);
+            var targetFlags = Constants.SetRoleFlags(level, role);
             return voxelDictionaryLevel0.Values.SelectMany(voxDict =>
                 EnumerateHighLevelVoxelsFromLevel0(voxDict, targetFlags));
         }
@@ -208,31 +234,9 @@ namespace TVGL.Voxelization
             var shift = 20 * dimension + 4 * (4 - voxel.Level) + 4;
             delta = delta << shift;
             var newID = (positiveStep)
-                ? (voxel.ID & Constants.maskOutFlags) + delta
-                : (voxel.ID & Constants.maskOutFlags) - delta;
-            if (voxel.Level == 0)
-            {
-                if (voxelDictionaryLevel0.ContainsKey(newID)) return voxelDictionaryLevel0[newID];
-                return new Voxel(newID + SetRoleFlags(0, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
-            }
-            if (voxel.Level == 1)
-            {
-                if (voxelDictionaryLevel1.ContainsKey(newID)) return voxelDictionaryLevel1[newID];
-                var neighborsParent = voxelDictionaryLevel0[MakeContainingVoxelID(newID, 0)];
-                if (neighborsParent.Role == VoxelRoleTypes.Full)
-                    return new Voxel(newID + SetRoleFlags(1, VoxelRoleTypes.Full), VoxelSideLengths, Offset);
-                return new Voxel(newID + SetRoleFlags(1, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
-            }
-            var neighborsLevel0Parent = voxelDictionaryLevel0[MakeContainingVoxelID(newID, 0)];
-            if (neighborsLevel0Parent != null)
-            {
-                var neighbor = neighborsLevel0Parent.HighLevelVoxels.GetVoxel(newID);
-                if (neighbor != null) return neighbor;
-                var neighborsParent = GetParentVoxel(new Voxel(newID, voxel.Level));
-                if (neighborsParent.Role == VoxelRoleTypes.Full)
-                    return new Voxel(newID + SetRoleFlags(voxel.Level, VoxelRoleTypes.Full), VoxelSideLengths, Offset);
-            }
-            return new Voxel(newID + SetRoleFlags(voxel.Level, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
+                ? Constants.ClearFlagsFromID(voxel.ID) + delta
+                : Constants.ClearFlagsFromID(voxel.ID) - delta;
+            return GetVoxel(newID, voxel.Level);
         }
 
         /// <summary>
@@ -282,31 +286,31 @@ namespace TVGL.Voxelization
             switch (child.Level)
             {
                 case 1:
-                    parentID = MakeContainingVoxelID(child.ID, 0);
+                    parentID = Constants.MakeContainingVoxelID(child.ID, 0);
                     if (voxelDictionaryLevel0.ContainsKey(parentID))
                         return voxelDictionaryLevel0[parentID];
-                    return new Voxel(parentID + SetRoleFlags(0, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
+                    return new Voxel(parentID + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), VoxelSideLengths, Offset);
                 case 2:
-                    parentID = MakeContainingVoxelID(child.ID, 1);
+                    parentID = Constants.MakeContainingVoxelID(child.ID, 1);
                     if (voxelDictionaryLevel1.ContainsKey(parentID))
                         return voxelDictionaryLevel1[parentID];
                     return GetParentVoxel(new Voxel(parentID, 1));
                 case 3:
-                    parentID = MakeContainingVoxelID(child.ID, 0);
+                    parentID = Constants.MakeContainingVoxelID(child.ID, 0);
                     if (voxelDictionaryLevel0.ContainsKey(parentID))
                     {
                         var level0Voxel = voxelDictionaryLevel0[parentID];
-                        parentID = MakeContainingVoxelID(child.ID, 2);
+                        parentID = Constants.MakeContainingVoxelID(child.ID, 2);
                         parent = level0Voxel.HighLevelVoxels.GetVoxel(parentID);
                         if (parent != null) return parent;
                     }
                     return GetParentVoxel(new Voxel(parentID, 2));
                 case 4:
-                    parentID = MakeContainingVoxelID(child.ID, 0);
+                    parentID = Constants.MakeContainingVoxelID(child.ID, 0);
                     if (voxelDictionaryLevel0.ContainsKey(parentID))
                     {
                         var level0Voxel = voxelDictionaryLevel0[parentID];
-                        parentID = MakeContainingVoxelID(child.ID, 3);
+                        parentID = Constants.MakeContainingVoxelID(child.ID, 3);
                         parent = level0Voxel.HighLevelVoxels.GetVoxel(parentID);
                         if (parent != null) return parent;
                     }
@@ -325,16 +329,16 @@ namespace TVGL.Voxelization
             }
             if (parent is Voxel_Level1_Class)
             {
-                var level0 = voxelDictionaryLevel0[MakeContainingVoxelID(parent.ID, 0)];
+                var level0 = voxelDictionaryLevel0[Constants.MakeContainingVoxelID(parent.ID, 0)];
                 var IDs = level0.HighLevelVoxels;
                 return IDs.Where(isLevel2)
                     .Select(id => (IVoxel)new Voxel(id, VoxelSideLengths, Offset));
             }
             else
             {
-                var level0 = voxelDictionaryLevel0[MakeContainingVoxelID(parent.ID, 0)];
+                var level0 = voxelDictionaryLevel0[Constants.MakeContainingVoxelID(parent.ID, 0)];
                 var IDs = level0.HighLevelVoxels;
-                var parentIDwithoutFlags = parent.ID & Constants.maskOutFlags;
+                var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
                 if (parent.Level == 2)
                     return IDs.Where(v => isLevel3(v) &&
                                           (v & Constants.maskAllButLevel01and2) == parentIDwithoutFlags)
@@ -394,10 +398,10 @@ namespace TVGL.Voxelization
             foreach (var voxelLevel0Class in this.voxelDictionaryLevel0)
             {
                 var copyVoxel = copy.voxelDictionaryLevel0[voxelLevel0Class.Key];
-                copyVoxel.NextLevelVoxels = new VoxelHashSet(voxelLevel0Class.Value.NextLevelVoxels.ToArray(),
-                    new VoxelComparerCoarse());
-                copyVoxel.HighLevelVoxels = new VoxelHashSet(voxelLevel0Class.Value.HighLevelVoxels.ToArray(),
-                    new VoxelComparerFine());
+                if (voxelLevel0Class.Value.NextLevelVoxels != null)
+                    copyVoxel.NextLevelVoxels = voxelLevel0Class.Value.NextLevelVoxels.Copy();
+                if (voxelLevel0Class.Value.HighLevelVoxels != null)
+                    copyVoxel.HighLevelVoxels = voxelLevel0Class.Value.HighLevelVoxels.Copy();
             }
             copy.UpdateProperties();
             return copy;
@@ -410,11 +414,21 @@ namespace TVGL.Voxelization
         public VoxelizedSolid DraftToNewSolid(VoxelDirections direction)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.Draft(direction);
+            copy.Draft(direction, null);
             return copy;
         }
 
-        public bool Draft(VoxelDirections direction, IVoxel parent = null)
+        /// <summary>
+        /// Drafts the solid in the specified direction.
+        /// </summary>
+        /// <param name="direction">The direction in which to draft.</param>
+        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        public void Draft(VoxelDirections direction)
+        {
+            Draft(direction, null);
+        }
+
+        private bool Draft(VoxelDirections direction, IVoxel parent)
         {
             var positiveStep = direction > 0;
             var dimension = Math.Abs((int)direction) - 1;
@@ -456,13 +470,12 @@ namespace TVGL.Voxelization
                     {
                         var filledUpNextLayer = Draft(direction, voxel);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
-                        if (neighbor == null)
-                            return; // null happens when you go outside of bounds (of coarsest voxels)
+                        if (neighbor == null) return; // null happens when you go outside of bounds (of coarsest voxels)
                         layerOfVoxels[i + 1].Add(neighbor);
                         if (filledUpNextLayer) MakeVoxelFull(neighbor);
                         else MakeVoxelPartial(neighbor);
                     }
-                });
+                } );
             }
             return nextLayerCount == 256;
         }
@@ -487,8 +500,8 @@ namespace TVGL.Voxelization
         public void Intersect(params VoxelizedSolid[] references)
         {
             var v0Keys = voxelDictionaryLevel0.Keys.ToList();
-            Parallel.ForEach(v0Keys, ID =>
-            //foreach (var ID in v0Keys)
+            //Parallel.ForEach(v0Keys, ID =>
+            foreach (var ID in v0Keys)
             {
                 var thisVoxel = voxelDictionaryLevel0[ID];
                 //if (voxelDictionaryLevel0[ID].Role == VoxelRoleTypes.Empty) return; //I don't think this'll be called
@@ -503,7 +516,7 @@ namespace TVGL.Voxelization
                     if (discretizationLevel >= 1)
                         IntersectLevel1(thisVoxel.NextLevelVoxels.ToList(), references);
                 }
-            });
+            }  //);
             UpdateProperties();
         }
         void IntersectLevel1(IList<long> level1Keys, VoxelizedSolid[] references)
@@ -880,7 +893,7 @@ namespace TVGL.Voxelization
                 //Instead of findind the actual coordinate value, get the IDMask for the value because it is faster.
                 //var coordinateMaskValue = MaskAllBut(voxel.ID, directionIndex);
                 //The actual coordinate value
-                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel)+4)) & Constants.MaxForSingleCoordinate;
+                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel) + 4)) & Constants.MaxForSingleCoordinate;
                 if (sortedDict.ContainsKey(coordValue))
                 {
                     sortedDict[coordValue].Add(voxel);
@@ -1077,7 +1090,7 @@ namespace TVGL.Voxelization
             }
             return exposedDirections;
         }
-        
+
         private static long AddDeltaToID(long ID, int[] delta)
         {
             return AddDeltaToID(ID, delta[0], delta[1], delta[2]);
@@ -1085,9 +1098,9 @@ namespace TVGL.Voxelization
 
         private static long AddDeltaToID(long ID, int deltaX, int deltaY, int deltaZ)
         {
-            var deltaXLong = Math.Sign(deltaX)*((((long) Math.Abs(deltaX)) & Constants.MaxForSingleCoordinate)<< 4);
-            var deltaYLong = Math.Sign(deltaY)*((((long) Math.Abs(deltaY)) & Constants.MaxForSingleCoordinate) << 24);
-            var deltaZLong = Math.Sign(deltaZ)*((((long) Math.Abs(deltaZ)) & Constants.MaxForSingleCoordinate) << 44);
+            var deltaXLong = Math.Sign(deltaX) * ((((long)Math.Abs(deltaX)) & Constants.MaxForSingleCoordinate) << 4);
+            var deltaYLong = Math.Sign(deltaY) * ((((long)Math.Abs(deltaY)) & Constants.MaxForSingleCoordinate) << 24);
+            var deltaZLong = Math.Sign(deltaZ) * ((((long)Math.Abs(deltaZ)) & Constants.MaxForSingleCoordinate) << 44);
             return ID + deltaXLong + deltaYLong + deltaZLong;
         }
 

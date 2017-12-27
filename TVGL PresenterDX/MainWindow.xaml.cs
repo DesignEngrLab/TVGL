@@ -87,7 +87,7 @@ namespace TVGLPresenterDX
 
             var boxFaceIndices = new[]
             {
-                0, 1, 2,  2, 1, 4,  1, 6, 4,  4, 6, 7,  2, 4, 5,  4, 7, 5,  0, 2, 3, 3, 2, 5,
+                0, 1, 2, 2, 1, 4, 1, 6, 4, 4, 6, 7, 2, 4, 5, 4, 7, 5, 0, 2, 3, 3, 2, 5,
                 5, 7, 3, 7, 6, 3, 3, 1, 0, 1, 3, 6
             };
             var positions = new Vector3Collection();
@@ -95,34 +95,36 @@ namespace TVGLPresenterDX
             var normals = new Vector3Collection();
             foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
             {
-                var i = positions.Count;
-                var x = (float)v.BottomCoordinate[0];
-                var y = (float)v.BottomCoordinate[1];
-                var z = (float)v.BottomCoordinate[2];
-                var s = (float)v.SideLength;
-                positions.Add(new Vector3(x, y, z));//0
-                positions.Add(new Vector3(x + s, y, z));//1
-                positions.Add(new Vector3(x, y + s, z));//2
-                positions.Add(new Vector3(x, y, z + s));//3
-                positions.Add(new Vector3(x + s, y + s, z));//4
-                positions.Add(new Vector3(x, y + s, z + s));//5
-                positions.Add(new Vector3(x + s, y, z + s));//6
-                positions.Add(new Vector3(x + s, y + s, z + s));//7
-                foreach (var boxFaceIndex in boxFaceIndices)
-                    indices.Add(i + boxFaceIndex);
-                normals.Add(new Vector3(0f, 0f, -1f));
-                normals.Add(new Vector3(0f, 0f, -1f));
-                normals.Add(new Vector3(1f, 0f, 0f));
-                normals.Add(new Vector3(1f, 0f, 0f));
-                normals.Add(new Vector3(0f, 1f, 0f));
-                normals.Add(new Vector3(0f, 1f, 0f));
-                normals.Add(new Vector3(-1f, 0f, 0f));
-                normals.Add(new Vector3(-1f, 0f, 0f));
-                normals.Add(new Vector3(0f, 0f, 1f));
-                normals.Add(new Vector3(0f, 0f, 1f));
-                normals.Add(new Vector3(0f, -1f, 0f));
-                normals.Add(new Vector3(0f, -1f, 0f));
-
+                if (vs.GetNeighbors(v).Any(n => n == null || n.Role == VoxelRoleTypes.Empty))
+                {
+                    var i = positions.Count;
+                    var x = (float)v.BottomCoordinate[0];
+                    var y = (float)v.BottomCoordinate[1];
+                    var z = (float)v.BottomCoordinate[2];
+                    var s = (float)v.SideLength;
+                    positions.Add(new Vector3(x, y, z)); //0
+                    positions.Add(new Vector3(x + s, y, z)); //1
+                    positions.Add(new Vector3(x, y + s, z)); //2
+                    positions.Add(new Vector3(x, y, z + s)); //3
+                    positions.Add(new Vector3(x + s, y + s, z)); //4
+                    positions.Add(new Vector3(x, y + s, z + s)); //5
+                    positions.Add(new Vector3(x + s, y, z + s)); //6
+                    positions.Add(new Vector3(x + s, y + s, z + s)); //7
+                    foreach (var boxFaceIndex in boxFaceIndices)
+                        indices.Add(i + boxFaceIndex);
+                    normals.Add(new Vector3(0f, 0f, -1f));
+                    normals.Add(new Vector3(0f, 0f, -1f));
+                    normals.Add(new Vector3(1f, 0f, 0f));
+                    normals.Add(new Vector3(1f, 0f, 0f));
+                    normals.Add(new Vector3(0f, 1f, 0f));
+                    normals.Add(new Vector3(0f, 1f, 0f));
+                    normals.Add(new Vector3(-1f, 0f, 0f));
+                    normals.Add(new Vector3(-1f, 0f, 0f));
+                    normals.Add(new Vector3(0f, 0f, 1f));
+                    normals.Add(new Vector3(0f, 0f, 1f));
+                    normals.Add(new Vector3(0f, -1f, 0f));
+                    normals.Add(new Vector3(0f, -1f, 0f));
+                }
             }
 
             return new MeshGeometryModel3D
@@ -130,7 +132,7 @@ namespace TVGLPresenterDX
                 Material = new PhongMaterial()
                 {
                     DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf,
-            1f)
+                1f)
                     //(float)0.75 * vs.SolidColor.Af)
                 },
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D

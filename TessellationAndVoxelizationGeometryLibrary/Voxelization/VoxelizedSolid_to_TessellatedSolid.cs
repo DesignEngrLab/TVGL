@@ -102,7 +102,7 @@ namespace TVGL.Voxelization
 
         private Vertex MakeBoundaryVertex(IVoxel baseVoxel, Dictionary<long, Vertex> boundaryDictionary, double[] shift, long delta)
         {
-            var hash = (baseVoxel.ID & Constants.maskOutFlags) + delta;
+            var hash = Constants.ClearFlagsFromID(baseVoxel.ID) + delta;
             // I really over-thought this function for a long time, but I now realize that even thought the delta will cause the 
             // voxel coordinates to rollover and cause entries into the flags area - this is all totally fine as boundaryDictionary
             // is empty of regular voxels.

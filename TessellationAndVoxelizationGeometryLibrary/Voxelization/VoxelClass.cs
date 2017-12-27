@@ -43,7 +43,7 @@ namespace TVGL.Voxelization
         internal Voxel(long ID, double[] voxelSideLengths = null, double[] offset = null)
         {
             this.ID = ID;
-            VoxelizedSolid.GetRoleFlags(ID, out var level, out var role, out var btmIsInside);
+            Constants.GetRoleFlags(ID, out var level, out var role, out var btmIsInside);
             Role = role;
             Level = level;
             BtmCoordIsInside = btmIsInside;
@@ -66,7 +66,7 @@ namespace TVGL.Voxelization
         internal Voxel(long ID, int level)
         {
             this.ID = ID;
-            VoxelizedSolid.GetRoleFlags(ID, out var leveldummy, out var role, out var btmIsInside);
+            Constants.GetRoleFlags(ID, out var leveldummy, out var role, out var btmIsInside);
             Role = role;
             Level = level;
             BtmCoordIsInside = btmIsInside;
@@ -119,7 +119,7 @@ namespace TVGL.Voxelization
             CoordinateIndices = new[] { (byte)coords[0], (byte)coords[1], (byte)coords[2] };
             Role = voxelRole;
             SideLength = voxelSideLengths[0];
-            ID = VoxelizedSolid.MakeVoxelID0(x, y, z);
+            ID = Constants.MakeVoxelID0(x, y, z);
             BottomCoordinate = coords.multiply(voxelSideLengths[1]).add(offset);
             if (voxelRole == VoxelRoleTypes.Partial)
             {
@@ -153,7 +153,7 @@ namespace TVGL.Voxelization
         {
             CoordinateIndices = new[] { x, y, z };
             Role = voxelRole;
-            ID = VoxelizedSolid.MakeVoxelID1(x, y, z);
+            ID = Constants.MakeVoxelID1(x, y, z);
             SideLength = voxelSideLengths[1];
             var coords = new int[] { x, y, z };
             BottomCoordinate = coords.multiply(voxelSideLengths[1]).add(offset);

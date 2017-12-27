@@ -62,9 +62,12 @@ namespace TVGL.Voxelization
                 var delta = longestSide * Constants.fractionOfWhiteSpaceAroundFinestVoxelFactor;
                 Bounds[0] = ts.Bounds[0].subtract(new[] { delta, delta, delta });
                 Bounds[1] = ts.Bounds[1].add(new[] { delta, delta, delta });
+                for (int i = 0; i < 3; i++)
+                    dimensions[i] += 2 * delta;
             }
             longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
             VoxelSideLengths = new[] { longestSide / 16, longestSide / 256, longestSide / 4096, longestSide / 65536, longestSide / 1048576 };
+            numVoxels = dimensions.Select(d => (int) Math.Ceiling(d / VoxelSideLengths[discretizationLevel])).ToArray();
             #endregion
 
             voxelDictionaryLevel0 = new Dictionary<long, Voxel_Level0_Class>(new VoxelComparerCoarse());
@@ -104,6 +107,7 @@ namespace TVGL.Voxelization
                 });
             }
             UpdateProperties();
+            Debug.WriteLine("ids match: {0}", voxelDictionaryLevel1.Keys.All(k => isLevel2(k)));
         }
 
         #region Making Voxels for Levels 0 and 1
@@ -509,11 +513,10 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Makes the voxels in interior.
         /// </summary>
-        /// <exception cref="System.NotImplementedException"></exception>
         private void makeVoxelsInInterior()
         {
             var sweepDim = longestDimensionIndex;
-            var ids = voxelDictionaryLevel1.Keys.Select(vxID => MakeCoordinateZero(vxID, sweepDim))
+            var ids = voxelDictionaryLevel1.Keys.Select(vxID => Constants.MakeCoordinateZero(vxID, sweepDim))
                 .Distinct()
                 .AsParallel();
             var rows = ids.ToDictionary(id => id,
@@ -523,7 +526,7 @@ namespace TVGL.Voxelization
             //foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
             {
                 var voxel = voxelKeyValuePair.Value;
-                var id = MakeCoordinateZero(voxelKeyValuePair.Key, sweepDim);
+                var id = Constants.MakeCoordinateZero(voxelKeyValuePair.Key, sweepDim);
                 var sortedSet = rows[id];
                 lock (sortedSet) sortedSet.Add(voxel);
             });
@@ -651,8 +654,8 @@ namespace TVGL.Voxelization
         private void MakeAndStoreFullVoxelLevel0And1(byte x, byte y, byte z)
         {
             bool level1AlreadyMade = false;
-            var voxIDLevel0 = MakeVoxelID0(x, y, z);
-            var voxIDLevel1 = MakeVoxelID1(x, y, z);
+            var voxIDLevel0 = Constants.MakeVoxelID0(x, y, z);
+            var voxIDLevel1 = Constants.MakeVoxelID1(x, y, z);
             lock (voxelDictionaryLevel1)
             {
                 if (voxelDictionaryLevel1.ContainsKey(voxIDLevel1))
@@ -693,7 +696,7 @@ namespace TVGL.Voxelization
         #region Make and Store Voxel
         private void MakeAndStoreFullVoxelLevel0(byte x, byte y, byte z)
         {
-            var voxIDLevel0 = MakeVoxelID0(x, y, z);
+            var voxIDLevel0 = Constants.MakeVoxelID0(x, y, z);
             lock (voxelDictionaryLevel0)
             {
                 if (!voxelDictionaryLevel0.ContainsKey(voxIDLevel0))
@@ -707,7 +710,7 @@ namespace TVGL.Voxelization
         private void MakeAndStorePartialVoxelLevel0(byte x, byte y, byte z, TessellationBaseClass tsObject)
         {
             Voxel_Level0_Class voxelLevel0;
-            var voxIDLevel0 = MakeVoxelID0(x, y, z);
+            var voxIDLevel0 = Constants.MakeVoxelID0(x, y, z);
             lock (voxelDictionaryLevel0)
             {
                 if (voxelDictionaryLevel0.ContainsKey(voxIDLevel0))
@@ -738,8 +741,8 @@ namespace TVGL.Voxelization
             bool level1AlreadyMade = false;
             Voxel_Level0_Class voxelLevel0;
             Voxel_Level1_Class voxelLevel1;
-            var voxIDLevel0 = MakeVoxelID0(x, y, z);
-            var voxIDLevel1 = MakeVoxelID1(x, y, z);
+            var voxIDLevel0 = Constants.MakeVoxelID0(x, y, z);
+            var voxIDLevel1 = Constants.MakeVoxelID1(x, y, z);
             if (voxIDLevel1 == 22518247245242368) { }
             lock (voxelDictionaryLevel1)
             {

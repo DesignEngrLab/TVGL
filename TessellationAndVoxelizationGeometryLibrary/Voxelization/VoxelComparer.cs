@@ -20,16 +20,16 @@ namespace TVGL.Voxelization
     {
         public bool Equals(long x, long y)
         {
-            return (x & Constants.maskOutFlags) == (y & Constants.maskOutFlags);
+            return Constants.ClearFlagsFromID(x) == Constants.ClearFlagsFromID(y);
         }
 
         public int GetHashCode(long obj)
         {
             // 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111 0000
             //           z-3  z-4  z-5            y-3  y-4  y-5            x-3  x-4  x-4  flags
-            var xValuesLevels234 = (obj >> 4) & 4096;
-            var yValuesLevels234 = (obj >> 24) & 4096; 
-            var zValuesLevels234 = (obj >> 44) & 4096;
+            var xValuesLevels234 = (obj >> 4) & 4095;
+            var yValuesLevels234 = (obj >> 24) & 4095; 
+            var zValuesLevels234 = (obj >> 44) & 4095;
             return (int)(xValuesLevels234 + (yValuesLevels234 <<10) + (zValuesLevels234 << 19));
         }
     }
@@ -37,7 +37,7 @@ namespace TVGL.Voxelization
     {
         public bool Equals(long x, long y)
         {
-            return (x & Constants.maskOutFlags) == (y & Constants.maskOutFlags);
+            return Constants.ClearFlagsFromID(x) == Constants.ClearFlagsFromID(y);
         }
 
         public int GetHashCode(long obj)
