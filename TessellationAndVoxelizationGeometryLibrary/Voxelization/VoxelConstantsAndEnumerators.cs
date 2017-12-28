@@ -78,13 +78,17 @@ namespace TVGL.Voxelization
 
         public static long MakeVoxelID1(byte x, byte y, byte z)
         {
-            var xLong = (long)x << 16;
-            var yLong = (long)y << 36;
-            var zLong = (long)z << 56;
+            var xLong = (long)x << 16; //add 16 bits to the right of binary(x)
+            var yLong = (long)y << 36; //add 36 bits to the right of binary(y)
+            var zLong = (long)z << 56; //add 56 bits to the right of binary(z)
             //   z0   z1    z2   z3    z4   y0   y1    y2   y3    y4    x0   x1    x2   x3    x4   flags
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            return xLong + yLong + zLong;
+            var all = xLong + yLong + zLong;
+            //var x2 = GetLevel1X(all);
+            //var y2 = GetLevel1Y(all);
+            //var z2 = GetLevel1Z(all);
+            return all;
         }
 
         public static long MakeVoxelID0(byte x, byte y, byte z)
@@ -93,6 +97,21 @@ namespace TVGL.Voxelization
             var yLong = (long)(y & 240) << 36;
             var zLong = (long)(z & 240) << 56;
             return xLong + yLong + zLong;
+        }
+
+        public static long GetLevel1X(long ID)
+        {
+            return (ID & maskAllButX) >> 16;
+        }
+
+        public static long GetLevel1Y(long ID)
+        {
+            return (ID & maskAllButY) >> 36;
+        }
+
+        public static long GetLevel1Z(long ID)
+        {
+            return (ID & maskAllButZ) >> 56;
         }
 
         public static long SetRoleFlags(int level, VoxelRoleTypes role, bool btmIsInside = false)

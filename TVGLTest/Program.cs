@@ -120,21 +120,21 @@ namespace TVGL_Test
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
 
-            Presenter.ShowAndHang(ts);
+            Presenter.ShowAndHangVoxelization(ts, vs1);
 
-            var tsFromVS = vs1.ConvertToTessellatedSolid();
-            tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
+            //var tsFromVS = vs1.ConvertToTessellatedSolid();
+            //tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
 
-            Presenter.ShowAndHang(new [] { tsFromVS });
+            //Presenter.ShowAndHang(new [] { tsFromVS });
 
             //PresenterShowAndHang(new Solid[] { ts, vs2 });
             //vs1.Intersect(vs2);
 
-            stopWatch.Restart();
-            vs1.Draft(VoxelDirections.XPositive);
-            stopWatch.Stop();
-            Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
-            Presenter.ShowAndHang(new TessellatedSolid[] { vs1.ConvertToTessellatedSolid() });
+            //stopWatch.Restart();
+            //vs1.Draft(VoxelDirections.XPositive);
+            //stopWatch.Stop();
+            //Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
+            //Presenter.ShowAndHang(new TessellatedSolid[] { vs1.ConvertToTessellatedSolid() });
 
         }
         public static void TestSegmentation(TessellatedSolid ts)
