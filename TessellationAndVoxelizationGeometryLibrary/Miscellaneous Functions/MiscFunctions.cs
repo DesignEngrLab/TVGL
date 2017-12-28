@@ -1754,6 +1754,54 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     of triangle to return a valid intersection.
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnFaceFromIntersectingLine(PolygonalFace face, double[] point1,
+            double[] point2)
+        {
+            var positions = face.Vertices.Select(vertex => vertex.Position).ToList();
+            return PointOnFaceFromIntersectingLine(positions, face.Normal, point1, point2);
+        }
+
+        /// <summary>
+        ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     of triangle to return a valid intersection.
+        /// </summary>
+        /// <param name="normal"></param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="vertices"></param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnFaceFromIntersectingLine(List<double[]> vertices, double[] normal, double[] point1,
+            double[] point2)
+        {
+            var distanceToOrigin = normal.dotProduct(vertices[0]);
+            var d1 = normal.dotProduct(point1);
+            var d2 = normal.dotProduct(point2);
+            if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
+            var denominator = d1 - d2;
+            if (denominator == 0) return null; //The points form a perpendicular line to the face
+            var fraction = (d1 - distanceToOrigin) / (denominator);
+            var position = new double[3];
+            for (var i = 0; i < 3; i++)
+            {
+                position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
+                if (double.IsNaN(position[i]))
+                    throw new Exception("This should never occur. Prevent this from happening");
+            }
+            return IsPointInsideTriangle(vertices, position, true) ? position : null;
+        }
+
+        /// <summary>
         ///     Finds the point on the plane made by a ray. If that ray is not going to pass through the
         ///     that plane, then null is returned.
         /// </summary>

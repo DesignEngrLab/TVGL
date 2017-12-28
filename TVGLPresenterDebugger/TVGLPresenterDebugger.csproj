@@ -317,7 +317,6 @@
     <Compile Include="..\TVGL Presenter\Window3DPlot.xaml.cs">
       <Link>Presenter\Window3DPlot.xaml.cs</Link>
     </Compile>
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TVGL\Voxelization\VoxelizedSolidfromTessellatedSolid.cs" />
   </ItemGroup>

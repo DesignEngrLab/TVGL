@@ -75,7 +75,7 @@ namespace TVGL.Voxelization
         #endregion
 
         #region Private Fields
-        private readonly double[][] transformedCoordinates;
+        private readonly double[][] transformedCoordinates; //Based on Level 1
         private readonly double[] dimensions;
         private readonly int longestDimensionIndex;
         private readonly Dictionary<long, Voxel_Level0_Class> voxelDictionaryLevel0;
