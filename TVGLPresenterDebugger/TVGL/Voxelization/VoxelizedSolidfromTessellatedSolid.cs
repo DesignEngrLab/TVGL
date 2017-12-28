@@ -197,29 +197,34 @@ namespace TVGL.Voxelization
         /// </summary>
         private bool IsTriangleIntersectingVoxel(int[] ijk, PolygonalFace face, int level, double squaredRadius)
         {
+            //To determine intersection, we are going to make a few checks that have increasing
+            //complexity, only doing the complex ones if really needed.
+            //Test 1:   If the closest point on a face to the voxel center > voxel length / 2 then
+            //          it cannot be inside the voxel. Return false. I used sqaured distances to 
+            //          avoid square root operations. Note that if the distance < voxel length / 2,
+            //          it does not gaurantee that the index is inside the voxel.
+            //Test 2:   If the If the closest point has the same int coordinates as the voxel, 
+            //          then it must be inside. Return true.
+            //Test 3:   If any of the edges of the voxel intersect the face, then it must be inside. 
+            //          Return true.
+            //Test 4:   If any of the edges of the face intersect the voxel's faces, then it must be inside. 
+            //          Return true.
+            //If tests 3 and 4 fail, then the face does not intersect the voxel. Return false.
+
             //Voxel center is simply converting the integer coordinates to the center of the voxel in 
-            //real space..
-           // var realA = prim.A.Position.subtract(Offset).divide(VoxelSideLengths[level]);
+            //real space. This assumes each voxel has a size of 1x1x1 and is in an interger grid.
             var voxelCenter = new [] { ijk[0] + 0.5, ijk[1] + 0.5, ijk[2] + 0.5 };
             var realCenter = voxelCenter.multiply(VoxelSideLengths[level]).add(Offset);
-
-            //This assumes each voxel has a size of 1x1x1 and is in an interger grid.
-            //First, find the closest point on the triangle to the center of the voxel.
-            //Second, if that point is in the same integer grid as the voxel (using floor rounding) 
-            //then it must intersect the voxel.
-            //However, if the point is not inside the voxel, it is not sufficent evidence to conclusively   
-            //prove that the triangle does not intersect the voxel. 
-
             //Closest Point on Triangle is not restricted to A,B,C. 
             //It may be any point on the triangle.
             var closestPoint = ClosestVertexOnTriangleToVertex(face, realCenter);
 
-            //Check 1: If the distance from closest point on the triangle to the voxel center > radius
+            //Test 1: If the distance from closest point on the triangle to the voxel center > radius
             //Then this voxel cannot intersect the face.
             var squaredDistance = MiscFunctions.SquareDistancePointToPoint(realCenter, closestPoint);
             if (squaredDistance > squaredRadius) return false;
 
-            //Check 2: If the closest point has the same int coordinates as the voxel, then it must be inside
+            //Test 2: If the closest point has the same int coordinates as the voxel, then it must be inside
             var coordinates = closestPoint.subtract(Offset).divide(VoxelSideLengths[level]);
             if ((int)Math.Floor(coordinates[0]) == ijk[0]
                 && (int)Math.Floor(coordinates[1]) == ijk[1]
@@ -228,11 +233,8 @@ namespace TVGL.Voxelization
                 return true;
             }
 
-            //Check 3: In some cases, the checks 1 and 2 may fail, so this check is used. 
-            //For each edge (line) of the voxel, check if it intersects the triangle.
-            //Then check if any of the triangle edges intersect the voxel faces.
-
-            //Now check each of the lines. 3 lines from each of these four points = 12 lines.
+            //Test 3: For each edge (line) of the voxel, check if it intersects the triangle.
+            //Check each of the lines. 3 lines from each of these four points = 12 lines.
             //[0,0,0] => +x, +y, + z
             //[0,+y,+z] => +x, 0, 0
             //[+x,+y,0] => 0, 0, or +z
@@ -264,7 +266,6 @@ namespace TVGL.Voxelization
                     if (point != null) return true;
                 }
             }
-
             //check if any of the triangle edges intersect the voxel faces.
             var corners = new List<double[]>();
             for (var i = 0; i < 2; i++)
@@ -279,6 +280,7 @@ namespace TVGL.Voxelization
                 }
             }
 
+            //Test 4: Check if any of the triangle edges intersect the voxel faces.
             //There are 6 rectangular "faces" of the voxel, each of which can be split into two triangles
             //[0], [1], [3], [2]
             //[1], [5], [7], [3]
@@ -328,14 +330,11 @@ namespace TVGL.Voxelization
             return false;
         }
 
-
         public static double[] ClosestVertexOnTriangleToVertex(PolygonalFace prim, double[] p)
         {
             double[] uvw;
             return Proximity.ClosestVertexOnTriangleToVertex(prim.A.Position, prim.B.Position, prim.C.Position, p, out uvw);
         }
-
-
 
         private void makeVoxelForVertexLevel0And1(Vertex vertex, double[] coordinates)
         {
