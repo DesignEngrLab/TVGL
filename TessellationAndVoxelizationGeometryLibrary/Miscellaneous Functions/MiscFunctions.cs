@@ -1729,6 +1729,55 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     of triangle to return a valid intersection.
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnFaceFromIntersectingLine(PolygonalFace face, double[] point1,
+            double[] point2)
+        {
+            var positions = face.Vertices.Select(vertex => vertex.Position).ToList();
+            return PointOnFaceFromIntersectingLine(positions, face.Normal, point1, point2);
+        }
+
+        /// <summary>
+        ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     of triangle to return a valid intersection.
+        /// </summary>
+        /// <param name="normal"></param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="vertices"></param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnFaceFromIntersectingLine(List<double[]> vertices, double[] normal, double[] point1,
+            double[] point2)
+        {
+            var distanceToOrigin = normal.dotProduct(vertices[0]);
+            var d1 = normal.dotProduct(point1);
+            var d2 = normal.dotProduct(point2);
+            if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
+            var denominator = d1 - d2;
+            if (denominator == 0) return null; //The points form a perpendicular line to the face
+            var fraction = (d1 - distanceToOrigin) / (denominator);
+            var position = new double[3];
+            for (var i = 0; i < 3; i++)
+            {
+                position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
+                if (double.IsNaN(position[i]))
+                    throw new Exception("This should never occur. Prevent this from happening");
+            }
+            return IsPointInsideTriangle(vertices, position, true) ? position : null;
+        }
+
+
+        /// <summary>
         ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
         ///     with that plane.
         /// </summary>
@@ -1811,6 +1860,7 @@ namespace TVGL
         {
             var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
+            if (newPoint == null) return null;
             return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
 
@@ -1924,21 +1974,34 @@ namespace TVGL
 
         /// <summary>
         ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
-        ///     triangle are considered "inside."
+        ///     triangle are considered "inside." Assumes vertex in question is in the same plane
+        ///     as the triangle.
+        /// </summary>
+        public static bool IsPointInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
+            bool onBoundaryIsInside = true)
+        {
+            var positions = vertices.Select(vertex => vertex.Position).ToList();
+            return IsPointInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
+        }
+
+        /// <summary>
+        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+        ///     triangle are considered "inside." Assumes vertex in question is in the same plane
+        ///     as the triangle.
         /// </summary>
         /// <param name="vertices"></param>
         /// <param name="vertexInQuestion"></param>
         /// <param name="onBoundaryIsInside"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static bool IsPointInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
+        public static bool IsPointInsideTriangle(IList<double[]> vertices, double[] vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
             if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
             var p = vertexInQuestion;
-            var a = vertices[0].Position;
-            var b = vertices[1].Position;
-            var c = vertices[2].Position;
+            var a = vertices[0];
+            var b = vertices[1];
+            var c = vertices[2];
             return SameSide(p, a, b, c, onBoundaryIsInside) &&
                    SameSide(p, b, a, c, onBoundaryIsInside) &&
                    SameSide(p, c, a, b, onBoundaryIsInside);
