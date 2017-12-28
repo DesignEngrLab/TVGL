@@ -82,20 +82,26 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../../TestFiles");
             var fileNames = dir.GetFiles("*");
-            for (var i = 14; i < fileNames.Count(); i++)
+            for (var i = 11; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
-                List<TessellatedSolid> solids = IO.Open(filename);
-                TestVoxelizatoin(solids[0]);
+                Stream fileStream;
+                List<TessellatedSolid> ts;
+                if (!File.Exists(filename)) continue;
+                using (fileStream = File.OpenRead(filename))
+                    ts = IO.Open(fileStream, filename);
+                if (!ts.Any()) continue;
+                ts[0].SolidColor = new Color(KnownColors.DeepPink);
+                // PresenterShowAndHang(ts);
+                TestVoxelization(ts[0]);
             }
 
             Console.WriteLine("Completed.");
-            //  Console.ReadKey();
         }
 
-        public static void TestVoxelizatoin(TessellatedSolid ts)
+        public static void TestVoxelization(TessellatedSolid ts)
         {
             var stopWatch = new Stopwatch();
             //stopWatch.Restart();
@@ -118,24 +124,24 @@ namespace TVGL_Test
             //var bounds = new double[2][];
             //bounds[0] = ts1.Bounds[0];
             //bounds[1] = ts2.Bounds[1];
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
 
-            Presenter.ShowAndHang(ts);
 
-            var tsFromVS = vs1.ConvertToTessellatedSolid();
-            tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true, null, false);
+            Presenter.ShowAndHangVoxelization(ts, vs1);
 
-            Presenter.ShowAndHang(new [] { tsFromVS });
+            //var tsFromVS = vs1.ConvertToTessellatedSolid();
+            //tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
 
-            //PresenterShowAndHang(new Solid[] { ts, vs2 });
-            //vs1.Intersect(vs2);
+            //Presenter.ShowAndHang(new [] { tsFromVS });
 
-            stopWatch.Restart();
-            vs1.Draft(VoxelDirections.XPositive);
-            stopWatch.Stop();
-            Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
-            Presenter.ShowAndHang(new TessellatedSolid[] { vs1.ConvertToTessellatedSolid() });
+            ////PresenterShowAndHang(new Solid[] { ts, vs2 });
+            ////vs1.Intersect(vs2);
 
+            //stopWatch.Restart();
+            //vs1.Draft(VoxelDirections.XPositive);
+            //stopWatch.Stop();
+            //Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
+            //Presenter.ShowAndHang(new TessellatedSolid[] { vs1.ConvertToTessellatedSolid() });
         }
         public static void TestSegmentation(TessellatedSolid ts)
         {
