@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using TVGL.MathOperations;
 
 namespace TVGL.Voxelization
 {
@@ -111,159 +110,6 @@ namespace TVGL.Voxelization
             Debug.WriteLine("ids match: {0}", voxelDictionaryLevel1.Keys.All(k => isLevel2(k)));
         }
 
-        #region Alternate Make Face Voxelization
-        private void makeVoxelForFacesAndEdgesAlternate(TessellatedSolid ts)
-        {
-            var level = 1;
-            Parallel.ForEach(ts.Faces, face =>
-            {
-                VoxelizeTriangle(face, level, true);
-            });
-        }
-
-        /// <summary>
-        /// Voxelizes a triangle starting with the voxel at the Floor of the first point in 
-        /// the triangle, and then checks the 26 adjacent voxel. If any of the adjacent voxels
-        /// are found to be intersecting, they are added to a stack to search their 26 adjacent 
-        /// voxels. In this way, it wraps along the face collecting all the intersecting voxels.
-        /// </summary>
-        private HashSet<long> VoxelizeTriangle(PolygonalFace triangle, int level, bool connectToFaces = false)
-        {
-            var consideredVoxels = new HashSet<long>();
-            var intersectingVoxels = new HashSet<long>();
-            var coordindateList = new Stack<int[]>();
-            //0.75 is the squared distance from the center to corner of a 1x1x1 box
-            //To get this in real dimensions, scale by the squared voxel side length
-            var squaredRadius = VoxelSideLengths[level] * VoxelSideLengths[level] * 0.75;
-
-            //Gets the integer coordinates, rounded down for point A on the triangle 
-            //This is a voxel bottom corner. We will check all voxels in a -1,+1 box around 
-            //this coordinate. 
-            var coord = transformedCoordinates[triangle.A.IndexInList];
-            //var coordinates = triangle.A.Position.subtract(Offset).divide(VoxelSideLengths[1]);
-            var ijk = new[]
-            {
-                (int) Math.Floor(coord[0]),
-                (int) Math.Floor(coord[1]),
-                (int) Math.Floor(coord[2])
-            };
-
-            //Set a new ID. This may not match up with TesselatedSolid.Faces.IDs,
-            //if the subdivision of faces is used.
-            if (!IsTriangleIntersectingVoxel(ijk, triangle, level, squaredRadius)) throw new Exception("This should always be true");
-            var voxelIndex = MakeVoxelID1((byte)ijk[0], (byte)ijk[1], (byte)ijk[2]);
-            intersectingVoxels.Add(voxelIndex);
-            coordindateList.Push(ijk);
-
-            while (coordindateList.Any())
-            {
-                ijk = coordindateList.Pop();
-                // For every surrounding voxel (6+12+8=26)
-                // 6 Voxel-face adjacent neghbours
-                // 12 Voxel-edge adjacent neghbours
-                // 8 Voxel-corner adjacent neghbours
-                // Voxels are in IntSpace, so we just use 
-                // every combination of -1, 0, and 1 for offsets
-                for (var i = 0; i < 26; ++i)
-                {
-                    var nijk = ijk.add(Utilities.CoordinateOffsets[i]);
-                    if (nijk[0] < 0 || nijk[1] < 0 || nijk[2] < 0) continue;
-
-                    //If the voxel has not already been checked with this primitive,
-                    //consider it and add it to the list of considered voxels. 
-                    voxelIndex = MakeVoxelID1((byte)nijk[0], (byte)nijk[1], (byte)nijk[2]);
-                    if (consideredVoxels.Contains(voxelIndex)) continue;
-
-                    consideredVoxels.Add(voxelIndex);
-                    if (IsTriangleIntersectingVoxel(nijk, triangle, level, squaredRadius))
-                    {
-                        coordindateList.Push(nijk);
-                        intersectingVoxels.Add(voxelIndex);
-                        if (connectToFaces)
-                        {
-                            MakeAndStorePartialVoxelLevel0And1((byte)nijk[0], (byte)nijk[1], (byte)nijk[2], triangle);
-                        }
-                    }
-                }
-            }
-            return intersectingVoxels;
-        }
-
-        /// <summary>
-        /// Determines whether the voxel is intersected by the triangle.
-        /// If it is, it adds the information to the VoxelizationData.
-        /// </summary>
-        private bool IsTriangleIntersectingVoxel(int[] ijk, PolygonalFace prim, int level, double squaredRadius)
-        {
-            //To determine intersection, we are going to make a few checks that have increasing
-            //complexity, only doing the complex ones if really needed.
-            //Test 1:   If the closest point on a face to the voxel center > voxel length / 2 then
-            //          it cannot be inside the voxel. Return false. I used sqaured distances to 
-            //          avoid square root operations. Note that if the distance < voxel length / 2,
-            //          it does not gaurantee that the index is inside the voxel.
-            //Test 2:   If the If the closest point has the same int coordinates as the voxel, 
-            //          then it must be inside. Return true.
-            //Test 3:   If any of the edges of the voxel intersect the face, then it must be inside. 
-            //          Return true.
-            //Test 4:   If any of the edges of the face intersect the voxel's faces, then it must be inside. 
-            //          Return true.
-            //If tests 3 and 4 fail, then the face does not intersect the voxel. Return false.
-
-            //Voxel center is simply converting the integer coordinates to the center of the voxel in 
-            //real space..
-            var voxelCenter = new[] { ijk[0] + 0.5, ijk[1] + 0.5, ijk[2] + 0.5 };
-            var realCenter = voxelCenter.multiply(VoxelSideLengths[level]).add(Offset);    
-            //Closest Point on Triangle is not restricted to A,B,C. 
-            //It may be any point on the triangle.
-            var closestPoint = ClosestVertexOnTriangleToVertex(prim, realCenter);
-
-            //Test 1: If the distance from closest point on the triangle to the voxel center > radius
-            //Then this voxel cannot intersect the face.
-            var squaredDistance = MiscFunctions.SquareDistancePointToPoint(realCenter, closestPoint);
-            if (squaredDistance > squaredRadius) return false;
-
-            //Test 2: If the closest point has the same int coordinates as the voxel, then it must be inside
-            var coordinates = closestPoint.subtract(Offset).divide(VoxelSideLengths[level]);
-            if ((int)Math.Floor(coordinates[0]) == ijk[0]
-                && (int)Math.Floor(coordinates[1]) == ijk[1]
-                && (int)Math.Floor(coordinates[2]) == ijk[2])
-            {
-                return true;
-            }
-
-            //Test 3: For each edge (line) of the voxel, check if it intersects the triangle.
-            //Check each of the lines. 3 lines from each of these four points = 12 lines.
-            for (var xOffset = 0; xOffset < 2; xOffset++)
-            {
-                for (var yOffset = 0; yOffset < 2; yOffset++)
-                {
-                    for (var zOffset = 0; zOffset < 2; zOffset++)
-                    {
-                        var intCorner = new[] { ijk[0] + xOffset, ijk[1] + yOffset, ijk[2] + zOffset };
-                        var corner = intCorner.multiply(VoxelSideLengths[level]).add(Offset);
-                        var closestPointToCorner = ClosestVertexOnTriangleToVertex(prim, corner);
-                        coordinates = closestPointToCorner.subtract(Offset).divide(VoxelSideLengths[level]);
-                        if ((int)Math.Floor(coordinates[0]) == ijk[0]
-                            && (int)Math.Floor(coordinates[1]) == ijk[1]
-                            && (int)Math.Floor(coordinates[2]) == ijk[2])
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
-
-
-        public static double[] ClosestVertexOnTriangleToVertex(PolygonalFace prim, double[] p)
-        {
-            double[] uvw;
-            return Proximity.ClosestVertexOnTriangleToVertex(prim.A.Position, prim.B.Position, prim.C.Position, p, out uvw);
-        }
-        #endregion
-
         #region Making Voxels for Levels 0 and 1
 
         private void makeVoxelForVertexLevel0And1(Vertex vertex, double[] coordinates)
@@ -295,42 +141,8 @@ namespace TVGL.Voxelization
                 MakeAndStorePartialVoxelLevel0And1(x, y, z, vertex);
         }
 
-        private bool DoFaceVoxelizationMethodsMatch(PolygonalFace face,
-            HashSet<long> alternateMethod)
-        {
-            var primaryMethod = new HashSet<long>();
-            foreach (var voxel in face.Voxels)
-            {
-                primaryMethod.Add(voxel.ID & Constants.maskOutFlags);
-            }
-
-            var missingFromAlternateMethod = new HashSet<long>();
-            foreach (var voxelIndex in primaryMethod)
-            {
-                if (!alternateMethod.Contains(voxelIndex))
-                {
-                    missingFromAlternateMethod.Add(voxelIndex);
-                }
-            }
-
-            var missingFromPrimaryMethod = new HashSet<long>();
-            foreach (var voxelIndex in alternateMethod)
-            {
-                if (!primaryMethod.Contains(voxelIndex))
-                {
-                    missingFromPrimaryMethod.Add(voxelIndex);
-                }
-            }
-
-            if (!missingFromAlternateMethod.Any() && !missingFromPrimaryMethod.Any()) return true;
-            //Else, show the face and the voxels for each method
-            //Then show the missing voxels from each method
-
-            return false;
-        }
-        #endregion
-
         #region the Level 0 and 1 Face and Edge Sweep Functions
+
         /// <summary>
         /// Makes the voxels for faces and edges. This is a complicated function! Originally, the scheme used in 
         /// OpenVDB was employed where a voxel group (3x3x3) is initiated at one of the vertices of a face so that 
@@ -348,12 +160,7 @@ namespace TVGL.Voxelization
         {
             foreach (var face in tessellatedSolid.Faces) //loop over the faces
             {
-                var voxelsFromAlternate = VoxelizeTriangle(face, 1, false);
-                if (simpleCase(face))
-                {
-                    DoFaceVoxelizationMethodsMatch(face, voxelsFromAlternate);
-                    continue;
-                }
+                if (simpleCase(face)) continue;
                 Vertex startVertex, leftVertex, rightVertex;
                 Edge leftEdge, rightEdge;
                 int uDim, vDim, sweepDim;
@@ -397,7 +204,6 @@ namespace TVGL.Voxelization
                         sweepDim, face.Normal[uDim] >= 0, face);
                     sweepValue++; //increment sweepValue and repeat!
                 }
-                DoFaceVoxelizationMethodsMatch(face, voxelsFromAlternate);
             }
         }
 
