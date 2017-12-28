@@ -214,6 +214,7 @@ namespace TVGL.Voxelization
             var dimension = Math.Abs((int)direction) - 1;
 
             #region Check if steps outside or neighbor has different parent
+            //ToDo: double check this next line / convert this into a Constants function if useful
             long coordValue = (voxel.ID >> (20 * dimension + 4)) & Constants.MaxForSingleCoordinate;
             coordValue = coordValue >> (4 * (4 - voxel.Level));
             // can't this section shift be combined with first? No, when rightshifting bits, the newest
@@ -893,6 +894,7 @@ namespace TVGL.Voxelization
                 //Instead of findind the actual coordinate value, get the IDMask for the value because it is faster.
                 //var coordinateMaskValue = MaskAllBut(voxel.ID, directionIndex);
                 //The actual coordinate value
+                //ToDo: double check this next line / convert this into a Constants function if useful
                 long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel) + 4)) & Constants.MaxForSingleCoordinate;
                 if (sortedDict.ContainsKey(coordValue))
                 {
@@ -942,6 +944,7 @@ namespace TVGL.Voxelization
                     {
                         //Add the voxelID. If it is already in the list, update the value:
                         //If oldValue == true && newValue == true => true. If either is false, return false.
+                        //ToDo: double check this next line / convert this into a Constants function if useful
                         long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel))) & Constants.maskAllButZ;
                         if (possibleShellVoxels.ContainsKey(coordValue))
                         {
