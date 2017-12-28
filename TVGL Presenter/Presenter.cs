@@ -843,12 +843,17 @@ namespace TVGL
                     voxel.BottomCoordinate[1] + 0.5 * sideLength,
                 voxel.BottomCoordinate[2] + 0.5 * sideLength), sideLength, sideLength, sideLength);
             }
+            return MakeModelVisual3D(builder, material);
+        }
+
+        private static Visual3D MakeModelVisual3D(MeshBuilder meshBuilder, Material material)
+        {
             return new ModelVisual3D
             {
                 Content =
                     new GeometryModel3D
                     {
-                        Geometry = builder.ToMesh(),
+                        Geometry = meshBuilder.ToMesh(),
                         Material = material
                     }
             };
@@ -920,6 +925,60 @@ namespace TVGL
             return result;
         }
 
+        private static Visual3D MakeModelVisual3D(List<PolygonalFace> faces, bool doubleSidedFace = false)
+        {
+            var defaultMaterial = MaterialHelper.CreateMaterial(
+                new System.Windows.Media.Color
+                {
+                    A = faces[0].Color.A,
+                    B = faces[0].Color.B,
+                    G = faces[0].Color.G,
+                    R = faces[0].Color.R
+                });
+
+            var result = new ModelVisual3D();
+            foreach (var face in faces)
+            {
+                var vOrder = new Point3DCollection();
+                for (var i = 0; i < 3; i++)
+                    vOrder.Add(new Point3D(face.Vertices[i].X, face.Vertices[i].Y, face.Vertices[i].Z));
+
+                var faceMaterial = face.Color == null
+                    ? defaultMaterial
+                    : MaterialHelper.CreateMaterial(new System.Windows.Media.Color
+                    {
+                        A = face.Color.A,
+                        B = face.Color.B,
+                        G = face.Color.G,
+                        R = face.Color.R
+                    });
+
+                result.Children.Add(new ModelVisual3D
+                {
+                    Content =
+                        new GeometryModel3D
+                        {
+                            Geometry = new MeshGeometry3D { Positions = vOrder },
+                            Material = faceMaterial
+                        }
+                });
+
+                if (doubleSidedFace)
+                {
+                    var reversedOrder = new Point3DCollection(vOrder.Reverse());
+                    result.Children.Add(new ModelVisual3D
+                    {
+                        Content =
+                            new GeometryModel3D
+                            {
+                                Geometry = new MeshGeometry3D { Positions = reversedOrder },
+                                Material = faceMaterial
+                            }
+                    });
+                }
+            }
+            return result;
+        }
         #endregion
 
         #region 3D Voxelization Plots
@@ -948,6 +1007,94 @@ namespace TVGL
             //  window.view1.Children.Add(model);
 
             model = MakeModelVisual3D(voxelSolid,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 255, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHangVoxelization(PolygonalFace face, List<Point3D> voxelCenters, double sideLength,
+    bool doubleSidedFace = false)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(new List<PolygonalFace> { face }, doubleSidedFace);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            var meshBuilder = new MeshBuilder();
+            foreach (var voxelCenter in voxelCenters)
+            {
+                meshBuilder.AddBox(voxelCenter, sideLength, sideLength, sideLength);
+            }
+
+            model = MakeModelVisual3D(meshBuilder,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 255, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHangVoxelization(List<PolygonalFace> faces, List<Point3D> voxelCenters,
+            List<Point3D> voxelCenters2,
+            double sideLength,
+            bool doubleSidedFace = false)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(faces, doubleSidedFace);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            var meshBuilder = new MeshBuilder();
+            foreach (var voxelCenter in voxelCenters)
+            {
+                meshBuilder.AddBox(voxelCenter, sideLength, sideLength, sideLength);
+            }
+            model = MakeModelVisual3D(meshBuilder,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 150, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            meshBuilder = new MeshBuilder();
+            foreach (var voxelCenter in voxelCenters2)
+            {
+                meshBuilder.AddBox(voxelCenter, sideLength, sideLength, sideLength);
+            }
+            model = MakeModelVisual3D(meshBuilder,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 150, R = 255, G = 0, B = 0 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            //Add a line from the first to last voxelCenter1
+            //Now create a line collection by doubling up the points
+            var lineCollection = new List<Point3D> { voxelCenters.First(), voxelCenters.Last() };
+            var color = new System.Windows.Media.Color { R = 255 };//G & B default to 0 to form red
+            var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color };
+            window.view1.Children.Add(lines);
+
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHangVoxelization(List<PolygonalFace> faces, List<Point3D> voxelCenters, double sideLength,
+            bool doubleSidedFace = false)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(faces, doubleSidedFace);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            var meshBuilder = new MeshBuilder();
+            foreach (var voxelCenter in voxelCenters)
+            {
+                meshBuilder.AddBox(voxelCenter, sideLength, sideLength, sideLength);
+            }
+
+            model = MakeModelVisual3D(meshBuilder,
                 MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 255, G = 189, B = 189 }));
             models.Add(model);
             window.view1.Children.Add(model);
