@@ -1770,7 +1770,7 @@ namespace TVGL
             signedDistance = 0.0;
             if (dot == 0) return null;
 
-            var d1 = -DistancePointToPlane(rayDirection, normalOfPlane, distOfPlane);
+            var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
             if (signedDistance.IsNegligible()) return rayPosition;
             return rayPosition.add(rayDirection.multiply(signedDistance));
@@ -1810,6 +1810,7 @@ namespace TVGL
         {
             var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
+            if (newPoint == null) return null;
             return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
         #endregion
@@ -1891,15 +1892,34 @@ namespace TVGL
         public static bool IsPointInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
+            var positions = vertices.Select(vertex => vertex.Position).ToList();
+            return IsPointInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
+        }
+
+        /// <summary>
+        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+        ///     triangle are considered "inside." Assumes vertex in question is in the same plane
+        ///     as the triangle.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="vertexInQuestion"></param>
+        /// <param name="onBoundaryIsInside"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static bool IsPointInsideTriangle(IList<double[]> vertices, double[] vertexInQuestion,
+            bool onBoundaryIsInside = true)
+        {
             if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
             var p = vertexInQuestion;
-            var a = vertices[0].Position;
-            var b = vertices[1].Position;
-            var c = vertices[2].Position;
+            var a = vertices[0];
+            var b = vertices[1];
+            var c = vertices[2];
             return SameSide(p, a, b, c, onBoundaryIsInside) &&
                    SameSide(p, b, a, c, onBoundaryIsInside) &&
                    SameSide(p, c, a, b, onBoundaryIsInside);
         }
+
+
 
         /// <summary>
         ///     Sames the side.
