@@ -1771,7 +1771,7 @@ namespace TVGL
             signedDistance = 0.0;
             if (dot == 0) return null;
 
-            var d1 = -DistancePointToPlane(rayDirection, normalOfPlane, distOfPlane);
+            var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
             if (signedDistance.IsNegligible()) return rayPosition;
             return rayPosition.add(rayDirection.multiply(signedDistance));
