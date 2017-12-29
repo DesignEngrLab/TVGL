@@ -194,8 +194,7 @@ namespace TVGL.Voxelization
 
         internal static long ChangeCoordinate(long id, long newValue, int dimension, int level, int startDiscretizationLevel)
         {
-            var shift = 4 + 4 * (4 - startDiscretizationLevel) - 4 * (startDiscretizationLevel - level);
-            shift += 20 * dimension;
+            var shift = 4 + 20 * dimension + 4 * (4 - startDiscretizationLevel) - 4 * (startDiscretizationLevel - level);
             newValue = newValue << shift;
             return newValue + MakeCoordinateZero(id, dimension);
         }
@@ -230,7 +229,7 @@ namespace TVGL.Voxelization
         internal static byte GetCoordinateIndexByte(long ID, int level, int dimension)
         {
             var shift = 4 + 20 * dimension + 4 * (4 - level);
-            return (byte)((ID >> shift) & Constants.MaxForSingleCoordinate);
+            return (byte)((ID >> shift) & (Constants.MaxForSingleCoordinate >> 4 * (4 - level)));
         }
         internal static int[] GetCoordinateIndices(long ID, int level)
         {
@@ -244,7 +243,7 @@ namespace TVGL.Voxelization
         internal static int GetCoordinateIndex(long ID, int level, int dimension)
         {
             var shift = 4 + 20 * dimension + 4 * (4 - level);
-            return (int)((ID >> shift) & Constants.MaxForSingleCoordinate);
+            return (int)((ID >> shift) & (Constants.MaxForSingleCoordinate >> 4 * (4 - level)));
         }
 
         #endregion

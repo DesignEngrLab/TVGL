@@ -872,7 +872,8 @@ namespace TVGL.Voxelization
                 //var coordinateMaskValue = MaskAllBut(voxel.ID, directionIndex);
                 //The actual coordinate value
                 //ToDo: double check this next line / convert this into a Constants function if useful
-                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel) + 4)) & Constants.MaxForSingleCoordinate;
+                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel) + 4))
+                                  & (Constants.MaxForSingleCoordinate >> 4 * (4 - voxelLevel));
                 if (sortedDict.ContainsKey(coordValue))
                 {
                     sortedDict[coordValue].Add(voxel);
