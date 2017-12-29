@@ -421,6 +421,7 @@ namespace TVGL.Voxelization
         {
             var bottomCoordinate = new double[]
             {
+                //ToDo: These are not correct. Why?
                 Constants.GetLevel1X(ID),
                 Constants.GetLevel1Y(ID),
                 Constants.GetLevel1Z(ID)
