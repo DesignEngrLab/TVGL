@@ -65,7 +65,7 @@ namespace TVGL.Voxelization
                 if (voxel.Role == VoxelRoleTypes.Empty) //then you may need to add it
                 {
                     if (!(voxel is Voxel_Level0_Class))
-                        voxel = new Voxel_Level0_Class(voxel.ID, VoxelRoleTypes.Full, VoxelSideLengths, Offset);
+                        voxel = new Voxel_Level0_Class(voxel.ID, VoxelRoleTypes.Full, this);
                     lock (voxelDictionaryLevel0)
                         if (!voxelDictionaryLevel0.ContainsKey(voxel.ID))
                             voxelDictionaryLevel0.Add(voxel.ID, (Voxel_Level0_Class)voxel);
@@ -92,7 +92,7 @@ namespace TVGL.Voxelization
                 if (voxel.Role == VoxelRoleTypes.Empty)
                 {
                     if (!(voxel is Voxel_Level1_Class))
-                        voxel = new Voxel_Level1_Class(voxel.ID, VoxelRoleTypes.Full, VoxelSideLengths, Offset);
+                        voxel = new Voxel_Level1_Class(voxel.ID, VoxelRoleTypes.Full, this);
                     lock (voxelDictionaryLevel1)
                         if (!voxelDictionaryLevel1.ContainsKey(voxel.ID))
                         {
@@ -102,7 +102,7 @@ namespace TVGL.Voxelization
                 }
                 else  //then it was partial
                     lock (voxel0.HighLevelVoxels)
-                        voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
+                        voxel0.HighLevelVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 1) == thisIDwoFlags);
                 ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Full;
                 if (voxel0.NextLevelVoxels.Count == 4096
                     && voxel0.NextLevelVoxels.All(v => voxelDictionaryLevel1[v].Role == VoxelRoleTypes.Full))
@@ -125,8 +125,7 @@ namespace TVGL.Voxelization
                 {
                     voxel0.HighLevelVoxels.Remove(voxel.ID);
                     if (voxel.Role == VoxelRoleTypes.Partial)
-                        voxel0.HighLevelVoxels.RemoveWhere(id =>
-                            (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+                        voxel0.HighLevelVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 2) == thisIDwoFlags);
                     voxel0.HighLevelVoxels.Add(thisIDwoFlags + Constants.SetRoleFlags(2, VoxelRoleTypes.Full));
                     makeParentFull = (voxel0.HighLevelVoxels.Count(isFullLevel2) == 4096);
                 }
@@ -154,7 +153,7 @@ namespace TVGL.Voxelization
                 {
                     voxel0.HighLevelVoxels.Remove(voxel.ID);
                     if (voxel.Role == VoxelRoleTypes.Partial)
-                        voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
+                        voxel0.HighLevelVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 3) == thisIDwoFlags);
                     voxel0.HighLevelVoxels.Add(thisIDwoFlags + Constants.SetRoleFlags(3, VoxelRoleTypes.Full));
                     makeParentFull = (GetSiblingVoxels(voxel).Count(v => isFullLevel3(v.ID)) == 4096);
                 }
@@ -216,7 +215,7 @@ namespace TVGL.Voxelization
                 else if (voxel.Role == VoxelRoleTypes.Partial)
                 {
                     lock (voxel0.HighLevelVoxels)
-                        voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskAllButLevel0and1) == thisIDwoFlags);
+                        voxel0.HighLevelVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 1) == thisIDwoFlags);
                     lock (voxelDictionaryLevel1) voxelDictionaryLevel1.Remove(voxel.ID);
                 }
             }
@@ -232,10 +231,10 @@ namespace TVGL.Voxelization
                     if (voxel.Level == 2)
                         lock (voxel0.HighLevelVoxels)
                             voxel0.HighLevelVoxels.RemoveWhere(
-                                id => (id & Constants.maskAllButLevel01and2) == thisIDwoFlags);
+                                id => Constants.MakeContainingVoxelID(id, 2) == thisIDwoFlags);
                     else if (voxel.Level == 3)
                         lock (voxel0.HighLevelVoxels)
-                            voxel0.HighLevelVoxels.RemoveWhere(id => (id & Constants.maskLevel4) == thisIDwoFlags);
+                            voxel0.HighLevelVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 3) == thisIDwoFlags);
                 }
             }
         }
@@ -247,7 +246,7 @@ namespace TVGL.Voxelization
             if (voxel.Level == 0)
             {
                 if (!(voxel is Voxel_Level0_Class))
-                    voxel = new Voxel_Level0_Class(voxel.ID, VoxelRoleTypes.Partial, VoxelSideLengths, Offset);
+                    voxel = new Voxel_Level0_Class(voxel.ID, VoxelRoleTypes.Partial, this);
                 lock (voxelDictionaryLevel0)
                     if (!voxelDictionaryLevel0.ContainsKey(voxel.ID))
                         voxelDictionaryLevel0.Add(voxel.ID, (Voxel_Level0_Class)voxel);
@@ -260,7 +259,7 @@ namespace TVGL.Voxelization
                 var voxel0 = voxelDictionaryLevel0[id0];
                 if (voxel0.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel0);
                 if (!(voxel is Voxel_Level1_Class))
-                    voxel = new Voxel_Level1_Class(voxel.ID, VoxelRoleTypes.Partial, VoxelSideLengths, Offset);
+                    voxel = new Voxel_Level1_Class(voxel.ID, VoxelRoleTypes.Partial, this);
                 lock (voxelDictionaryLevel1)
                     if (!voxelDictionaryLevel1.ContainsKey(voxel.ID))
                     {
@@ -337,10 +336,8 @@ namespace TVGL.Voxelization
             }
         }
 
-
-
-
         #endregion
+
         private void UpdateProperties(int level = -1)
         {
             _count = (long)voxelDictionaryLevel0.Count + (long)(voxelDictionaryLevel1?.Count ?? 0) +
@@ -364,66 +361,78 @@ namespace TVGL.Voxelization
             _volume += Math.Pow(VoxelSideLengths[discretizationLevel], 3) * _totals[2 * discretizationLevel + 1];
         }
 
+        internal double[] GetRealCoordinates(long ID, int level)
+        {
+            return GetRealCoordinates(level, Constants.GetCoordinateIndices(ID, level));
+            //var indices = Constants.GetCoordinateIndices(ID, level);
+            //return indices.multiply(VoxelSideLengths[level]).add(Offset);
+        }
+
+        internal double[] GetRealCoordinates(int level, params int[] indices)
+        {
+            return indices.multiply(VoxelSideLengths[level]).add(Offset);
+        }
+
         #region Quick Booleans for IDs
-        bool isFull(long ID)
+        internal static bool isFull(long ID)
         {
             return (ID & 3) == 3;
         }
-        bool isEmpty(long ID)
+        internal static bool isEmpty(long ID)
         {
             return (ID & 3) == 0;
         }
-        bool isPartial(long ID)
+        internal static bool isPartial(long ID)
         {
             var id = ID & 3;
             return id == 1 || id == 2;
         }
 
-        bool isLevel4(long ID)
+        internal static bool isLevel4(long ID)
         {
             return (ID & 15) >= 12;
         }
-        bool isLevel3(long ID)
+        internal static bool isLevel3(long ID)
         {
             var id = ID & 15;
             return id < 12 && id >= 8;
         }
-        bool isLevel2(long ID)
+        internal static bool isLevel2(long ID)
         {
             var id = ID & 15;
             return id < 8 && id >= 4;
         }
-        bool isLevel1(long ID)
+        internal static bool isLevel1(long ID)
         {
             var id = ID & 31;
             return id < 20 && id >= 16;
         }
-        bool isLevel0(long ID)
+        internal static bool isLevel0(long ID)
         {
             var id = ID & 31;
             return id < 4;
         }
-        bool isFullLevel2(long ID)
+        internal static bool isFullLevel2(long ID)
         {
             return isLevel2(ID) && isFull(ID);
         }
-        bool isPartialLevel2(long ID)
+        internal static bool isPartialLevel2(long ID)
         {
             return isLevel2(ID) && isPartial(ID);
         }
-        bool isFullLevel3(long ID)
+        internal static bool isFullLevel3(long ID)
         {
             return isLevel3(ID) && isFull(ID);
         }
-        bool isPartialLevel3(long ID)
+        internal static bool isPartialLevel3(long ID)
         {
             return isLevel3(ID) && isPartial(ID);
         }
-        bool isFullLevel4(long ID)
+        internal static bool isFullLevel4(long ID)
         {
             return isLevel4(ID) && isFull(ID);
         }
-        bool isPartialLevel4(long ID)
+        internal static bool isPartialLevel4(long ID)
         {
             return isLevel4(ID) && isPartial(ID);
         }

@@ -22,18 +22,16 @@ namespace TVGL.Voxelization
         private int lastIndex;
         private int freeList;
         private IEqualityComparer<long> comparer;
-        private readonly double[] voxelSideLengths;
-        private readonly double[] offset;
+        private readonly VoxelizedSolid solid;
         private bool CapacityMaxedOut;
 
 
         #region Constructors
 
-        public VoxelHashSet(IEqualityComparer<long> comparer, double[] voxelSideLengths, double[] offset)
+        public VoxelHashSet(IEqualityComparer<long> comparer, VoxelizedSolid solid)
         {
             this.comparer = comparer;
-            this.voxelSideLengths = voxelSideLengths;
-            this.offset = offset;
+            this.solid = solid;
             lastIndex = 0;
             count = 0;
             freeList = -1;
@@ -70,7 +68,7 @@ namespace TVGL.Voxelization
                 {
                     if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
                     {
-                        return new Voxel(slots[i].value, voxelSideLengths, offset);
+                        return new Voxel(slots[i].value, solid);
                     }
                 }
             }
@@ -79,9 +77,9 @@ namespace TVGL.Voxelization
         }
 
 
-        internal VoxelHashSet Copy()
+        internal VoxelHashSet Copy(VoxelizedSolid solid)
         {
-            var copy = new VoxelHashSet(this.comparer, (double[])voxelSideLengths.Clone(), (double[])this.offset.Clone())
+            var copy = new VoxelHashSet(this.comparer, solid)
             {
                 buckets = (int[])this.buckets.Clone(),
                 slots = (Slot[])slots.Clone(),

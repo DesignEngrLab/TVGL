@@ -13,6 +13,7 @@
 // ***********************************************************************
 
 using System.Collections.Generic;
+using TVGL.IOFunctions.threemfclasses;
 
 namespace TVGL.Voxelization
 {
@@ -87,9 +88,8 @@ namespace TVGL.Voxelization
 
         public int GetHashCode(long obj)
         {
-            var x = obj & mask;
-            var comp1 = (x >> shift1) & Constants.MaxForSingleCoordinate;
-            var comp2 = (x >> shift2) & Constants.MaxForSingleCoordinate;
+            var comp1 = (obj >> shift1) & Constants.MaxForSingleCoordinate;
+            var comp2 = (obj >> shift2) & Constants.MaxForSingleCoordinate;
             return (int)(comp1 + (comp2 << 11));
         }
     }

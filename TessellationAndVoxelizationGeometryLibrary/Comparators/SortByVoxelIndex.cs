@@ -32,21 +32,9 @@ namespace TVGL
         }
         public int Compare(long x, long y)
         {
-            switch (dimension)
-            {
-                case 0:
-                    if ((x & Voxelization.Constants.maskAllButX) > (y & Voxelization.Constants.maskAllButX))
-                        return sense;
-                    else return -sense;
-                case 1:
-                    if ((x & Voxelization.Constants.maskAllButY) > (y & Voxelization.Constants.maskAllButY))
-                        return sense;
-                    else return -sense;
-                default:
-                    if ((x & Voxelization.Constants.maskAllButZ) > (y & Voxelization.Constants.maskAllButZ))
-                        return sense;
-                    else return -sense;
-            }
+            if (Voxelization.Constants.MaskAllBut(x, dimension) > Voxelization.Constants.MaskAllBut(y, dimension))
+                return sense;
+            return -sense;
         }
     }
 }

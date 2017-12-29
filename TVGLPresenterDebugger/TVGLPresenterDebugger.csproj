@@ -299,6 +299,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs">
       <Link>TVGL\Voxelization\VoxelizedSolid.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidfromTessellatedSolid.cs">
+      <Link>TVGL\Voxelization\VoxelizedSolidfromTessellatedSolid.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs">
       <Link>TVGL\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs</Link>
     </Compile>
@@ -318,7 +321,6 @@
       <Link>Presenter\Window3DPlot.xaml.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TVGL\Voxelization\VoxelizedSolidfromTessellatedSolid.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">
