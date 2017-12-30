@@ -838,10 +838,13 @@ namespace TVGL
             var builder = new MeshBuilder();
             foreach (var voxel in solid.Voxels())
             {
-                var sideLength = voxel.SideLength;
-                builder.AddBox(new Point3D(voxel.BottomCoordinate[0]+0.5*sideLength,
-                    voxel.BottomCoordinate[1] + 0.5 * sideLength,
-                voxel.BottomCoordinate[2] + 0.5 * sideLength), sideLength, sideLength, sideLength);
+                if (solid.GetNeighbors(voxel).Any(n => n == null || n.Role == VoxelRoleTypes.Empty))
+                {
+                    var sideLength = voxel.SideLength;
+                    builder.AddBox(new Point3D(voxel.BottomCoordinate[0] + 0.5 * sideLength,
+                        voxel.BottomCoordinate[1] + 0.5 * sideLength,
+                        voxel.BottomCoordinate[2] + 0.5 * sideLength), sideLength, sideLength, sideLength);
+                }
             }
             return MakeModelVisual3D(builder, material);
         }

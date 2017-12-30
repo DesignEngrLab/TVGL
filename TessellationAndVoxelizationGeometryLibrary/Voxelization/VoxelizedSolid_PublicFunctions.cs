@@ -214,7 +214,6 @@ namespace TVGL.Voxelization
             var dimension = Math.Abs((int)direction) - 1;
 
             #region Check if steps outside or neighbor has different parent
-            //ToDo: double check this next line / convert this into a Constants function if useful
             long coordValue = Constants.GetCoordinateIndex(voxel.ID, voxel.Level, dimension);
             // can't this section shift be combined with first? No, when rightshifting bits, the newest
             // bits entering from the left will be 1's if the MSB is 1. Thus, we do it after the mask

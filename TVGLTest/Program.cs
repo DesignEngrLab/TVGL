@@ -119,7 +119,7 @@ namespace TVGL_Test
             //bounds[0] = ts1.Bounds[0];
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
-
+            Console.WriteLine("displaying");
             Presenter.ShowAndHangVoxelization(ts, vs1);
 
             //var tsFromVS = vs1.ConvertToTessellatedSolid();
