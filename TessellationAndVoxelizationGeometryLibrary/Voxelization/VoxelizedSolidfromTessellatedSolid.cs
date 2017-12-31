@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media.Media3D;
+//using System.Windows.Media.Media3D;
 using TVGL.MathOperations;
 
 namespace TVGL.Voxelization
@@ -88,8 +88,8 @@ namespace TVGL.Voxelization
                 transformedCoordinates[i] = coordinates; //i == vertex.IndexInList
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
             }  //);
-            //makeVoxelsForFacesAndEdges(ts);
-            makeVoxelForFacesAndEdgesAlternate(ts);
+            makeVoxelsForFacesAndEdges(ts);
+            //makeVoxelForFacesAndEdgesAlternate(ts);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior();
             if (discretizationLevel > 1)
@@ -110,7 +110,6 @@ namespace TVGL.Voxelization
                 });
             }
             UpdateProperties();
-            Debug.WriteLine("ids match: {0}", voxelDictionaryLevel1.Keys.All(k => isLevel2(k)));
         }
 
         #region Alternate Face Voxelization Method
@@ -336,86 +335,86 @@ namespace TVGL.Voxelization
             return Proximity.ClosestVertexOnTriangleToVertex(prim.A.Position, prim.B.Position, prim.C.Position, p, out uvw);
         }
 
-        private bool DoFaceVoxelizationMethodsMatch(PolygonalFace face,
-            HashSet<long> alternateMethod)
-        {
-            var primaryMethod = new HashSet<long>();
-            foreach (var voxel in face.Voxels)
-            {
-                primaryMethod.Add(Constants.ClearFlagsFromID(voxel.ID));
-            }
+        //private bool DoFaceVoxelizationMethodsMatch(PolygonalFace face,
+        //    HashSet<long> alternateMethod)
+        //{
+        //    var primaryMethod = new HashSet<long>();
+        //    foreach (var voxel in face.Voxels)
+        //    {
+        //        primaryMethod.Add(Constants.ClearFlagsFromID(voxel.ID));
+        //    }
 
-            var missingFromAlternateMethod = new HashSet<long>();
-            foreach (var voxelIndex in primaryMethod)
-            {
-                if (!alternateMethod.Contains(voxelIndex))
-                {
-                    missingFromAlternateMethod.Add(voxelIndex);
-                }
-            }
+        //    var missingFromAlternateMethod = new HashSet<long>();
+        //    foreach (var voxelIndex in primaryMethod)
+        //    {
+        //        if (!alternateMethod.Contains(voxelIndex))
+        //        {
+        //            missingFromAlternateMethod.Add(voxelIndex);
+        //        }
+        //    }
 
-            var missingFromPrimaryMethod = new HashSet<long>();
-            foreach (var voxelIndex in alternateMethod)
-            {
-                if (!primaryMethod.Contains(voxelIndex))
-                {
-                    missingFromPrimaryMethod.Add(voxelIndex);
-                }
-            }
+        //    var missingFromPrimaryMethod = new HashSet<long>();
+        //    foreach (var voxelIndex in alternateMethod)
+        //    {
+        //        if (!primaryMethod.Contains(voxelIndex))
+        //        {
+        //            missingFromPrimaryMethod.Add(voxelIndex);
+        //        }
+        //    }
 
-            if (!missingFromAlternateMethod.Any() && !missingFromPrimaryMethod.Any()) return true;
-            //Else, show the face and the voxels for each method
-            //Then show the missing voxels from each method
-            ShowFaceAndVoxels(face, primaryMethod);
-            ShowFaceAndVoxels(face, alternateMethod);
-            if (missingFromPrimaryMethod.Any()) ShowFaceAndVoxels(face, missingFromPrimaryMethod);
-            if (missingFromAlternateMethod.Any()) ShowFaceAndVoxels(face, missingFromAlternateMethod);
-            return false;
-        }
+        //    if (!missingFromAlternateMethod.Any() && !missingFromPrimaryMethod.Any()) return true;
+        //    //Else, show the face and the voxels for each method
+        //    //Then show the missing voxels from each method
+        //    ShowFaceAndVoxels(face, primaryMethod);
+        //    ShowFaceAndVoxels(face, alternateMethod);
+        //    if (missingFromPrimaryMethod.Any()) ShowFaceAndVoxels(face, missingFromPrimaryMethod);
+        //    if (missingFromAlternateMethod.Any()) ShowFaceAndVoxels(face, missingFromAlternateMethod);
+        //    return false;
+        //}
 
-        private void ShowFaceAndVoxels(PolygonalFace face, HashSet<long> IDs)
-        {
-            var sideLength = VoxelSideLengths[1];
-            var points = new List<Point3D>();
-            foreach (var ID in IDs)
-            {
-                var bottomCoordinate = GetRealCoordinates(ID, 1);
-                points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-                    bottomCoordinate[1] + 0.5 * sideLength,
-                    bottomCoordinate[2] + 0.5 * sideLength));
-            }
-            Presenter.ShowAndHangVoxelization(face, points, sideLength, true);
-        }
+        //private void ShowFaceAndVoxels(PolygonalFace face, HashSet<long> IDs)
+        //{
+        //    var sideLength = VoxelSideLengths[1];
+        //    var points = new List<Point3D>();
+        //    foreach (var ID in IDs)
+        //    {
+        //        var bottomCoordinate = GetRealCoordinates(ID, 1);
+        //        points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+        //            bottomCoordinate[1] + 0.5 * sideLength,
+        //            bottomCoordinate[2] + 0.5 * sideLength));
+        //    }
+        //    Presenter.ShowAndHangVoxelization(face, points, sideLength, true);
+        //}
 
-        private void ShowSolidAndLevel1Voxels(TessellatedSolid solid, IEnumerable<Voxel_Level1_Class> voxels,
-            IEnumerable<long> voxelsInQuestion)
-        {
-            ShowSolidAndLevel1Voxels(solid.Faces.ToList(), voxels, voxelsInQuestion);
-        }
+        //private void ShowSolidAndLevel1Voxels(TessellatedSolid solid, IEnumerable<Voxel_Level1_Class> voxels,
+        //    IEnumerable<long> voxelsInQuestion)
+        //{
+        //    ShowSolidAndLevel1Voxels(solid.Faces.ToList(), voxels, voxelsInQuestion);
+        //}
 
-        private void ShowSolidAndLevel1Voxels(List<PolygonalFace> faces, IEnumerable<Voxel_Level1_Class> voxels,
-            IEnumerable<long> voxelsInQuestion)
-        {
-            var sideLength = VoxelSideLengths[1];
-            var points = new List<Point3D>();
-            foreach (var voxel in voxels)
-            {
-                var bottomCoordinate = GetRealCoordinates(voxel.ID, 1);
-                points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-                    bottomCoordinate[1] + 0.5 * sideLength,
-                    bottomCoordinate[2] + 0.5 * sideLength));
-            }
+        //private void ShowSolidAndLevel1Voxels(List<PolygonalFace> faces, IEnumerable<Voxel_Level1_Class> voxels,
+        //    IEnumerable<long> voxelsInQuestion)
+        //{
+        //    var sideLength = VoxelSideLengths[1];
+        //    var points = new List<Point3D>();
+        //    foreach (var voxel in voxels)
+        //    {
+        //        var bottomCoordinate = GetRealCoordinates(voxel.ID, 1);
+        //        points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+        //            bottomCoordinate[1] + 0.5 * sideLength,
+        //            bottomCoordinate[2] + 0.5 * sideLength));
+        //    }
 
-            var points2 = new List<Point3D>();
-            foreach (var ID in voxelsInQuestion)
-            {
-                var bottomCoordinate = GetRealCoordinates(ID, 1);
-                points2.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-                    bottomCoordinate[1] + 0.5 * sideLength,
-                    bottomCoordinate[2] + 0.5 * sideLength));
-            }
-            Presenter.ShowAndHangVoxelization(faces, points, points2, sideLength, true);
-        }
+        //    var points2 = new List<Point3D>();
+        //    foreach (var ID in voxelsInQuestion)
+        //    {
+        //        var bottomCoordinate = GetRealCoordinates(ID, 1);
+        //        points2.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+        //            bottomCoordinate[1] + 0.5 * sideLength,
+        //            bottomCoordinate[2] + 0.5 * sideLength));
+        //    }
+        //    Presenter.ShowAndHangVoxelization(faces, points, points2, sideLength, true);
+        //}
 
         #endregion
 
@@ -847,7 +846,7 @@ namespace TVGL.Voxelization
             });
             // Parallel.ForEach(dict.Values.Where(v => v.Item1.Any() && v.Item2.Any()), v =>
             foreach (var v in rows.Values.Where(v => v.Any()))
-                MakeInteriorVoxelsAlongLine2(v, sweepDim);
+                MakeInteriorVoxelsAlongLine(v, sweepDim);
         }
 
         //Sort partial voxels along a given direction and then consider rows along that direction 
@@ -964,7 +963,7 @@ namespace TVGL.Voxelization
                     };
                     nextVoxelCoord[sweepDim]++;
                     var nextVoxelIndex = Constants.MakeVoxelID1(nextVoxelCoord[0], nextVoxelCoord[1], nextVoxelCoord[2]);
-                    ShowSolidAndLevel1Voxels(facesToConsider, all.ToList(), new List<long> { nextVoxelIndex });
+                    //ShowSolidAndLevel1Voxels(facesToConsider, all.ToList(), new List<long> { nextVoxelIndex });
                 }
                 var gray = new Color(KnownColors.LightGray);
                 foreach (var face in facesToConsider)

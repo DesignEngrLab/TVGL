@@ -89,7 +89,7 @@ namespace TVGL.Voxelization
             } //);
             var vertices = voxelVertexDictionary.Values.ToList();
             vertices.AddRange(boundaryVertexDictionary.Values);
-            return new TessellatedSolid(faceCollection.ToList(), vertices);
+            return new TessellatedSolid(faceCollection.ToList(), vertices, false);
         }
 
         private void MakeFaces(ConcurrentBag<PolygonalFace> faceCollection, Vertex v1, Vertex v2, Vertex v3, Vertex v4)

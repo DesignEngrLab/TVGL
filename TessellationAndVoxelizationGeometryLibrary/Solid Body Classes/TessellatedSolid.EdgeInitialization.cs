@@ -443,6 +443,7 @@ namespace TVGL
                         foreach (var triangle in triangles)
                         {
                             var newFace = new PolygonalFace(triangle, normal);
+                            if (newFace.Area.IsNegligible() && newFace.Normal.Any(double.IsNaN)) continue;
                             newFaces.Add(newFace);
                             for (var j = 0; j < 3; j++)
                             {

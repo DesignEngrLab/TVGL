@@ -407,7 +407,7 @@ namespace TVGL.Voxelization
         public VoxelizedSolid DraftToNewSolid(VoxelDirections direction)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.Draft(direction, null);
+            copy.Draft(direction);
             return copy;
         }
 
@@ -418,30 +418,33 @@ namespace TVGL.Voxelization
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public void Draft(VoxelDirections direction)
         {
-            Draft(direction, null);
+            Draft(direction, null, direction > 0 ?
+                numVoxels[Math.Abs((int)direction) - 1] : int.MaxValue);
         }
 
-        private bool Draft(VoxelDirections direction, IVoxel parent)
+        private bool Draft(VoxelDirections direction, IVoxel parent, int remainingVoxelLayers)
         {
-            var positiveStep = direction > 0;
+            var positiveDir = direction > 0;
             var dimension = Math.Abs((int)direction) - 1;
             var voxels = GetChildVoxels(parent);
-            var layerOfVoxels = new HashSet<IVoxel>[16];
-            for (int i = 0; i < 16; i++)
+            int factor = (int)Math.Pow(16, discretizationLevel - voxels.First().Level);
+            var limit = Math.Min((remainingVoxelLayers / factor) + 1, 16);
+            var layerOfVoxels = new HashSet<IVoxel>[limit];
+            for (int i = 0; i < limit; i++)
                 layerOfVoxels[i] = new HashSet<IVoxel>();
             Parallel.ForEach(voxels, v =>
             {
-                var layerIndex = getLayerIndex(v, dimension, positiveStep);
+                var layerIndex = getLayerIndex(v, dimension, positiveDir);
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].Add(v);
             });
             var nextLayerCount = 0;
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < limit; i++)
             {
                 if (parent == null)
                     Debug.WriteLine("layer: {0}", i);
-                Parallel.ForEach(layerOfVoxels[i], voxel =>
-                //foreach (var voxel in layerOfVoxels[i])
+                //Parallel.ForEach(layerOfVoxels[i], voxel =>
+                foreach (var voxel in layerOfVoxels[i])
                 {
                     if (voxel.Role == VoxelRoleTypes.Full ||
                         (voxel.Role == VoxelRoleTypes.Partial && voxel.Level == discretizationLevel))
@@ -449,26 +452,28 @@ namespace TVGL.Voxelization
                         nextLayerCount++;
                         bool neighborHasDifferentParent;
                         var neighbor = voxel;
-                        var j = i;
+                        var neighborLayer = i;
                         do
                         {
                             neighbor = GetNeighbor(neighbor, direction, out neighborHasDifferentParent);
-                            if (neighbor == null)
+                            neighborLayer++;
+                            if (neighbor == null || layerOfVoxels.Length <= neighborLayer)
                                 break; // null happens when you go outside of bounds (of coarsest voxels)
-                            if (!neighborHasDifferentParent) layerOfVoxels[++j].Remove(neighbor);
+                            if (!neighborHasDifferentParent)
+                                layerOfVoxels[neighborLayer].Remove(neighbor);
                             MakeVoxelFull(neighbor);
                         } while (!neighborHasDifferentParent);
                     }
                     else if (voxel.Role == VoxelRoleTypes.Partial)
                     {
-                        var filledUpNextLayer = Draft(direction, voxel);
+                        var filledUpNextLayer = Draft(direction, voxel, remainingVoxelLayers - factor);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
-                        if (neighbor == null) return; // null happens when you go outside of bounds (of coarsest voxels)
+                        if (neighbor == null || layerOfVoxels.Length <= i + 1) continue; //return; // null happens when you go outside of bounds (of coarsest voxels)
                         layerOfVoxels[i + 1].Add(neighbor);
                         if (filledUpNextLayer) MakeVoxelFull(neighbor);
                         else MakeVoxelPartial(neighbor);
                     }
-                });
+                } //);
             }
             return nextLayerCount == 256;
         }

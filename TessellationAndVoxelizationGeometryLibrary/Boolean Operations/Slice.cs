@@ -114,8 +114,8 @@ namespace TVGL.Boolean_Operations
         /// <param name="negativeSideSolids"></param>
         public static void MakeSolids(ContactData contactData, UnitType unitType, out List<TessellatedSolid> positiveSideSolids, out List<TessellatedSolid> negativeSideSolids)
         {
-            positiveSideSolids = contactData.PositiveSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, null, unitType)).ToList();
-            negativeSideSolids = contactData.NegativeSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, null, unitType)).ToList();
+            positiveSideSolids = contactData.PositiveSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, true, null, unitType)).ToList();
+            negativeSideSolids = contactData.NegativeSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, true, null, unitType)).ToList();
         }
 
 

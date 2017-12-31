@@ -140,11 +140,11 @@ namespace TVGLPresenterDX
             // var vs2 = (VoxelizedSolid)vs1.Copy();
            // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
             //vs1.ExclusiveOr(vs2);
-            PresenterShowAndHang(new Solid[] { vs1 });
+            //PresenterShowAndHang(new Solid[] { vs1 });
 
-            var vsPos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
+            var vsPos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
             PresenterShowAndHang(new Solid[] { vsPos });
-            var vsNeg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
+            var vsNeg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
             PresenterShowAndHang(new Solid[] { vsNeg });
 
             var vsInt = vsPos.IntersectToNewSolid(vsNeg);

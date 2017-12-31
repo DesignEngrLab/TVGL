@@ -82,7 +82,7 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*");
-            for (var i = 14; i < fileNames.Count(); i++)
+            for (var i = 17; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;

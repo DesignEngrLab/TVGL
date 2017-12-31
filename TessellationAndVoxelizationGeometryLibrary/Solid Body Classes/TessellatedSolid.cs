@@ -258,7 +258,7 @@ namespace TVGL
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null,
+        public TessellatedSolid(IList<PolygonalFace> faces, IList<Vertex> vertices = null, bool copyElements = true,
             IList<Color> colors = null, UnitType units = UnitType.unspecified, string name = "", string filename = "",
             List<string> comments = null, string language = "") : base(units, name, filename, comments, language)
         {
@@ -266,19 +266,17 @@ namespace TVGL
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             //Create a copy of the vertex and face (This is NON-Destructive!)
-
             var newVertices = new List<Vertex>();
             var simpleCompareDict = new Dictionary<Vertex, Vertex>();
             for (var i = 0; i < vertices.Count; i++)
             {
-                var vertex = vertices[i].Copy();
+                var vertex = copyElements ? vertices[i].Copy() : vertices[i];
                 vertex.ReferenceIndex = 0;
                 vertex.IndexInList = i;
                 newVertices.Add(vertex);
                 simpleCompareDict.Add(vertices[i], vertex);
             }
             Vertices = newVertices.ToArray();
-            NumberOfVertices = Vertices.Length;
 
             HasUniformColor = true;
             if (colors == null || !colors.Any())
@@ -288,7 +286,7 @@ namespace TVGL
             for (var i = 0; i < faces.Count; i++)
             {
                 //Keep "CreatedInFunction" to help with debug
-                var face = faces[i].Copy();
+                var face = copyElements ? faces[i].Copy() : faces[i];
                 face.PartOfConvexHull = false;
                 face.IndexInList = i;
                 var faceVertices = new List<Vertex>();
@@ -310,6 +308,7 @@ namespace TVGL
             }
             Faces = newFaces.ToArray();
             NumberOfFaces = Faces.Length;
+            NumberOfVertices = Vertices.Length;
             CompleteInitiation();
         }
 
