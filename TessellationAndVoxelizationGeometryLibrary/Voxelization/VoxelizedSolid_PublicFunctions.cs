@@ -427,8 +427,8 @@ namespace TVGL.Voxelization
             var positiveDir = direction > 0;
             var dimension = Math.Abs((int)direction) - 1;
             var voxels = GetChildVoxels(parent);
-            int factor = (int)Math.Pow(16, discretizationLevel - voxels.First().Level);
-            var limit = Math.Min((remainingVoxelLayers / factor) + 1, 16);
+            var voxelsPerLayer = Math.Pow(16, discretizationLevel - voxels.First().Level);
+            var limit = Math.Min((int)Math.Ceiling(remainingVoxelLayers / voxelsPerLayer), 16);
             var layerOfVoxels = new HashSet<IVoxel>[limit];
             for (int i = 0; i < limit; i++)
                 layerOfVoxels[i] = new HashSet<IVoxel>();
@@ -438,16 +438,17 @@ namespace TVGL.Voxelization
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].Add(v);
             });
+            var innerLimit = limit < 16 ? limit : 17;
             var nextLayerCount = 0;
             for (int i = 0; i < limit; i++)
             {
                 if (parent == null)
                     Debug.WriteLine("layer: {0}", i);
-                //Parallel.ForEach(layerOfVoxels[i], voxel =>
-                foreach (var voxel in layerOfVoxels[i])
+                Parallel.ForEach(layerOfVoxels[i], voxel =>
+                //foreach (var voxel in layerOfVoxels[i])
                 {
-                    if (voxel.Role == VoxelRoleTypes.Full ||
-                        (voxel.Role == VoxelRoleTypes.Partial && voxel.Level == discretizationLevel))
+                    if (remainingVoxelLayers >= voxelsPerLayer && (voxel.Role == VoxelRoleTypes.Full
+                        || (voxel.Role == VoxelRoleTypes.Partial && voxel.Level == discretizationLevel)))
                     {
                         nextLayerCount++;
                         bool neighborHasDifferentParent;
@@ -456,24 +457,23 @@ namespace TVGL.Voxelization
                         do
                         {
                             neighbor = GetNeighbor(neighbor, direction, out neighborHasDifferentParent);
-                            neighborLayer++;
-                            if (neighbor == null || layerOfVoxels.Length <= neighborLayer)
-                                break; // null happens when you go outside of bounds (of coarsest voxels)
-                            if (!neighborHasDifferentParent)
+                            if (neighbor == null) break; // null happens when you go outside of bounds (of coarsest voxels)
+                            if (++neighborLayer < innerLimit) neighbor = MakeVoxelFull(neighbor);
+                            if (!neighborHasDifferentParent && neighborLayer < layerOfVoxels.Length)
                                 layerOfVoxels[neighborLayer].Remove(neighbor);
-                            MakeVoxelFull(neighbor);
                         } while (!neighborHasDifferentParent);
                     }
                     else if (voxel.Role == VoxelRoleTypes.Partial)
                     {
-                        var filledUpNextLayer = Draft(direction, voxel, remainingVoxelLayers - factor);
+                        var filledUpNextLayer = Draft(direction, voxel, remainingVoxelLayers);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
-                        if (neighbor == null || layerOfVoxels.Length <= i + 1) continue; //return; // null happens when you go outside of bounds (of coarsest voxels)
+                        if (neighbor == null || layerOfVoxels.Length <= i + 1) return; // null happens when you go outside of bounds (of coarsest voxels)
+                        if (filledUpNextLayer) neighbor = MakeVoxelFull(neighbor);
+                        else neighbor = MakeVoxelPartial(neighbor);
                         layerOfVoxels[i + 1].Add(neighbor);
-                        if (filledUpNextLayer) MakeVoxelFull(neighbor);
-                        else MakeVoxelPartial(neighbor);
                     }
-                } //);
+                } );
+                remainingVoxelLayers -= (int)voxelsPerLayer;
             }
             return nextLayerCount == 256;
         }
@@ -530,7 +530,7 @@ namespace TVGL.Voxelization
                          thisVoxel.Role == VoxelRoleTypes.Full) MakeVoxelFull(thisVoxel);
                 else
                 {
-                    MakeVoxelPartial(thisVoxel);
+                    thisVoxel = (Voxel_Level1_Class)MakeVoxelPartial(thisVoxel);
                     if (discretizationLevel >= 2)
                     {
                         var v0Parent = (Voxel_Level0_Class)GetParentVoxel(thisVoxel);
@@ -602,7 +602,7 @@ namespace TVGL.Voxelization
                 if (referenceHighestRole == VoxelRoleTypes.Full) MakeVoxelEmpty(thisVoxel);
                 else if (referenceHighestRole == VoxelRoleTypes.Partial)
                 {
-                    MakeVoxelPartial(thisVoxel);
+                    thisVoxel = (Voxel_Level1_Class)MakeVoxelPartial(thisVoxel);
                     if (discretizationLevel >= 2)
                     {
                         var v0Parent = (Voxel_Level0_Class)GetParentVoxel(thisVoxel);

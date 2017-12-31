@@ -83,8 +83,8 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            for (var i = 72; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("sth*");
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -122,32 +122,32 @@ namespace TVGLPresenterDX
         {
             var ts2 = (TessellatedSolid)ts.TransformToNewSolid(new double[,]
               {
-                {1,0,0,(ts.XMax - ts.XMin)/2},
-                {0,1,0,(ts.YMax-ts.YMin)/2},
-                {0,0,1,(ts.ZMax-ts.ZMin)/2},
+                {1,0,0,(ts.XMax - ts.XMin)/10},
+                {0,1,0,(ts.YMax-ts.YMin)/10},
+                {0,0,1,(ts.ZMax-ts.ZMin)/10},
               });
             var bounds = new double[2][];
             bounds[0] = ts.Bounds[0];
             bounds[1] = ts2.Bounds[1];
             var stopWatch = new Stopwatch();
             stopWatch.Restart();
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
-            
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false); //, bounds);
+
             stopWatch.Stop();
             Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
                 ts.Volume, vs1.Volume, vs1.Count, stopWatch.Elapsed.TotalSeconds);
             // PresenterShowAndHang(new Solid[] { ts, vs1 });
             // var vs2 = (VoxelizedSolid)vs1.Copy();
-           // var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
+            //var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
             //vs1.ExclusiveOr(vs2);
             //PresenterShowAndHang(new Solid[] { vs1 });
 
             var vsPos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
-            PresenterShowAndHang(new Solid[] { vsPos });
+            //PresenterShowAndHang(new Solid[] { vsPos });
             var vsNeg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
-            PresenterShowAndHang(new Solid[] { vsNeg });
+            //PresenterShowAndHang(new Solid[] { vsNeg });
 
-            var vsInt = vsPos.IntersectToNewSolid(vsNeg);
+            var vsInt = vsNeg.IntersectToNewSolid(vsPos);
             PresenterShowAndHang(new Solid[] { vsInt });
         }
     }

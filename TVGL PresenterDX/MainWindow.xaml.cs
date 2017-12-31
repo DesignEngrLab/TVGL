@@ -95,8 +95,8 @@ namespace TVGLPresenterDX
             var normals = new Vector3Collection();
             foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
             {
-                if (vs.GetNeighbors(v).Any(n => n == null || n.Role == VoxelRoleTypes.Empty))
-                {
+                //if (vs.GetNeighbors(v).Any(n => n == null || n.Role == VoxelRoleTypes.Empty))
+                //{
                     var i = positions.Count;
                     var x = (float)v.BottomCoordinate[0];
                     var y = (float)v.BottomCoordinate[1];
@@ -124,7 +124,7 @@ namespace TVGLPresenterDX
                     normals.Add(new Vector3(0f, 0f, 1f));
                     normals.Add(new Vector3(0f, -1f, 0f));
                     normals.Add(new Vector3(0f, -1f, 0f));
-                }
+                //}
             }
 
             return new MeshGeometryModel3D

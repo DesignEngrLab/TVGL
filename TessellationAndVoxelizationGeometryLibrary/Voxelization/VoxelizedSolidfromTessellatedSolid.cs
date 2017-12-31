@@ -1212,7 +1212,7 @@ namespace TVGL.Voxelization
                 }
                 if (!voxelLevel0.NextLevelVoxels.Contains(voxIDLevel1))
                 {
-                    if (voxelLevel0.NextLevelVoxels.Count == 4095) MakeVoxelFull(voxelLevel0);
+                    if (voxelLevel0.NextLevelVoxels.Count == 4095) voxelLevel0 = (Voxel_Level0_Class)MakeVoxelFull(voxelLevel0);
                     else lock (voxelLevel0.NextLevelVoxels) voxelLevel0.NextLevelVoxels.Add(voxIDLevel1);
                 }
             }
