@@ -257,9 +257,8 @@ namespace TVGL.Voxelization
             {
                 if (!(voxel is Voxel_Level0_Class))
                     voxel = new Voxel_Level0_Class(voxel.ID, VoxelRoleTypes.Empty, this);
-                if (voxel.Role == VoxelRoleTypes.Empty)
-                    lock (voxelDictionaryLevel0)
-                        //  if (!voxelDictionaryLevel0.ContainsKey(voxel.ID))
+                lock (voxelDictionaryLevel0)
+                    if (!voxelDictionaryLevel0.ContainsKey(voxel.ID))
                         voxelDictionaryLevel0.Add(voxel.ID, (Voxel_Level0_Class)voxel);
                 ((Voxel_Level0_Class)voxel).NextLevelVoxels = new VoxelHashSet(new VoxelComparerCoarse(), this);
                 ((Voxel_Level0_Class)voxel).HighLevelVoxels = new VoxelHashSet(new VoxelComparerFine(), this);
