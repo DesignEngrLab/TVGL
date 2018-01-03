@@ -83,7 +83,7 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("sth*");
+            var fileNames = dir.GetFiles("*a*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -120,34 +120,39 @@ namespace TVGLPresenterDX
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var ts2 = (TessellatedSolid)ts.TransformToNewSolid(new double[,]
-              {
-                {1,0,0,(ts.XMax - ts.XMin)/10},
-                {0,1,0,(ts.YMax-ts.YMin)/10},
-                {0,0,1,(ts.ZMax-ts.ZMin)/10},
-              });
-            var bounds = new double[2][];
-            bounds[0] = ts.Bounds[0];
-            bounds[1] = ts2.Bounds[1];
             var stopWatch = new Stopwatch();
+            //var ts2 = (TessellatedSolid)ts.TransformToNewSolid(new double[,]
+            //  {
+            //    {1,0,0,(ts.XMax - ts.XMin)/2},
+            //    {0,1,0,(ts.YMax-ts.YMin)/2},
+            //    {0,0,1,(ts.ZMax-ts.ZMin)/2},
+            //  });
+            //var bounds = new double[2][];
+            //bounds[0] = ts.Bounds[0];//.multiply(3);
+            //bounds[1] = ts2.Bounds[1];//.multiply(3);
             stopWatch.Restart();
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false); //, bounds);
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
 
             stopWatch.Stop();
             Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
                 ts.Volume, vs1.Volume, vs1.Count, stopWatch.Elapsed.TotalSeconds);
+            stopWatch.Restart();
             // PresenterShowAndHang(new Solid[] { ts, vs1 });
             // var vs2 = (VoxelizedSolid)vs1.Copy();
             //var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
-            //vs1.ExclusiveOr(vs2);
+            //vs1.Subtract(vs2);
             //PresenterShowAndHang(new Solid[] { vs1 });
 
-            var vsPos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
+            var vsPos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
             //PresenterShowAndHang(new Solid[] { vsPos });
-            var vsNeg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
+            var vsNeg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
             //PresenterShowAndHang(new Solid[] { vsNeg });
 
             var vsInt = vsNeg.IntersectToNewSolid(vsPos);
+
+            stopWatch.Stop();
+            Console.WriteLine("Intersection: tsvol:{0}\tvol:{1}\ttime:{2}",
+                ts.Volume, vsInt.Volume, stopWatch.Elapsed.TotalSeconds);
             PresenterShowAndHang(new Solid[] { vsInt });
         }
     }

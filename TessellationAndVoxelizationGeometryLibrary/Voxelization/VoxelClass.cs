@@ -86,6 +86,8 @@ namespace TVGL.Voxelization
         {
             this.ID = ID;
             Role = voxelRole;
+            if (Role == VoxelRoleTypes.Partial) this.ID += 1;
+            else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
             CoordinateIndices = Constants.GetCoordinateIndicesByte(ID, 0);
             SideLength = solid.VoxelSideLengths[0];
             BottomCoordinate = solid.GetRealCoordinates(0, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
@@ -108,12 +110,13 @@ namespace TVGL.Voxelization
 
         public Voxel_Level1_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid)
         {
-            this.ID = ID;
+            this.ID =Constants.ClearFlagsFromID(ID) + 16;
             Role = voxelRole;
+            if (Role == VoxelRoleTypes.Partial) this.ID += 1;
+            else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
             CoordinateIndices = Constants.GetCoordinateIndicesByte(ID, 1);
             SideLength = solid.VoxelSideLengths[1];
             BottomCoordinate = solid.GetRealCoordinates(1, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
         }
-        
     }
 }

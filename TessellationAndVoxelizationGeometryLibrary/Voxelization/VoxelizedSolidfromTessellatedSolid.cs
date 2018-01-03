@@ -1095,12 +1095,16 @@ namespace TVGL.Voxelization
             bool level1AlreadyMade = false;
             var voxIDLevel0 = Constants.MakeVoxelID0(x, y, z);
             var voxIDLevel1 = Constants.MakeVoxelID1(x, y, z);
+            Voxel_Level1_Class voxelLevel1 = null;
             lock (voxelDictionaryLevel1)
             {
                 if (voxelDictionaryLevel1.ContainsKey(voxIDLevel1))
                     level1AlreadyMade = true;
                 else
-                    voxelDictionaryLevel1.Add(voxIDLevel1, new Voxel_Level1_Class(voxIDLevel1, VoxelRoleTypes.Full, this));
+                {
+                    voxelLevel1 = new Voxel_Level1_Class(voxIDLevel1, VoxelRoleTypes.Full, this);
+                    voxelDictionaryLevel1.Add(voxelLevel1.ID, voxelLevel1);
+                }
             }
             if (level1AlreadyMade)
             {
@@ -1122,12 +1126,10 @@ namespace TVGL.Voxelization
                     }
                 }
                 if (!voxelLevel0.NextLevelVoxels.Contains(voxIDLevel1))
-                {
-                    if (voxelLevel0.NextLevelVoxels.Count == 4095
+                    lock (voxelLevel0.NextLevelVoxels) voxelLevel0.NextLevelVoxels.Add(voxelLevel1.ID);
+                if (voxelLevel0.NextLevelVoxels.Count == 4096
                         && voxelLevel0.NextLevelVoxels.All(v => voxelDictionaryLevel1[v].Role == VoxelRoleTypes.Full))
-                        MakeVoxelFull(voxelLevel0);
-                    else lock (voxelLevel0.NextLevelVoxels) voxelLevel0.NextLevelVoxels.Add(voxIDLevel1);
-                }
+                    MakeVoxelFull(voxelLevel0);
             }
         }
         #endregion
@@ -1193,7 +1195,7 @@ namespace TVGL.Voxelization
                 else
                 {
                     voxelLevel1 = new Voxel_Level1_Class(voxIDLevel1, VoxelRoleTypes.Partial, this);
-                    voxelDictionaryLevel1.Add(voxIDLevel1, voxelLevel1);
+                    voxelDictionaryLevel1.Add(voxelLevel1.ID, voxelLevel1);
                 }
             }
             if (level1AlreadyMade)
@@ -1207,13 +1209,13 @@ namespace TVGL.Voxelization
                     else
                     {
                         voxelLevel0 = new Voxel_Level0_Class(voxIDLevel0, VoxelRoleTypes.Partial, this);
-                        voxelDictionaryLevel0.Add(voxIDLevel0, voxelLevel0);
+                        voxelDictionaryLevel0.Add(voxelLevel0.ID, voxelLevel0);
                     }
                 }
                 if (!voxelLevel0.NextLevelVoxels.Contains(voxIDLevel1))
                 {
                     if (voxelLevel0.NextLevelVoxels.Count == 4095) voxelLevel0 = (Voxel_Level0_Class)MakeVoxelFull(voxelLevel0);
-                    else lock (voxelLevel0.NextLevelVoxels) voxelLevel0.NextLevelVoxels.Add(voxIDLevel1);
+                    else lock (voxelLevel0.NextLevelVoxels) voxelLevel0.NextLevelVoxels.Add(voxelLevel1.ID);
                 }
             }
             Add(voxelLevel0, tsObject);

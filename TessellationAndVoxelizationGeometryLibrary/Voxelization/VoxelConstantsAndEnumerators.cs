@@ -175,7 +175,10 @@ namespace TVGL.Voxelization
             NumberStyles.HexNumber);   // remove the flags with #FFFFF,FFFFF,FFFFE,0
         internal static long ClearFlagsFromID(long ID)
         {
-            bool level234 = (ID & 12) > 0;
+            return ClearFlagsFromID(ID, (ID & 12) > 0);
+        }
+        internal static long ClearFlagsFromID(long ID, bool level234)
+        {
             if (level234) return ID & maskOutFlags234;
             else return ID & maskOutFlags01;
         }

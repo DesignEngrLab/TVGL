@@ -8,56 +8,56 @@
           <coordinates>
             <x>1</x>
             <y>1</y>
-            <z>-1</z>
+            <z>-.4</z>
           </coordinates>
         </vertex>
         <vertex>
           <coordinates>
             <x>1</x>
             <y>-1</y>
-            <z>-1</z>
+            <z>-.4</z>
           </coordinates>
         </vertex>
         <vertex>
           <coordinates>
             <x>-1</x>
             <y>-1</y>
-            <z>-1</z>
+            <z>-.4</z>
           </coordinates>
         </vertex>
         <vertex>
           <coordinates>
             <x>-1</x>
             <y>1</y>
-            <z>-1</z>
+            <z>-.4</z>
           </coordinates>
         </vertex>
         <vertex>
           <coordinates>
             <x>1</x>
-            <y>0.999999</y>
-            <z>1</z>
+            <y>1</y>
+            <z>.4</z>
           </coordinates>
         </vertex>
         <vertex>
           <coordinates>
-            <x>0.999999</x>
+            <x>1</x>
             <y>-1</y>
-            <z>1</z>
+            <z>.4</z>
           </coordinates>
         </vertex>
         <vertex>
           <coordinates>
             <x>-1</x>
             <y>-1</y>
-            <z>1</z>
+            <z>.4</z>
           </coordinates>
         </vertex>
         <vertex>
           <coordinates>
             <x>-1</x>
             <y>1</y>
-            <z>1</z>
+            <z>.4</z>
           </coordinates>
         </vertex>
       </vertices>
