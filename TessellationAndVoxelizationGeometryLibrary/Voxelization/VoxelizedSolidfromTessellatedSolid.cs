@@ -709,14 +709,19 @@ namespace TVGL.Voxelization
             int sweepDim, int uDim, int vDim, Edge edge, PolygonalFace face, double[] nextEndPoint,
             Vertex startVertex)
         {
+            //Check if this edge is contained within one voxel. Last() will use level1 in the current setup
+            bool voxelizeEdge = edge.To.Voxels.Last() != edge.From.Voxels.Last();
             double u, v;
             var reachedOtherVertex = findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
                 sweepValue, out u, out v);
 
-            makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
-            makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
+            if (voxelizeEdge)
+            {
+                makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
+                    sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
+                makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
+                    sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
+            }
 
             if (reachedOtherVertex)
             {
@@ -728,10 +733,13 @@ namespace TVGL.Voxelization
                 findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
                     sweepValue, out u, out v);
 
-                makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                    sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
-                makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                    sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
+                if (voxelizeEdge)
+                {
+                    makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
+                        sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
+                    makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
+                        sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
+                }
             }
             startPoint[uDim] = u;
             startPoint[vDim] = v;
