@@ -31,45 +31,75 @@ namespace TVGL
         /// <param name="ts">The ts.</param>
         public static void SimplifyFlatPatches(this TessellatedSolid ts)
         {
-         //   throw new NotImplementedException();
+            //   throw new NotImplementedException();
             var edgesToRemove = new List<Edge>();
             var edgesToAdd = new List<Edge>();
             var facesToRemove = new List<PolygonalFace>();
             var facesToAdd = new List<PolygonalFace>();
+            var verticesToRemove = new List<Vertex>();
             var flats = TVGL.MiscFunctions.FindFlats(ts.Faces);
             foreach (var flat in flats)
             {
                 if (flat.InnerEdges.Count < flat.Faces.Count) continue;
-                if (ts.Primitives != null && ts.Primitives.Contains(flat)) ts.Primitives.Remove(flat);
-                ts.RemoveFaces(flat.Faces);
-                // problem is, the vertices need to make a proper polygon
-                var vertices = flat.OuterEdges.SelectMany(oe => new[] { oe.To, oe.From }).Distinct().ToList();
-                List<List<Vertex[]>> triangulatedListofLists =
-                TriangulatePolygon.Run(new List<List<Vertex>> { vertices }, flat.Normal);
-                var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
                 var newFaces = new List<PolygonalFace>();
-                foreach (var vertexSet in triangulatedList)
-                {
-                    // need to attach to existing outeredges
-                    // need to make new faces and edges on the inside.
-                    // make a new Flat with this info
-                    //edgesToAdd.Add(new Edge());
-                    newFaces.Add(new PolygonalFace());
-                    //var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position);
-                    //var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position);
-                    //var face = v1.crossProduct(v2).dotProduct(flat.Normal) < 0
-                    //    ? new PolygonalFace(vertexSet.Reverse(), flat.Normal, doublyLinkToVertices) { Color = color }
-                    //    : new PolygonalFace(vertexSet, flat.Normal, doublyLinkToVertices) { Color = color };
-                    //listOfFaces.Add(face);
-                    //listOfFlatFaces.Add(face);
-                }
-                edgesToRemove.AddRange(flat.InnerEdges);
+                var outerEdgeHashSet = new HashSet<Edge>(flat.OuterEdges);
+                if (ts.Primitives != null && ts.Primitives.Contains(flat)) ts.Primitives.Remove(flat);
                 facesToRemove.AddRange(flat.Faces);
-                facesToAdd.AddRange(newFaces);
-                if (ts.Primitives == null) ts.Primitives = new List<PrimitiveSurface>();
+                edgesToRemove.AddRange(flat.InnerEdges);
+                var innerVertices = new HashSet<Vertex>(flat.InnerEdges.Select(e => e.To));
+                innerVertices.UnionWith(flat.InnerEdges.Select(e => e.From));
+                innerVertices.RemoveWhere(v => outerEdgeHashSet.Overlaps(v.Edges));
+                verticesToRemove.AddRange(innerVertices);
+                var loops = TessellatedSolid.OrganizeIntoLoops(flat.OuterEdges, out var remainingEdges);
+                var vertexLoops = new List<List<Vertex>>();
+                foreach (var loop in loops)
+                {
+                    var reverseLoop = (loop.Item2.dotProduct(flat.Normal) < 0);
+                    vertexLoops.Add(reverseLoop
+                        ? loop.Item1.Select(edge => edge.To).Reverse().ToList()
+                        : loop.Item1.Select(edge => edge.To).ToList());
+                }
+                List<List<Vertex[]>> triangulatedListofLists =
+                TriangulatePolygon.Run(vertexLoops, flat.Normal);
+                var triangulatedList = triangulatedListofLists.SelectMany(tl => tl).ToList();
+                var oldEdgeDictionary = flat.OuterEdges.ToDictionary(TessellatedSolid.SetAndGetEdgeChecksum);
+                Dictionary<long, Edge> newEdgeDictionary = new Dictionary<long, Edge>();
+                foreach (var triangle in triangulatedList)
+                {
+                    var newFace = new PolygonalFace(triangle, flat.Normal);
+                    if (newFace.Area.IsNegligible() && newFace.Normal.Any(double.IsNaN)) continue;
+                    newFaces.Add(newFace);
+                    for (var j = 0; j < 3; j++)
+                    {
+                        var fromVertex = newFace.Vertices[j];
+                        var toVertex = newFace.NextVertexCCW(fromVertex);
+                        var checksum = TessellatedSolid.GetEdgeChecksum(fromVertex, toVertex);
+                        if (oldEdgeDictionary.ContainsKey(checksum))
+                        {
+                            //fix up old outer edge.
+                            var edge = oldEdgeDictionary[checksum];
+                            if (fromVertex == edge.From) edge.OwnedFace = newFace;
+                            else edge.OtherFace = newFace;
+                            newFace.AddEdge(edge);
+                            oldEdgeDictionary.Remove(checksum);
+                        }
+                        else if (newEdgeDictionary.ContainsKey(checksum))
+                        {
+                            //Finish creating edge.
+                            var newEdge = newEdgeDictionary[checksum];
+                            newEdge.OtherFace = newFace;
+                            newFace.AddEdge(newEdge);
+                            newEdgeDictionary.Remove(checksum);
+                            edgesToAdd.Add(newEdge);
+                        }
+                        else
+                            newEdgeDictionary.Add(checksum, new Edge(fromVertex, toVertex, newFace, null, false, checksum));
+                    }
+                }
                 ts.Primitives.Add(new Flat(newFaces));
             }
-            ts.RemoveFaces(facesToRemove);
+            ts.RemoveVertices(verticesToRemove);  //todo: check if the order of these five commands 
+            ts.RemoveFaces(facesToRemove);        // matters. There may be an ordering that is more efficient
             ts.AddFaces(facesToAdd);
             ts.RemoveEdges(edgesToRemove);
             ts.AddEdges(edgesToAdd);
