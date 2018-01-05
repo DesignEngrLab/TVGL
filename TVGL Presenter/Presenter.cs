@@ -1034,7 +1034,7 @@ namespace TVGL
             }
 
             model = MakeModelVisual3D(meshBuilder,
-                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 255, G = 189, B = 189 }));
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 180, G = 189, B = 189 }));
             models.Add(model);
             window.view1.Children.Add(model);
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);

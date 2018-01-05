@@ -368,9 +368,9 @@ namespace TVGL.Voxelization
             //Else, show the face and the voxels for each method
             //Then show the missing voxels from each method
             ShowFaceAndVoxels(face, primaryMethod);
-            ShowFaceAndVoxels(face, alternateMethod);
+            //ShowFaceAndVoxels(face, alternateMethod);
             if (missingFromPrimaryMethod.Any()) ShowFaceAndVoxels(face, missingFromPrimaryMethod);
-            if (missingFromAlternateMethod.Any()) ShowFaceAndVoxels(face, missingFromAlternateMethod);
+            //if (missingFromAlternateMethod.Any()) ShowFaceAndVoxels(face, missingFromAlternateMethod);
             return false;
         }
 
@@ -498,25 +498,25 @@ namespace TVGL.Voxelization
                     // first fill in any voxels for face between the start points. Why do this here?! These 2 lines of code  were
                     // the last added. There are cases (not in the first loop, mind you) where it is necessary. Note this happens again
                     // at the bottom of the while-loop for the same sweep value, but for the next startpoints
-                    makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
-                        rightStartPoint[vDim], sweepValue, uDim, vDim,
-                        sweepDim, face.Normal[vDim] >= 0, face);
-                    makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
-                        rightStartPoint[uDim], sweepValue, vDim, uDim,
-                        sweepDim, face.Normal[uDim] >= 0, face);
+                    //makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
+                    //    rightStartPoint[vDim], sweepValue, uDim, vDim,
+                    //    sweepDim, face.Normal[vDim] >= 0, face);
+                    //makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
+                    //    rightStartPoint[uDim], sweepValue, vDim, uDim,
+                    //    sweepDim, face.Normal[uDim] >= 0, face);
                     // now two big calls for the edges: one for the left edge and one for the right. by the way, the naming of left and right are 
                     // completely arbitrary here. They are not indicative of any real position.
                     makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue,
-                        sweepDim, uDim, vDim, leftEdge, face, rightEndPoint, startVertex);
+                        sweepDim, uDim, vDim, ref leftEdge, face, rightEndPoint, startVertex);
                     makeVoxelsForEdgeWithinSweep(ref rightStartPoint, ref rightEndPoint, sweepValue,
-                        sweepDim, uDim, vDim, rightEdge, face, leftEndPoint, startVertex);
+                        sweepDim, uDim, vDim, ref rightEdge, face, leftEndPoint, startVertex);
                     // now that the end points of the edges have moved, fill in more of the faces.
-                    makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
-                        rightStartPoint[vDim], sweepValue, uDim, vDim,
-                        sweepDim, face.Normal[vDim] >= 0, face);
-                    makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
-                        rightStartPoint[uDim], sweepValue, vDim, uDim,
-                        sweepDim, face.Normal[uDim] >= 0, face);
+                    //makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
+                    //    rightStartPoint[vDim], sweepValue, uDim, vDim,
+                    //    sweepDim, face.Normal[vDim] >= 0, face);
+                    //makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
+                    //    rightStartPoint[uDim], sweepValue, vDim, uDim,
+                    //    sweepDim, face.Normal[uDim] >= 0, face);
                     sweepValue++; //increment sweepValue and repeat!
                 }
                 DoFaceVoxelizationMethodsMatch(face, alternateMethodVoxels);
@@ -706,7 +706,7 @@ namespace TVGL.Voxelization
         /// <param name="startVertex">The start vertex.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         private void makeVoxelsForEdgeWithinSweep(ref double[] startPoint, ref double[] endPoint, int sweepValue,
-            int sweepDim, int uDim, int vDim, Edge edge, PolygonalFace face, double[] nextEndPoint,
+            int sweepDim, int uDim, int vDim, ref Edge edge, PolygonalFace face, double[] nextEndPoint,
             Vertex startVertex)
         {
             //Check if this edge is contained within one voxel. Last() will use level1 in the current setup
@@ -746,6 +746,80 @@ namespace TVGL.Voxelization
             startPoint[sweepDim] = sweepValue;
         }
 
+        private void makeVoxelsAlongLineInPlaneWu(double startU, double startV, double endU, double endV,
+            int sweepValue,
+            int uDim, int vDim, int sweepDim, bool insideIsLowerV, TessellationBaseClass tsObject)
+        {
+            function drawLine(x0, y0, x1, y1) is
+                boolean steep := abs(y1 - y0) > abs(x1 - x0)
+
+
+            if steep then
+            swap(x0, y0)
+            swap(x1, y1)
+            end if
+            if x0 > x1 then
+            swap(x0, x1)
+            swap(y0, y1)
+            end if
+
+
+            dx := x1 - x0
+            dy:= y1 - y0
+            gradient:= dy / dx
+            if dx == 0.0 then
+            gradient := 1.0
+            end if
+
+            // handle first endpoint
+            xend := round(x0)
+            yend:= y0 + gradient * (xend - x0)
+            xgap:= rfpart(x0 + 0.5)
+            xpxl1:= xend // this will be used in the main loop
+            ypxl1:= ipart(yend)
+            if steep then
+            plot(ypxl1, xpxl1, rfpart(yend) * xgap)
+            plot(ypxl1 + 1, xpxl1, fpart(yend) * xgap)
+            else
+            plot(xpxl1, ypxl1, rfpart(yend) * xgap)
+            plot(xpxl1, ypxl1 + 1, fpart(yend) * xgap)
+            end if
+            intery := yend + gradient // first y-intersection for the main loop
+
+            // handle second endpoint
+            xend:= round(x1)
+            yend:= y1 + gradient * (xend - x1)
+            xgap:= fpart(x1 + 0.5)
+            xpxl2:= xend //this will be used in the main loop
+            ypxl2:= ipart(yend)
+            if steep then
+            plot(ypxl2, xpxl2, rfpart(yend) * xgap)
+            plot(ypxl2 + 1, xpxl2, fpart(yend) * xgap)
+            else
+            plot(xpxl2, ypxl2, rfpart(yend) * xgap)
+            plot(xpxl2, ypxl2 + 1, fpart(yend) * xgap)
+            end if
+
+            // main loop
+            if steep then
+            for x from xpxl1 + 1 to xpxl2 - 1 do
+                begin
+            plot(ipart(intery), x, rfpart(intery))
+            plot(ipart(intery) + 1, x, fpart(intery))
+            intery:= intery + gradient
+            end
+            else
+            for x from xpxl1 + 1 to xpxl2 - 1 do
+                begin
+            plot(x, ipart(intery), rfpart(intery))
+            plot(x, ipart(intery) + 1, fpart(intery))
+            intery:= intery + gradient
+            end
+                end if
+            end function
+
+        }
+
         /// <summary>
         /// Makes the voxels along line in plane. This is a tricky little function that took a lot of debugging.
         /// At this point, we are looking at a simple 2D problem. The startU, startV, endU, and endV are the
@@ -769,21 +843,28 @@ namespace TVGL.Voxelization
         private void makeVoxelsAlongLineInPlane(double startU, double startV, double endU, double endV, int sweepValue,
             int uDim, int vDim, int sweepDim, bool insideIsLowerV, TessellationBaseClass tsObject)
         {
+            if (startU.IsPracticallySame(endU)) return;
+            if (startU > endU)
+            {
+                var temp = startU;
+                startU = endU;
+                endU = temp;
+                temp = startV;
+                startV = endV;
+                endV = temp;
+            }
             var uRange = endU - startU;
-            if (uRange.IsNegligible()) return;
-            var u = atIntegerValue(startU) && uRange <= 0 ? (int)(startU - 1) : (int)Math.Floor(startU);
-            var increment = Math.Sign(endU - u);
-            // if you are starting an integer value for u, but you're going in the negative directive, then decrement u to the next lower value
-            // this is because voxels are defined by their lowest index values.
+            var u = (int)Math.Floor(startU);
+            //  u to the next lower value  this is because voxels are defined by their lowest index values.
             var vRange = endV - startV;
             var v = atIntegerValue(startV) && (vRange < 0 || (vRange == 0 && insideIsLowerV))
                 ? (int)(startV - 1)
                 : (int)Math.Floor(startV);
-            // likewise for v. if you are starting an integer value and you're going in the negative directive, OR if you're at an integer
+            //  for v: if you are starting an integer value and you're going in the negative directive, OR if you're at an integer
             // value and happen to be vertical line then decrement v to the next lower value
             var ijk = new byte[3];
             ijk[sweepDim] = (byte)(sweepValue - 1);
-            while (increment * u < increment * endU)
+            while (u < endU)
             {
                 ijk[uDim] = (byte)u;
                 ijk[vDim] = (byte)v;
@@ -792,13 +873,14 @@ namespace TVGL.Voxelization
                 else
                     MakeAndStorePartialVoxelLevel0And1(ijk[0], ijk[1], ijk[2], tsObject);
                 // now move to the next increment, of course, you may not use it if the while condition is not met
-                u += increment;
+                u++;
                 var vDouble = vRange * (u - startU) / uRange + startV;
                 v = atIntegerValue(vDouble) && (vRange < 0 || (vRange == 0 && insideIsLowerV))
                     ? (int)(vDouble - 1)
                     : (int)Math.Floor(vDouble);
             }
         }
+
 
 
         /// <summary>
