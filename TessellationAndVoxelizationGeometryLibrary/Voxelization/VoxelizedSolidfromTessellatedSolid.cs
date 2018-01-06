@@ -428,13 +428,13 @@ namespace TVGL.Voxelization
             if (coordinates.Any(atIntegerValue))
             {
                 var edgeVectors = vertex.Edges.Select(e => e.To == vertex ? e.Vector : e.Vector.multiply(-1));
-                if (edgeVectors.All(ev => ev[0] >= 0))
+                if (atIntegerValue(coordinates[0]) && edgeVectors.All(ev => ev[0] >= 0))
                     x = (byte)(coordinates[0] - 1);
                 else x = (byte)Math.Floor(coordinates[0]);
-                if (edgeVectors.All(ev => ev[1] >= 0))
+                if (atIntegerValue(coordinates[1]) && edgeVectors.All(ev => ev[1] >= 0))
                     y = (byte)(coordinates[1] - 1);
                 else y = (byte)Math.Floor(coordinates[1]);
-                if (edgeVectors.All(ev => ev[2] >= 0))
+                if (atIntegerValue(coordinates[2]) && edgeVectors.All(ev => ev[2] >= 0))
                     z = (byte)(coordinates[2] - 1);
                 else z = (byte)Math.Floor(coordinates[2]);
             }
