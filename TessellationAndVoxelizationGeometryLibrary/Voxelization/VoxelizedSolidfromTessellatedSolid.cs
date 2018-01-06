@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Media.Media3D;
 //using System.Windows.Media.Media3D;
 using TVGL.MathOperations;
 
@@ -335,86 +336,87 @@ namespace TVGL.Voxelization
             return Proximity.ClosestVertexOnTriangleToVertex(prim.A.Position, prim.B.Position, prim.C.Position, p, out uvw);
         }
 
-        //private bool DoFaceVoxelizationMethodsMatch(PolygonalFace face,
-        //    HashSet<long> alternateMethod)
-        //{
-        //    var primaryMethod = new HashSet<long>();
-        //    foreach (var voxel in face.Voxels)
-        //    {
-        //        primaryMethod.Add(Constants.ClearFlagsFromID(voxel.ID));
-        //    }
+        private bool DoFaceVoxelizationMethodsMatch(PolygonalFace face,
+            HashSet<long> alternateMethod)
+        {
+            var primaryMethod = new HashSet<long>();
+            foreach (var voxel in face.Voxels)
+            {
+                if (voxel.Level != 1) continue;
+                primaryMethod.Add(Constants.ClearFlagsFromID(voxel.ID));
+            }
 
-        //    var missingFromAlternateMethod = new HashSet<long>();
-        //    foreach (var voxelIndex in primaryMethod)
-        //    {
-        //        if (!alternateMethod.Contains(voxelIndex))
-        //        {
-        //            missingFromAlternateMethod.Add(voxelIndex);
-        //        }
-        //    }
+            var missingFromAlternateMethod = new HashSet<long>();
+            foreach (var voxelIndex in primaryMethod)
+            {
+                if (!alternateMethod.Contains(voxelIndex))
+                {
+                    missingFromAlternateMethod.Add(voxelIndex);
+                }
+            }
 
-        //    var missingFromPrimaryMethod = new HashSet<long>();
-        //    foreach (var voxelIndex in alternateMethod)
-        //    {
-        //        if (!primaryMethod.Contains(voxelIndex))
-        //        {
-        //            missingFromPrimaryMethod.Add(voxelIndex);
-        //        }
-        //    }
+            var missingFromPrimaryMethod = new HashSet<long>();
+            foreach (var voxelIndex in alternateMethod)
+            {
+                if (!primaryMethod.Contains(voxelIndex))
+                {
+                    missingFromPrimaryMethod.Add(voxelIndex);
+                }
+            }
 
-        //    if (!missingFromAlternateMethod.Any() && !missingFromPrimaryMethod.Any()) return true;
-        //    //Else, show the face and the voxels for each method
-        //    //Then show the missing voxels from each method
-        //    ShowFaceAndVoxels(face, primaryMethod);
-        //    ShowFaceAndVoxels(face, alternateMethod);
-        //    if (missingFromPrimaryMethod.Any()) ShowFaceAndVoxels(face, missingFromPrimaryMethod);
-        //    if (missingFromAlternateMethod.Any()) ShowFaceAndVoxels(face, missingFromAlternateMethod);
-        //    return false;
-        //}
+            if (!missingFromAlternateMethod.Any() && !missingFromPrimaryMethod.Any()) return true;
+            //Else, show the face and the voxels for each method
+            //Then show the missing voxels from each method
+            ShowFaceAndVoxels(face, primaryMethod);
+            //ShowFaceAndVoxels(face, alternateMethod);
+            if (missingFromPrimaryMethod.Any()) ShowFaceAndVoxels(face, missingFromPrimaryMethod);
+            if (missingFromAlternateMethod.Any()) ShowFaceAndVoxels(face, missingFromAlternateMethod); //Extra voxels in primary method
+            return false;
+        }
 
-        //private void ShowFaceAndVoxels(PolygonalFace face, HashSet<long> IDs)
-        //{
-        //    var sideLength = VoxelSideLengths[1];
-        //    var points = new List<Point3D>();
-        //    foreach (var ID in IDs)
-        //    {
-        //        var bottomCoordinate = GetRealCoordinates(ID, 1);
-        //        points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-        //            bottomCoordinate[1] + 0.5 * sideLength,
-        //            bottomCoordinate[2] + 0.5 * sideLength));
-        //    }
-        //    Presenter.ShowAndHangVoxelization(face, points, sideLength, true);
-        //}
+        private void ShowFaceAndVoxels(PolygonalFace face, HashSet<long> IDs)
+        {
+            var sideLength = VoxelSideLengths[1];
+            var points = new List<Point3D>();
+            foreach (var ID in IDs)
+            {
+                var bottomCoordinate = GetRealCoordinates(ID, 1);
+                points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+                    bottomCoordinate[1] + 0.5 * sideLength,
+                    bottomCoordinate[2] + 0.5 * sideLength));
+            }
+            Presenter.ShowAndHangVoxelization(face, points, sideLength, true);
+        }
 
-        //private void ShowSolidAndLevel1Voxels(TessellatedSolid solid, IEnumerable<Voxel_Level1_Class> voxels,
-        //    IEnumerable<long> voxelsInQuestion)
-        //{
-        //    ShowSolidAndLevel1Voxels(solid.Faces.ToList(), voxels, voxelsInQuestion);
-        //}
+        private void ShowSolidAndLevel1Voxels(TessellatedSolid solid, IEnumerable<Voxel_Level1_Class> voxels,
+            IEnumerable<long> voxelsInQuestion)
+        {
+            ShowSolidAndLevel1Voxels(solid.Faces.ToList(), voxels, voxelsInQuestion);
+        }
 
-        //private void ShowSolidAndLevel1Voxels(List<PolygonalFace> faces, IEnumerable<Voxel_Level1_Class> voxels,
-        //    IEnumerable<long> voxelsInQuestion)
-        //{
-        //    var sideLength = VoxelSideLengths[1];
-        //    var points = new List<Point3D>();
-        //    foreach (var voxel in voxels)
-        //    {
-        //        var bottomCoordinate = GetRealCoordinates(voxel.ID, 1);
-        //        points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-        //            bottomCoordinate[1] + 0.5 * sideLength,
-        //            bottomCoordinate[2] + 0.5 * sideLength));
-        //    }
+        private void ShowSolidAndLevel1Voxels(List<PolygonalFace> faces, IEnumerable<Voxel_Level1_Class> voxels,
+            IEnumerable<long> voxelsInQuestion)
+        {
+            var sideLength = VoxelSideLengths[1];
+            var points = new List<Point3D>();
+            foreach (var voxel in voxels)
+            {
+                var bottomCoordinate = GetRealCoordinates(voxel.ID, 1);
+                points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+                    bottomCoordinate[1] + 0.5 * sideLength,
+                    bottomCoordinate[2] + 0.5 * sideLength));
+            }
 
-        //    var points2 = new List<Point3D>();
-        //    foreach (var ID in voxelsInQuestion)
-        //    {
-        //        var bottomCoordinate = GetRealCoordinates(ID, 1);
-        //        points2.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-        //            bottomCoordinate[1] + 0.5 * sideLength,
-        //            bottomCoordinate[2] + 0.5 * sideLength));
-        //    }
-        //    Presenter.ShowAndHangVoxelization(faces, points, points2, sideLength, true);
-        //}
+            var points2 = new List<Point3D>();
+            foreach (var ID in voxelsInQuestion)
+            {
+                var bottomCoordinate = GetRealCoordinates(ID, 1);
+                points2.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+                    bottomCoordinate[1] + 0.5 * sideLength,
+                    bottomCoordinate[2] + 0.5 * sideLength));
+            }
+            Presenter.ShowAndHangVoxelization(faces, points, points2, sideLength, true);
+        }
 
         #endregion
 
@@ -426,13 +428,13 @@ namespace TVGL.Voxelization
             if (coordinates.Any(atIntegerValue))
             {
                 var edgeVectors = vertex.Edges.Select(e => e.To == vertex ? e.Vector : e.Vector.multiply(-1));
-                if (edgeVectors.All(ev => ev[0] >= 0))
+                if (atIntegerValue(coordinates[0]) && edgeVectors.All(ev => ev[0] >= 0))
                     x = (byte)(coordinates[0] - 1);
                 else x = (byte)Math.Floor(coordinates[0]);
-                if (edgeVectors.All(ev => ev[1] >= 0))
+                if (atIntegerValue(coordinates[1]) && edgeVectors.All(ev => ev[1] >= 0))
                     y = (byte)(coordinates[1] - 1);
                 else y = (byte)Math.Floor(coordinates[1]);
-                if (edgeVectors.All(ev => ev[2] >= 0))
+                if (atIntegerValue(coordinates[2]) && edgeVectors.All(ev => ev[2] >= 0))
                     z = (byte)(coordinates[2] - 1);
                 else z = (byte)Math.Floor(coordinates[2]);
             }
@@ -467,13 +469,9 @@ namespace TVGL.Voxelization
         private void makeVoxelsForFacesAndEdges(TessellatedSolid tessellatedSolid)
         {
             foreach (var face in tessellatedSolid.Faces) //loop over the faces
-            {
-                //var alternateMethodVoxels = VoxelizeTriangle(face, 1, false);
-                if (simpleCase(face))
-                {
-                    //DoFaceVoxelizationMethodsMatch(face, alternateMethodVoxels);
-                    continue;
-                }
+            { 
+                if (simpleCase(face)) continue;
+
                 Vertex startVertex, leftVertex, rightVertex;
                 Edge leftEdge, rightEdge;
                 int uDim, vDim, sweepDim;
@@ -482,42 +480,28 @@ namespace TVGL.Voxelization
                     out rightEdge, out uDim, out vDim,
                     out sweepDim, out maxSweepValue);
                 var leftStartPoint = (double[])transformedCoordinates[startVertex.IndexInList].Clone();
-                var rightStartPoint = (double[])leftStartPoint.Clone();
                 var sweepValue = (int)(atIntegerValue(leftStartPoint[sweepDim])
                     ? leftStartPoint[sweepDim] + 1
                     : Math.Ceiling(leftStartPoint[sweepDim]));
-                var leftEndPoint = transformedCoordinates[leftVertex.IndexInList];
-                var rightEndPoint = transformedCoordinates[rightVertex.IndexInList];
 
-                // the following 2 booleans determine if the edge needs to be voxelized as it may have
-                // been done in a previous visited face
+                var sweepIntersections = new Dictionary<int, List<double[]>>();
+                foreach (var edge in face.Edges)
+                {
+                    if (edge.To.Voxels.Last() == edge.From.Voxels.Last()) continue;
+                    makeVoxelsForLine(transformedCoordinates[edge.From.IndexInList], 
+                        transformedCoordinates[edge.To.IndexInList], edge, sweepDim, ref sweepIntersections, false);
+                }
+
                 while (sweepValue <= maxSweepValue) // this is the sweep along the face
                 {
-                    // first fill in any voxels for face between the start points. Why do this here?! These 2 lines of code  were
-                    // the last added. There are cases (not in the first loop, mind you) where it is necessary. Note this happens again
-                    // at the bottom of the while-loop for the same sweep value, but for the next startpoints
-                    makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
-                        rightStartPoint[vDim], sweepValue, uDim, vDim,
-                        sweepDim, face.Normal[vDim] >= 0, face);
-                    makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
-                        rightStartPoint[uDim], sweepValue, vDim, uDim,
-                        sweepDim, face.Normal[uDim] >= 0, face);
-                    // now two big calls for the edges: one for the left edge and one for the right. by the way, the naming of left and right are 
-                    // completely arbitrary here. They are not indicative of any real position.
-                    makeVoxelsForEdgeWithinSweep(ref leftStartPoint, ref leftEndPoint, sweepValue,
-                        sweepDim, uDim, vDim, leftEdge, face, rightEndPoint, startVertex);
-                    makeVoxelsForEdgeWithinSweep(ref rightStartPoint, ref rightEndPoint, sweepValue,
-                        sweepDim, uDim, vDim, rightEdge, face, leftEndPoint, startVertex);
-                    // now that the end points of the edges have moved, fill in more of the faces.
-                    makeVoxelsAlongLineInPlane(leftStartPoint[uDim], leftStartPoint[vDim], rightStartPoint[uDim],
-                        rightStartPoint[vDim], sweepValue, uDim, vDim,
-                        sweepDim, face.Normal[vDim] >= 0, face);
-                    makeVoxelsAlongLineInPlane(leftStartPoint[vDim], leftStartPoint[uDim], rightStartPoint[vDim],
-                        rightStartPoint[uDim], sweepValue, vDim, uDim,
-                        sweepDim, face.Normal[uDim] >= 0, face);
+                    if (sweepIntersections.ContainsKey(sweepValue))
+                    {
+                        var intersections = sweepIntersections[sweepValue];
+                        if (intersections.Count() != 2) throw new Exception();
+                        makeVoxelsForLineOnFace(intersections[0], intersections[1], face, sweepDim);
+                    }
                     sweepValue++; //increment sweepValue and repeat!
                 }
-                //DoFaceVoxelizationMethodsMatch(face, alternateMethodVoxels);
             }
         }
 
@@ -687,109 +671,155 @@ namespace TVGL.Voxelization
             }
         }
 
-        /// <summary>
-        /// Makes the voxels for edge within sweep.
-        /// </summary>
-        /// <param name="startPoint">The start point.</param>
-        /// <param name="endPoint">The end point.</param>
-        /// <param name="sweepValue">The sweep value.</param>
-        /// <param name="sweepDim">The sweep dim.</param>
-        /// <param name="uDim">The u dim.</param>
-        /// <param name="vDim">The v dim.</param>
-        /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
-        /// <param name="voxelize">if set to <c>true</c> [voxelize].</param>
-        /// <param name="edge">The edge.</param>
-        /// <param name="face">The face.</param>
-        /// <param name="nextEndPoint">The next end point.</param>
-        /// <param name="startVertex">The start vertex.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private void makeVoxelsForEdgeWithinSweep(ref double[] startPoint, ref double[] endPoint, int sweepValue,
-            int sweepDim, int uDim, int vDim, Edge edge, PolygonalFace face, double[] nextEndPoint,
-            Vertex startVertex)
+        private void makeVoxelsForLine(double[] startPoint, double[] endPoint, TessellationBaseClass tsObject,
+            int sweepDim, ref Dictionary<int, List<double[]>> sweepIntersections, bool isFace = false)
         {
-            double u, v;
-            var reachedOtherVertex = findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
-                sweepValue, out u, out v);
-
-            makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
-            makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
-
-            if (reachedOtherVertex)
+            //Get every X,Y, and Z integer value intersection
+            var vectorNorm = endPoint.subtract(startPoint).normalize();
+            var intersections = new Dictionary<int, List<double[]>>
             {
-                startPoint = (double[])endPoint.Clone();
-                endPoint = nextEndPoint;
-                edge = face.OtherEdge(startVertex);
-
-
-                findWhereLineCrossesPlane(startPoint, endPoint, sweepDim,
-                    sweepValue, out u, out v);
-
-                makeVoxelsAlongLineInPlane(startPoint[uDim], startPoint[vDim], u, v,
-                    sweepValue, uDim, vDim, sweepDim, face.Normal[vDim] >= 0, edge);
-                makeVoxelsAlongLineInPlane(startPoint[vDim], startPoint[uDim], v, u,
-                    sweepValue, vDim, uDim, sweepDim, face.Normal[uDim] >= 0, edge);
+                {0, new List<double[]>()},
+                {1, new List<double[]>()},
+                {2, new List<double[]>()}
+            };
+            for (var i = 0; i < 3; i++)
+            {
+                getIntergerIntersectionsAlongLine(startPoint, endPoint, i, ref intersections, vectorNorm);
             }
-            startPoint[uDim] = u;
-            startPoint[vDim] = v;
-            startPoint[sweepDim] = sweepValue;
-        }
 
-        /// <summary>
-        /// Makes the voxels along line in plane. This is a tricky little function that took a lot of debugging.
-        /// At this point, we are looking at a simple 2D problem. The startU, startV, endU, and endV are the
-        /// local/barycentric coordinates and correspond to actual x, y, and z via the uDim, and yDim. The
-        /// out-of-plane dimension is the sweepDim and its value (sweepValue) are provided as "read only" parameters.
-        /// - meaning they are given as constants that are used only to define the voxels. This method works by 
-        /// finding where the v values are that cross the u integer lines. There are some subtle
-        /// issues working in the negative direction (indicated by uRange and vRange) as you need to create the voxel
-        /// at the next lower integer cell - not the one specified by the line crossing.
-        /// </summary>
-        /// <param name="startU">The start x.</param>
-        /// <param name="startV">The start y.</param>
-        /// <param name="endU">The end x.</param>
-        /// <param name="endV">The end y.</param>
-        /// <param name="sweepValue">The value sweep dimension.</param>
-        /// <param name="uDim">The index of the u dimension.</param>
-        /// <param name="vDim">The index of the v dimension.</param>
-        /// <param name="sweepDim">The index of the sweep dimension.</param>
-        /// <param name="insideIsLowerV">if set to <c>true</c> [then the inside of the part is on the lower-side of the v-value].</param>
-        /// <param name="tsObject">The ts object.</param>
-        private void makeVoxelsAlongLineInPlane(double startU, double startV, double endU, double endV, int sweepValue,
-            int uDim, int vDim, int sweepDim, bool insideIsLowerV, TessellationBaseClass tsObject)
-        {
-            var uRange = endU - startU;
-            if (uRange.IsNegligible()) return;
-            var u = atIntegerValue(startU) && uRange <= 0 ? (int)(startU - 1) : (int)Math.Floor(startU);
-            var increment = Math.Sign(endU - u);
-            // if you are starting an integer value for u, but you're going in the negative directive, then decrement u to the next lower value
-            // this is because voxels are defined by their lowest index values.
-            var vRange = endV - startV;
-            var v = atIntegerValue(startV) && (vRange < 0 || (vRange == 0 && insideIsLowerV))
-                ? (int)(startV - 1)
-                : (int)Math.Floor(startV);
-            // likewise for v. if you are starting an integer value and you're going in the negative directive, OR if you're at an integer
-            // value and happen to be vertical line then decrement v to the next lower value
-            var ijk = new byte[3];
-            ijk[sweepDim] = (byte)(sweepValue - 1);
-            while (increment * u < increment * endU)
+            //Store the sweep dimension intersections.
+            foreach (var intersection in intersections[sweepDim])
             {
-                ijk[uDim] = (byte)u;
-                ijk[vDim] = (byte)v;
-                if (discretizationLevel == 0)
-                    MakeAndStorePartialVoxelLevel0(ijk[0], ijk[1], ijk[2], tsObject);
-                else
-                    MakeAndStorePartialVoxelLevel0And1(ijk[0], ijk[1], ijk[2], tsObject);
-                // now move to the next increment, of course, you may not use it if the while condition is not met
-                u += increment;
-                var vDouble = vRange * (u - startU) / uRange + startV;
-                v = atIntegerValue(vDouble) && (vRange < 0 || (vRange == 0 && insideIsLowerV))
-                    ? (int)(vDouble - 1)
-                    : (int)Math.Floor(vDouble);
+                var sweepValue = (int)intersection[sweepDim];
+                if (sweepIntersections.ContainsKey(sweepValue))
+                {
+                    sweepIntersections[sweepValue].Add(intersection);
+                }
+                else sweepIntersections.Add(sweepValue, new List<double[]> { intersection });
+            }
+
+            foreach (var axis in intersections.Keys)
+            {
+                foreach (var intersection in intersections[axis])
+                {
+                    //Convert the intersectin values to integers. 
+                    var ijk = new[] {(byte) intersection[0], (byte) intersection[1], (byte) intersection[2]};
+                    AddVoxelAtProperDicretization(ijk, tsObject);
+                    var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
+                    var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
+
+                    //If only one int, then add voxel + 1 along that direction 
+                    if (numAsInt == 1)
+                    {
+                        if (dimensionsAsIntegers[0]) ijk[0]--;
+                        else if (dimensionsAsIntegers[1]) ijk[1]--;
+                        else ijk[2]--;
+                        AddVoxelAtProperDicretization(ijk, tsObject);
+                    }
+                    else if (numAsInt == 2)
+                    {
+                        //This line goes through an edge of the voxel
+                        //ToDo: Does this need to add something?
+                    }
+                    //Else this line goes through the corner of a voxel
+                    //only add a voxel exactly at this intersection, which is done above  
+                }
             }
         }
 
+        /// <summary>
+        /// This function gets the intersection vertices between the startPoint and endPoint on a
+        /// line, for every integer value of the given dimension along the line.
+        /// </summary>
+        /// <param name="startPoint"></param>
+        /// <param name="endPoint"></param>
+        /// <param name="dim"></param>
+        /// <param name="intersections"></param>
+        /// <param name="vectorNorm"></param>
+        private void getIntergerIntersectionsAlongLine(double[] startPoint, double[] endPoint, 
+            int dim, ref Dictionary<int, List<double[]>> intersections, double[] vectorNorm = null)
+        {
+            if (vectorNorm == null) vectorNorm = endPoint.subtract(startPoint).normalize();
+            var start = (int)Math.Floor(startPoint[dim]);
+            var end = (int)Math.Floor(endPoint[dim]);
+            var forwardX = end > start;
+            var uDim = (dim + 1) % 3;
+            var vDim = (dim + 2) % 3;
+            var t = start;
+            while (t != end)
+            {
+                if (forwardX) t++;
+                var d = (t - startPoint[dim]) / vectorNorm[dim];
+                var intersection = new double[3];
+                intersection[dim] = t;
+                intersection[uDim] = startPoint[uDim] + d * vectorNorm[uDim];
+                intersection[vDim] = startPoint[vDim] + d * vectorNorm[vDim];
+                intersections[dim].Add(intersection);
+                //If going reverse, do not decriment until after using this voxel index.
+                if (!forwardX) t--;
+            }
+        }
+
+        private void makeVoxelsForLineOnFace(double[] startPoint, double[] endPoint, TessellationBaseClass tsObject,
+           int sweepDim)
+        {
+            //Get every X, Y, and Z integer value intersection, not including the sweepDim, which won't have any anyways
+            var vectorNorm = endPoint.subtract(startPoint).normalize();
+            var intersections = new Dictionary<int, List<double[]>>
+            {
+                {0, new List<double[]>()},
+                {1, new List<double[]>()},
+                {2, new List<double[]>()}
+            };
+            for (var i = 0; i < 3; i++)
+            {
+                if (i == sweepDim) continue;
+                getIntergerIntersectionsAlongLine(startPoint, endPoint, i, ref intersections, vectorNorm);
+            } 
+
+            foreach (var axis in intersections.Keys)
+            {
+                //There will be no intersections along the sweepDim
+                foreach (var intersection in intersections[axis])
+                {
+                    //Convert the intersection values to integers. 
+                    var ijk = new[] { (byte)intersection[0], (byte)intersection[1], (byte)intersection[2] };
+                    AddVoxelAtProperDicretization(ijk, tsObject);
+                    //Also add the -1 sweepDim voxel
+                    ijk[sweepDim]--;
+                    AddVoxelAtProperDicretization(ijk, tsObject);
+
+                    var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
+                    var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
+
+                    //If only one int, then add voxel + 1 along that direction 
+                    if (numAsInt == 1) throw new Exception("this cannot occur");
+                    if (numAsInt == 2)
+                    {
+                        //Add the increment that is not the sweepDim
+                        if (dimensionsAsIntegers[0] && sweepDim != 0) ijk[0]--;
+                        else if (dimensionsAsIntegers[1] && sweepDim != 1) ijk[1]--;
+                        else ijk[2]--; //(dimensionsAsIntegers[2] && sweepDim != 2)
+                        AddVoxelAtProperDicretization(ijk, tsObject);
+                        ijk[sweepDim]++;
+                        AddVoxelAtProperDicretization(ijk, tsObject);
+                    }
+                    else
+                    {
+                    }
+                    //Else this line goes through the corner of a voxel
+                    //only add a voxel exactly at this intersection ? 
+                }
+            }
+        }
+
+        private void AddVoxelAtProperDicretization(byte[] ijk, TessellationBaseClass tsObject)
+        {
+            if (discretizationLevel == 0)
+                MakeAndStorePartialVoxelLevel0(ijk[0], ijk[1], ijk[2], tsObject);
+            else
+                MakeAndStorePartialVoxelLevel0And1(ijk[0], ijk[1], ijk[2], tsObject);
+        }
 
         /// <summary>
         /// Finds the where line that is the edge length crosses sweep plane. It may be that the edge terminates
@@ -818,7 +848,6 @@ namespace TVGL.Voxelization
             valueD2 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
             return false;
         }
-
 
         #endregion
 
