@@ -835,7 +835,7 @@ namespace TVGL
 
         private static Visual3D MakeModelVisual3D(VoxelizedSolid solid, Material material)
         {
-            return MakeModelVisual3D(solid.ConvertToTessellatedSolid());
+            //return MakeModelVisual3D(solid.ConvertToTessellatedSolid());
             var builder = new MeshBuilder();
             foreach (var voxel in solid.Voxels())
             {

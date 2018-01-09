@@ -155,7 +155,6 @@ namespace TVGL
             Length = line.Length;
             IsHorizontal = line.IsHorizontal;
             IsVertical = line.IsVertical;
-            IndexInList = line.IndexInList;
             Slope = line.Slope;
             Yintercept = line.Yintercept;
         }

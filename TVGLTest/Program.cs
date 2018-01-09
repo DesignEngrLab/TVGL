@@ -80,7 +80,7 @@ namespace TVGL_Test
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            var dir = new DirectoryInfo("../../../TestFiles");
+            var dir = new DirectoryInfo("../../../../TestFiles");
             var fileNames = dir.GetFiles("*");
             for (var i = 17; i < fileNames.Count(); i++)
             {
