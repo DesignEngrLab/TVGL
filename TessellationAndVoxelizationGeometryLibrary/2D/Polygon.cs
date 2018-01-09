@@ -70,6 +70,15 @@ namespace TVGL
         }
 
         /// <summary>
+        /// This reverses the polygon, including updates to area and the point path.
+        /// </summary>
+        public void Reverse()
+        {
+            if (IsPositive) SetToCWNegative();
+            else SetToCCWPositive();
+        }
+
+        /// <summary>
         /// Gets the length of the polygon.
         /// </summary>
         public double Length;

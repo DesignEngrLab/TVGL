@@ -8,6 +8,7 @@ using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
+using TVGL.Voxelization;
 
 namespace TVGL_Test
 {
@@ -80,33 +81,62 @@ namespace TVGL_Test
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*.stl");
-            for (var i = 0; i < FileNames.Count(); i++)
+            var fileNames = dir.GetFiles("*");
+            for (var i = 17; i < fileNames.Count(); i++)
             {
-                var filename = FileNames[i];//.FullName;
+                //var filename = FileNames[i];
+                var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
-                Stream fileStream;
-                List<TessellatedSolid> ts;
-                using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
-                //filename += "1.ply";
-                //using (fileStream = File.OpenWrite(filename))
-                //    IO.Save(fileStream, ts, FileType.PLY_Binary);
-                //using (fileStream = File.OpenRead(filename))
-                //    ts = IO.Open(fileStream, filename);
-
-
-                //TestPolygon(ts[0]);
-                //TestSegmentation(ts[0]);
-                //Presenter.ShowAndHang(ts);
-                TestSilhouette(ts[0]);
-                //TestAdditiveVolumeEstimate(ts[0]);
+                List<TessellatedSolid> solids = IO.Open(filename);
+                TestVoxelizatoin(solids[0]);
             }
 
             Console.WriteLine("Completed.");
             //  Console.ReadKey();
         }
 
+        public static void TestVoxelizatoin(TessellatedSolid ts)
+        {
+            var stopWatch = new Stopwatch();
+            //stopWatch.Restart();
+            //var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.ExtraCoarse);
+            //stopWatch.Stop();
+            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+            //    ts.Volume, vs1.Volume,vs1.Count, stopWatch.Elapsed.TotalSeconds);
+            //PresenterShowAndHang(new Solid[] { ts, vs1 });
+            //stopWatch.Restart();
+            // var vs2 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
+            //stopWatch.Stop();
+            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+            //    ts.Volume, vs2.Volume, vs2.Count, stopWatch.Elapsed.TotalSeconds);
+            //var ts2 = (TessellatedSolid)ts1.TransformToNewSolid(new double[,]
+            //  {
+            //    {1,0,0,(ts1.XMax - ts1.XMin)/2},
+            //    {0,1,0,(ts1.YMax-ts1.YMin)/2},
+            //    {0,0,1,(ts1.ZMax-ts1.ZMin)/2},
+            //  });
+            //var bounds = new double[2][];
+            //bounds[0] = ts1.Bounds[0];
+            //bounds[1] = ts2.Bounds[1];
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
+            Console.WriteLine("displaying");
+            Presenter.ShowAndHangVoxelization(ts, vs1);
+
+            //var tsFromVS = vs1.ConvertToTessellatedSolid();
+            //tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
+
+            //Presenter.ShowAndHang(new [] { tsFromVS });
+
+            //PresenterShowAndHang(new Solid[] { ts, vs2 });
+            //vs1.Intersect(vs2);
+
+            //stopWatch.Restart();
+            //vs1.Draft(VoxelDirections.XPositive);
+            //stopWatch.Stop();
+            //Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
+            //Presenter.ShowAndHang(new TessellatedSolid[] { vs1.ConvertToTessellatedSolid() });
+
+        }
         public static void TestSegmentation(TessellatedSolid ts)
         {
             var obb = MinimumEnclosure.OrientedBoundingBox(ts);

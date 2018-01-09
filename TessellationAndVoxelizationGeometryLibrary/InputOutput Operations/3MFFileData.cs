@@ -91,9 +91,8 @@ namespace TVGL.IOFunctions
 
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
-        /// <param name="inParallel">if set to <c>true</c> [in parallel].</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static List<TessellatedSolid> OpenSolids(Stream s, string filename, bool inParallel = true)
+        internal static List<TessellatedSolid> OpenSolids(Stream s, string filename)
         {
 #if net40
             throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");

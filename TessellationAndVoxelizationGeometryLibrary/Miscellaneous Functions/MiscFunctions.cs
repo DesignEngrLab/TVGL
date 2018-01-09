@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -86,9 +87,9 @@ namespace TVGL
                 //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
                 Point point;
                 var dot1 = directions[0].dotProduct(vertex.Position);
-   
+
                 switch (directions.Length)
-                {                   
+                {
                     case 1:
                         {
                             point = new Point(vertex, Math.Round(dot1 * tolerance), 0.0, 0.0);
@@ -104,7 +105,7 @@ namespace TVGL
                         {
                             var dot2 = directions[1].dotProduct(vertex.Position);
                             var dot3 = directions[2].dotProduct(vertex.Position);
-                            point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), Math.Round(dot3 * tolerance));           
+                            point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), Math.Round(dot3 * tolerance));
                         }
                         break;
                     default:
@@ -350,6 +351,101 @@ namespace TVGL
         }
         #endregion
 
+        #region Dealing with Flat Patches
+        /// <summary>
+        /// Gets a collection of faces with distinct normals. These are the largest faces within the set with common normal. 
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="removeOpposites">if set to <c>true</c> [remove opposites].</param>
+        /// <returns>List&lt;PolygonalFace&gt;.</returns>
+        public static List<PolygonalFace> FacesWithDistinctNormals(IEnumerable<PolygonalFace> faces,
+            double tolerance = Constants.SameFaceNormalDotTolerance, bool removeOpposites = true)
+        {
+            // This is done by sorting the normals first by the x-component, then by the y and then the z. 
+            // This is to avoid the O(n^2) and be more like O(n). It is a necessary but not sufficient
+            // condition that faces with similar x-values in the normal (and then y and then z) will
+            // likely be the same normal. So, in this manner we can then check adjacent faces in a sorted
+            // set. However, sorting just in x alone may not be sufficient as the list may jump around. 
+            // For example, a portion of the list may look like: { ... [0 .3 .4], [0 -.3 .4], [0, .29999, .4] }
+            // comparing adjacent pairs will miss the fact that 1 and 3 and similar. But - since they have the
+            // same x-component as 2, then they are not compared. Here, the chance to catch such cases by sorting
+            // about all 3 cardinal directions. One could continue sorting by a dot-product with an arbitrary normal,
+            // but cases where this function have failed have not been observed.
+            var distinctList = faces.ToList();
+            for (int k = 0; k < 3; k++)
+            {
+                distinctList = distinctList.OrderBy(f => f.Normal[k]).ToList();
+                for (var i = distinctList.Count - 1; i > 0; i--)
+                {
+                    if (distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(1.0, tolerance) ||
+                        (removeOpposites && distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(-1, tolerance)))
+                    {
+                        if (distinctList[i].Area <= distinctList[i - 1].Area) distinctList.RemoveAt(i);
+                        else distinctList.RemoveAt(i - 1);
+                    }
+                }
+            }
+            return distinctList;
+        }
+
+        /// <summary>
+        ///     Gets a list of flats for a given list of faces.
+        /// </summary>
+        /// <param name="faces">The faces.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <param name="minSurfaceArea">The minimum surface area.</param>
+        /// <returns>List&lt;Flat&gt;.</returns>
+        internal static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+               int minNumberOfFacesPerFlat = 3)
+        {
+            //Note: This function has been optimized to run very fast for large amount of faces
+            //Used hashet for "Contains" function calls 
+            var unusedFaces = new HashSet<PolygonalFace>(faces);
+            var listFlats = new List<Flat>();
+
+            //Use an IEnumerable class (List) for iterating through each part, and then the 
+            //"Contains" function to see if it was already used. This is actually much faster
+            //than using a while loop with a ".Any" and ".First" call on the Hashset.
+            foreach (var startFace in faces)
+            {
+                //If this faces has already been used, continue to the next face
+                if (!unusedFaces.Contains(startFace)) continue;
+                //Get all the faces that should be used on this flat
+                //Use a hashset so we can use the ".Contains" function
+                var flatFaces = new HashSet<PolygonalFace> { startFace };
+                var flat = new Flat(flatFaces);
+                //Stacks a fast for "Push" and "Pop".
+                //Add all the adjecent faces from the first face to the stack for 
+                //consideration in the while loop below.
+                var stack = new Stack<PolygonalFace>(flatFaces);
+                while (stack.Any())
+                {
+                    var newFace = stack.Pop();
+                    //Add new adjacent faces to the stack for consideration
+                    //if the faces are already listed in the flat faces, the first
+                    //"if" statement in the while loop will ignore them.
+                    foreach (var adjacentFace in newFace.AdjacentFaces)
+                    {
+                        if (!flatFaces.Contains(adjacentFace) && unusedFaces.Contains(adjacentFace) &&
+                            !stack.Contains(adjacentFace) && flat.IsNewMemberOf(adjacentFace))
+                        {
+                            flat.UpdateWith(adjacentFace);
+                            flatFaces.Add(newFace);
+                            stack.Push(adjacentFace);
+                        }
+                    }
+                }
+                //Criteria of whether it should be a flat should be inserted here.
+                if (flat.Faces.Count < minNumberOfFacesPerFlat) continue;
+                listFlats.Add(flat);
+                foreach (var polygonalFace in flat.Faces)
+                    unusedFaces.Remove(polygonalFace);
+            }
+            return listFlats;
+        }
+        #endregion
+
 
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
@@ -442,7 +538,7 @@ namespace TVGL
 
             // compute area of the 2D projection
             // -1 so as to not include the vertex that was added to the end of the list
-            var n = vertices.Count - 1; 
+            var n = vertices.Count - 1;
             var i = 1;
             var area = 0.0;
             switch (coord)
@@ -593,8 +689,8 @@ namespace TVGL
             if (attempts > 0 && attempts < 4) Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
             else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
 
-            return path ;
-    }
+            return path;
+        }
 
 
 
@@ -1042,7 +1138,7 @@ namespace TVGL
             var p2 = pt2.Position2D;
             var q = pt3.Position2D;
             var q2 = pt4.Position2D;
-            var points = new List<Point> {pt1, pt2, pt3, pt4};
+            var points = new List<Point> { pt1, pt2, pt3, pt4 };
             intersectionPoint = null;
             var r = p2.subtract(p);
             var s = q2.subtract(q);
@@ -1060,10 +1156,10 @@ namespace TVGL
                 // then the two lines are collinear but disjoint.
                 var qpr = qp[0] * r[0] + qp[1] * r[1];
                 var pqs = p.subtract(q)[0] * s[0] + p.subtract(q)[1] * s[1];
-                var overlapping = (0 <= qpr && qpr <= r[0]*r[0] + r[1]*r[1]) ||
-                                  (0 <= pqs && pqs <= s[0]*s[0] + s[1]*s[1]);
+                var overlapping = (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) ||
+                                  (0 <= pqs && pqs <= s[0] * s[0] + s[1] * s[1]);
                 if (rxs.IsNegligible() && qpxr.IsNegligible())
-                    // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
+                // If r x s = 0 and (q - p) x r = 0, then the two lines are collinear.
                 {
                     if (!considerCollinearOverlapAsIntersect) return false;
                     return overlapping;
@@ -1092,14 +1188,14 @@ namespace TVGL
                 }
                 else slope2 = (pt4.Y - pt3.Y) / (pt4.X - pt3.X);
                 //Foreach line, check the Y intercepts of the X values from the other line. If the intercepts match the point.Y values, then it is collinear
-                if ((slope1*(pt3.X - pt1.X) + pt1.Y).IsPracticallySame(pt3.Y) &&
-                    (slope1*(pt4.X - pt1.X) + pt1.Y).IsPracticallySame(pt4.Y))
+                if ((slope1 * (pt3.X - pt1.X) + pt1.Y).IsPracticallySame(pt3.Y) &&
+                    (slope1 * (pt4.X - pt1.X) + pt1.Y).IsPracticallySame(pt4.Y))
                 {
                     if (!considerCollinearOverlapAsIntersect) return false;
                     return true;
                 }
-                if ((slope2*(pt1.X - pt3.X) + pt3.Y).IsPracticallySame(pt1.Y) &&
-                    (slope2*(pt2.X - pt3.X) + pt3.Y).IsPracticallySame(pt2.Y))
+                if ((slope2 * (pt1.X - pt3.X) + pt3.Y).IsPracticallySame(pt1.Y) &&
+                    (slope2 * (pt2.X - pt3.X) + pt3.Y).IsPracticallySame(pt2.Y))
                 {
                     if (!considerCollinearOverlapAsIntersect) return false;
                     return true;
@@ -1132,11 +1228,11 @@ namespace TVGL
 
             // 5. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
             // the two line segments meet at the point p + t r = q + u s.
-            if (!rxs.IsNegligible() && 
+            if (!rxs.IsNegligible() &&
                 !t[2].IsLessThanNonNegligible() && !t[2].IsGreaterThanNonNegligible(1.0) &&
                 !u[2].IsLessThanNonNegligible() && !u[2].IsGreaterThanNonNegligible(1.0))
-            {    
-                
+            {
+
                 ////Tthe intersection point may be one of the existing points
                 ////This is needed because the x,y calculated below can be off by a very slight amount, caused by rounding error.
                 ////Check if any of the points are on the other line.
@@ -1202,7 +1298,7 @@ namespace TVGL
                     intersectionPoint = new Point(x, y);
                     return true;
                 }
-                
+
                 //Values are not even close
                 if (!x.IsPracticallySame(x2, 0.0001) || !y.IsPracticallySame(y2, 0.00001)) throw new NotImplementedException();
 
@@ -1624,7 +1720,7 @@ namespace TVGL
         #region Distance Methods (between point, line, and plane)
 
         /// <summary>
-        ///     Returns the distance the point to line.
+        ///     Returns the distance the point on an infinite line.
         /// </summary>
         /// <param name="qPoint">The q point that is off of the line.</param>
         /// <param name="lineRefPt">The line reference point on the line.</param>
@@ -1637,7 +1733,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Distances the point to line.
+        ///     Returns the distance the point on an infinite line.
         /// </summary>
         /// <param name="qPoint">q is the point that is off of the line.</param>
         /// <param name="lineRefPt">p is a reference point on the line.</param>
@@ -1654,7 +1750,7 @@ namespace TVGL
                 * set equal to zero. This is really just solving to "t" the distance along the line from the lineRefPt. */
                 t = (lineVector[0] * (qPoint[0] - lineRefPt[0]) + lineVector[1] * (qPoint[1] - lineRefPt[1]))
                         / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1]);
-                pointOnLine = new[] {lineRefPt[0] + lineVector[0]*t, lineRefPt[1] + lineVector[1]*t};
+                pointOnLine = new[] { lineRefPt[0] + lineVector[0] * t, lineRefPt[1] + lineVector[1] * t };
                 return DistancePointToPoint(qPoint, pointOnLine);
             }
             /* pointOnLine is found by setting the dot-product of the lineVector and the vector formed by (pointOnLine-p) 
@@ -1696,6 +1792,21 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Distances the point to point.
+        /// </summary>
+        /// <param name="p1">point, p1.</param>
+        /// <param name="p2">point, p2.</param>
+        /// <returns>the distance between the two 3D points.</returns>
+        public static double SquareDistancePointToPoint(double[] p1, double[] p2)
+        {
+            var dX = p1[0] - p2[0];
+            var dY = p1[1] - p2[1];
+            if (p1.Length == 2) return dX * dX + dY * dY;
+            var dZ = p1[2] - p2[2];
+            return dX * dX + dY * dY + dZ * dZ;
+        }
+
+        /// <summary>
         ///     Returns the signed distance of the point to the plane.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -1720,6 +1831,55 @@ namespace TVGL
         {
             return normalOfPlane.dotProduct(point) - signedDistanceToPlane;
         }
+
+        /// <summary>
+        ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     of triangle to return a valid intersection.
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnFaceFromIntersectingLine(PolygonalFace face, double[] point1,
+            double[] point2)
+        {
+            var positions = face.Vertices.Select(vertex => vertex.Position).ToList();
+            return PointOnFaceFromIntersectingLine(positions, face.Normal, point1, point2);
+        }
+
+        /// <summary>
+        ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     of triangle to return a valid intersection.
+        /// </summary>
+        /// <param name="normal"></param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="vertices"></param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnFaceFromIntersectingLine(List<double[]> vertices, double[] normal, double[] point1,
+            double[] point2)
+        {
+            var distanceToOrigin = normal.dotProduct(vertices[0]);
+            var d1 = normal.dotProduct(point1);
+            var d2 = normal.dotProduct(point2);
+            if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
+            var denominator = d1 - d2;
+            if (denominator == 0) return null; //The points form a perpendicular line to the face
+            var fraction = (d1 - distanceToOrigin) / (denominator);
+            var position = new double[3];
+            for (var i = 0; i < 3; i++)
+            {
+                position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
+                if (double.IsNaN(position[i]))
+                    throw new Exception("This should never occur. Prevent this from happening");
+            }
+            return IsPointInsideTriangle(vertices, position, true) ? position : null;
+        }
+
 
         /// <summary>
         ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
@@ -1779,15 +1939,19 @@ namespace TVGL
         /// <param name="distOfPlane">The dist of plane.</param>
         /// <param name="rayPosition">The ray position.</param>
         /// <param name="rayDirection">The ray direction.</param>
+        /// <param name="signedDistance"></param>
         /// <returns>Vertex.</returns>
         public static double[] PointOnPlaneFromRay(double[] normalOfPlane, double distOfPlane, double[] rayPosition,
-            double[] rayDirection)
+            double[] rayDirection, out double signedDistance)
         {
-            var d1 = -DistancePointToPlane(rayDirection, normalOfPlane, distOfPlane);
-            var angle = SmallerAngleBetweenEdges(normalOfPlane, rayDirection);
-            var d2 = d1 / Math.Cos(angle);
-            if (d2 < 0) return null;
-            return rayPosition.add(rayDirection.multiply(d2));
+            var dot = rayDirection.dotProduct(normalOfPlane);
+            signedDistance = 0.0;
+            if (dot == 0) return null;
+
+            var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
+            signedDistance = d1 / dot;
+            if (signedDistance.IsNegligible()) return rayPosition;
+            return rayPosition.add(rayDirection.multiply(signedDistance));
         }
 
         /// <summary>
@@ -1805,15 +1969,69 @@ namespace TVGL
         public static double[] PointOnTriangleFromLine(PolygonalFace face, Vertex vertex, double[] direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
+            return PointOnTriangleFromLine(face, vertex.Position, direction, out signedDistance);
+        }
+
+        /// <summary>
+        ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
+        ///     that triangle, then null is returned. The signed distance is positive if the vertex points to
+        ///     the triangle along the direction (ray). User can also specify whether the edges of the triangle
+        ///     are considered "inside."
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="point3D"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="signedDistance">The signed distance.</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, double[] direction,
+            out double signedDistance, bool onBoundaryIsInside = true)
+        {
             var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-            signedDistance = -(vertex.Position.dotProduct(face.Normal) - distanceToOrigin) /
-                             direction.dotProduct(face.Normal);
-            //Note that if t == 0, then it is on the plane
-            //else, find the intersection point and determine if it is inside the polygon (face)
-            var newPoint = signedDistance.IsNegligible()
-                ? vertex
-                : new Vertex(vertex.Position.add(direction.multiply(signedDistance)));
-            return IsPointInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint.Position : null;
+            var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
+            if (newPoint == null) return null;
+            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+        }
+
+        /// <summary>
+        ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
+        ///     that triangle, then null is returned. The signed distance is positive if the vertex points to
+        ///     the triangle along the direction (ray). User can also specify whether the edges of the triangle
+        ///     are considered "inside."
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="point3D"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="signedDistance">The signed distance.</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, VoxelDirections direction,
+            out double signedDistance, bool onBoundaryIsInside = true)
+        {
+            var newPoint = (double[])point3D.Clone();
+            signedDistance = double.NaN;
+            var d = face.Normal.dotProduct(face.Vertices[0].Position);
+            var n = face.Normal;
+            switch (direction)
+            {
+                case VoxelDirections.XNegative:
+                case VoxelDirections.XPositive:
+                    if (face.Normal[0].IsNegligible()) return null;
+                    newPoint = new[] { (d - n[1] * point3D[1] - n[2] * point3D[2]) / n[0], point3D[1], point3D[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[0] - point3D[0]);
+                    break;
+                case VoxelDirections.YNegative:
+                case VoxelDirections.YPositive:
+                    if (face.Normal[1].IsNegligible()) return null;
+                    newPoint = new[] { point3D[0], (d - n[0] * point3D[0] - n[2] * point3D[2]) / n[1], point3D[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[1] - point3D[1]);
+                    break;
+                default:
+                    if (face.Normal[2].IsNegligible()) return null;
+                    newPoint = new[] { point3D[0], point3D[1], (d - n[0] * point3D[0] - n[1] * point3D[1]) / n[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[2] - point3D[2]);
+                    break;
+            }
+
+            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
         #endregion
 
@@ -1879,12 +2097,42 @@ namespace TVGL
         public static bool IsPointInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
+            return IsPointInsideTriangle(vertices, vertexInQuestion.Position, onBoundaryIsInside);
+        }
+
+        /// <summary>
+        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+        ///     triangle are considered "inside." Assumes vertex in question is in the same plane
+        ///     as the triangle.
+        /// </summary>
+        public static bool IsPointInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
+            bool onBoundaryIsInside = true)
+        {
+            var positions = vertices.Select(vertex => vertex.Position).ToList();
+            return IsPointInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
+        }
+
+        /// <summary>
+        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+        ///     triangle are considered "inside." Assumes vertex in question is in the same plane
+        ///     as the triangle.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="vertexInQuestion"></param>
+        /// <param name="onBoundaryIsInside"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static bool IsPointInsideTriangle(IList<double[]> vertices, double[] vertexInQuestion,
+            bool onBoundaryIsInside = true)
+        {
             if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
-            var p = vertexInQuestion.Position;
-            var a = vertices[0].Position;
-            var b = vertices[1].Position;
-            var c = vertices[2].Position;
-            return SameSide(p, a, b, c) && SameSide(p, b, a, c) && SameSide(p, c, a, b);
+            var p = vertexInQuestion;
+            var a = vertices[0];
+            var b = vertices[1];
+            var c = vertices[2];
+            return SameSide(p, a, b, c, onBoundaryIsInside) &&
+                   SameSide(p, b, a, c, onBoundaryIsInside) &&
+                   SameSide(p, c, a, b, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2013,7 +2261,7 @@ namespace TVGL
                 }
 
                 if (d < 0) continue; //line is below
-                
+
                 //Else, line is above
                 count++;
                 if (d > minD) continue;
