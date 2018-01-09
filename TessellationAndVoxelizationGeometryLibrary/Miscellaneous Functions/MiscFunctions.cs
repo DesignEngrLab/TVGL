@@ -396,7 +396,7 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
-        internal static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+        public static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
                int minNumberOfFacesPerFlat = 3)
         {
             //Note: This function has been optimized to run very fast for large amount of faces
