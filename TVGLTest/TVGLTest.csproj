@@ -113,21 +113,6 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
-<<<<<<< HEAD
-    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.Standard\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
-      <Project>{b73a4731-ff89-4a3d-b803-14b016196c4a}</Project>
-      <Name>TessellationAndVoxelizationGeometryLibrary.Standard</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj">
-      <Project>{8c1364cc-908a-4174-b62c-21ec4839584d}</Project>
-      <Name>TVGL Presenter</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="MIConvexHull.xml" />
-    <Content Include="StarMath.XML" />
-  </ItemGroup>
-=======
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
@@ -137,7 +122,6 @@
       <Name>TVGLPresenterDebugger</Name>
     </ProjectReference>
   </ItemGroup>
->>>>>>> DecompositionInprovements
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
