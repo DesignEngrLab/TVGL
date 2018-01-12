@@ -39,7 +39,7 @@ namespace TVGL.Voxelization
             var deltaY = 1L << (24 + 4 * (4 - discretizationLevel));
             var deltaZ = 1L << (44 + 4 * (4 - discretizationLevel));
 
-            //Parallel.ForEach(Voxels(VoxelRoleTypes.Partial), v =>
+            //Parallel.ForEach(Voxels(this.Discretization, VoxelRoleTypes.Partial, true), v =>
             foreach (var v in Voxels(this.Discretization, VoxelRoleTypes.Partial, true))
             {
                 var neighborX = GetNeighbor(v, VoxelDirections.XPositive);

@@ -18,8 +18,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Media.Media3D;
-//using System.Windows.Media.Media3D;
 using TVGL.MathOperations;
 
 namespace TVGL.Voxelization
@@ -367,57 +365,9 @@ namespace TVGL.Voxelization
             if (!missingFromAlternateMethod.Any() && !missingFromPrimaryMethod.Any()) return true;
             //Else, show the face and the voxels for each method
             //Then show the missing voxels from each method
-            ShowFaceAndVoxels(face, primaryMethod);
-            //ShowFaceAndVoxels(face, alternateMethod);
-            if (missingFromPrimaryMethod.Any()) ShowFaceAndVoxels(face, missingFromPrimaryMethod);
-            if (missingFromAlternateMethod.Any()) ShowFaceAndVoxels(face, missingFromAlternateMethod); //Extra voxels in primary method
             return false;
         }
-
-        private void ShowFaceAndVoxels(PolygonalFace face, HashSet<long> IDs)
-        {
-            var sideLength = VoxelSideLengths[1];
-            var points = new List<Point3D>();
-            foreach (var ID in IDs)
-            {
-                var bottomCoordinate = GetRealCoordinates(ID, 1);
-                points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-                    bottomCoordinate[1] + 0.5 * sideLength,
-                    bottomCoordinate[2] + 0.5 * sideLength));
-            }
-            Presenter.ShowAndHangVoxelization(face, points, sideLength, true);
-        }
-
-        private void ShowSolidAndLevel1Voxels(TessellatedSolid solid, IEnumerable<Voxel_Level1_Class> voxels,
-            IEnumerable<long> voxelsInQuestion)
-        {
-            ShowSolidAndLevel1Voxels(solid.Faces.ToList(), voxels, voxelsInQuestion);
-        }
-
-        private void ShowSolidAndLevel1Voxels(List<PolygonalFace> faces, IEnumerable<Voxel_Level1_Class> voxels,
-            IEnumerable<long> voxelsInQuestion)
-        {
-            var sideLength = VoxelSideLengths[1];
-            var points = new List<Point3D>();
-            foreach (var voxel in voxels)
-            {
-                var bottomCoordinate = GetRealCoordinates(voxel.ID, 1);
-                points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-                    bottomCoordinate[1] + 0.5 * sideLength,
-                    bottomCoordinate[2] + 0.5 * sideLength));
-            }
-
-            var points2 = new List<Point3D>();
-            foreach (var ID in voxelsInQuestion)
-            {
-                var bottomCoordinate = GetRealCoordinates(ID, 1);
-                points2.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
-                    bottomCoordinate[1] + 0.5 * sideLength,
-                    bottomCoordinate[2] + 0.5 * sideLength));
-            }
-            Presenter.ShowAndHangVoxelization(faces, points, points2, sideLength, true);
-        }
-
+        
         #endregion
 
         #region Making Voxels for Levels 0 and 1

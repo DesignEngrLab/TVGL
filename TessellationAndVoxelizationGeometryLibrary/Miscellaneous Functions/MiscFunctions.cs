@@ -308,12 +308,12 @@ namespace TVGL
         /// <param name="tolerance">The tolerance.</param>
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
-        internal static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
+        public static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
                int minNumberOfFacesPerFlat = 3)
         {
             //Note: This function has been optimized to run very fast for large amount of faces
             //Used hashet for "Contains" function calls 
-            var unusedFaces = new HashSet<PolygonalFace>(faces);
+            var usedFaces = new HashSet<PolygonalFace>();
             var listFlats = new List<Flat>();
 
             //Use an IEnumerable class (List) for iterating through each part, and then the 
@@ -322,15 +322,16 @@ namespace TVGL
             foreach (var startFace in faces)
             {
                 //If this faces has already been used, continue to the next face
-                if (!unusedFaces.Contains(startFace)) continue;
+                if (usedFaces.Contains(startFace)) continue;
                 //Get all the faces that should be used on this flat
                 //Use a hashset so we can use the ".Contains" function
-                var flatFaces = new HashSet<PolygonalFace> { startFace };
-                var flat = new Flat(flatFaces);
+                var flatHashSet = new HashSet<PolygonalFace> { startFace };
+                var flat = new Flat(flatHashSet);
                 //Stacks a fast for "Push" and "Pop".
                 //Add all the adjecent faces from the first face to the stack for 
                 //consideration in the while loop below.
-                var stack = new Stack<PolygonalFace>(flatFaces);
+                var stack = new Stack<PolygonalFace>(flatHashSet);
+                var reDefineFlat = 3;
                 while (stack.Any())
                 {
                     var newFace = stack.Pop();
@@ -339,20 +340,27 @@ namespace TVGL
                     //"if" statement in the while loop will ignore them.
                     foreach (var adjacentFace in newFace.AdjacentFaces)
                     {
-                        if (!flatFaces.Contains(adjacentFace) && unusedFaces.Contains(adjacentFace) &&
+                        if (adjacentFace == null) continue;
+                        if (!flatHashSet.Contains(adjacentFace) && !usedFaces.Contains(adjacentFace) &&
                             !stack.Contains(adjacentFace) && flat.IsNewMemberOf(adjacentFace))
                         {
-                            flat.UpdateWith(adjacentFace);
-                            flatFaces.Add(newFace);
+                            // flat.UpdateWith(adjacentFace);
+                            flatHashSet.Add(newFace);
+                            if (flatHashSet.Count >= reDefineFlat)
+                            {
+                                flat = new Flat(flatHashSet);
+                                reDefineFlat *= 3;
+                            }
                             stack.Push(adjacentFace);
                         }
                     }
                 }
+                flat = new Flat(flatHashSet);
                 //Criteria of whether it should be a flat should be inserted here.
-                if (flat.Faces.Count < minNumberOfFacesPerFlat) continue;
-                listFlats.Add(flat);
+                if (flat.Faces.Count >= minNumberOfFacesPerFlat)
+                    listFlats.Add(flat);
                 foreach (var polygonalFace in flat.Faces)
-                    unusedFaces.Remove(polygonalFace);
+                    usedFaces.Add(polygonalFace);
             }
             return listFlats;
         }
