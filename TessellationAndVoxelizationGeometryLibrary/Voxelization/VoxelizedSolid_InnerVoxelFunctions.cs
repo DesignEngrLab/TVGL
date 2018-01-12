@@ -427,10 +427,10 @@ namespace TVGL.Voxelization
                             voxelDictionaryLevel0.Values.Sum(dict => (long)(dict.HighLevelVoxels?.Count(isFullLevel4) ?? 0)),
                             voxelDictionaryLevel0.Values.Sum(dict => (long)(dict.HighLevelVoxels?.Count(isPartialLevel4) ?? 0))
                         };
-            _volume = 0.0;
+            Volume = 0.0;
             for (int i = 0; i <= discretizationLevel; i++)
-                _volume += Math.Pow(VoxelSideLengths[i], 3) * _totals[2 * i];
-            _volume += Math.Pow(VoxelSideLengths[discretizationLevel], 3) * _totals[2 * discretizationLevel + 1];
+                Volume += Math.Pow(VoxelSideLengths[i], 3) * _totals[2 * i];
+            Volume += Math.Pow(VoxelSideLengths[discretizationLevel], 3) * _totals[2 * discretizationLevel + 1];
         }
 
         internal double[] GetRealCoordinates(long ID, int level)

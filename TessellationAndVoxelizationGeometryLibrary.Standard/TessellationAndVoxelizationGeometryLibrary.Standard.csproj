@@ -122,14 +122,4 @@
     <PackageReference Include="StarMath" Version="2.0.17.1019" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\TVGLPresenterDebugger\TVGLPresenterDebugger.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="PresentationCore">
-      <HintPath>..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1\PresentationCore.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>

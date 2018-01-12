@@ -30,8 +30,6 @@ namespace TVGL.Voxelization
     {
         public long Count => _count;
         private long _count;
-        public new double Volume => _volume;
-        double _volume;
 
         public long[] GetTotals => _totals;
         long[] _totals;
@@ -371,7 +369,9 @@ namespace TVGL.Voxelization
 
         public override Solid TransformToNewSolid(double[,] transformationMatrix)
         {
-            throw new NotImplementedException();
+            var copy = (VoxelizedSolid)Copy();
+            copy.Transform(transformationMatrix);
+            return copy;
         }
 
         public override Solid Copy()

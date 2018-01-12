@@ -74,8 +74,8 @@ namespace TVGL.Voxelization
             voxelDictionaryLevel0 = new Dictionary<long, Voxel_Level0_Class>(new VoxelComparerCoarse());
             voxelDictionaryLevel1 = new Dictionary<long, Voxel_Level1_Class>(new VoxelComparerCoarse());
             transformedCoordinates = new double[ts.NumberOfVertices][];
-            //Parallel.For(0, ts.NumberOfVertices, i =>
-            for (int i = 0; i < ts.NumberOfVertices; i++)
+            Parallel.For(0, ts.NumberOfVertices, i =>
+            //for (int i = 0; i < ts.NumberOfVertices; i++)
             {
                 var vertex = ts.Vertices[i];
                 var coordinates = vertex.Position.subtract(Offset).divide(VoxelSideLengths[1]);
@@ -86,7 +86,7 @@ namespace TVGL.Voxelization
                 // in one voxel.
                 transformedCoordinates[i] = coordinates; //i == vertex.IndexInList
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
-            }  //);
+            }  );
             makeVoxelsForFacesAndEdges(ts);
             //makeVoxelForFacesAndEdgesAlternate(ts);
             if (!onlyDefineBoundary)

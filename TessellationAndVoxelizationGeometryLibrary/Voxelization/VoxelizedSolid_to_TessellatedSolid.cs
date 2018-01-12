@@ -90,7 +90,7 @@ namespace TVGL.Voxelization
             var vertices = voxelVertexDictionary.Values.ToList();
             vertices.AddRange(boundaryVertexDictionary.Values);
             var ts= new TessellatedSolid(faceCollection.ToList(), vertices, false);
-            ts.SimplifyFlatPatches();
+            //ts.SimplifyFlatPatches();
             return ts;
         }
 
