@@ -17,9 +17,14 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>3d, solid moedling, computaional geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
     <NeutralLanguage />
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard2.0\TessellationAndVoxelizationGeometryLibrary.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DocumentationFile>bin\Release\netstandard2.0\TessellationAndVoxelizationGeometryLibrary.xml</DocumentationFile>
   </PropertyGroup>
 
@@ -37,6 +42,7 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs" Link="Colors.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByIndexInList.cs" Link="Comparators\SortByIndexInList.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs" Link="Comparators\SortByLength.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByVoxelIndex.cs" Link="Comparators\SortByVoxelIndex.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs" Link="Constants.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHull2D.cs" Link="Enclosure Operations\ConvexHull2D.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\EnclosurePublicStructs.cs" Link="Enclosure Operations\EnclosurePublicStructs.cs" />
@@ -54,6 +60,7 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\SHELLFileData.cs" Link="InputOutput Operations\SHELLFileData.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\STLFileData.cs" Link="InputOutput Operations\STLFileData.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\InputOutput Operations\TVGLFileData.cs" Link="InputOutput Operations\TVGLFileData.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Math Operations\Proximity.cs" Link="Math Operations\Proximity.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\DirectionalDecomposition.cs" Link="Miscellaneous Functions\DirectionalDecomposition.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\Extrude.cs" Link="Miscellaneous Functions\Extrude.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Miscellaneous Functions\MiscFunctions.cs" Link="Miscellaneous Functions\MiscFunctions.cs" />
@@ -83,7 +90,17 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TessellationBaseClass.cs" Link="Solid Body Classes\TessellationBaseClass.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\TVGLConvexHull.cs" Link="Solid Body Classes\TVGLConvexHull.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Vertex.cs" Link="Solid Body Classes\Vertex.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid.cs" Link="Solid.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs" Link="Verbosity.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelClass.cs" Link="Voxelization\VoxelClass.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelComparer.cs" Link="Voxelization\VoxelComparer.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelConstantsAndEnumerators.cs" Link="Voxelization\VoxelConstantsAndEnumerators.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelHashSet.cs" Link="Voxelization\VoxelHashSet.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid.cs" Link="Voxelization\VoxelizedSolid.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolidfromTessellatedSolid.cs" Link="Voxelization\VoxelizedSolidfromTessellatedSolid.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs" Link="Voxelization\VoxelizedSolid_InnerVoxelFunctions.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_PublicFunctions.cs" Link="Voxelization\VoxelizedSolid_PublicFunctions.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_to_TessellatedSolid.cs" Link="Voxelization\VoxelizedSolid_to_TessellatedSolid.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -94,15 +111,21 @@
     <Folder Include="InputOutput Operations\" />
     <Folder Include="Miscellaneous Functions\TriangulatePolygon\" />
     <Folder Include="ModifyTessellation\" />
+    <Folder Include="Math Operations\" />
     <Folder Include="Primitive Classification\" />
     <Folder Include="Primitive Surfaces\" />
     <Folder Include="Solid Body Classes\" />
-    <Folder Include="SparseVoxelization\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.17.1019" />
     <PackageReference Include="StarMath" Version="2.0.17.1019" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PresentationCore">
+      <HintPath>..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1\PresentationCore.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using StarMathLib;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -57,7 +58,7 @@ namespace TVGL
         /// <param name="edgeReference">The edge reference.</param>
         /// <exception cref="Exception"></exception>
         public Edge(Vertex fromVertex, Vertex toVertex, PolygonalFace ownedFace, PolygonalFace otherFace,
-            bool doublyLinkedVertices, long edgeReference = 0) : this(fromVertex, toVertex, doublyLinkedVertices)
+                    bool doublyLinkedVertices, long edgeReference = 0) : this(fromVertex, toVertex, doublyLinkedVertices)
         {
             if (edgeReference > 0)
                 EdgeReference = edgeReference;

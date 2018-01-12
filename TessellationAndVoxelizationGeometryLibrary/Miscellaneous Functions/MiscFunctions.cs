@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -222,6 +223,94 @@ namespace TVGL
                     throw new Exception("Must provide between 1 to 3 direction vectors");
             }
         }
+
+        /// <summary>
+        ///     Returns a list of sorted points along a set direction. Ties are broken by direction[1] if
+        ///     available.
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="points"></param>
+        /// <param name="sortedPoints"></param>
+        /// <exception cref="Exception">
+        ///     Must provide between 1 to 3 direction vectors
+        ///     or
+        ///     Must provide between 1 to 3 direction vectors
+        /// </exception>
+        public static void SortAlongDirection(double[] direction, IList<Point> points,
+               out List<Tuple<Point, double>> sortedPoints)
+        {
+            var directions = new[] {direction};
+            SortAlongDirection(directions, points, out sortedPoints);
+        }
+
+        /// <summary>
+        ///     Returns a list of sorted points along a set direction. Ties are broken by direction[1] if
+        ///     available.
+        /// </summary>
+        /// <param name="directions">The directions.</param>
+        /// <param name="points"></param>
+        /// <param name="sortedPoints"></param>
+        /// <exception cref="Exception">
+        ///     Must provide between 1 to 3 direction vectors
+        ///     or
+        ///     Must provide between 1 to 3 direction vectors
+        /// </exception>
+        public static void SortAlongDirection(double[][] directions, IList<Point> points,
+            out List<Tuple<Point, double>> sortedPoints)
+        {
+            //Get integer values for every vertex as distance along direction
+            //Split positive and negative numbers into seperate lists. 0 is 
+            //considered positive.
+            //This is an O(n) preprocessing step
+            sortedPoints = new List<Tuple<Point, double>>();
+            var tempPoints = new List<Point>();
+            var pointDistances = new Dictionary<int, double>();
+            var pointReferences = new Dictionary<int, Point>();
+            var pointIndex = 0;
+            //Accuracy to the 15th decimal place
+            var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
+            foreach (var point in points)
+            {
+                //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
+                Point rotatedPoint;
+                var dot1 = directions[0][0]*point.X + directions[0][1] * point.Y; //2D dot product
+
+                switch (directions.Length)
+                {
+                    case 1:
+                        {
+                            rotatedPoint = new Point(Math.Round(dot1 * tolerance), 0.0);
+                        }
+                        break;
+                    case 2:
+                        {
+                            var dot2 = directions[1][0] * point.X + directions[1][1] * point.Y; //2D dot product
+                            rotatedPoint = new Point(Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance));
+                        }
+                        break;
+                    default:
+                        throw new Exception("Must provide between 1 to 2 direction vectors");
+
+                }
+                tempPoints.Add(rotatedPoint);
+                rotatedPoint.ReferenceIndex = pointIndex;
+                pointDistances.Add(pointIndex, dot1);
+                pointReferences.Add(pointIndex, point);
+                pointIndex++;
+            }
+            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
+            //tolerance as the "isNeglible" star math function 
+            var sortedPointsTemp = tempPoints.OrderBy(point => point.X).ThenBy(point => point.Y).ToList();
+
+            //Build the output list
+            foreach (var rotatedPoint in sortedPointsTemp)
+            {
+                var originalPoint = pointReferences[rotatedPoint.ReferenceIndex];
+                var distance = pointDistances[rotatedPoint.ReferenceIndex];
+                sortedPoints.Add(new Tuple<Point, double>(originalPoint, distance));
+            }
+        }
+
 
         #endregion
 
@@ -545,9 +634,9 @@ namespace TVGL
         #region Flatten to 2D
 
         /// <summary>
-        ///     Returns the 2D path (list of points) of the 3D loop (list of vertices) as that they would be represented in
-        ///     the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        ///     the vertices. Additionally, this function will keep the loops in their original positive/negative
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices. 
+        ///     Additionally, this function will keep the loops in their original positive/negative
         ///     orientation.
         /// </summary>
         /// <param name="loop"></param>
@@ -606,9 +695,8 @@ namespace TVGL
 
 
         /// <summary>
-        ///     Returns the positions (array of 3D arrays) of the vertices as that they would be represented in
-        ///     the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        ///     the vertices.
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -622,9 +710,8 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Returns the positions (array of 3D arrays) of the vertices as that they would be represented in
-        ///     the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        ///     the vertices.
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -638,9 +725,8 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Returns the positions (array of 3D arrays) of the vertices as that they would be represented in
-        ///     the x-y plane (although the z-values will be non-zero). This does not destructively alter
-        ///     the vertices.
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -655,42 +741,9 @@ namespace TVGL
             return Get2DProjectionPoints(vertices, transform, mergeDuplicateReferences);
         }
 
-        ///// <summary>
-        ///// Get2s the d projection points.
-        ///// </summary>
-        ///// <param name="vertices">The vertices.</param>
-        ///// <param name="transform">The transform.</param>
-        ///// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
-        ///// <returns>Point[].</returns>
-        //public static Point[] Get2DProjectionPoints(IList<Vertex> vertices, double[,] transform,
-        //    bool mergeDuplicateReferences = false)
-        //{
-        //    var points = new List<Point>();
-        //    var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
-        //    foreach (var vertex in vertices)
-        //    {
-        //        pointAs4[0] = vertex.Position[0];
-        //        pointAs4[1] = vertex.Position[1];
-        //        pointAs4[2] = vertex.Position[2];
-        //        pointAs4 = transform.multiply(pointAs4);
-        //        var point2D = new[] { pointAs4[0], pointAs4[1]};
-        //        if (mergeDuplicateReferences)
-        //        {
-        //            var sameIndex = points.FindIndex(p => p.Position2D.IsPracticallySame(point2D));
-        //            if (sameIndex >= 0)
-        //            {
-        //                //Add reference and move to the next vertex.
-        //                points[sameIndex].References.Add(vertex);
-        //                continue;
-        //            }
-        //        }
-        //        points.Add(new Point(vertex, pointAs4[0], pointAs4[1]));
-        //    }
-        //    return points.ToArray();
-        //}
-
         /// <summary>
-        ///     Get2s the d projection points.
+        ///     Returns an array of points projected using the given transform.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="transform">The transform.</param>
@@ -741,7 +794,8 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Gets the 2D projectsion points of vertices
+        ///     Returns the positions (array of 2D arrays) of the vertices as that they would be represented in
+        ///     the x-y plane (z-values will be zero). This does not destructively alter the vertices.
         /// </summary>
         /// <param name="vertices">The vertices.</param>
         /// <param name="direction">The direction.</param>
@@ -760,6 +814,19 @@ namespace TVGL
                 points[i] = new[] { pointAs4[0], pointAs4[1] };
             }
             return points;
+        }
+
+        /// <summary>
+        ///     Gets the 2D projection vector
+        /// </summary>
+        /// <param name="vector3D"></param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>System.Double[][].</returns>
+        public static double[] Get2DProjectionVector(double[] vector3D, double[] direction)
+        {
+            var transform = TransformToXYPlane(direction);
+            var vectorAs4 = transform.multiply(new[] {vector3D[0], vector3D[1], vector3D[2], 1.0});
+            return new[] {vectorAs4[0], vectorAs4[1]};
         }
 
         /// <summary>
@@ -814,6 +881,44 @@ namespace TVGL
             return rotateX.multiply(rotateY);
         }
 
+        /// <summary>
+        /// Backtransforms a 2D vector from an XY plane. Return 3D vector.
+        /// </summary>
+        /// <param name="direction2D"></param>
+        /// <param name="backTransform"></param>
+        /// <returns></returns>
+        public static double[] Convert2DVectorTo3DVector(double[] direction2D, double[,] backTransform)
+        {
+            var tempVector = new[] { direction2D[0], direction2D[1], 0.0, 1.0 };
+            return backTransform.multiply(tempVector).Take(3).ToArray().normalize();
+        }
+
+        /// <summary>
+        /// Gets 3D vertices from 2D points, the projection direction, and the distance along that direction.
+        /// </summary>
+        /// <param name="points"></param>
+        /// <param name="direction"></param>
+        /// <param name="distanceAlongDirection"></param>
+        /// <returns></returns>
+        public static List<Vertex> GetVerticesFrom2DPoints(List<Point> points, double[] direction, double distanceAlongDirection)
+        {
+            //Rotate axis back to the original, and then transform points along the given direction.
+            //If you try to transform first, it will shift the vertices incorrectly
+            double[,] backTransform;
+            TransformToXYPlane(direction, out backTransform);
+            var directionVector = direction.multiply(distanceAlongDirection);
+            var contour = new List<Vertex>();
+            foreach (var point in points)
+            {
+                var position = new[] { point.X, point.Y, 0.0, 1.0 };
+                var untransformedPosition = backTransform.multiply(position).Take(3).ToArray();
+                var vertexPosition = untransformedPosition.add(directionVector);
+
+                contour.Add(new Vertex(vertexPosition));
+            }
+
+            return new List<Vertex>(contour);
+        }
         #endregion
 
         #region Angle between Edges/Lines
@@ -1615,7 +1720,7 @@ namespace TVGL
         #region Distance Methods (between point, line, and plane)
 
         /// <summary>
-        ///     Returns the distance the point to line.
+        ///     Returns the distance the point on an infinite line.
         /// </summary>
         /// <param name="qPoint">The q point that is off of the line.</param>
         /// <param name="lineRefPt">The line reference point on the line.</param>
@@ -1628,7 +1733,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Distances the point to line.
+        ///     Returns the distance the point on an infinite line.
         /// </summary>
         /// <param name="qPoint">q is the point that is off of the line.</param>
         /// <param name="lineRefPt">p is a reference point on the line.</param>
@@ -1687,6 +1792,21 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Distances the point to point.
+        /// </summary>
+        /// <param name="p1">point, p1.</param>
+        /// <param name="p2">point, p2.</param>
+        /// <returns>the distance between the two 3D points.</returns>
+        public static double SquareDistancePointToPoint(double[] p1, double[] p2)
+        {
+            var dX = p1[0] - p2[0];
+            var dY = p1[1] - p2[1];
+            if (p1.Length == 2) return dX * dX + dY * dY;
+            var dZ = p1[2] - p2[2];
+            return dX * dX + dY * dY + dZ * dZ;
+        }
+
+        /// <summary>
         ///     Returns the signed distance of the point to the plane.
         /// </summary>
         /// <param name="point">The point.</param>
@@ -1711,6 +1831,55 @@ namespace TVGL
         {
             return normalOfPlane.dotProduct(point) - signedDistanceToPlane;
         }
+
+        /// <summary>
+        ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     of triangle to return a valid intersection.
+        /// </summary>
+        /// <param name="face"></param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnFaceFromIntersectingLine(PolygonalFace face, double[] point1,
+            double[] point2)
+        {
+            var positions = face.Vertices.Select(vertex => vertex.Position).ToList();
+            return PointOnFaceFromIntersectingLine(positions, face.Normal, point1, point2);
+        }
+
+        /// <summary>
+        ///     Finds the point on the face made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that face. If not intersection exists, then function returns null. Points must be on either side 
+        ///     of triangle to return a valid intersection.
+        /// </summary>
+        /// <param name="normal"></param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <param name="vertices"></param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnFaceFromIntersectingLine(List<double[]> vertices, double[] normal, double[] point1,
+            double[] point2)
+        {
+            var distanceToOrigin = normal.dotProduct(vertices[0]);
+            var d1 = normal.dotProduct(point1);
+            var d2 = normal.dotProduct(point2);
+            if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
+            var denominator = d1 - d2;
+            if (denominator == 0) return null; //The points form a perpendicular line to the face
+            var fraction = (d1 - distanceToOrigin) / (denominator);
+            var position = new double[3];
+            for (var i = 0; i < 3; i++)
+            {
+                position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
+                if (double.IsNaN(position[i]))
+                    throw new Exception("This should never occur. Prevent this from happening");
+            }
+            return IsPointInsideTriangle(vertices, position, true) ? position : null;
+        }
+
 
         /// <summary>
         ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
@@ -1739,6 +1908,30 @@ namespace TVGL
         }
 
         /// <summary>
+        ///     Finds the point on the plane made by a line intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane. Can be 2D or 3D. </param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="line"></param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static Point PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
+        {
+            var d1 = normalOfPlane[0] * line.ToPoint.X + normalOfPlane[1] * line.ToPoint.Y; //2D Dot product
+            var d2 = normalOfPlane[0] * line.FromPoint.X + normalOfPlane[1] * line.FromPoint.Y;  //For a point, Position[2] = 0.0
+            var fraction = (d1 - distOfPlane) / (d1 - d2);
+            var position2D = new double[2];
+            for (var i = 0; i < 2; i++)
+            {
+                position2D[i] = line.FromPoint.Position[i] * fraction + line.ToPoint.Position[i] * (1 - fraction);
+                if (double.IsNaN(position2D[i]))
+                    throw new Exception("This should never occur. Prevent this from happening");
+            }
+            return new Point(position2D[0], position2D[1]);
+        }
+
+        /// <summary>
         ///     Finds the point on the plane made by a ray. If that ray is not going to pass through the
         ///     that plane, then null is returned.
         /// </summary>
@@ -1746,15 +1939,19 @@ namespace TVGL
         /// <param name="distOfPlane">The dist of plane.</param>
         /// <param name="rayPosition">The ray position.</param>
         /// <param name="rayDirection">The ray direction.</param>
+        /// <param name="signedDistance"></param>
         /// <returns>Vertex.</returns>
         public static double[] PointOnPlaneFromRay(double[] normalOfPlane, double distOfPlane, double[] rayPosition,
-            double[] rayDirection)
+            double[] rayDirection, out double signedDistance)
         {
-            var d1 = -DistancePointToPlane(rayDirection, normalOfPlane, distOfPlane);
-            var angle = SmallerAngleBetweenEdges(normalOfPlane, rayDirection);
-            var d2 = d1 / Math.Cos(angle);
-            if (d2 < 0) return null;
-            return rayPosition.add(rayDirection.multiply(d2));
+            var dot = rayDirection.dotProduct(normalOfPlane);
+            signedDistance = 0.0;
+            if (dot == 0) return null;
+
+            var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
+            signedDistance = d1 / dot;
+            if (signedDistance.IsNegligible()) return rayPosition;
+            return rayPosition.add(rayDirection.multiply(signedDistance));
         }
 
         /// <summary>
@@ -1772,15 +1969,69 @@ namespace TVGL
         public static double[] PointOnTriangleFromLine(PolygonalFace face, Vertex vertex, double[] direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
+            return PointOnTriangleFromLine(face, vertex.Position, direction, out signedDistance);
+        }
+
+        /// <summary>
+        ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
+        ///     that triangle, then null is returned. The signed distance is positive if the vertex points to
+        ///     the triangle along the direction (ray). User can also specify whether the edges of the triangle
+        ///     are considered "inside."
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="point3D"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="signedDistance">The signed distance.</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, double[] direction,
+            out double signedDistance, bool onBoundaryIsInside = true)
+        {
             var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-            signedDistance = -(vertex.Position.dotProduct(face.Normal) - distanceToOrigin) /
-                             direction.dotProduct(face.Normal);
-            //Note that if t == 0, then it is on the plane
-            //else, find the intersection point and determine if it is inside the polygon (face)
-            var newPoint = signedDistance.IsNegligible()
-                ? vertex
-                : new Vertex(vertex.Position.add(direction.multiply(signedDistance)));
-            return IsPointInsideTriangle(face, newPoint, onBoundaryIsInside) ? newPoint.Position : null;
+            var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
+            if (newPoint == null) return null;
+            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+        }
+
+        /// <summary>
+        ///     Finds the point on the triangle made by a line. If that line is not going to pass through the
+        ///     that triangle, then null is returned. The signed distance is positive if the vertex points to
+        ///     the triangle along the direction (ray). User can also specify whether the edges of the triangle
+        ///     are considered "inside."
+        /// </summary>
+        /// <param name="face">The face.</param>
+        /// <param name="point3D"></param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="signedDistance">The signed distance.</param>
+        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
+        public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, VoxelDirections direction,
+            out double signedDistance, bool onBoundaryIsInside = true)
+        {
+            var newPoint = (double[])point3D.Clone();
+            signedDistance = double.NaN;
+            var d = face.Normal.dotProduct(face.Vertices[0].Position);
+            var n = face.Normal;
+            switch (direction)
+            {
+                case VoxelDirections.XNegative:
+                case VoxelDirections.XPositive:
+                    if (face.Normal[0].IsNegligible()) return null;
+                    newPoint = new[] { (d - n[1] * point3D[1] - n[2] * point3D[2]) / n[0], point3D[1], point3D[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[0] - point3D[0]);
+                    break;
+                case VoxelDirections.YNegative:
+                case VoxelDirections.YPositive:
+                    if (face.Normal[1].IsNegligible()) return null;
+                    newPoint = new[] { point3D[0], (d - n[0] * point3D[0] - n[2] * point3D[2]) / n[1], point3D[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[1] - point3D[1]);
+                    break;
+                default:
+                    if (face.Normal[2].IsNegligible()) return null;
+                    newPoint = new[] { point3D[0], point3D[1], (d - n[0] * point3D[0] - n[1] * point3D[1]) / n[2] };
+                    signedDistance = (Math.Sign((int)direction)) * (newPoint[2] - point3D[2]);
+                    break;
+            }
+
+            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
         #endregion
 
@@ -1846,12 +2097,42 @@ namespace TVGL
         public static bool IsPointInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
+            return IsPointInsideTriangle(vertices, vertexInQuestion.Position, onBoundaryIsInside);
+        }
+
+        /// <summary>
+        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+        ///     triangle are considered "inside." Assumes vertex in question is in the same plane
+        ///     as the triangle.
+        /// </summary>
+        public static bool IsPointInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
+            bool onBoundaryIsInside = true)
+        {
+            var positions = vertices.Select(vertex => vertex.Position).ToList();
+            return IsPointInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
+        }
+
+        /// <summary>
+        ///     Returns whether a vertex lies on a triangle. User can specify whether the edges of the
+        ///     triangle are considered "inside." Assumes vertex in question is in the same plane
+        ///     as the triangle.
+        /// </summary>
+        /// <param name="vertices"></param>
+        /// <param name="vertexInQuestion"></param>
+        /// <param name="onBoundaryIsInside"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static bool IsPointInsideTriangle(IList<double[]> vertices, double[] vertexInQuestion,
+            bool onBoundaryIsInside = true)
+        {
             if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
-            var p = vertexInQuestion.Position;
-            var a = vertices[0].Position;
-            var b = vertices[1].Position;
-            var c = vertices[2].Position;
-            return SameSide(p, a, b, c) && SameSide(p, b, a, c) && SameSide(p, c, a, b);
+            var p = vertexInQuestion;
+            var a = vertices[0];
+            var b = vertices[1];
+            var c = vertices[2];
+            return SameSide(p, a, b, c, onBoundaryIsInside) &&
+                   SameSide(p, b, a, c, onBoundaryIsInside) &&
+                   SameSide(p, c, a, b, onBoundaryIsInside);
         }
 
         /// <summary>

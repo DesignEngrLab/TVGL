@@ -28,7 +28,7 @@ namespace TVGL
     /// <remarks>
     ///     This partial class file is focused on static functions that relate to Tessellated Solid.
     /// </remarks>
-    public partial class TessellatedSolid
+    public partial class TessellatedSolid : Solid
     {
         private static bool ContainsDuplicateIndices(List<int> orderedIndices)
         {
@@ -115,6 +115,7 @@ namespace TVGL
         #region Define Inertia Tensor
         const double oneSixtieth = 1.0 / 60.0;
 
+
         private static double[,] DefineInertiaTensor(IEnumerable<PolygonalFace> Faces, double[] Center, double Volume)
         {
             var matrixA = StarMath.makeZero(3, 3);
@@ -177,5 +178,6 @@ namespace TVGL
                 if (vertex == edge.From) edge.From = null;
             }
         }
+
     }
 }

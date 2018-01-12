@@ -30,7 +30,7 @@ namespace TVGL
     ///     find some
     ///     error with the file. Here we attempt to patch those up..
     /// </remarks>
-    public partial class TessellatedSolid
+    public partial class TessellatedSolid:Solid
     {
         private void MakeEdges(out List<PolygonalFace> newFaces, out List<Vertex> removedVertices)
         {
@@ -426,8 +426,16 @@ namespace TVGL
                 else
                 {
                     var edgeDic = edges.ToDictionary(SetAndGetEdgeChecksum);
-                    var triangleFaceList = TriangulatePolygon.Run(new List<List<Vertex>>
-                    {edges.Select(e => e.To).ToList()}, normal); ;
+                    List<List<Vertex[]>> triangleFaceList = null;
+                    try
+                    {
+                        triangleFaceList = TriangulatePolygon.Run(new List<List<Vertex>>
+                            {edges.Select(e => e.To).ToList()}, normal);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
                     var triangles = triangleFaceList.SelectMany(tl => tl).ToList();
                     if (triangles.Any())
                     {
@@ -435,6 +443,7 @@ namespace TVGL
                         foreach (var triangle in triangles)
                         {
                             var newFace = new PolygonalFace(triangle, normal);
+                            if (newFace.Area.IsNegligible() && newFace.Normal.Any(double.IsNaN)) continue;
                             newFaces.Add(newFace);
                             for (var j = 0; j < 3; j++)
                             {

@@ -127,6 +127,17 @@ namespace TVGL
                 if (!isInside) throw new Exception("Negative polygon was not inside any positive polygons");
             }
 
+            //Set the polygon indices
+            var polygonCount = 0;
+            foreach (var shallowPolygonTree in shallowPolygonTrees)
+            {
+                foreach (var polygon in shallowPolygonTree.AllPolygons)
+                {
+                    polygon.Index = polygonCount;
+                    polygonCount++;
+                }
+            }
+
             return shallowPolygonTrees;
         }
 

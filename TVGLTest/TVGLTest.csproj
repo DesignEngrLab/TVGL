@@ -33,6 +33,27 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="MIConvexHull, Version=1.0.17.1019, Culture=neutral, PublicKeyToken=bdc96d69606221fd, processorArchitecture=MSIL">
       <HintPath>..\packages\MIConvexHull.1.1.17.1019\lib\netstandard1.0\MIConvexHull.dll</HintPath>
@@ -92,6 +113,7 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
+<<<<<<< HEAD
     <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.Standard\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
       <Project>{b73a4731-ff89-4a3d-b803-14b016196c4a}</Project>
       <Name>TessellationAndVoxelizationGeometryLibrary.Standard</Name>
@@ -105,6 +127,17 @@
     <Content Include="MIConvexHull.xml" />
     <Content Include="StarMath.XML" />
   </ItemGroup>
+=======
+    <Content Include="MIConvexHull.xml" />
+    <Content Include="StarMath.XML" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TVGLPresenterDebugger\TVGLPresenterDebugger.csproj">
+      <Project>{f6678d6c-1f71-4f4e-ac77-22f5e133a6f2}</Project>
+      <Name>TVGLPresenterDebugger</Name>
+    </ProjectReference>
+  </ItemGroup>
+>>>>>>> DecompositionInprovements
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

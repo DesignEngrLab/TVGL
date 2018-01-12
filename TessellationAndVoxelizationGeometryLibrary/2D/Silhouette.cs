@@ -248,8 +248,11 @@ namespace TVGL
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="normal"></param>
+        /// <param name="minAngle"></param>
+        /// <param name="removeTinyPolygons"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double minAngle = 1.0, bool removeTinyPolygons = true)
+        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double minAngle = 1.0,
+            bool removeTinyPolygons = true)
         {
             if (ts.Errors?.SingledSidedEdges != null)
             {
@@ -257,7 +260,27 @@ namespace TVGL
                 //Also, it handles low quality and small models better.
                 return Run2(ts, normal);
             }
+            ts.HasUniformColor = false;
 
+            List<Vertex> v1, v2;
+            var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out v1, out v2);
+
+            return Run(ts.Faces, normal, minAngle, ts.SurfaceArea/10000, removeTinyPolygons, depthOfPart);
+        }
+
+        /// <summary>
+        /// Gets the silhouette of a solid along a given normal. Depth of part is only used if removing tiny polygons.
+        /// </summary>
+        /// <param name="faces"></param>
+        /// <param name="normal"></param>
+        /// <param name="minAngle"></param>
+        /// <param name="minPathAreaToConsider"></param>
+        /// <param name="removeTinyPolygons"></param>
+        /// <param name="depthOfPart"></param> 
+        /// <returns></returns>
+        public static List<List<Point>> Run(IList<PolygonalFace> faces, double[] normal, double minAngle = 1.0,
+            double minPathAreaToConsider = 0.0, bool removeTinyPolygons = true, double depthOfPart = 0.0)
+        {
             //Get the positive faces into a dictionary
             var positiveFaceDict1 = new Dictionary<int, PolygonalFace>();
             var positiveFaceDict2 = new Dictionary<int, PolygonalFace>();
@@ -268,10 +291,9 @@ namespace TVGL
             if (minAngle > 4.999) minAngle = 4.999; //min angle must be between 0 and 5 degrees. 1 degree has proven to be good.
             //Note also that the offset is based on the min angle.
             var thirdTolerance = Math.Cos((90-minAngle)*Math.PI/180); //Angle of 89.9 Degrees from normal
-            ts.HasUniformColor = false;
-            foreach (var face in ts.Faces)
+ 
+            foreach (var face in faces)
             {
-                //face.Color = new Color(KnownColors.PaleGoldenrod);
                 var dot = normal.dotProduct(face.Normal);
                 if (dot.IsGreaterThanNonNegligible(firstTolerance))
                 {
@@ -300,7 +322,7 @@ namespace TVGL
             allSurfaces.AddRange(SeperateIntoSurfaces(positiveFaceDict2));
             allSurfaces.AddRange(SeperateIntoSurfaces(positiveFaceDict3));
 
-            //Get the surface paths from all the srufaces and union them together
+            //Get the surface paths from all the surfaces and union them together
             var solution = new List<List<Point>>();
             var loopCount = 0;
             foreach (var surface in allSurfaces)
@@ -312,7 +334,7 @@ namespace TVGL
                 {
                     var pathArea = MiscFunctions.AreaOfPolygon(path);
                     area += pathArea;
-                    if (!pathArea.IsNegligible(ts.SurfaceArea / 10000))
+                    if (!pathArea.IsNegligible(minPathAreaToConsider))
                     {
                         //Ignore very small patches
                         significantPaths.Add(path);
@@ -341,12 +363,9 @@ namespace TVGL
                 loopCount++;
             }
 
-
             if (!removeTinyPolygons) return solution;
 
             //Offset by enough to account for 0.1 degree limit. 
-            List<Vertex> v1, v2;
-            var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out v1, out v2);
             var scale = Math.Tan(minAngle * Math.PI / 180)*depthOfPart;
 
             //Remove tiny polygons and slivers 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TVGL.Voxelization;
 
 namespace TVGL
 {
@@ -28,8 +29,16 @@ namespace TVGL
         ///     Gets the normal.
         /// </summary>
         /// <value>The normal.</value>
-        public double[] Normal { get;internal set; }
+        public double[] Normal { get; internal set; }
 
+
+        public HashSet<VoxelWithTessellationLinks> Voxels { get; protected set; }
+
+        internal void AddVoxel(VoxelWithTessellationLinks v)
+        {
+            if (Voxels == null) Voxels = new HashSet<VoxelWithTessellationLinks> { v };
+            else if (!Voxels.Contains(v)) Voxels.Add(v);
+        }
 
     }
 }
