@@ -905,7 +905,7 @@ namespace TVGL.Voxelization
 
             //First, to round all edges, apply spheres to the center of every voxel in the shell.
             //Second, get all the new outer voxels.
-            var offsetValues = GetPartialSolidSphereOffsets(r);
+            var offsetValues = MakeMasks(r);
 
             //By using a concurrent dictionary rather than a bag, we can prevent duplicates. Use byte to only take 1 bit.
             var possibleShellVoxels = new ConcurrentDictionary<long, ConcurrentDictionary<long, bool>>(); //True = on shell. False = inner.
@@ -1135,7 +1135,7 @@ namespace TVGL.Voxelization
         //This function pre-builds all the possible offsets for every direction combination
         //This function should only need to be called once during the offset function, so it
         //does not need to be that optimized.
-        private static Dictionary<int, List<Tuple<int[], bool>>> GetPartialSolidSphereOffsets(int r)
+        private static Dictionary<int, List<Tuple<int[], bool>>> MakeMasks(int r)
         {
             var partialSolidSphereOffsets = new Dictionary<int, List<Tuple<int[], bool>>>();
 
@@ -1193,6 +1193,7 @@ namespace TVGL.Voxelization
                             //For this reason, we use case to int and then check for dominated voxels (larger x,y, and z value)
                             var onShell = false;
                             var r2 = (int)Math.Sqrt(xOffset * xOffset + yOffset * yOffset + zOffset * zOffset);
+                            if (r2 > r) continue;
                             if (r2 == r)
                             {
                                 //Check if adding +1 to the active X,Y,Z axis (active if max>0) results in radius also == r. 
