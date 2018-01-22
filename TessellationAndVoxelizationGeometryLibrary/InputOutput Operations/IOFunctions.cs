@@ -821,7 +821,7 @@ namespace TVGL.IOFunctions
         public static bool Save(IList<TessellatedSolid> solids, string filename, FileType fileType = FileType.unspecified)
         {
             var extension = GetExtensionFromFileName(filename);
-            if (fileType != FileType.unspecified)
+            if (fileType == FileType.unspecified)
                 fileType = GetFileTypeFromExtension(extension);
             var filenameLocal = filename;
             if (string.IsNullOrWhiteSpace(extension))

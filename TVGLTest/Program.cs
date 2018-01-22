@@ -89,6 +89,7 @@ namespace TVGL_Test
                 Console.WriteLine("Attempting: " + filename);
                 List<TessellatedSolid> solids = IO.Open(filename);
                 TestVoxelizatoin(solids[0]);
+
             }
 
             Console.WriteLine("Completed.");
@@ -118,11 +119,12 @@ namespace TVGL_Test
             //var bounds = new double[2][];
             //bounds[0] = ts1.Bounds[0];
             //bounds[1] = ts2.Bounds[1];
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
-            ts.Transform(new double[,]{ { 1, 0, 0, 10 }, { 0, 1, 0, 10 }, { 0, 0, 1, 10 }, { 0, 0, 0, 1 }});
+            var vs = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
+            var tsFromVs = vs.ConvertToTessellatedSolid(new Color(0.5f, 0.8f, 0f, 0.3f));
+            ts.Transform(new double[,] { { 1, 0, 0, 10 }, { 0, 1, 0, 10 }, { 0, 0, 1, 10 }, { 0, 0, 0, 1 } });
             Console.WriteLine("displaying");
-            Presenter.ShowAndHangVoxelization(ts, vs1);
-
+            Presenter.ShowAndHang(new List<TessellatedSolid> { ts, tsFromVs });
+            IO.Save(new[] { ts, tsFromVs }, "test", FileType.OFF);
             //var tsFromVS = vs1.ConvertToTessellatedSolid();
             //tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
 
@@ -155,7 +157,7 @@ namespace TVGL_Test
             {
                 Dictionary<int, double> stepDistances;
                 Dictionary<int, double> sortedVertexDistanceLookup;
-                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, 
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
                     stepSize, out stepDistances, out sortedVertexDistanceLookup);
                 //foreach (var segment in segments)
                 //{
@@ -214,7 +216,7 @@ namespace TVGL_Test
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL.Silhouette.Run(ts, new[] {0.5, 0.0, 0.5});
+            var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
             Presenter.ShowAndHang(silhouette);
         }
 
