@@ -28,7 +28,7 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
 
-        public TessellatedSolid ConvertToTessellatedSolid(double minEdgeLength = -1)
+        public TessellatedSolid ConvertToTessellatedSolid(Color color, double minEdgeLength = -1)
         {
             var faceCollection = new ConcurrentBag<PolygonalFace>();
             var voxelVertexDictionary = Voxels(this.Discretization, VoxelRoleTypes.Partial, true)
@@ -89,7 +89,7 @@ namespace TVGL.Voxelization
             } //);
             var vertices = voxelVertexDictionary.Values.ToList();
             vertices.AddRange(boundaryVertexDictionary.Values);
-            var ts= new TessellatedSolid(faceCollection.ToList(), vertices, false);
+            var ts = new TessellatedSolid(faceCollection.ToList(), vertices, false, new[] { color });
             //ts.SimplifyFlatPatches();
             return ts;
         }

@@ -835,7 +835,7 @@ namespace TVGL
 
         private static Visual3D MakeModelVisual3D(VoxelizedSolid solid, Material material)
         {
-            return MakeModelVisual3D(solid.ConvertToTessellatedSolid());
+            return MakeModelVisual3D(solid.ConvertToTessellatedSolid(new Color(0.5f, 0.8f, 0f, 0.3f)));
             var builder = new MeshBuilder();
             foreach (var voxel in solid.Voxels())
             {
@@ -1008,7 +1008,7 @@ namespace TVGL
             var models = new List<Visual3D>();
             var model = MakeModelVisual3D(solid);
             models.Add(model);
-            //  window.view1.Children.Add(model);
+            window.view1.Children.Add(model);
 
             model = MakeModelVisual3D(voxelSolid,
                 MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 200, G = 189, B = 189 }));

@@ -82,7 +82,7 @@ namespace TVGL_Test
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*");
-            for (var i = 17; i < fileNames.Count(); i++)
+            for (var i = 4; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -119,6 +119,7 @@ namespace TVGL_Test
             //bounds[0] = ts1.Bounds[0];
             //bounds[1] = ts2.Bounds[1];
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
+            ts.Transform(new double[,]{ { 1, 0, 0, 10 }, { 0, 1, 0, 10 }, { 0, 0, 1, 10 }, { 0, 0, 0, 1 }});
             Console.WriteLine("displaying");
             Presenter.ShowAndHangVoxelization(ts, vs1);
 
