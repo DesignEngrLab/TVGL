@@ -75,13 +75,13 @@ namespace TVGLPresenterDX
 
         private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
         {
-            if (true)
+            if (false)
             {
-                var ts = vs.ConvertToTessellatedSolid();
-                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
-                {
-                    Af = 0.80f
-                };
+                var ts = vs.ConvertToTessellatedSolid(
+                     new Color(KnownColors.MediumSeaGreen)
+                    {
+                        Af = 0.80f
+                    });
                 return ConvertTessellatedSolidtoObject3D(ts);
             }
 

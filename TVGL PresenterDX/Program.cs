@@ -83,7 +83,7 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*a*");
+            var fileNames = dir.GetFiles("AA*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -121,15 +121,12 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts)
         {
             var stopWatch = new Stopwatch();
-            //var ts2 = (TessellatedSolid)ts.TransformToNewSolid(new double[,]
-            //  {
-            //    {1,0,0,(ts.XMax - ts.XMin)/2},
-            //    {0,1,0,(ts.YMax-ts.YMin)/2},
-            //    {0,0,1,(ts.ZMax-ts.ZMin)/2},
-            //  });
-            //var bounds = new double[2][];
-            //bounds[0] = ts.Bounds[0];//.multiply(3);
-            //bounds[1] = ts2.Bounds[1];//.multiply(3);
+            ts.Transform(new double[,]
+              {
+                {1,0,0,-(ts.XMax + ts.XMin)/2},
+                {0,1,0,-(ts.YMax+ts.YMin)/2},
+                {0,0,1,-(ts.ZMax+ts.ZMin)/2},
+              });
             stopWatch.Restart();
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
 
@@ -144,9 +141,9 @@ namespace TVGLPresenterDX
             //PresenterShowAndHang(new Solid[] { vs1 });
 
             var vsPos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
-            //PresenterShowAndHang(new Solid[] { vsPos });
+            PresenterShowAndHang(new Solid[] { vsPos });
             var vsNeg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
-            //PresenterShowAndHang(new Solid[] { vsNeg });
+            PresenterShowAndHang(new Solid[] { vsNeg });
 
             var vsInt = vsNeg.IntersectToNewSolid(vsPos);
 

@@ -420,6 +420,7 @@ namespace TVGL.Voxelization
         {
             Draft(direction, null, direction > 0 ?
                 numVoxels[Math.Abs((int)direction) - 1] : int.MaxValue, 0);
+            UpdateProperties();
         }
 
         private bool Draft(VoxelDirections direction, IVoxel parent, int remainingVoxelLayers,
@@ -443,8 +444,8 @@ namespace TVGL.Voxelization
             var nextLayerCount = 0;
             for (int i = 0; i < limit; i++)
             {
-                Parallel.ForEach(layerOfVoxels[i], voxel =>
-                //foreach (var voxel in layerOfVoxels[i])
+                //Parallel.ForEach(layerOfVoxels[i], voxel =>
+                foreach (var voxel in layerOfVoxels[i])
                 {
                     if (remainingVoxelLayers >= voxelsPerLayer && (voxel.Role == VoxelRoleTypes.Full
                         || (voxel.Role == VoxelRoleTypes.Partial && level == discretizationLevel)))
@@ -466,12 +467,12 @@ namespace TVGL.Voxelization
                     {
                         var filledUpNextLayer = Draft(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
-                        if (neighbor == null || layerOfVoxels.Length <= i + 1) return; // null happens when you go outside of bounds (of coarsest voxels)
+                        if (neighbor == null || layerOfVoxels.Length <= i + 1) continue; //return; // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer) neighbor = MakeVoxelFull(neighbor);
                         else neighbor = MakeVoxelPartial(neighbor);
                         layerOfVoxels[i + 1].Add(neighbor);
                     }
-                });
+                }//);
                 remainingVoxelLayers -= (int)voxelsPerLayer;
             }
             return nextLayerCount == 256;
@@ -515,7 +516,7 @@ namespace TVGL.Voxelization
                 // subtract only make smaller models
                 //else if (referenceLowestRole == VoxelRoleTypes.Full &&
                 //         thisVoxel.Role == VoxelRoleTypes.Full) MakeVoxelFull(thisVoxel);
-            }  );
+            });
             UpdateProperties();
         }
         void IntersectLevel1(IList<long> level1Keys, VoxelizedSolid[] references)
@@ -540,7 +541,7 @@ namespace TVGL.Voxelization
                 // subtract only make smaller models
                 //else if (referenceLowestRole == VoxelRoleTypes.Full &&
                 //         thisVoxel.Role == VoxelRoleTypes.Full) MakeVoxelFull(thisVoxel);
-            }  );
+            });
         }
 
         void IntersectHigherLevels(VoxelHashSet highLevelHashSet, VoxelizedSolid[] references, int level)  //List<VoxelRoleTypes> flags)
@@ -591,7 +592,7 @@ namespace TVGL.Voxelization
                     if (discretizationLevel >= 1)
                         SubtractLevel1(thisVoxel.NextLevelVoxels.ToList(), subtrahends);
                 }
-            }  );
+            });
             UpdateProperties();
         }
         void SubtractLevel1(IList<long> level1Keys, VoxelizedSolid[] references)
@@ -612,7 +613,7 @@ namespace TVGL.Voxelization
                         SubtractHigherLevels(v0Parent.HighLevelVoxels, references, 2);
                     }
                 }
-            } );
+            });
         }
 
         void SubtractHigherLevels(VoxelHashSet highLevelHashSet, VoxelizedSolid[] references, int level)
