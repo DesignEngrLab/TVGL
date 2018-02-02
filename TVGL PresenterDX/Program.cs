@@ -83,7 +83,7 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("AA*");
+            var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
                 if (!ts.Any()) continue;
                 ts[0].SolidColor = new Color(KnownColors.DeepPink);
                 // PresenterShowAndHang(ts);
-                TestVoxelization(ts[0]);
+                TestMachinability(ts[0]);
             }
             Console.WriteLine("Completed.");
         }
@@ -114,8 +114,29 @@ namespace TVGLPresenterDX
             mainWindow.AddSolids(solids);
             mainWindow.ShowDialog();
         }
+        public static void TestMachinability(TessellatedSolid ts)
+        {
+            var stopWatch = new Stopwatch();
+            ts.Transform(new double[,]
+              {
+                {1,0,0,-(ts.XMax + ts.XMin)/2},
+                {0,1,0,-(ts.YMax+ts.YMin)/2},
+                {0,0,1,-(ts.ZMax+ts.ZMin)/2},
+              });
+            stopWatch.Restart();
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
 
+            var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
+            var vs1xneg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
+            var vs1ypos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
+            var vs1yneg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
+            var vs1zpos = vs1.DraftToNewSolid(VoxelDirections.ZPositive);
+            var vs1zneg = vs1.DraftToNewSolid(VoxelDirections.ZNegative);
 
+            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);
+            PresenterShowAndHang(new Solid[] { intersect });
+        }
+        
 
 
         public static void TestVoxelization(TessellatedSolid ts)
