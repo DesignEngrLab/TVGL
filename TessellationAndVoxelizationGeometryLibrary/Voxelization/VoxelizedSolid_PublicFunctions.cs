@@ -587,10 +587,11 @@ namespace TVGL.Voxelization
                 if (referenceHighestRole == VoxelRoleTypes.Full)
                     MakeVoxelEmpty(thisVoxel);
                 else if (referenceHighestRole == VoxelRoleTypes.Partial)
-                {
-                    MakeVoxelPartial(thisVoxel);
+                {                    
                     if (discretizationLevel >= 1)
-                        SubtractLevel1(thisVoxel.NextLevelVoxels.ToList(), subtrahends);
+                    { MakeVoxelPartial(thisVoxel);
+                        SubtractLevel1(thisVoxel.NextLevelVoxels.ToList(), subtrahends); }
+                    else MakeVoxelEmpty(thisVoxel);
                 }
             });
             UpdateProperties();
@@ -606,12 +607,13 @@ namespace TVGL.Voxelization
                 if (referenceHighestRole == VoxelRoleTypes.Full) MakeVoxelEmpty(thisVoxel);
                 else if (referenceHighestRole == VoxelRoleTypes.Partial)
                 {
-                    thisVoxel = (Voxel_Level1_Class)MakeVoxelPartial(thisVoxel);
                     if (discretizationLevel >= 2)
                     {
+                        thisVoxel = (Voxel_Level1_Class)MakeVoxelPartial(thisVoxel);
                         var v0Parent = (Voxel_Level0_Class)GetParentVoxel(thisVoxel);
                         SubtractHigherLevels(v0Parent.HighLevelVoxels, references, 2);
                     }
+                    else MakeVoxelEmpty(thisVoxel);
                 }
             });
         }

@@ -60,7 +60,8 @@ namespace TVGLPresenterDX
             {
                 Material = new PhongMaterial()
                 {
-                    DiffuseColor = new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf, 0.5f)
+                    DiffuseColor = new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf,
+                    ts.SolidColor.Af)
                 },
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
                 {
@@ -123,23 +124,23 @@ namespace TVGLPresenterDX
             };
             var positions = new Vector3Collection();
             var normals = new Vector3Collection();
-             foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
-           // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
+            foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
+                                           // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
             {
-                 var neighbors = vs.GetNeighbors(v).ToList();
+                var neighbors = vs.GetNeighbors(v).ToList();
                 // if (neighbors.All(n => n != null && n.Role == VoxelRoleTypes.Full))
-                 if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full|| n.Role == VoxelRoleTypes.Partial)))
-                        continue;
+                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || n.Role == VoxelRoleTypes.Partial)))
+                    continue;
 
-     var x = (float)v.BottomCoordinate[0];
-                 var y = (float)v.BottomCoordinate[1];
-                 var z = (float)v.BottomCoordinate[2];
-             var s = (float)v.SideLength;
+                var x = (float)v.BottomCoordinate[0];
+                var y = (float)v.BottomCoordinate[1];
+                var z = (float)v.BottomCoordinate[2];
+                var s = (float)v.SideLength;
                 for (int i = 0; i < 12; i++)
                 {
                     //  if (neighbors[i / 2] != null && neighbors[i / 2].Role == VoxelRoleTypes.Full) continue;
-                      if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
-                                                       || neighbors[i / 2].Role == VoxelRoleTypes.Partial)) continue;
+                    if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
+                                                     || neighbors[i / 2].Role == VoxelRoleTypes.Partial)) continue;
                     for (int j = 0; j < 3; j++)
                     {
                         positions.Add(new Vector3(x + coordOffsets[i][j][0] * s,
@@ -153,7 +154,8 @@ namespace TVGLPresenterDX
             {
                 Material = new PhongMaterial()
                 {
-                    DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf, 1f)
+                    DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf,
+                    vs.SolidColor.Af)
                     //(float)0.75 * vs.SolidColor.Af)
                 },
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
