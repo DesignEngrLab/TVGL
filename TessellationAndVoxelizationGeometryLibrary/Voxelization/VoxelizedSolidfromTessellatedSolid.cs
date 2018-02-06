@@ -823,9 +823,9 @@ namespace TVGL.Voxelization
                 var sortedSet = rows[id];
                 lock (sortedSet) sortedSet.Add(voxel);
             });
-            // Parallel.ForEach(dict.Values.Where(v => v.Item1.Any() && v.Item2.Any()), v =>
-            foreach (var v in rows.Values.Where(v => v.Any()))
-                MakeInteriorVoxelsAlongLine(v, sweepDim);
+            Parallel.ForEach(rows.Values.Where(v => v.Any()), v =>
+            //foreach (var v in rows.Values.Where(v => v.Any()))
+                MakeInteriorVoxelsAlongLine(v, sweepDim) );
         }
 
         //Sort partial voxels along a given direction and then consider rows along that direction 

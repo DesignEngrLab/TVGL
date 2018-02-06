@@ -117,9 +117,13 @@
     <Content Include="StarMath.XML" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TVGLPresenterDebugger\TVGLPresenterDebugger.csproj">
-      <Project>{f6678d6c-1f71-4f4e-ac77-22f5e133a6f2}</Project>
-      <Name>TVGLPresenterDebugger</Name>
+    <ProjectReference Include="..\TessellationAndVoxelizationGeometryLibrary.Standard\TessellationAndVoxelizationGeometryLibrary.Standard.csproj">
+      <Project>{b73a4731-ff89-4a3d-b803-14b016196c4a}</Project>
+      <Name>TessellationAndVoxelizationGeometryLibrary.Standard</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\TVGL Presenter\TVGL Presenter.csproj">
+      <Project>{8c1364cc-908a-4174-b62c-21ec4839584d}</Project>
+      <Name>TVGL Presenter</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

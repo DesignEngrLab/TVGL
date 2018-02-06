@@ -75,15 +75,7 @@ namespace TVGLPresenterDX
             };
             return result;
         }
-
-        private static Vector3 CalculateNormalAtVertex(Vertex v)
-        {
-            var average = new double[3];
-            foreach (var face in v.Faces)
-                average = average.add(face.Normal);
-            average.normalizeInPlace();
-            return new Vector3((float)average[0], (float)average[1], (float)average[2]);
-        }
+        
 
         private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
         {
@@ -100,27 +92,27 @@ namespace TVGLPresenterDX
             var normalsTemplate = new[]
             {
                 new float[] {1, 0, 0}, new float[] {1, 0, 0},
-               new float[] {0,1,  0}, new float[] {0,1,  0},
-                 new float[] {0,0,1},new float[]  {0,0,1},
+                new float[] {0, 1, 0}, new float[] {0, 1, 0},
+                new float[] {0, 0, 1}, new float[] {0, 0, 1},
                 new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
-                new float[]  {0,-1, 0}, new float[] {0,-1, 0, 0},
-         new float[]  {0,0,-1}, new float[] {0,0,-1}
+                new float[] {0, -1, 0}, new float[] {0, -1, 0, 0},
+                new float[] {0, 0, -1}, new float[] {0, 0, -1}
             };
 
             var coordOffsets = new[]
             {
-              new[]{  new float[] {1,0,0}, new float[] {1, 1,0},new float[] {1,0,1}},
-                new[]{    new float[] {1,1, 0},new float[] {1,1,1},new float[] {1,0,1}}, //x-pos
-                    new[]{     new float[] {0,1,0},new float[] {0,1,1}, new float[] {1,1,0}},
-              new[]{  new float[] {1, 1,0}, new float[] {0,1,1}, new float[] {1,1,1}}, //y-pos
-                        new[]{     new float[] {0,0,1}, new float[] {1,0,1}, new float[] {0,1,1}},
-                         new[]{   new float[] {1,0,1}, new float[] {1,1,1}, new float[] {0,1,1}},  //z-pos
-                            new[]{     new float[] {0,0,0}, new float[] { 0, 0,1}, new float[] {0,1,0}},
-                          new[]{  new float[] {0,1,0}, new float[] {0,0,1}, new float[] {0,1,1}}, //x-neg
-                                new[]{    new float[] {0,0,0}, new float[] { 1,0,0}, new float[] {0,0,1}},
-                           new[]{ new float[] {1, 0,0}, new float[] {1,0,1}, new float[] {0,0,1}}, //y-neg
-                                    new[]{    new float[] {0,0,0}, new float[] {0,1,0}, new float[] {1,0,0}},
-                            new[]{new float[] {1,0,0}, new float[] {0,1,0}, new float[] {1,1,0}},  //z-neg
+                new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
+                new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
+                new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
+                new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
+                new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
+                new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
+                new[]{ new float[] {0, 0, 0}, new float[] { 0, 0, 1}, new float[] {0, 1, 0}},
+                new[]{ new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
+                new[]{ new float[] {0, 0, 0}, new float[] { 1, 0, 0}, new float[] {0, 0, 1}},
+                new[]{ new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
+                new[]{ new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
+                new[]{new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
             };
             var positions = new Vector3Collection();
             var normals = new Vector3Collection();
