@@ -35,7 +35,7 @@ namespace TVGL.Voxelization
             get => (VoxelDiscretization)discretizationLevel;
             private set => discretizationLevel = (int)value;
         }
-        private int discretizationLevel;
+        internal int discretizationLevel;
 
         /// <summary>
         /// The voxel side length for each voxel level. It's a square, so all sides are the same length.

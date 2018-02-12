@@ -28,6 +28,7 @@ namespace TVGL.Voxelization
         VoxelRoleTypes Role { get; }
         int Level { get; }
         bool BtmCoordIsInside { get; }
+        int[] CoordinateIndices { get; }
     }
 
     public struct Voxel : IVoxel
@@ -39,6 +40,8 @@ namespace TVGL.Voxelization
         public int Level { get; internal set; }
         public double[] BottomCoordinate { get; internal set; }
         public bool BtmCoordIsInside { get; internal set; }
+
+        public int[] CoordinateIndices => Constants.GetCoordinateIndices(ID, Level);
 
         internal Voxel(long ID, VoxelizedSolid solid)
         {
@@ -60,18 +63,27 @@ namespace TVGL.Voxelization
             SideLength = double.NaN;
             BottomCoordinate = null;
         }
+        internal Voxel(int x, int y, int z, int level, VoxelRoleTypes role, bool btmIsInside)
+        {
+            this.ID = ID;
+            Role = role;
+            Level = level;
+            BtmCoordIsInside = btmIsInside;
+            SideLength = double.NaN;
+            BottomCoordinate = null;
+        }
     }
     public abstract class VoxelWithTessellationLinks : IVoxel
     {
         public abstract int Level { get; }
         public long ID { get; internal set; }
 
-        public byte[] CoordinateIndices { get; internal set; }
         public double[] BottomCoordinate { get; internal set; }
         public double SideLength { get; internal set; }
         public bool BtmCoordIsInside { get; internal set; }
         public VoxelRoleTypes Role { get; internal set; }
         internal HashSet<TessellationBaseClass> TessellationElements;
+        public int[] CoordinateIndices => Constants.GetCoordinateIndices(ID, Level);
 
         internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
         internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
@@ -88,19 +100,20 @@ namespace TVGL.Voxelization
             Role = voxelRole;
             if (Role == VoxelRoleTypes.Partial) this.ID += 1;
             else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
-            CoordinateIndices = Constants.GetCoordinateIndicesByte(ID, 0);
             SideLength = solid.VoxelSideLengths[0];
-            BottomCoordinate = solid.GetRealCoordinates(0, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
+            var coordinateIndices = Constants.GetCoordinateIndices(ID, 0);
+            BottomCoordinate = solid.GetRealCoordinates(0, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
 
             if (Role == VoxelRoleTypes.Partial)
             {
-                NextLevelVoxels = new VoxelHashSet(new VoxelComparerCoarse(), solid);
-                HighLevelVoxels = new VoxelHashSet(new VoxelComparerFine(), solid);
+                InnerVoxels = new VoxelHashSet[solid.discretizationLevel]; 
+                if (solid.discretizationLevel>=1)
+                 InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), solid);
+
             }
         }
-        
-        internal VoxelHashSet HighLevelVoxels;
-        internal VoxelHashSet NextLevelVoxels;
+
+        internal VoxelHashSet[] InnerVoxels;
     }
 
 
@@ -110,13 +123,13 @@ namespace TVGL.Voxelization
 
         public Voxel_Level1_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid)
         {
-            this.ID =Constants.ClearFlagsFromID(ID) + 16;
+            this.ID = Constants.ClearFlagsFromID(ID) + 16;
             Role = voxelRole;
             if (Role == VoxelRoleTypes.Partial) this.ID += 1;
             else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
-            CoordinateIndices = Constants.GetCoordinateIndicesByte(ID, 1);
             SideLength = solid.VoxelSideLengths[1];
-            BottomCoordinate = solid.GetRealCoordinates(1, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
+            var coordinateIndices = Constants.GetCoordinateIndices(ID, 1);
+            BottomCoordinate = solid.GetRealCoordinates(1, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
         }
     }
 }

@@ -64,7 +64,7 @@ namespace TVGL.Voxelization
                 ? voxelDictionaryLevel0[level0ParentID] : null;
             if (neighborsLevel0Parent != null)
             {
-                var neighbor = neighborsLevel0Parent.HighLevelVoxels.GetVoxel(newID);
+                var neighbor = neighborsLevel0Parent.InnerVoxels.GetVoxel(newID);
                 if (neighbor != null) return neighbor;
                 var neighborsParent = GetParentVoxel(new Voxel(newID, level));
                 if (neighborsParent.Role == VoxelRoleTypes.Full)
@@ -193,7 +193,7 @@ namespace TVGL.Voxelization
         internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
             params long[] targetFlags)
         {
-            foreach (var vx in voxel.HighLevelVoxels)
+            foreach (var vx in voxel.InnerVoxels)
             {
                 var flags = vx & 15; //get rid of every but the flags
                 if (targetFlags.Contains(flags))
@@ -298,7 +298,7 @@ namespace TVGL.Voxelization
                     {
                         var level0Voxel = voxelDictionaryLevel0[parentID];
                         parentID = Constants.MakeContainingVoxelID(child.ID, 2);
-                        parent = level0Voxel.HighLevelVoxels.GetVoxel(parentID);
+                        parent = level0Voxel.InnerVoxels.GetVoxel(parentID);
                         if (parent != null) return parent;
                     }
                     return GetParentVoxel(new Voxel(parentID, 2));
@@ -308,7 +308,7 @@ namespace TVGL.Voxelization
                     {
                         var level0Voxel = voxelDictionaryLevel0[parentID];
                         parentID = Constants.MakeContainingVoxelID(child.ID, 3);
-                        parent = level0Voxel.HighLevelVoxels.GetVoxel(parentID);
+                        parent = level0Voxel.InnerVoxels.GetVoxel(parentID);
                         if (parent != null) return parent;
                     }
                     return GetParentVoxel(new Voxel(parentID, 3));
@@ -327,14 +327,14 @@ namespace TVGL.Voxelization
             if (parent is Voxel_Level1_Class)
             {
                 var level0 = voxelDictionaryLevel0[Constants.MakeContainingVoxelID(parent.ID, 0)];
-                var IDs = level0.HighLevelVoxels;
+                var IDs = level0.InnerVoxels;
                 return IDs.Where(isLevel2)
                     .Select(id => (IVoxel)new Voxel(id, this));
             }
             else
             {
                 var level0 = voxelDictionaryLevel0[Constants.MakeContainingVoxelID(parent.ID, 0)];
-                var IDs = level0.HighLevelVoxels;
+                var IDs = level0.InnerVoxels;
                 var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
                 if (parent.Level == 2)
                     return IDs.Where(v => isLevel3(v) &&
@@ -393,8 +393,8 @@ namespace TVGL.Voxelization
                 var copyVoxel = copy.voxelDictionaryLevel0[voxelLevel0Class.Key];
                 if (voxelLevel0Class.Value.NextLevelVoxels != null)
                     copyVoxel.NextLevelVoxels = voxelLevel0Class.Value.NextLevelVoxels.Copy(copy);
-                if (voxelLevel0Class.Value.HighLevelVoxels != null)
-                    copyVoxel.HighLevelVoxels = voxelLevel0Class.Value.HighLevelVoxels.Copy(copy);
+                if (voxelLevel0Class.Value.InnerVoxels != null)
+                    copyVoxel.InnerVoxels = voxelLevel0Class.Value.InnerVoxels.Copy(copy);
             }
             copy.UpdateProperties();
             return copy;
@@ -534,7 +534,7 @@ namespace TVGL.Voxelization
                     if (discretizationLevel >= 2)
                     {
                         var v0Parent = (Voxel_Level0_Class)GetParentVoxel(thisVoxel);
-                        IntersectHigherLevels(v0Parent.HighLevelVoxels, references, 2);
+                        IntersectHigherLevels(v0Parent.InnerVoxels, references, 2);
                     }
                 }
                 // Well, no need to call the following (make voxel full) since intersect and 
@@ -611,7 +611,7 @@ namespace TVGL.Voxelization
                     {
                         thisVoxel = (Voxel_Level1_Class)MakeVoxelPartial(thisVoxel);
                         var v0Parent = (Voxel_Level0_Class)GetParentVoxel(thisVoxel);
-                        SubtractHigherLevels(v0Parent.HighLevelVoxels, references, 2);
+                        SubtractHigherLevels(v0Parent.InnerVoxels, references, 2);
                     }
                     else MakeVoxelEmpty(thisVoxel);
                 }
@@ -701,7 +701,7 @@ namespace TVGL.Voxelization
                     if (discretizationLevel >= 2)
                     {
                         var v0Parent = (Voxel_Level0_Class)reference.GetParentVoxel(refVoxel);
-                        UnionHigherLevels(v0Parent.HighLevelVoxels, reference, 2);
+                        UnionHigherLevels(v0Parent.InnerVoxels, reference, 2);
                     }
                 }
             });
@@ -794,7 +794,7 @@ namespace TVGL.Voxelization
                     if (discretizationLevel >= 2)
                     {
                         var v0Parent = (Voxel_Level0_Class)reference.GetParentVoxel(refVoxel);
-                        ExclusiveOrHigherLevels(v0Parent.HighLevelVoxels, reference, 2);
+                        ExclusiveOrHigherLevels(v0Parent.InnerVoxels, reference, 2);
                     }
                 }
             });

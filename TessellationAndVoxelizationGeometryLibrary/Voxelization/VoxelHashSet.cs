@@ -38,6 +38,10 @@ namespace TVGL.Voxelization
             Initialize(primes[0]);
         }
 
+        internal VoxelHashSet(IEqualityComparer<long> comparer, VoxelizedSolid solid, IEnumerable<long> startingSet) : this(comparer, solid)
+        {
+
+        }
 
         #endregion
         #region New Methods not found in HashSet
@@ -88,6 +92,12 @@ namespace TVGL.Voxelization
                 freeList = this.freeList,
             };
             return copy;
+        }
+
+
+        internal void AddRange(HashSet<IVoxel> voxels)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

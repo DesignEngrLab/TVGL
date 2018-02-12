@@ -56,7 +56,7 @@ namespace TVGL.Voxelization
 
         #region converting IDs and back again
         #region Parents and Children
-        public static long MakeVoxelID1(byte x, byte y, byte z)
+        public static long MakeVoxelID1(int x, int y, int z)
         {
             var xLong = (long)x << 16; //add 16 bits to the right of binary(x)
             var yLong = (long)y << 36; //add 36 bits to the right of binary(y)
@@ -71,11 +71,11 @@ namespace TVGL.Voxelization
             return all;
         }
 
-        public static long MakeVoxelID0(byte x, byte y, byte z)
+        public static long MakeVoxelID0(int x, int y, int z)
         {
-            var xLong = (long)(x & 240) << 16;
-            var yLong = (long)(y & 240) << 36;
-            var zLong = (long)(z & 240) << 56;
+            var xLong = (long)(((byte)x) & 240) << 16;
+            var yLong = (long)(((byte)y) & 240) << 36;
+            var zLong = (long)(((byte)z) & 240) << 56;
             return xLong + yLong + zLong;
         }
 
@@ -218,21 +218,6 @@ namespace TVGL.Voxelization
                 default:
                     return ID & maskAllButZ;
             }
-        }
-        internal static byte[] GetCoordinateIndicesByte(long ID, int level)
-        {
-            if (level > 1) throw new ArgumentException("Level argument should be 0 or 1 if the return is only bytes.");
-            return new[]
-            {
-                GetCoordinateIndexByte(ID, level, 0),
-                GetCoordinateIndexByte(ID, level, 1),
-                GetCoordinateIndexByte(ID, level, 2)
-            };
-        }
-        internal static byte GetCoordinateIndexByte(long ID, int level, int dimension)
-        {
-            var shift = 4 + 20 * dimension + 4 * (4 - level);
-            return (byte)((ID >> shift) & (Constants.MaxForSingleCoordinate >> 4 * (4 - level)));
         }
         internal static int[] GetCoordinateIndices(long ID, int level)
         {
