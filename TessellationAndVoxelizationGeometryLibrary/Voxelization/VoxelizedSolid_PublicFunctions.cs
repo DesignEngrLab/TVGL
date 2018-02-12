@@ -46,33 +46,35 @@ namespace TVGL.Voxelization
             if (level == -1) level = levelFromID;
             if (level == 0)
             {
-                if (voxelDictionaryLevel0.ContainsKey(newID)) return voxelDictionaryLevel0[newID];
-                return new Voxel(newID + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
+                return voxelDictionaryLevel0.GetVoxel(newID)
+                       ??
+                       new Voxel(newID + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
             }
-            if (level == 1)
+            var parentID = Constants.MakeContainingVoxelID(newID, 0);
+            var parent = voxelDictionaryLevel0.GetVoxel(parentID);
+            if (parent == null)
+                return new Voxel(newID + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
+            if (parent.Role == VoxelRoleTypes.Full)
+                return new Voxel(newID + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
+
+            var innerVoxels = ((Voxel_Level0_Class)parent).InnerVoxels;
+            if (innerVoxels.Length <= level)
             {
-                if (voxelDictionaryLevel1.ContainsKey(newID)) return voxelDictionaryLevel1[newID];
-                var parentID = Constants.MakeContainingVoxelID(newID, 0);
-                var neighborsParent = voxelDictionaryLevel0.ContainsKey(parentID)
-                    ? voxelDictionaryLevel0[parentID] : null;
-                if (neighborsParent != null && neighborsParent.Role == VoxelRoleTypes.Full)
-                    return new Voxel(newID + Constants.SetRoleFlags(1, VoxelRoleTypes.Full), this);
-                return new Voxel(newID + Constants.SetRoleFlags(1, VoxelRoleTypes.Empty), this);
+                var voxel = innerVoxels[level - 1].GetVoxel(newID);
+                if (voxel != null) return voxel;
             }
-            var level0ParentID = Constants.MakeContainingVoxelID(newID, 0);
-            var neighborsLevel0Parent = voxelDictionaryLevel0.ContainsKey(level0ParentID)
-                ? voxelDictionaryLevel0[level0ParentID] : null;
-            if (neighborsLevel0Parent != null)
+
+            for (int i = 1; i < level; i++)
             {
-                var neighbor = neighborsLevel0Parent.InnerVoxels.GetVoxel(newID);
-                if (neighbor != null) return neighbor;
-                var neighborsParent = GetParentVoxel(new Voxel(newID, level));
-                if (neighborsParent.Role == VoxelRoleTypes.Full)
+                parentID = Constants.MakeContainingVoxelID(newID, i);
+                parent = innerVoxels[i - 1].GetVoxel(parentID);
+                if (parent == null)
+                    return new Voxel(newID + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
+                if (parent.Role == VoxelRoleTypes.Full)
                     return new Voxel(newID + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
             }
-            return new Voxel(newID + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
+            throw new Exception("it should not be possible to get here.");
         }
-
 
 
         #region Get Functions
@@ -587,10 +589,12 @@ namespace TVGL.Voxelization
                 if (referenceHighestRole == VoxelRoleTypes.Full)
                     MakeVoxelEmpty(thisVoxel);
                 else if (referenceHighestRole == VoxelRoleTypes.Partial)
-                {                    
+                {
                     if (discretizationLevel >= 1)
-                    { MakeVoxelPartial(thisVoxel);
-                        SubtractLevel1(thisVoxel.NextLevelVoxels.ToList(), subtrahends); }
+                    {
+                        MakeVoxelPartial(thisVoxel);
+                        SubtractLevel1(thisVoxel.NextLevelVoxels.ToList(), subtrahends);
+                    }
                     else MakeVoxelEmpty(thisVoxel);
                 }
             });

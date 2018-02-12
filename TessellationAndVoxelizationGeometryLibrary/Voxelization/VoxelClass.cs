@@ -53,6 +53,7 @@ namespace TVGL.Voxelization
             SideLength = solid.VoxelSideLengths[Level];
             BottomCoordinate = solid.GetRealCoordinates(ID, Level);
         }
+        //todo: get rid of level as inputarg - maybe remove above constructor
         internal Voxel(long ID, int level)
         {
             this.ID = ID;
@@ -63,9 +64,9 @@ namespace TVGL.Voxelization
             SideLength = double.NaN;
             BottomCoordinate = null;
         }
-        internal Voxel(int x, int y, int z, int level, VoxelRoleTypes role, bool btmIsInside)
+        internal Voxel(int x, int y, int z, int level,int inputCoordLevel, VoxelRoleTypes role, bool btmIsInside)
         {
-            this.ID = ID;
+            this.ID = Constants.MakeIDFromCoordinates(level,x, y, z, inputCoordLevel);
             Role = role;
             Level = level;
             BtmCoordIsInside = btmIsInside;
@@ -103,14 +104,7 @@ namespace TVGL.Voxelization
             SideLength = solid.VoxelSideLengths[0];
             var coordinateIndices = Constants.GetCoordinateIndices(ID, 0);
             BottomCoordinate = solid.GetRealCoordinates(0, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
-
-            if (Role == VoxelRoleTypes.Partial)
-            {
-                InnerVoxels = new VoxelHashSet[solid.discretizationLevel]; 
-                if (solid.discretizationLevel>=1)
-                 InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), solid);
-
-            }
+            InnerVoxels = new VoxelHashSet[solid.discretizationLevel];
         }
 
         internal VoxelHashSet[] InnerVoxels;
@@ -123,7 +117,8 @@ namespace TVGL.Voxelization
 
         public Voxel_Level1_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid)
         {
-            this.ID = Constants.ClearFlagsFromID(ID) + 16;
+            this.ID = Constants.ClearFlagsFromID(ID) + 16; //adding 10000 which indicates level1 although it cuts in on the 4th level of
+            // the x-position.
             Role = voxelRole;
             if (Role == VoxelRoleTypes.Partial) this.ID += 1;
             else if (Role == VoxelRoleTypes.Partial) this.ID += 3;

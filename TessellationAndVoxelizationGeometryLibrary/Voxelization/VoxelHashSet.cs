@@ -3,15 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Runtime.Serialization;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Security;
 
 namespace TVGL.Voxelization
 {
-
-    public class VoxelHashSet : IEnumerable<long>
+    /// <summary>
+    /// Class VoxelHashSet.
+    /// </summary>
+    /// <seealso cref="System.Collections.Generic.IEnumerable{TVGL.Voxelization.IVoxel}" />
+    public class VoxelHashSet : IEnumerable<IVoxel>
     {
         private int[] buckets;
         private Slot[] slots;
@@ -28,6 +28,11 @@ namespace TVGL.Voxelization
 
         #region Constructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelHashSet"/> class.
+        /// </summary>
+        /// <param name="comparer">The comparer.</param>
+        /// <param name="solid">The solid.</param>
         public VoxelHashSet(IEqualityComparer<long> comparer, VoxelizedSolid solid)
         {
             this.comparer = comparer;
@@ -38,161 +43,208 @@ namespace TVGL.Voxelization
             Initialize(primes[0]);
         }
 
-        internal VoxelHashSet(IEqualityComparer<long> comparer, VoxelizedSolid solid, IEnumerable<long> startingSet) : this(comparer, solid)
-        {
-
-        }
-
-        #endregion
-        #region New Methods not found in HashSet
-        public long GetFullVoxelID(long item)
-        {
-            if (buckets != null)
-            {
-                int hashCode = InternalGetHashCode(item);
-                // see note at "HashSet" level describing why "- 1" appears in for loop
-                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
-                {
-                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
-                    {
-                        return slots[i].value;
-                    }
-                }
-            }
-            // either m_buckets is null or wasn't found
-            return 0;
-        }
-        public IVoxel GetVoxel(long item)
-        {
-            if (buckets != null)
-            {
-                int hashCode = InternalGetHashCode(item);
-                // see note at "HashSet" level describing why "- 1" appears in for loop
-                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
-                {
-                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
-                    {
-                        return new Voxel(slots[i].value, solid);
-                    }
-                }
-            }
-            // either m_buckets is null or wasn't found
-            return null;
-        }
-
-
-        internal VoxelHashSet Copy(VoxelizedSolid solid)
-        {
-            var copy = new VoxelHashSet(this.comparer, solid)
-            {
-                buckets = (int[])this.buckets.Clone(),
-                slots = (Slot[])slots.Clone(),
-                count = this.count,
-                lastIndex = this.lastIndex,
-                freeList = this.freeList,
-            };
-            return copy;
-        }
-
-
-        internal void AddRange(HashSet<IVoxel> voxels)
-        {
-            throw new NotImplementedException();
-        }
-
-        #endregion
-
-        #region ICollection<T> method
         /// <summary>
-        /// Remove all items from this set. This clears the elements but not the underlying 
-        /// buckets and slots array. Follow this call by TrimExcess to release these.
+        /// Initializes a new instance of the <see cref="VoxelHashSet"/> class.
         /// </summary>
-        public void Clear()
+        /// <param name="comparer">The comparer.</param>
+        /// <param name="solid">The solid.</param>
+        /// <param name="startingSet">The starting set.</param>
+        internal VoxelHashSet(IEqualityComparer<long> comparer, VoxelizedSolid solid, IEnumerable<IVoxel> startingSet) : this(comparer, solid)
         {
-            if (lastIndex > 0)
+            foreach (var voxel in startingSet)
             {
-                Debug.Assert(buckets != null, "m_buckets was null but m_lastIndex > 0");
-
-                // clear the elements so that the gc can reclaim the references.
-                // clear only up to m_lastIndex for m_slots 
-                Array.Clear(slots, 0, lastIndex);
-                Array.Clear(buckets, 0, buckets.Length);
-                lastIndex = 0;
-                count = 0;
-                freeList = -1;
-            }
-        }
-
-        /// <summary>
-        /// Checks if this hashset contains the item
-        /// </summary>
-        /// <param name="item">item to check for containment</param>
-        /// <returns>true if item contained; false if not</returns>
-        public bool Contains(long item)
-        {
-            if (buckets != null)
-            {
-                int hashCode = InternalGetHashCode(item);
-                // see note at "HashSet" level describing why "- 1" appears in for loop
-                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
-                {
-                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
-                    {
-                        return true;
-                    }
-                }
-            }
-            // either m_buckets is null or wasn't found
-            return false;
-        }
-
-        /// <summary>
-        /// Remove item from this hashset
-        /// </summary>
-        /// <param name="item">item to remove</param>
-        /// <returns>true if removed; false if not (i.e. if the item wasn't in the HashSet)</returns>
-        public bool Remove(long item)
-        {
-            if (buckets != null)
-            {
-                int hashCode = InternalGetHashCode(item);
+                int hashCode = InternalGetHashCode(voxel.ID);
                 int bucket = hashCode % buckets.Length;
-                int last = -1;
-                for (int i = buckets[bucket] - 1; i >= 0; last = i, i = slots[i].next)
-                {
-                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, item))
-                    {
-                        if (last < 0)
-                        {
-                            // first iteration; update buckets
-                            buckets[bucket] = slots[i].next + 1;
-                        }
-                        else
-                        {
-                            // subsequent iterations; update 'next' pointers
-                            slots[last].next = slots[i].next;
-                        }
-                        slots[i].hashCode = -1;
-                        slots[i].value = 0L;
-                        slots[i].next = freeList;
 
-                        count--;
-                        if (count == 0)
-                        {
-                            lastIndex = 0;
-                            freeList = -1;
-                        }
-                        else
-                        {
-                            freeList = i;
-                        }
-                        return true;
+                int index;
+                if (freeList >= 0)
+                {
+                    index = freeList;
+                    freeList = slots[index].next;
+                }
+                else
+                {
+                    if (lastIndex == slots.Length)
+                    {
+                        IncreaseCapacity();
+                        // this will change during resize
+                        bucket = hashCode % buckets.Length;
                     }
+                    index = lastIndex;
+                    lastIndex++;
+                }
+                slots[index].hashCode = hashCode;
+                slots[index].value = voxel;
+                slots[index].next = buckets[bucket] - 1;
+                buckets[bucket] = index + 1;
+                count++;
                 }
             }
-            // either m_buckets is null or wasn't found
-            return false;
-        }
+
+            #endregion
+            #region New Methods not found in HashSet
+            /// <summary>
+            /// Gets the full voxel identifier.
+            /// </summary>
+            /// <param name="item">The item.</param>
+            /// <returns>System.Int64.</returns>
+            public long GetFullVoxelID(long item)
+            {
+                if (buckets != null)
+                {
+                    int hashCode = InternalGetHashCode(item);
+                    // see note at "HashSet" level describing why "- 1" appears in for loop
+                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
+                        {
+                            return slots[i].value.ID;
+                        }
+                    }
+                }
+                // either m_buckets is null or wasn't found
+                return 0;
+            }
+            public IVoxel GetVoxel(long item)
+            {
+                if (buckets != null)
+                {
+                    int hashCode = InternalGetHashCode(item);
+                    // see note at "HashSet" level describing why "- 1" appears in for loop
+                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
+                        {
+                            return slots[i].value;
+                        }
+                    }
+                }
+                // either m_buckets is null or wasn't found
+                return null;
+            }
+
+
+            internal VoxelHashSet Copy(VoxelizedSolid solid)
+            {
+                var copy = new VoxelHashSet(this.comparer, solid)
+                {
+                    buckets = (int[])this.buckets.Clone(),
+                    slots = (Slot[])slots.Clone(),
+                    count = this.count,
+                    lastIndex = this.lastIndex,
+                    freeList = this.freeList,
+                };
+                return copy;
+            }
+
+
+            internal void AddRange(HashSet<IVoxel> voxels)
+            {
+                throw new NotImplementedException();
+            }
+
+            #endregion
+
+            #region ICollection<T> method
+            /// <summary>
+            /// Remove all items from this set. This clears the elements but not the underlying 
+            /// buckets and slots array. Follow this call by TrimExcess to release these.
+            /// </summary>
+            public void Clear()
+            {
+                if (lastIndex > 0)
+                {
+                    Debug.Assert(buckets != null, "m_buckets was null but m_lastIndex > 0");
+
+                    // clear the elements so that the gc can reclaim the references.
+                    // clear only up to m_lastIndex for m_slots 
+                    Array.Clear(slots, 0, lastIndex);
+                    Array.Clear(buckets, 0, buckets.Length);
+                    lastIndex = 0;
+                    count = 0;
+                    freeList = -1;
+                }
+            }
+
+            /// <summary>
+            /// Determines whether [contains] [the specified item].
+            /// </summary>
+            /// <param name="item">The item.</param>
+            /// <returns><c>true</c> if [contains] [the specified item]; otherwise, <c>false</c>.</returns>
+            public bool Contains(IVoxel item)
+            { return Contains(item.ID); }
+            /// <summary>
+            /// Checks if this hashset contains the item
+            /// </summary>
+            /// <param name="item">item to check for containment</param>
+            /// <returns>true if item contained; false if not</returns>
+            public bool Contains(long item)
+            {
+                if (buckets != null)
+                {
+                    int hashCode = InternalGetHashCode(item);
+                    // see note at "HashSet" level describing why "- 1" appears in for loop
+                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                // either m_buckets is null or wasn't found
+                return false;
+            }
+
+            public bool Remove(IVoxel item)
+            { return Remove(item.ID); }
+            /// <summary>
+            /// Remove item from this hashset
+            /// </summary>
+            /// <param name="item">item to remove</param>
+            /// <returns>true if removed; false if not (i.e. if the item wasn't in the HashSet)</returns>
+            public bool Remove(long item)
+            {
+                if (buckets != null)
+                {
+                    int hashCode = InternalGetHashCode(item);
+                    int bucket = hashCode % buckets.Length;
+                    int previousI = -1;
+                    for (int i = buckets[bucket] - 1; i >= 0; previousI = i, i = slots[i].next)
+                    {
+                        if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
+                        {
+                            if (previousI < 0)
+                            {
+                                // first iteration; update buckets
+                                buckets[bucket] = slots[i].next + 1;
+                            }
+                            else
+                            {
+                                // subsequent iterations; update 'next' pointers
+                                slots[previousI].next = slots[i].next;
+                            }
+                            slots[i].hashCode = -1;
+                            // slots[i].value = 0L;
+                            slots[i].next = freeList;
+
+                            count--;
+                            if (count == 0)
+                            {
+                                lastIndex = 0;
+                                freeList = -1;
+                            }
+                            else
+                            {
+                                freeList = i;
+                            }
+                            return true;
+                        }
+                    }
+                }
+                // either m_buckets is null or wasn't found
+                return false;
+            }
 
         /// <summary>
         /// Number of elements in this hashset
@@ -206,28 +258,17 @@ namespace TVGL.Voxelization
 
         #region HashSet methods
 
-        /// <summary>
-        /// Add item to this HashSet. Returns bool indicating whether item was added (won't be 
-        /// added if already present)
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns>true if added, false if already present</returns>
-        public bool Add(long item)
-        {
-            return AddIfNotPresent(item);
-        }
-
 
         /// <summary>
         /// Remove elements that match specified predicate. Returns the number of elements removed
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public int RemoveWhere(Predicate<long> match)
+        public int RemoveWhere(Predicate<IVoxel> match)
         {
             if (match == null)
             {
-                throw new ArgumentNullException("match");
+                throw new ArgumentNullException(nameof(match));
             }
             Contract.EndContractBlock();
 
@@ -420,7 +461,7 @@ namespace TVGL.Voxelization
                 {
                     if (newSlots[i].hashCode != -1)
                     {
-                        newSlots[i].hashCode = InternalGetHashCode(newSlots[i].value);
+                        newSlots[i].hashCode = InternalGetHashCode(newSlots[i].value.ID);
                     }
                 }
             }
@@ -437,19 +478,20 @@ namespace TVGL.Voxelization
         }
 
         /// <summary>
-        /// Adds value to HashSet if not contained already
-        /// Returns true if added and false if already present
+        /// Add item to this HashSet. Returns bool indicating whether item was added (won't be 
+        /// added if already present)
         /// </summary>
-        /// <param name="value">value to find</param>
-        /// <returns></returns>
-        private bool AddIfNotPresent(long value)
+        /// <param name="item"></param>
+        /// <returns>true if added, false if already present</returns>
+        public bool Add(IVoxel newVoxel)
         {
-            int hashCode = InternalGetHashCode(value);
+            long newVoxelID = newVoxel.ID;
+            int hashCode = InternalGetHashCode(newVoxelID);
             int bucket = hashCode % buckets.Length;
 
             for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
             {
-                if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value, value))
+                if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, newVoxelID))
                 {
                     return false;
                 }
@@ -473,7 +515,7 @@ namespace TVGL.Voxelization
                 lastIndex++;
             }
             slots[index].hashCode = hashCode;
-            slots[index].value = value;
+            slots[index].value = newVoxel;
             slots[index].next = buckets[bucket] - 1;
             buckets[bucket] = index + 1;
             count++;
@@ -483,12 +525,10 @@ namespace TVGL.Voxelization
         /// Copies this to an array. Used for DebugView
         /// </summary>
         /// <returns></returns>
-        internal long[] ToArray()
+        internal IVoxel[] ToArray()
         {
             return slots.Select(x => x.value).ToArray();
         }
-
-
 
         /// <summary>
         /// Workaround Comparers that throw ArgumentNullException for GetHashCode(null).
@@ -497,16 +537,12 @@ namespace TVGL.Voxelization
         /// <returns>hash code</returns>
         private int InternalGetHashCode(long item)
         {
-            if (item == null)
-            {
-                return 0;
-            }
             return comparer.GetHashCode(item);
         }
 
         #region IEnumerable methods
 
-        public IEnumerator<long> GetEnumerator()
+        public IEnumerator<IVoxel> GetEnumerator()
         {
             return new Enumerator(this);
         }
@@ -521,21 +557,21 @@ namespace TVGL.Voxelization
         internal struct Slot
         {
             internal int hashCode;      // Lower 31 bits of hash code, -1 if unused
-            internal long value;
+            internal IVoxel value;
             internal int next;          // Index of next entry, -1 if last
         }
 
-        private struct Enumerator : IEnumerator<long>, System.Collections.IEnumerator
+        private struct Enumerator : IEnumerator<IVoxel>
         {
-            private VoxelHashSet set;
+            private readonly VoxelHashSet set;
             private int index;
-            private long current;
+            private IVoxel current;
 
             internal Enumerator(VoxelHashSet set)
             {
                 this.set = set;
                 index = 0;
-                current = 0L;
+                current = new Voxel(0L, -1);
             }
 
             public void Dispose()
@@ -555,19 +591,13 @@ namespace TVGL.Voxelization
                     index++;
                 }
                 index = set.lastIndex + 1;
-                current = 0L;
+                // current = 0L;
                 return false;
             }
 
-            public long Current
-            {
-                get
-                {
-                    return current;
-                }
-            }
+            public IVoxel Current => current;
 
-            Object System.Collections.IEnumerator.Current
+            Object IEnumerator.Current
             {
                 get
                 {
@@ -579,10 +609,10 @@ namespace TVGL.Voxelization
                 }
             }
 
-            void System.Collections.IEnumerator.Reset()
+            void IEnumerator.Reset()
             {
                 index = 0;
-                current = 0L;
+                //  current = 0L;
             }
         }
     }

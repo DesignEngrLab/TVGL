@@ -25,37 +25,6 @@ namespace TVGL.Voxelization
     /// </summary>
     public partial class VoxelizedSolid
     {
-        #region Tessellation References functions
-        internal static void Add(IVoxel voxelbase, TessellationBaseClass tsObject)
-        {
-            if (tsObject == null) return;
-            if (!(voxelbase is VoxelWithTessellationLinks)) return;
-            var voxel = (VoxelWithTessellationLinks)voxelbase;
-            if (voxel.TessellationElements == null) voxel.TessellationElements = new HashSet<TessellationBaseClass>();
-            else if (voxel.TessellationElements.Contains(tsObject)) return;
-            lock (voxel.TessellationElements) voxel.TessellationElements.Add(tsObject);
-            tsObject.AddVoxel(voxel);
-        }
-
-
-        internal bool Remove(VoxelWithTessellationLinks voxel, TessellationBaseClass tsObject)
-        {
-            if (voxel.TessellationElements == null) return false;
-            if (voxel.TessellationElements.Count == 1 && voxel.TessellationElements.Contains(tsObject))
-            {
-                voxel.TessellationElements = null;
-                return true;
-            }
-            return voxel.TessellationElements.Remove(tsObject);
-        }
-
-        internal bool Contains(VoxelWithTessellationLinks voxel, TessellationBaseClass tsObject)
-        {
-            if (voxel.TessellationElements == null) return false;
-            return voxel.TessellationElements.Contains(tsObject);
-        }
-        #endregion
-
         #region Functions to make voxel full, empty or partial
 
         private IVoxel MakeVoxelFull(IVoxel voxel)
@@ -68,14 +37,14 @@ namespace TVGL.Voxelization
                     if (!(voxel is Voxel_Level0_Class))
                         voxel = new Voxel_Level0_Class(voxel.ID, VoxelRoleTypes.Full, this);
                     lock (voxelDictionaryLevel0)
-                        if (!voxelDictionaryLevel0.ContainsKey(voxel.ID))
-                            voxelDictionaryLevel0.Add(voxel.ID, (Voxel_Level0_Class)voxel);
+                        if (!voxelDictionaryLevel0.Contains(voxel.ID))
+                            voxelDictionaryLevel0.Add(voxel);
                 }
                 else
                 {
                     lock (((Voxel_Level0_Class)voxel).InnerVoxels)
                         ((Voxel_Level0_Class)voxel).InnerVoxels = null;
-                    foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
+                    foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).InnerVoxels[0])
                         lock (voxelDictionaryLevel1)
                             voxelDictionaryLevel1.Remove(nextLevelVoxel);
                     lock (((Voxel_Level0_Class)voxel).NextLevelVoxels)
@@ -412,25 +381,31 @@ namespace TVGL.Voxelization
 
         private void UpdateProperties(int level = -1)
         {
-            _count = (long)voxelDictionaryLevel0.Count + (long)(voxelDictionaryLevel1?.Count ?? 0) +
-            (long)voxelDictionaryLevel0.Sum(dict => (long)(dict.Value.InnerVoxels?.Count ?? 0));
             _totals = new[]
                         {
-                            voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Full),
-                            voxelDictionaryLevel0.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
-                            voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Full),
-                            voxelDictionaryLevel1.Values.Count(v => v.Role == VoxelRoleTypes.Partial),
-                            voxelDictionaryLevel0.Values.Sum(dict => (long)(dict.InnerVoxels?.Count(isFullLevel2) ?? 0)),
-                            voxelDictionaryLevel0.Values.Sum(dict => (long)(dict.InnerVoxels?.Count(isPartialLevel2) ?? 0)),
-                            voxelDictionaryLevel0.Values.Sum(dict => (long)(dict.InnerVoxels?.Count(isFullLevel3) ?? 0)),
-                            voxelDictionaryLevel0.Values.Sum(dict => (long)(dict.InnerVoxels?.Count(isPartialLevel3) ?? 0)),
-                            voxelDictionaryLevel0.Values.Sum(dict => (long)(dict.InnerVoxels?.Count(isFullLevel4) ?? 0)),
-                            voxelDictionaryLevel0.Values.Sum(dict => (long)(dict.InnerVoxels?.Count(isPartialLevel4) ?? 0))
+                            voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Full),
+                            voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Partial),
+                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,1,VoxelRoleTypes.Full)),
+                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,1,VoxelRoleTypes.Partial)),
+                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,2,VoxelRoleTypes.Full)),
+                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,2,VoxelRoleTypes.Partial)),
+                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,3,VoxelRoleTypes.Full)),
+                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,4,VoxelRoleTypes.Partial)),
+                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,4,VoxelRoleTypes.Full)),
+                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,4,VoxelRoleTypes.Partial))
                         };
             Volume = 0.0;
             for (int i = 0; i <= discretizationLevel; i++)
                 Volume += Math.Pow(VoxelSideLengths[i], 3) * _totals[2 * i];
             Volume += Math.Pow(VoxelSideLengths[discretizationLevel], 3) * _totals[2 * discretizationLevel + 1];
+            _count = _totals.Sum();
+        }
+
+        private long CountVoxels(IVoxel dict, int level, VoxelRoleTypes role)
+        {
+            var innerVoxels =((Voxel_Level0_Class)dict).InnerVoxels;
+            if (innerVoxels == null || innerVoxels.Length < level) return 0L;
+            return innerVoxels[level - 1].Count(v => v.Role == role);
         }
 
         internal double[] GetRealCoordinates(long ID, int level)
