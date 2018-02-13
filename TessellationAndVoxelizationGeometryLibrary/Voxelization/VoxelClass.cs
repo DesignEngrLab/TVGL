@@ -64,15 +64,15 @@ namespace TVGL.Voxelization
             SideLength = double.NaN;
             BottomCoordinate = null;
         }
-        internal Voxel(int x, int y, int z, int level,int inputCoordLevel, VoxelRoleTypes role, bool btmIsInside)
-        {
-            this.ID = Constants.MakeIDFromCoordinates(level,x, y, z, inputCoordLevel);
-            Role = role;
-            Level = level;
-            BtmCoordIsInside = btmIsInside;
-            SideLength = double.NaN;
-            BottomCoordinate = null;
-        }
+        //internal Voxel(int x, int y, int z, int level,int inputCoordLevel, VoxelRoleTypes role, bool btmIsInside)
+        //{
+        //    this.ID = Constants.MakeIDFromCoordinates(level,x, y, z, inputCoordLevel);
+        //    Role = role;
+        //    Level = level;
+        //    BtmCoordIsInside = btmIsInside;
+        //    SideLength = double.NaN;
+        //    BottomCoordinate = null;
+        //}
     }
     public abstract class VoxelWithTessellationLinks : IVoxel
     {

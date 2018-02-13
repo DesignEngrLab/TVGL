@@ -166,14 +166,14 @@ namespace TVGL.Voxelization
         #endregion
         #region Coordinates
 
-        internal static long MakeIDFromCoordinates(int level, int x, int y, int z, int inputCoordLevel)
+        internal static long MakeIDFromCoordinates(int level, int[] coordinates, int inputCoordLevel)
         {
             //   z0   z1    z2   z3    z4   y0   y1    y2   y3    y4    x0   x1    x2   x3    x4   flags
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            var xLong = (long)x << 4;
-            var yLong = (long)y << 24;
-            var zLong = (long)z << 44;
+            var xLong = (long)coordinates[0] << 4;
+            var yLong = (long)coordinates[1] << 24;
+            var zLong = (long)coordinates[2] << 44;
 
             xLong = xLong << 4 * (4 - inputCoordLevel);
             yLong = yLong << 4 * (4 - inputCoordLevel);
