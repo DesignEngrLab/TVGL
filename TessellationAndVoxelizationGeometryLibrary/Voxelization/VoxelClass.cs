@@ -27,7 +27,7 @@ namespace TVGL.Voxelization
         double SideLength { get; }
         VoxelRoleTypes Role { get; }
         int Level { get; }
-        bool BtmCoordIsInside { get; }
+        bool BtmCoordIsInside { get; set; }
         int[] CoordinateIndices { get; }
     }
 
@@ -39,7 +39,7 @@ namespace TVGL.Voxelization
         public VoxelRoleTypes Role { get; internal set; }
         public int Level { get; internal set; }
         public double[] BottomCoordinate { get; internal set; }
-        public bool BtmCoordIsInside { get; internal set; }
+        public bool BtmCoordIsInside { get; set; }
 
         public int[] CoordinateIndices => Constants.GetCoordinateIndices(ID, Level);
 
@@ -81,7 +81,7 @@ namespace TVGL.Voxelization
 
         public double[] BottomCoordinate { get; internal set; }
         public double SideLength { get; internal set; }
-        public bool BtmCoordIsInside { get; internal set; }
+        public bool BtmCoordIsInside { get; set; }
         public VoxelRoleTypes Role { get; internal set; }
         internal HashSet<TessellationBaseClass> TessellationElements;
         public int[] CoordinateIndices => Constants.GetCoordinateIndices(ID, Level);
