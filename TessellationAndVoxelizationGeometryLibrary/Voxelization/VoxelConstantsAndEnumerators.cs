@@ -66,7 +66,7 @@ namespace TVGL.Voxelization
             NumberStyles.HexNumber);  // clears out X since = #0,FFF00,FFF00,FFF00
         private static readonly long maskLevel4 = Int64.Parse("FFFF0FFFF0FFFF00",
             NumberStyles.HexNumber);  // clears out X since = #0,FFFF0,FFFF0,FFFF0
-        public static long MakeContainingVoxelID(long id, int level)
+        public static long MakeParentVoxelID(long id, int level)
         {
             switch (level)
             {

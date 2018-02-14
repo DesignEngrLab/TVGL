@@ -26,354 +26,211 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
         #region Functions to make voxel full, empty or partial
-
-        private IVoxel MakeVoxelFull(IVoxel voxel)
-        {
-            if (voxel.Role == VoxelRoleTypes.Full) return voxel;
-            if (voxel.Level == 0)
-            {
-                if (voxel.Role == VoxelRoleTypes.Empty) //then you may need to add it
-                {
-                    if (!(voxel is Voxel_Level0_Class))
-                        voxel = new Voxel_Level0_Class(voxel.ID, VoxelRoleTypes.Full, this);
-                    lock (voxelDictionaryLevel0)
-                        if (!voxelDictionaryLevel0.Contains(voxel.ID))
-                            voxelDictionaryLevel0.Add(voxel);
-                }
-                else
-                {
-                    lock (((Voxel_Level0_Class)voxel).InnerVoxels)
-                        ((Voxel_Level0_Class)voxel).InnerVoxels = null;
-                    foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).InnerVoxels[0])
-                        lock (voxelDictionaryLevel1)
-                            voxelDictionaryLevel1.Remove(nextLevelVoxel);
-                    lock (((Voxel_Level0_Class)voxel).NextLevelVoxels)
-                        ((Voxel_Level0_Class)voxel).NextLevelVoxels.Clear();
-                }
-
-                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Full;
-            }
-            else if (voxel.Level == 1)
-            {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-                var id0 = Constants.MakeContainingVoxelID(thisIDwoFlags, 0);
-                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0, 0));
-                var voxel0 = voxelDictionaryLevel0[id0];
-                lock (voxel0)
-                {
-                    if (voxel.Role == VoxelRoleTypes.Empty)
-                    {
-                        if (!(voxel is Voxel_Level1_Class))
-                            voxel = new Voxel_Level1_Class(voxel.ID, VoxelRoleTypes.Full, this);
-                        lock (voxelDictionaryLevel1)
-                            if (!voxelDictionaryLevel1.ContainsKey(voxel.ID))
-                            {
-                                voxelDictionaryLevel1.Add(voxel.ID, (Voxel_Level1_Class)voxel);
-                                voxel0.NextLevelVoxels.Add(voxel.ID);
-                            }
-                    }
-                    else //then it was partial
-                        voxel0.InnerVoxels.RemoveWhere(id =>
-                            Constants.MakeContainingVoxelID(id, 1) == thisIDwoFlags);
-
-                    ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Full;
-                    if (voxel0.NextLevelVoxels.Count == 4096
-                        && voxel0.NextLevelVoxels.All(v => voxelDictionaryLevel1[v].Role == VoxelRoleTypes.Full))
-                        MakeVoxelFull(voxel0);
-                }
-            }
-            else if (voxel.Level == 2)
-            {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-                voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(2, VoxelRoleTypes.Full), this);
-                var id0 = Constants.MakeContainingVoxelID(thisIDwoFlags, 0);
-                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0, 0));
-                var voxel0 = voxelDictionaryLevel0[id0];
-                if (voxel0.Role == VoxelRoleTypes.Full) return voxel;
-
-                var id1 = Constants.MakeContainingVoxelID(thisIDwoFlags, 1);
-                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1, 1));
-                var voxel1 = voxelDictionaryLevel1[id0];
-                if (voxel1.Role == VoxelRoleTypes.Full) return voxel;
-                var makeParentFull = false;
-                lock (voxel0.InnerVoxels)
-                {
-                    voxel0.InnerVoxels.Remove(voxel.ID);
-                    if (voxel.Role == VoxelRoleTypes.Partial)
-                        voxel0.InnerVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 2) == thisIDwoFlags);
-                    voxel0.InnerVoxels.Add(voxel.ID);
-                    makeParentFull = (voxel0.InnerVoxels.Count(isFullLevel2) == 4096);
-                }
-                if (makeParentFull) MakeVoxelFull(GetParentVoxel(voxel));
-            }
-            else if (voxel.Level == 3)
-            {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-                voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(3, VoxelRoleTypes.Full), this);
-                var id0 = Constants.MakeContainingVoxelID(thisIDwoFlags, 0);
-                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0, 0));
-                var voxel0 = voxelDictionaryLevel0[id0];
-                if (voxel0.Role == VoxelRoleTypes.Full) return voxel;
-
-                var id1 = Constants.MakeContainingVoxelID(thisIDwoFlags, 1);
-                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1, 1));
-                var voxel1 = voxelDictionaryLevel1[id0];
-                if (voxel1.Role == VoxelRoleTypes.Full) return voxel;
-
-                var id2 = Constants.MakeContainingVoxelID(thisIDwoFlags, 2);
-                if (!isFullLevel2(voxel0.InnerVoxels.GetFullVoxelID(id2))) return voxel;
-                if (!isPartialLevel2(voxel0.InnerVoxels.GetFullVoxelID(id2)))
-                    MakeVoxelPartial(new Voxel(id2, 2));
-                var makeParentFull = false;
-                lock (voxel0.InnerVoxels)
-                {
-                    voxel0.InnerVoxels.Remove(voxel.ID);
-                    if (voxel.Role == VoxelRoleTypes.Partial)
-                        voxel0.InnerVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 3) == thisIDwoFlags);
-                    voxel0.InnerVoxels.Add(voxel.ID);
-                    makeParentFull = (GetSiblingVoxels(voxel).Count(v => isFullLevel3(v.ID)) == 4096);
-                }
-                if (makeParentFull) MakeVoxelFull(GetParentVoxel(voxel));
-            }
-            else //if (voxel.Level == 4)
-            {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-                voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(4, VoxelRoleTypes.Full), this);
-                var id0 = Constants.MakeContainingVoxelID(thisIDwoFlags, 0);
-                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0, 0));
-                var voxel0 = voxelDictionaryLevel0[id0];
-                if (voxel0.Role == VoxelRoleTypes.Full) return voxel;
-
-                var id1 = Constants.MakeContainingVoxelID(thisIDwoFlags, 1);
-                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1, 1));
-                var voxel1 = voxelDictionaryLevel1[id0];
-                if (voxel1.Role == VoxelRoleTypes.Full) return voxel;
-
-                var id2 = Constants.MakeContainingVoxelID(thisIDwoFlags, 2);
-                if (!isFullLevel2(voxel0.InnerVoxels.GetFullVoxelID(id2))) return voxel;
-                if (!isPartialLevel2(voxel0.InnerVoxels.GetFullVoxelID(id2)))
-                    MakeVoxelPartial(new Voxel(id2, 2));
-
-                var id3 = Constants.MakeContainingVoxelID(thisIDwoFlags, 3);
-                if (!isFullLevel3(voxel0.InnerVoxels.GetFullVoxelID(id3))) return voxel;
-                if (!isPartialLevel3(voxel0.InnerVoxels.GetFullVoxelID(id3)))
-                    MakeVoxelPartial(new Voxel(id3, 3));
-
-                var makeParentFull = false;
-                lock (voxel0.InnerVoxels)
-                {
-                    voxel0.InnerVoxels.Remove(voxel.ID);
-                    voxel0.InnerVoxels.Add(voxel.ID);
-                    makeParentFull = (GetSiblingVoxels(voxel).Count(v => isFullLevel4(v.ID)) == 4096);
-                }
-                if (makeParentFull) MakeVoxelFull(GetParentVoxel(voxel));
-            }
-            return voxel;
-        }
-
-        private void MakeVoxelEmpty(IVoxel voxel)
+        private void ChangeVoxelToEmpty(IVoxel voxel)
         {
             if (voxel.Role == VoxelRoleTypes.Empty) return;
             if (voxel.Level == 0)
-            {
-                if (voxel.Role == VoxelRoleTypes.Partial)
-                    lock (voxelDictionaryLevel1)
-                        foreach (var nextLevelVoxel in ((Voxel_Level0_Class)voxel).NextLevelVoxels)
-                            voxelDictionaryLevel1.Remove(nextLevelVoxel);
                 // no need to do anything with the HigherLevelVoxels as deleting this Voxel, deletes
                 // the only reference to these higher voxels.
                 lock (voxelDictionaryLevel0)
                     voxelDictionaryLevel0.Remove(voxel.ID);
-            }
-            else if (voxel.Level == 1)
-            {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID, false);
-                var voxel0 = voxelDictionaryLevel0[Constants.MakeContainingVoxelID(thisIDwoFlags, 0)];
-                lock (voxel0.NextLevelVoxels)
-                    voxel0.NextLevelVoxels.Remove(thisIDwoFlags);
-                if (voxel0.NextLevelVoxels.Count == 0) MakeVoxelEmpty(voxel0);
-                if (voxel.Role == VoxelRoleTypes.Partial)
-                    lock (voxel0.InnerVoxels)
-                        voxel0.InnerVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 1) == thisIDwoFlags);
-                lock (voxelDictionaryLevel1) voxelDictionaryLevel1.Remove(voxel.ID);
-            }
             else
             {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-                var voxel0 = voxelDictionaryLevel0[Constants.MakeContainingVoxelID(thisIDwoFlags, 0)];
-                lock (voxel0.InnerVoxels)
-                    voxel0.InnerVoxels.Remove(voxel.ID);
-                if (!GetSiblingVoxels(voxel).Any()) MakeVoxelEmpty(GetParentVoxel(voxel));
-                if (voxel.Role == VoxelRoleTypes.Partial)
+                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID, false);
+                var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(Constants.MakeParentVoxelID(thisIDwoFlags, 0));
+                lock (voxel0.InnerVoxels[voxel.Level - 1])
+                    voxel0.InnerVoxels[voxel.Level - 1].Remove(thisIDwoFlags);
+                if (voxel0.InnerVoxels[voxel.Level - 1].Count == 0) ChangeVoxelToEmpty(GetParentVoxel(voxel));
+                else if (voxel.Role == VoxelRoleTypes.Partial)
                 {
-                    if (voxel.Level == 2)
-                        lock (voxel0.InnerVoxels)
-                            voxel0.InnerVoxels.RemoveWhere(
-                                id => Constants.MakeContainingVoxelID(id, 2) == thisIDwoFlags);
-                    else if (voxel.Level == 3)
-                        lock (voxel0.InnerVoxels)
-                            voxel0.InnerVoxels.RemoveWhere(id => Constants.MakeContainingVoxelID(id, 3) == thisIDwoFlags);
+                    for (int i = voxel.Level; i < discretizationLevel; i++)
+                    {
+                        lock (voxel0.InnerVoxels[i])
+                            voxel0.InnerVoxels[i]
+                                .RemoveWhere(vx => Constants.MakeParentVoxelID(vx.ID, voxel.Level) == thisIDwoFlags);
+                    }
                 }
+
             }
-            // return voxel;
         }
 
 
-        private IVoxel MakeVoxelPartial(IVoxel voxel)
+        private IVoxel ChangeEmptyVoxelToFull(long ID, int level)
         {
-            if (voxel.Role == VoxelRoleTypes.Partial) return voxel;
+            IVoxel voxel;
+            if (level == 0)
+            {
+                voxel = new Voxel_Level0_Class(ID, VoxelRoleTypes.Full, this);
+                lock (voxelDictionaryLevel0)
+                    voxelDictionaryLevel0.Add(voxel);
+                return voxel;
+            }
+            var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
+            Voxel_Level0_Class voxel0;
+            lock (voxelDictionaryLevel0)
+                if (!voxelDictionaryLevel0.Contains(id0))
+                    voxel0 = (Voxel_Level0_Class)ChangeEmptyVoxelToFull(id0, 0);
+                else
+                    voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
+            voxel = level == 1
+                ? (IVoxel)new Voxel_Level1_Class(ID, VoxelRoleTypes.Full, this)
+                : (IVoxel)new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), level);
+            lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
+            if (level == 1)
+            {
+                lock (voxel0.InnerVoxels[0])
+                {
+                    if (voxel0.InnerVoxels[0].Count == 4096
+                        && voxel0.InnerVoxels[0].All(v => v.Role == VoxelRoleTypes.Full))
+                        ChangePartialVoxelToFull(voxel0);
+                }
+            }
+            else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= 4096)
+            {
+                var parentID = Constants.MakeParentVoxelID(voxel.ID, level - 1);
+
+                lock (voxel0.InnerVoxels[level - 1])
+                {
+                    if (voxel0.InnerVoxels[voxel.Level - 1].Count(vx =>
+                            Constants.MakeParentVoxelID(vx.ID, level - 1) == parentID
+                            && vx.Role == VoxelRoleTypes.Full) == 4096)
+                        ChangePartialVoxelToFull(voxel0.InnerVoxels[level - 2].GetVoxel(parentID));
+                }
+            }
+            return voxel;
+        }
+
+
+        private IVoxel ChangePartialVoxelToFull(IVoxel voxel)
+        {
+            if (voxel.Role == VoxelRoleTypes.Full)
+                throw new ArgumentException("input voxel is already full.");
             if (voxel.Level == 0)
             {
-                if (!(voxel is Voxel_Level0_Class))
-                    voxel = new Voxel_Level0_Class(voxel.ID, VoxelRoleTypes.Empty, this);
+                lock (((Voxel_Level0_Class)voxel).InnerVoxels)
+                    ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
+                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Full;
+                return voxel;
+            }
+            var level = voxel.Level;
+            var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
+            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
+            if (level == 1) ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Full;
+            else
+            {
+                lock (voxel0.InnerVoxels[level - 1])
+                {
+                    voxel0.InnerVoxels[level - 1].Remove(voxel);
+                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full),
+                        level);
+                    voxel0.InnerVoxels[level - 1].Add(voxel);
+                }
+            }
+            for (int i = level; i < discretizationLevel; i++)
+            {
+                lock (voxel0.InnerVoxels[i])
+                    voxel0.InnerVoxels[i]
+                        .RemoveWhere(vx =>
+                            Constants.MakeParentVoxelID(vx.ID, level) == thisIDwoFlags);
+            }
+            if (level == 1)
+            {
+                lock (voxel0.InnerVoxels[0])
+                {
+                    if (voxel0.InnerVoxels[0].Count == 4096
+                               && voxel0.InnerVoxels[0].All(v => v.Role == VoxelRoleTypes.Full))
+                        ChangePartialVoxelToFull(voxel0);
+                }
+            }
+            else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= 4096)
+            {
+                var parentID = Constants.MakeParentVoxelID(voxel.ID, level - 1);
+
+                lock (voxel0.InnerVoxels[level - 1])
+                {
+                    if (voxel0.InnerVoxels[voxel.Level - 1].Count(vx =>
+                            Constants.MakeParentVoxelID(vx.ID, level - 1) == parentID
+                            && vx.Role == VoxelRoleTypes.Full) == 4096)
+                        ChangePartialVoxelToFull(voxel0.InnerVoxels[level - 2].GetVoxel(parentID));
+                }
+            }
+            return voxel;
+        }
+
+        private IVoxel ChangeEmptyVoxelToPartial(long ID, int level)
+        {
+            IVoxel voxel;
+            if (level == 0)
+            {
+                voxel = new Voxel_Level0_Class(ID, VoxelRoleTypes.Partial, this);
                 lock (voxelDictionaryLevel0)
-                    if (!voxelDictionaryLevel0.ContainsKey(voxel.ID))
-                        voxelDictionaryLevel0.Add(voxel.ID, (Voxel_Level0_Class)voxel);
-                ((Voxel_Level0_Class)voxel).NextLevelVoxels = new VoxelHashSet(new VoxelComparerCoarse(), this);
-                ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet(new VoxelComparerFine(), this);
-                if (voxel.Role == VoxelRoleTypes.Full)
-                    for (int i = 0; i < 16; i++)
-                        for (int j = 0; j < 16; j++)
-                            for (int k = 0; k < 16; k++)
-                            {
-                                var subVoxel = new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
-                                                                      (j * 68719476736) +
-                                                                      (k * 72057594037927936L),
-                                    VoxelRoleTypes.Full, this);
-                                lock (voxelDictionaryLevel1)
-                                    voxelDictionaryLevel1.Add(subVoxel.ID, (Voxel_Level1_Class)subVoxel);
-                                ((Voxel_Level0_Class)voxel).NextLevelVoxels.Add(subVoxel.ID);
-                            }
+                    voxelDictionaryLevel0.Add(voxel);
+                return voxel;
+            }
+            var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
+            Voxel_Level0_Class voxel0;
+            lock (voxelDictionaryLevel0)
+                if (!voxelDictionaryLevel0.Contains(id0))
+                    voxel0 = (Voxel_Level0_Class)ChangeEmptyVoxelToPartial(id0, 0);
+                else
+                    voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
+            voxel = level == 1
+                ? (IVoxel)new Voxel_Level1_Class(ID, VoxelRoleTypes.Partial, this)
+                : (IVoxel)new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), level);
+            lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
+            return voxel;
+        }
+        private IVoxel ChangeFullVoxelToPartial(IVoxel voxel)
+        {
+            if (voxel.Role == VoxelRoleTypes.Partial)
+                throw new ArgumentException("input voxel is already partial.");
+            if (voxel.Level == 0)
+            {
                 ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
+                var level1Voxels = new List<IVoxel>();
+                for (int i = 0; i < 16; i++)
+                    for (int j = 0; j < 16; j++)
+                        for (int k = 0; k < 16; k++)
+                        {
+                            level1Voxels.Add(new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
+                                                                    (j * 68719476736) +
+                                                                    (k * 72057594037927936L),
+                                VoxelRoleTypes.Full, this));
+                        }
+                   ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
+                ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this, level1Voxels);
+                return voxel;
             }
-            else if (voxel.Level == 1)
+            var level = voxel.Level;
+            var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
+            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
+            if (voxel0.Role == VoxelRoleTypes.Full) ChangeFullVoxelToPartial(voxel0);
+            if (level == 1) ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
+            else
             {
-                bool wasFull = voxel.Role == VoxelRoleTypes.Full;
-                Voxel_Level0_Class voxel0;
-                var id0 = Constants.MakeContainingVoxelID(voxel.ID, 0);
-                lock (voxelDictionaryLevel0)
+                lock (voxel0.InnerVoxels[level - 1])
                 {
-                    if (!voxelDictionaryLevel0.ContainsKey(id0))
-                        MakeVoxelPartial(new Voxel(id0, 0));
-                    voxel0 = voxelDictionaryLevel0[id0];
-                }
-
-                if (voxel0.Role == VoxelRoleTypes.Full) voxel0 = (Voxel_Level0_Class)MakeVoxelPartial(voxel0);
-                if (!(voxel is Voxel_Level1_Class))
-                    voxel = new Voxel_Level1_Class(voxel.ID, VoxelRoleTypes.Partial, this);
-                lock (voxelDictionaryLevel1)
-                    if (!voxelDictionaryLevel1.ContainsKey(voxel.ID))
-                    {
-                        voxelDictionaryLevel1.Add(voxel.ID, (Voxel_Level1_Class)voxel);
-                        voxel0.NextLevelVoxels.Add(voxel.ID);
-                    }
-
-                ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
-                if (wasFull && discretizationLevel > 1)
-                {
-                    var id2 = Constants.ClearFlagsFromID(voxel.ID, false)
-                              + Constants.SetRoleFlags(2, VoxelRoleTypes.Full);
-                    for (int i = 0; i < 16; i++)
-                        for (int j = 0; j < 16; j++)
-                            for (int k = 0; k < 16; k++)
-                                voxel0.InnerVoxels.Add(id2 + (i * 4096) +
-                                                           (j * 4294967296L) +
-                                                           (k * 4503599627370496));
+                    voxel0.InnerVoxels[level - 1].Remove(voxel);
+                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial),
+                        level);
+                    voxel0.InnerVoxels[level - 1].Add(voxel);
                 }
             }
-            else if (voxel.Level == 2)
-            {
-                bool wasFull = voxel.Role == VoxelRoleTypes.Full;
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-                voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(2, VoxelRoleTypes.Partial), this);
-                var id0 = Constants.MakeContainingVoxelID(thisIDwoFlags, 0);
-                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0, 0));
-                var voxel0 = voxelDictionaryLevel0[id0];
-                if (voxel0.Role == VoxelRoleTypes.Full) voxel0 = (Voxel_Level0_Class)MakeVoxelPartial(voxel0);
-
-                var id1 = Constants.MakeContainingVoxelID(thisIDwoFlags, 1);
-                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1, 1));
-                var voxel1 = voxelDictionaryLevel1[id0];
-                if (voxel1.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel1);
-                lock (voxel0.InnerVoxels)
-                {
-                    voxel0.InnerVoxels.Remove(voxel.ID);
-                    voxel0.InnerVoxels.Add(voxel.ID);
-                }
-                if (wasFull && discretizationLevel > 2)
-                {
-                    var id3 = Constants.ClearFlagsFromID(voxel.ID, true)
-                              + Constants.SetRoleFlags(2, VoxelRoleTypes.Full);
-                    for (int i = 0; i < 16; i++)
-                        for (int j = 0; j < 16; j++)
-                            for (int k = 0; k < 16; k++)
-                                voxel0.InnerVoxels.Add(id3 + (i * 256) +
-                                                           (j * 268435456) +
-                                                           (k * 281474976710656));
-                }
-            }
-            else if (voxel.Level == 3)
-            {
-                bool wasFull = voxel.Role == VoxelRoleTypes.Full;
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-                voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(3, VoxelRoleTypes.Partial), this);
-                var id0 = Constants.MakeContainingVoxelID(thisIDwoFlags, 0);
-                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0, 0));
-                var voxel0 = voxelDictionaryLevel0[id0];
-                if (voxel0.Role == VoxelRoleTypes.Full) voxel0 = (Voxel_Level0_Class)MakeVoxelPartial(voxel0);
-
-                var id1 = Constants.MakeContainingVoxelID(thisIDwoFlags, 1);
-                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1, 1));
-                var voxel1 = voxelDictionaryLevel1[id0];
-                if (voxel1.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel1);
-
-                var id2 = Constants.MakeContainingVoxelID(thisIDwoFlags, 2);
-                if (!isPartialLevel2(voxel0.InnerVoxels.GetFullVoxelID(id2)))
-                    MakeVoxelPartial(new Voxel(id2, 2));
-                lock (voxel0.InnerVoxels)
-                {
-                    voxel0.InnerVoxels.Remove(voxel.ID);
-                    voxel0.InnerVoxels.Add(voxel.ID);
-                }
-                if (wasFull && discretizationLevel > 3)
-                {
-                    var id4 = Constants.ClearFlagsFromID(voxel.ID, true)
-                              + Constants.SetRoleFlags(2, VoxelRoleTypes.Full);
-                    for (int i = 0; i < 16; i++)
-                        for (int j = 0; j < 16; j++)
-                            for (int k = 0; k < 16; k++)
-                                voxel0.InnerVoxels.Add(id4 + (i * 16) +
-                                                           (j * 16777216) +
-                                                           (k * 17592186044416));
-                }
-            }
-            else //if (voxel.Level == 4)
-            {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-                voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(4, VoxelRoleTypes.Partial), this);
-                var id0 = Constants.MakeContainingVoxelID(thisIDwoFlags, 0);
-                if (!voxelDictionaryLevel0.ContainsKey(id0)) MakeVoxelPartial(new Voxel(id0, 0));
-                var voxel0 = voxelDictionaryLevel0[id0];
-                if (voxel0.Role == VoxelRoleTypes.Full) voxel0 = (Voxel_Level0_Class)MakeVoxelPartial(voxel0);
-
-                var id1 = Constants.MakeContainingVoxelID(thisIDwoFlags, 1);
-                if (!voxelDictionaryLevel1.ContainsKey(id1)) MakeVoxelPartial(new Voxel(id1, 1));
-                var voxel1 = voxelDictionaryLevel1[id0];
-                if (voxel1.Role == VoxelRoleTypes.Full) MakeVoxelPartial(voxel1);
-
-                var id2 = Constants.MakeContainingVoxelID(thisIDwoFlags, 2);
-                if (!isPartialLevel2(voxel0.InnerVoxels.GetFullVoxelID(id2)))
-                    MakeVoxelPartial(new Voxel(id2, 2));
-
-                var id3 = Constants.MakeContainingVoxelID(thisIDwoFlags, 3);
-                if (!isPartialLevel3(voxel0.InnerVoxels.GetFullVoxelID(id3)))
-                    MakeVoxelPartial(new Voxel(id3, 3));
-                lock (voxel0.InnerVoxels)
-                {
-                    voxel0.InnerVoxels.Remove(voxel.ID);
-                    voxel0.InnerVoxels.Add(voxel.ID);
-                }
-            }
+            var lowerLevelVoxels = new HashSet<IVoxel>();
+            var xShift = 1L << 4 + 4 * (4 - level);
+            var yShift = xShift << 20;
+            var zShift = yShift << 20;
+            for (int i = 0; i < 16; i++)
+                for (int j = 0; j < 16; j++)
+                    for (int k = 0; k < 16; k++)
+                        lowerLevelVoxels.Add(new Voxel(thisIDwoFlags
+                                                           + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level + 1));
+            lock (((Voxel_Level0_Class)voxel).InnerVoxels[level + 1])
+                ((Voxel_Level0_Class)voxel).InnerVoxels[level + 1].AddRange(lowerLevelVoxels);
             return voxel;
         }
 
@@ -403,7 +260,7 @@ namespace TVGL.Voxelization
 
         private long CountVoxels(IVoxel dict, int level, VoxelRoleTypes role)
         {
-            var innerVoxels =((Voxel_Level0_Class)dict).InnerVoxels;
+            var innerVoxels = ((Voxel_Level0_Class)dict).InnerVoxels;
             if (innerVoxels == null || innerVoxels.Length < level) return 0L;
             return innerVoxels[level - 1].Count(v => v.Role == role);
         }

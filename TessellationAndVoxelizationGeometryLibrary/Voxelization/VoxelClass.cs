@@ -97,7 +97,7 @@ namespace TVGL.Voxelization
 
         public Voxel_Level0_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid)
         {
-            this.ID = ID;
+            this.ID =Constants.ClearFlagsFromID(ID);
             Role = voxelRole;
             if (Role == VoxelRoleTypes.Partial) this.ID += 1;
             else if (Role == VoxelRoleTypes.Partial) this.ID += 3;

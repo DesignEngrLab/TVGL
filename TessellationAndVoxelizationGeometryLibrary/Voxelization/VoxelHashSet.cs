@@ -138,9 +138,10 @@ namespace TVGL.Voxelization
             }
 
 
-            internal void AddRange(HashSet<IVoxel> voxels)
+            internal void AddRange(ICollection<IVoxel> voxels)
             {
-                throw new NotImplementedException();
+                foreach (var voxel in voxels)
+                    Add(voxel);
             }
 
             #endregion
