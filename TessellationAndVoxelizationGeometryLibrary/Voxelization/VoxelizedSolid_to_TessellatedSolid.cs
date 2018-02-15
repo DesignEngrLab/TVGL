@@ -31,7 +31,7 @@ namespace TVGL.Voxelization
         public TessellatedSolid ConvertToTessellatedSolid(Color color, double minEdgeLength = -1)
         {
             var faceCollection = new ConcurrentBag<PolygonalFace>();
-            var voxelVertexDictionary = Voxels(this.Discretization, VoxelRoleTypes.Partial, true)
+            var voxelVertexDictionary = Voxels(VoxelRoleTypes.Partial,this.Discretization,  true)
                 .ToDictionary(v => v.ID, v => new Vertex(v.BottomCoordinate));
             var boundaryVertexDictionary = new Dictionary<long, Vertex>();
             var sideLength = VoxelSideLengths[discretizationLevel];
@@ -40,7 +40,7 @@ namespace TVGL.Voxelization
             var deltaZ = 1L << (44 + 4 * (4 - discretizationLevel));
 
             //Parallel.ForEach(Voxels(this.Discretization, VoxelRoleTypes.Partial, true), v =>
-            foreach (var v in Voxels(this.Discretization, VoxelRoleTypes.Partial, true))
+            foreach (var v in Voxels(VoxelRoleTypes.Partial, this.Discretization, true))
             {
                 var neighborX = GetNeighbor(v, VoxelDirections.XPositive);
                 var neighborY = GetNeighbor(v, VoxelDirections.YPositive);

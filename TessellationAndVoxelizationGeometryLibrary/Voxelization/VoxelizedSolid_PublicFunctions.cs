@@ -42,8 +42,11 @@ namespace TVGL.Voxelization
         /// <returns>IVoxel.</returns>
         public IVoxel GetVoxel(long newID, int level = -1)
         {
-            Constants.GetRoleFlags(newID, out var levelFromID, out var role, out var btmIsInside);
-            if (level == -1) level = levelFromID;
+            if (level == -1)
+            {
+                Constants.GetRoleFlags(newID, out var levelFromID, out var role, out var btmIsInside);
+                level = levelFromID;
+            }
             if (level == 0)
             {
                 return voxelDictionaryLevel0.GetVoxel(newID)
@@ -79,126 +82,91 @@ namespace TVGL.Voxelization
 
         #region Get Functions
 
-        public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine)
+        public IEnumerable<IVoxel> Voxels(VoxelRoleTypes role, VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine,
+            bool onlyThisLevel = false)
         {
             var level = (int)voxelLevel;
-            if (level > discretizationLevel) level = discretizationLevel;
-            foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Full))
-                yield return v;
-            if (level == 0)
-                foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+            if (level > discretizationLevel)
+            {
+                if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
+                level = discretizationLevel;
+            }
+            if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
+                foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == role)) yield return v;
+            if ((onlyThisLevel && level == 1) || (!onlyThisLevel && level >= 1))
+                foreach (var v in voxelDictionaryLevel0
+                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
+                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 1)
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 1, role)))
                     yield return v;
-            if (level ==1)
-                foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                    EnumerateHighLevelVoxelsFromLevel0(voxDict)))
+            if ((onlyThisLevel && level == 2) || (!onlyThisLevel && level >= 2))
+                foreach (var v in voxelDictionaryLevel0
+                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
+                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 2)
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 2, role)))
                     yield return v;
-            if (level == 2)
-                foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                    EnumerateHighLevelVoxelsFromLevel0(voxDict, 5, 6, 7)))
+            if ((onlyThisLevel && level == 3) || (!onlyThisLevel && level >= 3))
+                foreach (var v in voxelDictionaryLevel0
+                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
+                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 3)
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 3, role)))
                     yield return v;
-            if (level == 3)
-                foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                    EnumerateHighLevelVoxelsFromLevel0(voxDict, 7, 9, 10, 11)))
-                    yield return v;
-            if (level == 4)
-                foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                    EnumerateHighLevelVoxelsFromLevel0(voxDict, 7, 11, 13, 14, 15)))
+            if ((onlyThisLevel && level == 4) || (!onlyThisLevel && level >= 4))
+                foreach (var v in voxelDictionaryLevel0
+                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
+                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 4)
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 4, role)))
                     yield return v;
         }
 
-        public IEnumerable<IVoxel> Voxels(VoxelRoleTypes role, VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine)
-        {
-            return Voxels(voxelLevel, role);
-        }
-
-        public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel, VoxelRoleTypes role)
+        public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine, bool onlyThisLevel = false)
         {
             var level = (int)voxelLevel;
-            if (level > discretizationLevel) level = discretizationLevel;
-            foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == role))
-                yield return v;
-            if (level >= 1)
-                foreach (var v in voxelDictionaryLevel1.Values.Where(v => v.Role == role))
+            if (level > discretizationLevel)
+            {
+                if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
+                level = discretizationLevel;
+            }
+            if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
+                foreach (var v in voxelDictionaryLevel0) yield return v;
+            if ((onlyThisLevel && level == 1) || (!onlyThisLevel && level >= 1))
+                foreach (var v in voxelDictionaryLevel0
+                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
+                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 1)
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 1)))
                     yield return v;
-            if (level == 2)
-            {
-                if (role == VoxelRoleTypes.Full)
-                    foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                        EnumerateHighLevelVoxelsFromLevel0(voxDict, 7)))
-                        yield return v;
-                else
-                    foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                        EnumerateHighLevelVoxelsFromLevel0(voxDict, 5, 6)))
-                        yield return v;
-            }
-            if (level == 3)
-            {
-                if (role == VoxelRoleTypes.Full)
-                    foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                        EnumerateHighLevelVoxelsFromLevel0(voxDict, 11)))
-                        yield return v;
-                else
-                    foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                        EnumerateHighLevelVoxelsFromLevel0(voxDict, 9, 10)))
-                        yield return v;
-            }
-            if (level == 4)
-            {
-                if (role == VoxelRoleTypes.Full)
-                    foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                        EnumerateHighLevelVoxelsFromLevel0(voxDict, 15)))
-                        yield return v;
-                else
-                    foreach (var v in voxelDictionaryLevel0.SelectMany(voxDict =>
-                        EnumerateHighLevelVoxelsFromLevel0(voxDict, 13, 14)))
-                        yield return v;
-            }
-        }
-
-        public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel, VoxelRoleTypes role, bool onlyThisLevel)
-        {
-            if (!onlyThisLevel) return Voxels(voxelLevel, role);
-            int level = (int)voxelLevel;
-            if (level == 0)
-                return voxelDictionaryLevel0.Where(v => v.Role == role);
-            if (level == 1)
-                return voxelDictionaryLevel1.Values.Where(v => v.Role == role);
-            if (level > discretizationLevel) level = discretizationLevel;
-            var targetFlags = Constants.SetRoleFlags(level, role);
-            return voxelDictionaryLevel0.SelectMany(voxDict =>
-                EnumerateHighLevelVoxelsFromLevel0(voxDict, targetFlags));
-        }
-
-        public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel, bool onlyThisLevel)
-        {
-            if (!onlyThisLevel) return Voxels(voxelLevel);
-            int level = (int)voxelLevel;
-            if (level > discretizationLevel) level = discretizationLevel;
-            if (level == 0)
-                return voxelDictionaryLevel0.Values;
-            if (level == 1)
-                return voxelDictionaryLevel1.Values;
-            if (level > discretizationLevel) level = discretizationLevel;
-            if (level == 2)
-                return voxelDictionaryLevel0.SelectMany(voxDict =>
-                    EnumerateHighLevelVoxelsFromLevel0(voxDict, 5, 6, 7));
-            if (level == 3)
-                return voxelDictionaryLevel0.SelectMany(voxDict =>
-                    EnumerateHighLevelVoxelsFromLevel0(voxDict, 9, 10, 11));
-            else //level==4
-                return voxelDictionaryLevel0.SelectMany(voxDict =>
-                    EnumerateHighLevelVoxelsFromLevel0(voxDict, 13, 14, 15));
+            if ((onlyThisLevel && level == 2) || (!onlyThisLevel && level >= 2))
+                foreach (var v in voxelDictionaryLevel0
+                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
+                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 2)
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 2)))
+                    yield return v;
+            if ((onlyThisLevel && level == 3) || (!onlyThisLevel && level >= 3))
+                foreach (var v in voxelDictionaryLevel0
+                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
+                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 3)
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 3)))
+                    yield return v;
+            if ((onlyThisLevel && level == 4) || (!onlyThisLevel && level >= 4))
+                foreach (var v in voxelDictionaryLevel0
+                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
+                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 4)
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 4)))
+                    yield return v;
         }
 
         internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
-            params long[] targetFlags)
+            int level)
         {
-            foreach (var vx in voxel.InnerVoxels)
-            {
-                var flags = vx & 15; //get rid of every but the flags
-                if (targetFlags.Contains(flags))
-                    yield return new Voxel(vx, this);
-            }
+            foreach (var vx in voxel.InnerVoxels[level - 1])
+                yield return vx;
+        }
+        internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
+            int level, VoxelRoleTypes role)
+        {
+            foreach (var vx in voxel.InnerVoxels[level - 1])
+                if (vx.Role == role)
+                    yield return vx;
         }
 
         public IVoxel GetNeighbor(IVoxel voxel, VoxelDirections direction)
@@ -278,72 +246,64 @@ namespace TVGL.Voxelization
 
         public IVoxel GetParentVoxel(IVoxel child)
         {
-            long parentID;
-            IVoxel parent;
-            switch (child.Level)
+            var parentLevel = child.Level - 1;
+            if (child.Level == 0) throw new ArgumentException("There are no parents for level-0 voxels.");
+            // childlevels 1, 2, 3, 4 or parent levels 0, 1, 2, 3
+            var parentID = Constants.MakeParentVoxelID(child.ID, 0);
+            var level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parentID);
+            if (level0Parent == null)
+                return new Voxel(Constants.MakeParentVoxelID(child.ID, parentLevel)
+                                 + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
+            if (level0Parent.Role == VoxelRoleTypes.Full)
+                return new Voxel(Constants.MakeParentVoxelID(child.ID, parentLevel)
+                                 + Constants.SetRoleFlags(0, VoxelRoleTypes.Full), this);
+            if (parentLevel == 0) return level0Parent;
+            //now for childlevels 2,3, 4 or parent levels 1, 2, 3
+            parentID = Constants.MakeParentVoxelID(child.ID, parentLevel);
+            var parent = level0Parent.InnerVoxels[parentLevel - 1].GetVoxel(parentID);
+            if (parent != null) return parent;
+            // so the rest of this should be either fulls or empties as there is no immediate partial parent
+            if (parentLevel == 1)
+                return new Voxel(Constants.MakeParentVoxelID(child.ID, parentLevel)
+                                 + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
+            //now for childlevels 3, 4 or parent levels 2, 3
+            parentID = Constants.MakeParentVoxelID(child.ID, parentLevel - 1); // which would be either 1, or 2 - the grandparent
+            parent = level0Parent.InnerVoxels[parentLevel - 2].GetVoxel(parentID);
+            if (parent != null || parentLevel == 2)
             {
-                case 1:
-                    parentID = Constants.MakeParentVoxelID(child.ID, 0);
-                    if (voxelDictionaryLevel0.ContainsKey(parentID))
-                        return voxelDictionaryLevel0[parentID];
-                    return new Voxel(parentID + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
-                case 2:
-                    parentID = Constants.MakeParentVoxelID(child.ID, 1);
-                    if (voxelDictionaryLevel1.ContainsKey(parentID))
-                        return voxelDictionaryLevel1[parentID];
-                    return GetParentVoxel(new Voxel(parentID, 1));
-                case 3:
-                    parentID = Constants.MakeParentVoxelID(child.ID, 0);
-                    if (voxelDictionaryLevel0.ContainsKey(parentID))
-                    {
-                        var level0Voxel = voxelDictionaryLevel0[parentID];
-                        parentID = Constants.MakeParentVoxelID(child.ID, 2);
-                        parent = level0Voxel.InnerVoxels.GetVoxel(parentID);
-                        if (parent != null) return parent;
-                    }
-                    return GetParentVoxel(new Voxel(parentID, 2));
-                case 4:
-                    parentID = Constants.MakeParentVoxelID(child.ID, 0);
-                    if (voxelDictionaryLevel0.ContainsKey(parentID))
-                    {
-                        var level0Voxel = voxelDictionaryLevel0[parentID];
-                        parentID = Constants.MakeParentVoxelID(child.ID, 3);
-                        parent = level0Voxel.InnerVoxels.GetVoxel(parentID);
-                        if (parent != null) return parent;
-                    }
-                    return GetParentVoxel(new Voxel(parentID, 3));
-                default: return null;
+                if (parent?.Role == VoxelRoleTypes.Full)
+                    return new Voxel(Constants.MakeParentVoxelID(child.ID, parentLevel)
+                                     + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Full), this);
+                else return new Voxel(Constants.MakeParentVoxelID(child.ID, parentLevel)
+                                                + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
             }
+            parentID = Constants.MakeParentVoxelID(child.ID, parentLevel - 2); // which would be 1 - the great-grandparent of a voxels at 4
+            parent = level0Parent.InnerVoxels[parentLevel - 3].GetVoxel(parentID);
+            if (parent?.Role == VoxelRoleTypes.Full)
+                return new Voxel(Constants.MakeParentVoxelID(child.ID, parentLevel)
+                                 + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Full), this);
+            else return new Voxel(Constants.MakeParentVoxelID(child.ID, parentLevel)
+                                  + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
         }
 
         public IEnumerable<IVoxel> GetChildVoxels(IVoxel parent)
         {
-            if (parent == null) return voxelDictionaryLevel0.Values;
+            if (parent == null) return voxelDictionaryLevel0;
+            Voxel_Level0_Class level0Parent;
             if (parent is Voxel_Level0_Class)
             {
-                var IDs = ((Voxel_Level0_Class)parent).NextLevelVoxels;
-                return IDs.Select(id => voxelDictionaryLevel1[id]);
+                level0Parent = (Voxel_Level0_Class)parent;
+                if (level0Parent.InnerVoxels != null && level0Parent.InnerVoxels.Length > 0)
+                    return level0Parent.InnerVoxels[0];
+                return new List<IVoxel>();
             }
-            if (parent is Voxel_Level1_Class)
-            {
-                var level0 = voxelDictionaryLevel0[Constants.MakeParentVoxelID(parent.ID, 0)];
-                var IDs = level0.InnerVoxels;
-                return IDs.Where(isLevel2)
-                    .Select(id => (IVoxel)new Voxel(id, this));
-            }
-            else
-            {
-                var level0 = voxelDictionaryLevel0[Constants.MakeParentVoxelID(parent.ID, 0)];
-                var IDs = level0.InnerVoxels;
-                var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
-                if (parent.Level == 2)
-                    return IDs.Where(v => isLevel3(v) &&
-                                          Constants.MakeContainingVoxelID(v, 2) == parentIDwithoutFlags)
-                        .Select(id => (IVoxel)new Voxel(id, this));
-                return IDs.Where(v => isLevel4(v) &&
-                                          Constants.MakeContainingVoxelID(v, 3) == parentIDwithoutFlags)
-                        .Select(id => (IVoxel)new Voxel(id, this));
-            }
+            // else the parent is level 1, 2, or 3
+            level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(Constants.MakeParentVoxelID(parent.ID, 0));
+            if (level0Parent.InnerVoxels == null || level0Parent.InnerVoxels.Length <= parent.Level)
+                return new List<IVoxel>();
+            var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
+            return level0Parent.InnerVoxels[parent.Level].Where(v =>
+                Constants.MakeParentVoxelID(v.ID, parent.Level) == parentIDwithoutFlags);
         }
 
         /// <summary>
@@ -378,23 +338,28 @@ namespace TVGL.Voxelization
         {
             var copy = new VoxelizedSolid(this.Discretization, this.Bounds, this.Units, this.Name, this.FileName,
                 this.Comments);
-            foreach (var voxelLevel0Class in this.voxelDictionaryLevel0)
+            foreach (var voxel in this.voxelDictionaryLevel0)
+                copy.voxelDictionaryLevel0.Add(new Voxel_Level0_Class(voxel.ID, voxel.Role, this));
+            foreach (var v in this.voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
             {
-                copy.voxelDictionaryLevel0.Add(voxelLevel0Class.Key, new Voxel_Level0_Class(voxelLevel0Class.Key,
-                    voxelLevel0Class.Value.Role, this));
-            }
-            foreach (var voxelLevel1Class in this.voxelDictionaryLevel1)
-            {
-                copy.voxelDictionaryLevel1.Add(voxelLevel1Class.Key, new Voxel_Level1_Class(voxelLevel1Class.Key,
-                    voxelLevel1Class.Value.Role, this));
-            }
-            foreach (var voxelLevel0Class in this.voxelDictionaryLevel0)
-            {
-                var copyVoxel = copy.voxelDictionaryLevel0[voxelLevel0Class.Key];
-                if (voxelLevel0Class.Value.NextLevelVoxels != null)
-                    copyVoxel.NextLevelVoxels = voxelLevel0Class.Value.NextLevelVoxels.Copy(copy);
-                if (voxelLevel0Class.Value.InnerVoxels != null)
-                    copyVoxel.InnerVoxels = voxelLevel0Class.Value.InnerVoxels.Copy(copy);
+                var thisVoxel = (Voxel_Level0_Class)v;
+                var copyVoxel = (Voxel_Level0_Class)copy.voxelDictionaryLevel0.GetVoxel(thisVoxel.ID);
+                for (int i = 0; i < discretizationLevel; i++)
+                {
+                    if (thisVoxel.InnerVoxels[i] == null) break;
+                    if (i == 0) // which is level-1
+                    {
+                        copyVoxel.InnerVoxels[i] = new VoxelHashSet(new VoxelComparerCoarse(), copy);
+                        foreach (var innerVoxel in thisVoxel.InnerVoxels[i])
+                            copyVoxel.InnerVoxels[i].Add(new Voxel_Level1_Class(innerVoxel.ID, innerVoxel.Role, copy));
+                    }
+                    else
+                    {
+                        copyVoxel.InnerVoxels[i] = new VoxelHashSet(new VoxelComparerFine(), copy);
+                        foreach (var innerVoxel in thisVoxel.InnerVoxels[i])
+                            copyVoxel.InnerVoxels[i].Add(new Voxel(innerVoxel.ID, i + 1));
+                    }
+                }
             }
             copy.UpdateProperties();
             return copy;
@@ -497,74 +462,26 @@ namespace TVGL.Voxelization
 
         public void Intersect(params VoxelizedSolid[] references)
         {
-            var v0Keys = voxelDictionaryLevel0.Keys.ToList();
-            Parallel.ForEach(v0Keys, ID =>
-            //foreach (var ID in v0Keys)
-            {
-                var thisVoxel = voxelDictionaryLevel0[ID];
-                //if (voxelDictionaryLevel0[ID].Role == VoxelRoleTypes.Empty) return; //I don't think this'll be called
-                var referenceLowestRole = GetLowestRole(thisVoxel.ID, 0, references);
-                if (referenceLowestRole == VoxelRoleTypes.Empty)
-                    MakeVoxelEmpty(thisVoxel);
-                else if (referenceLowestRole == VoxelRoleTypes.Partial)
-                {
-                    MakeVoxelPartial(thisVoxel);
-                    if (discretizationLevel >= 1)
-                        IntersectLevel1(thisVoxel.NextLevelVoxels.ToList(), references);
-                }
-                // Well, no need to call the following (make voxel full) since intersect and 
-                // subtract only make smaller models
-                //else if (referenceLowestRole == VoxelRoleTypes.Full &&
-                //         thisVoxel.Role == VoxelRoleTypes.Full) MakeVoxelFull(thisVoxel);
-            });
+            Intersect(null, 0, references);
             UpdateProperties();
         }
-        void IntersectLevel1(IList<long> level1Keys, VoxelizedSolid[] references)
-        {
-            Parallel.ForEach(level1Keys, ID =>
-            //foreach (var ID in level1Keys)
-            {
-                var thisVoxel = voxelDictionaryLevel1[ID];
-                //if (voxelDictionaryLevel1[ID].Role == VoxelRoleTypes.Empty) return;
-                var referenceLowestRole = GetLowestRole(thisVoxel.ID, 1, references);
-                if (referenceLowestRole == VoxelRoleTypes.Empty) MakeVoxelEmpty(thisVoxel);
-                else if (referenceLowestRole == VoxelRoleTypes.Partial)
-                {
-                    thisVoxel = (Voxel_Level1_Class)MakeVoxelPartial(thisVoxel);
-                    if (discretizationLevel >= 2)
-                    {
-                        var v0Parent = (Voxel_Level0_Class)GetParentVoxel(thisVoxel);
-                        IntersectHigherLevels(v0Parent.InnerVoxels, references, 2);
-                    }
-                }
-                // Well, no need to call the following (make voxel full) since intersect and 
-                // subtract only make smaller models
-                //else if (referenceLowestRole == VoxelRoleTypes.Full &&
-                //         thisVoxel.Role == VoxelRoleTypes.Full) MakeVoxelFull(thisVoxel);
-            });
-        }
 
-        void IntersectHigherLevels(VoxelHashSet highLevelHashSet, VoxelizedSolid[] references, int level)  //List<VoxelRoleTypes> flags)
+        private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references)
         {
-            List<long> listOfIDs;
-            if (level == 2) listOfIDs = highLevelHashSet.Where(isLevel2).ToList();
-            else if (level == 3) listOfIDs = highLevelHashSet.Where(isLevel3).ToList();
-            else if (level == 4) listOfIDs = highLevelHashSet.Where(isLevel4).ToList();
-            else listOfIDs = null;
-            level++;
-            Parallel.ForEach(listOfIDs, id =>
+            var voxels = GetChildVoxels(parent);
+            Parallel.ForEach(voxels, thisVoxel =>
             {
-                var referenceLowestRole = GetLowestRole(id, level, references);
-                if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(new Voxel(id, level));
-                else if (referenceLowestRole == VoxelRoleTypes.Partial)
+                var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
+                if (referenceLowestRole == VoxelRoleTypes.Full) return;
+                if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel);
+                else
                 {
-                    ChangeFullVoxelToPartial(new Voxel(id, level));
-                    if (discretizationLevel >= level)
-                        IntersectHigherLevels(highLevelHashSet, references, level);
+                    if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeFullVoxelToPartial(thisVoxel);
+                    if (discretizationLevel > level)
+                        Intersect(thisVoxel, level + 1, references);
                 }
             });
         }
-
         #endregion
         #region Subtract
         /// <exclude />
@@ -575,69 +492,26 @@ namespace TVGL.Voxelization
             return copy;
         }
 
-        public void Subtract(params VoxelizedSolid[] subtrahends)
+        public void Subtract(params VoxelizedSolid[] references)
         {
-            var v0Keys = voxelDictionaryLevel0.Keys.ToList();
-            Parallel.ForEach(v0Keys, ID =>
-            //foreach (var ID in v0Keys)
-            {
-                var thisVoxel = voxelDictionaryLevel0[ID];
-                //if (voxelDictionaryLevel0[ID].Role == VoxelRoleTypes.Empty) return; //I don't think this'll be called
-                var referenceHighestRole = GetHighestRole(ID, 0, subtrahends);
-                if (referenceHighestRole == VoxelRoleTypes.Full)
-                    MakeVoxelEmpty(thisVoxel);
-                else if (referenceHighestRole == VoxelRoleTypes.Partial)
-                {
-                    if (discretizationLevel >= 1)
-                    {
-                        MakeVoxelPartial(thisVoxel);
-                        SubtractLevel1(thisVoxel.NextLevelVoxels.ToList(), subtrahends);
-                    }
-                    else MakeVoxelEmpty(thisVoxel);
-                }
-            });
+            Subtract(null, 0, references);
             UpdateProperties();
         }
-        void SubtractLevel1(IList<long> level1Keys, VoxelizedSolid[] references)
-        {
-            Parallel.ForEach(level1Keys, ID =>
-            //foreach (var ID in level1Keys)
-            {
-                var thisVoxel = voxelDictionaryLevel1[ID];
-                //if (voxelDictionaryLevel1[ID].Role == VoxelRoleTypes.Empty) return;
-                var referenceHighestRole = GetHighestRole(ID, 1, references);
-                if (referenceHighestRole == VoxelRoleTypes.Full) MakeVoxelEmpty(thisVoxel);
-                else if (referenceHighestRole == VoxelRoleTypes.Partial)
-                {
-                    if (discretizationLevel >= 2)
-                    {
-                        thisVoxel = (Voxel_Level1_Class)MakeVoxelPartial(thisVoxel);
-                        var v0Parent = (Voxel_Level0_Class)GetParentVoxel(thisVoxel);
-                        SubtractHigherLevels(v0Parent.InnerVoxels, references, 2);
-                    }
-                    else MakeVoxelEmpty(thisVoxel);
-                }
-            });
-        }
 
-        void SubtractHigherLevels(VoxelHashSet highLevelHashSet, VoxelizedSolid[] references, int level)
+        private void Subtract(IVoxel parent, int level, VoxelizedSolid[] subtrahends)
         {
-            List<long> listOfIDs;
-            if (level == 2) listOfIDs = highLevelHashSet.Where(isLevel2).ToList();
-            else if (level == 3) listOfIDs = highLevelHashSet.Where(isLevel3).ToList();
-            else if (level == 4) listOfIDs = highLevelHashSet.Where(isLevel4).ToList();
-            else listOfIDs = null;
-            level++;
-            Parallel.ForEach(listOfIDs, id =>
+            var voxels = GetChildVoxels(parent);
+            Parallel.ForEach(voxels, thisVoxel =>
             {
-                var referenceHighestRole = GetHighestRole(id, level, references);
-                if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(new Voxel(id, level));
-                else if (referenceHighestRole == VoxelRoleTypes.Partial)
+                var referenceHighestRole = GetHighestRole(thisVoxel.ID, level, subtrahends);
+                if (referenceHighestRole == VoxelRoleTypes.Empty) return;
+                if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel);
+                else if (discretizationLevel > level)
                 {
-                    ChangeFullVoxelToPartial(new Voxel(id, level));
-                    if (discretizationLevel >= level)
-                        SubtractHigherLevels(highLevelHashSet, references, level);
+                    if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeFullVoxelToPartial(thisVoxel);
+                    Subtract(thisVoxel, level + 1, subtrahends);
                 }
+                else ChangeVoxelToEmpty(thisVoxel);
             });
         }
 
@@ -647,185 +521,72 @@ namespace TVGL.Voxelization
         public VoxelizedSolid UnionToNewSolid(VoxelizedSolid reference)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.Union(reference);
+            copy.Union(null, 0, reference);
             return copy;
         }
 
-        public void Union(VoxelizedSolid reference)
+        private void Union(IVoxel parent, int level, VoxelizedSolid reference)
         {
-            Parallel.ForEach(reference.voxelDictionaryLevel0, keyValue =>
+            var voxels = reference.GetChildVoxels(parent);
+            Parallel.ForEach(voxels, refVoxel =>
             {
-                var ID = keyValue.Key;
-                var refVoxel = keyValue.Value;
                 if (refVoxel.Role == VoxelRoleTypes.Empty) return;
-                var thisVoxel = GetVoxel(ID, 0);
-                if (thisVoxel?.Role == VoxelRoleTypes.Full) return;
+                var thisVoxel = GetVoxel(refVoxel.ID, level);
+                if (thisVoxel.Role == VoxelRoleTypes.Full) return;
                 if (refVoxel.Role == VoxelRoleTypes.Full)
                 {
-                    if (thisVoxel == null)
-                        lock (voxelDictionaryLevel0)
-                            voxelDictionaryLevel0.Add(ID, new Voxel_Level0_Class(ID, VoxelRoleTypes.Full, this));
+                    if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToFull(refVoxel.ID, level);
                     else ChangePartialVoxelToFull(thisVoxel);
                 }
                 else
                 {
-                    if (thisVoxel == null)
-                        lock (voxelDictionaryLevel0)
-                            voxelDictionaryLevel0.Add(ID, new Voxel_Level0_Class(ID, VoxelRoleTypes.Partial, this));
-                    if (discretizationLevel >= 1)
-                        UnionLevel1(refVoxel.NextLevelVoxels.ToList(), reference);
-                }
-            });
-            UpdateProperties();
-        }
-        void UnionLevel1(IList<long> level1Keys, VoxelizedSolid reference)
-        {
-            Parallel.ForEach(level1Keys, ID =>
-            {
-                var refVoxel = reference.voxelDictionaryLevel1[ID];
-                if (refVoxel.Role == VoxelRoleTypes.Empty) return;
-                var thisVoxel = GetVoxel(ID, 1);
-                if (thisVoxel?.Role == VoxelRoleTypes.Full) return;
-                if (refVoxel.Role == VoxelRoleTypes.Full)
-                {
-                    if (thisVoxel == null)
-                        lock (voxelDictionaryLevel1)
-                            voxelDictionaryLevel1.Add(ID, new Voxel_Level1_Class(ID, VoxelRoleTypes.Full, this));
-                    else ChangePartialVoxelToFull(thisVoxel);
-                }
-                else
-                {
-                    if (thisVoxel == null)
-                    {
-                        lock (voxelDictionaryLevel1)
-                            voxelDictionaryLevel1.Add(ID, new Voxel_Level1_Class(ID, VoxelRoleTypes.Partial, this));
-                    }
-                    if (discretizationLevel >= 2)
-                    {
-                        var v0Parent = (Voxel_Level0_Class)reference.GetParentVoxel(refVoxel);
-                        UnionHigherLevels(v0Parent.InnerVoxels, reference, 2);
-                    }
-                }
-            });
-        }
-
-        void UnionHigherLevels(VoxelHashSet highLevelHashSet, VoxelizedSolid reference, int level)
-        {
-            List<long> listOfIDs;
-            if (level == 2) listOfIDs = highLevelHashSet.Where(isLevel2).ToList();
-            else if (level == 3) listOfIDs = highLevelHashSet.Where(isLevel3).ToList();
-            else if (level == 4) listOfIDs = highLevelHashSet.Where(isLevel4).ToList();
-            else listOfIDs = null;
-            level++;
-            Parallel.ForEach(listOfIDs, id =>
-            {
-                var refVoxel = reference.GetVoxel(id, level);
-                if (refVoxel.Role == VoxelRoleTypes.Empty) return;
-                var thisVoxel = GetVoxel(id, level);
-                if (thisVoxel?.Role == VoxelRoleTypes.Full) return;
-                if (refVoxel.Role == VoxelRoleTypes.Full)
-                {
-                    if (thisVoxel == null) ChangeEmptyVoxelToFull(id, level);
-                    else ChangePartialVoxelToFull(thisVoxel);
-                }
-                else
-                {
-                    if (thisVoxel == null) ChangeFullVoxelToPartial(new Voxel(id, level));
-                    else ChangeFullVoxelToPartial(thisVoxel);
-                    if (discretizationLevel >= level)
-                        UnionHigherLevels(highLevelHashSet, reference, level);
+                    if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel.ID, level);
+                    if (discretizationLevel > level)
+                        Union(refVoxel, level + 1, reference);
                 }
             });
         }
 
         #endregion
         #region ExclusiveOr
-        /// <exclude />
+
         public VoxelizedSolid ExclusiveOrToNewSolid(VoxelizedSolid reference)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.ExclusiveOr(reference);
+            copy.ExclusiveOr(null, 0, reference);
             return copy;
         }
 
-        public void ExclusiveOr(VoxelizedSolid reference)
+        private void ExclusiveOr(IVoxel parent, int level, VoxelizedSolid reference)
         {
-            Parallel.ForEach(reference.voxelDictionaryLevel0, keyValue =>
+            IEnumerable<IVoxel> voxels;
+            if (parent.Role == VoxelRoleTypes.Full)
             {
-                var ID = keyValue.Key;
-                var refVoxel = keyValue.Value;
+                var thisIDwoFlags = Constants.ClearFlagsFromID(parent.ID);
+                voxels = new List<IVoxel>();
+                var xShift = 1L << 4 + 4 * (4 - level);
+                var yShift = xShift << 20;
+                var zShift = yShift << 20;
+                for (int i = 0; i < 16; i++)
+                    for (int j = 0; j < 16; j++)
+                        for (int k = 0; k < 16; k++)
+                            ((List<IVoxel>)voxels).Add(new Voxel(thisIDwoFlags
+                                                              + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level));
+            }
+            else voxels = reference.GetChildVoxels(parent);
+            Parallel.ForEach(voxels, refVoxel =>
+            {
                 if (refVoxel.Role == VoxelRoleTypes.Empty) return;
-                var thisVoxel = GetVoxel(ID, 0);
-                if ((thisVoxel == null || thisVoxel.Role == VoxelRoleTypes.Empty) && refVoxel.Role == VoxelRoleTypes.Full)
-                {
-                    if (thisVoxel == null)
-                        lock (voxelDictionaryLevel0)
-                            voxelDictionaryLevel0.Add(ID, new Voxel_Level0_Class(ID, VoxelRoleTypes.Full, this));
-                    else ChangePartialVoxelToFull(thisVoxel);
-                }
+                var thisVoxel = GetVoxel(refVoxel.ID, level);
+                if (thisVoxel.Role == VoxelRoleTypes.Empty && refVoxel.Role == VoxelRoleTypes.Full)
+                    ChangeEmptyVoxelToFull(refVoxel.ID, level);
+                else if (thisVoxel.Role == VoxelRoleTypes.Full && refVoxel.Role == VoxelRoleTypes.Full)
+                    ChangeVoxelToEmpty(thisVoxel);
                 else
                 {
-                    if (thisVoxel == null)
-                        lock (voxelDictionaryLevel0)
-                            voxelDictionaryLevel0.Add(ID, new Voxel_Level0_Class(ID, VoxelRoleTypes.Partial, this));
-                    if (discretizationLevel >= 1)
-                        ExclusiveOrLevel1(refVoxel.NextLevelVoxels.ToList(), reference);
-                }
-            });
-            UpdateProperties();
-        }
-        void ExclusiveOrLevel1(IList<long> level1Keys, VoxelizedSolid reference)
-        {
-            Parallel.ForEach(level1Keys, ID =>
-            {
-                var refVoxel = reference.voxelDictionaryLevel1[ID];
-                if (refVoxel.Role == VoxelRoleTypes.Empty) return;
-                var thisVoxel = GetVoxel(ID, 1);
-                if ((thisVoxel == null || thisVoxel.Role == VoxelRoleTypes.Empty) && refVoxel.Role == VoxelRoleTypes.Full)
-                {
-                    if (thisVoxel == null)
-                        lock (voxelDictionaryLevel1)
-                            voxelDictionaryLevel1.Add(ID, new Voxel_Level1_Class(ID, VoxelRoleTypes.Full, this));
-                    else ChangePartialVoxelToFull(thisVoxel);
-                }
-                else
-                {
-                    if (thisVoxel == null)
-                        lock (voxelDictionaryLevel1)
-                            voxelDictionaryLevel1.Add(ID, new Voxel_Level1_Class(ID, VoxelRoleTypes.Partial, this));
-                    if (discretizationLevel >= 2)
-                    {
-                        var v0Parent = (Voxel_Level0_Class)reference.GetParentVoxel(refVoxel);
-                        ExclusiveOrHigherLevels(v0Parent.InnerVoxels, reference, 2);
-                    }
-                }
-            });
-        }
-
-        void ExclusiveOrHigherLevels(VoxelHashSet highLevelHashSet, VoxelizedSolid reference, int level)
-        {
-            List<long> listOfIDs;
-            if (level == 2) listOfIDs = highLevelHashSet.Where(isLevel2).ToList();
-            else if (level == 3) listOfIDs = highLevelHashSet.Where(isLevel3).ToList();
-            else if (level == 4) listOfIDs = highLevelHashSet.Where(isLevel4).ToList();
-            else listOfIDs = null;
-            level++;
-            Parallel.ForEach(listOfIDs, id =>
-            {
-                var refVoxel = reference.GetVoxel(id, level);
-                if (refVoxel.Role == VoxelRoleTypes.Empty) return;
-                var thisVoxel = GetVoxel(id, level);
-                if ((thisVoxel == null || thisVoxel.Role == VoxelRoleTypes.Empty) && refVoxel.Role == VoxelRoleTypes.Full)
-                {
-                    if (thisVoxel == null) ChangeEmptyVoxelToFull(id, level);
-                    else ChangePartialVoxelToFull(thisVoxel);
-                }
-                else
-                {
-                    if (thisVoxel == null) ChangeFullVoxelToPartial(new Voxel(id, level));
-                    else ChangeFullVoxelToPartial(thisVoxel);
-                    if (discretizationLevel >= level)
-                        ExclusiveOrHigherLevels(highLevelHashSet, reference, level);
+                    if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel.ID, level);
+                    else if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeFullVoxelToPartial(thisVoxel);
+                    if (discretizationLevel > level) ExclusiveOr(refVoxel, level + 1, reference);
                 }
             });
         }

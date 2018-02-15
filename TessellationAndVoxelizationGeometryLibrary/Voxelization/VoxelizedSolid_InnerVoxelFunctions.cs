@@ -220,7 +220,7 @@ namespace TVGL.Voxelization
                     voxel0.InnerVoxels[level - 1].Add(voxel);
                 }
             }
-            var lowerLevelVoxels = new HashSet<IVoxel>();
+            var lowerLevelVoxels = new List<IVoxel>();
             var xShift = 1L << 4 + 4 * (4 - level);
             var yShift = xShift << 20;
             var zShift = yShift << 20;
