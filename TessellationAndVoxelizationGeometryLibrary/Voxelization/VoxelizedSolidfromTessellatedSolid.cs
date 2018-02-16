@@ -365,9 +365,57 @@ namespace TVGL.Voxelization
             if (!missingFromAlternateMethod.Any() && !missingFromPrimaryMethod.Any()) return true;
             //Else, show the face and the voxels for each method
             //Then show the missing voxels from each method
+            //ShowFaceAndVoxels(face, primaryMethod);
+            //ShowFaceAndVoxels(face, alternateMethod);
+            //if (missingFromPrimaryMethod.Any()) ShowFaceAndVoxels(face, missingFromPrimaryMethod);
+            //if (missingFromAlternateMethod.Any()) ShowFaceAndVoxels(face, missingFromAlternateMethod); //Extra voxels in primary method
             return false;
         }
-        
+
+        //private void ShowFaceAndVoxels(PolygonalFace face, HashSet<long> IDs)
+        //{
+        //    var sideLength = VoxelSideLengths[1];
+        //    var points = new List<Point3D>();
+        //    foreach (var ID in IDs)
+        //    {
+        //        var bottomCoordinate = GetRealCoordinates(ID, 1);
+        //        points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+        //            bottomCoordinate[1] + 0.5 * sideLength,
+        //            bottomCoordinate[2] + 0.5 * sideLength));
+        //    }
+        //    Presenter.ShowAndHangVoxelization(face, points, sideLength, true);
+        //}
+
+        //private void ShowSolidAndLevel1Voxels(TessellatedSolid solid, IEnumerable<Voxel_Level1_Class> voxels,
+        //    IEnumerable<long> voxelsInQuestion)
+        //{
+        //    ShowSolidAndLevel1Voxels(solid.Faces.ToList(), voxels, voxelsInQuestion);
+        //}
+
+        //private void ShowSolidAndLevel1Voxels(List<PolygonalFace> faces, IEnumerable<Voxel_Level1_Class> voxels,
+        //    IEnumerable<long> voxelsInQuestion)
+        //{
+        //    var sideLength = VoxelSideLengths[1];
+        //    var points = new List<Point3D>();
+        //    foreach (var voxel in voxels)
+        //    {
+        //        var bottomCoordinate = GetRealCoordinates(voxel.ID, 1);
+        //        points.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+        //            bottomCoordinate[1] + 0.5 * sideLength,
+        //            bottomCoordinate[2] + 0.5 * sideLength));
+        //    }
+
+        //    var points2 = new List<Point3D>();
+        //    foreach (var ID in voxelsInQuestion)
+        //    {
+        //        var bottomCoordinate = GetRealCoordinates(ID, 1);
+        //        points2.Add(new Point3D(bottomCoordinate[0] + 0.5 * sideLength,
+        //            bottomCoordinate[1] + 0.5 * sideLength,
+        //            bottomCoordinate[2] + 0.5 * sideLength));
+        //    }
+        //    Presenter.ShowAndHangVoxelization(faces, points, points2, sideLength, true);
+        //}
+
         #endregion
 
         #region Making Voxels for Levels 0 and 1
@@ -419,7 +467,7 @@ namespace TVGL.Voxelization
         private void makeVoxelsForFacesAndEdges(TessellatedSolid tessellatedSolid)
         {
             foreach (var face in tessellatedSolid.Faces) //loop over the faces
-            { 
+            {
                 if (simpleCase(face)) continue;
 
                 Vertex startVertex, leftVertex, rightVertex;
@@ -648,33 +696,27 @@ namespace TVGL.Voxelization
                 else sweepIntersections.Add(sweepValue, new List<double[]> { intersection });
             }
 
-            foreach (var axis in intersections.Keys)
-            {
-                foreach (var intersection in intersections[axis])
-                {
-                    //Convert the intersectin values to integers. 
-                    var ijk = new[] {(byte) intersection[0], (byte) intersection[1], (byte) intersection[2]};
-                    AddVoxelAtProperDicretization(ijk, tsObject);
-                    var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
-                    var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
+            addVoxelsAtIntersections(intersections, tsObject);
+        }
 
-                    //If only one int, then add voxel + 1 along that direction 
-                    if (numAsInt == 1)
-                    {
-                        if (dimensionsAsIntegers[0]) ijk[0]--;
-                        else if (dimensionsAsIntegers[1]) ijk[1]--;
-                        else ijk[2]--;
-                        AddVoxelAtProperDicretization(ijk, tsObject);
-                    }
-                    else if (numAsInt == 2)
-                    {
-                        //This line goes through an edge of the voxel
-                        //ToDo: Does this need to add something?
-                    }
-                    //Else this line goes through the corner of a voxel
-                    //only add a voxel exactly at this intersection, which is done above  
-                }
+        private void makeVoxelsForLineOnFace(double[] startPoint, double[] endPoint, TessellationBaseClass tsObject,
+            int sweepDim)
+        {
+            //Get every X, Y, and Z integer value intersection, not including the sweepDim, which won't have any anyways
+            var vectorNorm = endPoint.subtract(startPoint).normalize();
+            var intersections = new Dictionary<int, List<double[]>>
+            {
+                {0, new List<double[]>()},
+                {1, new List<double[]>()},
+                {2, new List<double[]>()}
+            };
+            for (var i = 0; i < 3; i++)
+            {
+                if (i == sweepDim) continue;
+                getIntergerIntersectionsAlongLine(startPoint, endPoint, i, ref intersections, vectorNorm);
             }
+
+            addVoxelsAtIntersections(intersections, tsObject);
         }
 
         /// <summary>
@@ -710,57 +752,73 @@ namespace TVGL.Voxelization
             }
         }
 
-        private void makeVoxelsForLineOnFace(double[] startPoint, double[] endPoint, TessellationBaseClass tsObject,
-           int sweepDim)
+        private void addVoxelsAtIntersections(Dictionary<int, List<double[]>> intersections, TessellationBaseClass tsObject)
         {
-            //Get every X, Y, and Z integer value intersection, not including the sweepDim, which won't have any anyways
-            var vectorNorm = endPoint.subtract(startPoint).normalize();
-            var intersections = new Dictionary<int, List<double[]>>
-            {
-                {0, new List<double[]>()},
-                {1, new List<double[]>()},
-                {2, new List<double[]>()}
-            };
-            for (var i = 0; i < 3; i++)
-            {
-                if (i == sweepDim) continue;
-                getIntergerIntersectionsAlongLine(startPoint, endPoint, i, ref intersections, vectorNorm);
-            } 
-
             foreach (var axis in intersections.Keys)
             {
-                //There will be no intersections along the sweepDim
                 foreach (var intersection in intersections[axis])
                 {
-                    //Convert the intersection values to integers. 
+                    //Convert the intersectin values to integers. 
                     var ijk = new[] { (byte)intersection[0], (byte)intersection[1], (byte)intersection[2] };
-                    AddVoxelAtProperDicretization(ijk, tsObject);
-                    //Also add the -1 sweepDim voxel
-                    ijk[sweepDim]--;
-                    AddVoxelAtProperDicretization(ijk, tsObject);
-
                     var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
                     var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
 
-                    //If only one int, then add voxel + 1 along that direction 
-                    if (numAsInt == 1) throw new Exception("this cannot occur");
-                    if (numAsInt == 2)
+                    //If one/ three dimensions lands on an integer, the edge goes through a voxel face.
+                    //If two/ three, a voxel edge. If three/ three, a corner. 
+
+                    //In any case that it goes through a face, there must be a voxel located on both sides of this face.
+                    //This is captured by the intersection conversion to bytes and the decrement along the dimension 
+                    //with the integer. 
+
+                    //If two/ three x,y,z values of the intersection are integers, this can be represented by drawing a 
+                    //2D and ignoring the non-integer dimension.The intersection of interest is when the line goes intersects 
+                    //the two axis(box corner). If you apply the decrement rule above, there are no real issues until you 
+                    //try a negative slope line that intersects multiple box corners.Not only is there significant 
+                    //inconsistency with the positive slope version, but it downright misses all the voxels with a line 
+                    //through them.I am sure this same issue applies to lines through multiple voxel corners or a mix of 
+                    //voxel corners and lines.
+
+                    //The simplest and most robust solution I can think of is to add voxels at all the decemented integer 
+                    //intersections. For voxel edge intersections, this forms 4 voxels around the intersection. For voxel
+                    //corner intersections, this forms 8 voxels around the intersection. This can be expressed as:
+                    //numVoxels = 2^numAsInt
+                    var numVoxels = 0;
+                    var allCombinations = new List<int[]>()
                     {
-                        //Add the increment that is not the sweepDim
-                        if (dimensionsAsIntegers[0] && sweepDim != 0) ijk[0]--;
-                        else if (dimensionsAsIntegers[1] && sweepDim != 1) ijk[1]--;
-                        else ijk[2]--; //(dimensionsAsIntegers[2] && sweepDim != 2)
-                        AddVoxelAtProperDicretization(ijk, tsObject);
-                        ijk[sweepDim]++;
-                        AddVoxelAtProperDicretization(ijk, tsObject);
-                    }
-                    else
+                        new []{ 0, 0, 0},
+                        new []{ -1, 0, 0},
+                        new []{ 0, -1, 0},
+                        new []{ 0, 0, -1},
+                        new []{ -1, -1, 0},
+                        new []{ -1, 0, -1},
+                        new []{ 0, -1, -1},
+                        new []{ -1, -1, -1},
+                    };
+                    foreach (var combination in allCombinations)
                     {
+                        var valid = true;
+                        for (var j = 0; j < 3; j++)
+                        {
+                            if (dimensionsAsIntegers[j]) continue;
+                            if (combination[j] == 0) continue;
+                            //If not an integer and not 0, then do not add it to the list
+                            valid = false;
+                            break;
+                        }
+                        if (!valid) continue;
+                        //This is a valid combination, so make it a voxel
+                        var newIjk = new[]
+                        {(byte)(ijk[0] + combination[0]),
+                            (byte)(ijk[1] + combination[1]),
+                            (byte)(ijk[2] + combination[2])};
+                        //ToDo: Add check to see if this newIjk is within the parent voxel bounds.
+                        AddVoxelAtProperDicretization(newIjk, tsObject);
+                        numVoxels++;
                     }
-                    //Else this line goes through the corner of a voxel
-                    //only add a voxel exactly at this intersection ? 
+                    if (numVoxels != (int)Math.Pow(2, numAsInt)) throw new Exception("Error in implementation");
                 }
             }
+
         }
 
         private void AddVoxelAtProperDicretization(byte[] ijk, TessellationBaseClass tsObject)
@@ -771,33 +829,33 @@ namespace TVGL.Voxelization
                 MakeAndStorePartialVoxelLevel0And1(ijk[0], ijk[1], ijk[2], tsObject);
         }
 
-        /// <summary>
-        /// Finds the where line that is the edge length crosses sweep plane. It may be that the edge terminates
-        /// before the plane. If that is the case, then this function returns true to inform the big loop above.
-        /// </summary>
-        /// <param name="startPoint">The start point.</param>
-        /// <param name="endPoint">The end point.</param>
-        /// <param name="sweepDim">The sweep dim.</param>
-        /// <param name="valueSweepDim">The value sweep dim.</param>
-        /// <param name="valueD1">The value d1.</param>
-        /// <param name="valueD2">The value d2.</param>
-        /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool findWhereLineCrossesPlane(double[] startPoint, double[] endPoint, int sweepDim,
-            double valueSweepDim, out double valueD1, out double valueD2)
-        {
-            if (endPoint[sweepDim] <= valueSweepDim)
-            {
-                valueD1 = endPoint[(sweepDim + 1) % 3];
-                valueD2 = endPoint[(sweepDim + 2) % 3];
-                return true;
-            }
-            var fraction = (valueSweepDim - startPoint[sweepDim]) / (endPoint[sweepDim] - startPoint[sweepDim]);
-            var dim = (sweepDim + 1) % 3;
-            valueD1 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
-            dim = (dim + 1) % 3;
-            valueD2 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
-            return false;
-        }
+        ///// <summary>
+        ///// Finds the where line that is the edge length crosses sweep plane. It may be that the edge terminates
+        ///// before the plane. If that is the case, then this function returns true to inform the big loop above.
+        ///// </summary>
+        ///// <param name="startPoint">The start point.</param>
+        ///// <param name="endPoint">The end point.</param>
+        ///// <param name="sweepDim">The sweep dim.</param>
+        ///// <param name="valueSweepDim">The value sweep dim.</param>
+        ///// <param name="valueD1">The value d1.</param>
+        ///// <param name="valueD2">The value d2.</param>
+        ///// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
+        //private bool findWhereLineCrossesPlane(double[] startPoint, double[] endPoint, int sweepDim,
+        //    double valueSweepDim, out double valueD1, out double valueD2)
+        //{
+        //    if (endPoint[sweepDim] <= valueSweepDim)
+        //    {
+        //        valueD1 = endPoint[(sweepDim + 1) % 3];
+        //        valueD2 = endPoint[(sweepDim + 2) % 3];
+        //        return true;
+        //    }
+        //    var fraction = (valueSweepDim - startPoint[sweepDim]) / (endPoint[sweepDim] - startPoint[sweepDim]);
+        //    var dim = (sweepDim + 1) % 3;
+        //    valueD1 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
+        //    dim = (dim + 1) % 3;
+        //    valueD2 = fraction * (endPoint[dim] - startPoint[dim]) + startPoint[dim];
+        //    return false;
+        //}
 
         #endregion
 
