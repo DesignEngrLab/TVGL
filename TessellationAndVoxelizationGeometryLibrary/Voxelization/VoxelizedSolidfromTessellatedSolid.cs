@@ -349,16 +349,16 @@ namespace TVGL.Voxelization
                         transformedCoordinates[edge.To.IndexInList], edge, sweepDim, sweepIntersections,
                         level, voxels, parentLimits);
                 }
-                // check that sweepValue is inside box
+                // todo:check that sweepValue is inside box
                 while (sweepValue <= maxSweepValue) // this is the sweep along the face
                 {
                     if (sweepIntersections.ContainsKey(sweepValue))
                     {
                         var intersections = sweepIntersections[sweepValue];
                         if (intersections.Count() != 2) throw new Exception();
-                        //check if both points are, say >Ymax or <Xmin
-                        makeVoxelsForLineOnFace(intersections[0], intersections[1], face, sweepDim, level,
-                            voxels, parentLimits);
+                        if (!allPointsOnOneSideOfLimits(parentLimits, intersections[0], intersections[1]))
+                            makeVoxelsForLineOnFace(intersections[0], intersections[1], face, sweepDim, level,
+                                voxels, parentLimits);
                     }
 
                     sweepValue++; //increment sweepValue and repeat!
