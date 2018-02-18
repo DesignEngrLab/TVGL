@@ -70,7 +70,7 @@ namespace TVGL.Voxelization
             Voxel_Level0_Class voxel0;
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id0))
-                    voxel0 = (Voxel_Level0_Class)ChangeEmptyVoxelToFull(id0, 0);
+                    voxel0 = (Voxel_Level0_Class)ChangeEmptyVoxelToPartial(id0, 0);
                 else
                     voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
             voxel = level == 1
@@ -108,8 +108,8 @@ namespace TVGL.Voxelization
                 throw new ArgumentException("input voxel is already full.");
             if (voxel.Level == 0)
             {
-                lock (((Voxel_Level0_Class)voxel).InnerVoxels)
-                    ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
+                lock (voxel)
+                    ((Voxel_Level0_Class)voxel).InnerVoxels = null;
                 ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Full;
                 return voxel;
             }
@@ -165,6 +165,10 @@ namespace TVGL.Voxelization
             if (level == 0)
             {
                 voxel = new Voxel_Level0_Class(ID, VoxelRoleTypes.Partial, this);
+                if (discretizationLevel >= 1)
+                    ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this);
+                for (int i = 2; i < discretizationLevel; i++)
+                    ((Voxel_Level0_Class)voxel).InnerVoxels[i] = new VoxelHashSet(new VoxelComparerFine(), this);
                 lock (voxelDictionaryLevel0)
                     voxelDictionaryLevel0.Add(voxel);
                 return voxel;
@@ -190,18 +194,21 @@ namespace TVGL.Voxelization
             if (voxel.Level == 0)
             {
                 ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
-                var level1Voxels = new List<IVoxel>();
-                for (int i = 0; i < 16; i++)
-                    for (int j = 0; j < 16; j++)
-                        for (int k = 0; k < 16; k++)
-                        {
-                            level1Voxels.Add(new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
-                                                                    (j * 68719476736) +
-                                                                    (k * 72057594037927936L),
-                                VoxelRoleTypes.Full, this));
-                        }
-                   ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
-                ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this, level1Voxels);
+                if (discretizationLevel > 0)
+                {
+                    var level1Voxels = new List<IVoxel>();
+                    for (int i = 0; i < 16; i++)
+                        for (int j = 0; j < 16; j++)
+                            for (int k = 0; k < 16; k++)
+                            {
+                                level1Voxels.Add(new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
+                                                                        (j * 68719476736) +
+                                                                        (k * 72057594037927936L),
+                                    VoxelRoleTypes.Full, this));
+                            }
+                    ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
+                    ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this, level1Voxels);
+                }
                 return voxel;
             }
             var level = voxel.Level;
@@ -261,7 +268,7 @@ namespace TVGL.Voxelization
         private long CountVoxels(IVoxel dict, int level, VoxelRoleTypes role)
         {
             var innerVoxels = ((Voxel_Level0_Class)dict).InnerVoxels;
-            if (innerVoxels == null || innerVoxels.Length < level) return 0L;
+            if (innerVoxels == null || innerVoxels.Length < level || innerVoxels[level - 1] == null) return 0L;
             return innerVoxels[level - 1].Count(v => v.Role == role);
         }
 

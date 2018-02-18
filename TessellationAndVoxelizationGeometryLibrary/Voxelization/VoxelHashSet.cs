@@ -167,13 +167,16 @@ namespace TVGL.Voxelization
                 }
             }
 
-            /// <summary>
-            /// Determines whether [contains] [the specified item].
-            /// </summary>
-            /// <param name="item">The item.</param>
-            /// <returns><c>true</c> if [contains] [the specified item]; otherwise, <c>false</c>.</returns>
-            public bool Contains(IVoxel item)
-            { return Contains(item.ID); }
+        /// <summary>
+        /// Determines whether [contains] [the specified item].
+        /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns><c>true</c> if [contains] [the specified item]; otherwise, <c>false</c>.</returns>
+        public bool Contains(IVoxel item)
+        {
+            if (item == null) return false;
+            return Contains(item.ID);
+        }
             /// <summary>
             /// Checks if this hashset contains the item
             /// </summary>

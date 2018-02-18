@@ -36,8 +36,10 @@ namespace TVGL
 
         internal void AddVoxel(VoxelWithTessellationLinks v)
         {
-            if (Voxels == null) Voxels = new HashSet<VoxelWithTessellationLinks> { v };
-            else if (!Voxels.Contains(v)) Voxels.Add(v);
+            if (Voxels == null) Voxels = new HashSet<VoxelWithTessellationLinks>();
+            lock (Voxels)
+                if (!Voxels.Contains(v))
+                    Voxels.Add(v);
         }
 
     }

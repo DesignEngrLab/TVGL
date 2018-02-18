@@ -68,7 +68,8 @@ namespace TVGL.Voxelization
             longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
             longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
             VoxelSideLengths = new[] { longestSide / 16, longestSide / 256, longestSide / 4096, longestSide / 65536, longestSide / 1048576 };
-            numVoxels = dimensions.Select(d => (int) Math.Ceiling(d / VoxelSideLengths[discretizationLevel])).ToArray();
+            numVoxels = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[discretizationLevel])).ToArray();
+            voxelDictionaryLevel0 = new VoxelHashSet(new VoxelComparerCoarse(), this);
             UpdateProperties();
         }
         #endregion

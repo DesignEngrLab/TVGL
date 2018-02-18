@@ -97,16 +97,16 @@ namespace TVGL.Voxelization
 
         public Voxel_Level0_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid)
         {
-            this.ID =Constants.ClearFlagsFromID(ID);
+            this.ID = Constants.ClearFlagsFromID(ID);
             Role = voxelRole;
             if (Role == VoxelRoleTypes.Partial) this.ID += 1;
             else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
             SideLength = solid.VoxelSideLengths[0];
             var coordinateIndices = Constants.GetCoordinateIndices(ID, 0);
             BottomCoordinate = solid.GetRealCoordinates(0, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
-            InnerVoxels = new VoxelHashSet[solid.discretizationLevel];
+            if (Role == VoxelRoleTypes.Partial)
+                InnerVoxels = new VoxelHashSet[solid.discretizationLevel];
         }
-
         internal VoxelHashSet[] InnerVoxels;
     }
 
