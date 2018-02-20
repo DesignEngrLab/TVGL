@@ -883,7 +883,7 @@ namespace TVGL
             };
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();
-            foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
+            foreach (var v in vs.Voxels(VoxelDiscretization.Coarse,true)) //VoxelDiscretization.ExtraCoarse))
                                            // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
             {
                 var neighbors = vs.GetNeighbors(v).ToList();

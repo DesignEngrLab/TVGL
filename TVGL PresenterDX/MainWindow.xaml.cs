@@ -75,7 +75,7 @@ namespace TVGLPresenterDX
             };
             return result;
         }
-        
+
 
         private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
         {
@@ -116,8 +116,8 @@ namespace TVGLPresenterDX
             };
             var positions = new Vector3Collection();
             var normals = new Vector3Collection();
-            foreach (var v in vs.Voxels(vs.Discretization)) //VoxelDiscretization.ExtraCoarse))
-                                           // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
+            foreach (var v in vs.Voxels(VoxelRoleTypes.Partial, vs.Discretization, true)) //VoxelDiscretization.ExtraCoarse))
+                                                                  // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
             {
                 var neighbors = vs.GetNeighbors(v).ToList();
                 //if (neighbors.All(n => n != null && n.Role == VoxelRoleTypes.Full))
