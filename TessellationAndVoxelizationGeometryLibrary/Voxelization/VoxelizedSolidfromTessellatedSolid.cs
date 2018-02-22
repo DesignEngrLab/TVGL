@@ -96,8 +96,8 @@ namespace TVGL.Voxelization
             if (discretizationLevel >= 1)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 1);
-                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
-                //foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+               // Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
+                foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                 {
                     var voxels = new VoxelHashSet(new VoxelComparerCoarse(), this);
                     MakeVertexVoxels(((VoxelWithTessellationLinks)voxel0).Vertices, voxel0, voxels);
@@ -106,7 +106,7 @@ namespace TVGL.Voxelization
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                });
+                }  //);
             }
 
             if (discretizationLevel >= 2)
@@ -422,7 +422,7 @@ namespace TVGL.Voxelization
             if (aCoords[1] == bCoords[1] && aCoords[1] == cCoords[1] &&
                 aCoords[2] == bCoords[2] && aCoords[2] == cCoords[2])
             {
-                makeVoxelsForFaceInCardinalLine(face, 0, level, voxels, limits, aCoords, bCoords[1], cCoords[1]);
+                makeVoxelsForFaceInCardinalLine(face, 0, level, voxels, limits, aCoords, bCoords[0], cCoords[0]);
                 return true;
             }
             return false;
@@ -809,8 +809,8 @@ namespace TVGL.Voxelization
             while (insiders.Any())
             {
                 var current = insiders.Pop();
-                var directions = (current.Role == VoxelRoleTypes.Full
-                                  || (unknownPartials != null && unknownPartials.Contains(current))) ? allDirections : negDirections;
+                var directions = current.Role == VoxelRoleTypes.Full
+                                 || (unknownPartials != null && unknownPartials.Contains(current)) ? allDirections : negDirections;
                 var coord = current.CoordinateIndices;
                 foreach (var direction in directions)
                 {

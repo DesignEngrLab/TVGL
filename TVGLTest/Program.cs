@@ -83,8 +83,8 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*brace*");
-            for (var i = 0; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("*");
+            for (var i = 12; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -119,12 +119,12 @@ namespace TVGLPresenterDX
             stopWatch.Restart();
             //PresenterShowAndHang(ts);
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true);  //, bounds);
             Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
-
+            return;
             Console.WriteLine("Drafting Solid in X Positive...");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
             Presenter.ShowAndHang(vs1xpos);
