@@ -254,7 +254,7 @@ namespace TVGL.Voxelization
 
         /// <summary>
         /// Gets the neighbors of the given voxel. This returns an array in the order:
-        /// { Xpositive, YPositive, ZPositive, XNegative, YNegative, ZNegative }.
+        /// { XNegative, Xpositive, YNegative, YPositive, ZNegative, ZPositive }.
         /// If no voxel existed at a neigboring spot, then an empty voxel is produced;
         /// however, these will be of type Voxel even if it is Level0 or Leve1. Unless,
         /// of course, an existing partial or full Level0 or Level1 voxel is present.
@@ -270,11 +270,15 @@ namespace TVGL.Voxelization
         {
             var neighbors = new IVoxel[6];
             neighborsHaveDifferentParent = new bool[6];
-            var i = 0;
-            foreach (var direction in Enum.GetValues(typeof(VoxelDirections)))
-                neighbors[i] = GetNeighbor(voxel, (VoxelDirections)direction, out neighborsHaveDifferentParent[i++]);
+            neighbors[0] = GetNeighbor(voxel, VoxelDirections.XNegative, out neighborsHaveDifferentParent[0]);
+            neighbors[1] = GetNeighbor(voxel, VoxelDirections.XPositive, out neighborsHaveDifferentParent[1]);
+            neighbors[2] = GetNeighbor(voxel, VoxelDirections.YNegative, out neighborsHaveDifferentParent[2]);
+            neighbors[3] = GetNeighbor(voxel, VoxelDirections.YPositive, out neighborsHaveDifferentParent[3]);
+            neighbors[4] = GetNeighbor(voxel, VoxelDirections.ZNegative, out neighborsHaveDifferentParent[4]);
+            neighbors[5] = GetNeighbor(voxel, VoxelDirections.ZPositive, out neighborsHaveDifferentParent[5]);
             return neighbors;
         }
+
 
         public IVoxel GetParentVoxel(IVoxel child)
         {
@@ -587,10 +591,12 @@ namespace TVGL.Voxelization
                 if (referenceHighestRole == VoxelRoleTypes.Full)
                     MakeVoxelEmpty(thisVoxel);
                 else if (referenceHighestRole == VoxelRoleTypes.Partial)
-                {                    
+                {
                     if (discretizationLevel >= 1)
-                    { MakeVoxelPartial(thisVoxel);
-                        SubtractLevel1(thisVoxel.NextLevelVoxels.ToList(), subtrahends); }
+                    {
+                        MakeVoxelPartial(thisVoxel);
+                        SubtractLevel1(thisVoxel.NextLevelVoxels.ToList(), subtrahends);
+                    }
                     else MakeVoxelEmpty(thisVoxel);
                 }
             });

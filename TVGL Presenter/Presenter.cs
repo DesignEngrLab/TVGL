@@ -858,28 +858,28 @@ namespace TVGL
         {
             var normalsTemplate = new[]
             {
-                new float[] {1, 0, 0}, new float[] {1, 0, 0},
-                new float[] {0, 1, 0}, new float[] {0, 1, 0},
-                new float[] {0, 0, 1}, new float[] {0, 0, 1},
                 new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
-                new float[] {0, -1, 0}, new float[] {0, -1, 0, 0},
-                new float[] {0, 0, -1}, new float[] {0, 0, -1}
+                new float[] {1, 0, 0}, new float[] {1, 0, 0},
+                new float[] {0, -1, 0}, new float[] {0, -1, 0},
+                new float[] {0, 1, 0}, new float[] {0, 1, 0},
+                new float[] {0, 0, -1}, new float[] {0, 0, -1},
+                new float[] {0, 0, 1}, new float[] {0, 0, 1}
             };
 
             var coordOffsets = new[]
             {
-                new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
-                new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
-                new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
-                new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
-                new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
-                new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
                 new[]{ new float[] {0, 0, 0}, new float[] { 0, 0, 1}, new float[] {0, 1, 0}},
                 new[]{ new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
+                new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
+                new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
                 new[]{ new float[] {0, 0, 0}, new float[] { 1, 0, 0}, new float[] {0, 0, 1}},
                 new[]{ new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
+                new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
+                new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
                 new[]{ new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
                 new[]{new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
+                new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
+                new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
             };
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();
