@@ -83,8 +83,8 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            for (var i = 33; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("*squ*");
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -132,14 +132,14 @@ namespace TVGLPresenterDX
             //PresenterShowAndHang(ts);
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
-            //PresenterShowAndHang(vs1);
+            PresenterShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Positive...");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
-            //PresenterShowAndHang(vs1xpos);
+            PresenterShowAndHang(vs1xpos);
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xpos_" + _fileName;
@@ -147,7 +147,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Drafting Solid in X Negative...");
             var vs1xneg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
-            //PresenterShowAndHang(vs1xneg);
+            PresenterShowAndHang(vs1xneg);
             //var vs1xnegts = vs1xneg.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xneg_" + _fileName;
@@ -155,7 +155,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Drafting Solid in Y Positive...");
             var vs1ypos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
-            //PresenterShowAndHang(vs1ypos);
+            PresenterShowAndHang(vs1ypos);
             //var vs1yposts = vs1ypos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1ypos_" + _fileName;
@@ -163,7 +163,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Drafting Solid in Y Negative...");
             var vs1yneg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
-            //PresenterShowAndHang(vs1yneg);
+            PresenterShowAndHang(vs1yneg);
             //var vs1ynegts = vs1yneg.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1yneg_" + _fileName;
@@ -171,7 +171,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Drafting Solid in Z Positive...");
             var vs1zpos = vs1.DraftToNewSolid(VoxelDirections.ZPositive);
-            //PresenterShowAndHang(vs1zpos);
+            PresenterShowAndHang(vs1zpos);
             //var vs1zposts = vs1zpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1zpos_" + _fileName;
@@ -179,7 +179,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Drafting Solid in Z Negative...");
             var vs1zneg = vs1.DraftToNewSolid(VoxelDirections.ZNegative);
-            //PresenterShowAndHang(vs1zneg);
+            PresenterShowAndHang(vs1zneg);
             //var vs1znegts = vs1zneg.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1zneg_" + _fileName;
@@ -187,7 +187,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Intersecting Drafted Solids...");
             var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);
-            //PresenterShowAndHang(intersect);
+            PresenterShowAndHang(intersect);
             //var intersectts = intersect.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "intersect_" + _fileName;
@@ -195,7 +195,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Subtracting Original Voxelized Shape From Intersect...");
             var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
-            //PresenterShowAndHang(unmachinableVoxels);
+            PresenterShowAndHang(unmachinableVoxels);
             //var uvts = unmachinableVoxels.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "unmachinable_" + _fileName;

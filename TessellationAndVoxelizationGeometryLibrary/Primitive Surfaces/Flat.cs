@@ -83,7 +83,7 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(double[,] transformMatrix)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         #region Constructors
