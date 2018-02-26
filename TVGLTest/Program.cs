@@ -79,12 +79,14 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
+            double[][] bounds = null;
+
             //var writer = new TextWriterTraceListener(Console.Out);
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            for (var i = 12; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("Brace*");
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -99,32 +101,33 @@ namespace TVGLPresenterDX
 
                 TestMachinability(ts[0], justfile);
 
+                var stopWatch = new Stopwatch();
+                Color color = new Color(KnownColors.AliceBlue);
+                //ts[0].SetToOriginAndSquare(out var backTransform);
+                //ts[0].Transform(new double[,]
+                //  {
+                //{1,0,0,-(ts[0].XMax + ts[0].XMin)/2},
+                //{0,1,0,-(ts[0].YMax+ts[0].YMin)/2},
+                //{0,0,1,-(ts[0].ZMax+ts[0].ZMin)/2},
+                //  });
+                stopWatch.Restart();
+                //PresenterShowAndHang(ts);
+                Console.WriteLine("Voxelizing Tesselated File " + filename);
+                var vs1 = new VoxelizedSolid(ts[0], VoxelDiscretization.Coarse, false);//, bounds);
+                Presenter.ShowAndHang(vs1);
                 //TestVoxelization(ts[0]);
-
+                //bounds = vs1.Bounds;
             }
             Console.WriteLine("Completed.");
         }
 
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
-            var stopWatch = new Stopwatch();
-            Color color = new Color(KnownColors.AliceBlue);
-            ts.SetToOriginAndSquare(out var backTransform);
-            ts.Transform(new double[,]
-              {
-                {1,0,0,-(ts.XMax + ts.XMin)/2},
-                {0,1,0,-(ts.YMax+ts.YMin)/2},
-                {0,0,1,-(ts.ZMax+ts.ZMin)/2},
-              });
-            stopWatch.Restart();
-            //PresenterShowAndHang(ts);
-            Console.WriteLine("Voxelizing Tesselated File " + _fileName);
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true);  //, bounds);
-            Presenter.ShowAndHang(vs1);
+                var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
-            return;
+            ;
             Console.WriteLine("Drafting Solid in X Positive...");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
             Presenter.ShowAndHang(vs1xpos);
@@ -238,8 +241,8 @@ namespace TVGLPresenterDX
             Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
                 ts.Volume, vs1.Volume, vs1.Count, stopWatch.Elapsed.TotalSeconds);
             stopWatch.Restart();
-            Presenter.ShowAndHang(new Solid[]{ ts, vs1});
-        // var vs2 = (VoxelizedSolid)vs1.Copy();
+            Presenter.ShowAndHang(new Solid[] { ts, vs1 });
+            // var vs2 = (VoxelizedSolid)vs1.Copy();
             //var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
             //vs1.Subtract(vs2);
             //PresenterShowAndHang(new Solid[] { vs1 });

@@ -712,13 +712,24 @@ namespace TVGL
             ShowAndHang(solids.ToList());
         }
 
+        public static void ShowAndHang(VoxelizedSolid solid, VoxelDiscretization level = VoxelDiscretization.ExtraFine)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            Visual3D model = MakeModelVisual3D(solid, level);
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
         public static void ShowAndHang(IList<Solid> solids)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
             foreach (var s in solids)
             {
-                Visual3D model=null;
+                Visual3D model = null;
                 if (s is TessellatedSolid)
                     model = MakeModelVisual3D((TessellatedSolid)s);
                 else if (s is VoxelizedSolid)
@@ -843,8 +854,8 @@ namespace TVGL
                         Geometry = new MeshGeometry3D
                         {
                             Positions = new Point3DCollection(positions),
-                            // TriangleIndices = new Int32Collection(triIndices),
-                            Normals = new Vector3DCollection(normals)
+                        // TriangleIndices = new Int32Collection(triIndices),
+                        Normals = new Vector3DCollection(normals)
                         },
                         Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 189, G = 189, B = 189 })
                     }
@@ -854,10 +865,11 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs)
+        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, VoxelDiscretization level = VoxelDiscretization.ExtraFine)
         {
+            if ((int)level > (int)vs.Discretization) level = vs.Discretization;
             var normalsTemplate = new[]
-            {
+           {
                 new float[] {1, 0, 0}, new float[] {1, 0, 0},
                 new float[] {0, 1, 0}, new float[] {0, 1, 0},
                 new float[] {0, 0, 1}, new float[] {0, 0, 1},
@@ -883,8 +895,8 @@ namespace TVGL
             };
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();
-            foreach (var v in vs.Voxels(VoxelDiscretization.Coarse,true)) //VoxelDiscretization.ExtraCoarse))
-                                           // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
+            foreach (var v in vs.Voxels(level, true)) //VoxelDiscretization.ExtraCoarse))
+                                                      // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
             {
                 var neighbors = vs.GetNeighbors(v).ToList();
                 // if (neighbors.All(n => n != null && n.Role == VoxelRoleTypes.Full))
@@ -916,8 +928,8 @@ namespace TVGL
                              Geometry = new MeshGeometry3D
                              {
                                  Positions = positions,
-                                 // TriangleIndices = new Int32Collection(triIndices),
-                                 Normals = normals
+                             // TriangleIndices = new Int32Collection(triIndices),
+                             Normals = normals
                              },
                              Material = MaterialHelper.CreateMaterial(
                                  new System.Windows.Media.Color
@@ -930,87 +942,87 @@ namespace TVGL
                          }
             };
         }
-    
 
-    /// <summary>
-    /// Makes the model visual3 d.
-    /// </summary>
-    /// <param name="ts">The ts.</param>
-    /// <returns>Visual3D.</returns>
-    private static Visual3D MakeModelVisual3D(TessellatedSolid ts)
-    {
-        var defaultMaterial = MaterialHelper.CreateMaterial(
-            new System.Windows.Media.Color
-            {
-                A = ts.SolidColor.A,
-                B = ts.SolidColor.B,
-                G = ts.SolidColor.G,
-                R = ts.SolidColor.R
-            });
-        if (ts.HasUniformColor)
-        {
-            var positions =
-                ts.Faces.SelectMany(
-                    f => f.Vertices.Select(v => new Point3D(v.Position[0], v.Position[1], v.Position[2])));
-            var normals =
-                ts.Faces.SelectMany(f => f.Vertices.Select(v => new Vector3D(f.Normal[0], f.Normal[1], f.Normal[2])));
-            return new ModelVisual3D
-            {
-                Content =
-                    new GeometryModel3D
-                    {
-                        Geometry = new MeshGeometry3D
-                        {
-                            Positions = new Point3DCollection(positions),
-                        // TriangleIndices = new Int32Collection(triIndices),
-                        Normals = new Vector3DCollection(normals)
-                        },
-                        Material = defaultMaterial
-                    }
-            };
-        }
-        var result = new ModelVisual3D();
-        foreach (var f in ts.Faces)
-        {
-            var vOrder = new Point3DCollection();
-            for (var i = 0; i < 3; i++)
-                vOrder.Add(new Point3D(f.Vertices[i].X, f.Vertices[i].Y, f.Vertices[i].Z));
 
-            var c = f.Color == null
-                ? defaultMaterial
-                : MaterialHelper.CreateMaterial(new System.Windows.Media.Color
+        /// <summary>
+        /// Makes the model visual3 d.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <returns>Visual3D.</returns>
+        private static Visual3D MakeModelVisual3D(TessellatedSolid ts)
+        {
+            var defaultMaterial = MaterialHelper.CreateMaterial(
+                new System.Windows.Media.Color
                 {
-                    A = f.Color.A,
-                    B = f.Color.B,
-                    G = f.Color.G,
-                    R = f.Color.R
+                    A = ts.SolidColor.A,
+                    B = ts.SolidColor.B,
+                    G = ts.SolidColor.G,
+                    R = ts.SolidColor.R
                 });
-            result.Children.Add(new ModelVisual3D
+            if (ts.HasUniformColor)
             {
-                Content =
-                    new GeometryModel3D
+                var positions =
+                    ts.Faces.SelectMany(
+                        f => f.Vertices.Select(v => new Point3D(v.Position[0], v.Position[1], v.Position[2])));
+                var normals =
+                    ts.Faces.SelectMany(f => f.Vertices.Select(v => new Vector3D(f.Normal[0], f.Normal[1], f.Normal[2])));
+                return new ModelVisual3D
+                {
+                    Content =
+                        new GeometryModel3D
+                        {
+                            Geometry = new MeshGeometry3D
+                            {
+                                Positions = new Point3DCollection(positions),
+                            // TriangleIndices = new Int32Collection(triIndices),
+                            Normals = new Vector3DCollection(normals)
+                            },
+                            Material = defaultMaterial
+                        }
+                };
+            }
+            var result = new ModelVisual3D();
+            foreach (var f in ts.Faces)
+            {
+                var vOrder = new Point3DCollection();
+                for (var i = 0; i < 3; i++)
+                    vOrder.Add(new Point3D(f.Vertices[i].X, f.Vertices[i].Y, f.Vertices[i].Z));
+
+                var c = f.Color == null
+                    ? defaultMaterial
+                    : MaterialHelper.CreateMaterial(new System.Windows.Media.Color
                     {
-                        Geometry = new MeshGeometry3D { Positions = vOrder },
-                        Material = c
-                    }
-            });
+                        A = f.Color.A,
+                        B = f.Color.B,
+                        G = f.Color.G,
+                        R = f.Color.R
+                    });
+                result.Children.Add(new ModelVisual3D
+                {
+                    Content =
+                        new GeometryModel3D
+                        {
+                            Geometry = new MeshGeometry3D { Positions = vOrder },
+                            Material = c
+                        }
+                });
+            }
+            return result;
         }
-        return result;
-    }
 
 
-    #endregion
+        #endregion
 
-    //A palet of distinguishable colors
-    //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
-    /// <summary>
-    /// Colors the palette.
-    /// </summary>
-    /// <returns>System.String[].</returns>
-    public static string[] ColorPalette()
-    {
-        return new[]
+        //A palet of distinguishable colors
+        //http://graphicdesign.stackexchange.com/questions/3682/where-can-i-find-a-large-palette-set-of-contrasting-colors-for-coloring-many-d
+        /// <summary>
+        /// Colors the palette.
+        /// </summary>
+        /// <returns>System.String[].</returns>
+        public static string[] ColorPalette()
         {
+            return new[]
+            {
                 "#000000",
                 "#1CE6FF",
                 "#FF34FF",
@@ -1115,6 +1127,6 @@ namespace TVGL
                 "#324E72",
                 "#6A3A4C"
             };
+        }
     }
-}
 }
