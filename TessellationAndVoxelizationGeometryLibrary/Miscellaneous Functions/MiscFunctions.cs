@@ -397,7 +397,7 @@ namespace TVGL
         /// <param name="minSurfaceArea">The minimum surface area.</param>
         /// <returns>List&lt;Flat&gt;.</returns>
         public static List<Flat> FindFlats(IList<PolygonalFace> faces, double tolerance = Constants.ErrorForFaceInSurface,
-               int minNumberOfFacesPerFlat = 3)
+               int minNumberOfFacesPerFlat = 2)
         {
             //Note: This function has been optimized to run very fast for large amount of faces
             //Used hashet for "Contains" function calls 
@@ -414,7 +414,7 @@ namespace TVGL
                 //Get all the faces that should be used on this flat
                 //Use a hashset so we can use the ".Contains" function
                 var flatFaces = new HashSet<PolygonalFace> { startFace };
-                var flat = new Flat(flatFaces);
+                var flat = new Flat(flatFaces){Tolerance = tolerance};
                 //Stacks a fast for "Push" and "Pop".
                 //Add all the adjecent faces from the first face to the stack for 
                 //consideration in the while loop below.
