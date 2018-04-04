@@ -1,13 +1,14 @@
-﻿using System;
+﻿using ClipperLib;
+using StarMathLib;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using StarMathLib;
-using ClipperLib;
 
 namespace TVGL
 {
     using Path = List<Point>;
     using Paths = List<List<Point>>;
+    using Polygons = List<Polygon>;
 
     internal enum BooleanOperationType
     {
@@ -64,6 +65,10 @@ namespace TVGL
         /// <param name="paths"></param>
         /// <returns></returns>
         public static List<ShallowPolygonTree> GetShallowPolygonTrees(List<List<Point>> paths)
+        {
+            return ShallowPolygonTree.GetShallowPolygonTrees(paths);
+        }
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(Polygons paths)
         {
             return ShallowPolygonTree.GetShallowPolygonTrees(paths);
         }
@@ -222,6 +227,11 @@ namespace TVGL
         {
             return Offset(new Paths { path.ToList() }, offset, JoinType.jtRound, minLength);
         }
+        public static Polygons OffsetRound(Polygon path, double offset,
+            double minLength = 0.0)
+        {
+            return Offset(new Polygons { path }, offset, JoinType.jtRound, minLength);
+        }
 
         /// <summary>
         /// Offsets all paths by the given offset value. Rounds the corners.
@@ -238,6 +248,10 @@ namespace TVGL
             var listPaths = paths.Select(path => path.ToList()).ToList();
             return Offset(listPaths, offset, JoinType.jtRound, minLength);
         }
+        public static Polygons OffsetRound(Polygons paths, double offset, double minLength = 0.0)
+        {
+            return Offset(paths, offset, JoinType.jtRound, minLength);
+        }
 
         /// <summary>
         /// Offsets all paths by the given offset value. Squares the corners.
@@ -250,6 +264,10 @@ namespace TVGL
         public static List<Point> OffsetMiter(IEnumerable<Point> path, double offset, double minLength = 0.0)
         {
             return Offset(new Paths { path.ToList() }, offset, JoinType.jtMiter, minLength).FirstOrDefault();
+        }
+        public static Polygon OffsetMiter(Polygon path, double offset, double minLength = 0.0)
+        {
+            return Offset(new Polygons { path }, offset, JoinType.jtMiter, minLength).FirstOrDefault();
         }
 
         /// <summary>
@@ -266,6 +284,10 @@ namespace TVGL
             var listPaths = paths.Select(path => path.ToList()).ToList();
             return Offset(listPaths, offset, JoinType.jtMiter, minLength);
         }
+        public static Polygons OffsetMiter(Polygons paths, double offset, double minLength = 0.0)
+        {
+            return Offset(paths, offset, JoinType.jtMiter, minLength);
+        }
 
         /// <summary>
         /// Offsets all paths by the given offset value. Squares the corners.
@@ -278,6 +300,10 @@ namespace TVGL
         public static List<List<Point>> OffsetSquare(List<Point> path, double offset, double minLength = 0.0)
         {
             return Offset(new Paths {path.ToList()}, offset, JoinType.jtSquare, minLength);
+        }
+        public static Polygons OffsetSquare(Polygon path, double offset, double minLength = 0.0)
+        {
+            return Offset(new Polygons { path }, offset, JoinType.jtSquare, minLength);
         }
 
         /// <summary>
@@ -293,6 +319,10 @@ namespace TVGL
         {
             var listPaths = paths.Select(path => path.ToList()).ToList();
             return Offset(listPaths, offset, JoinType.jtSquare, minLength);
+        }
+        public static Polygons OffsetSquare(Polygons paths, double offset, double minLength = 0.0)
+        {
+            return Offset(paths, offset, JoinType.jtSquare, minLength);
         }
 
         private static List<List<Point>> Offset(List<List<Point>> paths, double offset, JoinType joinType,
@@ -321,6 +351,12 @@ namespace TVGL
             var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point => new Point(point.X / scale, point.Y / scale)).ToList()).ToList();
             return solution;
         }
+        private static Polygons Offset(IEnumerable<Polygon> polygons, double offset, JoinType joinType,
+            double minLength = 0.0)
+        {
+            return Offset(polygons.Select(p => p.Path).ToList(), offset, joinType, minLength)
+                .Select(path => new Polygon(path)).ToList();
+        }
         #endregion
 
         #region Boolean Operations
@@ -340,6 +376,10 @@ namespace TVGL
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
         }
+        public static Polygons Union(Polygons subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
+        }
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
@@ -351,6 +391,10 @@ namespace TVGL
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Union(IList<List<Point>> subject, IList<List<Point>> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
+        }
+        public static Polygons Union(Polygons subject, Polygons clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, clip, simplifyPriorToUnion);
         }
@@ -368,6 +412,10 @@ namespace TVGL
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, new Paths { subject }, new Paths { clip }, simplifyPriorToUnion);
         }
+        public static Polygons Union(Polygon subject, Polygon clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctUnion, new Polygons { subject }, new Polygons { clip }, simplifyPriorToUnion);
+        }
 
         /// <summary>
         /// Union. Joins paths that are touching into merged larger subject.
@@ -381,6 +429,10 @@ namespace TVGL
         public static List<List<Point>> Union(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, new Paths { clip }, simplifyPriorToUnion);
+        }
+        public static Polygons Union(Polygons subject, Polygon clip, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctUnion, subject, new Polygons { clip }, simplifyPriorToUnion);
         }
         #endregion
 
@@ -398,6 +450,10 @@ namespace TVGL
         {
             return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
         }
+        public static List<Polygon> Difference(IList<Polygon> subject, IList<Polygon> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctDifference, subject, clip, simplifyPriorToDifference);
+        }
 
         /// <summary>
         /// Difference. Gets the difference between two sets of polygons. 
@@ -412,6 +468,10 @@ namespace TVGL
         {
             return BooleanOperation(polyFill, ClipType.ctDifference, new Paths { subject}, new Paths { clip}, simplifyPriorToDifference);
         }
+        public static Polygons Difference(Polygon subject, Polygon clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctDifference, new Polygons { subject }, new Polygons { clip }, simplifyPriorToDifference);
+        }
 
         /// <summary>
         /// Difference. Gets the difference between two sets of polygons. 
@@ -425,6 +485,10 @@ namespace TVGL
         public static List<List<Point>> Difference(IList<List<Point>> subject, List<Point> clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return BooleanOperation(polyFill, ClipType.ctDifference, subject, new Paths { clip }, simplifyPriorToDifference);
+        }
+        public static Polygons Difference(Polygons subject, Polygon clip, bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctDifference, subject, new Polygons { clip }, simplifyPriorToDifference);
         }
 
         /// <summary>
@@ -441,6 +505,11 @@ namespace TVGL
         {
             return BooleanOperation(polyFill, ClipType.ctDifference, new Paths { subject}, clip , simplifyPriorToDifference);
         }
+        public static Polygons Difference(Polygon subject, Polygons clip,
+            bool simplifyPriorToDifference = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctDifference, new Polygons { subject }, clip, simplifyPriorToDifference);
+        }
         #endregion
 
         #region Intersection
@@ -454,7 +523,11 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Intersection(List<Point> subject, List<Point> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>() { clip }, simplifyPriorToIntersection, polyFill);
+            return Intersection(new Paths { subject }, new Paths { clip }, simplifyPriorToIntersection, polyFill);
+        }
+        public static Polygons Intersection(Polygon subject, Polygon clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return Intersection(new Polygons { subject }, new Polygons { clip }, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -467,7 +540,11 @@ namespace TVGL
         /// <exception cref="Exception"></exception>
         public static List<List<Point>> Intersection(IList<List<Point>> subjects, List<Point> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
-            return Intersection(new List<List<Point>>(subjects), new List<List<Point>>() { clip }, simplifyPriorToIntersection, polyFill);
+            return Intersection(new Paths(subjects), new Paths { clip }, simplifyPriorToIntersection, polyFill);
+        }
+        public static Polygons Intersection(Polygons subjects, Polygon clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return Intersection(subjects, new Polygons { clip }, simplifyPriorToIntersection, polyFill);
         }
 
         /// <summary>
@@ -482,6 +559,10 @@ namespace TVGL
         {
             return Intersection(new List<List<Point>>() { subject }, new List<List<Point>>(clips), simplifyPriorToIntersection, polyFill);
         }
+        public static Polygons Intersection(Polygon subject, List<Polygon> clips, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return Intersection(new Polygons { subject }, clips, simplifyPriorToIntersection, polyFill);
+        }
 
         /// <summary>
         /// Intersection. Gets the areas covered by both the subjects and the clips.
@@ -495,7 +576,10 @@ namespace TVGL
         {
             return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
         }
-
+        public static List<Polygon> Intersection(IList<Polygon> subject, IList<Polygon> clip, bool simplifyPriorToIntersection = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctIntersection, subject, clip, simplifyPriorToIntersection);
+        }
         #endregion
 
         #region Xor
@@ -512,6 +596,10 @@ namespace TVGL
         {
             return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
         }
+        public static Polygons Xor(Polygons subject, Polygons clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return BooleanOperation(polyFill, ClipType.ctXor, subject, clip, simplifyPriorToXor);
+        }
 
         /// <summary>
         /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips. 
@@ -524,6 +612,10 @@ namespace TVGL
         public static List<List<Point>> Xor(List<Point> subject, List<Point> clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
         {
             return Xor(new List<List<Point>>() { subject }, new List<List<Point>>() { clip }, simplifyPriorToXor, polyFill);
+        }
+        public static Polygons Xor(Polygon subject, Polygon clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return Xor(new Polygons { subject }, new Polygons { clip }, simplifyPriorToXor, polyFill);
         }
 
         /// <summary>
@@ -538,6 +630,10 @@ namespace TVGL
         {
             return Xor(new List<List<Point>>(subjects), new List<List<Point>>() { clip }, simplifyPriorToXor, polyFill);
         }
+        public static Polygons Xor(Polygons subjects, Polygon clip, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return Xor(subjects, new Polygons { clip }, simplifyPriorToXor, polyFill);
+        }
 
         /// <summary>
         /// XOR. Opposite of Intersection. Gets the areas covered by only either subjects or clips.  
@@ -551,9 +647,21 @@ namespace TVGL
         {
             return Xor(new List<List<Point>>() { subject }, new List<List<Point>>(clips), simplifyPriorToXor, polyFill);
         }
+        public static Polygons Xor(Polygon subject, Polygons clips, bool simplifyPriorToXor = true, PolygonFillType polyFill = PolygonFillType.Positive)
+        {
+            return Xor(new Polygons { subject }, clips, simplifyPriorToXor, polyFill);
+        }
 
         #endregion
 
+        private static Polygons BooleanOperation(PolygonFillType fillMethod, ClipType clipType,
+            IEnumerable<Polygon> subject,
+            IEnumerable<Polygon> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
+        {
+            var paths = BooleanOperation(fillMethod, clipType, subject.Select(p => p.Path).ToList(),
+                clip.Select(p => p.Path).ToList(), simplifyPriorToBooleanOperation, scale);
+            return paths.Select(path => new Polygon(path)).ToList();
+        }
         private static List<List<Point>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType, IEnumerable<Path> subject,
            IEnumerable<Path> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
