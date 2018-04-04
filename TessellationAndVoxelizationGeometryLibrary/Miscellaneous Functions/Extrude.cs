@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -92,10 +93,14 @@ namespace TVGL
             {
                 try
                 {
+                    //Reset the list of triangles
+                    triangles = new List<Vertex[]>();
+
                     //Do some polygon functions to clean up issues and try again
                     paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
-                    paths = PolygonOperations.OffsetSquare(paths, distance/1000);
-                    paths = PolygonOperations.OffsetSquare(paths, -distance/1000);
+                    paths = PolygonOperations.OffsetRound(paths, distance/1000);
+                    paths = PolygonOperations.OffsetRound(paths, -distance/1000);
+                    paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
 
                     //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
                     //This also means we need to recreate cleanLoops
@@ -134,7 +139,8 @@ namespace TVGL
                 }
                 catch
                 {
-                    throw new Exception("Tried extrusion twice and failed.");
+                    Debug.WriteLine("Tried extrusion twice and failed.");
+                    return null;
                 }
             }
             
