@@ -43,7 +43,7 @@ namespace TVGL._2D
                 //that they are from non-overlapping shallow polygon trees.
                 var localSortedIntersectionOffsetPoints = new List<Point>();
                 var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
-                    out localSortedIntersectionOffsetPoints);
+                    out localSortedIntersectionOffsetPoints, offsetAtLine);
                 partialShape.AddRange(paths.Select(path => new Polygon(path)));
                 intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
             }
@@ -86,7 +86,7 @@ namespace TVGL._2D
                 //that they are from non-overlapping shallow polygon trees.
                 var localSortedIntersectionOffsetPoints = new List<Point>();
                 var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
-                    out localSortedIntersectionOffsetPoints);
+                    out localSortedIntersectionOffsetPoints, offsetAtLine);
                 partialShape.AddRange(paths);
                 intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
             }
