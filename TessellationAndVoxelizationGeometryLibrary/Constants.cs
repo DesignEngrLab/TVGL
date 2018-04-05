@@ -76,6 +76,24 @@ namespace TVGL
         /// </summary>
         internal const double MaxAllowableEdgeSimilarityScore = 0.2;
 
+        /// <summary>
+        /// A high confidence percentage of 0.997 (3 sigma). This is used in some boolean "is" checks,
+        /// like Polygon.IsRectangular
+        /// </summary>
+        public const double HighConfidence = 0.997;
+
+        /// <summary>
+        /// A medium confidence percentage of 0.95 (2 sigma). This is used in some boolean "is" checks,
+        /// like Polygon.IsRectangular
+        /// </summary>
+        public const double MediumConfidence = 0.95;
+
+        /// <summary>
+        /// A low confidence percentage of 0.68 (1 sigma). This is used in some boolean "is" checks,
+        /// like Polygon.IsRectangular
+        /// </summary>
+        public const double LowConfidence = 0.68;
+
         internal const double VoxelScaleSize = 255.8; // Math.Pow(2, 20) - 0.2;
 
         /// <summary>

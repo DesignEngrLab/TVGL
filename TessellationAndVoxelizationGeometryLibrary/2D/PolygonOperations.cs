@@ -30,28 +30,39 @@ namespace TVGL
     public class PolygonOperations
     {
         /// <summary>
-        /// Gets whether a polygon is rectangular by applying the area and perimeter equations
-        /// that define a rectangle. The rectangle my be in any orientation and contain any 
-        /// number of points greater than three. Tolerance Percentage can be increased to 
-        /// identify polygons that are close to rectangular.
+        /// Gets whether a polygon is rectangular by using the minimum bounding rectangle.
+        /// The rectangle my be in any orientation and contain any number of points greater than three.
+        /// Confidence Percentage can be decreased to identify polygons that are close to rectangular.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="polygon"></param>
         /// <param name="dimensions"></param>
-        /// <param name="tolerancePercentage"></param>
+        /// <param name="confidencePercentage"></param>
         /// <returns></returns>
-        public static bool IsRectangular(Polygon path, out double[] dimensions, double tolerancePercentage = Constants.BaseTolerance)
+        public static bool IsRectangular(Polygon polygon, out double[] dimensions, double confidencePercentage = Constants.HighConfidence)
         {
+            if (confidencePercentage > 1.0 || Math.Sign(confidencePercentage) < 0)
+                throw new Exception("Confidence percentage must be between 0 and 1");
+            var tolerancePercentage = 1.0 - confidencePercentage;
             //For it to be rectangular, Area = l*w && Perimeter = 2*l + 2*w.
-            //This is not true for any other polygon (that I can think of)
-            var p = path.Length;
-            var sqrRootTerm = Math.Sqrt(p * p - 16 * path.Area);
+            //This can only gaurantee that it is not a rectangle if false.
+            //If true, then check the polygon area vs. its minBoundingRectangle area. 
+            //The area / perimeter check is not strictly necessary, but can provide some speed-up
+            //For obviously not rectangular pieces
+            var p = polygon.Length;
+            var sqrRootTerm = Math.Sqrt(p * p - 16 * polygon.Area);
             var length = 0.25 * (p + sqrRootTerm);
             var width = 0.25 * (p - sqrRootTerm);
             dimensions = new[] {length, width};
             var areaCheck = length * width;
             var perimeterCheck = 2 * length + 2 * width;
-            return path.Area.IsPracticallySame(areaCheck, path.Area* tolerancePercentage) && 
-                path.Length.IsPracticallySame(perimeterCheck, path.Length* tolerancePercentage);
+            if(!polygon.Area.IsPracticallySame(areaCheck, polygon.Area * tolerancePercentage) && 
+                !polygon.Length.IsPracticallySame(perimeterCheck, polygon.Length * tolerancePercentage))
+            {
+                return false;
+            }
+
+            var minBoundingRectangle = MinimumEnclosure.BoundingRectangle(polygon.Path);
+            return polygon.Area.IsPracticallySame(minBoundingRectangle.Area, polygon.Area * tolerancePercentage);
         }
 
         /// <summary>
