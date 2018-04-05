@@ -29,6 +29,30 @@ namespace TVGL
     /// </summary>
     public class PolygonOperations
     {
+        /// <summary>
+        /// Gets whether a polygon is rectangular by applying the area and perimeter equations
+        /// that define a rectangle. The rectangle my be in any orientation and contain any 
+        /// number of points greater than three. Tolerance Percentage can be increased to 
+        /// identify polygons that are close to rectangular.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="dimensions"></param>
+        /// <param name="tolerancePercentage"></param>
+        /// <returns></returns>
+        public static bool IsRectangular(Polygon path, out double[] dimensions, double tolerancePercentage = Constants.BaseTolerance)
+        {
+            //For it to be rectangular, Area = l*w && Perimeter = 2*l + 2*w.
+            //This is not true for any other polygon (that I can think of)
+            var p = path.Length;
+            var sqrRootTerm = Math.Sqrt(p * p - 16 * path.Area);
+            var length = 0.25 * (p + sqrRootTerm);
+            var width = 0.25 * (p - sqrRootTerm);
+            dimensions = new[] {length, width};
+            var areaCheck = length * width;
+            var perimeterCheck = 2 * length + 2 * width;
+            return path.Area.IsPracticallySame(areaCheck, path.Area* tolerancePercentage) && 
+                path.Length.IsPracticallySame(perimeterCheck, path.Length* tolerancePercentage);
+        }
 
         /// <summary>
         /// Gets the length of a path
