@@ -132,14 +132,14 @@ namespace TVGLPresenterDX
             //PresenterShowAndHang(ts);
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
-            PresenterShowAndHang(vs1);
-            //var vs1ts = vs1.ConvertToTessellatedSolid(color);
+            //PresenterShowAndHang(vs1);
+            var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
+            PresenterShowAndHang(vs1ts);
 
             Console.WriteLine("Drafting Solid in X Positive...");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
-            PresenterShowAndHang(vs1xpos);
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xpos_" + _fileName;
