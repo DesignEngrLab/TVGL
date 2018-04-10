@@ -1771,8 +1771,8 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPoint2D(Point p1, Point p2)
         {
-            var dX = p1[0] - p2[0];
-            var dY = p1[1] - p2[1];
+            var dX = p1.X - p2.X;
+            var dY = p1.Y - p2.Y;
             return Math.Sqrt(dX * dX + dY * dY);
         }
 
