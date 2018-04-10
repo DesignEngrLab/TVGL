@@ -180,16 +180,13 @@ namespace TVGL
             out List<Point> bottomPoints,
             out List<Point> topPoints)
         {
-            var direction3D = new[] { direction2D[0], direction2D[1], 0 };
-            var dir = direction3D.normalize();
             var minD = double.PositiveInfinity;
             bottomPoints = new List<Point>();
             topPoints = new List<Point>();
             var maxD = double.NegativeInfinity;
             foreach (var point in points)
             {
-                var position3D = new[] {point.Position2D[0], point.Position2D[1], 0};
-                var distance = dir.dotProduct(position3D);
+                var distance = direction2D.dotProduct(point.Position2D, 2);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomPoints.Add(point);
                 else if (distance < minD)
@@ -274,28 +271,28 @@ namespace TVGL
             // extremeIndices[3] => max-Y, with max X for ties
             extremeIndices[3] = cvxPoints.Count - 1;
             // this is likely rare, but first we check if the first point has a higher y value (only when point is both min-x and max-Y)
-            if (cvxPoints[0][1] > cvxPoints[extremeIndices[3]][1]) extremeIndices[3] = 0;
+            if (cvxPoints[0].Y > cvxPoints[extremeIndices[3]].Y) extremeIndices[3] = 0;
             else
             {
-                while (extremeIndices[3] > 0 && cvxPoints[extremeIndices[3]][1] <= cvxPoints[extremeIndices[3] - 1][1])
+                while (extremeIndices[3] > 0 && cvxPoints[extremeIndices[3]].Y <= cvxPoints[extremeIndices[3] - 1].Y)
                     extremeIndices[3]--;
             }
             /* at this point, the max-Y point has been established. Next we walk backwards in the list until we hit the max-X point */
             // extremeIndices[2] => max-X, with min Y for ties
             extremeIndices[2] = extremeIndices[3] == 0 ? cvxPoints.Count - 1 : extremeIndices[3];
-            while (extremeIndices[2] > 0 && cvxPoints[extremeIndices[2]][0] <= cvxPoints[extremeIndices[2] - 1][0])
+            while (extremeIndices[2] > 0 && cvxPoints[extremeIndices[2]].X <= cvxPoints[extremeIndices[2] - 1].X)
                 extremeIndices[2]--;
             // extremeIndices[1] => min-Y, with min X for ties 
             extremeIndices[1] = extremeIndices[2] == 0 ? cvxPoints.Count - 1 : extremeIndices[2];
-            while (extremeIndices[1] > 0 && cvxPoints[extremeIndices[1]][1] >= cvxPoints[extremeIndices[1] - 1][1])
+            while (extremeIndices[1] > 0 && cvxPoints[extremeIndices[1]].Y >= cvxPoints[extremeIndices[1] - 1].Y)
                 extremeIndices[1]--;
             // extrememIndices[0] => min-X, with max Y for ties
             // First we check if the last point has an eqaully small x value, if it does we will need to walk backwards.
-            if (cvxPoints.Last()[0] > cvxPoints[0][0]) extremeIndices[0] = 0;
+            if (cvxPoints.Last().X > cvxPoints[0].X) extremeIndices[0] = 0;
             else
             {
                 extremeIndices[0] = cvxPoints.Count - 1;
-                while (cvxPoints[extremeIndices[0]][0] >= cvxPoints[extremeIndices[0] - 1][0])
+                while (cvxPoints[extremeIndices[0]].X >= cvxPoints[extremeIndices[0] - 1].X)
                     extremeIndices[0]--;
             }
 
@@ -392,8 +389,8 @@ namespace TVGL
                 {
                     var index = extremeIndices[i];
                     var prev = index == 0 ? numCvxPoints - 1 : index - 1;
-                    var tempDelta = Math.Atan2(cvxPoints[prev][1] - cvxPoints[index][1],
-                        cvxPoints[prev][0] - cvxPoints[index][0]);
+                    var tempDelta = Math.Atan2(cvxPoints[prev].Y - cvxPoints[index].Y,
+                        cvxPoints[prev].X - cvxPoints[index].X);
                     deltaAngles[i] = offsetAngles[i] - tempDelta;
                     //If the angle has rotated beyond the 90 degree bounds, it will be negative
                     //And should never be chosen from then on.
