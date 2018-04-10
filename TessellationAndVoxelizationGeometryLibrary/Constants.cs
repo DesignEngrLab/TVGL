@@ -55,6 +55,15 @@ namespace TVGL
         /// </summary>
         public const double BaseTolerance = 1E-9;
 
+        /// <summary>
+        ///     The tolerance used for simplifying polygons by joining to similary sloped lines.
+        /// </summary>
+        public const double LineSlopeTolerance = 0.0003;
+
+        /// <summary>
+        ///     The tolerance used for simplifying polygons by removing tiny lines.
+        /// </summary>
+        public const double LineLengthMinimum = 1E-7;
 
         /// <summary>
         ///     The angle tolerance used in the Oriented Bounding Box calculations

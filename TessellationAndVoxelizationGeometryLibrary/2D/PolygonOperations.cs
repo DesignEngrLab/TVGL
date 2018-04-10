@@ -152,7 +152,6 @@ namespace TVGL
         /// <returns></returns>
         public static List<Point> SimplifyFuzzy(IList<Point> path)
         {
-            const double looseTolerance = 0.0000001;
             var simplePath = new List<Point>(path);
             //Remove negligible length lines and combine collinear lines.
             for (var i = 0; i < simplePath.Count; i++)
@@ -164,35 +163,35 @@ namespace TVGL
                 var current = simplePath[i];
                 var next = simplePath[j];
                 var nextNext = simplePath[k];
-                if (i == 0 && NegligibleLine(current, next, looseTolerance))
+                if (i == 0 && NegligibleLine(current, next))
                 {
                     simplePath.RemoveAt(j);
                     i--;
                     continue;
                 }
-                if (NegligibleLine(next, nextNext, looseTolerance))
+                if (NegligibleLine(next, nextNext))
                 {
                     simplePath.RemoveAt(k);
                     i--;
                     continue;
                 }
                 //Use an even looser tolerance to determine if slopes are equal.
-                if (!LineSlopesEqual(current, next, nextNext, Math.Sqrt(looseTolerance))) continue;
+                if (!LineSlopesEqual(current, next, nextNext)) continue;
                 simplePath.RemoveAt(j);
                 i--;
             }
             return simplePath;
         }
 
-        private static bool NegligibleLine(Point pt1, Point pt2, double tolerance = 0.0)
+        private static bool NegligibleLine(Point pt1, Point pt2, double tolerance = Constants.LineLengthMinimum)
         {
-            if (tolerance.IsNegligible()) tolerance = StarMath.EqualityTolerance;
+            if (tolerance.IsNegligible()) tolerance = Constants.LineLengthMinimum;
             return MiscFunctions.DistancePointToPoint2D(pt1, pt2).IsNegligible(tolerance);
         }
 
-        private static bool LineSlopesEqual(Point pt1, Point pt2, Point pt3, double tolerance = 0.0)
+        private static bool LineSlopesEqual(Point pt1, Point pt2, Point pt3, double tolerance = Constants.LineSlopeTolerance)
         {
-            if (tolerance.IsNegligible()) tolerance = StarMath.EqualityTolerance;
+            if (tolerance.IsNegligible()) tolerance = Constants.LineSlopeTolerance;
             var value = (pt1.Y - pt2.Y)*(pt2.X - pt3.X) - (pt1.X - pt2.X)*(pt2.Y - pt3.Y);
             return value.IsNegligible(tolerance);
         }
@@ -693,8 +692,9 @@ namespace TVGL
             IEnumerable<Polygon> subject,
             IEnumerable<Polygon> clip = null, bool simplifyPriorToBooleanOperation = true, double scale = 1000000)
         {
+            var clipPaths = clip?.Select(p => p.Path).ToList(); //Handle null clip
             var paths = BooleanOperation(fillMethod, clipType, subject.Select(p => p.Path).ToList(),
-                clip.Select(p => p.Path).ToList(), simplifyPriorToBooleanOperation, scale);
+                clipPaths, simplifyPriorToBooleanOperation, scale);
             return paths.Select(path => new Polygon(path)).ToList();
         }
         private static List<List<Point>> BooleanOperation(PolygonFillType fillMethod, ClipType clipType, IEnumerable<Path> subject,
