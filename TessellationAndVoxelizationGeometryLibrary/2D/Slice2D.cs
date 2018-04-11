@@ -44,7 +44,7 @@ namespace TVGL._2D
                 var localSortedIntersectionOffsetPoints = new List<Point>();
                 var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
                     out localSortedIntersectionOffsetPoints, offsetAtLine);
-                partialShape.AddRange(paths.Select(path => new Polygon(path)));
+                partialShape.AddRange(paths);
                 intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
             }
             
@@ -86,7 +86,7 @@ namespace TVGL._2D
                 //that they are from non-overlapping shallow polygon trees.
                 var localSortedIntersectionOffsetPoints = new List<Point>();
                 var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
-                    out localSortedIntersectionOffsetPoints, offsetAtLine);
+                    out localSortedIntersectionOffsetPoints, offsetAtLine).Select(p => p.Path).ToList();
                 partialShape.AddRange(paths);
                 intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
             }
@@ -110,7 +110,7 @@ namespace TVGL._2D
         /// <param name="intersectionPoints"></param>
         /// <param name="offsetAtLine"></param>
         /// <returns></returns>
-        public static List<List<Point>> OnLine(ShallowPolygonTree polyTree, double[] direction2D, double distanceAlongDirection,
+        public static List<Polygon> OnLine(ShallowPolygonTree polyTree, double[] direction2D, double distanceAlongDirection,
             bool returnFurtherThanSlice, IEnumerable<Tuple<Point, double>> sortedPoints, out List<Point> intersectionPoints,
             double offsetAtLine = 0.0)
         {
@@ -190,7 +190,7 @@ namespace TVGL._2D
 
             //(4) Build the partial 2D shape
             intersectionPoints = new List<Point>();
-            var partialShape = new List<List<Point>>();
+            var partialShape = new List<Polygon>();
             while (linesToLeft.Any())
             {
                 //Note the line index is the same as the line.FromPoint.IndexInPath
@@ -264,7 +264,7 @@ namespace TVGL._2D
 
                 //Because of the intelligent slicing operation, the paths should be ordered correctly CCW+ or CW-
                 //A negative hole could be an entire path, as long as all its lines where to the left of the sweep.
-                partialShape.Add(path);
+                partialShape.Add(new Polygon(path));
             }
             return partialShape;
         }
