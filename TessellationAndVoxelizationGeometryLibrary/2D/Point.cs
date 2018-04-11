@@ -39,22 +39,21 @@ namespace TVGL
         ///     Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
-        [DataMember]
-        public double X { get; internal set; }
+        public double X => Position[0];
 
         /// <summary>
         ///     Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
-        [DataMember]
-        public double Y { get; internal set; }
+        public double Y => Position[1];
 
         /// <summary>
-        ///     Gets or sets the z coordinate. If one is using Point in a 2D capacity, it can be ignored.
+        /// Gets or sets the z coordinate, which is mostly ignored. 
+        /// It is initialized as 0.0 and accessed here or with Position3D
         /// </summary>
         /// <value>The z.</value>
         [DataMember]
-        public double Z { get; internal set; }
+        public double Z { get; set; } = 0.0;
 
         /// <summary>
         ///     Gets or sets the references.
@@ -82,42 +81,17 @@ namespace TVGL
         public IList<Line> Lines { get; set; }
 
         /// <summary>
-        ///     Gets or sets the coordinates or position.
+        ///     Gets the coordinates or position as an array of 3 elements (X, Y, Z).
         /// </summary>
         /// <value>The coordinates or position.</value>
-        public double[] Position
-        {
-            get
-            {
-                if (double.IsNaN(Z))
-                    return new[] { X, Y };
-                return new[] { X, Y, Z };
-            }
-            set
-            {
-                X = value[0];
-                Y = value[1];
-                Z = value.GetLength(0) > 2 ? value[2] : 0.0;
-            }
-        }
+        public double[] Position3D => new[] { X, Y, Z };
 
         /// <summary>
-        ///     Gets or sets the coordinates or position.
+        ///     Gets or sets the coordinates or position as an array of 2 elements (X, Y).
         /// </summary>
         /// <value>The coordinates or position.</value>
-        /// <exception cref="Exception">Cannot set the value of a point with an array with more than 2 values.</exception>
-        public double[] Position2D
-        {
-            get { return new[] { X, Y }; }
-            set
-            {
-                X = value[0];
-                Y = value[1];
-                if (value.GetLength(0) > 2)
-                    throw new Exception("Cannot set the value of a point with an array with more than 2 values.");
-                Z = 0.0;
-            }
-        }
+        [DataMember]
+        public double[] Position { get; set; }      
 
         /// <summary>
         ///     Gets or sets an arbitrary ReferenceIndex to track point
@@ -168,8 +142,7 @@ namespace TVGL
         /// <param name="point"></param>
         public Point(Point point)
         {
-            X = point.X;
-            Y = point.Y;
+            Position = new[] { point.X, point.Y};
             Z = point.Z;
             Lines = new List<Line>(point.Lines);
             References = new List<Vertex>(point.References);
@@ -184,8 +157,7 @@ namespace TVGL
         /// <param name="z">The z.</param>
         public Point(Vertex vertex, double x, double y, double z)
         {
-            X = x;
-            Y = y;
+            Position = new[] {x, y};
             Z = z;
             Lines = new List<Line>();
             References = new List<Vertex>();
@@ -197,7 +169,7 @@ namespace TVGL
         ///     Initializes a new instance of the <see cref="Point" /> class.
         /// </summary>
         /// <param name="coordinates">The coordinates.</param>
-        public Point(IList<double> coordinates) : this(null, coordinates[0], coordinates[1], coordinates[2])
+        public Point(IList<double> coordinates) : this(null, coordinates[0], coordinates[1])
         {
         }
         #endregion
@@ -208,10 +180,7 @@ namespace TVGL
         /// </summary>
         /// <param name="index">The index.</param>
         /// <returns>System.Double.</returns>
-        public double this[int index]
-        {
-            get { return Position[index]; }
-        }
+        public double this[int index] => Position[index];
 
         /// <summary>
         /// Gets whether points are equal

@@ -232,8 +232,8 @@ namespace TVGL._2D
                         //Each intersection point corresponds to an intersection offset point. This point
                         //is equal to the current point + the offsetAtLine added along the search direction.
                         var position = returnFurtherThanSlice
-                            ? intersectionPoint.Position2D.subtract(direction2D.multiply(offsetAtLine))
-                            : intersectionPoint.Position2D.add(direction2D.multiply(offsetAtLine));
+                            ? intersectionPoint.Position.subtract(direction2D.multiply(offsetAtLine))
+                            : intersectionPoint.Position.add(direction2D.multiply(offsetAtLine));
 
                         var intersectionOffsetPoint = new Point(position[0], position[1]);
                         path.Add(intersectionOffsetPoint);
@@ -241,8 +241,8 @@ namespace TVGL._2D
 
                         //(3) the offset point of the next intersection point
                         position = returnFurtherThanSlice
-                            ? pairedIntersectionPoint.Position2D.subtract(direction2D.multiply(offsetAtLine))
-                            : pairedIntersectionPoint.Position2D.add(direction2D.multiply(offsetAtLine));
+                            ? pairedIntersectionPoint.Position.subtract(direction2D.multiply(offsetAtLine))
+                            : pairedIntersectionPoint.Position.add(direction2D.multiply(offsetAtLine));
                         var pairedIntersectionOffsetPoint = new Point(position[0], position[1]);
                         path.Add(pairedIntersectionOffsetPoint);
                         intersectionPoints.Add(pairedIntersectionOffsetPoint);

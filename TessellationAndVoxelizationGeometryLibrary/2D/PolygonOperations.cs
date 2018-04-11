@@ -79,7 +79,7 @@ namespace TVGL
             {
                 var p1 = editPath[i];
                 var p2 = editPath[i + 1];
-                length += MiscFunctions.DistancePointToPoint(p1.Position2D, p2.Position2D);
+                length += MiscFunctions.DistancePointToPoint(p1.Position, p2.Position);
             }
             return length;
         }
@@ -186,7 +186,7 @@ namespace TVGL
         private static bool NegligibleLine(Point pt1, Point pt2, double tolerance = Constants.LineLengthMinimum)
         {
             if (tolerance.IsNegligible()) tolerance = Constants.LineLengthMinimum;
-            return MiscFunctions.DistancePointToPoint2D(pt1, pt2).IsNegligible(tolerance);
+            return MiscFunctions.DistancePointToPoint(pt1, pt2).IsNegligible(tolerance);
         }
 
         private static bool LineSlopesEqual(Point pt1, Point pt2, Point pt3, double tolerance = Constants.LineSlopeTolerance)
@@ -1145,10 +1145,10 @@ namespace TVGL
                 {
                     //Get the minimum signed angle between the two vectors 
                     var minAngle = double.PositiveInfinity;
-                    var v1 = currentSweepEvent.Point.Position2D.subtract(currentSweepEvent.OtherEvent.Point.Position2D);
+                    var v1 = currentSweepEvent.Point.Position.subtract(currentSweepEvent.OtherEvent.Point.Position);
                     foreach (var neighbor in neighbors)
                     {
-                        var v2 = neighbor.OtherEvent.Point.Position2D.subtract(neighbor.Point.Position2D);
+                        var v2 = neighbor.OtherEvent.Point.Position.subtract(neighbor.Point.Position);
                         var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(v1, v2);
                         if(angle < 0 || angle > 2*Math.PI) throw new Exception("Error in my assumption of output from above function");
                         if (angle < minAngle)

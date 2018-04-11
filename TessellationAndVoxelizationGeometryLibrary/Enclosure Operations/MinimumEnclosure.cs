@@ -42,6 +42,10 @@ namespace TVGL
         {
             return RotatingCalipers2DMethod(points, pointsAreConvexHull);
         }
+        public static BoundingRectangle BoundingRectangle(Polygon polygon, bool pointsAreConvexHull = false)
+        {
+            return RotatingCalipers2DMethod(polygon.Path, pointsAreConvexHull);
+        }
 
         /// <summary>
         ///     Finds the minimum bounding box.
@@ -186,7 +190,7 @@ namespace TVGL
             var maxD = double.NegativeInfinity;
             foreach (var point in points)
             {
-                var distance = direction2D.dotProduct(point.Position2D, 2);
+                var distance = direction2D.dotProduct(point.Position, 2);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomPoints.Add(point);
                 else if (distance < minD)
@@ -408,7 +412,7 @@ namespace TVGL
                 //Get unit normal for current edge
                 var otherIndex = extremeIndices[refIndex] == 0 ? numCvxPoints - 1 : extremeIndices[refIndex] - 1;
                 var direction =
-                    cvxPoints[extremeIndices[refIndex]].Position2D.subtract(cvxPoints[otherIndex].Position2D)
+                    cvxPoints[extremeIndices[refIndex]].Position.subtract(cvxPoints[otherIndex].Position)
                         .normalize();
                 //If point type = 1 or 3, then use inversed Direction
                 if (refIndex == 1 || refIndex == 3)
@@ -434,21 +438,21 @@ namespace TVGL
 
                 #endregion
 
-                var xDir = new[] {angleVector1[0], angleVector1[1], 0.0};
-                var yDir = new[] {angleVector2[0], angleVector2[1], 0.0};
+                var xDir = new[] {angleVector1[0], angleVector1[1]};
+                var yDir = new[] {angleVector2[0], angleVector2[1]};
                 var pointsOnSides = new List<Point>[4];
                 for (var i = 0; i < 4; i++)
                 {
                     pointsOnSides[i] = new List<Point>();
                     var dir = i%2 == 0 ? xDir : yDir;
-                    var distance = cvxPoints[extremeIndices[i]].Position.dotProduct(dir);
+                    var distance = cvxPoints[extremeIndices[i]].Position.dotProduct(dir, 2);
                     var prevIndex = extremeIndices[i];
                     do
                     {
                         extremeIndices[i] = prevIndex;
                         pointsOnSides[i].Add(cvxPoints[extremeIndices[i]]);
                         prevIndex = extremeIndices[i] == 0 ? numCvxPoints - 1 : extremeIndices[i] - 1;
-                    } while (distance.IsPracticallySame(cvxPoints[prevIndex].Position.dotProduct(dir),
+                    } while (distance.IsPracticallySame(cvxPoints[prevIndex].Position.dotProduct(dir, 2),
                         Constants.BaseTolerance));
                 }
 
@@ -507,14 +511,14 @@ namespace TVGL
             var tempDirection = new[]
             {
                 boundingRectangle.Directions2D[0][0], boundingRectangle.Directions2D[0][1],
-                boundingRectangle.Directions2D[0][2], 1.0
+                0.0, 1.0
             };
             tempDirection = backTransform.multiply(tempDirection);
             var direction2 = new[] {tempDirection[0], tempDirection[1], tempDirection[2]};
             tempDirection = new[]
             {
                 boundingRectangle.Directions2D[1][0], boundingRectangle.Directions2D[1][1],
-                boundingRectangle.Directions2D[1][2], 1.0
+                0.0, 1.0
             };
             tempDirection = backTransform.multiply(tempDirection);
             var direction3 = new[] {tempDirection[0], tempDirection[1], tempDirection[2]};
@@ -557,13 +561,13 @@ namespace TVGL
             var tempDirection = new[]
             {
                 boundingRectangle.Directions2D[0][0], boundingRectangle.Directions2D[0][1],
-                boundingRectangle.Directions2D[0][2], 1.0
+                0.0, 1.0
             };
             var direction1 = backTransform.multiply(tempDirection).Take(3).ToArray();
             tempDirection = new[]
             {
                 boundingRectangle.Directions2D[1][0], boundingRectangle.Directions2D[1][1],
-                boundingRectangle.Directions2D[1][2], 1.0
+                0.0, 1.0
             };
             var direction2 = backTransform.multiply(tempDirection).Take(3).ToArray();
             boxData.Box =

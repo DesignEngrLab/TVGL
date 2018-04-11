@@ -286,7 +286,7 @@ namespace TVGL
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
             foreach (var line in polygon.PathLines)
             {
-                var v1 = line.ToPoint.Position2D.subtract(line.FromPoint.Position2D);
+                var v1 = line.ToPoint.Position.subtract(line.FromPoint.Position);
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
                 if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
@@ -294,7 +294,7 @@ namespace TVGL
 
                 //Figure out how far the center point is away from the line
                 double[] pointOnLine;
-                var d = MiscFunctions.DistancePointToLine(centerPoint.Position2D, line.FromPoint.Position2D, v1, out pointOnLine);
+                var d = MiscFunctions.DistancePointToLine(centerPoint.Position, line.FromPoint.Position, v1, out pointOnLine);
                 if (d > shortestDistance) continue;
 
                 //Now we need to figure out if the lines intersect
@@ -310,7 +310,7 @@ namespace TVGL
             //   The shortest distance determines the diameter of the inner circle.
             foreach (var point in polygon.Path)
             {
-                var d = MiscFunctions.DistancePointToPoint(point.Position2D, centerPoint.Position2D);
+                var d = MiscFunctions.DistancePointToPoint(point.Position, centerPoint.Position);
                 if (d < shortestDistance) shortestDistance = d;
             }
 
@@ -538,7 +538,7 @@ namespace TVGL
                 }
                 else if (Points.Count == 2)
                 {
-                    var vector = Points[0].Position2D.subtract(Points[1].Position2D);
+                    var vector = Points[0].Position.subtract(Points[1].Position);
                     Center = new Point(new Vertex(new[] {Points[1].X + vector[0]/2, Points[1].Y + vector[1]/2, 0.0}));
                     SqRadius = Math.Pow(vector[0]/2, 2) + Math.Pow(vector[1]/2, 2);
                 }

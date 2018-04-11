@@ -59,9 +59,6 @@ namespace TVGL
         {
             //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
             var numPoints = points.Count;
-            var zValues = points.Select(p => p.Z).ToArray();
-            foreach (var point in points)
-                point.Z = double.NaN;
             var cvxPoints = new Point[numPoints];
             try
             {
@@ -82,8 +79,6 @@ namespace TVGL
                 }
             }
             
-            for (int i = 0; i < numPoints; i++)
-                points[i].Z = zValues[i];
             return cvxPoints;
         }
     }

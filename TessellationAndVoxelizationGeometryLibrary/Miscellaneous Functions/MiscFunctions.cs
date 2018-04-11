@@ -327,7 +327,7 @@ namespace TVGL
             for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
             {
                 perimeter = perimeter +
-                            DistancePointToPoint2D(listWithStartPointAtEnd[i - 1], listWithStartPointAtEnd[i]);
+                            DistancePointToPoint(listWithStartPointAtEnd[i - 1], listWithStartPointAtEnd[i]);
             }
             return perimeter;
         }
@@ -1134,10 +1134,10 @@ namespace TVGL
         /// <returns></returns>
         public static bool LineLineIntersection(Point pt1, Point pt2, Point pt3, Point pt4, out Point intersectionPoint, bool considerCollinearOverlapAsIntersect = false)
         {
-            var p = pt1.Position2D;
-            var p2 = pt2.Position2D;
-            var q = pt3.Position2D;
-            var q2 = pt4.Position2D;
+            var p = pt1.Position;
+            var p2 = pt2.Position;
+            var q = pt3.Position;
+            var q2 = pt4.Position;
             var points = new List<Point> { pt1, pt2, pt3, pt4 };
             intersectionPoint = null;
             var r = p2.subtract(p);
@@ -1769,7 +1769,7 @@ namespace TVGL
         /// <param name="p1">point, p1.</param>
         /// <param name="p2">point, p2.</param>
         /// <returns>the distance between the two 3D points.</returns>
-        public static double DistancePointToPoint2D(Point p1, Point p2)
+        public static double DistancePointToPoint(Point p1, Point p2)
         {
             var dX = p1.X - p2.X;
             var dY = p1.Y - p2.Y;
