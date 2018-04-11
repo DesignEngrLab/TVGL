@@ -21,6 +21,24 @@ using StarMathLib;
 
 namespace TVGL
 {
+    [DataContract]
+    public struct PointLight
+    {
+        public double X;
+        public double Y;
+
+        public PointLight(Point point)
+        {
+            X = point.X;
+            Y = point.Y;
+        }
+
+        public double[] GetPosition()
+        {
+            return new [] {X, Y};
+        }
+    }
+
     /// <summary>
     ///     The Point class is used to indicate a 2D or 3D location that may be outside
     ///     of a solid (hence making Vertex an inappropriate choice).

@@ -4,6 +4,20 @@ using System.Linq;
 
 namespace TVGL
 {
+    public struct PolygonLight
+    {
+        public List<PointLight> Path;
+
+        public PolygonLight(Polygon polygon)
+        {
+            Path = new List<PointLight>();
+            foreach (var point in polygon.Path)
+            {
+                Path.Add(new PointLight(point));
+            }
+        }
+    }
+
     internal enum PolygonType
     {
         Subject,
