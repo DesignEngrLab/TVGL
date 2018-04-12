@@ -74,8 +74,8 @@ namespace TVGL.Voxelization
             voxelDictionaryLevel0 = new Dictionary<long, Voxel_Level0_Class>(new VoxelComparerCoarse());
             voxelDictionaryLevel1 = new Dictionary<long, Voxel_Level1_Class>(new VoxelComparerCoarse());
             transformedCoordinates = new double[ts.NumberOfVertices][];
-            Parallel.For(0, ts.NumberOfVertices, i =>
-            //for (int i = 0; i < ts.NumberOfVertices; i++)
+            //Parallel.For(0, ts.NumberOfVertices, i =>
+            for (int i = 0; i < ts.NumberOfVertices; i++)
             {
                 var vertex = ts.Vertices[i];
                 var coordinates = vertex.Position.subtract(Offset).divide(VoxelSideLengths[1]);
@@ -86,16 +86,16 @@ namespace TVGL.Voxelization
                 // in one voxel.
                 transformedCoordinates[i] = coordinates; //i == vertex.IndexInList
                 makeVoxelForVertexLevel0And1(vertex, coordinates);
-            }  );
+            }  //);
             makeVoxelsForFacesAndEdges(ts);
             //makeVoxelForFacesAndEdgesAlternate(ts);
             if (!onlyDefineBoundary)
-                makeVoxelsInInterior();
+                makeVoxelsInInterior(ts);
             if (discretizationLevel > 1)
             {  //here's where the higher level voxels are defined.
                 //todo
-                Parallel.For(0, ts.NumberOfVertices, i =>
-                //for (int i = 0; i < ts.NumberOfVertices; i++)
+                //Parallel.For(0, ts.NumberOfVertices, i =>
+                for (int i = 0; i < ts.NumberOfVertices; i++)
                 {
                     var vertex = ts.Vertices[i];
                     var coordinates = vertex.Position.subtract(Offset).divide(VoxelSideLengths[1]);
@@ -106,7 +106,7 @@ namespace TVGL.Voxelization
                     // in one voxel.
                     transformedCoordinates[i] = coordinates;
                     makeVoxelForVertexLevel0And1(vertex, coordinates);
-                });
+                }//);
             }
             UpdateProperties();
         }
@@ -486,7 +486,7 @@ namespace TVGL.Voxelization
                 foreach (var edge in face.Edges)
                 {
                     if (edge.To.Voxels.Last() == edge.From.Voxels.Last()) continue;
-                    makeVoxelsForLine(transformedCoordinates[edge.From.IndexInList], 
+                    makeVoxelsForLine(transformedCoordinates[edge.From.IndexInList],
                         transformedCoordinates[edge.To.IndexInList], edge, sweepDim, ref sweepIntersections, false);
                 }
 
@@ -728,7 +728,7 @@ namespace TVGL.Voxelization
         /// <param name="dim"></param>
         /// <param name="intersections"></param>
         /// <param name="vectorNorm"></param>
-        private void getIntergerIntersectionsAlongLine(double[] startPoint, double[] endPoint, 
+        private void getIntergerIntersectionsAlongLine(double[] startPoint, double[] endPoint,
             int dim, ref Dictionary<int, List<double[]>> intersections, double[] vectorNorm = null)
         {
             if (vectorNorm == null) vectorNorm = endPoint.subtract(startPoint).normalize();
@@ -864,7 +864,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Makes the voxels in interior.
         /// </summary>
-        private void makeVoxelsInInterior()
+        private void makeVoxelsInInterior(TessellatedSolid ts)
         {
             var sweepDim = longestDimensionIndex;
             var ids = voxelDictionaryLevel1.Keys.Select(vxID => Constants.MakeCoordinateZero(vxID, sweepDim))
@@ -873,17 +873,17 @@ namespace TVGL.Voxelization
             var rows = ids.ToDictionary(id => id,
                 id => new SortedSet<Voxel_Level1_Class>(new SortByVoxelIndex(sweepDim + 1)));
             //VoxelDirection enumerator, and since there is no negative 0, we start at 1 (x=1).
-            Parallel.ForEach(voxelDictionaryLevel1, voxelKeyValuePair =>
-            //foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
+            //Parallel.ForEach(voxelDictionaryLevel1, voxelKeyValuePair =>
+            foreach (var voxelKeyValuePair in voxelDictionaryLevel1)
             {
                 var voxel = voxelKeyValuePair.Value;
                 var id = Constants.MakeCoordinateZero(voxelKeyValuePair.Key, sweepDim);
                 var sortedSet = rows[id];
                 lock (sortedSet) sortedSet.Add(voxel);
-            });
-            Parallel.ForEach(rows.Values.Where(v => v.Any()), v =>
-            //foreach (var v in rows.Values.Where(v => v.Any()))
-                MakeInteriorVoxelsAlongLine(v, sweepDim) );
+            }//);
+            //Parallel.ForEach(rows.Values.Where(v => v.Any()), v =>
+            foreach (var v in rows.Values.Where(v => v.Any()))
+                MakeInteriorVoxelsAlongLine(v, sweepDim, ts); //);
         }
 
         //Sort partial voxels along a given direction and then consider rows along that direction 
@@ -1019,7 +1019,8 @@ namespace TVGL.Voxelization
         //OR if it contains faces pointing both ways and the next voxel is fully inside the solid.
         //To Determine if a voxel is fully inside the solid, use the normal of the closest
         //face cast back from the voxel in question. 
-        private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> sortedVoxelsInRow, int sweepDim)
+        private void MakeInteriorVoxelsAlongLine(SortedSet<Voxel_Level1_Class> sortedVoxelsInRow, int sweepDim,
+            TessellatedSolid ts)
         {
             var voxelsInRow = new List<Voxel_Level1_Class>(sortedVoxelsInRow);
             var coords = (byte[])sortedVoxelsInRow.First().CoordinateIndices.Clone();
@@ -1078,15 +1079,18 @@ namespace TVGL.Voxelization
                     voxelsInRow.RemoveAt(0);
                     consecutiveVoxels.Add(nextVoxel);
                     nextFacesToConsider.AddRange(nextVoxel.Faces);
-                    nextVoxel = (voxelsInRow.Count > 1) ? voxelsInRow[1] : null;
+                    nextVoxel = (voxelsInRow.Any()) ? voxelsInRow[0] : null;
                 } while (nextVoxel != null && nextVoxel.CoordinateIndices[sweepDim] == ++nextIndex);
                 voxelsInRow.Insert(0, consecutiveVoxels.Last());
                 nextFacesToConsider = nextFacesToConsider.Distinct().ToList();
                 var random = new Random();
                 int successes = 0;
+            
                 for (int i = 0; i < Constants.NumberOfInteriorAttempts; i++)
                 {
                     var randDelta = new[] { random.NextDouble(), random.NextDouble(), random.NextDouble() };
+                    randDelta[sweepDim] = 1.0;
+                    randDelta = randDelta.multiply(this.VoxelSideLengths[1]);
                     var randCoordinate = currentVoxel.BottomCoordinate.add(randDelta);
                     PolygonalFace prevFace = ClosestIntersectingFace(prevFacesToConsider, randCoordinate,
                         (VoxelDirections)(-(sweepDim + 1)), out double distancePrev);
