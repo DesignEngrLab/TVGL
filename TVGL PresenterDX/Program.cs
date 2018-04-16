@@ -83,7 +83,7 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*square_*");
+            var fileNames = dir.GetFiles("*AA*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -156,8 +156,8 @@ namespace TVGLPresenterDX
             PresenterShowAndHang(vs1);
             //PresenterShowAndHang(vs1ts);
             PresenterShowAndHang(unmachinableVoxels);
-            //unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
-            //PresenterShowAndHang(vs1, unmachinableVoxels);
+            unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
+            PresenterShowAndHang(vs1, unmachinableVoxels);
 
             Console.WriteLine("Totals for Original Voxel Shape: " + vs1.GetTotals[0] + "; " + vs1.GetTotals[1] + "; " + vs1.GetTotals[2] + "; " + vs1.GetTotals[3]);
             Console.WriteLine("Totals for X Positive Draft: " + vs1xpos.GetTotals[0] + "; " + vs1xpos.GetTotals[1] + "; " + vs1xpos.GetTotals[2] + "; " + vs1xpos.GetTotals[3]);
