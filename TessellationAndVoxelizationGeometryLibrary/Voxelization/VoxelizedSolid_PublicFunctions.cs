@@ -63,7 +63,7 @@ namespace TVGL.Voxelization
             var innerVoxels = ((Voxel_Level0_Class)parent).InnerVoxels;
             if (innerVoxels.Length >= level)
             {
-                var voxel = innerVoxels[level - 1].GetVoxel(newID);
+                var voxel = innerVoxels[level - 1]?.GetVoxel(newID);
                 if (voxel == null) return new Voxel(newID + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
                 return voxel;
             }
@@ -160,8 +160,9 @@ namespace TVGL.Voxelization
         internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
             int level)
         {
-            foreach (var vx in voxel.InnerVoxels[level - 1])
-                yield return vx;
+            if (voxel.InnerVoxels[level - 1] != null)
+                foreach (var vx in voxel.InnerVoxels[level - 1])
+                    yield return vx;
         }
         internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
             int level, VoxelRoleTypes role)

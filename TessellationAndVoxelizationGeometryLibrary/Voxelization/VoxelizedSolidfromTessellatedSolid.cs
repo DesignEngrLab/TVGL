@@ -106,9 +106,10 @@ namespace TVGL.Voxelization
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-            Presenter.ShowAndHang(this, VoxelDiscretization.Coarse);
+            //Presenter.ShowAndHang(this, VoxelDiscretization.Coarse);
                 }  //);
             }
+            Presenter.ShowAndHang(this, VoxelDiscretization.Coarse);
 
             if (discretizationLevel >= 2)
             {

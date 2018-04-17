@@ -236,8 +236,9 @@ namespace TVGL.Voxelization
                     for (int k = 0; k < 16; k++)
                         lowerLevelVoxels.Add(new Voxel(thisIDwoFlags
                                                            + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level + 1));
-            lock (((Voxel_Level0_Class)voxel).InnerVoxels[level + 1])
-                ((Voxel_Level0_Class)voxel).InnerVoxels[level + 1].AddRange(lowerLevelVoxels);
+            if (this.discretizationLevel > level)
+                lock (voxel0.InnerVoxels[level + 1])
+                    voxel0.InnerVoxels[level + 1].AddRange(lowerLevelVoxels);
             return voxel;
         }
 
