@@ -90,7 +90,7 @@ namespace TVGL.Voxelization
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior(voxelsZeroLevel, null, null, unknownPartials);
             voxelDictionaryLevel0 = voxelsZeroLevel;
-            Presenter.ShowAndHang(this, VoxelDiscretization.ExtraCoarse);
+            //PresenterShowAndHang(this, VoxelDiscretization.ExtraCoarse);
             #endregion
 
             if (discretizationLevel >= 1)
@@ -109,7 +109,7 @@ namespace TVGL.Voxelization
             //Presenter.ShowAndHang(this, VoxelDiscretization.Coarse);
                 }  //);
             }
-            Presenter.ShowAndHang(this, VoxelDiscretization.Coarse);
+            //PresenterShowAndHang(this, VoxelDiscretization.Coarse);
 
             if (discretizationLevel >= 2)
             {
