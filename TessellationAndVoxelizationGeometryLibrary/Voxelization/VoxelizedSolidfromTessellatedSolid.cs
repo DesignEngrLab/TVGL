@@ -1024,68 +1024,76 @@ namespace TVGL.Voxelization
         {
             var voxelsInRow = new List<Voxel_Level1_Class>(sortedVoxelsInRow);
             var coords = (byte[])sortedVoxelsInRow.First().CoordinateIndices.Clone();
-            var consecutiveVoxels = new List<Voxel_Level1_Class>();
-            var lineStartIndex = int.MinValue;
-            var finalIndex = voxelsInRow.Last().CoordinateIndices[sweepDim];
+            var prevFacesToConsider = new HashSet<PolygonalFace>();
+            var nextFacesToConsider = new HashSet<PolygonalFace>();
+            var lineStartIndex = -1;
+            var lineEndIndex = -1;
             while (voxelsInRow.Any())
             {
+                /* pop off the top(next) voxel from the sorted list */
                 var currentVoxel = voxelsInRow[0];
                 voxelsInRow.RemoveAt(0);
                 var currentIndex = currentVoxel.CoordinateIndices[sweepDim];
 
-                //End that line at every partial voxel, regardless of face orientation. This voxel may start a new 
-                //line if it has faces in both directions.
-                if (lineStartIndex != int.MinValue)
+                /* Fill-in loop */
+                if (lineStartIndex >= 0)
                 {
-                    consecutiveVoxels.Clear();
-                    //Construct the line
-                    for (int i = lineStartIndex + 1; i < currentIndex; i++)
+                    /*Construct the line*/
+                    for (int i = lineStartIndex + 1; i < lineEndIndex; i++)
                     {
                         coords[sweepDim] = (byte)i;
                         if (discretizationLevel == 0)
                             MakeAndStoreFullVoxelLevel0(coords[0], coords[1], coords[2]);
                         MakeAndStoreFullVoxelLevel0And1(coords[0], coords[1], coords[2]);
                     }
-                    lineStartIndex = int.MinValue;
+                    lineStartIndex = lineEndIndex = -1;
                 }
-                //If it is the last voxel, then it cannot start a new line 
-                if (finalIndex == currentIndex) break;
-                //Start a new line anytime there is a voxel with any faces pointed away from the search direction
-                //and the next voxel is fully inside the solid (not a partial). 
-                consecutiveVoxels.Add(currentVoxel);
-                //If it is positive, then it must be outside. Do not make a new line.
-                if (currentVoxel.Faces.All(f => f.Normal[sweepDim] >= 0)) continue;
-                //If the next partial voxel is adjacent, then the current voxel cannot start a new line.
+                /* If it is the last voxel, then it cannot start a new line. There is no point going on, so break loop */
+                if (!voxelsInRow.Any()) break;
+                /* add any faces in current to the list of prevFacesToConsider */
+                foreach (var face in currentVoxel.Faces)
+                    if (!prevFacesToConsider.Contains(face)) prevFacesToConsider.Add(face);
+
+                /* If the next partial voxel is adjacent, then the current voxel cannot start a new line. */
                 var nextVoxel = voxelsInRow[0];
-                if (nextVoxel.CoordinateIndices[sweepDim] - currentIndex == 1) continue;
-                //If the current voxel is negative, then it must be inside. Start a new line.
-                if (nextVoxel.Faces.All(f => f.Normal[sweepDim] <= 0)) continue;
-                if (currentVoxel.Faces.All(f => f.Normal[sweepDim] <= 0)
-                    && (nextVoxel.Faces.All(f => f.Normal[sweepDim] >= 0)))
+                var nextIndex = nextVoxel.CoordinateIndices[sweepDim];
+                if (nextIndex - currentIndex == 1) continue;
+                lineEndIndex = nextIndex; /*this seems out of place, but it's meant to be established before changes in nextVoxel below*/  /* okay, if you get here then there is a gap ahead. This is the opportunity to fill in that gap
+                 * this is done by setting the lineStartIndex to the currentIndex - otherwise it should stay a 
+                 * negative number to avoid the fill-in loop above. */
+                if (currentVoxel.Faces.All(f => f.Normal[sweepDim] >= 0)
+                    || nextVoxel.Faces.All(f => f.Normal[sweepDim] <= 0))
                 {
-                    lineStartIndex = currentIndex;
+                    prevFacesToConsider.Clear();
                     continue;
                 }
-                //Else, the current voxel contains both positive and negative faces - as does the next voxel
-                //We need to determine if the next voxel is fully inside the solid or empty
-                //Check the reversed prior voxels, looking for the closest face that intersects
-                //a ray casted from the next voxel
-                var prevFacesToConsider = consecutiveVoxels.SelectMany(v => v.Faces).Distinct().ToList();
-                consecutiveVoxels.Clear();
-                var nextFacesToConsider = new List<PolygonalFace>();
-                var nextIndex = nextVoxel.CoordinateIndices[sweepDim];
+                if (currentVoxel.Faces.All(f => f.Normal[sweepDim] <= 0)
+                || (nextVoxel.Faces.All(f => f.Normal[sweepDim] >= 0)))
+                {
+                    lineStartIndex = currentIndex;
+                    prevFacesToConsider.Clear();
+                    continue;
+                }
+                /* Else, the current voxel contains both positive and negative faces - as does the next voxel
+                 * We need to determine if the next voxel is fully inside the solid or empty
+                 * Check ahead to build up the nextFacesToConsider
+                 * Then,we will look for the closest face that intersects ray cast in both directions the next voxel */
+                nextFacesToConsider = new HashSet<PolygonalFace>();
                 do
                 {
-                    voxelsInRow.RemoveAt(0);
-                    consecutiveVoxels.Add(nextVoxel);
-                    nextFacesToConsider.AddRange(nextVoxel.Faces);
-                    nextVoxel = (voxelsInRow.Any()) ? voxelsInRow[0] : null;
-                } while (nextVoxel != null && nextVoxel.CoordinateIndices[sweepDim] == ++nextIndex);
-                voxelsInRow.Insert(0, consecutiveVoxels.Last());
-                nextFacesToConsider = nextFacesToConsider.Distinct().ToList();
+                    foreach (var face in nextVoxel.Faces)
+                        if (!nextFacesToConsider.Contains(face)) nextFacesToConsider.Add(face);
+                    if (voxelsInRow.Count > 1 && voxelsInRow[1].CoordinateIndices[sweepDim] == 1 + nextIndex)
+                    {
+                        voxelsInRow.RemoveAt(0);
+                        nextVoxel = voxelsInRow[0];
+                        nextIndex++;
+                    }
+                    else break;
+                } while (true);
                 var random = new Random();
                 int successes = 0;
-            
+
                 for (int i = 0; i < Constants.NumberOfInteriorAttempts; i++)
                 {
                     var randDelta = new[] { random.NextDouble(), random.NextDouble(), random.NextDouble() };
@@ -1102,10 +1110,12 @@ namespace TVGL.Voxelization
                 }
                 if (successes >= Constants.NumberOfInteriorSuccesses)
                     lineStartIndex = currentIndex;
+                prevFacesToConsider = new HashSet<PolygonalFace>(nextFacesToConsider);
+                nextFacesToConsider.Clear();
             }
         }
 
-        private PolygonalFace ClosestIntersectingFace(List<PolygonalFace> faces, double[] coordinate,
+        private PolygonalFace ClosestIntersectingFace(IEnumerable<PolygonalFace> faces, double[] coordinate,
             VoxelDirections direction, out double distance)
         {
             PolygonalFace closestFace = null;
