@@ -21,21 +21,27 @@ using StarMathLib;
 
 namespace TVGL
 {
+    /// <summary>
+    ///     The Point light struct is a low memory version of the Point class. 
+    /// </summary>
     [DataContract]
-    public struct PointLight
+    public struct PointLight: IVertex
     {
-        public double X;
-        public double Y;
+        [DataMember]
+        public double[] Position { get; set; }
+
+        public double X => Position[0];
+
+        public double Y => Position[1];
+
+        public PointLight(double x, double y)
+        {
+            Position = new []{x , y};
+        }
 
         public PointLight(Point point)
         {
-            X = point.X;
-            Y = point.Y;
-        }
-
-        public double[] GetPosition()
-        {
-            return new [] {X, Y};
+            Position = new[] { point.X, point.Y };
         }
     }
 
