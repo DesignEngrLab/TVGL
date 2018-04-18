@@ -59,13 +59,13 @@ namespace TVGL.Voxelization
 
 
         private static readonly long maskAllButLevel0 = Int64.Parse("F0000F0000F00000",
-            NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
+            NumberStyles.HexNumber); 
         private static readonly long maskAllButLevel0and1 = Int64.Parse("FF000FF000FF0000",
-            NumberStyles.HexNumber);  // clears out X since = #0,FF000,FF000,FF000
+            NumberStyles.HexNumber); 
         private static readonly long maskAllButLevel01and2 = Int64.Parse("FFF00FFF00FFF000",
-            NumberStyles.HexNumber);  // clears out X since = #0,FFF00,FFF00,FFF00
+            NumberStyles.HexNumber); 
         private static readonly long maskLevel4 = Int64.Parse("FFFF0FFFF0FFFF00",
-            NumberStyles.HexNumber);  // clears out X since = #0,FFFF0,FFFF0,FFFF0
+            NumberStyles.HexNumber); 
         public static long MakeParentVoxelID(long id, int level)
         {
             switch (level)
@@ -202,7 +202,7 @@ namespace TVGL.Voxelization
         }
 
 
-        private static readonly long maskAllButX = Int64.Parse("000000000FFFFF0",
+        private static readonly long maskAllButX = Int64.Parse("0000000000FFFFF0",
             NumberStyles.HexNumber); // clears all but X
         private static readonly long maskAllButY = Int64.Parse("00000FFFFF000000",
             NumberStyles.HexNumber); // clears all but Y
