@@ -83,9 +83,9 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("Pump4*");
+            var fileNames = dir.GetFiles("*ThickPlateTopOp*");
             var r = new Random();
-            for (var i = 0; i < fileNames.Count(); i=i+r.Next(10))
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -136,19 +136,24 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
-            PresenterShowAndHang(vs1);
-            
+          //  PresenterShowAndHang(vs1);
+
             //Console.WriteLine("Converting back to Tesselated Model");
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
 
             Console.WriteLine("Drafting voxelized model along orthogonals");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
-            PresenterShowAndHang(vs1xpos);
+           // PresenterShowAndHang(vs1xpos);
             var vs1xneg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
+           // PresenterShowAndHang(vs1xneg);
             var vs1ypos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
+           // PresenterShowAndHang(vs1ypos);
             var vs1yneg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
+           // PresenterShowAndHang(vs1yneg);
             var vs1zpos = vs1.DraftToNewSolid(VoxelDirections.ZPositive);
+           // PresenterShowAndHang(vs1zpos);
             var vs1zneg = vs1.DraftToNewSolid(VoxelDirections.ZNegative);
+           // PresenterShowAndHang(vs1zneg);
 
             Console.WriteLine("Intersecting drafted models");
             var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);
@@ -162,11 +167,11 @@ namespace TVGLPresenterDX
             PresenterShowAndHang(vs1, unmachinableVoxels);
 
             Console.WriteLine("Totals for Original Voxel Shape: " + vs1.GetTotals[0] + "; " + vs1.GetTotals[1] + "; " + vs1.GetTotals[2] + "; " + vs1.GetTotals[3]);
-            Console.WriteLine("Totals for X Positive Draft: " + vs1xpos.GetTotals[0] + "; " + vs1xpos.GetTotals[1] + "; " + vs1xpos.GetTotals[2] + "; " + vs1xpos.GetTotals[3]);
+            //Console.WriteLine("Totals for X Positive Draft: " + vs1xpos.GetTotals[0] + "; " + vs1xpos.GetTotals[1] + "; " + vs1xpos.GetTotals[2] + "; " + vs1xpos.GetTotals[3]);
             Console.WriteLine("Totals for X Negative Draft: " + vs1xneg.GetTotals[0] + "; " + vs1xneg.GetTotals[1] + "; " + vs1xneg.GetTotals[2] + "; " + vs1xneg.GetTotals[3]);
-            Console.WriteLine("Totals for Y Positive Draft: " + vs1ypos.GetTotals[0] + "; " + vs1ypos.GetTotals[1] + "; " + vs1ypos.GetTotals[2] + "; " + vs1ypos.GetTotals[3]);
+            //Console.WriteLine("Totals for Y Positive Draft: " + vs1ypos.GetTotals[0] + "; " + vs1ypos.GetTotals[1] + "; " + vs1ypos.GetTotals[2] + "; " + vs1ypos.GetTotals[3]);
             Console.WriteLine("Totals for Y Negative Draft: " + vs1yneg.GetTotals[0] + "; " + vs1yneg.GetTotals[1] + "; " + vs1yneg.GetTotals[2] + "; " + vs1yneg.GetTotals[3]);
-            Console.WriteLine("Totals for Z Positive Draft: " + vs1zpos.GetTotals[0] + "; " + vs1zpos.GetTotals[1] + "; " + vs1zpos.GetTotals[2] + "; " + vs1zpos.GetTotals[3]);
+            //Console.WriteLine("Totals for Z Positive Draft: " + vs1zpos.GetTotals[0] + "; " + vs1zpos.GetTotals[1] + "; " + vs1zpos.GetTotals[2] + "; " + vs1zpos.GetTotals[3]);
             Console.WriteLine("Totals for Z Negative Draft: " + vs1zneg.GetTotals[0] + "; " + vs1zneg.GetTotals[1] + "; " + vs1zneg.GetTotals[2] + "; " + vs1zneg.GetTotals[3]);
             Console.WriteLine("Totals for Intersected Voxel Shape: " + intersect.GetTotals[0] + "; " + intersect.GetTotals[1] + "; " + intersect.GetTotals[2] + "; " + intersect.GetTotals[3]);
             Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);

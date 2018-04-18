@@ -483,8 +483,8 @@ namespace TVGL.Voxelization
         private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references)
         {
             var voxels = GetChildVoxels(parent);
-            //Parallel.ForEach(voxels, thisVoxel =>
-            foreach (var thisVoxel in voxels)
+            Parallel.ForEach(voxels, thisVoxel =>
+            //foreach (var thisVoxel in voxels)
             {
                 var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
                 if (referenceLowestRole == VoxelRoleTypes.Full) return;
@@ -495,7 +495,7 @@ namespace TVGL.Voxelization
                     if (discretizationLevel > level)
                         Intersect(thisVoxel, level + 1, references);
                 }
-            } //);
+            } );
         }
         #endregion
         #region Subtract
