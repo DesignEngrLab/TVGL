@@ -160,6 +160,7 @@ namespace TVGL.Voxelization
         internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
             int level)
         {
+            if (voxel.InnerVoxels[level - 1] != null)
             foreach (var vx in voxel.InnerVoxels[level - 1])
                 yield return vx;
         }
@@ -410,13 +411,13 @@ namespace TVGL.Voxelization
                 var layerIndex = getLayerIndex(v, dimension, level, positiveDir);
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].Add(v);
-            } );
+            });
             var innerLimit = limit < 16 ? limit : 17;
             var nextLayerCount = 0;
             for (int i = 0; i < limit; i++)
             {
-                 Parallel.ForEach(layerOfVoxels[i], voxel =>
-               // foreach (var voxel in layerOfVoxels[i])
+                Parallel.ForEach(layerOfVoxels[i], voxel =>
+                // foreach (var voxel in layerOfVoxels[i])
                 {
                     if (remainingVoxelLayers < voxelsPerLayer) return;
                     if (voxel.Role == VoxelRoleTypes.Full
@@ -428,7 +429,8 @@ namespace TVGL.Voxelization
                         var neighborLayer = i;
                         do
                         {
-                            neighbor = GetNeighbor(neighbor, direction, out neighborHasDifferentParent);
+                            lock (neighbor)
+                                neighbor = GetNeighbor(neighbor, direction, out neighborHasDifferentParent);
                             if (neighbor == null) break; // null happens when you go outside of bounds (of coarsest voxels)
                             if (++neighborLayer < innerLimit)
                             {
@@ -451,7 +453,7 @@ namespace TVGL.Voxelization
                         else if (neighbor.Role != VoxelRoleTypes.Partial) neighbor = ChangeFullVoxelToPartial(neighbor);
                         layerOfVoxels[i + 1].Add(neighbor);
                     }
-                } );
+                });
                 remainingVoxelLayers -= (int)voxelsPerLayer;
             }
             return nextLayerCount == 256;
@@ -495,7 +497,7 @@ namespace TVGL.Voxelization
                     if (discretizationLevel > level)
                         Intersect(thisVoxel, level + 1, references);
                 }
-            } );
+            });
         }
         #endregion
         #region Subtract

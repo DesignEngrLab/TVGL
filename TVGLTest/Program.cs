@@ -85,8 +85,8 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            for (var i = 40; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("*Boss*");
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -99,10 +99,12 @@ namespace TVGLPresenterDX
                     ts = IO.Open(fileStream, filename);
                 if (!ts.Any()) continue;
 
+                Color color = new Color(KnownColors.AliceBlue);
+                ts[0].SolidColor = new Color(0.5f, 0f, 0f, .8f);
                 TestMachinability(ts[0], justfile);
 
-               // var stopWatch = new Stopwatch();
-               // Color color = new Color(KnownColors.AliceBlue);
+                // var stopWatch = new Stopwatch();
+                // Color color = new Color(KnownColors.AliceBlue);
                 //ts[0].SetToOriginAndSquare(out var backTransform);
                 //ts[0].Transform(new double[,]
                 //  {
@@ -110,11 +112,11 @@ namespace TVGLPresenterDX
                 //{0,1,0,-(ts[0].YMax+ts[0].YMin)/2},
                 //{0,0,1,-(ts[0].ZMax+ts[0].ZMin)/2},
                 //  });
-               // stopWatch.Restart();
+                // stopWatch.Restart();
                 //PresenterShowAndHang(ts);
-               // Console.WriteLine("Voxelizing Tesselated File " + filename);
-              //  var vs1 = new VoxelizedSolid(ts[0], VoxelDiscretization.Coarse, false);//, bounds);
-               // Presenter.ShowAndHang(vs1);
+                // Console.WriteLine("Voxelizing Tesselated File " + filename);
+                //  var vs1 = new VoxelizedSolid(ts[0], VoxelDiscretization.Coarse, false);//, bounds);
+                // Presenter.ShowAndHang(vs1);
                 //TestVoxelization(ts[0]);
                 //bounds = vs1.Bounds;
             }
@@ -123,11 +125,11 @@ namespace TVGLPresenterDX
 
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
-                var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
-            
+
             Console.WriteLine("Drafting Solid in X Positive...");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
             Presenter.ShowAndHang(vs1xpos);
