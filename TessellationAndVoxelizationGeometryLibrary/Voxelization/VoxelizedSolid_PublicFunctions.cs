@@ -416,7 +416,7 @@ namespace TVGL.Voxelization
                 // Parallel.ForEach(layerOfVoxels[i], voxel =>
                 foreach (var voxel in layerOfVoxels[i])
                 {
-                    if (remainingVoxelLayers >= voxelsPerLayer) continue;
+                    if (remainingVoxelLayers < voxelsPerLayer) continue;
                     if (voxel.Role == VoxelRoleTypes.Full
                         || (voxel.Role == VoxelRoleTypes.Partial && level == discretizationLevel))
                     {
