@@ -83,8 +83,9 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            for (var i = 0; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("Pump4*");
+            var r = new Random();
+            for (var i = 0; i < fileNames.Count(); i=i+r.Next(10))
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -135,12 +136,14 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
-
-            Console.WriteLine("Converting back to Tesselated Model");
-            var vs1ts = vs1.ConvertToTessellatedSolid(color);
+            PresenterShowAndHang(vs1);
+            
+            //Console.WriteLine("Converting back to Tesselated Model");
+            //var vs1ts = vs1.ConvertToTessellatedSolid(color);
 
             Console.WriteLine("Drafting voxelized model along orthogonals");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
+            PresenterShowAndHang(vs1xpos);
             var vs1xneg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
             var vs1ypos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
             var vs1yneg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
@@ -153,7 +156,6 @@ namespace TVGLPresenterDX
             Console.WriteLine("Subtracting original shape from intersect");
             var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
 
-            PresenterShowAndHang(vs1);
             //PresenterShowAndHang(vs1ts);
             PresenterShowAndHang(unmachinableVoxels);
             unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);

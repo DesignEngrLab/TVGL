@@ -45,7 +45,7 @@ namespace TVGLPresenterDX
 
         public void AddSolids(IList<Solid> solids)
         {
-            viewModel.AttachModelList(solids.Select(solid => ConvertToObject3D(solid)).ToList());
+            viewModel.AttachModelList(solids.Select(ConvertToObject3D).ToList());
         }
 
         private MeshGeometryModel3D ConvertToObject3D(Solid solid)
@@ -119,9 +119,11 @@ namespace TVGLPresenterDX
             foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
                                            // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
             {
+                var lowestLevel = (int) vs.Discretization;
+                if (v.Role == VoxelRoleTypes.Partial && v.Level < lowestLevel) continue;
                 var neighbors = vs.GetNeighbors(v).ToList();
-                // if (neighbors.All(n => n != null && n.Role == VoxelRoleTypes.Full))
-                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || n.Role == VoxelRoleTypes.Partial)))
+                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || (n.Role == VoxelRoleTypes.Partial
+                                                                                       && v.Level==lowestLevel))))
                     continue;
 
                 var x = (float)v.BottomCoordinate[0];

@@ -31,7 +31,7 @@ namespace TVGL.Voxelization
         public TessellatedSolid ConvertToTessellatedSolid(Color color, double minEdgeLength = -1)
         {
             var faceCollection = new ConcurrentBag<PolygonalFace>();
-            var voxelVertexDictionary = Voxels(VoxelRoleTypes.Partial,this.Discretization,  true)
+            var voxelVertexDictionary = Voxels(VoxelRoleTypes.Partial, this.Discretization, true)
                 .ToDictionary(v => v.ID, v => new Vertex(v.BottomCoordinate));
             var boundaryVertexDictionary = new Dictionary<long, Vertex>();
             var sideLength = VoxelSideLengths[discretizationLevel];
@@ -39,8 +39,8 @@ namespace TVGL.Voxelization
             var deltaY = 1L << (24 + 4 * (4 - discretizationLevel));
             var deltaZ = 1L << (44 + 4 * (4 - discretizationLevel));
 
-            //Parallel.ForEach(Voxels(this.Discretization, VoxelRoleTypes.Partial, true), v =>
-            foreach (var v in Voxels(VoxelRoleTypes.Partial, this.Discretization, true))
+            Parallel.ForEach(Voxels(VoxelRoleTypes.Partial, this.Discretization, true), v =>
+            //foreach (var v in Voxels(VoxelRoleTypes.Partial, this.Discretization, true))
             {
                 var neighborX = GetNeighbor(v, VoxelDirections.XPositive);
                 var neighborY = GetNeighbor(v, VoxelDirections.YPositive);
@@ -86,7 +86,7 @@ namespace TVGL.Voxelization
                 // positive Z face
                 if (neighborZ == null || neighborZ.Role == VoxelRoleTypes.Empty)
                     MakeFaces(faceCollection, vertexZ, vertexZX, vertexXYZ, vertexYZ);
-            } //);
+            });
             var vertices = voxelVertexDictionary.Values.ToList();
             vertices.AddRange(boundaryVertexDictionary.Values);
             var ts = new TessellatedSolid(faceCollection.ToList(), vertices, false, new[] { color });
@@ -98,8 +98,8 @@ namespace TVGL.Voxelization
         {
             //var f1=new PolygonalFace(new[] { v1, v2, v3 });
             //faceCollection.Add(f1);
-            faceCollection.Add(new PolygonalFace(new[] { v1, v2, v3 }));
-            faceCollection.Add(new PolygonalFace(new[] { v1, v3, v4 }));
+            faceCollection.Add(new PolygonalFace(new[] { v1, v2, v3 }, false));
+            faceCollection.Add(new PolygonalFace(new[] { v1, v3, v4 }, false));
         }
 
         private Vertex MakeBoundaryVertex(IVoxel baseVoxel, Dictionary<long, Vertex> boundaryDictionary, double[] shift, long delta)
