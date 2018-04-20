@@ -101,6 +101,7 @@ namespace TVGL.Voxelization
             Role = voxelRole;
             if (Role == VoxelRoleTypes.Partial) this.ID += 1;
             else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
+            if (Role == VoxelRoleTypes.Full) BtmCoordIsInside = true;
             SideLength = solid.VoxelSideLengths[0];
             var coordinateIndices = Constants.GetCoordinateIndices(ID, 0);
             BottomCoordinate = solid.GetRealCoordinates(0, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
@@ -122,6 +123,7 @@ namespace TVGL.Voxelization
             Role = voxelRole;
             if (Role == VoxelRoleTypes.Partial) this.ID += 1;
             else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
+            if (Role == VoxelRoleTypes.Full) BtmCoordIsInside = true;
             SideLength = solid.VoxelSideLengths[1];
             var coordinateIndices = Constants.GetCoordinateIndices(ID, 1);
             BottomCoordinate = solid.GetRealCoordinates(1, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);

@@ -90,13 +90,12 @@ namespace TVGL.Voxelization
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior(voxelsZeroLevel, null, null, unknownPartials);
             voxelDictionaryLevel0 = voxelsZeroLevel;
-            Presenter.ShowAndHang(this, VoxelDiscretization.ExtraCoarse);
             #endregion
 
             if (discretizationLevel >= 1)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 1);
-               // Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
+                // Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
                 foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                 {
                     var voxels = new VoxelHashSet(new VoxelComparerCoarse(), this);
@@ -106,10 +105,8 @@ namespace TVGL.Voxelization
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-            Presenter.ShowAndHang(ts, this);
                 }  //);
             }
-            //PresenterShowAndHang(this, VoxelDiscretization.Coarse);
 
             if (discretizationLevel >= 2)
             {
@@ -227,7 +224,7 @@ namespace TVGL.Voxelization
         {
             var s = VoxelSideLengths[level];
             Parallel.For(0, vertices.Count, i =>
-            //for (int i = 0; i < ts.NumberOfVertices; i++)
+            //for (int i = 0; i < vertices.Count; i++)
             {
                 // transformedCoordinates[i] = vertices[i].Position.subtract(Offset).divide(VoxelSideLengths[level]);
                 // or to make a bit faster
@@ -243,13 +240,13 @@ namespace TVGL.Voxelization
         private void MakeVertexVoxels(IList<Vertex> vertices, IVoxel parent, VoxelHashSet voxels)
         {
             setLimitsAndLevel(parent, out var level, out var parentLimits);
-            Parallel.ForEach(vertices, vertex =>
-            //for (int i = 0; i < ts.NumberOfVertices; i++)
+            //Parallel.ForEach(vertices, vertex =>
+            foreach (var vertex in vertices)
             {
                 int[] intCoords = intCoordsForVertex(vertex);
                 MakeAndStorePartialVoxel(intCoords, level, voxels, parentLimits, vertex);
             }
-            );
+            //);
         }
         private int[] intCoordsForVertex(Vertex v)
         {
@@ -769,12 +766,14 @@ namespace TVGL.Voxelization
         private void makeVoxelsInInterior(VoxelHashSet voxels, IVoxel parent, List<PolygonalFace> grandParentFaces,
             VoxelHashSet unknownPartials)
         {
+            /* define the box of the parent in terms of an lower and upper arrays */
             setLimitsAndLevel(parent, out var level, out var parentLimits);
             var allDirections = new[] { -3, -2, -1, 1, 2, 3 };
             var negDirections = new[] { -3, -2, -1 };
             var posDirections = new[] { 0, 1, 2 };
             var insiders = new Stack<IVoxel>();
             var outsiders = new Stack<IVoxel>();
+            /* separeate the partial/surface voxels into insiders and outsiders*/
             if (unknownPartials == null)
                 foreach (var voxel in voxels)
                     if (voxel.BtmCoordIsInside) insiders.Push(voxel);
@@ -782,25 +781,32 @@ namespace TVGL.Voxelization
             else foreach (var voxel in voxels.Where(v => !unknownPartials.Contains(v)))
                     if (voxel.BtmCoordIsInside) insiders.Push(voxel);
                     else outsiders.Push(voxel);
-            // the outsiders are harder since need to see if what across boundary is actually inside
+            /* the outsiders are done first as these may create insiders that are useful to finding other insiders.
+             * Note, that new interior voxels created here (20 lines down) are added to the insider queue. */
             while (outsiders.Any())
             {
                 var current = outsiders.Pop();
                 var coord = current.CoordinateIndices;
                 foreach (var direction in posDirections)
                 {
-                    if (coord[direction] == parentLimits[1][direction] - 1) continue;   // check to see if current is on a boundary 
+                    if (coord[direction] == parentLimits[1][direction] - 1) continue;   /* check to see if current is on a boundary.
+                    if so, just skip this one. */
                     var neighbor = GetNeighborForTSBuilding(coord, (VoxelDirections)(direction + 1), voxels, level, out var neighborCoord);
+                    /* if neighbor is null, then there is a possiblity to add it. if it exists but is in unknowns then we can figure out
+                     * if it is still unknown or not. */
                     if ((unknownPartials == null && neighbor != null) ||
                         (unknownPartials != null && !unknownPartials.Contains(neighbor))) continue;
+                    /* get the faces that goes through the current face */
                     var faces = current is VoxelWithTessellationLinks ? ((VoxelWithTessellationLinks)current).Faces :
                         parent is VoxelWithTessellationLinks ? ((VoxelWithTessellationLinks)parent).Faces :
                         grandParentFaces;
+                    /* so, if the farthest face in this positive direction is pointing in the negative direction, then
+                     * that neighboring voxel is inside. */
                     if (farthestFaceIsNegativeDirection(faces, coord, direction))
-                    {
+                    {  /*so, update an existing one that is unknown or...*/
                         if (unknownPartials != null && unknownPartials.Contains(neighbor))
                             neighbor.BtmCoordIsInside = true;
-                        else
+                        else /* make a new one */
                         {
                             neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels, parentLimits);
                             if (neighbor != null) insiders.Push(neighbor);
@@ -808,26 +814,26 @@ namespace TVGL.Voxelization
                     }
                 }
             }
+            insiders = new Stack<IVoxel>(insiders.OrderBy(v => v.CoordinateIndices[2]));
             while (insiders.Any())
             {
                 var current = insiders.Pop();
-                var directions = current.Role == VoxelRoleTypes.Full
-                                 || (unknownPartials != null && unknownPartials.Contains(current)) ? allDirections : negDirections;
+                var directions = current.Role == VoxelRoleTypes.Full || (unknownPartials != null && unknownPartials.Contains(current))
+                ? allDirections : negDirections;
                 var coord = current.CoordinateIndices;
                 foreach (var direction in directions)
                 {
-                    // check to see if current is on a boundary 
-                    if ((direction < 0 && coord[-direction - 1] > parentLimits[0][-direction - 1]) ||
-                    (direction > 0 && coord[direction - 1] < parentLimits[1][direction - 1] - 1))
+                    // check to see if current is not going put the neighbor outside of the boundary 
+                    if ((direction < 0 && coord[-direction - 1] == parentLimits[0][-direction - 1]) ||
+                        (direction > 0 && coord[direction - 1] == parentLimits[1][direction - 1] - 1)) continue;
+                    var neighbor = GetNeighborForTSBuilding(coord, (VoxelDirections)direction, voxels, level, out var neighborCoord);
+                    if (unknownPartials != null && unknownPartials.Contains(neighbor))
+                        neighbor.BtmCoordIsInside = true;
+                    else
+                    if (neighbor == null)
                     {
-                        var neighbor = GetNeighborForTSBuilding(coord, (VoxelDirections)direction, voxels, level, out var neighborCoord);
-                        if (unknownPartials != null && unknownPartials.Contains(neighbor))
-                            neighbor.BtmCoordIsInside = true;
-                        else if (neighbor == null)
-                        {
-                            neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels, parentLimits);
-                            insiders.Push(neighbor);
-                        }
+                        neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels, parentLimits);
+                        insiders.Push(neighbor);
                     }
                 }
             }
@@ -921,7 +927,7 @@ namespace TVGL.Voxelization
 
         private void LinkVoxelToTessellatedObject(VoxelWithTessellationLinks voxel, TessellationBaseClass tsObject)
         {
-            if (tsObject==null) return;
+            if (tsObject == null) return;
             if (voxel.TessellationElements.Contains(tsObject)) return;
             lock (voxel.TessellationElements) voxel.TessellationElements.Add(tsObject);
             tsObject.AddVoxel(voxel);

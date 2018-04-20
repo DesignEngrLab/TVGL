@@ -100,8 +100,11 @@ namespace TVGLPresenterDX
                 if (!ts.Any()) continue;
 
                 Color color = new Color(KnownColors.AliceBlue);
-                ts[0].SolidColor = new Color(0.5f, 0f, 0f, .8f);
-                TestMachinability(ts[0], justfile);
+                ts[0].SolidColor = new Color(KnownColors.MediumSeaGreen)
+                {
+                    Af = 0.25f
+                };
+            TestMachinability(ts[0], justfile);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -126,6 +129,7 @@ namespace TVGLPresenterDX
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
+            Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);

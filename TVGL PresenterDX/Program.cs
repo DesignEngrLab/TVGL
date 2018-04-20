@@ -83,7 +83,7 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*Boss*");
+            var fileNames = dir.GetFiles("*ThickPlateTopOp*");
             var r = new Random();
             for (var i = 0; i < fileNames.Count(); i++)
             {
@@ -124,22 +124,20 @@ namespace TVGLPresenterDX
         public static void TestVoxelFunctions(TessellatedSolid ts, string _fileName)
         {
             var stopWatch = new Stopwatch();
-            Color color = new Color(KnownColors.AliceBlue);
-            ts.SetToOriginAndSquare(out var backTransform);
-            ts.Transform(new double[,]
-              {
-                {1,0,0,-(ts.XMax + ts.XMin)/2},
-                {0,1,0,-(ts.YMax+ts.YMin)/2},
-                {0,0,1,-(ts.ZMax+ts.ZMin)/2},
-              });
-            stopWatch.Restart();
-
+            //ts.SetToOriginAndSquare(out var backTransform);
+            //ts.Transform(new double[,]
+            //  {
+            //    {1,0,0,-(ts.XMax + ts.XMin)/2},
+            //    {0,1,0,-(ts.YMax+ts.YMin)/2},
+            //    {0,0,1,-(ts.ZMax+ts.ZMin)/2},
+            //  });
+            //stopWatch.Restart();
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
            PresenterShowAndHang(vs1);
 
             //Console.WriteLine("Converting back to Tesselated Model");
-            var vs1ts = vs1.ConvertToTessellatedSolid(color);
+            //var vs1ts = vs1.ConvertToTessellatedSolid(new Color(KnownColors.AliceBlue));
 
             Console.WriteLine("Drafting voxelized model along orthogonals");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
