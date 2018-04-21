@@ -134,7 +134,7 @@ namespace TVGLPresenterDX
             //stopWatch.Restart();
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);  //, bounds);
-           PresenterShowAndHang(vs1);
+           //PresenterShowAndHang(vs1);
 
             //Console.WriteLine("Converting back to Tesselated Model");
             //var vs1ts = vs1.ConvertToTessellatedSolid(new Color(KnownColors.AliceBlue));

@@ -14,13 +14,9 @@
 
 using StarMathLib;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
-using TVGL.MathOperations;
 
 namespace TVGL.Voxelization
 {
@@ -95,8 +91,8 @@ namespace TVGL.Voxelization
             if (discretizationLevel >= 1)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 1);
-                // Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
-                foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
+                //foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                 {
                     var voxels = new VoxelHashSet(new VoxelComparerCoarse(), this);
                     MakeVertexVoxels(((VoxelWithTessellationLinks)voxel0).Vertices, voxel0, voxels);
@@ -105,7 +101,7 @@ namespace TVGL.Voxelization
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                }  //);
+                } );
             }
 
             if (discretizationLevel >= 2)
@@ -240,13 +236,13 @@ namespace TVGL.Voxelization
         private void MakeVertexVoxels(IList<Vertex> vertices, IVoxel parent, VoxelHashSet voxels)
         {
             setLimitsAndLevel(parent, out var level, out var parentLimits);
-            //Parallel.ForEach(vertices, vertex =>
-            foreach (var vertex in vertices)
+            Parallel.ForEach(vertices, vertex =>
+            //foreach (var vertex in vertices)
             {
                 int[] intCoords = intCoordsForVertex(vertex);
                 MakeAndStorePartialVoxel(intCoords, level, voxels, parentLimits, vertex);
             }
-            //);
+            );
         }
         private int[] intCoordsForVertex(Vertex v)
         {

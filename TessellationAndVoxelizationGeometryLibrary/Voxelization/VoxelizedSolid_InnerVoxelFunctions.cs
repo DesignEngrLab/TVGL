@@ -196,16 +196,16 @@ namespace TVGL.Voxelization
                 ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
                 if (discretizationLevel > 0)
                 {
-                    var level1Voxels = new List<IVoxel>();
-                    for (int i = 0; i < 16; i++)
-                        for (int j = 0; j < 16; j++)
-                            for (int k = 0; k < 16; k++)
-                            {
-                                level1Voxels.Add(new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
-                                                                        (j * 68719476736) +
-                                                                        (k * 72057594037927936L),
-                                    VoxelRoleTypes.Full, this));
-                            }
+                    var level1Voxels = new Voxel_Level1_Class[4096];
+                    Parallel.For(0, 16, i =>
+                         {
+                             for (int j = 0; j < 16; j++)
+                                 for (int k = 0; k < 16; k++)
+                                     level1Voxels[256 * i + 16 * j + k] = new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
+                                                                                                    (j * 68719476736) +
+                                                                                                    (k * 72057594037927936L),
+                                            VoxelRoleTypes.Full, this);
+                         });
                     ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
                     ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this, level1Voxels);
                 }
