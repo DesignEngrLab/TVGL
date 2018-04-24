@@ -161,8 +161,8 @@ namespace TVGL.Voxelization
             int level)
         {
             if (voxel.InnerVoxels[level - 1] != null)
-            foreach (var vx in voxel.InnerVoxels[level - 1])
-                yield return vx;
+                foreach (var vx in voxel.InnerVoxels[level - 1])
+                    yield return vx;
         }
         internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
             int level, VoxelRoleTypes role)
@@ -479,6 +479,7 @@ namespace TVGL.Voxelization
         public void Intersect(params VoxelizedSolid[] references)
         {
             Intersect(null, 0, references);
+            //IntersectNEW(null, 0, references, false);
             UpdateProperties();
         }
 
@@ -486,7 +487,7 @@ namespace TVGL.Voxelization
         {
             var voxels = GetChildVoxels(parent);
             Parallel.ForEach(voxels, thisVoxel =>
-                //foreach (var thisVoxel in voxels)
+            //foreach (var thisVoxel in voxels)
             {
                 var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
                 if (referenceLowestRole == VoxelRoleTypes.Full) return;
@@ -501,21 +502,57 @@ namespace TVGL.Voxelization
         }
         private void IntersectNEW(IVoxel parent, int level, VoxelizedSolid[] references, bool parentWasFull)
         {
-            var voxels = GetChildVoxels(references[0].GetVoxel(parent.ID,parent.Level));
-            if (references.Length==1)
-            Parallel.ForEach(voxels, thisVoxel =>
-                //foreach (var thisVoxel in voxels)
+            if (parentWasFull)
             {
-                var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
-                if (referenceLowestRole == VoxelRoleTypes.Full) return;
-                if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel);
-                else
+                var thisIDwoFlags = Constants.ClearFlagsFromID(parent.ID);
+                var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
+                var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
+
+                var refVoxels = GetChildVoxels(references[0].GetVoxel(parent.ID, parent.Level));
+                Parallel.ForEach(refVoxels, refVoxel =>
+                //foreach (var refVoxel in refVoxels)
                 {
-                    if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeFullVoxelToPartial(thisVoxel);
-                    if (discretizationLevel > level)
-                        Intersect(thisVoxel, level + 1, references);
-                }
-            });
+                    var referenceLowestRole = GetLowestRole(refVoxel.ID, level, references);
+                    if (referenceLowestRole == VoxelRoleTypes.Full)
+                    {
+                        var newVoxel = level == 1
+                            ? (IVoxel)new Voxel_Level1_Class(refVoxel.ID, VoxelRoleTypes.Full, this)
+                        : (IVoxel)new Voxel(Constants.ClearFlagsFromID(refVoxel.ID)
+                                           + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
+                        lock (voxel0.InnerVoxels[level - 1])
+                            voxel0.InnerVoxels[level - 1].Add(newVoxel);
+                    }
+                    else if (referenceLowestRole == VoxelRoleTypes.Partial)
+                    {
+                        var newVoxel = level == 1
+                            ? (IVoxel)new Voxel_Level1_Class(refVoxel.ID, VoxelRoleTypes.Partial, this)
+                                : (IVoxel)new Voxel(Constants.ClearFlagsFromID(refVoxel.ID)
+                                                    + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
+                        lock (voxel0.InnerVoxels[level - 1])
+                            voxel0.InnerVoxels[level - 1].Add(newVoxel);
+                        if (discretizationLevel > level)
+                            IntersectNEW(newVoxel, level + 1, references, false);
+                    }
+                } );
+            }
+            else
+            {
+                var voxels = GetChildVoxels(parent);
+                Parallel.ForEach(voxels, thisVoxel =>
+                //foreach (var thisVoxel in voxels)
+                {
+                    var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
+                    if (referenceLowestRole == VoxelRoleTypes.Full) return;
+                    if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel);
+                    else
+                    {
+                        var thisVoxelWasFull = thisVoxel.Role == VoxelRoleTypes.Full;
+                        if (thisVoxelWasFull) ChangeFullVoxelToPartialNEW(thisVoxel,false);
+                        if (discretizationLevel > level)
+                            IntersectNEW(thisVoxel, level + 1, references, thisVoxelWasFull);
+                    }
+                });
+            }
         }
         #endregion
         #region Subtract

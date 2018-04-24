@@ -198,14 +198,14 @@ namespace TVGL.Voxelization
                 {
                     var level1Voxels = new Voxel_Level1_Class[4096];
                     Parallel.For(0, 16, i =>
-                         {
-                             for (int j = 0; j < 16; j++)
-                                 for (int k = 0; k < 16; k++)
-                                     level1Voxels[256 * i + 16 * j + k] = new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
-                                                                                                    (j * 68719476736) +
-                                                                                                    (k * 72057594037927936L),
-                                            VoxelRoleTypes.Full, this);
-                         });
+                    {
+                        for (int j = 0; j < 16; j++)
+                            for (int k = 0; k < 16; k++)
+                                level1Voxels[256 * i + 16 * j + k] = new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
+                                    (j * 68719476736) +
+                                    (k * 72057594037927936L),
+                                    VoxelRoleTypes.Full, this);
+                    });
                     ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
                     ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this, level1Voxels);
                 }
@@ -235,13 +235,77 @@ namespace TVGL.Voxelization
                 for (int j = 0; j < 16; j++)
                     for (int k = 0; k < 16; k++)
                         lowerLevelVoxels.Add(new Voxel(thisIDwoFlags
-                                                           + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level + 1));
+                            + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level + 1));
             if (this.discretizationLevel > level)
                 lock (voxel0.InnerVoxels[level + 1])
                     voxel0.InnerVoxels[level + 1].AddRange(lowerLevelVoxels);
             return voxel;
         }
 
+        private IVoxel ChangeFullVoxelToPartialNEW(IVoxel voxel, bool populateSubVoxels = true)
+        {
+            if (voxel.Role == VoxelRoleTypes.Partial)
+                throw new ArgumentException("input voxel is already partial.");
+            if (voxel.Level == 0)
+            {
+                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
+                if (discretizationLevel > 0)
+                {
+                    ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
+                    if (populateSubVoxels)
+                    {
+                        var level1Voxels = new Voxel_Level1_Class[4096];
+                        Parallel.For(0, 16, i =>
+                        {
+                            for (int j = 0; j < 16; j++)
+                                for (int k = 0; k < 16; k++)
+                                    level1Voxels[256 * i + 16 * j + k] = new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
+                                                                                            (j * 68719476736) +
+                                                                                            (k * 72057594037927936L),
+                                    VoxelRoleTypes.Full, this);
+                        });
+                        ((Voxel_Level0_Class)voxel).InnerVoxels[0] =
+                            new VoxelHashSet(new VoxelComparerCoarse(), this, level1Voxels);
+                    }
+                    else ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this);
+                }
+                return voxel;
+            }
+            var level = voxel.Level;
+            var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
+            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
+            if (voxel0.Role == VoxelRoleTypes.Full) ChangeFullVoxelToPartial(voxel0);
+            if (level == 1) ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
+            else
+            {
+                lock (voxel0.InnerVoxels[level - 1])
+                {
+                    voxel0.InnerVoxels[level - 1].Remove(voxel);
+                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), level);
+                    voxel0.InnerVoxels[level - 1].Add(voxel);
+                }
+            }
+            if (this.discretizationLevel <= level) return voxel;
+            if (voxel0.InnerVoxels[level] == null)
+                voxel0.InnerVoxels[level] = new VoxelHashSet(new VoxelComparerFine(), this);
+            if (populateSubVoxels)
+            {
+                var lowerLevelVoxels = new List<IVoxel>();
+                var xShift = 1L << 4 + 4 * (4 - level);
+                var yShift = xShift << 20;
+                var zShift = yShift << 20;
+                for (int i = 0; i < 16; i++)
+                    for (int j = 0; j < 16; j++)
+                        for (int k = 0; k < 16; k++)
+                            lowerLevelVoxels.Add(new Voxel(thisIDwoFlags
+                                                           + (i * xShift) + (j * yShift) + (k * zShift)
+                                                           + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level + 1));
+                lock (voxel0.InnerVoxels[level])
+                    voxel0.InnerVoxels[level].AddRange(lowerLevelVoxels);
+            }
+            return voxel;
+        }
         #endregion
 
         private void UpdateProperties(int level = -1)
