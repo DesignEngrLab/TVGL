@@ -65,6 +65,21 @@ namespace TVGL
             return polygon.Area.IsPracticallySame(minBoundingRectangle.Area, polygon.Area * tolerancePercentage);
         }
 
+        public static bool IsCircular(Polygon polygon, double confidencePercentage = Constants.HighConfidence)
+        {
+            return IsCircular(polygon, out var _, confidencePercentage);
+        }
+
+        public static bool IsCircular(Polygon polygon, out BoundingCircle minCircle, double confidencePercentage = Constants.HighConfidence)
+        {
+            var tolerancePercentage = 1.0 - confidencePercentage;
+            minCircle = MinimumEnclosure.MinimumCircle(polygon.Path);
+            
+            //Check if areas are close to the same
+            var polygonArea = Math.Abs(polygon.Area);
+            return polygonArea.IsPracticallySame(minCircle.Area, polygonArea * tolerancePercentage); 
+        }
+
         /// <summary>
         /// Gets the length of a path
         /// </summary>
