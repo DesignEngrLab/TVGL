@@ -265,11 +265,11 @@ namespace TVGL
                         if (normal != null)
                         {
                             if (tempCross.IsPracticallySame(normal, Constants.SameFaceNormalDotTolerance))
-                                return normal;
+                                return tempCross;
                             if (tempCross.multiply(-1).IsPracticallySame(normal, Constants.SameFaceNormalDotTolerance))
                             {
                                 reverseVertexOrder = true;
-                                return normal;
+                                return tempCross.multiply(-1);
                             }
                         }
                     }
