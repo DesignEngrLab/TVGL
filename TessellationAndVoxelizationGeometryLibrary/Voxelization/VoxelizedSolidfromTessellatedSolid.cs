@@ -541,7 +541,7 @@ namespace TVGL.Voxelization
         /// <param name="dim"></param>
         /// <param name="intersections"></param>
         /// <param name="vectorNorm"></param>
-        private void getIntegerIntersectionsAlongLine(double[] startPoint, double[] endPoint,
+        public static void getIntegerIntersectionsAlongLine(double[] startPoint, double[] endPoint,
             int dim, Dictionary<int, List<double[]>> intersections, double[] vectorNorm = null)
         {
             if (vectorNorm == null) vectorNorm = endPoint.subtract(startPoint).normalize();

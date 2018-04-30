@@ -34,13 +34,17 @@ namespace TVGL.Voxelization
         public long[] GetTotals => _totals;
         long[] _totals;
 
-        /// <summary>
-        /// Gets the voxel.
-        /// </summary>
-        /// <param name="newID">The new identifier.</param>
-        /// <param name="level">The level.</param>
-        /// <returns>IVoxel.</returns>
-        public IVoxel GetVoxel(long newID, int level = -1)
+        public IVoxel GetVoxel(int[] intCoordnewID, int level = -1)
+        {
+            throw new NotImplementedException();
+        }
+            /// <summary>
+            /// Gets the voxel.
+            /// </summary>
+            /// <param name="newID">The new identifier.</param>
+            /// <param name="level">The level.</param>
+            /// <returns>IVoxel.</returns>
+            public IVoxel GetVoxel(long newID, int level = -1)
         {
             if (level == -1)
             {

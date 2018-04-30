@@ -183,7 +183,7 @@ namespace TVGLPresenterDX
             //IO.Save(vs1znegts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Intersecting Drafted Solids...");
-            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1ypos, vs1zpos);
+            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1yneg, vs1zpos);
             //PresenterShowAndHang(intersect);
             //var intersectts = intersect.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");

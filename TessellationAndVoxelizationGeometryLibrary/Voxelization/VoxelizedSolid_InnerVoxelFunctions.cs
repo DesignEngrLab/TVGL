@@ -26,7 +26,7 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
         #region Functions to make voxel full, empty or partial
-        private void ChangeVoxelToEmpty(IVoxel voxel)
+        public void ChangeVoxelToEmpty(IVoxel voxel)
         {
             if (voxel.Role == VoxelRoleTypes.Empty) return;
             if (voxel.Level == 0)
