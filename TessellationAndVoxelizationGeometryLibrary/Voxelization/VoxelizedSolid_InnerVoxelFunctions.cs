@@ -75,7 +75,7 @@ namespace TVGL.Voxelization
                     voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
             voxel = level == 1
                 ? (IVoxel)new Voxel_Level1_Class(ID, VoxelRoleTypes.Full, this)
-                : (IVoxel)new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), level);
+                : (IVoxel)new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full));
             lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
             if (level == 1)
             {
@@ -123,8 +123,7 @@ namespace TVGL.Voxelization
                 lock (voxel0.InnerVoxels[level - 1])
                 {
                     voxel0.InnerVoxels[level - 1].Remove(voxel);
-                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full),
-                        level);
+                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full));
                     voxel0.InnerVoxels[level - 1].Add(voxel);
                 }
             }
@@ -183,7 +182,7 @@ namespace TVGL.Voxelization
                     voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
             voxel = level == 1
                 ? (IVoxel)new Voxel_Level1_Class(ID, VoxelRoleTypes.Partial, this)
-                : (IVoxel)new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), level);
+                : (IVoxel)new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial));
             lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
             return voxel;
         }
@@ -222,8 +221,7 @@ namespace TVGL.Voxelization
                 lock (voxel0.InnerVoxels[level - 1])
                 {
                     voxel0.InnerVoxels[level - 1].Remove(voxel);
-                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial),
-                        level);
+                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial));
                     voxel0.InnerVoxels[level - 1].Add(voxel);
                 }
             }
@@ -235,7 +233,7 @@ namespace TVGL.Voxelization
                 for (int j = 0; j < 16; j++)
                     for (int k = 0; k < 16; k++)
                         lowerLevelVoxels.Add(new Voxel(thisIDwoFlags
-                            + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level + 1));
+                            + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true)));
             if (this.discretizationLevel > level)
                 lock (voxel0.InnerVoxels[level + 1])
                     voxel0.InnerVoxels[level + 1].AddRange(lowerLevelVoxels);
@@ -282,7 +280,7 @@ namespace TVGL.Voxelization
                 lock (voxel0.InnerVoxels[level - 1])
                 {
                     voxel0.InnerVoxels[level - 1].Remove(voxel);
-                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), level);
+                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial));
                     voxel0.InnerVoxels[level - 1].Add(voxel);
                 }
             }
@@ -300,7 +298,7 @@ namespace TVGL.Voxelization
                         for (int k = 0; k < 16; k++)
                             lowerLevelVoxels.Add(new Voxel(thisIDwoFlags
                                                            + (i * xShift) + (j * yShift) + (k * zShift)
-                                                           + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level + 1));
+                                                           + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true)));
                 lock (voxel0.InnerVoxels[level])
                     voxel0.InnerVoxels[level].AddRange(lowerLevelVoxels);
             }

@@ -363,7 +363,7 @@ namespace TVGL.Voxelization
                     {
                         copyVoxel.InnerVoxels[i] = new VoxelHashSet(new VoxelComparerFine(), copy);
                         foreach (var innerVoxel in thisVoxel.InnerVoxels[i])
-                            copyVoxel.InnerVoxels[i].Add(new Voxel(innerVoxel.ID, i + 1));
+                            copyVoxel.InnerVoxels[i].Add(new Voxel(innerVoxel.ID));
                     }
                 }
             }
@@ -643,7 +643,7 @@ namespace TVGL.Voxelization
                     for (int j = 0; j < 16; j++)
                         for (int k = 0; k < 16; k++)
                             ((List<IVoxel>)voxels).Add(new Voxel(thisIDwoFlags
-                                                              + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), level));
+                                                              + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true)));
             }
             else voxels = reference.GetChildVoxels(parent);
             Parallel.ForEach(voxels, refVoxel =>
@@ -798,7 +798,7 @@ namespace TVGL.Voxelization
                     //ToDo: Can this be parallelized???
                     foreach (var voxelItem in removedLayer)
                     {
-                        if (voxelItem.Value) voxelSolid.ChangeFullVoxelToPartial(new Voxel(voxelItem.Key, voxelLevel));
+                        if (voxelItem.Value) voxelSolid.ChangeFullVoxelToPartial(new Voxel(voxelItem.Key));
                         else voxelSolid.ChangeEmptyVoxelToFull(voxelItem.Key, voxelLevel);
                     }
                 }

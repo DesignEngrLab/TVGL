@@ -896,7 +896,7 @@ namespace TVGL.Voxelization
                     else if (level == 1)
                         voxel = new Voxel_Level1_Class(id, VoxelRoleTypes.Partial, this);
                     else
-                        voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), level);
+                        voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial));
                     voxels.Add(voxel);
                 }
             }
@@ -944,7 +944,7 @@ namespace TVGL.Voxelization
                     else if (level == 1)
                         voxel = new Voxel_Level1_Class(id, VoxelRoleTypes.Full, this);
                     else
-                        voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), level);
+                        voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Full));
                     voxels.Add(voxel);
                 }
             }
