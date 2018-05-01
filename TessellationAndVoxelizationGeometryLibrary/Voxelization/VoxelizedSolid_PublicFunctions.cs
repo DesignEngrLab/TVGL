@@ -1111,7 +1111,7 @@ namespace TVGL.Voxelization
             return voxelOffsets;
         }
 
-        public static void GetSolidCubeCenteredOnVoxel(Voxel voxel, ref VoxelizedSolid voxelizedSolid, int length)
+        public static void GetSolidCubeCenteredOnVoxel(Voxel voxel, VoxelizedSolid voxelizedSolid, int length)
         {
             //var x = voxel.Index[0];
             //var y = voxel.Index[1];

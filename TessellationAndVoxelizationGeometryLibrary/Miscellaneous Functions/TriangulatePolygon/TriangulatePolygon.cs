@@ -562,9 +562,9 @@ namespace TVGL
 
                                         //Close two trapezoids
                                         //Left trapezoid:
-                                        InsertTrapezoid(node, leftLine, node.StartLine, ref trapTree, ref completedTrapezoids);
+                                        InsertTrapezoid(node, leftLine, node.StartLine, trapTree, completedTrapezoids);
                                         //Right trapezoid:
-                                        InsertTrapezoid(node, node.EndLine, rightLine, ref trapTree, ref completedTrapezoids);
+                                        InsertTrapezoid(node, node.EndLine, rightLine, trapTree, completedTrapezoids);
 
                                         //Create one new partial trapezoid
                                         var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, rightLine);
@@ -580,7 +580,7 @@ namespace TVGL
                                         }
 
                                         //Close one trapezoid
-                                        InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
+                                        InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
 
                                         //Create two new partial trapezoids
                                         //Left Trapezoid
@@ -601,7 +601,7 @@ namespace TVGL
                                 case NodeType.Root:
                                     {
                                         //Close one trapezoid
-                                        InsertTrapezoid(node, node.EndLine, node.StartLine, ref trapTree, ref completedTrapezoids);
+                                        InsertTrapezoid(node, node.EndLine, node.StartLine, trapTree, completedTrapezoids);
                                     }
                                     break;
                                 case NodeType.Left:
@@ -609,7 +609,7 @@ namespace TVGL
                                         //Create one trapezoid
                                         FindLeftLine(node, lineList, out leftLine);
                                         rightLine = node.StartLine;
-                                        InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
+                                        InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
 
                                         //Create one new partial trapezoid
                                         var newPartialTrapezoid = new PartialTrapezoid(node, leftLine, node.EndLine);
@@ -621,7 +621,7 @@ namespace TVGL
                                         //Create one trapezoid
                                         FindRightLine(node, lineList, out rightLine);
                                         leftLine = node.EndLine;
-                                        InsertTrapezoid(node, leftLine, rightLine, ref trapTree, ref completedTrapezoids);
+                                        InsertTrapezoid(node, leftLine, rightLine, trapTree, completedTrapezoids);
 
                                         //Create one new partial trapezoid
                                         var newPartialTrapezoid = new PartialTrapezoid(node, node.StartLine, rightLine);
@@ -1299,7 +1299,7 @@ namespace TVGL
         #endregion
 
         #region Create Trapezoid and Insert Into List
-        internal static void InsertTrapezoid(Node node, NodeLine leftLine, NodeLine rightLine, ref List<PartialTrapezoid> trapTree, ref List<Trapezoid> completedTrapezoids)
+        internal static void InsertTrapezoid(Node node, NodeLine leftLine, NodeLine rightLine, List<PartialTrapezoid> trapTree, List<Trapezoid> completedTrapezoids)
         {
             var matchesTrap = false;
             var i = 0;

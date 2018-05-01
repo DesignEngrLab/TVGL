@@ -82,7 +82,7 @@ namespace TVGL.Voxelization
             MakeVertexSimulatedCoordinates(ts.Vertices, 0);
             MakeVertexVoxels(ts.Vertices, null, voxelsZeroLevel);
             MakeVoxelsForFacesAndEdges(ts.Faces, null, voxelsZeroLevel);
-            var unknownPartials = DefineBottomCoordinateInside(ref voxelsZeroLevel, null);
+            var unknownPartials = DefineBottomCoordinateInside(voxelsZeroLevel, null);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior(voxelsZeroLevel, null, null, unknownPartials);
             voxelDictionaryLevel0 = voxelsZeroLevel;
@@ -97,7 +97,7 @@ namespace TVGL.Voxelization
                     var voxels = new VoxelHashSet(new VoxelComparerCoarse(), this);
                     MakeVertexVoxels(((VoxelWithTessellationLinks)voxel0).Vertices, voxel0, voxels);
                     MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel0).Faces, voxel0, voxels);
-                    unknownPartials = DefineBottomCoordinateInside(ref voxels, null);
+                    unknownPartials = DefineBottomCoordinateInside(voxels, null);
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
@@ -121,7 +121,7 @@ namespace TVGL.Voxelization
                                 MakeVertexVoxels(((VoxelWithTessellationLinks)voxel1).Vertices, voxel1, voxelHash);
                                 MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel1).Faces, voxel1,
                                     voxelHash);
-                                unknownPartials = DefineBottomCoordinateInside(ref voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
+                                unknownPartials = DefineBottomCoordinateInside(voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
                                 if (!onlyDefineBoundary)
                                     makeVoxelsInInterior(voxelHash, voxel1, null, unknownPartials);
                                 lock (voxels) voxels.AddRange(voxelHash);
@@ -151,7 +151,7 @@ namespace TVGL.Voxelization
                                     MakeVertexVoxels(((VoxelWithTessellationLinks)voxel1).Vertices, voxel2, voxelHash);
                                     MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel1).Faces, voxel2,
                                         voxelHash);
-                                    unknownPartials = DefineBottomCoordinateInside(ref voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
+                                    unknownPartials = DefineBottomCoordinateInside(voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
                                     if (!onlyDefineBoundary)
                                         makeVoxelsInInterior(voxelHash, voxel2, ((VoxelWithTessellationLinks)voxel1).Faces, unknownPartials);
                                     lock (voxels) voxels.AddRange(voxelHash);
@@ -186,7 +186,7 @@ namespace TVGL.Voxelization
                                             voxelHash);
                                         MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel1).Faces, voxel3,
                                             voxelHash);
-                                        unknownPartials = DefineBottomCoordinateInside(ref voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
+                                        unknownPartials = DefineBottomCoordinateInside(voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
                                         if (!onlyDefineBoundary)
                                             makeVoxelsInInterior(voxelHash, voxel3, ((VoxelWithTessellationLinks)voxel1).Faces, unknownPartials);
                                         lock (voxels) voxels.AddRange(voxelHash);
@@ -655,7 +655,7 @@ namespace TVGL.Voxelization
         #region Interior Voxel Creation
 
 
-        private VoxelHashSet DefineBottomCoordinateInside(ref VoxelHashSet voxels, List<PolygonalFace> parentFaces)
+        private VoxelHashSet DefineBottomCoordinateInside(VoxelHashSet voxels, List<PolygonalFace> parentFaces)
         {
             var level = voxels.FirstOrDefault()?.Level ?? 0;
             var queue = new Queue<IVoxel>(voxels);
