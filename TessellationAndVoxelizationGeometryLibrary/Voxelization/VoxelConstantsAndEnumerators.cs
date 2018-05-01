@@ -25,7 +25,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The fraction of white space around the finest voxel (2^20 along longest side)
         /// </summary>
-        internal const double fractionOfWhiteSpaceAroundFinestVoxel = 0.5;
+        internal const double fractionOfWhiteSpaceAroundFinestVoxel = 0.1;
         // we call this f for short
         // to find this delta, we have two equations & two unknowns
         // Eq1: length_of_model + 2*delta = length_of_box
@@ -56,38 +56,17 @@ namespace TVGL.Voxelization
 
         #region converting IDs and back again
         #region Parents and Children
-        public static long MakeVoxelID1(byte x, byte y, byte z)
-        {
-            var xLong = (long)x << 16; //add 16 bits to the right of binary(x)
-            var yLong = (long)y << 36; //add 36 bits to the right of binary(y)
-            var zLong = (long)z << 56; //add 56 bits to the right of binary(z)
-            //   z0   z1    z2   z3    z4   y0   y1    y2   y3    y4    x0   x1    x2   x3    x4   flags
-            // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
-            // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            var all = xLong + yLong + zLong;
-            //var x2 = GetLevel1X(all);
-            //var y2 = GetLevel1Y(all);
-            //var z2 = GetLevel1Z(all);
-            return all;
-        }
 
-        public static long MakeVoxelID0(byte x, byte y, byte z)
-        {
-            var xLong = (long)(x & 240) << 16;
-            var yLong = (long)(y & 240) << 36;
-            var zLong = (long)(z & 240) << 56;
-            return xLong + yLong + zLong;
-        }
 
         private static readonly long maskAllButLevel0 = Int64.Parse("F0000F0000F00000",
-            NumberStyles.HexNumber);  // clears out X since = #0,F0000,F0000,F0000
+            NumberStyles.HexNumber); 
         private static readonly long maskAllButLevel0and1 = Int64.Parse("FF000FF000FF0000",
-            NumberStyles.HexNumber);  // clears out X since = #0,FF000,FF000,FF000
+            NumberStyles.HexNumber); 
         private static readonly long maskAllButLevel01and2 = Int64.Parse("FFF00FFF00FFF000",
-            NumberStyles.HexNumber);  // clears out X since = #0,FFF00,FFF00,FFF00
+            NumberStyles.HexNumber); 
         private static readonly long maskLevel4 = Int64.Parse("FFFF0FFFF0FFFF00",
-            NumberStyles.HexNumber);  // clears out X since = #0,FFFF0,FFFF0,FFFF0
-        public static long MakeContainingVoxelID(long id, int level)
+            NumberStyles.HexNumber); 
+        public static long MakeParentVoxelID(long id, int level)
         {
             switch (level)
             {
@@ -186,6 +165,33 @@ namespace TVGL.Voxelization
 
         #endregion
         #region Coordinates
+
+        internal static long MakeIDFromCoordinates(int level, int[] coordinates, int inputCoordLevel)
+        {
+            //   z0   z1    z2   z3    z4   y0   y1    y2   y3    y4    x0   x1    x2   x3    x4   flags
+            // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
+            // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
+            var xLong = (long)coordinates[0] << 4;
+            var yLong = (long)coordinates[1] << 24;
+            var zLong = (long)coordinates[2] << 44;
+
+            xLong = xLong << 4 * (4 - inputCoordLevel);
+            yLong = yLong << 4 * (4 - inputCoordLevel);
+            zLong = zLong << 4 * (4 - inputCoordLevel);
+            var id = zLong + yLong + xLong;
+            switch (level)
+            {
+                case 0: return id & maskAllButLevel0;
+                case 1:
+                    return id & maskAllButLevel0and1;
+                case 2:
+                    return id & maskAllButLevel01and2;
+                case 3:
+                    return id & maskLevel4;
+                default: return id;
+            }
+
+        }
         public static long MakeCoordinateZero(long id, int dimension)
         {
             if (dimension == 0)
@@ -195,13 +201,8 @@ namespace TVGL.Voxelization
             return id & maskOutZ;
         }
 
-        internal static long ChangeCoordinate(long id, long newValue, int dimension, int level, int startDiscretizationLevel)
-        {
-            var shift = 4 + 20 * dimension + 4 * (4 - startDiscretizationLevel) - 4 * (startDiscretizationLevel - level);
-            newValue = newValue << shift;
-            return newValue + MakeCoordinateZero(id, dimension);
-        }
-        private static readonly long maskAllButX = Int64.Parse("000000000FFFFF0",
+
+        private static readonly long maskAllButX = Int64.Parse("0000000000FFFFF0",
             NumberStyles.HexNumber); // clears all but X
         private static readonly long maskAllButY = Int64.Parse("00000FFFFF000000",
             NumberStyles.HexNumber); // clears all but Y
@@ -218,21 +219,6 @@ namespace TVGL.Voxelization
                 default:
                     return ID & maskAllButZ;
             }
-        }
-        internal static byte[] GetCoordinateIndicesByte(long ID, int level)
-        {
-            if (level > 1) throw new ArgumentException("Level argument should be 0 or 1 if the return is only bytes.");
-            return new[]
-            {
-                GetCoordinateIndexByte(ID, level, 0),
-                GetCoordinateIndexByte(ID, level, 1),
-                GetCoordinateIndexByte(ID, level, 2)
-            };
-        }
-        internal static byte GetCoordinateIndexByte(long ID, int level, int dimension)
-        {
-            var shift = 4 + 20 * dimension + 4 * (4 - level);
-            return (byte)((ID >> shift) & (Constants.MaxForSingleCoordinate >> 4 * (4 - level)));
         }
         internal static int[] GetCoordinateIndices(long ID, int level)
         {
