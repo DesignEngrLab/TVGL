@@ -240,14 +240,15 @@ namespace TVGLPresenterDX
             Console.WriteLine("Subtracting original shape from intersect");
             var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
 
-            var newUV = TestNewUnmachinable(vs1, unmachinableVoxels);
+            var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat());
         }
 
         public static VoxelizedSolid TestNewUnmachinable(VoxelizedSolid vs, VoxelizedSolid unmachinableVoxels, Flat cuttingPlane)
         {
+            var level = (int)vs.Discretization;
             var newUnmachinableVoxels = (VoxelizedSolid)unmachinableVoxels.Copy();
             var toolDirections = new List<double[]>();
-            var halfWidth = newUnmachinableVoxels.VoxelSideLengths[(int)newUnmachinableVoxels.Discretization] / 2.0;
+            var halfWidth = newUnmachinableVoxels.VoxelSideLengths[level] / 2.0;
             var halfWidhs = new[] { halfWidth, halfWidth, halfWidth };
             //sort with respect to distance from cutting plane
 
@@ -265,7 +266,7 @@ namespace TVGLPresenterDX
                     var intList = makeVoxelsForLineOnFace(voxelcenter, intersectionWPlane);
                     foreach (var intCoord in intList)
                     {
-                        if (newUnmachinableVoxels.GetVoxel(intCoord).Role != VoxelRoleTypes.Empty)
+                        if (newUnmachinableVoxels.GetVoxel(intCoord, level).Role != VoxelRoleTypes.Empty)
                         {
                             newUnmachinableVoxels.ChangeVoxelToEmpty(voxel);
                         }

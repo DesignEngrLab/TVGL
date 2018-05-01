@@ -13,7 +13,6 @@
 // ***********************************************************************
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -413,8 +412,8 @@ namespace TVGL
                 if (usedFaces.Contains(startFace)) continue;
                 //Get all the faces that should be used on this flat
                 //Use a hashset so we can use the ".Contains" function
-                var flatFaces = new HashSet<PolygonalFace> { startFace };
-                var flat = new Flat(flatFaces){Tolerance = tolerance};
+                var flatHashSet = new HashSet<PolygonalFace> { startFace };
+                var flat = new Flat(flatHashSet) {Tolerance = tolerance};
                 //Stacks a fast for "Push" and "Pop".
                 //Add all the adjecent faces from the first face to the stack for 
                 //consideration in the while loop below.
