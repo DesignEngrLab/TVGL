@@ -160,12 +160,18 @@ namespace TVGL
         #endregion
 
         #region Simplify
+
+        public static List<List<Point>> SimplifyFuzzy(IList<List<Point>> paths)
+        {
+            return paths.Select(SimplifyFuzzy).ToList();
+        }
+
         /// <summary>
-        /// Simplifies a polygon, by removing self intersection. This may output several polygons.
+        /// Simplifies the lines on a polygon to use fewer points when possible.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static List<Point> SimplifyFuzzy(IList<Point> path)
+            public static List<Point> SimplifyFuzzy(IList<Point> path)
         {
             var simplePath = new List<Point>(path);
             //Remove negligible length lines and combine collinear lines.
