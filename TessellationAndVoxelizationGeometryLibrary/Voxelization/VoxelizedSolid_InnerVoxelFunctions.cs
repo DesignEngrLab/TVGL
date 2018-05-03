@@ -349,6 +349,20 @@ namespace TVGL.Voxelization
             return indices.multiply(VoxelSideLengths[level]).add(Offset);
         }
 
+        //public static int[] GetIntCoordinates(int level, params double[] coordinates)
+        //{
+        //    var indices = (coordinates.subtract(Offset));
+        //    indices = indices.divide(VoxelSideLengths[level]);
+        //    int[] intCoords = { 0, 0, 0 };
+        //    int counter = 0;
+        //    foreach(var coord in indices)
+        //    {
+        //        intCoords[counter] = (int)(Math.Round(coord));
+        //        counter++;
+        //    }
+        //    return intCoords;
+        //}
+
         #region Quick Booleans for IDs
         internal static bool isFull(long ID)
         {

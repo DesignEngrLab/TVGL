@@ -249,31 +249,52 @@ namespace TVGLPresenterDX
             var newUnmachinableVoxels = (VoxelizedSolid)unmachinableVoxels.Copy();
             var toolDirections = new List<double[]>();
             var halfWidth = newUnmachinableVoxels.VoxelSideLengths[level] / 2.0;
-            var halfWidhs = new[] { halfWidth, halfWidth, halfWidth };
+            var halfWidths = new[] { 0.5, 0.5, 0.5 };
             //sort with respect to distance from cutting plane
 
             //Add directions for orthogonals to voxels and direction perpendicular to the cutting plane
 
-            foreach (var x in toolDirections)
+            foreach (var direction in toolDirections)
             {
                 var voxels = new List<IVoxel>(newUnmachinableVoxels.Voxels(newUnmachinableVoxels.Discretization, true));
                 foreach (var voxel in voxels)
                 {
                     //Create line segment from center of Voxel to
-                    var voxelcenter = voxel.BottomCoordinate.add(halfWidhs);
-                    var intersectionWPlane = TVGL.MiscFunctions.PointOnPlaneFromRay(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, voxelcenter, x, out var signedDistance);
+                    var voxelcenter = voxel.CoordinateIndices.add(halfWidths);
 
-                    var intList = makeVoxelsForLineOnFace(voxelcenter, intersectionWPlane);
+                    var intersectionWPlane = TVGL.MiscFunctions.PointOnPlaneFromRay(cuttingPlane.Normal, cuttingPlane.DistanceToOrigin, voxelcenter, direction, out var signedDistance);
+
+                    intersectionWPlane = intersectionWPlane.subtract(unmachinableVoxels.Offset);
+                    intersectionWPlane = intersectionWPlane.divide(unmachinableVoxels.VoxelSideLengths[level]);
+
+                    //int[] intersectionWPlaneInt = new int[intersectionWPlane.Count()];
+                    //var counter = 0;
+                    //foreach(var coord in intersectionWPlane)
+                    //{
+                    //    intersectionWPlaneInt[counter] = (int)Math.Round(coord);
+                    //    counter++;
+                    //}
+
+                    //List of all voxels that the line segment intersects.
+                    var intList = makeVoxelsForLineOnFace(voxelcenter, (intersectionWPlane.add(halfWidths)));
+                    
+                    //List of voxels to be removed, should none of the voxels in the list above be from the original part
+                    var intListforRemoval = new List<int[]>();
                     foreach (var intCoord in intList)
                     {
-                        if (newUnmachinableVoxels.GetVoxel(intCoord, level).Role != VoxelRoleTypes.Empty)
+                        if (vs.GetVoxel(intCoord, level).Role != VoxelRoleTypes.Empty)
                         {
-                            newUnmachinableVoxels.ChangeVoxelToEmpty(voxel);
+                            intListforRemoval.Clear();
+                            break;
                         }
                         else
                         {
-
+                            intListforRemoval.Add(intCoord);
                         }
+                    }
+                    foreach(var intCoord in intListforRemoval)
+                    {
+                        newUnmachinableVoxels.ChangeVoxelToEmpty(newUnmachinableVoxels.GetVoxel(intCoord, level));
                     }
 
                 }
