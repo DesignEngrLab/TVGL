@@ -839,7 +839,8 @@ namespace TVGL
                 {
                     if (attempts >= 3)
                     {
-                        throw new Exception("Triangulation failed after " + attempts + " attempts.");
+                        throw new Exception("Triangulation failed after " + attempts +
+                                            " attempts. Points may be too close to distinguish.");
                     }
                     isPositive = null;
                     attempts++;
