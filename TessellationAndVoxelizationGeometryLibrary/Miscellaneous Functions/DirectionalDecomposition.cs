@@ -418,14 +418,29 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="distance"></param>
         /// <returns></returns>
-        public static List<List<Point>> GetCrossSectionAtGivenDistance(TessellatedSolid ts, double[] direction, double distance)
+        public static List<Polygon> GetCrossSectionAtGivenDistance(TessellatedSolid ts, double[] direction, double distance)
         {
-            var crossSection = new List<List<Point>>();
+            var crossSection3D = Get3DCrossSectionAtGivenDistance(ts, direction, distance);
 
+            //Get a list of 2D paths from the 3D loops
+            //Get 2D projections does not reorder list if the cutting plane direction is negative
+            //So we need to do this ourselves. 
+            //Return null if crossSection3D is null (uses null propogation "?")
+            var crossSection = crossSection3D?.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, out _, ts.SameTolerance)).ToList();
+            return crossSection?.Select(p => new Polygon(p)).ToList();
+        }
+
+        /// <summary>
+        /// Gets the Cross Section for a given distance
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="direction"></param>
+        /// <param name="distance"></param>
+        /// <returns></returns>
+        public static List<List<Vertex>> Get3DCrossSectionAtGivenDistance(TessellatedSolid ts, double[] direction, double distance)
+        {
             //First, sort the vertices along the given axis. Duplicate distances are not important.
-            List<Tuple<Vertex, double>> sortedVertices;
-            List<int[]> duplicateRanges;
-            MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+            MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out List<Tuple<Vertex, double>> sortedVertices, out _);
             if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
                 distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
             {
@@ -444,7 +459,7 @@ namespace TVGL
                 {
                     //Determine cross sectional area for section as close to given distance as possitible (after previous vertex, but before current vertex)
                     //But not actually on the current vertex
-                    var distance2 = 0.0;
+                    double distance2;
                     if (currentVertexDistance.IsPracticallySame(distance))
                     {
                         if (previousVertexDistance < distance - ts.SameTolerance)
@@ -464,17 +479,9 @@ namespace TVGL
                     }
 
                     var cuttingPlane = new Flat(distance2, direction);
-                    List<List<Edge>> outputEdgeLoops;
                     var inputEdgeLoops = new List<List<Edge>>();
-                    var current3DLoops = GetLoops(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops);
-
-                    //Get a list of 2D paths from the 3D loops
-                    //Get 2D projections does not reorder list if the cutting plane direction is negative
-                    //So we need to do this ourselves. 
-                    double[,] backTransform;
-                    crossSection.AddRange(current3DLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, out backTransform, ts.SameTolerance)));
-
-                    return crossSection;
+                    var loops = GetLoops(edgeListDictionary, cuttingPlane, out _, inputEdgeLoops);
+                    return loops;
                 }
                 foreach (var edge in vertex.Edges)
                 {
