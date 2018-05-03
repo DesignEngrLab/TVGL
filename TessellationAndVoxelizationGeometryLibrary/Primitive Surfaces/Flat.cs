@@ -41,6 +41,9 @@ namespace TVGL
         /// </summary>
         public double Tolerance { get; set; }
 
+
+        public double[] ClosestPointToOrigin => Normal.multiply(DistanceToOrigin);
+
         /// <summary>
         ///     Determines whether [is new member of] [the specified face].
         /// </summary>
