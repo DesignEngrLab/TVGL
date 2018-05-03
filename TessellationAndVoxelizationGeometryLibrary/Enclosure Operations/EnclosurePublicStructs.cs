@@ -263,6 +263,27 @@ namespace TVGL
             CornerVertices = cornerVertices;
             Center = new Vertex(centerPosition);
         }
+
+        public static BoundingBox Copy(BoundingBox original)
+        {
+            var copy = new BoundingBox
+            {
+                Center = original.Center.Copy(),
+                Volume = original.Volume,
+                Dimensions = new [] { original.Dimensions[0], original.Dimensions[1], original.Dimensions[2]},
+                Directions = original.Directions, //If these change, then the copy is useless anyways
+                PointsOnFaces = original.PointsOnFaces, //These are reference vertices, so they should not be copied
+                CornerVertices = new Vertex[8]
+            };
+            //Recreated the corner vertices
+            for(var i =0; i < 8; i++)
+            {
+                copy.CornerVertices[i] = original.CornerVertices[i].Copy();
+            }
+            //Recreate the solid representation if one existing in the original
+            if(original.SolidRepresentation != null) copy.SetSolidRepresentation();
+            return copy;
+        }
     }
 
     /// <summary>
