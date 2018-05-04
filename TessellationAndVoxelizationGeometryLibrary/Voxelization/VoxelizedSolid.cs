@@ -53,6 +53,16 @@ namespace TVGL.Voxelization
 
         #region Constructor (from another voxelized solid, or maybe from a file)
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
+        /// </summary>
+        /// <param name="voxelDiscretization">The voxel discretization.</param>
+        /// <param name="bounds">The bounds.</param>
+        /// <param name="units">The units.</param>
+        /// <param name="name">The name.</param>
+        /// <param name="filename">The filename.</param>
+        /// <param name="comments">The comments.</param>
+        /// <param name="language">The language.</param>
         public VoxelizedSolid(VoxelDiscretization voxelDiscretization, double[][] bounds, UnitType units = UnitType.unspecified, string name = "",
             string filename = "", List<string> comments = null, string language = "") : base(units, name, filename,
             comments, language)

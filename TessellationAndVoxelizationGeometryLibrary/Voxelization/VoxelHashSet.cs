@@ -78,94 +78,94 @@ namespace TVGL.Voxelization
                 slots[index].next = buckets[bucket] - 1;
                 buckets[bucket] = index + 1;
                 count++;
-                }
             }
+        }
 
-            #endregion
-            #region New Methods not found in HashSet
-            /// <summary>
-            /// Gets the full voxel identifier.
-            /// </summary>
-            /// <param name="item">The item.</param>
-            /// <returns>System.Int64.</returns>
-            public long GetFullVoxelID(long item)
+        #endregion
+        #region New Methods not found in HashSet
+        /// <summary>
+        /// Gets the full voxel identifier.
+        /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns>System.Int64.</returns>
+        public long GetFullVoxelID(long item)
+        {
+            if (buckets != null)
             {
-                if (buckets != null)
+                int hashCode = InternalGetHashCode(item);
+                // see note at "HashSet" level describing why "- 1" appears in for loop
+                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                 {
-                    int hashCode = InternalGetHashCode(item);
-                    // see note at "HashSet" level describing why "- 1" appears in for loop
-                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
                     {
-                        if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
-                        {
-                            return slots[i].value.ID;
-                        }
+                        return slots[i].value.ID;
                     }
                 }
-                // either m_buckets is null or wasn't found
-                return 0;
             }
-            public IVoxel GetVoxel(long item)
+            // either m_buckets is null or wasn't found
+            return 0;
+        }
+        public IVoxel GetVoxel(long item)
+        {
+            if (buckets != null)
             {
-                if (buckets != null)
+                int hashCode = InternalGetHashCode(item);
+                // see note at "HashSet" level describing why "- 1" appears in for loop
+                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                 {
-                    int hashCode = InternalGetHashCode(item);
-                    // see note at "HashSet" level describing why "- 1" appears in for loop
-                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
                     {
-                        if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
-                        {
-                            return slots[i].value;
-                        }
+                        return slots[i].value;
                     }
                 }
-                // either m_buckets is null or wasn't found
-                return null;
             }
+            // either m_buckets is null or wasn't found
+            return null;
+        }
 
 
-            internal VoxelHashSet Copy(VoxelizedSolid solid)
+        internal VoxelHashSet Copy(VoxelizedSolid solid)
+        {
+            var copy = new VoxelHashSet(this.comparer, solid)
             {
-                var copy = new VoxelHashSet(this.comparer, solid)
-                {
-                    buckets = (int[])this.buckets.Clone(),
-                    slots = (Slot[])slots.Clone(),
-                    count = this.count,
-                    lastIndex = this.lastIndex,
-                    freeList = this.freeList,
-                };
-                return copy;
-            }
+                buckets = (int[])this.buckets.Clone(),
+                slots = (Slot[])slots.Clone(),
+                count = this.count,
+                lastIndex = this.lastIndex,
+                freeList = this.freeList,
+            };
+            return copy;
+        }
 
 
-            internal void AddRange(ICollection<IVoxel> voxels)
+        internal void AddRange(ICollection<IVoxel> voxels)
+        {
+            foreach (var voxel in voxels)
+                Add(voxel);
+        }
+
+        #endregion
+
+        #region ICollection<T> method
+        /// <summary>
+        /// Remove all items from this set. This clears the elements but not the underlying 
+        /// buckets and slots array. Follow this call by TrimExcess to release these.
+        /// </summary>
+        public void Clear()
+        {
+            if (lastIndex > 0)
             {
-                foreach (var voxel in voxels)
-                    Add(voxel);
+                Debug.Assert(buckets != null, "m_buckets was null but m_lastIndex > 0");
+
+                // clear the elements so that the gc can reclaim the references.
+                // clear only up to m_lastIndex for m_slots 
+                Array.Clear(slots, 0, lastIndex);
+                Array.Clear(buckets, 0, buckets.Length);
+                lastIndex = 0;
+                count = 0;
+                freeList = -1;
             }
-
-            #endregion
-
-            #region ICollection<T> method
-            /// <summary>
-            /// Remove all items from this set. This clears the elements but not the underlying 
-            /// buckets and slots array. Follow this call by TrimExcess to release these.
-            /// </summary>
-            public void Clear()
-            {
-                if (lastIndex > 0)
-                {
-                    Debug.Assert(buckets != null, "m_buckets was null but m_lastIndex > 0");
-
-                    // clear the elements so that the gc can reclaim the references.
-                    // clear only up to m_lastIndex for m_slots 
-                    Array.Clear(slots, 0, lastIndex);
-                    Array.Clear(buckets, 0, buckets.Length);
-                    lastIndex = 0;
-                    count = 0;
-                    freeList = -1;
-                }
-            }
+        }
 
         /// <summary>
         /// Determines whether [contains] [the specified item].
@@ -177,78 +177,78 @@ namespace TVGL.Voxelization
             if (item == null) return false;
             return Contains(item.ID);
         }
-            /// <summary>
-            /// Checks if this hashset contains the item
-            /// </summary>
-            /// <param name="item">item to check for containment</param>
-            /// <returns>true if item contained; false if not</returns>
-            public bool Contains(long item)
+        /// <summary>
+        /// Checks if this hashset contains the item
+        /// </summary>
+        /// <param name="item">item to check for containment</param>
+        /// <returns>true if item contained; false if not</returns>
+        public bool Contains(long item)
+        {
+            if (buckets != null)
             {
-                if (buckets != null)
+                int hashCode = InternalGetHashCode(item);
+                // see note at "HashSet" level describing why "- 1" appears in for loop
+                for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
                 {
-                    int hashCode = InternalGetHashCode(item);
-                    // see note at "HashSet" level describing why "- 1" appears in for loop
-                    for (int i = buckets[hashCode % buckets.Length] - 1; i >= 0; i = slots[i].next)
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
                     {
-                        if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
-                        {
-                            return true;
-                        }
+                        return true;
                     }
                 }
-                // either m_buckets is null or wasn't found
-                return false;
             }
+            // either m_buckets is null or wasn't found
+            return false;
+        }
 
-            public bool Remove(IVoxel item)
-            { return Remove(item.ID); }
-            /// <summary>
-            /// Remove item from this hashset
-            /// </summary>
-            /// <param name="item">item to remove</param>
-            /// <returns>true if removed; false if not (i.e. if the item wasn't in the HashSet)</returns>
-            public bool Remove(long item)
+        public bool Remove(IVoxel item)
+        { return Remove(item.ID); }
+        /// <summary>
+        /// Remove item from this hashset
+        /// </summary>
+        /// <param name="item">item to remove</param>
+        /// <returns>true if removed; false if not (i.e. if the item wasn't in the HashSet)</returns>
+        public bool Remove(long item)
+        {
+            if (buckets != null)
             {
-                if (buckets != null)
+                int hashCode = InternalGetHashCode(item);
+                int bucket = hashCode % buckets.Length;
+                int previousI = -1;
+                for (int i = buckets[bucket] - 1; i >= 0; previousI = i, i = slots[i].next)
                 {
-                    int hashCode = InternalGetHashCode(item);
-                    int bucket = hashCode % buckets.Length;
-                    int previousI = -1;
-                    for (int i = buckets[bucket] - 1; i >= 0; previousI = i, i = slots[i].next)
+                    if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
                     {
-                        if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, item))
+                        if (previousI < 0)
                         {
-                            if (previousI < 0)
-                            {
-                                // first iteration; update buckets
-                                buckets[bucket] = slots[i].next + 1;
-                            }
-                            else
-                            {
-                                // subsequent iterations; update 'next' pointers
-                                slots[previousI].next = slots[i].next;
-                            }
-                            slots[i].hashCode = -1;
-                            // slots[i].value = 0L;
-                            slots[i].next = freeList;
-
-                            count--;
-                            if (count == 0)
-                            {
-                                lastIndex = 0;
-                                freeList = -1;
-                            }
-                            else
-                            {
-                                freeList = i;
-                            }
-                            return true;
+                            // first iteration; update buckets
+                            buckets[bucket] = slots[i].next + 1;
                         }
+                        else
+                        {
+                            // subsequent iterations; update 'next' pointers
+                            slots[previousI].next = slots[i].next;
+                        }
+                        slots[i].hashCode = -1;
+                        // slots[i].value = 0L;
+                        slots[i].next = freeList;
+
+                        count--;
+                        if (count == 0)
+                        {
+                            lastIndex = 0;
+                            freeList = -1;
+                        }
+                        else
+                        {
+                            freeList = i;
+                        }
+                        return true;
                     }
                 }
-                // either m_buckets is null or wasn't found
-                return false;
             }
+            // either m_buckets is null or wasn't found
+            return false;
+        }
 
         /// <summary>
         /// Number of elements in this hashset

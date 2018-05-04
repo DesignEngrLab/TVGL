@@ -28,12 +28,26 @@ namespace TVGL.Voxelization
     /// </summary>
     public partial class VoxelizedSolid : Solid
     {
+        /// <summary>
+        /// Gets the sum of all voxels of all sizes.
+        /// </summary>
+        /// <value>The count.</value>
         public long Count => _count;
         private long _count;
 
+        /// <summary>
+        /// Gets an array of voxel totals in order full0, partial0, full1, etc.
+        /// </summary>
+        /// <value>The get totals.</value>
         public long[] GetTotals => _totals;
         long[] _totals;
 
+        /// <summary>
+        /// Gets the voxel.
+        /// </summary>
+        /// <param name="coordinates">The coordinates.</param>
+        /// <param name="level">The level.</param>
+        /// <returns>IVoxel.</returns>
         public IVoxel GetVoxel(int[] coordinates, int level)
         {
             var id = Constants.MakeIDFromCoordinates(level, coordinates, level);
@@ -89,6 +103,14 @@ namespace TVGL.Voxelization
 
         #region Get Functions
 
+        /// <summary>
+        /// Gets the Voxels with a specified role.
+        /// </summary>
+        /// <param name="role">The role.</param>
+        /// <param name="voxelLevel">The voxel level.</param>
+        /// <param name="onlyThisLevel">if set to <c>true</c> [only this level].</param>
+        /// <returns>IEnumerable&lt;IVoxel&gt;.</returns>
+        /// <exception cref="ArgumentException">Specifying voxels at a level that is finer than created.</exception>
         public IEnumerable<IVoxel> Voxels(VoxelRoleTypes role, VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine,
             bool onlyThisLevel = false)
         {
@@ -126,6 +148,13 @@ namespace TVGL.Voxelization
                     yield return v;
         }
 
+        /// <summary>
+        /// Gets the Voxels with a specified voxel level.
+        /// </summary>
+        /// <param name="voxelLevel">The voxel level.</param>
+        /// <param name="onlyThisLevel">if set to <c>true</c> [only this level].</param>
+        /// <returns>IEnumerable&lt;IVoxel&gt;.</returns>
+        /// <exception cref="ArgumentException">Specifying voxels at a level that is finer than created.</exception>
         public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine, bool onlyThisLevel = false)
         {
             var level = (int)voxelLevel;
@@ -177,11 +206,24 @@ namespace TVGL.Voxelization
                     yield return vx;
         }
 
+        /// <summary>
+        /// Gets the neighbor.
+        /// </summary>
+        /// <param name="voxel">The voxel.</param>
+        /// <param name="direction">The direction.</param>
+        /// <returns>IVoxel.</returns>
         public IVoxel GetNeighbor(IVoxel voxel, VoxelDirections direction)
         {
             return GetNeighbor(voxel, direction, out bool dummy);
         }
 
+        /// <summary>
+        /// Gets the neighbor.
+        /// </summary>
+        /// <param name="voxel">The voxel.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="neighborHasDifferentParent">if set to <c>true</c> [neighbor has different parent].</param>
+        /// <returns>IVoxel.</returns>
         public IVoxel GetNeighbor(IVoxel voxel, VoxelDirections direction, out bool neighborHasDifferentParent)
         {
             var positiveStep = direction > 0;
@@ -255,6 +297,12 @@ namespace TVGL.Voxelization
             return neighbors;
         }
 
+        /// <summary>
+        /// Gets the parent voxel.
+        /// </summary>
+        /// <param name="child">The child.</param>
+        /// <returns>IVoxel.</returns>
+        /// <exception cref="ArgumentException">There are no parents for level-0 voxels.</exception>
         public IVoxel GetParentVoxel(IVoxel child)
         {
             var parentLevel = child.Level - 1;
@@ -297,6 +345,11 @@ namespace TVGL.Voxelization
                                   + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
         }
 
+        /// <summary>
+        /// Gets the child voxels.
+        /// </summary>
+        /// <param name="parent">The parent.</param>
+        /// <returns>IEnumerable&lt;IVoxel&gt;.</returns>
         public IEnumerable<IVoxel> GetChildVoxels(IVoxel parent)
         {
             if (parent == null) return voxelDictionaryLevel0;
@@ -345,6 +398,10 @@ namespace TVGL.Voxelization
             return copy;
         }
 
+        /// <summary>
+        /// Copies this instance.
+        /// </summary>
+        /// <returns>Solid.</returns>
         public override Solid Copy()
         {
             var copy = new VoxelizedSolid(this.Discretization, this.Bounds, this.Units, this.Name, this.FileName,
@@ -380,6 +437,11 @@ namespace TVGL.Voxelization
 
         #region Draft
 
+        /// <summary>
+        /// Drafts to a new solid.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid DraftToNewSolid(VoxelDirections direction)
         {
             var copy = (VoxelizedSolid)Copy();
@@ -473,7 +535,11 @@ namespace TVGL.Voxelization
         #endregion
         #region Boolean Function (e.g. union, intersect, etc.)
         #region Intersect
-        /// <exclude />
+        /// <summary>
+        /// Intersects this solid with the specified references.
+        /// </summary>
+        /// <param name="references">The references.</param>
+        /// <returns>TVGL.Voxelization.VoxelizedSolid.</returns>
         public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] references)
         {
             var copy = (VoxelizedSolid)Copy();
@@ -481,6 +547,10 @@ namespace TVGL.Voxelization
             return copy;
         }
 
+        /// <summary>
+        /// Intersects this solid with the specified references.
+        /// </summary>
+        /// <param name="references">The references.</param>
         public void Intersect(params VoxelizedSolid[] references)
         {
             Intersect(null, 0, references);
@@ -561,7 +631,11 @@ namespace TVGL.Voxelization
         }
         #endregion
         #region Subtract
-        /// <exclude />
+        /// <summary>
+        /// Subtracts to new solid.
+        /// </summary>
+        /// <param name="subtrahends">The subtrahends.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid SubtractToNewSolid(params VoxelizedSolid[] subtrahends)
         {
             var copy = (VoxelizedSolid)Copy();
@@ -569,9 +643,13 @@ namespace TVGL.Voxelization
             return copy;
         }
 
-        public void Subtract(params VoxelizedSolid[] references)
+        /// <summary>
+        /// Subtracts the specified subtrahends from this solid
+        /// </summary>
+        /// <param name="subtrahends">The subtrahends.</param>
+        public void Subtract(params VoxelizedSolid[] subtrahends)
         {
-            Subtract(null, 0, references);
+            Subtract(null, 0, subtrahends);
             UpdateProperties();
         }
 
@@ -627,6 +705,11 @@ namespace TVGL.Voxelization
         #endregion
         #region ExclusiveOr
 
+        /// <summary>
+        /// Performs the exclusive-or function with the reference and creates a new solid.
+        /// </summary>
+        /// <param name="reference">The reference.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid ExclusiveOrToNewSolid(VoxelizedSolid reference)
         {
             var copy = (VoxelizedSolid)Copy();
@@ -634,6 +717,12 @@ namespace TVGL.Voxelization
             return copy;
         }
 
+        /// <summary>
+        /// Performs the exclusive-or function with the reference and creates a new solid.
+        /// </summary>
+        /// <param name="parent">The parent.</param>
+        /// <param name="level">The level.</param>
+        /// <param name="reference">The reference.</param>
         private void ExclusiveOr(IVoxel parent, int level, VoxelizedSolid reference)
         {
             IEnumerable<IVoxel> voxels;
@@ -1078,7 +1167,7 @@ namespace TVGL.Voxelization
             return partialSolidSphereOffsets;
         }
 
-        public static List<int[]> GetHollowSphereOffsets(int r)
+        private static List<int[]> GetHollowSphereOffsets(int r)
         {
             var voxelOffsets = new List<int[]>();
             var rSqaured = r * r;
@@ -1111,7 +1200,7 @@ namespace TVGL.Voxelization
             return voxelOffsets;
         }
 
-        public static void GetSolidCubeCenteredOnVoxel(Voxel voxel, VoxelizedSolid voxelizedSolid, int length)
+        private static void GetSolidCubeCenteredOnVoxel(Voxel voxel, VoxelizedSolid voxelizedSolid, int length)
         {
             //var x = voxel.Index[0];
             //var y = voxel.Index[1];
