@@ -79,11 +79,10 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
-            double[][] bounds = null;
-
-            //var writer = new TextWriterTraceListener(Console.Out);
-            //Debug.Listeners.Add(writer);
-            //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
+            //Difference2();
+            var writer = new TextWriterTraceListener(Console.Out);
+            Debug.Listeners.Add(writer);
+            TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*dodec*");
             for (var i = 0; i < fileNames.Count(); i++)
@@ -183,7 +182,7 @@ namespace TVGLPresenterDX
             //IO.Save(vs1znegts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Intersecting Drafted Solids...");
-            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1ypos, vs1zpos);
+            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1yneg, vs1zpos);
             //PresenterShowAndHang(intersect);
             //var intersectts = intersect.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");

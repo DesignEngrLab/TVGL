@@ -119,6 +119,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Silhouette.cs">
       <Link>TVGL\2D\Silhouette.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Slice2D.cs">
+      <Link>TVGL\2D\Slice2D.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\ContactData.cs">
       <Link>TVGL\Boolean Operations\ContactData.cs</Link>
     </Compile>

@@ -11,6 +11,7 @@ namespace TVGL
     /// </summary>
     public class Line
     {
+ 
         #region Public Properties
         /// <summary>
         ///     Gets the Pointwhich the line is pointing to. Set is through the constructor.
@@ -57,12 +58,18 @@ namespace TVGL
         /// <summary>
         /// Get or set its index in a list.
         /// </summary>
-        public int IndexInList { get; set; }
+        public int IndexInPath { get; set; }
 
         /// <summary>
         /// Gets the length of the line
         /// </summary>
         public double Length { get; private set; }
+
+        /// <summary>
+        ///     Gets or sets an arbitrary ReferenceIndex to track this line
+        /// </summary>
+        /// <value>The reference index.</value>
+        public int ReferenceIndex { get; set; }
    
         // ReSharper disable once InconsistentNaming
         public double dY; //Rise
@@ -106,7 +113,7 @@ namespace TVGL
         {
             FromPoint = fromPoint;
             ToPoint= toPoint;
-            Length = MiscFunctions.DistancePointToPoint(FromPoint.Position2D, ToPoint.Position2D);
+            Length = MiscFunctions.DistancePointToPoint(FromPoint.Position, ToPoint.Position);
             IsHorizontal = false;
             IsVertical = false;
             dY = ToPoint.Y - FromPoint.Y;
@@ -148,7 +155,6 @@ namespace TVGL
             Length = line.Length;
             IsHorizontal = line.IsHorizontal;
             IsVertical = line.IsVertical;
-            IndexInList = line.IndexInList;
             Slope = line.Slope;
             Yintercept = line.Yintercept;
         }

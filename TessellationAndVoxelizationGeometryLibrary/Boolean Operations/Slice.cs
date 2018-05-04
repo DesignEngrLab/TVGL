@@ -476,7 +476,7 @@ namespace TVGL.Boolean_Operations
                             previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
                             loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
                         }
-                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, straddleEdgesDict, straddleFaces, ref newEdges, ref adjOnsideFaceIndices, true));
+                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, straddleEdgesDict, straddleFaces, newEdges, adjOnsideFaceIndices, true));
                         successfull = true;
                     }
                     //If too close together for a good triangle
@@ -503,7 +503,7 @@ namespace TVGL.Boolean_Operations
                         }
                         else
                         {
-                            newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, straddleEdgesDict, straddleFaces, ref newEdges, ref adjOnsideFaceIndices));
+                            newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, straddleEdgesDict, straddleFaces, newEdges, adjOnsideFaceIndices));
                             previousStraddleEdge = currentStraddleEdge;
                         }
                     }
@@ -514,7 +514,7 @@ namespace TVGL.Boolean_Operations
                             previousStraddleEdge.IntersectVertex.IndexInList = newVertexIndex++;
                             loopOfVertices.Add(previousStraddleEdge.IntersectVertex);
                         }
-                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, straddleEdgesDict, straddleFaces, ref newEdges, ref adjOnsideFaceIndices));
+                        newFaces.AddRange(NewFace(previousStraddleEdge, currentStraddleEdge, straddleEdgesDict, straddleFaces, newEdges, adjOnsideFaceIndices));
                         previousStraddleEdge = currentStraddleEdge;
                     }
                 } while (!successfull);
@@ -554,7 +554,7 @@ namespace TVGL.Boolean_Operations
         /// Error, the straddle edges do not match up at a common vertex
         /// </exception>
         public static List<PolygonalFace> NewFace(StraddleEdge st1, StraddleEdge st2, Dictionary<int, Edge> straddleEdgesDict,
-            Dictionary<int, PolygonalFace> straddleFaces, ref List<Edge> newEdges, ref HashSet<int> adjOnsideFaceIndices, bool lastNewFace = false)
+            Dictionary<int, PolygonalFace> straddleFaces, List<Edge> newEdges, HashSet<int> adjOnsideFaceIndices, bool lastNewFace = false)
         {
             PolygonalFace sharedFace;
             if (st1.OwnedFace == st2.OwnedFace || st1.OwnedFace == st2.OtherFace) sharedFace = st1.OwnedFace;

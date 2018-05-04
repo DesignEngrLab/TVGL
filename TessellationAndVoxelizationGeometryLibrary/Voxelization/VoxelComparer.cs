@@ -13,17 +13,30 @@
 // ***********************************************************************
 
 using System.Collections.Generic;
-using TVGL.IOFunctions.threemfclasses;
 
 namespace TVGL.Voxelization
 {
+    /// <summary>
+    /// Class VoxelComparerFine.
+    /// </summary>
     public class VoxelComparerFine : IEqualityComparer<long>
     {
+        /// <summary>
+        /// Determines whether the specified objects are equal.
+        /// </summary>
+        /// <param name="x">The first object of type <paramref name="T" /> to compare.</param>
+        /// <param name="y">The second object of type <paramref name="T" /> to compare.</param>
+        /// <returns>true if the specified objects are equal; otherwise, false.</returns>
         public bool Equals(long x, long y)
         {
             return Constants.ClearFlagsFromID(x) == Constants.ClearFlagsFromID(y);
         }
 
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <param name="obj">The <see cref="T:System.Object" /> for which a hash code is to be returned.</param>
+        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
         public int GetHashCode(long obj)
         {
             // 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111 0000
@@ -34,13 +47,27 @@ namespace TVGL.Voxelization
             return (int)(xValuesLevels234 + (yValuesLevels234 <<10) + (zValuesLevels234 << 19));
         }
     }
+    /// <summary>
+    /// Class VoxelComparerCoarse.
+    /// </summary>
     public class VoxelComparerCoarse : IEqualityComparer<long>
     {
+        /// <summary>
+        /// Determines whether the specified objects are equal.
+        /// </summary>
+        /// <param name="x">The first object of type <paramref name="T" /> to compare.</param>
+        /// <param name="y">The second object of type <paramref name="T" /> to compare.</param>
+        /// <returns>true if the specified objects are equal; otherwise, false.</returns>
         public bool Equals(long x, long y)
         {
             return Constants.ClearFlagsFromID(x) == Constants.ClearFlagsFromID(y);
         }
 
+        /// <summary>
+        /// Returns a hash code for this instance.
+        /// </summary>
+        /// <param name="obj">The <see cref="T:System.Object" /> for which a hash code is to be returned.</param>
+        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
         public int GetHashCode(long obj)
         {
             //long x = obj & Constants.maskAllButLevel0and1;
@@ -55,42 +82,5 @@ namespace TVGL.Voxelization
             // 000 zzzz zzzz 00 yyyy yyyyy 00 xxxx xxxx
         }
     }
-    public class VoxelComparerTwoDimension : IEqualityComparer<long>
-    {
-        private long mask;
-        private int shift1, shift2;
 
-        internal VoxelComparerTwoDimension(int dimensionToSkip)
-        {
-            switch (dimensionToSkip)
-            {
-                case 0:
-                    mask = Constants.maskOutX;
-                    shift1 = 24;
-                    shift2 = 44;
-                    break;
-                case 1:
-                    mask = Constants.maskOutY;
-                    shift1 = 4;
-                    shift2 = 44;
-                    break;
-                default:
-                    mask = Constants.maskOutZ;
-                    shift1 = 4;
-                    shift2 = 24;
-                    break;
-            }
-        }
-        public bool Equals(long x, long y)
-        {
-            return (x & mask) == (y & mask);
-        }
-
-        public int GetHashCode(long obj)
-        {
-            var comp1 = (obj >> shift1) & Constants.MaxForSingleCoordinate;
-            var comp2 = (obj >> shift2) & Constants.MaxForSingleCoordinate;
-            return (int)(comp1 + (comp2 << 11));
-        }
-    }
 }

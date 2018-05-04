@@ -36,6 +36,7 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\PolygonOperations.cs" Link="2D\PolygonOperations.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\PolygonTree.cs" Link="2D\PolygonTree.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Silhouette.cs" Link="2D\Silhouette.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Slice2D.cs" Link="2D\Slice2D.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\ContactData.cs" Link="Boolean Operations\ContactData.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\Polygon.cs" Link="Boolean Operations\Polygon.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Boolean Operations\Slice.cs" Link="Boolean Operations\Slice.cs" />

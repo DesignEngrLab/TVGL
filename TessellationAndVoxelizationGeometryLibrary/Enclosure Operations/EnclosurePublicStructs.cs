@@ -79,8 +79,89 @@ namespace TVGL
             SolidRepresentation = Extrude.FromLoops(new List<List<Vertex>>() {CornerVertices.Take(4).ToList()}, Directions[2], Dimensions[2]);
         }
 
+        private IList<int> _sortedDirectionIndicesByLength;
         /// <summary>
-        ///     Adds the corner vertices (actually 3d points) to the bounding box
+        ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
+        /// </summary>
+        public IList<int> SortedDirectionIndicesByLength
+        {
+            get
+            {
+                if (_sortedDirectionsListsHaveBeenSet) return _sortedDirectionIndicesByLength;
+                //Else
+                SetSortedDirections();
+                return _sortedDirectionIndicesByLength;
+            }
+        }
+
+        private IList<double[]> _sortedDirectionsByLength;
+        /// <summary>
+        ///     The direction indices sorted by the distance along that direction. This is not set by defualt. 
+        /// </summary>
+        public IList<double[]> SortedDirectionsByLength
+        {
+            get
+            {
+                if (_sortedDirectionsListsHaveBeenSet) return _sortedDirectionsByLength;
+                //Else
+                SetSortedDirections();
+                return _sortedDirectionsByLength;
+            }
+        }
+
+        private IList<double> _sortedDimensions;
+        /// <summary>
+        ///     The sorted dimensions. This is not set by defualt. 
+        /// </summary>
+        public IList<double> SortedDimensions
+        {
+            get
+            {
+                if (_sortedDirectionsListsHaveBeenSet) return _sortedDimensions;
+                //Else
+                SetSortedDirections();
+                return _sortedDimensions;
+            }
+        }
+
+        /// <summary>
+        /// If false, need to call SetSortedDirections() to get above three properties.
+        /// Default for booleans is false.
+        /// </summary>
+        private bool _sortedDirectionsListsHaveBeenSet;
+
+        /// <summary>
+        /// Sorts the directions by the distance along that direction. Smallest to largest.
+        /// </summary>
+        public void SetSortedDirections()
+        {
+            var dimensions = new Dictionary<int, double>
+            {
+                {0, Dimensions[0]},
+                {1, Dimensions[1]},
+                {2, Dimensions[2]}
+            };
+
+            // Order by values. Use LINQ to specify sorting by value.
+            var sortedDimensions = from pair in dimensions
+                        orderby pair.Value ascending
+                        select pair;
+
+            //Set the sorted lists
+            _sortedDirectionIndicesByLength = sortedDimensions.Select(pair => pair.Key).ToList();
+            _sortedDirectionsByLength = new List<double[]>();
+            _sortedDimensions = new List<double>();
+            foreach (var index in _sortedDirectionIndicesByLength)
+            {
+                _sortedDirectionsByLength.Add(Directions[index]);
+                _sortedDimensions.Add(Dimensions[index]);
+            }
+
+            _sortedDirectionsListsHaveBeenSet = true;
+        }
+
+        /// <summary>
+        ///     Adds the corner vertices to the bounding box
         /// </summary>
         /// <returns>BoundingBox.</returns>
         public void SetCornerVertices()
@@ -101,13 +182,12 @@ namespace TVGL
             SetCornerVertices(allPointsOnFaces);
         }
 
-
         /// <summary>
-        ///     Adds the corner vertices (actually 3d points) to the bounding box
+        ///     Adds the corner vertices  to the bounding box
         ///     This method is used when the face vertices are not known.
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public void SetCornerVertices(List<Vertex> verticesOfInterest )
+        public void SetCornerVertices(List<Vertex> verticesOfInterest)
         {
             if (CornerVertices != null) return;
             var cornerVertices = new Vertex[8];
@@ -227,8 +307,8 @@ namespace TVGL
         public void SetCornerPoints()
         {
             var cornerPoints = new Point[4];
-            var dir0 = new double[] {Directions2D[0][0], Directions2D[0][1], 0};
-            var dir1 = new double[] { Directions2D[1][0], Directions2D[1][1], 0 };
+            var dir0 = Directions2D[0];
+            var dir1 = Directions2D[1];
             var extremePoints = new List<Point>();
             foreach (var pair in PointsOnSides)
             {
@@ -237,12 +317,12 @@ namespace TVGL
 
             //Lower left point
             List<Point> bottomPoints, topPoints;
-            MinimumEnclosure.GetLengthAndExtremePoints(Directions2D[0], extremePoints, out bottomPoints, out topPoints);
-            var bp = bottomPoints.First().Position2D;
-            var p0 = new [] {bp[0], bp[1], 0};
-            MinimumEnclosure.GetLengthAndExtremePoints(Directions2D[1], extremePoints, out bottomPoints, out topPoints);
-            bp = bottomPoints.First().Position2D;
-            var p1 = new[] { bp[0], bp[1], 0 };
+            MinimumEnclosure.GetLengthAndExtremePoints(dir0, extremePoints, out bottomPoints, out topPoints);
+            var bp = bottomPoints.First().Position;
+            var p0 = new [] {bp[0], bp[1]};
+            MinimumEnclosure.GetLengthAndExtremePoints(dir1, extremePoints, out bottomPoints, out topPoints);
+            bp = bottomPoints.First().Position;
+            var p1 = new[] { bp[0], bp[1]};
 
             //Start with v0 and move along direction[1] by projection
             var vector0To1 = p1.subtract(p0);
@@ -252,18 +332,18 @@ namespace TVGL
 
             //Double Check to make sure it is the bottom corner
             extremePoints.Add(bottomCorner);
-            MinimumEnclosure.GetLengthAndExtremePoints(Directions2D[0], extremePoints, out bottomPoints, out topPoints);
+            MinimumEnclosure.GetLengthAndExtremePoints(dir0, extremePoints, out bottomPoints, out topPoints);
             if (!bottomPoints.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
-            MinimumEnclosure.GetLengthAndExtremePoints(Directions2D[1], extremePoints, out bottomPoints, out topPoints);
+            MinimumEnclosure.GetLengthAndExtremePoints(dir1, extremePoints, out bottomPoints, out topPoints);
             if (!bottomPoints.Contains(bottomCorner)) throw new Exception("Error in defining bottom corner");
 
             //Create the vertices that make up the box and add them to the corner vertices array
             for (var i = 0; i < 2; i++)
             {
-                var d0Vector = i == 0 ? new[] { 0.0, 0.0, 0.0 } : dir0.multiply(Dimensions[0]);
+                var d0Vector = i == 0 ? new[] { 0.0, 0.0 } : dir0.multiply(Dimensions[0]);
                 for (var j = 0; j < 2; j++)
                 {
-                    var d1Vector = j == 0 ? new[] { 0.0, 0.0, 0.0 } : dir1.multiply(Dimensions[1]);
+                    var d1Vector = j == 0 ? new[] { 0.0, 0.0 } : dir1.multiply(Dimensions[1]);
                     var newPoint = new Point(bottomCorner.Position.add(d0Vector).add(d1Vector));
                     //Put the points in the correct position to be ordered CCW, starting with the bottom corner
                     if (i == 0)
@@ -280,8 +360,8 @@ namespace TVGL
             var centerPosition = new[] { 0.0, 0.0 };
             foreach (var vertex in cornerPoints)
             {
-                centerPosition[0] += vertex.Position[0];
-                centerPosition[1] += vertex.Position[1];
+                centerPosition[0] += vertex.X;
+                centerPosition[1] += vertex.Y;
             }
             centerPosition[0] = centerPosition[0] / cornerPoints.Count();
             centerPosition[1] = centerPosition[1] / cornerPoints.Count();

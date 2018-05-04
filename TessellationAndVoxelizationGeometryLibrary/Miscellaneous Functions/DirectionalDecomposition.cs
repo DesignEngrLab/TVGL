@@ -426,6 +426,12 @@ namespace TVGL
             List<Tuple<Vertex, double>> sortedVertices;
             List<int[]> duplicateRanges;
             MiscFunctions.SortAlongDirection(new[] { direction }, ts.Vertices.ToList(), out sortedVertices, out duplicateRanges);
+            if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
+                distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
+            {
+                //Distance is out of range of this solid.
+                return null;
+            }
 
             var edgeListDictionary = new Dictionary<int, Edge>();
             var previousVertexDistance = sortedVertices[0].Item2; //This value can be negative
@@ -591,6 +597,9 @@ namespace TVGL
             /// </summary>
             public List<int> PotentialSegmentIndices;
 
+            /// <summary>
+            /// Get/set the distance along the search direction (Should match stepIndex)
+            /// </summary>
             public double DistanceAlongSearchDirection;
 
             /// <summary>
@@ -664,16 +673,20 @@ namespace TVGL
         #region Uniform Directional Segmentation
 
         /// <summary>
-        /// Returns the Directional Segments found from decomposing a solid along a given direction. This data is used in other methods.
+        /// Returns the Directional Segments found from decomposing a solid along a given direction. 
+        /// This data is used in other methods. Optional parameter "orderedforcedSteps" adds in steps at the 
+        /// given distances, but it must be ordered.
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="direction"></param>
         /// <param name="stepSize"></param>
         /// <param name="stepDistances"></param>
         /// <param name="sortedVertexDistanceLookup"></param>
+        /// <param name="orderedForcedSteps"></param>
         /// <returns></returns>
         public static List<DirectionalSegment> UniformDirectionalSegmentation(TessellatedSolid ts, double[] direction,
-            double stepSize, out Dictionary<int, double> stepDistances, out Dictionary<int, double> sortedVertexDistanceLookup)
+            double stepSize, out Dictionary<int, double> stepDistances, 
+            out Dictionary<int, double> sortedVertexDistanceLookup, List<double> orderedForcedSteps = null)
         {
             //Reset all the arbitrary edge references and vertex references to -1, since they may have been set in another method
             foreach (var vertex in ts.Vertices)
@@ -733,12 +746,50 @@ namespace TVGL
             var furthestDistance = sortedVertices.Last().Item2;
             var distanceAlongAxis = firstDistance;
             var currentVertexIndex = 0;
-            var stepIndex = 0;
-
+            var debugCounter = 0;
+            //Start the step index at -1, so that the increment can be at the start of the while loop, 
+            //making the final stepIndex correct for use in a later function.
+            var stepIndex = -1;
+            var nextForcedDistance = double.MaxValue;
+            var forcedDistanceIndex = 0;
+            var numberOfForcedDistances = 0;
+            var cleanOrderedForcedSteps = new List<double>();
+            if (orderedForcedSteps != null)
+            {
+                numberOfForcedDistances = orderedForcedSteps.Count();
+                nextForcedDistance = orderedForcedSteps[forcedDistanceIndex];
+                cleanOrderedForcedSteps.Add(nextForcedDistance);
+                for (var i = 1; i < numberOfForcedDistances; i++)
+                {
+                    //Remove duplicates
+                    if (!orderedForcedSteps[i].IsPracticallySame(cleanOrderedForcedSteps.Last(), minOffset))
+                    {
+                        cleanOrderedForcedSteps.Add(orderedForcedSteps[i]);
+                    }
+                }
+                numberOfForcedDistances = cleanOrderedForcedSteps.Count;
+                forcedDistanceIndex ++;
+            }
+            var priorNonForcedDistanceAlongAxis = distanceAlongAxis;
             while (distanceAlongAxis < furthestDistance - stepSize)
             {
+                stepIndex++;
+
                 //This is the current distance along the axis. It will move forward by the step size during each iteration.
-                distanceAlongAxis += stepSize;
+                distanceAlongAxis = priorNonForcedDistanceAlongAxis + stepSize;
+
+                if (orderedForcedSteps != null && forcedDistanceIndex < numberOfForcedDistances
+                    && (distanceAlongAxis > nextForcedDistance || distanceAlongAxis.IsPracticallySame(nextForcedDistance)))
+                {
+                    distanceAlongAxis = nextForcedDistance;
+                    nextForcedDistance = cleanOrderedForcedSteps[forcedDistanceIndex];
+                    forcedDistanceIndex++;
+                    //Don't update priorNonForcedDistanceAlongAxis
+                }
+                else
+                {
+                    priorNonForcedDistanceAlongAxis = distanceAlongAxis;
+                }
 
                 //inPlaneEdges is a list of edges that are added to the edge list and removed in the same step.
                 //This means that they are basically in the current plane. This list will be reset every time we take another step.
@@ -815,7 +866,8 @@ namespace TVGL
                     if (segmentationData != null) outputData.Add(segmentationData);
 
                     UpdateSegments(segmentationData, inStepVertices, sortedVertexDistanceLookup, direction,
-                        ref allDirectionalSegments, ts);
+                        allDirectionalSegments, debugCounter);
+                    debugCounter++;
 
                     stepDistances.Add(stepIndex, distanceAlongAxis);
 
@@ -824,7 +876,6 @@ namespace TVGL
                         referenceVerticesByStepIndex.Add(vertex.IndexInList, stepIndex);
                     }
                 }
-                stepIndex++;
             }
 
             //Add the remaining vertices to a final step index
@@ -841,11 +892,23 @@ namespace TVGL
                     segment.SetReferenceVerticesByStepIndex(referenceVerticesByStepIndex);
                     continue;
                 }
-                //Else
 
-                //We need to finish wrapping around all the open segments. 
-                //There should be no merging or branching if the step size was the correct size.
-                var stack = new Stack<Vertex>(segment.NextVertices);
+                /*  We need to finish wrapping around all the open segments. There are two types
+                of open segments; those that ended before the final step and those that ended
+                at the final step. In both cases, there should be no merging or branching if 
+                the step size was the correct size.
+                    
+                For segments that ended before the final step, we cannot use NextVertices or 
+                CurrentEdges, since they are removed during the UpdateSegment function calls, 
+                so instead we use ReferenceVertices to determine which vertices belonging to the 
+                segment are further along the direction than the segment's final step.
+                
+                For segments that end at the final step, we cannot use ReferenceVertices since it 
+                has not been updated with the NextVertices, but we can use NextVertices.
+                The GetFinalVertices function takes care of these two different approaches.  */
+
+                var endingVertices = segment.GetFinalVertices(sortedVertexDistanceLookup);
+                var stack = new Stack<Vertex>(endingVertices);
                 while (stack.Any())
                 {
                     var vertex = stack.Pop();
@@ -859,17 +922,32 @@ namespace TVGL
                             //We have not visited this vertex yet, so push it onto the stack
                             //We will update its index when we pop it off.
                             stack.Push(otherVertex);
+                            endingVertices.Add(otherVertex);
                         }
                         //All these edges will be reference edges, since they are complete.
                         //Since this is a hashset, we do not need to see if it contains the edges.
                         segment.ReferenceEdges.Add(edge);
                     }
+                }
 
+                //Now we need to set the step index for these vertices. We want it to be the last
+                //index of the segment.
+                var endIndex = segment.EndStepIndexAlongSearchDirection;
+                foreach (var vertex in endingVertices)
+                {
+                    //var priorInt = referenceVerticesByStepIndex[vertex.IndexInList];
+                    referenceVerticesByStepIndex[vertex.IndexInList] = endIndex;
                 }
                 //Set to IsFinished. This will clear out the current edges
                 //(by now they should have all been added to reference edges)
                 segment.IsFinished = true;
                 segment.SetReferenceVerticesByStepIndex(referenceVerticesByStepIndex);
+            }
+
+            foreach (var segment in allDirectionalSegments)
+            {
+                if(segment.Value.CrossSectionPathDictionary.Count == 0) throw new Exception("A segment must have cross sections");
+                //if(segment.Value.StartStepIndexAlongSearchDirection == segment.Value.EndStepIndexAlongSearchDirection) throw new Exception("This segment has zero thickness");
             }
 
             return allDirectionalSegments.Values.ToList();
@@ -885,10 +963,10 @@ namespace TVGL
         /// <param name="vertexDistanceLookup"></param>
         /// <param name="searchDirection"></param>
         /// <param name="allDirectionalSegments"></param>
-        /// <param name="ts"></param>
+        /// <param name="debugCounter"></param>
         private static void UpdateSegments(SegmentationData segmentationData, HashSet<Vertex> inStepVertices,
             Dictionary<int, double> vertexDistanceLookup, double[] searchDirection,
-            ref Dictionary<int, DirectionalSegment> allDirectionalSegments, TessellatedSolid ts)
+            Dictionary<int, DirectionalSegment> allDirectionalSegments, int debugCounter)
         {
             /* There are six possible segment cases that may occur. This section describes what they are and how they are handled.  
             
@@ -899,14 +977,14 @@ namespace TVGL
                             in a segment does not change (should always be = 1) and every loop it contains only belongs to this 
                             segment. Save the stashed vertices and edges, and keep this segment open.
 
-            Segment Case 3: [Merging] If a polygon's egde loop belongs to multiple segments (as identified in Wrapping Step), end 
+            Segment Case 3: [Merging] If a polygon's edge loop belongs to multiple segments (as identified in Wrapping Step), end 
                             each connected segment and start a new one. 
 
-            Segment Case 4: [Blind Hole/Pocket] If a negative polygon's egde loop does NOT belongs to any segments, then it is a blind
+            Segment Case 4: [Blind Hole/Pocket] If a negative polygon's edge loop does NOT belongs to any segments, then it is a blind
                             hole or pocket. To find it's segment, use the intersection polygon operation to determine overlap with existing
                             segments. Each blind hole or pocket can only belong to one segment.
 
-            Segment Case 5: [New Segment] If a positive polygon's egde loop does NOT belongs to any segments, then it is the start of
+            Segment Case 5: [New Segment] If a positive polygon's edge loop does NOT belongs to any segments, then it is the start of
                             a new segement. Simply start a new segment and look through any of the unassigned negative polygons to check
                             if they belong to this new polygon (Do this with the same wrapping technique used earlier).
 
@@ -916,8 +994,17 @@ namespace TVGL
 
             In All Cases:   The in-step vertices and edges belong to the parent and child segments. This does repeat information, but there
                             are quite a few different cases and this is the easiest solution (other than not attaching them to any segment).
+            
+            Fast Transititions: A segment starts at the index after its parent end. If this segment merges with another segment in the next
+                                iteration, then it will only be defined for one step (zero thickness). This may also happen if a brand new 
+                                segment (A) immediately merges with another segment (B). In this case, segment A will only be defined for the 
+                                first step index, since segment B takes over at the next step index. Otherwise, there would be multiple cross
+                                sections for a step in an index. 
+                                
+            Implications:   A segment may only be defined for one step, but its volume should be thought of as extending a half-step forward
+                            and backward from that step to form a volume.  
             */
-
+            if(debugCounter == 145) Debug.WriteLine("Bug Stop Hit");
             var distanceAlongAxis = segmentationData.DistanceAlongDirection;
 
             //Get all the current segments.
@@ -1044,9 +1131,9 @@ namespace TVGL
 
                                 //Else, this vertex belongs to another segment                         
                                 var otherSegment = allDirectionalSegments[otherVertex.ReferenceIndex];
-                                AddConnectedSegment(otherSegment, ref connectedSegmentsIndices,
-                                    ref inStepVertices, ref inStepSegmentVertexSet,
-                                    ref allInStepSegmentVertices);
+                                AddConnectedSegment(otherSegment, connectedSegmentsIndices,
+                                    inStepVertices, inStepSegmentVertexSet,
+                                    allInStepSegmentVertices);
                                 continue;
                             }
                             //Else if
@@ -1054,9 +1141,9 @@ namespace TVGL
                             {
                                 //This vertex belongs to another segment 
                                 var otherSegment = allDirectionalSegments[otherVertex.ReferenceIndex];
-                                AddConnectedSegment(otherSegment, ref connectedSegmentsIndices,
-                                     ref inStepVertices, ref inStepSegmentVertexSet,
-                                     ref allInStepSegmentVertices);
+                                AddConnectedSegment(otherSegment, connectedSegmentsIndices,
+                                     inStepVertices, inStepSegmentVertexSet,
+                                     allInStepSegmentVertices);
                                 continue;
                             }
 
@@ -1110,9 +1197,9 @@ namespace TVGL
                                     //These two segments are connected. 
                                     if (otherSegment.Index != segment.Index)
                                     {
-                                        AddConnectedSegment(otherSegment, ref connectedSegmentsIndices,
-                                            ref inStepVertices, ref inStepSegmentVertexSet,
-                                            ref allInStepSegmentVertices);
+                                        AddConnectedSegment(otherSegment, connectedSegmentsIndices,
+                                            inStepVertices, inStepSegmentVertexSet,
+                                            allInStepSegmentVertices);
                                     }
                                 }
                             }
@@ -1224,7 +1311,7 @@ namespace TVGL
             //example: Blind holes and a branching segment have not been captured up to this point.
             //First, we need to connect each path (polygonDataSet stores the path and the edge loop) to its segment
             var unassignedPositivePolygonDataGroups = new List<PolygonDataGroup>();
-            var unassignedNegativePolygonDataGroups = new List<PolygonDataGroup>();
+            var unassignedNegativePolygonDataGroups = new HashSet<PolygonDataGroup>();
             foreach (var polygonDataGroup in segmentationData.CrossSectionData)
             {
                 //It does not matter which edge we check, so just use the first one.
@@ -1351,11 +1438,11 @@ namespace TVGL
 
                 //There does not have to be a negative polygon, but go ahead and check
                 //There can only be one positive polygon data group, but there may be multiple negative ones.
+                //For this reason, we need to check all of them and cannot break early.
+                //We will then have a loop to remove the newly assigned data groups from the list of unnassigned ones.
                 var negativePolygonDataGroups = new HashSet<PolygonDataGroup>();
-                for (var i = 0; i < unassignedNegativePolygonDataGroups.Count; i++)
+                foreach (var polygonDataGroup in unassignedNegativePolygonDataGroups)
                 {
-                    var polygonDataGroup = unassignedNegativePolygonDataGroups[i];
-
                     //It does not matter which edge we check, so just use the first one.
                     var edge = polygonDataGroup.EdgeLoop.First();
 
@@ -1364,14 +1451,11 @@ namespace TVGL
 
                     //Else,  Great. This is the polygon we were looking for
                     polygonDataGroup.SegmentIndex = newSegmentIndex;
-
                     negativePolygonDataGroups.Add(polygonDataGroup);
-
-                    //Remove it from the list. This would normally cause an error in for loop because
-                    //it is modifying the enumerator, but it does not matter because we are breaking 
-                    //out of the for loop.
-                    unassignedNegativePolygonDataGroups.RemoveAt(i);
-                    break;
+                }
+                foreach (var assignedNegativePolygonDataGroup in negativePolygonDataGroups)
+                {
+                    unassignedNegativePolygonDataGroups.Remove(assignedNegativePolygonDataGroup);
                 }
 
                 #region  Segment Case 4: [Blind Hole/Pocket]
@@ -1443,7 +1527,7 @@ namespace TVGL
                 }
                 #endregion
 
-                #region Segment Case 5: [New Segment]
+                #region Segment Case 5: [New Segment (with and without holes)]
                 //Create the new segment from the unused vertices and connect the polygon data groups to the segments
                 else
                 {
@@ -1485,23 +1569,24 @@ namespace TVGL
                     else if (counter > 1)
                     {
                         //Segment Case 6 [Branching]: End the potential segment and start new segments for each positive polygon.
-                        potentialSegment.BranchSegment(ref allDirectionalSegments);
+                        //If the merger needs to be branched, this function will handle that too.
+                        potentialSegment.BranchSegment(allDirectionalSegments);
                     }
                     else throw new Exception("One of the polygons must have been positive.");
                 }
                 else
                 {
-                    throw new Exception("All the polygon data group must be assigned to a segment by this point");
+                    throw new Exception("All the polygon data groups must be assigned to a segment by this point");
                 }
             }
             #endregion
         }
 
         private static void AddConnectedSegment(DirectionalSegment otherSegment,
-            ref HashSet<int> connectedSegmentsIndices,
-            ref HashSet<Vertex> inStepVertices,
-            ref Stack<Vertex> inStepSegmentVertexSet,
-            ref HashSet<Vertex> allInStepSegmentVertices)
+            HashSet<int> connectedSegmentsIndices,
+            HashSet<Vertex> inStepVertices,
+            Stack<Vertex> inStepSegmentVertexSet,
+            HashSet<Vertex> allInStepSegmentVertices)
         {
             //If this connected segment has not already been identified
             if (connectedSegmentsIndices.Contains(otherSegment.Index)) return;
@@ -1668,8 +1753,11 @@ namespace TVGL
 
             /// <summary>
             /// Reference vertices by step index that they were added in (passed by the search plane)
+            /// New segments not attached to prior segments will have their first set of vertices added
+            /// at their first defined step (cross section). Segments that end with no children segments
+            /// will have their last set of vertices added to their last defined step.
             /// </summary>
-            public Dictionary<int, List<Vertex>> ReferenceVerticesByStepIndex { get; internal set; }
+            public Dictionary<int, List<Vertex>> ReferenceVerticesByStepIndex { get; private set; }
 
             /// <summary>
             /// A list of all the edges that correspond to this segment. Some edges may belong to multiple segments.
@@ -1757,6 +1845,9 @@ namespace TVGL
             /// is started first along the search direction.
             /// </summary>
             public int Index;
+
+            //A segment temporarily created, that is to be deleted. (Ex. Branching a merged segment in the same step)
+            public bool IsDummySegment;
 
             /// <summary>
             /// Gets the first cross section 
@@ -1902,17 +1993,97 @@ namespace TVGL
             /// Starts a directional segment for each polygon data group assigned to this parent directional segment
             /// </summary>
             /// <param name="allDirectionalSegments"></param>
-            public void BranchSegment(ref Dictionary<int, DirectionalSegment> allDirectionalSegments)
+            public void BranchSegment(Dictionary<int, DirectionalSegment> allDirectionalSegments)
             {
+                //If a merger resulted in a new segment (this) that needs to be branched, it will have no cross sections set by this point.
+                //Replace this segment with new segments. 
+                if (!this.CrossSectionPathDictionary.Any())
+                {
+                    allDirectionalSegments.Remove(this.Index);
+                    IsDummySegment = true;
+                }
+
                 IsFinished = true;
                 var newSegments = new List<DirectionalSegment>();
-                foreach (var positivePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area > 0.0))
+                if (!IsDummySegment)
                 {
-                    var newSegmentIndex = allDirectionalSegments.Count;
-                    var newSegment = new DirectionalSegment(newSegmentIndex, positivePolygonDataGroup, this);
-                    allDirectionalSegments.Add(newSegmentIndex, newSegment);
-                    newSegments.Add(newSegment);
+                    foreach (var positivePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area > 0.0))
+                    {
+                        var newSegmentIndex = allDirectionalSegments.Count;
+                        var newSegment = new DirectionalSegment(newSegmentIndex, positivePolygonDataGroup, this);
+                        allDirectionalSegments.Add(newSegmentIndex, newSegment);
+                        newSegments.Add(newSegment);
+                    }
                 }
+                else
+                {
+                    //We need to match up the positive polygons with the parents of this segment.
+                    //If the intersection results in any overlap, then it belongs to this segment.
+                    //It can belong to multiple segments, or just one.
+                    foreach (var positivePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area > 0.0))
+                    {
+                        var parentSegments = new List<DirectionalSegment>();
+                        foreach (var parentSegment in RearwardAdjoinedDirectionalSegments)
+                        {
+                            //Get the last positive polygon data group from the parent segment.
+                            //There can only be one.
+                            var positiveParentPolygonDataGroup =
+                                parentSegment.CrossSectionPathDictionary.Last().Value.FirstOrDefault(p => p.Area > 0.0);
+                            if (positiveParentPolygonDataGroup == null)
+                                throw new Exception(
+                                    "No positive polygon found for parent. Check how the parent was created");
+
+                            //Check if the parent's polygon overlaps with the new polygon
+                            var result = PolygonOperations.Intersection(positiveParentPolygonDataGroup.Path2D, positivePolygonDataGroup.Path2D);
+                            if (result != null && result.Any())
+                            {
+                                parentSegments.Add(parentSegment);
+                            }
+                        }
+
+                        //Now that we have all the parent segments fo the current positivePolygonDataGroup, 
+                        //we can create the new segment.
+                        var newSegmentIndex = allDirectionalSegments.Count;
+
+                        //For the reference Edges and Vertices, all should belong to the parents.
+                        //The current edges are those in the polygon data group
+                        //Negative loop edges will be added later.
+                        var currentEdges = new HashSet<Edge>(positivePolygonDataGroup.EdgeLoop);
+                        var referenceVertices = new HashSet<Vertex>();
+                        foreach (var edge in currentEdges)
+                        {
+                            if (edge.To.ReferenceIndex == -1)
+                            {
+                                referenceVertices.Add(edge.From);
+                                ReferenceVertices.Remove(edge.From);
+                            }
+                            else
+                            {
+                                referenceVertices.Add(edge.To);
+                                ReferenceVertices.Remove(edge.To);
+                            }
+                        }
+                        var referenceEdges = new HashSet<Edge>();
+                        var newSegment = new DirectionalSegment(newSegmentIndex, referenceEdges, referenceVertices, currentEdges, parentSegments);
+                        newSegment.AddPolygonDataGroup(positivePolygonDataGroup);
+                        allDirectionalSegments.Add(newSegmentIndex, newSegment);
+                        newSegments.Add(newSegment);
+                    }
+
+                    //Attach the reference edges and remaining reference vertices to all the parent segments 
+                    foreach (var parent in RearwardAdjoinedDirectionalSegments)
+                    {
+                        foreach (var vertex in ReferenceVertices)
+                        {
+                            parent.ReferenceVertices.Add(vertex);
+                        }
+                        foreach (var edge in ReferenceEdges)
+                        {
+                            parent.ReferenceEdges.Add(edge);
+                        }
+                    }
+                }
+
                 //Now we need to match up the negative polygon data groups
                 foreach (var negativePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area < 0.0))
                 {
@@ -1992,6 +2163,23 @@ namespace TVGL
                     CurrentEdges.Add(edge);
                 }
                 UpdateNextVertices();
+            }
+
+            /// <summary>
+            /// Gets the list of the final vertices (those on the other side of the segment's final step index).
+            /// </summary>
+            public HashSet<Vertex> GetFinalVertices(Dictionary<int, double> sortedVertexDistanceLookup)
+            {
+                var finalVertices = new HashSet<Vertex>(NextVertices);
+                foreach (var vertex in ReferenceVertices)
+                {
+                    var vertexDistance = sortedVertexDistanceLookup[vertex.IndexInList];
+                    if (vertexDistance > EndDistanceAlongSearchDirection)
+                    {
+                        finalVertices.Add(vertex);
+                    }
+                }
+                return finalVertices;
             }
 
             /// <summary>
@@ -2117,6 +2305,42 @@ namespace TVGL
                 return allVertexPaths;
             }
             #endregion
+
+            /// <summary>
+            /// Reverses the direction and all associated dictionaries. It is assumed that the steps are to be 
+            /// ordered along the reversed direction. The total number of steps along the direction must be given.
+            /// </summary>
+            public void Reverse(int maxStepIndex,  Dictionary<int, double> stepDistances)
+            {
+                ForwardDirection = ForwardDirection.multiply(-1);
+                var tempSegmentsSet = ForwardAdjoinedDirectionalSegments;
+                ForwardAdjoinedDirectionalSegments = RearwardAdjoinedDirectionalSegments;
+                RearwardAdjoinedDirectionalSegments = tempSegmentsSet;
+
+                var tempReferenceVertices = ReferenceVerticesByStepIndex.Reverse();
+                var reversedReferenceVerticesByStepIndex = new Dictionary<int, List<Vertex>>();
+                foreach (var referenceItem in tempReferenceVertices)
+                {
+                    var i = maxStepIndex - referenceItem.Key;
+                    reversedReferenceVerticesByStepIndex.Add(i, referenceItem.Value);
+                }
+                ReferenceVerticesByStepIndex = reversedReferenceVerticesByStepIndex;
+
+                var tempCrossSections = CrossSectionPathDictionary.Reverse();
+                var reversedCrossSectionPathDictionary = new Dictionary<int, List<PolygonDataGroup>>();
+                foreach (var crossSectionItem in tempCrossSections)
+                {
+                    var i = maxStepIndex - crossSectionItem.Key;
+                    var distanceAlongSearchDirection = stepDistances[i];
+                    foreach (var polygonDataGroup in crossSectionItem.Value)
+                    {
+                        polygonDataGroup.StepIndex = i;
+                        polygonDataGroup.DistanceAlongSearchDirection = distanceAlongSearchDirection;
+                    }
+                    reversedCrossSectionPathDictionary.Add(i, crossSectionItem.Value);
+                }
+                CrossSectionPathDictionary = reversedCrossSectionPathDictionary;
+            }
         }
         #endregion
 

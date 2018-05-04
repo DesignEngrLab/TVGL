@@ -55,6 +55,15 @@ namespace TVGL
         /// </summary>
         public const double BaseTolerance = 1E-9;
 
+        /// <summary>
+        ///     The tolerance used for simplifying polygons by joining to similary sloped lines.
+        /// </summary>
+        public const double LineSlopeTolerance = 0.0003;
+
+        /// <summary>
+        ///     The tolerance used for simplifying polygons by removing tiny lines.
+        /// </summary>
+        public const double LineLengthMinimum = 1E-7;
 
         /// <summary>
         ///     The angle tolerance used in the Oriented Bounding Box calculations
@@ -75,6 +84,24 @@ namespace TVGL
         /// a tessellated model.
         /// </summary>
         internal const double MaxAllowableEdgeSimilarityScore = 0.2;
+
+        /// <summary>
+        /// A high confidence percentage of 0.997 (3 sigma). This is used in some boolean "is" checks,
+        /// like Polygon.IsRectangular
+        /// </summary>
+        public const double HighConfidence = 0.997;
+
+        /// <summary>
+        /// A medium confidence percentage of 0.95 (2 sigma). This is used in some boolean "is" checks,
+        /// like Polygon.IsRectangular
+        /// </summary>
+        public const double MediumConfidence = 0.95;
+
+        /// <summary>
+        /// A low confidence percentage of 0.68 (1 sigma). This is used in some boolean "is" checks,
+        /// like Polygon.IsRectangular
+        /// </summary>
+        public const double LowConfidence = 0.68;
 
         internal const double VoxelScaleSize = 255.8; // Math.Pow(2, 20) - 0.2;
 

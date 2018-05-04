@@ -26,7 +26,7 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
         #region Functions to make voxel full, empty or partial
-        private void ChangeVoxelToEmpty(IVoxel voxel)
+        public void ChangeVoxelToEmpty(IVoxel voxel)
         {
             if (voxel.Role == VoxelRoleTypes.Empty) return;
             if (voxel.Level == 0)
@@ -346,6 +346,20 @@ namespace TVGL.Voxelization
         {
             return indices.multiply(VoxelSideLengths[level]).add(Offset);
         }
+
+        //public static int[] GetIntCoordinates(int level, params double[] coordinates)
+        //{
+        //    var indices = (coordinates.subtract(Offset));
+        //    indices = indices.divide(VoxelSideLengths[level]);
+        //    int[] intCoords = { 0, 0, 0 };
+        //    int counter = 0;
+        //    foreach(var coord in indices)
+        //    {
+        //        intCoords[counter] = (int)(Math.Round(coord));
+        //        counter++;
+        //    }
+        //    return intCoords;
+        //}
 
         #region Quick Booleans for IDs
         internal static bool isFull(long ID)
