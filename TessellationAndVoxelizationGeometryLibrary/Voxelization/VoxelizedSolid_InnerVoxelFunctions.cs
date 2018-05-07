@@ -308,7 +308,7 @@ namespace TVGL.Voxelization
         }
         #endregion
 
-        private void UpdateProperties(int level = -1)
+        public void UpdateProperties(int level = -1)
         {
             _totals = new[]
                         {

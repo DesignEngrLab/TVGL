@@ -15,6 +15,7 @@
 using StarMathLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -98,6 +99,7 @@ namespace TVGL.Voxelization
                     MakeVertexVoxels(((VoxelWithTessellationLinks)voxel0).Vertices, voxel0, voxels);
                     MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel0).Faces, voxel0, voxels);
                     unknownPartials = DefineBottomCoordinateInside(voxels, null);
+                    Debug.WriteLineIf(unknownPartials!=null, "\n**********\nthere are unknown partial voxels\n**********\n");
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
@@ -270,7 +272,7 @@ namespace TVGL.Voxelization
 
         /// <summary>
         /// Checks if the tessellated object is outside limits. This is a necessary but not sufficient condition.
-        /// In otherwords, when TRUE it is assured that the object is outside, but FALSE when inside inside and some
+        /// In other words, when TRUE it is assured that the object is outside, but FALSE when inside inside and some
         /// outside cases.
         /// </summary>
         /// <param name="limits">The limits.</param>
@@ -491,7 +493,7 @@ namespace TVGL.Voxelization
             maxSweepValue = (int)Math.Ceiling(Math.Max(transformedCoordinates[face.B.IndexInList][sweepDim],
                 transformedCoordinates[face.C.IndexInList][sweepDim]));
             // in the following conditions the actual vertex positions are used instead of this.transformedCoordinates,
-            // but it is okay since these are simpley scaled and compared to one another
+            // but it is okay since these are simply scaled and compared to one another
             if (face.B.Position[sweepDim] < face.A.Position[sweepDim])
             {
                 startVertex = face.B;
@@ -560,7 +562,7 @@ namespace TVGL.Voxelization
                 intersection[uDim] = startPoint[uDim] + d * vectorNorm[uDim];
                 intersection[vDim] = startPoint[vDim] + d * vectorNorm[vDim];
                 intersections[dim].Add(intersection);
-                //If going reverse, do not decriment until after using this voxel index.
+                //If going reverse, do not decrement until after using this voxel index.
                 if (!forwardX) t--;
             }
         }
@@ -592,7 +594,7 @@ namespace TVGL.Voxelization
             {
                 foreach (var intersection in intersections[axis])
                 {
-                    //Convert the intersectin values to integers. 
+                    //Convert the intersection values to integers. 
                     var ijk = new[] { (int)intersection[0], (int)intersection[1], (int)intersection[2] };
                     var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
                     var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
@@ -612,7 +614,7 @@ namespace TVGL.Voxelization
                     //through them.I am sure this same issue applies to lines through multiple voxel corners or a mix of 
                     //voxel corners and lines.
 
-                    //The simplest and most robust solution I can think of is to add voxels at all the decemented integer 
+                    //The simplest and most robust solution I can think of is to add voxels at all the decremented integer 
                     //intersections. For voxel edge intersections, this forms 4 voxels around the intersection. For voxel
                     //corner intersections, this forms 8 voxels around the intersection. This can be expressed as:
                     //numVoxels = 2^numAsInt
@@ -670,6 +672,20 @@ namespace TVGL.Voxelization
                 // least within the current scaling). It's possible that faces are intersected but farther away than
                 // this voxel. This is for when the voxel knows its faces as well as when looking over the parent set
                 var faces = voxel is VoxelWithTessellationLinks ? ((VoxelWithTessellationLinks)voxel).Faces : parentFaces;
+                if (faces.SelectMany(f => f.Normal).All(n => n >= 0))
+                {
+                    voxel.BtmCoordIsInside = true;
+                    assignedHashset.Add(voxel);
+                    lastSuccess = 0;
+                    continue;
+                }
+                if (faces.SelectMany(f => f.Normal).All(n => n <= 0))
+                {
+                    voxel.BtmCoordIsInside = false;
+                    assignedHashset.Add(voxel);
+                    lastSuccess = 0;
+                    continue;
+                }
                 foreach (var face in faces)
                 {
                     var d = face.Normal.dotProduct(transformedCoordinates[face.Vertices[0].IndexInList]);
@@ -732,7 +748,11 @@ namespace TVGL.Voxelization
                     }
                 }
                 if (gotFromNeighbor) lastSuccess = 0;
-                else lastSuccess++;
+                else
+                {
+                    queue.Enqueue(voxel);
+                    lastSuccess++;
+                }
             }
             if (queue.Any())
                 return new VoxelHashSet(level > 1 ? (IEqualityComparer<long>)new VoxelComparerFine() : new VoxelComparerCoarse(),
@@ -769,7 +789,7 @@ namespace TVGL.Voxelization
             var posDirections = new[] { 0, 1, 2 };
             var insiders = new Stack<IVoxel>();
             var outsiders = new Stack<IVoxel>();
-            /* separeate the partial/surface voxels into insiders and outsiders*/
+            /* separate the partial/surface voxels into insiders and outsiders*/
             if (unknownPartials == null)
                 foreach (var voxel in voxels)
                     if (voxel.BtmCoordIsInside) insiders.Push(voxel);
@@ -779,6 +799,7 @@ namespace TVGL.Voxelization
                     else outsiders.Push(voxel);
             /* the outsiders are done first as these may create insiders that are useful to finding other insiders.
              * Note, that new interior voxels created here (20 lines down) are added to the insider queue. */
+            // debug: potential problem!!! what if there are no outsiders or insiders but there are unknown partials?
             while (outsiders.Any())
             {
                 var current = outsiders.Pop();
@@ -788,7 +809,7 @@ namespace TVGL.Voxelization
                     if (coord[direction] == parentLimits[1][direction] - 1) continue;   /* check to see if current is on a boundary.
                     if so, just skip this one. */
                     var neighbor = GetNeighborForTSBuilding(coord, (VoxelDirections)(direction + 1), voxels, level, out var neighborCoord);
-                    /* if neighbor is null, then there is a possiblity to add it. if it exists but is in unknowns then we can figure out
+                    /* if neighbor is null, then there is a possibility to add it. if it exists but is in unknowns then we can figure out
                      * if it is still unknown or not. */
                     if ((unknownPartials == null && neighbor != null) ||
                         (unknownPartials != null && !unknownPartials.Contains(neighbor))) continue;
@@ -901,22 +922,22 @@ namespace TVGL.Voxelization
                 }
             }
             if (level > 1) return voxel;
-            var voxelwithTsLinks = (VoxelWithTessellationLinks)voxel;
-            if (voxelwithTsLinks.TessellationElements == null)
-                voxelwithTsLinks.TessellationElements = new HashSet<TessellationBaseClass>();
+            var voxelWithTsLinks = (VoxelWithTessellationLinks)voxel;
+            if (voxelWithTsLinks.TessellationElements == null)
+                voxelWithTsLinks.TessellationElements = new HashSet<TessellationBaseClass>();
 
-            LinkVoxelToTessellatedObject(voxelwithTsLinks, tsObject);
+            LinkVoxelToTessellatedObject(voxelWithTsLinks, tsObject);
             if (tsObject is Vertex vertex)
             {
                 foreach (var edge in vertex.Edges)
-                    LinkVoxelToTessellatedObject(voxelwithTsLinks, edge);
+                    LinkVoxelToTessellatedObject(voxelWithTsLinks, edge);
                 foreach (var face in vertex.Faces)
-                    LinkVoxelToTessellatedObject(voxelwithTsLinks, face);
+                    LinkVoxelToTessellatedObject(voxelWithTsLinks, face);
             }
             else if (tsObject is Edge edge)
             {
-                LinkVoxelToTessellatedObject(voxelwithTsLinks, edge.OtherFace);
-                LinkVoxelToTessellatedObject(voxelwithTsLinks, edge.OwnedFace);
+                LinkVoxelToTessellatedObject(voxelWithTsLinks, edge.OtherFace);
+                LinkVoxelToTessellatedObject(voxelWithTsLinks, edge.OwnedFace);
             }
             return voxel;
         }

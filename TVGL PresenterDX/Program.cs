@@ -258,7 +258,7 @@ namespace TVGLPresenterDX
             PresenterShowAndHang(unmachinableVoxels);
             PresenterShowAndHang(ts, unmachinableVoxels);
 
-            var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat(1066.0, new[] { 0.0, 1.0, 0.0 }));
+            var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat(166.0, new[] { 0.0, 1.0, 0.0 }));
 
             Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
             Console.WriteLine("Totals for New Unmachinable Voxels: " + newUV.GetTotals[0] + "; " + newUV.GetTotals[1] + "; " + newUV.GetTotals[2] + "; " + newUV.GetTotals[3]);
@@ -348,7 +348,7 @@ namespace TVGLPresenterDX
 
 
             }
-
+            newUnmachinableVoxels.UpdateProperties();
             return newUnmachinableVoxels;
         }
 
