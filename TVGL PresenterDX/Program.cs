@@ -243,8 +243,26 @@ namespace TVGLPresenterDX
             Console.WriteLine("Subtracting original shape from intersect");
             var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
 
+            Console.WriteLine("Totals for Original Voxel Shape: " + vs1.GetTotals[0] + "; " + vs1.GetTotals[1] + "; " + vs1.GetTotals[2] + "; " + vs1.GetTotals[3]);
+            Console.WriteLine("Totals for X Positive Draft: " + vs1xpos.GetTotals[0] + "; " + vs1xpos.GetTotals[1] + "; " + vs1xpos.GetTotals[2] + "; " + vs1xpos.GetTotals[3]);
+            Console.WriteLine("Totals for X Negative Draft: " + vs1xneg.GetTotals[0] + "; " + vs1xneg.GetTotals[1] + "; " + vs1xneg.GetTotals[2] + "; " + vs1xneg.GetTotals[3]);
+            Console.WriteLine("Totals for Y Positive Draft: " + vs1ypos.GetTotals[0] + "; " + vs1ypos.GetTotals[1] + "; " + vs1ypos.GetTotals[2] + "; " + vs1ypos.GetTotals[3]);
+            Console.WriteLine("Totals for Y Negative Draft: " + vs1yneg.GetTotals[0] + "; " + vs1yneg.GetTotals[1] + "; " + vs1yneg.GetTotals[2] + "; " + vs1yneg.GetTotals[3]);
+            Console.WriteLine("Totals for Z Positive Draft: " + vs1zpos.GetTotals[0] + "; " + vs1zpos.GetTotals[1] + "; " + vs1zpos.GetTotals[2] + "; " + vs1zpos.GetTotals[3]);
+            Console.WriteLine("Totals for Z Negative Draft: " + vs1zneg.GetTotals[0] + "; " + vs1zneg.GetTotals[1] + "; " + vs1zneg.GetTotals[2] + "; " + vs1zneg.GetTotals[3]);
+            Console.WriteLine("Totals for Intersected Voxel Shape: " + intersect.GetTotals[0] + "; " + intersect.GetTotals[1] + "; " + intersect.GetTotals[2] + "; " + intersect.GetTotals[3]);
+            Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
+
+            unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
+            PresenterShowAndHang(ts, unmachinableVoxels);
+
             var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat(166.0, new[] {0.0, 1.0, 0.0}));
+
+            Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
+            Console.WriteLine("Totals for New Unmachinable Voxels: " + newUV.GetTotals[0] + "; " + newUV.GetTotals[1] + "; " + newUV.GetTotals[2] + "; " + newUV.GetTotals[3]);
+            newUV.SolidColor = new Color(KnownColors.DeepPink);
             PresenterShowAndHang(newUV);
+            PresenterShowAndHang(ts, newUV);
         }
 
         public static VoxelizedSolid TestNewUnmachinable(VoxelizedSolid vs, VoxelizedSolid unmachinableVoxels,
@@ -267,13 +285,17 @@ namespace TVGLPresenterDX
             foreach (var direction in toolDirections)
             {
                 var voxels = new List<IVoxel>(newUnmachinableVoxels.Voxels(newUnmachinableVoxels.Discretization, true));
+                
+                //Check if that direction intersects with cutting plane at all?
+                
                 // make following loop a while loop s.t. the voxels that were crossed
                 //while (voxels.Any())
                 //{
                 //    var voxel = voxels.First();
-                var intListforRemoval = new HashSet<int[]>();
+                
                 foreach (var voxel in voxels)
                 {
+                    var intListforRemoval = new HashSet<int[]>();
                     //Create line segment from center of Voxel to
                     var voxelcenter = voxel.CoordinateIndices.add(halfWidths);
 
@@ -296,6 +318,8 @@ namespace TVGLPresenterDX
                     //}
 
                     //List of all voxels that the line segment intersects.
+                    if (intersectionWPlane == null) break;
+
                     var intList = findIntersectingVoxelCoords(voxelcenter, intersectionWPlane);
 
                     //List of voxels to be removed, should none of the voxels in the list above be from the original part
@@ -313,17 +337,16 @@ namespace TVGLPresenterDX
                                 intListforRemoval.Add(intCoord);
                         }
                     }
+                    foreach (var intCoord in intListforRemoval)
+                    {
+                        newUnmachinableVoxels.ChangeVoxelToEmpty(newUnmachinableVoxels.GetVoxel(intCoord, level));
+                    }
                 }
 
-                foreach (var intCoord in intListforRemoval)
-                {
-                    newUnmachinableVoxels.ChangeVoxelToEmpty(newUnmachinableVoxels.GetVoxel(intCoord, level));
-                }
+
 
             }
-
-
-
+            
             return newUnmachinableVoxels;
         }
 
