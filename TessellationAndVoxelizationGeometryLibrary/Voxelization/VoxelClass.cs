@@ -127,6 +127,7 @@ namespace TVGL.Voxelization
             }
         }
     }
+
     /// <summary>
     /// Class VoxelWithTessellationLinks.
     /// </summary>
@@ -138,6 +139,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The level.</value>
         public abstract int Level { get; }
+
         /// <summary>
         /// Gets the identifier.
         /// </summary>
@@ -149,25 +151,30 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The bottom coordinate.</value>
         public double[] BottomCoordinate { get; internal set; }
+
         /// <summary>
         /// Gets the length of the side.
         /// </summary>
         /// <value>The length of the side.</value>
         public double SideLength { get; internal set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether [BTM coord is inside].
         /// </summary>
         /// <value><c>true</c> if [BTM coord is inside]; otherwise, <c>false</c>.</value>
         public bool BtmCoordIsInside { get; set; }
+
         /// <summary>
         /// Gets the role.
         /// </summary>
         /// <value>The role.</value>
         public VoxelRoleTypes Role { get; internal set; }
+
         /// <summary>
         /// The tessellation elements
         /// </summary>
         internal HashSet<TessellationBaseClass> TessellationElements;
+
         /// <summary>
         /// Gets the coordinate indices.
         /// </summary>
@@ -178,12 +185,15 @@ namespace TVGL.Voxelization
         /// Gets the faces.
         /// </summary>
         /// <value>The faces.</value>
-        internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
+        internal List<PolygonalFace> Faces =>
+            TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
+
         /// <summary>
         /// Gets the edges.
         /// </summary>
         /// <value>The edges.</value>
         internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
+
         /// <summary>
         /// Gets the vertices.
         /// </summary>
@@ -191,14 +201,18 @@ namespace TVGL.Voxelization
         internal List<Vertex> Vertices => TessellationElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
 
 
-        protected VoxelWithTessellationLinks(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid, bool btmCoordIsInside=false)
+        protected VoxelWithTessellationLinks(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
+            bool btmCoordIsInside = false)
         {
             Role = voxelRole;
-            this.ID = Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(Level, Role, Role == VoxelRoleTypes.Full|| btmCoordIsInside);
+            this.ID = Constants.ClearFlagsFromID(ID) +
+                      Constants.SetRoleFlags(Level, Role, Role == VoxelRoleTypes.Full || btmCoordIsInside);
             SideLength = solid.VoxelSideLengths[Level];
             var coordinateIndices = Constants.GetCoordinateIndices(ID, Level);
-            BottomCoordinate = solid.GetRealCoordinates(Level, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
+            BottomCoordinate =
+                solid.GetRealCoordinates(Level, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
         }
+    }
 
     /// <summary>
     /// Class Voxel_Level0_Class.

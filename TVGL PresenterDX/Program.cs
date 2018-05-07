@@ -228,18 +228,24 @@ namespace TVGLPresenterDX
         {
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
-
+            PresenterShowAndHang(vs1);
             Console.WriteLine("Drafting voxelized model along orthogonals");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
+            PresenterShowAndHang(vs1xpos);
             var vs1xneg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
+            PresenterShowAndHang(vs1xneg);
             var vs1ypos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
+            PresenterShowAndHang(vs1ypos);
             var vs1yneg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
+            PresenterShowAndHang(vs1yneg);
             var vs1zpos = vs1.DraftToNewSolid(VoxelDirections.ZPositive);
+            PresenterShowAndHang(vs1zpos);
             var vs1zneg = vs1.DraftToNewSolid(VoxelDirections.ZNegative);
+            PresenterShowAndHang(vs1zneg);
 
             Console.WriteLine("Intersecting drafted models");
             var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);
-
+            PresenterShowAndHang(intersect);
             Console.WriteLine("Subtracting original shape from intersect");
             var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
 
