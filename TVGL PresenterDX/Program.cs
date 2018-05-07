@@ -125,8 +125,8 @@ namespace TVGLPresenterDX
             var intersections = new List<double[]>();
             for (var dim = 0; dim < 3; dim++)
             {
-                var start = (int) Math.Floor(startPoint[dim]);
-                var end = (int) Math.Floor(endPoint[dim]);
+                var start = (int)Math.Floor(startPoint[dim]);
+                var end = (int)Math.Floor(endPoint[dim]);
                 var forwardX = end > start;
                 var uDim = (dim + 1) % 3;
                 var vDim = (dim + 2) % 3;
@@ -164,7 +164,7 @@ namespace TVGLPresenterDX
             foreach (var intersection in intersections)
             {
                 //Convert the intersectin values to integers. 
-                var ijk = new[] {(int) intersection[0], (int) intersection[1], (int) intersection[2]};
+                var ijk = new[] { (int)intersection[0], (int)intersection[1], (int)intersection[2] };
                 var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
                 var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
 
@@ -213,12 +213,12 @@ namespace TVGLPresenterDX
 
                     if (!valid) continue;
                     //This is a valid combination, so make it a voxel
-                    var newIjk = new[] {ijk[0] + combination[0], ijk[1] + combination[1], ijk[2] + combination[2]};
+                    var newIjk = new[] { ijk[0] + combination[0], ijk[1] + combination[1], ijk[2] + combination[2] };
                     voxelCoords.Add(newIjk);
                     numVoxels++;
                 }
 
-                if (numVoxels != (int) Math.Pow(2, numAsInt)) throw new Exception("Error in implementation");
+                if (numVoxels != (int)Math.Pow(2, numAsInt)) throw new Exception("Error in implementation");
             }
 
             return voxelCoords;
@@ -228,6 +228,7 @@ namespace TVGLPresenterDX
         {
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
+            PresenterShowAndHang(vs1);
 
             Console.WriteLine("Drafting voxelized model along orthogonals");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
@@ -243,15 +244,34 @@ namespace TVGLPresenterDX
             Console.WriteLine("Subtracting original shape from intersect");
             var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
 
-            var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat(166.0, new[] {0.0, 1.0, 0.0}));
+            Console.WriteLine("Totals for Original Voxel Shape: " + vs1.GetTotals[0] + "; " + vs1.GetTotals[1] + "; " + vs1.GetTotals[2] + "; " + vs1.GetTotals[3]);
+            Console.WriteLine("Totals for X Positive Draft: " + vs1xpos.GetTotals[0] + "; " + vs1xpos.GetTotals[1] + "; " + vs1xpos.GetTotals[2] + "; " + vs1xpos.GetTotals[3]);
+            Console.WriteLine("Totals for X Negative Draft: " + vs1xneg.GetTotals[0] + "; " + vs1xneg.GetTotals[1] + "; " + vs1xneg.GetTotals[2] + "; " + vs1xneg.GetTotals[3]);
+            Console.WriteLine("Totals for Y Positive Draft: " + vs1ypos.GetTotals[0] + "; " + vs1ypos.GetTotals[1] + "; " + vs1ypos.GetTotals[2] + "; " + vs1ypos.GetTotals[3]);
+            Console.WriteLine("Totals for Y Negative Draft: " + vs1yneg.GetTotals[0] + "; " + vs1yneg.GetTotals[1] + "; " + vs1yneg.GetTotals[2] + "; " + vs1yneg.GetTotals[3]);
+            Console.WriteLine("Totals for Z Positive Draft: " + vs1zpos.GetTotals[0] + "; " + vs1zpos.GetTotals[1] + "; " + vs1zpos.GetTotals[2] + "; " + vs1zpos.GetTotals[3]);
+            Console.WriteLine("Totals for Z Negative Draft: " + vs1zneg.GetTotals[0] + "; " + vs1zneg.GetTotals[1] + "; " + vs1zneg.GetTotals[2] + "; " + vs1zneg.GetTotals[3]);
+            Console.WriteLine("Totals for Intersected Voxel Shape: " + intersect.GetTotals[0] + "; " + intersect.GetTotals[1] + "; " + intersect.GetTotals[2] + "; " + intersect.GetTotals[3]);
+            Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
+
+            unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
+            PresenterShowAndHang(unmachinableVoxels);
+            PresenterShowAndHang(ts, unmachinableVoxels);
+
+            var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat(1066.0, new[] { 0.0, 1.0, 0.0 }));
+
+            Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
+            Console.WriteLine("Totals for New Unmachinable Voxels: " + newUV.GetTotals[0] + "; " + newUV.GetTotals[1] + "; " + newUV.GetTotals[2] + "; " + newUV.GetTotals[3]);
+            newUV.SolidColor = new Color(KnownColors.DeepPink);
             PresenterShowAndHang(newUV);
+            PresenterShowAndHang(ts, newUV);
         }
 
         public static VoxelizedSolid TestNewUnmachinable(VoxelizedSolid vs, VoxelizedSolid unmachinableVoxels,
             Flat cuttingPlane)
         {
-            var level = (int) vs.Discretization;
-            var newUnmachinableVoxels = (VoxelizedSolid) unmachinableVoxels.Copy();
+            var level = (int)vs.Discretization;
+            var newUnmachinableVoxels = (VoxelizedSolid)unmachinableVoxels.Copy();
             var toolDirections = new List<double[]>
             {
                 cuttingPlane.Normal,
@@ -259,7 +279,7 @@ namespace TVGLPresenterDX
                 new[] {0, 1.0, 0},
                 new[] {0, 0, 1.0}
             };
-            var halfWidths = new[] {0.5, 0.5, 0.5};
+            var halfWidths = new[] { 0.5, 0.5, 0.5 };
             //sort with respect to distance from cutting plane
 
             //Add directions for orthogonals to voxels and direction perpendicular to the cutting plane
@@ -267,13 +287,17 @@ namespace TVGLPresenterDX
             foreach (var direction in toolDirections)
             {
                 var voxels = new List<IVoxel>(newUnmachinableVoxels.Voxels(newUnmachinableVoxels.Discretization, true));
+
+                //Check if that direction intersects with cutting plane at all?
+
                 // make following loop a while loop s.t. the voxels that were crossed
                 //while (voxels.Any())
                 //{
                 //    var voxel = voxels.First();
-                var intListforRemoval = new HashSet<int[]>();
+
                 foreach (var voxel in voxels)
                 {
+                    var intListforRemoval = new HashSet<int[]>();
                     //Create line segment from center of Voxel to
                     var voxelcenter = voxel.CoordinateIndices.add(halfWidths);
 
@@ -296,6 +320,8 @@ namespace TVGLPresenterDX
                     //}
 
                     //List of all voxels that the line segment intersects.
+                    if (intersectionWPlane == null) break;
+
                     var intList = findIntersectingVoxelCoords(voxelcenter, intersectionWPlane);
 
                     //List of voxels to be removed, should none of the voxels in the list above be from the original part
@@ -313,16 +339,15 @@ namespace TVGLPresenterDX
                                 intListforRemoval.Add(intCoord);
                         }
                     }
+                    foreach (var intCoord in intListforRemoval)
+                    {
+                        newUnmachinableVoxels.ChangeVoxelToEmpty(newUnmachinableVoxels.GetVoxel(intCoord, level));
+                    }
                 }
 
-                foreach (var intCoord in intListforRemoval)
-                {
-                    newUnmachinableVoxels.ChangeVoxelToEmpty(newUnmachinableVoxels.GetVoxel(intCoord, level));
-                }
+
 
             }
-
-
 
             return newUnmachinableVoxels;
         }
