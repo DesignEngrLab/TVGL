@@ -83,7 +83,7 @@ namespace TVGL
             {
                 bool[] isPositive = null;
                 var triangleFaceList = TriangulatePolygon.Run2D(points2D, out groupsOfLoops, ref isPositive);
-                if(!triangleFaceList.Any()) throw new Exception();
+                if(!triangleFaceList.Any()) throw new Exception("Extrusion failed. Will clean up polygons and retry.");
                 foreach (var face in triangleFaceList)
                 {
                     triangles.AddRange(face);
