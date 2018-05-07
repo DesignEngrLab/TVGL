@@ -17,7 +17,7 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run2(TessellatedSolid ts, double[] normal)
+        public static List<List<Point>> Precise(TessellatedSolid ts, double[] normal)
         {
             //Get the negative faces
             var negativeFaces = new List<PolygonalFace>();
@@ -106,7 +106,7 @@ namespace TVGL
             if (ts.Errors?.SingledSidedEdges != null)
             {
                 //Run2 is slower, but may handle missing edge/vertex pairing better.
-                return Run2(ts, normal);
+                return Precise(ts, normal);
             }
 
             //Get the positive faces into a dictionary
@@ -249,23 +249,21 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <param name="minAngle"></param>
-        /// <param name="removeTinyPolygons"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double minAngle = 1.0,
-            bool removeTinyPolygons = true)
+        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double minAngle = 1.0)
         {
             if (ts.Errors?.SingledSidedEdges != null)
             {
-                //Run2 is slower, but may handle missing edge/vertex pairing better.
+                //HighlyAccurate is slower, but more accurate and may handle missing edge/vertex pairing better.
                 //Also, it handles low quality and small models better.
-                return Run2(ts, normal);
+                return Precise(ts, normal);
             }
             ts.HasUniformColor = false;
 
             List<Vertex> v1, v2;
             var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out v1, out v2);
 
-            return Run(ts.Faces, normal, minAngle, ts.SurfaceArea/10000, removeTinyPolygons, depthOfPart);
+            return Rough(ts.Faces, normal, minAngle, ts.SameTolerance, depthOfPart);
         }
 
         /// <summary>
@@ -275,11 +273,10 @@ namespace TVGL
         /// <param name="normal"></param>
         /// <param name="minAngle"></param>
         /// <param name="minPathAreaToConsider"></param>
-        /// <param name="removeTinyPolygons"></param>
         /// <param name="depthOfPart"></param> 
         /// <returns></returns>
-        public static List<List<Point>> Run(IList<PolygonalFace> faces, double[] normal, double minAngle = 1.0,
-            double minPathAreaToConsider = 0.0, bool removeTinyPolygons = true, double depthOfPart = 0.0)
+        public static List<List<Point>> Rough(IList<PolygonalFace> faces, double[] normal, double minAngle = 1.0,
+            double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             //Get the positive faces into a dictionary
             var positiveFaceDict1 = new Dictionary<int, PolygonalFace>();
@@ -342,7 +339,16 @@ namespace TVGL
                 }
                 if (!significantPaths.Any()) continue;
 
-                var surfaceUnion = PolygonOperations.Union(significantPaths, true, PolygonFillType.EvenOdd);
+                List<List<Point>> surfaceUnion;
+                try
+                {
+                    surfaceUnion = PolygonOperations.Union(significantPaths, true, PolygonFillType.EvenOdd);
+                }
+                catch
+                {
+                    //Simplify likely reduced the polygon to nothing. It is insignificant, so continue.
+                    continue;
+                }
                 if (!surfaceUnion.Any()) continue;
 
                 if (area < 0)
@@ -363,12 +369,11 @@ namespace TVGL
                 loopCount++;
             }
 
-            if (!removeTinyPolygons) return solution;
-
             //Offset by enough to account for 0.1 degree limit. 
             var scale = Math.Tan(minAngle * Math.PI / 180)*depthOfPart;
 
             //Remove tiny polygons and slivers 
+            solution = PolygonOperations.SimplifyFuzzy(solution);
             var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
             var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
             return significantSolution;
