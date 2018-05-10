@@ -20,11 +20,11 @@ using StarMathLib;
 namespace TVGL
 {
     /// <summary>
-    ///     The BoundingBox struct is a simple structure for representing an arbitrarily oriented box
+    ///     The BoundingBox is a simple structure for representing an arbitrarily oriented box
     ///     or 3D prismatic rectangle. It simply includes the orientation as three unit vectors in
     ///     "Directions2D", the extreme vertices, and the volume.
     /// </summary>
-    public struct BoundingBox
+    public class BoundingBox
     {
         /// <summary>
         ///     The volume of the bounding box.
