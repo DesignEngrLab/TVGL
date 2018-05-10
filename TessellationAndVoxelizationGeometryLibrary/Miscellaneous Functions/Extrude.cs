@@ -73,17 +73,50 @@ namespace TVGL
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
-            List<List<int>> groupsOfLoops;
             var backTransform = new double[,] {};
             var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop.ToArray(), extrudeDirection, out backTransform)).ToList();
-            var points2D = paths.Select(path => path.ToArray()).ToList();
-
-            var triangles = new List<Vertex[]>();
+            List<Point[]> points2D;
+            List<Vertex[]> triangles;
             try
             {
+                //Reset the list of triangles
+                triangles = new List<Vertex[]>();
+
+                //Do some polygon functions to clean up issues and try again
+                //This is important because the Get2DProjections may produce invalid paths and because
+                //triangulate will try 3 times before throwing the exception to go to the catch.
+                paths = PolygonOperations.Union(paths, true, PolygonFillType.EvenOdd);
+
+                //Since triangulate polygon needs the points to have references to their vertices, we need to add vertex references to each point
+                //This also means we need to recreate cleanLoops
+                //Also, give the vertices indices.
+                cleanLoops = new List<List<Vertex>>();
+                var j = 0;
+                foreach (var path in paths)
+                {
+                    var cleanLoop = new List<Vertex>();
+                    foreach (var point in path)
+                    {
+                        var position = new[] { point.X, point.Y, 0.0, 1.0 };
+                        var vertexPosition1 = backTransform.multiply(position).Take(3).ToArray();
+                        //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
+                        //So, we must move it to be on the plane
+                        //This next line gets a second vertex to use for the point on plane function
+                        var vertexPosition2 = vertexPosition1.add(extrudeDirection.multiply(5));
+                        var vertex = MiscFunctions.PointOnPlaneFromIntersectingLine(extrudeDirection,
+                            distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
+                            new Vertex(vertexPosition2));
+                        vertex.IndexInList = j;
+                        point.References.Add(vertex);
+                        cleanLoop.Add(vertex);
+                        j++;
+                    }
+                    cleanLoops.Add(cleanLoop);
+                }
+
+                points2D = paths.Select(path => path.ToArray()).ToList();
                 bool[] isPositive = null;
-                var triangleFaceList = TriangulatePolygon.Run2D(points2D, out groupsOfLoops, ref isPositive);
-                if(!triangleFaceList.Any()) throw new Exception("Extrusion failed. Will clean up polygons and retry.");
+                var triangleFaceList = TriangulatePolygon.Run2D(points2D, out _, ref isPositive);
                 foreach (var face in triangleFaceList)
                 {
                     triangles.AddRange(face);
@@ -131,7 +164,7 @@ namespace TVGL
 
                     points2D = paths.Select(path => path.ToArray()).ToList();
                     bool[] isPositive = null;
-                    var triangleFaceList = TriangulatePolygon.Run2D(points2D, out groupsOfLoops, ref isPositive);
+                    var triangleFaceList = TriangulatePolygon.Run2D(points2D, out _, ref isPositive);
                     foreach (var face in triangleFaceList)
                     {
                         triangles.AddRange(face);
