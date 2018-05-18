@@ -220,6 +220,10 @@ namespace TVGL
             return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
         }
 
+        public Point Copy()
+        {
+            return new Point(X, Y);
+        }
 
         /// <summary>
         /// Gets whether points are not equal
