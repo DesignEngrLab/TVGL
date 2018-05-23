@@ -329,20 +329,19 @@ namespace TVGL
                 var significantPaths = new List<List<Point>>();
                 foreach (var path in surfacePaths)
                 {
-                    var pathArea = MiscFunctions.AreaOfPolygon(path);
+                    var simplePath = PolygonOperations.SimplifyFuzzy(path);
+                    if (!simplePath.Any()) continue;  //Ignore very small patches
+                    var pathArea = MiscFunctions.AreaOfPolygon(simplePath);
                     area += pathArea;
-                    if (!pathArea.IsNegligible(minPathAreaToConsider))
-                    {
-                        //Ignore very small patches
-                        significantPaths.Add(path);
-                    }
+                    if (pathArea.IsNegligible(minPathAreaToConsider)) continue;  //Ignore very small patches
+                    significantPaths.Add(simplePath);          
                 }
                 if (!significantPaths.Any()) continue;
 
                 List<List<Point>> surfaceUnion;
                 try
                 {
-                    surfaceUnion = PolygonOperations.Union(significantPaths, true, PolygonFillType.EvenOdd);
+                    surfaceUnion = PolygonOperations.Union(significantPaths, false, PolygonFillType.EvenOdd);
                 }
                 catch
                 {
