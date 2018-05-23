@@ -1011,7 +1011,7 @@ namespace TVGL
             Implications:   A segment may only be defined for one step, but its volume should be thought of as extending a half-step forward
                             and backward from that step to form a volume.  
             */
-            if(debugCounter == 145) Debug.WriteLine("Bug Stop Hit");
+            //if(debugCounter == 145) Debug.WriteLine("Bug Stop Hit");
             var distanceAlongAxis = segmentationData.DistanceAlongDirection;
 
             //Get all the current segments.
