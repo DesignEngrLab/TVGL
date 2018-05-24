@@ -17,6 +17,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Windows.Media.Converters;
 using StarMathLib;
 using TVGL.Voxelization;
 
@@ -791,6 +792,16 @@ namespace TVGL
                 }
             }
             return points.ToArray();
+        }
+
+        public static Point Get2DProjectionPoint(Vertex vertex, double[,] transform)
+        {
+            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
+            pointAs4[0] = vertex.Position[0];
+            pointAs4[1] = vertex.Position[1];
+            pointAs4[2] = vertex.Position[2];
+            pointAs4 = transform.multiply(pointAs4);
+            return new Point(vertex, pointAs4[0], pointAs4[1]);
         }
 
         /// <summary>
@@ -2498,6 +2509,65 @@ namespace TVGL
             }
 
             return inside;
+        }
+
+        /// <summary>
+        /// This algorithm returns whether two polygons intersect. It can be used to triangle/triangle intersections,
+        /// or any abitrary set of polygons. If two polygons are touching, they are not considered to be intersecting.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        //To get the area of intersection, use the Sutherland–Hodgman algorithm for polygon clipping
+        // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
+        public static bool IsPolygonIntersectingPolygon(Polygon subject, Polygon clip)
+        {
+            //Get the axis aligned bounding box of the path. This is super fast.
+            //If the point is inside the bounding box, continue to check with more detailed methods, 
+            //Else, return false.
+            if( subject.MinX > clip.MaxX ||
+                subject.MaxX < clip.MinX ||
+                subject.MinY > clip.MinY ||
+                subject.MaxY < clip.MinY) return false;     
+
+            //Check if either polygon is fully encompassed by the other
+            if(clip.Path.Any(p => IsPointInsidePolygon(subject, p))) return true;
+            if(subject.Path.Any(p => IsPointInsidePolygon(clip, p))) return true;
+
+            //Else, any remaining intersection will be defined by one or more crossing lines
+            //Check for intersections between all but one of the clip lines with all of the subject lines.
+            //This is enough to test for intersection because we have already performed a point check.
+            //This makes very little difference for large polygons, but cuts 9 operations down to 6 for 
+            //a triangle/triangle intersection
+            var clipPathLength = clip.Path.Count;
+            var subjectPathLength = subject.Path.Count;
+            //This next section gathers the points rather than using polygon.PathLines, so that the 
+            //PathLines do not need to be set (we don't even use them in LineLineIntersection).
+            for (var i = 0; i < clipPathLength - 1; i++) //-1 since we only need two lines
+            {
+                var point1 = clip.Path[i];
+                var point2 = (i == clipPathLength - 1) ? clip.Path[0] : clip.Path[i + 1]; //Wrap back around to 0. Else use i+1
+                for (var j = 0; j < subjectPathLength; j++) //Need to consider all the lines
+                {
+                    var point3 = subject.Path[j];
+                    var point4 = (j == subjectPathLength - 1) ? subject.Path[0] : subject.Path[j + 1]; //Wrap back around to 0. Else use i+1
+                    if (LineLineIntersection(point1, point2, point3, point4, out var intersectionPoint, false))
+                    {
+                        if (intersectionPoint == point1 ||
+                            intersectionPoint == point1 ||
+                            intersectionPoint == point3 ||
+                            intersectionPoint == point4)
+                        {
+                            continue;
+                        }
+                        //Else
+                        return true;
+                    }
+                }
+            }
+
+            //No intersections identified. Return false.
+            return false;
         }
     }
     #endregion
