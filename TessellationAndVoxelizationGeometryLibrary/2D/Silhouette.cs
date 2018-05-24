@@ -287,7 +287,7 @@ namespace TVGL
                         foreach (var priorFaceInColumn in priorFacesInColumn)
                         {
                             var priorFacePolygon = projectedFacePolygons[priorFaceInColumn];
-                            if (MiscFunctions.TriangleTriangleIntersection(polygon, priorFacePolygon)) continue;
+                            if (MiscFunctions.IsPolygonIntersectingPolygon(polygon, priorFacePolygon)) continue;
                             addToSurface = true;
                             break;
                         }      
