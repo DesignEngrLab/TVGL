@@ -79,12 +79,11 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
-            //Difference2();
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*dodec*");
+            var fileNames = dir.GetFiles("*Casing*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -97,30 +96,15 @@ namespace TVGLPresenterDX
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
                 if (!ts.Any()) continue;
-
-                Color color = new Color(KnownColors.AliceBlue);
-                ts[0].SolidColor = new Color(KnownColors.MediumSeaGreen)
-                {
-                    Af = 0.25f
-                };
-            TestMachinability(ts[0], justfile);
-
-                // var stopWatch = new Stopwatch();
-                // Color color = new Color(KnownColors.AliceBlue);
-                //ts[0].SetToOriginAndSquare(out var backTransform);
-                //ts[0].Transform(new double[,]
-                //  {
-                //{1,0,0,-(ts[0].XMax + ts[0].XMin)/2},
-                //{0,1,0,-(ts[0].YMax+ts[0].YMin)/2},
-                //{0,0,1,-(ts[0].ZMax+ts[0].ZMin)/2},
-                //  });
-                // stopWatch.Restart();
-                //PresenterShowAndHang(ts);
-                // Console.WriteLine("Voxelizing Tesselated File " + filename);
-                //  var vs1 = new VoxelizedSolid(ts[0], VoxelDiscretization.Coarse, false);//, bounds);
-                // Presenter.ShowAndHang(vs1);
-                //TestVoxelization(ts[0]);
-                //bounds = vs1.Bounds;
+                Presenter.ShowAndHang(ts);
+                var casing = ts[0];
+                List<TessellatedSolid> negativeSolids;
+                List<TessellatedSolid> positiveSolids;
+                var d = (casing.XMax + casing.XMin)/2;
+                TVGL.Boolean_Operations.Slice.OnFlat(casing, new Flat(d,new []{1.0,0.0,0.0}),
+                                        out positiveSolids, out negativeSolids); 
+                Presenter.ShowAndHang(positiveSolids);
+                Presenter.ShowAndHang(negativeSolids);
             }
             Console.WriteLine("Completed.");
         }
