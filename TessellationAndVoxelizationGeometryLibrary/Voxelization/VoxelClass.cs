@@ -236,11 +236,6 @@ namespace TVGL.Voxelization
             bool btmCoordIsInside = false)
             : base(ID, voxelRole, solid, btmCoordIsInside)
         {
-            //Role = voxelRole;
-            //this.ID = Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(0, Role, Role == VoxelRoleTypes.Full);
-            //SideLength = solid.VoxelSideLengths[0];
-            //var coordinateIndices = Constants.GetCoordinateIndices(ID, 0);
-            //BottomCoordinate = solid.GetRealCoordinates(0, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
             if (Role == VoxelRoleTypes.Partial)
                 InnerVoxels = new VoxelHashSet[solid.discretizationLevel];
         }
@@ -271,13 +266,6 @@ namespace TVGL.Voxelization
         /// <param name="solid">The solid.</param>
         public Voxel_Level1_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
             bool btmCoordIsInside = false)
-            : base(ID, voxelRole, solid, btmCoordIsInside)
-        {
-            //    Role = voxelRole;
-            //    this.ID = Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(0, Role, Role == VoxelRoleTypes.Full);
-            //    SideLength = solid.VoxelSideLengths[1];
-            //    var coordinateIndices = Constants.GetCoordinateIndices(ID, 1);
-            //    BottomCoordinate = solid.GetRealCoordinates(1, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
-        }
+            : base(ID, voxelRole, solid, btmCoordIsInside) { }
     }
 }

@@ -163,7 +163,7 @@ namespace TVGLPresenterDX
             var voxelCoords = new List<int[]>();
             foreach (var intersection in intersections)
             {
-                //Convert the intersectin values to integers. 
+                //Convert the intersection values to integers. 
                 var ijk = new[] {(int) intersection[0], (int) intersection[1], (int) intersection[2]};
                 var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
                 var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
