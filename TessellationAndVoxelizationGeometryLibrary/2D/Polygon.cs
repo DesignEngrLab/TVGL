@@ -140,9 +140,9 @@ namespace TVGL
             {
                 var point = Path[i];
                 if (point.X > MaxX) MaxX = point.X;
-                else if (point.X < MinX) MinX = point.X;
+                if (point.X < MinX) MinX = point.X;
                 if (point.Y > MaxY) MaxY = point.Y;
-                else if (point.Y < MinY) MinY = point.Y;
+                if (point.Y < MinY) MinY = point.Y;
                 point.IndexInPath = i;
                 point.Lines = new List<Line>(); //erase any previous connection to lines.
             }
