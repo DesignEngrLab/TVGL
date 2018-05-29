@@ -101,7 +101,7 @@ namespace TVGL
         /// <param name="thisVertex">The this vertex.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Edge.</returns>
-        internal Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
+        public Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
         {
             if (willAcceptNullAnswer)
                 return Edges.FirstOrDefault(e => e != null && e.To != thisVertex && e.From != thisVertex);
@@ -114,7 +114,7 @@ namespace TVGL
         /// <param name="thisEdge">The this edge.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Vertex.</returns>
-        internal Vertex OtherVertex(Edge thisEdge, bool willAcceptNullAnswer = false)
+        public Vertex OtherVertex(Edge thisEdge, bool willAcceptNullAnswer = false)
         {
             return willAcceptNullAnswer
                 ? Vertices.FirstOrDefault(v => v != null && v != thisEdge.To &&
@@ -129,7 +129,7 @@ namespace TVGL
         /// <param name="v2">The v2.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Vertex.</returns>
-        internal Vertex OtherVertex(Vertex v1, Vertex v2, bool willAcceptNullAnswer = false)
+        public Vertex OtherVertex(Vertex v1, Vertex v2, bool willAcceptNullAnswer = false)
         {
             return willAcceptNullAnswer
                 ? Vertices.FirstOrDefault(v => v != null && v != v1 && v != v2)
@@ -141,7 +141,7 @@ namespace TVGL
         /// </summary>
         /// <param name="v1">The v1.</param>
         /// <returns>Vertex.</returns>
-        internal Vertex NextVertexCCW(Vertex v1)
+        public Vertex NextVertexCCW(Vertex v1)
         {
             var index = Vertices.IndexOf(v1);
             if (index < 0) return null; //Vertex is not part of this face
@@ -241,7 +241,7 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double[].</returns>
-        internal static double[] DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, double[] normal = null)
+        public static double[] DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, double[] normal = null)
         {
             reverseVertexOrder = false;
             var n = vertices.Count;

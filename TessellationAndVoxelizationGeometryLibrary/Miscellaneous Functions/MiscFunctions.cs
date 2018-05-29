@@ -935,7 +935,7 @@ namespace TVGL
         #region Angle between Edges/Lines
 
         /// <summary>
-        ///     Smallers the angle between edges.
+        ///     Gets the smaller of the two angles between edges.
         /// </summary>
         /// <param name="edge1">The edge1.</param>
         /// <param name="edge2">The edge2.</param>
@@ -949,7 +949,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Smallers the angle between edges.
+        ///     Gets the smaller of the two angles between edges.
         /// </summary>
         /// <param name="a">a.</param>
         /// <param name="b">The b.</param>
@@ -1057,34 +1057,37 @@ namespace TVGL
         /// <param name="c">The c.</param>
         /// <param name="positiveNormal">The positive normal.</param>
         /// <returns>System.Double.</returns>
-        internal static double ProjectedAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
+        public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
         {
             var points = Get2DProjectionPoints(new List<Vertex> { a, b, c }, positiveNormal);
             return InteriorAngleBetweenEdgesInCCWList(new[] { points[1].X - points[0].X, points[1].Y - points[0].Y },
                 new[] { points[2].X - points[1].X, points[2].Y - points[1].Y });
         }
 
+        public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
+        {
+            return 2 * Math.PI - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, positiveNormal);
+        }
+
         /// <summary>
-        ///     Angles the between edges cw.
+        ///     Gets the exterior angle between two edges, assuming the edges are listed in CCW order.
         /// </summary>
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
+        public static double ExteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
         {
             return 2 * Math.PI - InteriorAngleBetweenEdgesInCCWList(v0, v1);
         }
 
-        //Gets the angle between edges that are ordered in a CCW list. 
-        //NOTE: This is opposite from getting the CCW angle from v0 and v1.
-
         /// <summary>
-        ///     Angles the between edges CCW.
+        ///     Gets the interior angle between two edges, assuming the edges are listed in CCW order.
+        ///     NOTE: This is opposite from getting the CCW angle from v0 and v1.
         /// </summary>
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
+        public static double InteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
         {
             #region Law of Cosines Approach (Commented Out)
 
