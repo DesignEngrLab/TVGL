@@ -2530,7 +2530,7 @@ namespace TVGL
             //Else, return false.
             if( subject.MinX > clip.MaxX ||
                 subject.MaxX < clip.MinX ||
-                subject.MinY > clip.MinY ||
+                subject.MinY > clip.MaxY ||
                 subject.MaxY < clip.MinY) return false;     
 
             //Check if either polygon is fully encompassed by the other
