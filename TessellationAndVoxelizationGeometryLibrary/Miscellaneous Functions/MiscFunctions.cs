@@ -2441,9 +2441,19 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon"></param>
         /// <param name="p"></param>
+        /// <param name="returnSharedPointAsInside"></param>
         /// <returns></returns>
-        public static bool IsPointInsidePolygon(Polygon polygon, Point p)
+        public static bool IsPointInsidePolygon(Polygon polygon, Point p, bool returnSharedPointAsInside = false)
         {
+            //Check if the point is the same as any of the polygon's points
+            foreach (var point in polygon.Path)
+            {
+                if (point.X.IsPracticallySame(p.X) && point.Y.IsPracticallySame(p.Y))
+                {
+                    return returnSharedPointAsInside;
+                }
+            }
+
             //1) Check if center point is within bounding box of each polygon
             if (!p.X.IsLessThanNonNegligible(polygon.MaxX) ||
                 !p.X.IsGreaterThanNonNegligible(polygon.MinX) ||
@@ -2480,8 +2490,17 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <param name="p"></param>
-        public static bool IsPointInsidePolygon(List<Point> path, Point p)
+        public static bool IsPointInsidePolygon(List<Point> path, Point p, bool returnSharedPointAsInside = false)
         {
+            //Check if the point is the same as any of the polygon's points
+            foreach (var point in path)
+            {
+                if (point.X.IsPracticallySame(p.X) && point.Y.IsPracticallySame(p.Y))
+                {
+                    return returnSharedPointAsInside;
+                }
+            }
+
             //1) Get the axis aligned bounding box of the path. This is super fast.
             //If the point is inside the bounding box, continue to check with more detailed methods, 
             //Else, retrun false.
