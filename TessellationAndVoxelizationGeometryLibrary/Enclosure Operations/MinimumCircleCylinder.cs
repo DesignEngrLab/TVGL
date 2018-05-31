@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -186,7 +187,7 @@ namespace TVGL
             #endregion
 
             //Return information about minimum circle
-            if (stallCounter == stallLimit) throw new Exception("Bounding circle failed to converge");
+            if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " +  (Constants.BaseTolerance * circle.SqRadius * 2));
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
             return new BoundingCircle(radius, circle.Center);
         }
