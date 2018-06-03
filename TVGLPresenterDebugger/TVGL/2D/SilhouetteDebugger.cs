@@ -203,7 +203,6 @@ namespace TVGL
 
             //Get the surface paths from all the surfaces and union them together
             var solution = new List<List<Point>>();
-            var loopCount = 0;
             foreach (var surface in allSurfaces)
             {
                 //Split into positive and negative paths. For each of the negative paths, we need to 
@@ -211,52 +210,10 @@ namespace TVGL
                 //A path is a hole, IF none of its points are inside the polygons from the adjacent faces
                 //on that loop.
                 var surfaceUnion = GetSurfacePaths(surface, normal, minPathAreaToConsider, originalSolid, projectedFacePolygons);
-
-                //var area = 0.0;
-                //var significantPaths = new List<List<Point>>();
-                //foreach (var path in surfacePaths)
-                //{
-                //    var simplePath = PolygonOperations.SimplifyFuzzy(path);
-                //    if (!simplePath.Any()) continue;  //Ignore very small patches
-                //    var pathArea = MiscFunctions.AreaOfPolygon(simplePath);
-                //    area += pathArea;
-                //    if (pathArea.IsNegligible(minPathAreaToConsider)) continue;  //Ignore very small patches
-                //    significantPaths.Add(simplePath);
-                //}
-                //if (!significantPaths.Any()) continue;
-                //solution.AddRange(significantPaths);
-                //List<List<Point>> surfaceUnion;
-                //try
-                //{
-                //    //Use positive fill, since it handles overlapping surfaces correctly
-                //    surfaceUnion = PolygonOperations.Union(significantPaths, false, PolygonFillType.Positive);
-                //}
-                //catch
-                //{
-                //    //Simplify likely reduced the polygon to nothing. It is insignificant, so continue.
-                //    continue;
-                //}
-                //if (!surfaceUnion.Any()) continue;
-
-                //if (area < 0)
-                //{
-                //    area = surfaceUnion.Sum(path => MiscFunctions.AreaOfPolygon(path));
-                //    if (area < 0) throw new Exception("Area for each surface must be positive");
-                //}
                 solution.AddRange(surfaceUnion);
-                //if (loopCount == 0)
-                //{
-                //    solution = new List<List<Point>>(surfaceUnion);
-                //}
-                //else
-                //{
-
-                //    var oldSolution = new List<List<Point>>(solution);
-                //    solution = PolygonOperations.Union(oldSolution, surfaceUnion.ToList());
-                //}
-                //loopCount++;
             }
-            Presenter.ShowAndHang(solution);
+            //Presenter.ShowAndHang(solution);
+            //Using the default Positive Fill works well here.
             solution = PolygonOperations.Union(solution);
             //Offset by enough to account for minimum angle 
             var scale = Math.Tan(minAngle * Math.PI / 180) * depthOfPart;
@@ -449,24 +406,19 @@ namespace TVGL
                     }
                 }
                 if (needsReversal > correct) loop.Reverse();
-
                 //if(needsReversal*correct != 0) Debug.WriteLine("Reversed Loop Count: " + needsReversal + " Forward Loop Count: " + correct);
-
-                //Note: Removing all the vertices in the loop that are invisible would make edge overlaps innacurate
-                //because it is unlikely there is a vertex exactly where two overlapping edges intersect when projected.
-                //The only way to consider visibility is to cut invisible sections from lines. 
-
 
                 //Get2DProjections does not project directionally (normal and normal.multiply(-1) return the same transform)
                 //So we need to use the 3D area to tell us if the path is ordered correctly
+                //ToDo: Is above comment true? Does this cause issues?
                 var area3D = MiscFunctions.AreaOf3DPolygon(loop, normal);
                 var surfacePath = MiscFunctions.Get2DProjectionPoints(loop, normal).ToList();
                 var area2D = MiscFunctions.AreaOfPolygon(surfacePath);
                 if (area2D.IsNegligible(minAreaToConsider)) continue;
-                if (surfacePath.Count > 3)
-                {
-                    
-                }
+                
+                //Trust the ordering from the face normals. A self intersecting polygon may have a negative area, 
+                //but in-fact be positive once it undergoes a Fill Positive union. Same goes for positive areas.
+                //if (Math.Sign(area2D) != Math.Sign(area3D)) surfacePath.Reverse();
                 surfacePaths.Add(surfacePath);
                 loops.Add(loop);
             }
@@ -481,33 +433,16 @@ namespace TVGL
             var correctedSurfacePath = new List<List<Point>>();
             //By unioning the path into non-self intersecting paths, 
             //partially covered holes will be reduced to their final non-covered size.
-            //This is necessary for the next few checks in determining if it is a hole
-            //or an overhang.
-            var nonSelfIntersectingPaths = PolygonOperations.Union(surfacePaths, false);
-            //var area2D2 = MiscFunctions.AreaOfPolygon(nonSelfIntersectingPaths);
-            //if (!area2D2.IsPracticallySame(area2D, 1.0))
-            //{
-            if (nonSelfIntersectingPaths.Sum(p => p.Count) > 10)
-            {
-                Presenter.ShowAndHang(surfacePaths);
-                Presenter.ShowAndHang(nonSelfIntersectingPaths);
-                var alternateMethod = new List<List<Point>>();
-                foreach (var surfacePath in surfacePaths)
-                {
-                    alternateMethod.AddRange(PolygonOperations.Union(new List<List<Point>>{surfacePath}, false, PolygonFillType.NonZero));
-                }
-                Presenter.ShowAndHang(alternateMethod);
-                nonSelfIntersectingPaths = alternateMethod;
-            }
-            //ToDo: Send all the polygons through the check, since using non-zero changed the CW negative to positive.
-            //}
+            //This is necessary for the next few checks in determining if it is a hole or an overhang.
+            //This union operation is the trickiest union in the silhouette function to reason through. 
+            //Using positive fill or even/odd perform pretty well, but they union overlapping 
+            //negative regions. This is undesirable, since we do not want to union a hole
+            //with an overlapping region. For this reason, Union Non-Zero is used. It keeps
+            //the holes in their proper orientation and does not combine them together. 
+            var nonSelfIntersectingPaths = PolygonOperations.Union(surfacePaths, false, PolygonFillType.NonZero);
 
             foreach (var path in nonSelfIntersectingPaths)
             {
-                //Trust the ordering from the face normals. A self intersecting polygon may have a negative area, 
-                //but in-fact be positive once it undergoes a Fill Positive union. Same goes for positive areas.
-                //if (Math.Sign(area2D) != Math.Sign(area3D)) surfacePath.Reverse();
-
                 //If the area is negative, we need to check if it is a hole or an overhang
                 //If it is an overhang, we ignore it. An overhang exists if any the points
                 //in the path are inside any of the positive faces touching the path
@@ -537,18 +472,9 @@ namespace TVGL
                     {
                         polygons.Add(projectedFacePolygons[face.IndexInList]);
                     }
-                    //Presenter.ShowAndHang(polygons.ToList(), new List<List<Point>> { path });
-                    //foreach (var borderVertex in loops)
-                    //{
-                    //    foreach (var face in borderVertex.Faces.Where(surface.Contains))
-                    //    {
-                    //        //true if the element is added to the HashSet<T> object; false if the element is already present.
-                    //        polygons.Add(projectedFacePolygons[face.IndexInList]);
-                    //        face.Color = blue;
-                    //    }
-                    //}
+
                     //Get a few points that are inside the polygon (It is non-self intersecting,
-                    //but taking the center may not work.
+                    //but taking the center may not work.)
                     var pathCenterX = path.Average(v => v.X);
                     var pathCenterY = path.Average(v => v.Y);
                     var centerPoint = new PointLight(pathCenterX, pathCenterY);
@@ -608,105 +534,14 @@ namespace TVGL
                     {
                         //This is a hole
                         correctedSurfacePath.Add(path);
-             
                     }
-
-                    //foreach (var adjacentFacePolygon in polygons)
-                    //{
-                    //    var centerX = adjacentFacePolygon.Average(v => v.X);
-                    //    var centerY = adjacentFacePolygon.Average(v => v.Y);
-                    //    if (MiscFunctions.IsPointInsidePolygon(path, new PointLight(centerX, centerY)))
-                    //    {
-                    //        isOverhangCounter1++;
-                    //    }
-                    //}
-                    //if (isOverhangCounter1 > 0)
-                    //{
-                    //    //This is an overhang. Include it as a positive. 
-                    //    //if (path.Count > 3)
-                    //    //{
-                    //    //    Presenter.ShowAndHang(path);
-                    //    //    Presenter.ShowVertexPathsWithSolid(new List<List<List<Vertex>>> { loops },
-                    //    //        new List<TessellatedSolid> { originalSolid });
-                    //    //}
-                    //    path.Reverse();
-                    //    correctedSurfacePath.Add(path);
-                    //    continue;
-                    //}
-
-                    ////Note: you cannot use all the positive faces or even all the faces of the surface, 
-                    ////because a hole may be partially covered by an upper surface.
-                    ////But if that "hole" is covered by any adjacent faces, then it is actually an overhang.     
-                    ////If the point is inside any polygon, it is an overhang
-                    ////Else, it is a hole.
-                    ////Note that there can be points on the saddle points of the overhang that will be classified
-                    ////as holes. 
-                    //var isHoleCounter2 = 0;
-                    //var isOverhangCounter2 = 0;
-                    //var overhangDistance = 0.0;
-                    //var holeDistance = 0.0;
-                    //var priorPointIsInside = false;
-                    //Point priorPoint = null;
-                    //foreach (var point in path)
-                    //{
-                    //    if (polygons.Any(poly => MiscFunctions.IsPointInsidePolygon(poly, point, false)))
-                    //    {
-                    //        isOverhangCounter2++;
-                    //        if (priorPoint != null && priorPointIsInside)
-                    //        {
-                    //            overhangDistance += priorPoint.Position.subtract(point.Position).norm2();
-                    //        }
-                    //        priorPoint = point;
-                    //        priorPointIsInside = true;
-                    //    }
-                    //    else
-                    //    {
-                    //        isHoleCounter2++;
-                    //        if (priorPoint != null && !priorPointIsInside)
-                    //        {
-                    //            holeDistance += priorPoint.Position.subtract(point.Position).norm2();
-                    //        }
-                    //        priorPoint = point;
-                    //        priorPointIsInside = false;
-                    //    }
-                    //}
-
-                    ////if (path.Count > 3)
-                    ////{
-                    ////    Presenter.ShowAndHang(path);
-                    ////    Presenter.ShowVertexPathsWithSolid(new List<List<List<Vertex>>> { loops },
-                    ////        new List<TessellatedSolid> { originalSolid });
-                    ////}
-                    //if (isHoleCounter2 > isOverhangCounter2 && holeDistance > overhangDistance)
-                    //{
-                    //    if (path.Count > 3)
-                    //    {
-                    //        //Presenter.ShowAndHang(surfacePath);
-                    //        //Presenter.ShowVertexPathsWithSolid(
-                    //        //    new List<List<List<Vertex>>> {new List<List<Vertex>> {loop}},
-                    //        //    new List<TessellatedSolid> {originalSolid});
-                    //    }
-
-                    //    if (isOverhangCounter2 > 0)
-                    //    {
-                    //        Debug.WriteLine("Determination of hole is inconclusive");
-                    //        //
-                    //    }
-                    //    correctedSurfacePath.Add(path);
-                    //}
-                    //else
-                    //{
-                    //    //include this overlap as a positive.
-                    //    path.Reverse();
-                    //    correctedSurfacePath.Add(path);
-                    //}
                 }
             }
 
             var correctedDirections = PolygonOperations.Union(correctedSurfacePath, false);
             if (correctedDirections.Sum(p => p.Count) > 3)
             {
-                Presenter.ShowAndHang(correctedDirections);
+                //Presenter.ShowAndHang(correctedDirections);
             }
             var area = correctedSurfacePath.Sum(s => MiscFunctions.AreaOfPolygon(s));
             if (area < 0)
