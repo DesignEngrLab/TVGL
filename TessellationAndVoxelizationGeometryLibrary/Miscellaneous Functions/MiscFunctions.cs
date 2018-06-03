@@ -17,7 +17,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Media.Converters;
 using StarMathLib;
 using TVGL.Voxelization;
 
@@ -2491,6 +2490,24 @@ namespace TVGL
         /// <param name="path"></param>
         /// <param name="p"></param>
         public static bool IsPointInsidePolygon(List<Point> path, Point p, bool returnSharedPointAsInside = false)
+        {
+            return IsPointInsidePolygon(path, new PointLight(p.X, p.Y), returnSharedPointAsInside);
+        }
+
+        /// <summary>
+        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
+        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
+        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        ///     Major Assumptions: 
+        ///     1) The polygon can be convex
+        ///     2) The direction of the polygon does not matter  
+        /// 
+        ///     Updated by Brandon Massoni: 8.11.2017
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="p"></param>
+        public static bool IsPointInsidePolygon(List<Point> path, PointLight p, bool returnSharedPointAsInside = false)
         {
             //Check if the point is the same as any of the polygon's points
             foreach (var point in path)
