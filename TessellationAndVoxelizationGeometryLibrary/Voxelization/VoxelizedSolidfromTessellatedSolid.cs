@@ -99,11 +99,11 @@ namespace TVGL.Voxelization
                     MakeVertexVoxels(((VoxelWithTessellationLinks)voxel0).Vertices, voxel0, voxels);
                     MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel0).Faces, voxel0, voxels);
                     unknownPartials = DefineBottomCoordinateInside(voxels, null);
-                    Debug.WriteLineIf(unknownPartials!=null, "\n**********\nthere are unknown partial voxels\n**********\n");
+                    Debug.WriteLineIf(unknownPartials != null, "\n**********\nthere are unknown partial voxels\n**********\n");
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                } );
+                });
             }
 
             if (discretizationLevel >= 2)
@@ -298,14 +298,23 @@ namespace TVGL.Voxelization
                     points.All(p => p[1] > limits[1][1]) ||
                     points.All(p => p[2] > limits[1][2]);
         }
-        private bool allPointsOnOneSideOfLimits(int[][] limits, params int[][] points)
+        //private bool allPointsOnOneSideOfLimits(int[][] limits, params int[][] points)
+        //{
+        //    return points.All(p => p[0] < limits[0][0]) ||
+        //           points.All(p => p[1] < limits[0][1]) ||
+        //           points.All(p => p[2] < limits[0][2]) ||
+        //           points.All(p => p[0] >= limits[1][0]) ||  //notice that this is changed for >= so
+        //           points.All(p => p[1] >= limits[1][1]) ||  //as to make the upper value exclusive
+        //           points.All(p => p[2] >= limits[1][2]);    //instead of inclusive.
+        //}
+        private bool allPointsOnOneSideOfLimits(int[][] limits, int[] p)
         {
-            return points.All(p => p[0] < limits[0][0]) ||
-                   points.All(p => p[1] < limits[0][1]) ||
-                   points.All(p => p[2] < limits[0][2]) ||
-                   points.All(p => p[0] >= limits[1][0]) ||  //notice that this is changed for >= so
-                   points.All(p => p[1] >= limits[1][1]) ||  //as to make the upper value exclusive
-                   points.All(p => p[2] >= limits[1][2]);    //instead of inclusive.
+            return p[0] < limits[0][0] ||
+                    p[1] < limits[0][1] ||
+                    p[2] < limits[0][2] ||
+                    p[0] >= limits[1][0] ||  //notice that this is changed for >= so
+                    p[1] >= limits[1][1] ||  //as to make the upper value exclusive
+                    p[2] >= limits[1][2];    //instead of inclusive.
         }
 
         #region Face and Edge  Functions
@@ -515,12 +524,7 @@ namespace TVGL.Voxelization
         {
             //Get every X,Y, and Z integer value intersection
             var vectorNorm = endPoint.subtract(startPoint).normalize();
-            var intersections = new Dictionary<int, List<double[]>>
-            {
-                {0, new List<double[]>()},
-                {1, new List<double[]>()},
-                {2, new List<double[]>()}
-            };
+            var intersections = new[] { new List<double[]>(), new List<double[]>(), new List<double[]>() };
             for (var i = 0; i < 3; i++)
                 getIntegerIntersectionsAlongLine(startPoint, endPoint, i, intersections, vectorNorm);
 
@@ -544,7 +548,7 @@ namespace TVGL.Voxelization
         /// <param name="intersections"></param>
         /// <param name="vectorNorm"></param>
         public static void getIntegerIntersectionsAlongLine(double[] startPoint, double[] endPoint,
-            int dim, Dictionary<int, List<double[]>> intersections, double[] vectorNorm = null)
+            int dim, List<double[]>[] intersections, double[] vectorNorm = null)
         {
             if (vectorNorm == null) vectorNorm = endPoint.subtract(startPoint).normalize();
             var start = (int)Math.Floor(startPoint[dim]);
@@ -573,12 +577,8 @@ namespace TVGL.Voxelization
             if (allPointsOnOneSideOfLimits(limits, startPoint, endPoint)) return;
             //Get every X, Y, and Z integer value intersection, not including the sweepDim, which won't have any anyways
             var vectorNorm = endPoint.subtract(startPoint).normalize();
-            var intersections = new Dictionary<int, List<double[]>>
-            {
-                {0, new List<double[]>()},
-                {1, new List<double[]>()},
-                {2, new List<double[]>()}
-            };
+            var intersections = new[] { new List<double[]>(), new List<double[]>(), new List<double[]>() };
+
             for (var i = 0; i < 3; i++)
             {
                 if (i == sweepDim) continue;
@@ -587,18 +587,27 @@ namespace TVGL.Voxelization
             addVoxelsAtIntersections(intersections, level, voxels, limits, tsObject);
         }
 
-        private void addVoxelsAtIntersections(Dictionary<int, List<double[]>> intersections, int level, VoxelHashSet voxels,
+        private void addVoxelsAtIntersections(List<double[]>[] intersections, int level, VoxelHashSet voxels,
             int[][] limits, TessellationBaseClass tsObject)
         {
-            foreach (var axis in intersections.Keys)
+            var ijk = new int[3];
+            var dimensionsAsIntegers = new bool[3];
+            foreach (var intersectionSet in intersections)
             {
-                foreach (var intersection in intersections[axis])
+                foreach (var intersection in intersectionSet)
                 {
+                    var numAsInt = 0;
                     //Convert the intersection values to integers. 
-                    var ijk = new[] { (int)intersection[0], (int)intersection[1], (int)intersection[2] };
-                    var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
-                    var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
-
+                    for (int i = 0; i < 3; i++)
+                    {
+                        if (atIntegerValue(intersection[i]))
+                        {
+                            dimensionsAsIntegers[i] = true;
+                            numAsInt++;
+                        }
+                        else dimensionsAsIntegers[i] = false;
+                        ijk[i] = (int)intersection[i];
+                    }
                     //If one/ three dimensions lands on an integer, the edge goes through a voxel face.
                     //If two/ three, a voxel edge. If three/ three, a corner. 
 
@@ -619,18 +628,7 @@ namespace TVGL.Voxelization
                     //corner intersections, this forms 8 voxels around the intersection. This can be expressed as:
                     //numVoxels = 2^numAsInt
                     var numVoxels = 0;
-                    var allCombinations = new List<int[]>()
-                    {
-                        new []{ 0, 0, 0},
-                        new []{ -1, 0, 0},
-                        new []{ 0, -1, 0},
-                        new []{ 0, 0, -1},
-                        new []{ -1, -1, 0},
-                        new []{ -1, 0, -1},
-                        new []{ 0, -1, -1},
-                        new []{ -1, -1, -1},
-                    };
-                    foreach (var combination in allCombinations)
+                    foreach (var combination in TVGL.Constants.TessellationToVoxelizationIntersectionCombinations)
                     {
                         var valid = true;
                         for (var j = 0; j < 3; j++)
@@ -760,15 +758,19 @@ namespace TVGL.Voxelization
             return null;
         }
 
-        private bool IsPointInsideTriangleTSBuilding(PolygonalFace face, double[] point)
+        private bool IsPointInsideTriangleTSBuilding(PolygonalFace face, double[] p)
         {
-            var endPoints = face.Vertices.Select(v => transformedCoordinates[v.IndexInList]).ToList();
-            return MiscFunctions.IsPointInsideTriangle(endPoints, point);
+            var a = transformedCoordinates[face.A.IndexInList];
+            var b = transformedCoordinates[face.B.IndexInList];
+            var c = transformedCoordinates[face.C.IndexInList];
+            return MiscFunctions.SameSide(p, a, b, c) &&
+                   MiscFunctions.SameSide(p, b, a, c) &&
+                   MiscFunctions.SameSide(p, c, a, b);
         }
 
         private IVoxel GetNeighborForTSBuilding(int[] point3D, VoxelDirections direction, VoxelHashSet voxelHashSet, int level, out int[] neighborCoord)
         {
-            neighborCoord = (int[])point3D.Clone();
+            neighborCoord = new[] { point3D[0], point3D[1], point3D[2] };
             var step = direction > 0 ? 1 : -1;
             var dimension = Math.Abs((int)direction) - 1;
             neighborCoord[dimension] += step;

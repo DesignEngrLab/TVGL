@@ -84,7 +84,7 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*dodec*");
+            var fileNames = dir.GetFiles("dodec*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -128,14 +128,16 @@ namespace TVGLPresenterDX
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
-            Presenter.ShowAndHang(vs1);
+            //return;
+            //Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Positive...");
-            var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
-            Presenter.ShowAndHang(vs1xpos);
+            var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
+            //Presenter.ShowAndHang(vs1xpos);
+            return;
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xpos_" + _fileName;

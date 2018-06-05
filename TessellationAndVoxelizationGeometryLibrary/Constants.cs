@@ -105,6 +105,24 @@ namespace TVGL
 
         internal const double VoxelScaleSize = 255.8; // Math.Pow(2, 20) - 0.2;
 
+
+
+        /// <summary>
+        /// The tessellation to voxelization intersection combinations. This is used in the unction that
+        /// produces voxels on the edges and faces of a tesselated shape.
+        /// </summary>
+        internal static readonly List<int[]> TessellationToVoxelizationIntersectionCombinations = new List<int[]>()
+        {
+            new []{ 0, 0, 0},
+            new []{ -1, 0, 0},
+            new []{ 0, -1, 0},
+            new []{ 0, 0, -1},
+            new []{ -1, -1, 0},
+            new []{ -1, 0, -1},
+            new []{ 0, -1, -1},
+            new []{ -1, -1, -1},
+        };
+
         /// <summary>
         ///     Finds the index.
         /// </summary>
