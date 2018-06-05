@@ -90,7 +90,7 @@ namespace TVGL_Test
                 var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
                 List<TessellatedSolid> solids = IO.Open(filename);
-                var silhouette = SilhouetteDebugger.Run(solids[0], new[] { 0.2, 0.0, 0.8 }.normalize(), 0.1);
+                var silhouette = Silhouette.Run(solids[0], new[] { 0.2, 0.0, 0.8 }.normalize(), 0.1);
                 //Presenter.ShowAndHang(silhouette);
                 Presenter.ShowAndHang(solids[0]);
             }
