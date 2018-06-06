@@ -515,9 +515,11 @@ namespace TVGL.Voxelization
                     {
                         var filledUpNextLayer = Draft(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
+                        Debug.WriteLineIf(neighbor.Role == VoxelRoleTypes.Empty,
+                            "neighbor.Role== VoxelRoleTypes.Empty");
                         if (neighbor == null || layerOfVoxels.Length <= i + 1) return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer && neighbor.Role != VoxelRoleTypes.Full) neighbor = ChangePartialVoxelToFull(neighbor);
-                        else if (neighbor.Role != VoxelRoleTypes.Partial) neighbor = ChangeFullVoxelToPartial(neighbor);
+                        else if (!filledUpNextLayer && neighbor.Role == VoxelRoleTypes.Full) neighbor = ChangeFullVoxelToPartial(neighbor);
                         layerOfVoxels[i + 1].Add(neighbor);
                     }
                 });
@@ -608,7 +610,7 @@ namespace TVGL.Voxelization
                         if (discretizationLevel > level)
                             IntersectNEW(newVoxel, level + 1, references, false);
                     }
-                } );
+                });
             }
             else
             {
@@ -622,7 +624,7 @@ namespace TVGL.Voxelization
                     else
                     {
                         var thisVoxelWasFull = thisVoxel.Role == VoxelRoleTypes.Full;
-                        if (thisVoxelWasFull) ChangeFullVoxelToPartialNEW(thisVoxel,false);
+                        if (thisVoxelWasFull) ChangeFullVoxelToPartial(thisVoxel, false);
                         if (discretizationLevel > level)
                             IntersectNEW(thisVoxel, level + 1, references, thisVoxelWasFull);
                     }
