@@ -276,7 +276,8 @@ namespace TVGL
                 {
                     //Get a point that is inside the polygon. We could set up a sweep line to do this,
                     //but for now I'm taking an easier approach (take average of three random points)
-                    var rnd = new Random();
+                    //Use the overload of the Random constructor which accepts a seed value, so that this is repeatable
+                    var rnd = new Random(0);
                     var count = 0;
                     while (!centerPointIsValid && count < 1000)
                     {
