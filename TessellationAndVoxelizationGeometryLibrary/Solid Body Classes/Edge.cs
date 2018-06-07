@@ -230,8 +230,8 @@ namespace TVGL
             var faceToIndex = _ownedFace.Vertices.IndexOf(To);
             var faceNextIndex = faceToIndex + 1 == _ownedFace.Vertices.Count ? 0 : faceToIndex + 1;
             var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
-            var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
-            var dotOfCross = Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal);
+            var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
+            var dotOfCross = Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal, 3);
             if (dotOfCross <= 0)
             {
                 /* then switch the direction of the edge to match the ownership.
@@ -246,8 +246,8 @@ namespace TVGL
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
-                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
+                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
+                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal, 3);
                 if (dotOfCross2 < 0)
                 // neither faces appear to own the edge...must be something wrong
                 {
@@ -263,8 +263,8 @@ namespace TVGL
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
-                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
+                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
+                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal, 3);
                 if (dotOfCross2 > 0)
                 // both faces appear to own the edge...must be something wrong
                 {
@@ -290,7 +290,7 @@ namespace TVGL
                 {
                     if (face != null && face != _otherFace)
                     {
-                        ownedNeighborAvgNormals = ownedNeighborAvgNormals.add(face.Normal);
+                        ownedNeighborAvgNormals = ownedNeighborAvgNormals.add(face.Normal, 3);
                         numNeighbors++;
                     }
                 }
@@ -301,12 +301,12 @@ namespace TVGL
                 {
                     if (face != null && face != _ownedFace)
                     {
-                        otherNeighborAvgNormals = otherNeighborAvgNormals.add(face.Normal);
+                        otherNeighborAvgNormals = otherNeighborAvgNormals.add(face.Normal, 3);
                         numNeighbors++;
                     }
                 }
                 otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
-                if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector) < 0)
+                if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector, 3) < 0)
                 {
                     InternalAngle = Constants.TwoPi;
                     Curvature = CurvatureType.Concave;
@@ -319,7 +319,7 @@ namespace TVGL
             }
             else
             {
-                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal).dotProduct(Vector);
+                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal).dotProduct(Vector, 3);
                 if (cross < 0)
                 {
                     InternalAngle = Math.PI + Math.Acos(dot);

@@ -93,7 +93,7 @@ namespace TVGL
                 foreach (var face in faces)
                 {
                     if (face.Area.IsNegligible()) continue; //Ignore faces with zero area, since their Normals are not set.
-                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1))) / 3;
+                    var tetrahedronVolume = face.Area * (face.Normal.dotProduct(face.Vertices[0].Position.subtract(oldCenter1, 3), 3)) / 3;
                     // this is the volume of a tetrahedron from defined by the face and the origin {0,0,0}. The origin would be part of the second term
                     // in the dotproduct, "face.Normal.dotProduct(face.Vertices[0].Position.subtract(ORIGIN))", but clearly there is no need to subtract
                     // {0,0,0}. Note that the volume of the tetrahedron could be negative. This is fine as it ensures that the origin has no influence
@@ -104,7 +104,7 @@ namespace TVGL
                     center[2] += (oldCenter1[2] + face.Vertices[0].Z + face.Vertices[1].Z + face.Vertices[2].Z) * tetrahedronVolume / 4;
                     // center is found by a weighted sum of the centers of each tetrahedron. The weighted sum coordinate are collected here.
                 }
-                if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2).divide(2);
+                if (iterations > 10 || volume < 0) center = oldCenter1.add(oldCenter2, 3).divide(2);
                 else center = center.divide(volume);
                 iterations++;
             } while (Math.Abs(oldVolume - volume) > Constants.BaseTolerance && iterations <= 20);

@@ -287,7 +287,7 @@ namespace TVGL
 
             if (Double.IsNaN(ABN))
             {
-                var eee = eachEdge.Edge.OwnedFace.Normal.dotProduct(eachEdge.Edge.OtherFace.Normal);
+                var eee = eachEdge.Edge.OwnedFace.Normal.dotProduct(eachEdge.Edge.OtherFace.Normal, 3);
                 if (eee > 1)
                     eee = 1;
                 ABN = Math.Acos(eee);
@@ -301,8 +301,8 @@ namespace TVGL
             var cenMass2 = eachEdge.Edge.OtherFace.Center;
             var vector1 = new[] { cenMass1[0] - eachEdge.Edge.From.Position[0], cenMass1[1] - eachEdge.Edge.From.Position[1], cenMass1[2] - eachEdge.Edge.From.Position[2] };
             var vector2 = new[] { cenMass2[0] - eachEdge.Edge.From.Position[0], cenMass2[1] - eachEdge.Edge.From.Position[1], cenMass2[2] - eachEdge.Edge.From.Position[2] };
-            var distance1 = eachEdge.Edge.Vector.normalize().dotProduct(vector1);
-            var distance2 = eachEdge.Edge.Vector.normalize().dotProduct(vector2);
+            var distance1 = eachEdge.Edge.Vector.normalize(3).dotProduct(vector1, 3);
+            var distance2 = eachEdge.Edge.Vector.normalize(3).dotProduct(vector2, 3);
             //Mapped Center of Mass
             var MCM = (Math.Abs(distance1 - distance2)) / eachEdge.Edge.Length;
             return MCM;
@@ -866,7 +866,7 @@ namespace TVGL
             }
             if (faces.Count == 2)
             {
-                axis = faces[0].Normal.crossProduct(faces[1].Normal).normalize();
+                axis = faces[0].Normal.crossProduct(faces[1].Normal).normalize(3);
                 coneAngle = 0.0;
                 return false;
             }
@@ -907,9 +907,9 @@ namespace TVGL
             // since the vectors that are the difference of two normals (v = n1 - n2) would
             // be in the plane, let's first figure out the average plane of this normal
             var inPlaneVectors = new double[n][];
-            inPlaneVectors[0] = faces[0].Normal.subtract(faces[n - 1].Normal);
+            inPlaneVectors[0] = faces[0].Normal.subtract(faces[n - 1].Normal, 3);
             for (int i = 1; i < n; i++)
-                inPlaneVectors[i] = faces[i].Normal.subtract(faces[i - 1].Normal);
+                inPlaneVectors[i] = faces[i].Normal.subtract(faces[i - 1].Normal, 3);
 
             var normalsOfGaussPlane = new List<double[]>();
             var tempCross = inPlaneVectors[0].crossProduct(inPlaneVectors[n - 1]).normalize();
@@ -919,15 +919,15 @@ namespace TVGL
             {
                 tempCross = inPlaneVectors[i].crossProduct(inPlaneVectors[i - 1]).normalize();
                 if (!tempCross.Any(double.IsNaN))
-                    if (tempCross.dotProduct(normalsOfGaussPlane[0]) >= 0)
+                    if (tempCross.dotProduct(normalsOfGaussPlane[0], 3) >= 0)
                         normalsOfGaussPlane.Add(tempCross);
                     else normalsOfGaussPlane.Add(tempCross.multiply(-1));
             }
             var normalOfGaussPlane = new double[3];
-            normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current.add(c));
+            normalOfGaussPlane = normalsOfGaussPlane.Aggregate(normalOfGaussPlane, (current, c) => current.add(c, 3));
             normalOfGaussPlane = normalOfGaussPlane.divide(normalsOfGaussPlane.Count);
 
-            var distance = faces.Sum(face => face.Normal.dotProduct(normalOfGaussPlane));
+            var distance = faces.Sum(face => face.Normal.dotProduct(normalOfGaussPlane, 3));
             if (distance < 0)
             {
                 axis = normalOfGaussPlane.multiply(-1);

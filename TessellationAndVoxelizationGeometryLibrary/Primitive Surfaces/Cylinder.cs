@@ -32,7 +32,7 @@ namespace TVGL
         public override bool IsNewMemberOf(PolygonalFace face)
         {
             if (Faces.Contains(face)) return false;
-            if (Math.Abs(face.Normal.dotProduct(Axis)) > Constants.ErrorForFaceInSurface)
+            if (Math.Abs(face.Normal.dotProduct(Axis, 3)) > Constants.ErrorForFaceInSurface)
                 return false;
             foreach (var v in face.Vertices)
                 if (Math.Abs(MiscFunctions.DistancePointToLine(v.Position, Anchor, Axis) - Radius) >
@@ -53,30 +53,30 @@ namespace TVGL
                 out inBetweenPoint);
             var fractionToMove = 1 / numFaces;
             var moveVector = Anchor.crossProduct(face.Normal);
-            if (moveVector.dotProduct(face.Center.subtract(inBetweenPoint)) < 0)
+            if (moveVector.dotProduct(face.Center.subtract(inBetweenPoint, 3)) < 0)
                 moveVector = moveVector.multiply(-1);
-            moveVector.normalizeInPlace();
+            moveVector.normalizeInPlace(3);
             /**** set new Anchor (by averaging in with last n values) ****/
             Anchor =
                 Anchor.add(new[]
                 {
                     moveVector[0]*fractionToMove*distance, moveVector[1]*fractionToMove*distance,
                     moveVector[2]*fractionToMove*distance
-                });
+                }, 3);
 
             /* to adjust the Axis, we will average the cross products of the new face with all the old faces */
             var totalAxis = new double[3];
             for (var i = 0; i < numFaces; i++)
             {
                 var newAxis = face.Normal.crossProduct(Faces[i].Normal);
-                if (newAxis.dotProduct(Axis) < 0)
+                if (newAxis.dotProduct(Axis, 3) < 0)
                     newAxis.multiply(-1);
-                totalAxis = totalAxis.add(newAxis);
+                totalAxis = totalAxis.add(newAxis, 3);
             }
             var numPrevCrossProducts = numFaces * (numFaces - 1) / 2;
-            totalAxis = totalAxis.add(Axis.multiply(numPrevCrossProducts));
+            totalAxis = totalAxis.add(Axis.multiply(numPrevCrossProducts), 3);
             /**** set new Axis (by averaging in with last n values) ****/
-            Axis = totalAxis.divide(numFaces + numPrevCrossProducts).normalize();
+            Axis = totalAxis.divide(numFaces + numPrevCrossProducts).normalize(3);
             foreach (var v in face.Vertices)
                 if (!Vertices.Contains(v))
                     Vertices.Add(v);
@@ -169,11 +169,11 @@ namespace TVGL
                 }
             }
             center = new double[3];
-            center = centers.Aggregate(center, (current, c) => current.add(c));
+            center = centers.Aggregate(center, (current, c) => current.add(c, 3));
             center = center.divide(centers.Count);
             /* move center to origin plane */
-            var distBackToOrigin = -1 * axis.dotProduct(center);
-            center = center.subtract(axis.multiply(distBackToOrigin));
+            var distBackToOrigin = -1 * axis.dotProduct(center, 3);
+            center = center.subtract(axis.multiply(distBackToOrigin), 3);
             /* determine is positive or negative */
             var numNeg = signedDistances.Count(d => d < 0);
             var numPos = signedDistances.Count(d => d > 0);
@@ -201,7 +201,7 @@ namespace TVGL
             var axis = edge.OwnedFace.Normal.crossProduct(edge.OtherFace.Normal);
             var length = axis.norm2();
             if (length.IsNegligible()) throw new Exception("Edge used to define cylinder is flat.");
-            axis.normalizeInPlace();
+            axis.normalizeInPlace(3);
             var v1 = edge.From;
             var v2 = edge.To;
             var v3 = edge.OwnedFace.Vertices.First(v => v != v1 && v != v2);
@@ -212,7 +212,7 @@ namespace TVGL
             /* determine is positive or negative */
             var isPositive = edge.Curvature == CurvatureType.Convex;
             /* move center to origin plane */
-            var distToOrigin = axis.dotProduct(center);
+            var distToOrigin = axis.dotProduct(center, 3);
             if (distToOrigin < 0)
             {
                 distToOrigin *= -1;

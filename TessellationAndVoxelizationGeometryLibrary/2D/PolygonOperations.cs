@@ -1166,10 +1166,10 @@ namespace TVGL
                 {
                     //Get the minimum signed angle between the two vectors 
                     var minAngle = double.PositiveInfinity;
-                    var v1 = currentSweepEvent.Point.Position.subtract(currentSweepEvent.OtherEvent.Point.Position);
+                    var v1 = currentSweepEvent.Point.Position.subtract(currentSweepEvent.OtherEvent.Point.Position, 2);
                     foreach (var neighbor in neighbors)
                     {
-                        var v2 = neighbor.OtherEvent.Point.Position.subtract(neighbor.Point.Position);
+                        var v2 = neighbor.OtherEvent.Point.Position.subtract(neighbor.Point.Position, 2);
                         var angle = MiscFunctions.InteriorAngleBetweenEdgesInCCWList(v1, v2);
                         if(angle < 0 || angle > 2*Math.PI) throw new Exception("Error in my assumption of output from above function");
                         if (angle < minAngle)

@@ -2454,9 +2454,9 @@ namespace TVGL
                                 cuttingPlane.DistanceToOrigin, nextEdge.To, nextEdge.From);
                             //Add the edge as a reference for the vertex, so we can get the faces later
                             intersectVertex.Edges.Add(nextEdge);
-                            var vector = intersectVertex.Position.subtract(loop.Last().Position);
+                            var vector = intersectVertex.Position.subtract(loop.Last().Position, 3);
                             //Use the previous face, since that is the one that contains both of the edges that are in use.
-                            var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector);
+                            var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector, 3);
                             loop.Add(intersectVertex);
                             edgeLoop.Add(nextEdge);
                             unusedEdges.Remove(nextEdge);

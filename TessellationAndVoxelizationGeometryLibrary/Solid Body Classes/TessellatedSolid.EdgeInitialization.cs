@@ -181,7 +181,7 @@ namespace TVGL
                     {
                         var dotProductScore = refOwnsEdge == FaceShouldBeOwnedFace(edge, candidateMatchingFace)
                             ? -2 //edge cannot be owned by both faces, thus this is not a good candidate for this.
-                            : refFace.Normal.dotProduct(candidateMatchingFace.Normal);
+                            : refFace.Normal.dotProduct(candidateMatchingFace.Normal, 3);
                         //  To take it "out of the running", we simply give it a value of -2
                         if (dotProductScore > highestDotProduct)
                         {
@@ -232,9 +232,9 @@ namespace TVGL
 
         private static bool FaceShouldBeOwnedFace(Edge edge, PolygonalFace face)
         {
-            var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Position.subtract(edge.To.Position);
+            var otherEdgeVector = face.OtherVertex(edge.From, edge.To).Position.subtract(edge.To.Position, 3);
             var isThisNormal = edge.Vector.crossProduct(otherEdgeVector);
-            return face.Normal.dotProduct(isThisNormal) > 0;
+            return face.Normal.dotProduct(isThisNormal, 3) > 0;
         }
 
 
@@ -354,13 +354,13 @@ namespace TVGL
                     {
                         var bestNext = pickBestEdge(possibleNextEdges, loop.Last().Vector, normal);
                         loop.Add(bestNext);
-                        var n1 = loop[loop.Count - 1].Vector.crossProduct(loop[loop.Count - 2].Vector).normalize();
+                        var n1 = loop[loop.Count - 1].Vector.crossProduct(loop[loop.Count - 2].Vector).normalize(3);
                         if (!n1.Contains(double.NaN))
                         {
-                            n1 = n1.dotProduct(normal) < 0 ? n1.multiply(-1) : n1;
+                            n1 = n1.dotProduct(normal, 3) < 0 ? n1.multiply(-1) : n1;
                             normal = loop.Count == 2
                                 ? n1
-                                : normal.multiply(loop.Count).add(n1).divide(loop.Count + 1).normalize();
+                                : normal.multiply(loop.Count).add(n1, 3).divide(loop.Count + 1).normalize(3);
                         }
                         removedEdges.Add(bestNext);
                         remainingEdges.Remove(bestNext);
@@ -373,13 +373,13 @@ namespace TVGL
                             var bestPrev = pickBestEdge(possibleNextEdges, loop[0].Vector.multiply(-1),
                                 normal);
                             loop.Insert(0, bestPrev);
-                            var n1 = loop[1].Vector.crossProduct(loop[0].Vector).normalize();
+                            var n1 = loop[1].Vector.crossProduct(loop[0].Vector).normalize(3);
                             if (!n1.Contains(double.NaN))
                             {
-                                n1 = n1.dotProduct(normal) < 0 ? n1.multiply(-1) : n1;
+                                n1 = n1.dotProduct(normal, 3) < 0 ? n1.multiply(-1) : n1;
                                 normal = loop.Count == 2
                                     ? n1
-                                    : normal.multiply(loop.Count).add(n1).divide(loop.Count + 1).normalize();
+                                    : normal.multiply(loop.Count).add(n1, 3).divide(loop.Count + 1).normalize(3);
                             }
                             removedEdges.Add(bestPrev);
                             remainingEdges.Remove(bestPrev);
@@ -471,14 +471,14 @@ namespace TVGL
 
         private static Edge pickBestEdge(IEnumerable<Edge> possibleNextEdges, double[] refEdge, double[] normal)
         {
-            var unitRefEdge = refEdge.normalize();
+            var unitRefEdge = refEdge.normalize(3);
             var max = -2.0;
             Edge bestEdge = null;
             foreach (var candEdge in possibleNextEdges)
             {
-                var unitCandEdge = candEdge.Vector.normalize();
+                var unitCandEdge = candEdge.Vector.normalize(3);
                 var cross = unitRefEdge.crossProduct(unitCandEdge);
-                var temp = cross.dotProduct(normal);
+                var temp = cross.dotProduct(normal, 3);
                 if (max < temp)
                 {
                     max = temp;
@@ -492,11 +492,11 @@ namespace TVGL
         private static double GetEdgeSimilarityScore(Edge e1, Edge e2)
         {
             var score = Math.Abs(e1.Length - e2.Length) / e1.Length;
-            score += 1 - Math.Abs(e1.Vector.normalize().dotProduct(e2.Vector.normalize()));
-            score += Math.Min(e2.From.Position.subtract(e1.To.Position).norm2()
-                              + e2.To.Position.subtract(e1.From.Position).norm2(),
-                e2.From.Position.subtract(e1.From.Position).norm2()
-                + e2.To.Position.subtract(e1.To.Position).norm2())
+            score += 1 - Math.Abs(e1.Vector.normalize(3).dotProduct(e2.Vector.normalize(3), 3));
+            score += Math.Min(e2.From.Position.subtract(e1.To.Position, 3).norm2()
+                              + e2.To.Position.subtract(e1.From.Position, 3).norm2(),
+                e2.From.Position.subtract(e1.From.Position, 3).norm2()
+                + e2.To.Position.subtract(e1.To.Position, 3).norm2())
                      / e1.Length;
             return score;
         }

@@ -61,7 +61,7 @@ namespace TVGL
                     //entire extrude distance.
                     if (midPlane)
                     {
-                        var midPlaneVertexPosition = vertexPosition.add(extrudeDirection.multiply(-distance/2));
+                        var midPlaneVertexPosition = vertexPosition.add(extrudeDirection.multiply(-distance/2), 3);
                         cleanLoop.Add(new Vertex(midPlaneVertexPosition, i));
                     }
                     else cleanLoop.Add(new Vertex(vertexPosition, i));
@@ -69,7 +69,7 @@ namespace TVGL
                 }
                 cleanLoops.Add(cleanLoop);
             }
-            var distanceFromOriginAlongDirection = extrudeDirection.dotProduct(cleanLoops.First().First().Position);
+            var distanceFromOriginAlongDirection = extrudeDirection.dotProduct(cleanLoops.First().First().Position, 3);
 
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
@@ -102,7 +102,7 @@ namespace TVGL
                         //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
                         //So, we must move it to be on the plane
                         //This next line gets a second vertex to use for the point on plane function
-                        var vertexPosition2 = vertexPosition1.add(extrudeDirection.multiply(5));
+                        var vertexPosition2 = vertexPosition1.add(extrudeDirection.multiply(5), 3);
                         var vertex = MiscFunctions.PointOnPlaneFromIntersectingLine(extrudeDirection,
                             distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
                             new Vertex(vertexPosition2));
@@ -150,7 +150,7 @@ namespace TVGL
                             //The point has been located back to its original position. It is not necessarily the correct distance along the cutting plane normal.
                             //So, we must move it to be on the plane
                             //This next line gets a second vertex to use for the point on plane function
-                            var vertexPosition2 = vertexPosition1.add(extrudeDirection.multiply(5));
+                            var vertexPosition2 = vertexPosition1.add(extrudeDirection.multiply(5), 3);
                             var vertex = MiscFunctions.PointOnPlaneFromIntersectingLine(extrudeDirection,
                                 distanceFromOriginAlongDirection, new Vertex(vertexPosition1),
                                 new Vertex(vertexPosition2));
@@ -186,7 +186,7 @@ namespace TVGL
             var pairedVertices = new Dictionary<Vertex, Vertex>();
             foreach (var vertex in vertices)
             {
-                var newVertex = new Vertex(vertex.Position.add(extrudeDirection.multiply(distance)));
+                var newVertex = new Vertex(vertex.Position.add(extrudeDirection.multiply(distance), 3));
                 pairedVertices.Add(vertex, newVertex);
             }
 
@@ -196,11 +196,11 @@ namespace TVGL
             foreach (var triangle in triangles)
             {
                 //Create the triangle in plane with the loops
-                var v1 = triangle[1].Position.subtract(triangle[0].Position);
-                var v2 = triangle[2].Position.subtract(triangle[0].Position);
+                var v1 = triangle[1].Position.subtract(triangle[0].Position, 3);
+                var v2 = triangle[2].Position.subtract(triangle[0].Position, 3);
 
                 //This model reverses the triangle vertex ordering as necessary to line up with the normal.
-                var topTriangle = v1.crossProduct(v2).dotProduct(extrudeDirection.multiply(-1)) < 0
+                var topTriangle = v1.crossProduct(v2).dotProduct(extrudeDirection.multiply(-1), 3) < 0
                     ? new PolygonalFace(triangle.Reverse(), extrudeDirection.multiply(-1), true)
                     : new PolygonalFace(triangle, extrudeDirection.multiply(-1), true);
                 topFaces.Add(topTriangle);

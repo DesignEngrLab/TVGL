@@ -71,11 +71,11 @@ namespace TVGL
             var directions = new List<double[]>();
             for (var i = -1; i <= 1; i++)
                 for (var j = -1; j <= 1; j++)
-                    directions.Add(new[] {1.0, i, j}.normalize());
-            directions.Add(new[] {0.0, 0, 1}.normalize());
-            directions.Add(new[] {0.0, 1, 0}.normalize());
-            directions.Add(new[] {0.0, 1, 1}.normalize());
-            directions.Add(new[] {0.0, -1, 1}.normalize());
+                    directions.Add(new[] {1.0, i, j}.normalize(3));
+            directions.Add(new[] {0.0, 0, 1}.normalize(3));
+            directions.Add(new[] {0.0, 1, 0}.normalize(3));
+            directions.Add(new[] {0.0, 1, 1}.normalize(3));
+            directions.Add(new[] {0.0, -1, 1}.normalize(3));
 
             var boxes = directions.Select(v => new BoundingBox
             {
@@ -143,14 +143,14 @@ namespace TVGL
             out List<Vertex> bottomVertices,
             out List<Vertex> topVertices)
         {
-            var dir = direction.normalize();
+            var dir = direction.normalize(3);
             var minD = double.PositiveInfinity;
             bottomVertices = new List<Vertex>();
             topVertices = new List<Vertex>();
             var maxD = double.NegativeInfinity;
             foreach (var v in vertices)
             {
-                var distance = dir.dotProduct(v.Position);
+                var distance = dir.dotProduct(v.Position, 3);
                 if (distance.IsPracticallySame(minD, Constants.BaseTolerance))
                     bottomVertices.Add(v);
                 else if (distance < minD)
@@ -412,8 +412,8 @@ namespace TVGL
                 //Get unit normal for current edge
                 var otherIndex = extremeIndices[refIndex] == 0 ? numCvxPoints - 1 : extremeIndices[refIndex] - 1;
                 var direction =
-                    cvxPoints[extremeIndices[refIndex]].Position.subtract(cvxPoints[otherIndex].Position)
-                        .normalize();
+                    cvxPoints[extremeIndices[refIndex]].Position.subtract(cvxPoints[otherIndex].Position, 2)
+                        .normalize(2);
                 //If point type = 1 or 3, then use inversed Direction
                 if (refIndex == 1 || refIndex == 3)
                 {
@@ -426,14 +426,14 @@ namespace TVGL
                 };
 
                 var angleVector1 = new[] {-direction[1], direction[0]};
-                var width = Math.Abs(vectorWidth.dotProduct(angleVector1));
+                var width = Math.Abs(vectorWidth.dotProduct(angleVector1, 2));
                 var vectorHeight = new[]
                 {
                     cvxPoints[extremeIndices[3]][0] - cvxPoints[extremeIndices[1]][0],
                     cvxPoints[extremeIndices[3]][1] - cvxPoints[extremeIndices[1]][1]
                 };
                 var angleVector2 = new[] {direction[0], direction[1]};
-                var height = Math.Abs(vectorHeight.dotProduct(angleVector2));
+                var height = Math.Abs(vectorHeight.dotProduct(angleVector2, 2));
                 var area = height*width;
 
                 #endregion
@@ -500,7 +500,7 @@ namespace TVGL
         private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction)
         { 
             List<Vertex> bottomVertices, topVertices;
-            var direction1 = direction.normalize();
+            var direction1 = direction.normalize(3);
             var depth = GetLengthAndExtremeVertices(direction, vertices, out bottomVertices, out topVertices);
 
             double[,] backTransform;
@@ -552,8 +552,8 @@ namespace TVGL
         /// <param name="boxData">The box data.</param>
         private static void FindOBBAlongDirection(BoundingBoxData boxData)
         {
-            var direction0 = boxData.Direction = boxData.Direction.normalize();
-            var height = direction0.dotProduct(boxData.RotatorEdge.From.Position.subtract(boxData.BackVertex.Position));
+            var direction0 = boxData.Direction = boxData.Direction.normalize(3);
+            var height = direction0.dotProduct(boxData.RotatorEdge.From.Position.subtract(boxData.BackVertex.Position, 3), 3);
             double[,] backTransform;
             var points = MiscFunctions.Get2DProjectionPoints(boxData.OrthVertices, direction0, out backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
