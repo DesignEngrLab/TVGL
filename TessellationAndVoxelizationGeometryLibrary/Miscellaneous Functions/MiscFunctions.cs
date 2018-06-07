@@ -1233,11 +1233,11 @@ namespace TVGL
 
             // t = (q - p) x s / (r x s)
             //Note, the output of this will be t = [0,0,#] since this is a 2D cross product.
-            var t = q.subtract(p, 2).crossProduct(s).divide(rxs, 2);
+            var t = q.subtract(p).crossProduct(s).divide(rxs);
 
             // u = (q - p) x r / (r x s)
             //Note, the output of this will be u = [0,0,#] since this is a 2D cross product.
-            var u = q.subtract(p, 2).crossProduct(r).divide(rxs, 2);
+            var u = q.subtract(p).crossProduct(r).divide(rxs);
 
             // 5. If r x s != 0 and 0 <= t <= 1 and 0 <= u <= 1
             // the two line segments meet at the point p + t r = q + u s.
