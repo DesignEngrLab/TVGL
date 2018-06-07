@@ -266,23 +266,22 @@ namespace TVGL
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             //Create a copy of the vertex and face (This is NON-Destructive!)
-            var newVertices = new List<Vertex>();
+            Vertices = new Vertex[vertices.Count];
             var simpleCompareDict = new Dictionary<Vertex, Vertex>();
             for (var i = 0; i < vertices.Count; i++)
             {
                 var vertex = copyElements ? vertices[i].Copy() : vertices[i];
                 vertex.ReferenceIndex = 0;
                 vertex.IndexInList = i;
-                newVertices.Add(vertex);
+                Vertices[i] = vertex;
                 simpleCompareDict.Add(vertices[i], vertex);
             }
-            Vertices = newVertices.ToArray();
 
             HasUniformColor = true;
             if (colors == null || !colors.Any())
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
-            var newFaces = new List<PolygonalFace>();
+            Faces = new PolygonalFace[faces.Count];
             for (var i = 0; i < faces.Count; i++)
             {
                 //Keep "CreatedInFunction" to help with debug
@@ -304,9 +303,8 @@ namespace TVGL
                     face.Color = colors[j];
                     if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
                 }
-                newFaces.Add(face);
+                Faces[i] = face;
             }
-            Faces = newFaces.ToArray();
             NumberOfFaces = Faces.Length;
             NumberOfVertices = Vertices.Length;
             CompleteInitiation();
