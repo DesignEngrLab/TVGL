@@ -103,7 +103,7 @@ namespace TVGL.Voxelization
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                });
+                } );
             }
 
             if (discretizationLevel >= 2)
@@ -654,7 +654,7 @@ namespace TVGL.Voxelization
         private VoxelHashSet DefineBottomCoordinateInside(VoxelHashSet voxels, List<PolygonalFace> parentFaces)
         {
             var level = voxels.FirstOrDefault()?.Level ?? 0;
-            var queue = new Queue<IVoxel>(voxels);
+            var queue = new Queue<IVoxel>();
             var assignedHashSet = new VoxelHashSet(new VoxelComparerCoarse(), this);
             foreach (var voxel in voxels)
             {
@@ -686,7 +686,7 @@ namespace TVGL.Voxelization
                         var xPt = (d - n[1] * voxCoord[1] - n[2] * voxCoord[2]) / n[0];
                         signedDistance = xPt - voxCoord[0];
                         if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            IsPointInsideTriangleTSBuilding(face, new[] { xPt, voxCoord[1], voxCoord[2] }))
+                            isPointInsideFaceTSBuilding(face, new[] { xPt, voxCoord[1], voxCoord[2] }))
                         {
                             closestFaceDistance = signedDistance;
                             closestFaceIsPositive = n[0] > 0;
@@ -697,7 +697,7 @@ namespace TVGL.Voxelization
                         var yPt = (d - n[0] * voxCoord[0] - n[2] * voxCoord[2]) / n[1];
                         signedDistance = yPt - voxCoord[1];
                         if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            IsPointInsideTriangleTSBuilding(face, new[] { voxCoord[0], yPt, voxCoord[2] }))
+                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], yPt, voxCoord[2] }))
                         {
                             closestFaceDistance = signedDistance;
                             closestFaceIsPositive = n[1] > 0;
@@ -708,7 +708,7 @@ namespace TVGL.Voxelization
                         var zPt = (d - n[0] * voxCoord[0] - n[1] * voxCoord[1]) / n[2];
                         signedDistance = zPt - voxCoord[2];
                         if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            IsPointInsideTriangleTSBuilding(face, new[] { voxCoord[0], voxCoord[1], zPt }))
+                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], voxCoord[1], zPt }))
                         {
                             closestFaceDistance = signedDistance;
                             closestFaceIsPositive = n[2] > 0;
@@ -731,7 +731,7 @@ namespace TVGL.Voxelization
                             signedDistance = xPt - voxCoord[0];
                             if (signedDistance > -startingMinFaceToCornerDistance && signedDistance <= 0
                             && signedDistance < closestFaceDistance &&
-                                IsPointInsideTriangleTSBuilding(face, new[] { xPt, voxCoord[1], voxCoord[2] }))
+                                isPointInsideFaceTSBuilding(face, new[] { xPt, voxCoord[1], voxCoord[2] }))
                             {
                                 closestFaceDistance = signedDistance;
                                 closestFaceIsPositive = n[0] > 0;
@@ -743,7 +743,7 @@ namespace TVGL.Voxelization
                             signedDistance = yPt - voxCoord[1];
                             if (signedDistance > -startingMinFaceToCornerDistance && signedDistance <= 0
                                                                                   && signedDistance < closestFaceDistance &&
-                                IsPointInsideTriangleTSBuilding(face, new[] { voxCoord[0], yPt, voxCoord[2] }))
+                                isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], yPt, voxCoord[2] }))
                             {
                                 closestFaceDistance = signedDistance;
                                 closestFaceIsPositive = n[1] > 0;
@@ -755,7 +755,7 @@ namespace TVGL.Voxelization
                             signedDistance = zPt - voxCoord[2];
                             if (signedDistance > -startingMinFaceToCornerDistance && signedDistance <= 0
                                                                                   && signedDistance < closestFaceDistance &&
-                                IsPointInsideTriangleTSBuilding(face, new[] { voxCoord[0], voxCoord[1], zPt }))
+                                isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], voxCoord[1], zPt }))
                             {
                                 closestFaceDistance = signedDistance;
                                 closestFaceIsPositive = n[2] > 0;
@@ -803,15 +803,23 @@ namespace TVGL.Voxelization
                     this, queue);
             return null;
         }
-
-        private bool IsPointInsideTriangleTSBuilding(PolygonalFace face, double[] p)
+   
+        private bool isPointInsideFaceTSBuilding(PolygonalFace face, double[] p)
         {
             var a = transformedCoordinates[face.A.IndexInList];
             var b = transformedCoordinates[face.B.IndexInList];
             var c = transformedCoordinates[face.C.IndexInList];
-            return MiscFunctions.SameSide(p, a, b, c) &&
-                   MiscFunctions.SameSide(p, b, a, c) &&
-                   MiscFunctions.SameSide(p, c, a, b);
+            var line = b.subtract(a, 3);
+            if (line.crossProduct(p.subtract(a, 3)).dotProduct(face.Normal) < 0) return false;
+            line = c.subtract(b, 3);
+            if (line.crossProduct(p.subtract(b, 3)).dotProduct(face.Normal) < 0) return false;
+            line = a.subtract(c, 3);
+            if (line.crossProduct(p.subtract(c, 3)).dotProduct(face.Normal) < 0) return false;
+            return true;
+
+            //return MiscFunctions.SameSide(p, a, b, c) &&
+            //       MiscFunctions.SameSide(p, b, a, c) &&
+            //       MiscFunctions.SameSide(p, c, a, b);
         }
 
         private IVoxel GetNeighborForTSBuilding(int[] point3D, VoxelDirections direction, VoxelHashSet voxelHashSet, int level, out int[] neighborCoord)
@@ -837,7 +845,8 @@ namespace TVGL.Voxelization
             var posDirections = new[] { 0, 1, 2 };
             var insiders = new Stack<IVoxel>();
             var outsiders = new Stack<IVoxel>();
-            /* separate the partial/surface voxels into insiders and outsiders*/
+            /* separate the partial/surface voxels into insiders and outsiders. If there are unknownPartials, then
+             * these stay in their own list for now. */
             if (unknownPartials == null)
                 foreach (var voxel in voxels)
                     if (voxel.BtmCoordIsInside) insiders.Push(voxel);
@@ -852,6 +861,9 @@ namespace TVGL.Voxelization
             {
                 var current = outsiders.Pop();
                 var coord = current.CoordinateIndices;
+                /* We are going to cycle of the posDirections only. If the positive neighbor is null, then it could be
+                 * a new interior if we cross over a face going in that positive direction. If the positive neighbor is
+                 * an unknown, then we should be able to resolve it. */
                 foreach (var direction in posDirections)
                 {
                     if (coord[direction] == parentLimits[1][direction] - 1) continue;   /* check to see if current is on a boundary.
@@ -936,7 +948,7 @@ namespace TVGL.Voxelization
                         break;
                 }
                 if (signedDistance < 0 || signedDistance > 1 ||
-                    !IsPointInsideTriangleTSBuilding(face, newPoint)) continue;
+                    !isPointInsideFaceTSBuilding(face, newPoint)) continue;
                 if (signedDistance > maxDistance)
                 {
                     negativeFace = face.Normal[dimension] < 0;

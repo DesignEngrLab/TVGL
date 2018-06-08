@@ -129,7 +129,7 @@ namespace TVGLPresenterDX
         {
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
             //return;
-            //Presenter.ShowAndHang(vs1);
+            Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
