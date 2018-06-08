@@ -186,7 +186,7 @@ namespace TVGL.Voxelization
             lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
             return voxel;
         }
-        private IVoxel ChangeFullVoxelToPartialOLD(IVoxel voxel)
+        private IVoxel ChangeFullVoxelToPartial(IVoxel voxel)
         {
             if (voxel.Role == VoxelRoleTypes.Partial)
                 throw new ArgumentException("input voxel is already partial.");
@@ -214,7 +214,7 @@ namespace TVGL.Voxelization
             var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
             var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
             var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
-            if (voxel0.Role == VoxelRoleTypes.Full) ChangeFullVoxelToPartialOLD(voxel0);
+            if (voxel0.Role == VoxelRoleTypes.Full) ChangeFullVoxelToPartial(voxel0);
             if (level == 1) ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
             else
             {
@@ -240,7 +240,7 @@ namespace TVGL.Voxelization
             return voxel;
         }
 
-        private IVoxel ChangeFullVoxelToPartial(IVoxel voxel, bool populateSubVoxels = true)
+        private IVoxel ChangeFullVoxelToPartialNEW(IVoxel voxel, bool populateSubVoxels = true)
         {
             if (voxel.Role == VoxelRoleTypes.Partial)
                 throw new ArgumentException("input voxel is already partial.");

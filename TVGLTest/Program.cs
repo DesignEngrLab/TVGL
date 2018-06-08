@@ -127,7 +127,7 @@ namespace TVGLPresenterDX
 
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true);
             //return;
             Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);

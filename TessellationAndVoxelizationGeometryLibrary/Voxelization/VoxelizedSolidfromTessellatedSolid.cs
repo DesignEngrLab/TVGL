@@ -92,8 +92,8 @@ namespace TVGL.Voxelization
             if (discretizationLevel >= 1)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 1);
-                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
-                //foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
+                foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                 {
                     var voxels = new VoxelHashSet(new VoxelComparerCoarse(), this);
                     MakeVertexVoxels(((VoxelWithTessellationLinks)voxel0).Vertices, voxel0, voxels);
@@ -103,7 +103,7 @@ namespace TVGL.Voxelization
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                } );
+                } //);
             }
 
             if (discretizationLevel >= 2)
@@ -798,12 +798,14 @@ namespace TVGL.Voxelization
                     cyclesSinceLastSuccess++;
                 }
             }
+            Debug.WriteLine("{0} are T; {1} are F; {2} total", voxels.Count(v => v.BtmCoordIsInside), voxels.Count(v => !v.BtmCoordIsInside),
+                voxels.Count);
             if (queue.Any())
                 return new VoxelHashSet(level > 1 ? (IEqualityComparer<long>)new VoxelComparerFine() : new VoxelComparerCoarse(),
                     this, queue);
             return null;
         }
-   
+
         private bool isPointInsideFaceTSBuilding(PolygonalFace face, double[] p)
         {
             var a = transformedCoordinates[face.A.IndexInList];

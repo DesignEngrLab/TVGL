@@ -624,7 +624,7 @@ namespace TVGL.Voxelization
                     else
                     {
                         var thisVoxelWasFull = thisVoxel.Role == VoxelRoleTypes.Full;
-                        if (thisVoxelWasFull) ChangeFullVoxelToPartial(thisVoxel, false);
+                        if (thisVoxelWasFull) ChangeFullVoxelToPartialNEW(thisVoxel, false);
                         if (discretizationLevel > level)
                             IntersectNEW(thisVoxel, level + 1, references, thisVoxelWasFull);
                     }
