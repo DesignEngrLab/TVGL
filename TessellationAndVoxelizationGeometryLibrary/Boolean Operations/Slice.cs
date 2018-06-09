@@ -260,7 +260,7 @@ namespace TVGL.Boolean_Operations
             var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
             foreach (var vertex in ts.Vertices)
             {
-                var distance = vertex.Position.subtract(pointOnPlane).dotProduct(plane.Normal);
+                var distance = vertex.Position.subtract(pointOnPlane, 3).dotProduct(plane.Normal, 3);
                 distancesToPlane.Add(distance);
                 if (distance > 0) distancesToPosPlane.Add(distance);
                 else if (distance < 0) distancesToNegPlane.Add(Math.Abs(distance));

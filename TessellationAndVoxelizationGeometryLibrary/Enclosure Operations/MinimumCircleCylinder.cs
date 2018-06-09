@@ -317,7 +317,7 @@ namespace TVGL
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
             foreach (var line in polygon.PathLines)
             {
-                var v1 = line.ToPoint.Position.subtract(line.FromPoint.Position);
+                var v1 = line.ToPoint.Position.subtract(line.FromPoint.Position, 2);
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
                 if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
@@ -569,7 +569,7 @@ namespace TVGL
                 }
                 else if (Points.Count == 2)
                 {
-                    var vector = Points[0].Position.subtract(Points[1].Position);
+                    var vector = Points[0].Position.subtract(Points[1].Position, 2);
                     Center = new Point(new Vertex(new[] {Points[1].X + vector[0]/2, Points[1].Y + vector[1]/2, 0.0}));
                     SqRadius = Math.Pow(vector[0]/2, 2) + Math.Pow(vector[1]/2, 2);
                 }

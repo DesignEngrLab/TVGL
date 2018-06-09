@@ -430,9 +430,9 @@ namespace TVGL
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
-                        var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position);
-                        var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position);
-                        var face = v1.crossProduct(v2).dotProduct(normal) < 0
+                        var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position, 3);
+                        var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position, 3);
+                        var face = v1.crossProduct(v2).dotProduct(normal, 3) < 0
                             ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }
                             : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
                         listOfFaces.Add(face);
@@ -931,14 +931,14 @@ namespace TVGL
             for (var i = 0; i < 3; i++)
             {
                 var direction = obbDirections[i];
-                var dotX1 = direction.dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
+                var dotX1 = direction.dotProduct(new List<double>() { 1.0, 0.0, 0.0 }, 3);
                 if (dotX1 > minDot)
                 {
                     minDot = dotX1;
                     xPrime = direction;
                     xPrimeIndex = i;
                 }
-                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
+                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() { 1.0, 0.0, 0.0 }, 3);
                 if (dotX2 > minDot)
                 {
                     minDot = dotX2;
@@ -953,13 +953,13 @@ namespace TVGL
             for (var i = 0; i < 2; i++)
             {
                 var direction = obbDirections[i];
-                var dotY1 = direction.dotProduct(new List<double>() { 0.0, 1.0, 0.0 });
+                var dotY1 = direction.dotProduct(new List<double>() { 0.0, 1.0, 0.0 }, 3);
                 if (dotY1 > minDot)
                 {
                     minDot = dotY1;
                     yPrime = direction;
                 }
-                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() { 0.0, 1.0, 0.0 });
+                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() { 0.0, 1.0, 0.0 }, 3);
                 if (dotY2 > minDot)
                 {
                     minDot = dotY2;
@@ -975,7 +975,7 @@ namespace TVGL
             var dotXs = new Dictionary<Vertex, double>();
             foreach (var vertex in obb.CornerVertices)
             {
-                var dot = vertex.Position.dotProduct(xPrime);
+                var dot = vertex.Position.dotProduct(xPrime, 3);
                 dotXs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest four values. Then get the those four vertices.
@@ -986,7 +986,7 @@ namespace TVGL
             var dotYs = new Dictionary<Vertex, double>();
             foreach (var vertex in bottom4Vertices)
             {
-                var dot = vertex.Position.dotProduct(yPrime);
+                var dot = vertex.Position.dotProduct(yPrime, 3);
                 dotYs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
@@ -997,7 +997,7 @@ namespace TVGL
             var dotZs = new Dictionary<Vertex, double>();
             foreach (var vertex in bottom2Vertices)
             {
-                var dot = vertex.Position.dotProduct(zPrime);
+                var dot = vertex.Position.dotProduct(zPrime, 3);
                 dotZs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.

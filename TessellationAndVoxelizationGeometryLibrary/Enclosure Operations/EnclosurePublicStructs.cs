@@ -202,14 +202,14 @@ namespace TVGL
             var v2 = new Vertex(vLows.First().Position);
 
             //Start with v0 and move along direction[1] by projection
-            var vector0To1 = v1.Position.subtract(v0.Position);
-            var projectionOntoD1 = Directions[1].multiply(Directions[1].dotProduct(vector0To1));
-            var v4 = v0.Position.add(projectionOntoD1);
+            var vector0To1 = v1.Position.subtract(v0.Position, 3);
+            var projectionOntoD1 = Directions[1].multiply(Directions[1].dotProduct(vector0To1, 3));
+            var v4 = v0.Position.add(projectionOntoD1, 3);
 
             //Move along direction[2] by projection
-            var vector4To2 = v2.Position.subtract(v4);
-            var projectionOntoD2 = Directions[2].multiply(Directions[2].dotProduct(vector4To2));
-            var bottomCorner = new Vertex(v4.add(projectionOntoD2));
+            var vector4To2 = v2.Position.subtract(v4, 3);
+            var projectionOntoD2 = Directions[2].multiply(Directions[2].dotProduct(vector4To2, 3));
+            var bottomCorner = new Vertex(v4.add(projectionOntoD2, 3));
 
             //Double Check to make sure it is the bottom corner
             verticesOfInterest.Add(bottomCorner);
@@ -230,7 +230,7 @@ namespace TVGL
                     for (var k = 0; k < 2; k++)
                     {
                         var d2Vector = k == 0 ? new[] { 0.0, 0.0, 0.0 } : Directions[2].multiply(Dimensions[2]);
-                        var newVertex = new Vertex(bottomCorner.Position.add(d0Vector).add(d1Vector).add(d2Vector));
+                        var newVertex = new Vertex(bottomCorner.Position.add(d0Vector, 3).add(d1Vector, 3).add(d2Vector, 3));
 
                         //
                         var b = k == 0 ? 0 : 4;
@@ -346,9 +346,9 @@ namespace TVGL
             var p1 = new[] { bp[0], bp[1]};
 
             //Start with v0 and move along direction[1] by projection
-            var vector0To1 = p1.subtract(p0);
-            var projectionOntoD1 = dir1.multiply(dir1.dotProduct(vector0To1));
-            var p2 = p0.add(projectionOntoD1);
+            var vector0To1 = p1.subtract(p0, 2);
+            var projectionOntoD1 = dir1.multiply(dir1.dotProduct(vector0To1, 2));
+            var p2 = p0.add(projectionOntoD1, 2);
             var bottomCorner = new Point(p2);
 
             //Double Check to make sure it is the bottom corner
@@ -365,7 +365,7 @@ namespace TVGL
                 for (var j = 0; j < 2; j++)
                 {
                     var d1Vector = j == 0 ? new[] { 0.0, 0.0 } : dir1.multiply(Dimensions[1]);
-                    var newPoint = new Point(bottomCorner.Position.add(d0Vector).add(d1Vector));
+                    var newPoint = new Point(bottomCorner.Position.add(d0Vector, 2).add(d1Vector, 2));
                     //Put the points in the correct position to be ordered CCW, starting with the bottom corner
                     if (i == 0)
                     {

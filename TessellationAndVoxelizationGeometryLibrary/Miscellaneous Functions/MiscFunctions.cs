@@ -86,7 +86,7 @@ namespace TVGL
             {
                 //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
                 Point point;
-                var dot1 = directions[0].dotProduct(vertex.Position);
+                var dot1 = directions[0].dotProduct(vertex.Position, 3);
 
                 switch (directions.Length)
                 {
@@ -97,14 +97,14 @@ namespace TVGL
                         break;
                     case 2:
                         {
-                            var dot2 = directions[1].dotProduct(vertex.Position);
+                            var dot2 = directions[1].dotProduct(vertex.Position, 3);
                             point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), 0.0);
                         }
                         break;
                     case 3:
                         {
-                            var dot2 = directions[1].dotProduct(vertex.Position);
-                            var dot3 = directions[2].dotProduct(vertex.Position);
+                            var dot2 = directions[1].dotProduct(vertex.Position, 3);
+                            var dot3 = directions[2].dotProduct(vertex.Position, 3);
                             point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), Math.Round(dot3 * tolerance));
                         }
                         break;
@@ -395,8 +395,8 @@ namespace TVGL
                 distinctList = distinctList.OrderBy(f => f.Normal[k]).ToList();
                 for (var i = distinctList.Count - 1; i > 0; i--)
                 {
-                    if (distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(1.0, tolerance) ||
-                        (removeOpposites && distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(-1, tolerance)))
+                    if (distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal, 3).IsPracticallySame(1.0, tolerance) ||
+                        (removeOpposites && distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal, 3).IsPracticallySame(-1, tolerance)))
                     {
                         if (distinctList[i].Area <= distinctList[i - 1].Area) distinctList.RemoveAt(i);
                         else distinctList.RemoveAt(i - 1);
@@ -1063,7 +1063,7 @@ namespace TVGL
         public static double[] Convert2DVectorTo3DVector(double[] direction2D, double[,] backTransform)
         {
             var tempVector = new[] { direction2D[0], direction2D[1], 0.0, 1.0 };
-            return backTransform.multiply(tempVector).Take(3).ToArray().normalize();
+            return backTransform.multiply(tempVector).Take(3).ToArray().normalize(3);
         }
 
         /// <summary>
@@ -1085,7 +1085,7 @@ namespace TVGL
             {
                 var position = new[] { point.X, point.Y, 0.0, 1.0 };
                 var untransformedPosition = backTransform.multiply(position).Take(3).ToArray();
-                var vertexPosition = untransformedPosition.add(directionVector);
+                var vertexPosition = untransformedPosition.add(directionVector, 3);
 
                 contour.Add(new Vertex(vertexPosition));
             }
@@ -1121,7 +1121,7 @@ namespace TVGL
         {
             var edge1 = new[] { b.X - a.X, b.Y - a.Y };
             var edge2 = new[] { c.X - b.X, c.Y - b.Y };
-            return Math.Acos(edge1.dotProduct(edge2) / (edge1.norm2() * edge2.norm2()));
+            return Math.Acos(edge1.dotProduct(edge2, 3) / (edge1.norm2() * edge2.norm2()));
         }
 
         /// <summary>
@@ -1316,10 +1316,10 @@ namespace TVGL
             var q2 = pt4.Position;
             var points = new List<Point> { pt1, pt2, pt3, pt4 };
             intersectionPoint = null;
-            var r = p2.subtract(p);
-            var s = q2.subtract(q);
+            var r = p2.subtract(p, 2);
+            var s = q2.subtract(q, 2);
             var rxs = r[0] * s[1] - r[1] * s[0]; //2D cross product, determines if parallel
-            var qp = q.subtract(p);
+            var qp = q.subtract(p, 2);
             var qpxr = qp[0] * r[1] - qp[1] * r[0];//2D cross product
 
             // If r x s ~ 0 and (q - p) x r ~ 0, then the two lines are possibly collinear.
@@ -1331,7 +1331,7 @@ namespace TVGL
                 // 2. If neither 0 <= (q - p) * r = r * r nor 0 <= (p - q) * s <= s * s
                 // then the two lines are collinear but disjoint.
                 var qpr = qp[0] * r[0] + qp[1] * r[1];
-                var pqs = p.subtract(q)[0] * s[0] + p.subtract(q)[1] * s[1];
+                var pqs = p.subtract(q, 2)[0] * s[0] + p.subtract(q, 2)[1] * s[1];
                 var overlapping = (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) ||
                                   (0 <= pqs && pqs <= s[0] * s[0] + s[1] * s[1]);
                 if (rxs.IsNegligible() && qpxr.IsNegligible())
@@ -1575,7 +1575,7 @@ namespace TVGL
         internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2,
             out double[] directionOfLine, out double[] pointOnLine)
         {
-            directionOfLine = n1.crossProduct(n2).normalize();
+            directionOfLine = n1.crossProduct(n2).normalize(3);
             LineIntersectingTwoPlanes(n1, d1, n2, d2, directionOfLine, out pointOnLine);
         }
 
@@ -1755,10 +1755,10 @@ namespace TVGL
 
             //Set directions, where dir2 is perpendicular to dir1 and dir3 is perpendicular to both dir1 and dir2.
             var rnd = new Random();
-            var direction1 = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
-            var direction2 = new[] { direction1[1] - direction1[2], -direction1[0], direction1[0] }.normalize();
+            var direction1 = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize(3);
+            var direction2 = new[] { direction1[1] - direction1[2], -direction1[0], direction1[0] }.normalize(3);
             //one of many
-            var direction3 = direction1.crossProduct(direction2).normalize();
+            var direction3 = direction1.crossProduct(direction2).normalize(3);
             var directions = new[] { direction1, direction2, direction3 };
             var allVertices = new List<Vertex>(insideVertices);
             allVertices.AddRange(outsideVertices);
@@ -2002,7 +2002,7 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPlane(double[] point, double[] normalOfPlane, double[] positionOnPlane)
         {
-            return DistancePointToPlane(point, normalOfPlane, positionOnPlane.dotProduct(normalOfPlane));
+            return DistancePointToPlane(point, normalOfPlane, positionOnPlane.dotProduct(normalOfPlane, 3));
         }
 
         /// <summary>
@@ -2016,7 +2016,7 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPlane(double[] point, double[] normalOfPlane, double signedDistanceToPlane)
         {
-            return normalOfPlane.dotProduct(point) - signedDistanceToPlane;
+            return normalOfPlane.dotProduct(point, 3) - signedDistanceToPlane;
         }
 
         /// <summary>
@@ -2050,9 +2050,9 @@ namespace TVGL
         public static double[] PointOnFaceFromIntersectingLine(List<double[]> vertices, double[] normal, double[] point1,
             double[] point2)
         {
-            var distanceToOrigin = normal.dotProduct(vertices[0]);
-            var d1 = normal.dotProduct(point1);
-            var d2 = normal.dotProduct(point2);
+            var distanceToOrigin = normal.dotProduct(vertices[0], 3);
+            var d1 = normal.dotProduct(point1, 3);
+            var d2 = normal.dotProduct(point2, 3);
             if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
             var denominator = d1 - d2;
             if (denominator == 0) return null; //The points form a perpendicular line to the face
@@ -2064,7 +2064,7 @@ namespace TVGL
                 if (double.IsNaN(position[i]))
                     throw new Exception("This should never occur. Prevent this from happening");
             }
-            return IsPointInsideTriangle(vertices, position, true) ? position : null;
+            return IsVertexInsideTriangle(vertices, position, true) ? position : null;
         }
 
 
@@ -2081,8 +2081,8 @@ namespace TVGL
         public static Vertex PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Vertex point1,
             Vertex point2)
         {
-            var d1 = normalOfPlane.dotProduct(point1.Position);
-            var d2 = normalOfPlane.dotProduct(point2.Position);
+            var d1 = normalOfPlane.dotProduct(point1.Position, 3);
+            var d2 = normalOfPlane.dotProduct(point2.Position, 3);
             var fraction = (d1 - distOfPlane) / (d1 - d2);
             var position = new double[3];
             for (var i = 0; i < 3; i++)
@@ -2131,14 +2131,14 @@ namespace TVGL
         public static double[] PointOnPlaneFromRay(double[] normalOfPlane, double distOfPlane, double[] rayPosition,
             double[] rayDirection, out double signedDistance)
         {
-            var dot = rayDirection.dotProduct(normalOfPlane);
+            var dot = rayDirection.dotProduct(normalOfPlane, 3);
             signedDistance = 0.0;
             if (dot == 0) return null;
 
             var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
             if (signedDistance.IsNegligible()) return rayPosition;
-            return rayPosition.add(rayDirection.multiply(signedDistance));
+            return rayPosition.add(rayDirection.multiply(signedDistance), 3);
         }
 
         /// <summary>
@@ -2173,10 +2173,10 @@ namespace TVGL
         public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, double[] direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
-            var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
+            var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position, 3);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
             if (newPoint == null) return null;
-            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
 
         /// <summary>
@@ -2195,7 +2195,7 @@ namespace TVGL
         {
             var newPoint = (double[])point3D.Clone();
             signedDistance = double.NaN;
-            var d = face.Normal.dotProduct(face.Vertices[0].Position);
+            var d = face.Normal.dotProduct(face.Vertices[0].Position, 3);
             var n = face.Normal;
             switch (direction)
             {
@@ -2218,7 +2218,7 @@ namespace TVGL
                     break;
             }
 
-            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
         #endregion
 
@@ -2262,10 +2262,10 @@ namespace TVGL
         /// <param name="vertexInQuestion">The vertex in question.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside triangle] [the specified triangle]; otherwise, <c>false</c>.</returns>
-        public static bool IsPointInsideTriangle(PolygonalFace triangle, Vertex vertexInQuestion,
+        public static bool IsVertexInsideTriangle(PolygonalFace triangle, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            return IsPointInsideTriangle(triangle.Vertices, vertexInQuestion, onBoundaryIsInside);
+            return IsVertexInsideTriangle(triangle.Vertices, vertexInQuestion, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2281,10 +2281,10 @@ namespace TVGL
         /// <references>
         ///     http://www.blackpawn.com/texts/pointinpoly/
         /// </references>
-        public static bool IsPointInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            return IsPointInsideTriangle(vertices, vertexInQuestion.Position, onBoundaryIsInside);
+            return IsVertexInsideTriangle(vertices, vertexInQuestion.Position, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2292,11 +2292,11 @@ namespace TVGL
         ///     triangle are considered "inside." Assumes vertex in question is in the same plane
         ///     as the triangle.
         /// </summary>
-        public static bool IsPointInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
             var positions = vertices.Select(vertex => vertex.Position).ToList();
-            return IsPointInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
+            return IsVertexInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2309,7 +2309,7 @@ namespace TVGL
         /// <param name="onBoundaryIsInside"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static bool IsPointInsideTriangle(IList<double[]> vertices, double[] vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<double[]> vertices, double[] vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
             if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
@@ -2333,9 +2333,9 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool SameSide(double[] p1, double[] p2, double[] a, double[] b, bool onBoundaryIsInside = true)
         {
-            var cp1 = b.subtract(a).crossProduct(p1.subtract(a));
-            var cp2 = b.subtract(a).crossProduct(p2.subtract(a));
-            var dot = cp1.dotProduct(cp2);
+            var cp1 = b.subtract(a, 3).crossProduct(p1.subtract(a, 3));
+            var cp2 = b.subtract(a, 3).crossProduct(p2.subtract(a, 3));
+            var dot = cp1.dotProduct(cp2, 3);
             if (dot.IsNegligible()) return onBoundaryIsInside;
             if (Math.Abs(dot) < 1E-10) return onBoundaryIsInside;
             return dot > 0.0;
@@ -2367,7 +2367,7 @@ namespace TVGL
             while (inconclusive)
             {
                 inconclusive = false;
-                var direction = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
+                var direction = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize(3);
                 foreach (var face in ts.Faces)
                 {
                     if (face.Vertices.Any(vertex => vertexInQuestion.X.IsPracticallySame(vertex.X) &&
@@ -2377,15 +2377,15 @@ namespace TVGL
                         return onBoundaryIsInside;
                     }
 
-                    var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal) - distanceToOrigin) /
-                            direction.dotProduct(face.Normal);
+                    var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position, 3);
+                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal, 3) - distanceToOrigin) /
+                            direction.dotProduct(face.Normal, 3);
                     //Note that if t == 0, then it is on the face
                     //else, find the intersection point and determine if it is inside the polygon (face)
                     var newVertex = t.IsNegligible()
                         ? vertexInQuestion
-                        : new Vertex(vertexInQuestion.Position.add(direction.multiply(t)));
-                    if (!IsPointInsideTriangle(face, newVertex)) continue;
+                        : new Vertex(vertexInQuestion.Position.add(direction.multiply(t), 3));
+                    if (!IsVertexInsideTriangle(face, newVertex)) continue;
                     //If the distance between the vertex and a plane is neglible and the vertex is inside that face
                     if (t.IsNegligible())
                     {
