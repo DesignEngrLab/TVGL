@@ -16,12 +16,12 @@ namespace TVGL._2D
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
         /// intersection points before the line).
         /// </summary>
-        public static List<Polygon> OnLine(List<Polygon> shape, double[] direction2D, double distanceAlongDirection,
+        public static List<PolygonLight> OnLine(List<PolygonLight> shape, double[] direction2D, double distanceAlongDirection,
             bool returnFurtherThanSlice, out List<Point> intersectionPoints, double offsetAtLine = 0.0)
         {
-            var partialShape = new List<Polygon>();
+            var partialShape = new List<PolygonLight>();
             intersectionPoints = new List<Point>();
-            var shallowPolygonsTrees = ShallowPolygonTree.GetShallowPolygonTrees(shape);
+            var shallowPolygonsTrees = PolygonOperations.GetShallowPolygonTrees(shape);
             foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
             {
                 //Set the lines in all the polygons. These are needed for Slice.OnLine()
@@ -59,10 +59,10 @@ namespace TVGL._2D
         /// returned partial shape (i.e., if returnFurtherThanSlice == true, a positive offsetAtLine value moves the  
         /// intersection points before the line).
         /// </summary>
-        public static List<List<Point>> OnLine(List<List<Point>> shape, double[] direction2D, double distanceAlongDirection,
+        public static List<List<PointLight>> OnLine(List<List<Point>> shape, double[] direction2D, double distanceAlongDirection,
             bool returnFurtherThanSlice, out List<Point> intersectionPoints, double offsetAtLine = 0.0)
         {
-            var partialShape = new List<List<Point>>();
+            var partialShape = new List<List<PointLight>>();
             intersectionPoints = new List<Point>();
             var shallowPolygonsTrees = ShallowPolygonTree.GetShallowPolygonTrees(shape);
             foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
@@ -110,7 +110,7 @@ namespace TVGL._2D
         /// <param name="sortedIntersectionPoints"></param>
         /// <param name="offsetAtLine"></param>
         /// <returns></returns>
-        public static List<Polygon> OnLine(ShallowPolygonTree polyTree, double[] direction2D, double distanceAlongDirection,
+        public static List<PolygonLight> OnLine(ShallowPolygonTree polyTree, double[] direction2D, double distanceAlongDirection,
             bool returnFurtherThanSlice, IEnumerable<Tuple<Point, double>> sortedPoints, out List<Point> sortedIntersectionPoints,
             double offsetAtLine = 0.0)
         {
@@ -189,7 +189,7 @@ namespace TVGL._2D
 
             //(4) Build the partial 2D shape
             sortedIntersectionPoints = new List<Point>();
-            var partialShape = new List<Polygon>();
+            var partialShape = new List<PolygonLight>();
             while (linesToLeft.Any())
             {
                 //Note the line index is the same as the line.FromPoint.IndexInPath
@@ -203,7 +203,7 @@ namespace TVGL._2D
                 var currentPolygon = polyTree.AllPolygons[endPoint.PolygonIndex];
                 var endPolygonIndex = currentPolygon.Index;
                 var endLineIndex = endLine.IndexInPath;
-                var path = new List<Point>{ endPoint.Copy() };
+                var path = new List<PointLight> { endPoint.Light };
 
                 var nextLineIndex = currentPolygon.NextLineIndex(endLineIndex);
                 //Since the line index can be duplicated between polygons, we also need to check the polygon index
@@ -212,7 +212,7 @@ namespace TVGL._2D
                 {
                     var currentLineIndex = nextLineIndex;
                     var currentLine = currentPolygon.PathLines[currentLineIndex];
-                    path.Add(currentLine.FromPoint.Copy());
+                    path.Add(currentLine.FromPoint.Light);
                     if (intersectionLines.Contains(currentLine))
                     {
                         //Add the paired intersection points.
@@ -227,7 +227,7 @@ namespace TVGL._2D
 
                         //Add four points to the path, both intersection points and their offsets
                         //(1) the current intersection point. 
-                        path.Add(intersectionPoint);
+                        path.Add(intersectionPoint.Light);
 
                         //(2) the offset point of the current intersection point
                         //Each intersection point corresponds to an intersection offset point. This point
@@ -237,7 +237,7 @@ namespace TVGL._2D
                             : intersectionPoint.Position.add(direction2D.multiply(offsetAtLine));
 
                         var intersectionOffsetPoint = new Point(position[0], position[1]);
-                        path.Add(intersectionOffsetPoint);
+                        path.Add(intersectionOffsetPoint.Light);
                         sortedIntersectionPoints.Add(intersectionOffsetPoint);
 
                         //(3) the offset point of the next intersection point
@@ -245,11 +245,11 @@ namespace TVGL._2D
                             ? pairedIntersectionPoint.Position.subtract(direction2D.multiply(offsetAtLine))
                             : pairedIntersectionPoint.Position.add(direction2D.multiply(offsetAtLine));
                         var pairedIntersectionOffsetPoint = new Point(position[0], position[1]);
-                        path.Add(pairedIntersectionOffsetPoint);
+                        path.Add(pairedIntersectionOffsetPoint.Light);
                         sortedIntersectionPoints.Add(pairedIntersectionOffsetPoint);
 
                         //(4) the next intersection point. 
-                        path.Add(pairedIntersectionPoint);
+                        path.Add(pairedIntersectionPoint.Light);
 
                         //Update the current polygons, since it may have changed, and then update the next line index
                         var nextLine = intersectionLinesByRef[pairedIntersectionPoint.ReferenceIndex];
@@ -265,7 +265,7 @@ namespace TVGL._2D
 
                 //Because of the intelligent slicing operation, the paths should be ordered correctly CCW+ or CW-
                 //A negative hole could be an entire path, as long as all its lines where to the left of the sweep.
-                partialShape.Add(new Polygon(path));
+                partialShape.Add(new PolygonLight(path));
             }
             return partialShape;
         }

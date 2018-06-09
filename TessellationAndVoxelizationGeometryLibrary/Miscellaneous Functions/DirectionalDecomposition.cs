@@ -254,7 +254,7 @@ namespace TVGL
                     var currentPaths =
                         current3DLoops.Select(
                             cp =>
-                                MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(cp, direction,
+                                MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(cp, direction,
                                     out backTransform));
 
                     //Get the area of this layer
@@ -296,7 +296,7 @@ namespace TVGL
         public static double AdditiveVolume(List<DecompositionData> decompData, double additiveAccuracy, out List<DecompositionData> outputData)
         {
             outputData = new List<DecompositionData>();
-            var previousPolygons = new List<List<Point>>();
+            var previousPolygons = new List<List<PointLight>>();
             var previousDistance = 0.0;
             var previousArea = 0.0;
             var additiveVolume = 0.0;
@@ -311,7 +311,7 @@ namespace TVGL
 
                 //Offset if the additive accuracy is significant
                 var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentPaths);
-                var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<Point>>(currentPaths);
+                var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<PointLight>>(currentPaths);
                 var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
                 //Simplify the paths, but remove any that are eliminated (e.g. points are all very close together)
                 var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
@@ -325,7 +325,7 @@ namespace TVGL
                     previousPolygons = previousPolygons.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
                     try
                     {
-                        currentPaths = new List<List<Point>>(PolygonOperations.Union(previousPolygons, simpleOffset));
+                        currentPaths = PolygonOperations.Union(previousPolygons, simpleOffset);
                     }
                     catch
                     {
@@ -418,7 +418,7 @@ namespace TVGL
         /// <param name="direction"></param>
         /// <param name="distance"></param>
         /// <returns></returns>
-        public static List<Polygon> GetCrossSectionAtGivenDistance(TessellatedSolid ts, double[] direction, double distance)
+        public static List<PolygonLight> GetCrossSectionAtGivenDistance(TessellatedSolid ts, double[] direction, double distance)
         {
             var crossSection3D = Get3DCrossSectionAtGivenDistance(ts, direction, distance);
 
@@ -426,8 +426,8 @@ namespace TVGL
             //Get 2D projections does not reorder list if the cutting plane direction is negative
             //So we need to do this ourselves. 
             //Return null if crossSection3D is null (uses null propogation "?")
-            var crossSection = crossSection3D?.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop, direction, out _, ts.SameTolerance)).ToList();
-            return crossSection?.Select(p => new Polygon(p)).ToList();
+            var crossSection = crossSection3D?.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop, direction, out _, ts.SameTolerance)).ToList();
+            return crossSection?.Select(p => new PolygonLight(p)).ToList();
         }
 
         /// <summary>
@@ -513,7 +513,7 @@ namespace TVGL
             /// <summary>
             /// A list of the paths that make up the slice of the solid at this distance along this direction
             /// </summary>
-            public List<List<Point>> Paths;
+            public List<List<PointLight>> Paths;
 
             /// <summary>
             /// The distance along this direction
@@ -525,9 +525,9 @@ namespace TVGL
             /// </summary>
             /// <param name="paths"></param>
             /// <param name="distanceAlongDirection"></param>
-            public DecompositionData(IEnumerable<List<Point>> paths, double distanceAlongDirection)
+            public DecompositionData(IEnumerable<List<PointLight>> paths, double distanceAlongDirection)
             {
-                Paths = new List<List<Point>>(paths);
+                Paths = new List<List<PointLight>>(paths);
                 DistanceAlongDirection = distanceAlongDirection;
             }
         }
@@ -540,7 +540,7 @@ namespace TVGL
             /// <summary>
             /// The 2D list of points that define this polygon in the cross section
             /// </summary>
-            public List<Point> Path2D;
+            public List<PointLight> Path2D;
 
             /// <summary>
             /// Gets the length of the path
@@ -619,7 +619,7 @@ namespace TVGL
             /// <param name="stepIndex"></param>
             /// <param name="path2D"></param>
             /// <param name="distanceAlongSearchDirection"></param>
-            public PolygonDataGroup(List<Point> path2D, List<Vertex> intersectionVertices, 
+            public PolygonDataGroup(List<PointLight> path2D, List<Vertex> intersectionVertices, 
                 List<Edge> edgeLoop, double area, int indexInCrossSection, int stepIndex, double distanceAlongSearchDirection)
             {
                 Path2D = path2D;
@@ -664,7 +664,7 @@ namespace TVGL
             /// <param name="edgeLoops"></param>
             /// <param name="stepIndex"></param>
             /// <param name="paths2D"></param>
-            public SegmentationData(List<List<Point>> paths2D, List<List<Vertex>> paths3D,
+            public SegmentationData(List<List<PointLight>> paths2D, List<List<Vertex>> paths3D,
                 List<List<Edge>> edgeLoops, List<double> areas, double distanceAlongDirection, int stepIndex)
             {
                 CrossSectionData = new List<PolygonDataGroup>();
@@ -1485,7 +1485,7 @@ namespace TVGL
                         foreach (var negativePolygonDataGroup in negativePolygonDataGroups)
                         {
                             //Reverse the blind holes, so it is positive and then we can use intersection
-                            var tempPolygons = new List<Point>(negativePolygonDataGroup.Path2D);
+                            var tempPolygons = new List<PointLight>(negativePolygonDataGroup.Path2D);
                             tempPolygons.Reverse();
 
                             //IF the intersection results in any overlap, then it belongs to this segment.
@@ -1670,13 +1670,12 @@ namespace TVGL
                             "Area for a cross section in UniformDirectionalDecomposition was negative. This means there was an issue with the polygon ordering");
                     }
 
-                    double[,] backTransform;
                     //Get a list of 2D paths from the 3D loops
                     var currentPaths =
                         current3DLoops.Select(
                             cp =>
-                                MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(cp, direction,
-                                    out backTransform));
+                                MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(cp, direction,
+                                    out _));
 
                     successfull = true; //Irrelevant, since we are returning now.
 
@@ -2102,7 +2101,7 @@ namespace TVGL
                         //Note: you cannot just check if a point from the dataSet is inside the positive paths, 
                         //since it the blind hole could be nested inside positive/negative pairings. (ex: a hollow rod 
                         //down the middle of a larger hollow tube. In this case, the hollow rod is a differnt segment).
-                        var positiveVersionOfHole = new List<Point>(negativePolygonDataGroup.Path2D);
+                        var positiveVersionOfHole = new List<PointLight>(negativePolygonDataGroup.Path2D);
                         positiveVersionOfHole.Reverse();
                         var result = PolygonOperations.Intersection(paths, positiveVersionOfHole);
                         if (result != null && result.Any())

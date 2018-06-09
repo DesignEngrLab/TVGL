@@ -20,7 +20,7 @@ namespace TVGL
         /// <param name="minPathAreaToConsider"></param>
         /// <param name="depthOfPart"></param>
         /// <returns></returns>
-        public static List<List<Point>> Slow(IList<PolygonalFace> faces, double[] normal, double minAngle = 0.1,
+        public static List<List<PointLight>> Slow(IList<PolygonalFace> faces, double[] normal, double minAngle = 0.1,
             double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {     
             var angleTolerance = Math.Cos((90 - minAngle) * Math.PI / 180);
@@ -45,10 +45,10 @@ namespace TVGL
             //Project all the vertices into points
             //The vertex is saved as a reference in the point
             var transform = MiscFunctions.TransformToXYPlane(normal, out _);
-            var projectedPoints = new Dictionary<int, Point>();
+            var projectedPoints = new Dictionary<int, PointLight>();
             foreach (var vertex in vertices)
             {
-                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Get2DProjectionPoint(vertex, transform));
+                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Get2DProjectionPointAsLight(vertex, transform));
             }
 
             //Build a dictionary of faces to polygons
@@ -75,7 +75,7 @@ namespace TVGL
         /// <param name="normal"></param>
         /// <param name="minAngle"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double minAngle = 0.1)
+        public static List<List<PointLight>> Run(TessellatedSolid ts, double[] normal, double minAngle = 0.1)
         {
             var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out _, out _);
             return Run(ts.Faces, normal, ts, minAngle, ts.SameTolerance, depthOfPart);
@@ -91,7 +91,7 @@ namespace TVGL
         /// <param name="minPathAreaToConsider"></param>
         /// <param name="depthOfPart"></param> 
         /// <returns></returns>
-        public static List<List<Point>> Run(IList<PolygonalFace> faces, double[] normal, TessellatedSolid originalSolid, double minAngle = 0.1,
+        public static List<List<PointLight>> Run(IList<PolygonalFace> faces, double[] normal, TessellatedSolid originalSolid, double minAngle = 0.1,
         double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             //Get the positive faces into a dictionary
@@ -155,10 +155,10 @@ namespace TVGL
                 }
             }
             var transform = MiscFunctions.TransformToXYPlane(normal, out _);
-            var projectedPoints = new Dictionary<int, Point>();
+            var projectedPoints = new Dictionary<int, PointLight>();
             foreach (var vertex in vertices)
             {
-                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Get2DProjectionPoint(vertex, transform));
+                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Get2DProjectionPointAsLight(vertex, transform));
             }
             var projectedFacePolygons = positiveFaces.ToDictionary(f => f.IndexInList, f => GetPathFromFace(f, projectedPoints, true));
 
@@ -210,11 +210,11 @@ namespace TVGL
         }
 
         #region Eliminate Overhangs
-        private static List<List<Point>> EliminateOverhangPolygons(List<List<Point>> nonSelfIntersectingPaths,
-                    Dictionary<int, List<Point>> projectedFacePolygons)
+        private static List<List<PointLight>> EliminateOverhangPolygons(List<List<PointLight>> nonSelfIntersectingPaths,
+                    Dictionary<int, List<PointLight>> projectedFacePolygons)
         {
-            var correctedSurfacePath = new List<List<Point>>();
-            var negativePaths = new List<List<Point>>();
+            var correctedSurfacePath = new List<List<PointLight>>();
+            var negativePaths = new List<List<PointLight>>();
             foreach (var path in nonSelfIntersectingPaths)
             {
                 //If the area is negative, we need to check if it is a hole or an overhang
@@ -247,7 +247,7 @@ namespace TVGL
                     //    new List<TessellatedSolid> { originalSolid });
                 }
 
-                var polygons = new HashSet<List<Point>>(projectedFacePolygons.Values);
+                var polygons = new HashSet<List<PointLight>>(projectedFacePolygons.Values);
 
                 //Get a few points that are inside the polygon (It is non-self intersecting,
                 //but taking the center may not work.)
@@ -340,13 +340,13 @@ namespace TVGL
         #endregion
 
         #region GetSurfacePaths
-        private static IEnumerable<List<Point>> GetSurfacePaths(List<HashSet<PolygonalFace>> surfaces, double[] normal,
-            double minAreaToConsider, TessellatedSolid originalSolid, Dictionary<int, List<Point>> projectedFacePolygons)
+        private static IEnumerable<List<PointLight>> GetSurfacePaths(List<HashSet<PolygonalFace>> surfaces, double[] normal,
+            double minAreaToConsider, TessellatedSolid originalSolid, Dictionary<int, List<PointLight>> projectedFacePolygons)
         {
             originalSolid.HasUniformColor = false;
             
             var red = new Color(KnownColors.Red);
-            var allPaths = new List<List<Point>>();
+            var allPaths = new List<List<PointLight>>();
             foreach (var surface in surfaces)
             {
                 //Get the surface inner and outer edges
@@ -368,7 +368,7 @@ namespace TVGL
                     }
                 }
 
-                var surfacePaths = new List<List<Point>>();
+                var surfacePaths = new List<List<PointLight>>();
                 var assignedEdges = new HashSet<Edge>();
                 while (outerEdges.Any())
                 {
@@ -519,7 +519,7 @@ namespace TVGL
 
                     //Get2DProjections does not project directionally (normal and normal.multiply(-1) return the same transform)
                     //However, the way we are unioning the polygons and eliminating overhand polygons seems to be taking care of this
-                    var surfacePath = MiscFunctions.Get2DProjectionPoints(loop, normal).ToList();
+                    var surfacePath = MiscFunctions.Get2DProjectionPointsAsLight(loop, normal).ToList();
                     var area2D = MiscFunctions.AreaOfPolygon(surfacePath);
                     if (area2D.IsNegligible(minAreaToConsider)) continue;
 
@@ -577,7 +577,7 @@ namespace TVGL
         }
         #endregion
 
-        private static List<Point> GetPathFromFace(PolygonalFace face, Dictionary<int, Point> projectedPoints, bool forceToBePositive)
+        private static List<PointLight> GetPathFromFace(PolygonalFace face, Dictionary<int, PointLight> projectedPoints, bool forceToBePositive)
         {
             if (face.Vertices.Count != 3) throw new Exception("This method was only developed with triangles in mind.");
             //Make sure the polygon is ordered correctly (we already know this face is positive)
@@ -587,13 +587,13 @@ namespace TVGL
             return points;
         }
 
-        private static Polygon GetPolygonFromFace(PolygonalFace face, Dictionary<int, Point> projectedPoints, bool forceToBePositive)
+        private static PolygonLight GetPolygonFromFace(PolygonalFace face, IReadOnlyDictionary<int, PointLight> projectedPoints, bool forceToBePositive)
         {
             if (face.Vertices.Count != 3) throw new Exception("This method was only developed with triangles in mind.");
             //Make sure the polygon is ordered correctly (we already know this face is positive)
             var points = face.Vertices.Select(v => projectedPoints[v.IndexInList]).ToList();
-            var facePolygon = new Polygon(points);
-            if (forceToBePositive && !facePolygon.IsPositive) facePolygon.Reverse();
+            var facePolygon = new PolygonLight(points);
+            if (forceToBePositive && facePolygon.Area < 0) facePolygon.Reverse();
             return facePolygon;
         }
     }

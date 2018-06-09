@@ -8,14 +8,72 @@ namespace TVGL
     {
         public List<PointLight> Path;
 
+        /// <summary>
+        /// Gets the area of the polygon. Negative Area for holes.
+        /// </summary>
+        public double Area;
+
+        /// <summary>
+        /// Maxiumum X value
+        /// </summary>
+        public double MaxX;
+
+        /// <summary>
+        /// Miniumum X value
+        /// </summary>
+        public double MinX;
+
+        /// <summary>
+        /// Maxiumum Y value
+        /// </summary>
+        public double MaxY;
+
+        /// <summary>
+        /// Minimum Y value
+        /// </summary>
+        public double MinY;
+
         public PolygonLight(Polygon polygon)
         {
+            Area = polygon.Area;
             Path = new List<PointLight>();
             foreach (var point in polygon.Path)
             {
                 Path.Add(new PointLight(point));
             }
+
+            MaxX = polygon.MaxX;
+            MaxY = polygon.MaxY;
+            MinX = polygon.MinX;
+            MinY = polygon.MinY;
         }
+
+        public PolygonLight(IEnumerable<PointLight> points)
+        {
+            Path = new List<PointLight>(points);
+            Area = MiscFunctions.AreaOfPolygon(Path);
+            MaxX = double.MinValue;
+            MinX = double.MaxValue;
+            MaxY = double.MinValue;
+            MinY = double.MaxValue;
+            foreach (var point in Path)
+            {
+                if (point.X > MaxX) MaxX = point.X;
+                if (point.X < MinX) MinX = point.X;
+                if (point.Y > MaxY) MaxY = point.Y;
+                if (point.Y < MinY) MinY = point.Y;
+            }
+        }
+
+        public void Reverse()
+        {
+            Path.Reverse();
+            Area = -Area;
+        }
+
+        public double Length => MiscFunctions.Perimeter(Path);
+
+        public bool IsPositive => Area >= 0;
     }
 
     internal enum PolygonType
@@ -33,6 +91,16 @@ namespace TVGL
         /// The list of 2D points that make up a polygon.
         /// </summary>
         public List<Point> Path;
+
+        /// <summary>
+        /// The list of 2D points that make up a polygon.
+        /// </summary>
+        public List<PointLight> PathAsLight => Path.Select(p => p.Light).ToList();
+
+        /// <summary>
+        /// The list of 2D points that make up a polygon.
+        /// </summary>
+        public PolygonLight Light => new PolygonLight(this);
 
         /// <summary>
         /// The list of lines that make up a polygon. This is not set by default.
@@ -157,6 +225,10 @@ namespace TVGL
             {
                 SetPathLines();
             }
+        }
+
+        public Polygon(PolygonLight poly): this(poly.Path.Select(p => new Point(p)))
+        {
         }
 
         private double SetLength()

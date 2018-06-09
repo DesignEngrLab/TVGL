@@ -27,7 +27,15 @@ namespace TVGL
     public static partial class MinimumEnclosure
     {
         /// <summary>
-        ///     Minimums the circle.
+        ///     Finds the minimum bounding circle
+        /// </summary>
+        public static BoundingCircle MinimumCircle(IList<PointLight> points)
+        {
+            return MinimumCircle(points.Select(p => new Point(p)).ToList());
+        }
+
+        /// <summary>
+        ///     Finds the minimum bounding circle
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>System.Double.</returns>
@@ -192,6 +200,28 @@ namespace TVGL
             return new BoundingCircle(radius, circle.Center);
         }
 
+
+        /// <summary>
+        ///     Gets the maximum inner circle given a group of polygons and a center point.
+        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingCircle MaximumInnerCircle(IList<List<PointLight>> paths, Point centerPoint)
+        {
+            var polygons = paths.Select(path => new Polygon(path.Select(p => new Point(p)))).ToList();
+            return MaximumInnerCircle(polygons, centerPoint);
+        }
+
+        /// <summary>
+        ///     Gets the maximum inner circle given a group of polygons and a center point.
+        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, Point centerPoint)
+        {
+            var polygons = paths.Select(path => new Polygon(path)).ToList();
+            return MaximumInnerCircle(polygons, centerPoint);
+        }
 
         /// <summary>
         ///     Gets the maximum inner circle given a group of polygons and a center point.

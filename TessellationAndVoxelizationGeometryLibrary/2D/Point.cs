@@ -63,13 +63,13 @@ namespace TVGL
         ///     Gets or sets the x.
         /// </summary>
         /// <value>The x.</value>
-        public double X => Position[0];
+        public double X => Light.X;
 
         /// <summary>
         ///     Gets or sets the y.
         /// </summary>
         /// <value>The y.</value>
-        public double Y => Position[1];
+        public double Y => Light.Y;
 
         /// <summary>
         /// Gets or sets the z coordinate, which is mostly ignored. 
@@ -115,7 +115,10 @@ namespace TVGL
         /// </summary>
         /// <value>The coordinates or position.</value>
         [DataMember]
-        public double[] Position { get; set; }      
+        public double[] Position => Light.Position;
+        
+        [DataMember]
+        public PointLight Light { get; set; }
 
         /// <summary>
         ///     Gets or sets an arbitrary ReferenceIndex to track point
@@ -147,8 +150,9 @@ namespace TVGL
         {
         }
 
+        /// <inheritdoc />
         /// <summary>
-        ///     Initializes a new instance of the <see cref="Point" /> class.
+        ///     Initializes a new instance of the <see cref="T:TVGL.Point" /> class.
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
@@ -156,6 +160,15 @@ namespace TVGL
             : this(null, x, y, 0.0)
         {
             if(double.IsNaN(x) || double.IsNaN(y)) throw new Exception("Must be a number");
+        }
+
+        /// <inheritdoc />
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="T:TVGL.Point" /> class.
+        /// </summary>
+        public Point(PointLight p)
+            : this(null, p.X, p.Y, 0.0)
+        {
         }
 
         /// <summary>
@@ -166,7 +179,7 @@ namespace TVGL
         /// <param name="point"></param>
         public Point(Point point)
         {
-            Position = new[] { point.X, point.Y};
+            Light = new PointLight(point.X, point.Y);
             Z = point.Z;
             Lines = new List<Line>(point.Lines);
             References = new List<Vertex>(point.References);
@@ -181,7 +194,7 @@ namespace TVGL
         /// <param name="z">The z.</param>
         public Point(Vertex vertex, double x, double y, double z)
         {
-            Position = new[] {x, y};
+            Light = new PointLight(x, y);
             Z = z;
             Lines = new List<Line>();
             References = new List<Vertex>();

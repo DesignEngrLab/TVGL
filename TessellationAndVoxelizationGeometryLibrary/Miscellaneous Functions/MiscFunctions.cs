@@ -320,6 +320,23 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon"></param>
         /// <returns></returns>
+        public static double Perimeter(ICollection<PointLight> polygon)
+        {
+            var listWithStartPointAtEnd = new List<PointLight>(polygon) { polygon.First() };
+            double perimeter = 0;
+            for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
+            {
+                perimeter = perimeter +
+                            DistancePointToPoint(listWithStartPointAtEnd[i - 1], listWithStartPointAtEnd[i]);
+            }
+            return perimeter;
+        }
+
+        /// <summary>
+        /// Gets the perimeter for a 2D set of points.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
         public static double Perimeter(ICollection<Point> polygon)
         {
             var listWithStartPointAtEnd = new List<Point>(polygon) { polygon.First() };
@@ -450,9 +467,14 @@ namespace TVGL
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
         /// </summary>
-        public static double AreaOfPolygon(IList<List<Point>> paths)
+        public static double AreaOfPolygon(IList<List<PointLight>> paths)
         {
             return paths.Sum(path => AreaOfPolygon(path));
+        }
+
+        public static double AreaOfPolygon(IList<Point> polygon)
+        {
+            return AreaOfPolygon(polygon.Select(p => p.Light).ToList());
         }
 
         /// <summary>
@@ -464,7 +486,7 @@ namespace TVGL
         ///     Method 1: http://www.mathopenref.com/coordpolygonarea2.html
         ///     Faster Method: http://geomalgorithms.com/a01-_area.html
         /// </reference>
-        public static double AreaOfPolygon(IList<Point> polygon)
+        public static double AreaOfPolygon(IList<PointLight> polygon)
         {
             //If less than three points, it is a line and has zero area.
             if (polygon.Count < 3) return 0.0;
@@ -754,27 +776,23 @@ namespace TVGL
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Point>();
-            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
             var simpleCompareDict = new Dictionary<string, Point>();
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var stringformat = "F" + numDecimalPoints;
             foreach (var vertex in vertices)
             {
-                pointAs4[0] = vertex.Position[0];
-                pointAs4[1] = vertex.Position[1];
-                pointAs4[2] = vertex.Position[2];
-                pointAs4 = transform.multiply(pointAs4);
+                var point = Get2DProjectionPoint(vertex, transform);
                 if (!mergeDuplicateReferences)
                 {
-                    points.Add(new Point(vertex, pointAs4[0], pointAs4[1]));
+                    points.Add(new Point(vertex, point[0], point[1]));
                 }
                 else
                 {
-                    pointAs4[0] = Math.Round(pointAs4[0], numDecimalPoints);
-                    pointAs4[1] = Math.Round(pointAs4[1], numDecimalPoints);
-                    var lookupString = pointAs4[0].ToString(stringformat) + "|"
-                                       + pointAs4[1].ToString(stringformat);
+                    point[0] = Math.Round(point[0], numDecimalPoints);
+                    point[1] = Math.Round(point[1], numDecimalPoints);
+                    var lookupString = point[0].ToString(stringformat) + "|"
+                                       + point[1].ToString(stringformat);
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
                         /* if it's in the dictionary, Add reference and move to the next vertex */
@@ -784,7 +802,7 @@ namespace TVGL
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
-                        var point2D = new Point(vertex, pointAs4[0], pointAs4[1]);
+                        var point2D = new Point(vertex, point[0], point[1]);
                         simpleCompareDict.Add(lookupString, point2D);
                         points.Add(point2D);
                     }
@@ -793,14 +811,159 @@ namespace TVGL
             return points.ToArray();
         }
 
-        public static Point Get2DProjectionPoint(Vertex vertex, double[,] transform)
+        /// <summary>
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices. 
+        ///     Additionally, this function will keep the loops in their original positive/negative
+        ///     orientation.
+        /// </summary>
+        /// <param name="loop"></param>
+        /// <param name="direction"></param>
+        /// <param name="backTransform"></param>
+        /// <param name="tolerance"></param>
+        /// <param name="mergeDuplicateReferences"></param>
+        /// <returns></returns>
+        public static List<PointLight> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
+            bool mergeDuplicateReferences = false)
+        {
+            var enumerable = loop as IList<Vertex> ?? loop.ToList();
+            var area1 = AreaOf3DPolygon(enumerable, direction);
+            var path = Get2DProjectionPointsAsLight(enumerable, direction, out backTransform);
+            var area2 = AreaOfPolygon(path);
+            var dif = area1 - area2;
+            var successful = false;
+            var attempts = 0;
+            //Try up to three times if not successful, expanding the tolerance each time
+            while (!successful && attempts < 4)
+            {
+                //For every attempt greater than zero, expand the tolerance by taking its square root
+                if (attempts > 0) tolerance = Math.Sqrt(tolerance);
+
+                try
+                {
+                    if (dif.IsNegligible(tolerance))
+                    {
+                        successful = true;
+                    }
+                    else
+                    {
+                        if ((-area1).IsPracticallySame(area2, tolerance))
+                        {
+                            dif = area1 + area2;
+                            path.Reverse();
+                            successful = true;
+                        }
+                        else
+                        {
+                            throw new Exception("area mismatch during 2D projection");
+                        }
+                    }
+                }
+                catch
+                {
+                    attempts++;
+                }
+            }
+            if (attempts > 0 && attempts < 4) Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
+            else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
+
+            return path;
+        }
+
+        /// <summary>
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="backTransform">The back transform.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        /// <returns>Point2D[].</returns>
+        public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, double[] direction,
+            out double[,] backTransform,
+            bool mergeDuplicateReferences = false)
+        {
+            var transform = TransformToXYPlane(direction, out backTransform);
+            return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
+        }
+
+        /// <summary>
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        /// <returns>Point2D[].</returns>
+        public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, double[] direction,
+            bool mergeDuplicateReferences = false)
+        {
+            var transform = TransformToXYPlane(direction);
+            return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
+        }
+
+        /// <summary>
+        ///     Returns an array of points projected using the given transform.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="transform">The transform.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <returns>Point[].</returns>
+        public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, double[,] transform,
+            bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
+        {
+            var points = new List<PointLight>();
+            var simpleCompareDict = new Dictionary<string, PointLight>();
+            var numDecimalPoints = 0;
+            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            var stringformat = "F" + numDecimalPoints;
+            foreach (var vertex in vertices)
+            {
+                var point = Get2DProjectionPoint(vertex, transform);
+                if (!mergeDuplicateReferences)
+                {
+                    points.Add(new PointLight(point[0], point[1]));
+                }
+                else
+                {
+                    point[0] = Math.Round(point[0], numDecimalPoints);
+                    point[1] = Math.Round(point[1], numDecimalPoints);
+                    var lookupString = point[0].ToString(stringformat) + "|"
+                                       + point[1].ToString(stringformat);
+                    if (simpleCompareDict.ContainsKey(lookupString))
+                    {
+                        /* if it's in the dictionary, move to the next vertex */
+                        continue;
+                    }
+                    else
+                    {
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
+                        * the position in the locationIndices. */
+                        var point2D = new PointLight(point[0], point[1]);
+                        simpleCompareDict.Add(lookupString, point2D);
+                        points.Add(point2D);
+                    }
+                }
+            }
+            return points;
+        }
+
+        public static PointLight Get2DProjectionPointAsLight(Vertex vertex, double[,] transform)
+        {
+            var position = Get2DProjectionPoint(vertex, transform);
+            return new PointLight(position[0], position[1]);
+        }
+
+        public static double[] Get2DProjectionPoint(Vertex vertex, double[,] transform)
         {
             var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
             pointAs4[0] = vertex.Position[0];
             pointAs4[1] = vertex.Position[1];
             pointAs4[2] = vertex.Position[2];
             pointAs4 = transform.multiply(pointAs4);
-            return new Point(vertex, pointAs4[0], pointAs4[1]);
+            return new [] {pointAs4[0], pointAs4[1]};
         }
 
         /// <summary>
@@ -1784,6 +1947,17 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPoint(Point p1, Point p2)
         {
+            return DistancePointToPoint(p1.Light, p2.Light);
+        }
+
+        /// <summary>
+        ///     Distances the point to point.
+        /// </summary>
+        /// <param name="p1">point, p1.</param>
+        /// <param name="p2">point, p2.</param>
+        /// <returns>the distance between the two 3D points.</returns>
+        public static double DistancePointToPoint(PointLight p1, PointLight p2)
+        {
             var dX = p1.X - p2.X;
             var dY = p1.Y - p2.Y;
             return Math.Sqrt(dX * dX + dY * dY);
@@ -2328,7 +2502,7 @@ namespace TVGL
         /// 
         ///     Updated by Brandon Massoni: 8.11.2017
         /// </summary>
-        public static bool IsPolygonInsidePolygon(Polygon outerPolygon, Polygon possibleInnerPolygon)
+        public static bool IsPolygonInsidePolygon(PolygonLight outerPolygon, PolygonLight possibleInnerPolygon)
         {
             //The inner polygon can only fully be inside a polygon that has a larger absolute area.
             if (Math.Abs(outerPolygon.Area) < Math.Abs(possibleInnerPolygon.Area)) return false;
@@ -2442,7 +2616,7 @@ namespace TVGL
         /// <param name="p"></param>
         /// <param name="returnSharedPointAsInside"></param>
         /// <returns></returns>
-        public static bool IsPointInsidePolygon(Polygon polygon, Point p, bool returnSharedPointAsInside = false)
+        public static bool IsPointInsidePolygon(PolygonLight polygon, PointLight p, bool returnSharedPointAsInside = false)
         {
             //Check if the point is the same as any of the polygon's points
             foreach (var point in polygon.Path)
@@ -2489,9 +2663,9 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <param name="p"></param>
-        public static bool IsPointInsidePolygon(List<Point> path, Point p, bool returnSharedPointAsInside = false)
+        public static bool IsPointInsidePolygon(List<Point> path, Point point, bool returnSharedPointAsInside = false)
         {
-            return IsPointInsidePolygon(path, new PointLight(p.X, p.Y), returnSharedPointAsInside);
+            return IsPointInsidePolygon(path.Select(p => p.Light).ToList(), new PointLight(point.X, point.Y), returnSharedPointAsInside);
         }
 
         /// <summary>
@@ -2507,7 +2681,7 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <param name="p"></param>
-        public static bool IsPointInsidePolygon(List<Point> path, PointLight p, bool returnSharedPointAsInside = false)
+        public static bool IsPointInsidePolygon(List<PointLight> path, PointLight p, bool returnSharedPointAsInside = false)
         {
             //Check if the point is the same as any of the polygon's points
             foreach (var point in path)
@@ -2570,8 +2744,8 @@ namespace TVGL
                 subject.MaxY < clip.MinY) return false;     
 
             //Check if either polygon is fully encompassed by the other
-            if(clip.Path.Any(p => IsPointInsidePolygon(subject, p))) return true;
-            if(subject.Path.Any(p => IsPointInsidePolygon(clip, p))) return true;
+            if(clip.Path.Any(p => IsPointInsidePolygon(subject.Light, p.Light))) return true;
+            if(subject.Path.Any(p => IsPointInsidePolygon(clip.Light, p.Light))) return true;
 
             //Else, any remaining intersection will be defined by one or more crossing lines
             //Check for intersections between all but one of the clip lines with all of the subject lines.

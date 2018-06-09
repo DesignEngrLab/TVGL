@@ -74,7 +74,7 @@ namespace TVGL
             //First, triangulate the loops
             var listOfFaces = new List<PolygonalFace>();
             var backTransform = new double[,] {};
-            var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsReorderingIfNecessary(loop.ToArray(), extrudeDirection, out backTransform)).ToList();
+            var paths = cleanLoops.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop.ToArray(), extrudeDirection, out backTransform)).ToList();
             List<Point[]> points2D;
             List<Vertex[]> triangles;
             try
@@ -91,11 +91,14 @@ namespace TVGL
                 //This also means we need to recreate cleanLoops
                 //Also, give the vertices indices.
                 cleanLoops = new List<List<Vertex>>();
+                points2D = new List<Point[]>();
                 var j = 0;
                 foreach (var path in paths)
                 {
+                    var pathAsPoints = path.Select(p => new Point(p)).ToArray();
+                    points2D.Add(pathAsPoints);
                     var cleanLoop = new List<Vertex>();
-                    foreach (var point in path)
+                    foreach (var point in pathAsPoints)
                     {
                         var position = new[] { point.X, point.Y, 0.0, 1.0 };
                         var vertexPosition1 = backTransform.multiply(position).Take(3).ToArray();
@@ -114,7 +117,6 @@ namespace TVGL
                     cleanLoops.Add(cleanLoop);
                 }
 
-                points2D = paths.Select(path => path.ToArray()).ToList();
                 bool[] isPositive = null;
                 var triangleFaceList = TriangulatePolygon.Run2D(points2D, out _, ref isPositive);
                 foreach (var face in triangleFaceList)
@@ -139,11 +141,14 @@ namespace TVGL
                     //This also means we need to recreate cleanLoops
                     //Also, give the vertices indices.
                     cleanLoops = new List<List<Vertex>>();
+                    points2D = new List<Point[]>();
                     var j = 0;
                     foreach (var path in paths)
                     {
+                        var pathAsPoints = path.Select(p => new Point(p)).ToArray();
+                        points2D.Add(pathAsPoints);
                         var cleanLoop = new List<Vertex>();
-                        foreach (var point in path)
+                        foreach (var point in pathAsPoints)
                         {
                             var position = new[] { point.X, point.Y, 0.0, 1.0 };
                             var vertexPosition1 = backTransform.multiply(position).Take(3).ToArray();
@@ -162,7 +167,6 @@ namespace TVGL
                         cleanLoops.Add(cleanLoop);
                     }
 
-                    points2D = paths.Select(path => path.ToArray()).ToList();
                     bool[] isPositive = null;
                     var triangleFaceList = TriangulatePolygon.Run2D(points2D, out _, ref isPositive);
                     foreach (var face in triangleFaceList)
