@@ -84,8 +84,9 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*SquareSupport*");
+            var fileNames = dir.GetFiles("*");
             var r = new Random();
+            fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -99,7 +100,7 @@ namespace TVGLPresenterDX
                     ts = IO.Open(fileStream, filename);
                 if (!ts.Any()) continue;
 
-                TestVoxelSearch(ts[0], filename);
+                TestVoxelSearch(ts[0],filename);
 
             }
 
@@ -125,8 +126,8 @@ namespace TVGLPresenterDX
             var intersections = new List<double[]>();
             for (var dim = 0; dim < 3; dim++)
             {
-                var start = (int) Math.Floor(startPoint[dim]);
-                var end = (int) Math.Floor(endPoint[dim]);
+                var start = (int)Math.Floor(startPoint[dim]);
+                var end = (int)Math.Floor(endPoint[dim]);
                 var forwardX = end > start;
                 var uDim = (dim + 1) % 3;
                 var vDim = (dim + 2) % 3;
@@ -164,7 +165,7 @@ namespace TVGLPresenterDX
             foreach (var intersection in intersections)
             {
                 //Convert the intersection values to integers. 
-                var ijk = new[] {(int) intersection[0], (int) intersection[1], (int) intersection[2]};
+                var ijk = new[] { (int)intersection[0], (int)intersection[1], (int)intersection[2] };
                 var dimensionsAsIntegers = intersection.Select(atIntegerValue).ToList();
                 var numAsInt = dimensionsAsIntegers.Count(c => c); //Counts number of trues
 
@@ -213,12 +214,12 @@ namespace TVGLPresenterDX
 
                     if (!valid) continue;
                     //This is a valid combination, so make it a voxel
-                    var newIjk = new[] {ijk[0] + combination[0], ijk[1] + combination[1], ijk[2] + combination[2]};
+                    var newIjk = new[] { ijk[0] + combination[0], ijk[1] + combination[1], ijk[2] + combination[2] };
                     voxelCoords.Add(newIjk);
                     numVoxels++;
                 }
 
-                if (numVoxels != (int) Math.Pow(2, numAsInt)) throw new Exception("Error in implementation");
+                if (numVoxels != (int)Math.Pow(2, numAsInt)) throw new Exception("Error in implementation");
             }
 
             return voxelCoords;
@@ -262,7 +263,7 @@ namespace TVGLPresenterDX
             unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
             PresenterShowAndHang(ts, unmachinableVoxels);
 
-            var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat(166.0, new[] {0.0, 1.0, 0.0}));
+            var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat(166.0, new[] { 0.0, 1.0, 0.0 }));
 
             Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
             Console.WriteLine("Totals for New Unmachinable Voxels: " + newUV.GetTotals[0] + "; " + newUV.GetTotals[1] + "; " + newUV.GetTotals[2] + "; " + newUV.GetTotals[3]);
@@ -274,8 +275,8 @@ namespace TVGLPresenterDX
         public static VoxelizedSolid TestNewUnmachinable(VoxelizedSolid vs, VoxelizedSolid unmachinableVoxels,
             Flat cuttingPlane)
         {
-            var level = (int) vs.Discretization;
-            var newUnmachinableVoxels = (VoxelizedSolid) unmachinableVoxels.Copy();
+            var level = (int)vs.Discretization;
+            var newUnmachinableVoxels = (VoxelizedSolid)unmachinableVoxels.Copy();
             var toolDirections = new List<double[]>
             {
                 cuttingPlane.Normal,
@@ -283,7 +284,7 @@ namespace TVGLPresenterDX
                 new[] {0, 1.0, 0},
                 new[] {0, 0, 1.0}
             };
-            var halfWidths = new[] {0.5, 0.5, 0.5};
+            var halfWidths = new[] { 0.5, 0.5, 0.5 };
             //sort with respect to distance from cutting plane
 
             //Add directions for orthogonals to voxels and direction perpendicular to the cutting plane
@@ -291,14 +292,14 @@ namespace TVGLPresenterDX
             foreach (var direction in toolDirections)
             {
                 var voxels = new List<IVoxel>(newUnmachinableVoxels.Voxels(newUnmachinableVoxels.Discretization, true));
-                
+
                 //Check if that direction intersects with cutting plane at all?
-                
+
                 // make following loop a while loop s.t. the voxels that were crossed
                 //while (voxels.Any())
                 //{
                 //    var voxel = voxels.First();
-                
+
                 foreach (var voxel in voxels)
                 {
                     var intListforRemoval = new HashSet<int[]>();
@@ -352,7 +353,7 @@ namespace TVGLPresenterDX
 
 
             }
-            
+
             return newUnmachinableVoxels;
         }
 

@@ -127,17 +127,15 @@ namespace TVGLPresenterDX
 
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true);
-            //return;
-            Presenter.ShowAndHang(vs1);
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
+            
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Positive...");
-            var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
-            //Presenter.ShowAndHang(vs1xpos);
-            return;
+            var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
+           
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xpos_" + _fileName;
@@ -185,7 +183,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Intersecting Drafted Solids...");
             var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1yneg, vs1zpos);
-            //PresenterShowAndHang(intersect);
+            Presenter.ShowAndHang(intersect);
             //var intersectts = intersect.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "intersect_" + _fileName;
