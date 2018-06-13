@@ -6,81 +6,99 @@
 // Last Modified By : Matt Campbell
 // Last Modified On : 09-21-2017
 // ***********************************************************************
-// <copyright file="Voxel.cs" company="Design Engineering Lab">
+// <copyright file="VoxelComparer.cs" company="Design Engineering Lab">
 //     Copyright ©  2017
 // </copyright>
 // <summary></summary>
 // ***********************************************************************
 
+using System;
 using System.Collections.Generic;
 
 namespace TVGL.Voxelization
 {
-    /// <summary>
-    /// Class VoxelComparerFine.
-    /// </summary>
-    public class VoxelComparerFine : IEqualityComparer<long>
+    public abstract class VoxelComparer : IEqualityComparer<long>
     {
-        /// <summary>
-        /// Determines whether the specified objects are equal.
-        /// </summary>
-        /// <param name="x">The first object of type <paramref name="T" /> to compare.</param>
-        /// <param name="y">The second object of type <paramref name="T" /> to compare.</param>
-        /// <returns>true if the specified objects are equal; otherwise, false.</returns>
-        public bool Equals(long x, long y)
+
+        protected int coordShift, yShift, zShift;
+        protected long coordMask, mask;
+        internal long EqualsMask(long id)
         {
-            return Constants.ClearFlagsFromID(x) == Constants.ClearFlagsFromID(y);
+            return id & mask;
         }
 
-        /// <summary>
-        /// Returns a hash code for this instance.
-        /// </summary>
-        /// <param name="obj">The <see cref="T:System.Object" /> for which a hash code is to be returned.</param>
-        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
-        public int GetHashCode(long obj)
+        public bool Equals(long entry, long query)
         {
-            // 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111 0000 0000 1111 1111 1111 0000
-            //           z-3  z-4  z-5            y-3  y-4  y-5            x-3  x-4  x-4  flags
-            var xValuesLevels234 = (obj >> 4) & 4095;
-            var yValuesLevels234 = (obj >> 24) & 4095; 
-            var zValuesLevels234 = (obj >> 44) & 4095;
-            return (int)(xValuesLevels234 + (yValuesLevels234 <<10) + (zValuesLevels234 << 19));
+            return EqualsMask(entry) == query;
+        }
+
+        public int GetHashCode(long id)
+        {
+            long x = (id >> coordShift + 4) & coordMask;
+            long y = (id >> coordShift + 24) & coordMask;
+            long z = (id >> coordShift + 44) & coordMask;
+            return (int)(x + (y << yShift) + (z << zShift));
+        }
+    }
+
+
+    public class VoxelComparerLevel0 : VoxelComparer
+    {
+        internal VoxelComparerLevel0(int bitsInLevel0)
+        {
+            // level0 is at the far left of the coordinate amount and since
+            // each coordinate takes up to 20 bits, we subtract
+            coordShift = 20 - bitsInLevel0;
+            // yShift and zShift are just left-shifted to follow x
+            yShift = bitsInLevel0;
+            zShift = 2 * bitsInLevel0;
+            // the coordinate mask should be all one's for 3 bits its 111, for 4 it's 1111,
+            // etc. This formula creates that number. For 5 bits, its 2^5-1 = 31
+            coordMask = (int)Math.Pow(2, bitsInLevel0) - 1;
+            // mask is usually just the coordinates without the flags. however, since
+            // many queries are simply lower level ID's - this allows us to check just the
+            // bits at level 0
+            mask = (coordMask << coordShift + 4) + (coordMask << coordShift + 24)
+                                               + (coordMask << coordShift + 44);
+        }
+    }
+
+    public class VoxelComparerMidLevels : VoxelComparer
+    {
+        internal VoxelComparerMidLevels(int bitsInLevel0)
+        {
+            // the midlevel bits are the 10 bits following the level0 bits.
+            // why 10? because for x, y, and z this would be 30 bits and the
+            // hashsets define the hash code as a 31-bit (positive integer)
+            // the bits from level0 do not need to be included as there are hashsets
+            // within each level0 voxel
+            coordShift = 20 - 10 - bitsInLevel0;
+            // yShift and zShift are just left-shifted to follow x
+            yShift = 10;
+            zShift = 20;
+            coordMask = 1023;
+            mask = (coordMask << coordShift + 4) + (coordMask << coordShift + 24)
+                                                 + (coordMask << coordShift + 44);
         }
     }
     /// <summary>
-    /// Class VoxelComparerCoarse.
+    /// Class VoxelComparerFine.
     /// </summary>
-    public class VoxelComparerCoarse : IEqualityComparer<long>
+    public class VoxelComparerFine : VoxelComparer
     {
-        /// <summary>
-        /// Determines whether the specified objects are equal.
-        /// </summary>
-        /// <param name="x">The first object of type <paramref name="T" /> to compare.</param>
-        /// <param name="y">The second object of type <paramref name="T" /> to compare.</param>
-        /// <returns>true if the specified objects are equal; otherwise, false.</returns>
-        public bool Equals(long x, long y)
+        internal VoxelComparerFine(int bitsInLevel0)
         {
-            return Constants.ClearFlagsFromID(x) == Constants.ClearFlagsFromID(y);
+            // assuming that we are using all the bits, so no need to shift each coordinate
+            coordShift = 0;
+            // here, there will be overlap in the hashset, to make it
+            var bitsInCoord = 20 - bitsInLevel0;
+            zShift = 31 - bitsInCoord;
+            yShift = zShift / 2;
+            coordMask = (int)Math.Pow(2, bitsInCoord) - 1; ;
+            mask = (coordMask << coordShift + 4) + (coordMask << coordShift + 24)
+                                                 + (coordMask << coordShift + 44);
         }
 
-        /// <summary>
-        /// Returns a hash code for this instance.
-        /// </summary>
-        /// <param name="obj">The <see cref="T:System.Object" /> for which a hash code is to be returned.</param>
-        /// <returns>A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.</returns>
-        public int GetHashCode(long obj)
-        {
-            //long x = obj & Constants.maskAllButLevel0and1;
-            long x = (obj >> 16) & 255;
-            long y = (obj >> 36) & 255;
-            long z = (obj >> 56) & 255;
-            //#FF000,FF000,FF000,0
-            return (int)(x+ (y<<10) + (z << 20));
-            // this moves the x levels into the first position and then
-            // z's value for levels 1 and 2 between y and x
-            // converting to int remove the higher values 
-            // 000 zzzz zzzz 00 yyyy yyyyy 00 xxxx xxxx
-        }
     }
 
 }

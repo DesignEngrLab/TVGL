@@ -115,10 +115,10 @@ namespace TVGL.Voxelization
             bool onlyThisLevel = false)
         {
             var level = (int)voxelLevel;
-            if (level > discretizationLevel)
+            if (level > numberOfLevels)
             {
                 if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
-                level = discretizationLevel;
+                level = numberOfLevels;
             }
             if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
                 foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == role)) yield return v;
@@ -158,10 +158,10 @@ namespace TVGL.Voxelization
         public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine, bool onlyThisLevel = false)
         {
             var level = (int)voxelLevel;
-            if (level > discretizationLevel)
+            if (level > numberOfLevels)
             {
                 if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
-                level = discretizationLevel;
+                level = numberOfLevels;
             }
             if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
                 foreach (var v in voxelDictionaryLevel0) yield return v;
@@ -246,7 +246,7 @@ namespace TVGL.Voxelization
             #endregion
 
             var delta = 1L;
-            var shift = 20 * dimension + 4 * (4 - voxel.Level) + 4;
+            var shift = 20 * dimension + 4 * (4 - voxel.Level) + 4; //todo: replace 4by4 with bit-take-sum
             delta = delta << shift;
             var newID = (positiveStep)
                 ? Constants.ClearFlagsFromID(voxel.ID) + delta
@@ -412,21 +412,12 @@ namespace TVGL.Voxelization
             {
                 var thisVoxel = (Voxel_Level0_Class)v;
                 var copyVoxel = (Voxel_Level0_Class)copy.voxelDictionaryLevel0.GetVoxel(thisVoxel.ID);
-                for (int i = 0; i < discretizationLevel; i++)
+                for (int i = 1; i < numberOfLevels; i++)
                 {
-                    if (thisVoxel.InnerVoxels[i] == null) break;
-                    if (i == 0) // which is level-1
-                    {
-                        copyVoxel.InnerVoxels[i] = new VoxelHashSet(new VoxelComparerCoarse(), copy);
-                        foreach (var innerVoxel in thisVoxel.InnerVoxels[i])
-                            copyVoxel.InnerVoxels[i].Add(new Voxel_Level1_Class(innerVoxel.ID, innerVoxel.Role, copy));
-                    }
-                    else
-                    {
-                        copyVoxel.InnerVoxels[i] = new VoxelHashSet(new VoxelComparerFine(), copy);
-                        foreach (var innerVoxel in thisVoxel.InnerVoxels[i])
-                            copyVoxel.InnerVoxels[i].Add(new Voxel(innerVoxel.ID));
-                    }
+                    if (thisVoxel.InnerVoxels[i - 1] == null) break;
+                    copyVoxel.InnerVoxels[i - 1] = new VoxelHashSet(i, copy);
+                    foreach (var innerVoxel in thisVoxel.InnerVoxels[i - 1])
+                        copyVoxel.InnerVoxels[i - 1].Add(new Voxel(innerVoxel.ID, copy));
                 }
             }
             copy.UpdateProperties();
@@ -456,8 +447,12 @@ namespace TVGL.Voxelization
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public void Extrude(VoxelDirections direction)
         {
-            Extrude(direction, null, direction > 0 ?
-                numVoxels[Math.Abs((int)direction) - 1] : int.MaxValue, 0);
+            if (direction > 0)
+            {
+                var maxVoxels = (int)Math.Ceiling(dimensions[(int)direction - 1] / VoxelSideLengths[numberOfLevels - 1]);
+                Extrude(direction, null, maxVoxels, 0);
+            }
+            else Extrude(direction, null, int.MaxValue, 0);
             UpdateProperties();
         }
 
@@ -472,19 +467,21 @@ namespace TVGL.Voxelization
             /* remainingVoxelLayers, innerLimit, limit, and voxelPerLayer are all about this positive extrude. */
             var dimension = Math.Abs((int)direction) - 1;
             var voxels = GetChildVoxels(parent);
-            var voxelsPerLayer = Math.Pow(16, discretizationLevel - level);
-            var limit = Math.Min((int) Math.Ceiling(remainingVoxelLayers / voxelsPerLayer), 16);
+            var voxelsPerLayer = 1;
+            for (int i = level + 1; i < numberOfLevels; i++)
+                voxelsPerLayer *= voxelsPerSide[i];
+            var limit = Math.Min((int)Math.Ceiling(remainingVoxelLayers / (double)voxelsPerLayer), voxelsPerSide[level]);
             /* limit will often be 16. The only time it is not is for positive extrudes that meet the bounding box. */
             var layerOfVoxels = new HashSet<IVoxel>[limit]; /* the voxels are organized into layers */
             for (int i = 0; i < limit; i++)
                 layerOfVoxels[i] = new HashSet<IVoxel>();
-            Parallel.ForEach(voxels, v =>
-            //foreach (var v in voxels)
+            //Parallel.ForEach(voxels, v =>
+            foreach (var v in voxels)
             {
                 var layerIndex = getLayerIndex(v, dimension, level, positiveDir);
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].Add(v);
-            });
+            } //);
             /* now, for the main loop */
             var innerLimit = limit < 16 ? limit : 17;
             var nextLayerCount = 0; /* this is used to count how many in a layer/slice/cross-section are filled up.
@@ -492,13 +489,13 @@ namespace TVGL.Voxelization
             for (int i = 0; i < limit; i++)
             { /* cycle over each layer, note that voxels are being removed from subsequent layers so the process should
                * speed up. The loop may not reach ?...wait a second redundant code?  */
-             //   if (remainingVoxelLayers < voxelsPerLayer) continue; //return;
-                // Parallel.ForEach(layerOfVoxels[i], voxel =>
+              //   if (remainingVoxelLayers < voxelsPerLayer) continue; //return;
+              // Parallel.ForEach(layerOfVoxels[i], voxel =>
                 foreach (var voxel in layerOfVoxels[i])
-                 {
+                {
                     #region fill up the layers below this one
                     if (voxel.Role == VoxelRoleTypes.Full
-                        || (voxel.Role == VoxelRoleTypes.Partial && level == discretizationLevel))
+                        || (voxel.Role == VoxelRoleTypes.Partial && level == numberOfLevels-1))
                     { //if at the lowest level - then treat partial voxel as if it were full
                         nextLayerCount++;
                         bool neighborHasDifferentParent;
@@ -523,7 +520,7 @@ namespace TVGL.Voxelization
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
                         if (neighbor == null || layerOfVoxels.Length <= i + 1) continue; // return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer) neighbor = ChangeVoxelToFull(neighbor);
-                        else neighbor = ChangeVoxelToPartial(neighbor);
+                        else if (neighbor.Role == VoxelRoleTypes.Empty) neighbor = ChangeVoxelToPartial(neighbor);
                         layerOfVoxels[i + 1].Add(neighbor);
                     }
                     #endregion
@@ -534,7 +531,7 @@ namespace TVGL.Voxelization
         }
         int getLayerIndex(IVoxel v, int dimension, int level, bool positiveStep)
         {
-            var layer = (int)((v.ID >> (20 * dimension + 4 * (4 - level) + 4)) & 15);
+            var layer = (int)((v.ID >> (20 * dimension + 4 * (4 - level) + 4)) & 15);//todo: replace 4by4 with bit-take-sum
             if (positiveStep) return layer;
             else return 15 - layer;
         }
@@ -553,19 +550,28 @@ namespace TVGL.Voxelization
             copy.Intersect(references);
             return copy;
         }
-
+        public VoxelizedSolid IntersectToNewSolidOLD(params VoxelizedSolid[] references)
+        {
+            var copy = (VoxelizedSolid)Copy();
+            copy.IntersectOLD(references);
+            return copy;
+        }
         /// <summary>
         /// Intersects this solid with the specified references.
         /// </summary>
         /// <param name="references">The references.</param>
         public void Intersect(params VoxelizedSolid[] references)
         {
-            Intersect(null, 0, references);
-            //IntersectNEW(null, 0, references, false);
+            Intersect(null, 0, references, false);
+            UpdateProperties();
+        }
+        public void IntersectOLD(params VoxelizedSolid[] references)
+        {
+            IntersectOLD(null, 0, references);
             UpdateProperties();
         }
 
-        private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references)
+        private void IntersectOLD(IVoxel parent, int level, VoxelizedSolid[] references)
         {
             var voxels = GetChildVoxels(parent);
             Parallel.ForEach(voxels, thisVoxel =>
@@ -577,51 +583,49 @@ namespace TVGL.Voxelization
                 else
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel);
-                    if (discretizationLevel > level)
-                        Intersect(thisVoxel, level + 1, references);
+                    if (numberOfLevels > level)
+                        IntersectOLD(thisVoxel, level + 1, references);
                 }
             });
         }
-        private void IntersectNEW(IVoxel parent, int level, VoxelizedSolid[] references, bool parentWasFull)
+        private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references, bool parentWasFull)
         {
             if (parentWasFull)
             {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(parent.ID);
-                var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
-                var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
+                // the time-savings here is that creating all sub-voxels is expensive - and then this function will
+                // simply delete many of them, so if parent is full, we can look to the first reference
+                // to guide us in which sub-voxels to keep.
+                var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
 
                 var refVoxels = GetChildVoxels(references[0].GetVoxel(parent.ID, parent.Level));
+                // cycle over the reference voxels from references[0]
                 Parallel.ForEach(refVoxels, refVoxel =>
                 //foreach (var refVoxel in refVoxels)
                 {
                     var referenceLowestRole = GetLowestRole(refVoxel.ID, level, references);
                     if (referenceLowestRole == VoxelRoleTypes.Full)
                     {
-                        var newVoxel = level == 1
-                            ? (IVoxel)new Voxel_Level1_Class(refVoxel.ID, VoxelRoleTypes.Full, this)
-                        : (IVoxel)new Voxel(Constants.ClearFlagsFromID(refVoxel.ID)
+                        var newVoxel = new Voxel(Constants.ClearFlagsFromID(refVoxel.ID)
                                            + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
                         lock (voxel0.InnerVoxels[level - 1])
                             voxel0.InnerVoxels[level - 1].Add(newVoxel);
                     }
                     else if (referenceLowestRole == VoxelRoleTypes.Partial)
                     {
-                        var newVoxel = level == 1
-                            ? (IVoxel)new Voxel_Level1_Class(refVoxel.ID, VoxelRoleTypes.Partial, this)
-                                : (IVoxel)new Voxel(Constants.ClearFlagsFromID(refVoxel.ID)
+                        var newVoxel = new Voxel(Constants.ClearFlagsFromID(refVoxel.ID)
                                                     + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
                         lock (voxel0.InnerVoxels[level - 1])
                             voxel0.InnerVoxels[level - 1].Add(newVoxel);
-                        if (discretizationLevel > level)
-                            IntersectNEW(newVoxel, level + 1, references, false);
+                        if (numberOfLevels > level)
+                            Intersect(newVoxel, level + 1, references, true);
                     }
                 });
             }
             else
             {
                 var voxels = GetChildVoxels(parent);
-                Parallel.ForEach(voxels, thisVoxel =>
-                //foreach (var thisVoxel in voxels)
+                //Parallel.ForEach(voxels, thisVoxel =>
+                foreach (var thisVoxel in voxels)
                 {
                     var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
                     if (referenceLowestRole == VoxelRoleTypes.Full) return;
@@ -629,11 +633,11 @@ namespace TVGL.Voxelization
                     else
                     {
                         var thisVoxelWasFull = thisVoxel.Role == VoxelRoleTypes.Full;
-                        if (thisVoxelWasFull) ChangeVoxelToPartialNEW(thisVoxel, false);
-                        if (discretizationLevel > level)
-                            IntersectNEW(thisVoxel, level + 1, references, thisVoxelWasFull);
+                        if (thisVoxelWasFull) ChangeVoxelToPartial(thisVoxel, false);
+                        if (numberOfLevels > level)
+                            Intersect(thisVoxel, level + 1, references, thisVoxelWasFull);
                     }
-                });
+                } //);
             }
         }
         #endregion
@@ -668,7 +672,7 @@ namespace TVGL.Voxelization
                 var referenceHighestRole = GetHighestRole(thisVoxel.ID, level, subtrahends);
                 if (referenceHighestRole == VoxelRoleTypes.Empty) return;
                 if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel);
-                else if (discretizationLevel > level)
+                else if (numberOfLevels > level)
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel);
                     Subtract(thisVoxel, level + 1, subtrahends);
@@ -703,7 +707,7 @@ namespace TVGL.Voxelization
                 else
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel.ID, level);
-                    if (discretizationLevel > level)
+                    if (numberOfLevels > level)
                         Union(refVoxel, level + 1, reference);
                 }
             });
@@ -744,7 +748,7 @@ namespace TVGL.Voxelization
                     for (int j = 0; j < 16; j++)
                         for (int k = 0; k < 16; k++)
                             ((List<IVoxel>)voxels).Add(new Voxel(thisIDwoFlags
-                                                              + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true)));
+                                                              + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), this));
             }
             else voxels = reference.GetChildVoxels(parent);
             Parallel.ForEach(voxels, refVoxel =>
@@ -759,7 +763,7 @@ namespace TVGL.Voxelization
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel.ID, level);
                     else if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel);
-                    if (discretizationLevel > level) ExclusiveOr(refVoxel, level + 1, reference);
+                    if (numberOfLevels > level) ExclusiveOr(refVoxel, level + 1, reference);
                 }
             });
         }
@@ -818,7 +822,7 @@ namespace TVGL.Voxelization
                 //var coordinateMaskValue = MaskAllBut(voxel.ID, directionIndex);
                 //The actual coordinate value
                 //ToDo: double check this next line / convert this into a Constants function if useful
-                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel) + 4))
+                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel) + 4)) //todo: replace 4by4 with bit-take-sum
                                   & (Constants.MaxForSingleCoordinate >> 4 * (4 - voxelLevel));
                 if (sortedDict.ContainsKey(coordValue))
                 {
@@ -899,7 +903,7 @@ namespace TVGL.Voxelization
                     //ToDo: Can this be parallelized???
                     foreach (var voxelItem in removedLayer)
                     {
-                        if (voxelItem.Value) voxelSolid.ChangeVoxelToPartial(new Voxel(voxelItem.Key));
+                        if (voxelItem.Value) voxelSolid.ChangeVoxelToPartial(new Voxel(voxelItem.Key, this));
                         else voxelSolid.ChangeEmptyVoxelToFull(voxelItem.Key, voxelLevel);
                     }
                 }
@@ -928,7 +932,7 @@ namespace TVGL.Voxelization
             IVoxel voxel;
             if (voxelLevel == 1)
             {
-                voxel = (Voxel_Level1_Class)iVoxel;
+                voxel = (Voxel_ClassWithLinksToTSElements)iVoxel;
             }
             else
             {

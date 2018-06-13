@@ -12,6 +12,7 @@
 // ***********************************************************************
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace TVGL.Voxelization
@@ -318,12 +319,28 @@ namespace TVGL.Voxelization
         /// <returns>System.Int32.</returns>
         internal static int GetCoordinateIndex(long ID, int level, int dimension)
         {
-            var shift = 4 + 20 * dimension + 4 * (4 - level);
+            var shift = 4 + 20 * dimension + 4 * (4 - level);  //todo: replace 4by4 with bit's take sum
             return (int)((ID >> shift) & (Constants.MaxForSingleCoordinate >> 4 * (4 - level)));
         }
 
         #endregion
         #endregion
+        internal static Dictionary<VoxelDiscretization, int[]> DefaultBitLevelDistribution
+        = new Dictionary<VoxelDiscretization, int[]>()
+        {
+              { VoxelDiscretization.ExtraCoarse, new[]{4}}, // 16 (2^4) voxels per side
+               { VoxelDiscretization.Coarse, new[]{4,4}}, // 256 (2^8)  voxels per side
+               { VoxelDiscretization.Medium, new[]{4,4,4}}, // 4096 (2^12)  voxels per side
+               { VoxelDiscretization.Fine, new[]{4,4,4,4}}, // 65K (2^16)  voxels per side
+               { VoxelDiscretization.ExtraFine, new[]{4,4,4,4,4}} //1million (2^20) voxels per side 
+            /*   { VoxelDiscretization.ExtraCoarse, new[]{3,3}}, // 64 (2^6) voxels per side
+               { VoxelDiscretization.Coarse, new[]{4,3,3}}, // 1024 (2^10)  voxels per side
+               { VoxelDiscretization.Medium, new[]{4,3,3,2}}, // 4096 (2^12)  voxels per side
+               { VoxelDiscretization.Fine, new[]{5,3,3,2,2}}, // 32K (2^15)  voxels per side
+               { VoxelDiscretization.ExtraFine, new[]{5,4,3,3,3,2}} //1million (2^20) voxels per side */
+        };
+        internal const int LevelAtWhichComparerSwitchesToFine = 4;
+        internal const int LevelAtWhichLinkToTessellation = 1;
     }
 
     /// <summary>
@@ -445,14 +462,14 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Enum VoxelDiscretization
         /// </summary>
-        /// The extra coarse discretization is up to 16 voxels on a side.
+        /// The extra coarse discretization is up to 64 voxels on a side.
         /// </summary>
         /// <summary>
         /// The extra coarse
         /// </summary>
         ExtraCoarse = 0, //= 16,
         /// <summary>
-        /// The coarse discretization is up to 256 voxels on a side.
+        /// The coarse discretization is up to 512 voxels on a side.
         /// <summary>
         /// The extra coarse
         /// </summary>

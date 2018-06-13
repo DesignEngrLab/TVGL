@@ -92,18 +92,17 @@ namespace TVGLPresenterDX
                 Console.WriteLine("Attempting: " + filename);
                 var justfile = fileNames[i].Name;
                 Stream fileStream;
-                List<TessellatedSolid> ts;
+                TessellatedSolid ts;
                 if (!File.Exists(filename)) continue;
                 using (fileStream = File.OpenRead(filename))
-                    ts = IO.Open(fileStream, filename);
-                if (!ts.Any()) continue;
+                    IO.Open(fileStream, filename, out ts);
 
                 Color color = new Color(KnownColors.AliceBlue);
-                ts[0].SolidColor = new Color(KnownColors.MediumSeaGreen)
+                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
                 {
                     Af = 0.25f
                 };
-            TestMachinability(ts[0], justfile);
+                TestMachinability(ts, justfile);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -128,14 +127,14 @@ namespace TVGLPresenterDX
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
-            
+
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Positive...");
             var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
-           
+
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xpos_" + _fileName;

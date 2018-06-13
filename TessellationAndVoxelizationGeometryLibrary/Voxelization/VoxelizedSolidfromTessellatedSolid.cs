@@ -38,6 +38,10 @@ namespace TVGL.Voxelization
             double[][] bounds = null) : base(ts.Units, ts.Name, "", ts.Comments, ts.Language)
         {
             Discretization = voxelDiscretization;
+            bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
+            voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
+            voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
+            numberOfLevels = bitLevelDistribution.Length;
 
             #region Setting Up Parameters 
 
@@ -69,44 +73,46 @@ namespace TVGL.Voxelization
             }
 
             longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
-            VoxelSideLengths = new[]
-                {longestSide / 16, longestSide / 256, longestSide / 4096, longestSide / 65536, longestSide / 1048576};
-            numVoxels = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[discretizationLevel])).ToArray();
+            VoxelSideLengths = new double[numberOfLevels];
+            VoxelSideLengths[0] = longestSide / voxelsPerSide[0];
+            for (int i = 1; i < numberOfLevels; i++)
+                VoxelSideLengths[i] = VoxelSideLengths[i - 1] / voxelsPerSide[i];
 
             #endregion
 
             transformedCoordinates = new double[ts.NumberOfVertices][];
 
             #region Level-0
-
-            var voxelsZeroLevel = new VoxelHashSet(new VoxelComparerCoarse(), this);
+            voxelDictionaryLevel0 = new VoxelHashSet(0, this);
             MakeVertexSimulatedCoordinates(ts.Vertices, 0);
-            MakeVertexVoxels(ts.Vertices, null, voxelsZeroLevel);
-            MakeVoxelsForFacesAndEdges(ts.Faces, null, voxelsZeroLevel);
-            var unknownPartials = DefineBottomCoordinateInside(voxelsZeroLevel, null);
+            MakeVertexVoxels(ts.Vertices, null, voxelDictionaryLevel0);
+            MakeVoxelsForFacesAndEdges(ts.Faces, null, voxelDictionaryLevel0);
+            var unknownPartials = DefineBottomCoordinateInside(voxelDictionaryLevel0, null);
             if (!onlyDefineBoundary)
-                makeVoxelsInInterior(voxelsZeroLevel, null, null, unknownPartials);
-            voxelDictionaryLevel0 = voxelsZeroLevel;
+                makeVoxelsInInterior(voxelDictionaryLevel0, null, null, unknownPartials);
             #endregion
 
-            if (discretizationLevel >= 1)
+            #region Level-1
+            if (numberOfLevels > 1)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 1);
-                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
-                //foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
+                foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                 {
-                    var voxels = new VoxelHashSet(new VoxelComparerCoarse(), this);
-                    MakeVertexVoxels(((VoxelWithTessellationLinks)voxel0).Vertices, voxel0, voxels);
-                    MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel0).Faces, voxel0, voxels);
+                    var voxels = new VoxelHashSet(1, this);
+                    MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel0).Vertices, voxel0, voxels);
+                    MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel0).Faces, voxel0, voxels);
                     unknownPartials = DefineBottomCoordinateInside(voxels, null);
-                    Debug.WriteLineIf(unknownPartials != null, "\n**********\nthere are unknown partial voxels\n**********\n");
+                    // Debug.WriteLineIf(unknownPartials != null, "\n**********\nthere are unknown partial voxels\n**********\n");
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                } );
+                } //);
             }
+            #endregion
 
-            if (discretizationLevel >= 2)
+            #region Level-2
+            if (numberOfLevels > 2)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 2);
                 Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
@@ -119,21 +125,22 @@ namespace TVGL.Voxelization
                             voxel1 =>
                             //  foreach (var voxel0 in voxelDictionaryLevel0.Values.Where(v=>v.Role==VoxelRoleTypes.Partial))
                             {
-                                var voxelHash = new VoxelHashSet(new VoxelComparerFine(), this);
-                                MakeVertexVoxels(((VoxelWithTessellationLinks)voxel1).Vertices, voxel1, voxelHash);
-                                MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel1).Faces, voxel1,
+                                var voxelHash = new VoxelHashSet(1, this);
+                                MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel1, voxelHash);
+                                MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel1,
                                     voxelHash);
-                                unknownPartials = DefineBottomCoordinateInside(voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
+                                unknownPartials = DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
                                 if (!onlyDefineBoundary)
                                     makeVoxelsInInterior(voxelHash, voxel1, null, unknownPartials);
                                 lock (voxels) voxels.AddRange(voxelHash);
                             });
-                        ((Voxel_Level0_Class)voxel0).InnerVoxels[1] =
-                            new VoxelHashSet(new VoxelComparerFine(), this, voxels);
+                        ((Voxel_Level0_Class)voxel0).InnerVoxels[1] = new VoxelHashSet(1, this, voxels);
                     });
             }
+            #endregion
 
-            if (discretizationLevel >= 3)
+            #region Level-3
+            if (numberOfLevels > 3)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 3);
                 Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
@@ -149,22 +156,23 @@ namespace TVGL.Voxelization
                                 var voxelsLevel2 = GetChildVoxels(voxel1);
                                 Parallel.ForEach(voxelsLevel2, voxel2 =>
                                 {
-                                    var voxelHash = new VoxelHashSet(new VoxelComparerFine(), this);
-                                    MakeVertexVoxels(((VoxelWithTessellationLinks)voxel1).Vertices, voxel2, voxelHash);
-                                    MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel1).Faces, voxel2,
+                                    var voxelHash = new VoxelHashSet(2, this);
+                                    MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel2, voxelHash);
+                                    MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel2,
                                         voxelHash);
-                                    unknownPartials = DefineBottomCoordinateInside(voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
+                                    unknownPartials = DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
                                     if (!onlyDefineBoundary)
-                                        makeVoxelsInInterior(voxelHash, voxel2, ((VoxelWithTessellationLinks)voxel1).Faces, unknownPartials);
+                                        makeVoxelsInInterior(voxelHash, voxel2, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces, unknownPartials);
                                     lock (voxels) voxels.AddRange(voxelHash);
                                 });
                             });
-                        ((Voxel_Level0_Class)voxel0).InnerVoxels[2] =
-                            new VoxelHashSet(new VoxelComparerFine(), this, voxels);
+                        ((Voxel_Level0_Class)voxel0).InnerVoxels[2] = new VoxelHashSet(2, this, voxels);
                     });
             }
+            #endregion
 
-            if (discretizationLevel >= 4)
+            #region Level-4
+            if (numberOfLevels > 4)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 4);
                 Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
@@ -183,22 +191,22 @@ namespace TVGL.Voxelization
                                     var voxelsLevel3 = GetChildVoxels(voxel2);
                                     Parallel.ForEach(voxelsLevel3, voxel3 =>
                                     {
-                                        var voxelHash = new VoxelHashSet(new VoxelComparerFine(), this);
-                                        MakeVertexVoxels(((VoxelWithTessellationLinks)voxel1).Vertices, voxel3,
+                                        var voxelHash = new VoxelHashSet(3, this);
+                                        MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel3,
                                             voxelHash);
-                                        MakeVoxelsForFacesAndEdges(((VoxelWithTessellationLinks)voxel1).Faces, voxel3,
+                                        MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel3,
                                             voxelHash);
-                                        unknownPartials = DefineBottomCoordinateInside(voxelHash, ((VoxelWithTessellationLinks)voxel1).Faces);
+                                        unknownPartials = DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
                                         if (!onlyDefineBoundary)
-                                            makeVoxelsInInterior(voxelHash, voxel3, ((VoxelWithTessellationLinks)voxel1).Faces, unknownPartials);
+                                            makeVoxelsInInterior(voxelHash, voxel3, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces, unknownPartials);
                                         lock (voxels) voxels.AddRange(voxelHash);
                                     });
                                 });
                             });
-                        ((Voxel_Level0_Class)voxel0).InnerVoxels[3] =
-                            new VoxelHashSet(new VoxelComparerFine(), this, voxels);
+                        ((Voxel_Level0_Class)voxel0).InnerVoxels[3] = new VoxelHashSet(3, this, voxels);
                     });
             }
+            #endregion
             UpdateProperties();
         }
 
@@ -451,7 +459,7 @@ namespace TVGL.Voxelization
                 // set up voxels for the face
                 coordinates[dim] = i;
                 var voxel = MakeAndStorePartialVoxel(coordinates, level, voxels, parentLimits, face);
-                if (voxel is VoxelWithTessellationLinks)
+                if (voxel is Voxel_ClassWithLinksToTSElements)
                 { // this is just to add links to the edges
                     var btmDim = Constants.GetCoordinateIndex(voxel.ID, level, dim);
                     foreach (var faceEdge in face.Edges)
@@ -463,7 +471,7 @@ namespace TVGL.Voxelization
                             (fromDim > btmDim && toDim < btmDim) ||
                             (fromDim < btmDim + 1 && toDim > btmDim + 1) ||
                             (fromDim > btmDim + 1 && toDim < btmDim + 1))
-                            LinkVoxelToTessellatedObject((VoxelWithTessellationLinks)voxel, faceEdge);
+                            LinkVoxelToTessellatedObject((Voxel_ClassWithLinksToTSElements)voxel, faceEdge);
                     }
                 }
             }
@@ -653,16 +661,16 @@ namespace TVGL.Voxelization
                                                                      // away from the voxel but - in all practicality intersect in a way that can tell us about the bottom corner.
         private VoxelHashSet DefineBottomCoordinateInside(VoxelHashSet voxels, List<PolygonalFace> parentFaces)
         {
-            var level = voxels.FirstOrDefault()?.Level ?? 0;
+            var level = voxels.level;
             var queue = new Queue<IVoxel>();
-            var assignedHashSet = new VoxelHashSet(new VoxelComparerCoarse(), this);
+            var assignedHashSet = new VoxelHashSet(level, this);
             foreach (var voxel in voxels)
             {
                 var voxCoord = voxel.CoordinateIndices;
                 var closestFaceIsPositive = false;
                 var closestFaceDistance = startingMinFaceToCornerDistance;
-                var faces = voxel is VoxelWithTessellationLinks
-                    ? ((VoxelWithTessellationLinks)voxel).Faces
+                var faces = voxel is Voxel_ClassWithLinksToTSElements
+                    ? ((Voxel_ClassWithLinksToTSElements)voxel).Faces
                     : parentFaces;
                 if (faces.SelectMany(f => f.Normal).All(n => n > 0))
                 {
@@ -757,8 +765,7 @@ namespace TVGL.Voxelization
                 }
             }
             if (queue.Any())
-                return new VoxelHashSet(level > 1 ? (IEqualityComparer<long>)new VoxelComparerFine() : new VoxelComparerCoarse(),
-                    this, queue);
+                return new VoxelHashSet(level, this, queue);
             return null;
         }
 
@@ -832,8 +839,8 @@ namespace TVGL.Voxelization
                     if ((unknownPartials == null && neighbor != null) ||
                         (unknownPartials != null && !unknownPartials.Contains(neighbor))) continue;
                     /* get the faces that goes through the current face */
-                    var faces = current is VoxelWithTessellationLinks ? ((VoxelWithTessellationLinks)current).Faces :
-                        parent is VoxelWithTessellationLinks ? ((VoxelWithTessellationLinks)parent).Faces :
+                    var faces = current is Voxel_ClassWithLinksToTSElements ? ((Voxel_ClassWithLinksToTSElements)current).Faces :
+                        parent is Voxel_ClassWithLinksToTSElements ? ((Voxel_ClassWithLinksToTSElements)parent).Faces :
                         grandParentFaces;
                     /* so, if the farthest face in this positive direction is pointing in the negative direction, then
                      * that neighboring voxel is inside. */
@@ -857,7 +864,7 @@ namespace TVGL.Voxelization
             while (insiders.Any())
             {
                 var current = insiders.Pop();
-                var directions = 
+                var directions =
                     current.Role == VoxelRoleTypes.Full || (unknownPartials != null && unknownPartials.Contains(current)) ?
                         allDirections : negDirections;
                 var coord = current.CoordinateIndices;
@@ -936,15 +943,15 @@ namespace TVGL.Voxelization
                 {
                     if (level == 0)
                         voxel = new Voxel_Level0_Class(id, VoxelRoleTypes.Partial, this);
-                    else if (level == 1)
-                        voxel = new Voxel_Level1_Class(id, VoxelRoleTypes.Partial, this);
+                    else if (level <= Constants.LevelAtWhichLinkToTessellation)
+                        voxel = new Voxel_ClassWithLinksToTSElements(id, level, VoxelRoleTypes.Partial, this);
                     else
-                        voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial));
+                        voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
                     voxels.Add(voxel);
                 }
             }
             if (level > 1) return voxel;
-            var voxelWithTsLinks = (VoxelWithTessellationLinks)voxel;
+            var voxelWithTsLinks = (Voxel_ClassWithLinksToTSElements)voxel;
             if (voxelWithTsLinks.TessellationElements == null)
                 voxelWithTsLinks.TessellationElements = new HashSet<TessellationBaseClass>();
 
@@ -964,7 +971,7 @@ namespace TVGL.Voxelization
             return voxel;
         }
 
-        private void LinkVoxelToTessellatedObject(VoxelWithTessellationLinks voxel, TessellationBaseClass tsObject)
+        private void LinkVoxelToTessellatedObject(Voxel_ClassWithLinksToTSElements voxel, TessellationBaseClass tsObject)
         {
             if (tsObject == null) return;
             if (voxel.TessellationElements.Contains(tsObject)) return;
@@ -984,10 +991,10 @@ namespace TVGL.Voxelization
                 {
                     if (level == 0)
                         voxel = new Voxel_Level0_Class(id, VoxelRoleTypes.Full, this);
-                    else if (level == 1)
-                        voxel = new Voxel_Level1_Class(id, VoxelRoleTypes.Full, this);
+                    //else if (level == 1)  //what's the point if it doesn't overlap with surface?
+                    //    voxel = new Voxel_ClassWithLinksToTSElements(id,level, VoxelRoleTypes.Full, this);
                     else
-                        voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Full));
+                        voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
                     voxels.Add(voxel);
                 }
             }

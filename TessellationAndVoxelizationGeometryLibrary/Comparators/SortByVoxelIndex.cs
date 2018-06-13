@@ -4,7 +4,7 @@ using TVGL.Voxelization;
 
 namespace TVGL
 {
-    internal class SortByVoxelIndex : IComparer<VoxelWithTessellationLinks>
+    internal class SortByVoxelIndex : IComparer<Voxel_ClassWithLinksToTSElements>
     {
         private int dimension;
         private int sense;
@@ -14,7 +14,7 @@ namespace TVGL
             sense = Math.Sign(dimension);
             this.dimension = Math.Abs(dimension) - 1;
         }
-        public int Compare(VoxelWithTessellationLinks x, VoxelWithTessellationLinks y)
+        public int Compare(Voxel_ClassWithLinksToTSElements x, Voxel_ClassWithLinksToTSElements y)
         {
             if (x.CoordinateIndices[dimension] > y.CoordinateIndices[dimension]) return sense;
             else return -sense;

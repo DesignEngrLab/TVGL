@@ -342,43 +342,4 @@ namespace TVGL
             return 1;
         }
     }
-
-    public class Utilities
-    {
-        /// <summary>
-        /// Stores the offsets for the 26 adjacent voxels.
-        /// 6 Voxel-face adjacent neghbours
-        /// 12 Voxel-edge adjacent neghbours
-        /// 8 Voxel-corner adjacent neghbours        
-        /// </summary>
-        public static readonly List<int[]> CoordinateOffsets = new List<int[]>()
-        {
-            new[] {1,  0,  0}, /// Voxel-face adjacent neghbours
-            new[] {-1,  0,  0}, /// 0 to 5
-            new[] { 0,  1,  0},
-            new[] { 0, -1,  0},
-            new[] { 0,  0,  1},
-            new[] { 0,  0, -1},
-            new[] { 1,  0, -1}, /// Voxel-edge adjacent neghbours
-            new[] {-1,  0, -1}, /// 6 to 17
-            new[] { 1,  0,  1},
-            new[] {-1,  0,  1},
-            new[] { 1,  1,  0},
-            new[] {-1,  1,  0},
-            new[] { 1, -1,  0},
-            new[] {-1, -1,  0},
-            new[] { 0, -1,  1},
-            new[] { 0, -1, -1},
-            new[] { 0,  1,  1},
-            new[] { 0,  1, -1},
-            new[] {-1, -1, -1}, /// Voxel-corner adjacent neghbours
-            new[] {-1, -1,  1}, /// 18 to 25
-            new[] { 1, -1,  1},
-            new[] { 1, -1, -1},
-            new[] {-1,  1, -1},
-            new[] {-1,  1,  1},
-            new[] { 1,  1,  1},
-            new[] { 1,  1, -1}
-        };
-    }
 }

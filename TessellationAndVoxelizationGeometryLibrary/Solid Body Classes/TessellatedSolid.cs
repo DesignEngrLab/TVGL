@@ -86,7 +86,6 @@ namespace TVGL
                 return _inertiaTensor;
             }
         }
-        internal double[,] _inertiaTensor;
 
         /// <summary>
         ///     The tolerance is set during the initiation (constructor phase). This is based on the maximum
@@ -149,20 +148,10 @@ namespace TVGL
             CompleteInitiation();
         }
 
-        internal TessellatedSolid(TVGLFileData fileData, string fileName) : base(fileData.Units, fileData.Name, fileName,
-                fileData.Comments, fileData.Language)
+        internal TessellatedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
         {
-            XMax = fileData.XMax;
-            XMin = fileData.XMin;
-            YMax = fileData.YMax;
-            YMin = fileData.YMin;
-            ZMax = fileData.ZMax;
-            ZMin = fileData.ZMin;
-            Center = fileData.Center;
             SameTolerance = fileData.SameTolerance;
-
-
-
+            
             var stringList = fileData.Vertices.Split(',');
             var listLength = stringList.Length;
             var coords = new double[listLength / 3][];
@@ -184,14 +173,7 @@ namespace TVGL
                     int.Parse(stringList[3 * i + 2])
                 };
 
-            if (!string.IsNullOrWhiteSpace(fileData.InertiaTensor))
-            {
-                stringList = fileData.InertiaTensor.Split(',');
-                _inertiaTensor = new double[3, 3];
-                for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                        _inertiaTensor[i, j] = double.Parse(stringList[3 * i + j]);
-            }
+  
             stringList = fileData.Colors.Split(',');
             listLength = stringList.Length;
             var colors = new Color[listLength];
@@ -201,15 +183,10 @@ namespace TVGL
             MakeVertices(coords, faceIndices);
             MakeFaces(faceIndices, colors);
 
-            List<PolygonalFace> newFaces;
-            List<Vertex> removedVertices;
-            MakeEdges(out newFaces, out removedVertices);
+            MakeEdges(out var newFaces, out var removedVertices);
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
-            Center = fileData.Center;
-            Volume = fileData.Volume;
-            SurfaceArea = fileData.SurfaceArea;
-
+          
             foreach (var face in Faces)
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)

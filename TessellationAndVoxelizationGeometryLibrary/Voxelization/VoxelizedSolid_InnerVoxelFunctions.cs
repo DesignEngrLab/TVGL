@@ -27,6 +27,10 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
         #region Functions to make voxel full, empty or partial
+        /// <summary>
+        /// Changes the voxel to empty.
+        /// </summary>
+        /// <param name="voxel">The voxel.</param>
         public void ChangeVoxelToEmpty(IVoxel voxel)
         {
             if (voxel.Role == VoxelRoleTypes.Empty) return;
@@ -37,18 +41,21 @@ namespace TVGL.Voxelization
                     voxelDictionaryLevel0.Remove(voxel.ID);
             else
             {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID, false);
-                var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(Constants.MakeParentVoxelID(thisIDwoFlags, 0));
-                lock (voxel0.InnerVoxels[voxel.Level - 1])
-                    voxel0.InnerVoxels[voxel.Level - 1].Remove(thisIDwoFlags);
-                if (voxel0.InnerVoxels[voxel.Level - 1].Count == 0) ChangeVoxelToEmpty(GetParentVoxel(voxel));
+                var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
+                lock (voxel0.InnerVoxels[voxel.Level - 1]) //remove the node here
+                    voxel0.InnerVoxels[voxel.Level - 1].Remove(voxel.ID);
+                var parent = GetParentVoxel(voxel);
+                // then check to see if the parent should be empty as well
+                if (voxel0.InnerVoxels[voxel.Level - 1].Count == 0 ||
+                    voxel0.InnerVoxels[voxel.Level - 1].CountDescendants(parent.ID, voxel.Level - 1) == 0)
+                    ChangeVoxelToEmpty(GetParentVoxel(voxel));
+                // finally, any descendants of voxel need to be removed
                 else if (voxel.Role == VoxelRoleTypes.Partial)
                 {
-                    for (int i = voxel.Level; i < discretizationLevel; i++)
-                    {
+                    for (int i = voxel.Level; i < numberOfLevels; i++)
+                    { // by starting at voxel.Level (and not doing an i-1), we are starting at the next lower level
                         lock (voxel0.InnerVoxels[i])
-                            voxel0.InnerVoxels[i]
-                                .RemoveWhere(vx => Constants.MakeParentVoxelID(vx.ID, voxel.Level) == thisIDwoFlags);
+                            voxel0.InnerVoxels[i].RemoveDescendants(voxel.ID, voxel.Level);
                     }
                 }
 
@@ -56,8 +63,8 @@ namespace TVGL.Voxelization
         }
 
         private IVoxel ChangeEmptyVoxelToFull(long ID, int level)
-            {
-                IVoxel voxel;
+        {
+            IVoxel voxel;
             if (level == 0)
             {
                 voxel = new Voxel_Level0_Class(ID, VoxelRoleTypes.Full, this);
@@ -73,90 +80,95 @@ namespace TVGL.Voxelization
                     voxel0 = (Voxel_Level0_Class)ChangeEmptyVoxelToPartial(id0, 0);
                 else
                     voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
-            voxel = level == 1
-                ? (IVoxel)new Voxel_Level1_Class(ID, VoxelRoleTypes.Full, this)
-                : (IVoxel)new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full));
+            voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
             lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
             if (level == 1)
-            {
+            {   //What if this is the last voxel to be added that makes the parent full?
+                // This is checked differently for the level-1 than the others. The code could be
+                // combined but it would be less efficient.
                 lock (voxel0.InnerVoxels[0])
                 {
-                    if (voxel0.InnerVoxels[0].Count == 4096
+                    if (voxel0.InnerVoxels[0].Count == voxelsInParent[level] //the following All statement is slow. First, just
+                                                                             // check if its worth counting to see if all are Full
                         && voxel0.InnerVoxels[0].All(v => v.Role == VoxelRoleTypes.Full))
                         ChangeVoxelToFull(voxel0);
                 }
             }
-            else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= 4096)
-            {
+            else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= voxelsInParent[level])
+            {   // for the remaining voxellevels, since the hashsets are combined we need to count
+                // what is indeed an immediate descendant of the the parent and see if they are all full
                 var parentID = Constants.MakeParentVoxelID(voxel.ID, level - 1);
-
                 lock (voxel0.InnerVoxels[level - 1])
                 {
-                    if (voxel0.InnerVoxels[voxel.Level - 1].Count(vx =>
-                            Constants.MakeParentVoxelID(vx.ID, level - 1) == parentID
-                            && vx.Role == VoxelRoleTypes.Full) == 4096)
-                        ChangeVoxelToFull(voxel0.InnerVoxels[level - 2].GetVoxel(parentID));
+                    if (voxel0.InnerVoxels[voxel.Level - 1].CountDescendants(parentID, level - 1, VoxelRoleTypes.Full) == voxelsInParent[level])
+                        ChangeVoxelToFull(voxel0.InnerVoxels[level - 1 - 1].GetVoxel(parentID));
                 }
             }
             return voxel;
         }
 
 
-        private IVoxel ChangeVoxelToFull(IVoxel voxel)
+        /// <summary>
+        /// Changes the voxel to full.
+        /// </summary>
+        /// <param name="voxel">The voxel.</param>
+        /// <returns>IVoxel.</returns>
+        public IVoxel ChangeVoxelToFull(IVoxel voxel)
         {
             if (voxel.Role == VoxelRoleTypes.Full)
             {
-              // Debug.WriteLine("Call to ChangeVoxelToFull but voxel is already full.");
+                // Debug.WriteLine("Call to ChangeVoxelToFull but voxel is already full.");
                 return voxel;
             }
             if (voxel.Role == VoxelRoleTypes.Empty) return ChangeEmptyVoxelToFull(voxel.ID, voxel.Level);
+            // so the rest of this function is doing the work to change a partial voxel to a full
             if (voxel.Level == 0)
-            {
+            {   // level-0 is easy since it has no parent voxels to check and the children are easily removed
+                // by deleting the InnerVoxels object.
                 lock (voxel)
                     ((Voxel_Level0_Class)voxel).InnerVoxels = null;
                 ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Full;
                 return voxel;
             }
             var level = voxel.Level;
-            var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
-            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
-            if (level == 1) ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Full;
-            else
-            {
+            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
+            if (voxel is Voxel_ClassWithLinksToTSElements) ((Voxel_ClassWithLinksToTSElements)voxel).Role = VoxelRoleTypes.Full;
+            else //if it's a class then we can change with the above statement
+            {    //if it's the voxel struct then we have to delete it and make a new one
                 lock (voxel0.InnerVoxels[level - 1])
                 {
                     voxel0.InnerVoxels[level - 1].Remove(voxel);
-                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full));
+                    voxel = new Voxel(Constants.ClearFlagsFromID(voxel.ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
                     voxel0.InnerVoxels[level - 1].Add(voxel);
                 }
             }
-            for (int i = level; i < discretizationLevel; i++)
+            // now, remove all the descendants - for all lower levels. This is just like in changing partial to empty
+            for (int i = level; i < numberOfLevels-1; i++)
             {
                 lock (voxel0.InnerVoxels[i])
                     voxel0.InnerVoxels[i]
-                        .RemoveWhere(vx =>
-                            Constants.MakeParentVoxelID(vx.ID, level) == thisIDwoFlags);
+                        .RemoveDescendants(voxel.ID, level);
             }
             if (level == 1)
-            {
+            {   //What if this is the last voxel to be added that makes the parent full?
+                // This is checked differently for the level-1 than the others. The code could be
+                // combined but it would be less efficient.
                 lock (voxel0.InnerVoxels[0])
                 {
-                    if (voxel0.InnerVoxels[0].Count == 4096
+                    if (voxel0.InnerVoxels[0].Count == voxelsInParent[level] //the following All statement is slow. First, just
+                                                                             // check if its worth counting to see if all are Full
                                && voxel0.InnerVoxels[0].All(v => v.Role == VoxelRoleTypes.Full))
                         ChangeVoxelToFull(voxel0);
                 }
             }
-            else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= 4096)
-            {
+            else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= voxelsInParent[level])
+            {   // for the remaining voxellevels, since the hashsets are combined we need to count
+                // what is indeed an immediate descendant of the the parent and see if they are all full
                 var parentID = Constants.MakeParentVoxelID(voxel.ID, level - 1);
-
                 lock (voxel0.InnerVoxels[level - 1])
                 {
-                    if (voxel0.InnerVoxels[voxel.Level - 1].Count(vx =>
-                            Constants.MakeParentVoxelID(vx.ID, level - 1) == parentID
-                            && vx.Role == VoxelRoleTypes.Full) == 4096)
-                        ChangeVoxelToFull(voxel0.InnerVoxels[level - 2].GetVoxel(parentID));
+                    if (voxel0.InnerVoxels[voxel.Level - 1].CountDescendants(parentID, level - 1, VoxelRoleTypes.Full) == voxelsInParent[level])
+                        ChangeVoxelToFull(voxel0.InnerVoxels[level - 1 - 1].GetVoxel(parentID));
                 }
             }
             return voxel;
@@ -166,178 +178,107 @@ namespace TVGL.Voxelization
         {
             IVoxel voxel;
             if (level == 0)
-            {
+            {  //adding a new level-0 voxel is fairly straightforward
                 voxel = new Voxel_Level0_Class(ID, VoxelRoleTypes.Partial, this);
-                if (discretizationLevel >= 1)
-                    ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this);
-                for (int i = 2; i < discretizationLevel; i++)
-                    ((Voxel_Level0_Class)voxel).InnerVoxels[i] = new VoxelHashSet(new VoxelComparerFine(), this);
+                for (int i = 1; i < numberOfLevels; i++)
+                    ((Voxel_Level0_Class)voxel).InnerVoxels[i - 1] = new VoxelHashSet(i, this);
                 lock (voxelDictionaryLevel0)
                     voxelDictionaryLevel0.Add(voxel);
                 return voxel;
             }
+            // for the lower levels, first get or make the level-0 voxel (next7 lines)
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
             var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
             Voxel_Level0_Class voxel0;
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id0))
                     voxel0 = (Voxel_Level0_Class)ChangeEmptyVoxelToPartial(id0, 0);
-                else
-                    voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
-            voxel = level == 1
-                ? (IVoxel)new Voxel_Level1_Class(ID, VoxelRoleTypes.Partial, this)
-                : (IVoxel)new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial));
+                else voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
+            // make the new Voxel, and add it to the proper hashset
+            voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
             lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
             return voxel;
         }
-        private IVoxel ChangeVoxelToPartial(IVoxel voxel)
+        private IVoxel ChangeVoxelToPartial(IVoxel voxel, bool populateSubVoxels = true)
         {
             if (voxel.Role == VoxelRoleTypes.Partial)
             {
                 //Debug.WriteLine("Call to ChangeVoxelToPartial but voxel is already partial.");
                 return voxel;
             }
+
             if (voxel.Role == VoxelRoleTypes.Empty) return ChangeEmptyVoxelToPartial(voxel.ID, voxel.Level);
-            if (voxel.Level == 0)
-            {
-                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
-                if (discretizationLevel > 0)
-                {
-                    var level1Voxels = new Voxel_Level1_Class[4096];
-                    Parallel.For(0, 16, i =>
-                    {
-                        for (int j = 0; j < 16; j++)
-                            for (int k = 0; k < 16; k++)
-                                level1Voxels[256 * i + 16 * j + k] = new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
-                                    (j * 68719476736) +
-                                    (k * 72057594037927936L),
-                                    VoxelRoleTypes.Full, this);
-                    });
-                    ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
-                    ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this, level1Voxels);
-                }
-                return voxel;
-            }
+            // otherwise, we are changing a full to a partial
             var level = voxel.Level;
-            var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
-            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
-            if (voxel0.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(voxel0);
-            if (level == 1) ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
+            Voxel_Level0_Class voxel0;
+            if (level == 0)
+            {
+                //again, level-0 is easy. there's no parent, and the class allows us to change role directly.
+                // also, we need to set up the innerVoxel hashsets.
+                voxel0 = (Voxel_Level0_Class)voxel;
+                voxel0.InnerVoxels = new VoxelHashSet[numberOfLevels - 1];
+                voxel0.Role = VoxelRoleTypes.Partial;
+            }
             else
             {
-                lock (voxel0.InnerVoxels[level - 1])
+                voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
+                // if the voxel at level-0 is full then we first must change it to Partial so that we can
+                // add this voxel. In this way, populateSubVoxels must be set to true in the following recursion
+                // so that we have an accurate representation of the parent. In the present, it may be false since
+                // the calling function intends to fill it up. Actually, I'm not sure the recursion will ever happed
+                // with current set of modification functions that work form level-0 on down.
+                if (voxel0.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(voxel0, true);
+                if (voxel is Voxel_ClassWithLinksToTSElements)
+                    ((Voxel_ClassWithLinksToTSElements)voxel).Role = VoxelRoleTypes.Partial;
+                else //if it's a class then we can change with the above statement
                 {
-                    voxel0.InnerVoxels[level - 1].Remove(voxel);
-                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial));
-                    voxel0.InnerVoxels[level - 1].Add(voxel);
-                }
-            }
-            var lowerLevelVoxels = new List<IVoxel>();
-            var xShift = 1L << 4 + 4 * (4 - level);
-            var yShift = xShift << 20;
-            var zShift = yShift << 20;
-            for (int i = 0; i < 16; i++)
-                for (int j = 0; j < 16; j++)
-                    for (int k = 0; k < 16; k++)
-                        lowerLevelVoxels.Add(new Voxel(thisIDwoFlags
-                            + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true)));
-            if (this.discretizationLevel > level)
-                lock (voxel0.InnerVoxels[level + 1])
-                    voxel0.InnerVoxels[level + 1].AddRange(lowerLevelVoxels);
-            return voxel;
-        }
-
-        private IVoxel ChangeVoxelToPartialNEW(IVoxel voxel, bool populateSubVoxels = true)
-        {
-            if (voxel.Role == VoxelRoleTypes.Partial)
-            {
-                //Debug.WriteLine("Call to ChangeVoxelToPartial but voxel is already partial.");
-                return voxel;
-            }
-            if (voxel.Role == VoxelRoleTypes.Empty) return ChangeEmptyVoxelToPartial(voxel.ID, voxel.Level);
-
-            if (voxel.Level == 0)
-            {
-                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
-                if (discretizationLevel > 0)
-                {
-                    ((Voxel_Level0_Class)voxel).InnerVoxels = new VoxelHashSet[discretizationLevel];
-                    if (populateSubVoxels)
+                    //if it's the voxel struct then we have to delete it and make a new one
+                    lock (voxel0.InnerVoxels[level - 1])
                     {
-                        var level1Voxels = new Voxel_Level1_Class[4096];
-                        Parallel.For(0, 16, i =>
-                        {
-                            for (int j = 0; j < 16; j++)
-                                for (int k = 0; k < 16; k++)
-                                    level1Voxels[256 * i + 16 * j + k] = new Voxel_Level1_Class(voxel.ID + (i * 65536L) +
-                                                                                            (j * 68719476736) +
-                                                                                            (k * 72057594037927936L),
-                                    VoxelRoleTypes.Full, this);
-                        });
-                        ((Voxel_Level0_Class)voxel).InnerVoxels[0] =
-                            new VoxelHashSet(new VoxelComparerCoarse(), this, level1Voxels);
+                        voxel0.InnerVoxels[level - 1].Remove(voxel);
+                        voxel = new Voxel(Constants.ClearFlagsFromID(voxel.ID) +
+                                          Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
+                        voxel0.InnerVoxels[level - 1].Add(voxel);
                     }
-                    else ((Voxel_Level0_Class)voxel).InnerVoxels[0] = new VoxelHashSet(new VoxelComparerCoarse(), this);
-                }
-                return voxel;
-            }
-            var level = voxel.Level;
-            var thisIDwoFlags = Constants.ClearFlagsFromID(voxel.ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
-            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
-            if (voxel0.Role == VoxelRoleTypes.Full) ChangeVoxelToPartialNEW(voxel0, populateSubVoxels);
-            if (level == 1) ((Voxel_Level1_Class)voxel).Role = VoxelRoleTypes.Partial;
-            else
-            {
-                lock (voxel0.InnerVoxels[level - 1])
-                {
-                    voxel0.InnerVoxels[level - 1].Remove(voxel);
-                    voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial));
-                    voxel0.InnerVoxels[level - 1].Add(voxel);
                 }
             }
-            if (this.discretizationLevel <= level) return voxel;
-            if (voxel0.InnerVoxels[level] == null)
-                voxel0.InnerVoxels[level] = new VoxelHashSet(new VoxelComparerFine(), this);
-            if (populateSubVoxels)
-            {
-                var lowerLevelVoxels = new List<IVoxel>();
-                var xShift = 1L << 4 + 4 * (4 - level);
-                var yShift = xShift << 20;
-                var zShift = yShift << 20;
-                for (int i = 0; i < 16; i++)
-                    for (int j = 0; j < 16; j++)
-                        for (int k = 0; k < 16; k++)
-                            lowerLevelVoxels.Add(new Voxel(thisIDwoFlags
-                                                           + (i * xShift) + (j * yShift) + (k * zShift)
-                                                           + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true)));
-                lock (voxel0.InnerVoxels[level])
-                    voxel0.InnerVoxels[level].AddRange(lowerLevelVoxels);
-            }
+            if (voxel0.InnerVoxels[level - 1] == null) //ensure that InnerVoxels is setup. Actually, I'm pretty sure 
+                //this code will never be hit. testing...
+                voxel0.InnerVoxels[level - 1] = new VoxelHashSet(level, this);
+
+            if (!populateSubVoxels || this.numberOfLevels == level) return voxel;  //if at the lowest level or
+                                                                                   //if populateSubVoxels is false, then we can return 
+            var startingID = Constants.ClearFlagsFromID(voxel.ID);  //this provides the base for adding all descendants
+            var lowerLevelVoxels = new List<IVoxel>();
+            var xShift = 1L << (4 + 20 - bitLevelDistribution.Take(level).Sum()); //finding the correct multiplier requires adding up all the bits used in current levels
+            var yShift = xShift << 20; //once the xShift is known, the y and z shifts are just 20 bits over
+            var zShift = yShift << 20;
+            for (int i = 0; i < voxelsPerSide[level + 1]; i++)
+                for (int j = 0; j < voxelsPerSide[level + 1]; j++)
+                    for (int k = 0; k < voxelsPerSide[level + 1]; k++)
+                        lowerLevelVoxels.Add(new Voxel(startingID
+                                                       + (i * xShift) + (j * yShift) + (k * zShift)
+                                                       + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), this));
+            lock (voxel0.InnerVoxels[level])
+                voxel0.InnerVoxels[level].AddRange(lowerLevelVoxels);
             return voxel;
         }
         #endregion
 
         public void UpdateProperties(int level = -1)
         {
-            _totals = new[]
-                        {
-                            voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Full),
-                            voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Partial),
-                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,1,VoxelRoleTypes.Full)),
-                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,1,VoxelRoleTypes.Partial)),
-                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,2,VoxelRoleTypes.Full)),
-                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,2,VoxelRoleTypes.Partial)),
-                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,3,VoxelRoleTypes.Full)),
-                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,4,VoxelRoleTypes.Partial)),
-                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,4,VoxelRoleTypes.Full)),
-                            voxelDictionaryLevel0.Sum(dict => CountVoxels(dict,4,VoxelRoleTypes.Partial))
-                        };
+            _totals = new long[2 * numberOfLevels];
+            _totals[0] = voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Full);
+            _totals[1] = voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Partial);
+            for (int i = 1; i < numberOfLevels; i++)
+            {
+                _totals[2 * i] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, 1, VoxelRoleTypes.Full));
+                _totals[2 * i + 1] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, 1, VoxelRoleTypes.Partial));
+            };
             Volume = 0.0;
-            for (int i = 0; i <= discretizationLevel; i++)
+            for (int i = 0; i < numberOfLevels; i++)
                 Volume += Math.Pow(VoxelSideLengths[i], 3) * _totals[2 * i];
-            Volume += Math.Pow(VoxelSideLengths[discretizationLevel], 3) * _totals[2 * discretizationLevel + 1];
+            Volume += Math.Pow(VoxelSideLengths[numberOfLevels - 1], 3) * _totals[2 * (numberOfLevels - 1) + 1];
             _count = _totals.Sum();
         }
 
@@ -348,31 +289,11 @@ namespace TVGL.Voxelization
             return innerVoxels[level - 1].Count(v => v.Role == role);
         }
 
-        internal double[] GetRealCoordinates(long ID, int level)
-        {
-            return GetRealCoordinates(level, Constants.GetCoordinateIndices(ID, level));
-            //var indices = Constants.GetCoordinateIndices(ID, level);
-            //return indices.multiply(VoxelSideLengths[level]).add(Offset);
-        }
-
         internal double[] GetRealCoordinates(int level, params int[] indices)
         {
             return indices.multiply(VoxelSideLengths[level]).add(Offset);
         }
 
-        //public static int[] GetIntCoordinates(int level, params double[] coordinates)
-        //{
-        //    var indices = (coordinates.subtract(Offset));
-        //    indices = indices.divide(VoxelSideLengths[level]);
-        //    int[] intCoords = { 0, 0, 0 };
-        //    int counter = 0;
-        //    foreach(var coord in indices)
-        //    {
-        //        intCoords[counter] = (int)(Math.Round(coord));
-        //        counter++;
-        //    }
-        //    return intCoords;
-        //}
 
         #region Quick Booleans for IDs
         internal static bool isFull(long ID)
@@ -403,40 +324,8 @@ namespace TVGL.Voxelization
             var id = ID & 15;
             return id < 8 && id >= 4;
         }
-        internal static bool isLevel1(long ID)
-        {
-            var id = ID & 31;
-            return id < 20 && id >= 16;
-        }
-        internal static bool isLevel0(long ID)
-        {
-            var id = ID & 31;
-            return id < 4;
-        }
-        internal static bool isFullLevel2(long ID)
-        {
-            return isLevel2(ID) && isFull(ID);
-        }
-        internal static bool isPartialLevel2(long ID)
-        {
-            return isLevel2(ID) && isPartial(ID);
-        }
-        internal static bool isFullLevel3(long ID)
-        {
-            return isLevel3(ID) && isFull(ID);
-        }
-        internal static bool isPartialLevel3(long ID)
-        {
-            return isLevel3(ID) && isPartial(ID);
-        }
-        internal static bool isFullLevel4(long ID)
-        {
-            return isLevel4(ID) && isFull(ID);
-        }
-        internal static bool isPartialLevel4(long ID)
-        {
-            return isLevel4(ID) && isPartial(ID);
-        }
+
+
         #endregion
     }
 }
