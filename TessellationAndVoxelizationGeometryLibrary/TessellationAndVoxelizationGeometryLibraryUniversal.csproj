@@ -68,7 +68,6 @@
     <Compile Include="Boolean Operations\ContactData.cs" />
     <Compile Include="Boolean Operations\Polygon.cs" />
     <Compile Include="Boolean Operations\Slice.cs" />
-    <Compile Include="Comparators\SortByVoxelIndex.cs" />
     <Compile Include="Comparators\SortByLength.cs" />
     <Compile Include="Enclosure Operations\GaussianSphere.cs" />
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />

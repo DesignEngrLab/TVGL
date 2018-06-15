@@ -97,8 +97,8 @@ namespace TVGLPresenterDX
                 TessellatedSolid ts;
                 if (!File.Exists(filename)) continue;
                 using (fileStream = File.OpenRead(filename))
-                   IO.Open(fileStream, filename,out ts);
-                TestVoxelSearch(ts,filename);
+                    IO.Open(fileStream, filename, out ts);
+                TestVoxelSearch(ts, filename);
             }
 
             Console.WriteLine("Completed.");
@@ -226,19 +226,24 @@ namespace TVGLPresenterDX
         {
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
-           PresenterShowAndHang(vs1);
+            PresenterShowAndHang(vs1);
             Console.WriteLine("Drafting voxelized model along orthogonals");
-            var vs1xpos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
+            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.XPositive);
             PresenterShowAndHang(vs1xpos);
-            var vs1xneg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
-         //   PresenterShowAndHang(vs1xneg);
-            var vs1ypos = vs1.DraftToNewSolid(VoxelDirections.YPositive);
-         //   PresenterShowAndHang(vs1ypos);
-            var vs1yneg = vs1.DraftToNewSolid(VoxelDirections.YNegative);
-         //   PresenterShowAndHang(vs1yneg);
-            var vs1zpos = vs1.DraftToNewSolid(VoxelDirections.ZPositive);
-         //   PresenterShowAndHang(vs1zpos);
-            var vs1zneg = vs1.DraftToNewSolid(VoxelDirections.ZNegative);
+            Console.WriteLine("x-neg");
+            var vs1xneg = vs1.ExtrudeToNewSolid(VoxelDirections.XNegative);
+            //   PresenterShowAndHang(vs1xneg);
+            Console.WriteLine("y-pos");
+            var vs1ypos = vs1.ExtrudeToNewSolid(VoxelDirections.YPositive);
+            //   PresenterShowAndHang(vs1ypos);
+            Console.WriteLine("y-neg");
+            var vs1yneg = vs1.ExtrudeToNewSolid(VoxelDirections.YNegative);
+            //   PresenterShowAndHang(vs1yneg);
+            Console.WriteLine("z-pos");
+            var vs1zpos = vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive);
+            //   PresenterShowAndHang(vs1zpos);
+            Console.WriteLine("z-neg");
+            var vs1zneg = vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative);
             //   PresenterShowAndHang(vs1zneg);
 
             //Console.WriteLine("Old Intersecting drafted models");
@@ -246,7 +251,7 @@ namespace TVGLPresenterDX
             //Console.WriteLine("presenting...");
             //PresenterShowAndHang(intersect);
             Console.WriteLine("New Intersecting drafted models");
-          var  intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);
+            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);
             Console.WriteLine("presenting...");
             PresenterShowAndHang(intersect);
             //Console.WriteLine("Subtracting original shape from intersect");

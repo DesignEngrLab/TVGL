@@ -42,10 +42,9 @@ namespace TVGL.Voxelization
             voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
             voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
             numberOfLevels = bitLevelDistribution.Length;
+        #region Setting Up Parameters 
 
-            #region Setting Up Parameters 
-
-            double longestSide;
+        double longestSide;
             Bounds = new double[2][];
             if (bounds != null)
             {
@@ -65,7 +64,10 @@ namespace TVGL.Voxelization
                     dimensions[i] = ts.Bounds[1][i] - ts.Bounds[0][i];
                 longestSide = dimensions.Max();
                 longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
-                var delta = longestSide * Constants.fractionOfWhiteSpaceAroundFinestVoxelFactor;
+
+                var voxelsonLongSide = voxelsPerSide.Aggregate(1, (num, total) => total *= num);
+                    
+                var delta = longestSide * ((voxelsonLongSide / (voxelsonLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
                 Bounds[0] = ts.Bounds[0].subtract(new[] { delta, delta, delta });
                 Bounds[1] = ts.Bounds[1].add(new[] { delta, delta, delta });
                 for (int i = 0; i < 3; i++)
@@ -333,7 +335,7 @@ namespace TVGL.Voxelization
         /// <param name="linkToTessellatedSolid">if set to <c>true</c> [link to tessellated solid].</param>
         private void MakeVoxelsForFacesAndEdges(IList<PolygonalFace> faces, IVoxel parent, VoxelHashSet voxels)
         {
-            setLimitsAndLevel(parent, out int level, out var parentLimits);
+            setLimitsAndLevel(parent, out var level, out var parentLimits);
             foreach (var face in faces) //loop over the faces
             {
                 if (level > 2 && tsObjectIsOutsideLimits(parentLimits, face)) continue;
@@ -374,7 +376,7 @@ namespace TVGL.Voxelization
             }
         }
 
-        private void setLimitsAndLevel(IVoxel parent, out int level, out int[][] parentLimits)
+        private void setLimitsAndLevel(IVoxel parent, out byte level, out int[][] parentLimits)
         {
             if (parent == null)
             {
@@ -383,7 +385,7 @@ namespace TVGL.Voxelization
             }
             else
             {
-                level = parent.Level + 1;
+                level = (byte) (parent.Level + 1);
                 parentLimits = new int[2][];
                 parentLimits[0] = Constants.GetCoordinateIndices(parent.ID, level);
                 parentLimits[1] = parentLimits[0].add(new[] { 16, 16, 16, });
@@ -397,7 +399,7 @@ namespace TVGL.Voxelization
         /// <param name="voxels">The voxels.</param>
         /// <param name="level">The level.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        private bool simpleCase(PolygonalFace face, VoxelHashSet voxels, int level, int[][] limits)
+        private bool simpleCase(PolygonalFace face, VoxelHashSet voxels, byte level, int[][] limits)
         {
             var aCoords = intCoordsForVertex(face.A);
             var bCoords = intCoordsForVertex(face.B);
@@ -439,7 +441,7 @@ namespace TVGL.Voxelization
         /// <param name="face">The face.</param>
         /// <param name="dim">The dim.</param>
         /// <param name="linkToTessellatedSolid"></param>
-        private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim, int level, VoxelHashSet voxels,
+        private void makeVoxelsForFaceInCardinalLine(PolygonalFace face, int dim, byte level, VoxelHashSet voxels,
             int[][] parentLimits, int[] aCoords, int bValue, int cValue)
         {
             var aValue = aCoords[dim];
@@ -518,7 +520,7 @@ namespace TVGL.Voxelization
         }
 
         private void makeVoxelsForLine(double[] startPoint, double[] endPoint, TessellationBaseClass tsObject,
-            int sweepDim, Dictionary<int, List<double[]>> sweepIntersections, int level, VoxelHashSet voxels,
+            int sweepDim, Dictionary<int, List<double[]>> sweepIntersections, byte level, VoxelHashSet voxels,
             int[][] limits)
         {
             //Get every X,Y, and Z integer value intersection
@@ -571,7 +573,7 @@ namespace TVGL.Voxelization
         }
 
         private void makeVoxelsForLineOnFace(double[] startPoint, double[] endPoint, TessellationBaseClass tsObject,
-           int sweepDim, int level, VoxelHashSet voxels, int[][] limits)
+           int sweepDim, byte level, VoxelHashSet voxels, int[][] limits)
         {
             if (allPointsOnOneSideOfLimits(limits, startPoint, endPoint)) return;
             //Get every X, Y, and Z integer value intersection, not including the sweepDim, which won't have any anyways
@@ -586,7 +588,7 @@ namespace TVGL.Voxelization
             addVoxelsAtIntersections(intersections, level, voxels, limits, tsObject);
         }
 
-        private void addVoxelsAtIntersections(List<double[]>[] intersections, int level, VoxelHashSet voxels,
+        private void addVoxelsAtIntersections(List<double[]>[] intersections, byte level, VoxelHashSet voxels,
             int[][] limits, TessellationBaseClass tsObject)
         {
             var ijk = new int[3];
@@ -860,7 +862,7 @@ namespace TVGL.Voxelization
                     }
                 }
             }
-            insiders = new Stack<IVoxel>(insiders.OrderBy(v => v.CoordinateIndices[2]));
+            insiders = new Stack<IVoxel>(insiders); //.OrderBy(v => v.CoordinateIndices[2]));// why are the insiders sorted?
             while (insiders.Any())
             {
                 var current = insiders.Pop();
@@ -930,7 +932,7 @@ namespace TVGL.Voxelization
 
 
         #region Make and Store Voxel
-        private IVoxel MakeAndStorePartialVoxel(int[] coordinates, int level, VoxelHashSet voxels, int[][] limits,
+        private IVoxel MakeAndStorePartialVoxel(int[] coordinates, byte level, VoxelHashSet voxels, int[][] limits,
             TessellationBaseClass tsObject = null)
         {
             if (allPointsOnOneSideOfLimits(limits, coordinates)) return null;

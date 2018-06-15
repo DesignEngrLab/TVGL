@@ -118,14 +118,14 @@ namespace TVGL.Voxelization
             for (int i = 0; i < bytes.Length; i += 8)
             {
                 var ID = BitConverter.ToInt64(bytes, i);
-                Constants.GetRoleFlags(ID, out int level, out VoxelRoleTypes role, out bool btmInside);
+                Constants.GetRoleFlags(ID, out var level, out VoxelRoleTypes role, out bool btmInside);
                 voxelDictionaryLevel0.Add(new Voxel_Level0_Class(ID, role, this, btmInside));
             }
             bytes = Convert.FromBase64String(fileData.Voxels);
             for (int i = 0; i < bytes.Length; i += 8)
             {
                 var ID = BitConverter.ToInt64(bytes, i);
-                Constants.GetRoleFlags(ID, out int level, out VoxelRoleTypes role, out bool btmInside);
+                Constants.GetRoleFlags(ID, out var level, out VoxelRoleTypes role, out bool btmInside);
                 ((Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(ID)).InnerVoxels[level - 1].Add(new Voxel(ID, this));
             }
             UpdateProperties();

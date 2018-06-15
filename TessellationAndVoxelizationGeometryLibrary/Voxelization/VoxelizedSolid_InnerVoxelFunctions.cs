@@ -73,7 +73,7 @@ namespace TVGL.Voxelization
                 return voxel;
             }
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, Discretization, 0);
             Voxel_Level0_Class voxel0;
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id0))
@@ -97,7 +97,7 @@ namespace TVGL.Voxelization
             else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= voxelsInParent[level])
             {   // for the remaining voxellevels, since the hashsets are combined we need to count
                 // what is indeed an immediate descendant of the the parent and see if they are all full
-                var parentID = Constants.MakeParentVoxelID(voxel.ID, level - 1);
+                var parentID = Constants.MakeParentVoxelID(voxel.ID, Discretization, level - 1);
                 lock (voxel0.InnerVoxels[level - 1])
                 {
                     if (voxel0.InnerVoxels[voxel.Level - 1].CountDescendants(parentID, level - 1, VoxelRoleTypes.Full) == voxelsInParent[level])
@@ -143,7 +143,7 @@ namespace TVGL.Voxelization
                 }
             }
             // now, remove all the descendants - for all lower levels. This is just like in changing partial to empty
-            for (int i = level; i < numberOfLevels-1; i++)
+            for (int i = level; i < numberOfLevels - 1; i++)
             {
                 lock (voxel0.InnerVoxels[i])
                     voxel0.InnerVoxels[i]
@@ -164,7 +164,7 @@ namespace TVGL.Voxelization
             else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= voxelsInParent[level])
             {   // for the remaining voxellevels, since the hashsets are combined we need to count
                 // what is indeed an immediate descendant of the the parent and see if they are all full
-                var parentID = Constants.MakeParentVoxelID(voxel.ID, level - 1);
+                var parentID = Constants.MakeParentVoxelID(voxel.ID, Discretization, level - 1);
                 lock (voxel0.InnerVoxels[level - 1])
                 {
                     if (voxel0.InnerVoxels[voxel.Level - 1].CountDescendants(parentID, level - 1, VoxelRoleTypes.Full) == voxelsInParent[level])
@@ -188,7 +188,7 @@ namespace TVGL.Voxelization
             }
             // for the lower levels, first get or make the level-0 voxel (next7 lines)
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, 0);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, Discretization, 0);
             Voxel_Level0_Class voxel0;
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id0))
@@ -242,12 +242,11 @@ namespace TVGL.Voxelization
                     }
                 }
             }
-            if (voxel0.InnerVoxels[level - 1] == null) //ensure that InnerVoxels is setup. Actually, I'm pretty sure 
-                //this code will never be hit. testing...
-                voxel0.InnerVoxels[level - 1] = new VoxelHashSet(level, this);
+            if (!populateSubVoxels || this.numberOfLevels - 1 == level) return voxel;  //if at the lowest level or
+                                                                                       //if populateSubVoxels is false, then we can return 
+            if (voxel0.InnerVoxels[level] == null)
+                voxel0.InnerVoxels[level] = new VoxelHashSet(level + 1, this);
 
-            if (!populateSubVoxels || this.numberOfLevels == level) return voxel;  //if at the lowest level or
-                                                                                   //if populateSubVoxels is false, then we can return 
             var startingID = Constants.ClearFlagsFromID(voxel.ID);  //this provides the base for adding all descendants
             var lowerLevelVoxels = new List<IVoxel>();
             var xShift = 1L << (4 + 20 - bitLevelDistribution.Take(level).Sum()); //finding the correct multiplier requires adding up all the bits used in current levels

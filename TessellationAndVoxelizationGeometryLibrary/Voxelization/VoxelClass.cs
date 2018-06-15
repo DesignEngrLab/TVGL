@@ -46,7 +46,7 @@ namespace TVGL.Voxelization
         /// Gets the level.
         /// </summary>
         /// <value>The level.</value>
-        int Level { get; }
+        byte Level { get; }
         /// <summary>
         /// Gets or sets a value indicating whether [BTM coord is inside].
         /// </summary>
@@ -85,7 +85,7 @@ namespace TVGL.Voxelization
         /// Gets the level.
         /// </summary>
         /// <value>The level.</value>
-        public int Level { get; internal set; }
+        public byte Level { get; internal set; }
         /// <summary>
         /// Gets the bottom coordinate.
         /// </summary>
@@ -136,7 +136,7 @@ namespace TVGL.Voxelization
     /// <seealso cref="TVGL.Voxelization.IVoxel" />
     public class Voxel_ClassWithLinksToTSElements : IVoxel
     {
-        internal Voxel_ClassWithLinksToTSElements(long ID, int level, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
+        internal Voxel_ClassWithLinksToTSElements(long ID, byte level, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
             bool btmCoordIsInside = false)
         {
             Role = voxelRole;
@@ -169,7 +169,7 @@ namespace TVGL.Voxelization
         /// Gets the level.
         /// </summary>
         /// <value>The level.</value>
-        public int Level { get; internal set; }
+        public byte Level { get; internal set; }
 
         /// <summary>
         /// Gets the bottom coordinate.
