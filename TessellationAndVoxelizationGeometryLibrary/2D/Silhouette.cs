@@ -593,7 +593,7 @@ namespace TVGL
             //Make sure the polygon is ordered correctly (we already know this face is positive)
             var points = face.Vertices.Select(v => projectedPoints[v.IndexInList]).ToList();
             var facePolygon = new PolygonLight(points);
-            if (forceToBePositive && facePolygon.Area < 0) facePolygon.Reverse();
+            if (forceToBePositive && facePolygon.Area < 0) facePolygon = PolygonLight.Reverse(facePolygon);
             return facePolygon;
         }
     }

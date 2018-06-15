@@ -65,10 +65,12 @@ namespace TVGL
             }
         }
 
-        public void Reverse()
+        public static PolygonLight Reverse(PolygonLight original)
         {
-            Path.Reverse();
-            Area = -Area;
+            var path = new List<PointLight>(original.Path);
+            path.Reverse();
+            var newPoly =  new PolygonLight(path);
+            return newPoly;
         }
 
         public double Length => MiscFunctions.Perimeter(Path);
