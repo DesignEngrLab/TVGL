@@ -1819,5 +1819,41 @@ namespace TVGL
             return true;
         }
         #endregion
+
+        //Mirrors a shape along a given direction, such that the mid line is the same for both the original and mirror
+        public static PolygonsAsLight Mirror(PolygonsAsLight shape, double[] direction2D)
+        {
+            var mirror = new PolygonsAsLight();
+            var points = new List<PointLight>();
+            foreach (var path in shape)
+            {
+                foreach (var point in path.Path)
+                {
+                    points.Add(point);
+                }
+            }
+            MinimumEnclosure.GetLengthAndExtremePoints(direction2D, points, out var bottomPoints, out _);
+            var distanceFromOriginToClosestPoint = bottomPoints[0].Position.dotProduct(direction2D, 2);
+            foreach (var polygon in shape)
+            {
+                var newPath = new PathAsLight();
+                foreach (var point in polygon.Path)
+                {
+                    //Get the distance to the point along direction2D
+                    //Then subtract 2X the distance along direction2D
+                    var d = point.Position.dotProduct(direction2D, 2) - distanceFromOriginToClosestPoint;
+                    var newPosition = point.Position.subtract(direction2D.multiply(2 * d), 2);
+                    newPath.Add(new PointLight(newPosition[0], newPosition[1]));
+                }
+                //Reverse the new path so that it retains the same CW/CCW direction of the original
+                newPath.Reverse();
+                mirror.Add(new PolygonLight(newPath));
+                if (!mirror.Last().Area.IsPracticallySame(polygon.Area, Constants.BaseTolerance))
+                {
+                    throw new Exception("Areas do not match after mirroring the polygons");
+                }
+            }
+            return mirror;
+        }
     }
 }
