@@ -50,7 +50,7 @@ namespace TVGL.Voxelization
         /// <returns>IVoxel.</returns>
         public IVoxel GetVoxel(int[] coordinates, int level)
         {
-            var id = Constants.MakeIDFromCoordinates(level, coordinates, level);
+            var id = Constants.MakeIDFromCoordinates(coordinates, singleCoordinateShifts[level]);
             return GetVoxel(id, level);
         }
         /// <summary>
@@ -74,7 +74,7 @@ namespace TVGL.Voxelization
                        ??
                        new Voxel(newIDwoTags + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
             }
-            var parentID = Constants.MakeParentVoxelID(newIDwoTags, Discretization, 0);
+            var parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[0]);
             var parent = voxelDictionaryLevel0.GetVoxel(parentID);
             if (parent == null)
                 return new Voxel(newIDwoTags + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
@@ -91,7 +91,7 @@ namespace TVGL.Voxelization
 
             for (int i = 1; i < level; i++)
             {
-                parentID = Constants.MakeParentVoxelID(newIDwoTags, Discretization, i);
+                parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[i]);
                 if (innerVoxels.Length >= i)
                     parent = innerVoxels[i - 1].GetVoxel(parentID);
                 if (parent == null || parent.Role == VoxelRoleTypes.Empty)
@@ -230,26 +230,25 @@ namespace TVGL.Voxelization
         {
             var positiveStep = direction > 0;
             var dimension = Math.Abs((int)direction) - 1;
-
+            var level = voxel.Level;
             #region Check if steps outside or neighbor has different parent
-            long coordValue = Constants.GetCoordinateIndex(voxel.ID, voxel.Level, dimension);
+            var coordValue = Constants.GetCoordinateIndex(voxel.ID, dimension, singleCoordinateShifts[level]);
             // can't this section shift be combined with first? No, when rightshifting bits, the newest
             // bits entering from the left will be 1's if the MSB is 1. Thus, we do it after the mask
-            var maxValue = Constants.MaxForSingleCoordinate >> (4 * (4 - voxel.Level));
+            var maxValue = Constants.MaxForSingleCoordinate >> singleCoordinateShifts[level];
             if ((coordValue == 0 && !positiveStep) || (positiveStep && coordValue == maxValue))
             {
                 //then stepping outside of entire bounds!
                 neighborHasDifferentParent = true;
                 return null;
             }
-            var justThisLevelCoordValue = coordValue & 15;
+            var maxForThisLevel = voxelsPerSide[level] - 1;
+            var justThisLevelCoordValue = coordValue & maxForThisLevel;
             neighborHasDifferentParent = ((justThisLevelCoordValue == 0 && !positiveStep) ||
-                                          (justThisLevelCoordValue == 15 && positiveStep));
+                                          (justThisLevelCoordValue == maxForThisLevel && positiveStep));
             #endregion
 
-            var delta = 1L;
-            var shift = 20 * dimension + 4 * (4 - voxel.Level) + 4; //todo: replace 4by4 with bit-take-sum
-            delta = delta << shift;
+            var delta = 1L << (20 * dimension + singleCoordinateShifts[voxel.Level] + 4);
             var newID = (positiveStep)
                 ? Constants.ClearFlagsFromID(voxel.ID) + delta
                 : Constants.ClearFlagsFromID(voxel.ID) - delta;
@@ -310,40 +309,40 @@ namespace TVGL.Voxelization
             var parentLevel = child.Level - 1;
             if (child.Level == 0) throw new ArgumentException("There are no parents for level-0 voxels.");
             // childlevels 1, 2, 3, 4 or parent levels 0, 1, 2, 3
-            var parentID = Constants.MakeParentVoxelID(child.ID, Discretization, 0);
+            var parentID = Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[0]);
             var level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parentID);
             if (level0Parent == null)
-                return new Voxel(Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel)
+                return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
                                  + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
             if (level0Parent.Role == VoxelRoleTypes.Full)
-                return new Voxel(Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel)
+                return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
                                  + Constants.SetRoleFlags(0, VoxelRoleTypes.Full), this);
             if (parentLevel == 0) return level0Parent;
             //now for childlevels 2,3, 4 or parent levels 1, 2, 3
-            parentID = Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel);
+            parentID = Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel]);
             var parent = level0Parent.InnerVoxels[parentLevel - 1].GetVoxel(parentID);
             if (parent != null) return parent;
             // so the rest of this should be either fulls or empties as there is no immediate partial parent
             if (parentLevel == 1)
-                return new Voxel(Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel)
+                return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
                                  + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
             //now for childlevels 3, 4 or parent levels 2, 3
-            parentID = Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel - 1); // which would be either 1, or 2 - the grandparent
+            parentID = Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel - 1]); // which would be either 1, or 2 - the grandparent
             parent = level0Parent.InnerVoxels[parentLevel - 2].GetVoxel(parentID);
             if (parent != null || parentLevel == 2)
             {
                 if (parent?.Role == VoxelRoleTypes.Full)
-                    return new Voxel(Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel)
+                    return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
                                      + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Full), this);
-                else return new Voxel(Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel)
+                else return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
                                                 + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
             }
-            parentID = Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel - 2); // which would be 1 - the great-grandparent of a voxels at 4
+            parentID = Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel - 2]); // which would be 1 - the great-grandparent of a voxels at 4
             parent = level0Parent.InnerVoxels[parentLevel - 3].GetVoxel(parentID);
             if (parent?.Role == VoxelRoleTypes.Full)
-                return new Voxel(Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel)
+                return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
                                  + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Full), this);
-            else return new Voxel(Constants.MakeParentVoxelID(child.ID, Discretization, parentLevel)
+            else return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
                                   + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
         }
 
@@ -364,12 +363,12 @@ namespace TVGL.Voxelization
                 return new List<IVoxel>();
             }
             // else the parent is level 1, 2, or 3
-            level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(Constants.MakeParentVoxelID(parent.ID, Discretization, 0));
+            level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(Constants.MakeParentVoxelID(parent.ID, singleCoordinateMasks[0]));
             if (level0Parent.InnerVoxels == null || level0Parent.InnerVoxels.Length <= parent.Level)
                 return new List<IVoxel>();
             var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
             return level0Parent.InnerVoxels[parent.Level].Where(v =>
-                Constants.MakeParentVoxelID(v.ID, Discretization, parent.Level) == parentIDwithoutFlags);
+                Constants.MakeParentVoxelID(v.ID, singleCoordinateMasks[parent.Level]) == parentIDwithoutFlags);
         }
 
         /// <summary>
@@ -473,7 +472,7 @@ namespace TVGL.Voxelization
             for (int i = level + 1; i < numberOfLevels; i++)
                 voxelsPerLayer *= voxelsPerSide[i];
             var limit = Math.Min((int)Math.Ceiling(remainingVoxelLayers / (double)voxelsPerLayer), voxelsPerSide[level]);
-            /* limit will often be 16. The only time it is not is for positive extrudes that meet the bounding box. */
+            /* limit will often be the max. The only time it is not is for positive extrudes that meet the bounding box. */
             var layerOfVoxels = new HashSet<IVoxel>[limit]; /* the voxels are organized into layers */
             for (int i = 0; i < limit; i++)
                 layerOfVoxels[i] = new HashSet<IVoxel>();
@@ -483,17 +482,17 @@ namespace TVGL.Voxelization
                 var layerIndex = getLayerIndex(v, dimension, level, positiveDir);
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].Add(v);
-            } );
+            });
             /* now, for the main loop */
-            var innerLimit = limit < 16 ? limit : 17;
+            var innerLimit = limit < voxelsPerSide[level] ? limit : voxelsPerSide[level] + 1;
             var nextLayerCount = 0; /* this is used to count how many in a layer/slice/cross-section are filled up.
                                      * if it hits the max, then the parent voxel below this one should be filled up. */
             for (int i = 0; i < limit; i++)
             { /* cycle over each layer, note that voxels are being removed from subsequent layers so the process should
                * speed up. The loop may not reach ?...wait a second redundant code?  */
               //   if (remainingVoxelLayers < voxelsPerLayer) continue; //return;
-               Parallel.ForEach(layerOfVoxels[i], voxel =>
-              //  foreach (var voxel in layerOfVoxels[i])
+                Parallel.ForEach(layerOfVoxels[i], voxel =>
+                //  foreach (var voxel in layerOfVoxels[i])
                 {
                     #region fill up the layers below this one
                     if (voxel.Role == VoxelRoleTypes.Full
@@ -526,16 +525,16 @@ namespace TVGL.Voxelization
                         layerOfVoxels[i + 1].Add(neighbor);
                     }
                     #endregion
-                }  );
+                } );
                 remainingVoxelLayers -= (int)voxelsPerLayer;
             }
             return nextLayerCount == 256;
         }
         int getLayerIndex(IVoxel v, int dimension, int level, bool positiveStep)
         {
-            var layer = (int)((v.ID >> (20 * dimension + 4 * (4 - level) + 4)) & 15);//todo: replace 4by4 with bit-take-sum
+            var layer = (int)((v.ID >> (20 * dimension + 4 + singleCoordinateShifts[level])) & singleCoordinateMasks[level]);
             if (positiveStep) return layer;
-            else return 15 - layer;
+            else return (int)singleCoordinateMasks[level] - layer;
         }
 
         #endregion
@@ -746,9 +745,9 @@ namespace TVGL.Voxelization
                 var xShift = 1L << 4 + 4 * (4 - level);
                 var yShift = xShift << 20;
                 var zShift = yShift << 20;
-                for (int i = 0; i < 16; i++)
-                    for (int j = 0; j < 16; j++)
-                        for (int k = 0; k < 16; k++)
+                for (int i = 0; i < 16; i++) //todo fix 16
+                    for (int j = 0; j < 16; j++)//todo fix 16
+                        for (int k = 0; k < 16; k++)//todo fix 16
                             ((List<IVoxel>)voxels).Add(new Voxel(thisIDwoFlags
                                                               + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), this));
             }
@@ -823,9 +822,8 @@ namespace TVGL.Voxelization
                 //Instead of findind the actual coordinate value, get the IDMask for the value because it is faster.
                 //var coordinateMaskValue = MaskAllBut(voxel.ID, directionIndex);
                 //The actual coordinate value
-                //ToDo: double check this next line / convert this into a Constants function if useful
-                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 * (4 - voxelLevel) + 4)) //todo: replace 4by4 with bit-take-sum
-                                  & (Constants.MaxForSingleCoordinate >> 4 * (4 - voxelLevel));
+                long coordValue = (voxel.ID >> (20 * (directionIndex) + 4 + singleCoordinateShifts[voxelLevel]))
+                                  & (Constants.MaxForSingleCoordinate >> singleCoordinateShifts[voxelLevel]);
                 if (sortedDict.ContainsKey(coordValue))
                 {
                     sortedDict[coordValue].Add(voxel);
@@ -875,7 +873,7 @@ namespace TVGL.Voxelization
                         //Add the voxelID. If it is already in the list, update the value:
                         //If oldValue == true && newValue == true => true. If either is false, return false.
                         //ToDo: double check this next line / convert this into a Constants function if useful
-                        long coordValue = Constants.GetCoordinateIndex(voxel.ID, voxelLevel, directionIndex);
+                        var coordValue = Constants.GetCoordinateIndex(voxel.ID, voxelLevel, directionIndex);
                         if (possibleShellVoxels.ContainsKey(coordValue))
                         {
                             possibleShellVoxels[coordValue].AddOrUpdate(sphereVoxel.Key, sphereVoxel.Value,

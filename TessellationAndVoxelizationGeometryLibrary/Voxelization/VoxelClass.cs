@@ -26,7 +26,6 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The identifier.</value>
         long ID { get; }
-        // int[] CoordinateIndices { get; }
         /// <summary>
         /// Gets the bottom coordinate.
         /// </summary>
@@ -70,7 +69,6 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The identifier.</value>
         public long ID { get; internal set; }
-        // public int[] CoordinateIndices { get; internal set; }
         /// <summary>
         /// Gets the length of the side.
         /// </summary>
@@ -95,13 +93,13 @@ namespace TVGL.Voxelization
         /// Gets or sets a value indicating whether [BTM coord is inside].
         /// </summary>
         /// <value><c>true</c> if [BTM coord is inside]; otherwise, <c>false</c>.</value>
-        public bool BtmCoordIsInside { get; set; }
+        public bool BtmCoordIsInside { get;  set; }
 
         /// <summary>
         /// Gets the coordinate indices.
         /// </summary>
         /// <value>The coordinate indices.</value>
-        public int[] CoordinateIndices => Constants.GetCoordinateIndices(ID, Level);
+        public int[] CoordinateIndices { get; internal set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Voxel"/> struct.
@@ -115,18 +113,10 @@ namespace TVGL.Voxelization
             Role = role;
             Level = level;
             BtmCoordIsInside = btmIsInside;
-            if (solid == null)
-            {
-                SideLength = double.NaN;
-                BottomCoordinate = null;
-            }
-            else
-            {
-                SideLength = solid.VoxelSideLengths[Level];
-                var coordinateIndices = Constants.GetCoordinateIndices(ID, Level);
-                BottomCoordinate =
-                    solid.GetRealCoordinates(Level, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
-            }
+            SideLength = solid.VoxelSideLengths[Level];
+            CoordinateIndices = Constants.GetCoordinateIndices(ID, solid.singleCoordinateShifts[level]);
+            BottomCoordinate =
+                solid.GetRealCoordinates(Level, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
         }
     }
 
@@ -145,9 +135,9 @@ namespace TVGL.Voxelization
                       Constants.SetRoleFlags(Level, Role, Role == VoxelRoleTypes.Full || btmCoordIsInside);
             BtmCoordIsInside = btmCoordIsInside;
             SideLength = solid.VoxelSideLengths[Level];
-            var coordinateIndices = Constants.GetCoordinateIndices(ID, Level);
+            CoordinateIndices = Constants.GetCoordinateIndices(ID,solid.singleCoordinateShifts[level]);
             BottomCoordinate =
-                solid.GetRealCoordinates(Level, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
+                solid.GetRealCoordinates(Level, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
         }
         /// <summary>
         /// Gets the identifier.
@@ -194,7 +184,7 @@ namespace TVGL.Voxelization
         /// Gets the coordinate indices.
         /// </summary>
         /// <value>The coordinate indices.</value>
-        public int[] CoordinateIndices => Constants.GetCoordinateIndices(ID, Level);
+        public int[] CoordinateIndices { get; internal set; }
 
         /// <summary>
         /// Gets the faces.
@@ -233,7 +223,7 @@ namespace TVGL.Voxelization
             : base(ID, 0, voxelRole, solid, btmCoordIsInside)
         {
             if (Role == VoxelRoleTypes.Partial)
-                InnerVoxels = new VoxelHashSet[solid.numberOfLevels-1];
+                InnerVoxels = new VoxelHashSet[solid.numberOfLevels - 1];
         }
         /// <summary>
         /// The inner voxels

@@ -225,11 +225,13 @@ namespace TVGLPresenterDX
         public static void TestVoxelSearch(TessellatedSolid ts, string _fileName)
         {
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Fine, false);
+            Console.WriteLine("...done voxelizing");
             PresenterShowAndHang(vs1);
+            return;
             Console.WriteLine("Drafting voxelized model along orthogonals");
             var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.XPositive);
-            PresenterShowAndHang(vs1xpos);
+            //PresenterShowAndHang(vs1xpos);
             Console.WriteLine("x-neg");
             var vs1xneg = vs1.ExtrudeToNewSolid(VoxelDirections.XNegative);
             //   PresenterShowAndHang(vs1xneg);

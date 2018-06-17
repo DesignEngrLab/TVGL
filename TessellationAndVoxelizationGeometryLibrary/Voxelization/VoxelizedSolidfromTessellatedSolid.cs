@@ -41,10 +41,11 @@ namespace TVGL.Voxelization
             bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
             voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
             voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
+            defineMaskAndShifts(bitLevelDistribution);
             numberOfLevels = bitLevelDistribution.Length;
-        #region Setting Up Parameters 
+            #region Setting Up Parameters 
 
-        double longestSide;
+            double longestSide;
             Bounds = new double[2][];
             if (bounds != null)
             {
@@ -66,7 +67,7 @@ namespace TVGL.Voxelization
                 longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
 
                 var voxelsonLongSide = voxelsPerSide.Aggregate(1, (num, total) => total *= num);
-                    
+
                 var delta = longestSide * ((voxelsonLongSide / (voxelsonLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
                 Bounds[0] = ts.Bounds[0].subtract(new[] { delta, delta, delta });
                 Bounds[1] = ts.Bounds[1].add(new[] { delta, delta, delta });
@@ -381,14 +382,14 @@ namespace TVGL.Voxelization
             if (parent == null)
             {
                 level = 0;
-                parentLimits = new[] { new int[3], new[] { 16, 16, 16 } };
+                parentLimits = new[] { new int[3], new[] { voxelsPerSide[0], voxelsPerSide[0], voxelsPerSide[0] } };
             }
             else
             {
-                level = (byte) (parent.Level + 1);
+                level = (byte)(parent.Level + 1);
                 parentLimits = new int[2][];
-                parentLimits[0] = Constants.GetCoordinateIndices(parent.ID, level);
-                parentLimits[1] = parentLimits[0].add(new[] { 16, 16, 16, });
+                parentLimits[0] = Constants.GetCoordinateIndices(parent.ID, singleCoordinateShifts[level]);
+                parentLimits[1] = parentLimits[0].add(new[] { voxelsPerSide[level], voxelsPerSide[level], voxelsPerSide[level]});
             }
         }
 
@@ -463,7 +464,7 @@ namespace TVGL.Voxelization
                 var voxel = MakeAndStorePartialVoxel(coordinates, level, voxels, parentLimits, face);
                 if (voxel is Voxel_ClassWithLinksToTSElements)
                 { // this is just to add links to the edges
-                    var btmDim = Constants.GetCoordinateIndex(voxel.ID, level, dim);
+                    var btmDim = Constants.GetCoordinateIndex(voxel.ID, dim, singleCoordinateShifts[level]);
                     foreach (var faceEdge in face.Edges)
                     {
                         // cycle over the edges to link them to the voxels
@@ -744,7 +745,7 @@ namespace TVGL.Voxelization
             {
                 var voxel = queue.Dequeue();
                 var voxCoord = voxel.CoordinateIndices;
-                var maxValue = Constants.MaxForSingleCoordinate >> (4 * (4 - level));
+                var maxValue = Constants.MaxForSingleCoordinate >> singleCoordinateShifts[level];
                 var gotFromNeighbor = false;
                 for (int i = 0; i < 3; i++)
                 {
@@ -795,7 +796,7 @@ namespace TVGL.Voxelization
             var step = direction > 0 ? 1 : -1;
             var dimension = Math.Abs((int)direction) - 1;
             neighborCoord[dimension] += step;
-            var neighborID = Constants.MakeIDFromCoordinates(level, neighborCoord, level);
+            var neighborID = Constants.MakeIDFromCoordinates(neighborCoord, singleCoordinateShifts[level]);
             return voxelHashSet.GetVoxel(neighborID);
         }
 
@@ -937,7 +938,7 @@ namespace TVGL.Voxelization
         {
             if (allPointsOnOneSideOfLimits(limits, coordinates)) return null;
             IVoxel voxel;
-            var id = Constants.MakeIDFromCoordinates(level, coordinates, level);
+            var id = Constants.MakeIDFromCoordinates(coordinates, singleCoordinateShifts[level]);
             lock (voxels)
             {
                 voxel = voxels.GetVoxel(id);
@@ -985,7 +986,7 @@ namespace TVGL.Voxelization
         {
             if (allPointsOnOneSideOfLimits(limits, coordinates)) return null;
             IVoxel voxel;
-            var id = Constants.MakeIDFromCoordinates(level, coordinates, level);
+            var id = Constants.MakeIDFromCoordinates(coordinates, singleCoordinateShifts[level]);
             lock (voxels)
             {
                 voxel = voxels.GetVoxel(id);

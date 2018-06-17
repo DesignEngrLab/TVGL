@@ -102,10 +102,7 @@ namespace TVGL
         /// like Polygon.IsRectangular
         /// </summary>
         public const double LowConfidence = 0.68;
-
-        internal const double VoxelScaleSize = 255.8; // Math.Pow(2, 20) - 0.2;
-
-
+        
 
         /// <summary>
         /// The tessellation to voxelization intersection combinations. This is used in the unction that

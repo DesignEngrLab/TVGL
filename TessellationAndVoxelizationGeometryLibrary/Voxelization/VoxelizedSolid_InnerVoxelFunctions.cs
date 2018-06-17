@@ -73,7 +73,7 @@ namespace TVGL.Voxelization
                 return voxel;
             }
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, Discretization, 0);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, singleCoordinateMasks[0]);
             Voxel_Level0_Class voxel0;
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id0))
@@ -97,11 +97,16 @@ namespace TVGL.Voxelization
             else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= voxelsInParent[level])
             {   // for the remaining voxellevels, since the hashsets are combined we need to count
                 // what is indeed an immediate descendant of the the parent and see if they are all full
-                var parentID = Constants.MakeParentVoxelID(voxel.ID, Discretization, level - 1);
+                var parentID = Constants.MakeParentVoxelID(voxel.ID, singleCoordinateMasks[level - 1]);
                 lock (voxel0.InnerVoxels[level - 1])
                 {
-                    if (voxel0.InnerVoxels[voxel.Level - 1].CountDescendants(parentID, level - 1, VoxelRoleTypes.Full) == voxelsInParent[level])
-                        ChangeVoxelToFull(voxel0.InnerVoxels[level - 1 - 1].GetVoxel(parentID));
+                    if (voxel0.InnerVoxels[voxel.Level - 1]
+                            .CountDescendants(parentID, level - 1, VoxelRoleTypes.Full) == voxelsInParent[level])
+                    {
+                        var parentVoxel = voxel0.InnerVoxels[level - 1 - 1].GetVoxel(parentID);
+                        if (parentVoxel == null) ChangeEmptyVoxelToFull(parentID, voxel.Level - 1);
+                        else ChangeVoxelToFull(parentVoxel);
+                    }
                 }
             }
             return voxel;
@@ -115,6 +120,7 @@ namespace TVGL.Voxelization
         /// <returns>IVoxel.</returns>
         public IVoxel ChangeVoxelToFull(IVoxel voxel)
         {
+            // if (voxel == null) Debug.WriteLine("");
             if (voxel.Role == VoxelRoleTypes.Full)
             {
                 // Debug.WriteLine("Call to ChangeVoxelToFull but voxel is already full.");
@@ -164,7 +170,7 @@ namespace TVGL.Voxelization
             else if (level > 1 && voxel0.InnerVoxels[voxel.Level - 1].Count >= voxelsInParent[level])
             {   // for the remaining voxellevels, since the hashsets are combined we need to count
                 // what is indeed an immediate descendant of the the parent and see if they are all full
-                var parentID = Constants.MakeParentVoxelID(voxel.ID, Discretization, level - 1);
+                var parentID = Constants.MakeParentVoxelID(voxel.ID, singleCoordinateMasks[level - 1]);
                 lock (voxel0.InnerVoxels[level - 1])
                 {
                     if (voxel0.InnerVoxels[voxel.Level - 1].CountDescendants(parentID, level - 1, VoxelRoleTypes.Full) == voxelsInParent[level])
@@ -188,7 +194,7 @@ namespace TVGL.Voxelization
             }
             // for the lower levels, first get or make the level-0 voxel (next7 lines)
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, Discretization, 0);
+            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, singleCoordinateMasks[0]);
             Voxel_Level0_Class voxel0;
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id0))
@@ -249,7 +255,7 @@ namespace TVGL.Voxelization
 
             var startingID = Constants.ClearFlagsFromID(voxel.ID);  //this provides the base for adding all descendants
             var lowerLevelVoxels = new List<IVoxel>();
-            var xShift = 1L << (4 + 20 - bitLevelDistribution.Take(level).Sum()); //finding the correct multiplier requires adding up all the bits used in current levels
+            var xShift = 1L << (4 + singleCoordinateShifts[level]); //finding the correct multiplier requires adding up all the bits used in current levels
             var yShift = xShift << 20; //once the xShift is known, the y and z shifts are just 20 bits over
             var zShift = yShift << 20;
             for (int i = 0; i < voxelsPerSide[level + 1]; i++)
@@ -292,39 +298,5 @@ namespace TVGL.Voxelization
         {
             return indices.multiply(VoxelSideLengths[level]).add(Offset);
         }
-
-
-        #region Quick Booleans for IDs
-        internal static bool isFull(long ID)
-        {
-            return (ID & 3) == 3;
-        }
-        internal static bool isEmpty(long ID)
-        {
-            return (ID & 3) == 0;
-        }
-        internal static bool isPartial(long ID)
-        {
-            var id = ID & 3;
-            return id == 1 || id == 2;
-        }
-
-        internal static bool isLevel4(long ID)
-        {
-            return (ID & 15) >= 12;
-        }
-        internal static bool isLevel3(long ID)
-        {
-            var id = ID & 15;
-            return id < 12 && id >= 8;
-        }
-        internal static bool isLevel2(long ID)
-        {
-            var id = ID & 15;
-            return id < 8 && id >= 4;
-        }
-
-
-        #endregion
     }
 }

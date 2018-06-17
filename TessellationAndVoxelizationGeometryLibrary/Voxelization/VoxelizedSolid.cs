@@ -37,8 +37,11 @@ namespace TVGL.Voxelization
         public readonly VoxelDiscretization Discretization;
         internal int numberOfLevels;
         internal int[] bitLevelDistribution;
-        internal int[] voxelsPerSide;
-        internal int[] voxelsInParent;
+        private int[] voxelsPerSide;
+        private int[] voxelsInParent;
+        internal int[] singleCoordinateShifts;
+        private long[] singleCoordinateMasks;
+
 
         /// <summary>
         /// The voxel side length for each voxel level. It's a square, so all sides are the same length.
@@ -74,6 +77,7 @@ namespace TVGL.Voxelization
             bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
             voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
             voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
+            defineMaskAndShifts(bitLevelDistribution);
             numberOfLevels = bitLevelDistribution.Length;
             Bounds = new double[2][];
             Bounds[0] = (double[])bounds[0].Clone();
@@ -92,6 +96,22 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
+        private void defineMaskAndShifts(int[] bits)
+        {
+            var n = bitLevelDistribution.Length;
+            singleCoordinateMasks = new long[n];
+            singleCoordinateShifts = new int[n];
+
+            var shift = 20;
+            var mask = 0L;
+            for (int i = 0; i < n; i++)
+            {
+                shift -= bits[i];
+                singleCoordinateShifts[i] = shift;
+                mask += (long) (voxelsPerSide[i]-1) << shift;
+                singleCoordinateMasks[i] = mask;
+            }
+        }
 
         internal VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
         {
@@ -99,6 +119,7 @@ namespace TVGL.Voxelization
             bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
             voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
             voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
+            defineMaskAndShifts(bitLevelDistribution);
             numberOfLevels = bitLevelDistribution.Length;
             // the next 10 lines are common to the constructor above. They cannot be combines since these
             // flow down to different sub-constructors

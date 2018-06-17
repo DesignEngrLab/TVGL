@@ -628,7 +628,7 @@ namespace TVGL.Voxelization
             {
                 this.set = set;
                 index = 0;
-                current = new Voxel(0L, null);
+                current = null;// new Voxel(0L, null);
             }
 
             public void Dispose()

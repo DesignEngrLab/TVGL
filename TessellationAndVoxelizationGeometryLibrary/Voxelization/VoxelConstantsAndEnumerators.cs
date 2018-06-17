@@ -58,10 +58,9 @@ namespace TVGL.Voxelization
         /// <param name="level">The level of the parent.</param>
         /// <returns>System.Int64.</returns>
         /// <exception cref="ArgumentOutOfRangeException">containing level must be 0, 1, 2, or 3</exception>
-        public static long MakeParentVoxelID(long id, VoxelDiscretization discretization, int level)
+        public static long MakeParentVoxelID(long id, long singleCoordMask)
         {
-            var mask = SingleCoordMasks[discretization][level];
-            mask = (mask << 4) + (mask << 24) + (mask << 44);
+            var mask = (singleCoordMask << 4) + (singleCoordMask << 24) + (singleCoordMask << 44);
             return id & mask;
         }
         #endregion
@@ -162,36 +161,19 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="level">The level.</param>
         /// <param name="coordinates">The coordinates.</param>
-        /// <param name="inputCoordLevel">The input coord level.</param>
         /// <returns>System.Int64.</returns>
-        internal static long MakeIDFromCoordinates(int level, int[] coordinates, int inputCoordLevel)
+        internal static long MakeIDFromCoordinates(int[] coordinates, int singleCoordShift)
         {
+            var shift = 4 + singleCoordShift;
             //   z0   z1    z2   z3    z4   y0   y1    y2   y3    y4    x0   x1    x2   x3    x4   flags
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            var xLong = (long)coordinates[0] << 4;
-            var yLong = (long)coordinates[1] << 24;
-            var zLong = (long)coordinates[2] << 44;
-
-            xLong = xLong << 4 * (4 - inputCoordLevel);
-            yLong = yLong << 4 * (4 - inputCoordLevel); //todo: replace 4by4 with bit's take sum
-            zLong = zLong << 4 * (4 - inputCoordLevel);
-            return zLong + yLong + xLong;
-
-            /*
-            var id = zLong + yLong + xLong;
-           switch (level)
-            {
-                case 0: return id & maskAllButLevel0;
-                case 1:
-                    return id & maskAllButLevel0and1;
-                case 2:
-                    return id & maskAllButLevel01and2;
-                case 3:
-                    return id & maskLevel4;
-                default: return id;
-            }
-            */
+            var result = (long)coordinates[0] << shift;
+            shift += 20;
+            result += (long)coordinates[1] << shift;
+            shift += 20;
+            result += (long)coordinates[2] << shift;
+            return result;
         }
 
 
@@ -201,13 +183,13 @@ namespace TVGL.Voxelization
         /// <param name="ID">The identifier.</param>
         /// <param name="level">The level.</param>
         /// <returns>System.Int32[].</returns>
-        internal static int[] GetCoordinateIndices(long ID, int level)
+        internal static int[] GetCoordinateIndices(long ID, int singleShift)
         {
             return new[]
             {
-                GetCoordinateIndex(ID, level, 0),
-                GetCoordinateIndex(ID, level, 1),
-                GetCoordinateIndex(ID, level, 2)
+                GetCoordinateIndex(ID,  0, singleShift),
+                GetCoordinateIndex(ID,  1, singleShift),
+                GetCoordinateIndex(ID,  2, singleShift)
             };
         }
         /// <summary>
@@ -217,10 +199,10 @@ namespace TVGL.Voxelization
         /// <param name="level">The level.</param>
         /// <param name="dimension">The dimension.</param>
         /// <returns>System.Int32.</returns>
-        internal static int GetCoordinateIndex(long ID, int level, int dimension)
+        internal static int GetCoordinateIndex(long ID, int dimension, int singleShift)
         {
-            var shift = 4 + 20 * dimension + 4 * (4 - level);  //todo: replace 4by4 with bit's take sum
-            return (int)((ID >> shift) & (Constants.MaxForSingleCoordinate >> 4 * (4 - level)));
+            var shift = 4 + 20 * dimension + singleShift;
+            return (int)((ID >> shift) & (Constants.MaxForSingleCoordinate >> singleShift));
         }
 
         #endregion
@@ -228,50 +210,23 @@ namespace TVGL.Voxelization
         internal static Dictionary<VoxelDiscretization, int[]> DefaultBitLevelDistribution
         = new Dictionary<VoxelDiscretization, int[]>()
         {
-              { VoxelDiscretization.ExtraCoarse, new[]{4}}, // 16 (2^4) voxels per side
+            /*  { VoxelDiscretization.ExtraCoarse, new[]{4}}, // 16 (2^4) voxels per side
                { VoxelDiscretization.Coarse, new[]{4,4}}, // 256 (2^8)  voxels per side
                { VoxelDiscretization.Medium, new[]{4,4,4}}, // 4096 (2^12)  voxels per side
                { VoxelDiscretization.Fine, new[]{4,4,4,4}}, // 65K (2^16)  voxels per side
-               { VoxelDiscretization.ExtraFine, new[]{4,4,4,4,4}} //1million (2^20) voxels per side 
-            /*   { VoxelDiscretization.ExtraCoarse, new[]{3,3}}, // 64 (2^6) voxels per side
+               { VoxelDiscretization.ExtraFine, new[]{4,4,4,4,4}} //1million (2^20) voxels per side */ 
+               { VoxelDiscretization.ExtraCoarse, new[]{3,3}}, // 64 (2^6) voxels per side
                { VoxelDiscretization.Coarse, new[]{4,3,3}}, // 1024 (2^10)  voxels per side
                { VoxelDiscretization.Medium, new[]{4,3,3,2}}, // 4096 (2^12)  voxels per side
                { VoxelDiscretization.Fine, new[]{5,3,3,2,2}}, // 32K (2^15)  voxels per side
-               { VoxelDiscretization.ExtraFine, new[]{5,4,3,3,3,2}} //1million (2^20) voxels per side */
+               { VoxelDiscretization.ExtraFine, new[]{5,4,3,3,3,2}} //1million (2^20) voxels per side
         };
 
 
         internal const int LevelAtWhichComparerSwitchesToFine = 4;
         internal const int LevelAtWhichLinkToTessellation = 1;
 
-        internal static Dictionary<VoxelDiscretization, long[]> SingleCoordMasks
-        {
-            get
-            {
-                if (_singleCoordMasks == null) makeSingleCoordMasks();
-                return _singleCoordMasks;
-            }
-        }
-        private static Dictionary<VoxelDiscretization, long[]> _singleCoordMasks;
 
-        private static void makeSingleCoordMasks()
-        {
-            _singleCoordMasks = new Dictionary<VoxelDiscretization, long[]>();
-            foreach (var bitsKeyValuePair in DefaultBitLevelDistribution)
-            {
-                var bits = bitsKeyValuePair.Value;
-                var masks = new long[bits.Length];
-                var shift = 20;
-                var mask = 0L;
-                for (int i = 0; i < bits.Length; i++)
-                {
-                    shift -= bits[i];
-                    mask += (long) (Math.Pow(2, bits[i]) - 1) << shift;
-                    masks[i] = mask;
-                }
-                _singleCoordMasks.Add(bitsKeyValuePair.Key, masks);
-            }
-        }
 
     }
 
