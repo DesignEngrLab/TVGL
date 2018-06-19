@@ -448,12 +448,13 @@ namespace TVGL.Voxelization
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public void Extrude(VoxelDirections direction)
         {
-            if (direction > 0)
-            {
-                var maxVoxels = (int)Math.Ceiling(dimensions[(int)direction - 1] / VoxelSideLengths[numberOfLevels - 1]);
-                Extrude(direction, null, maxVoxels, 0);
-            }
-            else Extrude(direction, null, int.MaxValue, 0);
+            //if (direction > 0)
+            //{
+            //    var maxVoxels = (int)Math.Ceiling(dimensions[(int)direction - 1] / VoxelSideLengths[numberOfLevels - 1]);
+            //    Extrude(direction, null, maxVoxels, 0);
+            //}
+            //else 
+            Extrude(direction, null, int.MaxValue, 0);
             UpdateProperties();
         }
 
@@ -479,10 +480,11 @@ namespace TVGL.Voxelization
             Parallel.ForEach(voxels, v =>
             //foreach (var v in voxels)
             {
-                var layerIndex = getLayerIndex(v, dimension, level, positiveDir);
+                var layerIndex = (int)((v.ID >> (20 * dimension + 4 + singleCoordinateShifts[level])) & (voxelsPerSide[level] - 1));
+                if (!positiveDir) layerIndex = limit - 1 - layerIndex;
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].Add(v);
-            });
+            } );
             /* now, for the main loop */
             var innerLimit = limit < voxelsPerSide[level] ? limit : voxelsPerSide[level] + 1;
             var nextLayerCount = 0; /* this is used to count how many in a layer/slice/cross-section are filled up.
@@ -491,8 +493,8 @@ namespace TVGL.Voxelization
             { /* cycle over each layer, note that voxels are being removed from subsequent layers so the process should
                * speed up. The loop may not reach ?...wait a second redundant code?  */
               //   if (remainingVoxelLayers < voxelsPerLayer) continue; //return;
-                Parallel.ForEach(layerOfVoxels[i], voxel =>
-                //  foreach (var voxel in layerOfVoxels[i])
+              Parallel.ForEach(layerOfVoxels[i], voxel =>
+              //  foreach (var voxel in layerOfVoxels[i])
                 {
                     #region fill up the layers below this one
                     if (voxel.Role == VoxelRoleTypes.Full
@@ -519,22 +521,16 @@ namespace TVGL.Voxelization
                     {
                         var filledUpNextLayer = Extrude(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
-                        if (neighbor == null || layerOfVoxels.Length <= i + 1)  return;  // null happens when you go outside of bounds (of coarsest voxels)
+                        if (neighbor == null || layerOfVoxels.Length <= i + 1) return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer) neighbor = ChangeVoxelToFull(neighbor);
                         else if (neighbor.Role == VoxelRoleTypes.Empty) neighbor = ChangeVoxelToPartial(neighbor);
                         layerOfVoxels[i + 1].Add(neighbor);
                     }
                     #endregion
-                } );
+                });
                 remainingVoxelLayers -= (int)voxelsPerLayer;
             }
-            return nextLayerCount == 256;
-        }
-        int getLayerIndex(IVoxel v, int dimension, int level, bool positiveStep)
-        {
-            var layer = (int)((v.ID >> (20 * dimension + 4 + singleCoordinateShifts[level])) & singleCoordinateMasks[level]);
-            if (positiveStep) return layer;
-            else return (int)singleCoordinateMasks[level] - layer;
+            return nextLayerCount == voxelsPerSide[level] * voxelsPerSide[level];
         }
 
         #endregion
@@ -598,10 +594,10 @@ namespace TVGL.Voxelization
                 // to guide us in which sub-voxels to keep.
                 var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
 
-                var refVoxels = GetChildVoxels(references[0].GetVoxel(parent.ID, parent.Level));
+                var refVoxels = references[0].GetChildVoxels(references[0].GetVoxel(parent.ID, parent.Level));
                 // cycle over the reference voxels from references[0]
-                //Parallel.ForEach(refVoxels, refVoxel =>
-                foreach (var refVoxel in refVoxels)
+                Parallel.ForEach(refVoxels, refVoxel =>
+                //foreach (var refVoxel in refVoxels)
                 {
                     var referenceLowestRole = GetLowestRole(refVoxel.ID, level, references);
                     if (referenceLowestRole == VoxelRoleTypes.Full)
@@ -615,18 +611,19 @@ namespace TVGL.Voxelization
                     {
                         var newVoxel = new Voxel(Constants.ClearFlagsFromID(refVoxel.ID)
                                                     + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
+
                         lock (voxel0.InnerVoxels[level - 1])
                             voxel0.InnerVoxels[level - 1].Add(newVoxel);
                         if (numberOfLevels > level)
                             Intersect(newVoxel, level + 1, references, true);
                     }
-                }//);
+                });
             }
             else
             {
                 var voxels = GetChildVoxels(parent);
-                //Parallel.ForEach(voxels, thisVoxel =>
-                foreach (var thisVoxel in voxels)
+                Parallel.ForEach(voxels, thisVoxel =>
+                //foreach (var thisVoxel in voxels)
                 {
                     var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
                     if (referenceLowestRole == VoxelRoleTypes.Full) return;
@@ -638,7 +635,7 @@ namespace TVGL.Voxelization
                         if (numberOfLevels > level)
                             Intersect(thisVoxel, level + 1, references, thisVoxelWasFull);
                     }
-                } //);
+                } );
             }
         }
         #endregion

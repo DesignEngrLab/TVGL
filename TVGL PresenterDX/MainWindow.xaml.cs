@@ -134,7 +134,7 @@ namespace TVGLPresenterDX
                 {
                     //  if (neighbors[i / 2] != null && neighbors[i / 2].Role == VoxelRoleTypes.Full) continue;
                     if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
-                                                     || neighbors[i / 2].Role == VoxelRoleTypes.Partial)) continue;
+                                                     || (neighbors[i / 2].Role == VoxelRoleTypes.Partial && v.Level == lowestLevel))) continue;
                     for (int j = 0; j < 3; j++)
                     {
                         positions.Add(new Vector3(x + coordOffsets[i][j][0] * s,

@@ -84,10 +84,10 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
-            var r = new Random();
-            fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
-            for (var i = 0; i < 5; i++)
+            var fileNames = dir.GetFiles("**");
+            //var r = new Random();
+            //fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
+            for (var i = 30; i < 35; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -225,28 +225,28 @@ namespace TVGLPresenterDX
         public static void TestVoxelSearch(TessellatedSolid ts, string _fileName)
         {
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Fine, false);
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
             Console.WriteLine("...done voxelizing");
             PresenterShowAndHang(vs1);
-            return;
+            
             Console.WriteLine("Drafting voxelized model along orthogonals");
             var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.XPositive);
-            //PresenterShowAndHang(vs1xpos);
+            PresenterShowAndHang(vs1xpos);
             Console.WriteLine("x-neg");
             var vs1xneg = vs1.ExtrudeToNewSolid(VoxelDirections.XNegative);
-            //   PresenterShowAndHang(vs1xneg);
+             PresenterShowAndHang(vs1xneg);
             Console.WriteLine("y-pos");
             var vs1ypos = vs1.ExtrudeToNewSolid(VoxelDirections.YPositive);
-            //   PresenterShowAndHang(vs1ypos);
+             PresenterShowAndHang(vs1ypos);
             Console.WriteLine("y-neg");
             var vs1yneg = vs1.ExtrudeToNewSolid(VoxelDirections.YNegative);
-            //   PresenterShowAndHang(vs1yneg);
+             PresenterShowAndHang(vs1yneg);
             Console.WriteLine("z-pos");
             var vs1zpos = vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive);
-            //   PresenterShowAndHang(vs1zpos);
+               PresenterShowAndHang(vs1zpos);
             Console.WriteLine("z-neg");
             var vs1zneg = vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative);
-            //   PresenterShowAndHang(vs1zneg);
+              PresenterShowAndHang(vs1zneg);
 
             //Console.WriteLine("Old Intersecting drafted models");
             //var intersect = vs1xpos.IntersectToNewSolidOLD(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);

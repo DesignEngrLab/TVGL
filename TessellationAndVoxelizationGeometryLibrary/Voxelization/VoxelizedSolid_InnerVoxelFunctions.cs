@@ -52,7 +52,7 @@ namespace TVGL.Voxelization
                 // finally, any descendants of voxel need to be removed
                 else if (voxel.Role == VoxelRoleTypes.Partial)
                 {
-                    for (int i = voxel.Level; i < numberOfLevels; i++)
+                    for (int i = voxel.Level; i < numberOfLevels - 1; i++)
                     { // by starting at voxel.Level (and not doing an i-1), we are starting at the next lower level
                         lock (voxel0.InnerVoxels[i])
                             voxel0.InnerVoxels[i].RemoveDescendants(voxel.ID, voxel.Level);
@@ -223,35 +223,35 @@ namespace TVGL.Voxelization
                 // also, we need to set up the innerVoxel hashsets.
                 voxel0 = (Voxel_Level0_Class)voxel;
                 voxel0.InnerVoxels = new VoxelHashSet[numberOfLevels - 1];
+                for (int i = 1; i < numberOfLevels; i++)
+                    ((Voxel_Level0_Class)voxel).InnerVoxels[i - 1] = new VoxelHashSet(i, this);
                 voxel0.Role = VoxelRoleTypes.Partial;
+                return voxel0;
             }
-            else
+            voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
+            // if the voxel at level-0 is full then we first must change it to Partial so that we can
+            // add this voxel. In this way, populateSubVoxels must be set to true in the following recursion
+            // so that we have an accurate representation of the parent. In the present, it may be false since
+            // the calling function intends to fill it up. Actually, I'm not sure the recursion will ever happed
+            // with current set of modification functions that work form level-0 on down.
+            if (voxel0.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(voxel0, true);
+            if (voxel is Voxel_ClassWithLinksToTSElements)
+                ((Voxel_ClassWithLinksToTSElements)voxel).Role = VoxelRoleTypes.Partial;
+            else //if it's a class then we can change with the above statement
             {
-                voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
-                // if the voxel at level-0 is full then we first must change it to Partial so that we can
-                // add this voxel. In this way, populateSubVoxels must be set to true in the following recursion
-                // so that we have an accurate representation of the parent. In the present, it may be false since
-                // the calling function intends to fill it up. Actually, I'm not sure the recursion will ever happed
-                // with current set of modification functions that work form level-0 on down.
-                if (voxel0.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(voxel0, true);
-                if (voxel is Voxel_ClassWithLinksToTSElements)
-                    ((Voxel_ClassWithLinksToTSElements)voxel).Role = VoxelRoleTypes.Partial;
-                else //if it's a class then we can change with the above statement
+                //if it's the voxel struct then we have to delete it and make a new one
+                lock (voxel0.InnerVoxels[level - 1])
                 {
-                    //if it's the voxel struct then we have to delete it and make a new one
-                    lock (voxel0.InnerVoxels[level - 1])
-                    {
-                        voxel0.InnerVoxels[level - 1].Remove(voxel);
-                        voxel = new Voxel(Constants.ClearFlagsFromID(voxel.ID) +
-                                          Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
-                        voxel0.InnerVoxels[level - 1].Add(voxel);
-                    }
+                    voxel0.InnerVoxels[level - 1].Remove(voxel);
+                    voxel = new Voxel(Constants.ClearFlagsFromID(voxel.ID) +
+                                      Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
+                    voxel0.InnerVoxels[level - 1].Add(voxel);
                 }
             }
+            if (level < numberOfLevels - 1 && voxel0.InnerVoxels[level] == null)
+                voxel0.InnerVoxels[level] = new VoxelHashSet(level + 1, this);
             if (!populateSubVoxels || this.numberOfLevels - 1 == level) return voxel;  //if at the lowest level or
                                                                                        //if populateSubVoxels is false, then we can return 
-            if (voxel0.InnerVoxels[level] == null)
-                voxel0.InnerVoxels[level] = new VoxelHashSet(level + 1, this);
 
             var startingID = Constants.ClearFlagsFromID(voxel.ID);  //this provides the base for adding all descendants
             var lowerLevelVoxels = new List<IVoxel>();
