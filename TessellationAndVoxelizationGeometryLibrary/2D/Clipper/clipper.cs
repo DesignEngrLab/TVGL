@@ -4741,7 +4741,7 @@ namespace ClipperLib
     }
     //------------------------------------------------------------------------------
 
-    public void Execute(ref Paths solution, double delta)
+    public void Execute(Paths solution, double delta)
     {
       solution.Clear();
       FixOrientations();
@@ -4772,7 +4772,7 @@ namespace ClipperLib
     }
     //------------------------------------------------------------------------------
 
-    public void Execute(ref PolyTree solution, double delta)
+    public void Execute(PolyTree solution, double delta)
     {
       solution.Clear();
       FixOrientations();

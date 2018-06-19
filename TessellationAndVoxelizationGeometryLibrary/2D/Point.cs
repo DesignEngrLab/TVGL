@@ -43,6 +43,11 @@ namespace TVGL
         {
             Position = new[] { point.X, point.Y };
         }
+
+        public PointLight(double[] position)
+        {
+            Position = new[] { position[0], position[1] };
+        }
     }
 
     /// <summary>

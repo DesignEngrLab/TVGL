@@ -12,6 +12,7 @@ using System;
 using System.Linq;
 using HelixToolkit.Wpf.SharpDX.Core;
 using SharpDX;
+using StarMathLib;
 using TVGL;
 using TVGL.Voxelization;
 using Color = TVGL.Color;
@@ -44,7 +45,7 @@ namespace TVGLPresenterDX
 
         public void AddSolids(IList<Solid> solids)
         {
-            viewModel.AttachModelList(solids.Select(solid => ConvertToObject3D(solid)).ToList());
+            viewModel.AttachModelList(solids.Select(ConvertToObject3D).ToList());
         }
 
         private MeshGeometryModel3D ConvertToObject3D(Solid solid)
@@ -59,71 +60,87 @@ namespace TVGLPresenterDX
             {
                 Material = new PhongMaterial()
                 {
-                    DiffuseColor = new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf, ts.SolidColor.Af)
+                    DiffuseColor = new SharpDX.Color4(ts.SolidColor.Rf, ts.SolidColor.Gf, ts.SolidColor.Bf,
+                    ts.SolidColor.Af)
                 },
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
                 {
-                    Positions = new Vector3Collection(ts.Vertices.Select(v =>
-                        new Vector3((float)v.X, (float)v.Y, (float)v.Z))),
-                    Indices = new IntCollection(ts.Faces.SelectMany(f => f.Vertices.Select(v => v.IndexInList))),
-                    Normals = new Vector3Collection(ts.Faces.Select(f =>
-                        new Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])))
+                    Positions = new Vector3Collection(ts.Faces.SelectMany(f => f.Vertices.Select(v =>
+                          new Vector3((float)v.X, (float)v.Y, (float)v.Z)))),
+                    Indices = new IntCollection(Enumerable.Range(0, 3 * ts.NumberOfFaces)),
+                    Normals = new Vector3Collection(ts.Faces.SelectMany(f => f.Vertices.Select(v =>
+                        new Vector3((float)f.Normal[0], (float)f.Normal[1], (float)f.Normal[2])))),
+
                 }
             };
             return result;
         }
+        
 
         private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
         {
-            if (true)
+            if (false)
             {
-                var ts = vs.ConvertToTessellatedSolid();
-                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
-                {
-                    Af = 0.80f
-                };
+                var ts = vs.ConvertToTessellatedSolid(
+                     new Color(KnownColors.MediumSeaGreen)
+                     {
+                         Af = 0.80f
+                     });
                 return ConvertTessellatedSolidtoObject3D(ts);
             }
 
-            var boxFaceIndices = new[]
+            var normalsTemplate = new[]
             {
-                0, 1, 2, 2, 1, 4, 1, 6, 4, 4, 6, 7, 2, 4, 5, 4, 7, 5, 0, 2, 3, 3, 2, 5,
-                5, 7, 3, 7, 6, 3, 3, 1, 0, 1, 3, 6
+                new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
+                new float[] {1, 0, 0}, new float[] {1, 0, 0},
+                new float[] {0, -1, 0}, new float[] {0, -1, 0},
+                new float[] {0, 1, 0}, new float[] {0, 1, 0},
+                new float[] {0, 0, -1}, new float[] {0, 0, -1},
+                new float[] {0, 0, 1}, new float[] {0, 0, 1}
+            };
+
+            var coordOffsets = new[]
+            {
+                new[]{ new float[] {0, 0, 0}, new float[] { 0, 0, 1}, new float[] {0, 1, 0}},
+                new[]{ new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
+                new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
+                new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
+                new[]{ new float[] {0, 0, 0}, new float[] { 1, 0, 0}, new float[] {0, 0, 1}},
+                new[]{ new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
+                new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
+                new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
+                new[]{ new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
+                new[]{new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
+                new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
+                new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
             };
             var positions = new Vector3Collection();
-            var indices = new IntCollection();
             var normals = new Vector3Collection();
             foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
+                                           // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
             {
-                if (vs.GetNeighbors(v).Any(n => n == null || n.Role == VoxelRoleTypes.Empty))
+                var lowestLevel = (int) vs.Discretization;
+                if (v.Role == VoxelRoleTypes.Partial && v.Level < lowestLevel) continue;
+                var neighbors = vs.GetNeighbors(v).ToList();
+                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || (n.Role == VoxelRoleTypes.Partial
+                                                                                       && v.Level==lowestLevel))))
+                    continue;
+
+                var x = (float)v.BottomCoordinate[0];
+                var y = (float)v.BottomCoordinate[1];
+                var z = (float)v.BottomCoordinate[2];
+                var s = (float)v.SideLength;
+                for (int i = 0; i < 12; i++)
                 {
-                    var i = positions.Count;
-                    var x = (float)v.BottomCoordinate[0];
-                    var y = (float)v.BottomCoordinate[1];
-                    var z = (float)v.BottomCoordinate[2];
-                    var s = (float)v.SideLength;
-                    positions.Add(new Vector3(x, y, z)); //0
-                    positions.Add(new Vector3(x + s, y, z)); //1
-                    positions.Add(new Vector3(x, y + s, z)); //2
-                    positions.Add(new Vector3(x, y, z + s)); //3
-                    positions.Add(new Vector3(x + s, y + s, z)); //4
-                    positions.Add(new Vector3(x, y + s, z + s)); //5
-                    positions.Add(new Vector3(x + s, y, z + s)); //6
-                    positions.Add(new Vector3(x + s, y + s, z + s)); //7
-                    foreach (var boxFaceIndex in boxFaceIndices)
-                        indices.Add(i + boxFaceIndex);
-                    normals.Add(new Vector3(0f, 0f, -1f));
-                    normals.Add(new Vector3(0f, 0f, -1f));
-                    normals.Add(new Vector3(1f, 0f, 0f));
-                    normals.Add(new Vector3(1f, 0f, 0f));
-                    normals.Add(new Vector3(0f, 1f, 0f));
-                    normals.Add(new Vector3(0f, 1f, 0f));
-                    normals.Add(new Vector3(-1f, 0f, 0f));
-                    normals.Add(new Vector3(-1f, 0f, 0f));
-                    normals.Add(new Vector3(0f, 0f, 1f));
-                    normals.Add(new Vector3(0f, 0f, 1f));
-                    normals.Add(new Vector3(0f, -1f, 0f));
-                    normals.Add(new Vector3(0f, -1f, 0f));
+                    //  if (neighbors[i / 2] != null && neighbors[i / 2].Role == VoxelRoleTypes.Full) continue;
+                    if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
+                                                     || neighbors[i / 2].Role == VoxelRoleTypes.Partial)) continue;
+                    for (int j = 0; j < 3; j++)
+                    {
+                        positions.Add(new Vector3(x + coordOffsets[i][j][0] * s,
+                            y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
+                        normals.Add(new Vector3(normalsTemplate[i][0], normalsTemplate[i][1], normalsTemplate[i][2]));
+                    }
                 }
             }
 
@@ -132,17 +149,16 @@ namespace TVGLPresenterDX
                 Material = new PhongMaterial()
                 {
                     DiffuseColor = new SharpDX.Color4(vs.SolidColor.Rf, vs.SolidColor.Gf, vs.SolidColor.Bf,
-                1f)
+                    vs.SolidColor.Af)
                     //(float)0.75 * vs.SolidColor.Af)
                 },
                 Geometry = new HelixToolkit.Wpf.SharpDX.MeshGeometry3D
                 {
                     Positions = positions,
-                    Indices = indices,
+                    Indices = new IntCollection(Enumerable.Range(0, positions.Count)),
                     Normals = normals
                 }
             };
-
         }
 
 

@@ -410,7 +410,7 @@ namespace TVGL
 
             //Begin an evaluation
             var clipperSolution = new List<List<IntPoint>>();
-            clip.Execute(ref clipperSolution, offset*scale);
+            clip.Execute(clipperSolution, offset*scale);
 
             //Convert back to points and return solution
             var solution = clipperSolution.Select(clipperPath => clipperPath.Select(point => new PointLight(point.X / scale, point.Y / scale)).ToList()).ToList();
