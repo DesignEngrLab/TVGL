@@ -6,6 +6,9 @@ namespace TVGL
 {
     public struct PolygonLight
     {
+        /// <summary>
+        /// Gets the PointLights that make up the polygon
+        /// </summary>
         public List<PointLight> Path;
 
         /// <summary>
