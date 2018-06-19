@@ -3,6 +3,8 @@
 // Author           : Design Engineering Lab
 // Created          : 02-27-2015
 //
+// Last Modified By : Matt Campbell
+// Last Modified On : 03-15-2015
 // ***********************************************************************
 // <copyright file="Flat.cs" company="Design Engineering Lab">
 //     Copyright ©  2014
@@ -18,38 +20,29 @@ using StarMathLib;
 namespace TVGL
 {
     /// <summary>
-    /// Class Flat.
+    ///     Class Flat.
     /// </summary>
-    /// <seealso cref="TVGL.PrimitiveSurface" />
     public class Flat : PrimitiveSurface
     {
         /// <summary>
-        /// Gets or sets the anchor.
+        ///     Gets or sets the anchor.
         /// </summary>
         /// <value>The anchor.</value>
         public double DistanceToOrigin { get; set; }
 
         /// <summary>
-        /// Gets or sets the normal.
+        ///     Gets or sets the normal.
         /// </summary>
         /// <value>The normal.</value>
         public double[] Normal { get; set; }
 
         /// <summary>
-        /// Tolerance used to determine whether faces should be part of this flat
+        ///     Tolerance used to determine whether faces shoud be part of this flat
         /// </summary>
-        /// <value>The tolerance.</value>
         public double Tolerance { get; set; }
 
-
         /// <summary>
-        /// Gets the closest point on the plane to the origin.
-        /// </summary>
-        /// <value>The closest point to origin.</value>
-        public double[] ClosestPointToOrigin => Normal.multiply(DistanceToOrigin);
-
-        /// <summary>
-        /// Determines whether [is new member of] [the specified face].
+        ///     Determines whether [is new member of] [the specified face].
         /// </summary>
         /// <param name="face">The face.</param>
         /// <returns><c>true</c> if [is new member of] [the specified face]; otherwise, <c>false</c>.</returns>
@@ -65,7 +58,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Updates the with.
+        ///     Updates the with.
         /// </summary>
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
@@ -90,15 +83,15 @@ namespace TVGL
         /// <exception cref="System.NotImplementedException"></exception>
         public override void Transform(double[,] transformMatrix)
         {
-           // throw new NotImplementedException();
+            throw new NotImplementedException();
         }
 
         #region Constructors
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Flat" /> class.
+        ///     Initializes a new instance of the <see cref="Flat" /> class.
         /// </summary>
-        /// <param name="faces">The faces.</param>
+        /// <param name="faces"></param>
         public Flat(IEnumerable<PolygonalFace> faces)
             : base(faces)
         {
@@ -120,7 +113,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Flat" /> class.
+        ///     Initializes a new instance of the <see cref="Flat" /> class.
         /// </summary>
         public Flat()
         {
@@ -128,7 +121,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Flat" /> class.
+        ///     Initializes a new instance of the <see cref="Flat" /> class.
         /// </summary>
         /// <param name="distanceToOrigin">The distance to origin.</param>
         /// <param name="normal">The normal.</param>
@@ -140,7 +133,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Flat" /> class.
+        ///     Initializes a new instance of the <see cref="Flat" /> class.
         /// </summary>
         /// <param name="pointOnPlane">a point on plane.</param>
         /// <param name="normal">The normal.</param>

@@ -16,11 +16,8 @@ using StarMathLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using TVGL.IOFunctions;
 
 namespace TVGL.Voxelization
 {
@@ -30,18 +27,15 @@ namespace TVGL.Voxelization
     public partial class VoxelizedSolid
     {
         #region Properties
-
         /// <summary>
         /// The discretization level
         /// </summary>
-        public readonly VoxelDiscretization Discretization;
-        internal int numberOfLevels;
-        internal int[] bitLevelDistribution;
-        private int[] voxelsPerSide;
-        private int[] voxelsInParent;
-        internal int[] singleCoordinateShifts;
-        private long[] singleCoordinateMasks;
-
+        public VoxelDiscretization Discretization
+        {
+            get => (VoxelDiscretization)discretizationLevel;
+            private set => discretizationLevel = (int)value;
+        }
+        private int discretizationLevel;
 
         /// <summary>
         /// The voxel side length for each voxel level. It's a square, so all sides are the same length.
@@ -59,108 +53,35 @@ namespace TVGL.Voxelization
 
         #region Constructor (from another voxelized solid, or maybe from a file)
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelizedSolid"/> class.
-        /// </summary>
-        /// <param name="voxelDiscretization">The voxel discretization.</param>
-        /// <param name="bounds">The bounds.</param>
-        /// <param name="units">The units.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="filename">The filename.</param>
-        /// <param name="comments">The comments.</param>
-        /// <param name="language">The language.</param>
         public VoxelizedSolid(VoxelDiscretization voxelDiscretization, double[][] bounds, UnitType units = UnitType.unspecified, string name = "",
             string filename = "", List<string> comments = null, string language = "") : base(units, name, filename,
             comments, language)
         {
             Discretization = voxelDiscretization;
-            bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
-            voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
-            voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
-            defineMaskAndShifts(bitLevelDistribution);
-            numberOfLevels = bitLevelDistribution.Length;
             Bounds = new double[2][];
             Bounds[0] = (double[])bounds[0].Clone();
             Bounds[1] = (double[])bounds[1].Clone();
-            dimensions = new double[3];
+            var dimensions = new double[3];
             for (int i = 0; i < 3; i++)
                 dimensions[i] = Bounds[1][i] - Bounds[0][i];
             var longestSide = dimensions.Max();
             longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
             longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
-            VoxelSideLengths = new double[numberOfLevels];
-            VoxelSideLengths[0] = longestSide / voxelsPerSide[0];
-            for (int i = 1; i < numberOfLevels; i++)
-                VoxelSideLengths[i] = VoxelSideLengths[i - 1] / voxelsPerSide[i];
-            voxelDictionaryLevel0 = new VoxelHashSet(0, this);
+            VoxelSideLengths = new[] { longestSide / 16, longestSide / 256, longestSide / 4096, longestSide / 65536, longestSide / 1048576 };
+            numVoxels = dimensions.Select(d => (int) Math.Ceiling(d / VoxelSideLengths[discretizationLevel])).ToArray();
+            voxelDictionaryLevel0 = new Dictionary<long, Voxel_Level0_Class>(new VoxelComparerCoarse());
+            voxelDictionaryLevel1 = new Dictionary<long, Voxel_Level1_Class>(new VoxelComparerCoarse());
             UpdateProperties();
-        }
-
-        private void defineMaskAndShifts(int[] bits)
-        {
-            var n = bitLevelDistribution.Length;
-            singleCoordinateMasks = new long[n];
-            singleCoordinateShifts = new int[n];
-
-            var shift = 20;
-            var mask = 0L;
-            for (int i = 0; i < n; i++)
-            {
-                shift -= bits[i];
-                singleCoordinateShifts[i] = shift;
-                mask += (long) (voxelsPerSide[i]-1) << shift;
-                singleCoordinateMasks[i] = mask;
-            }
-        }
-
-        internal VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
-        {
-            Discretization = fileData.DiscretizationLevel;
-            bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
-            voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
-            voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
-            defineMaskAndShifts(bitLevelDistribution);
-            numberOfLevels = bitLevelDistribution.Length;
-            // the next 10 lines are common to the constructor above. They cannot be combines since these
-            // flow down to different sub-constructors
-            dimensions = new double[3];
-            for (int i = 0; i < 3; i++)
-                dimensions[i] = Bounds[1][i] - Bounds[0][i];
-            var longestSide = dimensions.Max();
-            longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
-            longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
-            VoxelSideLengths = new double[numberOfLevels];
-            VoxelSideLengths[0] = longestSide / voxelsPerSide[0];
-            for (int i = 1; i < numberOfLevels; i++)
-                VoxelSideLengths[i] = VoxelSideLengths[i - 1] / voxelsPerSide[i];
-            voxelDictionaryLevel0 = new VoxelHashSet(0, this);
-
-            byte[] bytes = Convert.FromBase64String(fileData.Level0Voxels);
-            for (int i = 0; i < bytes.Length; i += 8)
-            {
-                var ID = BitConverter.ToInt64(bytes, i);
-                Constants.GetRoleFlags(ID, out var level, out VoxelRoleTypes role, out bool btmInside);
-                voxelDictionaryLevel0.Add(new Voxel_Level0_Class(ID, role, this, btmInside));
-            }
-            bytes = Convert.FromBase64String(fileData.Voxels);
-            for (int i = 0; i < bytes.Length; i += 8)
-            {
-                var ID = BitConverter.ToInt64(bytes, i);
-                Constants.GetRoleFlags(ID, out var level, out VoxelRoleTypes role, out bool btmInside);
-                ((Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(ID)).InnerVoxels[level - 1].Add(new Voxel(ID, this));
-            }
-            UpdateProperties();
-
-            if (fileData.Primitives != null && fileData.Primitives.Any())
-                Primitives = fileData.Primitives;
         }
         #endregion
 
         #region Private Fields
         private readonly double[][] transformedCoordinates;
         private readonly double[] dimensions;
+        private readonly int[] numVoxels;
         private readonly int longestDimensionIndex;
-        private readonly VoxelHashSet voxelDictionaryLevel0;
+        private readonly Dictionary<long, Voxel_Level0_Class> voxelDictionaryLevel0;
+        private readonly Dictionary<long, Voxel_Level1_Class> voxelDictionaryLevel1;
         #endregion
 
 

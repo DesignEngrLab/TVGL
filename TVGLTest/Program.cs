@@ -3,56 +3,54 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using NUnit.Framework;
 using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
 
-namespace TVGLTest
+namespace TVGL_Test
 {
     internal class Program
     {
         private static readonly string[] FileNames = {
-           //"../../../TestFiles/Binary.stl",
-         //   "../../../TestFiles/ABF.ply",
-          //   "../../../TestFiles/Beam_Boss.STL",
-         "../../../TestFiles/Beam_Clean.STL",
-
-        "../../../TestFiles/bigmotor.amf",
-        "../../../TestFiles/DxTopLevelPart2.shell",
-        "../../../TestFiles/Candy.shell",
-        "../../../TestFiles/amf_Cube.amf",
-        "../../../TestFiles/train.3mf",
-        "../../../TestFiles/Castle.3mf",
-        "../../../TestFiles/Raspberry Pi Case.3mf",
-       //"../../../TestFiles/shark.ply",
-       "../../../TestFiles/bunnySmall.ply",
-        "../../../TestFiles/cube.ply",
-        "../../../TestFiles/airplane.ply",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        "../../../TestFiles/Tetrahedron.STL",
-        "../../../TestFiles/off_axis_box.STL",
-           "../../../TestFiles/Wedge.STL",
-        "../../../TestFiles/Mic_Holder_SW.stl",
-        "../../../TestFiles/Mic_Holder_JR.stl",
-        "../../../TestFiles/3_bananas.amf",
-        "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-        "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-        "../../../TestFiles/hdodec.off",
-        "../../../TestFiles/tref.off",
-        "../../../TestFiles/mushroom.off",
-        "../../../TestFiles/vertcube.off",
-        "../../../TestFiles/trapezoid.4d.off",
-        "../../../TestFiles/ABF.STL",
-        "../../../TestFiles/Pump-1repair.STL",
-        "../../../TestFiles/Pump-1.STL",
+        //"../../../TestFiles/ABF.ply",
+       // "../../../TestFiles/Beam_Boss.STL",
+       // //"../../../TestFiles/bigmotor.amf",
+       // //"../../../TestFiles/DxTopLevelPart2.shell",
+       // //"../../../TestFiles/Candy.shell",
+       // //"../../../TestFiles/amf_Cube.amf",
+       // //"../../../TestFiles/train.3mf",
+       // //"../../../TestFiles/Castle.3mf",
+       // //"../../../TestFiles/Raspberry Pi Case.3mf",
+       ////"../../../TestFiles/shark.ply",
+     // "../../../TestFiles/bunnySmall.ply",
+       // "../../../TestFiles/cube.ply",
+       // //"../../../TestFiles/airplane.ply",
+       // "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
+        //"../../../TestFiles/Tetrahedron.STL",
+       // "../../../TestFiles/off_axis_box.STL",
+       // "../../../TestFiles/Wedge.STL",
+       // "../../../TestFiles/Mic_Holder_SW.stl",
+       // "../../../TestFiles/Mic_Holder_JR.stl",
+       // "../../../TestFiles/3_bananas.amf",
+       // "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+       // "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+       // "../../../TestFiles/Rook.amf",
+        //"../../../TestFiles/hdodec.off",
+        //"../../../TestFiles/tref.off",
+        //"../../../TestFiles/mushroom.off",
+        //"../../../TestFiles/vertcube.off",
+        //"../../../TestFiles/trapezoid.4d.off",
+        //"../../../TestFiles/ABF.STL",
+        //"../../../TestFiles/Pump-1repair.STL",
+        //"../../../TestFiles/Pump-1.STL",
         "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
         "../../../TestFiles/Beam_Clean.STL",
         "../../../TestFiles/Square_Support.STL",
         "../../../TestFiles/Aerospace_Beam.STL",
-        "../../../TestFiles/Rook.amf",
-       "../../../TestFiles/bunny.ply",
+
 
         "../../../TestFiles/piston.stl",
         "../../../TestFiles/Z682.stl",
@@ -82,139 +80,77 @@ namespace TVGLTest
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-#if AnyCPU
-            //Works for AnyCPU (x86) builds
-            var dir = new DirectoryInfo("../../../TestFiles");
-#else
-            //Works for x64 builds
+
+//#if AnyCPU
+//            //Works for AnyCPU (x86) builds
+//            var dir = new DirectoryInfo("../../../TestFiles");
+//#else
+//            //Works for x64 builds
+//            var dir = new DirectoryInfo("../../../../TestFiles");
+//#endif
+
             var dir = new DirectoryInfo("../../../../TestFiles");
-#endif
+
             var fileNames = dir.GetFiles("*");
-            for (var i = 0; i < fileNames.Count(); i++)
+            //Casing = 17
+            //SquareSupport = 70
+            for (var i = 17; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
-                var justfile = fileNames[i].Name;
-                Stream fileStream;
-                TessellatedSolid ts;
-                if (!File.Exists(filename)) continue;
-                using (fileStream = File.OpenRead(filename))
-                    IO.Open(fileStream, filename, out ts);
-
-                Color color = new Color(KnownColors.AliceBlue);
-                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
-                {
-                    Af = 0.25f
-                };
-                TestMachinability(ts, justfile);
+                List<TessellatedSolid> solids = IO.Open(filename);
+                var silhouette = Silhouette.Run(solids[0], new[] { 0.2, 0.0, 0.8 }.normalize(), 0.1);
+                //Presenter.ShowAndHang(silhouette);
+                Presenter.ShowAndHang(solids[0]);
             }
+
             Console.WriteLine("Completed.");
+            //  Console.ReadKey();
         }
 
-        public static void TestMachinability(TessellatedSolid ts, string _fileName)
+        public static void TestVoxelizatoin(TessellatedSolid ts)
         {
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
+            var stopWatch = new Stopwatch();
+            //stopWatch.Restart();
+            //var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.ExtraCoarse);
+            //stopWatch.Stop();
+            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+            //    ts.Volume, vs1.Volume,vs1.Count, stopWatch.Elapsed.TotalSeconds);
+            //PresenterShowAndHang(new Solid[] { ts, vs1 });
+            //stopWatch.Restart();
+            // var vs2 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
+            //stopWatch.Stop();
+            //Console.WriteLine("Extra Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+            //    ts.Volume, vs2.Volume, vs2.Count, stopWatch.Elapsed.TotalSeconds);
+            //var ts2 = (TessellatedSolid)ts1.TransformToNewSolid(new double[,]
+            //  {
+            //    {1,0,0,(ts1.XMax - ts1.XMin)/2},
+            //    {0,1,0,(ts1.YMax-ts1.YMin)/2},
+            //    {0,0,1,(ts1.ZMax-ts1.ZMin)/2},
+            //  });
+            //var bounds = new double[2][];
+            //bounds[0] = ts1.Bounds[0];
+            //bounds[1] = ts2.Bounds[1];
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);//, bounds);
+            Console.WriteLine("displaying");
+            Presenter.ShowAndHangVoxelization(ts, vs1);
 
-            //var vs1ts = vs1.ConvertToTessellatedSolid(color);
-            //var savename = "voxelized_" + _fileName;
-            //IO.Save(vs1ts, savename, FileType.STL_ASCII);
+            //var tsFromVS = vs1.ConvertToTessellatedSolid();
+            //tsFromVS.SolidColor = new Color(KnownColors.Green) {Af = 0.5f};
 
-            Console.WriteLine("Drafting Solid in X Positive...");
-            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.XPositive);
+            //Presenter.ShowAndHang(new [] { tsFromVS });
 
-            //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
-            //Console.WriteLine("Saving Solid...");
-            //savename = "vs1xpos_" + _fileName;
-            //IO.Save(vs1xposts, savename, FileType.STL_ASCII);
+            //PresenterShowAndHang(new Solid[] { ts, vs2 });
+            //vs1.Intersect(vs2);
 
-            Console.WriteLine("Drafting Solid in X Negative...");
-            var vs1xneg = vs1.ExtrudeToNewSolid(VoxelDirections.XNegative);
-            //PresenterShowAndHang(vs1xneg);
-            //var vs1xnegts = vs1xneg.ConvertToTessellatedSolid(color);
-            //Console.WriteLine("Saving Solid...");
-            //savename = "vs1xneg_" + _fileName;
-            //IO.Save(vs1xnegts, savename, FileType.STL_ASCII);
+            //stopWatch.Restart();
+            //vs1.Draft(VoxelDirections.XPositive);
+            //stopWatch.Stop();
+            //Console.WriteLine(stopWatch.Elapsed.TotalSeconds);
+            //Presenter.ShowAndHang(new TessellatedSolid[] { vs1.ConvertToTessellatedSolid() });
 
-            Console.WriteLine("Drafting Solid in Y Positive...");
-            var vs1ypos = vs1.ExtrudeToNewSolid(VoxelDirections.YPositive);
-            //PresenterShowAndHang(vs1ypos);
-            //var vs1yposts = vs1ypos.ConvertToTessellatedSolid(color);
-            //Console.WriteLine("Saving Solid...");
-            //savename = "vs1ypos_" + _fileName;
-            //IO.Save(vs1yposts, savename, FileType.STL_ASCII);
-
-            Console.WriteLine("Drafting Solid in Y Negative...");
-            var vs1yneg = vs1.ExtrudeToNewSolid(VoxelDirections.YNegative);
-            ////PresenterShowAndHang(vs1yneg);
-            ////var vs1ynegts = vs1yneg.ConvertToTessellatedSolid(color);
-            ////Console.WriteLine("Saving Solid...");
-            ////savename = "vs1yneg_" + _fileName;
-            ////IO.Save(vs1ynegts, savename, FileType.STL_ASCII);
-
-            Console.WriteLine("Drafting Solid in Z Positive...");
-            var vs1zpos = vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive);
-            ////PresenterShowAndHang(vs1zpos);
-            ////var vs1zposts = vs1zpos.ConvertToTessellatedSolid(color);
-            ////Console.WriteLine("Saving Solid...");
-            ////savename = "vs1zpos_" + _fileName;
-            ////IO.Save(vs1zposts, savename, FileType.STL_ASCII);
-
-            Console.WriteLine("Drafting Solid in Z Negative...");
-            var vs1zneg = vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative);
-            //PresenterShowAndHang(vs1zneg);
-            //var vs1znegts = vs1zneg.ConvertToTessellatedSolid(color);
-            //Console.WriteLine("Saving Solid...");
-            //savename = "vs1zneg_" + _fileName;
-            //IO.Save(vs1znegts, savename, FileType.STL_ASCII);
-
-            Console.WriteLine("Intersecting Drafted Solids...");
-            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1yneg, vs1zpos);
-            Presenter.ShowAndHang(intersect);
-            //var intersectts = intersect.ConvertToTessellatedSolid(color);
-            //Console.WriteLine("Saving Solid...");
-            //savename = "intersect_" + _fileName;
-            //IO.Save(intersectts, savename, FileType.STL_ASCII);
-
-            Console.WriteLine("Subtracting Original Voxelized Shape From Intersect...");
-            var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
-            Presenter.ShowAndHang(unmachinableVoxels);
-            //var uvts = unmachinableVoxels.ConvertToTessellatedSolid(color);
-            //Console.WriteLine("Saving Solid...");
-            //savename = "unmachinable_" + _fileName;
-            //IO.Save(uvts, savename, FileType.STL_ASCII);
-
-            Console.WriteLine("Totals for Original Voxel Shape: " + vs1.GetTotals[0] + "; " + vs1.GetTotals[1] + "; " + vs1.GetTotals[2] + "; " + vs1.GetTotals[3]);
-            Console.WriteLine("Totals for X Positive Draft: " + vs1xpos.GetTotals[0] + "; " + vs1xpos.GetTotals[1] + "; " + vs1xpos.GetTotals[2] + "; " + vs1xpos.GetTotals[3]);
-            Console.WriteLine("Totals for X Negative Draft: " + vs1xneg.GetTotals[0] + "; " + vs1xneg.GetTotals[1] + "; " + vs1xneg.GetTotals[2] + "; " + vs1xneg.GetTotals[3]);
-            Console.WriteLine("Totals for Y Positive Draft: " + vs1ypos.GetTotals[0] + "; " + vs1ypos.GetTotals[1] + "; " + vs1ypos.GetTotals[2] + "; " + vs1ypos.GetTotals[3]);
-            Console.WriteLine("Totals for Y Negative Draft: " + vs1yneg.GetTotals[0] + "; " + vs1yneg.GetTotals[1] + "; " + vs1yneg.GetTotals[2] + "; " + vs1yneg.GetTotals[3]);
-            Console.WriteLine("Totals for Z Positive Draft: " + vs1zpos.GetTotals[0] + "; " + vs1zpos.GetTotals[1] + "; " + vs1zpos.GetTotals[2] + "; " + vs1zpos.GetTotals[3]);
-            Console.WriteLine("Totals for Z Negative Draft: " + vs1zneg.GetTotals[0] + "; " + vs1zneg.GetTotals[1] + "; " + vs1zneg.GetTotals[2] + "; " + vs1zneg.GetTotals[3]);
-            Console.WriteLine("Totals for Intersected Voxel Shape: " + intersect.GetTotals[0] + "; " + intersect.GetTotals[1] + "; " + intersect.GetTotals[2] + "; " + intersect.GetTotals[3]);
-            Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
-
-            //PresenterShowAndHang(vs1);
-            //PresenterShowAndHang(vs1xpos);
-            //PresenterShowAndHang(vs1xneg);
-            //PresenterShowAndHang(vs1ypos);
-            //PresenterShowAndHang(vs1yneg);
-            //PresenterShowAndHang(vs1zpos);
-            //PresenterShowAndHang(vs1zneg);
-            //PresenterShowAndHang(intersect);
-            //PresenterShowAndHang(unmachinableVoxels);
-            unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
-            unmachinableVoxels.SolidColor.A = 200;
-
-            Presenter.ShowAndHang(new Solid[] { ts, unmachinableVoxels });
-
-            //PresenterShowAndHang(new Solid[] { intersect });
-            //var unmachinableVoxelsSolid = new Solid[] { unmachinableVoxels };
-            //PresenterShowAndHang(unmachinableVoxelsSolid);
-
-            //var originalTS = new Solid[] { ts };
         }
-
         public static void TestSegmentation(TessellatedSolid ts)
         {
             var obb = MinimumEnclosure.OrientedBoundingBox(ts);
@@ -232,7 +168,7 @@ namespace TVGLTest
             {
                 Dictionary<int, double> stepDistances;
                 Dictionary<int, double> sortedVertexDistanceLookup;
-                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction, 
                     stepSize, out stepDistances, out sortedVertexDistanceLookup);
                 //foreach (var segment in segments)
                 //{
@@ -284,14 +220,14 @@ namespace TVGLTest
             Presenter.ShowAndHang(ts);
 
             //Make sure that every face, edge, and vertex is accounted for
-            //Assert.That(!edges.Any(), "edges missed");
-            //Assert.That(!faces.Any(), "faces missed");
-            //Assert.That(!vertices.Any(), "vertices missed");
+            Assert.That(!edges.Any(), "edges missed");
+            Assert.That(!faces.Any(), "faces missed");
+            Assert.That(!vertices.Any(), "vertices missed");
         }
 
         public static void TestSilhouette(TessellatedSolid ts)
         {
-            var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
+            var silhouette = TVGL.Silhouette.Run(ts, new[] {0.5, 0.0, 0.5});
             Presenter.ShowAndHang(silhouette);
         }
 
@@ -303,39 +239,159 @@ namespace TVGLTest
             throw new NotImplementedException();
         }
 
-        public static void TestVoxelization(TessellatedSolid ts)
+        private static void TestOBB(string InputDir)
         {
-            var stopWatch = new Stopwatch();
-            ts.Transform(new double[,]
+            var di = new DirectoryInfo(InputDir);
+            var fis = di.EnumerateFiles();
+            var numVertices = new List<int>();
+            var data = new List<double[]>();
+            foreach (var fileInfo in fis)
             {
-                {1, 0, 0, -(ts.XMax + ts.XMin) / 2},
-                {0, 1, 0, -(ts.YMax + ts.YMin) / 2},
-                {0, 0, 1, -(ts.ZMax + ts.ZMin) / 2},
-            });
-            stopWatch.Restart();
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true); //, bounds);
+                try
+                {
+                    var ts = IO.Open(fileInfo.Open(FileMode.Open), fileInfo.Name);
+                    foreach (var tessellatedSolid in ts)
+                    {
+                        List<double> times, volumes;
+                        MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
+                        data.Add(new[] { tessellatedSolid.ConvexHull.Vertices.Count(), tessellatedSolid.Volume,
+                            times[0], times[1],times[2], volumes[0],  volumes[1], volumes[2] });
+                    }
+                }
+                catch { }
+            }
+            // TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
+            TVGLTest.ExcelInterface.CreateNewGraph(new[] { data }, "", "Methods", "Volume", new[] { "PCA", "ChanTan" });
+        }
 
-            stopWatch.Stop();
-            Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
-                ts.Volume, vs1.Volume, vs1.Count, stopWatch.Elapsed.TotalSeconds);
-            stopWatch.Restart();
-            Presenter.ShowAndHang(new Solid[] { ts, vs1 });
-            // var vs2 = (VoxelizedSolid)vs1.Copy();
-            //var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
-            //vs1.Subtract(vs2);
-            //PresenterShowAndHang(new Solid[] { vs1 });
+        private static void TestSimplify(TessellatedSolid ts)
+        {
+            ts.Simplify(.9);
+            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
+            TVGL.Presenter.ShowAndHang(ts);
+        }
 
-            //var vsPos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
-            //PresenterShowAndHang(new Solid[] { vsPos });
-            //var vsNeg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
-            //PresenterShowAndHang(new Solid[] { vsNeg });
+        //private static void TestClassification(TessellatedSolid ts)
+        //{
+        //    TesselationToPrimitives.Run(ts);
+        //}
 
-            //var vsInt = vsNeg.IntersectToNewSolid(vsPos);
+        //private static void TestOBB(TessellatedSolid ts, string filename)
+        //{
+        //    //var obb = MinimumEnclosure.Find_via_PCA_Approach(ts);
+        //    //var obb = MinimumEnclosure.Find_via_ChanTan_AABB_Approach(ts);
+        //    //var obb = MinimumEnclosure.Find_via_MC_ApproachOne(ts);\
+        //    //MiscFunctions.IsConvexHullBroken(ts);
+        //    List<List<double[]>> VolumeData1;
+        //  //  List<List<double[]>> VolumeData2;
+        //    var obb = MinimumEnclosure.OrientedBoundingBox_Test(ts, out VolumeData1);//, out VolumeData2);
+        //    //var obb = MinimumEnclosure.Find_via_BM_ApproachOne(ts);
+        //    //TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
+        ////   TVGLTest.ExcelInterface.CreateNewGraph(VolumeData1, "", "Methods", "Volume", new []{"PCA", "ChanTan"});
+        //}
 
-            //stopWatch.Stop();
-            //Console.WriteLine("Intersection: tsvol:{0}\tvol:{1}\ttime:{2}",
-            //    ts.Volume, vsInt.Volume, stopWatch.Elapsed.TotalSeconds);
-            //PresenterShowAndHang(new Solid[] { vsInt });
+        private static void TestInsideSolid(TessellatedSolid ts1, TessellatedSolid ts2)
+        {
+            var now = DateTime.Now;
+            Console.WriteLine("start...");
+            List<Vertex> insideVertices1;
+            List<Vertex> outsideVertices1;
+            List<Vertex> insideVertices2;
+            List<Vertex> outsideVertices2;
+            MiscFunctions.FindSolidIntersections(ts2, ts1, out insideVertices1, out outsideVertices1, out insideVertices2, out outsideVertices2, true);
+            //var vertexInQuestion = new Vertex(new[] {0.0, 0.0, 0.0});
+            //var isVertexInside = MinimumEnclosure.IsVertexInsideSolid(ts, vertexInQuestion);
+            //ToDo: Run test multiple times and look for vertices that change. Get visual and determine cause of error.
+            //ToDo: Also, check if boundary function works 
+            Console.WriteLine("Is the Solid inside the Solid?");
+            Console.WriteLine();
+            Console.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
+            Console.ReadLine();
+        }
+
+
+        private static void TestXSections(TessellatedSolid ts)
+        {
+            var now = DateTime.Now;
+            Debug.WriteLine("start...");
+            var crossAreas = new double[3][,];
+            var maxSlices = 100;
+            var delta = Math.Max((ts.Bounds[1][0] - ts.Bounds[0][0]) / maxSlices,
+                Math.Max((ts.Bounds[1][1] - ts.Bounds[0][1]) / maxSlices,
+                    (ts.Bounds[1][2] - ts.Bounds[0][2]) / maxSlices));
+            //Parallel.For(0, 3, i =>
+            var greatestDeltas = new List<double>();
+            var greatestDeltaLocations = new List<double>();
+            var areaData = new List<List<double[]>>();
+            for (int i = 0; i < 3; i++)
+            {
+                //var max = ts.Bounds[1][i];
+                //var min = ts.Bounds[0][i];
+                //var numSteps = (int)Math.Ceiling((max - min) / delta);
+                var coordValues = ts.Vertices.Select(v => v.Position[i]).Distinct().OrderBy(x => x).ToList();
+                var numValues = new List<double>();
+                var offset = 0.000000001;
+                foreach (var coordValue in coordValues)
+                {
+                    if (coordValues[0] == coordValue)
+                    {
+                        //Only Add increment forward
+                        numValues.Add(coordValue + offset);
+                    }
+                    else if (coordValues.Last() == coordValue)
+                    {
+                        //Only Add increment back
+                        numValues.Add(coordValue - offset);
+                    }
+                    else
+                    {
+                        //Add increment forward and back
+                        numValues.Add(coordValue + offset);
+                        numValues.Add(coordValue - offset);
+                    }
+                }
+                coordValues = numValues.OrderBy(x => x).ToList();
+                var numSteps = coordValues.Count;
+                var direction = new double[3];
+                direction[i] = 1.0;
+                crossAreas[i] = new double[numSteps, 2];
+                var greatestDelta = 0.0;
+                var previousArea = 0.0;
+                var greatestDeltaLocation = 0.0;
+                var dataPoints = new List<double[]>();
+                for (var j = 0; j < numSteps; j++)
+                {
+                    var dist = crossAreas[i][j, 0] = coordValues[j];
+                    //Console.WriteLine("slice at Coord " + i + " at " + coordValues[j]);
+                    var newArea = 0.0;// Slice.DefineContact(ts, new Flat(dist, direction), false).Area;
+                    crossAreas[i][j, 1] = newArea;
+                    if (j > 0 && Math.Abs(newArea - previousArea) > greatestDelta)
+                    {
+                        greatestDelta = Math.Abs(newArea - previousArea);
+                        greatestDeltaLocation = dist;
+                    }
+                    var dataPoint = new double[] { dist, newArea };
+                    dataPoints.Add(dataPoint);
+                    previousArea = newArea;
+                }
+                areaData.Add(dataPoints);
+                greatestDeltas.Add(greatestDelta);
+                greatestDeltaLocations.Add(greatestDeltaLocation);
+            }//);
+            TVGLTest.ExcelInterface.CreateNewGraph(areaData, "Area Decomposition", "Distance From Origin", "Area");
+            Debug.WriteLine("end...Time Elapsed = " + (DateTime.Now - now));
+
+            //Console.ReadKey();
+            //for (var i = 0; i < 3; i++)
+            //{
+            //    Debug.WriteLine("\nfor direction " + i);
+            //    for (var j = 0; j < crossAreas[i].GetLength(0); j++)
+            //    {
+            //        Debug.WriteLine(crossAreas[i][j, 0] + ", " + crossAreas[i][j, 1]);
+            //    }
+            //}
         }
     }
 }

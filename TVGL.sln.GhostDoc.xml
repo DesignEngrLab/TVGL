@@ -42,10 +42,6 @@
     <ResolveCrefLinks>true</ResolveCrefLinks>
     <HeaderText />
     <FooterText />
-    <ConceptualContent>
-      <ContentLayout />
-      <MediaContent />
-    </ConceptualContent>
     <SelectedProjects>
       <SelectedProject>TessellationAndVoxelizationGeometryLibraryUniversal</SelectedProject>
     </SelectedProjects>

@@ -12,8 +12,6 @@
 // <summary></summary>
 // ***********************************************************************
 
-using System;
-using System.Collections.Generic;
 using System.Windows;
 
 
@@ -51,6 +49,5 @@ namespace TVGL
         {
             GridLines.Visible = false;
         }
-        
     }
 }

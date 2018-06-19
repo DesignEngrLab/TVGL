@@ -112,13 +112,10 @@ namespace TVGL
         /// </summary>
         public bool HasUniformColor { get; set; }
 
-
         /// <summary>
-        /// Gets or sets the inertia tensor.
+        ///     The has uniform color
         /// </summary>
-        /// <value>The inertia tensor.</value>
         public virtual double[,] InertiaTensor { get; protected set; }
-        internal double[,] _inertiaTensor;
 
 
         /// <summary>
@@ -151,35 +148,6 @@ namespace TVGL
             Bounds[0] = new double[3];
             Bounds[1] = new double[3];
         }
-
-        internal Solid(TVGLFileData fileData, string fileName) : this(fileData.Units, fileData.Name, fileName,
-                fileData.Comments, fileData.Language)
-        {
-            XMax = fileData.XMax;
-            XMin = fileData.XMin;
-            YMax = fileData.YMax;
-            YMin = fileData.YMin;
-            ZMax = fileData.ZMax;
-            ZMin = fileData.ZMin;
-            Center = fileData.Center;
-
-            string[] stringList;
-
-            if (!string.IsNullOrWhiteSpace(fileData.InertiaTensor))
-            {
-                stringList = fileData.InertiaTensor.Split(',');
-                _inertiaTensor = new double[3, 3];
-                for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                        _inertiaTensor[i, j] = double.Parse(stringList[3 * i + j]);
-            }
-       
-            Center = fileData.Center;
-            Volume = fileData.Volume;
-            SurfaceArea = fileData.SurfaceArea;
-            }
-
-
         #endregion
 
         /// <summary>

@@ -21,7 +21,6 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 using StarMathLib;
-using TVGL.Voxelization;
 
 namespace TVGL.IOFunctions
 {
@@ -38,7 +37,7 @@ namespace TVGL.IOFunctions
     {
 
         #region Fields and Properties
-        #region that match with Solid
+
         /// <summary>
         ///     Gets the center.
         /// </summary>
@@ -108,6 +107,19 @@ namespace TVGL.IOFunctions
         /// The convex hull area
         /// </summary>
         public double ConvexHullArea;
+
+        /// <summary>
+        ///     Gets the faces.
+        /// </summary>
+        /// <value>The faces.</value>
+        public string Faces;
+
+        /// <summary>
+        ///     Gets the vertices.
+        /// </summary>
+        /// <value>The vertices.</value>
+        public string Vertices;
+
         /// <summary>
         ///     Gets the convex hull.
         /// </summary>
@@ -135,37 +147,16 @@ namespace TVGL.IOFunctions
         public string Colors;
 
         /// <summary>
-        ///     Gets or sets the primitive objects that make up the solid
-        /// </summary>
-        public List<PrimitiveSurface> Primitives;
-        #endregion
-        #region that match with TessellatedSolid
-        /// <summary>
-        ///     Gets the faces.
-        /// </summary>
-        /// <value>The faces.</value>
-        public string Faces;
-
-        /// <summary>
-        ///     Gets the vertices.
-        /// </summary>
-        /// <value>The vertices.</value>
-        public string Vertices;
-        /// <summary>
         ///     The tolerance is set during the initiation (constructor phase). This is based on the maximum
         ///     length of the axis-aligned bounding box times Constants.
         /// </summary>
         /// <value>The same tolerance.</value>
         public double SameTolerance;
-        #endregion
-        #region that match with VoxelizedSolid
 
-        public VoxelDiscretization DiscretizationLevel;
-        public string Level0Voxels { get; set; }
-        public string Voxels { get; set; }
-
-        #endregion
-
+        /// <summary>
+        ///     Gets or sets the primitive objects that make up the solid
+        /// </summary>
+        public List<PrimitiveSurface> Primitives;
 
         #endregion
 
@@ -178,10 +169,10 @@ namespace TVGL.IOFunctions
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static List<Solid> OpenSolids(Stream s, string filename)
+        internal static List<TessellatedSolid> OpenSolids(Stream s, string filename)
         {
             var now = DateTime.Now;
-            var solids = new List<Solid>();
+            List<TessellatedSolid> solids = new List<TessellatedSolid>();
             try
             {
                 var tvglDeserializer = new XmlSerializer(typeof(TVGLFileData));
@@ -189,10 +180,11 @@ namespace TVGL.IOFunctions
                 {
                     s.Position = 0;
                     var streamReader = new StreamReader(s);
-                    var fileData = (TVGLFileData)tvglDeserializer.Deserialize(streamReader);
-                    if (string.IsNullOrWhiteSpace(fileData.Voxels))
-                        solids.Add(new TessellatedSolid(fileData, filename));
-                    else solids.Add(new VoxelizedSolid(fileData, filename));
+                    solids = new List<TessellatedSolid>()
+                    {
+                    new TessellatedSolid((TVGLFileData) tvglDeserializer.Deserialize(streamReader),
+                        filename)
+                    };
                 }
                 else
                 {
@@ -200,10 +192,7 @@ namespace TVGL.IOFunctions
                     var streamReader = new StreamReader(s);
                     tvglDeserializer = new XmlSerializer(typeof(List<TVGLFileData>));
                     var fileDataList = (List<TVGLFileData>)tvglDeserializer.Deserialize(streamReader);
-                    foreach (var fileData in fileDataList)
-                        if (string.IsNullOrWhiteSpace(fileData.Voxels))
-                            solids.Add(new TessellatedSolid(fileData, filename));
-                        else solids.Add(new VoxelizedSolid(fileData, filename));
+                    solids = fileDataList.Select(fileData => new TessellatedSolid(fileData, filename)).ToList();
                 }
                 Message.output("Successfully read in TVGL file (" + (DateTime.Now - now) + ").", 3);
             }
@@ -227,7 +216,7 @@ namespace TVGL.IOFunctions
         /// <param name="stream">The stream.</param>
         /// <param name="solids">The solids.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
-        internal static bool SaveSolids(Stream stream, IList<Solid> solids)
+        internal static bool SaveSolids(Stream stream, IList<TessellatedSolid> solids)
         {
             try
             {
@@ -263,7 +252,7 @@ namespace TVGL.IOFunctions
         /// <param name="solid">The solid.</param>
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         /// <exception cref="NotImplementedException"></exception>
-        internal static bool SaveSolid(Stream stream, Solid solid)
+        internal static bool SaveSolid(Stream stream, TessellatedSolid solid)
         {
             try
             {
@@ -284,13 +273,6 @@ namespace TVGL.IOFunctions
                 Message.output("Exception: " + exception.Message, 3);
                 return false;
             }
-        }
-
-        private static TVGLFileData MakeFileData(Solid s)
-        {
-            if (s is TessellatedSolid) return MakeFileData((TessellatedSolid)s);
-            if (s is VoxelizedSolid) return MakeFileData((VoxelizedSolid)s);
-            return null;
         }
 
         private static TVGLFileData MakeFileData(TessellatedSolid ts)
@@ -318,7 +300,7 @@ namespace TVGL.IOFunctions
                 ZMin = ts.ZMin,
                 ConvexHullVertices = string.Join(",", ts.ConvexHull.Vertices.Select(v => v.IndexInList)),
                 ConvexHullFaces = string.Join(",",
-                ts.ConvexHull.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))),
+                    ts.ConvexHull.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))),
                 Faces = string.Join(",", ts.Faces.SelectMany(face => face.Vertices.Select(v => v.IndexInList))),
                 Vertices = string.Join(",", ts.Vertices.SelectMany(v => v.Position))
             };
@@ -330,47 +312,6 @@ namespace TVGL.IOFunctions
                 for (int i = 0; i < 3; i++)
                     for (int j = 0; j < 3; j++)
                         tensorAsArray[3 * i + j] = ts._inertiaTensor[i, j];
-                result.InertiaTensor = string.Join(",", tensorAsArray);
-            }
-            return result;
-        }
-
-        private static TVGLFileData MakeFileData(VoxelizedSolid vs)
-        {
-            var result = new TVGLFileData
-            {
-                Center = vs.Center,
-                ConvexHullCenter = vs.ConvexHull.Center,
-                ConvexHullArea = vs.ConvexHull.SurfaceArea,
-                ConvexHullVolume = vs.ConvexHull.Volume,
-                HasUniformColor = true,
-                Language = vs.Language,
-                Mass = vs.Mass,
-                Name = vs.Name,
-                Primitives = vs.Primitives,
-                SurfaceArea = vs.SurfaceArea,
-                Units = vs.Units,
-                Volume = vs.Volume,
-                XMax = vs.XMax,
-                XMin = vs.XMin,
-                YMax = vs.YMax,
-                YMin = vs.YMin,
-                ZMax = vs.ZMax,
-                ZMin = vs.ZMin,
-                DiscretizationLevel = vs.Discretization,
-                Level0Voxels = vs.Voxels(VoxelDiscretization.ExtraCoarse, true)
-                    .SelectMany(v => BitConverter.GetBytes(v.ID)).ToString(),
-                Voxels = vs.Voxels(VoxelDiscretization.Coarse, true)
-                    .SelectMany(v => BitConverter.GetBytes(v.ID)).ToString()
-            };
-            result.Colors = vs.SolidColor.ToString();
-            result.Comments.AddRange(vs.Comments);
-            if (vs._inertiaTensor != null)
-            {
-                var tensorAsArray = new double[9];
-                for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                        tensorAsArray[3 * i + j] = vs._inertiaTensor[i, j];
                 result.InertiaTensor = string.Join(",", tensorAsArray);
             }
             return result;

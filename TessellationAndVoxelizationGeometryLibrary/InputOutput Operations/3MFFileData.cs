@@ -92,7 +92,7 @@ namespace TVGL.IOFunctions
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
+        internal static List<TessellatedSolid> OpenSolids(Stream s, string filename)
         {
 #if net40
             throw new NotSupportedException("The loading or saving of .3mf files are not supported in the .NET4.0 version of TVGL.");
@@ -104,11 +104,11 @@ namespace TVGL.IOFunctions
                 var modelStream = modelFile.Open();
                 result.AddRange(OpenModelFile(modelStream, filename));
             }
-            return result.ToArray();
+            return result;
 #endif
         }
 
-        internal static TessellatedSolid[] OpenModelFile(Stream s, string filename)
+        internal static List<TessellatedSolid> OpenModelFile(Stream s, string filename)
         {
             var now = DateTime.Now;
             ThreeMFFileData threeMFData = null;
@@ -148,7 +148,7 @@ namespace TVGL.IOFunctions
                     }
 
                     Message.output("Successfully read in 3Dmodel file (" + (DateTime.Now - now) + ").", 3);
-                    return results.ToArray();
+                    return results;
                 }
             }
             catch (Exception exception)

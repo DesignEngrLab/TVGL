@@ -45,7 +45,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void Show(IList<PointLight> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void Show(IList<Point> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
@@ -65,8 +65,7 @@ namespace TVGL
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, false);
-            Show(points.Select(p => p.Light).ToList(), title, plot2DType, closeShape, marker);
+            Show(MiscFunctions.Get2DProjectionPoints(vertices, direction, false), title, plot2DType, closeShape, marker);
         }
 
         /// <summary>
@@ -77,7 +76,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IList<PointLight> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IList<Point> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
@@ -92,7 +91,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<List<PointLight>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IEnumerable<List<Point>> pointsList, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
 
@@ -108,7 +107,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IEnumerable<List<List<PointLight>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IEnumerable<List<List<Point>>> pointsLists, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
 
@@ -117,12 +116,6 @@ namespace TVGL
         }
 
         public static void ShowAndHang(IList<Polygon> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
-            bool closeShape = true, MarkerType marker = MarkerType.Circle)
-        {
-            ShowAndHang(polygons.Select(p => p.Light).ToList(), title, plot2DType, closeShape, marker);
-        }
-
-        public static void ShowAndHang(IList<PolygonLight> polygons, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             var points = polygons.Select(polygon => polygon.Path).ToList();
@@ -143,7 +136,7 @@ namespace TVGL
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
-            ShowAndHang(MiscFunctions.Get2DProjectionPoints(vertices, direction, false).Select(p => p.Light).ToList(), title, plot2DType, closeShape,
+            ShowAndHang(MiscFunctions.Get2DProjectionPoints(vertices, direction, false), title, plot2DType, closeShape,
                 marker);
         }
 
@@ -157,7 +150,7 @@ namespace TVGL
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker1">The marker1.</param>
         /// <param name="marker2">The marker2.</param>
-        public static void ShowAndHang(IList<List<PointLight>> points1, IList<List<PointLight>> points2, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IList<List<Point>> points1, IList<List<Point>> points2, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker1 = MarkerType.Circle, MarkerType marker2 = MarkerType.Cross)
         {
             var window = new Window2DPlot(points1, points2, title, plot2DType, closeShape, marker1, marker2);
@@ -195,7 +188,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void Show(IList<PointLight[]> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void Show(IList<Point[]> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
@@ -210,7 +203,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void Show(IList<List<PointLight>> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void Show(IList<List<Point>> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
@@ -225,7 +218,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IList<List<PointLight>> points, string title = "",
+        public static void ShowAndHang(IList<List<Point>> points, string title = "",
             Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
@@ -241,7 +234,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public static void ShowAndHang(IList<PointLight[]> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
+        public static void ShowAndHang(IList<Point[]> points, string title = "", Plot2DType plot2DType = Plot2DType.Line,
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             var window = new Window2DPlot(points, title, plot2DType, closeShape, marker);
@@ -266,7 +259,7 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             Show(
-                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false).Select(p => p.Light).ToList())
+                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false))
                     .ToList(), title, plot2DType, closeShape, marker);
         }
 
@@ -284,7 +277,7 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             Show(
-                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false).Select(p => p.Light).ToList())
+                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false))
                     .ToList(), title, plot2DType, closeShape, marker);
         }
 
@@ -303,7 +296,7 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             ShowAndHang(
-                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false).Select(p => p.Light).ToList())
+                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false))
                     .ToList(), title, plot2DType, closeShape, marker);
         }
 
@@ -321,7 +314,7 @@ namespace TVGL
             bool closeShape = true, MarkerType marker = MarkerType.Circle)
         {
             ShowAndHang(
-                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false).Select(p => p.Light).ToList())
+                vertices.Select(listsOfVerts => MiscFunctions.Get2DProjectionPoints(listsOfVerts, direction, false))
                     .ToList(), title, plot2DType, closeShape, marker);
         }
 
@@ -712,42 +705,10 @@ namespace TVGL
             else window.Show();
         }
 
-
-
-        public static void ShowAndHang(params Solid[] solids)
-        {
-            ShowAndHang(solids.ToList());
-        }
-
-        public static void ShowAndHang(VoxelizedSolid solid, VoxelDiscretization level = VoxelDiscretization.ExtraFine)
-        {
-            var window = new Window3DPlot();
-            var models = new List<Visual3D>();
-            Visual3D model = MakeModelVisual3D(solid, level);
-            models.Add(model);
-            window.view1.Children.Add(model);
-            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
-            window.ShowDialog();
-        }
-
-        public static void ShowAndHang(IList<Solid> solids)
-        {
-            var window = new Window3DPlot();
-            var models = new List<Visual3D>();
-            foreach (var s in solids)
-            {
-                Visual3D model = null;
-                if (s is TessellatedSolid)
-                    model = MakeModelVisual3D((TessellatedSolid)s);
-                else if (s is VoxelizedSolid)
-                    model = MakeModelVisual3D((VoxelizedSolid)s);
-                models.Add(model);
-                window.view1.Children.Add(model);
-            }
-            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
-            window.ShowDialog();
-        }
-
+        /// <summary>
+        /// Shows the and hang.
+        /// </summary>
+        /// <param name="tessellatedSolids">The tessellated solids.</param>
         public static void ShowAndHang(IList<TessellatedSolid> tessellatedSolids)
         {
             var window = new Window3DPlot();
@@ -833,7 +794,7 @@ namespace TVGL
                 //window.view1.Items.Refresh();
                 //window.view1.UpdateLayout();              
                 //window.Measure(size);
-                //window.Arrange(new Rect(new System.Windows.PointLight(0, 0), size));
+                //window.Arrange(new Rect(new System.Windows.Point(0, 0), size));
             }
             window.Close();
         }
@@ -861,8 +822,8 @@ namespace TVGL
                         Geometry = new MeshGeometry3D
                         {
                             Positions = new Point3DCollection(positions),
-                        // TriangleIndices = new Int32Collection(triIndices),
-                        Normals = new Vector3DCollection(normals)
+                            // TriangleIndices = new Int32Collection(triIndices),
+                            Normals = new Vector3DCollection(normals)
                         },
                         Material = MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 189, G = 189, B = 189 })
                     }
@@ -872,84 +833,35 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, VoxelDiscretization level = VoxelDiscretization.ExtraFine)
+        private static Visual3D MakeModelVisual3D(VoxelizedSolid solid, Material material)
         {
-            if ((int)level > (int)vs.Discretization) level = vs.Discretization;
-            var normalsTemplate = new[]
-           {
-                new float[] {1, 0, 0}, new float[] {1, 0, 0},
-                new float[] {0, 1, 0}, new float[] {0, 1, 0},
-                new float[] {0, 0, 1}, new float[] {0, 0, 1},
-                new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
-                new float[] {0, -1, 0}, new float[] {0, -1, 0, 0},
-                new float[] {0, 0, -1}, new float[] {0, 0, -1}
-            };
-
-            var coordOffsets = new[]
+            //return MakeModelVisual3D(solid.ConvertToTessellatedSolid());
+            var builder = new MeshBuilder();
+            foreach (var voxel in solid.Voxels())
             {
-                new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
-                new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
-                new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
-                new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
-                new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
-                new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
-                new[]{ new float[] {0, 0, 0}, new float[] { 0, 0, 1}, new float[] {0, 1, 0}},
-                new[]{ new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
-                new[]{ new float[] {0, 0, 0}, new float[] { 1, 0, 0}, new float[] {0, 0, 1}},
-                new[]{ new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
-                new[]{ new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
-                new[]{new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
-            };
-            var positions = new Point3DCollection();
-            var normals = new Vector3DCollection();
-            foreach (var v in vs.Voxels(level, true)) //VoxelDiscretization.ExtraCoarse))
-                                                      // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
-            {
-                var neighbors = vs.GetNeighbors(v).ToList();
-                // if (neighbors.All(n => n != null && n.Role == VoxelRoleTypes.Full))
-                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || n.Role == VoxelRoleTypes.Partial)))
-                    continue;
-
-                var x = (float)v.BottomCoordinate[0];
-                var y = (float)v.BottomCoordinate[1];
-                var z = (float)v.BottomCoordinate[2];
-                var s = (float)v.SideLength;
-                for (int i = 0; i < 12; i++)
+                if (solid.GetNeighbors(voxel).Any(n => n == null || n.Role == VoxelRoleTypes.Empty))
                 {
-                    //  if (neighbors[i / 2] != null && neighbors[i / 2].Role == VoxelRoleTypes.Full) continue;
-                    //if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
-                    //                                 || neighbors[i / 2].Role == VoxelRoleTypes.Partial)) continue;
-                    for (int j = 0; j < 3; j++)
-                    {
-                        positions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
-                            y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
-                        normals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1], normalsTemplate[i][2]));
-                    }
+                    var sideLength = voxel.SideLength;
+                    builder.AddBox(new Point3D(voxel.BottomCoordinate[0] + 0.5 * sideLength,
+                        voxel.BottomCoordinate[1] + 0.5 * sideLength,
+                        voxel.BottomCoordinate[2] + 0.5 * sideLength), sideLength, sideLength, sideLength);
                 }
             }
+            return MakeModelVisual3D(builder, material);
+        }
+
+        private static Visual3D MakeModelVisual3D(MeshBuilder meshBuilder, Material material)
+        {
             return new ModelVisual3D
             {
                 Content =
-                         new GeometryModel3D
-                         {
-                             Geometry = new MeshGeometry3D
-                             {
-                                 Positions = positions,
-                             // TriangleIndices = new Int32Collection(triIndices),
-                             Normals = normals
-                             },
-                             Material = MaterialHelper.CreateMaterial(
-                                 new System.Windows.Media.Color
-                                 {
-                                     A = vs.SolidColor.A,
-                                     B = vs.SolidColor.B,
-                                     G = vs.SolidColor.G,
-                                     R = vs.SolidColor.R
-                                 })
-                         }
+                    new GeometryModel3D
+                    {
+                        Geometry = meshBuilder.ToMesh(),
+                        Material = material
+                    }
             };
         }
-
 
         /// <summary>
         /// Makes the model visual3 d.
@@ -981,8 +893,8 @@ namespace TVGL
                             Geometry = new MeshGeometry3D
                             {
                                 Positions = new Point3DCollection(positions),
-                            // TriangleIndices = new Int32Collection(triIndices),
-                            Normals = new Vector3DCollection(normals)
+                                // TriangleIndices = new Int32Collection(triIndices),
+                                Normals = new Vector3DCollection(normals)
                             },
                             Material = defaultMaterial
                         }
@@ -1017,6 +929,182 @@ namespace TVGL
             return result;
         }
 
+        private static Visual3D MakeModelVisual3D(List<PolygonalFace> faces, bool doubleSidedFace = false)
+        {
+            var defaultMaterial = MaterialHelper.CreateMaterial(
+                new System.Windows.Media.Color
+                {
+                    A = faces[0].Color.A,
+                    B = faces[0].Color.B,
+                    G = faces[0].Color.G,
+                    R = faces[0].Color.R
+                });
+
+            var result = new ModelVisual3D();
+            foreach (var face in faces)
+            {
+                var vOrder = new Point3DCollection();
+                for (var i = 0; i < 3; i++)
+                    vOrder.Add(new Point3D(face.Vertices[i].X, face.Vertices[i].Y, face.Vertices[i].Z));
+
+                var faceMaterial = face.Color == null
+                    ? defaultMaterial
+                    : MaterialHelper.CreateMaterial(new System.Windows.Media.Color
+                    {
+                        A = face.Color.A,
+                        B = face.Color.B,
+                        G = face.Color.G,
+                        R = face.Color.R
+                    });
+
+                result.Children.Add(new ModelVisual3D
+                {
+                    Content =
+                        new GeometryModel3D
+                        {
+                            Geometry = new MeshGeometry3D { Positions = vOrder },
+                            Material = faceMaterial
+                        }
+                });
+
+                if (doubleSidedFace)
+                {
+                    var reversedOrder = new Point3DCollection(vOrder.Reverse());
+                    result.Children.Add(new ModelVisual3D
+                    {
+                        Content =
+                            new GeometryModel3D
+                            {
+                                Geometry = new MeshGeometry3D { Positions = reversedOrder },
+                                Material = faceMaterial
+                            }
+                    });
+                }
+            }
+            return result;
+        }
+        #endregion
+
+        #region 3D Voxelization Plots
+        public static void ShowVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSolid)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(solid);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            model = MakeModelVisual3D(voxelSolid,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 200, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.Show();
+        }
+
+        public static void ShowAndHangVoxelization(TessellatedSolid solid, VoxelizedSolid voxelSolid)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(solid);
+            models.Add(model);
+            //  window.view1.Children.Add(model);
+
+            model = MakeModelVisual3D(voxelSolid,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 200, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHangVoxelization(PolygonalFace face, List<Point3D> voxelCenters, double sideLength,
+    bool doubleSidedFace = false)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(new List<PolygonalFace> { face }, doubleSidedFace);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            var meshBuilder = new MeshBuilder();
+            foreach (var voxelCenter in voxelCenters)
+            {
+                meshBuilder.AddBox(voxelCenter, sideLength, sideLength, sideLength);
+            }
+
+            model = MakeModelVisual3D(meshBuilder,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 180, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHangVoxelization(List<PolygonalFace> faces, List<Point3D> voxelCenters,
+            List<Point3D> voxelCenters2,
+            double sideLength,
+            bool doubleSidedFace = false)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(faces, doubleSidedFace);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            var meshBuilder = new MeshBuilder();
+            foreach (var voxelCenter in voxelCenters)
+            {
+                meshBuilder.AddBox(voxelCenter, sideLength, sideLength, sideLength);
+            }
+            model = MakeModelVisual3D(meshBuilder,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 150, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            meshBuilder = new MeshBuilder();
+            foreach (var voxelCenter in voxelCenters2)
+            {
+                meshBuilder.AddBox(voxelCenter, sideLength, sideLength, sideLength);
+            }
+            model = MakeModelVisual3D(meshBuilder,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 150, R = 255, G = 0, B = 0 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            //Add a line from the first to last voxelCenter1
+            //Now create a line collection by doubling up the points
+            var lineCollection = new List<Point3D> { voxelCenters.First(), voxelCenters.Last() };
+            var color = new System.Windows.Media.Color { R = 255 };//G & B default to 0 to form red
+            var lines = new LinesVisual3D { Points = new Point3DCollection(lineCollection), Color = color };
+            window.view1.Children.Add(lines);
+
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
+
+        public static void ShowAndHangVoxelization(List<PolygonalFace> faces, List<Point3D> voxelCenters, double sideLength,
+            bool doubleSidedFace = false)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            var model = MakeModelVisual3D(faces, doubleSidedFace);
+            models.Add(model);
+            window.view1.Children.Add(model);
+
+            var meshBuilder = new MeshBuilder();
+            foreach (var voxelCenter in voxelCenters)
+            {
+                meshBuilder.AddBox(voxelCenter, sideLength, sideLength, sideLength);
+            }
+
+            model = MakeModelVisual3D(meshBuilder,
+                MaterialHelper.CreateMaterial(new System.Windows.Media.Color { A = 255, G = 189, B = 189 }));
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
 
         #endregion
 

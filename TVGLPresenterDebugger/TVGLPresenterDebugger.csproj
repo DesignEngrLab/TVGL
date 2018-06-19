@@ -137,6 +137,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs">
       <Link>TVGL\Comparators\SortByLength.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByVoxelIndex.cs">
+      <Link>TVGL\Comparators\SortByVoxelIndex.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs">
       <Link>TVGL\Constants.cs</Link>
     </Compile>
