@@ -201,7 +201,9 @@ namespace TVGL
             //First, Offset out and then perform a quick check for overhang polygons.
             //This is helpful when the polygon is nearly self-intersecting. 
             //Then offset back out.  
-            solution = PolygonOperations.SimplifyFuzzy(solution);
+
+            solution = PolygonOperations.SimplifyFuzzy(solution, Math.Min(scale/1000, Constants.LineLengthMinimum ), 
+                Math.Min(angleTolerance/1000, Constants.LineSlopeTolerance));
             var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
             offsetPolygons = EliminateOverhangPolygons(offsetPolygons, projectedFacePolygons);
             var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);

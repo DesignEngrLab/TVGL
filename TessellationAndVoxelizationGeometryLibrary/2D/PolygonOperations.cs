@@ -183,12 +183,33 @@ namespace TVGL
             return paths.Select(SimplifyFuzzy).ToList();
         }
 
+        public static List<List<PointLight>> SimplifyFuzzy(IList<List<PointLight>> paths, double lengthTolerance,
+            double slopeTolerance)
+        {
+            return paths.Select(p => SimplifyFuzzy(p, lengthTolerance, slopeTolerance)).ToList();
+        }
+
         /// <summary>
         /// Simplifies the lines on a polygon to use fewer points when possible.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-            public static List<PointLight> SimplifyFuzzy(IList<PointLight> path)
+        public static List<PointLight> SimplifyFuzzy(IList<PointLight> path)
+        {
+            double lengthTolerance = Constants.LineLengthMinimum;
+            double slopeTolerance = Constants.LineSlopeTolerance;
+            return SimplifyFuzzy(path, lengthTolerance, slopeTolerance);
+        }
+
+        /// <summary>
+        /// Simplifies the lines on a polygon to use fewer points when possible.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="lengthTolerance"></param>
+        /// <param name="slopeTolerance"></param>
+        /// <returns></returns>
+        public static List<PointLight> SimplifyFuzzy(IList<PointLight> path, double lengthTolerance,
+            double slopeTolerance)
         {
             var simplePath = new List<PointLight>(path);
             //Remove negligible length lines and combine collinear lines.
@@ -201,29 +222,24 @@ namespace TVGL
                 var current = simplePath[i];
                 var next = simplePath[j];
                 var nextNext = simplePath[k];
-                if (i == 0 && NegligibleLine(current, next))
+                if (i == 0 && NegligibleLine(current, next, lengthTolerance))
                 {
                     simplePath.RemoveAt(j);
                     i--;
                     continue;
                 }
-                if (NegligibleLine(next, nextNext))
+                if (NegligibleLine(next, nextNext, lengthTolerance))
                 {
                     simplePath.RemoveAt(k);
                     i--;
                     continue;
                 }
                 //Use an even looser tolerance to determine if slopes are equal.
-                if (!LineSlopesEqual(current, next, nextNext)) continue;
+                if (!LineSlopesEqual(current, next, nextNext, slopeTolerance)) continue;
                 simplePath.RemoveAt(j);
                 i--;
             }
             return simplePath;
-        }
-
-        public static List<List<Point>> SimplifyFuzzy(IList<List<Point>> paths)
-        {
-            return paths.Select(SimplifyFuzzy).ToList();
         }
 
         /// <summary>
@@ -232,6 +248,21 @@ namespace TVGL
         /// <param name="path"></param>
         /// <returns></returns>
         public static List<Point> SimplifyFuzzy(IList<Point> path)
+        {
+            double lengthTolerance = Constants.LineLengthMinimum;
+            double slopeTolerance = Constants.LineSlopeTolerance;
+            return SimplifyFuzzy(path, lengthTolerance, slopeTolerance);
+        }
+
+        /// <summary>
+        /// Simplifies the lines on a polygon to use fewer points when possible.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="lengthTolerance"></param>
+        /// <param name="slopeTolerance"></param>
+        /// <returns></returns>
+        public static List<Point> SimplifyFuzzy(IList<Point> path, double lengthTolerance,
+            double slopeTolerance)
         {
             var simplePath = new List<Point>(path);
             //Remove negligible length lines and combine collinear lines.
@@ -244,25 +275,26 @@ namespace TVGL
                 var current = simplePath[i];
                 var next = simplePath[j];
                 var nextNext = simplePath[k];
-                if (i == 0 && NegligibleLine(current.Light, next.Light))
+                if (i == 0 && NegligibleLine(current.Light, next.Light, lengthTolerance))
                 {
                     simplePath.RemoveAt(j);
                     i--;
                     continue;
                 }
-                if (NegligibleLine(next.Light, nextNext.Light))
+                if (NegligibleLine(next.Light, nextNext.Light, lengthTolerance))
                 {
                     simplePath.RemoveAt(k);
                     i--;
                     continue;
                 }
                 //Use an even looser tolerance to determine if slopes are equal.
-                if (!LineSlopesEqual(current.Light, next.Light, nextNext.Light)) continue;
+                if (!LineSlopesEqual(current.Light, next.Light, nextNext.Light, slopeTolerance)) continue;
                 simplePath.RemoveAt(j);
                 i--;
             }
             return simplePath;
         }
+
 
         private static bool NegligibleLine(PointLight pt1, PointLight pt2, double tolerance = Constants.LineLengthMinimum)
         {
