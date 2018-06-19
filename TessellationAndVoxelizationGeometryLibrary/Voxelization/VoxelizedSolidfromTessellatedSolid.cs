@@ -99,8 +99,8 @@ namespace TVGL.Voxelization
             if (numberOfLevels > 1)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 1);
-                //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
-                foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
+                //foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                 {
                     var voxels = new VoxelHashSet(1, this);
                     MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel0).Vertices, voxel0, voxels);
@@ -110,7 +110,7 @@ namespace TVGL.Voxelization
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                } //);
+                } );
             }
             #endregion
 
