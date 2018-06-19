@@ -82,17 +82,13 @@ namespace TVGLTest
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            DirectoryInfo dir;
-            try
-            {
-                //Works for x64 builds
-                dir = new DirectoryInfo("../../../../TestFiles");
-            }
-            catch
-            {
-                //Works for AnyCPU (x86) builds
-                dir = new DirectoryInfo("../../../TestFiles");
-            }
+#if AnyCPU
+            //Works for AnyCPU (x86) builds
+            var dir = new DirectoryInfo("../../../TestFiles");
+#else
+            //Works for x64 builds
+            var dir = new DirectoryInfo("../../../../TestFiles");
+#endif
             var fileNames = dir.GetFiles("*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
