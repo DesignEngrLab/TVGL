@@ -587,7 +587,7 @@ namespace TVGL
             return points;
         }
 
-        private static PolygonLight GetPolygonFromFace(PolygonalFace face, IReadOnlyDictionary<int, PointLight> projectedPoints, bool forceToBePositive)
+        private static PolygonLight GetPolygonFromFace(PolygonalFace face, Dictionary<int, PointLight> projectedPoints, bool forceToBePositive)
         {
             if (face.Vertices.Count != 3) throw new Exception("This method was only developed with triangles in mind.");
             //Make sure the polygon is ordered correctly (we already know this face is positive)

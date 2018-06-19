@@ -8,8 +8,8 @@ using TVGL;
 
 namespace TVGL_Test
 {
-    using Path = List<Point>;
-    using Paths = List<List<Point>>;
+    using Path = List<PointLight>;
+    using Paths = List<List<PointLight>>;
 
     [TestFixture]
     class ClipperTest
@@ -34,13 +34,13 @@ namespace TVGL_Test
 
             for (var i = 0; i < ints.Length; i += 2)
             {
-                polygon.Add(new Point(ints[i], ints[i + 1]));
+                polygon.Add(new PointLight(ints[i], ints[i + 1]));
             }
 
             return polygon;
         }
 
-        public static List<Point> MakeRectangularPolygon(int width, int height, int[] centerPoint)
+        public static List<PointLight> MakeRectangularPolygon(int width, int height, int[] centerPoint)
         {
             var x1 = centerPoint[0] - width/2;
             var x2 = centerPoint[0] + width / 2;
@@ -118,12 +118,12 @@ namespace TVGL_Test
 
         private static void ShowPaths(IEnumerable<Path> paths, int scalingFactor = 1)
         {
-            var pointPaths = new List<List<Point>>();
+            var pointPaths = new List<List<PointLight>>();
             foreach (var path in paths)
             {
-                var points = new List<Point>();
+                var points = new List<PointLight>();
                 if (scalingFactor < 1) scalingFactor = 1;
-                points.AddRange(path.Select(Point => new Point(new List<double>() { Point.X / scalingFactor, Point.Y / scalingFactor, 0.0 })));
+                points.AddRange(path.Select(point => new PointLight(point.X / scalingFactor, point.Y / scalingFactor)));
                 pointPaths.Add(points);
             }
           //  Presenter.ShowAndHang(pointPaths);
@@ -131,16 +131,15 @@ namespace TVGL_Test
 
         private static void ShowPathListsAsDifferentColors(IEnumerable<IEnumerable<Path>> pathLists, int scalingFactor = 1)
         {
-
-            var pointPathLists = new List<List<List<Point>>>();
+            var pointPathLists = new List<List<List<PointLight>>>();
             foreach (var paths in pathLists)
             {
-                var pointPathList = new List<List<Point>>();
+                var pointPathList = new List<List<PointLight>>();
                 foreach (var path in paths)
                 {
-                    var points = new List<Point>();
+                    var points = new List<PointLight>();
                     if (scalingFactor < 1) scalingFactor = 1;
-                    points.AddRange(path.Select(point => new Point(new List<double>() { point.X / scalingFactor, point.Y / scalingFactor, 0.0 })));
+                    points.AddRange(path.Select(point => new PointLight(point.X / scalingFactor, point.Y / scalingFactor)));
                     pointPathList.Add(points);
                 }
                 pointPathLists.Add(pointPathList);
@@ -170,7 +169,7 @@ namespace TVGL_Test
             var subjectList4 = MakeRectangularPolygon(20, 20, intPoint);
 
             //Incorrect ShallowTree ordering, so we can check create function.
-            var paths = new List<List<Point>> { subjectList3, clipperList2, subjectList4 , subjectList, subjectList2, clipperList3, clipperList };
+            var paths = new List<List<PointLight>> { subjectList3, clipperList2, subjectList4 , subjectList, subjectList2, clipperList3, clipperList };
             //Presenter.ShowAndHang(paths);
             var trees = PolygonOperations.GetShallowPolygonTrees(paths);
             Assert.That(trees.Count == 4);
@@ -256,7 +255,7 @@ namespace TVGL_Test
             int[] ints4 = { 97, 174, 58, 160, 60, 124, 99, 132 }; //CCW Red
 
             var subjectList = MakePathFromInts(ints1);
-            var clipList = new List<List<Point>>() { MakePathFromInts(ints2), MakePathFromInts(ints3), MakePathFromInts(ints4) };
+            var clipList = new List<List<PointLight>>() { MakePathFromInts(ints2), MakePathFromInts(ints3), MakePathFromInts(ints4) };
 
             //ShowPaths(new Paths() {subjectList});
             //ShowPaths(clipList);

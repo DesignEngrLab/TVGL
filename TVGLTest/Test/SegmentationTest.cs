@@ -86,10 +86,10 @@ namespace TVGL_Test
         private static TessellatedSolid LoadSolid(string filename)
         {
             Stream fileStream;
-            List<TessellatedSolid> ts;
+            TessellatedSolid ts;
             using (fileStream = File.OpenRead(filename))
-                ts = IO.Open(fileStream, filename);
-            return ts[0];
+               IO.Open(fileStream, filename, out ts);
+            return ts;
         }
 
         [Test]

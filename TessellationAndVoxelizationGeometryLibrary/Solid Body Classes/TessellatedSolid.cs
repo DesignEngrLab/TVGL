@@ -86,7 +86,6 @@ namespace TVGL
                 return _inertiaTensor;
             }
         }
-        internal double[,] _inertiaTensor;
 
         /// <summary>
         ///     The tolerance is set during the initiation (constructor phase). This is based on the maximum
@@ -149,20 +148,10 @@ namespace TVGL
             CompleteInitiation();
         }
 
-        internal TessellatedSolid(TVGLFileData fileData, string fileName) : base(fileData.Units, fileData.Name, fileName,
-                fileData.Comments, fileData.Language)
+        internal TessellatedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
         {
-            XMax = fileData.XMax;
-            XMin = fileData.XMin;
-            YMax = fileData.YMax;
-            YMin = fileData.YMin;
-            ZMax = fileData.ZMax;
-            ZMin = fileData.ZMin;
-            Center = fileData.Center;
             SameTolerance = fileData.SameTolerance;
-
-
-
+            
             var stringList = fileData.Vertices.Split(',');
             var listLength = stringList.Length;
             var coords = new double[listLength / 3][];
@@ -184,14 +173,7 @@ namespace TVGL
                     int.Parse(stringList[3 * i + 2])
                 };
 
-            if (!string.IsNullOrWhiteSpace(fileData.InertiaTensor))
-            {
-                stringList = fileData.InertiaTensor.Split(',');
-                _inertiaTensor = new double[3, 3];
-                for (int i = 0; i < 3; i++)
-                    for (int j = 0; j < 3; j++)
-                        _inertiaTensor[i, j] = double.Parse(stringList[3 * i + j]);
-            }
+  
             stringList = fileData.Colors.Split(',');
             listLength = stringList.Length;
             var colors = new Color[listLength];
@@ -201,15 +183,10 @@ namespace TVGL
             MakeVertices(coords, faceIndices);
             MakeFaces(faceIndices, colors);
 
-            List<PolygonalFace> newFaces;
-            List<Vertex> removedVertices;
-            MakeEdges(out newFaces, out removedVertices);
+            MakeEdges(out var newFaces, out var removedVertices);
             AddFaces(newFaces);
             RemoveVertices(removedVertices);
-            Center = fileData.Center;
-            Volume = fileData.Volume;
-            SurfaceArea = fileData.SurfaceArea;
-
+          
             foreach (var face in Faces)
                 face.DefineFaceCurvature();
             foreach (var v in Vertices)
@@ -900,8 +877,9 @@ namespace TVGL
         /// <returns></returns>
         public TessellatedSolid SetToOriginAndSquareToNewSolid(out double[,] backTransform)
         {
-            var transformationMatrix = getSquaredandOriginTransform(out backTransform);
-            return (TessellatedSolid)TransformToNewSolid(transformationMatrix);
+            var copy = (TessellatedSolid)this.Copy();
+            copy.SetToOriginAndSquare(out backTransform);
+            return copy;
         }
         /// <summary>
         /// Translates and Squares Tesselated Solid based on its oriented bounding box. 
@@ -1035,22 +1013,21 @@ namespace TVGL
         public override void Transform(double[,] transformMatrix)
         {
             double[] tempCoord;
+            XMin = YMin = ZMin = double.PositiveInfinity;
+            XMax = YMax = ZMax = double.NegativeInfinity;
             foreach (var vert in Vertices)
             {
                 tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
                 vert.Position[0] = tempCoord[0];
                 vert.Position[1] = tempCoord[1];
                 vert.Position[2] = tempCoord[2];
+                if (tempCoord[0] < XMin) XMin = tempCoord[0];
+                if (tempCoord[1] < YMin) YMin = tempCoord[1];
+                if (tempCoord[2] < ZMin) ZMin = tempCoord[2];
+                if (tempCoord[0] > XMax) XMax = tempCoord[0];
+                if (tempCoord[1] > YMax) YMax = tempCoord[1];
+                if (tempCoord[2] > ZMax) ZMax = tempCoord[2];
             }
-            tempCoord = transformMatrix.multiply(new[] { XMin, YMin, ZMin, 1 });
-            XMin = tempCoord[0];
-            YMin = tempCoord[1];
-            ZMin = tempCoord[2];
-
-            tempCoord = transformMatrix.multiply(new[] { XMax, YMax, ZMax, 1 });
-            XMax = tempCoord[0];
-            YMax = tempCoord[1];
-            ZMax = tempCoord[2];
             Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             if (_inertiaTensor != null)
@@ -1072,31 +1049,9 @@ namespace TVGL
         /// <returns></returns>
         public override Solid TransformToNewSolid(double[,] transformationMatrix)
         {
-            var ts = this;
-
-            //Transform and rotate all the vertices
-            var newVertices = new List<double[]>();
-            foreach (var vertex in ts.Vertices)
-            {
-                var oldVertexPosition = new[]
-                {
-                    vertex.X, vertex.Y, vertex.Z, 1.0
-                };
-                var newVertexPosition = transformationMatrix.multiply(oldVertexPosition);
-                newVertices.Add(newVertexPosition);
-            }
-
-            //Collect the face indices to make the tesselated solid
-            var faceToVertexIndices = new List<int[]>();
-            var colors = new List<Color>();
-            foreach (var face in ts.Faces)
-            {
-                faceToVertexIndices.Add(new[]
-                {face.Vertices[0].IndexInList, face.Vertices[1].IndexInList, face.Vertices[2].IndexInList});
-                colors.Add(face.Color);
-            }
-
-            return new TessellatedSolid(newVertices, faceToVertexIndices, colors, ts.Units, ts.Name, ts.FileName);
+            var copy = this.Copy();
+            copy.Transform(transformationMatrix);
+            return copy;
         }
         #endregion
     }

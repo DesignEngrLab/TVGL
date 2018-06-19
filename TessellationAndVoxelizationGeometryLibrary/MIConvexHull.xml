@@ -368,7 +368,8 @@
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <typeparam name="TFace">The type of the t face.</typeparam>
             <param name="data">The data.</param>
-            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>
             ConvexHull&lt;TVertex, TFace&gt;.
             </returns>
@@ -379,7 +380,8 @@
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <param name="data">The data.</param>
-            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>
             ConvexHull&lt;TVertex, DefaultConvexFace&lt;TVertex&gt;&gt;.
             </returns>
@@ -389,7 +391,8 @@
             Creates a convex hull of the input data.
             </summary>
             <param name="data">The data.</param>
-            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>
             ConvexHull&lt;DefaultVertex, DefaultConvexFace&lt;DefaultVertex&gt;&gt;.
             </returns>
@@ -788,13 +791,14 @@
             Helper class for handling math related stuff.
             </summary>
         </member>
-        <member name="M:MIConvexHull.ConvexHullAlgorithm.GetDelaunayTriangulation``2(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.ConvexHullAlgorithm.GetDelaunayTriangulation``2(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Computes the Delaunay triangulation.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <typeparam name="TCell">The type of the t cell.</typeparam>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance.</param>
             <returns>TCell[].</returns>
         </member>
         <member name="M:MIConvexHull.ConvexHullAlgorithm.RemoveUpperFaces">
@@ -1114,11 +1118,13 @@
             </summary>
             <value>The cells.</value>
         </member>
-        <member name="M:MIConvexHull.DelaunayTriangulation`2.Create(System.Collections.Generic.IList{`0})">
+        <member name="M:MIConvexHull.DelaunayTriangulation`2.Create(System.Collections.Generic.IList{`0},System.Double)">
             <summary>
             Creates the Delaunay triangulation of the input data.
             </summary>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>DelaunayTriangulation&lt;TVertex, TCell&gt;.</returns>
             <exception cref="T:System.ArgumentNullException">data</exception>
             <exception cref="T:System.ArgumentNullException">data</exception>
@@ -1141,31 +1147,37 @@
             Factory class for creating triangulations.
             </summary>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``1(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``1(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Creates the Delaunay triangulation of the input data.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>ITriangulation&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateDelaunay(System.Collections.Generic.IList{System.Double[]})">
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay(System.Collections.Generic.IList{System.Double[]},System.Double)">
             <summary>
             Creates the Delaunay triangulation of the input data.
             </summary>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>ITriangulation&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``2(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.Triangulation.CreateDelaunay``2(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Creates the Delaunay triangulation of the input data.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <typeparam name="TFace">The type of the t face.</typeparam>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>ITriangulation&lt;TVertex, TFace&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``3(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``3(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Create the voronoi mesh.
             </summary>
@@ -1173,30 +1185,38 @@
             <typeparam name="TCell">The type of the t cell.</typeparam>
             <typeparam name="TEdge">The type of the t edge.</typeparam>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>VoronoiMesh&lt;TVertex, TCell, TEdge&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``1(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``1(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Create the voronoi mesh.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>VoronoiMesh&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;, VoronoiEdge&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateVoronoi(System.Collections.Generic.IList{System.Double[]})">
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi(System.Collections.Generic.IList{System.Double[]},System.Double)">
             <summary>
             Create the voronoi mesh.
             </summary>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>VoronoiMesh&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;, VoronoiEdge&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``2(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.Triangulation.CreateVoronoi``2(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Create the voronoi mesh.
             </summary>
             <typeparam name="TVertex">The type of the t vertex.</typeparam>
             <typeparam name="TCell">The type of the t cell.</typeparam>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>VoronoiMesh&lt;TVertex, TCell, VoronoiEdge&lt;TVertex, TCell&gt;&gt;.</returns>
         </member>
         <member name="T:MIConvexHull.TriangulationCell`2">
@@ -1264,7 +1284,7 @@
             A factory class for creating a Voronoi mesh.
             </summary>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh.Create``3(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.VoronoiMesh.Create``3(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Create the voronoi mesh.
             </summary>
@@ -1274,7 +1294,7 @@
             <param name="data">The data.</param>
             <returns>VoronoiMesh&lt;TVertex, TCell, TEdge&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh.Create``1(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.VoronoiMesh.Create``1(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Create the voronoi mesh.
             </summary>
@@ -1282,14 +1302,14 @@
             <param name="data">The data.</param>
             <returns>VoronoiMesh&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;, VoronoiEdge&lt;TVertex, DefaultTriangulationCell&lt;TVertex&gt;&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh.Create(System.Collections.Generic.IList{System.Double[]})">
+        <member name="M:MIConvexHull.VoronoiMesh.Create(System.Collections.Generic.IList{System.Double[]},System.Double)">
             <summary>
             Create the voronoi mesh.
             </summary>
             <param name="data">The data.</param>
             <returns>VoronoiMesh&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;, VoronoiEdge&lt;DefaultVertex, DefaultTriangulationCell&lt;DefaultVertex&gt;&gt;&gt;.</returns>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh.Create``2(System.Collections.Generic.IList{``0})">
+        <member name="M:MIConvexHull.VoronoiMesh.Create``2(System.Collections.Generic.IList{``0},System.Double)">
             <summary>
             Create the voronoi mesh.
             </summary>
@@ -1324,11 +1344,13 @@
             </summary>
             <value>The edges.</value>
         </member>
-        <member name="M:MIConvexHull.VoronoiMesh`3.Create(System.Collections.Generic.IList{`0})">
+        <member name="M:MIConvexHull.VoronoiMesh`3.Create(System.Collections.Generic.IList{`0},System.Double)">
             <summary>
             Create a Voronoi diagram of the input data.
             </summary>
             <param name="data">The data.</param>
+            <param name="PlaneDistanceTolerance">The plane distance tolerance (default is 1e-10). If too high, points 
+            will be missed. If too low, the algorithm may break. Only adjust if you notice problems.</param>
             <returns>VoronoiMesh&lt;TVertex, TCell, TEdge&gt;.</returns>
             <exception cref="T:System.ArgumentNullException">data</exception>
             <exception cref="T:System.ArgumentNullException">data</exception>
@@ -1341,7 +1363,7 @@
         </member>
         <member name="M:MIConvexHull.VoronoiMesh`3.EdgeComparer.Equals(`2,`2)">
             <summary>
-            Equalses the specified x.
+            Equals the specified x.
             </summary>
             <param name="x">The x.</param>
             <param name="y">The y.</param>

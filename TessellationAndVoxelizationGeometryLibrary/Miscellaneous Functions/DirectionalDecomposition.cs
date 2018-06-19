@@ -873,7 +873,7 @@ namespace TVGL
                     if (segmentationData != null) outputData.Add(segmentationData);
 
                     UpdateSegments(segmentationData, inStepVertices, sortedVertexDistanceLookup, direction,
-                        ref allDirectionalSegments, debugCounter);
+                        allDirectionalSegments, debugCounter);
                     debugCounter++;
 
                     stepDistances.Add(stepIndex, distanceAlongAxis);
@@ -973,7 +973,7 @@ namespace TVGL
         /// <param name="debugCounter"></param>
         private static void UpdateSegments(SegmentationData segmentationData, HashSet<Vertex> inStepVertices,
             Dictionary<int, double> vertexDistanceLookup, double[] searchDirection,
-            ref Dictionary<int, DirectionalSegment> allDirectionalSegments, int debugCounter)
+            Dictionary<int, DirectionalSegment> allDirectionalSegments, int debugCounter)
         {
             /* There are six possible segment cases that may occur. This section describes what they are and how they are handled.  
             
@@ -1138,9 +1138,9 @@ namespace TVGL
 
                                 //Else, this vertex belongs to another segment                         
                                 var otherSegment = allDirectionalSegments[otherVertex.ReferenceIndex];
-                                AddConnectedSegment(otherSegment, ref connectedSegmentsIndices,
-                                    ref inStepVertices, ref inStepSegmentVertexSet,
-                                    ref allInStepSegmentVertices);
+                                AddConnectedSegment(otherSegment, connectedSegmentsIndices,
+                                    inStepVertices, inStepSegmentVertexSet,
+                                    allInStepSegmentVertices);
                                 continue;
                             }
                             //Else if
@@ -1148,9 +1148,9 @@ namespace TVGL
                             {
                                 //This vertex belongs to another segment 
                                 var otherSegment = allDirectionalSegments[otherVertex.ReferenceIndex];
-                                AddConnectedSegment(otherSegment, ref connectedSegmentsIndices,
-                                     ref inStepVertices, ref inStepSegmentVertexSet,
-                                     ref allInStepSegmentVertices);
+                                AddConnectedSegment(otherSegment, connectedSegmentsIndices,
+                                     inStepVertices, inStepSegmentVertexSet,
+                                     allInStepSegmentVertices);
                                 continue;
                             }
 
@@ -1204,9 +1204,9 @@ namespace TVGL
                                     //These two segments are connected. 
                                     if (otherSegment.Index != segment.Index)
                                     {
-                                        AddConnectedSegment(otherSegment, ref connectedSegmentsIndices,
-                                            ref inStepVertices, ref inStepSegmentVertexSet,
-                                            ref allInStepSegmentVertices);
+                                        AddConnectedSegment(otherSegment, connectedSegmentsIndices,
+                                            inStepVertices, inStepSegmentVertexSet,
+                                            allInStepSegmentVertices);
                                     }
                                 }
                             }
@@ -1577,7 +1577,7 @@ namespace TVGL
                     {
                         //Segment Case 6 [Branching]: End the potential segment and start new segments for each positive polygon.
                         //If the merger needs to be branched, this function will handle that too.
-                        potentialSegment.BranchSegment(ref allDirectionalSegments);
+                        potentialSegment.BranchSegment(allDirectionalSegments);
                     }
                     else throw new Exception("One of the polygons must have been positive.");
                 }
@@ -1590,10 +1590,10 @@ namespace TVGL
         }
 
         private static void AddConnectedSegment(DirectionalSegment otherSegment,
-            ref HashSet<int> connectedSegmentsIndices,
-            ref HashSet<Vertex> inStepVertices,
-            ref Stack<Vertex> inStepSegmentVertexSet,
-            ref HashSet<Vertex> allInStepSegmentVertices)
+            HashSet<int> connectedSegmentsIndices,
+            HashSet<Vertex> inStepVertices,
+            Stack<Vertex> inStepSegmentVertexSet,
+            HashSet<Vertex> allInStepSegmentVertices)
         {
             //If this connected segment has not already been identified
             if (connectedSegmentsIndices.Contains(otherSegment.Index)) return;
@@ -1999,7 +1999,7 @@ namespace TVGL
             /// Starts a directional segment for each polygon data group assigned to this parent directional segment
             /// </summary>
             /// <param name="allDirectionalSegments"></param>
-            public void BranchSegment(ref Dictionary<int, DirectionalSegment> allDirectionalSegments)
+            public void BranchSegment(Dictionary<int, DirectionalSegment> allDirectionalSegments)
             {
                 //If a merger resulted in a new segment (this) that needs to be branched, it will have no cross sections set by this point.
                 //Replace this segment with new segments. 

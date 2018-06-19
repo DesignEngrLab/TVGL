@@ -91,7 +91,7 @@ namespace TVGL.IOFunctions
         /// <param name="s">The s.</param>
         /// <param name="filename">The filename.</param>
         /// <returns>List&lt;TessellatedSolid&gt;.</returns>
-        internal static List<TessellatedSolid> OpenSolids(Stream s, string filename)
+        internal static TessellatedSolid[] OpenSolids(Stream s, string filename)
         {
             var now = DateTime.Now;
             AMFFileData amfData;
@@ -124,10 +124,10 @@ namespace TVGL.IOFunctions
                     objectsUsed.Add(amfInstance.objectid);
                 }
             }
-            if (objectsUsed.Any()) return results;
+            if (objectsUsed.Any()) return results.ToArray();
             foreach (var amfObject in amfData.Objects)
                 results.Add(amfData.CreateSolid(amfObject));
-            return results;
+            return results.ToArray();
         }
 
         private TessellatedSolid CreateSolid(AMF_Object amfObject, AMF_Instance amfInstance = null)
