@@ -17,7 +17,8 @@ namespace TVGL._2D
         /// intersection points before the line).
         /// </summary>
         public static List<PolygonLight> OnLine(List<PolygonLight> shape, double[] direction2D, double distanceAlongDirection,
-            bool returnFurtherThanSlice, out List<Point> intersectionPoints, double offsetAtLine = 0.0)
+            bool returnFurtherThanSlice, out List<Point> intersectionPoints, 
+            double offsetAtLine = 0.0, List<Tuple<Point, double>> sortedPoints =null)
         {
             var partialShape = new List<PolygonLight>();
             intersectionPoints = new List<Point>();
@@ -36,8 +37,11 @@ namespace TVGL._2D
                 {
                     allPoints.AddRange(path);
                 }
-                List<Tuple<Point, double>> sortedPoints;
-                MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
+
+                if (sortedPoints == null)
+                {
+                    MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
+                }
 
                 //Get the paths for each partial shape and add them together. The paths should not overlap, given
                 //that they are from non-overlapping shallow polygon trees.
@@ -60,7 +64,8 @@ namespace TVGL._2D
         /// intersection points before the line).
         /// </summary>
         public static List<List<PointLight>> OnLine(List<List<Point>> shape, double[] direction2D, double distanceAlongDirection,
-            bool returnFurtherThanSlice, out List<Point> intersectionPoints, double offsetAtLine = 0.0)
+            bool returnFurtherThanSlice, out List<Point> intersectionPoints, 
+            double offsetAtLine = 0.0, List<Tuple<Point, double>> sortedPoints = null)
         {
             var partialShape = new List<List<PointLight>>();
             intersectionPoints = new List<Point>();
@@ -79,14 +84,16 @@ namespace TVGL._2D
                 {
                     allPoints.AddRange(path);
                 }
-                List<Tuple<Point, double>> sortedPoints;
-                MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
+
+                if (sortedPoints == null)
+                {
+                    MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
+                }                       
 
                 //Get the paths for each partial shape and add them together. The paths should not overlap, given
                 //that they are from non-overlapping shallow polygon trees.
-                var localSortedIntersectionOffsetPoints = new List<Point>();
                 var paths = OnLine(shallowPolygonTree, direction2D, distanceAlongDirection, returnFurtherThanSlice, sortedPoints,
-                    out localSortedIntersectionOffsetPoints, offsetAtLine).Select(p => p.Path).ToList();
+                    out var localSortedIntersectionOffsetPoints, offsetAtLine).Select(p => p.Path).ToList();
                 partialShape.AddRange(paths);
                 intersectionPoints.AddRange(localSortedIntersectionOffsetPoints);
             }
