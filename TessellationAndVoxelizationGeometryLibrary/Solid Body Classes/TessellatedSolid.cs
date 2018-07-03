@@ -1051,7 +1051,7 @@ namespace TVGL
                 if (tempCoord[1] > YMax) YMax = tempCoord[1];
                 if (tempCoord[2] > ZMax) ZMax = tempCoord[2];
             }
-            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
+            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 }).Take(3).ToArray();
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             if (_inertiaTensor != null)
             {
