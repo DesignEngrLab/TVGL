@@ -164,7 +164,7 @@ namespace TVGL
                     minD = distance;
                 }
                 if (distance.IsPracticallySame(maxD, Constants.BaseTolerance))
-                    bottomVertices.Add(v);
+                    topVertices.Add(v);
                 else if (distance > maxD)
                 {
                     topVertices.Clear();
