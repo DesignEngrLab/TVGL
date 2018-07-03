@@ -219,6 +219,7 @@ namespace TVGL
             var negativePaths = new List<List<PointLight>>();
             foreach (var path in nonSelfIntersectingPaths)
             {
+                if (path.Count < 3) continue; //Don't include lines. It must be a valid polygon.
                 //If the area is negative, we need to check if it is a hole or an overhang
                 //If it is an overhang, we ignore it. An overhang exists if any the points
                 //in the path are inside any of the positive faces touching the path
