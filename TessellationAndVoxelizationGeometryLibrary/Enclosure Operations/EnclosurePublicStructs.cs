@@ -53,7 +53,8 @@ namespace TVGL
         public double[][] Directions;
 
         /// <summary>
-        ///     The corner points
+        ///     Corner vertices are ordered as follows, where - = low and + = high along directions 0, 1, and 2 respectively.
+        ///     [0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
         /// </summary>
         public Vertex[] CornerVertices;
 
@@ -283,6 +284,34 @@ namespace TVGL
             //Recreate the solid representation if one existing in the original
             if(original.SolidRepresentation != null) copy.SetSolidRepresentation();
             return copy;
+        }
+
+        //Note: Corner vertices must be ordered correctly. See below where - = low and + = high along directions 0, 1, and 2 respectively.
+        // [0] = +++, [1] = +-+, [2] = +--, [3] = ++-, [4] = -++, [5] = --+, [6] = ---, [7] = -+-
+        public static BoundingBox FromCornerVertices(double[][] directions, Vertex[] cornerVertices, bool areVerticesInCorrectOrder)
+        {
+            if(!areVerticesInCorrectOrder) throw new Exception("Not implemented exception. Vertices must be in correct order for OBB");
+            if(cornerVertices.Length != 8) throw new Exception("Must set Bounding Box using eight corner vertices in correct order");
+
+            var dimensions = new[] { 0.0, 0.0, 0.0 };
+            dimensions[0] = MinimumEnclosure.GetLengthAndExtremeVertices(directions[0], cornerVertices, out _, out _);
+            dimensions[1] = MinimumEnclosure.GetLengthAndExtremeVertices(directions[1], cornerVertices, out _, out  _);
+            dimensions[2] = MinimumEnclosure.GetLengthAndExtremeVertices(directions[2], cornerVertices, out _, out _);
+
+            //Add in the center
+            var centerPosition = new[] { 0.0, 0.0, 0.0 };
+            centerPosition = cornerVertices.Aggregate(centerPosition, (c, v) => c.add(v.Position, 3))
+                .divide(cornerVertices.Count(), 3);
+            
+            return new BoundingBox
+            {
+                Center = new Vertex(centerPosition),
+                Volume = dimensions[0] * dimensions[1] * dimensions[2],
+                Dimensions = dimensions,
+                Directions = directions, 
+                PointsOnFaces = null, 
+                CornerVertices = cornerVertices
+            };
         }
     }
 
