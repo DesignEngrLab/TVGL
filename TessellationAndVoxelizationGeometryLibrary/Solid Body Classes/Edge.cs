@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using StarMathLib;
 using TVGL.Voxelization;
 
@@ -338,6 +339,39 @@ namespace TVGL
         {
             From.Edges.Add(this);
             To.Edges.Add(this);
+        }
+
+        /// <summary>
+        /// Returns owned and other face in that order
+        /// </summary>
+        /// <returns></returns>
+        internal static (PolygonalFace, PolygonalFace) GetOwnedAndOtherFace(long edgeChecksum, PolygonalFace face1, PolygonalFace face2)
+        {
+            var (from, to) = GetVertexIndices(edgeChecksum);
+            //We are going to enforce that the edge is defined along the vertices, such that it goes from the smaller
+            //vertex index to the larger. 
+            var v0 = face1.Vertices.First(v => v.IndexInList == from);
+            var v1 = face1.Vertices.First(v => v.IndexInList == to);
+            var v2 = face1.Vertices.First(v => v.IndexInList != to && v.IndexInList != from);
+            var vector1 = v1.Position.subtract(v0.Position);
+            var vector2 = v2.Position.subtract(v1.Position);
+            var dot = vector1.crossProduct(vector2).dotProduct(face1.Normal);
+            //The owned face(the face in which the from-to direction makes sense
+            // - that is, produces the proper cross-product normal).
+            return Math.Sign(dot) > 0 ? (face1, face2) : (face2, face1);
+        }
+
+        internal static (int, int) GetVertexIndices(long checkSum)
+        {
+            //The checksum is ordered from larger to smaller
+            var largeIndex = (int)(checkSum / Constants.VertexCheckSumMultiplier);
+            var smallIndex = (int)(checkSum - largeIndex * Constants.VertexCheckSumMultiplier);
+            return (smallIndex, largeIndex);
+        }
+
+        internal static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
+        {
+            return TessellatedSolid.GetEdgeChecksum(vertex1, vertex2);
         }
 
         #endregion

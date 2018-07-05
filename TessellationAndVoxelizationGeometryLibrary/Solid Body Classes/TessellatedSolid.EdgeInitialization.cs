@@ -501,7 +501,6 @@ namespace TVGL
             return score;
         }
 
-
         internal static long SetAndGetEdgeChecksum(Edge edge)
         {
             var checksum = GetEdgeChecksum(edge.From, edge.To);
@@ -509,15 +508,15 @@ namespace TVGL
             return checksum;
         }
 
-        internal static long GetEdgeChecksum(Vertex fromVertex, Vertex toVertex)
+        internal static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
         {
-            var fromIndex = fromVertex.IndexInList;
-            var toIndex = toVertex.IndexInList;
-            if (fromIndex == -1 || toIndex == -1) return -1;
-            if (fromIndex == toIndex) throw new Exception("edge to same vertices.");
-            return fromIndex < toIndex
-                ? fromIndex + Constants.VertexCheckSumMultiplier * toIndex
-                : toIndex + Constants.VertexCheckSumMultiplier * fromIndex;
+            var v1 = vertex1.IndexInList;
+            var v2 = vertex2.IndexInList;
+            if (v1 == -1 || v2 == -1) return -1;
+            if (v1 == v2) throw new Exception("edge to same vertices.");
+            return v1 < v2
+                ? v1 + Constants.VertexCheckSumMultiplier * v2
+                : v2 + Constants.VertexCheckSumMultiplier * v1;
         }
     }
 }
