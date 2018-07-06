@@ -12,7 +12,7 @@ namespace TVGL
         ///     Index of the face in the tesselated solid face list
         /// </summary>
         /// <value>The index in list.</value>
-        public int IndexInList { get; internal set; }
+        public int IndexInList { get; set; }
         /// <summary>
         ///     Gets a value indicating whether [it is part of the convex hull].
         /// </summary>

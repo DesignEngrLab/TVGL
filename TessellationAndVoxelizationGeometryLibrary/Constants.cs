@@ -48,7 +48,7 @@ namespace TVGL
         /// <summary>
         ///     The default color
         /// </summary>
-        internal const KnownColors DefaultColor = KnownColors.LightGray;
+        public const KnownColors DefaultColor = KnownColors.LightGray;
 
         /// <summary>
         ///     The error ratio used as a base for determining a good tolerance within a given tessellated solid.

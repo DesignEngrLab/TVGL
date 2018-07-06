@@ -245,13 +245,13 @@ namespace TVGL
         }
 
 
-
         /// <summary>
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
         /// for cases in which the faces and vertices are already defined.
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="vertices">The vertices.</param>
+        /// <param name="copyElements"></param>
         /// <param name="colors">The colors.</param>
         /// <param name="units">The units.</param>
         /// <param name="name">The name.</param>
