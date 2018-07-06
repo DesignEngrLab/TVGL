@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using StarMathLib;
 using TVGL.Voxelization;
@@ -45,7 +46,7 @@ namespace TVGL
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
-            sortedVertices = vertexDistances.OrderBy(p => p.Item3).Select(p => new Tuple<Vertex, double>(p.Item1, p.Item2)).ToList();
+            sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 
         /// <summary>
@@ -65,20 +66,20 @@ namespace TVGL
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
-            sortedVertices = vertexDistances.OrderBy(p => p.Item3).Select(p =>p.Item1).ToList();
+            sortedVertices = vertexDistances.OrderBy(p => p.Item2).Select(p =>p.Item1).ToList();
         }
 
-        private static IEnumerable<Tuple<Vertex, double, int>> GetVertexDistances(double[] direction, IEnumerable<Vertex> vertices)
+        private static IEnumerable<Tuple<Vertex, double>> GetVertexDistances(double[] direction, IEnumerable<Vertex> vertices)
         {
-            var vertexDistances = new List<Tuple<Vertex, double, int>>();
+            var vertexDistances = new List<Tuple<Vertex, double>>();
             //Accuracy to the 15th decimal place
-            var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
+            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
+            var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal)+1)));
             foreach (var vertex in vertices)
             {
-                //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = direction.dotProduct(vertex.Position, 3);
-                var rounded = (int)Math.Round(d * tolerance);
-                vertexDistances.Add(new Tuple<Vertex, double, int>(vertex, d, rounded));
+                //Get distance along the search direction with accuracy to the 15th decimal place to match StarMath
+                var d = Math.Round(direction.dotProduct(vertex.Position, 3), tolerance);
+                vertexDistances.Add(new Tuple<Vertex, double>(vertex, d));
             }
             return vertexDistances;
         }
@@ -96,21 +97,20 @@ namespace TVGL
             //Split positive and negative numbers into seperate lists. 0 is 
             //considered positive.
             //This is an O(n) preprocessing step
-            var pointDistances = new List<Tuple<Point, double, int>>();
+            var pointDistances = new List<Tuple<Point, double>>();
             //Accuracy to the 15th decimal place
-            var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
+            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
+            var tolerance = toleranceString.Substring(toleranceString.IndexOf(".", StringComparison.Ordinal) + 1).Length;
             foreach (var point in points)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = direction[0]*point.X + direction[1] * point.Y; //2D dot product
-                var rounded = (int) Math.Round(d * tolerance);
-                pointDistances.Add(new Tuple<Point, double, int>(point, d, rounded));
+                var d = Math.Round(direction[0]*point.X + direction[1] * point.Y, tolerance); //2D dot product
+                pointDistances.Add(new Tuple<Point, double>(point, d));
             }
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
-            sortedPoints = pointDistances.OrderBy(point => point.Item3)
-                .Select(p => new Tuple<Point, double>(p.Item1, p.Item2)).ToList();
+            sortedPoints = pointDistances.OrderBy(point => point.Item2).ToList();
         }
 
         #endregion
