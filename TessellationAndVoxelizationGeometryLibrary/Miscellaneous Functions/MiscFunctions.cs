@@ -28,7 +28,6 @@ namespace TVGL
     {
         #region Sort Along Direction
 
-
         /// <summary>
         ///     Returns a list of sorted vertices along a set direction. Ties are broken by direction[1] then direction[2] if
         ///     available.
@@ -43,16 +42,13 @@ namespace TVGL
         ///     Must provide between 1 to 3 direction vectors
         /// </exception>
         public static void SortAlongDirection(double[][] directions, IEnumerable<Vertex> vertices,
-            out List<Vertex> sortedVertices,
-            out List<int[]> duplicateRanges)
+            out List<Vertex> sortedVertices, out List<int[]> duplicateRanges)
         {
-            List<Tuple<Vertex, double>> sortedVertexDictionary;
-            SortAlongDirection(directions, vertices, out sortedVertexDictionary, out duplicateRanges);
+            SortAlongDirection(directions, vertices, out List<Tuple<Vertex, double>> sortedVertexDictionary, out duplicateRanges);
             //Convert output to a list of sorted vertices
             sortedVertices = sortedVertexDictionary.Select(element => element.Item1).ToList();
         }
 
-
         /// <summary>
         ///     Returns a list of sorted vertices along a set direction. Ties are broken by direction[1] then direction[2] if
         ///     available.
@@ -67,8 +63,7 @@ namespace TVGL
         ///     Must provide between 1 to 3 direction vectors
         /// </exception>
         public static void SortAlongDirection(double[][] directions, IEnumerable<Vertex> vertices,
-            out List<Tuple<Vertex, double>> sortedVertices,
-            out List<int[]> duplicateRanges)
+            out List<Tuple<Vertex, double>> sortedVertices, out List<int[]> duplicateRanges)
         {
             //Get integer values for every vertex as distance along direction
             //Split positive and negative numbers into seperate lists. 0 is 
@@ -221,6 +216,61 @@ namespace TVGL
                 default:
                     throw new Exception("Must provide between 1 to 3 direction vectors");
             }
+        }
+
+        /// <summary>
+        ///     Returns a list of sorted vertices along a set direction. 
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="sortedVertices">The sorted vertices.</param>
+        public static void SortAlongDirection(double[] direction, IEnumerable<Vertex> vertices,
+            out List<Tuple<Vertex, double>> sortedVertices)
+        {
+            //Get integer values for every vertex as distance along direction
+            //Split positive and negative numbers into seperate lists. 0 is 
+            //considered positive.
+            //This is an O(n) preprocessing step
+            var vertexDistances = GetVertexDistances(direction, vertices);
+
+            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
+            //tolerance as the "isNeglible" star math function 
+            sortedVertices = vertexDistances.OrderBy(p => p.Item3).Select(p => new Tuple<Vertex, double>(p.Item1, p.Item2)).ToList();
+        }
+
+        /// <summary>
+        ///     Returns a list of sorted vertices along a set direction. 
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="sortedVertices">The sorted vertices.</param>
+        public static void SortAlongDirection(double[] direction, IEnumerable<Vertex> vertices,
+            out List<Vertex> sortedVertices)
+        {
+            //Get integer values for every vertex as distance along direction
+            //Split positive and negative numbers into seperate lists. 0 is 
+            //considered positive.
+            //This is an O(n) preprocessing step
+            var vertexDistances = GetVertexDistances(direction, vertices);
+
+            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
+            //tolerance as the "isNeglible" star math function 
+            sortedVertices = vertexDistances.OrderBy(p => p.Item3).Select(p =>p.Item1).ToList();
+        }
+
+        private static IEnumerable<Tuple<Vertex, double, int>> GetVertexDistances(double[] direction, IEnumerable<Vertex> vertices)
+        {
+            var vertexDistances = new List<Tuple<Vertex, double, int>>();
+            //Accuracy to the 15th decimal place
+            var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction with accuracy to the 15th decimal place
+                var d = direction.dotProduct(vertex.Position, 3);
+                var rounded = (int)Math.Round(d * tolerance);
+                vertexDistances.Add(new Tuple<Vertex, double, int>(vertex, d, rounded));
+            }
+            return vertexDistances;
         }
 
         /// <summary>
@@ -1769,9 +1819,7 @@ namespace TVGL
             var directions = new[] { direction1, direction2, direction3 };
             var allVertices = new List<Vertex>(insideVertices);
             allVertices.AddRange(outsideVertices);
-            List<Vertex> sortedVertices;
-            List<int[]> duplicateIndexRanges;
-            SortAlongDirection(directions, allVertices, out sortedVertices, out duplicateIndexRanges);
+            SortAlongDirection(directions, allVertices, out List<Vertex> sortedVertices, out var duplicateIndexRanges);
             //if (onBoundaryIsInside && duplicateIndexRanges.Count > 1) return false;
             //Remove all duplicate vertices
             var offset = 0;
