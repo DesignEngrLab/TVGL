@@ -84,92 +84,34 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Returns a list of sorted points along a set direction. Ties are broken by direction[1] if
-        ///     available.
+        ///     Returns a list of sorted points along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
         /// <param name="sortedPoints"></param>
-        /// <exception cref="Exception">
-        ///     Must provide between 1 to 3 direction vectors
-        ///     or
-        ///     Must provide between 1 to 3 direction vectors
-        /// </exception>
         public static void SortAlongDirection(double[] direction, IList<Point> points,
                out List<Tuple<Point, double>> sortedPoints)
-        {
-            var directions = new[] {direction};
-            SortAlongDirection(directions, points, out sortedPoints);
-        }
-
-        /// <summary>
-        ///     Returns a list of sorted points along a set direction. Ties are broken by direction[1] if
-        ///     available.
-        /// </summary>
-        /// <param name="directions">The directions.</param>
-        /// <param name="points"></param>
-        /// <param name="sortedPoints"></param>
-        /// <exception cref="Exception">
-        ///     Must provide between 1 to 3 direction vectors
-        ///     or
-        ///     Must provide between 1 to 3 direction vectors
-        /// </exception>
-        public static void SortAlongDirection(double[][] directions, IList<Point> points,
-            out List<Tuple<Point, double>> sortedPoints)
         {
             //Get integer values for every vertex as distance along direction
             //Split positive and negative numbers into seperate lists. 0 is 
             //considered positive.
             //This is an O(n) preprocessing step
-            sortedPoints = new List<Tuple<Point, double>>();
-            var tempPoints = new List<Point>();
-            var pointDistances = new Dictionary<int, double>();
-            var pointReferences = new Dictionary<int, Point>();
-            var pointIndex = 0;
+            var pointDistances = new List<Tuple<Point, double, int>>();
             //Accuracy to the 15th decimal place
             var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
             foreach (var point in points)
             {
-                //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
-                Point rotatedPoint;
-                var dot1 = directions[0][0]*point.X + directions[0][1] * point.Y; //2D dot product
-
-                switch (directions.Length)
-                {
-                    case 1:
-                        {
-                            rotatedPoint = new Point(Math.Round(dot1 * tolerance), 0.0);
-                        }
-                        break;
-                    case 2:
-                        {
-                            var dot2 = directions[1][0] * point.X + directions[1][1] * point.Y; //2D dot product
-                            rotatedPoint = new Point(Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance));
-                        }
-                        break;
-                    default:
-                        throw new Exception("Must provide between 1 to 2 direction vectors");
-
-                }
-                tempPoints.Add(rotatedPoint);
-                rotatedPoint.ReferenceIndex = pointIndex;
-                pointDistances.Add(pointIndex, dot1);
-                pointReferences.Add(pointIndex, point);
-                pointIndex++;
+                //Get distance along the search direction with accuracy to the 15th decimal place
+                var d = direction[0]*point.X + direction[1] * point.Y; //2D dot product
+                var rounded = (int) Math.Round(d * tolerance);
+                pointDistances.Add(new Tuple<Point, double, int>(point, d, rounded));
             }
+
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
-            var sortedPointsTemp = tempPoints.OrderBy(point => point.X).ThenBy(point => point.Y).ToList();
-
-            //Build the output list
-            foreach (var rotatedPoint in sortedPointsTemp)
-            {
-                var originalPoint = pointReferences[rotatedPoint.ReferenceIndex];
-                var distance = pointDistances[rotatedPoint.ReferenceIndex];
-                sortedPoints.Add(new Tuple<Point, double>(originalPoint, distance));
-            }
+            sortedPoints = pointDistances.OrderBy(point => point.Item3)
+                .Select(p => new Tuple<Point, double>(p.Item1, p.Item2)).ToList();
         }
-
 
         #endregion
 
