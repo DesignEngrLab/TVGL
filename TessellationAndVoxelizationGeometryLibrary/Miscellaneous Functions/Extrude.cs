@@ -38,8 +38,30 @@ namespace TVGL
         /// <param name="distance"></param>
         /// <param name="midPlane"></param>
         /// <returns></returns>
-        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<double[]>> loops, double[] extrudeDirection, 
+        public static TessellatedSolid FromLoops(IEnumerable<IEnumerable<double[]>> loops, double[] extrudeDirection,
             double distance, bool midPlane = false)
+        {
+            return new TessellatedSolid(ReturnFacesFromLoops(loops, extrudeDirection, distance, midPlane), null, false);
+        }
+
+        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<Vertex>> loops,
+            double[] extrudeDirection, double distance, bool midPlane = false)
+        {
+            var positionLoops = loops.Select(loop => loop.Select(vertex => vertex.Position).ToList()).ToList();
+            return ReturnFacesFromLoops(positionLoops, extrudeDirection, distance, midPlane);
+        }
+
+        /// <summary>
+        /// Create the Polygonal Faces for a new Tesselated Solid by extruding the given loop along the given normal.
+        /// Setting midPlane to true, extrudes half forward and half reverse.
+        /// </summary>
+        /// <param name="loops"></param>
+        /// <param name="extrudeDirection"></param>
+        /// <param name="distance"></param>
+        /// <param name="midPlane"></param>
+        /// <returns></returns>
+        public static List<PolygonalFace> ReturnFacesFromLoops(IEnumerable<IEnumerable<double[]>> loops, double[] extrudeDirection,
+        double distance, bool midPlane = false)
         {
             //This simplifies the cases we have to handle by always extruding in the positive direction
             if (distance < 0)
@@ -273,7 +295,7 @@ namespace TVGL
                 }
             }
 
-            return new TessellatedSolid(listOfFaces);
+            return listOfFaces;
         }
     }
 }
