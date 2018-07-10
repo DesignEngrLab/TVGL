@@ -84,10 +84,10 @@ namespace TVGLPresenterDX
             //Debug.Listeners.Add(writer);
             //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("**");
-            //var r = new Random();
-            //fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
-            for (var i = 30; i < 35; i++)
+            var fileNames = dir.GetFiles("*etrahed*");
+            var r = new Random();
+           // fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
+            for (var i = 0; i < 35; i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;

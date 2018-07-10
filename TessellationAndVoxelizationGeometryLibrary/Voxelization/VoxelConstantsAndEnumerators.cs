@@ -147,7 +147,7 @@ namespace TVGL.Voxelization
         /// <returns>System.Int64.</returns>
         internal static long ClearFlagsFromID(long ID)
         {
-            if ((ID & 12) == 0) return ID & -16; // which is FFFFFFFFFFFFFFF0 or 1...10000
+            if ((ID & 12) == 12) return ID & -16; // which is FFFFFFFFFFFFFFF0 or 1...10000
             else return ID & -32;  // which is FFFFFFFFFFFFFFF0 or 1...100000
         }
 
@@ -216,7 +216,7 @@ namespace TVGL.Voxelization
                { VoxelDiscretization.Fine, new[]{4,4,4,4}}, // 65K (2^16)  voxels per side
                { VoxelDiscretization.ExtraFine, new[]{4,4,4,4,4}} //1million (2^20) voxels per side */ 
                { VoxelDiscretization.ExtraCoarse, new[]{3,3}}, // 64 (2^6) voxels per side
-               { VoxelDiscretization.Coarse, new[]{4,3,3}}, // 1024 (2^10)  voxels per side
+               { VoxelDiscretization.Coarse, new[]{4,4}}, // 1024 (2^10)  voxels per side
                { VoxelDiscretization.Medium, new[]{4,3,3,2}}, // 4096 (2^12)  voxels per side
                { VoxelDiscretization.Fine, new[]{5,3,3,2,2}}, // 32K (2^15)  voxels per side
                { VoxelDiscretization.ExtraFine, new[]{5,4,3,3,3,2}} //1million (2^20) voxels per side
