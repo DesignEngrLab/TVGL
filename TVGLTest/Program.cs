@@ -75,7 +75,7 @@ namespace TVGLPresenterDX
        "../../../TestFiles/MV-Test files/holding-device.STL",
        "../../../TestFiles/MV-Test files/gear.STL"
         };
-
+        
         [STAThread]
         private static void Main(string[] args)
         {
@@ -84,7 +84,7 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("dodec*");
+            var fileNames = dir.GetFiles("*etrah*");
             for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
@@ -127,7 +127,8 @@ namespace TVGLPresenterDX
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
-
+            Presenter.ShowAndHang(vs1);
+            return;
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);

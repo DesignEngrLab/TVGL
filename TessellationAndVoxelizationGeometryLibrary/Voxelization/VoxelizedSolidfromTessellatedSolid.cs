@@ -67,8 +67,9 @@ namespace TVGL.Voxelization
                 longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
 
                 var voxelsonLongSide = voxelsPerSide.Aggregate(1, (num, total) => total *= num);
+                var delta = Constants.fractionOfWhiteSpaceAroundFinestVoxel;
+                //var delta = longestSide * ((voxelsonLongSide / (voxelsonLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
 
-                var delta = longestSide * ((voxelsonLongSide / (voxelsonLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
                 Bounds[0] = ts.Bounds[0].subtract(new[] { delta, delta, delta });
                 Bounds[1] = ts.Bounds[1].add(new[] { delta, delta, delta });
                 for (int i = 0; i < 3; i++)
@@ -110,7 +111,7 @@ namespace TVGL.Voxelization
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                } );
+                });
             }
             #endregion
 
@@ -389,7 +390,7 @@ namespace TVGL.Voxelization
                 level = (byte)(parent.Level + 1);
                 parentLimits = new int[2][];
                 parentLimits[0] = Constants.GetCoordinateIndices(parent.ID, singleCoordinateShifts[level]);
-                parentLimits[1] = parentLimits[0].add(new[] { voxelsPerSide[level], voxelsPerSide[level], voxelsPerSide[level]});
+                parentLimits[1] = parentLimits[0].add(new[] { voxelsPerSide[level], voxelsPerSide[level], voxelsPerSide[level] });
             }
         }
 
@@ -691,13 +692,13 @@ namespace TVGL.Voxelization
                 {
                     var n = face.Normal;
                     var d = n.dotProduct(transformedCoordinates[face.Vertices[0].IndexInList]);
+                    var numerator = (d - n[0] * voxCoord[0] - n[1] * voxCoord[1] - n[2] * voxCoord[2]);
                     double signedDistance;
                     if (!face.Normal[0].IsNegligible())
                     {
-                        var xPt = (d - n[1] * voxCoord[1] - n[2] * voxCoord[2]) / n[0];
-                        signedDistance = xPt - voxCoord[0];
+                        signedDistance = numerator / n[0];
                         if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            isPointInsideFaceTSBuilding(face, new[] { xPt, voxCoord[1], voxCoord[2] }))
+                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0]+ signedDistance, voxCoord[1], voxCoord[2] }))
                         {
                             closestFaceDistance = signedDistance;
                             closestFaceIsPositive = n[0] > 0;
@@ -705,10 +706,9 @@ namespace TVGL.Voxelization
                     }
                     if (!face.Normal[1].IsNegligible())
                     {
-                        var yPt = (d - n[0] * voxCoord[0] - n[2] * voxCoord[2]) / n[1];
-                        signedDistance = yPt - voxCoord[1];
+                        signedDistance = numerator / n[1];
                         if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], yPt, voxCoord[2] }))
+                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], voxCoord[1]+signedDistance, voxCoord[2] }))
                         {
                             closestFaceDistance = signedDistance;
                             closestFaceIsPositive = n[1] > 0;
@@ -716,10 +716,9 @@ namespace TVGL.Voxelization
                     }
                     if (!face.Normal[2].IsNegligible())
                     {
-                        var zPt = (d - n[0] * voxCoord[0] - n[1] * voxCoord[1]) / n[2];
-                        signedDistance = zPt - voxCoord[2];
+                        signedDistance = numerator / n[2];
                         if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], voxCoord[1], zPt }))
+                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], voxCoord[1], voxCoord[2]+signedDistance }))
                         {
                             closestFaceDistance = signedDistance;
                             closestFaceIsPositive = n[2] > 0;
@@ -732,7 +731,7 @@ namespace TVGL.Voxelization
                     /* Are there other checks that could be done. It seems that all cases should be determine-able
                      * but it is not clear to me how to do this. *
                 } */
-                if (closestFaceDistance < startingMinFaceToCornerDistance)
+                if (closestFaceDistance <= 1.0)
                 {
                     voxel.BtmCoordIsInside = closestFaceIsPositive;
                     assignedHashSet.Add(voxel);
