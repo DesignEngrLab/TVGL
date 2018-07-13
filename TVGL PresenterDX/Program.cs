@@ -80,14 +80,15 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
-            //var writer = new TextWriterTraceListener(Console.Out);
-            //Debug.Listeners.Add(writer);
-            //TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
+            var writer = new TextWriterTraceListener(Console.Out);
+            Debug.Listeners.Add(writer);
+            TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*etrahed*");
+            var fileNames = dir.GetFiles("*");
             var r = new Random();
-           // fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
-            for (var i = 0; i < 35; i++)
+            fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
+
+            for (var i = 0; i < fileNames.Count(); i += 5)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -227,6 +228,7 @@ namespace TVGLPresenterDX
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, false);
             Console.WriteLine("...done voxelizing");
+            return;
             PresenterShowAndHang(vs1);
             
             Console.WriteLine("Drafting voxelized model along orthogonals");

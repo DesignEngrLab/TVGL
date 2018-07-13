@@ -84,8 +84,11 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*etrah*");
-            for (var i = 0; i < fileNames.Count(); i++)
+            var fileNames = dir.GetFiles("*");
+            var r = new Random();
+            fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
+
+            for (var i = 0; i < fileNames.Count(); i+=5)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -122,12 +125,17 @@ namespace TVGLPresenterDX
                 //bounds = vs1.Bounds;
             }
             Console.WriteLine("Completed.");
+            Console.ReadKey();
         }
 
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
+            Console.WriteLine(ts.Volume);
             var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
-            Presenter.ShowAndHang(vs1);
+            Console.WriteLine(vs1.Volume - vs1.VoxelSideLengths[2]*vs1.GetTotals[5]);
+            Console.WriteLine(vs1.Volume);
+            
+            //Presenter.ShowAndHang(vs1);
             return;
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;

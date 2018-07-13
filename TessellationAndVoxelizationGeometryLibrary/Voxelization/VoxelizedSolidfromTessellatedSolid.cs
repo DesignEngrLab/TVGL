@@ -882,6 +882,7 @@ namespace TVGL.Voxelization
                     {
                         neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels, parentLimits);
                         insiders.Push(neighbor);
+                        //Presenter.ShowAndHang(this);
                     }
                 }
             }

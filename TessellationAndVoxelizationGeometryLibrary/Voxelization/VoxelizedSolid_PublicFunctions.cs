@@ -493,8 +493,8 @@ namespace TVGL.Voxelization
             { /* cycle over each layer, note that voxels are being removed from subsequent layers so the process should
                * speed up. The loop may not reach ?...wait a second redundant code?  */
               //   if (remainingVoxelLayers < voxelsPerLayer) continue; //return;
-              //Parallel.ForEach(layerOfVoxels[i], voxel =>
-               foreach (var voxel in layerOfVoxels[i])
+              Parallel.ForEach(layerOfVoxels[i], voxel =>
+              // foreach (var voxel in layerOfVoxels[i])
                 {
                     #region fill up the layers below this one
                     if (voxel.Role == VoxelRoleTypes.Full
@@ -521,13 +521,13 @@ namespace TVGL.Voxelization
                     {
                         var filledUpNextLayer = Extrude(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
-                        if (neighbor == null || layerOfVoxels.Length <= i + 1) continue; // return;  // null happens when you go outside of bounds (of coarsest voxels)
+                        if (neighbor == null || layerOfVoxels.Length <= i + 1)  return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer) neighbor = ChangeVoxelToFull(neighbor);
                         else if (neighbor.Role == VoxelRoleTypes.Empty) neighbor = ChangeVoxelToPartial(neighbor);
                         layerOfVoxels[i + 1].Add(neighbor);
                     }
                     #endregion
-                } //);
+                } );
                 remainingVoxelLayers -= (int)voxelsPerLayer;
             }
             return nextLayerCount == voxelsPerSide[level] * voxelsPerSide[level];

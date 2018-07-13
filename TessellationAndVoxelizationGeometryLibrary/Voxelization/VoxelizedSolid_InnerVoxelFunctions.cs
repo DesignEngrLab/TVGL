@@ -277,8 +277,8 @@ namespace TVGL.Voxelization
             _totals[1] = voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Partial);
             for (int i = 1; i < numberOfLevels; i++)
             {
-                _totals[2 * i] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, 1, VoxelRoleTypes.Full));
-                _totals[2 * i + 1] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, 1, VoxelRoleTypes.Partial));
+                _totals[2 * i] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, i, VoxelRoleTypes.Full));
+                _totals[2 * i + 1] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, i, VoxelRoleTypes.Partial));
             };
             Volume = 0.0;
             for (int i = 0; i < numberOfLevels; i++)
