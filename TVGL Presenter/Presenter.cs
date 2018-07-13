@@ -867,40 +867,41 @@ namespace TVGL
 
         private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, VoxelDiscretization level = VoxelDiscretization.ExtraFine)
         {
-            if ((int)level > (int)vs.Discretization) level = vs.Discretization;
             var normalsTemplate = new[]
-           {
-                new float[] {1, 0, 0}, new float[] {1, 0, 0},
-                new float[] {0, 1, 0}, new float[] {0, 1, 0},
-                new float[] {0, 0, 1}, new float[] {0, 0, 1},
+            {
                 new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
-                new float[] {0, -1, 0}, new float[] {0, -1, 0, 0},
-                new float[] {0, 0, -1}, new float[] {0, 0, -1}
+                new float[] {1, 0, 0}, new float[] {1, 0, 0},
+                new float[] {0, -1, 0}, new float[] {0, -1, 0},
+                new float[] {0, 1, 0}, new float[] {0, 1, 0},
+                new float[] {0, 0, -1}, new float[] {0, 0, -1},
+                new float[] {0, 0, 1}, new float[] {0, 0, 1}
             };
 
             var coordOffsets = new[]
             {
-                new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
-                new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
-                new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
-                new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
-                new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
-                new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
                 new[]{ new float[] {0, 0, 0}, new float[] { 0, 0, 1}, new float[] {0, 1, 0}},
                 new[]{ new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
+                new[]{ new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
+                new[]{ new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
                 new[]{ new float[] {0, 0, 0}, new float[] { 1, 0, 0}, new float[] {0, 0, 1}},
                 new[]{ new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
+                new[]{ new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
+                new[]{ new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
                 new[]{ new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
                 new[]{new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
+                new[]{ new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
+                new[]{ new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
             };
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();
-            foreach (var v in vs.Voxels(level, true)) //VoxelDiscretization.ExtraCoarse))
-                                                      // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
+            var lowestLevel = (int)vs.VoxelSideLengths.Length - 1;
+            foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
+                                           // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
             {
+                if (v.Role == VoxelRoleTypes.Partial && v.Level < lowestLevel) continue;
                 var neighbors = vs.GetNeighbors(v).ToList();
-                // if (neighbors.All(n => n != null && n.Role == VoxelRoleTypes.Full))
-                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || n.Role == VoxelRoleTypes.Partial)))
+                if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || (n.Role == VoxelRoleTypes.Partial
+                                                                                       && v.Level == lowestLevel))))
                     continue;
 
                 var x = (float)v.BottomCoordinate[0];
@@ -910,8 +911,8 @@ namespace TVGL
                 for (int i = 0; i < 12; i++)
                 {
                     //  if (neighbors[i / 2] != null && neighbors[i / 2].Role == VoxelRoleTypes.Full) continue;
-                    //if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
-                    //                                 || neighbors[i / 2].Role == VoxelRoleTypes.Partial)) continue;
+                    if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
+                                                     || (neighbors[i / 2].Role == VoxelRoleTypes.Partial && v.Level == lowestLevel))) continue;
                     for (int j = 0; j < 3; j++)
                     {
                         positions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
@@ -920,6 +921,7 @@ namespace TVGL
                     }
                 }
             }
+
             return new ModelVisual3D
             {
                 Content =
@@ -928,8 +930,8 @@ namespace TVGL
                              Geometry = new MeshGeometry3D
                              {
                                  Positions = positions,
-                             // TriangleIndices = new Int32Collection(triIndices),
-                             Normals = normals
+                                 // TriangleIndices = new Int32Collection(triIndices),
+                                 Normals = normals
                              },
                              Material = MaterialHelper.CreateMaterial(
                                  new System.Windows.Media.Color
@@ -942,6 +944,7 @@ namespace TVGL
                          }
             };
         }
+
 
 
         /// <summary>

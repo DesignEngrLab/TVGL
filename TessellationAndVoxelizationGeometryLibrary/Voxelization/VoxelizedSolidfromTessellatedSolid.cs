@@ -748,11 +748,7 @@ namespace TVGL.Voxelization
                     }
                 }
                 if (gotFromNeighbor) lastSuccess = 0;
-                else
-                {
-                    queue.Enqueue(voxel);
-                    lastSuccess++;
-                }
+                else lastSuccess++;
             }
             if (queue.Any())
                 return new VoxelHashSet(level > 1 ? (IEqualityComparer<long>)new VoxelComparerFine() : new VoxelComparerCoarse(),
@@ -760,10 +756,20 @@ namespace TVGL.Voxelization
             return null;
         }
 
-        private bool IsPointInsideTriangleTSBuilding(PolygonalFace face, double[] point)
+
+
+        private bool IsPointInsideTriangleTSBuilding(PolygonalFace face, double[] p)
         {
-            var endPoints = face.Vertices.Select(v => new PointLight(transformedCoordinates[v.IndexInList])).ToList();
-            return MiscFunctions.IsPointInsidePolygon(endPoints, new PointLight(point));
+            var a = transformedCoordinates[face.A.IndexInList];
+            var b = transformedCoordinates[face.B.IndexInList];
+            var c = transformedCoordinates[face.C.IndexInList];
+            var line = b.subtract(a, 3);
+            if (line.crossProduct(p.subtract(a, 3)).dotProduct(face.Normal) < 0) return false;
+            line = c.subtract(b, 3);
+            if (line.crossProduct(p.subtract(b, 3)).dotProduct(face.Normal) < 0) return false;
+            line = a.subtract(c, 3);
+            if (line.crossProduct(p.subtract(c, 3)).dotProduct(face.Normal) < 0) return false;
+            return true;
         }
 
         private IVoxel GetNeighborForTSBuilding(int[] point3D, VoxelDirections direction, VoxelHashSet voxelHashSet, int level, out int[] neighborCoord)
