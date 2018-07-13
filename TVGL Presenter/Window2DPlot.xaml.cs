@@ -40,6 +40,7 @@ using System.Linq;
 using System.Windows;
 using OxyPlot;
 using OxyPlot.Series;
+using DataPointSeries = OxyPlot.Wpf.DataPointSeries;
 
 namespace TVGL
 {
@@ -306,8 +307,11 @@ namespace TVGL
         /// <param name="marker">The marker.</param>
         private void AddScatterSeriesToModel(IList<double[]> points, MarkerType marker, TVGL.Color color = null)
         {
-            var series = new LineSeries {MarkerType = marker};
-
+            var series = new LineSeries
+            {
+                MarkerType = marker,
+                LineStyle = LineStyle.None
+            };
             //Add color to series if applicable
             if (color != null)
             {
