@@ -1038,6 +1038,7 @@ namespace TVGL
             double[] tempCoord;
             XMin = YMin = ZMin = double.PositiveInfinity;
             XMax = YMax = ZMax = double.NegativeInfinity;
+            //Update the vertices
             foreach (var vert in Vertices)
             {
                 tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
@@ -1050,6 +1051,16 @@ namespace TVGL
                 if (tempCoord[0] > XMax) XMax = tempCoord[0];
                 if (tempCoord[1] > YMax) YMax = tempCoord[1];
                 if (tempCoord[2] > ZMax) ZMax = tempCoord[2];
+            }
+            //Update the faces
+            foreach (var face in Faces)
+            {
+                face.Update();
+            }
+            //Update the edges
+            foreach (var edge in Edges)
+            {
+                edge.Update(true);
             }
             Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 }).Take(3).ToArray();
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor

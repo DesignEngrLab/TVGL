@@ -187,7 +187,7 @@ namespace TVGL
         ///     Updates the edge vector and length, if a vertex has been moved.
         /// </summary>
         /// <exception cref="Exception"></exception>
-        public void Update()
+        public void Update(bool lengthAndAngleUnchanged = false)
         {
             //Reset the vector, since vertices may have been moved.
             Vector = new[]
@@ -196,10 +196,11 @@ namespace TVGL
                 To.Position[1] - From.Position[1],
                 To.Position[2] - From.Position[2]
             };
+
+            if (lengthAndAngleUnchanged) return; //Done. No need to update the length or the internal edge angle
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
-            // if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
         /// <summary>
