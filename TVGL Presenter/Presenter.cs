@@ -712,11 +712,11 @@ namespace TVGL
             ShowAndHang(solids.ToList());
         }
 
-        public static void ShowAndHang(VoxelizedSolid solid, VoxelDiscretization level = VoxelDiscretization.ExtraFine)
+        public static void ShowAndHang(VoxelizedSolid solid)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
-            Visual3D model = MakeModelVisual3D(solid, level);
+            Visual3D model = MakeModelVisual3D(solid);
             models.Add(model);
             window.view1.Children.Add(model);
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
@@ -865,7 +865,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
-        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, VoxelDiscretization level = VoxelDiscretization.ExtraFine)
+        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs)
         {
             //if (false)
             //{

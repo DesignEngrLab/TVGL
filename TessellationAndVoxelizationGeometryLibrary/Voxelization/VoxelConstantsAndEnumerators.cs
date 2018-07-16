@@ -47,6 +47,7 @@ namespace TVGL.Voxelization
             NumberStyles.HexNumber); // max value for a single coordinate
 
         #region converting IDs and back again
+
         #region Parents and Children
 
 
@@ -63,8 +64,11 @@ namespace TVGL.Voxelization
             var mask = (singleCoordMask << 4) + (singleCoordMask << 24) + (singleCoordMask << 44);
             return id & mask;
         }
+
         #endregion
+
         #region Flags
+
         /****** Flags ******
          * within the last 5 (LSB) bits of the long, the flags are encoded.
          * these result in a boolean, a VoxelRoleType and a int(byte):
@@ -100,19 +104,21 @@ namespace TVGL.Voxelization
         /// <param name="btmIsInside">if set to <c>true</c> [BTM is inside].</param>
         public static void GetRoleFlags(long ID, out byte level, out VoxelRoleTypes role, out bool btmIsInside)
         {
-            level = (byte)((ID & 12) >> 2); //12 is (1100)
+            level = (byte) ((ID & 12) >> 2); //12 is (1100)
             if (level == 3) level = 6; //level 3 (11) is actually 6 (See comment above)
             else if ((ID & 16) != 0) level += 3;
 
             if ((ID & 2) == 0) // 0_
             {
                 if ((ID & 1) == 0)
-                { //00
+                {
+                    //00
                     btmIsInside = false;
                     role = VoxelRoleTypes.Empty;
                 }
                 else
-                { //01
+                {
+                    //01
                     btmIsInside = true;
                     role = VoxelRoleTypes.Full;
                 }
@@ -123,6 +129,7 @@ namespace TVGL.Voxelization
                 btmIsInside = (ID & 1) == 1; // 11
             }
         }
+
         /// <summary>
         /// Sets the role flags.
         /// </summary>
@@ -148,12 +155,13 @@ namespace TVGL.Voxelization
         internal static long ClearFlagsFromID(long ID)
         {
             if ((ID & 12) == 12) return ID & -16; // which is FFFFFFFFFFFFFFF0 or 1...10000
-            else return ID & -32;  // which is FFFFFFFFFFFFFFF0 or 1...100000
+            else return ID & -32; // which is FFFFFFFFFFFFFFF0 or 1...100000
         }
 
 
 
         #endregion
+
         #region Coordinates
 
         /// <summary>
@@ -168,11 +176,11 @@ namespace TVGL.Voxelization
             //   z0   z1    z2   z3    z4   y0   y1    y2   y3    y4    x0   x1    x2   x3    x4   flags
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            var result = (long)coordinates[0] << shift;
+            var result = (long) coordinates[0] << shift;
             shift += 20;
-            result += (long)coordinates[1] << shift;
+            result += (long) coordinates[1] << shift;
             shift += 20;
-            result += (long)coordinates[2] << shift;
+            result += (long) coordinates[2] << shift;
             return result;
         }
 
@@ -187,11 +195,12 @@ namespace TVGL.Voxelization
         {
             return new[]
             {
-                GetCoordinateIndex(ID,  0, singleShift),
-                GetCoordinateIndex(ID,  1, singleShift),
-                GetCoordinateIndex(ID,  2, singleShift)
+                GetCoordinateIndex(ID, 0, singleShift),
+                GetCoordinateIndex(ID, 1, singleShift),
+                GetCoordinateIndex(ID, 2, singleShift)
             };
         }
+
         /// <summary>
         /// Gets the index of the coordinate.
         /// </summary>
@@ -202,25 +211,33 @@ namespace TVGL.Voxelization
         internal static int GetCoordinateIndex(long ID, int dimension, int singleShift)
         {
             var shift = 4 + 20 * dimension + singleShift;
-            return (int)((ID >> shift) & (Constants.MaxForSingleCoordinate >> singleShift));
+            return (int) ((ID >> shift) & (Constants.MaxForSingleCoordinate >> singleShift));
         }
 
         #endregion
+
         #endregion
-        internal static Dictionary<VoxelDiscretization, int[]> DefaultBitLevelDistribution
-        = new Dictionary<VoxelDiscretization, int[]>()
-        {
-            /*  { VoxelDiscretization.ExtraCoarse, new[]{4}}, // 16 (2^4) voxels per side
-               { VoxelDiscretization.Coarse, new[]{4,4}}, // 256 (2^8)  voxels per side
-               { VoxelDiscretization.Medium, new[]{4,4,4}}, // 4096 (2^12)  voxels per side
-               { VoxelDiscretization.Fine, new[]{4,4,4,4}}, // 65K (2^16)  voxels per side
-               { VoxelDiscretization.ExtraFine, new[]{4,4,4,4,4}} //1million (2^20) voxels per side */ 
-               { VoxelDiscretization.ExtraCoarse, new[]{3,3}}, // 64 (2^6) voxels per sid
-               { VoxelDiscretization.Coarse, new[]{3,3,3}}, // 1024 (2^10)  voxels per side
-               { VoxelDiscretization.Medium, new[]{4,3,3,2}}, // 4096 (2^12)  voxels per side
-               { VoxelDiscretization.Fine, new[]{5,3,3,2,2}}, // 32K (2^15)  voxels per side
-               { VoxelDiscretization.ExtraFine, new[]{5,4,3,3,3,2}} //1million (2^20) voxels per side
-        };
+
+        internal static Dictionary<int, int[]> DefaultBitLevelDistribution
+            = new Dictionary<int, int[]>()
+            {
+                {5, new[] {3, 2}},
+                {6, new[] {3, 3}},
+                {7, new[] {4, 4}},
+                {8, new[] {4, 4}},
+                {9, new[] {4, 3, 2}},
+                {10, new[] {4, 3, 3}},
+                {11, new[] {4, 4, 3}},
+                {12, new[] {4, 3, 3, 2}},
+                {13, new[] {4, 3, 3, 3}},
+                {14, new[] {4, 3, 3, 2, 2}},
+                {15, new[] {4, 3, 3, 3, 2}},
+                {16, new[] {4, 3, 3, 2, 2, 2 }},
+                {17, new[] {4, 3, 3, 3, 2, 2 }},
+                {18, new[] {3, 3, 3, 3, 2, 2, 2}},
+                {19, new[] {3, 3, 3, 3, 3, 2, 2}},
+                {20, new[] {4, 3, 3, 3, 3, 2, 2}}
+            };
 
 
         internal const int LevelAtWhichComparerSwitchesToFine = 4;
@@ -245,6 +262,7 @@ namespace TVGL.Voxelization
         /// The x negative
         /// </summary>
         XNegative = -1,
+
         /// <summary>
         /// Negative Y Direction
         /// <summary>
@@ -255,6 +273,7 @@ namespace TVGL.Voxelization
         /// The y negative
         /// </summary>
         YNegative = -2,
+
         /// <summary>
         /// Negative Z Direction
         /// <summary>
@@ -265,6 +284,7 @@ namespace TVGL.Voxelization
         /// The z negative
         /// </summary>
         ZNegative = -3,
+
         /// <summary>
         /// Positive X Direction
         /// <summary>
@@ -275,6 +295,7 @@ namespace TVGL.Voxelization
         /// The x positive
         /// </summary>
         XPositive = 1,
+
         /// <summary>
         /// Positive Y Direction
         /// <summary>
@@ -285,6 +306,7 @@ namespace TVGL.Voxelization
         /// The y positive
         /// </summary>
         YPositive = 2,
+
         /// <summary>
         /// Positive Z Direction
         /// <summary>
@@ -316,6 +338,7 @@ namespace TVGL.Voxelization
         /// The empty
         /// </summary>
         Empty = -1,
+
         /// <summary>
         /// The voxel is fully within the material or is inside the part
         /// <summary>
@@ -326,6 +349,7 @@ namespace TVGL.Voxelization
         /// The full
         /// </summary>
         Full = 1,
+
         /// <summary>
         /// The partial fill or on the surface or exterior of the part
         /// <summary>
@@ -336,64 +360,5 @@ namespace TVGL.Voxelization
         /// The partial
         /// </summary>
         Partial = 0
-    };
-    /// <summary>
-    /// <summary>
-    /// The partial
-    /// </summary>
-    /// The discretization type for the voxelized solid. 
-    /// </summary>
-    public enum VoxelDiscretization
-    {
-        /// <summary>
-        /// <summary>
-        /// Enum VoxelDiscretization
-        /// </summary>
-        /// The extra coarse discretization is up to 64 voxels on a side.
-        /// </summary>
-        /// <summary>
-        /// The extra coarse
-        /// </summary>
-        ExtraCoarse = 0, //= 16,
-        /// <summary>
-        /// The coarse discretization is up to 512 voxels on a side.
-        /// <summary>
-        /// The extra coarse
-        /// </summary>
-        /// </summary>
-        /// <summary>
-        /// The coarse
-        /// </summary>
-        Coarse = 1, // 256,
-        /// <summary>
-        /// The medium discretization is up to 4096 voxels on a side.
-        /// <summary>
-        /// The coarse
-        /// </summary>
-        /// </summary>
-        /// <summary>
-        /// The medium
-        /// </summary>
-        Medium = 2,  //4096,
-        /// <summary>
-        /// The fine discretization is up to 65,536 voxels on a side (2^16)
-        /// <summary>
-        /// The medium
-        /// </summary>
-        /// </summary>
-        /// <summary>
-        /// The fine
-        /// </summary>
-        Fine = 3,  //65536,
-        /// <summary>
-        /// The extra fine is up to 2^20 (~1million) voxels on a side.
-        /// <summary>
-        /// The fine
-        /// </summary>
-        /// </summary>
-        /// <summary>
-        /// The extra fine
-        /// </summary>
-        ExtraFine = 4, // 1048576
     };
 }

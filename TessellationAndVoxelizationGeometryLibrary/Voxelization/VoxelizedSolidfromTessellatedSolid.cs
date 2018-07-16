@@ -33,11 +33,11 @@ namespace TVGL.Voxelization
         /// <param name="voxelDiscretization">The voxel discretization.</param>
         /// <param name="onlyDefineBoundary">if set to <c>true</c> [only define boundary].</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, VoxelDiscretization voxelDiscretization,
+        public VoxelizedSolid(TessellatedSolid ts, int bindarySize,
             bool onlyDefineBoundary = false,
             double[][] bounds = null) : base(ts.Units, ts.Name, "", ts.Comments, ts.Language)
         {
-            Discretization = voxelDiscretization;
+            Discretization = bindarySize;
             bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
             voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
             voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();

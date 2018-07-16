@@ -34,7 +34,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The discretization level
         /// </summary>
-        public readonly VoxelDiscretization Discretization;
+        public readonly int Discretization;
         internal int numberOfLevels;
         internal int[] bitLevelDistribution;
         private int[] voxelsPerSide;
@@ -69,7 +69,7 @@ namespace TVGL.Voxelization
         /// <param name="filename">The filename.</param>
         /// <param name="comments">The comments.</param>
         /// <param name="language">The language.</param>
-        public VoxelizedSolid(VoxelDiscretization voxelDiscretization, double[][] bounds, UnitType units = UnitType.unspecified, string name = "",
+        public VoxelizedSolid(int voxelDiscretization, double[][] bounds, UnitType units = UnitType.unspecified, string name = "",
             string filename = "", List<string> comments = null, string language = "") : base(units, name, filename,
             comments, language)
         {
@@ -108,15 +108,15 @@ namespace TVGL.Voxelization
             {
                 shift -= bits[i];
                 singleCoordinateShifts[i] = shift;
-                mask += (long) (voxelsPerSide[i]-1) << shift;
+                mask += (long)(voxelsPerSide[i] - 1) << shift;
                 singleCoordinateMasks[i] = mask;
             }
         }
 
         internal VoxelizedSolid(TVGLFileData fileData, string fileName) : base(fileData, fileName)
         {
-            Discretization = fileData.DiscretizationLevel;
-            bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
+            bitLevelDistribution = fileData.BitLevelDistribution;
+            Discretization = bitLevelDistribution.Sum();
             voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
             voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
             defineMaskAndShifts(bitLevelDistribution);
@@ -135,28 +135,33 @@ namespace TVGL.Voxelization
                 VoxelSideLengths[i] = VoxelSideLengths[i - 1] / voxelsPerSide[i];
             voxelDictionaryLevel0 = new VoxelHashSet(0, this);
 
-            byte[] bytes = Convert.FromBase64String(fileData.Level0Voxels);
+            byte[] bytes = Convert.FromBase64String(fileData.Voxels[0]);
             for (int i = 0; i < bytes.Length; i += 8)
             {
                 var ID = BitConverter.ToInt64(bytes, i);
                 Constants.GetRoleFlags(ID, out var level, out VoxelRoleTypes role, out bool btmInside);
                 voxelDictionaryLevel0.Add(new Voxel_Level0_Class(ID, role, this, btmInside));
             }
-            bytes = Convert.FromBase64String(fileData.Voxels);
-            for (int i = 0; i < bytes.Length; i += 8)
+
+            for (int i = 1; i < bitLevelDistribution.Length; i++)
             {
-                var ID = BitConverter.ToInt64(bytes, i);
-                Constants.GetRoleFlags(ID, out var level, out VoxelRoleTypes role, out bool btmInside);
-                ((Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(ID)).InnerVoxels[level - 1].Add(new Voxel(ID, this));
+                bytes = Convert.FromBase64String(fileData.Voxels[i]);
+                for (int j = 0; j < bytes.Length; j += 8)
+                {
+                    var ID = BitConverter.ToInt64(bytes, j);
+                    ((Voxel_Level0_Class) voxelDictionaryLevel0.GetVoxel(ID)).InnerVoxels[i - 1]
+                        .Add(new Voxel(ID, this));
+                }
             }
+
             UpdateProperties();
 
-            if (fileData.Primitives != null && fileData.Primitives.Any())
-                Primitives = fileData.Primitives;
-        }
+                if (fileData.Primitives != null && fileData.Primitives.Any())
+                    Primitives = fileData.Primitives;
+            }
         #endregion
 
-        #region Private Fields
+            #region Private Fields
         private readonly double[][] transformedCoordinates;
         private readonly double[] dimensions;
         private readonly int longestDimensionIndex;

@@ -113,8 +113,7 @@ namespace TVGL.Voxelization
         /// <param name="onlyThisLevel">if set to <c>true</c> [only this level].</param>
         /// <returns>IEnumerable&lt;IVoxel&gt;.</returns>
         /// <exception cref="ArgumentException">Specifying voxels at a level that is finer than created.</exception>
-        public IEnumerable<IVoxel> Voxels(VoxelRoleTypes role, VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine,
-            bool onlyThisLevel = false)
+        public IEnumerable<IVoxel> Voxels(VoxelRoleTypes role, int voxelLevel = 20, bool onlyThisLevel = false)
         {
             var level = (int)voxelLevel;
             if (level > numberOfLevels)
@@ -157,7 +156,7 @@ namespace TVGL.Voxelization
         /// <param name="onlyThisLevel">if set to <c>true</c> [only this level].</param>
         /// <returns>IEnumerable&lt;IVoxel&gt;.</returns>
         /// <exception cref="ArgumentException">Specifying voxels at a level that is finer than created.</exception>
-        public IEnumerable<IVoxel> Voxels(VoxelDiscretization voxelLevel = VoxelDiscretization.ExtraFine, bool onlyThisLevel = false)
+        public IEnumerable<IVoxel> Voxels(int voxelLevel = 6, bool onlyThisLevel = false)
         {
             var level = (int)voxelLevel;
             if (level > numberOfLevels)

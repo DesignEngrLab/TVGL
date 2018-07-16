@@ -160,9 +160,8 @@ namespace TVGL.IOFunctions
         #endregion
         #region that match with VoxelizedSolid
 
-        public VoxelDiscretization DiscretizationLevel;
-        public string Level0Voxels { get; set; }
-        public string Voxels { get; set; }
+        public int[] BitLevelDistribution;
+        public string[] Voxels { get; set; }
 
         #endregion
 
@@ -190,7 +189,7 @@ namespace TVGL.IOFunctions
                     s.Position = 0;
                     var streamReader = new StreamReader(s);
                     var fileData = (TVGLFileData)tvglDeserializer.Deserialize(streamReader);
-                    if (string.IsNullOrWhiteSpace(fileData.Voxels))
+                    if (!fileData.Voxels.Any())
                         solids.Add(new TessellatedSolid(fileData, filename));
                     else solids.Add(new VoxelizedSolid(fileData, filename));
                 }
@@ -201,7 +200,7 @@ namespace TVGL.IOFunctions
                     tvglDeserializer = new XmlSerializer(typeof(List<TVGLFileData>));
                     var fileDataList = (List<TVGLFileData>)tvglDeserializer.Deserialize(streamReader);
                     foreach (var fileData in fileDataList)
-                        if (string.IsNullOrWhiteSpace(fileData.Voxels))
+                        if (!fileData.Voxels.Any())
                             solids.Add(new TessellatedSolid(fileData, filename));
                         else solids.Add(new VoxelizedSolid(fileData, filename));
                 }
@@ -357,12 +356,12 @@ namespace TVGL.IOFunctions
                 YMin = vs.YMin,
                 ZMax = vs.ZMax,
                 ZMin = vs.ZMin,
-                DiscretizationLevel = vs.Discretization,
-                Level0Voxels = vs.Voxels(VoxelDiscretization.ExtraCoarse, true)
-                    .SelectMany(v => BitConverter.GetBytes(v.ID)).ToString(),
-                Voxels = vs.Voxels(VoxelDiscretization.Coarse, true)
-                    .SelectMany(v => BitConverter.GetBytes(v.ID)).ToString()
+                BitLevelDistribution = (int[])vs.bitLevelDistribution.Clone()
             };
+            result.Voxels = new string[vs.bitLevelDistribution.Length];
+            for (int i = 0; i < result.Voxels.Length; i++)
+                result.Voxels[i] = vs.Voxels(i, true)
+                        .SelectMany(v => BitConverter.GetBytes(v.ID)).ToString();
             result.Colors = vs.SolidColor.ToString();
             result.Comments.AddRange(vs.Comments);
             if (vs._inertiaTensor != null)
