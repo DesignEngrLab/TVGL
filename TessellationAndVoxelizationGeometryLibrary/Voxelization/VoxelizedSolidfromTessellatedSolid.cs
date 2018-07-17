@@ -107,7 +107,6 @@ namespace TVGL.Voxelization
                     MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel0).Vertices, voxel0, voxels);
                     MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel0).Faces, voxel0, voxels);
                     unknownPartials = DefineBottomCoordinateInside(voxels, null);
-                    // Debug.WriteLineIf(unknownPartials != null, "\n**********\nthere are unknown partial voxels\n**********\n");
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
@@ -744,21 +743,17 @@ namespace TVGL.Voxelization
             {
                 var voxel = queue.Dequeue();
                 var voxCoord = voxel.CoordinateIndices;
-                var maxValue = Constants.MaxForSingleCoordinate >> singleCoordinateShifts[level];
                 var gotFromNeighbor = false;
                 for (int i = 0; i < 3; i++)
                 {
-                    if (voxCoord[i] == maxValue) continue;
                     var neighbor = GetNeighborForTSBuilding(voxCoord, (VoxelDirections)(i + 1), assignedHashSet,
                         level, out var neighborCoord);
-                    if (neighbor != null)
-                    {
-                        voxel.BtmCoordIsInside = neighbor.BtmCoordIsInside;
-                        assignedHashSet.Add(voxel);
-                        cyclesSinceLastSuccess = 0;
-                        gotFromNeighbor = true;
-                        break;
-                    }
+                    if (neighbor == null) continue;
+                    voxel.BtmCoordIsInside = neighbor.BtmCoordIsInside;
+                    assignedHashSet.Add(voxel);
+                    cyclesSinceLastSuccess = 0;
+                    gotFromNeighbor = true;
+                    break;
                 }
                 if (!gotFromNeighbor)
                 {
@@ -798,8 +793,22 @@ namespace TVGL.Voxelization
         private IVoxel GetNeighborForTSBuilding(int[] point3D, VoxelDirections direction, VoxelHashSet voxelHashSet, int level, out int[] neighborCoord)
         {
             neighborCoord = new[] { point3D[0], point3D[1], point3D[2] };
-            var step = direction > 0 ? 1 : -1;
+            var positiveStep = direction > 0;
+            var step = positiveStep ? 1 : -1;
             var dimension = Math.Abs((int)direction) - 1;
+
+            #region Check if steps outside or neighbor has different parent
+            var coordValue = point3D[dimension];
+            var maxValue = Constants.MaxForSingleCoordinate >> singleCoordinateShifts[level];
+            if ((coordValue == 0 && !positiveStep) || (positiveStep && coordValue == maxValue))
+                //then stepping outside of entire bounds!
+                return null;
+            var maxForThisLevel = voxelsPerSide[level] - 1;
+            var justThisLevelCoordValue = coordValue & maxForThisLevel;
+            if ((justThisLevelCoordValue == 0 && !positiveStep) ||
+                (justThisLevelCoordValue == maxForThisLevel && positiveStep))
+                return null;
+            #endregion
             neighborCoord[dimension] += step;
             var neighborID = Constants.MakeIDFromCoordinates(neighborCoord, singleCoordinateShifts[level]);
             return voxelHashSet.GetVoxel(neighborID);

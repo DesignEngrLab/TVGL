@@ -131,11 +131,9 @@ namespace TVGLPresenterDX
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
             Console.WriteLine(ts.Volume);
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse);
-            Console.WriteLine(vs1.Volume - vs1.VoxelSideLengths[2]*vs1.GetTotals[5]);
+            var vs1 = new VoxelizedSolid(ts, 8);
             Console.WriteLine(vs1.Volume);
-            
-            //Presenter.ShowAndHang(vs1);
+            Presenter.ShowAndHang(vs1);
             return;
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
@@ -248,7 +246,7 @@ namespace TVGLPresenterDX
                 {0, 0, 1, -(ts.ZMax + ts.ZMin) / 2},
             });
             stopWatch.Restart();
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true); //, bounds);
+            var vs1 = new VoxelizedSolid(ts, 8, true); //, bounds);
 
             stopWatch.Stop();
             Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
