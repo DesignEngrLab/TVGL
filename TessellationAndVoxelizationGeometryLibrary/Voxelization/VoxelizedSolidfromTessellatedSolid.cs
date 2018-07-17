@@ -678,13 +678,13 @@ namespace TVGL.Voxelization
                 if (faces.SelectMany(f => f.Normal).All(n => n > 0))
                 {
                     voxel.BtmCoordIsInside = true;
-                    assignedHashSet.Add(voxel);
+                    assignedHashSet.AddOrReplace(voxel);
                     continue;
                 }
                 if (faces.SelectMany(f => f.Normal).All(n => n < 0))
                 {
                     voxel.BtmCoordIsInside = false;
-                    assignedHashSet.Add(voxel);
+                    assignedHashSet.AddOrReplace(voxel);
                     continue;
                 }
                 foreach (var face in faces)
@@ -733,7 +733,7 @@ namespace TVGL.Voxelization
                 if (closestFaceDistance <= 1.0)
                 {
                     voxel.BtmCoordIsInside = closestFaceIsPositive;
-                    assignedHashSet.Add(voxel);
+                    assignedHashSet.AddOrReplace(voxel);
                     continue;
                 }
                 queue.Enqueue(voxel);
@@ -750,7 +750,7 @@ namespace TVGL.Voxelization
                         level, out var neighborCoord);
                     if (neighbor == null) continue;
                     voxel.BtmCoordIsInside = neighbor.BtmCoordIsInside;
-                    assignedHashSet.Add(voxel);
+                    assignedHashSet.AddOrReplace(voxel);
                     cyclesSinceLastSuccess = 0;
                     gotFromNeighbor = true;
                     break;
@@ -964,7 +964,7 @@ namespace TVGL.Voxelization
                         voxel = new Voxel_ClassWithLinksToTSElements(id, level, VoxelRoleTypes.Partial, this);
                     else
                         voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
-                    voxels.Add(voxel);
+                    voxels.AddOrReplace(voxel);
                 }
             }
             if (level > 1) return voxel;
@@ -1012,7 +1012,7 @@ namespace TVGL.Voxelization
                     //    voxel = new Voxel_ClassWithLinksToTSElements(id,level, VoxelRoleTypes.Full, this);
                     else
                         voxel = new Voxel(id + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
-                    voxels.Add(voxel);
+                    voxels.AddOrReplace(voxel);
                 }
             }
             return voxel;

@@ -153,7 +153,7 @@ namespace TVGL.Voxelization
         internal void AddRange(ICollection<IVoxel> voxels)
         {
             foreach (var voxel in voxels)
-                Add(voxel);
+                AddOrReplace(voxel);
         }
 
         #endregion
@@ -533,13 +533,14 @@ namespace TVGL.Voxelization
             buckets = newBuckets;
         }
 
+
         /// <summary>
-        /// Add item to this HashSet. Returns bool indicating whether item was added (won't be 
-        /// added if already present)
+        /// Add item to this HashSet if it is not within the set and returns true if it is
+        /// new. If the voxel already exists, then it is replaced with the provided.
         /// </summary>
         /// <param name="item"></param>
         /// <returns>true if added, false if already present</returns>
-        public bool Add(IVoxel newVoxel)
+        public bool AddOrReplace(IVoxel newVoxel)
         {
             long newVoxelID = newVoxel.ID;
             int hashCode = InternalGetHashCode(newVoxelID);
@@ -550,6 +551,7 @@ namespace TVGL.Voxelization
             {
                 if (slots[i].hashCode == hashCode && comparer.Equals(slots[i].value.ID, newVoxelID))
                 {
+                    slots[i].value = newVoxel;
                     return false;
                 }
             }

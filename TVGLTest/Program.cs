@@ -8,6 +8,7 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
+using Constants = TVGL.Voxelization.Constants;
 
 
 namespace TVGLPresenterDX
@@ -75,7 +76,7 @@ namespace TVGLPresenterDX
        "../../../TestFiles/MV-Test files/holding-device.STL",
        "../../../TestFiles/MV-Test files/gear.STL"
         };
-        
+
         [STAThread]
         private static void Main(string[] args)
         {
@@ -86,9 +87,8 @@ namespace TVGLPresenterDX
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*");
             var r = new Random();
-            fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
-
-            for (var i = 0; i < fileNames.Count(); i+=5)
+            //fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
+            for (var i = 0; i < fileNames.Count(); i += 5)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -124,24 +124,28 @@ namespace TVGLPresenterDX
                 //TestVoxelization(ts[0]);
                 //bounds = vs1.Bounds;
             }
+
             Console.WriteLine("Completed.");
             Console.ReadKey();
         }
 
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
-            Console.WriteLine(ts.Volume);
-            var vs1 = new VoxelizedSolid(ts, 8);
-            Console.WriteLine(vs1.Volume);
-            Presenter.ShowAndHang(vs1);
-            return;
+            Stopwatch s = new Stopwatch();
+            s.Start();
+            var vs1 = new VoxelizedSolid(ts, 6);
+            s.Stop();
+            Console.WriteLine(ts.Volume + "," + vs1.Volume);
+            Console.WriteLine(s.Elapsed + "," + vs1.Count + "," + s.ElapsedTicks / (double)vs1.Count);
+            //Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Positive...");
-            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.XPositive);
-
+            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative);
+            Presenter.ShowAndHang(vs1xpos);
+            return;
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xpos_" + _fileName;

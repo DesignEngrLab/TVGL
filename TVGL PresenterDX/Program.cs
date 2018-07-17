@@ -86,7 +86,8 @@ namespace TVGLPresenterDX
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*");
             var r = new Random();
-            fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
+           // fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
+            fileNames = fileNames.OrderByDescending(x => x.Length).ToArray();
 
             for (var i = 0; i < fileNames.Count(); i++)
             {
@@ -228,7 +229,7 @@ namespace TVGLPresenterDX
         public static void TestVoxelSearch(TessellatedSolid ts, string _fileName)
         {
             Console.WriteLine("Voxelizing Tesselated File " + _fileName);
-            var vs1 = new VoxelizedSolid(ts, 10, false);
+            var vs1 = new VoxelizedSolid(ts, 9, false);
             Console.WriteLine("...done voxelizing");
             PresenterShowAndHang(vs1);
             return;

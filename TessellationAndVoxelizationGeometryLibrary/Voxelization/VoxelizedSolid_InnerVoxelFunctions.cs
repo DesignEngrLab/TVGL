@@ -69,7 +69,7 @@ namespace TVGL.Voxelization
             {
                 voxel = new Voxel_Level0_Class(ID, VoxelRoleTypes.Full, this);
                 lock (voxelDictionaryLevel0)
-                    voxelDictionaryLevel0.Add(voxel);
+                    voxelDictionaryLevel0.AddOrReplace(voxel);
                 return voxel;
             }
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
@@ -81,7 +81,7 @@ namespace TVGL.Voxelization
                 else
                     voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
             voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
-            lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
+            lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
             if (level == 1)
             {   //What if this is the last voxel to be added that makes the parent full?
                 // This is checked differently for the level-1 than the others. The code could be
@@ -142,10 +142,9 @@ namespace TVGL.Voxelization
             else //if it's a class then we can change with the above statement
             {    //if it's the voxel struct then we have to delete it and make a new one
                 lock (voxel0.InnerVoxels[level - 1])
-                {
-                    voxel0.InnerVoxels[level - 1].Remove(voxel);
+                { 
                     voxel = new Voxel(Constants.ClearFlagsFromID(voxel.ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
-                    voxel0.InnerVoxels[level - 1].Add(voxel);
+                    voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
                 }
             }
             // now, remove all the descendants - for all lower levels. This is just like in changing partial to empty
@@ -189,7 +188,7 @@ namespace TVGL.Voxelization
                 for (int i = 1; i < numberOfLevels; i++)
                     ((Voxel_Level0_Class)voxel).InnerVoxels[i - 1] = new VoxelHashSet(i, this);
                 lock (voxelDictionaryLevel0)
-                    voxelDictionaryLevel0.Add(voxel);
+                    voxelDictionaryLevel0.AddOrReplace(voxel);
                 return voxel;
             }
             // for the lower levels, first get or make the level-0 voxel (next7 lines)
@@ -202,7 +201,7 @@ namespace TVGL.Voxelization
                 else voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id0);
             // make the new Voxel, and add it to the proper hashset
             voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
-            lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].Add(voxel);
+            lock (voxel0.InnerVoxels[level - 1]) voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
             return voxel;
         }
         private IVoxel ChangeVoxelToPartial(IVoxel voxel, bool populateSubVoxels = true)
@@ -242,10 +241,9 @@ namespace TVGL.Voxelization
                 //if it's the voxel struct then we have to delete it and make a new one
                 lock (voxel0.InnerVoxels[level - 1])
                 {
-                    voxel0.InnerVoxels[level - 1].Remove(voxel);
                     voxel = new Voxel(Constants.ClearFlagsFromID(voxel.ID) +
                                       Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
-                    voxel0.InnerVoxels[level - 1].Add(voxel);
+                    voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
                 }
             }
             if (level < numberOfLevels - 1 && voxel0.InnerVoxels[level] == null)
