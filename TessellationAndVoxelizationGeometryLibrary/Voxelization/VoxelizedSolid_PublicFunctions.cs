@@ -56,50 +56,53 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Gets the voxel.
         /// </summary>
-        /// <param name="newID">The new identifier.</param>
+        /// <param name="ID">The new identifier.</param>
         /// <param name="level">The level.</param>
         /// <returns>IVoxel.</returns>
-        public IVoxel GetVoxel(long newID, int level = -1)
+        public IVoxel GetVoxel(long ID, int level = -1)
         {
             if (level == -1)
             {
-                Constants.GetRoleFlags(newID, out var levelFromID, out var role, out var btmIsInside);
+                Constants.GetRoleFlags(ID, out var levelFromID, out var role, out var btmIsInside);
                 level = levelFromID;
             }
-
-            var newIDwoTags = Constants.ClearFlagsFromID(newID);
             if (level == 0)
             {
-                return voxelDictionaryLevel0.GetVoxel(newIDwoTags)
+                return voxelDictionaryLevel0.GetVoxel(ID)
                        ??
-                       new Voxel(newIDwoTags + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
+                       new Voxel(Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
             }
-            var parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[0]);
-            var parent = voxelDictionaryLevel0.GetVoxel(parentID);
-            if (parent == null)
-                return new Voxel(newIDwoTags + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
-            if (parent.Role == VoxelRoleTypes.Full)
-                return new Voxel(newIDwoTags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
+            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(ID);
+            //var newIDwoTags = Constants.ClearFlagsFromID(ID);
+            //var parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[0]);
+            //var parent = voxelDictionaryLevel0.GetVoxel(parentID);
+            if (voxel0 == null || voxel0.Role==VoxelRoleTypes.Empty)
+                return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
+            if (voxel0.Role == VoxelRoleTypes.Full)
+                return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
 
-            var innerVoxels = ((Voxel_Level0_Class)parent).InnerVoxels;
-            if (innerVoxels.Length >= level)
-            {
-                var voxel = innerVoxels[level - 1]?.GetVoxel(newIDwoTags);
-                if (voxel == null) return new Voxel(newIDwoTags + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
-                return voxel;
-            }
+            var voxel = voxel0.InnerVoxels[level - 1].GetVoxel(ID);
+            if (voxel != null) return voxel;
 
-            for (int i = 1; i < level; i++)
+            //so, now the voxel0 exists and is partial, but the ID is not registered with its expected level. This means that
+            //one of the ancestors must be empty or full
+            for (int i = level - 1; i >= 1; i--)
             {
-                parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[i]);
-                if (innerVoxels.Length >= i)
-                    parent = innerVoxels[i - 1].GetVoxel(parentID);
-                if (parent == null || parent.Role == VoxelRoleTypes.Empty)
-                    return new Voxel(newIDwoTags + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
-                if (parent.Role == VoxelRoleTypes.Full)
-                    return new Voxel(newIDwoTags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
+                var parentID = Constants.MakeParentVoxelID(ID, singleCoordinateMasks[i]);
+                var parent = voxel0.InnerVoxels[i - 1].GetVoxel(parentID);
+                if (parent != null)
+                {
+                    if (parent.Role == VoxelRoleTypes.Full)
+                        return new Voxel(
+                            Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
+                    else
+                        return new Voxel(
+                            Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
+                }
             }
-            throw new Exception("it should not be possible to get here.");
+            // else then it was null at even level-1, which means that it is empty
+            return new Voxel(
+                Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
         }
 
 
@@ -109,42 +112,33 @@ namespace TVGL.Voxelization
         /// Gets the Voxels with a specified role.
         /// </summary>
         /// <param name="role">The role.</param>
-        /// <param name="voxelLevel">The voxel level.</param>
+        /// <param name="level">The voxel level.</param>
         /// <param name="onlyThisLevel">if set to <c>true</c> [only this level].</param>
         /// <returns>IEnumerable&lt;IVoxel&gt;.</returns>
         /// <exception cref="ArgumentException">Specifying voxels at a level that is finer than created.</exception>
-        public IEnumerable<IVoxel> Voxels(VoxelRoleTypes role, int voxelLevel = 20, bool onlyThisLevel = false)
+        public IEnumerable<IVoxel> Voxels(VoxelRoleTypes role, int level = 20, bool onlyThisLevel = false)
         {
-            var level = (int)voxelLevel;
-            if (level > numberOfLevels)
+            if (level >= numberOfLevels)
             {
                 if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
-                level = numberOfLevels;
+                level = numberOfLevels-1;
             }
             if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
                 foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == role)) yield return v;
             if ((onlyThisLevel && level == 1) || (!onlyThisLevel && level >= 1))
                 foreach (var v in voxelDictionaryLevel0
-                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
-                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 1)
                     .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 1, role)))
                     yield return v;
             if ((onlyThisLevel && level == 2) || (!onlyThisLevel && level >= 2))
                 foreach (var v in voxelDictionaryLevel0
-                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
-                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 2)
                     .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 2, role)))
                     yield return v;
             if ((onlyThisLevel && level == 3) || (!onlyThisLevel && level >= 3))
                 foreach (var v in voxelDictionaryLevel0
-                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
-                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 3)
                     .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 3, role)))
                     yield return v;
             if ((onlyThisLevel && level == 4) || (!onlyThisLevel && level >= 4))
                 foreach (var v in voxelDictionaryLevel0
-                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
-                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 4)
                     .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 4, role)))
                     yield return v;
         }
@@ -152,42 +146,33 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Gets the Voxels with a specified voxel level.
         /// </summary>
-        /// <param name="voxelLevel">The voxel level.</param>
+        /// <param name="level">The voxel level.</param>
         /// <param name="onlyThisLevel">if set to <c>true</c> [only this level].</param>
         /// <returns>IEnumerable&lt;IVoxel&gt;.</returns>
         /// <exception cref="ArgumentException">Specifying voxels at a level that is finer than created.</exception>
-        public IEnumerable<IVoxel> Voxels(int voxelLevel = 6, bool onlyThisLevel = false)
+        public IEnumerable<IVoxel> Voxels(int level = 20, bool onlyThisLevel = false)
         {
-            var level = (int)voxelLevel;
-            if (level > numberOfLevels)
+            if (level >= numberOfLevels)
             {
                 if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
-                level = numberOfLevels;
+                level = numberOfLevels - 1;
             }
             if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
                 foreach (var v in voxelDictionaryLevel0) yield return v;
             if ((onlyThisLevel && level == 1) || (!onlyThisLevel && level >= 1))
                 foreach (var v in voxelDictionaryLevel0
-                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
-                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 1)
                     .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 1)))
                     yield return v;
             if ((onlyThisLevel && level == 2) || (!onlyThisLevel && level >= 2))
                 foreach (var v in voxelDictionaryLevel0
-                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
-                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 2)
                     .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 2)))
                     yield return v;
             if ((onlyThisLevel && level == 3) || (!onlyThisLevel && level >= 3))
                 foreach (var v in voxelDictionaryLevel0
-                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
-                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 3)
                     .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 3)))
                     yield return v;
             if ((onlyThisLevel && level == 4) || (!onlyThisLevel && level >= 4))
                 foreach (var v in voxelDictionaryLevel0
-                    .Where(vb => ((Voxel_Level0_Class)vb).InnerVoxels != null &&
-                                 ((Voxel_Level0_Class)vb).InnerVoxels.Length >= 4)
                     .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 4)))
                     yield return v;
         }
@@ -358,18 +343,11 @@ namespace TVGL.Voxelization
             if (parent is Voxel_Level0_Class)
             {
                 level0Parent = (Voxel_Level0_Class)parent;
-                if (level0Parent.InnerVoxels != null && level0Parent.InnerVoxels.Length > 0)
                     return level0Parent.InnerVoxels[0];
-                return new List<IVoxel>();
             }
             // else the parent is level 1, 2, or 3
             level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
-            if (level0Parent.InnerVoxels == null || level0Parent.InnerVoxels.Length <= parent.Level)
-                return new List<IVoxel>();
             return level0Parent.InnerVoxels[parent.Level].GetDescendants(parent.ID, parent.Level);
-            // var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
-            //return level0Parent.InnerVoxels[parent.Level].Where(v =>
-            //    Constants.MakeParentVoxelID(v.ID, singleCoordinateMasks[parent.Level]) == parentIDwithoutFlags);
         }
 
         /// <summary>
@@ -587,6 +565,7 @@ namespace TVGL.Voxelization
                     if (level < numberOfLevels - 1)
                         IntersectOLD(thisVoxel, level + 1, references);
                 }
+              //if (level==0)  Presenter.ShowAndHang(this);
             }//);
         }
         private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references, bool parentWasFull)
@@ -615,13 +594,12 @@ namespace TVGL.Voxelization
                     {
                         var newVoxel = new Voxel(Constants.ClearFlagsFromID(refVoxel.ID)
                                                     + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
-
                         lock (voxel0.InnerVoxels[level - 1])
                             voxel0.InnerVoxels[level - 1].AddOrReplace(newVoxel);
-                        if (numberOfLevels > level)
+                        if (level < numberOfLevels - 1)
                             Intersect(newVoxel, level + 1, references, true);
                     }
-                } //);
+                }// );
             }
             else
             {

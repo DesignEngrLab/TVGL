@@ -314,8 +314,8 @@ namespace TVGL.Voxelization
             _totals[1] = voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Partial);
             for (int i = 1; i < numberOfLevels; i++)
             {
-                _totals[2 * i] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, i, VoxelRoleTypes.Full));
-                _totals[2 * i + 1] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, i, VoxelRoleTypes.Partial));
+                _totals[2 * i] = voxelDictionaryLevel0.Sum(dict => CountVoxels((Voxel_Level0_Class)dict, i, VoxelRoleTypes.Full));
+                _totals[2 * i + 1] = voxelDictionaryLevel0.Sum(dict => CountVoxels((Voxel_Level0_Class)dict, i, VoxelRoleTypes.Partial));
             };
             Volume = 0.0;
             for (int i = 0; i < numberOfLevels; i++)
@@ -324,11 +324,9 @@ namespace TVGL.Voxelization
             _count = _totals.Sum();
         }
 
-        private long CountVoxels(IVoxel dict, int level, VoxelRoleTypes role)
+        private long CountVoxels(Voxel_Level0_Class voxel0, int level, VoxelRoleTypes role)
         {
-            var innerVoxels = ((Voxel_Level0_Class)dict).InnerVoxels;
-            if (innerVoxels == null || innerVoxels.Length < level || innerVoxels[level - 1] == null) return 0L;
-            return innerVoxels[level - 1].Count(v => v.Role == role);
+            return voxel0.InnerVoxels[level - 1].Count(v => v.Role == role);
         }
 
         internal double[] GetRealCoordinates(int level, params int[] indices)
