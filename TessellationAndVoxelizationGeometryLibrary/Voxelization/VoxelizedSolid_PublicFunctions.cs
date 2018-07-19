@@ -76,7 +76,7 @@ namespace TVGL.Voxelization
             //var newIDwoTags = Constants.ClearFlagsFromID(ID);
             //var parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[0]);
             //var parent = voxelDictionaryLevel0.GetVoxel(parentID);
-            if (voxel0 == null || voxel0.Role==VoxelRoleTypes.Empty)
+            if (voxel0 == null || voxel0.Role == VoxelRoleTypes.Empty)
                 return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Empty), this);
             if (voxel0.Role == VoxelRoleTypes.Full)
                 return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
@@ -121,7 +121,7 @@ namespace TVGL.Voxelization
             if (level >= numberOfLevels)
             {
                 if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
-                level = numberOfLevels-1;
+                level = numberOfLevels - 1;
             }
             if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
                 foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == role)) yield return v;
@@ -343,7 +343,7 @@ namespace TVGL.Voxelization
             if (parent is Voxel_Level0_Class)
             {
                 level0Parent = (Voxel_Level0_Class)parent;
-                    return level0Parent.InnerVoxels[0];
+                return level0Parent.InnerVoxels[0];
             }
             // else the parent is level 1, 2, or 3
             level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
@@ -530,7 +530,7 @@ namespace TVGL.Voxelization
         public VoxelizedSolid IntersectToNewSolid(params VoxelizedSolid[] references)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.IntersectOLD(references);
+            copy.Intersect(references);
             return copy;
         }
         /// <summary>
@@ -542,32 +542,7 @@ namespace TVGL.Voxelization
             Intersect(null, 0, references, false);
             UpdateProperties();
         }
-        public void IntersectOLD(params VoxelizedSolid[] references)
-        {
-            IntersectOLD(null, 0, references);
-            UpdateProperties();
-        }
 
-        private void IntersectOLD(IVoxel parent, int level, VoxelizedSolid[] references)
-        {
-            var voxels = GetChildVoxels(parent);
-            //Parallel.ForEach(voxels, thisVoxel =>
-            foreach (var thisVoxel in voxels)
-            {
-                var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
-                if (referenceLowestRole == VoxelRoleTypes.Full) continue; //return;
-                if (referenceLowestRole == VoxelRoleTypes.Empty)
-                    ChangeVoxelToEmpty(thisVoxel);
-                else
-                {
-                    if (thisVoxel.Role == VoxelRoleTypes.Full)
-                        ChangeVoxelToPartial(thisVoxel);
-                    if (level < numberOfLevels - 1)
-                        IntersectOLD(thisVoxel, level + 1, references);
-                }
-              //if (level==0)  Presenter.ShowAndHang(this);
-            }//);
-        }
         private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references, bool parentWasFull)
         {
             if (parentWasFull)
@@ -576,11 +551,21 @@ namespace TVGL.Voxelization
                 // simply delete many of them, so if parent is full, we can look to the first reference
                 // to guide us in which sub-voxels to keep.
                 var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
-
-                var refVoxels = references[0].GetChildVoxels(references[0].GetVoxel(parent.ID, parent.Level));
+                //now one of the references must have stated that they were partial for this voxel, but we are not sure which.
+                //if we choose one that is full, then we won't get a set of reference sub-voxel and this "shortcut"
+                //wouldn't be worth it.
+                var k = 0;
+                VoxelizedSolid newReference = references[k];
+                var refParent = newReference.GetVoxel(parent.ID, parent.Level);
+                while (refParent.Role == VoxelRoleTypes.Full)
+                {
+                    newReference = references[++k];
+                    refParent = newReference.GetVoxel(parent.ID, parent.Level);
+                }
+                var refVoxels = newReference.GetChildVoxels(refParent);
                 // cycle over the reference voxels from references[0]
-                //Parallel.ForEach(refVoxels, refVoxel =>
-                foreach (var refVoxel in refVoxels)
+                Parallel.ForEach(refVoxels, refVoxel =>
+                //foreach (var refVoxel in refVoxels)
                 {
                     var referenceLowestRole = GetLowestRole(refVoxel.ID, level, references);
                     if (referenceLowestRole == VoxelRoleTypes.Full)
@@ -599,16 +584,16 @@ namespace TVGL.Voxelization
                         if (level < numberOfLevels - 1)
                             Intersect(newVoxel, level + 1, references, true);
                     }
-                }// );
+                });
             }
             else
             {
                 var voxels = GetChildVoxels(parent);
-                //Parallel.ForEach(voxels, thisVoxel =>
-                foreach (var thisVoxel in voxels)
+                Parallel.ForEach(voxels, thisVoxel =>
+                //foreach (var thisVoxel in voxels)
                 {
                     var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
-                    if (referenceLowestRole == VoxelRoleTypes.Full) continue;
+                    if (referenceLowestRole == VoxelRoleTypes.Full) return; //continue;
                     if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel);
                     else
                     {
@@ -617,7 +602,7 @@ namespace TVGL.Voxelization
                         if (level < numberOfLevels - 1)
                             Intersect(thisVoxel, level + 1, references, thisVoxelWasFull);
                     }
-                }//);
+                });
             }
         }
         #endregion
@@ -652,7 +637,7 @@ namespace TVGL.Voxelization
                 var referenceHighestRole = GetHighestRole(thisVoxel.ID, level, subtrahends);
                 if (referenceHighestRole == VoxelRoleTypes.Empty) return;
                 if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel);
-                else if (numberOfLevels > level)
+                else if (level < numberOfLevels - 1)
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel);
                     Subtract(thisVoxel, level + 1, subtrahends);

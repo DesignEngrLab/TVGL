@@ -168,8 +168,7 @@ namespace TVGL.Voxelization
             for (int i = level; i < numberOfLevels - 1; i++)
             {
                 lock (voxel0.InnerVoxels[i])
-                    voxel0.InnerVoxels[i]
-                        .RemoveDescendants(voxel.ID, level);
+                    voxel0.InnerVoxels[i].RemoveDescendants(voxel.ID, level);
             }
             if (level == 1)
             {   //What if this is the last voxel to be added that makes the parent full?
