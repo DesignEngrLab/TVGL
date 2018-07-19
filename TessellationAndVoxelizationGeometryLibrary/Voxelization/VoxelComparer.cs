@@ -19,14 +19,22 @@ namespace TVGL.Voxelization
 {
     public abstract class VoxelComparer : IEqualityComparer<long>
     {
-
+        protected long parentMask;
         protected int coordShift, yShift, zShift;
         protected long coordMask, mask;
         internal long EqualsMask(long id)
         {
             return id & mask;
         }
+        internal long ParentMask(long id)
+        {
+            return id & parentMask;
+        }
 
+        internal bool IsDescendantOf(long entry, long ancestor)
+        {
+            return ParentMask(entry) == ancestor;
+        }
         public bool Equals(long entry, long query)
         {
             return EqualsMask(entry) == query;
@@ -34,9 +42,9 @@ namespace TVGL.Voxelization
 
         public int GetHashCode(long id)
         {
-            long x = (id >> coordShift + 4) & coordMask;
-            long y = (id >> coordShift + 24) & coordMask;
-            long z = (id >> coordShift + 44) & coordMask;
+            var x = (id >> coordShift + 4) & coordMask;
+            var y = (id >> coordShift + 24) & coordMask;
+            var z = (id >> coordShift + 44) & coordMask;
             return (int)(x + (y << yShift) + (z << zShift));
         }
     }
@@ -65,13 +73,17 @@ namespace TVGL.Voxelization
 
     public class VoxelComparerMidLevels : VoxelComparer
     {
-        internal VoxelComparerMidLevels(int bitsInLevel0)
+        internal VoxelComparerMidLevels(int bitsInLevel0, int numberOfBitsInParent)
         {
             // the midlevel bits are the 10 bits following the level0 bits.
             // why 10? because for x, y, and z this would be 30 bits and the
             // hashsets define the hash code as a 31-bit (positive integer)
             // the bits from level0 do not need to be included as there are hashsets
             // within each level0 voxel
+            parentMask = (long)Math.Pow(2, numberOfBitsInParent) - 1;
+            var parentShift = 20 - numberOfBitsInParent;
+            parentMask = (parentMask << parentShift + 4) + (parentMask << parentShift + 24) +
+                         (parentMask << parentShift + 44);
             coordShift = 20 - 10 - bitsInLevel0;
             // yShift and zShift are just left-shifted to follow x
             yShift = 10;
@@ -86,15 +98,19 @@ namespace TVGL.Voxelization
     /// </summary>
     public class VoxelComparerFine : VoxelComparer
     {
-        internal VoxelComparerFine(int bitsInLevel0)
+        internal VoxelComparerFine(int bitsInLevel0, int numberOfBitsInParent)
         {
+            parentMask = (long)Math.Pow(2, numberOfBitsInParent) - 1;
+            var parentShift = 20 - numberOfBitsInParent;
+            parentMask = (parentMask << parentShift + 4) + (parentMask << parentShift + 24) +
+                         (parentMask << parentShift + 44);
             // assuming that we are using all the bits, so no need to shift each coordinate
             coordShift = 0;
             // here, there will be overlap in the hashset, to make it
             var bitsInCoord = 20 - bitsInLevel0;
             zShift = 31 - bitsInCoord;
             yShift = zShift / 2;
-            coordMask = (int)Math.Pow(2, bitsInCoord) - 1; ;
+            coordMask = (int)Math.Pow(2, bitsInCoord) - 1;
             mask = (coordMask << coordShift + 4) + (coordMask << coordShift + 24)
                                                  + (coordMask << coordShift + 44);
         }

@@ -362,12 +362,13 @@ namespace TVGL.Voxelization
                 return new List<IVoxel>();
             }
             // else the parent is level 1, 2, or 3
-            level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(Constants.MakeParentVoxelID(parent.ID, singleCoordinateMasks[0]));
+            level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
             if (level0Parent.InnerVoxels == null || level0Parent.InnerVoxels.Length <= parent.Level)
                 return new List<IVoxel>();
-            var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
-            return level0Parent.InnerVoxels[parent.Level].Where(v =>
-                Constants.MakeParentVoxelID(v.ID, singleCoordinateMasks[parent.Level]) == parentIDwithoutFlags);
+            return level0Parent.InnerVoxels[parent.Level].GetDescendants(parent.ID, parent.Level); 
+           // var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
+            //return level0Parent.InnerVoxels[parent.Level].Where(v =>
+            //    Constants.MakeParentVoxelID(v.ID, singleCoordinateMasks[parent.Level]) == parentIDwithoutFlags);
         }
 
         /// <summary>
@@ -542,8 +543,8 @@ namespace TVGL.Voxelization
                             layerOfVoxels[i + 1].AddOrReplace(neighbor);
                         }
                     }
-                    if (level == -10)
-                        Presenter.ShowAndHang(this);
+                   // if (level == 0)
+                        //Presenter.ShowAndHang(this);
 
                     #endregion
                 } //);

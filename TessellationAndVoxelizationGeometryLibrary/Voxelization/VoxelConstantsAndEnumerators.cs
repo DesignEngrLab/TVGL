@@ -104,7 +104,7 @@ namespace TVGL.Voxelization
         /// <param name="btmIsInside">if set to <c>true</c> [BTM is inside].</param>
         public static void GetRoleFlags(long ID, out byte level, out VoxelRoleTypes role, out bool btmIsInside)
         {
-            level = (byte) ((ID & 12) >> 2); //12 is (1100)
+            level = (byte)((ID & 12) >> 2); //12 is (1100)
             if (level == 3) level = 6; //level 3 (11) is actually 6 (See comment above)
             else if ((ID & 16) != 0) level += 3;
 
@@ -176,11 +176,11 @@ namespace TVGL.Voxelization
             //   z0   z1    z2   z3    z4   y0   y1    y2   y3    y4    x0   x1    x2   x3    x4   flags
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            var result = (long) coordinates[0] << shift;
+            var result = (long)coordinates[0] << shift;
             shift += 20;
-            result += (long) coordinates[1] << shift;
+            result += (long)coordinates[1] << shift;
             shift += 20;
-            result += (long) coordinates[2] << shift;
+            result += (long)coordinates[2] << shift;
             return result;
         }
 
@@ -211,7 +211,7 @@ namespace TVGL.Voxelization
         internal static int GetCoordinateIndex(long ID, int dimension, int singleShift)
         {
             var shift = 4 + 20 * dimension + singleShift;
-            return (int) ((ID >> shift) & (Constants.MaxForSingleCoordinate >> singleShift));
+            return (int)((ID >> shift) & (Constants.MaxForSingleCoordinate >> singleShift));
         }
 
         #endregion
@@ -222,7 +222,7 @@ namespace TVGL.Voxelization
             = new Dictionary<int, int[]>()
             {
                 {5, new[] {3, 2}},
-                {6, new[] {3, 3}},
+                {6, new[] {2, 2, 2}},
                 {7, new[] {3, 2, 2}},
                 {8, new[] {3, 3, 2}},
                 {9, new[] {4, 3, 2}},
@@ -230,17 +230,16 @@ namespace TVGL.Voxelization
                 {11, new[] {4, 4, 3}},
                 {12, new[] {4, 3, 3, 2}},
                 {13, new[] {4, 3, 3, 3}},
-                {14, new[] {4, 3, 3, 2, 2}},
-                {15, new[] {4, 3, 3, 3, 2}},
-                {16, new[] {4, 3, 3, 2, 2, 2 }},
-                {17, new[] {4, 3, 3, 3, 2, 2 }},
-                {18, new[] {3, 3, 3, 3, 2, 2, 2}},
-                {19, new[] {3, 3, 3, 3, 3, 2, 2}},
-                {20, new[] {4, 3, 3, 3, 3, 2, 2}}
+                {14, new[] {4, 3, 4, 3}},  //what is attempted from this level on down 
+                {15, new[] {5, 3, 4, 3}},  // is to try to get a certain number of levels after
+                {16, new[] {5, 3, 3, 2, 1}}, //level-0 to sum to 10. This is because this allows
+                {17, new[] {5, 3, 4, 3, 2}},  //the midLevel comparer in the VoxelHashSet to be used
+                {18, new[] {5, 3, 4, 3, 3}},  //most effectively. Above this, the finecomparer is used
+                {19, new[] {5, 3, 3, 2, 2, 2, 2}},
+                {20, new[] {5, 3, 3, 2, 2, 3, 2}}
             };
 
 
-        internal const int LevelAtWhichComparerSwitchesToFine = 4;
         internal const int LevelAtWhichLinkToTessellation = 1;
 
 
