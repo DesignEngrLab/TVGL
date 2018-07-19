@@ -23,7 +23,6 @@ namespace TVGL.Voxelization
         private int lastIndex;
         private int freeList;
         private VoxelComparer comparer;
-        private readonly VoxelizedSolid solid;
         private bool CapacityMaxedOut;
 
 
@@ -41,9 +40,8 @@ namespace TVGL.Voxelization
             if (level == 0)
                 comparer = new VoxelComparerLevel0(solid.bitLevelDistribution[0]);
             else if (numParentBits - solid.bitLevelDistribution[0] <= 10)
-                comparer = new VoxelComparerMidLevels(solid.bitLevelDistribution[0], numParentBits);
-            else comparer = new VoxelComparerFine(solid.bitLevelDistribution[0], numParentBits);
-            this.solid = solid;
+                comparer = new VoxelComparerMidLevels(solid.bitLevelDistribution, numParentBits);
+            else comparer = new VoxelComparerFine(solid.bitLevelDistribution, numParentBits);
             lastIndex = 0;
             count = 0;
             freeList = -1;
@@ -304,13 +302,13 @@ namespace TVGL.Voxelization
         }
         public int RemoveDescendants(long ancestor, int ancestorLevel)
         {
-            ancestor =comparer.ParentMask(ancestor);
+            ancestor =comparer.ParentMask(ancestor,ancestorLevel);
             int numRemoved = 0;
             for (int i = 0; i < lastIndex; i++)
             {
                 if (slots[i].hashCode >= 0)
                 {
-                    if (comparer.IsDescendantOf(slots[i].value.ID, ancestor))
+                    if (comparer.IsDescendantOf(slots[i].value.ID, ancestor, ancestorLevel))
                     {
                         // check again that remove actually removed it
                         if (Remove(slots[i].value))
@@ -323,12 +321,12 @@ namespace TVGL.Voxelization
         public List<IVoxel> GetDescendants(long ancestor, int ancestorLevel)
         {
             var descendants = new List<IVoxel>();
-            ancestor = comparer.ParentMask(ancestor);
+            ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             for (int i = 0; i < lastIndex; i++)
             {
                 if (slots[i].hashCode >= 0)
                 {
-                    if (comparer.IsDescendantOf(slots[i].value.ID, ancestor))
+                    if (comparer.IsDescendantOf(slots[i].value.ID, ancestor, ancestorLevel))
                         descendants.Add(slots[i].value);
                 }
             }
@@ -336,13 +334,13 @@ namespace TVGL.Voxelization
         }
         public int CountDescendants(long ancestor, int ancestorLevel)
         {
-            ancestor = comparer.ParentMask(ancestor);
+            ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             int count = 0;
             for (int i = 0; i < lastIndex; i++)
             {
                 if (slots[i].hashCode >= 0)
                 {
-                    if (comparer.IsDescendantOf(slots[i].value.ID, ancestor))
+                    if (comparer.IsDescendantOf(slots[i].value.ID, ancestor, ancestorLevel))
                         count++;
                 }
             }
@@ -350,13 +348,13 @@ namespace TVGL.Voxelization
         }
         public int CountDescendants(long ancestor, int ancestorLevel, VoxelRoleTypes role)
         {
-            ancestor = comparer.ParentMask(ancestor);
+            ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             int count = 0;
             for (int i = 0; i < lastIndex; i++)
             {
                 if (slots[i].hashCode >= 0)
                 {
-                    if (comparer.IsDescendantOf(slots[i].value.ID, ancestor) && slots[i].value.Role == role)
+                    if (comparer.IsDescendantOf(slots[i].value.ID, ancestor, ancestorLevel) && slots[i].value.Role == role)
                         count++;
                 }
             }

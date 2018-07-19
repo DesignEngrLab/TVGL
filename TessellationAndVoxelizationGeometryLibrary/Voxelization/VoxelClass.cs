@@ -222,8 +222,11 @@ namespace TVGL.Voxelization
             bool btmCoordIsInside = false)
             : base(ID, 0, voxelRole, solid, btmCoordIsInside)
         {
-            if (Role == VoxelRoleTypes.Partial)
+            //if (Role == VoxelRoleTypes.Partial)
                 InnerVoxels = new VoxelHashSet[solid.numberOfLevels - 1];
+
+            for (int i = 1; i < solid.numberOfLevels; i++)
+                InnerVoxels[i - 1] = new VoxelHashSet(i, solid);
         }
         /// <summary>
         /// The inner voxels
