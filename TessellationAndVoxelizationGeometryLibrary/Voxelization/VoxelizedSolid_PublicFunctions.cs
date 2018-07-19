@@ -365,8 +365,8 @@ namespace TVGL.Voxelization
             level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
             if (level0Parent.InnerVoxels == null || level0Parent.InnerVoxels.Length <= parent.Level)
                 return new List<IVoxel>();
-            return level0Parent.InnerVoxels[parent.Level].GetDescendants(parent.ID, parent.Level); 
-           // var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
+            return level0Parent.InnerVoxels[parent.Level].GetDescendants(parent.ID, parent.Level);
+            // var parentIDwithoutFlags = Constants.ClearFlagsFromID(parent.ID);
             //return level0Parent.InnerVoxels[parent.Level].Where(v =>
             //    Constants.MakeParentVoxelID(v.ID, singleCoordinateMasks[parent.Level]) == parentIDwithoutFlags);
         }
@@ -500,11 +500,6 @@ namespace TVGL.Voxelization
               //Parallel.ForEach(layerOfVoxels[i], voxel =>
                 foreach (var voxel in layerOfVoxels[i])
                 {
-
-                    if (level == 0)
-                    {
-                        Debug.WriteLine(voxel.CoordinateIndices.MakePrintString());
-                    }
                     #region fill up the layers below this one
                     if (voxel.Role == VoxelRoleTypes.Full
                         || (voxel.Role == VoxelRoleTypes.Partial && level == numberOfLevels - 1))
@@ -532,19 +527,14 @@ namespace TVGL.Voxelization
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
                         if (neighbor == null || layerOfVoxels.Length <= i + 1)
                             continue; // return;  // null happens when you go outside of bounds (of coarsest voxels)
-                        if (filledUpNextLayer && neighbor.Role!=VoxelRoleTypes.Full)
-                        {
+                        if (filledUpNextLayer && neighbor.Role != VoxelRoleTypes.Full)
                             neighbor = ChangeVoxelToFull(neighbor);
-                            layerOfVoxels[i + 1].AddOrReplace(neighbor);
-                        }
                         else if (!filledUpNextLayer && neighbor.Role == VoxelRoleTypes.Empty)
-                        {
                             neighbor = ChangeVoxelToPartial(neighbor);
-                            layerOfVoxels[i + 1].AddOrReplace(neighbor);
-                        }
+                        layerOfVoxels[i + 1].AddOrReplace(neighbor);
                     }
-                   // if (level == 0)
-                        //Presenter.ShowAndHang(this);
+                    //if (level == 0)
+                    //    Presenter.ShowAndHang(this);
 
                     #endregion
                 } //);

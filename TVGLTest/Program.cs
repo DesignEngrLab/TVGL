@@ -88,7 +88,7 @@ namespace TVGLPresenterDX
             var fileNames = dir.GetFiles("*");
             var r = new Random();
             //fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
-            for (var i = 0; i < fileNames.Count(); i += 5)
+            for (var i =2; i < fileNames.Count(); i += 5)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -143,9 +143,8 @@ namespace TVGLPresenterDX
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Positive...");
-            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative);
-            Presenter.ShowAndHang(vs1xpos);
-            return;
+            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.YPositive);
+          ;
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xpos_" + _fileName;
