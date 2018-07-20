@@ -628,7 +628,9 @@ namespace TVGL.Voxelization
             Subtract(null, 0, subtrahends);
             UpdateProperties();
         }
-
+        // could Subtract be sped up like Intersect? It is doubtful. One would need
+        // to check which subvoxels are absent in the references, which is not likely
+        // to be quicker than the current approach. For now, it's best to keep it simple.
         private void Subtract(IVoxel parent, int level, VoxelizedSolid[] subtrahends)
         {
             var voxels = GetChildVoxels(parent);
@@ -648,7 +650,11 @@ namespace TVGL.Voxelization
 
         #endregion
         #region Union
-        /// <exclude />
+        /// <summary>
+        /// Unions to new solid.
+        /// </summary>
+        /// <param name="reference">The reference.</param>
+        /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid UnionToNewSolid(VoxelizedSolid reference)
         {
             var copy = (VoxelizedSolid)Copy();
@@ -672,7 +678,7 @@ namespace TVGL.Voxelization
                 else
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel.ID, level);
-                    if (numberOfLevels > level)
+                    if (level < numberOfLevels - 1)
                         Union(refVoxel, level + 1, reference);
                 }
             });
@@ -703,18 +709,7 @@ namespace TVGL.Voxelization
         {
             IEnumerable<IVoxel> voxels;
             if (parent.Role == VoxelRoleTypes.Full)
-            {
-                var thisIDwoFlags = Constants.ClearFlagsFromID(parent.ID);
-                voxels = new List<IVoxel>();
-                var xShift = 1L << 4 + 4 * (4 - level);
-                var yShift = xShift << 20;
-                var zShift = yShift << 20;
-                for (int i = 0; i < 16; i++) //todo fix 16
-                    for (int j = 0; j < 16; j++)//todo fix 16
-                        for (int k = 0; k < 16; k++)//todo fix 16
-                            ((List<IVoxel>)voxels).Add(new Voxel(thisIDwoFlags
-                                                              + (i * xShift) + (j * yShift) + (k * zShift) + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), this));
-            }
+                voxels = AddAllDescendants(Constants.ClearFlagsFromID(parent.ID), level);
             else voxels = reference.GetChildVoxels(parent);
             Parallel.ForEach(voxels, refVoxel =>
             {
@@ -724,11 +719,13 @@ namespace TVGL.Voxelization
                     ChangeEmptyVoxelToFull(refVoxel.ID, level);
                 else if (thisVoxel.Role == VoxelRoleTypes.Full && refVoxel.Role == VoxelRoleTypes.Full)
                     ChangeVoxelToEmpty(thisVoxel);
+                // these 3 conditions cover full-empty (as well as empty-empty), empty-full, and full-full
+                // what's left then is something with partial, requiring recursion
                 else
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel.ID, level);
                     else if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel);
-                    if (numberOfLevels > level) ExclusiveOr(refVoxel, level + 1, reference);
+                    if (level < numberOfLevels - 1) ExclusiveOr(refVoxel, level + 1, reference);
                 }
             });
         }

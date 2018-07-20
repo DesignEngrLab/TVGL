@@ -260,7 +260,7 @@ namespace TVGL.Voxelization
                 //for (int i = 1; i < numberOfLevels; i++)
                 //    ((Voxel_Level0_Class)voxel).InnerVoxels[i - 1] = new VoxelHashSet(i, this);
                 voxel0.Role = VoxelRoleTypes.Partial;
-                if (addAllDescendants) AddAllDescendants(voxel0, Constants.ClearFlagsFromID(voxel0.ID), level);
+                if (addAllDescendants) AddAllDescendants(Constants.ClearFlagsFromID(voxel0.ID), level, voxel0);
                 return voxel0;
             }
             voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
@@ -285,22 +285,27 @@ namespace TVGL.Voxelization
             if (level < numberOfLevels - 1 && voxel0.InnerVoxels[level] == null)
                 voxel0.InnerVoxels[level] = new VoxelHashSet(level + 1, this);
             if (addAllDescendants && this.numberOfLevels - 1 != level)
-                AddAllDescendants(voxel0, Constants.ClearFlagsFromID(voxel.ID), level);
+                AddAllDescendants(Constants.ClearFlagsFromID(voxel.ID), level, voxel0);
             return voxel;  //if at the lowest level or
         }
 
-        void AddAllDescendants(Voxel_Level0_Class voxel0, long startingID, int level)
+        List<IVoxel> AddAllDescendants(long startingID, int level)
         {
-            var lowerLevelVoxels = new List<IVoxel>();
+            var descendants = new List<IVoxel>();
             var xShift = 1L << (4 + singleCoordinateShifts[level + 1]); //finding the correct multiplier requires adding up all the bits used in current levels
             var yShift = xShift << 20; //once the xShift is known, the y and z shifts are just 20 bits over
             var zShift = yShift << 20;
             for (int i = 0; i < voxelsPerSide[level + 1]; i++)
-                for (int j = 0; j < voxelsPerSide[level + 1]; j++)
-                    for (int k = 0; k < voxelsPerSide[level + 1]; k++)
-                        lowerLevelVoxels.Add(new Voxel(startingID
-                                                       + (i * xShift) + (j * yShift) + (k * zShift)
-                                                       + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), this));
+            for (int j = 0; j < voxelsPerSide[level + 1]; j++)
+            for (int k = 0; k < voxelsPerSide[level + 1]; k++)
+                descendants.Add(new Voxel(startingID
+                                               + (i * xShift) + (j * yShift) + (k * zShift)
+                                               + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), this));
+            return descendants;
+        }
+        void AddAllDescendants(long startingID, int level, Voxel_Level0_Class voxel0)
+        {
+            var lowerLevelVoxels = AddAllDescendants(startingID, level);
             lock (voxel0.InnerVoxels[level])
                 voxel0.InnerVoxels[level].AddRange(lowerLevelVoxels);
         }
