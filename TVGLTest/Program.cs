@@ -85,11 +85,11 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
+            var fileNames = dir.GetFiles("*adiob*");
             //var fileNames = dir.GetFiles("bracet*");
             var r = new Random();
-            //fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
-            for (var i =0; i < fileNames.Count(); i += 6)
+            fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
+            for (var i =0; i < fileNames.Count(); i += 17)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -132,15 +132,15 @@ namespace TVGLPresenterDX
 
         public static void TestMachinability(TessellatedSolid ts, string _fileName)
         {
-            var vs1 = new VoxelizedSolid(ts, 9);
+            var vs1 = new VoxelizedSolid(ts, 6);
             //Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
 
             Console.WriteLine("Drafting Solid in X Positive...");
-            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.XPositive);
-            //Presenter.ShowAndHang(vs1xpos);
+            var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.YPositive);
+            Presenter.ShowAndHang(vs1xpos);
             //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1xpos_" + _fileName;
