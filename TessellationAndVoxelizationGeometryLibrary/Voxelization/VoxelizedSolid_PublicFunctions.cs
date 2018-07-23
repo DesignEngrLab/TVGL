@@ -429,7 +429,7 @@ namespace TVGL.Voxelization
         {
             if (direction > 0)
             {
-                var maxVoxels = (int)Math.Ceiling(dimensions[(int)direction - 1] / VoxelSideLengths[numberOfLevels - 1]);
+                var maxVoxels = (int)Math.Ceiling(dimensions[(int)direction - 1] / VoxelSideLengths[numberOfLevels - 1]) + 1;
                 Extrude(direction, null, maxVoxels, 0);
             }
             else
@@ -464,14 +464,14 @@ namespace TVGL.Voxelization
             var layerOfVoxels = new VoxelHashSet[numLayers]; /* the voxels are organized into layers */
             for (int i = 0; i < numLayers; i++)
                 layerOfVoxels[i] = new VoxelHashSet(level, this);
-            Parallel.ForEach(voxels, v =>
-            //foreach (var v in voxels)
+            // Parallel.ForEach(voxels, v =>
+            foreach (var v in voxels)
             {  //place all the voxels in this level into layers along the extrude direction
                 var layerIndex = (int)((v.ID >> (20 * dimension + 4 + singleCoordinateShifts[level])) & (voxelsPerSide[level] - 1));
                 if (!positiveDir) layerIndex = numLayers - 1 - layerIndex;
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].AddOrReplace(v);
-            });
+            }//);
             /* now, for the main loop */
             var loopLimit = lastLayer ? numLayers - 1 : numLayers;
             // loopLimit is one more than the numer of layers so that we can "inform" the set below this one.
@@ -500,8 +500,7 @@ namespace TVGL.Voxelization
                                 neighbor = ChangeVoxelToPartial(neighbor);
                                 if (level < this.numberOfLevels - 1)
                                     AddAllDescendants(Constants.ClearFlagsFromID(neighbor.ID), level,
-                                     (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(neighbor.ID), dimension,
-                                      remainingVoxelLayers % voxelsPerLayer);
+                                        (Voxel_Level0_Class) voxelDictionaryLevel0.GetVoxel(neighbor.ID), dimension, 1);
                                 lock (layerOfVoxels[neighborLayer])
                                     layerOfVoxels[neighborLayer].AddOrReplace(neighbor);
                             }
@@ -521,7 +520,7 @@ namespace TVGL.Voxelization
                         var filledUpNextLayer = Extrude(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
                         if (neighbor == null || layerOfVoxels.Length <= i + 1)
-                            continue;//   return;  // null happens when you go outside of bounds (of coarsest voxels)
+                            continue;   //    return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer)
                         {
                             if (i + 1 == loopLimit && lastLayer) neighbor = ChangeVoxelToPartial(neighbor);
@@ -531,7 +530,7 @@ namespace TVGL.Voxelization
                         layerOfVoxels[i + 1].AddOrReplace(neighbor);
                     }
                     #endregion
-                }  //);
+                } //);
                 remainingVoxelLayers -= voxelsPerLayer;
             }
             return numVoxelsOnXSection == voxelsPerSide[level] * voxelsPerSide[level];
