@@ -447,7 +447,9 @@ namespace TVGL.Voxelization
                                               * cube - but rather to stop at the bounding box of the solid. */
             /* remainingVoxelLayers, innerLimit, limit, and voxelPerLayer are all about this positive extrude. */
             var dimension = Math.Abs((int)direction) - 1;
-            var voxels = GetChildVoxels(parent);
+            IEnumerable<IVoxel> voxels = null;
+            if (parent == null) voxels = GetChildVoxels(parent);
+            else lock (parent) voxels = GetChildVoxels(parent);
             int voxelsPerLayer = 1; //this is the number of smallest voxels that are within one of the current voxels.
             // this is important because, when we go in the positive direction, we want to stop at the highest voxel length
             // and a layer at this level may jump this. This is capture by the line near the bottom
@@ -737,7 +739,7 @@ namespace TVGL.Voxelization
                 // what's left then is something with partial, requiring recursion
                 else
                 {
-                    ChangeVoxelToPartial(thisVoxel,true);
+                    ChangeVoxelToPartial(thisVoxel, true);
                     if (level < numberOfLevels - 1) ExclusiveOr(refVoxel, level + 1, reference);
                 }
             });
@@ -878,7 +880,7 @@ namespace TVGL.Voxelization
                     foreach (var voxelItem in removedLayer)
                     {
                         if (voxelItem.Value) voxelSolid.ChangeEmptyVoxelToPartial(voxelItem.Key, voxelLevel);
-                        else voxelSolid.ChangeEmptyVoxelToFull(voxelItem.Key, voxelLevel,true);
+                        else voxelSolid.ChangeEmptyVoxelToFull(voxelItem.Key, voxelLevel, true);
                         //todo: not sure about this last true to check if the parent is full
                     }
                 }
