@@ -464,14 +464,14 @@ namespace TVGL.Voxelization
             var layerOfVoxels = new VoxelHashSet[numLayers]; /* the voxels are organized into layers */
             for (int i = 0; i < numLayers; i++)
                 layerOfVoxels[i] = new VoxelHashSet(level, this);
-            // Parallel.ForEach(voxels, v =>
-            foreach (var v in voxels)
+            Parallel.ForEach(voxels, v =>
+            //foreach (var v in voxels)
             {  //place all the voxels in this level into layers along the extrude direction
                 var layerIndex = (int)((v.ID >> (20 * dimension + 4 + singleCoordinateShifts[level])) & (voxelsPerSide[level] - 1));
                 if (!positiveDir) layerIndex = numLayers - 1 - layerIndex;
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].AddOrReplace(v);
-            }//);
+            });
             /* now, for the main loop */
             var loopLimit = lastLayer ? numLayers - 1 : numLayers;
             // loopLimit is one more than the numer of layers so that we can "inform" the set below this one.
@@ -480,10 +480,9 @@ namespace TVGL.Voxelization
                                      * if it hits the max, then the parent voxel below this one should be filled up. */
             for (int i = 0; i < numLayers; i++)
             { /* cycle over each layer, note that voxels are being removed from subsequent layers so the process should
-               * speed up. The loop may not reach ?...wait a second redundant code?  */
-              //   if (remainingVoxelLayers < voxelsPerLayer) continue; //return;
-              //Parallel.ForEach(layerOfVoxels[i], voxel =>
-                foreach (var voxel in layerOfVoxels[i])
+               * speed up.  */
+                Parallel.ForEach(layerOfVoxels[i], voxel =>
+                // foreach (var voxel in layerOfVoxels[i])
                 {
                     #region fill up the layers below this one
                     if (voxel.Role == VoxelRoleTypes.Full
@@ -497,16 +496,17 @@ namespace TVGL.Voxelization
                             if (neighbor == null) break; // null happens when you go outside of bounds
                             if (lastLayer && neighborLayer == loopLimit)
                             {
-                                neighbor = ChangeVoxelToPartial(neighbor);
+                                neighbor = ChangeVoxelToPartial(neighbor, false);
                                 if (level < this.numberOfLevels - 1)
+                                    // todo: this should go down to the lowest level!
                                     AddAllDescendants(Constants.ClearFlagsFromID(neighbor.ID), level,
-                                        (Voxel_Level0_Class) voxelDictionaryLevel0.GetVoxel(neighbor.ID), dimension, 1);
+                                        (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(neighbor.ID), dimension, 1);
                                 lock (layerOfVoxels[neighborLayer])
                                     layerOfVoxels[neighborLayer].AddOrReplace(neighbor);
                             }
                             else
                             {
-                                neighbor = ChangeVoxelToFull(neighbor);
+                                neighbor = ChangeVoxelToFull(neighbor, false);
                                 if (!neighborHasDifferentParent)
                                     lock (layerOfVoxels[neighborLayer])
                                         layerOfVoxels[neighborLayer].Remove(neighbor);
@@ -520,17 +520,17 @@ namespace TVGL.Voxelization
                         var filledUpNextLayer = Extrude(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
                         if (neighbor == null || layerOfVoxels.Length <= i + 1)
-                            continue;   //    return;  // null happens when you go outside of bounds (of coarsest voxels)
+                            return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer)
                         {
-                            if (i + 1 == loopLimit && lastLayer) neighbor = ChangeVoxelToPartial(neighbor);
-                            else neighbor = ChangeVoxelToFull(neighbor);
+                            if (i + 1 == loopLimit && lastLayer) neighbor = ChangeVoxelToPartial(neighbor, false);
+                            else neighbor = ChangeVoxelToFull(neighbor, false);
                         }
-                        else neighbor = ChangeVoxelToPartial(neighbor);
+                        else neighbor = ChangeVoxelToPartial(neighbor, false);
                         layerOfVoxels[i + 1].AddOrReplace(neighbor);
                     }
                     #endregion
-                } //);
+                });
                 remainingVoxelLayers -= voxelsPerLayer;
             }
             return numVoxelsOnXSection == voxelsPerSide[level] * voxelsPerSide[level];
@@ -611,7 +611,7 @@ namespace TVGL.Voxelization
                 {
                     var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
                     if (referenceLowestRole == VoxelRoleTypes.Full) return; //continue;
-                    if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel);
+                    if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel, true, false);
                     else
                     {
                         var thisVoxelWasFull = thisVoxel.Role == VoxelRoleTypes.Full;
@@ -655,13 +655,13 @@ namespace TVGL.Voxelization
             {
                 var referenceHighestRole = GetHighestRole(thisVoxel.ID, level, subtrahends);
                 if (referenceHighestRole == VoxelRoleTypes.Empty) return;
-                if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel);
+                if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel, true, false);
                 else if (level < numberOfLevels - 1)
                 {
-                    if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel);
+                    if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel, true);
                     Subtract(thisVoxel, level + 1, subtrahends);
                 }
-                else ChangeVoxelToEmpty(thisVoxel);
+                else ChangeVoxelToEmpty(thisVoxel, true, false);
             });
         }
 
@@ -688,10 +688,7 @@ namespace TVGL.Voxelization
                 var thisVoxel = GetVoxel(refVoxel.ID, level);
                 if (thisVoxel.Role == VoxelRoleTypes.Full) return;
                 if (refVoxel.Role == VoxelRoleTypes.Full)
-                {
-                    if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToFull(refVoxel.ID, level);
-                    else ChangeVoxelToFull(thisVoxel);
-                }
+                    ChangeVoxelToFull(thisVoxel, false);
                 else
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel.ID, level);
@@ -733,15 +730,14 @@ namespace TVGL.Voxelization
                 if (refVoxel.Role == VoxelRoleTypes.Empty) return;
                 var thisVoxel = GetVoxel(refVoxel.ID, level);
                 if (thisVoxel.Role == VoxelRoleTypes.Empty && refVoxel.Role == VoxelRoleTypes.Full)
-                    ChangeEmptyVoxelToFull(refVoxel.ID, level);
+                    ChangeEmptyVoxelToFull(refVoxel.ID, level, false);
                 else if (thisVoxel.Role == VoxelRoleTypes.Full && refVoxel.Role == VoxelRoleTypes.Full)
-                    ChangeVoxelToEmpty(thisVoxel);
+                    ChangeVoxelToEmpty(thisVoxel, true, false);
                 // these 3 conditions cover full-empty (as well as empty-empty), empty-full, and full-full
                 // what's left then is something with partial, requiring recursion
                 else
                 {
-                    if (thisVoxel.Role == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel.ID, level);
-                    else if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel);
+                    ChangeVoxelToPartial(thisVoxel,true);
                     if (level < numberOfLevels - 1) ExclusiveOr(refVoxel, level + 1, reference);
                 }
             });
@@ -881,8 +877,9 @@ namespace TVGL.Voxelization
                     //ToDo: Can this be parallelized???
                     foreach (var voxelItem in removedLayer)
                     {
-                        if (voxelItem.Value) voxelSolid.ChangeVoxelToPartial(new Voxel(voxelItem.Key, this));
-                        else voxelSolid.ChangeEmptyVoxelToFull(voxelItem.Key, voxelLevel);
+                        if (voxelItem.Value) voxelSolid.ChangeEmptyVoxelToPartial(voxelItem.Key, voxelLevel);
+                        else voxelSolid.ChangeEmptyVoxelToFull(voxelItem.Key, voxelLevel,true);
+                        //todo: not sure about this last true to check if the parent is full
                     }
                 }
             }

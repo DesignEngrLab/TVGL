@@ -84,7 +84,7 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            var fileNames = dir.GetFiles("*");
+            var fileNames = dir.GetFiles("*adio*");
             var r = new Random();
            // fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
             fileNames = fileNames.OrderByDescending(x => x.Length).ToArray();
@@ -101,7 +101,7 @@ namespace TVGLPresenterDX
                 using (fileStream = File.OpenRead(filename))
                     IO.Open(fileStream, filename, out ts);
                 if (ts.Errors == null)
-                    TestVoxelSearch(ts, filename);
+                    TestVoxelization(ts, filename);
                 else Console.WriteLine("File: {0} has errors: {1}", filename, ts.Errors.ToString());
             }
 
@@ -226,43 +226,79 @@ namespace TVGLPresenterDX
             return voxelCoords;
         }
 
-        public static void TestVoxelSearch(TessellatedSolid ts, string _fileName)
-        {
-            Console.WriteLine("Voxelizing Tesselated File " + _fileName);
-            var vs1 = new VoxelizedSolid(ts, 9, false);
-            Console.WriteLine("...done voxelizing");
-            PresenterShowAndHang(vs1);
-            return;
 
-            Console.WriteLine("Drafting voxelized model along orthogonals");
+        public static void TestVoxelization(TessellatedSolid ts, string _fileName)
+        {
+            var vs1 = new VoxelizedSolid(ts, 10);
+            PresenterShowAndHang(vs1);
+            //var vs1ts = vs1.ConvertToTessellatedSolid(color);
+            //var savename = "voxelized_" + _fileName;
+            //IO.Save(vs1ts, savename, FileType.STL_ASCII);
+
+            Console.WriteLine("Drafting Solid in X Positive...");
             var vs1xpos = vs1.ExtrudeToNewSolid(VoxelDirections.XPositive);
             PresenterShowAndHang(vs1xpos);
-            Console.WriteLine("x-neg");
+            //var vs1xposts = vs1xpos.ConvertToTessellatedSolid(color);
+            //Console.WriteLine("Saving Solid...");
+            //savename = "vs1xpos_" + _fileName;
+            //IO.Save(vs1xposts, savename, FileType.STL_ASCII);
+
+            Console.WriteLine("Drafting Solid in X Negative...");
             var vs1xneg = vs1.ExtrudeToNewSolid(VoxelDirections.XNegative);
             PresenterShowAndHang(vs1xneg);
-            Console.WriteLine("y-pos");
+            //var vs1xnegts = vs1xneg.ConvertToTessellatedSolid(color);
+            //Console.WriteLine("Saving Solid...");
+            //savename = "vs1xneg_" + _fileName;
+            //IO.Save(vs1xnegts, savename, FileType.STL_ASCII);
+
+            Console.WriteLine("Drafting Solid in Y Positive...");
             var vs1ypos = vs1.ExtrudeToNewSolid(VoxelDirections.YPositive);
             PresenterShowAndHang(vs1ypos);
-            Console.WriteLine("y-neg");
+            //var vs1yposts = vs1ypos.ConvertToTessellatedSolid(color);
+            //Console.WriteLine("Saving Solid...");
+            //savename = "vs1ypos_" + _fileName;
+            //IO.Save(vs1yposts, savename, FileType.STL_ASCII);
+
+            Console.WriteLine("Drafting Solid in Y Negative...");
             var vs1yneg = vs1.ExtrudeToNewSolid(VoxelDirections.YNegative);
             PresenterShowAndHang(vs1yneg);
-            Console.WriteLine("z-pos");
+            ////var vs1ynegts = vs1yneg.ConvertToTessellatedSolid(color);
+            ////Console.WriteLine("Saving Solid...");
+            ////savename = "vs1yneg_" + _fileName;
+            ////IO.Save(vs1ynegts, savename, FileType.STL_ASCII);
+
+            Console.WriteLine("Drafting Solid in Z Positive...");
             var vs1zpos = vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive);
             PresenterShowAndHang(vs1zpos);
-            Console.WriteLine("z-neg");
+            ////var vs1zposts = vs1zpos.ConvertToTessellatedSolid(color);
+            ////Console.WriteLine("Saving Solid...");
+            ////savename = "vs1zpos_" + _fileName;
+            ////IO.Save(vs1zposts, savename, FileType.STL_ASCII);
+
+            Console.WriteLine("Drafting Solid in Z Negative...");
             var vs1zneg = vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative);
             PresenterShowAndHang(vs1zneg);
+            //var vs1znegts = vs1zneg.ConvertToTessellatedSolid(color);
+            //Console.WriteLine("Saving Solid...");
+            //savename = "vs1zneg_" + _fileName;
+            //IO.Save(vs1znegts, savename, FileType.STL_ASCII);
 
-            //Console.WriteLine("Old Intersecting drafted models");
-            //var intersect = vs1xpos.IntersectToNewSolidOLD(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);
-            //Console.WriteLine("presenting...");
-            //PresenterShowAndHang(intersect);
-            Console.WriteLine("New Intersecting drafted models");
-            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1yneg, vs1zneg, vs1ypos, vs1zpos);
-            Console.WriteLine("presenting...");
+            Console.WriteLine("Intersecting Drafted Solids...");
+            var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1yneg, vs1zpos);
             PresenterShowAndHang(intersect);
-            //Console.WriteLine("Subtracting original shape from intersect");
-            //var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
+            //return;
+            //var intersectts = intersect.ConvertToTessellatedSolid(color);
+            //Console.WriteLine("Saving Solid...");
+            //savename = "intersect_" + _fileName;
+            //IO.Save(intersectts, savename, FileType.STL_ASCII);
+
+            Console.WriteLine("Subtracting Original Voxelized Shape From Intersect...");
+            var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
+            PresenterShowAndHang(unmachinableVoxels);
+            //var uvts = unmachinableVoxels.ConvertToTessellatedSolid(color);
+            //Console.WriteLine("Saving Solid...");
+            //savename = "unmachinable_" + _fileName;
+            //IO.Save(uvts, savename, FileType.STL_ASCII);
 
             //Console.WriteLine("Totals for Original Voxel Shape: " + vs1.GetTotals[0] + "; " + vs1.GetTotals[1] + "; " + vs1.GetTotals[2] + "; " + vs1.GetTotals[3]);
             //Console.WriteLine("Totals for X Positive Draft: " + vs1xpos.GetTotals[0] + "; " + vs1xpos.GetTotals[1] + "; " + vs1xpos.GetTotals[2] + "; " + vs1xpos.GetTotals[3]);
@@ -274,17 +310,27 @@ namespace TVGLPresenterDX
             //Console.WriteLine("Totals for Intersected Voxel Shape: " + intersect.GetTotals[0] + "; " + intersect.GetTotals[1] + "; " + intersect.GetTotals[2] + "; " + intersect.GetTotals[3]);
             //Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
 
+            //PresenterShowAndHang(vs1);
+            //PresenterShowAndHang(vs1xpos);
+            //PresenterShowAndHang(vs1xneg);
+            //PresenterShowAndHang(vs1ypos);
+            //PresenterShowAndHang(vs1yneg);
+            //PresenterShowAndHang(vs1zpos);
+            //PresenterShowAndHang(vs1zneg);
+            //PresenterShowAndHang(intersect);
+            //PresenterShowAndHang(unmachinableVoxels);
             //unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
-            //PresenterShowAndHang(ts, unmachinableVoxels);
+            //unmachinableVoxels.SolidColor.A = 200;
 
-            //var newUV = TestNewUnmachinable(vs1, unmachinableVoxels, new Flat(166.0, new[] { 0.0, 1.0, 0.0 }));
+            // Presenter.ShowAndHang(new Solid[] { ts, unmachinableVoxels });
 
-            //Console.WriteLine("Totals for Unmachinable Voxels: " + unmachinableVoxels.GetTotals[0] + "; " + unmachinableVoxels.GetTotals[1] + "; " + unmachinableVoxels.GetTotals[2] + "; " + unmachinableVoxels.GetTotals[3]);
-            //Console.WriteLine("Totals for New Unmachinable Voxels: " + newUV.GetTotals[0] + "; " + newUV.GetTotals[1] + "; " + newUV.GetTotals[2] + "; " + newUV.GetTotals[3]);
-            //newUV.SolidColor = new Color(KnownColors.DeepPink);
-            //PresenterShowAndHang(newUV);
-            //PresenterShowAndHang(ts, newUV);
+            //PresenterShowAndHang(new Solid[] { intersect });
+            //var unmachinableVoxelsSolid = new Solid[] { unmachinableVoxels };
+            //PresenterShowAndHang(unmachinableVoxelsSolid);
+
+            //var originalTS = new Solid[] { ts };
         }
+
 
     }
 }
