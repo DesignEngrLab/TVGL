@@ -85,11 +85,11 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
-            //var fileNames = dir.GetFiles("*");
-            var fileNames = dir.GetFiles("*etrah*");
+            var fileNames = dir.GetFiles("*");
+            //var fileNames = dir.GetFiles("*etrah*");
             var r = new Random();
             fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
-            for (var i = 0; i < fileNames.Count(); i += 10)
+            for (var i = 0; i < fileNames.Count(); i += 1)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -133,7 +133,7 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
             var vs1 = new VoxelizedSolid(ts, 7);
-            Presenter.ShowAndHang(vs1);
+           // Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);
@@ -224,9 +224,13 @@ namespace TVGLPresenterDX
             //PresenterShowAndHang(unmachinableVoxels);
             //unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
             //unmachinableVoxels.SolidColor.A = 200;
-
-             Presenter.ShowAndHang(new Solid[] { ts, unmachinableVoxels });
-             Presenter.ShowAndHang(unmachinableVoxels);
+            if (unmachinableVoxels.Volume==0)
+                Console.WriteLine("no unmachineable sections!!\n\n");
+            else
+            {
+                Presenter.ShowAndHang(ts, unmachinableVoxels);
+                Presenter.ShowAndHang(unmachinableVoxels);
+            }
 
             //PresenterShowAndHang(new Solid[] { intersect });
             //var unmachinableVoxelsSolid = new Solid[] { unmachinableVoxels };

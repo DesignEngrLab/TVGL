@@ -91,26 +91,26 @@ namespace TVGL.Voxelization
             MakeVertexSimulatedCoordinates(ts.Vertices, 0);
             MakeVertexVoxels(ts.Vertices, null, voxelDictionaryLevel0);
             MakeVoxelsForFacesAndEdges(ts.Faces, null, voxelDictionaryLevel0);
-            var unknownPartials = DefineBottomCoordinateInside(voxelDictionaryLevel0, null);
+            DefineBottomCoordinateInside(voxelDictionaryLevel0, ts.Faces.ToList(), false);
             if (!onlyDefineBoundary)
-                makeVoxelsInInterior(voxelDictionaryLevel0, null, null, unknownPartials);
+                makeVoxelsInInterior(voxelDictionaryLevel0, null, null);
 
             #endregion
             #region Level-1
             if (numberOfLevels > 1)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 1);
-                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
-                //foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
+                foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                 {
                     var voxels = new VoxelHashSet(1, this);
                     MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel0).Vertices, voxel0, voxels);
                     MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel0).Faces, voxel0, voxels);
-                    unknownPartials = DefineBottomCoordinateInside(voxels, null);
+                    DefineBottomCoordinateInside(voxels, ((Voxel_ClassWithLinksToTSElements)voxel0).Faces, voxel0.BtmCoordIsInside);
                     if (!onlyDefineBoundary)
-                        makeVoxelsInInterior(voxels, voxel0, null, unknownPartials);
+                        makeVoxelsInInterior(voxels, voxel0, null);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
-                });
+                } //);
             }
             #endregion
 
@@ -118,27 +118,27 @@ namespace TVGL.Voxelization
             if (numberOfLevels > 2)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, 2);
-                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
-                    voxel0 =>
-                    //  foreach (var voxel0 in voxelDictionaryLevel0.Values.Where(v=>v.Role==VoxelRoleTypes.Partial))
+                //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
+                //    voxel0 =>
+                foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                {
+                    var voxels = new List<IVoxel>();
+                    //Parallel.ForEach(
+                    //    ((Voxel_Level0_Class)voxel0).InnerVoxels[0].Where(v => v.Role == VoxelRoleTypes.Partial),
+                    //voxel1 =>
+                    foreach (var voxel1 in ((Voxel_Level0_Class)voxel0).InnerVoxels[0].Where(v => v.Role == VoxelRoleTypes.Partial))
                     {
-                        var voxels = new List<IVoxel>();
-                        Parallel.ForEach(
-                            ((Voxel_Level0_Class)voxel0).InnerVoxels[0].Where(v => v.Role == VoxelRoleTypes.Partial),
-                            voxel1 =>
-                            //  foreach (var voxel0 in voxelDictionaryLevel0.Values.Where(v=>v.Role==VoxelRoleTypes.Partial))
-                            {
-                                var voxelHash = new VoxelHashSet(1, this);
-                                MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel1, voxelHash);
-                                MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel1,
-                                    voxelHash);
-                                unknownPartials = DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
-                                if (!onlyDefineBoundary)
-                                    makeVoxelsInInterior(voxelHash, voxel1, null, unknownPartials);
-                                lock (voxels) voxels.AddRange(voxelHash);
-                            });
-                        ((Voxel_Level0_Class)voxel0).InnerVoxels[1] = new VoxelHashSet(1, this, voxels);
-                    });
+                        var voxelHash = new VoxelHashSet(1, this);
+                        MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel1, voxelHash);
+                        MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel1,
+                            voxelHash);
+                        DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel1.BtmCoordIsInside);
+                        if (!onlyDefineBoundary)
+                            makeVoxelsInInterior(voxelHash, voxel1, null);
+                        lock (voxels) voxels.AddRange(voxelHash);
+                    } //);
+                  ((Voxel_Level0_Class)voxel0).InnerVoxels[1] = new VoxelHashSet(1, this, voxels);
+                } //);
             }
             #endregion
 
@@ -163,9 +163,9 @@ namespace TVGL.Voxelization
                                     MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel2, voxelHash);
                                     MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel2,
                                         voxelHash);
-                                    unknownPartials = DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
+                                    DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces,voxel2.BtmCoordIsInside);
                                     if (!onlyDefineBoundary)
-                                        makeVoxelsInInterior(voxelHash, voxel2, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces, unknownPartials);
+                                        makeVoxelsInInterior(voxelHash, voxel2, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
                                     lock (voxels) voxels.AddRange(voxelHash);
                                 });
                             });
@@ -199,9 +199,9 @@ namespace TVGL.Voxelization
                                             voxelHash);
                                         MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel3,
                                             voxelHash);
-                                        unknownPartials = DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
+                                        DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel3.BtmCoordIsInside);
                                         if (!onlyDefineBoundary)
-                                            makeVoxelsInInterior(voxelHash, voxel3, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces, unknownPartials);
+                                            makeVoxelsInInterior(voxelHash, voxel3, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
                                         lock (voxels) voxels.AddRange(voxelHash);
                                     });
                                 });
@@ -662,16 +662,14 @@ namespace TVGL.Voxelization
                                                                      // completely fine to start at 1.0 instead of 1.001 but I wanted a definitive value slightly greater than one for 
                                                                      // a conditional statement used below, plus I wanted to be a little practical if the face was just slightly
                                                                      // away from the voxel but - in all practicality intersect in a way that can tell us about the bottom corner.
-        private VoxelHashSet DefineBottomCoordinateInside(VoxelHashSet voxels, List<PolygonalFace> parentFaces)
+        private void DefineBottomCoordinateInside(VoxelHashSet voxels, List<PolygonalFace> parentFaces, bool parentBtmCoordIsInside)
         {
             var level = voxels.level;
             var queue = new Queue<IVoxel>();
             var assignedHashSet = new VoxelHashSet(level, this);
             foreach (var voxel in voxels)
             {
-                var voxCoord = voxel.CoordinateIndices;
-                var closestFaceIsPositive = false;
-                var closestFaceDistance = startingMinFaceToCornerDistance;
+                #region Step 1: if the face has all positive normals or all negative then quick and easy
                 var faces = voxel is Voxel_ClassWithLinksToTSElements
                     ? ((Voxel_ClassWithLinksToTSElements)voxel).Faces
                     : parentFaces;
@@ -687,57 +685,32 @@ namespace TVGL.Voxelization
                     assignedHashSet.AddOrReplace(voxel);
                     continue;
                 }
+                #endregion
+                #region Step 2: check if a face intersects with local coordinate frame
+                var voxCoord = voxel.CoordinateIndices;
+                var closestFaceIsPositive = false;
+                var closestFaceDistance = startingMinFaceToCornerDistance;
+                // in the next loop, we check to see if a face intersection the local coordinate frame of the voxel. That is going from 0,0,0 to 1,0,0 or 0,1,0 or 0,0,1
                 foreach (var face in faces)
                 {
-                    var n = face.Normal;
-                    var d = n.dotProduct(transformedCoordinates[face.Vertices[0].IndexInList]);
-                    var numerator = (d - n[0] * voxCoord[0] - n[1] * voxCoord[1] - n[2] * voxCoord[2]);
-                    double signedDistance;
-                    if (!face.Normal[0].IsNegligible())
-                    {
-                        signedDistance = numerator / n[0];
-                        if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0] + signedDistance, voxCoord[1], voxCoord[2] }))
+                    for (int i = 0; i < 3; i++)
+                        if (lineToFaceIntersection(face, voxCoord, i, closestFaceDistance, out var signedDistance))
                         {
                             closestFaceDistance = signedDistance;
-                            closestFaceIsPositive = n[0] > 0;
+                            closestFaceIsPositive = face.Normal[i] > 0;
                         }
-                    }
-                    if (!face.Normal[1].IsNegligible())
-                    {
-                        signedDistance = numerator / n[1];
-                        if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], voxCoord[1] + signedDistance, voxCoord[2] }))
-                        {
-                            closestFaceDistance = signedDistance;
-                            closestFaceIsPositive = n[1] > 0;
-                        }
-                    }
-                    if (!face.Normal[2].IsNegligible())
-                    {
-                        signedDistance = numerator / n[2];
-                        if (signedDistance >= 0 && signedDistance < closestFaceDistance &&
-                            isPointInsideFaceTSBuilding(face, new[] { voxCoord[0], voxCoord[1], voxCoord[2] + signedDistance }))
-                        {
-                            closestFaceDistance = signedDistance;
-                            closestFaceIsPositive = n[2] > 0;
-                        }
-                    }
                 }
-                /*
-                if (closestFaceDistance == startingMinFaceToCornerDistance)
-                {
-                    /* Are there other checks that could be done. It seems that all cases should be determine-able
-                     * but it is not clear to me how to do this. *
-                } */
                 if (closestFaceDistance <= 1.0)
                 {
                     voxel.BtmCoordIsInside = closestFaceIsPositive;
                     assignedHashSet.AddOrReplace(voxel);
                     continue;
                 }
+                #endregion
+                // if not, then add the voxel to a queue for step 3
                 queue.Enqueue(voxel);
             }
+            #region Step 3: infer from neighbors
             var cyclesSinceLastSuccess = 0;
             while (queue.Any() && queue.Count > cyclesSinceLastSuccess)
             {
@@ -761,11 +734,71 @@ namespace TVGL.Voxelization
                     cyclesSinceLastSuccess++;
                 }
             }
-            if (queue.Any())
-                return new VoxelHashSet(level, this, queue);
-            return null;
+            #endregion
+            #region Step 4 look to the parent
+            while (queue.Any())
+            {  // check the vector connection the btmCoordinate to the parent's btmCoordinate. Why? 1) the parent is known (at this point) and if nothing intersects
+                // this line then it is the same of the parent, 2) the vector back to the parent has no positive values which simplifies the check with the face normals,
+                // 3) has a superset of the tesselated elements
+                var voxel = queue.Dequeue();
+                var voxCoord = voxel.CoordinateIndices;
+                var closestFaceIsPositive = false;
+                double minDistance = startingMinFaceToCornerDistance;
+                var btmIsInside = false;
+                var foundIntersectingFace = false;
+                var line = voxCoord.Select(x => (double)(x % voxelsPerSide[level])).ToArray().multiply(-1);
+                foreach (var face in parentFaces)
+                {
+                    if (lineToFaceIntersection(face, voxCoord, line, minDistance, out var signedDistance))
+                        if (signedDistance < minDistance)
+                        {
+                            foundIntersectingFace = true;
+                            btmIsInside = face.Normal.dotProduct(line) >= 0;
+                            minDistance = signedDistance;
+                        }
+                }
+                voxel.BtmCoordIsInside = foundIntersectingFace ? btmIsInside : parentBtmCoordIsInside;
+            }
+            #endregion
         }
 
+        private bool lineToFaceIntersection(PolygonalFace face, int[] c, int dimension, double upperLimit, out double signedDistance)
+        {
+            var n = face.Normal;
+            var d = n.dotProduct(transformedCoordinates[face.Vertices[0].IndexInList]);
+            if (n[dimension].IsNegligible())
+            {
+                signedDistance = double.NaN;
+                return false;
+            }
+            signedDistance = (d - n[0] * c[0] - n[1] * c[1] - n[2] * c[2]) / n[dimension];
+            if (signedDistance >= 0 && signedDistance < upperLimit)
+            {
+                var intersection = new double[] { c[0], c[1], c[2] };
+                intersection[dimension] += signedDistance;
+                if (isPointInsideFaceTSBuilding(face, intersection))
+                    return true;
+            }
+            return false;
+        }
+        private bool lineToFaceIntersection(PolygonalFace face, int[] c, double[] direction, double upperLimit, out double signedDistance)
+        {
+            var n = face.Normal;
+            var d = n.dotProduct(transformedCoordinates[face.Vertices[0].IndexInList]);
+            var normalDottedWithDirection = n.dotProduct(direction);
+            if (normalDottedWithDirection.IsNegligible())
+            {
+                signedDistance = double.NaN;
+                return false;
+            }
+            signedDistance = (d - n[0] * c[0] - n[1] * c[1] - n[2] * c[2]) / normalDottedWithDirection;
+            if (signedDistance >= 0 && signedDistance < upperLimit)
+            {
+                if (isPointInsideFaceTSBuilding(face, c.add(direction.multiply(signedDistance))))
+                    return true;
+            }
+            return false;
+        }
         private bool isPointInsideFaceTSBuilding(PolygonalFace face, double[] p)
         {
             var a = transformedCoordinates[face.A.IndexInList];
@@ -784,10 +817,6 @@ namespace TVGL.Voxelization
             if (!dot.IsNegligible(TVGL.Constants.BaseTolerance) && dot < 0) return false;
 
             return true;
-
-            //return MiscFunctions.SameSide(p, a, b, c) &&
-            //       MiscFunctions.SameSide(p, b, a, c) &&
-            //       MiscFunctions.SameSide(p, c, a, b);
         }
 
         private IVoxel GetNeighborForTSBuilding(int[] point3D, VoxelDirections direction, VoxelHashSet voxelHashSet, int level, out int[] neighborCoord)
@@ -817,8 +846,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Makes the voxels in interior.
         /// </summary>
-        private void makeVoxelsInInterior(VoxelHashSet voxels, IVoxel parent, List<PolygonalFace> grandParentFaces,
-            VoxelHashSet unknownPartials)
+        private void makeVoxelsInInterior(VoxelHashSet voxels, IVoxel parent, List<PolygonalFace> grandParentFaces)
         {
             /* define the box of the parent in terms of lower and upper arrays */
             setLimitsAndLevel(parent, out var level, out var parentLimits);
@@ -827,15 +855,10 @@ namespace TVGL.Voxelization
             var posDirections = new[] { 0, 1, 2 };
             var insiders = new Stack<IVoxel>();
             var outsiders = new Stack<IVoxel>();
-            /* separate the partial/surface voxels into insiders and outsiders. If there are unknownPartials, then
-             * these stay in their own list for now. */
-            if (unknownPartials == null)
-                foreach (var voxel in voxels)
-                    if (voxel.BtmCoordIsInside) insiders.Push(voxel);
-                    else outsiders.Push(voxel);
-            else foreach (var voxel in voxels.Where(v => !unknownPartials.Contains(v)))
-                    if (voxel.BtmCoordIsInside) insiders.Push(voxel);
-                    else outsiders.Push(voxel);
+            /* separate the partial/surface voxels into insiders and outsiders.  */
+            foreach (var voxel in voxels)
+                if (voxel.BtmCoordIsInside) insiders.Push(voxel);
+                else outsiders.Push(voxel);
             /* the outsiders are done first as these may create insiders that are useful to finding other insiders.
              * Note, that new interior voxels created here (20 lines down) are added to the insider queue. */
             // debug: potential problem!!! what if there are no outsiders or insiders but there are unknown partials?
@@ -851,10 +874,8 @@ namespace TVGL.Voxelization
                     if (coord[direction] == parentLimits[1][direction] - 1) continue;   /* check to see if current is on a boundary.
                     if so, just skip this one. */
                     var neighbor = GetNeighborForTSBuilding(coord, (VoxelDirections)(direction + 1), voxels, level, out var neighborCoord);
-                    /* if neighbor is null, then there is a possibility to add it. if it exists but is in unknowns then we can figure out
-                     * if it is still unknown or not. */
-                    if ((unknownPartials == null && neighbor != null) ||
-                        (unknownPartials != null && !unknownPartials.Contains(neighbor))) continue;
+                    /* if neighbor is null, then there is a possibility to add it - otherwise, move on to the next */
+                    if (neighbor != null) continue;
                     /* get the faces that goes through the current face */
                     var faces = current is Voxel_ClassWithLinksToTSElements ? ((Voxel_ClassWithLinksToTSElements)current).Faces :
                         parent is Voxel_ClassWithLinksToTSElements ? ((Voxel_ClassWithLinksToTSElements)parent).Faces :
@@ -862,18 +883,10 @@ namespace TVGL.Voxelization
                     /* so, if the farthest face in this positive direction is pointing in the negative direction, then
                      * that neighboring voxel is inside. */
                     if (farthestFaceIsNegativeDirection(faces, coord, direction))
-                    {  /*so, update an existing one that is unknown or...*/
-                        if (unknownPartials != null && unknownPartials.Contains(neighbor))
-                        {
-                            neighbor.BtmCoordIsInside = true;
-                            insiders.Push(neighbor);
-                            unknownPartials.Remove(neighbor);
-                        }
-                        else /* make a new one */
-                        {
-                            neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels, parentLimits);
-                            if (neighbor != null) insiders.Push(neighbor);
-                        }
+                    {
+                        neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels, parentLimits);
+                        if (neighbor != null) insiders.Push(neighbor);
+                        if (neighbor == null) Debug.WriteLine("what?!");
                     }
                 }
             }
@@ -881,9 +894,7 @@ namespace TVGL.Voxelization
             while (insiders.Any())
             {
                 var current = insiders.Pop();
-                var directions =
-                    current.Role == VoxelRoleTypes.Full || (unknownPartials != null && unknownPartials.Contains(current)) ?
-                        allDirections : negDirections;
+                var directions =current.Role == VoxelRoleTypes.Full ?allDirections : negDirections;
                 var coord = current.CoordinateIndices;
                 foreach (var direction in directions)
                 {
@@ -891,9 +902,7 @@ namespace TVGL.Voxelization
                     if ((direction < 0 && coord[-direction - 1] == parentLimits[0][-direction - 1]) ||
                         (direction > 0 && coord[direction - 1] == parentLimits[1][direction - 1] - 1)) continue;
                     var neighbor = GetNeighborForTSBuilding(coord, (VoxelDirections)direction, voxels, level, out var neighborCoord);
-                    if (unknownPartials != null && unknownPartials.Contains(neighbor))
-                        neighbor.BtmCoordIsInside = true;
-                    else if (neighbor == null)
+                    if (neighbor == null)
                     {
                         neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels, parentLimits);
                         insiders.Push(neighbor);
@@ -909,37 +918,12 @@ namespace TVGL.Voxelization
             double maxDistance = 0.0;
             foreach (var face in faces)
             {
-                if (face.Normal[dimension].IsNegligible()) continue; //Use a different face because this face is inconclusive.
-
-                var d = face.Normal.dotProduct(transformedCoordinates[face.Vertices[0].IndexInList]);
-                var n = face.Normal;
-                double[] newPoint;
-                double signedDistance;
-                switch (dimension)
-                {
-                    case 0:
-                        var xPt = (d - n[1] * coord[1] - n[2] * coord[2]) / n[0];
-                        signedDistance = xPt - coord[0];
-                        newPoint = new[] { xPt, coord[1], coord[2] };
-                        break;
-                    case 1:
-                        var yPt = (d - n[0] * coord[0] - n[2] * coord[2]) / n[1];
-                        signedDistance = yPt - coord[1];
-                        newPoint = new[] { coord[0], yPt, coord[2] };
-                        break;
-                    default:
-                        var zPt = (d - n[0] * coord[0] - n[1] * coord[1]) / n[2];
-                        signedDistance = zPt - coord[2];
-                        newPoint = new[] { coord[0], coord[1], zPt };
-                        break;
-                }
-                if (signedDistance < 0 || signedDistance > 1 ||
-                    !isPointInsideFaceTSBuilding(face, newPoint)) continue;
-                if (signedDistance > maxDistance)
-                {
-                    negativeFace = face.Normal[dimension] < 0;
-                    maxDistance = signedDistance;
-                }
+                if (lineToFaceIntersection(face, coord, dimension, startingMinFaceToCornerDistance, out var signedDistance))
+                    if (signedDistance > maxDistance)
+                    {
+                        negativeFace = face.Normal[dimension] < 0;
+                        maxDistance = signedDistance;
+                    }
             }
             return negativeFace;
         }
