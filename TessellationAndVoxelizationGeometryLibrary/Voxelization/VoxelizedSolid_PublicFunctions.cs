@@ -532,7 +532,7 @@ namespace TVGL.Voxelization
                             layerOfVoxels[i + 1].AddOrReplace(neighbor);
                     }
                     #endregion
-                }  );
+                });
                 remainingVoxelLayers -= voxelsPerLayer;
             }
             return numVoxelsOnXSection == voxelsPerSide[level] * voxelsPerSide[level];
@@ -653,18 +653,19 @@ namespace TVGL.Voxelization
         private void Subtract(IVoxel parent, int level, VoxelizedSolid[] subtrahends)
         {
             var voxels = GetChildVoxelsInner(parent);
-            Parallel.ForEach(voxels, thisVoxel =>
+            //Parallel.ForEach(voxels, thisVoxel =>
+            foreach(var thisVoxel in voxels)
             {
                 var referenceHighestRole = GetHighestRole(thisVoxel.ID, level, subtrahends);
-                if (referenceHighestRole == VoxelRoleTypes.Empty) return;
-                if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel, true, false);
+                if (referenceHighestRole == VoxelRoleTypes.Empty) continue; // return;
+                if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel, true, true);
                 else if (level < numberOfLevels - 1)
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel, true);
                     Subtract(thisVoxel, level + 1, subtrahends);
                 }
-                else ChangeVoxelToEmpty(thisVoxel, true, false);
-            });
+                else ChangeVoxelToEmpty(thisVoxel, false, true);
+            }  //);
         }
 
         #endregion

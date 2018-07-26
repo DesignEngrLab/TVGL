@@ -103,17 +103,23 @@ namespace TVGL.Voxelization
                 //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), voxel0 =>
                 foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                 {
+                    //if (voxel0.CoordinateIndices[0] == 5 && voxel0.CoordinateIndices[1] == 2 && voxel0.CoordinateIndices[2] == 0)
+                    //{
+                    //    Console.WriteLine(voxel0.CoordinateIndices.MakePrintString());
+                    //    Presenter.ShowAndHang(this);
+                    //}
                     var voxels = new VoxelHashSet(1, this);
                     MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel0).Vertices, voxel0, voxels);
                     MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel0).Faces, voxel0, voxels);
-                    DefineBottomCoordinateInside(voxels, ((Voxel_ClassWithLinksToTSElements)voxel0).Faces, voxel0.BtmCoordIsInside);
+               DefineBottomCoordinateInside(voxels, ((Voxel_ClassWithLinksToTSElements)voxel0).Faces, voxel0.BtmCoordIsInside);
                     if (!onlyDefineBoundary)
                         makeVoxelsInInterior(voxels, voxel0, null);
                     ((Voxel_Level0_Class)voxel0).InnerVoxels[0] = voxels;
+                    //    Console.WriteLine(voxel0.CoordinateIndices.MakePrintString());
+                    //Presenter.ShowAndHang(this);
                 } //);
             }
             #endregion
-
             #region Level-2
             if (numberOfLevels > 2)
             {
@@ -163,7 +169,7 @@ namespace TVGL.Voxelization
                                     MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel2, voxelHash);
                                     MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel2,
                                         voxelHash);
-                                    DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces,voxel2.BtmCoordIsInside);
+                                    DefineBottomCoordinateInside(voxelHash, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel2.BtmCoordIsInside);
                                     if (!onlyDefineBoundary)
                                         makeVoxelsInInterior(voxelHash, voxel2, ((Voxel_ClassWithLinksToTSElements)voxel1).Faces);
                                     lock (voxels) voxels.AddRange(voxelHash);
@@ -673,13 +679,13 @@ namespace TVGL.Voxelization
                 var faces = voxel is Voxel_ClassWithLinksToTSElements
                     ? ((Voxel_ClassWithLinksToTSElements)voxel).Faces
                     : parentFaces;
-                if (faces.SelectMany(f => f.Normal).All(n => n > 0))
+                if (faces.SelectMany(f => f.Normal).All(n => n >= 0))
                 {
                     voxel.BtmCoordIsInside = true;
                     assignedHashSet.AddOrReplace(voxel);
                     continue;
                 }
-                if (faces.SelectMany(f => f.Normal).All(n => n < 0))
+                if (faces.SelectMany(f => f.Normal).All(n => n <= 0))
                 {
                     voxel.BtmCoordIsInside = false;
                     assignedHashSet.AddOrReplace(voxel);
@@ -703,12 +709,12 @@ namespace TVGL.Voxelization
                 if (closestFaceDistance <= 1.0)
                 {
                     voxel.BtmCoordIsInside = closestFaceIsPositive;
+                    voxels.AddOrReplace(voxel);
                     assignedHashSet.AddOrReplace(voxel);
-                    continue;
                 }
                 #endregion
                 // if not, then add the voxel to a queue for step 3
-                queue.Enqueue(voxel);
+                else queue.Enqueue(voxel);
             }
             #region Step 3: infer from neighbors
             var cyclesSinceLastSuccess = 0;
@@ -723,6 +729,7 @@ namespace TVGL.Voxelization
                         level, out var neighborCoord);
                     if (neighbor == null) continue;
                     voxel.BtmCoordIsInside = neighbor.BtmCoordIsInside;
+                    voxels.AddOrReplace(voxel);
                     assignedHashSet.AddOrReplace(voxel);
                     cyclesSinceLastSuccess = 0;
                     gotFromNeighbor = true;
@@ -758,8 +765,11 @@ namespace TVGL.Voxelization
                         }
                 }
                 voxel.BtmCoordIsInside = foundIntersectingFace ? btmIsInside : parentBtmCoordIsInside;
+                voxels.AddOrReplace(voxel);
             }
             #endregion
+
+            voxels = assignedHashSet;
         }
 
         private bool lineToFaceIntersection(PolygonalFace face, int[] c, int dimension, double upperLimit, out double signedDistance)
@@ -848,6 +858,11 @@ namespace TVGL.Voxelization
         /// </summary>
         private void makeVoxelsInInterior(VoxelHashSet voxels, IVoxel parent, List<PolygonalFace> grandParentFaces)
         {
+            if (!voxels.Any() && parent.BtmCoordIsInside == true)
+            {
+                voxels.AddRange(AddAllDescendants(Constants.ClearFlagsFromID(parent.ID), parent.Level));
+                return;
+            }
             /* define the box of the parent in terms of lower and upper arrays */
             setLimitsAndLevel(parent, out var level, out var parentLimits);
             var allDirections = new[] { -3, -2, -1, 1, 2, 3 };
@@ -885,8 +900,7 @@ namespace TVGL.Voxelization
                     if (farthestFaceIsNegativeDirection(faces, coord, direction))
                     {
                         neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels, parentLimits);
-                        if (neighbor != null) insiders.Push(neighbor);
-                        if (neighbor == null) Debug.WriteLine("what?!");
+                        insiders.Push(neighbor);
                     }
                 }
             }
@@ -894,7 +908,7 @@ namespace TVGL.Voxelization
             while (insiders.Any())
             {
                 var current = insiders.Pop();
-                var directions =current.Role == VoxelRoleTypes.Full ?allDirections : negDirections;
+                var directions = current.Role == VoxelRoleTypes.Full ? allDirections : negDirections;
                 var coord = current.CoordinateIndices;
                 foreach (var direction in directions)
                 {
