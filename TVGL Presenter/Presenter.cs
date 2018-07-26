@@ -865,6 +865,7 @@ namespace TVGL
             window.ShowDialog();
         }
 
+
         private static Visual3D MakeModelVisual3D(VoxelizedSolid vs)
         {
             //if (false)
@@ -939,8 +940,8 @@ namespace TVGL
                              Geometry = new MeshGeometry3D
                              {
                                  Positions = positions,
-                             // TriangleIndices = new Int32Collection(triIndices),
-                             Normals = normals
+                                 // TriangleIndices = new Int32Collection(triIndices),
+                                 Normals = normals
                              },
                              Material = MaterialHelper.CreateMaterial(
                                  new System.Windows.Media.Color
@@ -953,8 +954,7 @@ namespace TVGL
                          }
             };
         }
-
-
+        
         /// <summary>
         /// Makes the model visual3 d.
         /// </summary>

@@ -464,14 +464,14 @@ namespace TVGL.Voxelization
             var layerOfVoxels = new VoxelHashSet[numLayers]; /* the voxels are organized into layers */
             for (int i = 0; i < numLayers; i++)
                 layerOfVoxels[i] = new VoxelHashSet(level, this);
-            Parallel.ForEach(voxels, v =>
-            //foreach (var v in voxels)
+            //Parallel.ForEach(voxels, v =>
+            foreach (var v in voxels)
             {  //place all the voxels in this level into layers along the extrude direction
                 var layerIndex = (int)((v.ID >> (20 * dimension + 4 + singleCoordinateShifts[level])) & (voxelsPerSide[level] - 1));
                 if (!positiveDir) layerIndex = numLayers - 1 - layerIndex;
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].AddOrReplace(v);
-            });
+            }//);
             /* now, for the main loop */
             var loopLimit = lastLayer ? numLayers - 1 : numLayers;
             // loopLimit is one more than the numer of layers so that we can "inform" the set below this one.
@@ -653,11 +653,11 @@ namespace TVGL.Voxelization
         private void Subtract(IVoxel parent, int level, VoxelizedSolid[] subtrahends)
         {
             var voxels = GetChildVoxelsInner(parent);
-            //Parallel.ForEach(voxels, thisVoxel =>
-            foreach(var thisVoxel in voxels)
+            Parallel.ForEach(voxels, thisVoxel =>
+            //foreach(var thisVoxel in voxels)
             {
                 var referenceHighestRole = GetHighestRole(thisVoxel.ID, level, subtrahends);
-                if (referenceHighestRole == VoxelRoleTypes.Empty) continue; // return;
+                if (referenceHighestRole == VoxelRoleTypes.Empty) return;
                 if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel, true, true);
                 else if (level < numberOfLevels - 1)
                 {
@@ -665,7 +665,7 @@ namespace TVGL.Voxelization
                     Subtract(thisVoxel, level + 1, subtrahends);
                 }
                 else ChangeVoxelToEmpty(thisVoxel, false, true);
-            }  //);
+            });
         }
 
         #endregion

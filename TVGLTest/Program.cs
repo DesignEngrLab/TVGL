@@ -86,7 +86,6 @@ namespace TVGLPresenterDX
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             var dir = new DirectoryInfo("../../../TestFiles");
             var fileNames = dir.GetFiles("*");
-            var fileNames = dir.GetFiles("ThreeHoleBracket.*");
             var r = new Random();
             fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
             for (var i = 0; i < fileNames.Count(); i += 1)
@@ -100,7 +99,7 @@ namespace TVGLPresenterDX
                 if (!File.Exists(filename)) continue;
                 using (fileStream = File.OpenRead(filename))
                     IO.Open(fileStream, filename, out ts);
-
+                if (ts.Errors!=null) continue;
                 Color color = new Color(KnownColors.AliceBlue);
                 ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
                 {
