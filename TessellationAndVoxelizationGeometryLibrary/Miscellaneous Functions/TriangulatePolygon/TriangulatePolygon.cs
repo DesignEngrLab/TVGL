@@ -839,7 +839,8 @@ namespace TVGL
                 {
                     if (attempts >= 3)
                     {
-                        throw new Exception("Triangulation failed after " + attempts + " attempts.");
+                        throw new Exception("Triangulation failed after " + attempts +
+                                            " attempts. Points may be too close to distinguish.");
                     }
                     isPositive = null;
                     attempts++;
@@ -1595,8 +1596,8 @@ namespace TVGL
             }
             foreach (var triangle in triangles)
             {
-                var edge1 = triangle[1].Position.subtract(triangle[0].Position);
-                var edge2 = triangle[2].Position.subtract(triangle[0].Position);
+                var edge1 = triangle[1].Position.subtract(triangle[0].Position, 3);
+                var edge2 = triangle[2].Position.subtract(triangle[0].Position, 3);
                 var area = Math.Abs(edge1.crossProduct(edge2).norm2()) / 2;
                 if (area.IsNegligible()) Message.output("Neglible Area Traingle Created", 2); //CANNOT output a 0.0 area triangle. It will break other functions!
                 //Could collapse whichever edge vector is giving 0 area and ignore this triangle. 

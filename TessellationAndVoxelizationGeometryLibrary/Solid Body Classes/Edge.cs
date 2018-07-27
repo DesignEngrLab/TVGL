@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using StarMathLib;
 using TVGL.Voxelization;
 
@@ -186,7 +187,7 @@ namespace TVGL
         ///     Updates the edge vector and length, if a vertex has been moved.
         /// </summary>
         /// <exception cref="Exception"></exception>
-        public void Update()
+        public void Update(bool lengthAndAngleUnchanged = false)
         {
             //Reset the vector, since vertices may have been moved.
             Vector = new[]
@@ -195,10 +196,11 @@ namespace TVGL
                 To.Position[1] - From.Position[1],
                 To.Position[2] - From.Position[2]
             };
+
+            if (lengthAndAngleUnchanged) return; //Done. No need to update the length or the internal edge angle
             Length =
                 Math.Sqrt(Vector[0] * Vector[0] + Vector[1] * Vector[1] + Vector[2] * Vector[2]);
             DefineInternalEdgeAngle();
-            // if (double.IsNaN(InternalAngle)) throw new Exception();
         }
 
         /// <summary>
@@ -230,8 +232,8 @@ namespace TVGL
             var faceToIndex = _ownedFace.Vertices.IndexOf(To);
             var faceNextIndex = faceToIndex + 1 == _ownedFace.Vertices.Count ? 0 : faceToIndex + 1;
             var nextFaceVertex = _ownedFace.Vertices[faceNextIndex];
-            var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
-            var dotOfCross = Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal);
+            var nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
+            var dotOfCross = Vector.crossProduct(nextEdgeVector).dotProduct(_ownedFace.Normal, 3);
             if (dotOfCross <= 0)
             {
                 /* then switch the direction of the edge to match the ownership.
@@ -246,8 +248,8 @@ namespace TVGL
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
-                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
+                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
+                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal, 3);
                 if (dotOfCross2 < 0)
                 // neither faces appear to own the edge...must be something wrong
                 {
@@ -263,8 +265,8 @@ namespace TVGL
                 faceToIndex = _otherFace.Vertices.IndexOf(To);
                 faceNextIndex = faceToIndex + 1 == _otherFace.Vertices.Count ? 0 : faceToIndex + 1;
                 nextFaceVertex = _otherFace.Vertices[faceNextIndex];
-                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position);
-                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal);
+                nextEdgeVector = nextFaceVertex.Position.subtract(To.Position, 3);
+                var dotOfCross2 = Vector.crossProduct(nextEdgeVector).dotProduct(_otherFace.Normal, 3);
                 if (dotOfCross2 > 0)
                 // both faces appear to own the edge...must be something wrong
                 {
@@ -290,7 +292,7 @@ namespace TVGL
                 {
                     if (face != null && face != _otherFace)
                     {
-                        ownedNeighborAvgNormals = ownedNeighborAvgNormals.add(face.Normal);
+                        ownedNeighborAvgNormals = ownedNeighborAvgNormals.add(face.Normal, 3);
                         numNeighbors++;
                     }
                 }
@@ -301,12 +303,12 @@ namespace TVGL
                 {
                     if (face != null && face != _ownedFace)
                     {
-                        otherNeighborAvgNormals = otherNeighborAvgNormals.add(face.Normal);
+                        otherNeighborAvgNormals = otherNeighborAvgNormals.add(face.Normal, 3);
                         numNeighbors++;
                     }
                 }
                 otherNeighborAvgNormals = otherNeighborAvgNormals.divide(numNeighbors);
-                if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector) < 0)
+                if (ownedNeighborAvgNormals.crossProduct(otherNeighborAvgNormals).dotProduct(Vector, 3) < 0)
                 {
                     InternalAngle = Constants.TwoPi;
                     Curvature = CurvatureType.Concave;
@@ -319,7 +321,7 @@ namespace TVGL
             }
             else
             {
-                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal).dotProduct(Vector);
+                var cross = _ownedFace.Normal.crossProduct(_otherFace.Normal).dotProduct(Vector, 3);
                 if (cross < 0)
                 {
                     InternalAngle = Math.PI + Math.Acos(dot);
@@ -338,6 +340,39 @@ namespace TVGL
         {
             From.Edges.Add(this);
             To.Edges.Add(this);
+        }
+
+        /// <summary>
+        /// Returns owned and other face in that order
+        /// </summary>
+        /// <returns></returns>
+        internal static (PolygonalFace, PolygonalFace) GetOwnedAndOtherFace(long edgeChecksum, PolygonalFace face1, PolygonalFace face2)
+        {
+            var (from, to) = GetVertexIndices(edgeChecksum);
+            //We are going to enforce that the edge is defined along the vertices, such that it goes from the smaller
+            //vertex index to the larger. 
+            var v0 = face1.Vertices.First(v => v.IndexInList == from);
+            var v1 = face1.Vertices.First(v => v.IndexInList == to);
+            var v2 = face1.Vertices.First(v => v.IndexInList != to && v.IndexInList != from);
+            var vector1 = v1.Position.subtract(v0.Position);
+            var vector2 = v2.Position.subtract(v1.Position);
+            var dot = vector1.crossProduct(vector2).dotProduct(face1.Normal);
+            //The owned face(the face in which the from-to direction makes sense
+            // - that is, produces the proper cross-product normal).
+            return Math.Sign(dot) > 0 ? (face1, face2) : (face2, face1);
+        }
+
+        internal static (int, int) GetVertexIndices(long checkSum)
+        {
+            //The checksum is ordered from larger to smaller
+            var largeIndex = (int)(checkSum / Constants.VertexCheckSumMultiplier);
+            var smallIndex = (int)(checkSum - largeIndex * Constants.VertexCheckSumMultiplier);
+            return (smallIndex, largeIndex);
+        }
+
+        internal static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
+        {
+            return TessellatedSolid.GetEdgeChecksum(vertex1, vertex2);
         }
 
         #endregion

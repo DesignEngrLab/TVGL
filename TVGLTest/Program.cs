@@ -84,16 +84,25 @@ namespace TVGLPresenterDX
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            var dir = new DirectoryInfo("../../../TestFiles");
+            DirectoryInfo dir;
+            try
+            {
+                //x64
+                dir = new DirectoryInfo("../../../../TestFiles");
+            }
+            catch
+            {
+                //x86
+                dir = new DirectoryInfo("../../../TestFiles");
+            }
             var fileNames = dir.GetFiles("*");
-            var r = new Random();
-            fileNames = fileNames.OrderBy(x => r.NextDouble()).ToArray();
-            for (var i = 0; i < fileNames.Count(); i += 1)
+            //Casing = 18
+            //SquareSupport = 75
+            for (var i = 18; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
                 Console.WriteLine("Attempting: " + filename);
-                var justfile = fileNames[i].Name;
                 Stream fileStream;
                 TessellatedSolid ts;
                 if (!File.Exists(filename)) continue;
@@ -241,5 +250,152 @@ namespace TVGLPresenterDX
 
 
 
+        public static void TestVoxelization(TessellatedSolid ts)
+        {
+            var stopWatch = new Stopwatch();
+            ts.Transform(new double[,]
+            {
+                {1, 0, 0, -(ts.XMax + ts.XMin) / 2},
+                {0, 1, 0, -(ts.YMax + ts.YMin) / 2},
+                {0, 0, 1, -(ts.ZMax + ts.ZMin) / 2},
+            });
+            stopWatch.Restart();
+            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true); //, bounds);
+
+            stopWatch.Stop();
+            Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
+                ts.Volume, vs1.Volume, vs1.Count, stopWatch.Elapsed.TotalSeconds);
+            stopWatch.Restart();
+            Presenter.ShowAndHang(new Solid[] { ts, vs1 });
+            // var vs2 = (VoxelizedSolid)vs1.Copy();
+            //var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
+            //vs1.Subtract(vs2);
+            //PresenterShowAndHang(new Solid[] { vs1 });
+
+            //var vsPos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
+            //PresenterShowAndHang(new Solid[] { vsPos });
+            //var vsNeg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
+            //PresenterShowAndHang(new Solid[] { vsNeg });
+
+
+            //stopWatch.Stop();
+            //Console.WriteLine("Intersection: tsvol:{0}\tvol:{1}\ttime:{2}",
+            //    ts.Volume, vsInt.Volume, stopWatch.Elapsed.TotalSeconds);
+            //PresenterShowAndHang(new Solid[] { vsInt });
+        }
+
+        public static void TestSegmentation(TessellatedSolid ts)
+        {
+            var obb = MinimumEnclosure.OrientedBoundingBox(ts);
+            var startTime = DateTime.Now;
+
+            var averageNumberOfSteps = 500;
+
+            //Do the average # of slices slices for each direction on a box (l == w == h).
+            //Else, weight the average # of slices based on the average obb distance
+            var obbAverageLength = (obb.Dimensions[0] + obb.Dimensions[1] + obb.Dimensions[2]) / 3;
+            //Set step size to an even increment over the entire length of the solid
+            var stepSize = obbAverageLength / averageNumberOfSteps;
+
+            foreach (var direction in obb.Directions)
+            {
+                Dictionary<int, double> stepDistances;
+                Dictionary<int, double> sortedVertexDistanceLookup;
+                var segments = DirectionalDecomposition.UniformDirectionalSegmentation(ts, direction,
+                    stepSize, out stepDistances, out sortedVertexDistanceLookup);
+                //foreach (var segment in segments)
+                //{
+                //    var vertexLists = segment.DisplaySetup(ts);
+                //    Presenter.ShowVertexPathsWithSolid(vertexLists, new List<TessellatedSolid>() { ts });
+                //}
+            }
+
+            // var segments = AreaDecomposition.UniformDirectionalSegmentation(ts, obb.Directions[2].multiply(-1), stepSize);
+            var totalTime = DateTime.Now - startTime;
+            Debug.WriteLine(totalTime.TotalMilliseconds + " Milliseconds");
+            //CheckAllObjectTypes(ts, segments);
+        }
+
+        private static void CheckAllObjectTypes(TessellatedSolid ts, IEnumerable<DirectionalDecomposition.DirectionalSegment> segments)
+        {
+            var faces = new HashSet<PolygonalFace>(ts.Faces);
+            var vertices = new HashSet<Vertex>(ts.Vertices);
+            var edges = new HashSet<Edge>(ts.Edges);
+
+
+            foreach (var face in faces)
+            {
+                face.Color = new Color(KnownColors.Gray);
+            }
+
+            foreach (var segment in segments)
+            {
+                foreach (var face in segment.ReferenceFaces)
+                {
+                    faces.Remove(face);
+                }
+                foreach (var edge in segment.ReferenceEdges)
+                {
+                    edges.Remove(edge);
+                }
+                foreach (var vertex in segment.ReferenceVertices)
+                {
+                    vertices.Remove(vertex);
+                }
+            }
+
+            ts.HasUniformColor = false;
+            //Turn the remaining faces red
+            foreach (var face in faces)
+            {
+                face.Color = new Color(KnownColors.Red);
+            }
+            Presenter.ShowAndHang(ts);
+
+            //Make sure that every face, edge, and vertex is accounted for
+            //Assert.That(!edges.Any(), "edges missed");
+            //Assert.That(!faces.Any(), "faces missed");
+            //Assert.That(!vertices.Any(), "vertices missed");
+        }
+
+        public static void TestSilhouette(TessellatedSolid ts)
+        {
+            var silhouette = TVGL.Silhouette.Run(ts, new[] { 0.5, 0.0, 0.5 });
+            Presenter.ShowAndHang(silhouette);
+        }
+
+        private static void TestOBB(string InputDir)
+        {
+            var di = new DirectoryInfo(InputDir);
+            var fis = di.EnumerateFiles();
+            var numVertices = new List<int>();
+            var data = new List<double[]>();
+            foreach (var fileInfo in fis)
+            {
+                try
+                {
+                    var ts = IO.Open(fileInfo.Open(FileMode.Open), fileInfo.Name);
+                    foreach (var tessellatedSolid in ts)
+                    {
+                        List<double> times, volumes;
+                        MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
+                        data.Add(new[] { tessellatedSolid.ConvexHull.Vertices.Count(), tessellatedSolid.Volume,
+                            times[0], times[1],times[2], volumes[0],  volumes[1], volumes[2] });
+                    }
+                }
+                catch { }
+            }
+            // TVGLTest.ExcelInterface.PlotEachSeriesSeperately(VolumeData1, "Edge", "Angle", "Volume");
+            TVGLTest.ExcelInterface.CreateNewGraph(new[] { data }, "", "Methods", "Volume", new[] { "PCA", "ChanTan" });
+        }
+
+        private static void TestSimplify(TessellatedSolid ts)
+        {
+            ts.Simplify(.9);
+            Debug.WriteLine("number of vertices = " + ts.NumberOfVertices);
+            Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
+            Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
+            TVGL.Presenter.ShowAndHang(ts);
+        }  
     }
 }

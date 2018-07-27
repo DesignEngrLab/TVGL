@@ -39,10 +39,10 @@ namespace TVGL.MathOperations
                 return a;
             }
 
-            var ab = b.subtract(a);
-            var ac = c.subtract(a);
-            var ap = p.subtract(a);
-            double d1 = ab.dotProduct(ap), d2 = ac.dotProduct(ap);
+            var ab = b.subtract(a, 3);
+            var ac = c.subtract(a, 3);
+            var ap = p.subtract(a, 3);
+            double d1 = ab.dotProduct(ap, 3), d2 = ac.dotProduct(ap, 3);
 
             // degenerate triangle edges
             if (MiscFunctions.DistancePointToPoint(a, b).IsNegligible())
@@ -72,8 +72,8 @@ namespace TVGL.MathOperations
             }
 
             // Check if P in vertex region outside B
-            var bp = p.subtract(b);
-            double d3 = ab.dotProduct(bp), d4 = ac.dotProduct(bp);
+            var bp = p.subtract(b, 3);
+            double d3 = ab.dotProduct(bp, 3), d4 = ac.dotProduct(bp, 3);
             if (d3 >= 0.0 && d4 <= d3)
             {
                 uvw[1] = 1.0;
@@ -86,12 +86,12 @@ namespace TVGL.MathOperations
             {
                 uvw[1] = d1 / (d1 - d3);
                 uvw[0] = 1.0 - uvw[1];
-                return a.add(ab.multiply(uvw[1])); // barycentric coordinates (1-v,v,0)
+                return a.add(ab.multiply(uvw[1]), 3); // barycentric coordinates (1-v,v,0)
             }
 
             // Check if P in vertex region outside C
-            var cp = p.subtract(c);
-            double d5 = ab.dotProduct(cp), d6 = ac.dotProduct(cp);
+            var cp = p.subtract(c, 3);
+            double d5 = ab.dotProduct(cp, 3), d6 = ac.dotProduct(cp, 3);
             if (d6 >= 0.0 && d5 <= d6)
             {
                 uvw[2] = 1.0;
@@ -104,7 +104,7 @@ namespace TVGL.MathOperations
             {
                 uvw[2] = d2 / (d2 - d6);
                 uvw[0] = 1.0 - uvw[2];
-                return a.add(ac.multiply(uvw[2])); // barycentric coordinates (1-w,0,w)
+                return a.add(ac.multiply(uvw[2]), 3); // barycentric coordinates (1-w,0,w)
             }
 
             // Check if P in edge region of BC, if so return projection of P onto BC
@@ -113,7 +113,7 @@ namespace TVGL.MathOperations
             {
                 uvw[2] = (d4 - d3) / ((d4 - d3) + (d5 - d6));
                 uvw[1] = 1.0 - uvw[2];
-                return b.add(c.subtract(b).multiply(uvw[2])); // b + uvw[2] * (c - b), barycentric coordinates (0,1-w,w)
+                return b.add(c.subtract(b, 3).multiply(uvw[2]), 3); // b + uvw[2] * (c - b), barycentric coordinates (0,1-w,w)
             }
 
             // P inside face region. Compute Q through its barycentric coordinates (u,v,w)
@@ -122,7 +122,7 @@ namespace TVGL.MathOperations
             uvw[1] = vb * denom;
             uvw[0] = 1.0 - uvw[1] - uvw[2];
 
-            return a.add(ab.multiply(uvw[1]).add(ac.multiply(uvw[2])));
+            return a.add(ab.multiply(uvw[1]).add(ac.multiply(uvw[2]), 3), 3);
             //a + ab*uvw[1] + ac*uvw[2]; // = u*a + v*b + w*c , u= va*denom = 1.0-v-w
         }
 
@@ -139,8 +139,8 @@ namespace TVGL.MathOperations
         /// <returns></returns>
         public static double[] ClosestVertexOnSegmentToVertex(double[] a, double[] b, double[] p, out double distanceToSegment)
         {
-            var ab = b.subtract(a);
-            distanceToSegment = p.subtract(a).dotProduct(ab);
+            var ab = b.subtract(a, 3);
+            distanceToSegment = p.subtract(a, 3).dotProduct(ab, 3);
 
             if (distanceToSegment <= 0.0)
             {
@@ -152,7 +152,7 @@ namespace TVGL.MathOperations
             {
 
                 // always nonnegative since denom = ||ab||^2
-                double denom = ab.dotProduct(ab);
+                double denom = ab.dotProduct(ab, 3);
 
                 if (distanceToSegment >= denom)
                 {
@@ -164,7 +164,7 @@ namespace TVGL.MathOperations
                 {
                     // c projects inside the [a,b] interval.
                     distanceToSegment = distanceToSegment / denom;
-                    return a.add(ab.multiply(distanceToSegment)); // a + (ab * t);
+                    return a.add(ab.multiply(distanceToSegment), 3); // a + (ab * t);
                 }
             }
         }
@@ -175,7 +175,7 @@ namespace TVGL.MathOperations
         /// <param name="line"></param>
         /// <param name="p"></param>
         /// <returns></returns>
-        public static double[] ClosestPointOnLineSegmentToPoint(Line line, double[] p)
+        public static double[] ClosestPointOnLineSegmentToPoint(Line line, PointLight p)
         {
             //First, project the point in question onto the infinite line, getting its distance on the line from 
             //the line.FromPoint
@@ -184,8 +184,8 @@ namespace TVGL.MathOperations
             //(2) If the distance is >= the line.Length, the infinite line intersection is outside the line segment interval, on the ToPoint side.
             //(3) Otherwise, the infinite line intersection is inside the line segment interval.
             var fromPoint = line.FromPoint.Position;
-            var lineVector = line.ToPoint.Position.subtract(line.FromPoint.Position);
-            var distanceToSegment = p.subtract(fromPoint).dotProduct(lineVector) / line.Length;
+            var lineVector = line.ToPoint.Position.subtract(line.FromPoint.Position, 2);
+            var distanceToSegment = p.Position.subtract(fromPoint, 2).dotProduct(lineVector, 2) / line.Length;
 
             if (distanceToSegment <= 0.0)
             {
@@ -196,7 +196,7 @@ namespace TVGL.MathOperations
                 return line.ToPoint.Position;
             }
             distanceToSegment = distanceToSegment / line.Length;
-            return fromPoint.add(lineVector.multiply(distanceToSegment));
+            return fromPoint.add(lineVector.multiply(distanceToSegment), 2);
 
             //var t = (lineVector[0] * (p[0] - fromPoint[0]) + lineVector[1] * (p[1] - fromPoint[1]))
             //           / (lineVector[0] * lineVector[0] + lineVector[1] * lineVector[1]);

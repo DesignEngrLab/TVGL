@@ -100,7 +100,7 @@ namespace TVGL
         /// <param name="thisVertex">The this vertex.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Edge.</returns>
-        internal Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
+        public Edge OtherEdge(Vertex thisVertex, bool willAcceptNullAnswer = false)
         {
             if (willAcceptNullAnswer)
                 return Edges.FirstOrDefault(e => e != null && e.To != thisVertex && e.From != thisVertex);
@@ -113,7 +113,7 @@ namespace TVGL
         /// <param name="thisEdge">The this edge.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Vertex.</returns>
-        internal Vertex OtherVertex(Edge thisEdge, bool willAcceptNullAnswer = false)
+        public Vertex OtherVertex(Edge thisEdge, bool willAcceptNullAnswer = false)
         {
             return willAcceptNullAnswer
                 ? Vertices.FirstOrDefault(v => v != null && v != thisEdge.To &&
@@ -128,7 +128,7 @@ namespace TVGL
         /// <param name="v2">The v2.</param>
         /// <param name="willAcceptNullAnswer">if set to <c>true</c> [will accept null answer].</param>
         /// <returns>Vertex.</returns>
-        internal Vertex OtherVertex(Vertex v1, Vertex v2, bool willAcceptNullAnswer = false)
+        public Vertex OtherVertex(Vertex v1, Vertex v2, bool willAcceptNullAnswer = false)
         {
             return willAcceptNullAnswer
                 ? Vertices.FirstOrDefault(v => v != null && v != v1 && v != v2)
@@ -140,7 +140,7 @@ namespace TVGL
         /// </summary>
         /// <param name="v1">The v1.</param>
         /// <returns>Vertex.</returns>
-        internal Vertex NextVertexCCW(Vertex v1)
+        public Vertex NextVertexCCW(Vertex v1)
         {
             var index = Vertices.IndexOf(v1);
             if (index < 0) return null; //Vertex is not part of this face
@@ -224,10 +224,10 @@ namespace TVGL
             var area = 0.0;
             for (var i = 2; i < Vertices.Count; i++)
             {
-                var edge1 = Vertices[1].Position.subtract(Vertices[0].Position);
-                var edge2 = Vertices[2].Position.subtract(Vertices[0].Position);
+                var edge1 = Vertices[1].Position.subtract(Vertices[0].Position, 3);
+                var edge2 = Vertices[2].Position.subtract(Vertices[0].Position, 3);
                 // the area of each triangle in the face is the area is half the magnitude of the cross product of two of the edges
-                area += Math.Abs(edge1.crossProduct(edge2).dotProduct(Normal)) / 2;
+                area += Math.Abs(edge1.crossProduct(edge2).dotProduct(Normal, 3)) / 2;
             }
             //If not a number, the triangle is actually a straight line. Set the area = 0, and let repair function fix this.
             return double.IsNaN(area) ? 0.0 : area;
@@ -240,19 +240,19 @@ namespace TVGL
         /// <param name="vertices">The vertices.</param>
         /// <param name="normal">The normal.</param>
         /// <returns>System.Double[].</returns>
-        internal static double[] DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, double[] normal = null)
+        public static double[] DetermineNormal(List<Vertex> vertices, out bool reverseVertexOrder, double[] normal = null)
         {
             reverseVertexOrder = false;
             var n = vertices.Count;
             if (normal != null && normal.Contains(double.NaN)) normal = null;
-            else if (normal != null) normal.normalizeInPlace();
+            else if (normal != null) normal.normalizeInPlace(3);
             var edgeVectors = new double[n][];
             var normals = new List<double[]>();
-            edgeVectors[0] = vertices[0].Position.subtract(vertices[n - 1].Position);
+            edgeVectors[0] = vertices[0].Position.subtract(vertices[n - 1].Position, 3);
             for (var i = 1; i < n; i++)
             {
-                edgeVectors[i] = vertices[i].Position.subtract(vertices[i - 1].Position);
-                var tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize();
+                edgeVectors[i] = vertices[i].Position.subtract(vertices[i - 1].Position, 3);
+                var tempCross = edgeVectors[i - 1].crossProduct(edgeVectors[i]).normalize(3);
                 if (!tempCross.Any(double.IsNaN))
                 {
                     if (!normals.Any())
@@ -275,7 +275,7 @@ namespace TVGL
                     normals.Add(tempCross);
                 }
             }
-            var lastCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize();
+            var lastCross = edgeVectors[n - 1].crossProduct(edgeVectors[0]).normalize(3);
             if (!lastCross.Any(double.IsNaN)) normals.Add(lastCross);
 
             n = normals.Count;
@@ -285,17 +285,17 @@ namespace TVGL
             // the dotProductsOfNormals simply takes the dot product of adjacent
             // normals. If they're all close to one, then we can average and return.
             var dotProductsOfNormals = new List<double>();
-            dotProductsOfNormals.Add(normals[0].dotProduct(normals[n - 1]));
-            for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].dotProduct(normals[i - 1]));
+            dotProductsOfNormals.Add(normals[0].dotProduct(normals[n - 1], 3));
+            for (var i = 1; i < n; i++) dotProductsOfNormals.Add(normals[i].dotProduct(normals[i - 1], 3));
             // if all are close to one (or at least positive), then the face is a convex polygon. Now,
             // we can simply average and return the answer.
             var isConvex = dotProductsOfNormals.All(x => x > 0);
             if (isConvex)
             {
-                var newNormal = normals.Aggregate((current, c) => current.add(c)).normalize();
+                var newNormal = normals.Aggregate((current, c) => current.add(c, 3)).normalize(3);
                 // even though the normal provide was wrong above (or nonexistent)
                 // we still check it to see if this is the correct direction.
-                if (normal == null || newNormal.dotProduct(normal) >= 0) return newNormal;
+                if (normal == null || newNormal.dotProduct(normal, 3) >= 0) return newNormal;
                 // else reverse the order 
                 reverseVertexOrder = true;
                 return newNormal.multiply(-1);
@@ -306,8 +306,8 @@ namespace TVGL
                 //
                 // well, here the guess may be useful. We'll insert it into the list of dotProducts
                 // and then do a tally
-                dotProductsOfNormals[0] = normal.dotProduct(normals[0]);
-                dotProductsOfNormals.Insert(0, normal.dotProduct(normals[n - 1]));
+                dotProductsOfNormals[0] = normal.dotProduct(normals[0], 3);
+                dotProductsOfNormals.Insert(0, normal.dotProduct(normals[n - 1], 3));
             }
             var likeFirstNormal = true;
             var numLikeFirstNormal = 1;
@@ -319,12 +319,12 @@ namespace TVGL
                 if (likeFirstNormal) numLikeFirstNormal++;
             }
             // if the majority are like the first one, then use that one (which may have been the guess).
-            if (2 * numLikeFirstNormal >= normals.Count) return normals[0].normalize();
+            if (2 * numLikeFirstNormal >= normals.Count) return normals[0].normalize(3);
             // otherwise, go with the opposite (so long as there isn't an original guess)
-            if (normal == null) return normals[0].normalize().multiply(-1);
+            if (normal == null) return normals[0].normalize(3).multiply(-1);
             //finally, assume the original guess is right, and reverse the order
             reverseVertexOrder = true;
-            return normals[0].normalize();
+            return normals[0].normalize(3);
         }
         #endregion
 

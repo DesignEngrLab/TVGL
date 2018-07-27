@@ -102,7 +102,7 @@ namespace TVGL
                 {
                     var face = convexHull.Faces[i];
                     face.IndexInList = i;
-                    startingDots[i] = face.Normal.dotProduct(startDir);
+                    startingDots[i] = face.Normal.dotProduct(startDir, 3);
                 }
                 foreach (var edge in convexHull.Edges)
                 {
@@ -110,8 +110,8 @@ namespace TVGL
                     var otherX = startingDots[edge.OtherFace.IndexInList];
                     if (otherX*ownedX <= 0)
                     {
-                        var ownedY = edge.OwnedFace.Normal.dotProduct(yDir);
-                        var otherY = edge.OtherFace.Normal.dotProduct(yDir);
+                        var ownedY = edge.OwnedFace.Normal.dotProduct(yDir, 3);
+                        var otherY = edge.OtherFace.Normal.dotProduct(yDir, 3);
                         //if ((ownedX < 0 && ownedY > 0) || (ownedX > 0 && ownedY < 0))
                         //    OrthGaussSphereArcs.Add(new GaussSphereArc(edge, edge.OwnedFace));
                         //else if ((otherX < 0 && otherY > 0) || (otherX > 0 && otherY < 0))
@@ -127,7 +127,7 @@ namespace TVGL
                 var maxDistance = double.NegativeInfinity;
                 foreach (var v in convexHull.Vertices)
                 {
-                    var distance = rotatorEdge.From.Position.subtract(v.Position).dotProduct(startDir);
+                    var distance = rotatorEdge.From.Position.subtract(v.Position, 3).dotProduct(startDir, 3);
                     if (distance > maxDistance)
                     {
                         maxDistance = distance;
@@ -197,7 +197,7 @@ namespace TVGL
         {
             var m = new double[3];
             // loop over the points to find the mean point location
-            m = convexHullVertices.Aggregate(m, (current, point) => current.add(point.Position));
+            m = convexHullVertices.Aggregate(m, (current, point) => current.add(point.Position, 3));
             m = m.divide(convexHullVertices.Count);
             var C = new double[3, 3];
             var m00 = m[0]*m[0];
@@ -260,7 +260,7 @@ namespace TVGL
                 //Find the triangle weight based proportional to area
                 var w = triangle.Area/totalArea;
                 //Find the center of gravity
-                c = c.add(triangle.Center.multiply(w));
+                c = c.add(triangle.Center.multiply(w), 3);
             }
 
             //Find the covariance matrix  of the convex hull
@@ -272,13 +272,13 @@ namespace TVGL
                 {
                     var jTerm1 = new double[3, 3];
                     var jTerm1Total = new double[3, 3];
-                    var vector1 = triangle.Vertices[j].Position.subtract(c);
+                    var vector1 = triangle.Vertices[j].Position.subtract(c, 3);
                     var term1 = new[,] {{vector1[0], vector1[1], vector1[2]}};
                     var term3 = term1;
                     var term4 = new[,] {{vector1[0]}, {vector1[1]}, {vector1[2]}};
                     for (var k = 0; k < 3; k++)
                     {
-                        var vector2 = triangle.Vertices[k].Position.subtract(c);
+                        var vector2 = triangle.Vertices[k].Position.subtract(c, 3);
                         var term2 = new[,] {{vector2[0]}, {vector2[1]}, {vector2[2]}};
                         jTerm1 = term2.multiply(term1);
                         jTerm1Total = jTerm1Total.add(jTerm1);
@@ -298,7 +298,7 @@ namespace TVGL
             // Perform a 2D caliper along each eigenvector. 
             foreach (var eigenVector in eigenVectors)
             {
-                var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize());
+                var OBB = FindOBBAlongDirection(convexHullVertices, eigenVector.normalize(3));
                 if (OBB.Volume < bestOBB.Volume)
                     bestOBB = OBB;
             }
@@ -332,7 +332,7 @@ namespace TVGL
 
                 //Initialize variables
                 //rotatorVector is basically the edge in question - the vector that is being rotated about
-                var rotatorVector = rotateEdge.Vector.normalize();
+                var rotatorVector = rotateEdge.Vector.normalize(3);
                 // startDir is the starting Direction - based on the OtherFace
                 var startDir = rotateEdge.OtherFace.Normal;
                 // endDir is the OwnedFace final Direction - we go from Other to Owned since in order to be about
@@ -341,7 +341,7 @@ namespace TVGL
                 // posYDir is the vector for the positive y-Direction. Well, this is a simplification of the 
                 //gauss sphere to a 2D circle. The Direction (such as startDir) represents the x-axis and this
                 //, which is the orthogonal is the y Direction
-                var origPosYDir = rotatorVector.crossProduct(startDir).normalize();
+                var origPosYDir = rotatorVector.crossProduct(startDir).normalize(3);
                 var totalAngle = Math.PI - rotateEdge.InternalAngle;
                 var thisBoxData = new BoundingBoxData(startDir, origPosYDir, rotateEdge, rotatorVector, convexHull);
 
@@ -398,7 +398,7 @@ namespace TVGL
                         nextBoxData.Angle = angle;
                         nextBoxData.Direction = UpdateDirection(startDir, rotatorVector, origPosYDir, angle);
                     }
-                    nextBoxData.PosYDir = nextBoxData.RotatorVector.crossProduct(nextBoxData.Direction).normalize();
+                    nextBoxData.PosYDir = nextBoxData.RotatorVector.crossProduct(nextBoxData.Direction).normalize(3);
 
                     /****************/
                     FindOBBAlongDirection(nextBoxData);
@@ -410,7 +410,7 @@ namespace TVGL
                         var midBox = thisBoxData.Copy();
                         while (!lowerBox.Angle.IsPracticallySame(upperBox.Angle, Constants.OBBAngleTolerance))
                         {
-                            midBox.Direction = lowerBox.Direction.add(upperBox.Direction).divide(2).normalize();
+                            midBox.Direction = lowerBox.Direction.add(upperBox.Direction, 3).divide(2).normalize(3);
                             midBox.Angle = (lowerBox.Angle + upperBox.Angle)/2.0;
                             FindOBBAlongDirection(midBox);
                             if (midBox.Box.Volume > lowerBox.Box.Volume && midBox.Box.Volume > upperBox.Box.Volume)
@@ -434,11 +434,11 @@ namespace TVGL
         {
             GaussSphereArc arcToRemove = null;
             var minSlope = double.PositiveInfinity;
-            boxData.PosYDir = boxData.RotatorVector.crossProduct(boxData.Direction).normalize();
+            boxData.PosYDir = boxData.RotatorVector.crossProduct(boxData.Direction).normalize(3);
             foreach (var arc in boxData.OrthGaussSphereArcs)
             {
-                var x = boxData.Direction.dotProduct(arc.ToFace.Normal);
-                var y = boxData.PosYDir.dotProduct(arc.ToFace.Normal);
+                var x = boxData.Direction.dotProduct(arc.ToFace.Normal, 3);
+                var y = boxData.PosYDir.dotProduct(arc.ToFace.Normal, 3);
                 if (y == 0.0) continue;
                 var tempSlope = -x/y;
                 if (!(tempSlope < minSlope)) continue;
@@ -477,12 +477,12 @@ namespace TVGL
             foreach (var edge in boxData.BackVertex.Edges)
             {
                 var otherVertex = edge.OtherVertex(boxData.BackVertex);
-                var vector = otherVertex.Position.subtract(boxData.BackVertex.Position);
-                var y = yDir.dotProduct(vector);
+                var vector = otherVertex.Position.subtract(boxData.BackVertex.Position, 3);
+                var y = yDir.dotProduct(vector, 3);
                 if (y < 0)
                 {
                     // the x-value is boxData.Direction.dotProduct(vector) and it's positive for all edges since it's the back vertex
-                    var slope = -boxData.Direction.dotProduct(vector)/y;
+                    var slope = -boxData.Direction.dotProduct(vector, 3)/y;
                     if (slope < minSlope)
                     {
                         minSlope = slope;

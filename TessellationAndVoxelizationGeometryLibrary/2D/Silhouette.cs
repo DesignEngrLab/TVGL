@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using StarMathLib;
 
 namespace TVGL
@@ -14,233 +14,58 @@ namespace TVGL
         /// <summary>
         /// Gets the silhouette of a solid along a given normal.
         /// </summary>
-        /// <param name="ts"></param>
+        /// <param name="faces"></param>
         /// <param name="normal"></param>
+        /// <param name="minAngle"></param>
+        /// <param name="minPathAreaToConsider"></param>
+        /// <param name="depthOfPart"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run2(TessellatedSolid ts, double[] normal)
-        {
-            //Get the negative faces
-            var negativeFaces = new List<PolygonalFace>();
-            foreach (var face in ts.Faces)
+        public static List<List<PointLight>> Slow(IList<PolygonalFace> faces, double[] normal, double minAngle = 0.1,
+            double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
+        {     
+            var angleTolerance = Math.Cos((90 - minAngle) * Math.PI / 180);
+
+            //Get the positive faces (defined as face normal along same direction as the silhoutte normal).
+            var positiveFaces = new HashSet<PolygonalFace>();
+            var vertices = new HashSet<Vertex>();
+            foreach (var face in faces)
             {
-                var dot = normal.dotProduct(face.Normal);
-                if (Math.Sign(dot) < 0)
+                var dot = normal.dotProduct(face.Normal, 3);
+                if (dot.IsGreaterThanNonNegligible(angleTolerance))
                 {
-                    negativeFaces.Add(face);
-                }
-            }
-
-            //For each negative face.
-            //1. Project it onto a plane perpendicular to the given normal.
-            //2. Remove it from the list if it has a insignificant area
-            var projectedFaces = new List<List<Point>>();
-            foreach (var face in negativeFaces)
-            {
-                var polygon = MiscFunctions.Get2DProjectionPoints(face.Vertices, normal, true).ToList();
-                if (polygon.Count < 3) continue; //2 of the points must have been merged
-                var area = MiscFunctions.AreaOfPolygon(polygon);
-                if (area.IsNegligible(0.0000001)) continue; //Higher tolerance because of the conversion to intPoints in the Union function
-                if (area < 0) polygon.Reverse();//Make this polygon positive CCW
-                projectedFaces.Add(polygon);
-            }
-
-
-            //2. Union it with the prior negative faces.
-            var startPolygon = projectedFaces[0];
-            projectedFaces.RemoveAt(0);
-            var polygonList = new List<List<Point>> { startPolygon };
-            var previousArea = MiscFunctions.AreaOfPolygon(startPolygon);
-            while (projectedFaces.Any())
-            {
-                var nextPolygon = projectedFaces[0];
-                projectedFaces.RemoveAt(0);
-                var oldPolygonList = new List<List<Point>>(polygonList);
-                polygonList = PolygonOperations.Union(oldPolygonList, new List<List<Point>> {nextPolygon});
-
-                //Check to make sure the area got larger
-                var currentArea = polygonList.Sum(p => MiscFunctions.AreaOfPolygon(p));
-                if (currentArea < previousArea*.99)
-                {
-                    throw new Exception("Adding a triangle should never decrease the area");
-                    //oldPolygonList.Add(nextPolygon);
-                    //return polygonList; 
-                }
-                previousArea = currentArea; //ToDo: Remove this check once it is working properly.
-            }
-
-            var smallestX = double.PositiveInfinity;
-            var largestX = double.NegativeInfinity;
-            foreach (var path in polygonList)
-            {
-                foreach (var point in path)
-                {
-                    if (point.X < smallestX)
+                    positiveFaces.Add(face);
+                    //face.Color = new Color(KnownColors.Blue);
+                    foreach (var vertex in face.Vertices)
                     {
-                        smallestX = point.X;
-                    }
-                    if (point.X > largestX)
-                    {
-                        largestX = point.X;
+                        vertices.Add(vertex);
                     }
                 }
             }
-            var scale = largestX - smallestX;
+
+            //Project all the vertices into points
+            //The vertex is saved as a reference in the point
+            var transform = MiscFunctions.TransformToXYPlane(normal, out _);
+            var projectedPoints = new Dictionary<int, PointLight>();
+            foreach (var vertex in vertices)
+            {
+                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Get2DProjectionPointAsLight(vertex, transform));
+            }
+
+            //Build a dictionary of faces to polygons
+            //var projectedFacePolygons = positiveFaces.ToDictionary(f => f, f => GetPolygonFromFace(f, projectedPoints, true));
+            //Use GetPolygonFromFace and force to be positive faces with true"
+            var projectedFacePolygons2 = positiveFaces.Select(f => GetPolygonFromFace(f, projectedPoints, true)).ToList().Where(p => p.Area > minPathAreaToConsider).ToList();
+            var solution = PolygonOperations.Union(projectedFacePolygons2, false).Select(p => p.Path).ToList();
+
+            //Offset by enough to account for minimum angle 
+            var scale = Math.Tan(minAngle * Math.PI / 180) * depthOfPart;
 
             //Remove tiny polygons and slivers 
-            var offsetPolygons = PolygonOperations.OffsetMiter(polygonList, scale / 1000);
-            var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale / 1000);
-
-            return significantSolution;
-        }
-
-        /// <summary>
-        /// Gets the silhouette of a solid along a given normal. 
-        /// </summary>
-        /// <param name="ts"></param>
-        /// <param name="normal"></param>
-        /// <returns></returns>
-        public static List<List<Point>> Run3(TessellatedSolid ts, double[] normal, double tolerance = Constants.BaseTolerance)
-        {
-            //A tolerance of ts.SameTolerance * 100 or greater seems to be the best.
-
-            if (ts.Errors?.SingledSidedEdges != null)
-            {
-                //Run2 is slower, but may handle missing edge/vertex pairing better.
-                return Run2(ts, normal);
-            }
-
-            //Get the positive faces into a dictionary
-            var positiveFaceDict = new Dictionary<int, PolygonalFace>();
-            foreach (var face in ts.Faces)
-            {
-                //face.Color = new Color(KnownColors.PaleGoldenrod);
-                var dot = normal.dotProduct(face.Normal);
-                if (dot.IsGreaterThanNonNegligible(tolerance))
-                {
-                    positiveFaceDict.Add(face.IndexInList, face);
-                }
-            }
-
-            var unusedPositiveFaces = new Dictionary<int, PolygonalFace>(positiveFaceDict);
-            var seperateSurfaces = new List<HashSet<PolygonalFace>>();
-
-            ts.HasUniformColor = false;
-            var colorList = new List<Color>
-            {
-                new Color(KnownColors.Blue),
-                new Color(KnownColors.Red),
-                new Color(KnownColors.Yellow),
-                new Color(KnownColors.Green),
-                new Color(KnownColors.Orange),
-                new Color(KnownColors.Yellow),
-                new Color(KnownColors.Purple),
-                new Color(KnownColors.Brown),
-                new Color(KnownColors.DarkTurquoise),
-                new Color(KnownColors.AntiqueWhite),
-                new Color(KnownColors.DarkOliveGreen),
-                new Color(KnownColors.DarkGray),
-                new Color(KnownColors.Gold)
-            };
-            var ic = 0;
-            while (unusedPositiveFaces.Any())
-            {
-                var surface = new HashSet<PolygonalFace>();
-                var stack = new Stack<PolygonalFace>(new[] { unusedPositiveFaces.ElementAt(0).Value });
-                
-                while (stack.Any())
-                {
-                    var face = stack.Pop();
-                    if (surface.Contains(face)) continue;
-                    surface.Add(face);
-                    face.Color = colorList[ic];
-                    unusedPositiveFaces.Remove(face.IndexInList);
-                    //Only push adjacent faces that are also negative
-                    foreach (var adjacentFace in face.AdjacentFaces)
-                    {
-                        if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
-                        if (!positiveFaceDict.ContainsKey(adjacentFace.IndexInList)) continue; //Ignore if not negative
-                        var dot = surface.Last().Normal.dotProduct(adjacentFace.Normal);
-                        if (!dot.IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) continue; //ignore for now. It will be part of a different surface.
-                        stack.Push(adjacentFace);
-                    }
-                }
-                seperateSurfaces.Add(surface);
-                ic++;
-                if (ic == colorList.Count) ic = 0; //Go back to the beginning
-            }
-
-            //Get the surface positive and negative loops
-            var solution = new List<List<Point>>();
-            var loopCount = 0;
-            foreach (var surface in seperateSurfaces)
-            {
-                var surfacePaths = GetSurfacePaths(surface, normal);
-                var area = 0.0;
-                var significantPaths = new List<List<Point>>();
-                foreach (var path in surfacePaths)
-                {
-                    var pathArea = MiscFunctions.AreaOfPolygon(path);
-                    area += pathArea;
-                    if (!pathArea.IsNegligible(ts.SurfaceArea/10000))
-                    {
-                        //Ignore very small patches
-                        significantPaths.Add(path);
-                    }
-                }
-                if (!significantPaths.Any()) continue;
-
-                var surfaceUnion = PolygonOperations.Union(significantPaths, true, PolygonFillType.EvenOdd);
-                if (!surfaceUnion.Any()) continue;
-
-                if (area < 0)
-                {
-                    area = surfaceUnion.Sum(path => MiscFunctions.AreaOfPolygon(path));
-                    if (area < 0) throw new Exception("Area for each surface must be positive");
-                }
-
-                if (loopCount == 0)
-                {
-                    solution = new List<List<Point>>(surfaceUnion);
-                }
-                else
-                {
-                    var oldSolution = new List<List<Point>>(solution);
-                    //try
-                    //{
-                        solution = PolygonOperations.Union(oldSolution, surfaceUnion);
-                    //}
-                    //catch
-                    //{
-                        //oldSolution.AddRange(surfaceUnion);
-                        //solution = oldSolution;
-                        //break;
-                    //}
-
-                }
-                loopCount ++;
-                
-            }
-
-            var smallestX = double.PositiveInfinity;
-            var largestX = double.NegativeInfinity;
-            foreach (var point in solution.SelectMany(path => path))
-            {
-                if (point.X < smallestX)
-                {
-                    smallestX = point.X;
-                }
-                if (point.X > largestX)
-                {
-                    largestX = point.X;
-                }
-            }
-            var scale = largestX - smallestX;
-
-            //Remove tiny polygons and slivers 
-            var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale / 1000);
-            var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale / 1000);
-
-            return significantSolution;
+            solution = PolygonOperations.SimplifyFuzzy(solution);
+            var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
+            var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
+            //Presenter.ShowAndHang(significantSolution);
+            return significantSolution; //.Select(p => p.Path).ToList();
         }
 
         /// <summary>
@@ -249,23 +74,11 @@ namespace TVGL
         /// <param name="ts"></param>
         /// <param name="normal"></param>
         /// <param name="minAngle"></param>
-        /// <param name="removeTinyPolygons"></param>
         /// <returns></returns>
-        public static List<List<Point>> Run(TessellatedSolid ts, double[] normal, double minAngle = 1.0,
-            bool removeTinyPolygons = true)
+        public static List<List<PointLight>> Run(TessellatedSolid ts, double[] normal, double minAngle = 0.1)
         {
-            if (ts.Errors?.SingledSidedEdges != null)
-            {
-                //Run2 is slower, but may handle missing edge/vertex pairing better.
-                //Also, it handles low quality and small models better.
-                return Run2(ts, normal);
-            }
-            ts.HasUniformColor = false;
-
-            List<Vertex> v1, v2;
-            var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out v1, out v2);
-
-            return Run(ts.Faces, normal, minAngle, ts.SurfaceArea/10000, removeTinyPolygons, depthOfPart);
+            var depthOfPart = MinimumEnclosure.GetLengthAndExtremeVertices(normal, ts.Vertices, out _, out _);
+            return Run(ts.Faces, normal, ts, minAngle, ts.SameTolerance, depthOfPart);
         }
 
         /// <summary>
@@ -273,286 +86,468 @@ namespace TVGL
         /// </summary>
         /// <param name="faces"></param>
         /// <param name="normal"></param>
+        /// <param name="originalSolid"></param>
         /// <param name="minAngle"></param>
         /// <param name="minPathAreaToConsider"></param>
-        /// <param name="removeTinyPolygons"></param>
         /// <param name="depthOfPart"></param> 
         /// <returns></returns>
-        public static List<List<Point>> Run(IList<PolygonalFace> faces, double[] normal, double minAngle = 1.0,
-            double minPathAreaToConsider = 0.0, bool removeTinyPolygons = true, double depthOfPart = 0.0)
+        public static List<List<PointLight>> Run(IList<PolygonalFace> faces, double[] normal, TessellatedSolid originalSolid, double minAngle = 0.1,
+        double minPathAreaToConsider = 0.0, double depthOfPart = 0.0)
         {
             //Get the positive faces into a dictionary
-            var positiveFaceDict1 = new Dictionary<int, PolygonalFace>();
-            var positiveFaceDict2 = new Dictionary<int, PolygonalFace>();
-            var positiveFaceDict3 = new Dictionary<int, PolygonalFace>();
-            var firstTolerance = Math.Cos(60 * Math.PI / 180); //Angle of 60 Degrees from normal
-            var secondTolerance = Math.Cos(85* Math.PI / 180); //Angle of 85 Degrees from normal
-
-            if (minAngle > 4.999) minAngle = 4.999; //min angle must be between 0 and 5 degrees. 1 degree has proven to be good.
+            if (minAngle > 4.999) minAngle = 4.999; //min angle must be between 0 and 5 degrees. 0.1 degree has proven to be good.
             //Note also that the offset is based on the min angle.
-            var thirdTolerance = Math.Cos((90-minAngle)*Math.PI/180); //Angle of 89.9 Degrees from normal
- 
+            var angleTolerance = Math.Cos((90 - minAngle) * Math.PI / 180); //Angle of 89.9 Degrees from normal
+
+            var positiveFaces = new HashSet<PolygonalFace>();
+            var smallFaces = new List<PolygonalFace>();
+            var allPositives = new Dictionary<int, PolygonalFace>();
+            var allVertices = new HashSet<Vertex>();
             foreach (var face in faces)
             {
-                var dot = normal.dotProduct(face.Normal);
-                if (dot.IsGreaterThanNonNegligible(firstTolerance))
+                var dot = normal.dotProduct(face.Normal, 3);
+                if (dot.IsGreaterThanNonNegligible(angleTolerance))
                 {
-                    positiveFaceDict1.Add(face.IndexInList, face);
-                    face.Color = new Color(KnownColors.Blue);
+                    allPositives.Add(face.IndexInList, face);
+                    positiveFaces.Add(face);
                 }
-                else if (dot.IsGreaterThanNonNegligible(secondTolerance))
+                else if (Math.Sign(dot) > 0 && face.Area < 1.0)
                 {
-                    positiveFaceDict2.Add(face.IndexInList, face);
-                    face.Color = new Color(KnownColors.Green);
+                    smallFaces.Add(face);
                 }
-                else if (dot.IsGreaterThanNonNegligible(thirdTolerance))
+                foreach (var vertex in face.Vertices)
                 {
-                    positiveFaceDict3.Add(face.IndexInList, face);
-                    face.Color = new Color(KnownColors.Red);
+                    allVertices.Add(vertex);
                 }
-                else if (dot.IsGreaterThanNonNegligible())
-                {
-                    face.Color = new Color(KnownColors.DarkRed);
-                }
-                //Any face not at least 89.9 degrees similar to the normal is ignored
             }
-
-            //Get all the surfaces
-            var allSurfaces = SeperateIntoSurfaces(positiveFaceDict1);
-            allSurfaces.AddRange(SeperateIntoSurfaces(positiveFaceDict2));
-            allSurfaces.AddRange(SeperateIntoSurfaces(positiveFaceDict3));
-
-            //Get the surface paths from all the surfaces and union them together
-            var solution = new List<List<Point>>();
-            var loopCount = 0;
-            foreach (var surface in allSurfaces)
+            //Add any small sliver faces that are sandwinched between two positive faces.
+            foreach (var smallFace in smallFaces)
             {
-                var surfacePaths = GetSurfacePaths(surface, normal);
-                var area = 0.0;
-                var significantPaths = new List<List<Point>>();
-                foreach (var path in surfacePaths)
+                var largerEdges = smallFace.Edges.OrderBy(e => e.Length).Take(2).ToList();
+                var addToPositives = true;
+                foreach (var edge in largerEdges)
                 {
-                    var pathArea = MiscFunctions.AreaOfPolygon(path);
-                    area += pathArea;
-                    if (!pathArea.IsNegligible(minPathAreaToConsider))
+                    if (edge.OwnedFace == smallFace && allPositives.ContainsKey(edge.OtherFace.IndexInList))
                     {
-                        //Ignore very small patches
-                        significantPaths.Add(path);
                     }
-                }
-                if (!significantPaths.Any()) continue;
-
-                var surfaceUnion = PolygonOperations.Union(significantPaths, true, PolygonFillType.EvenOdd);
-                if (!surfaceUnion.Any()) continue;
-
-                if (area < 0)
-                {
-                    area = surfaceUnion.Sum(path => MiscFunctions.AreaOfPolygon(path));
-                    if (area < 0) throw new Exception("Area for each surface must be positive");
-                }
-
-                if (loopCount == 0)
-                {
-                    solution = new List<List<Point>>(surfaceUnion);
-                }
-                else
-                {
-                    var oldSolution = new List<List<Point>>(solution);
-                    solution = PolygonOperations.Union(oldSolution, surfaceUnion);
-                }
-                loopCount++;
-            }
-
-            if (!removeTinyPolygons) return solution;
-
-            //Offset by enough to account for 0.1 degree limit. 
-            var scale = Math.Tan(minAngle * Math.PI / 180)*depthOfPart;
-
-            //Remove tiny polygons and slivers 
-            var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
-            var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
-            return significantSolution;
-        }
-
-        #region GetSurfacePaths
-        private static List<List<Point>> GetSurfacePaths(HashSet<PolygonalFace> surface, double[] normal)
-        {
-            //Get the surface inner and outer edges
-            var outerEdges = new HashSet<Edge>();
-            var innerEdges = new HashSet<Edge>();
-            foreach (var face in surface)
-            {
-                if (face.Edges.Count != 3) throw new Exception();
-                foreach (var edge in face.Edges)
-                {
-                    //if (innerEdges.Contains(edge)) continue;
-                    if (!outerEdges.Contains(edge)) outerEdges.Add(edge);
-                    else if (outerEdges.Contains(edge))
+                    else if (edge.OtherFace == smallFace && allPositives.ContainsKey(edge.OwnedFace.IndexInList))
                     {
-                        innerEdges.Add(edge);
-                        outerEdges.Remove(edge);
-                    }
-                    else throw new Exception();
-                }
-
-            }
-
-            var surfacePaths = new List<List<Point>>();
-            while (outerEdges.Any())
-            {
-                var isReversed = false;
-                var startEdge = outerEdges.First();
-                outerEdges.Remove(startEdge);
-                var startVertex = startEdge.From;
-                var vertex = startEdge.To;
-                var loop = new List<Vertex> { vertex };
-                var loopOrder = new List<int> { vertex.IndexInList };
-                var edgeLoop = new List<Edge> { startEdge };
-                var stallCount = 0;
-                var previousLoopSize = 0;
-                do
-                {
-                    if (!vertex.Edges.Any()) throw new Exception("error in model");
-                    if (loop.Count - previousLoopSize == 0)
-                    {
-                        stallCount++;
-                    }
-                    previousLoopSize = loop.Count;
-                    if (stallCount > 10) throw new Exception("Missing relationship between edge and vertex");
-                    foreach (var edge2 in vertex.Edges.Where(edge2 => outerEdges.Contains(edge2)))
-                    {
-                        if (edge2.From == vertex)
-                        {
-                            outerEdges.Remove(edge2);
-                            vertex = edge2.To;
-                            loop.Add(vertex);
-                            loopOrder.Add(vertex.IndexInList);
-                            edgeLoop.Add(edge2);
-                            break;
-                        }
-                        else if (edge2.To == vertex)
-                        {
-                            outerEdges.Remove(edge2);
-                            vertex = edge2.From;
-                            loop.Add(vertex);
-                            loopOrder.Add(vertex.IndexInList);
-                            edgeLoop.Add(edge2);
-                            break;
-                        }
-                        if (edge2 == vertex.Edges.Last() && !isReversed)
-                        {
-                            //Swap the vertices were interested in and
-                            //Reverse the loop
-                            var tempVertex = startVertex;
-                            startVertex = vertex;
-                            vertex = tempVertex;
-                            loop.Reverse();
-                            loop.Add(vertex);
-                            loop.Reverse();
-                            loopOrder.Add(vertex.IndexInList);
-                            edgeLoop.Reverse();
-                            isReversed = true;
-                        }
-                        else if (edge2 == vertex.Edges.Last() && isReversed)
-                        {
-                            //Artifically close the loop.
-                            vertex = startVertex;
-                        }
-                    }
-                } while (vertex != startVertex && outerEdges.Any());
-
-                //To determine order, make sure the loop is ordered in the correct orientation
-                //This is based on the assumption that the edge direction is CCW with its owned face.
-                var alreadyReversed = false;
-                var inCorrectOrder = false;
-                var errorCount = 0;
-                var correctCount = 0;
-                foreach (var edge in edgeLoop)
-                {
-                    //Check assumption
-                    var vertex3 = edge.OwnedFace.OtherVertex(edge);
-                    var v1 = vertex3.Position.subtract(edge.To.Position);
-                    var v2 = edge.Vector;
-                    if (v2.crossProduct(v1).dotProduct(edge.OwnedFace.Normal) < 0) throw new Exception("Assumption is faulty");
-                    if (edge.OwnedFace.Normal.dotProduct(normal) > 0.0)
-                    {
-                        //Owned face is visible from positive side. 
-                        //edge.From must be right before Edge.To in list of vertices.
-                        var fromIndex = 0;
-                        for (var i = 0; i < loop.Count; i++)
-                        {
-                            if (edge.From.IndexInList == loopOrder[i])
-                            {
-                                fromIndex = i;
-                                break;
-                            }
-                        }
-                        var toIndex = 0;
-                        for (var i = 0; i < loop.Count; i++)
-                        {
-                            if (edge.To.IndexInList == loopOrder[i])
-                            {
-                                toIndex = i;
-                                break;
-                            }
-                        }
-                        if ((fromIndex + 1 == toIndex) || (toIndex == 0 && fromIndex == loop.Count - 1))
-                        {
-                            inCorrectOrder = true;
-                            correctCount++;
-                        }
-                        else if (((fromIndex == toIndex + 1) || (toIndex == loop.Count && fromIndex == 0)) && !alreadyReversed && !inCorrectOrder)
-                        {
-                            loop.Reverse();
-                            loopOrder.Reverse();
-                            alreadyReversed = true;
-                            inCorrectOrder = true;
-                            correctCount++;
-                        }
-                        else errorCount++;
                     }
                     else
                     {
-                        //Owned face is not visible from negative side. 
-                        //edge.To must be right before Edge.From in list of vertices.
-                        var toIndex = 0;
-                        for (var i = 0; i < loop.Count; i++)
-                        {
-                            if (edge.To.IndexInList == loopOrder[i])
-                            {
-                                toIndex = i;
-                                break;
-                            }
-                        }
-                        var fromIndex = 0;
-                        for (var i = 0; i < loop.Count; i++)
-                        {
-                            if (edge.From.IndexInList == loopOrder[i])
-                            {
-                                fromIndex = i;
-                                break;
-                            }
-                        }
-                        if ((fromIndex == toIndex + 1) || (toIndex == loop.Count - 1 && fromIndex == 0))
-                        {
-                            inCorrectOrder = true;
-                            correctCount++;
-                        }
-                        else if (((fromIndex == toIndex - 1) || (toIndex == 0 && fromIndex == loop.Count - 1)) && !alreadyReversed && !inCorrectOrder)
-                        {
-                            loop.Reverse();
-                            loopOrder.Reverse();
-                            alreadyReversed = true;
-                            inCorrectOrder = true;
-                            correctCount++;
-                        }
-                        else errorCount++;
+                        addToPositives = false;
                     }
                 }
-                if (errorCount > correctCount) loop.Reverse();
-                surfacePaths.Add(MiscFunctions.Get2DProjectionPoints(loop, normal, false).ToList());
+                if (addToPositives)
+                {
+                    allPositives.Add(smallFace.IndexInList, smallFace);
+                    positiveFaces.Add(smallFace);
+                }
             }
-            return surfacePaths;
+
+            //Get the polygons of all the positive faces. Force the polygons to be positive CCW
+            var vertices = new HashSet<Vertex>();
+            foreach (var face in positiveFaces)
+            {
+                foreach (var vertex in face.Vertices)
+                {
+                    vertices.Add(vertex);
+                }
+            }
+            var transform = MiscFunctions.TransformToXYPlane(normal, out _);
+            var projectedPoints = new Dictionary<int, PointLight>();
+            foreach (var vertex in vertices)
+            {
+                projectedPoints.Add(vertex.IndexInList, MiscFunctions.Get2DProjectionPointAsLight(vertex, transform));
+            }
+            var projectedFacePolygons = positiveFaces.ToDictionary(f => f.IndexInList, f => GetPathFromFace(f, projectedPoints, true));
+
+            //Get all the surfaces
+            var allSurfaces = SeperateIntoSurfaces(allPositives);
+            //var colors = new List<Color>()
+            //{
+            //    new Color(KnownColors.Blue),
+            //    new Color(KnownColors.Red),
+            //    new Color(KnownColors.Green),
+            //    new Color(KnownColors.Yellow),
+            //    new Color(KnownColors.Purple),
+            //    new Color(KnownColors.Pink),
+            //    new Color(KnownColors.Orange),
+            //    new Color(KnownColors.Turquoise),
+            //    new Color(KnownColors.White),
+            //    new Color(KnownColors.Tan)
+            //};
+            //originalSolid.HasUniformColor = false;
+            //var i = 0;
+            //foreach (var surface in allSurfaces)
+            //{
+            //    if (i == colors.Count) i = 0;
+            //    var color = colors[i];
+            //    i++;
+            //    foreach (var face in surface)
+            //    {
+            //        face.Color = color;
+            //    }
+            //}
+            //Presenter.ShowAndHang(originalSolid);
+
+            //Get the surface paths from all the surfaces and union them together
+            var solution = GetSurfacePaths(allSurfaces, normal, minPathAreaToConsider, originalSolid, projectedFacePolygons).ToList();
+
+            //Offset by enough to account for minimum angle 
+            var scale = Math.Tan(minAngle * Math.PI / 180) * depthOfPart;
+
+            //Remove tiny polygons and slivers 
+            //First, Offset out and then perform a quick check for overhang polygons.
+            //This is helpful when the polygon is nearly self-intersecting. 
+            //Then offset back out.  
+
+            solution = PolygonOperations.SimplifyFuzzy(solution, Math.Min(scale/1000, Constants.LineLengthMinimum ), 
+                Math.Min(angleTolerance/1000, Constants.LineSlopeTolerance));
+            var offsetPolygons = PolygonOperations.OffsetMiter(solution, scale);
+            offsetPolygons = EliminateOverhangPolygons(offsetPolygons, projectedFacePolygons);
+            var significantSolution = PolygonOperations.OffsetMiter(offsetPolygons, -scale);
+
+            return significantSolution;
+        }
+
+        #region Eliminate Overhangs
+        private static List<List<PointLight>> EliminateOverhangPolygons(List<List<PointLight>> nonSelfIntersectingPaths,
+                    Dictionary<int, List<PointLight>> projectedFacePolygons)
+        {
+            var correctedSurfacePath = new List<List<PointLight>>();
+            var negativePaths = new List<List<PointLight>>();
+            foreach (var path in nonSelfIntersectingPaths)
+            {
+                if (path.Count < 3) continue; //Don't include lines. It must be a valid polygon.
+                //If the area is negative, we need to check if it is a hole or an overhang
+                //If it is an overhang, we ignore it. An overhang exists if any the points
+                //in the path are inside any of the positive faces touching the path
+                var area2D = MiscFunctions.AreaOfPolygon(path);
+                if (Math.Sign(area2D) > 0)
+                {
+                    correctedSurfacePath.Add(path);
+                }
+                else
+                {
+                    negativePaths.Add(path);
+                }
+            }
+
+            foreach (var path in negativePaths)
+            {
+                var isHoleCounter1 = 0;
+                var isOverhangCounter1 = 0;
+                //Get all the adjacent faces on this surface 
+                //We need to check the face centers with the surface path.
+                //If any adjacent face centers are inside the surface path, then it is an overhang
+                //Note: regardless of whether the face is further than the loop in question or 
+                //before, being inside the loop is enough to say that it is not a hole.
+                if (path.Count > 3)
+                {
+                    //Presenter.ShowAndHang(path);
+                    //Presenter.ShowVertexPathsWithSolid(new List<List<List<Vertex>>> { loops },
+                    //    new List<TessellatedSolid> { originalSolid });
+                }
+
+                var polygons = new HashSet<List<PointLight>>(projectedFacePolygons.Values);
+
+                //Get a few points that are inside the polygon (It is non-self intersecting,
+                //but taking the center may not work.)
+                var pathCenterX = path.Average(v => v.X);
+                var pathCenterY = path.Average(v => v.Y);
+                var centerPoint = new PointLight(pathCenterX, pathCenterY);
+                var centerPointIsValid = false;
+                if (MiscFunctions.IsPointInsidePolygon(path, centerPoint, false))
+                {
+                    //A negative polygon may be inside of a positive polygon without issue, however, 
+                    //If there is a negative polygon inside a negative polygon an issue may arise.
+                    //So we need to check to make sure this point is not inside any of the other negative polgyons.
+                    if (negativePaths.Count == 1) centerPointIsValid = true;
+                    else
+                    {
+                        centerPointIsValid = negativePaths.Where(otherPath => otherPath != path).Any(otherPath =>
+                            MiscFunctions.IsPointInsidePolygon(path, centerPoint, true));
+                    }
+                }
+
+                if (centerPointIsValid)
+                {
+                    //Great! We have an easy point that is inside. Check if it is inside any surface polygon
+                }
+                else
+                {
+                    //Get a point that is inside the polygon. We could set up a sweep line to do this,
+                    //but for now I'm taking an easier approach (take average of three random points)
+                    //Use the overload of the Random constructor which accepts a seed value, so that this is repeatable
+                    var rnd = new Random(0);
+                    var count = 0;
+                    while (!centerPointIsValid && count < 1000)
+                    {
+                        var r1 = rnd.Next(path.Count);
+                        var r2 = rnd.Next(path.Count);
+                        var r3 = rnd.Next(path.Count);
+                        while (r1 == r2)
+                        {
+                            //Get a new r2
+                            r2 = rnd.Next(path.Count);
+                        }
+                        while (r3 == r2 || r3 == r1)
+                        {
+                            //Get a new r3
+                            r3 = rnd.Next(path.Count);
+                        }
+                        var p1 = path[r1];
+                        var p2 = path[r2];
+                        var p3 = path[r3];
+                        var centerX = (p1.X + p2.X + p3.X) / 3;
+                        var centerY = (p1.Y + p2.Y + p3.Y) / 3;
+                        var newCenter = new PointLight(centerX, centerY);
+                        if (MiscFunctions.IsPointInsidePolygon(path, newCenter, false))
+                        {
+                            centerPoint = newCenter;
+
+                            //A negative polygon may be inside of a positive polygon without issue, however, 
+                            //If there is a negative polygon inside a negative polygon an issue may arise.
+                            //So we need to check to make sure this point is not inside any of the other negative polgyons.
+                            if (negativePaths.Count == 1) centerPointIsValid = true;
+                            else
+                            {
+                                centerPointIsValid = negativePaths.Where(otherPath => otherPath != path).Any(otherPath =>
+                                MiscFunctions.IsPointInsidePolygon(path, newCenter, true));
+                            }
+                        }
+                        count++;
+                    }
+                    if (count == 1000)
+                    {                    
+                        //Presenter.ShowAndHang(negativePaths);
+                        throw new Exception("Not able to find a point inside polygon");
+                    }
+                }
+
+                if (polygons.Any(p => MiscFunctions.IsPointInsidePolygon(p, centerPoint, true)))
+                {
+                    //This is an overhang
+                    //path.Reverse();
+                    //correctedSurfacePath.Add(path);
+                }
+                else
+                {
+                    //This is a hole
+                    correctedSurfacePath.Add(path);
+                }
+            }
+            return correctedSurfacePath;
+        }
+        #endregion
+
+        #region GetSurfacePaths
+        private static IEnumerable<List<PointLight>> GetSurfacePaths(List<HashSet<PolygonalFace>> surfaces, double[] normal,
+            double minAreaToConsider, TessellatedSolid originalSolid, Dictionary<int, List<PointLight>> projectedFacePolygons)
+        {
+            originalSolid.HasUniformColor = false;
+            
+            var red = new Color(KnownColors.Red);
+            var allPaths = new List<List<PointLight>>();
+            foreach (var surface in surfaces)
+            {
+                //Get the surface inner and outer edges
+                var outerEdges = new HashSet<Edge>();
+                var innerEdges = new HashSet<Edge>();
+                foreach (var face in surface)
+                {
+                    if (face.Edges.Count != 3) throw new Exception();
+                    foreach (var edge in face.Edges)
+                    {
+                        //if (innerEdges.Contains(edge)) continue;
+                        if (!outerEdges.Contains(edge)) outerEdges.Add(edge);
+                        else if (outerEdges.Contains(edge))
+                        {
+                            innerEdges.Add(edge);
+                            outerEdges.Remove(edge);
+                        }
+                        else throw new Exception();
+                    }
+                }
+
+                var surfacePaths = new List<List<PointLight>>();
+                var assignedEdges = new HashSet<Edge>();
+                while (outerEdges.Any())
+                {
+                    //Get the start vertex and edge and save them to the lists
+                    var startEdge = outerEdges.First();
+                    var startVertex = startEdge.From;
+                    var loop = new List<Vertex> { startVertex };
+
+                    var nextVertex = startEdge.To;
+                    var edgeLoop = new List<Tuple<Edge, Vertex, Vertex>>
+                    {
+                        new Tuple<Edge, Vertex, Vertex>(startEdge, startVertex, nextVertex)
+                    };
+                    assignedEdges.Add(startEdge);
+
+                    //Initialize the current vertex and edge
+                    var vertex = startEdge.From;
+                    var currentEdge = startEdge;
+
+                    //Loop until back to the start vertex
+                    while (nextVertex.IndexInList != startVertex.IndexInList)
+                    {
+                        //Get the next edge
+                        var nextEdges = nextVertex.Edges.Where(e => !assignedEdges.Contains(e)).Where(e => outerEdges.Contains(e))
+                            .ToList();
+                        if (nextEdges.Count == 0)
+                        {
+                            Debug.WriteLine("Surface paths do not wrap around properly. Artificially closing loop.");
+                            break;
+                        }
+                        if (nextEdges.Count > 1)
+                        {
+                            //There are multiple edges to go to next. Simply reversing will cause an issue
+                            //if the same thing happens along the other direction.
+                            //To avoid this, we go in the direction of the current edge's surface face, until we
+                            //hit an edge.
+                            var minAngle = 2 * Math.PI;
+                            var currentFace = surface.Contains(currentEdge.OtherFace) ? currentEdge.OtherFace : currentEdge.OwnedFace;
+                            //currentFace.Color = new Color(KnownColors.White);
+                            var otherVertex = currentFace.OtherVertex(currentEdge.To, currentEdge.From);
+                            var angle1 = MiscFunctions.ProjectedExteriorAngleBetweenVerticesCCW(vertex, nextVertex, otherVertex, normal);
+                            var angle2 = MiscFunctions.ProjectedInteriorAngleBetweenVerticesCCW(vertex, nextVertex, otherVertex, normal);
+                            if (angle1 < angle2)
+                            {
+                                //Use the exterior angle
+                                foreach (var edge in nextEdges)
+                                {
+                                    var furtherVertex = edge.OtherVertex(nextVertex);
+                                    var angle = MiscFunctions.ProjectedExteriorAngleBetweenVerticesCCW(vertex, nextVertex, furtherVertex, normal);
+                                    if (!(angle < minAngle)) continue;
+                                    minAngle = angle;
+                                    //Update the current edge
+                                    currentEdge = edge;
+                                }
+                            }
+                            else
+                            {
+                                //Use the interior angle
+                                foreach (var edge in nextEdges)
+                                {
+                                    var furtherVertex = edge.OtherVertex(nextVertex);
+                                    var angle = MiscFunctions.ProjectedInteriorAngleBetweenVerticesCCW(vertex, nextVertex, furtherVertex, normal);
+                                    if (!(angle < minAngle)) continue;
+                                    minAngle = angle;
+                                    //Update the current edge
+                                    currentEdge = edge;
+
+                                    PolygonalFace faceInQuestion = null;
+                                    if (surface.Contains(edge.OwnedFace) && surface.Contains(edge.OtherFace))
+                                    {
+                                        //edge.OwnedFace.Color = new Color(KnownColors.Green);
+                                        //edge.OtherFace.Color = red;
+                                        //Presenter.ShowVertexPathsWithSolid(new List<List<List<Vertex>>> { error2Loops },
+                                        //    new List<TessellatedSolid> { originalSolid });
+                                    }
+                                    else if (surface.Contains(edge.OwnedFace))
+                                    {
+                                        faceInQuestion = edge.OtherFace;
+                                    }
+                                    else if (surface.Contains(edge.OtherFace))
+                                    {
+                                        faceInQuestion = edge.OwnedFace;
+                                    }
+                                    if (faceInQuestion != null)
+                                    {
+                                        //faceInQuestion.Color = red;
+                                        //var n2 = PolygonalFace.DetermineNormal(faceInQuestion.Vertices, out _);
+                                        //Presenter.ShowAndHang(originalSolid);
+                                        //Presenter.ShowVertexPathsWithSolid(new List<List<List<Vertex>>> { error2Loops },
+                                        //    new List<TessellatedSolid> { originalSolid });
+                                    }
+                                }
+                            }
+                            foreach (var edge in nextEdges)
+                            {
+                                if (currentFace.Edges.Contains(edge))
+                                {
+                                    if (edge == currentEdge) break; //This is what we want
+                                                                    //Presenter.ShowVertexPathsWithSolid(new List<List<List<Vertex>>> { error2Loops },
+                                                                    //    new List<TessellatedSolid> { originalSolid });
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //Update the current edge
+                            currentEdge = nextEdges.First();
+                        }
+                        //Update the current vertex
+                        vertex = nextVertex;
+                        loop.Add(vertex);
+                        //Get the next vertex                    
+                        nextVertex = currentEdge.OtherVertex(vertex);
+                        edgeLoop.Add(new Tuple<Edge, Vertex, Vertex>(currentEdge, vertex, nextVertex));
+                        assignedEdges.Add(currentEdge);
+                    }
+
+                    //To determine order:
+                    //The vertices should be listed such that their edge vector cross producted with the second point,
+                    //toward a third point on the positive face that provided this edge lines up with the normal.
+                    //If that is incorrect, then this may be a hole.
+                    //All edges should agree on this test.
+                    var correct = 0;
+                    var needsReversal = 0;
+                    foreach (var edgeTuple in edgeLoop)
+                    {
+                        var edge = edgeTuple.Item1;
+                        outerEdges.Remove(edge);
+                        var isOtherFace = surface.Contains(edge.OtherFace);
+                        var isOwnedFace = surface.Contains(edge.OwnedFace);
+                        if (isOwnedFace == isOtherFace) throw new Exception("Should be one and only one face for this edge on this surface");
+                        var positiveFaceBelongingToEdge = isOwnedFace ? edge.OwnedFace : edge.OtherFace;
+                        var vertex3 = positiveFaceBelongingToEdge.OtherVertex(edge);
+                        var v1 = vertex3.Position.subtract(edgeTuple.Item3.Position, 3); //To point according to our loop
+                        var v2 = edgeTuple.Item3.Position.subtract(edgeTuple.Item2.Position, 3); //To minus from
+                        var dot = v2.crossProduct(v1).dotProduct(positiveFaceBelongingToEdge.Normal, 3);
+                        if (dot > 0)
+                        {
+                            correct++;
+                        }
+                        else
+                        {
+                            needsReversal++;
+                        }
+                    }
+                    if (needsReversal > correct) loop.Reverse();
+                    //if(needsReversal*correct != 0) Debug.WriteLine("Reversed Loop Count: " + needsReversal + " Forward Loop Count: " + correct);
+
+                    //Get2DProjections does not project directionally (normal and normal.multiply(-1) return the same transform)
+                    //However, the way we are unioning the polygons and eliminating overhand polygons seems to be taking care of this
+                    var surfacePath = MiscFunctions.Get2DProjectionPointsAsLight(loop, normal).ToList();
+                    var area2D = MiscFunctions.AreaOfPolygon(surfacePath);
+                    if (area2D.IsNegligible(minAreaToConsider)) continue;
+
+                    //Trust the ordering from the face normals. A self intersecting polygon may have a negative area, 
+                    //but in-fact be positive once it undergoes a Fill Positive union. Same goes for positive areas.
+                    //if (Math.Sign(area2D) != Math.Sign(area3D)) surfacePath.Reverse();
+                    surfacePaths.Add(surfacePath);
+                }
+                if (!surfacePaths.Any()) continue;
+                allPaths.AddRange(surfacePaths);
+            }
+
+            //By unioning the path into non-self intersecting paths, 
+            //partially covered holes will be reduced to their final non-covered size.
+            //This is necessary for the next few checks in determining if it is a hole or an overhang.
+            //This union operation is the trickiest union in the silhouette function to reason through. 
+            //Using positive fill or even/odd perform pretty well, but they union overlapping 
+            //negative regions. This is undesirable, since we do not want to union a hole
+            //with an overlapping region. For this reason, Union Non-Zero is used. It keeps
+            //the holes in their proper orientation and does not combine them together. 
+            var nonSelfIntersectingPaths = PolygonOperations.Union(allPaths, false, PolygonFillType.NonZero);
+            var correctedSurfacePath = EliminateOverhangPolygons(nonSelfIntersectingPaths, projectedFacePolygons);
+            //if (allPaths.Sum(p => p.Count) > 10) Presenter.ShowAndHang(nonSelfIntersectingPaths);
+
+            return correctedSurfacePath;
         }
         #endregion
 
@@ -572,13 +567,10 @@ namespace TVGL
                     if (surface.Contains(face)) continue;
                     surface.Add(face);
                     unusedFaces.Remove(face.IndexInList);
-                    //Only push adjacent faces that are also negative
                     foreach (var adjacentFace in face.AdjacentFaces)
                     {
                         if (adjacentFace == null) continue; //This is an error. Handle it in the error function.
-                        if (!faces.ContainsKey(adjacentFace.IndexInList)) continue; //Ignore if not negative
-                        var dot = surface.First().Normal.dotProduct(adjacentFace.Normal);
-                        if (!dot.IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance)) continue; //ignore for now. It will be part of a different surface.
+                        if (!faces.ContainsKey(adjacentFace.IndexInList)) continue; //Ignore, only push adjacent faces that are in the faces list.
                         stack.Push(adjacentFace);
                     }
                 }
@@ -587,5 +579,25 @@ namespace TVGL
             return seperateSurfaces;
         }
         #endregion
+
+        private static List<PointLight> GetPathFromFace(PolygonalFace face, Dictionary<int, PointLight> projectedPoints, bool forceToBePositive)
+        {
+            if (face.Vertices.Count != 3) throw new Exception("This method was only developed with triangles in mind.");
+            //Make sure the polygon is ordered correctly (we already know this face is positive)
+            var points = face.Vertices.Select(v => projectedPoints[v.IndexInList]).ToList();
+            var area = MiscFunctions.AreaOfPolygon(points);
+            if (forceToBePositive && area < 0) points.Reverse();
+            return points;
+        }
+
+        private static PolygonLight GetPolygonFromFace(PolygonalFace face, Dictionary<int, PointLight> projectedPoints, bool forceToBePositive)
+        {
+            if (face.Vertices.Count != 3) throw new Exception("This method was only developed with triangles in mind.");
+            //Make sure the polygon is ordered correctly (we already know this face is positive)
+            var points = face.Vertices.Select(v => projectedPoints[v.IndexInList]).ToList();
+            var facePolygon = new PolygonLight(points);
+            if (forceToBePositive && facePolygon.Area < 0) facePolygon = PolygonLight.Reverse(facePolygon);
+            return facePolygon;
+        }
     }
 }

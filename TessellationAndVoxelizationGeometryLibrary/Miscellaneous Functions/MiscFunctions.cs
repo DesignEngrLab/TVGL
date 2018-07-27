@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using StarMathLib;
 using TVGL.Voxelization;
@@ -28,292 +29,110 @@ namespace TVGL
     {
         #region Sort Along Direction
 
-
         /// <summary>
-        ///     Returns a list of sorted vertices along a set direction. Ties are broken by direction[1] then direction[2] if
-        ///     available.
+        ///     Returns a list of sorted vertices along a set direction. 
         /// </summary>
-        /// <param name="directions">The directions.</param>
+        /// <param name="direction">The directions.</param>
         /// <param name="vertices">The vertices.</param>
         /// <param name="sortedVertices">The sorted vertices.</param>
-        /// <param name="duplicateRanges">The duplicate ranges.</param>
-        /// <exception cref="Exception">
-        ///     Must provide between 1 to 3 direction vectors
-        ///     or
-        ///     Must provide between 1 to 3 direction vectors
-        /// </exception>
-        public static void SortAlongDirection(double[][] directions, IEnumerable<Vertex> vertices,
-            out List<Vertex> sortedVertices,
-            out List<int[]> duplicateRanges)
-        {
-            List<Tuple<Vertex, double>> sortedVertexDictionary;
-            SortAlongDirection(directions, vertices, out sortedVertexDictionary, out duplicateRanges);
-            //Convert output to a list of sorted vertices
-            sortedVertices = sortedVertexDictionary.Select(element => element.Item1).ToList();
-        }
-
-
-        /// <summary>
-        ///     Returns a list of sorted vertices along a set direction. Ties are broken by direction[1] then direction[2] if
-        ///     available.
-        /// </summary>
-        /// <param name="directions">The directions.</param>
-        /// <param name="vertices">The vertices.</param>
-        /// <param name="sortedVertices">The sorted vertices.</param>
-        /// <param name="duplicateRanges">The duplicate ranges.</param>
-        /// <exception cref="Exception">
-        ///     Must provide between 1 to 3 direction vectors
-        ///     or
-        ///     Must provide between 1 to 3 direction vectors
-        /// </exception>
-        public static void SortAlongDirection(double[][] directions, IEnumerable<Vertex> vertices,
-            out List<Tuple<Vertex, double>> sortedVertices,
-            out List<int[]> duplicateRanges)
+        public static void SortAlongDirection(double[] direction, IEnumerable<Vertex> vertices,
+            out List<Tuple<Vertex, double>> sortedVertices)
         {
             //Get integer values for every vertex as distance along direction
             //Split positive and negative numbers into seperate lists. 0 is 
             //considered positive.
             //This is an O(n) preprocessing step
-            duplicateRanges = new List<int[]>();
-            sortedVertices = new List<Tuple<Vertex, double>>();
-            var points = new List<Point>();
-            var pointDistances = new Dictionary<int, double>();
-            var pointIndex = 0;
-            //Accuracy to the 15th decimal place
-            var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
-            foreach (var vertex in vertices)
-            {
-                //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
-                Point point;
-                var dot1 = directions[0].dotProduct(vertex.Position);
+            var vertexDistances = GetVertexDistances(direction, vertices);
 
-                switch (directions.Length)
-                {
-                    case 1:
-                        {
-                            point = new Point(vertex, Math.Round(dot1 * tolerance), 0.0, 0.0);
-                        }
-                        break;
-                    case 2:
-                        {
-                            var dot2 = directions[1].dotProduct(vertex.Position);
-                            point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), 0.0);
-                        }
-                        break;
-                    case 3:
-                        {
-                            var dot2 = directions[1].dotProduct(vertex.Position);
-                            var dot3 = directions[2].dotProduct(vertex.Position);
-                            point = new Point(vertex, Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance), Math.Round(dot3 * tolerance));
-                        }
-                        break;
-                    default:
-                        throw new Exception("Must provide between 1 to 3 direction vectors");
-
-                }
-                point.IndexInPath = pointIndex;
-                points.Add(point);
-                pointDistances.Add(pointIndex, dot1);
-                pointIndex++;
-            }
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
-            var sortedPoints =
-                points.OrderBy(point => point.X).ThenBy(point => point.Y).ThenBy(point => point.Z).ToList();
-
-
-            //Linear operation to locate duplicates and convert back to a list of vertices
-            var previousDuplicate = false;
-            var startIndex = 0;
-            var startPoint = sortedPoints[0];
-            sortedVertices.Add(new Tuple<Vertex, double>(startPoint.References[0], pointDistances[startPoint.IndexInPath]));
-            var counter = 0;
-            int[] intRange;
-            switch (directions.Length)
-            {
-                case 1:
-                    {
-                        for (var i = 1; i < sortedPoints.Count; i++)
-                        {
-                            var point = sortedPoints[i];
-                            sortedVertices.Add(new Tuple<Vertex, double>(point.References[0], pointDistances[point.IndexInPath]));
-                            if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X))
-                            {
-                                counter++;
-                                if (previousDuplicate) continue;
-                                startIndex = i - 1;
-                                previousDuplicate = true;
-                                counter++;
-                            }
-                            else if (previousDuplicate)
-                            {
-                                intRange = new[] { startIndex, counter };
-                                duplicateRanges.Add(intRange);
-                                previousDuplicate = false;
-                                counter = 0;
-                            }
-                        }
-                        //Add last duplicate group if necessary
-                        if (!previousDuplicate) return;
-                        intRange = new[] { startIndex, counter };
-                        duplicateRanges.Add(intRange);
-                    }
-                    break;
-                case 2:
-                    {
-                        for (var i = 1; i < sortedPoints.Count; i++)
-                        {
-                            var point = sortedPoints[i];
-                            sortedVertices.Add(new Tuple<Vertex, double>(point.References[0], pointDistances[point.IndexInPath]));
-                            if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
-                                sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y))
-                            {
-                                counter++;
-                                if (previousDuplicate) continue;
-                                startIndex = i - 1;
-                                previousDuplicate = true;
-                                counter++;
-                            }
-                            else if (previousDuplicate)
-                            {
-                                intRange = new[] { startIndex, counter };
-                                duplicateRanges.Add(intRange);
-                                previousDuplicate = false;
-                                counter = 0;
-                            }
-                        }
-                        //Add last duplicate group if necessary
-                        if (!previousDuplicate) return;
-                        intRange = new[] { startIndex, counter };
-                        duplicateRanges.Add(intRange);
-                    }
-                    break;
-                case 3:
-                    {
-                        for (var i = 1; i < sortedPoints.Count; i++)
-                        {
-                            var point = sortedPoints[i];
-                            sortedVertices.Add(new Tuple<Vertex, double>(point.References[0], pointDistances[point.IndexInPath]));
-                            if (sortedPoints[i - 1].X.IsPracticallySame(sortedPoints[i].X) &&
-                                sortedPoints[i - 1].Y.IsPracticallySame(sortedPoints[i].Y) &&
-                                sortedPoints[i - 1].Z.IsPracticallySame(sortedPoints[i].Z))
-                            {
-                                counter++;
-                                if (previousDuplicate) continue;
-                                startIndex = i - 1;
-                                previousDuplicate = true;
-                                counter++;
-                            }
-                            else if (previousDuplicate)
-                            {
-                                intRange = new[] { startIndex, counter };
-                                duplicateRanges.Add(intRange);
-                                previousDuplicate = false;
-                                counter = 0;
-                            }
-                        }
-                        //Add last duplicate group if necessary
-                        if (!previousDuplicate) return;
-                        intRange = new[] { startIndex, counter };
-                        duplicateRanges.Add(intRange);
-                    }
-                    break;
-                default:
-                    throw new Exception("Must provide between 1 to 3 direction vectors");
-            }
+            sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
         }
 
         /// <summary>
-        ///     Returns a list of sorted points along a set direction. Ties are broken by direction[1] if
-        ///     available.
+        ///     Returns a list of sorted vertices along a set direction. 
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="sortedVertices">The sorted vertices.</param>
+        public static void SortAlongDirection(double[] direction, IEnumerable<Vertex> vertices,
+            out List<Vertex> sortedVertices)
+        {
+            //Get integer values for every vertex as distance along direction
+            //Split positive and negative numbers into seperate lists. 0 is 
+            //considered positive.
+            //This is an O(n) preprocessing step
+            var vertexDistances = GetVertexDistances(direction, vertices);
+
+            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
+            //tolerance as the "isNeglible" star math function 
+            sortedVertices = vertexDistances.OrderBy(p => p.Item2).Select(p =>p.Item1).ToList();
+        }
+
+        private static IEnumerable<Tuple<Vertex, double>> GetVertexDistances(double[] direction, IEnumerable<Vertex> vertices)
+        {
+            var vertexDistances = new List<Tuple<Vertex, double>>();
+            //Accuracy to the 15th decimal place
+            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
+            var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal)+1)));
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction with accuracy to the 15th decimal place to match StarMath
+                var d = Math.Round(direction.dotProduct(vertex.Position, 3), tolerance);
+                vertexDistances.Add(new Tuple<Vertex, double>(vertex, d));
+            }
+            return vertexDistances;
+        }
+
+        /// <summary>
+        ///     Returns a list of sorted points along a set direction. 
         /// </summary>
         /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
         /// <param name="sortedPoints"></param>
-        /// <exception cref="Exception">
-        ///     Must provide between 1 to 3 direction vectors
-        ///     or
-        ///     Must provide between 1 to 3 direction vectors
-        /// </exception>
         public static void SortAlongDirection(double[] direction, IList<Point> points,
                out List<Tuple<Point, double>> sortedPoints)
-        {
-            var directions = new[] {direction};
-            SortAlongDirection(directions, points, out sortedPoints);
-        }
-
-        /// <summary>
-        ///     Returns a list of sorted points along a set direction. Ties are broken by direction[1] if
-        ///     available.
-        /// </summary>
-        /// <param name="directions">The directions.</param>
-        /// <param name="points"></param>
-        /// <param name="sortedPoints"></param>
-        /// <exception cref="Exception">
-        ///     Must provide between 1 to 3 direction vectors
-        ///     or
-        ///     Must provide between 1 to 3 direction vectors
-        /// </exception>
-        public static void SortAlongDirection(double[][] directions, IList<Point> points,
-            out List<Tuple<Point, double>> sortedPoints)
         {
             //Get integer values for every vertex as distance along direction
             //Split positive and negative numbers into seperate lists. 0 is 
             //considered positive.
             //This is an O(n) preprocessing step
-            sortedPoints = new List<Tuple<Point, double>>();
-            var tempPoints = new List<Point>();
-            var pointDistances = new Dictionary<int, double>();
-            var pointReferences = new Dictionary<int, Point>();
-            var pointIndex = 0;
+            var pointDistances = new List<Tuple<Point, double>>();
             //Accuracy to the 15th decimal place
-            var tolerance = Math.Round(1 / StarMath.EqualityTolerance);
+            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
+            var tolerance = toleranceString.Substring(toleranceString.IndexOf(".", StringComparison.Ordinal) + 1).Length;
             foreach (var point in points)
             {
-                //Get distance along 3 directions (2 & 3 to break ties) with accuracy to the 15th decimal place
-                Point rotatedPoint;
-                var dot1 = directions[0][0]*point.X + directions[0][1] * point.Y; //2D dot product
-
-                switch (directions.Length)
-                {
-                    case 1:
-                        {
-                            rotatedPoint = new Point(Math.Round(dot1 * tolerance), 0.0);
-                        }
-                        break;
-                    case 2:
-                        {
-                            var dot2 = directions[1][0] * point.X + directions[1][1] * point.Y; //2D dot product
-                            rotatedPoint = new Point(Math.Round(dot1 * tolerance), Math.Round(dot2 * tolerance));
-                        }
-                        break;
-                    default:
-                        throw new Exception("Must provide between 1 to 2 direction vectors");
-
-                }
-                tempPoints.Add(rotatedPoint);
-                rotatedPoint.ReferenceIndex = pointIndex;
-                pointDistances.Add(pointIndex, dot1);
-                pointReferences.Add(pointIndex, point);
-                pointIndex++;
+                //Get distance along the search direction with accuracy to the 15th decimal place
+                var d = Math.Round(direction[0]*point.X + direction[1] * point.Y, tolerance); //2D dot product
+                pointDistances.Add(new Tuple<Point, double>(point, d));
             }
+
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
-            var sortedPointsTemp = tempPoints.OrderBy(point => point.X).ThenBy(point => point.Y).ToList();
-
-            //Build the output list
-            foreach (var rotatedPoint in sortedPointsTemp)
-            {
-                var originalPoint = pointReferences[rotatedPoint.ReferenceIndex];
-                var distance = pointDistances[rotatedPoint.ReferenceIndex];
-                sortedPoints.Add(new Tuple<Point, double>(originalPoint, distance));
-            }
+            sortedPoints = pointDistances.OrderBy(point => point.Item2).ToList();
         }
-
 
         #endregion
 
         #region Perimeter
+        /// <summary>
+        /// Gets the perimeter for a 2D set of points.
+        /// </summary>
+        /// <param name="polygon"></param>
+        /// <returns></returns>
+        public static double Perimeter(ICollection<PointLight> polygon)
+        {
+            var listWithStartPointAtEnd = new List<PointLight>(polygon) { polygon.First() };
+            double perimeter = 0;
+            for (var i = 1; i < listWithStartPointAtEnd.Count; i++)
+            {
+                perimeter = perimeter +
+                            DistancePointToPoint(listWithStartPointAtEnd[i - 1], listWithStartPointAtEnd[i]);
+            }
+            return perimeter;
+        }
+
         /// <summary>
         /// Gets the perimeter for a 2D set of points.
         /// </summary>
@@ -377,8 +196,8 @@ namespace TVGL
                 distinctList = distinctList.OrderBy(f => f.Normal[k]).ToList();
                 for (var i = distinctList.Count - 1; i > 0; i--)
                 {
-                    if (distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(1.0, tolerance) ||
-                        (removeOpposites && distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal).IsPracticallySame(-1, tolerance)))
+                    if (distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal, 3).IsPracticallySame(1.0, tolerance) ||
+                        (removeOpposites && distinctList[i].Normal.dotProduct(distinctList[i - 1].Normal, 3).IsPracticallySame(-1, tolerance)))
                     {
                         if (distinctList[i].Area <= distinctList[i - 1].Area) distinctList.RemoveAt(i);
                         else distinctList.RemoveAt(i - 1);
@@ -457,9 +276,14 @@ namespace TVGL
         /// <summary>
         ///     Calculate the area of any non-intersecting polygon.
         /// </summary>
-        public static double AreaOfPolygon(IList<List<Point>> paths)
+        public static double AreaOfPolygon(IList<List<PointLight>> paths)
         {
             return paths.Sum(path => AreaOfPolygon(path));
+        }
+
+        public static double AreaOfPolygon(IList<Point> polygon)
+        {
+            return AreaOfPolygon(polygon.Select(p => p.Light).ToList());
         }
 
         /// <summary>
@@ -471,7 +295,7 @@ namespace TVGL
         ///     Method 1: http://www.mathopenref.com/coordpolygonarea2.html
         ///     Faster Method: http://geomalgorithms.com/a01-_area.html
         /// </reference>
-        public static double AreaOfPolygon(IList<Point> polygon)
+        public static double AreaOfPolygon(IList<PointLight> polygon)
         {
             //If less than three points, it is a line and has zero area.
             if (polygon.Count < 3) return 0.0;
@@ -761,27 +585,23 @@ namespace TVGL
             bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
         {
             var points = new List<Point>();
-            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
             var simpleCompareDict = new Dictionary<string, Point>();
             var numDecimalPoints = 0;
             while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
             var stringformat = "F" + numDecimalPoints;
             foreach (var vertex in vertices)
             {
-                pointAs4[0] = vertex.Position[0];
-                pointAs4[1] = vertex.Position[1];
-                pointAs4[2] = vertex.Position[2];
-                pointAs4 = transform.multiply(pointAs4);
+                var point = Get2DProjectionPoint(vertex, transform);
                 if (!mergeDuplicateReferences)
                 {
-                    points.Add(new Point(vertex, pointAs4[0], pointAs4[1]));
+                    points.Add(new Point(vertex, point[0], point[1]));
                 }
                 else
                 {
-                    pointAs4[0] = Math.Round(pointAs4[0], numDecimalPoints);
-                    pointAs4[1] = Math.Round(pointAs4[1], numDecimalPoints);
-                    var lookupString = pointAs4[0].ToString(stringformat) + "|"
-                                       + pointAs4[1].ToString(stringformat);
+                    point[0] = Math.Round(point[0], numDecimalPoints);
+                    point[1] = Math.Round(point[1], numDecimalPoints);
+                    var lookupString = point[0].ToString(stringformat) + "|"
+                                       + point[1].ToString(stringformat);
                     if (simpleCompareDict.ContainsKey(lookupString))
                     {
                         /* if it's in the dictionary, Add reference and move to the next vertex */
@@ -791,13 +611,168 @@ namespace TVGL
                     {
                         /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
                         * the position in the locationIndices. */
-                        var point2D = new Point(vertex, pointAs4[0], pointAs4[1]);
+                        var point2D = new Point(vertex, point[0], point[1]);
                         simpleCompareDict.Add(lookupString, point2D);
                         points.Add(point2D);
                     }
                 }
             }
             return points.ToArray();
+        }
+
+        /// <summary>
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices. 
+        ///     Additionally, this function will keep the loops in their original positive/negative
+        ///     orientation.
+        /// </summary>
+        /// <param name="loop"></param>
+        /// <param name="direction"></param>
+        /// <param name="backTransform"></param>
+        /// <param name="tolerance"></param>
+        /// <param name="mergeDuplicateReferences"></param>
+        /// <returns></returns>
+        public static List<PointLight> Get2DProjectionPointsAsLightReorderingIfNecessary(IEnumerable<Vertex> loop, double[] direction, out double[,] backTransform, double tolerance = Constants.BaseTolerance,
+            bool mergeDuplicateReferences = false)
+        {
+            var enumerable = loop as IList<Vertex> ?? loop.ToList();
+            var area1 = AreaOf3DPolygon(enumerable, direction);
+            var path = Get2DProjectionPointsAsLight(enumerable, direction, out backTransform);
+            var area2 = AreaOfPolygon(path);
+            var dif = area1 - area2;
+            var successful = false;
+            var attempts = 0;
+            //Try up to three times if not successful, expanding the tolerance each time
+            while (!successful && attempts < 4)
+            {
+                //For every attempt greater than zero, expand the tolerance by taking its square root
+                if (attempts > 0) tolerance = Math.Sqrt(tolerance);
+
+                try
+                {
+                    if (dif.IsNegligible(tolerance))
+                    {
+                        successful = true;
+                    }
+                    else
+                    {
+                        if ((-area1).IsPracticallySame(area2, tolerance))
+                        {
+                            dif = area1 + area2;
+                            path.Reverse();
+                            successful = true;
+                        }
+                        else
+                        {
+                            throw new Exception("area mismatch during 2D projection");
+                        }
+                    }
+                }
+                catch
+                {
+                    attempts++;
+                }
+            }
+            if (attempts > 0 && attempts < 4) Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
+            else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
+
+            return path;
+        }
+
+        /// <summary>
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="backTransform">The back transform.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        /// <returns>Point2D[].</returns>
+        public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, double[] direction,
+            out double[,] backTransform,
+            bool mergeDuplicateReferences = false)
+        {
+            var transform = TransformToXYPlane(direction, out backTransform);
+            return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
+        }
+
+        /// <summary>
+        ///     Returns an array of points projected along the given direction onto an x-y plane.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="direction">The direction.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        /// <returns>Point2D[].</returns>
+        public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, double[] direction,
+            bool mergeDuplicateReferences = false)
+        {
+            var transform = TransformToXYPlane(direction);
+            return Get2DProjectionPointsAsLight(vertices, transform, mergeDuplicateReferences);
+        }
+
+        /// <summary>
+        ///     Returns an array of points projected using the given transform.
+        ///     The point z-values will be zero. This does not destructively alter the vertices.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="transform">The transform.</param>
+        /// <param name="mergeDuplicateReferences">The merge duplicate references.</param>
+        /// <param name="sameTolerance">The same tolerance.</param>
+        /// <returns>Point[].</returns>
+        public static List<PointLight> Get2DProjectionPointsAsLight(IEnumerable<Vertex> vertices, double[,] transform,
+            bool mergeDuplicateReferences = false, double sameTolerance = Constants.BaseTolerance)
+        {
+            var points = new List<PointLight>();
+            var simpleCompareDict = new Dictionary<string, PointLight>();
+            var numDecimalPoints = 0;
+            while (Math.Round(sameTolerance, numDecimalPoints).IsPracticallySame(0.0)) numDecimalPoints++;
+            var stringformat = "F" + numDecimalPoints;
+            foreach (var vertex in vertices)
+            {
+                var point = Get2DProjectionPoint(vertex, transform);
+                if (!mergeDuplicateReferences)
+                {
+                    points.Add(new PointLight(point[0], point[1]));
+                }
+                else
+                {
+                    point[0] = Math.Round(point[0], numDecimalPoints);
+                    point[1] = Math.Round(point[1], numDecimalPoints);
+                    var lookupString = point[0].ToString(stringformat) + "|"
+                                       + point[1].ToString(stringformat);
+                    if (simpleCompareDict.ContainsKey(lookupString))
+                    {
+                        /* if it's in the dictionary, move to the next vertex */
+                        continue;
+                    }
+                    else
+                    {
+                        /* else, add a new vertex to the list, and a new entry to simpleCompareDict. Also, be sure to indicate
+                        * the position in the locationIndices. */
+                        var point2D = new PointLight(point[0], point[1]);
+                        simpleCompareDict.Add(lookupString, point2D);
+                        points.Add(point2D);
+                    }
+                }
+            }
+            return points;
+        }
+
+        public static PointLight Get2DProjectionPointAsLight(Vertex vertex, double[,] transform)
+        {
+            var position = Get2DProjectionPoint(vertex, transform);
+            return new PointLight(position[0], position[1]);
+        }
+
+        public static double[] Get2DProjectionPoint(Vertex vertex, double[,] transform)
+        {
+            var pointAs4 = new[] { 0.0, 0.0, 0.0, 1.0 };
+            pointAs4[0] = vertex.Position[0];
+            pointAs4[1] = vertex.Position[1];
+            pointAs4[2] = vertex.Position[2];
+            pointAs4 = transform.multiply(pointAs4);
+            return new [] {pointAs4[0], pointAs4[1]};
         }
 
         /// <summary>
@@ -897,7 +872,7 @@ namespace TVGL
         public static double[] Convert2DVectorTo3DVector(double[] direction2D, double[,] backTransform)
         {
             var tempVector = new[] { direction2D[0], direction2D[1], 0.0, 1.0 };
-            return backTransform.multiply(tempVector).Take(3).ToArray().normalize();
+            return backTransform.multiply(tempVector).Take(3).ToArray().normalize(3);
         }
 
         /// <summary>
@@ -919,7 +894,7 @@ namespace TVGL
             {
                 var position = new[] { point.X, point.Y, 0.0, 1.0 };
                 var untransformedPosition = backTransform.multiply(position).Take(3).ToArray();
-                var vertexPosition = untransformedPosition.add(directionVector);
+                var vertexPosition = untransformedPosition.add(directionVector, 3);
 
                 contour.Add(new Vertex(vertexPosition));
             }
@@ -931,7 +906,7 @@ namespace TVGL
         #region Angle between Edges/Lines
 
         /// <summary>
-        ///     Smallers the angle between edges.
+        ///     Gets the smaller of the two angles between edges.
         /// </summary>
         /// <param name="edge1">The edge1.</param>
         /// <param name="edge2">The edge2.</param>
@@ -945,7 +920,7 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Smallers the angle between edges.
+        ///     Gets the smaller of the two angles between edges.
         /// </summary>
         /// <param name="a">a.</param>
         /// <param name="b">The b.</param>
@@ -955,7 +930,7 @@ namespace TVGL
         {
             var edge1 = new[] { b.X - a.X, b.Y - a.Y };
             var edge2 = new[] { c.X - b.X, c.Y - b.Y };
-            return Math.Acos(edge1.dotProduct(edge2) / (edge1.norm2() * edge2.norm2()));
+            return Math.Acos(edge1.dotProduct(edge2, 3) / (edge1.norm2() * edge2.norm2()));
         }
 
         /// <summary>
@@ -1053,34 +1028,37 @@ namespace TVGL
         /// <param name="c">The c.</param>
         /// <param name="positiveNormal">The positive normal.</param>
         /// <returns>System.Double.</returns>
-        internal static double ProjectedAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
+        public static double ProjectedInteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
         {
             var points = Get2DProjectionPoints(new List<Vertex> { a, b, c }, positiveNormal);
             return InteriorAngleBetweenEdgesInCCWList(new[] { points[1].X - points[0].X, points[1].Y - points[0].Y },
                 new[] { points[2].X - points[1].X, points[2].Y - points[1].Y });
         }
 
+        public static double ProjectedExteriorAngleBetweenVerticesCCW(Vertex a, Vertex b, Vertex c, double[] positiveNormal)
+        {
+            return 2 * Math.PI - ProjectedInteriorAngleBetweenVerticesCCW(a, b, c, positiveNormal);
+        }
+
         /// <summary>
-        ///     Angles the between edges cw.
+        ///     Gets the exterior angle between two edges, assuming the edges are listed in CCW order.
         /// </summary>
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double ExteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
+        public static double ExteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
         {
             return 2 * Math.PI - InteriorAngleBetweenEdgesInCCWList(v0, v1);
         }
 
-        //Gets the angle between edges that are ordered in a CCW list. 
-        //NOTE: This is opposite from getting the CCW angle from v0 and v1.
-
         /// <summary>
-        ///     Angles the between edges CCW.
+        ///     Gets the interior angle between two edges, assuming the edges are listed in CCW order.
+        ///     NOTE: This is opposite from getting the CCW angle from v0 and v1.
         /// </summary>
         /// <param name="v0">The v0.</param>
         /// <param name="v1">The v1.</param>
         /// <returns>System.Double.</returns>
-        internal static double InteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
+        public static double InteriorAngleBetweenEdgesInCCWList(double[] v0, double[] v1)
         {
             #region Law of Cosines Approach (Commented Out)
 
@@ -1147,10 +1125,10 @@ namespace TVGL
             var q2 = pt4.Position;
             var points = new List<Point> { pt1, pt2, pt3, pt4 };
             intersectionPoint = null;
-            var r = p2.subtract(p);
-            var s = q2.subtract(q);
+            var r = p2.subtract(p, 2);
+            var s = q2.subtract(q, 2);
             var rxs = r[0] * s[1] - r[1] * s[0]; //2D cross product, determines if parallel
-            var qp = q.subtract(p);
+            var qp = q.subtract(p, 2);
             var qpxr = qp[0] * r[1] - qp[1] * r[0];//2D cross product
 
             // If r x s ~ 0 and (q - p) x r ~ 0, then the two lines are possibly collinear.
@@ -1162,7 +1140,7 @@ namespace TVGL
                 // 2. If neither 0 <= (q - p) * r = r * r nor 0 <= (p - q) * s <= s * s
                 // then the two lines are collinear but disjoint.
                 var qpr = qp[0] * r[0] + qp[1] * r[1];
-                var pqs = p.subtract(q)[0] * s[0] + p.subtract(q)[1] * s[1];
+                var pqs = p.subtract(q, 2)[0] * s[0] + p.subtract(q, 2)[1] * s[1];
                 var overlapping = (0 <= qpr && qpr <= r[0] * r[0] + r[1] * r[1]) ||
                                   (0 <= pqs && pqs <= s[0] * s[0] + s[1] * s[1]);
                 if (rxs.IsNegligible() && qpxr.IsNegligible())
@@ -1406,7 +1384,7 @@ namespace TVGL
         internal static void LineIntersectingTwoPlanes(double[] n1, double d1, double[] n2, double d2,
             out double[] directionOfLine, out double[] pointOnLine)
         {
-            directionOfLine = n1.crossProduct(n2).normalize();
+            directionOfLine = n1.crossProduct(n2).normalize(3);
             LineIntersectingTwoPlanes(n1, d1, n2, d2, directionOfLine, out pointOnLine);
         }
 
@@ -1539,189 +1517,6 @@ namespace TVGL
             return DistancePointToPoint(interSect1, interSect2);
         }
 
-
-        /// <summary>
-        ///     Returns lists of vertices that are inside vs. outside of each solid.
-        /// </summary>
-        /// <param name="solid1">The solid1.</param>
-        /// <param name="solid2">The solid2.</param>
-        /// <param name="verticesFromSolid1InsideSolid2">The vertices from solid1 inside solid2.</param>
-        /// <param name="verticesFromSolid1OutsideSolid2">The vertices from solid1 outside solid2.</param>
-        /// <param name="verticesFromSolid2InsideSolid1">The vertices from solid2 inside solid1.</param>
-        /// <param name="verticesFromSolid2OutsideSolid1">The vertices from solid2 outside solid1.</param>
-        /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
-        public static void FindSolidIntersections(TessellatedSolid solid1, TessellatedSolid solid2,
-            out List<Vertex> verticesFromSolid1InsideSolid2, out List<Vertex> verticesFromSolid1OutsideSolid2,
-            out List<Vertex> verticesFromSolid2InsideSolid1, out List<Vertex> verticesFromSolid2OutsideSolid1,
-            bool onBoundaryIsInside = true)
-        {
-            //Note: This mehtod should accurately tell you if any vertices are inside another solid, 
-            //but there may be some cases (though rare) where faces go through another solid without leaving a vertex inside.
-            //In this case, it would be better to check for face intersections with the lists rather than doing a ray cast with the vertices.
-
-            //HOW IT WORKS:
-            //The code sorts the vertices for each solid along a direction.
-            //There is no real reason to pick a random direction, except that is what I was using with 
-            //a try/catch to check another direction if it failed.Likely, that should be removed so it can actually be debugged if needed.
-
-            //Then, the search method goes through a list of all the sorted vertices
-            //If the vertex belongs to the second solid
-            //1) it updates the outsideFaceList, which is the face list for Solid2.
-            //2) It performs a ray cast to see how many Solid1 faces it intersects along a perpendicular direction to the search direction
-            //It tracks whether the face is above or below the vertex in question.
-            //3) It uses the number of faces above and below to determine whether it is inside Solid1.This is the same logic as for determining whether a point is inside a positive polygon.An even number of intercepts means the vertex is outside Solid1, while an odd number means it is inside.This should work whether the solids are convex or concave.
-
-            //If the vertex belongs to the first solid, it does the same thing but using Solid2 and the insideFaceList.
-
-
-
-
-            //Set reference indices to keep track of which vertex belong to which point
-            //NOTE: if the two solids are in fact the same solid, this will fail, but it
-            //will work as long as it is a copy of the solid.
-            var insideVertices = new List<Vertex>(solid1.Vertices);
-            foreach (var vertex in insideVertices) vertex.ReferenceIndex = 1;
-            var outsideVertices = new List<Vertex>(solid2.Vertices);
-            foreach (var vertex in outsideVertices) vertex.ReferenceIndex = 2;
-
-            //Set directions, where dir2 is perpendicular to dir1 and dir3 is perpendicular to both dir1 and dir2.
-            var rnd = new Random();
-            var direction1 = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
-            var direction2 = new[] { direction1[1] - direction1[2], -direction1[0], direction1[0] }.normalize();
-            //one of many
-            var direction3 = direction1.crossProduct(direction2).normalize();
-            var directions = new[] { direction1, direction2, direction3 };
-            var allVertices = new List<Vertex>(insideVertices);
-            allVertices.AddRange(outsideVertices);
-            List<Vertex> sortedVertices;
-            List<int[]> duplicateIndexRanges;
-            SortAlongDirection(directions, allVertices, out sortedVertices, out duplicateIndexRanges);
-            //if (onBoundaryIsInside && duplicateIndexRanges.Count > 1) return false;
-            //Remove all duplicate vertices
-            var offset = 0;
-            foreach (var duplicateRange in duplicateIndexRanges)
-            {
-                sortedVertices.RemoveRange(duplicateRange[0] - offset, duplicateRange[1]);
-                offset = offset + duplicateRange[1];
-            }
-            //The solids share all the same vertices (onBoundaryIsInside = false) was considered above
-            //if (sortedVertices.Count < 1) return true; 
-            //If the first or last vertex along the direction vectors was in the inside solid, then it is not inside
-            //if (sortedVertices.First().ReferenceIndex == 1 || tempSortedVertices.Last().ReferenceIndex == 1) return false;
-
-            //Perform a search along direction 1 looking for plane intercepts along direction 2.
-            //This method assumes TRIANGLE FACES ONLY.
-            var insideFaceList1 = new List<PolygonalFace>();
-            var insideFaceList2 = new List<PolygonalFace>();
-            var outsideFaceList1 = new List<PolygonalFace>();
-            var outsideFaceList2 = new List<PolygonalFace>();
-            verticesFromSolid1InsideSolid2 = new List<Vertex>();
-            verticesFromSolid1OutsideSolid2 = new List<Vertex>();
-            verticesFromSolid2InsideSolid1 = new List<Vertex>();
-            verticesFromSolid2OutsideSolid1 = new List<Vertex>();
-            foreach (var vertex in sortedVertices)
-            {
-                if (vertex.ReferenceIndex == 2)
-                {
-                    foreach (var triangle in vertex.Faces)
-                    {
-                        if (outsideFaceList1.Contains(triangle))
-                        {
-                            if (outsideFaceList2.Contains(triangle))
-                            {
-                                outsideFaceList1.Remove(triangle);
-                                outsideFaceList2.Remove(triangle);
-                            }
-                            else outsideFaceList2.Add(triangle);
-                        }
-                        else outsideFaceList1.Add(triangle);
-                    }
-                    var faceCountBelow = 0;
-                    var faceCountAbove = 0;
-                    var inside = true;
-                    foreach (var triangle in insideFaceList1)
-                    {
-                        double signedDistance;
-                        //The following funtion returns null if the vertex does not intersect the triangle
-                        var position = PointOnTriangleFromLine(triangle, vertex, direction2, out signedDistance);
-                        if (position != null)
-                        {
-                            if (signedDistance.IsNegligible())
-                            {
-                                inside = onBoundaryIsInside;
-                                //Set face counts to an odd number, and add vertex to list of inside vertices
-                                faceCountAbove = 1;
-                                faceCountBelow = 1;
-                                break;
-                            }
-                            if (signedDistance < 0.0)
-                            {
-                                faceCountBelow++;
-                            }
-                            else
-                            {
-                                faceCountAbove++;
-                            }
-                        }
-                    }
-                    if (faceCountAbove == 0 || faceCountBelow == 0) inside = false;
-                    if (faceCountAbove % 2 == 0 || faceCountBelow % 2 == 0)
-                        inside = false; //Even number of intercepts, means the vertex is outside
-                    if (inside) verticesFromSolid2InsideSolid1.Add(vertex);
-                    else verticesFromSolid2OutsideSolid1.Add(vertex);
-                }
-                else
-                {
-                    foreach (var triangle in vertex.Faces)
-                    {
-                        if (insideFaceList1.Contains(triangle))
-                        {
-                            if (insideFaceList2.Contains(triangle))
-                            {
-                                insideFaceList1.Remove(triangle);
-                                insideFaceList2.Remove(triangle);
-                            }
-                            else insideFaceList2.Add(triangle);
-                        }
-                        else insideFaceList1.Add(triangle);
-                    }
-                    var faceCountBelow = 0;
-                    var faceCountAbove = 0;
-                    var inside = true;
-                    foreach (var triangle in outsideFaceList1)
-                    {
-                        double signedDistance;
-                        //The following funtion returns null if the vertex does not intersect the triangle
-                        var position = PointOnTriangleFromLine(triangle, vertex, direction2, out signedDistance);
-                        if (position != null)
-                        {
-                            if (signedDistance.IsNegligible())
-                            {
-                                inside = onBoundaryIsInside;
-                                //Set face counts to an odd number, and add vertex to list of inside vertices
-                                faceCountAbove = 1;
-                                faceCountBelow = 1;
-                                break;
-                            }
-                            if (signedDistance < 0.0)
-                            {
-                                faceCountBelow++;
-                            }
-                            else
-                            {
-                                faceCountAbove++;
-                            }
-                        }
-                    }
-                    if (faceCountAbove == 0 || faceCountBelow == 0) inside = false;
-                    if (faceCountAbove % 2 == 0 || faceCountBelow % 2 == 0)
-                        inside = false; //Even number of intercepts, means the vertex is outside
-                    if (inside) verticesFromSolid1InsideSolid2.Add(vertex);
-                    else verticesFromSolid1OutsideSolid2.Add(vertex);
-                }
-            }
-        }
-
         #endregion
 
         #region Distance Methods (between point, line, and plane)
@@ -1778,6 +1573,17 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPoint(Point p1, Point p2)
         {
+            return DistancePointToPoint(p1.Light, p2.Light);
+        }
+
+        /// <summary>
+        ///     Distances the point to point.
+        /// </summary>
+        /// <param name="p1">point, p1.</param>
+        /// <param name="p2">point, p2.</param>
+        /// <returns>the distance between the two 3D points.</returns>
+        public static double DistancePointToPoint(PointLight p1, PointLight p2)
+        {
             var dX = p1.X - p2.X;
             var dY = p1.Y - p2.Y;
             return Math.Sqrt(dX * dX + dY * dY);
@@ -1822,7 +1628,7 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPlane(double[] point, double[] normalOfPlane, double[] positionOnPlane)
         {
-            return DistancePointToPlane(point, normalOfPlane, positionOnPlane.dotProduct(normalOfPlane));
+            return DistancePointToPlane(point, normalOfPlane, positionOnPlane.dotProduct(normalOfPlane, 3));
         }
 
         /// <summary>
@@ -1836,7 +1642,7 @@ namespace TVGL
         /// <returns>the distance between the two 3D points.</returns>
         public static double DistancePointToPlane(double[] point, double[] normalOfPlane, double signedDistanceToPlane)
         {
-            return normalOfPlane.dotProduct(point) - signedDistanceToPlane;
+            return normalOfPlane.dotProduct(point, 3) - signedDistanceToPlane;
         }
 
         /// <summary>
@@ -1870,9 +1676,9 @@ namespace TVGL
         public static double[] PointOnFaceFromIntersectingLine(List<double[]> vertices, double[] normal, double[] point1,
             double[] point2)
         {
-            var distanceToOrigin = normal.dotProduct(vertices[0]);
-            var d1 = normal.dotProduct(point1);
-            var d2 = normal.dotProduct(point2);
+            var distanceToOrigin = normal.dotProduct(vertices[0], 3);
+            var d1 = normal.dotProduct(point1, 3);
+            var d2 = normal.dotProduct(point2, 3);
             if (Math.Sign(distanceToOrigin - d1) == Math.Sign(distanceToOrigin - d2)) return null; //Points must be on either side of triangle
             var denominator = d1 - d2;
             if (denominator == 0) return null; //The points form a perpendicular line to the face
@@ -1884,7 +1690,7 @@ namespace TVGL
                 if (double.IsNaN(position[i]))
                     throw new Exception("This should never occur. Prevent this from happening");
             }
-            return IsPointInsideTriangle(vertices, position, true) ? position : null;
+            return IsVertexInsideTriangle(vertices, position, true) ? position : null;
         }
 
 
@@ -1901,8 +1707,8 @@ namespace TVGL
         public static Vertex PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Vertex point1,
             Vertex point2)
         {
-            var d1 = normalOfPlane.dotProduct(point1.Position);
-            var d2 = normalOfPlane.dotProduct(point2.Position);
+            var d1 = normalOfPlane.dotProduct(point1.Position, 3);
+            var d2 = normalOfPlane.dotProduct(point2.Position, 3);
             var fraction = (d1 - distOfPlane) / (d1 - d2);
             var position = new double[3];
             for (var i = 0; i < 3; i++)
@@ -1951,14 +1757,14 @@ namespace TVGL
         public static double[] PointOnPlaneFromRay(double[] normalOfPlane, double distOfPlane, double[] rayPosition,
             double[] rayDirection, out double signedDistance)
         {
-            var dot = rayDirection.dotProduct(normalOfPlane);
+            var dot = rayDirection.dotProduct(normalOfPlane, 3);
             signedDistance = 0.0;
             if (dot == 0) return null;
 
             var d1 = -DistancePointToPlane(rayPosition, normalOfPlane, distOfPlane);
             signedDistance = d1 / dot;
             if (signedDistance.IsNegligible()) return rayPosition;
-            return rayPosition.add(rayDirection.multiply(signedDistance));
+            return rayPosition.add(rayDirection.multiply(signedDistance), 3);
         }
 
         /// <summary>
@@ -1993,10 +1799,10 @@ namespace TVGL
         public static double[] PointOnTriangleFromLine(PolygonalFace face, double[] point3D, double[] direction,
             out double signedDistance, bool onBoundaryIsInside = true)
         {
-            var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
+            var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position, 3);
             var newPoint = PointOnPlaneFromRay(face.Normal, distanceToOrigin, point3D, direction, out signedDistance);
             if (newPoint == null) return null;
-            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
 
         /// <summary>
@@ -2015,7 +1821,7 @@ namespace TVGL
         {
             var newPoint = (double[])point3D.Clone();
             signedDistance = double.NaN;
-            var d = face.Normal.dotProduct(face.Vertices[0].Position);
+            var d = face.Normal.dotProduct(face.Vertices[0].Position, 3);
             var n = face.Normal;
             switch (direction)
             {
@@ -2038,7 +1844,7 @@ namespace TVGL
                     break;
             }
 
-            return IsPointInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
+            return IsVertexInsideTriangle(face.Vertices, newPoint, onBoundaryIsInside) ? newPoint : null;
         }
         #endregion
 
@@ -2082,10 +1888,10 @@ namespace TVGL
         /// <param name="vertexInQuestion">The vertex in question.</param>
         /// <param name="onBoundaryIsInside">if set to <c>true</c> [on boundary is inside].</param>
         /// <returns><c>true</c> if [is point inside triangle] [the specified triangle]; otherwise, <c>false</c>.</returns>
-        public static bool IsPointInsideTriangle(PolygonalFace triangle, Vertex vertexInQuestion,
+        public static bool IsVertexInsideTriangle(PolygonalFace triangle, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            return IsPointInsideTriangle(triangle.Vertices, vertexInQuestion, onBoundaryIsInside);
+            return IsVertexInsideTriangle(triangle.Vertices, vertexInQuestion, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2101,10 +1907,10 @@ namespace TVGL
         /// <references>
         ///     http://www.blackpawn.com/texts/pointinpoly/
         /// </references>
-        public static bool IsPointInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vertex> vertices, Vertex vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
-            return IsPointInsideTriangle(vertices, vertexInQuestion.Position, onBoundaryIsInside);
+            return IsVertexInsideTriangle(vertices, vertexInQuestion.Position, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2112,11 +1918,11 @@ namespace TVGL
         ///     triangle are considered "inside." Assumes vertex in question is in the same plane
         ///     as the triangle.
         /// </summary>
-        public static bool IsPointInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<Vertex> vertices, double[] vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
             var positions = vertices.Select(vertex => vertex.Position).ToList();
-            return IsPointInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
+            return IsVertexInsideTriangle(positions, vertexInQuestion, onBoundaryIsInside);
         }
 
         /// <summary>
@@ -2129,7 +1935,7 @@ namespace TVGL
         /// <param name="onBoundaryIsInside"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static bool IsPointInsideTriangle(IList<double[]> vertices, double[] vertexInQuestion,
+        public static bool IsVertexInsideTriangle(IList<double[]> vertices, double[] vertexInQuestion,
             bool onBoundaryIsInside = true)
         {
             if (vertices.Count != 3) throw new Exception("Incorrect number of points in traingle");
@@ -2153,9 +1959,9 @@ namespace TVGL
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         internal static bool SameSide(double[] p1, double[] p2, double[] a, double[] b, bool onBoundaryIsInside = true)
         {
-            var cp1 = b.subtract(a).crossProduct(p1.subtract(a));
-            var cp2 = b.subtract(a).crossProduct(p2.subtract(a));
-            var dot = cp1.dotProduct(cp2);
+            var cp1 = b.subtract(a, 3).crossProduct(p1.subtract(a, 3));
+            var cp2 = b.subtract(a, 3).crossProduct(p2.subtract(a, 3));
+            var dot = cp1.dotProduct(cp2, 3);
             if (dot.IsNegligible()) return onBoundaryIsInside;
             if (Math.Abs(dot) < Constants.BaseTolerance) return onBoundaryIsInside;
             return dot > 0.0;
@@ -2187,7 +1993,7 @@ namespace TVGL
             while (inconclusive)
             {
                 inconclusive = false;
-                var direction = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize();
+                var direction = new[] { rnd.NextDouble(), rnd.NextDouble(), rnd.NextDouble() }.normalize(3);
                 foreach (var face in ts.Faces)
                 {
                     if (face.Vertices.Any(vertex => vertexInQuestion.X.IsPracticallySame(vertex.X) &&
@@ -2197,15 +2003,15 @@ namespace TVGL
                         return onBoundaryIsInside;
                     }
 
-                    var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position);
-                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal) - distanceToOrigin) /
-                            direction.dotProduct(face.Normal);
+                    var distanceToOrigin = face.Normal.dotProduct(face.Vertices[0].Position, 3);
+                    var t = -(vertexInQuestion.Position.dotProduct(face.Normal, 3) - distanceToOrigin) /
+                            direction.dotProduct(face.Normal, 3);
                     //Note that if t == 0, then it is on the face
                     //else, find the intersection point and determine if it is inside the polygon (face)
                     var newVertex = t.IsNegligible()
                         ? vertexInQuestion
-                        : new Vertex(vertexInQuestion.Position.add(direction.multiply(t)));
-                    if (!IsPointInsideTriangle(face, newVertex)) continue;
+                        : new Vertex(vertexInQuestion.Position.add(direction.multiply(t), 3));
+                    if (!IsVertexInsideTriangle(face, newVertex)) continue;
                     //If the distance between the vertex and a plane is neglible and the vertex is inside that face
                     if (t.IsNegligible())
                     {
@@ -2322,7 +2128,7 @@ namespace TVGL
         /// 
         ///     Updated by Brandon Massoni: 8.11.2017
         /// </summary>
-        public static bool IsPolygonInsidePolygon(Polygon outerPolygon, Polygon possibleInnerPolygon)
+        public static bool IsPolygonInsidePolygon(PolygonLight outerPolygon, PolygonLight possibleInnerPolygon)
         {
             //The inner polygon can only fully be inside a polygon that has a larger absolute area.
             if (Math.Abs(outerPolygon.Area) < Math.Abs(possibleInnerPolygon.Area)) return false;
@@ -2434,9 +2240,19 @@ namespace TVGL
         /// </summary>
         /// <param name="polygon"></param>
         /// <param name="p"></param>
+        /// <param name="returnSharedPointAsInside"></param>
         /// <returns></returns>
-        public static bool IsPointInsidePolygon(Polygon polygon, Point p)
+        public static bool IsPointInsidePolygon(PolygonLight polygon, PointLight p, bool returnSharedPointAsInside = false)
         {
+            //Check if the point is the same as any of the polygon's points
+            foreach (var point in polygon.Path)
+            {
+                if (point.X.IsPracticallySame(p.X) && point.Y.IsPracticallySame(p.Y))
+                {
+                    return returnSharedPointAsInside;
+                }
+            }
+
             //1) Check if center point is within bounding box of each polygon
             if (!p.X.IsLessThanNonNegligible(polygon.MaxX) ||
                 !p.X.IsGreaterThanNonNegligible(polygon.MinX) ||
@@ -2473,8 +2289,35 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <param name="p"></param>
-        public static bool IsPointInsidePolygon(List<Point> path, Point p)
+        public static bool IsPointInsidePolygon(List<Point> path, Point point, bool returnSharedPointAsInside = false)
         {
+            return IsPointInsidePolygon(path.Select(p => p.Light).ToList(), new PointLight(point.X, point.Y), returnSharedPointAsInside);
+        }
+
+        /// <summary>
+        ///     Determines if a point is inside a polygon, where a polygon is an ordered list of 2D points.
+        ///     And the polygon is not self-intersecting. This is a newer, much faster implementation than prior
+        ///     the prior method, making use of W. Randolph Franklin's compact algorithm
+        ///     https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
+        ///     Major Assumptions: 
+        ///     1) The polygon can be convex
+        ///     2) The direction of the polygon does not matter  
+        /// 
+        ///     Updated by Brandon Massoni: 8.11.2017
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="p"></param>
+        public static bool IsPointInsidePolygon(List<PointLight> path, PointLight p, bool returnSharedPointAsInside = false)
+        {
+            //Check if the point is the same as any of the polygon's points
+            foreach (var point in path)
+            {
+                if (point.X.IsPracticallySame(p.X) && point.Y.IsPracticallySame(p.Y))
+                {
+                    return returnSharedPointAsInside;
+                }
+            }
+
             //1) Get the axis aligned bounding box of the path. This is super fast.
             //If the point is inside the bounding box, continue to check with more detailed methods, 
             //Else, retrun false.
@@ -2505,6 +2348,65 @@ namespace TVGL
             }
 
             return inside;
+        }
+
+        /// <summary>
+        /// This algorithm returns whether two polygons intersect. It can be used to triangle/triangle intersections,
+        /// or any abitrary set of polygons. If two polygons are touching, they are not considered to be intersecting.
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <param name="clip"></param>
+        /// <returns></returns>
+        //To get the area of intersection, use the Sutherland–Hodgman algorithm for polygon clipping
+        // https://en.wikipedia.org/wiki/Sutherland%E2%80%93Hodgman_algorithm
+        public static bool IsPolygonIntersectingPolygon(Polygon subject, Polygon clip)
+        {
+            //Get the axis aligned bounding box of the path. This is super fast.
+            //If the point is inside the bounding box, continue to check with more detailed methods, 
+            //Else, return false.
+            if( subject.MinX > clip.MaxX ||
+                subject.MaxX < clip.MinX ||
+                subject.MinY > clip.MaxY ||
+                subject.MaxY < clip.MinY) return false;     
+
+            //Check if either polygon is fully encompassed by the other
+            if(clip.Path.Any(p => IsPointInsidePolygon(subject.Light, p.Light))) return true;
+            if(subject.Path.Any(p => IsPointInsidePolygon(clip.Light, p.Light))) return true;
+
+            //Else, any remaining intersection will be defined by one or more crossing lines
+            //Check for intersections between all but one of the clip lines with all of the subject lines.
+            //This is enough to test for intersection because we have already performed a point check.
+            //This makes very little difference for large polygons, but cuts 9 operations down to 6 for 
+            //a triangle/triangle intersection
+            var clipPathLength = clip.Path.Count;
+            var subjectPathLength = subject.Path.Count;
+            //This next section gathers the points rather than using polygon.PathLines, so that the 
+            //PathLines do not need to be set (we don't even use them in LineLineIntersection).
+            for (var i = 0; i < clipPathLength - 1; i++) //-1 since we only need two lines
+            {
+                var point1 = clip.Path[i];
+                var point2 = (i == clipPathLength - 1) ? clip.Path[0] : clip.Path[i + 1]; //Wrap back around to 0. Else use i+1
+                for (var j = 0; j < subjectPathLength; j++) //Need to consider all the lines
+                {
+                    var point3 = subject.Path[j];
+                    var point4 = (j == subjectPathLength - 1) ? subject.Path[0] : subject.Path[j + 1]; //Wrap back around to 0. Else use i+1
+                    if (LineLineIntersection(point1, point2, point3, point4, out var intersectionPoint, false))
+                    {
+                        if (intersectionPoint == point1 ||
+                            intersectionPoint == point1 ||
+                            intersectionPoint == point3 ||
+                            intersectionPoint == point4)
+                        {
+                            continue;
+                        }
+                        //Else
+                        return true;
+                    }
+                }
+            }
+
+            //No intersections identified. Return false.
+            return false;
         }
     }
     #endregion

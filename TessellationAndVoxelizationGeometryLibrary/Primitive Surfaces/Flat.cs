@@ -57,11 +57,11 @@ namespace TVGL
         {
             if (Tolerance.IsPracticallySame(0.0)) Tolerance = Constants.ErrorForFaceInSurface;
             if (Faces.Contains(face)) return false;
-            if (!face.Normal.dotProduct(Normal).IsPracticallySame(1.0, Tolerance)) return false;
+            if (!face.Normal.dotProduct(Normal, 3).IsPracticallySame(1.0, Tolerance)) return false;
             //Return true if all the vertices are within the tolerance 
             //Note that the dotProduct term and distance to origin, must have the same sign, 
             //so there is no additional need moth absolute value methods.
-            return face.Vertices.All(v => Normal.dotProduct(v.Position).IsPracticallySame(DistanceToOrigin, Tolerance));
+            return face.Vertices.All(v => Normal.dotProduct(v.Position, 3).IsPracticallySame(DistanceToOrigin, Tolerance));
         }
 
         /// <summary>
@@ -70,14 +70,14 @@ namespace TVGL
         /// <param name="face">The face.</param>
         public override void UpdateWith(PolygonalFace face)
         {
-            Normal = Normal.multiply(Faces.Count).add(face.Normal).divide(Faces.Count + 1);
+            Normal = Normal.multiply(Faces.Count).add(face.Normal, 3).divide(Faces.Count + 1);
             Normal.normalizeInPlace();
             var newVerts = new List<Vertex>();
             var newDistanceToPlane = 0.0;
             foreach (var v in face.Vertices.Where(v => !Vertices.Contains(v)))
             {
                 newVerts.Add(v);
-                newDistanceToPlane += v.Position.dotProduct(Normal);
+                newDistanceToPlane += v.Position.dotProduct(Normal, 3);
             }
             DistanceToOrigin = (Vertices.Count * DistanceToOrigin + newDistanceToPlane) / (Vertices.Count + newVerts.Count);
             base.UpdateWith(face);
@@ -114,9 +114,9 @@ namespace TVGL
                 normalSum[1] += weightedNormal[1];
                 normalSum[2] += weightedNormal[2];
             }
-            Normal = normalSum.normalize();
+            Normal = normalSum.normalize(3);
 
-            DistanceToOrigin = Faces.Average(f => Normal.dotProduct(f.Vertices[0].Position));
+            DistanceToOrigin = Faces.Average(f => Normal.dotProduct(f.Vertices[0].Position, 3));
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace TVGL
         public Flat(double distanceToOrigin, double[] normal)
         {
             Type = PrimitiveSurfaceType.Flat;
-            Normal = normal.normalize();
+            Normal = normal.normalize(3);
             DistanceToOrigin = distanceToOrigin;
         }
 
@@ -147,8 +147,8 @@ namespace TVGL
         public Flat(double[] pointOnPlane, double[] normal)
         {
             Type = PrimitiveSurfaceType.Flat;
-            Normal = normal.normalize();
-            DistanceToOrigin = Normal.dotProduct(pointOnPlane);
+            Normal = normal.normalize(3);
+            DistanceToOrigin = Normal.dotProduct(pointOnPlane, 3);
         }
 
         #endregion

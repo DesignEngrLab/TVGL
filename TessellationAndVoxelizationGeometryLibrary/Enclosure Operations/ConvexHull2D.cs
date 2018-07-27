@@ -81,5 +81,37 @@ namespace TVGL
             
             return cvxPoints;
         }
+
+        /// <summary>
+        /// Returns the 2D convex hull for given list of points. 
+        /// </summary>
+        /// <param name="points">The points.</param>
+        /// <param name="tolerance">The tolerance.</param>
+        /// <returns>
+        /// List&lt;Point&gt;.
+        /// </returns>
+        public static IEnumerable<PointLight> ConvexHull2D(IList<PointLight> points, double tolerance = Constants.BaseTolerance)
+        {
+            //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
+            PointLight[] cvxPoints;
+            try
+            {
+                if (double.IsNaN(tolerance))
+                    return MIConvexHull.ConvexHull.Create(points).Points;
+                return MIConvexHull.ConvexHull.Create(points, tolerance).Points;
+            }
+            catch
+            {
+                Debug.WriteLine("ConvexHull2D failed on first iteration");
+                try
+                {
+                    return MIConvexHull.ConvexHull.Create(points, 0.01).Points;
+                }
+                catch
+                {
+                    throw new Exception("ConvexHull2D failed on second attempt");
+                }
+            }
+        }
     }
 }

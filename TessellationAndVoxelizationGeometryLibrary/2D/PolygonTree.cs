@@ -32,6 +32,12 @@ namespace TVGL
         public IList<List<Point>> AllPaths => AllPolygons.Select(polygon => polygon.Path).ToList();
 
         /// <summary>
+        /// A list of all the polygons in this tree.
+        /// </summary>
+        public IList<List<PointLight>> AllPathsAsLight =>
+            AllPolygons.Select(polygon => polygon.Path.Select(point => point.Light).ToList()).ToList();
+
+        /// <summary>
         /// Gets the area of the shallow polygon tree (OuterPolygon - InnerPolygons)
         /// </summary>
         public double Area => AllPolygons.Sum(p => p.Area);
@@ -113,7 +119,7 @@ namespace TVGL
                 //Start with the smallest positive polygon           
                 foreach (var shallowTree in shallowPolygonTrees)
                 {
-                    if (MiscFunctions.IsPolygonInsidePolygon(shallowTree.OuterPolygon, negativePolygon))
+                    if (MiscFunctions.IsPolygonInsidePolygon(shallowTree.OuterPolygon.Light, negativePolygon.Light))
                     {
                         shallowTree.InnerPolygons.Add(negativePolygon);
                         negativePolygon.Parent = shallowTree.OuterPolygon;

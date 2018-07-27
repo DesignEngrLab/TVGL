@@ -222,13 +222,13 @@ namespace TVGL
         }
 
 
-
         /// <summary>
         /// Initializes a new instance of the <see cref="TessellatedSolid" /> class. This constructor is
         /// for cases in which the faces and vertices are already defined.
         /// </summary>
         /// <param name="faces">The faces.</param>
         /// <param name="vertices">The vertices.</param>
+        /// <param name="copyElements"></param>
         /// <param name="colors">The colors.</param>
         /// <param name="units">The units.</param>
         /// <param name="name">The name.</param>
@@ -243,23 +243,22 @@ namespace TVGL
                 vertices = faces.SelectMany(face => face.Vertices).Distinct().ToList();
             DefineAxisAlignedBoundingBoxAndTolerance(vertices.Select(v => v.Position));
             //Create a copy of the vertex and face (This is NON-Destructive!)
-            var newVertices = new List<Vertex>();
+            Vertices = new Vertex[vertices.Count];
             var simpleCompareDict = new Dictionary<Vertex, Vertex>();
             for (var i = 0; i < vertices.Count; i++)
             {
                 var vertex = copyElements ? vertices[i].Copy() : vertices[i];
                 vertex.ReferenceIndex = 0;
                 vertex.IndexInList = i;
-                newVertices.Add(vertex);
+                Vertices[i] = vertex;
                 simpleCompareDict.Add(vertices[i], vertex);
             }
-            Vertices = newVertices.ToArray();
 
             HasUniformColor = true;
             if (colors == null || !colors.Any())
                 SolidColor = new Color(Constants.DefaultColor);
             else SolidColor = colors[0];
-            var newFaces = new List<PolygonalFace>();
+            Faces = new PolygonalFace[faces.Count];
             for (var i = 0; i < faces.Count; i++)
             {
                 //Keep "CreatedInFunction" to help with debug
@@ -281,9 +280,8 @@ namespace TVGL
                     face.Color = colors[j];
                     if (!SolidColor.Equals(face.Color)) HasUniformColor = false;
                 }
-                newFaces.Add(face);
+                Faces[i] = face;
             }
-            Faces = newFaces.ToArray();
             NumberOfFaces = Faces.Length;
             NumberOfVertices = Vertices.Length;
             CompleteInitiation();
@@ -409,9 +407,9 @@ namespace TVGL
                     var listOfFlatFaces = new List<PolygonalFace>();
                     foreach (var vertexSet in triangulatedList)
                     {
-                        var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position);
-                        var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position);
-                        var face = v1.crossProduct(v2).dotProduct(normal) < 0
+                        var v1 = vertexSet[1].Position.subtract(vertexSet[0].Position, 3);
+                        var v2 = vertexSet[2].Position.subtract(vertexSet[0].Position, 3);
+                        var face = v1.crossProduct(v2).dotProduct(normal, 3) < 0
                             ? new PolygonalFace(vertexSet.Reverse(), normal, doublyLinkToVertices) { Color = color }
                             : new PolygonalFace(vertexSet, normal, doublyLinkToVertices) { Color = color };
                         listOfFaces.Add(face);
@@ -911,14 +909,14 @@ namespace TVGL
             for (var i = 0; i < 3; i++)
             {
                 var direction = obbDirections[i];
-                var dotX1 = direction.dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
+                var dotX1 = direction.dotProduct(new List<double>() { 1.0, 0.0, 0.0 }, 3);
                 if (dotX1 > minDot)
                 {
                     minDot = dotX1;
                     xPrime = direction;
                     xPrimeIndex = i;
                 }
-                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() { 1.0, 0.0, 0.0 });
+                var dotX2 = direction.multiply(-1).dotProduct(new List<double>() { 1.0, 0.0, 0.0 }, 3);
                 if (dotX2 > minDot)
                 {
                     minDot = dotX2;
@@ -933,13 +931,13 @@ namespace TVGL
             for (var i = 0; i < 2; i++)
             {
                 var direction = obbDirections[i];
-                var dotY1 = direction.dotProduct(new List<double>() { 0.0, 1.0, 0.0 });
+                var dotY1 = direction.dotProduct(new List<double>() { 0.0, 1.0, 0.0 }, 3);
                 if (dotY1 > minDot)
                 {
                     minDot = dotY1;
                     yPrime = direction;
                 }
-                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() { 0.0, 1.0, 0.0 });
+                var dotY2 = direction.multiply(-1).dotProduct(new List<double>() { 0.0, 1.0, 0.0 }, 3);
                 if (dotY2 > minDot)
                 {
                     minDot = dotY2;
@@ -955,7 +953,7 @@ namespace TVGL
             var dotXs = new Dictionary<Vertex, double>();
             foreach (var vertex in obb.CornerVertices)
             {
-                var dot = vertex.Position.dotProduct(xPrime);
+                var dot = vertex.Position.dotProduct(xPrime, 3);
                 dotXs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest four values. Then get the those four vertices.
@@ -966,7 +964,7 @@ namespace TVGL
             var dotYs = new Dictionary<Vertex, double>();
             foreach (var vertex in bottom4Vertices)
             {
-                var dot = vertex.Position.dotProduct(yPrime);
+                var dot = vertex.Position.dotProduct(yPrime, 3);
                 dotYs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
@@ -977,7 +975,7 @@ namespace TVGL
             var dotZs = new Dictionary<Vertex, double>();
             foreach (var vertex in bottom2Vertices)
             {
-                var dot = vertex.Position.dotProduct(zPrime);
+                var dot = vertex.Position.dotProduct(zPrime, 3);
                 dotZs.Add(vertex, dot);
             }
             //Order the vertices by their dot products. Take the smallest two values. Then get the those two vertices.
@@ -1017,6 +1015,7 @@ namespace TVGL
             double[] tempCoord;
             XMin = YMin = ZMin = double.PositiveInfinity;
             XMax = YMax = ZMax = double.NegativeInfinity;
+            //Update the vertices
             foreach (var vert in Vertices)
             {
                 tempCoord = transformMatrix.multiply(new[] { vert.X, vert.Y, vert.Z, 1 });
@@ -1030,7 +1029,17 @@ namespace TVGL
                 if (tempCoord[1] > YMax) YMax = tempCoord[1];
                 if (tempCoord[2] > ZMax) ZMax = tempCoord[2];
             }
-            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 });
+            //Update the faces
+            foreach (var face in Faces)
+            {
+                face.Update();
+            }
+            //Update the edges
+            foreach (var edge in Edges)
+            {
+                edge.Update(true);
+            }
+            Center = transformMatrix.multiply(new[] { Center[0], Center[1], Center[2], 1 }).Take(3).ToArray();
             // I'm not sure this is right, but I'm just using the 3x3 rotational submatrix to rotate the inertia tensor
             if (_inertiaTensor != null)
             {

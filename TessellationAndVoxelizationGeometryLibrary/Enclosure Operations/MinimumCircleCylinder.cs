@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using StarMathLib;
 
@@ -26,7 +27,15 @@ namespace TVGL
     public static partial class MinimumEnclosure
     {
         /// <summary>
-        ///     Minimums the circle.
+        ///     Finds the minimum bounding circle
+        /// </summary>
+        public static BoundingCircle MinimumCircle(IList<PointLight> points)
+        {
+            return MinimumCircle(points.Select(p => new Point(p)).ToList());
+        }
+
+        /// <summary>
+        ///     Finds the minimum bounding circle
         /// </summary>
         /// <param name="points">The points.</param>
         /// <returns>System.Double.</returns>
@@ -186,11 +195,33 @@ namespace TVGL
             #endregion
 
             //Return information about minimum circle
-            if (stallCounter == stallLimit) throw new Exception("Bounding circle failed to converge");
+            if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " +  (Constants.BaseTolerance * circle.SqRadius * 2));
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
             return new BoundingCircle(radius, circle.Center);
         }
 
+
+        /// <summary>
+        ///     Gets the maximum inner circle given a group of polygons and a center point.
+        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingCircle MaximumInnerCircle(IList<List<PointLight>> paths, Point centerPoint)
+        {
+            var polygons = paths.Select(path => new Polygon(path.Select(p => new Point(p)))).ToList();
+            return MaximumInnerCircle(polygons, centerPoint);
+        }
+
+        /// <summary>
+        ///     Gets the maximum inner circle given a group of polygons and a center point.
+        ///     If there are no negative polygons, the function will return a negligible Bounding Circle
+        /// </summary>
+        /// <returns>BoundingBox.</returns>
+        public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, Point centerPoint)
+        {
+            var polygons = paths.Select(path => new Polygon(path)).ToList();
+            return MaximumInnerCircle(polygons, centerPoint);
+        }
 
         /// <summary>
         ///     Gets the maximum inner circle given a group of polygons and a center point.
@@ -286,7 +317,7 @@ namespace TVGL
             //   Skip if min distance to line (perpendicular) forms a point not on the line.
             foreach (var line in polygon.PathLines)
             {
-                var v1 = line.ToPoint.Position.subtract(line.FromPoint.Position);
+                var v1 = line.ToPoint.Position.subtract(line.FromPoint.Position, 2);
                 //Correctly ordering the points should yield a negative area if the circle is inside a hole or outside a positive polygon.
                 //Note also that zero area will occur when the points line up, which we want to ignore (the line ends will be checked anyways)
                 if (!MiscFunctions.AreaOfPolygon(new List<Point> { line.FromPoint, line.ToPoint, centerPoint }).IsLessThanNonNegligible())
@@ -538,7 +569,7 @@ namespace TVGL
                 }
                 else if (Points.Count == 2)
                 {
-                    var vector = Points[0].Position.subtract(Points[1].Position);
+                    var vector = Points[0].Position.subtract(Points[1].Position, 2);
                     Center = new Point(new Vertex(new[] {Points[1].X + vector[0]/2, Points[1].Y + vector[1]/2, 0.0}));
                     SqRadius = Math.Pow(vector[0]/2, 2) + Math.Pow(vector[1]/2, 2);
                 }

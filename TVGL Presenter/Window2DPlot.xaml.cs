@@ -40,6 +40,7 @@ using System.Linq;
 using System.Windows;
 using OxyPlot;
 using OxyPlot.Series;
+using DataPointSeries = OxyPlot.Wpf.DataPointSeries;
 
 namespace TVGL
 {
@@ -74,7 +75,7 @@ namespace TVGL
             Model = new PlotModel();
         }
 
-        public Window2DPlot(IEnumerable<Point> points, string title, Plot2DType plot2DType, bool closeShape,
+        public Window2DPlot(IEnumerable<PointLight> points, string title, Plot2DType plot2DType, bool closeShape,
          MarkerType marker) : this(title)
         {
             if (plot2DType == Plot2DType.Line)
@@ -93,7 +94,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public Window2DPlot(IEnumerable<Point[]> listOfArrayOfPoints, string title, Plot2DType plot2DType, bool closeShape,
+        public Window2DPlot(IEnumerable<PointLight[]> listOfArrayOfPoints, string title, Plot2DType plot2DType, bool closeShape,
             MarkerType marker) : this(title)
         {
             foreach (var points in listOfArrayOfPoints)
@@ -143,7 +144,7 @@ namespace TVGL
         /// <param name="plot2DType">Type of the plot2 d.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        public Window2DPlot(IEnumerable<List<Point>> listOfListOfPoints, string title, Plot2DType plot2DType, bool closeShape,
+        public Window2DPlot(IEnumerable<List<PointLight>> listOfListOfPoints, string title, Plot2DType plot2DType, bool closeShape,
             MarkerType marker) : this(title)
         {
             foreach (var points in listOfListOfPoints)
@@ -167,7 +168,7 @@ namespace TVGL
         /// <param name="listOfListOfPoints1"></param>
         /// <param name="marker1"></param>
         /// <param name="marker2"></param>
-        public Window2DPlot(IEnumerable<List<Point>> listOfListOfPoints1, IEnumerable<List<Point>> listOfListOfPoints2, 
+        public Window2DPlot(IEnumerable<List<PointLight>> listOfListOfPoints1, IEnumerable<List<PointLight>> listOfListOfPoints2, 
             string title, Plot2DType plot2DType, bool closeShape,
             MarkerType marker1, MarkerType marker2) : this(title)
         {
@@ -188,7 +189,7 @@ namespace TVGL
             InitializeComponent();
         }
 
-        public Window2DPlot(IEnumerable<List<List<Point>>> listofListOfListOfPoints, string title, Plot2DType plot2DType, bool closeShape,
+        public Window2DPlot(IEnumerable<List<List<PointLight>>> listofListOfListOfPoints, string title, Plot2DType plot2DType, bool closeShape,
             MarkerType marker) : this(title)
         {
             var i = 0;
@@ -261,7 +262,7 @@ namespace TVGL
         /// <param name="points">The points.</param>
         /// <param name="closeShape">if set to <c>true</c> [close shape].</param>
         /// <param name="marker">The marker.</param>
-        private void AddLineSeriesToModel(IList<Point> points, bool closeShape, MarkerType marker, TVGL.Color color = null)
+        private void AddLineSeriesToModel(IList<PointLight> points, bool closeShape, MarkerType marker, TVGL.Color color = null)
         {
             AddLineSeriesToModel(PointsToDouble(points), closeShape, marker, color);
         }
@@ -294,7 +295,7 @@ namespace TVGL
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="marker">The marker.</param>
-        private void AddScatterSeriesToModel(IList<Point> points, MarkerType marker, TVGL.Color color = null)
+        private void AddScatterSeriesToModel(IList<PointLight> points, MarkerType marker, TVGL.Color color = null)
         {
             AddScatterSeriesToModel(PointsToDouble(points), marker, color);
         }
@@ -306,8 +307,11 @@ namespace TVGL
         /// <param name="marker">The marker.</param>
         private void AddScatterSeriesToModel(IList<double[]> points, MarkerType marker, TVGL.Color color = null)
         {
-            var series = new LineSeries {MarkerType = marker};
-
+            var series = new LineSeries
+            {
+                MarkerType = marker,
+                LineStyle = LineStyle.None
+            };
             //Add color to series if applicable
             if (color != null)
             {
@@ -320,7 +324,7 @@ namespace TVGL
             Model.Series.Add(series);
         }
 
-        private List<double[]> PointsToDouble(IList<Point> points)
+        private List<double[]> PointsToDouble(IList<PointLight> points)
         {
             var doubleArray = new List<double[]>();
             for(var i = 0; i < points.Count(); i++)

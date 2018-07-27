@@ -64,6 +64,30 @@ namespace TVGL.Boolean_Operations
         }
 
         /// <summary>
+        /// This slice function makes a seperate cut for the positive and negative side,
+        /// at a specified offset in both directions. It rebuilds straddle triangles, 
+        /// but only uses one of the two straddle edge intersection vertices to prevent
+        /// tiny triangles from being created.
+        /// </summary>
+        /// <param name="ts">The ts.</param>
+        /// <param name="plane">The plane.</param>
+        /// <param name="positiveSideSolid">The solid that is on the positive side of the plane
+        /// This means that are on the side that the normal faces.</param>
+        /// <param name="negativeSideSolid">The solid on the negative side of the plane.</param>
+        public static void OnFlatAsSingleSolids(TessellatedSolid ts, Flat plane,
+            out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
+        {
+            if (!GetContactData(ts, plane, out var contactData))
+            {
+                positiveSideSolid = null;
+                negativeSideSolid = null;
+                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
+                return;
+            };
+            MakeSolids(contactData, ts.Units, out positiveSideSolid, out negativeSideSolid);
+        }
+
+        /// <summary>
         /// Gets the contact data for a slice, without making the individual solids.
         /// </summary>
         /// <param name="ts"></param>
@@ -116,6 +140,20 @@ namespace TVGL.Boolean_Operations
         {
             positiveSideSolids = contactData.PositiveSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, true, null, unitType)).ToList();
             negativeSideSolids = contactData.NegativeSideContactData.Select(solidContactData => new TessellatedSolid(solidContactData.AllFaces, null, true, null, unitType)).ToList();
+        }
+
+        /// <summary>
+        /// Returns a single positive side and negative side solid, given contact data for this slice
+        /// </summary>
+        /// <param name="contactData"></param>
+        /// <param name="positiveSideSolid"></param>
+        /// <param name="negativeSideSolid"></param>
+        public static void MakeSolids(ContactData contactData, UnitType unitType, out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
+        {
+            var positiveSideFaces = new List<PolygonalFace>(contactData.PositiveSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
+            positiveSideSolid = new TessellatedSolid(positiveSideFaces, null, true, null, unitType);
+            var negativeSideFaces = new List<PolygonalFace>(contactData.NegativeSideContactData.SelectMany(solidContactData => solidContactData.AllFaces));
+            negativeSideSolid = new TessellatedSolid(negativeSideFaces, null, true, null, unitType);
         }
 
 
@@ -260,7 +298,7 @@ namespace TVGL.Boolean_Operations
             var pointOnPlane = plane.Normal.multiply(plane.DistanceToOrigin);
             foreach (var vertex in ts.Vertices)
             {
-                var distance = vertex.Position.subtract(pointOnPlane).dotProduct(plane.Normal);
+                var distance = vertex.Position.subtract(pointOnPlane, 3).dotProduct(plane.Normal, 3);
                 distancesToPlane.Add(distance);
                 if (distance > 0) distancesToPosPlane.Add(distance);
                 else if (distance < 0) distancesToNegPlane.Add(Math.Abs(distance));
