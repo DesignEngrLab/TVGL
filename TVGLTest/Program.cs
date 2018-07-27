@@ -105,6 +105,7 @@ namespace TVGLPresenterDX
                 {
                     Af = 0.25f
                 };
+                //Presenter.ShowAndHang(ts);
                 TestVoxelization(ts, justfile);
 
                 // var stopWatch = new Stopwatch();
@@ -132,7 +133,7 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
             var vs1 = new VoxelizedSolid(ts, 7);
-            Presenter.ShowAndHang(vs1);
+            //Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);

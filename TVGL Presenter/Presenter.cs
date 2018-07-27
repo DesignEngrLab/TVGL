@@ -868,16 +868,6 @@ namespace TVGL
 
         private static Visual3D MakeModelVisual3D(VoxelizedSolid vs)
         {
-            //if (false)
-            //{
-            //    var ts = vs.ConvertToTessellatedSolid(
-            //         new Color(KnownColors.MediumSeaGreen)
-            //         {
-            //             Af = 0.80f
-            //         });
-            //    return ConvertTessellatedSolidtoObject3D(ts);
-            //}
-
             var normalsTemplate = new[]
             {
                 new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
@@ -954,7 +944,128 @@ namespace TVGL
                          }
             };
         }
-        
+
+        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, bool showPartialGreen)
+        {
+            var normalsTemplate = new[]
+            {
+                new float[] {-1, 0, 0}, new float[] {-1, 0, 0},
+                new float[] {1, 0, 0}, new float[] {1, 0, 0},
+                new float[] {0, -1, 0}, new float[] {0, -1, 0},
+                new float[] {0, 1, 0}, new float[] {0, 1, 0},
+                new float[] {0, 0, -1}, new float[] {0, 0, -1},
+                new float[] {0, 0, 1}, new float[] {0, 0, 1}
+            };
+
+            var coordOffsets = new[]
+            {
+                new[] {new float[] {0, 0, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 0}},
+                new[] {new float[] {0, 1, 0}, new float[] {0, 0, 1}, new float[] {0, 1, 1}}, //x-neg
+                new[] {new float[] {1, 0, 0}, new float[] {1, 1, 0}, new float[] {1, 0, 1}},
+                new[] {new float[] {1, 1, 0}, new float[] {1, 1, 1}, new float[] {1, 0, 1}}, //x-pos
+                new[] {new float[] {0, 0, 0}, new float[] {1, 0, 0}, new float[] {0, 0, 1}},
+                new[] {new float[] {1, 0, 0}, new float[] {1, 0, 1}, new float[] {0, 0, 1}}, //y-neg
+                new[] {new float[] {0, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 0}},
+                new[] {new float[] {1, 1, 0}, new float[] {0, 1, 1}, new float[] {1, 1, 1}}, //y-pos
+                new[] {new float[] {0, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 0, 0}},
+                new[] {new float[] {1, 0, 0}, new float[] {0, 1, 0}, new float[] {1, 1, 0}}, //z-neg
+                new[] {new float[] {0, 0, 1}, new float[] {1, 0, 1}, new float[] {0, 1, 1}},
+                new[] {new float[] {1, 0, 1}, new float[] {1, 1, 1}, new float[] {0, 1, 1}}, //z-pos
+            };
+            var fullPositions = new Point3DCollection();
+            var fullNormals = new Vector3DCollection();
+            var partialPositions = new Point3DCollection();
+            var partialNormals = new Vector3DCollection();
+            var lowestLevel = (int) vs.VoxelSideLengths.Length - 1;
+            foreach (var v in vs.Voxels(VoxelRoleTypes.Partial))
+            {
+                if (v.Level == 0 || v.Level == lowestLevel) continue;
+                var x = (float) v.BottomCoordinate[0];
+                var y = (float) v.BottomCoordinate[1];
+                var z = (float) v.BottomCoordinate[2];
+                var s = (float) v.SideLength;
+                for (int i = 0; i < 12; i++)
+                {
+                   for (int j = 0; j < 3; j++)
+                    {
+                        partialPositions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
+                            y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
+                        partialNormals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1],
+                            normalsTemplate[i][2]));
+                    }
+                }
+            }
+
+            foreach (var v in vs.Voxels(VoxelRoleTypes.Full)) 
+            {
+                //if (v.Level == 0 || v.Level == lowestLevel) continue;
+              
+                var x = (float) v.BottomCoordinate[0];
+                var y = (float) v.BottomCoordinate[1];
+                var z = (float) v.BottomCoordinate[2];
+                var s = (float) v.SideLength;
+                for (int i = 0; i < 12; i++)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        fullPositions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
+                            y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
+                        fullNormals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1],
+                            normalsTemplate[i][2]));
+                    }
+                }
+            }
+
+            return new ModelVisual3D
+            {
+                Children =
+                {
+                    new ModelVisual3D
+                    {
+                        Content =
+                            new GeometryModel3D
+                            {
+                                Geometry = new MeshGeometry3D
+                                {
+                                    Positions = fullPositions,
+                                    // TriangleIndices = new Int32Collection(triIndices),
+                                    Normals = fullNormals
+                                },
+                                Material = MaterialHelper.CreateMaterial(
+                                    new System.Windows.Media.Color
+                                    {
+                                        A = vs.SolidColor.A,
+                                        B = vs.SolidColor.B,
+                                        G = vs.SolidColor.G,
+                                        R = vs.SolidColor.R
+                                    })
+                            }
+                    },
+                    new ModelVisual3D
+                    {
+                        Content =
+                            new GeometryModel3D
+                            {
+                                Geometry = new MeshGeometry3D
+                                {
+                                    Positions = partialPositions,
+                                    // TriangleIndices = new Int32Collection(triIndices),
+                                    Normals = partialNormals
+                                },
+                                Material = MaterialHelper.CreateMaterial(
+                                    new System.Windows.Media.Color
+                                    {
+                                        A = 64,
+                                        B = 64,
+                                        G = 255,
+                                        R = 33
+                                    })
+                            }
+                    }
+                }
+            };
+        }
+
         /// <summary>
         /// Makes the model visual3 d.
         /// </summary>

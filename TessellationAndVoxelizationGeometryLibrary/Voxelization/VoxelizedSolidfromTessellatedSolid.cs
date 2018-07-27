@@ -30,14 +30,14 @@ namespace TVGL.Voxelization
         /// Initializes a new instance of the <see cref="VoxelizedSolid" /> class.
         /// </summary>
         /// <param name="ts">The ts.</param>
-        /// <param name="voxelDiscretization">The voxel discretization.</param>
+        /// <param name="binarySize">The number of voxels on the longest size is 2 raised to this number (e.g 7 means 128 voxels on longest side).</param>
         /// <param name="onlyDefineBoundary">if set to <c>true</c> [only define boundary].</param>
         /// <param name="bounds">The bounds.</param>
-        public VoxelizedSolid(TessellatedSolid ts, int bindarySize,
+        public VoxelizedSolid(TessellatedSolid ts, int binarySize,
             bool onlyDefineBoundary = false,
             double[][] bounds = null) : base(ts.Units, ts.Name, "", ts.Comments, ts.Language)
         {
-            Discretization = bindarySize;
+            Discretization = binarySize;
             bitLevelDistribution = Constants.DefaultBitLevelDistribution[Discretization];
             voxelsPerSide = bitLevelDistribution.Select(b => (int)Math.Pow(2, b)).ToArray();
             voxelsInParent = voxelsPerSide.Select(s => s * s * s).ToArray();
@@ -127,7 +127,7 @@ namespace TVGL.Voxelization
                         voxel1 =>
                         //foreach (var voxel1 in ((Voxel_Level0_Class)voxel0).InnerVoxels[0].Where(v => v.Role == VoxelRoleTypes.Partial))
                         {
-                            var voxelHash = new VoxelHashSet(1, this);
+                            var voxelHash = new VoxelHashSet(2, this);
                             MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel1, voxelHash);
                             MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel1,
                                 voxelHash);
@@ -136,7 +136,7 @@ namespace TVGL.Voxelization
                                 makeVoxelsInInterior(voxelHash, voxel1, null);
                             lock (voxels) voxels.AddRange(voxelHash);
                         });
-                        ((Voxel_Level0_Class)voxel0).InnerVoxels[1] = new VoxelHashSet(1, this, voxels);
+                        ((Voxel_Level0_Class)voxel0).InnerVoxels[1] = new VoxelHashSet(2, this, voxels);
                     });
             }
             #endregion
@@ -158,7 +158,7 @@ namespace TVGL.Voxelization
                                 var voxelsLevel2 = GetChildVoxels(voxel1);
                                 Parallel.ForEach(voxelsLevel2, voxel2 =>
                                 {
-                                    var voxelHash = new VoxelHashSet(2, this);
+                                    var voxelHash = new VoxelHashSet(3, this);
                                     MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel2, voxelHash);
                                     MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel2,
                                         voxelHash);
@@ -168,7 +168,7 @@ namespace TVGL.Voxelization
                                     lock (voxels) voxels.AddRange(voxelHash);
                                 });
                             });
-                        ((Voxel_Level0_Class)voxel0).InnerVoxels[2] = new VoxelHashSet(2, this, voxels);
+                        ((Voxel_Level0_Class)voxel0).InnerVoxels[2] = new VoxelHashSet(3, this, voxels);
                     });
             }
             #endregion
@@ -193,7 +193,7 @@ namespace TVGL.Voxelization
                                     var voxelsLevel3 = GetChildVoxels(voxel2);
                                     Parallel.ForEach(voxelsLevel3, voxel3 =>
                                     {
-                                        var voxelHash = new VoxelHashSet(3, this);
+                                        var voxelHash = new VoxelHashSet(4, this);
                                         MakeVertexVoxels(((Voxel_ClassWithLinksToTSElements)voxel1).Vertices, voxel3,
                                             voxelHash);
                                         MakeVoxelsForFacesAndEdges(((Voxel_ClassWithLinksToTSElements)voxel1).Faces, voxel3,
@@ -205,7 +205,7 @@ namespace TVGL.Voxelization
                                     });
                                 });
                             });
-                        ((Voxel_Level0_Class)voxel0).InnerVoxels[3] = new VoxelHashSet(3, this, voxels);
+                        ((Voxel_Level0_Class)voxel0).InnerVoxels[3] = new VoxelHashSet(4, this, voxels);
                     });
             }
             #endregion
@@ -226,7 +226,8 @@ namespace TVGL.Voxelization
                     {(p[0] - Offset[0]) / s, (p[1] - Offset[1]) / s, (p[2] - Offset[2]) / s};
             });
         }
-
+        // this is effectively the same function as above but the 2nd, 3rd, 4th, etc. times we do it, we can just
+        // overwrite the previous values.
         private void UpdateVertexSimulatedCoordinates(IList<Vertex> vertices, int level)
         {
             var s = VoxelSideLengths[level];
@@ -244,6 +245,12 @@ namespace TVGL.Voxelization
             );
         }
 
+        /// <summary>
+        /// Makes the voxels that each vertex is within.
+        /// </summary>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="parent">The parent.</param>
+        /// <param name="voxels">The voxels.</param>
         private void MakeVertexVoxels(IList<Vertex> vertices, IVoxel parent, VoxelHashSet voxels)
         {
             setLimitsAndLevel(parent, out var level, out var parentLimits);
@@ -255,6 +262,12 @@ namespace TVGL.Voxelization
             }
             );
         }
+        /// <summary>
+        /// This is a helper function for the previous function. Extra care is take when the actual coords of the vertex
+        /// lie on the boundary between voxels.
+        /// </summary>
+        /// <param name="v">The v.</param>
+        /// <returns>System.Int32[].</returns>
         private int[] intCoordsForVertex(Vertex v)
         {
             var coordinates = transformedCoordinates[v.IndexInList];
@@ -338,6 +351,10 @@ namespace TVGL.Voxelization
             foreach (var face in faces) //loop over the faces
             {
                 if (level > 2 && tsObjectIsOutsideLimits(parentLimits, face)) continue;
+                // todo: this should be made much quicker (this being the whole set of functions for faces and edges)
+                // we should only find the intersections within the parent. For lower levels, too much time is spent
+                // simply throwing out intersections that are not within the parent boundaries. This does not require
+                // a full overhaul of the functions, but careful testing and benchmarking is necessary.
                 if (simpleCase(face, voxels, level, parentLimits)) continue;
 
                 setUpFaceSweepDetails(face, out var startVertex, out var sweepDim, out var maxSweepValue);
@@ -654,14 +671,23 @@ namespace TVGL.Voxelization
 
         #region Interior Voxel Creation
 
-        private const double startingMinFaceToCornerDistance = 1.001;// this starts close to 1.0 because the voxel has length of one (at 
-                                                                    // least within the current scaling). It's possible that faces are intersected but farther away than
-                                                                    // this voxel. This is for when the voxel knows its faces as well as when looking over the parent set. It may be
-                                                                    // completely fine to start at 1.0 instead of 1.001 but I wanted a definitive value slightly greater than one for 
-                                                                    // a conditional statement used below, plus I wanted to be a little practical if the face was just slightly
-                                                                    // away from the voxel but - in all practicality intersect in a way that can tell us about the bottom corner.
+        private const double startingMinFaceToCornerDistance = 1.0001;// this starts close to 1.0 because the voxel has length of one (at 
+                                                                     // least within the current scaling). It's possible that faces are intersected but farther away than
+                                                                     // this voxel. This is for when the voxel knows its faces as well as when looking over the parent set. It may be
+                                                                     // completely fine to start at 1.0 instead of 1.001 but I wanted a definitive value slightly greater than one for 
+                                                                     // a conditional statement used below, plus I wanted to be a little practical if the face was just slightly
+                                                                     // away from the voxel but - in all practicality intersect in a way that can tell us about the bottom corner.
+                                                                     /// <summary>
+                                                                     /// For each of the discovered partial voxels, we now need to determine is the bottom coordinate inside or not. This is
+                                                                     /// important for filling in the internal voxels. We are to know for one true point whether or not it is inside or not.
+                                                                     /// </summary>
+                                                                     /// <param name="voxels">The voxels.</param>
+                                                                     /// <param name="parentFaces">The parent faces.</param>
+                                                                     /// <param name="parentBtmCoordIsInside">if set to <c>true</c> [parent BTM coord is inside].</param>
         private void DefineBottomCoordinateInside(VoxelHashSet voxels, List<PolygonalFace> parentFaces, bool parentBtmCoordIsInside)
         {
+            // This is a tricky function that has been rewritten alot in the first half of 2018. The four steps are arranged to 
+            // quickly solve easy cases before a longer process to find the remaining ones.
             var level = voxels.level;
             var queue = new Queue<IVoxel>();
             var assignedHashSet = new VoxelHashSet(level, this);
@@ -685,10 +711,11 @@ namespace TVGL.Voxelization
                 }
                 #endregion
                 #region Step 2: check if a face intersects with local coordinate frame
+                // in the next loop, we check to see if a face intersects with the local coordinate frame of the voxel.
+                // That is, the 3 lines  going from 0,0,0 to 1,0,0 or 0,1,0 or 0,0,1. We 
                 var voxCoord = voxel.CoordinateIndices;
                 var closestFaceIsPositive = false;
                 var closestFaceDistance = startingMinFaceToCornerDistance;
-                // in the next loop, we check to see if a face intersection the local coordinate frame of the voxel. That is going from 0,0,0 to 1,0,0 or 0,1,0 or 0,0,1
                 foreach (var face in faces)
                 {
                     for (int i = 0; i < 3; i++)
@@ -709,9 +736,14 @@ namespace TVGL.Voxelization
                 else queue.Enqueue(voxel);
             }
             #region Step 3: infer from neighbors
+            // those that we weren't able to get from Step 2 may be neighbors of ones that were figured out from one and two
+            // this is why the successes in the above were also put onto the "assignedHashSet". We now know that those on the queue
+            // have no faces along their coordinate axes, so we use this to see if the neighbor is inside, then we know the one in
+            // question is inside. We also move that to the "assignedHashSet" so that it can aid other unknowns in the queue. 
             var cyclesSinceLastSuccess = 0;
             while (queue.Any() && queue.Count > cyclesSinceLastSuccess)
-            {
+            {  // note the "cyclesSincesLastSuccess". This allows us to go one full additional pass through any remaining in the queue
+                // to see if they can be determined from their recently determined neighbors that were formerly on the queue
                 var voxel = queue.Dequeue();
                 var voxCoord = voxel.CoordinateIndices;
                 var gotFromNeighbor = false;
@@ -760,8 +792,6 @@ namespace TVGL.Voxelization
                 voxels.AddOrReplace(voxel);
             }
             #endregion
-
-            voxels = assignedHashSet;
         }
 
         private bool lineToFaceIntersection(PolygonalFace face, int[] c, int dimension, double upperLimit, out double signedDistance)
@@ -895,7 +925,7 @@ namespace TVGL.Voxelization
                     }
                 }
             }
-            insiders = new Stack<IVoxel>(insiders); //.OrderBy(v => v.CoordinateIndices[2]));// why are the insiders sorted?
+            insiders = new Stack<IVoxel>(insiders); 
             while (insiders.Any())
             {
                 var current = insiders.Pop();
@@ -917,8 +947,8 @@ namespace TVGL.Voxelization
                             var faces = current is Voxel_ClassWithLinksToTSElements ? ((Voxel_ClassWithLinksToTSElements)current).Faces :
                                 parent is Voxel_ClassWithLinksToTSElements ? ((Voxel_ClassWithLinksToTSElements)parent).Faces :
                                     grandParentFaces;
-                            addTheNeighbor = !faces.Any(f => lineToFaceIntersection(f, coord, direction - 1, 1, out var signedDistance));
-                            //addTheNeighbor = farthestFaceIsNegativeDirection(faces, coord, direction - 1);
+                            //addTheNeighbor = !faces.Any(f => lineToFaceIntersection(f, coord, direction - 1, 1, out var signedDistance));
+                            addTheNeighbor = farthestFaceIsNegativeDirection(faces, coord, direction - 1);
                         }
                         if (addTheNeighbor)
                         {
@@ -937,7 +967,8 @@ namespace TVGL.Voxelization
             double maxDistance = 0.0;
             foreach (var face in faces)
             {
-                if (lineToFaceIntersection(face, coord, dimension, startingMinFaceToCornerDistance, out var signedDistance))
+                if (lineToFaceIntersection(face, coord, dimension, 1, out var signedDistance))
+                //if (lineToFaceIntersection(face, coord, dimension, startingMinFaceToCornerDistance, out var signedDistance))
                     if (signedDistance > maxDistance)
                     {
                         negativeFace = face.Normal[dimension] < 0;
