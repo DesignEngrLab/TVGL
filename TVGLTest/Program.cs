@@ -88,12 +88,12 @@ namespace TVGLPresenterDX
             try
             {
                 //x64
-                dir = new DirectoryInfo("../../../../TestFiles");
+                dir = new DirectoryInfo("../../../TestFiles");
             }
             catch
             {
                 //x86
-                dir = new DirectoryInfo("../../../TestFiles");
+                dir = new DirectoryInfo("../../TestFiles");
             }
             var fileNames = dir.GetFiles("*");
             //Casing = 18
@@ -108,14 +108,14 @@ namespace TVGLPresenterDX
                 if (!File.Exists(filename)) continue;
                 using (fileStream = File.OpenRead(filename))
                     IO.Open(fileStream, filename, out ts);
-                if (ts.Errors!=null) continue;
+                if (ts.Errors != null) continue;
                 Color color = new Color(KnownColors.AliceBlue);
                 ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
                 {
                     Af = 0.25f
                 };
                 //Presenter.ShowAndHang(ts);
-                TestVoxelization(ts, justfile);
+                TestVoxelization(ts, filename);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -136,7 +136,7 @@ namespace TVGLPresenterDX
             }
 
             Console.WriteLine("Completed.");
-             Console.ReadKey();
+            Console.ReadKey();
         }
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
@@ -233,11 +233,11 @@ namespace TVGLPresenterDX
             //PresenterShowAndHang(unmachinableVoxels);
             //unmachinableVoxels.SolidColor = new Color(KnownColors.DeepPink);
             //unmachinableVoxels.SolidColor.A = 200;
-            if (unmachinableVoxels.Volume==0)
+            if (unmachinableVoxels.Volume == 0)
                 Console.WriteLine("no unmachineable sections!!\n\n");
             else
             {
-                Presenter.ShowAndHang(unmachinableVoxels,ts);
+                Presenter.ShowAndHang(unmachinableVoxels, ts);
                 Presenter.ShowAndHang(unmachinableVoxels);
             }
 
@@ -246,42 +246,6 @@ namespace TVGLPresenterDX
             //PresenterShowAndHang(unmachinableVoxelsSolid);
 
             //var originalTS = new Solid[] { ts };
-        }
-
-
-
-        public static void TestVoxelization(TessellatedSolid ts)
-        {
-            var stopWatch = new Stopwatch();
-            ts.Transform(new double[,]
-            {
-                {1, 0, 0, -(ts.XMax + ts.XMin) / 2},
-                {0, 1, 0, -(ts.YMax + ts.YMin) / 2},
-                {0, 0, 1, -(ts.ZMax + ts.ZMin) / 2},
-            });
-            stopWatch.Restart();
-            var vs1 = new VoxelizedSolid(ts, VoxelDiscretization.Coarse, true); //, bounds);
-
-            stopWatch.Stop();
-            Console.WriteLine("Coarse: tsvol:{0}\tvol:{1}\t#voxels:{2}\ttime{3}",
-                ts.Volume, vs1.Volume, vs1.Count, stopWatch.Elapsed.TotalSeconds);
-            stopWatch.Restart();
-            Presenter.ShowAndHang(new Solid[] { ts, vs1 });
-            // var vs2 = (VoxelizedSolid)vs1.Copy();
-            //var vs2 = new VoxelizedSolid(ts2, VoxelDiscretization.Coarse, false, bounds);
-            //vs1.Subtract(vs2);
-            //PresenterShowAndHang(new Solid[] { vs1 });
-
-            //var vsPos = vs1.DraftToNewSolid(VoxelDirections.XPositive);
-            //PresenterShowAndHang(new Solid[] { vsPos });
-            //var vsNeg = vs1.DraftToNewSolid(VoxelDirections.XNegative);
-            //PresenterShowAndHang(new Solid[] { vsNeg });
-
-
-            //stopWatch.Stop();
-            //Console.WriteLine("Intersection: tsvol:{0}\tvol:{1}\ttime:{2}",
-            //    ts.Volume, vsInt.Volume, stopWatch.Elapsed.TotalSeconds);
-            //PresenterShowAndHang(new Solid[] { vsInt });
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
@@ -374,14 +338,11 @@ namespace TVGLPresenterDX
             {
                 try
                 {
-                    var ts = IO.Open(fileInfo.Open(FileMode.Open), fileInfo.Name);
-                    foreach (var tessellatedSolid in ts)
-                    {
-                        List<double> times, volumes;
-                        MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
-                        data.Add(new[] { tessellatedSolid.ConvexHull.Vertices.Count(), tessellatedSolid.Volume,
+                    IO.Open(fileInfo.Open(FileMode.Open), fileInfo.Name, out TessellatedSolid tessellatedSolid);
+                    List<double> times, volumes;
+                    MinimumEnclosure.OrientedBoundingBox_Test(tessellatedSolid, out times, out volumes);//, out VolumeData2);
+                    data.Add(new[] { tessellatedSolid.ConvexHull.Vertices.Count(), tessellatedSolid.Volume,
                             times[0], times[1],times[2], volumes[0],  volumes[1], volumes[2] });
-                    }
                 }
                 catch { }
             }
@@ -396,6 +357,6 @@ namespace TVGLPresenterDX
             Debug.WriteLine("number of edges = " + ts.NumberOfEdges);
             Debug.WriteLine("number of faces = " + ts.NumberOfFaces);
             TVGL.Presenter.ShowAndHang(ts);
-        }  
+        }
     }
 }
