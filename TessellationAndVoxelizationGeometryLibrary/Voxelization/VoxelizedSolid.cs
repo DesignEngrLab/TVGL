@@ -170,13 +170,19 @@ namespace TVGL.Voxelization
 
 
         /// <summary>
-        /// Is the double currently at an integer value?
+        /// Makes the parent voxel identifier.
         /// </summary>
-        /// <param name="d">The d.</param>
-        /// <returns></returns>
-        private static bool atIntegerValue(double d)
+        /// <param name="id">The identifier.</param>
+        /// <param name="discretization">The discretization.</param>
+        /// <param name="level">The level of the parent.</param>
+        /// <returns>System.Int64.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">containing level must be 0, 1, 2, or 3</exception>
+        public long MakeParentVoxelID(long id, int parentLevel)
         {
-            return Math.Ceiling(d) == d;
+            long singleCoordMask = singleCoordinateMasks[parentLevel];
+            var mask = (singleCoordMask << 4) + (singleCoordMask << 24) + (singleCoordMask << 44);
+            return id & mask;
         }
+
     }
 }

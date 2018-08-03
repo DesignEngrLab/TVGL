@@ -76,7 +76,7 @@ namespace TVGL.Voxelization
             }
             // for the lower levels, first get or make the level-0 voxel (next7 lines)
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, singleCoordinateMasks[0]);
+            var id0 = MakeParentVoxelID(thisIDwoFlags, 0);
             Voxel_Level0_Class voxel0;
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id0))
@@ -103,7 +103,7 @@ namespace TVGL.Voxelization
             else if (level > 1)
             {
                 // for the remaining voxellevels, we also need to check if the parent has been created
-                var parentID = Constants.MakeParentVoxelID(voxel.ID, singleCoordinateMasks[level - 1]);
+                var parentID = MakeParentVoxelID(voxel.ID, level - 1);
                 IVoxel parentVoxel;
                 var mightBeFull = false;
                 lock (voxel0.InnerVoxels[level - 2]) parentVoxel = voxel0.InnerVoxels[level - 2].GetVoxel(parentID);
@@ -198,7 +198,7 @@ namespace TVGL.Voxelization
                 {
                     // for the remaining voxellevels, since the hashsets are combined we need to count
                     // what is indeed an immediate descendant of the the parent and see if they are all full
-                    var parentID = Constants.MakeParentVoxelID(voxel.ID, singleCoordinateMasks[level - 1]);
+                    var parentID = MakeParentVoxelID(voxel.ID, level - 1);
                     var makeVoxelFull = false;
                     lock (voxel0.InnerVoxels[voxel.Level - 1])
                         makeVoxelFull = voxel0.InnerVoxels[voxel.Level - 1].Count >= voxelsInParent[level];
@@ -227,7 +227,7 @@ namespace TVGL.Voxelization
 
             // for the lower levels, first get or make the level-0 voxel (next7 lines)
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
-            var id0 = Constants.MakeParentVoxelID(thisIDwoFlags, singleCoordinateMasks[0]);
+            var id0 = MakeParentVoxelID(thisIDwoFlags, 0);
             Voxel_Level0_Class voxel0;
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id0))
@@ -242,7 +242,7 @@ namespace TVGL.Voxelization
             if (level > 1)
             {
                 // for the remaining voxellevels, we also need to check if the parent has been created
-                var parentID = Constants.MakeParentVoxelID(voxel.ID, singleCoordinateMasks[level - 1]);
+                var parentID = MakeParentVoxelID(voxel.ID, level - 1);
                 IVoxel parentVoxel = null;
                 lock (voxel0.InnerVoxels[level - 2])
                     parentVoxel = voxel0.InnerVoxels[level - 2].GetVoxel(parentID);

@@ -47,26 +47,6 @@ namespace TVGL.Voxelization
             NumberStyles.HexNumber); // max value for a single coordinate
 
         #region converting IDs and back again
-
-        #region Parents and Children
-
-
-        /// <summary>
-        /// Makes the parent voxel identifier.
-        /// </summary>
-        /// <param name="id">The identifier.</param>
-        /// <param name="discretization">The discretization.</param>
-        /// <param name="level">The level of the parent.</param>
-        /// <returns>System.Int64.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">containing level must be 0, 1, 2, or 3</exception>
-        public static long MakeParentVoxelID(long id, long singleCoordMask)
-        {
-            var mask = (singleCoordMask << 4) + (singleCoordMask << 24) + (singleCoordMask << 44);
-            return id & mask;
-        }
-
-        #endregion
-
         #region Flags
 
         /****** Flags ******
@@ -225,7 +205,7 @@ namespace TVGL.Voxelization
                 {6, new[] {2, 2, 2}},
                 {7, new[] {3, 2, 2}},
                 {8, new[] {3, 3, 2}},
-                {9, new[] {4, 3, 2}},
+                {9, new[] {3, 2,2,2}},
                 {10, new[] {4, 3, 3}},
                 {11, new[] {4, 4, 3}},
                 {12, new[] {4, 3, 3, 2}},
@@ -240,8 +220,17 @@ namespace TVGL.Voxelization
             };
 
 
-        internal const int LevelAtWhichLinkToTessellation = 1;
+        internal const int LevelAtWhichLinkToTessellation = 2;
 
+        /// <summary>
+        /// Is the double currently at an integer value?
+        /// </summary>
+        /// <param name="d">The d.</param>
+        /// <returns></returns>
+        internal static bool atIntegerValue(double d)
+        {
+            return Math.Ceiling(d) == d;
+        }
 
 
     }

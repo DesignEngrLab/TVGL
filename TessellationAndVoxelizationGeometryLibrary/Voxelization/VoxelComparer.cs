@@ -89,7 +89,7 @@ namespace TVGL.Voxelization
     {
         internal VoxelComparerMidLevels(int[] bitLevelDistribution, int numberOfBitsInParent)
         {
-            MakeParentMasks(bitLevelDistribution,numberOfBitsInParent);
+            MakeParentMasks(bitLevelDistribution, numberOfBitsInParent);
             // the midlevel bits are the 10 bits following the level0 bits.
             // why 10? because for x, y, and z this would be 30 bits and the
             // hashsets define the hash code as a 31-bit (positive integer)
@@ -123,6 +123,37 @@ namespace TVGL.Voxelization
                                                  + (coordMask << coordShift + 44);
         }
 
+    }
+    public class VoxelToTessellationComparer : IEqualityComparer<long>
+    {
+        int coordShift, yShift, zShift;
+        long equalsMask, coordMask;
+
+        internal VoxelToTessellationComparer(int numberOfBitsInLevel0)
+        {
+            coordShift = 20 - 10 - numberOfBitsInLevel0;
+            // yShift and zShift are just left-shifted to follow x
+            yShift = 10;
+            zShift = 20;
+            coordMask = 1023;
+            var maskOfAllLevels = (long)Math.Pow(2, numberOfBitsInLevel0 + 10) - 1;
+            equalsMask = (maskOfAllLevels << coordShift + 4) + (maskOfAllLevels << coordShift + 24)
+                                                 + (maskOfAllLevels << coordShift + 44);
+        }
+
+        public bool Equals(long x, long y)
+        {
+            return (x & equalsMask) == (y & equalsMask);
+
+        }
+
+        public int GetHashCode(long id)
+        {
+            var x = (id >> coordShift + 4) & coordMask;
+            var y = (id >> coordShift + 24) & coordMask;
+            var z = (id >> coordShift + 44) & coordMask;
+            return (int)(x + (y << yShift) + (z << zShift));
+        }
     }
 
 }

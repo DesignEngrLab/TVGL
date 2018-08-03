@@ -88,7 +88,7 @@ namespace TVGL.Voxelization
             //one of the ancestors must be empty or full
             for (int i = level - 1; i >= 1; i--)
             {
-                var parentID = Constants.MakeParentVoxelID(ID, singleCoordinateMasks[i]);
+                var parentID = MakeParentVoxelID(ID, i);
                 var parent = voxel0.InnerVoxels[i - 1].GetVoxel(parentID);
                 if (parent != null)
                 {
@@ -293,40 +293,40 @@ namespace TVGL.Voxelization
             var parentLevel = child.Level - 1;
             if (child.Level == 0) throw new ArgumentException("There are no parents for level-0 voxels.");
             // childlevels 1, 2, 3, 4 or parent levels 0, 1, 2, 3
-            var parentID = Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[0]);
+            var parentID = MakeParentVoxelID(child.ID, 0);
             var level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parentID);
             if (level0Parent == null)
-                return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
+                return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
                                  + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
             if (level0Parent.Role == VoxelRoleTypes.Full)
-                return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
+                return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
                                  + Constants.SetRoleFlags(0, VoxelRoleTypes.Full), this);
             if (parentLevel == 0) return level0Parent;
             //now for childlevels 2,3, 4 or parent levels 1, 2, 3
-            parentID = Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel]);
+            parentID = MakeParentVoxelID(child.ID, parentLevel);
             var parent = level0Parent.InnerVoxels[parentLevel - 1].GetVoxel(parentID);
             if (parent != null) return parent;
             // so the rest of this should be either fulls or empties as there is no immediate partial parent
             if (parentLevel == 1)
-                return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
+                return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
                                  + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
             //now for childlevels 3, 4 or parent levels 2, 3
-            parentID = Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel - 1]); // which would be either 1, or 2 - the grandparent
+            parentID = MakeParentVoxelID(child.ID, parentLevel - 1); // which would be either 1, or 2 - the grandparent
             parent = level0Parent.InnerVoxels[parentLevel - 2].GetVoxel(parentID);
             if (parent != null || parentLevel == 2)
             {
                 if (parent?.Role == VoxelRoleTypes.Full)
-                    return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
+                    return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
                                      + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Full), this);
-                else return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
+                else return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
                                                 + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
             }
-            parentID = Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel - 2]); // which would be 1 - the great-grandparent of a voxels at 4
+            parentID = MakeParentVoxelID(child.ID, parentLevel - 2); // which would be 1 - the great-grandparent of a voxels at 4
             parent = level0Parent.InnerVoxels[parentLevel - 3].GetVoxel(parentID);
             if (parent?.Role == VoxelRoleTypes.Full)
-                return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
+                return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
                                  + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Full), this);
-            else return new Voxel(Constants.MakeParentVoxelID(child.ID, singleCoordinateMasks[parentLevel])
+            else return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
                                   + Constants.SetRoleFlags(parentLevel, VoxelRoleTypes.Empty), this);
         }
 
