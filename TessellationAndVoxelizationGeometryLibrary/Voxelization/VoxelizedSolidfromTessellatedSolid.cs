@@ -120,26 +120,28 @@ namespace TVGL.Voxelization
             for (byte level = 2; level < numberOfLevels; level++)
             {
                 UpdateVertexSimulatedCoordinates(ts.Vertices, level);
-                //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
-                //    v0 =>
-                foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
-                {
-                    var voxel0 = (Voxel_Level0_Class)v0;
-                    var parentTSElements = voxel0.tsElementsForChildVoxels[voxel0.ID];
-                    var parentTSVertices = parentTSElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
-                    var parentTSFaces = parentTSElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>()
-                        .ToList();
-                    var voxels = voxel0.InnerVoxels[level - 1] = new VoxelHashSet(level, this);
-                    MakeVertexVoxels(parentTSVertices, level, voxels);
-                    MakeVoxelsForFacesAndEdges(parentTSFaces, level, voxel0, voxels);
-                    foreach (var parent in voxel0.InnerVoxels[level - 2].Where(v => v.Role == VoxelRoleTypes.Partial))
+                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
+                    v0 =>
+                        //foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                     {
-                        var children = GetChildVoxels(parent).ToList();
-                        DefineBottomCoordinateInside(voxels, children, voxel0, parent.BtmCoordIsInside, GetFacesToCheck(parent, voxel0));
-                        if (!onlyDefineBoundary)
-                            makeVoxelsInInterior(voxels, children, level, parent, voxel0);
-                    }
-                }
+                        var voxel0 = (Voxel_Level0_Class) v0;
+                        var parentTSElements = voxel0.tsElementsForChildVoxels[voxel0.ID];
+                        var parentTSVertices = parentTSElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
+                        var parentTSFaces = parentTSElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>()
+                            .ToList();
+                        var voxels = voxel0.InnerVoxels[level - 1] = new VoxelHashSet(level, this);
+                        MakeVertexVoxels(parentTSVertices, level, voxels);
+                        MakeVoxelsForFacesAndEdges(parentTSFaces, level, voxel0, voxels);
+                        foreach (var parent in voxel0.InnerVoxels[level - 2]
+                            .Where(v => v.Role == VoxelRoleTypes.Partial))
+                        {
+                            var children = GetChildVoxels(parent).ToList();
+                            DefineBottomCoordinateInside(voxels, children, voxel0, parent.BtmCoordIsInside,
+                                GetFacesToCheck(parent, voxel0));
+                            if (!onlyDefineBoundary)
+                                makeVoxelsInInterior(voxels, children, level, parent, voxel0);
+                        }
+                    });
             }
             #endregion
             UpdateProperties();
@@ -283,7 +285,7 @@ namespace TVGL.Voxelization
             var parentLimits = setLimitsAndLevel(parent, level);
             foreach (var face in faces) //loop over the faces
             {
-                if (level > 2 && tsObjectIsOutsideLimits(parentLimits, face)) continue;
+               // if (level > 2 && tsObjectIsOutsideLimits(parentLimits, face)) continue;
                 // todo: this should be made much quicker (this being the whole set of functions for faces and edges)
                 // we should only find the intersections within the parent. For lower levels, too much time is spent
                 // simply throwing out intersections that are not within the parent boundaries. This does not require
