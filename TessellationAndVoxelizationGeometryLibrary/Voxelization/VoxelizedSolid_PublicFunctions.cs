@@ -903,21 +903,10 @@ namespace TVGL.Voxelization
             return sphereOffsets.ToDictionary(offsetTuple => AddDeltaToID(voxel.ID, offsetTuple.Item1), offsetTuple => offsetTuple.Item2);
         }
 
-        private Dictionary<long, bool> GetVoxelOffsetsBasedOnNeighbors(IVoxel iVoxel,
+        private Dictionary<long, bool> GetVoxelOffsetsBasedOnNeighbors(IVoxel voxel,
             Dictionary<int, List<Tuple<int[], bool>>> offsetsByDirectionCombinations, int voxelLevel)
         {
             //Initialize
-            IVoxel voxel;
-            if (voxelLevel == 1)
-            {
-                voxel = (Voxel_ClassWithLinksToTSElements)iVoxel;
-            }
-            else
-            {
-                throw new NotImplementedException();
-
-            }
-
             var outputVoxels = new Dictionary<long, bool>();
 
             //Get all the directions that have a non-empty neighbor

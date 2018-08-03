@@ -141,7 +141,7 @@ namespace TVGLPresenterDX
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
-            var vs1 = new VoxelizedSolid(ts, 10);
+            var vs1 = new VoxelizedSolid(ts, 9);
             Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;

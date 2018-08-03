@@ -120,25 +120,34 @@ namespace TVGL.Voxelization
         }
     }
 
-    /// <summary>
-    /// Class VoxelWithTessellationLinks.
-    /// </summary>
-    /// <seealso cref="TVGL.Voxelization.IVoxel" />
-    public class Voxel_ClassWithLinksToTSElements : IVoxel
+    public class Voxel_Level0_Class : IVoxel
     {
-        internal Voxel_ClassWithLinksToTSElements(long ID, byte level, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Voxel_Level0_Class"/> class.
+        /// </summary>
+        /// <param name="ID">The identifier.</param>
+        /// <param name="voxelRole">The voxel role.</param>
+        /// <param name="solid">The solid.</param>
+        public Voxel_Level0_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
             bool btmCoordIsInside = false)
         {
+            InnerVoxels = new VoxelHashSet[solid.numberOfLevels - 1];
+            for (int i = 1; i < solid.numberOfLevels; i++)
+                InnerVoxels[i - 1] = new VoxelHashSet(i, solid);
             Role = voxelRole;
-            Level = level;
+            Level = 0;
             this.ID = Constants.ClearFlagsFromID(ID) +
                       Constants.SetRoleFlags(Level, Role, Role == VoxelRoleTypes.Full || btmCoordIsInside);
             BtmCoordIsInside = btmCoordIsInside;
             SideLength = solid.VoxelSideLengths[Level];
-            CoordinateIndices = Constants.GetCoordinateIndices(ID, solid.singleCoordinateShifts[level]);
+            CoordinateIndices = Constants.GetCoordinateIndices(ID, solid.singleCoordinateShifts[0]);
             BottomCoordinate =
                 solid.GetRealCoordinates(Level, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
         }
+
+        public VoxelHashSet[] InnerVoxels { get;internal set; }
+
+
         /// <summary>
         /// Gets the identifier.
         /// </summary>
@@ -175,10 +184,6 @@ namespace TVGL.Voxelization
         public bool BtmCoordIsInside { get; set; }
 
 
-        /// <summary>
-        /// The tessellation elements
-        /// </summary>
-        //internal HashSet<TessellationBaseClass> TessellationElements;
 
         internal Dictionary<long, HashSet<TessellationBaseClass>> tsElementsForChildVoxels;
         /// <summary>
@@ -187,50 +192,7 @@ namespace TVGL.Voxelization
         /// <value>The coordinate indices.</value>
         public int[] CoordinateIndices { get; internal set; }
 
-        /// <summary>
-        /// Gets the faces.
-        /// </summary>
-        /// <value>The faces.</value>
-        //internal List<PolygonalFace> Faces =>
-        //    TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
-
-        /// <summary>
-        /// Gets the edges.
-        /// </summary>
-        /// <value>The edges.</value>
-       // internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
-
-        /// <summary>
-        /// Gets the vertices.
-        /// </summary>
-        /// <value>The vertices.</value>
-       // internal List<Vertex> Vertices => TessellationElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
     }
 
-    /// <summary>
-    /// Class Voxel_Level0_Class.
-    /// </summary>
-    /// <seealso cref="TVGL.Voxelization.Voxel_ClassWithLinksToTSElements" />
-    public class Voxel_Level0_Class : Voxel_ClassWithLinksToTSElements
-    {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel_Level0_Class"/> class.
-        /// </summary>
-        /// <param name="ID">The identifier.</param>
-        /// <param name="voxelRole">The voxel role.</param>
-        /// <param name="solid">The solid.</param>
-        public Voxel_Level0_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
-            bool btmCoordIsInside = false)
-            : base(ID, 0, voxelRole, solid, btmCoordIsInside)
-        {
-            //if (Role == VoxelRoleTypes.Partial)
-            InnerVoxels = new VoxelHashSet[solid.numberOfLevels - 1];
-            for (int i = 1; i < solid.numberOfLevels; i++)
-                InnerVoxels[i - 1] = new VoxelHashSet(i, solid);
-        }
-        /// <summary>
-        /// The inner voxels
-        /// </summary>
-        internal VoxelHashSet[] InnerVoxels;
-    }
+
 }

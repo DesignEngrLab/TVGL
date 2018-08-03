@@ -122,9 +122,9 @@ namespace TVGL.Voxelization
                 UpdateVertexSimulatedCoordinates(ts.Vertices, level);
                 Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
                     v0 =>
-                        //foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                    //foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                     {
-                        var voxel0 = (Voxel_Level0_Class) v0;
+                        var voxel0 = (Voxel_Level0_Class)v0;
                         var parentTSElements = voxel0.tsElementsForChildVoxels[voxel0.ID];
                         var parentTSVertices = parentTSElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
                         var parentTSFaces = parentTSElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>()
@@ -285,7 +285,7 @@ namespace TVGL.Voxelization
             var parentLimits = setLimitsAndLevel(parent, level);
             foreach (var face in faces) //loop over the faces
             {
-               // if (level > 2 && tsObjectIsOutsideLimits(parentLimits, face)) continue;
+                // if (level > 2 && tsObjectIsOutsideLimits(parentLimits, face)) continue;
                 // todo: this should be made much quicker (this being the whole set of functions for faces and edges)
                 // we should only find the intersections within the parent. For lower levels, too much time is spent
                 // simply throwing out intersections that are not within the parent boundaries. This does not require
@@ -411,7 +411,7 @@ namespace TVGL.Voxelization
                 coordinates[dim] = i;
                 var voxel = MakeAndStorePartialVoxel(coordinates, level, voxels, parentLimits, face);
                 var voxel0 = level == 0 ? (Voxel_Level0_Class)voxel : (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
-                if (voxel is Voxel_ClassWithLinksToTSElements)
+                if (level <= Constants.LevelAtWhichLinkToTessellation)
                 { // this is just to add links to the edges
                     var btmDim = Constants.GetCoordinateIndex(voxel.ID, dim, singleCoordinateShifts[level]);
                     foreach (var faceEdge in face.Edges)

@@ -164,8 +164,8 @@ namespace TVGL.Voxelization
             var level = voxel.Level;
             var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
 
-            if (voxel is Voxel_ClassWithLinksToTSElements)
-                ((Voxel_ClassWithLinksToTSElements)voxel).Role = VoxelRoleTypes.Full;
+            if (voxel is Voxel_Level0_Class)
+                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Full;
             else //if it's a class then we can change with the above statement
             {
                 //if it's the voxel struct then we have to delete it and make a new one
@@ -282,8 +282,8 @@ namespace TVGL.Voxelization
             // the calling function intends to fill it up. Actually, I'm not sure the recursion will ever happed
             // with current set of modification functions that work form level-0 on down.
             if (voxel0.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(voxel0, true);
-            if (voxel is Voxel_ClassWithLinksToTSElements)
-                ((Voxel_ClassWithLinksToTSElements)voxel).Role = VoxelRoleTypes.Partial;
+            if (voxel is Voxel_Level0_Class)
+                ((Voxel_Level0_Class)voxel).Role = VoxelRoleTypes.Partial;
             else //if it's a class then we can change with the above statement
             {
                 //if it's the voxel struct then we have to delete it and make a new one
