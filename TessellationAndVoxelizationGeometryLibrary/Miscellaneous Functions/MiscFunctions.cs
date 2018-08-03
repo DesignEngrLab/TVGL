@@ -1963,7 +1963,7 @@ namespace TVGL
             var cp2 = b.subtract(a, 3).crossProduct(p2.subtract(a, 3));
             var dot = cp1.dotProduct(cp2, 3);
             if (dot.IsNegligible()) return onBoundaryIsInside;
-            if (Math.Abs(dot) < 1E-10) return onBoundaryIsInside;
+            if (Math.Abs(dot) < Constants.BaseTolerance) return onBoundaryIsInside;
             return dot > 0.0;
         }
 

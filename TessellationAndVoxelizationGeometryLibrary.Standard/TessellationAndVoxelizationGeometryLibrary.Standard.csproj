@@ -43,7 +43,6 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Colors.cs" Link="Colors.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByIndexInList.cs" Link="Comparators\SortByIndexInList.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs" Link="Comparators\SortByLength.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByVoxelIndex.cs" Link="Comparators\SortByVoxelIndex.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs" Link="Constants.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHull2D.cs" Link="Enclosure Operations\ConvexHull2D.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\EnclosurePublicStructs.cs" Link="Enclosure Operations\EnclosurePublicStructs.cs" />

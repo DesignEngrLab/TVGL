@@ -75,7 +75,7 @@ namespace TVGLPresenterDX
             };
             return result;
         }
-        
+
 
         private MeshGeometryModel3D ConvertVoxelizedSolidtoObject3D(VoxelizedSolid vs)
         {
@@ -116,14 +116,14 @@ namespace TVGLPresenterDX
             };
             var positions = new Vector3Collection();
             var normals = new Vector3Collection();
+            var lowestLevel = (int)vs.VoxelSideLengths.Length - 1;
             foreach (var v in vs.Voxels()) //VoxelDiscretization.ExtraCoarse))
                                            // var v = vs.Voxels(VoxelDiscretization.ExtraCoarse).First(); //VoxelDiscretization.ExtraCoarse))
             {
-                var lowestLevel = (int) vs.Discretization;
                 if (v.Role == VoxelRoleTypes.Partial && v.Level < lowestLevel) continue;
                 var neighbors = vs.GetNeighbors(v).ToList();
                 if (neighbors.All(n => n != null && (n.Role == VoxelRoleTypes.Full || (n.Role == VoxelRoleTypes.Partial
-                                                                                       && v.Level==lowestLevel))))
+                                                                                       && v.Level == lowestLevel))))
                     continue;
 
                 var x = (float)v.BottomCoordinate[0];
@@ -134,7 +134,7 @@ namespace TVGLPresenterDX
                 {
                     //  if (neighbors[i / 2] != null && neighbors[i / 2].Role == VoxelRoleTypes.Full) continue;
                     if (neighbors[i / 2] != null && (neighbors[i / 2].Role == VoxelRoleTypes.Full
-                                                     || neighbors[i / 2].Role == VoxelRoleTypes.Partial)) continue;
+                                                     || (neighbors[i / 2].Role == VoxelRoleTypes.Partial && v.Level == lowestLevel))) continue;
                     for (int j = 0; j < 3; j++)
                     {
                         positions.Add(new Vector3(x + coordOffsets[i][j][0] * s,

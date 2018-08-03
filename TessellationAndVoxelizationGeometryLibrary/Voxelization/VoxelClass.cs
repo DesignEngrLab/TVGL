@@ -26,7 +26,6 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The identifier.</value>
         long ID { get; }
-        // int[] CoordinateIndices { get; }
         /// <summary>
         /// Gets the bottom coordinate.
         /// </summary>
@@ -46,7 +45,7 @@ namespace TVGL.Voxelization
         /// Gets the level.
         /// </summary>
         /// <value>The level.</value>
-        int Level { get; }
+        byte Level { get; }
         /// <summary>
         /// Gets or sets a value indicating whether [BTM coord is inside].
         /// </summary>
@@ -70,6 +69,90 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The identifier.</value>
         public long ID { get; internal set; }
+        /// <summary>
+        /// Gets the length of the side.
+        /// </summary>
+        /// <value>The length of the side.</value>
+        public double SideLength { get; internal set; }
+        /// <summary>
+        /// Gets the role.
+        /// </summary>
+        /// <value>The role.</value>
+        public VoxelRoleTypes Role { get; internal set; }
+        /// <summary>
+        /// Gets the level.
+        /// </summary>
+        /// <value>The level.</value>
+        public byte Level { get; internal set; }
+        /// <summary>
+        /// Gets the bottom coordinate.
+        /// </summary>
+        /// <value>The bottom coordinate.</value>
+        public double[] BottomCoordinate { get; internal set; }
+        /// <summary>
+        /// Gets or sets a value indicating whether [BTM coord is inside].
+        /// </summary>
+        /// <value><c>true</c> if [BTM coord is inside]; otherwise, <c>false</c>.</value>
+        public bool BtmCoordIsInside { get; set; }
+
+        /// <summary>
+        /// Gets the coordinate indices.
+        /// </summary>
+        /// <value>The coordinate indices.</value>
+        public int[] CoordinateIndices { get; internal set; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Voxel"/> struct.
+        /// </summary>
+        /// <param name="ID">The identifier.</param>
+        /// <param name="solid">The solid.</param>
+        internal Voxel(long ID, VoxelizedSolid solid) // = null)
+        {
+            this.ID = ID;
+            Constants.GetRoleFlags(ID, out var level, out var role, out var btmIsInside);
+            Role = role;
+            Level = level;
+            BtmCoordIsInside = btmIsInside;
+            SideLength = solid.VoxelSideLengths[Level];
+            CoordinateIndices = Constants.GetCoordinateIndices(ID, solid.singleCoordinateShifts[level]);
+            BottomCoordinate =
+                solid.GetRealCoordinates(Level, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
+        }
+    }
+
+    public class Voxel_Level0_Class : IVoxel
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Voxel_Level0_Class"/> class.
+        /// </summary>
+        /// <param name="ID">The identifier.</param>
+        /// <param name="voxelRole">The voxel role.</param>
+        /// <param name="solid">The solid.</param>
+        public Voxel_Level0_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
+            bool btmCoordIsInside = false)
+        {
+            InnerVoxels = new VoxelHashSet[solid.numberOfLevels - 1];
+            for (int i = 1; i < solid.numberOfLevels; i++)
+                InnerVoxels[i - 1] = new VoxelHashSet(i, solid);
+            Role = voxelRole;
+            Level = 0;
+            this.ID = Constants.ClearFlagsFromID(ID) +
+                      Constants.SetRoleFlags(Level, Role, Role == VoxelRoleTypes.Full || btmCoordIsInside);
+            BtmCoordIsInside = btmCoordIsInside;
+            SideLength = solid.VoxelSideLengths[Level];
+            CoordinateIndices = Constants.GetCoordinateIndices(ID, solid.singleCoordinateShifts[0]);
+            BottomCoordinate =
+                solid.GetRealCoordinates(Level, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
+        }
+
+        public VoxelHashSet[] InnerVoxels { get;internal set; }
+
+
+        /// <summary>
+        /// Gets the identifier.
+        /// </summary>
+        /// <value>The identifier.</value>
+        public long ID { get; internal set; }
         // public int[] CoordinateIndices { get; internal set; }
         /// <summary>
         /// Gets the length of the side.
@@ -85,196 +168,31 @@ namespace TVGL.Voxelization
         /// Gets the level.
         /// </summary>
         /// <value>The level.</value>
-        public int Level { get; internal set; }
-        /// <summary>
-        /// Gets the bottom coordinate.
-        /// </summary>
-        /// <value>The bottom coordinate.</value>
-        public double[] BottomCoordinate { get; internal set; }
-        /// <summary>
-        /// Gets or sets a value indicating whether [BTM coord is inside].
-        /// </summary>
-        /// <value><c>true</c> if [BTM coord is inside]; otherwise, <c>false</c>.</value>
-        public bool BtmCoordIsInside { get; set; }
-
-        /// <summary>
-        /// Gets the coordinate indices.
-        /// </summary>
-        /// <value>The coordinate indices.</value>
-        public int[] CoordinateIndices => Constants.GetCoordinateIndices(ID, Level);
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel"/> struct.
-        /// </summary>
-        /// <param name="ID">The identifier.</param>
-        /// <param name="solid">The solid.</param>
-        internal Voxel(long ID, VoxelizedSolid solid)
-        {
-            this.ID = ID;
-            Constants.GetRoleFlags(ID, out var level, out var role, out var btmIsInside);
-            Role = role;
-            Level = level;
-            BtmCoordIsInside = btmIsInside;
-            SideLength = solid.VoxelSideLengths[Level];
-            BottomCoordinate = solid.GetRealCoordinates(ID, Level);
-        }
-        //todo: get rid of level as inputarg - maybe remove above constructor
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel"/> struct.
-        /// </summary>
-        /// <param name="ID">The identifier.</param>
-        /// <param name="level">The level.</param>
-        internal Voxel(long ID, int level)
-        {
-            this.ID = ID;
-            Constants.GetRoleFlags(ID, out var leveldummy, out var role, out var btmIsInside);
-            Role = role;
-            Level = level;
-            BtmCoordIsInside = btmIsInside;
-            SideLength = double.NaN;
-            BottomCoordinate = null;
-        }
-        //internal Voxel(int x, int y, int z, int level,int inputCoordLevel, VoxelRoleTypes role, bool btmIsInside)
-        //{
-        //    this.ID = Constants.MakeIDFromCoordinates(level,x, y, z, inputCoordLevel);
-        //    Role = role;
-        //    Level = level;
-        //    BtmCoordIsInside = btmIsInside;
-        //    SideLength = double.NaN;
-        //    BottomCoordinate = null;
-        //}
-    }
-    /// <summary>
-    /// Class VoxelWithTessellationLinks.
-    /// </summary>
-    /// <seealso cref="TVGL.Voxelization.IVoxel" />
-    public abstract class VoxelWithTessellationLinks : IVoxel
-    {
-        /// <summary>
-        /// Gets the level.
-        /// </summary>
-        /// <value>The level.</value>
-        public abstract int Level { get; }
-        /// <summary>
-        /// Gets the identifier.
-        /// </summary>
-        /// <value>The identifier.</value>
-        public long ID { get; internal set; }
+        public byte Level { get; internal set; }
 
         /// <summary>
         /// Gets the bottom coordinate.
         /// </summary>
         /// <value>The bottom coordinate.</value>
         public double[] BottomCoordinate { get; internal set; }
-        /// <summary>
-        /// Gets the length of the side.
-        /// </summary>
-        /// <value>The length of the side.</value>
-        public double SideLength { get; internal set; }
+
+
         /// <summary>
         /// Gets or sets a value indicating whether [BTM coord is inside].
         /// </summary>
         /// <value><c>true</c> if [BTM coord is inside]; otherwise, <c>false</c>.</value>
         public bool BtmCoordIsInside { get; set; }
-        /// <summary>
-        /// Gets the role.
-        /// </summary>
-        /// <value>The role.</value>
-        public VoxelRoleTypes Role { get; internal set; }
-        /// <summary>
-        /// The tessellation elements
-        /// </summary>
-        internal HashSet<TessellationBaseClass> TessellationElements;
+
+
+
+        internal Dictionary<long, HashSet<TessellationBaseClass>> tsElementsForChildVoxels;
         /// <summary>
         /// Gets the coordinate indices.
         /// </summary>
         /// <value>The coordinate indices.</value>
-        public int[] CoordinateIndices => Constants.GetCoordinateIndices(ID, Level);
+        public int[] CoordinateIndices { get; internal set; }
 
-        /// <summary>
-        /// Gets the faces.
-        /// </summary>
-        /// <value>The faces.</value>
-        internal List<PolygonalFace> Faces => TessellationElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
-        /// <summary>
-        /// Gets the edges.
-        /// </summary>
-        /// <value>The edges.</value>
-        internal List<Edge> Edges => TessellationElements.Where(te => te is Edge).Cast<Edge>().ToList();
-        /// <summary>
-        /// Gets the vertices.
-        /// </summary>
-        /// <value>The vertices.</value>
-        internal List<Vertex> Vertices => TessellationElements.Where(te => te is Vertex).Cast<Vertex>().ToList();
-    }
-
-    /// <summary>
-    /// Class Voxel_Level0_Class.
-    /// </summary>
-    /// <seealso cref="TVGL.Voxelization.VoxelWithTessellationLinks" />
-    public class Voxel_Level0_Class : VoxelWithTessellationLinks
-    {
-        /// <summary>
-        /// Gets the level.
-        /// </summary>
-        /// <value>The level.</value>
-        public override int Level => 0;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel_Level0_Class"/> class.
-        /// </summary>
-        /// <param name="ID">The identifier.</param>
-        /// <param name="voxelRole">The voxel role.</param>
-        /// <param name="solid">The solid.</param>
-        public Voxel_Level0_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid)
-        {
-            this.ID = Constants.ClearFlagsFromID(ID);
-            Role = voxelRole;
-            if (Role == VoxelRoleTypes.Partial) this.ID += 1;
-            else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
-            if (Role == VoxelRoleTypes.Full) BtmCoordIsInside = true;
-            SideLength = solid.VoxelSideLengths[0];
-            var coordinateIndices = Constants.GetCoordinateIndices(ID, 0);
-            BottomCoordinate = solid.GetRealCoordinates(0, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
-            if (Role == VoxelRoleTypes.Partial)
-                InnerVoxels = new VoxelHashSet[solid.discretizationLevel];
-        }
-        /// <summary>
-        /// The inner voxels
-        /// </summary>
-        internal VoxelHashSet[] InnerVoxels;
     }
 
 
-    /// <summary>
-    /// Class Voxel_Level1_Class.
-    /// </summary>
-    /// <seealso cref="TVGL.Voxelization.VoxelWithTessellationLinks" />
-    public class Voxel_Level1_Class : VoxelWithTessellationLinks
-    {
-        /// <summary>
-        /// Gets the level.
-        /// </summary>
-        /// <value>The level.</value>
-        public override int Level => 1;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel_Level1_Class"/> class.
-        /// </summary>
-        /// <param name="ID">The identifier.</param>
-        /// <param name="voxelRole">The voxel role.</param>
-        /// <param name="solid">The solid.</param>
-        public Voxel_Level1_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid)
-        {
-            this.ID = Constants.ClearFlagsFromID(ID) + 16; //adding 10000 which indicates level1 although it cuts in on the 4th level of
-            // the x-position.
-            Role = voxelRole;
-            if (Role == VoxelRoleTypes.Partial) this.ID += 1;
-            else if (Role == VoxelRoleTypes.Partial) this.ID += 3;
-            if (Role == VoxelRoleTypes.Full) BtmCoordIsInside = true;
-            SideLength = solid.VoxelSideLengths[1];
-            var coordinateIndices = Constants.GetCoordinateIndices(ID, 1);
-            BottomCoordinate = solid.GetRealCoordinates(1, coordinateIndices[0], coordinateIndices[1], coordinateIndices[2]);
-        }
-    }
 }

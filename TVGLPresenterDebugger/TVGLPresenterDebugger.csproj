@@ -21,7 +21,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -139,9 +140,6 @@
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs">
       <Link>TVGL\Comparators\SortByLength.cs</Link>
-    </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByVoxelIndex.cs">
-      <Link>TVGL\Comparators\SortByVoxelIndex.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs">
       <Link>TVGL\Constants.cs</Link>
