@@ -559,9 +559,27 @@ namespace TVGL.Voxelization
         public void Intersect(params VoxelizedSolid[] references)
         {
             Intersect(null, 0, references, false);
+            //Intersect(null, 0, references);
             UpdateProperties();
         }
 
+        private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references)
+        {
+            var voxels = GetChildVoxelsInner(parent);
+            Parallel.ForEach(voxels, thisVoxel =>
+            //foreach (var thisVoxel in voxels)
+            {
+                var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
+                if (referenceLowestRole == VoxelRoleTypes.Full) return; //continue;
+                    if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel, true, false);
+                else
+                {
+                    if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel, true);
+                    if (level < numberOfLevels - 1)
+                        Intersect(thisVoxel, level + 1, references);
+                }
+            });
+        }
         private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references, bool parentWasFull)
         {
             if (parentWasFull)
