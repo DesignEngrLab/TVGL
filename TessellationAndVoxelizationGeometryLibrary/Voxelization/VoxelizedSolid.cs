@@ -35,6 +35,7 @@ namespace TVGL.Voxelization
         /// The discretization level
         /// </summary>
         public readonly int Discretization;
+        public readonly int LevelAtWhichLinkToTessellation;
         internal int numberOfLevels;
         internal int[] bitLevelDistribution;
         private int[] voxelsPerSide;

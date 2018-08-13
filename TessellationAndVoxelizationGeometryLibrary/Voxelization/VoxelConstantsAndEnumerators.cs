@@ -220,7 +220,7 @@ namespace TVGL.Voxelization
             };
 
 
-        internal const int LevelAtWhichLinkToTessellation = 2;
+        internal const int DefaultLevelAtWhichLinkToTessellation = 1;
 
         /// <summary>
         /// Is the double currently at an integer value?
