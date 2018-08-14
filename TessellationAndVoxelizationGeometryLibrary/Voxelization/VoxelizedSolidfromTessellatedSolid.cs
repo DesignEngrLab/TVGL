@@ -90,13 +90,14 @@ namespace TVGL.Voxelization
             MakeVertexVoxels(ts.Vertices, (byte)(numberOfLevels - 1), voxelDictionaryLevel0);
             MakeVoxelsForFacesAndEdges(ts.Faces, (byte)(numberOfLevels - 1));
             if (onlyDefineBoundary) { UpdateProperties(); return; }
+            UpdateVertexSimulatedCoordinates(ts.Vertices, 0);
             DefineBottomCoordinateInside(voxelDictionaryLevel0, voxelDictionaryLevel0, null, false, ts.Faces);
             if (!onlyDefineBoundary)
                 makeVoxelsInInterior(voxelDictionaryLevel0, voxelDictionaryLevel0, 0, null, null);
             #region for level 1
             UpdateVertexSimulatedCoordinates(ts.Vertices, 1);
-            //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), v0 =>
-            foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+            Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), v0 =>
+            //foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
             {
                 var voxel0 = (Voxel_Level0_Class)v0;
                 var parentTSElements = voxel0.tsElementsForChildVoxels[voxel0.ID];
@@ -106,7 +107,7 @@ namespace TVGL.Voxelization
                 DefineBottomCoordinateInside(voxels, voxels, voxel0, voxel0.BtmCoordIsInside, parentTSFaces);
                 if (!onlyDefineBoundary)
                     makeVoxelsInInterior(voxels, voxels, 1, voxel0, voxel0);
-            }//);
+            });
 
             #endregion
             #region For all higher levels
@@ -233,18 +234,19 @@ namespace TVGL.Voxelization
         private void MakeVoxelsForFacesAndEdges(IList<PolygonalFace> faces, byte level)
         {
             //var parentLimits = setLimitsAndLevel(parent, level);
-            foreach (var face in faces) //loop over the faces
+            Parallel.ForEach(faces, face =>
+                //foreach (var face in faces) //loop over the faces
             {
                 // if (level > 2 && tsObjectIsOutsideLimits(parentLimits, face)) continue;
                 // todo: this should be made much quicker (this being the whole set of functions for faces and edges)
                 // we should only find the intersections within the parent. For lower levels, too much time is spent
                 // simply throwing out intersections that are not within the parent boundaries. This does not require
                 // a full overhaul of the functions, but careful testing and benchmarking is necessary.
-                if (simpleCase(face, level)) continue;
+                if (simpleCase(face, level)) return; //continue;
 
                 setUpFaceSweepDetails(face, out var startVertex, out var sweepDim, out var maxSweepValue);
-                var leftStartPoint = (double[])transformedCoordinates[startVertex.IndexInList].Clone();
-                var sweepValue = (int)(Constants.atIntegerValue(leftStartPoint[sweepDim])
+                var leftStartPoint = (double[]) transformedCoordinates[startVertex.IndexInList].Clone();
+                var sweepValue = (int) (Constants.atIntegerValue(leftStartPoint[sweepDim])
                     ? leftStartPoint[sweepDim] + 1
                     : Math.Ceiling(leftStartPoint[sweepDim]));
 
@@ -254,7 +256,7 @@ namespace TVGL.Voxelization
                     var toIntCoords = intCoordsForVertex(edge.To);
                     var fromIntCoords = intCoordsForVertex(edge.From);
                     if (toIntCoords[0] == fromIntCoords[0] && toIntCoords[1] == fromIntCoords[1] &&
-                       toIntCoords[2] == fromIntCoords[2]) continue;
+                        toIntCoords[2] == fromIntCoords[2]) continue;
                     makeVoxelsForLine(transformedCoordinates[edge.From.IndexInList],
                         transformedCoordinates[edge.To.IndexInList], edge, sweepDim, sweepIntersections,
                         level);
@@ -268,12 +270,14 @@ namespace TVGL.Voxelization
                     {
                         var intersections = sweepIntersections[sweepValue];
                         //if (intersections.Count() != 2) throw new Exception();
-                        if (intersections.Count == 2) // && !allPointsOnOneSideOfLimits(parentLimits, intersections[0], intersections[1]))
+                        if (intersections.Count == 2
+                        ) // && !allPointsOnOneSideOfLimits(parentLimits, intersections[0], intersections[1]))
                             makeVoxelsForLineOnFace(intersections[0], intersections[1], face, sweepDim, level);
                     }
+
                     sweepValue++; //increment sweepValue and repeat!
                 }
-            }
+            });
         }
 
         private int[][] setLimitsAndLevel(IVoxel parent, byte level)
@@ -553,7 +557,7 @@ namespace TVGL.Voxelization
 
         #region Interior Voxel Creation
 
-        private const double startingMinFaceToCornerDistance = 1.0001;// this starts close to 1.0 because the voxel has length of one (at 
+        private const double startingMinFaceToCornerDistance = 1.00000001;// this starts close to 1.0 because the voxel has length of one (at 
                                                                       // least within the current scaling). It's possible that faces are intersected but farther away than
                                                                       // this voxel. This is for when the voxel knows its faces as well as when looking over the parent set. It may be
                                                                       // completely fine to start at 1.0 instead of 1.001 but I wanted a definitive value slightly greater than one for 
@@ -843,7 +847,6 @@ namespace TVGL.Voxelization
                         if (addTheNeighbor)
                         {
                             neighbor = MakeAndStoreFullVoxel(neighborCoord, level, voxels);
-                            Presenter.ShowAndHang(this, true);
                             insiders.Push(neighbor);
                         }
                     }
