@@ -71,7 +71,7 @@ namespace TVGL.Voxelization
             {   //adding a new level-0 voxel is fairly straightforward
                 voxel = new VoxelBinClass(ID, VoxelRoleTypes.Full, this);
                 lock (voxelDictionaryLevel0)
-                    voxelDictionaryLevel0.AddOrReplace(voxel);
+                    voxelDictionaryLevel0.AddOrReplace((VoxelBinClass)voxel);
                 return voxel;
             }
             // for the lower levels, first get or make the level-0 voxel (next7 lines)
@@ -162,7 +162,7 @@ namespace TVGL.Voxelization
                 }
             }
             var level = voxel.Level;
-            var voxel0 = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(voxel.ID);
+            var voxel0 = voxelDictionaryLevel0.GetVoxel(voxel.ID);
 
             if (voxel is VoxelBinClass)
                 ((VoxelBinClass)voxel).Role = VoxelRoleTypes.Full;
@@ -221,7 +221,7 @@ namespace TVGL.Voxelization
                 //adding a new level-0 voxel is fairly straightforward
                 voxel = new VoxelBinClass(ID, VoxelRoleTypes.Partial, this);
                 lock (voxelDictionaryLevel0)
-                    voxelDictionaryLevel0.AddOrReplace(voxel);
+                    voxelDictionaryLevel0.AddOrReplace((VoxelBinClass)voxel);
                 return voxel;
             }
 

@@ -68,9 +68,9 @@ namespace TVGL.Voxelization
             }
             if (level == 0)
             {
-                return voxelDictionaryLevel0.GetVoxel(ID)
-                       ??
-                       new Voxel(Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
+                var voxelbin = voxelDictionaryLevel0.GetVoxel(ID);
+                if (voxelbin != null) return voxelbin;
+                return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
             }
             var voxel0 = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(ID);
             //var newIDwoTags = Constants.ClearFlagsFromID(ID);
@@ -215,18 +215,18 @@ namespace TVGL.Voxelization
             var positiveStep = direction > 0;
             var dimension = Math.Abs((int)direction) - 1;
             var level = voxel.Level;
+
             #region Check if steps outside or neighbor has different parent
             var coordValue = Constants.GetCoordinateIndex(voxel.ID, dimension, singleCoordinateShifts[level]);
-            // can't this section shift be combined with first? No, when rightshifting bits, the newest
-            // bits entering from the left will be 1's if the MSB is 1. Thus, we do it after the mask
             var maxValue = Constants.MaxForSingleCoordinate >> singleCoordinateShifts[level];
-            if ((coordValue == 0 && !positiveStep) || (positiveStep && coordValue == maxValue))
+            var maxForThisLevel = (level == 0) ? voxelDictionaryLevel0.size[dimension] - 1 : voxelsPerSide[level] - 1;
+            if ((coordValue == 0 && !positiveStep) || (level == 0 && positiveStep && coordValue == maxForThisLevel)
+                || (level > 0 && positiveStep && coordValue == maxValue))
             {
                 //then stepping outside of entire bounds!
                 neighborHasDifferentParent = true;
                 return null;
             }
-            var maxForThisLevel = voxelsPerSide[level] - 1;
             var justThisLevelCoordValue = coordValue & maxForThisLevel;
             neighborHasDifferentParent = ((justThisLevelCoordValue == 0 && !positiveStep) ||
                                           (justThisLevelCoordValue == maxForThisLevel && positiveStep));
@@ -429,7 +429,8 @@ namespace TVGL.Voxelization
         {
             if (direction > 0)
             {
-                var maxVoxels = (int)Math.Ceiling(dimensions[(int)direction - 1] / VoxelSideLengths[numberOfLevels - 1]) + 1;
+                var maxVoxels =
+                    (int) Math.Ceiling(dimensions[(int) direction - 1] / VoxelSideLengths[numberOfLevels - 1]);// + 1;
                 Extrude(direction, null, maxVoxels, 0);
             }
             else
@@ -481,8 +482,8 @@ namespace TVGL.Voxelization
             for (int i = 0; i < numLayers; i++)
             { /* cycle over each layer, note that voxels are being removed from subsequent layers so the process should
                * speed up.  */
-                Parallel.ForEach(layerOfVoxels[i], voxel =>
-                //foreach (var voxel in layerOfVoxels[i])
+                //Parallel.ForEach(layerOfVoxels[i], voxel =>
+                foreach (var voxel in layerOfVoxels[i])
                 {
                     #region fill up the layers below this one
                     if (voxel.Role == VoxelRoleTypes.Full
@@ -521,7 +522,7 @@ namespace TVGL.Voxelization
                         filledUpNextLayer = Extrude(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
                         if (neighbor == null || layerOfVoxels.Length <= i + 1)
-                            return;  // null happens when you go outside of bounds (of coarsest voxels)
+                            continue;  //   return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer)
                         {
                             if (i + 1 == loopLimit && lastLayer) neighbor = ChangeVoxelToPartial(neighbor, false);
@@ -532,7 +533,7 @@ namespace TVGL.Voxelization
                             layerOfVoxels[i + 1].AddOrReplace(neighbor);
                     }
                     #endregion
-                });
+                }//);
                 remainingVoxelLayers -= voxelsPerLayer;
             }
             return numVoxelsOnXSection == voxelsPerSide[level] * voxelsPerSide[level];
@@ -571,7 +572,7 @@ namespace TVGL.Voxelization
             {
                 var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
                 if (referenceLowestRole == VoxelRoleTypes.Full) return; //continue;
-                    if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel, true, false);
+                if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel, true, false);
                 else
                 {
                     if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel, true);

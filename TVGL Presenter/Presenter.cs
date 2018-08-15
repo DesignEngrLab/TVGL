@@ -722,11 +722,11 @@ namespace TVGL
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
-        public static void ShowAndHang(VoxelizedSolid solid, bool showPartials)
+        public static void ShowAndHang(VoxelizedSolid solid, int showPartialLevel)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
-            Visual3D model = MakeModelVisual3D(solid, showPartials);
+            Visual3D model = MakeModelVisual3D(solid, showPartialLevel);
             models.Add(model);
             window.view1.Children.Add(model);
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
@@ -956,7 +956,7 @@ namespace TVGL
             };
         }
 
-        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, bool showPartialGreen)
+        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, int showPartialLevel)
         {
             var normalsTemplate = new[]
             {
@@ -989,10 +989,9 @@ namespace TVGL
             var partialInNormals = new Vector3DCollection();
             var partialOutPositions = new Point3DCollection();
             var partialOutNormals = new Vector3DCollection();
-            var lowestLevel = (int) vs.VoxelSideLengths.Length - 1;
             foreach (var v in vs.Voxels(VoxelRoleTypes.Partial))
             {
-                if (v.Level != 0 || v.Level == lowestLevel) continue;
+                if (v.Level != showPartialLevel ) continue;
                 var x = (float) v.BottomCoordinate[0];
                 var y = (float) v.BottomCoordinate[1];
                 var z = (float) v.BottomCoordinate[2];

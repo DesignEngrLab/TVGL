@@ -11,7 +11,7 @@ namespace TVGL.Voxelization
     /// Class VoxelHashSet.
     /// </summary>
     /// <seealso cref="System.Collections.Generic.IEnumerable{TVGL.Voxelization.IVoxel}" />
-    internal class VoxelHashSet : IVoxelSet
+    internal class VoxelHashSet : IEnumerable<IVoxel>
     {
         internal readonly int level;
         private int[] buckets;
@@ -97,7 +97,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns>System.Int64.</returns>
-        internal override long GetFullVoxelID(long item)
+        internal long GetFullVoxelID(long item)
         {
             if (buckets != null)
             {
@@ -118,7 +118,7 @@ namespace TVGL.Voxelization
             return 0;
         }
 
-        internal override IVoxel GetVoxel(long item)
+        internal IVoxel GetVoxel(long item)
         {
             if (buckets != null)
             {
@@ -152,7 +152,7 @@ namespace TVGL.Voxelization
         }
 
 
-        internal override void AddRange(ICollection<IVoxel> voxels)
+        internal void AddRange(ICollection<IVoxel> voxels)
         {
             foreach (var voxel in voxels)
                 AddOrReplace(voxel);
@@ -167,7 +167,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns><c>true</c> if [contains] [the specified item]; otherwise, <c>false</c>.</returns>
-        internal override bool Contains(IVoxel item)
+        internal bool Contains(IVoxel item)
         {
             if (item == null) return false;
             return Contains(item.ID);
@@ -177,7 +177,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item">item to check for containment</param>
         /// <returns>true if item contained; false if not</returns>
-        internal override bool Contains(long item)
+        internal bool Contains(long item)
         {
             if (buckets != null)
             {
@@ -196,14 +196,14 @@ namespace TVGL.Voxelization
             return false;
         }
 
-        internal override bool Remove(IVoxel item)
+        internal bool Remove(IVoxel item)
         { return Remove(item.ID); }
         /// <summary>
         /// Remove item from this hashset
         /// </summary>
         /// <param name="item">item to remove</param>
         /// <returns>true if removed; false if not (i.e. if the item wasn't in the HashSet)</returns>
-        internal override bool Remove(long item)
+        internal bool Remove(long item)
         {
             if (buckets != null)
             {
@@ -250,7 +250,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Number of elements in this hashset
         /// </summary>
-        internal override int Count => count;
+        internal int Count => count;
 
         #endregion
 
@@ -263,7 +263,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        internal override int RemoveWhere(Predicate<IVoxel> match)
+        internal int RemoveWhere(Predicate<IVoxel> match)
         {
             int numRemoved = 0;
             for (int i = 0; i < lastIndex; i++)
@@ -282,7 +282,7 @@ namespace TVGL.Voxelization
             }
             return numRemoved;
         }
-        internal override int RemoveDescendants(long ancestor, int ancestorLevel)
+        internal int RemoveDescendants(long ancestor, int ancestorLevel)
         {
             ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             int numRemoved = 0;
@@ -300,7 +300,7 @@ namespace TVGL.Voxelization
             }
             return numRemoved;
         }
-        internal override List<IVoxel> GetDescendants(long ancestor, int ancestorLevel)
+        internal List<IVoxel> GetDescendants(long ancestor, int ancestorLevel)
         {
             var descendants = new List<IVoxel>();
             ancestor = comparer.ParentMask(ancestor, ancestorLevel);
@@ -314,7 +314,7 @@ namespace TVGL.Voxelization
             }
             return descendants;
         }
-        internal override int CountDescendants(long ancestor, int ancestorLevel)
+        internal int CountDescendants(long ancestor, int ancestorLevel)
         {
             ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             int count = 0;
@@ -328,7 +328,7 @@ namespace TVGL.Voxelization
             }
             return count;
         }
-        internal override int CountDescendants(long ancestor, int ancestorLevel, VoxelRoleTypes role)
+        internal int CountDescendants(long ancestor, int ancestorLevel, VoxelRoleTypes role)
         {
             ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             int count = 0;
@@ -524,7 +524,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item"></param>
         /// <returns>true if added, false if already present</returns>
-        internal override bool AddOrReplace(IVoxel newVoxel)
+        internal bool AddOrReplace(IVoxel newVoxel)
         {
             long newVoxelID = newVoxel.ID;
             int hashCode = InternalGetHashCode(newVoxelID);
@@ -585,11 +585,15 @@ namespace TVGL.Voxelization
 
         #region IEnumerable methods
 
-        public override IEnumerator<IVoxel> GetEnumerator()
+        public IEnumerator<IVoxel> GetEnumerator()
         {
-            return new Enumerator(this);
+            return new VoxelEnumerator(this);
         }
 
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
         #endregion
         #endregion
 
@@ -600,13 +604,13 @@ namespace TVGL.Voxelization
             internal int next;          // Index of next entry, -1 if last
         }
 
-        private struct Enumerator : IEnumerator<IVoxel>
+        private struct VoxelEnumerator : IEnumerator<IVoxel>
         {
             private readonly VoxelHashSet set;
             private int index;
             private IVoxel current;
 
-            internal Enumerator(VoxelHashSet set)
+            internal VoxelEnumerator(VoxelHashSet set)
             {
                 this.set = set;
                 index = 0;
