@@ -120,20 +120,20 @@ namespace TVGL.Voxelization
         }
     }
 
-    public class Voxel_Level0_Class : IVoxel
+    public class VoxelBinClass : IVoxel
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Voxel_Level0_Class"/> class.
+        /// Initializes a new instance of the <see cref="VoxelBinClass"/> class.
         /// </summary>
         /// <param name="ID">The identifier.</param>
         /// <param name="voxelRole">The voxel role.</param>
         /// <param name="solid">The solid.</param>
-        public Voxel_Level0_Class(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
+        public VoxelBinClass(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
             bool btmCoordIsInside = false)
         {
             InnerVoxels = new VoxelHashSet[solid.numberOfLevels - 1];
             for (int i = 1; i < solid.numberOfLevels; i++)
-                InnerVoxels[i - 1] = new VoxelHashSet(i, solid);
+                InnerVoxels[i - 1] = new VoxelHashSet(i, solid.bitLevelDistribution);
             Role = voxelRole;
             Level = 0;
             this.ID = Constants.ClearFlagsFromID(ID) +
@@ -145,7 +145,7 @@ namespace TVGL.Voxelization
                 solid.GetRealCoordinates(Level, CoordinateIndices[0], CoordinateIndices[1], CoordinateIndices[2]);
         }
 
-        public VoxelHashSet[] InnerVoxels { get;internal set; }
+        internal VoxelHashSet[] InnerVoxels { get; set; }
 
 
         /// <summary>

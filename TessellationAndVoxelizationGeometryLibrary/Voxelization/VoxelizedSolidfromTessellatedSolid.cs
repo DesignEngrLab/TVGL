@@ -76,7 +76,7 @@ namespace TVGL.Voxelization
                     dimensions[i] += 2 * delta;
             }
 
-            longestSide = Bounds[1][longestDimensionIndex] - Bounds[0][longestDimensionIndex];
+            longestSide = dimensions[longestDimensionIndex];
             VoxelSideLengths = new double[numberOfLevels];
             VoxelSideLengths[0] = longestSide / voxelsPerSide[0];
             for (int i = 1; i < numberOfLevels; i++)
@@ -85,7 +85,8 @@ namespace TVGL.Voxelization
             #endregion
 
             transformedCoordinates = new double[ts.NumberOfVertices][];
-            voxelDictionaryLevel0 = new VoxelHashSet(0, this);
+            //voxelDictionaryLevel0 = new VoxelBinSet(dimensions.Select(d=>(int)Math.Ceiling(d/VoxelSideLengths[0])).Cast<int>().ToArray(), bitLevelDistribution[0]);
+            voxelDictionaryLevel0 = new VoxelHashSet(0, bitLevelDistribution);
             MakeVertexSimulatedCoordinates(ts.Vertices, numberOfLevels - 1);
             MakeVertexVoxels(ts.Vertices, (byte)(numberOfLevels - 1), voxelDictionaryLevel0);
             MakeVoxelsForFacesAndEdges(ts.Faces, (byte)(numberOfLevels - 1));
@@ -99,7 +100,7 @@ namespace TVGL.Voxelization
             Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial), v0 =>
             //foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
             {
-                var voxel0 = (Voxel_Level0_Class)v0;
+                var voxel0 = (VoxelBinClass)v0;
                 var parentTSElements = voxel0.tsElementsForChildVoxels[voxel0.ID];
                 var parentTSFaces = parentTSElements.Where(te => te is PolygonalFace).Cast<PolygonalFace>()
                     .ToList();
@@ -118,7 +119,7 @@ namespace TVGL.Voxelization
                     v0 =>
                     //foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                     {
-                        var voxel0 = (Voxel_Level0_Class)v0;
+                        var voxel0 = (VoxelBinClass)v0;
                         var voxels = voxel0.InnerVoxels[level - 1];
                         foreach (var parent in voxel0.InnerVoxels[level - 2]
                             .Where(v => v.Role == VoxelRoleTypes.Partial))
@@ -363,7 +364,7 @@ namespace TVGL.Voxelization
                 coordinates[dim] = i;
                 var voxel = MakeAndStorePartialVoxel(Constants.MakeIDFromCoordinates(coordinates, singleCoordinateShifts[level]),
                     level, face);
-                var voxel0 = level == 0 ? (Voxel_Level0_Class)voxel : (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(voxel.ID);
+                var voxel0 = level == 0 ? (VoxelBinClass)voxel : (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(voxel.ID);
                 if (level <= LevelAtWhichLinkToTessellation)
                 { // this is just to add links to the edges
                     var btmDim = Constants.GetCoordinateIndex(voxel.ID, dim, singleCoordinateShifts[level]);
@@ -570,14 +571,14 @@ namespace TVGL.Voxelization
                                                                       /// <param name="voxels">The voxels.</param>
                                                                       /// <param name="parentFaces">The parent faces.</param>
                                                                       /// <param name="parentBtmCoordIsInside">if set to <c>true</c> [parent BTM coord is inside].</param>
-        private void DefineBottomCoordinateInside(VoxelHashSet voxels, IEnumerable<IVoxel> partialChildren, Voxel_Level0_Class voxel0,
+        private void DefineBottomCoordinateInside(VoxelHashSet voxels, IEnumerable<IVoxel> partialChildren, VoxelBinClass voxel0,
                                                                           bool parentBtmCoordIsInside, IEnumerable<PolygonalFace> parentFaces)
         {
             // This is a tricky function that has been rewritten alot in the first half of 2018. The four steps are arranged to 
             // quickly solve easy cases before a longer process to find the remaining ones.
             var level = voxels.level;
             var queue = new Queue<IVoxel>();
-            var assignedHashSet = new VoxelHashSet(level, this);
+            var assignedHashSet = new VoxelHashSet(level, bitLevelDistribution);
             foreach (var voxel in partialChildren)
             {
                 #region Step 1: if the face has all positive normals or all negative then quick and easy
@@ -682,9 +683,9 @@ namespace TVGL.Voxelization
         }
 
 
-        private List<PolygonalFace> GetFacesToCheck(IVoxel voxel, Voxel_Level0_Class voxel0)
+        private List<PolygonalFace> GetFacesToCheck(IVoxel voxel, VoxelBinClass voxel0)
         {
-            if (voxel.Level == 0) voxel0 = (Voxel_Level0_Class)voxel;
+            if (voxel.Level == 0) voxel0 = (VoxelBinClass)voxel;
             if (voxel0.tsElementsForChildVoxels == null) return null;
             if (voxel.Level <= LevelAtWhichLinkToTessellation)
                 return voxel0.tsElementsForChildVoxels[voxel.ID].Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
@@ -776,7 +777,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Makes the voxels in interior.
         /// </summary>
-        private void makeVoxelsInInterior(VoxelHashSet voxels, IEnumerable<IVoxel> partialChildren, byte level, IVoxel parent, Voxel_Level0_Class voxel0)
+        private void makeVoxelsInInterior(VoxelHashSet voxels, IEnumerable<IVoxel> partialChildren, byte level, IVoxel parent, VoxelBinClass voxel0)
         {
             if (!partialChildren.Any() && parent.BtmCoordIsInside == true)
             {
@@ -878,19 +879,19 @@ namespace TVGL.Voxelization
         private IVoxel MakeAndStorePartialVoxel(long id, byte level, TessellationBaseClass tsObject = null)
         {
             IVoxel voxel = null;
-            Voxel_Level0_Class voxel0;
+            VoxelBinClass voxel0;
             // for the lower levels, first get or make the level-0 voxel (next7 lines)
             lock (voxelDictionaryLevel0)
                 if (!voxelDictionaryLevel0.Contains(id))
                 {
                     if (level == 0)
                     {
-                        voxel = voxel0 = new Voxel_Level0_Class(MakeParentVoxelID(id, 0), VoxelRoleTypes.Partial, this);
+                        voxel = voxel0 = new VoxelBinClass(MakeParentVoxelID(id, 0), VoxelRoleTypes.Partial, this);
                         voxelDictionaryLevel0.AddOrReplace(voxel);
                     }
-                    else voxel0 = (Voxel_Level0_Class)MakeAndStorePartialVoxel(id, 0, tsObject);
+                    else voxel0 = (VoxelBinClass)MakeAndStorePartialVoxel(id, 0, tsObject);
                 }
-                else voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(id);
+                else voxel0 = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(id);
             // make the new Voxel, and add it to the proper hashset
             if (level > 0)
             {
@@ -916,7 +917,7 @@ namespace TVGL.Voxelization
             return voxel;
         }
 
-        private void LinkVoxelToTessellatedObject(IVoxel voxel, Voxel_Level0_Class voxel0, TessellationBaseClass tsObject)
+        private void LinkVoxelToTessellatedObject(IVoxel voxel, VoxelBinClass voxel0, TessellationBaseClass tsObject)
         {
             if (voxel.Level <= LevelAtWhichLinkToTessellation)
             {
@@ -969,7 +970,7 @@ namespace TVGL.Voxelization
                 if (voxel == null)
                 {
                     if (level == 0)
-                        voxel = new Voxel_Level0_Class(id, VoxelRoleTypes.Full, this);
+                        voxel = new VoxelBinClass(id, VoxelRoleTypes.Full, this);
                     //else if (level == 1)  //what's the point if it doesn't overlap with surface?
                     //    voxel = new Voxel_ClassWithLinksToTSElements(id,level, VoxelRoleTypes.Full, this);
                     else

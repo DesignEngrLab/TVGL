@@ -72,7 +72,7 @@ namespace TVGL.Voxelization
                        ??
                        new Voxel(Constants.ClearFlagsFromID(ID) + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
             }
-            var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(ID);
+            var voxel0 = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(ID);
             //var newIDwoTags = Constants.ClearFlagsFromID(ID);
             //var parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[0]);
             //var parent = voxelDictionaryLevel0.GetVoxel(parentID);
@@ -127,19 +127,19 @@ namespace TVGL.Voxelization
                 foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == role)) yield return v;
             if ((onlyThisLevel && level == 1) || (!onlyThisLevel && level >= 1))
                 foreach (var v in voxelDictionaryLevel0
-                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 1, role)))
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((VoxelBinClass)vb, 1, role)))
                     yield return v;
             if ((onlyThisLevel && level == 2) || (!onlyThisLevel && level >= 2))
                 foreach (var v in voxelDictionaryLevel0
-                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 2, role)))
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((VoxelBinClass)vb, 2, role)))
                     yield return v;
             if ((onlyThisLevel && level == 3) || (!onlyThisLevel && level >= 3))
                 foreach (var v in voxelDictionaryLevel0
-                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 3, role)))
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((VoxelBinClass)vb, 3, role)))
                     yield return v;
             if ((onlyThisLevel && level == 4) || (!onlyThisLevel && level >= 4))
                 foreach (var v in voxelDictionaryLevel0
-                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 4, role)))
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((VoxelBinClass)vb, 4, role)))
                     yield return v;
         }
 
@@ -161,30 +161,30 @@ namespace TVGL.Voxelization
                 foreach (var v in voxelDictionaryLevel0) yield return v;
             if ((onlyThisLevel && level == 1) || (!onlyThisLevel && level >= 1))
                 foreach (var v in voxelDictionaryLevel0
-                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 1)))
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((VoxelBinClass)vb, 1)))
                     yield return v;
             if ((onlyThisLevel && level == 2) || (!onlyThisLevel && level >= 2))
                 foreach (var v in voxelDictionaryLevel0
-                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 2)))
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((VoxelBinClass)vb, 2)))
                     yield return v;
             if ((onlyThisLevel && level == 3) || (!onlyThisLevel && level >= 3))
                 foreach (var v in voxelDictionaryLevel0
-                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 3)))
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((VoxelBinClass)vb, 3)))
                     yield return v;
             if ((onlyThisLevel && level == 4) || (!onlyThisLevel && level >= 4))
                 foreach (var v in voxelDictionaryLevel0
-                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((Voxel_Level0_Class)vb, 4)))
+                    .SelectMany(vb => EnumerateHighLevelVoxelsFromLevel0((VoxelBinClass)vb, 4)))
                     yield return v;
         }
 
-        internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
+        internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(VoxelBinClass voxel,
             int level)
         {
             if (voxel.InnerVoxels[level - 1] != null)
                 foreach (var vx in voxel.InnerVoxels[level - 1])
                     yield return vx;
         }
-        internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(Voxel_Level0_Class voxel,
+        internal IEnumerable<IVoxel> EnumerateHighLevelVoxelsFromLevel0(VoxelBinClass voxel,
             int level, VoxelRoleTypes role)
         {
             foreach (var vx in voxel.InnerVoxels[level - 1])
@@ -294,7 +294,7 @@ namespace TVGL.Voxelization
             if (child.Level == 0) throw new ArgumentException("There are no parents for level-0 voxels.");
             // childlevels 1, 2, 3, 4 or parent levels 0, 1, 2, 3
             var parentID = MakeParentVoxelID(child.ID, 0);
-            var level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parentID);
+            var level0Parent = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(parentID);
             if (level0Parent == null)
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
                                  + Constants.SetRoleFlags(0, VoxelRoleTypes.Empty), this);
@@ -339,14 +339,14 @@ namespace TVGL.Voxelization
         {
             if (parent == null) return voxelDictionaryLevel0;
             if (parent.Level == numberOfLevels - 1) return null;
-            Voxel_Level0_Class level0Parent;
-            if (parent is Voxel_Level0_Class)
+            VoxelBinClass level0Parent;
+            if (parent is VoxelBinClass)
             {
-                level0Parent = (Voxel_Level0_Class)parent;
+                level0Parent = (VoxelBinClass)parent;
                 return level0Parent.InnerVoxels[0];
             }
             // else the parent is level 1, 2, or 3
-            level0Parent = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
+            level0Parent = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(parent.ID);
             return level0Parent.InnerVoxels[parent.Level].GetDescendants(parent.ID, parent.Level);
         }
 
@@ -387,15 +387,15 @@ namespace TVGL.Voxelization
             var copy = new VoxelizedSolid(this.Discretization, this.Bounds, this.Units, this.Name, this.FileName,
                 this.Comments);
             foreach (var voxel in this.voxelDictionaryLevel0)
-                copy.voxelDictionaryLevel0.AddOrReplace(new Voxel_Level0_Class(voxel.ID, voxel.Role, this));
+                copy.voxelDictionaryLevel0.AddOrReplace(new VoxelBinClass(voxel.ID, voxel.Role, this));
             foreach (var v in this.voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
             {
-                var thisVoxel = (Voxel_Level0_Class)v;
-                var copyVoxel = (Voxel_Level0_Class)copy.voxelDictionaryLevel0.GetVoxel(thisVoxel.ID);
+                var thisVoxel = (VoxelBinClass)v;
+                var copyVoxel = (VoxelBinClass)copy.voxelDictionaryLevel0.GetVoxel(thisVoxel.ID);
                 for (int i = 1; i < numberOfLevels; i++)
                 {
                     if (thisVoxel.InnerVoxels[i - 1] == null) break;
-                    copyVoxel.InnerVoxels[i - 1] = new VoxelHashSet(i, copy);
+                    copyVoxel.InnerVoxels[i - 1] = new VoxelHashSet(i, copy.bitLevelDistribution);
                     foreach (var innerVoxel in thisVoxel.InnerVoxels[i - 1])
                         copyVoxel.InnerVoxels[i - 1].AddOrReplace(new Voxel(innerVoxel.ID, copy));
                 }
@@ -463,7 +463,7 @@ namespace TVGL.Voxelization
             /* limit will often be the max. The only time it is not is for positive extrudes that meet the bounding box. */
             var layerOfVoxels = new VoxelHashSet[numLayers]; /* the voxels are organized into layers */
             for (int i = 0; i < numLayers; i++)
-                layerOfVoxels[i] = new VoxelHashSet(level, this);
+                layerOfVoxels[i] = new VoxelHashSet(level, bitLevelDistribution);
             //Parallel.ForEach(voxels, v =>
             foreach (var v in voxels)
             {  //place all the voxels in this level into layers along the extrude direction
@@ -500,7 +500,7 @@ namespace TVGL.Voxelization
                                 if (level < this.numberOfLevels - 1)
                                     // todo: this should go down to the lowest level!
                                     AddAllDescendants(Constants.ClearFlagsFromID(neighbor.ID), level,
-                                        (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(neighbor.ID), dimension, 1);
+                                        (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(neighbor.ID), dimension, 1);
                                 lock (layerOfVoxels[neighborLayer])
                                     layerOfVoxels[neighborLayer].AddOrReplace(neighbor);
                             }
@@ -587,7 +587,7 @@ namespace TVGL.Voxelization
                 // the time-savings here is that creating all sub-voxels is expensive - and then this function will
                 // simply delete many of them, so if parent is full, we can look to the first reference
                 // to guide us in which sub-voxels to keep.
-                var voxel0 = (Voxel_Level0_Class)voxelDictionaryLevel0.GetVoxel(parent.ID);
+                var voxel0 = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(parent.ID);
                 //now one of the references must have stated that they were partial for this voxel, but we are not sure which.
                 //if we choose one that is full, then we won't get a set of reference sub-voxel and this "shortcut"
                 //wouldn't be worth it.

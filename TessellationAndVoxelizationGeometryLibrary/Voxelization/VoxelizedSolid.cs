@@ -93,7 +93,7 @@ namespace TVGL.Voxelization
             VoxelSideLengths[0] = longestSide / voxelsPerSide[0];
             for (int i = 1; i < numberOfLevels; i++)
                 VoxelSideLengths[i] = VoxelSideLengths[i - 1] / voxelsPerSide[i];
-            voxelDictionaryLevel0 = new VoxelHashSet(0, this);
+            voxelDictionaryLevel0 = new VoxelHashSet(0, bitLevelDistribution);
             UpdateProperties();
         }
 
@@ -134,14 +134,14 @@ namespace TVGL.Voxelization
             VoxelSideLengths[0] = longestSide / voxelsPerSide[0];
             for (int i = 1; i < numberOfLevels; i++)
                 VoxelSideLengths[i] = VoxelSideLengths[i - 1] / voxelsPerSide[i];
-            voxelDictionaryLevel0 = new VoxelHashSet(0, this);
+            voxelDictionaryLevel0 = new VoxelHashSet(0, bitLevelDistribution);
 
             byte[] bytes = Convert.FromBase64String(fileData.Voxels[0]);
             for (int i = 0; i < bytes.Length; i += 8)
             {
                 var ID = BitConverter.ToInt64(bytes, i);
                 Constants.GetRoleFlags(ID, out var level, out VoxelRoleTypes role, out bool btmInside);
-                voxelDictionaryLevel0.AddOrReplace(new Voxel_Level0_Class(ID, role, this, btmInside));
+                voxelDictionaryLevel0.AddOrReplace(new VoxelBinClass(ID, role, this, btmInside));
             }
 
             for (int i = 1; i < bitLevelDistribution.Length; i++)
@@ -150,7 +150,7 @@ namespace TVGL.Voxelization
                 for (int j = 0; j < bytes.Length; j += 8)
                 {
                     var ID = BitConverter.ToInt64(bytes, j);
-                    ((Voxel_Level0_Class) voxelDictionaryLevel0.GetVoxel(ID)).InnerVoxels[i - 1]
+                    ((VoxelBinClass) voxelDictionaryLevel0.GetVoxel(ID)).InnerVoxels[i - 1]
                         .AddOrReplace(new Voxel(ID, this));
                 }
             }

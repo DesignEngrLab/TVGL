@@ -11,7 +11,7 @@ namespace TVGL.Voxelization
     /// Class VoxelHashSet.
     /// </summary>
     /// <seealso cref="System.Collections.Generic.IEnumerable{TVGL.Voxelization.IVoxel}" />
-    public class VoxelHashSet : IEnumerable<IVoxel>
+    internal class VoxelHashSet : IVoxelSet
     {
         internal readonly int level;
         private int[] buckets;
@@ -33,15 +33,18 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="comparer">The comparer.</param>
         /// <param name="solid">The solid.</param>
-        public VoxelHashSet(int level, VoxelizedSolid solid)
+        internal VoxelHashSet(int level, int[] bitLevelDistribution)
         {
             this.level = level;
-            var numParentBits = solid.bitLevelDistribution.Take(level).Sum();
+            var numParentBits = bitLevelDistribution.Take(level).Sum();
             if (level == 0)
-                comparer = new VoxelComparerLevel0(solid.bitLevelDistribution[0]);
-            else if (numParentBits - solid.bitLevelDistribution[0] <= 10)
-                comparer = new VoxelComparerMidLevels(solid.bitLevelDistribution, numParentBits);
-            else comparer = new VoxelComparerFine(solid.bitLevelDistribution, numParentBits);
+            {
+                //throw new ArgumentException("shouldn't pass level 0 here anymore");
+                comparer = new VoxelComparerLevel0(bitLevelDistribution[0]);
+            }
+            else if (numParentBits - bitLevelDistribution[0] <= 10)
+                comparer = new VoxelComparerMidLevels(bitLevelDistribution, numParentBits);
+            else comparer = new VoxelComparerFine(bitLevelDistribution, numParentBits);
             lastIndex = 0;
             count = 0;
             freeList = -1;
@@ -54,8 +57,8 @@ namespace TVGL.Voxelization
         /// <param name="comparer">The comparer.</param>
         /// <param name="solid">The solid.</param>
         /// <param name="startingSet">The starting set.</param>
-        internal VoxelHashSet(int level, VoxelizedSolid solid, IEnumerable<IVoxel> startingSet)
-            : this(level, solid)
+        internal VoxelHashSet(int level, int[] bitLevelDistribution, IEnumerable<IVoxel> startingSet)
+            : this(level, bitLevelDistribution)
         {
             foreach (var voxel in startingSet)
             {
@@ -94,7 +97,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns>System.Int64.</returns>
-        public long GetFullVoxelID(long item)
+        internal override long GetFullVoxelID(long item)
         {
             if (buckets != null)
             {
@@ -115,7 +118,7 @@ namespace TVGL.Voxelization
             return 0;
         }
 
-        public IVoxel GetVoxel(long item)
+        internal override IVoxel GetVoxel(long item)
         {
             if (buckets != null)
             {
@@ -137,7 +140,7 @@ namespace TVGL.Voxelization
 
         internal VoxelHashSet Copy(VoxelizedSolid solid)
         {
-            var copy = new VoxelHashSet(this.level, solid)
+            var copy = new VoxelHashSet(this.level, solid.bitLevelDistribution)
             {
                 buckets = (int[])this.buckets.Clone(),
                 slots = (Slot[])slots.Clone(),
@@ -149,7 +152,7 @@ namespace TVGL.Voxelization
         }
 
 
-        internal void AddRange(ICollection<IVoxel> voxels)
+        internal override void AddRange(ICollection<IVoxel> voxels)
         {
             foreach (var voxel in voxels)
                 AddOrReplace(voxel);
@@ -158,32 +161,13 @@ namespace TVGL.Voxelization
         #endregion
 
         #region ICollection<T> method
-        /// <summary>
-        /// Remove all items from this set. This clears the elements but not the underlying 
-        /// buckets and slots array. Follow this call by TrimExcess to release these.
-        /// </summary>
-        public void Clear()
-        {
-            if (lastIndex > 0)
-            {
-                Debug.Assert(buckets != null, "m_buckets was null but m_lastIndex > 0");
-
-                // clear the elements so that the gc can reclaim the references.
-                // clear only up to m_lastIndex for m_slots 
-                Array.Clear(slots, 0, lastIndex);
-                Array.Clear(buckets, 0, buckets.Length);
-                lastIndex = 0;
-                count = 0;
-                freeList = -1;
-            }
-        }
 
         /// <summary>
         /// Determines whether [contains] [the specified item].
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns><c>true</c> if [contains] [the specified item]; otherwise, <c>false</c>.</returns>
-        public bool Contains(IVoxel item)
+        internal override bool Contains(IVoxel item)
         {
             if (item == null) return false;
             return Contains(item.ID);
@@ -193,7 +177,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item">item to check for containment</param>
         /// <returns>true if item contained; false if not</returns>
-        public bool Contains(long item)
+        internal override bool Contains(long item)
         {
             if (buckets != null)
             {
@@ -212,14 +196,14 @@ namespace TVGL.Voxelization
             return false;
         }
 
-        public bool Remove(IVoxel item)
+        internal override bool Remove(IVoxel item)
         { return Remove(item.ID); }
         /// <summary>
         /// Remove item from this hashset
         /// </summary>
         /// <param name="item">item to remove</param>
         /// <returns>true if removed; false if not (i.e. if the item wasn't in the HashSet)</returns>
-        public bool Remove(long item)
+        internal override bool Remove(long item)
         {
             if (buckets != null)
             {
@@ -266,10 +250,8 @@ namespace TVGL.Voxelization
         /// <summary>
         /// Number of elements in this hashset
         /// </summary>
-        public int Count
-        {
-            get { return count; }
-        }
+        internal override int Count => count;
+
         #endregion
 
 
@@ -281,7 +263,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="match"></param>
         /// <returns></returns>
-        public int RemoveWhere(Predicate<IVoxel> match)
+        internal override int RemoveWhere(Predicate<IVoxel> match)
         {
             int numRemoved = 0;
             for (int i = 0; i < lastIndex; i++)
@@ -300,9 +282,9 @@ namespace TVGL.Voxelization
             }
             return numRemoved;
         }
-        public int RemoveDescendants(long ancestor, int ancestorLevel)
+        internal override int RemoveDescendants(long ancestor, int ancestorLevel)
         {
-            ancestor =comparer.ParentMask(ancestor,ancestorLevel);
+            ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             int numRemoved = 0;
             for (int i = 0; i < lastIndex; i++)
             {
@@ -318,7 +300,7 @@ namespace TVGL.Voxelization
             }
             return numRemoved;
         }
-        public List<IVoxel> GetDescendants(long ancestor, int ancestorLevel)
+        internal override List<IVoxel> GetDescendants(long ancestor, int ancestorLevel)
         {
             var descendants = new List<IVoxel>();
             ancestor = comparer.ParentMask(ancestor, ancestorLevel);
@@ -332,7 +314,7 @@ namespace TVGL.Voxelization
             }
             return descendants;
         }
-        public int CountDescendants(long ancestor, int ancestorLevel)
+        internal override int CountDescendants(long ancestor, int ancestorLevel)
         {
             ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             int count = 0;
@@ -346,7 +328,7 @@ namespace TVGL.Voxelization
             }
             return count;
         }
-        public int CountDescendants(long ancestor, int ancestorLevel, VoxelRoleTypes role)
+        internal override int CountDescendants(long ancestor, int ancestorLevel, VoxelRoleTypes role)
         {
             ancestor = comparer.ParentMask(ancestor, ancestorLevel);
             int count = 0;
@@ -361,17 +343,6 @@ namespace TVGL.Voxelization
             return count;
         }
 
-        /// <summary>
-        /// Gets the IEqualityComparer that is used to determine equality of keys for 
-        /// the HashSet.
-        /// </summary>
-        public IEqualityComparer<long> Comparer
-        {
-            get
-            {
-                return comparer;
-            }
-        }
 
         /// <summary>
         /// Sets the capacity of this list to the size of the list (rounded up to nearest prime),
@@ -553,7 +524,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="item"></param>
         /// <returns>true if added, false if already present</returns>
-        public bool AddOrReplace(IVoxel newVoxel)
+        internal override bool AddOrReplace(IVoxel newVoxel)
         {
             long newVoxelID = newVoxel.ID;
             int hashCode = InternalGetHashCode(newVoxelID);
@@ -614,15 +585,11 @@ namespace TVGL.Voxelization
 
         #region IEnumerable methods
 
-        public IEnumerator<IVoxel> GetEnumerator()
+        public override IEnumerator<IVoxel> GetEnumerator()
         {
             return new Enumerator(this);
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
         #endregion
         #endregion
 

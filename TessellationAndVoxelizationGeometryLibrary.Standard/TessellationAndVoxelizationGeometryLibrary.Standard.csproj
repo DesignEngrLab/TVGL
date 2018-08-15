@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -92,6 +92,7 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid Body Classes\Vertex.cs" Link="Solid Body Classes\Vertex.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Solid.cs" Link="Solid.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs" Link="Verbosity.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\IVoxelSet.cs" Link="Voxelization\IVoxelSet.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelClass.cs" Link="Voxelization\VoxelClass.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelComparer.cs" Link="Voxelization\VoxelComparer.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelConstantsAndEnumerators.cs" Link="Voxelization\VoxelConstantsAndEnumerators.cs" />
@@ -103,7 +104,7 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelizedSolid_to_TessellatedSolid.cs" Link="Voxelization\VoxelizedSolid_to_TessellatedSolid.cs" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!--<ItemGroup>
     <Folder Include="2D\Clipper\" />
     <Folder Include="Boolean Operations\" />
     <Folder Include="Comparators\" />
@@ -115,7 +116,7 @@
     <Folder Include="Primitive Classification\" />
     <Folder Include="Primitive Surfaces\" />
     <Folder Include="Solid Body Classes\" />
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup>
     <PackageReference Include="MIConvexHull" Version="1.1.17.1019" />
