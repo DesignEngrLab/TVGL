@@ -465,14 +465,14 @@ namespace TVGL.Voxelization
             var layerOfVoxels = new VoxelHashSet[numLayers]; /* the voxels are organized into layers */
             for (int i = 0; i < numLayers; i++)
                 layerOfVoxels[i] = new VoxelHashSet(level, bitLevelDistribution);
-            //Parallel.ForEach(voxels, v =>
-            foreach (var v in voxels)
+            Parallel.ForEach(voxels, v =>
+            //foreach (var v in voxels)
             {  //place all the voxels in this level into layers along the extrude direction
                 var layerIndex = (int)((v.ID >> (20 * dimension + 4 + singleCoordinateShifts[level])) & (voxelsPerSide[level] - 1));
                 if (!positiveDir) layerIndex = numLayers - 1 - layerIndex;
                 lock (layerOfVoxels[layerIndex])
                     layerOfVoxels[layerIndex].AddOrReplace(v);
-            }//);
+            });
             /* now, for the main loop */
             var loopLimit = lastLayer ? numLayers - 1 : numLayers;
             // loopLimit is one more than the numer of layers so that we can "inform" the set below this one.
@@ -482,8 +482,8 @@ namespace TVGL.Voxelization
             for (int i = 0; i < numLayers; i++)
             { /* cycle over each layer, note that voxels are being removed from subsequent layers so the process should
                * speed up.  */
-                //Parallel.ForEach(layerOfVoxels[i], voxel =>
-                foreach (var voxel in layerOfVoxels[i])
+                Parallel.ForEach(layerOfVoxels[i], voxel =>
+                //foreach (var voxel in layerOfVoxels[i])
                 {
                     #region fill up the layers below this one
                     if (voxel.Role == VoxelRoleTypes.Full
@@ -501,7 +501,7 @@ namespace TVGL.Voxelization
                                 if (level < this.numberOfLevels - 1)
                                     // todo: this should go down to the lowest level!
                                     AddAllDescendants(Constants.ClearFlagsFromID(neighbor.ID), level,
-                                        (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(neighbor.ID), dimension, 1);
+                                        voxelDictionaryLevel0.GetVoxel(neighbor.ID), dimension, 1);
                                 lock (layerOfVoxels[neighborLayer])
                                     layerOfVoxels[neighborLayer].AddOrReplace(neighbor);
                             }
@@ -522,7 +522,7 @@ namespace TVGL.Voxelization
                         filledUpNextLayer = Extrude(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
                         if (neighbor == null || layerOfVoxels.Length <= i + 1)
-                            continue;  //   return;  // null happens when you go outside of bounds (of coarsest voxels)
+                            return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer)
                         {
                             if (i + 1 == loopLimit && lastLayer) neighbor = ChangeVoxelToPartial(neighbor, false);
@@ -533,7 +533,7 @@ namespace TVGL.Voxelization
                             layerOfVoxels[i + 1].AddOrReplace(neighbor);
                     }
                     #endregion
-                }//);
+                });
                 remainingVoxelLayers -= voxelsPerLayer;
             }
             return numVoxelsOnXSection == voxelsPerSide[level] * voxelsPerSide[level];
@@ -564,23 +564,6 @@ namespace TVGL.Voxelization
             UpdateProperties();
         }
 
-        private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references)
-        {
-            var voxels = GetChildVoxelsInner(parent);
-            Parallel.ForEach(voxels, thisVoxel =>
-            //foreach (var thisVoxel in voxels)
-            {
-                var referenceLowestRole = GetLowestRole(thisVoxel.ID, level, references);
-                if (referenceLowestRole == VoxelRoleTypes.Full) return; //continue;
-                if (referenceLowestRole == VoxelRoleTypes.Empty) ChangeVoxelToEmpty(thisVoxel, true, false);
-                else
-                {
-                    if (thisVoxel.Role == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel, true);
-                    if (level < numberOfLevels - 1)
-                        Intersect(thisVoxel, level + 1, references);
-                }
-            });
-        }
         private void Intersect(IVoxel parent, int level, VoxelizedSolid[] references, bool parentWasFull)
         {
             if (parentWasFull)
