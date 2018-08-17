@@ -129,7 +129,7 @@
     <Compile Include="Solid Body Classes\TessellatedSolid.cs" />
     <Compile Include="Solid Body Classes\Vertex.cs" />
     <Compile Include="Solid.cs" />
-    <Compile Include="Voxelization\IVoxelSet.cs" />
+    <Compile Include="Voxelization\VoxelBinSet.cs" />
     <Compile Include="Voxelization\VoxelClass.cs" />
     <Compile Include="Voxelization\VoxelHashSet.cs" />
     <Compile Include="Voxelization\VoxelComparer.cs" />

@@ -82,7 +82,7 @@ namespace TVGL.Voxelization
         /// <param name="level">The level.</param>
         /// <param name="role">The role.</param>
         /// <param name="btmIsInside">if set to <c>true</c> [BTM is inside].</param>
-        public static void GetRoleFlags(long ID, out byte level, out VoxelRoleTypes role, out bool btmIsInside)
+        internal static void GetRoleFlags(long ID, out byte level, out VoxelRoleTypes role, out bool btmIsInside)
         {
             level = (byte)((ID & 12) >> 2); //12 is (1100)
             if (level == 3) level = 6; //level 3 (11) is actually 6 (See comment above)
@@ -110,6 +110,47 @@ namespace TVGL.Voxelization
             }
         }
 
+        internal static VoxelRoleTypes GetRole(long ID)
+        {
+            if ((ID & 2) == 0) // 0_
+            {
+                if ((ID & 1) == 0)
+                    return VoxelRoleTypes.Empty;
+                return VoxelRoleTypes.Full;
+            }
+            // 1_
+            return VoxelRoleTypes.Partial;
+        }
+
+        internal static bool GetIfBtmIsInside(long ID)
+        {
+            if ((ID & 2) == 0) // 0_
+            {
+                return (ID & 1) != 0;
+            }
+            // 1_
+            return (ID & 1) == 1; // 11
+        }
+        internal static long SetBtmCoordIsInside(long ID, bool btmIsInside)
+        {
+            if (btmIsInside)
+            {
+                if ((ID & 1) == 0) return ID + 1;
+            }
+            else
+                if ((ID & 1) != 0) return ID - 1;
+
+            return ID;
+        }
+
+        internal static byte GetLevel(long ID)
+        {
+            var level = (byte)((ID & 12) >> 2); //12 is (1100)
+            if (level == 3) level = 6; //level 3 (11) is actually 6 (See comment above)
+            else if ((ID & 16) != 0) level += 3;
+            return level;
+        }
+
         /// <summary>
         /// Sets the role flags.
         /// </summary>
@@ -117,7 +158,7 @@ namespace TVGL.Voxelization
         /// <param name="role">The role.</param>
         /// <param name="btmIsInside">if set to <c>true</c> [BTM is inside].</param>
         /// <returns>System.Int64.</returns>
-        public static long SetRoleFlags(int level, VoxelRoleTypes role, bool btmIsInside = false)
+        public static long MakeFlags(int level, VoxelRoleTypes role, bool btmIsInside = false)
         {
             var result = (btmIsInside || role == VoxelRoleTypes.Full) ? 1L : 0L;
             if (role == VoxelRoleTypes.Partial) result += 2;
@@ -231,7 +272,6 @@ namespace TVGL.Voxelization
         {
             return Math.Ceiling(d) == d;
         }
-
 
     }
 

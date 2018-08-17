@@ -31,7 +31,7 @@ namespace TVGL.Voxelization
         /// Changes the voxel to empty.
         /// </summary>
         /// <param name="voxel">The voxel.</param>
-        public void ChangeVoxelToEmpty(IVoxel voxel, bool removeDescendants, bool checkParentEmpty)
+        public void ChangeVoxelToEmpty(long voxel, bool removeDescendants, bool checkParentEmpty)
         {
             if (voxel.Role == VoxelRoleTypes.Empty) return;
             if (voxel.Level == 0)
@@ -64,15 +64,14 @@ namespace TVGL.Voxelization
             }
         }
 
-        private IVoxel ChangeEmptyVoxelToFull(long ID, int level, bool checkParentFull)
+        private long ChangeEmptyVoxelToFull(long ID, int level, bool checkParentFull)
         {
-            IVoxel voxel;
             if (level == 0)
             {   //adding a new level-0 voxel is fairly straightforward
-                voxel = new VoxelBinClass(ID, VoxelRoleTypes.Full, this);
+               var voxelBin = new VoxelBinClass(ID, VoxelRoleTypes.Full, this);
                 lock (voxelDictionaryLevel0)
-                    voxelDictionaryLevel0.AddOrReplace((VoxelBinClass)voxel);
-                return voxel;
+                    voxelDictionaryLevel0.AddOrReplace(voxelBin);
+                return voxelBin;
             }
             // for the lower levels, first get or make the level-0 voxel (next7 lines)
             var thisIDwoFlags = Constants.ClearFlagsFromID(ID);
@@ -84,7 +83,7 @@ namespace TVGL.Voxelization
                 else
                     voxel0 = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(id0);
             // make the new Voxel, and add it to the proper hashset
-            voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Full), this);
+          var  voxel = thisIDwoFlags + Constants.MakeFlags(level, VoxelRoleTypes.Full);
             lock (voxel0.InnerVoxels[level - 1])
                 voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
             if (level == 1 && checkParentFull)
@@ -97,14 +96,14 @@ namespace TVGL.Voxelization
                     changeToFull = (voxel0.InnerVoxels[0].Count == voxelsInParent[level]
                                     //the following All statement is slow. First, just
                                     // check if its worth counting to see if all are Full
-                                    && voxel0.InnerVoxels[0].All(v => v.Role == VoxelRoleTypes.Full));
+                                    && voxel0.InnerVoxels[0].All(v => Constants.GetRole(v) == VoxelRoleTypes.Full));
                 if (changeToFull) ChangeVoxelToFull(voxel0, checkParentFull);
             }
             else if (level > 1)
             {
                 // for the remaining voxellevels, we also need to check if the parent has been created
-                var parentID = MakeParentVoxelID(voxel.ID, level - 1);
-                IVoxel parentVoxel;
+                var parentID = MakeParentVoxelID(voxel, level - 1);
+                long parentVoxel;
                 var mightBeFull = false;
                 lock (voxel0.InnerVoxels[level - 2]) parentVoxel = voxel0.InnerVoxels[level - 2].GetVoxel(parentID);
                 if (parentVoxel == null) ChangeEmptyVoxelToPartial(parentID, level - 1);
@@ -112,13 +111,13 @@ namespace TVGL.Voxelization
                 if (checkParentFull && mightBeFull)
                 {
                     bool makeParentFull = false;
-                    lock (voxel0.InnerVoxels[voxel.Level - 1])
+                    lock (voxel0.InnerVoxels[level- 1])
                     {
                         // since the hashsets are combined we need to count
                         // what is indeed the immediate descendant of the the parent and see if they are all full
-                        makeParentFull = voxel0.InnerVoxels[voxel.Level - 1].Count >= voxelsInParent[level];
+                        makeParentFull = voxel0.InnerVoxels[level - 1].Count >= voxelsInParent[level];
                         if (makeParentFull)
-                            makeParentFull = (voxel0.InnerVoxels[voxel.Level - 1]
+                            makeParentFull = (voxel0.InnerVoxels[level - 1]
                                                   .CountDescendants(parentID, level - 1, VoxelRoleTypes.Full) ==
                                               voxelsInParent[level]);
                     }
@@ -133,8 +132,8 @@ namespace TVGL.Voxelization
         /// Changes the voxel to full.
         /// </summary>
         /// <param name="voxel">The voxel.</param>
-        /// <returns>IVoxel.</returns>
-        public IVoxel ChangeVoxelToFull(IVoxel voxel, bool checkParentFull)
+        /// <returns>long.</returns>
+        public long ChangeVoxelToFull(long voxel, bool checkParentFull)
         {
             // if (voxel == null) Debug.WriteLine("");
             if (voxel.Role == VoxelRoleTypes.Full)
@@ -170,7 +169,7 @@ namespace TVGL.Voxelization
             {
                 //if it's the voxel struct then we have to delete it and make a new one
                 voxel = new Voxel(
-                    Constants.ClearFlagsFromID(voxel.ID) + Constants.SetRoleFlags(level, VoxelRoleTypes.Full),
+                    Constants.ClearFlagsFromID(voxel.ID) + Constants.MakeFlags(level, VoxelRoleTypes.Full),
                     this);
                 lock (voxel0.InnerVoxels[level - 1])
                     voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
@@ -191,7 +190,7 @@ namespace TVGL.Voxelization
                     (voxel0.InnerVoxels[0].Count ==
                      voxelsInParent[level] //the following All statement is slow. First, just
                                            // check if its worth counting to see if all are Full
-                     && voxel0.InnerVoxels[0].All(v => v.Role == VoxelRoleTypes.Full));
+                     && voxel0.InnerVoxels[0].All(v => Constants.GetRole(v) == VoxelRoleTypes.Full));
                     if (makeVoxelFull) ChangeVoxelToFull(voxel0, checkParentFull);
                 }
                 else
@@ -213,9 +212,9 @@ namespace TVGL.Voxelization
             return voxel;
         }
 
-        private IVoxel ChangeEmptyVoxelToPartial(long ID, int level)
+        private long ChangeEmptyVoxelToPartial(long ID, int level)
         {
-            IVoxel voxel;
+            long voxel;
             if (level == 0)
             {
                 //adding a new level-0 voxel is fairly straightforward
@@ -235,7 +234,7 @@ namespace TVGL.Voxelization
                 else
                     voxel0 = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(id0);
             // make the new Voxel, and add it to the proper hashset
-            voxel = new Voxel(thisIDwoFlags + Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
+            voxel = new Voxel(thisIDwoFlags + Constants.MakeFlags(level, VoxelRoleTypes.Partial), this);
             lock (voxel0.InnerVoxels[level - 1])
                 voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
             // well, we don't need to check if parent is full but we may need to create the parent
@@ -243,7 +242,7 @@ namespace TVGL.Voxelization
             {
                 // for the remaining voxellevels, we also need to check if the parent has been created
                 var parentID = MakeParentVoxelID(voxel.ID, level - 1);
-                IVoxel parentVoxel = null;
+                long parentVoxel = null;
                 lock (voxel0.InnerVoxels[level - 2])
                     parentVoxel = voxel0.InnerVoxels[level - 2].GetVoxel(parentID);
                 if (parentVoxel == null) ChangeEmptyVoxelToPartial(parentID, level - 1);
@@ -251,7 +250,7 @@ namespace TVGL.Voxelization
             return voxel;
         }
 
-        private IVoxel ChangeVoxelToPartial(IVoxel voxel, bool addAllDescendants)
+        private long ChangeVoxelToPartial(long voxel, bool addAllDescendants)
         {
             if (voxel.Role == VoxelRoleTypes.Partial)
             {
@@ -288,7 +287,7 @@ namespace TVGL.Voxelization
             {
                 //if it's the voxel struct then we have to delete it and make a new one
                 voxel = new Voxel(Constants.ClearFlagsFromID(voxel.ID) +
-                                  Constants.SetRoleFlags(level, VoxelRoleTypes.Partial), this);
+                                  Constants.MakeFlags(level, VoxelRoleTypes.Partial), this);
                 lock (voxel0.InnerVoxels[level - 1])
                     voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
             }
@@ -297,11 +296,11 @@ namespace TVGL.Voxelization
             return voxel;  //if at the lowest level or
         }
 
-        List<IVoxel> AddAllDescendants(long startingID, int level, int shortDimension = -1, int numShortLayers = -1)
+        List<long> AddAllDescendants(long startingID, int level, int shortDimension = -1, int numShortLayers = -1)
         {
             var limits = new[] { voxelsPerSide[level + 1], voxelsPerSide[level + 1], voxelsPerSide[level + 1] };
             if (shortDimension >= 0) limits[shortDimension] = numShortLayers;
-            var descendants = new List<IVoxel>();
+            var descendants = new List<long>();
             var xShift = 1L << (4 + singleCoordinateShifts[level + 1]); //finding the correct multiplier requires adding up all the bits used in current levels
             var yShift = xShift << 20; //once the xShift is known, the y and z shifts are just 20 bits over
             var zShift = yShift << 20;
@@ -310,32 +309,18 @@ namespace TVGL.Voxelization
                     for (int k = 0; k < limits[2]; k++)
                         descendants.Add(new Voxel(startingID
                                                        + (i * xShift) + (j * yShift) + (k * zShift)
-                                                       + Constants.SetRoleFlags(level + 1, VoxelRoleTypes.Full, true), this));
+                                                       + Constants.MakeFlags(level + 1, VoxelRoleTypes.Full, true), this));
             return descendants;
         }
-        void AddAllDescendants(long startingID, int level, VoxelBinClass voxel0, int shortDimension = -1, int numShortLayers = -1)
+
+        void AddAllDescendants(long startingID, int level, VoxelBinClass voxel0, int shortDimension = -1,
+            int numShortLayers = -1)
         {
             var lowerLevelVoxels = AddAllDescendants(startingID, level, shortDimension, numShortLayers);
             lock (voxel0.InnerVoxels[level])
                 voxel0.InnerVoxels[level].AddRange(lowerLevelVoxels);
         }
-        internal IEnumerable<IVoxel> GetChildVoxelsInner(IVoxel parent)
-        {
-            if (parent == null) return voxelDictionaryLevel0;
-            if (parent.Level == numberOfLevels - 1) return null;
-            VoxelBinClass level0Parent;
-            if (parent is VoxelBinClass)
-            {
-                level0Parent = (VoxelBinClass)parent;
-                return level0Parent.InnerVoxels[0];
-            }
-            // else the parent is level 1, 2, or 3
-            level0Parent = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(parent.ID);
-            IEnumerable<IVoxel> voxels;
-            lock (level0Parent.InnerVoxels[parent.Level])
-                voxels = level0Parent.InnerVoxels[parent.Level].GetDescendants(parent.ID, parent.Level);
-            return voxels;
-        }
+
         #endregion
 
         public void UpdateProperties(int level = -1)
@@ -357,7 +342,7 @@ namespace TVGL.Voxelization
 
         private long CountVoxels(VoxelBinClass voxel0, int level, VoxelRoleTypes role)
         {
-            return voxel0.InnerVoxels[level - 1].Count(v => v.Role == role);
+            return voxel0.InnerVoxels[level - 1].Count(v => Constants.GetRole(v) == role);
         }
 
         internal double[] GetRealCoordinates(int level, params int[] indices)

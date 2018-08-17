@@ -288,8 +288,8 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Verbosity.cs">
       <Link>TVGL\Verbosity.cs</Link>
     </Compile>
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\IVoxelSet.cs">
-      <Link>TVGL\Voxelization\IVoxelSet.cs</Link>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelBinSet.cs">
+      <Link>TVGL\Voxelization\VoxelBinSet.cs</Link>
     </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Voxelization\VoxelClass.cs">
       <Link>TVGL\Voxelization\VoxelClass.cs</Link>

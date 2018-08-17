@@ -152,7 +152,7 @@ namespace TVGL.Voxelization
                 {
                     var ID = BitConverter.ToInt64(bytes, j);
                     ((VoxelBinClass)voxelDictionaryLevel0.GetVoxel(ID)).InnerVoxels[i - 1]
-                        .AddOrReplace(new Voxel(ID, this));
+                        .AddOrReplace(ID);
                 }
             }
 

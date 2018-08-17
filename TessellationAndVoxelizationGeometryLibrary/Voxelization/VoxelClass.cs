@@ -106,7 +106,7 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <param name="ID">The identifier.</param>
         /// <param name="solid">The solid.</param>
-        internal Voxel(long ID, VoxelizedSolid solid) // = null)
+        internal Voxel(long ID, VoxelizedSolid solid = null)
         {
             this.ID = ID;
             Constants.GetRoleFlags(ID, out var level, out var role, out var btmIsInside);
@@ -137,7 +137,7 @@ namespace TVGL.Voxelization
             Role = voxelRole;
             Level = 0;
             this.ID = Constants.ClearFlagsFromID(ID) +
-                      Constants.SetRoleFlags(Level, Role, Role == VoxelRoleTypes.Full || btmCoordIsInside);
+                      Constants.MakeFlags(Level, Role, Role == VoxelRoleTypes.Full || btmCoordIsInside);
             BtmCoordIsInside = btmCoordIsInside;
             SideLength = solid.VoxelSideLengths[Level];
             CoordinateIndices = Constants.GetCoordinateIndices(ID, solid.singleCoordinateShifts[0]);
