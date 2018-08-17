@@ -123,9 +123,9 @@ namespace TVGL.Voxelization
 
         internal static long SetRole(long id, VoxelRoleTypes value)
         {
-            if ((id &2)>0) //then partial
+            if ((id &2) != 0) //then partial
             id -= 2;
-            else if ((id & 1) > 0) // then full
+            else if ((id & 1) != 0) // then full
             {
                 if (value == VoxelRoleTypes.Partial)
                     id += 2;

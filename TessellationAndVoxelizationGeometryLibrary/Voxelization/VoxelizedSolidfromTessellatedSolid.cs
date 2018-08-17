@@ -109,11 +109,10 @@ namespace TVGL.Voxelization
             for (byte level = 2; level < numberOfLevels; level++)
             {
                 UpdateVertexSimulatedCoordinates(transformedCoordinates, ts.Vertices, level);
-                Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
-                  v0 =>
-                  // foreach (var v0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                //Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
+                //  voxel0 =>
+                   foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
                   {
-                      var voxel0 = v0;
                       var voxels = voxel0.InnerVoxels[level - 1];
                       foreach (var parent in voxel0.InnerVoxels[level - 2].Where(v => Constants.GetRole(v) == VoxelRoleTypes.Partial))
                       {
@@ -122,7 +121,7 @@ namespace TVGL.Voxelization
                               GetFacesToCheck(parent, level, voxel0), transformedCoordinates);
                           makeVoxelsInInterior(voxels, children, level, parent, voxel0, transformedCoordinates);
                       }
-                  });
+                  } //);
             }
             #endregion
             UpdateProperties();
@@ -974,7 +973,6 @@ namespace TVGL.Voxelization
                 else outsiders.Push(voxel);
             /* the outsiders are done first as these may create insiders that are useful to finding other insiders.
              * Note, that new interior voxels created here (20 lines down) are added to the insider queue. */
-            // debug: potential problem!!! what if there are no outsiders or insiders but there are unknown partials?
             while (outsiders.Any())
             {
                 var current = outsiders.Pop();
@@ -988,7 +986,7 @@ namespace TVGL.Voxelization
                     if so, just skip this one. */
                     var neighbor = GetNeighborForTSBuilding(coord, (VoxelDirections)(direction + 1), voxels, level, out var neighborCoord);
                     /* if neighbor is null, then there is a possibility to add it - otherwise, move on to the next */
-                    if (neighbor > 0) continue;
+                    if (neighbor != 0) continue;
                     /* get the faces that goes through the current face */
                     var faces = GetFacesToCheck(current, level, voxel0);
                     /* so, if the farthest face in this positive direction is pointing in the negative direction, then
@@ -1007,8 +1005,7 @@ namespace TVGL.Voxelization
                 //var directions = current.Role == VoxelRoleTypes.Full ? allDirections : negDirections;
                 var coord = Constants.GetCoordinateIndices(current, singleCoordinateShifts[level]);
                 foreach (var direction in allDirections)
-                {
-                    // check to see if current is not going put the neighbor outside of the boundary 
+                {  // check to see if current is not going put the neighbor outside of the boundary 
                     if ((direction < 0 && coord[-direction - 1] == parentLimits[0][-direction - 1]) ||
                         (direction > 0 && coord[direction - 1] == parentLimits[1][direction - 1] - 1)) continue;
                     var neighbor = GetNeighborForTSBuilding(coord, (VoxelDirections)direction, voxels, level,

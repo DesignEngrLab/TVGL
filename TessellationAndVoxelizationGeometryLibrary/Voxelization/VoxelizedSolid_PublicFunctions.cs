@@ -81,7 +81,7 @@ namespace TVGL.Voxelization
                 return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.MakeFlags(level, VoxelRoleTypes.Full), this);
 
             var vID = voxel0.InnerVoxels[level - 1].GetVoxel(ID);
-            if (vID > 0) return new Voxel(vID, this);
+            if (vID != 0) return new Voxel(vID, this);
 
             //so, now the voxel0 exists and is partial, but the ID is not registered with its expected level. This means that
             //one of the ancestors must be empty or full
@@ -89,7 +89,7 @@ namespace TVGL.Voxelization
             {
                 var parentID = MakeParentVoxelID(ID, i);
                 parentID = voxel0.InnerVoxels[i - 1].GetVoxel(parentID);
-                if (parentID > 0)
+                if (parentID != 0)
                 {
                     if (Constants.GetRole(parentID) == VoxelRoleTypes.Full)
                         return new Voxel(
@@ -304,7 +304,7 @@ namespace TVGL.Voxelization
             //now for childlevels 2,3, 4 or parent levels 1, 2, 3
             parentID = MakeParentVoxelID(child.ID, parentLevel);
             parentID = level0Parent.InnerVoxels[parentLevel - 1].GetVoxel(parentID);
-            if (parentID > 0) return new Voxel(parentID, this);
+            if (parentID != 0) return new Voxel(parentID, this);
             // so the rest of this should be either fulls or empties as there is no immediate partial parent
             if (parentLevel == 1)
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
@@ -312,7 +312,7 @@ namespace TVGL.Voxelization
             //now for childlevels 3, 4 or parent levels 2, 3
             parentID = MakeParentVoxelID(child.ID, parentLevel - 1); // which would be either 1, or 2 - the grandparent
             parentID = level0Parent.InnerVoxels[parentLevel - 2].GetVoxel(parentID);
-            if (parentID > 0) return new Voxel(parentID, this);
+            if (parentID != 0) return new Voxel(parentID, this);
             // so the rest of this should be either fulls or empties as there is no immediate partial parent
             if (parentLevel == 1)
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty),
@@ -402,7 +402,7 @@ namespace TVGL.Voxelization
                 return Constants.ClearFlagsFromID(ID) + Constants.MakeFlags(level, VoxelRoleTypes.Full);
 
             var vID = voxel0.InnerVoxels[level - 1].GetVoxel(ID);
-            if (vID > 0) return vID;
+            if (vID != 0) return vID;
 
             //so, now the voxel0 exists and is partial, but the ID is not registered with its expected level. This means that
             //one of the ancestors must be empty or full
@@ -410,7 +410,7 @@ namespace TVGL.Voxelization
             {
                 var parentID = MakeParentVoxelID(ID, i);
                 parentID = voxel0.InnerVoxels[i - 1].GetVoxel(parentID);
-                if (parentID > 0)
+                if (parentID != 0)
                 {
                     if (Constants.GetRole(parentID) == VoxelRoleTypes.Full)
                         return Constants.ClearFlagsFromID(ID) + Constants.MakeFlags(level, VoxelRoleTypes.Full);
@@ -534,7 +534,7 @@ namespace TVGL.Voxelization
             //now for childlevels 2,3, 4 or parent levels 1, 2, 3
             var parentID = MakeParentVoxelID(child, parentLevel);
             parentID = level0Parent.InnerVoxels[parentLevel - 1].GetVoxel(parentID);
-            if (parentID > 0) return parentID;
+            if (parentID != 0) return parentID;
             // so the rest of this should be either fulls or empties as there is no immediate partial parent
             if (parentLevel == 1)
                 return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty);
