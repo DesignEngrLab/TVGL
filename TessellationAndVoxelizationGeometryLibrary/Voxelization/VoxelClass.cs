@@ -109,7 +109,7 @@ namespace TVGL.Voxelization
         internal Voxel(long ID, VoxelizedSolid solid = null)
         {
             this.ID = ID;
-            Constants.GetRoleFlags(ID, out var level, out var role, out var btmIsInside);
+            Constants.GetAllFlags(ID, out var level, out var role, out var btmIsInside);
             Role = role;
             Level = level;
             BtmCoordIsInside = btmIsInside;
@@ -135,7 +135,6 @@ namespace TVGL.Voxelization
             for (int i = 1; i < solid.numberOfLevels; i++)
                 InnerVoxels[i - 1] = new VoxelHashSet(i, solid.bitLevelDistribution);
             Role = voxelRole;
-            Level = 0;
             this.ID = Constants.ClearFlagsFromID(ID) +
                       Constants.MakeFlags(Level, Role, Role == VoxelRoleTypes.Full || btmCoordIsInside);
             BtmCoordIsInside = btmCoordIsInside;
@@ -159,16 +158,28 @@ namespace TVGL.Voxelization
         /// </summary>
         /// <value>The length of the side.</value>
         public double SideLength { get; internal set; }
+
         /// <summary>
         /// Gets the role.
         /// </summary>
         /// <value>The role.</value>
-        public VoxelRoleTypes Role { get; internal set; }
+        public VoxelRoleTypes Role
+        {
+            get => _role;
+            internal set
+            {
+                if (_role == value) return;
+                _role = value;
+                ID = Constants.SetRole(ID, value);
+            }
+        }
+        private VoxelRoleTypes _role;
+
         /// <summary>
         /// Gets the level.
         /// </summary>
         /// <value>The level.</value>
-        public byte Level { get; internal set; }
+        public byte Level => 0;
 
         /// <summary>
         /// Gets the bottom coordinate.
@@ -186,6 +197,7 @@ namespace TVGL.Voxelization
 
 
         internal Dictionary<long, HashSet<TessellationBaseClass>> tsElementsForChildVoxels;
+
         /// <summary>
         /// Gets the coordinate indices.
         /// </summary>

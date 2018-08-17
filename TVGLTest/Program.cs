@@ -96,7 +96,7 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../TestFiles");
             }
             var random = new Random();
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*etra*").OrderBy(x => random.Next()).ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i++)
@@ -144,7 +144,7 @@ namespace TVGLPresenterDX
         {
             var vs1 = new VoxelizedSolid(ts, 7);
             Console.WriteLine("done constructing, now ...");
-            //Presenter.ShowAndHang(vs1);
+            Presenter.ShowAndHang(vs1);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
             //var savename = "voxelized_" + _fileName;
             //IO.Save(vs1ts, savename, FileType.STL_ASCII);

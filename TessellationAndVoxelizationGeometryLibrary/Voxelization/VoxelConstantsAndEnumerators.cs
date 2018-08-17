@@ -82,7 +82,7 @@ namespace TVGL.Voxelization
         /// <param name="level">The level.</param>
         /// <param name="role">The role.</param>
         /// <param name="btmIsInside">if set to <c>true</c> [BTM is inside].</param>
-        internal static void GetRoleFlags(long ID, out byte level, out VoxelRoleTypes role, out bool btmIsInside)
+        internal static void GetAllFlags(long ID, out byte level, out VoxelRoleTypes role, out bool btmIsInside)
         {
             level = (byte)((ID & 12) >> 2); //12 is (1100)
             if (level == 3) level = 6; //level 3 (11) is actually 6 (See comment above)
@@ -118,10 +118,29 @@ namespace TVGL.Voxelization
                     return VoxelRoleTypes.Empty;
                 return VoxelRoleTypes.Full;
             }
-            // 1_
             return VoxelRoleTypes.Partial;
         }
 
+        internal static long SetRole(long id, VoxelRoleTypes value)
+        {
+            if ((id &2)>0) //then partial
+            id -= 2;
+            else if ((id & 1) > 0) // then full
+            {
+                if (value == VoxelRoleTypes.Partial)
+                    id += 2;
+                else if (value == VoxelRoleTypes.Empty)
+                    id -= 1;
+            }
+            else //then must be empty
+            {
+                if (value == VoxelRoleTypes.Partial)
+                    id += 2;
+                else if (value == VoxelRoleTypes.Full)
+                    id += 1;
+            }
+            return id;
+        }
         internal static bool GetIfBtmIsInside(long ID)
         {
             if ((ID & 2) == 0) // 0_

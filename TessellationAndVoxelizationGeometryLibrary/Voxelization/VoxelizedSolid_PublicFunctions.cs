@@ -63,7 +63,7 @@ namespace TVGL.Voxelization
         {
             if (level == -1)
             {
-                Constants.GetRoleFlags(ID, out var levelFromID, out var role, out var btmIsInside);
+                Constants.GetAllFlags(ID, out var levelFromID, out var role, out var btmIsInside);
                 level = levelFromID;
             }
             var voxel0 = voxelDictionaryLevel0.GetVoxel(ID);
@@ -324,7 +324,7 @@ namespace TVGL.Voxelization
                 i++;
                 parentID = MakeParentVoxelID(child.ID, parentLevel - i); // which would be either 1, or 2 - the grandparent
                 parentID = level0Parent.InnerVoxels[parentLevel - i - 1].GetVoxel(parentID);
-            } while (parentID <= 0);
+            } while (parentID == 0);
             if (Constants.GetRole(parentID) == VoxelRoleTypes.Full)
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Full),this);
             else return new Voxel(MakeParentVoxelID(child.ID, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty),this);
@@ -384,7 +384,7 @@ namespace TVGL.Voxelization
         {
             if (level == -1)
             {
-                Constants.GetRoleFlags(ID, out var levelFromID, out var role, out var btmIsInside);
+                Constants.GetAllFlags(ID, out var levelFromID, out var role, out var btmIsInside);
                 level = levelFromID;
             }
             var voxel0 = voxelDictionaryLevel0.GetVoxel(ID);
@@ -545,7 +545,7 @@ namespace TVGL.Voxelization
                 i++;
                 parentID = MakeParentVoxelID(child, parentLevel - i); // which would be either 1, or 2 - the grandparent
                 parentID = level0Parent.InnerVoxels[parentLevel - i - 1].GetVoxel(parentID);
-            } while (parentID <= 0);
+            } while (parentID == 0);
             if (Constants.GetRole(parentID) == VoxelRoleTypes.Full)
                 return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Full);
             else return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty);
@@ -559,7 +559,7 @@ namespace TVGL.Voxelization
         /// <returns>IEnumerable&lt;IVoxel&gt;.</returns>
         public IEnumerable<long> GetChildVoxels(long parent)
         {
-            if (parent <= 0) return voxelDictionaryLevel0.Select(v => v.ID);
+            if (parent == 0) return voxelDictionaryLevel0.Select(v => v.ID);
             var level = Constants.GetLevel(parent);
             if (level == numberOfLevels - 1) return null;
             VoxelBinClass level0Parent = voxelDictionaryLevel0.GetVoxel(parent);
@@ -987,7 +987,7 @@ namespace TVGL.Voxelization
             foreach (var voxelizedSolid in solids)
             {
                 var argVoxel = voxelizedSolid.GetVoxelID(ID, level);
-                if (argVoxel <= 0 ) return VoxelRoleTypes.Empty;
+                if (argVoxel == 0 ) return VoxelRoleTypes.Empty;
                 var argRole = Constants.GetRole(argVoxel);
                 if (argRole == VoxelRoleTypes.Empty)
                     return VoxelRoleTypes.Empty;
