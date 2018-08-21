@@ -718,7 +718,7 @@ namespace TVGL.Voxelization
                         for (var neighborLayer = i + 1; neighborLayer <= loopLimit; neighborLayer++)
                         {
                             neighbor = GetNeighbor(neighbor, direction, out var neighborHasDifferentParent);
-                            if (neighbor == null) break; // null happens when you go outside of bounds
+                            if (neighbor == 0) break; // null happens when you go outside of bounds
                             if (lastLayer && neighborLayer == loopLimit)
                             {
                                 neighbor = ChangeVoxelToPartial(neighbor, false);
@@ -745,8 +745,8 @@ namespace TVGL.Voxelization
                         var filledUpNextLayer = false;
                         filledUpNextLayer = Extrude(direction, voxel, remainingVoxelLayers, level + 1);
                         var neighbor = GetNeighbor(voxel, direction, out var neighborHasDifferentParent);
-                        if (neighbor == null || layerOfVoxels.Length <= i + 1)
-                            return;  // null happens when you go outside of bounds (of coarsest voxels)
+                        if (neighbor == 0 || layerOfVoxels.Length <= i + 1)
+                           return;  // null happens when you go outside of bounds (of coarsest voxels)
                         if (filledUpNextLayer)
                         {
                             if (i + 1 == loopLimit && lastLayer) neighbor = ChangeVoxelToPartial(neighbor, false);
@@ -1002,7 +1002,7 @@ namespace TVGL.Voxelization
             foreach (var voxelizedSolid in solids)
             {
                 var argVoxel = voxelizedSolid.GetVoxelID(ID, level);
-                if (argVoxel == null) continue;
+                if (argVoxel == 0) continue;
                 var argRole = Constants.GetRole(argVoxel);
                 if (argRole == VoxelRoleTypes.Full)
                     return VoxelRoleTypes.Full;

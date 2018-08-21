@@ -262,7 +262,7 @@ namespace TVGL.Voxelization
             = new Dictionary<int, int[]>()
             {
                 {5, new[] {3, 2}},
-                {6, new[] {2, 2, 2}},
+                {6, new[] {3, 1,2}},
                 {7, new[] {3, 2, 2}},
                 {8, new[] {3, 3, 2}},
                 {9, new[] {3, 2,2,2}},
