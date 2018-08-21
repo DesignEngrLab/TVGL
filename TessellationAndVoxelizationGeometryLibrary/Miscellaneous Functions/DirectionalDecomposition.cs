@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using StarMathLib;
@@ -519,7 +520,7 @@ namespace TVGL
             //Return null if crossSection3D is null (uses null propogation "?")
             var crossSection = crossSection3D?.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop, direction, out _, tolerance)).ToList();
             var polygons = crossSection?.Select(p => new PolygonLight(p)).ToList();
-            if (polygons?.Sum(a => a.Area) < 0.0) throw new Exception("Cross section should not have a negative area");
+            if (polygons?.Sum(a => a.Area) < 0.0) Debug.WriteLine("Cross section should not have a negative area");
             return polygons;
         }
 
@@ -596,7 +597,7 @@ namespace TVGL
 
                 if (currentVertexDistance.IsPracticallySame(distance, tolerance) || currentVertexDistance > distance)
                 {
-                    //Determine cross sectional area for section as close to given distance as possitible (after previous vertex, but before current vertex)
+                    //Determine cross sectional area for section as close to given distance as possible (after previous vertex, but before current vertex)
                     //But not actually on the current vertex
                     double distance2;
                     if (currentVertexDistance.IsPracticallySame(distance))
@@ -620,6 +621,125 @@ namespace TVGL
                     var cuttingPlane = new Flat(distance2, direction);
                     var inputEdgeLoops = new List<List<long>>();
                     var loops = GetLoops(edgeList, cuttingPlane, out _, inputEdgeLoops, vertexLookup, vertexEdges, edgeFaces, faceEdgeLookup, 
+                        ref maxVertexIndex);
+                    return loops; //May return null if line intersections are not valid
+                }
+                foreach (var edge in vertexEdges[vertex.IndexInList])
+                {
+                    //Every edge has only two vertices. So the first sorted vertex adds the edge to this list
+                    //and the second removes it from the list.
+                    if (edgeList.Contains(edge))
+                    {
+                        edgeList.Remove(edge);
+                    }
+                    else
+                    {
+                        edgeList.Add(edge);
+                    }
+                }
+                //Update the previous distance of the vertex checked
+                previousVertexDistance = currentVertexDistance;
+            }
+            return null; //The function should return from the if statement inside
+        }
+
+        /// <summary>
+        /// Gets the Cross Section for a given distance without using the Edge class.
+        /// </summary>
+        /// <param name="tolerance"></param>
+        /// <param name="direction"></param>
+        /// <param name="distance"></param>
+        /// <param name="faces"></param>
+        /// <param name="vertices"></param>
+        /// <returns></returns>
+        public static List<List<VertexLight>> Get3DCrossSectionAtGivenDistance(FaceLight[] faces, VertexLight[] vertices, double tolerance, double[] direction, double distance)
+        {
+            //First, sort the vertices along the given axis. Duplicate distances are not important.
+            SortAlongDirection(direction, vertices.ToList(), out List<Tuple<VertexLight, double>> sortedVertices);
+            if (distance.IsLessThanNonNegligible(sortedVertices.First().Item2) ||
+                distance.IsGreaterThanNonNegligible(sortedVertices.Last().Item2))
+            {
+                //Distance is out of range of this solid.
+                return null;
+            }
+
+            var vertexLookup = new Dictionary<int, VertexLight>();
+            //initialize the vertex to edge dictionary
+            var vertexEdges = new Dictionary<int, List<long>>(); //Key = vertex index, Value = List<edge checksums>
+            foreach (var vertex in vertices)
+            {
+                vertexEdges.Add(vertex.IndexInList, new List<long>());
+                vertexLookup.Add(vertex.IndexInList, vertex);
+            }
+            int maxVertexIndex = vertexLookup.Keys.Max();
+            //The easiest way to build the lookup dictionaries is to create edges for all the faces
+            //Duplicate edges will be an issue, since edges are longs and are stored in a hashset
+            var edgeFaces = new Dictionary<long, List<FaceLight>>(); //Key = edge checksum, Value = face 1 , face 2. Owned/Other is not known.
+            var faceEdgeLookup = new Dictionary<FaceLight, List<long>>();
+            foreach (var face in faces)
+            {
+                var edges = new List<long>();
+                for (var i = 0; i < 3; i++)
+                {
+                    var j = (i == 2) ? 0 : i + 1;
+                    var v1 = face.Vertices[i];
+                    var v2 = face.Vertices[j];
+                    var newEdge = Edge.GetEdgeChecksum(v1.IndexInList, v2.IndexInList);
+                    edges.Add(newEdge);
+                    if (edgeFaces.ContainsKey(newEdge))
+                    {
+                        //Add the face to the edge. The vertices are already attached to the edge.
+                        edgeFaces[newEdge].Add(face);
+                    }
+                    else
+                    {
+                        //Add the face to the edge and the edge to the vertices
+                        edgeFaces[newEdge] = new List<FaceLight> { face };
+                        vertexEdges[v1.IndexInList].Add(newEdge);
+                        vertexEdges[v2.IndexInList].Add(newEdge);
+                    }
+                }
+                faceEdgeLookup[face] = edges;
+            }
+            //ToDo: could change value to an array once debugged
+            foreach (var edgeFaceSet in edgeFaces.Values)
+            {
+                if (edgeFaceSet.Count != 2) throw new Exception("Error in setting edge-face lookup dictionary");
+            }
+
+            var edgeList = new HashSet<long>();
+            var previousVertexDistance = sortedVertices[0].Item2; //This value can be negative
+            foreach (var element in sortedVertices)
+            {
+                var vertex = element.Item1;
+                var currentVertexDistance = element.Item2; //This value can be negative
+
+                if (currentVertexDistance.IsPracticallySame(distance, tolerance) || currentVertexDistance > distance)
+                {
+                    //Determine cross sectional area for section as close to given distance as possitible (after previous vertex, but before current vertex)
+                    //But not actually on the current vertex
+                    double distance2;
+                    if (currentVertexDistance.IsPracticallySame(distance))
+                    {
+                        if (previousVertexDistance < distance - tolerance)
+                        {
+                            distance2 = distance - tolerance;
+                        }
+                        else
+                        {
+                            //Take the average if the function above did not work.
+                            distance2 = (previousVertexDistance + currentVertexDistance / 2);
+                        }
+                    }
+                    else
+                    {
+                        //There was a significant enough gap betwwen points to use the exact distance
+                        distance2 = distance;
+                    }
+
+                    var cuttingPlane = new Flat(distance2, direction);
+                    var inputEdgeLoops = new List<List<long>>();
+                    var loops = GetLoops(edgeList, cuttingPlane, out _, inputEdgeLoops, vertexLookup, vertexEdges, edgeFaces, faceEdgeLookup,
                         ref maxVertexIndex);
                     return loops;
                 }
@@ -818,7 +938,6 @@ namespace TVGL
         #endregion
 
         #region Uniform Directional Segmentation
-
         /// <summary>
         /// Returns the Directional Segments found from decomposing a solid along a given direction. 
         /// This data is used in other methods. Optional parameter "orderedforcedSteps" adds in steps at the 
@@ -1149,7 +1268,7 @@ namespace TVGL
             Implications:   A segment may only be defined for one step, but its volume should be thought of as extending a half-step forward
                             and backward from that step to form a volume.  
             */
-            //if(debugCounter == 145) Debug.WriteLine("Bug Stop Hit");
+            //if(debugCounter == 52) Debug.WriteLine("Bug Stop Hit");
             var distanceAlongAxis = segmentationData.DistanceAlongDirection;
 
             //Get all the current segments.
@@ -1430,7 +1549,7 @@ namespace TVGL
                     }
 
                     //Create a new segment that starts from these completed segments. 
-                    var segmentIndex = allDirectionalSegments.Count();
+                    var segmentIndex = allDirectionalSegments.Keys.Max() + 1;
                     var newSegment = new DirectionalSegment(segmentIndex, inStepSegmentEdges,
                         allInStepSegmentVertices, newSegmentCurrentEdges, connectedSegments.ToList());
 
@@ -1507,7 +1626,7 @@ namespace TVGL
                 //Don't remove from the unusedInStepVertices list until we are done collecting
                 //All the edges that belong to this segment. Otherwise, we will be missing some
                 //of the edges between in step vertices.
-                var newSegmentIndex = allDirectionalSegments.Count;
+                var newSegmentIndex = allDirectionalSegments.Any()? allDirectionalSegments.Keys.Max() + 1 : 0;
                 usedInStepVertices.Add(startVertex);
                 var verticesToConsider = new Stack<Vertex>();
                 verticesToConsider.Push(startVertex);
@@ -1655,7 +1774,18 @@ namespace TVGL
                                     currentSegment.ReferenceVertices.Add(vertex);
                                 }
 
-                                currentSegment.AddPolygonDataGroup(negativePolygonDataGroup, true);
+                                //If this segment is not branching, go ahead and set this negative polygon.
+                                //Otherwise, it will be set when creating the branches
+                                if (paths.Count == 1)
+                                {
+                                    currentSegment.AddPolygonDataGroup(negativePolygonDataGroup, true);
+                                }
+                                else
+                                {
+                                    currentSegment.CurrentPolygonDataGroups.Add(negativePolygonDataGroup);
+                                    negativePolygonDataGroup.SegmentIndex = -1;
+                                    negativePolygonDataGroup.PotentialSegmentIndices.Add(currentSegment.Index);
+                                }
                             }
                         }
 
@@ -2153,7 +2283,7 @@ namespace TVGL
                 {
                     foreach (var positivePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area > 0.0))
                     {
-                        var newSegmentIndex = allDirectionalSegments.Count;
+                        var newSegmentIndex = allDirectionalSegments.Keys.Max() + 1;
                         var newSegment = new DirectionalSegment(newSegmentIndex, positivePolygonDataGroup, this);
                         allDirectionalSegments.Add(newSegmentIndex, newSegment);
                         newSegments.Add(newSegment);
@@ -2187,7 +2317,7 @@ namespace TVGL
 
                         //Now that we have all the parent segments fo the current positivePolygonDataGroup, 
                         //we can create the new segment.
-                        var newSegmentIndex = allDirectionalSegments.Count;
+                        var newSegmentIndex = allDirectionalSegments.Keys.Max() + 1;
 
                         //For the reference Edges and Vertices, all should belong to the parents.
                         //The current edges are those in the polygon data group
@@ -2281,7 +2411,7 @@ namespace TVGL
                     else
                     {
                         //This is a positive polygon
-                        //Check to make sure that we are not addind a second positive polygon to the same step index 
+                        //Check to make sure that we are not adding a second positive polygon to the same step index 
                         //We can only have one per segment per step 
 
                         if (CrossSectionPathDictionary[dataGroup.StepIndex].Any(p => p.Area > 0.0))
@@ -2622,6 +2752,7 @@ namespace TVGL
             Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup, 
             Dictionary<PolygonalFace, List<long>> faceEdgeLookup, ref int maxVertexIndex)
         {
+            outputEdgeLoops = new List<List<long>>();
             var edgeLoops = new List<List<long>>();
             var loops = new List<List<Vertex>>();
             if (intputEdgeLoops.Any())
@@ -2703,8 +2834,9 @@ namespace TVGL
                         {
                             (vertex1, vertex2) = Edge.GetVertexIndices(nextEdge);
                             //For the first set of edges, check to make sure this list is going in the proper direction
-                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
+                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLineSegment(cuttingPlane.Normal,
                                 cuttingPlane.DistanceToOrigin, vertexLookup[vertex1], vertexLookup[vertex2]);
+                            if (intersectVertex == null) return null;
 
                             var vector = intersectVertex.Position.subtract(loop.Last().Position, 3);
                             //Use the previous face, since that is the one that contains both of the edges that are in use.
@@ -2725,6 +2857,246 @@ namespace TVGL
                         }
                         else throw new Exception("Loop did not complete");
                     } while (currentFace != endFace);
+
+                    //if (reverseDirection > 2 && correctDirection > 2) throw new Exception("Area Decomp Loop Finding needs additional work.");
+                    if (reverseDirection > correctDirection)
+                    {
+                        loop.Reverse();
+                        edgeLoop.Reverse();
+                    }
+                    loops.Add(loop);
+                    edgeLoops.Add(edgeLoop);
+                }
+            }
+            outputEdgeLoops = edgeLoops;
+            return loops;
+        }
+
+
+        public struct FaceLight
+        {
+            public int IndexInList { get; set; }
+            public VertexLight A => Vertices[0];
+            public VertexLight B => Vertices[1];
+            public VertexLight C => Vertices[2];
+            public double[] Normal { get; }
+            public Dictionary<int, VertexLight> VertexByIndex { get; }
+            public VertexLight[] Vertices { get; }
+            public FaceLight(int indexInList, VertexLight a, VertexLight b, VertexLight c)
+            {
+                IndexInList = indexInList;
+                VertexByIndex = new Dictionary<int, VertexLight>
+                {
+                    {a.IndexInList, a },
+                    {b.IndexInList, b },
+                    {c.IndexInList, c },
+                };
+                Vertices = new[] {a, b, c};
+                Normal = b.Position.subtract(a.Position).crossProduct(c.Position.subtract(b.Position)).normalize();
+            }
+        }
+
+        public struct VertexLight
+        {
+            public double[] Position { get; set; }
+
+            public double X => Position[0];
+
+            public double Y => Position[1];
+
+            public double Z => Position[2];
+
+            public int IndexInList { get; set; }
+
+            public VertexLight(double x, double y, double z)
+            {
+                Position = new[] { x, y, z };
+                IndexInList = -1;
+            }
+
+            public VertexLight(Point point)
+            {
+                Position = new[] { point.X, point.Y, point.Z };
+                IndexInList = -1;
+            }
+
+            public VertexLight(double[] position)
+            {
+                Position = new[] { position[0], position[1], position[2] };
+                IndexInList = -1;
+            }
+        }
+
+        /// <summary>
+        ///     Returns a list of sorted vertices along a set direction. 
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="sortedVertices">The sorted vertices.</param>
+        public static void SortAlongDirection(double[] direction, IEnumerable<VertexLight> vertices,
+            out List<Tuple<VertexLight, double>> sortedVertices)
+        {
+            //Get integer values for every vertex as distance along direction
+            //Split positive and negative numbers into seperate lists. 0 is 
+            //considered positive.
+            //This is an O(n) preprocessing step
+            var vertexDistances = GetVertexDistances(direction, vertices);
+
+            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
+            //tolerance as the "isNeglible" star math function 
+            sortedVertices = vertexDistances.OrderBy(p => p.Item2).ToList();
+        }
+
+        private static IEnumerable<Tuple<VertexLight, double>> GetVertexDistances(double[] direction, IEnumerable<VertexLight> vertices)
+        {
+            var vertexDistances = new List<Tuple<VertexLight, double>>();
+            //Accuracy to the 15th decimal place
+            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
+            var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal) + 1)));
+            foreach (var vertex in vertices)
+            {
+                //Get distance along the search direction with accuracy to the 15th decimal place to match StarMath
+                var d = Math.Round(direction.dotProduct(vertex.Position, 3), tolerance);
+                vertexDistances.Add(new Tuple<VertexLight, double>(vertex, d));
+            }
+            return vertexDistances;
+        }
+
+        /// <summary>
+        /// Returns owned and other face in that order
+        /// </summary>
+        /// <returns></returns>
+        internal static (FaceLight, FaceLight) GetOwnedAndOtherFace(long edgeChecksum, FaceLight face1, FaceLight face2)
+        {
+            var (from, to) = Edge.GetVertexIndices(edgeChecksum);
+            //We are going to enforce that the edge is defined along the vertices, such that it goes from the smaller
+            //vertex index to the larger. 
+            var v0 = face1.VertexByIndex[from];
+            var v1 = face1.VertexByIndex[to];
+            var v2 = face1.VertexByIndex[face1.VertexByIndex.Keys.First(k => k != from && k != to)];
+
+            var vector1 = v1.Position.subtract(v0.Position);
+            var vector2 = v2.Position.subtract(v1.Position);
+            var dot = vector1.crossProduct(vector2).dotProduct(face1.Normal);
+            //The owned face(the face in which the from-to direction makes sense
+            // - that is, produces the proper cross-product normal).
+            return Math.Sign(dot) > 0 ? (face1, face2) : (face2, face1);
+        }
+
+        private static List<List<VertexLight>> GetLoops(HashSet<long> edgeList, Flat cuttingPlane,
+            out List<List<long>> outputEdgeLoops, List<List<long>> intputEdgeLoops, Dictionary<int, VertexLight> vertexLookup,
+            Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<FaceLight>> edgeFaceLookup,
+            Dictionary<FaceLight, List<long>> faceEdgeLookup, ref int maxVertexIndex)
+        {
+            var edgeLoops = new List<List<long>>();
+            var loops = new List<List<VertexLight>>();
+            if (intputEdgeLoops.Any())
+            {
+                edgeLoops = intputEdgeLoops; //Note that edge loops should all be ordered correctly
+                foreach (var edgeLoop in edgeLoops)
+                {
+                    var loop = new List<VertexLight>();
+                    foreach (var edge in edgeLoop)
+                    {
+                        var (vertex1, vertex2) = Edge.GetVertexIndices(edge);
+                        var newVertex = new VertexLight(MiscFunctions.PointOnPlaneFromIntersectingLine(
+                            cuttingPlane.Normal,
+                            cuttingPlane.DistanceToOrigin,
+                            vertexLookup[vertex1].Position, vertexLookup[vertex2].Position))
+                        {
+                            IndexInList = maxVertexIndex
+                        };
+                        maxVertexIndex++;
+                        vertexLookup.Add(maxVertexIndex, newVertex);
+                        vertexEdgeLoopup.Add(maxVertexIndex, new List<long> { edge });
+                        loop.Add(newVertex);
+                    }
+                    loops.Add(loop);
+                }
+            }
+            else
+            {
+                //Build an edge list that we can modify, without ruining the original
+                //After comparing hashset versus dictionary (with known keys)
+                //Hashset was slighlty faster during creation and enumeration, 
+                //but even more slighlty slower at removing. Overall, Hashset 
+                //was about 17% faster than a dictionary.
+                var edges = new List<long>(edgeList);
+                var unusedEdges = new HashSet<long>(edges);
+                foreach (var startEdge in edges)
+                {
+                    if (!unusedEdges.Contains(startEdge)) continue;
+                    unusedEdges.Remove(startEdge);
+                    var loop = new List<VertexLight>();
+                    var (vertex1, vertex2) = Edge.GetVertexIndices(startEdge);
+                    var intersectVertex = new VertexLight(MiscFunctions.PointOnPlaneFromIntersectingLine(
+                        cuttingPlane.Normal,
+                        cuttingPlane.DistanceToOrigin, vertexLookup[vertex1].Position,
+                        vertexLookup[vertex2].Position)) {IndexInList = maxVertexIndex};
+                    maxVertexIndex++;
+                    vertexLookup.Add(maxVertexIndex, intersectVertex);
+                    loop.Add(intersectVertex);
+                    var edgeLoop = new List<long> { startEdge };
+                    var (ownedFace, otherFace) = GetOwnedAndOtherFace(startEdge, edgeFaceLookup[startEdge][0], edgeFaceLookup[startEdge][1]);
+                    var startFace = ownedFace;
+                    var currentFace = startFace;
+                    var previousFace = startFace; //This will be set again before its used.
+                    var endFace = otherFace;
+                    var nextEdgeFound = false;
+                    long nextEdge = -1;
+                    var correctDirection = 0.0;
+                    var reverseDirection = 0.0;
+                    do
+                    {
+                        //Get the next edge
+                        foreach (var edge in faceEdgeLookup[currentFace])
+                        {
+                            (ownedFace, otherFace) = GetOwnedAndOtherFace(edge, edgeFaceLookup[edge][0], edgeFaceLookup[edge][1]);
+                            if (!unusedEdges.Contains(edge)) continue;
+                            if (otherFace.IndexInList == currentFace.IndexInList)
+                            {
+                                previousFace = otherFace;
+                                currentFace = ownedFace;
+                                nextEdgeFound = true;
+                                nextEdge = edge;
+                                break;
+                            }
+                            if (ownedFace.IndexInList == currentFace.IndexInList)
+                            {
+                                previousFace = ownedFace;
+                                currentFace = otherFace;
+                                nextEdgeFound = true;
+                                nextEdge = edge;
+                                break;
+                            }
+                        }
+                        if (nextEdgeFound)
+                        {
+                            (vertex1, vertex2) = Edge.GetVertexIndices(nextEdge);
+                            //For the first set of edges, check to make sure this list is going in the proper direction
+                            intersectVertex = new VertexLight(MiscFunctions.PointOnPlaneFromIntersectingLine(
+                                cuttingPlane.Normal,
+                                cuttingPlane.DistanceToOrigin, vertexLookup[vertex1].Position,
+                                vertexLookup[vertex2].Position)) {IndexInList = maxVertexIndex};
+                            maxVertexIndex++;
+
+                            var vector = intersectVertex.Position.subtract(loop.Last().Position, 3);
+                            //Use the previous face, since that is the one that contains both of the edges that are in use.
+                            var dot = cuttingPlane.Normal.crossProduct(previousFace.Normal).dotProduct(vector, 3);
+                            if (Math.Sign(dot) >= 0) correctDirection += dot;
+                            else reverseDirection += (-dot);
+
+                            //Add the edge as a reference for the vertex, so we can get the faces later
+                            vertexLookup.Add(maxVertexIndex, intersectVertex);
+                            vertexEdgeLoopup.Add(maxVertexIndex, new List<long> { nextEdge });
+                            loop.Add(intersectVertex);
+
+                            //Note that removing at an index is FASTER than removing a object.
+                            edgeLoop.Add(nextEdge);
+                            unusedEdges.Remove(nextEdge);
+                        }
+                        else throw new Exception("Loop did not complete");
+                    } while (currentFace.IndexInList != endFace.IndexInList);
 
                     //if (reverseDirection > 2 && correctDirection > 2) throw new Exception("Area Decomp Loop Finding needs additional work.");
                     if (reverseDirection > correctDirection)

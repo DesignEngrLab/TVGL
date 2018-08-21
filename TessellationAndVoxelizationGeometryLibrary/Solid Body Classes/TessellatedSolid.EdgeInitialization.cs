@@ -510,8 +510,11 @@ namespace TVGL
 
         internal static long GetEdgeChecksum(Vertex vertex1, Vertex vertex2)
         {
-            var v1 = vertex1.IndexInList;
-            var v2 = vertex2.IndexInList;
+            return GetEdgeChecksum(vertex1.IndexInList, vertex2.IndexInList);
+        }
+
+        internal static long GetEdgeChecksum(int v1, int v2)
+        {
             if (v1 == -1 || v2 == -1) return -1;
             if (v1 == v2) throw new Exception("edge to same vertices.");
             return v1 < v2
