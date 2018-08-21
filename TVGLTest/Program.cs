@@ -103,7 +103,7 @@ namespace TVGLPresenterDX
             var fileNames = dir.GetFiles("*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 5; i < fileNames.Count(); i+=15)
+            for (var i = 5; i < fileNames.Count(); i+=76)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -147,7 +147,7 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
             stopwatch.Start();
-            var vs1 = new VoxelizedSolid(ts,8);
+            var vs1 = new VoxelizedSolid(ts,9);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);

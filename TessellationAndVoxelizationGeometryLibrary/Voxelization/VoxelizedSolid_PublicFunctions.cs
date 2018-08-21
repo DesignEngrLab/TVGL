@@ -784,7 +784,6 @@ namespace TVGL.Voxelization
         public void Intersect(params VoxelizedSolid[] references)
         {
             Intersect(0, 0, references, false);
-            //Intersect(null, 0, references);
             UpdateProperties();
         }
 
@@ -906,8 +905,18 @@ namespace TVGL.Voxelization
         public VoxelizedSolid UnionToNewSolid(VoxelizedSolid reference)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.Union(0, 0, reference);
+            copy.Union(reference);
             return copy;
+        }
+
+        /// <summary>
+        /// Unions the specified reference.
+        /// </summary>
+        /// <param name="reference">The reference.</param>
+        public void Union(VoxelizedSolid reference)
+        {
+            Union(0, 0, reference);
+            UpdateProperties();
         }
 
         private void Union(long parent, int level, VoxelizedSolid reference)
@@ -944,6 +953,16 @@ namespace TVGL.Voxelization
             var copy = (VoxelizedSolid)Copy();
             copy.ExclusiveOr(0, 0, reference);
             return copy;
+        }
+
+        /// <summary>
+        /// Exclusives the or.
+        /// </summary>
+        /// <param name="reference">The reference.</param>
+        public void ExclusiveOr(VoxelizedSolid reference)
+        {
+            ExclusiveOr(0, 0, reference);
+            UpdateProperties();
         }
 
         /// <summary>

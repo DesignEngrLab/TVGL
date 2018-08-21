@@ -316,69 +316,6 @@ namespace TVGL.Voxelization
             }
             return count;
         }
-
-
-        /// <summary>
-        /// Sets the capacity of this list to the size of the list (rounded up to nearest prime),
-        /// unless count is 0, in which case we release references.
-        /// 
-        /// This method can be used to minimize a list's memory overhead once it is known that no
-        /// new elements will be added to the list. To completely clear a list and release all 
-        /// memory referenced by the list, execute the following statements:
-        /// 
-        /// list.Clear();
-        /// list.TrimExcess(); 
-        /// </summary>
-        public void TrimExcess()
-        {
-            if (count == 0)
-            {
-                // if count is zero, clear references
-                buckets = null;
-                slots = null;
-            }
-            else
-            {
-                // similar to IncreaseCapacity but moves down elements in case add/remove/etc
-                // caused fragmentation
-                int index = 0;
-                while (index < primes.Length && primes[index] <= count) { index++; }
-                if (index == primes.Length)
-                {
-                    index--;
-                    CapacityMaxedOut = true;
-                }
-                int newSize = primes[index];
-                Slot[] newSlots = new Slot[newSize];
-                int[] newBuckets = new int[newSize];
-
-                // move down slots and rehash at the same time. newIndex keeps track of current 
-                // position in newSlots array
-                int newIndex = 0;
-                for (int i = 0; i < lastIndex; i++)
-                {
-                    if (slots[i].hashCode >= 0)
-                    {
-                        newSlots[newIndex] = slots[i];
-
-                        // rehash
-                        int bucket = newSlots[newIndex].hashCode % newSize;
-                        newSlots[newIndex].next = newBuckets[bucket] - 1;
-                        newBuckets[bucket] = newIndex + 1;
-
-                        newIndex++;
-                    }
-                }
-
-                Debug.Assert(newSlots.Length <= slots.Length, "capacity increased after TrimExcess");
-
-                lastIndex = newIndex;
-                slots = newSlots;
-                buckets = newBuckets;
-                freeList = -1;
-            }
-        }
-
         #endregion
 
         #region Helper methods

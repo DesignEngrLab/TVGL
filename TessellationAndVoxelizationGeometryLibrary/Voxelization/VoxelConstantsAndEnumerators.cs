@@ -123,8 +123,8 @@ namespace TVGL.Voxelization
 
         internal static long SetRole(long id, VoxelRoleTypes value)
         {
-            if ((id &2) != 0) //then partial
-            id -= 2;
+            if ((id & 2) != 0) //then partial
+                id -= 2;
             else if ((id & 1) != 0) // then full
             {
                 if (value == VoxelRoleTypes.Partial)
@@ -177,7 +177,7 @@ namespace TVGL.Voxelization
         /// <param name="role">The role.</param>
         /// <param name="btmIsInside">if set to <c>true</c> [BTM is inside].</param>
         /// <returns>System.Int64.</returns>
-        public static long MakeFlags(int level, VoxelRoleTypes role, bool btmIsInside = false)
+        internal static long MakeFlags(int level, VoxelRoleTypes role, bool btmIsInside = false)
         {
             var result = (btmIsInside || role == VoxelRoleTypes.Full) ? 1L : 0L;
             if (role == VoxelRoleTypes.Partial) result += 2;
@@ -261,22 +261,25 @@ namespace TVGL.Voxelization
         internal static Dictionary<int, int[]> DefaultBitLevelDistribution
             = new Dictionary<int, int[]>()
             {
-                {5, new[] {3, 2}},
-                {6, new[] {3, 1,2}},
-                {7, new[] {3, 2, 2}},
-                {8, new[] {3, 3, 2}},
-                {9, new[] {3, 2,2,2}},
-                {10, new[] {4, 3, 3}},
-                {11, new[] {4, 4, 3}},
-                {12, new[] {4, 3, 3, 2}},
-                {13, new[] {4, 3, 3, 3}},
-                {14, new[] {4, 3, 4, 3}},  //what is attempted from this level on down 
-                {15, new[] {5, 3, 4, 3}},  // is to try to get a certain number of levels after
-                {16, new[] {5, 3, 3, 2, 1}}, //level-0 to sum to 10. This is because this allows
-                {17, new[] {5, 3, 4, 3, 2}},  //the midLevel comparer in the VoxelHashSet to be used
-                {18, new[] {5, 3, 4, 3, 3}},  //most effectively. Above this, the finecomparer is used
-                {19, new[] {5, 3, 3, 2, 2, 2, 2}},
-                {20, new[] {5, 3, 3, 2, 2, 3, 2}}
+                {2, new[] { 2 }},
+                {3, new[] { 3 }},
+                {4, new[] { 4 }},
+                {5, new[] { 5 }},
+                {6, new[] { 4, 2 }},
+                {7, new[] { 4, 3 }},
+                {8, new[] { 5, 3 }},
+                {9, new[] { 5, 2, 2 }},
+                {10, new[] { 5, 3, 2}},
+                {11, new[] {5, 3, 3}},
+                {12, new[] {5, 4, 3}},
+                {13, new[] {5, 4, 4}},
+                {14, new[] {5, 3, 3, 3}},  //what is attempted from this level on down 
+                {15, new[] {5, 4, 3, 3}},  // is to try to get a certain number of levels after
+                {16, new[] {5, 4, 3, 3, 1}}, //level-0 to sum to 10. This is because this allows
+                {17, new[] {5, 4, 3, 3, 2}},  //the midLevel comparer in the VoxelHashSet to be used
+                {18, new[] {6, 4, 3, 3, 2}},  //most effectively. Above this, the finecomparer is used
+                {19, new[] {6, 4, 3, 3, 3}},
+                {20, new[] {6, 4, 3, 3, 2, 2}}
             };
 
 
