@@ -82,7 +82,7 @@ namespace TVGL.Voxelization
         /// <param name="level">The level.</param>
         /// <param name="role">The role.</param>
         /// <param name="btmIsInside">if set to <c>true</c> [BTM is inside].</param>
-        public static void GetRoleFlags(long ID, out byte level, out VoxelRoleTypes role, out bool btmIsInside)
+        internal static void GetAllFlags(long ID, out byte level, out VoxelRoleTypes role, out bool btmIsInside)
         {
             level = (byte)((ID & 12) >> 2); //12 is (1100)
             if (level == 3) level = 6; //level 3 (11) is actually 6 (See comment above)
@@ -110,6 +110,66 @@ namespace TVGL.Voxelization
             }
         }
 
+        internal static VoxelRoleTypes GetRole(long ID)
+        {
+            if ((ID & 2) == 0) // 0_
+            {
+                if ((ID & 1) == 0)
+                    return VoxelRoleTypes.Empty;
+                return VoxelRoleTypes.Full;
+            }
+            return VoxelRoleTypes.Partial;
+        }
+
+        internal static long SetRole(long id, VoxelRoleTypes value)
+        {
+            if ((id & 2) != 0) //then partial
+                id -= 2;
+            else if ((id & 1) != 0) // then full
+            {
+                if (value == VoxelRoleTypes.Partial)
+                    id += 2;
+                else if (value == VoxelRoleTypes.Empty)
+                    id -= 1;
+            }
+            else //then must be empty
+            {
+                if (value == VoxelRoleTypes.Partial)
+                    id += 2;
+                else if (value == VoxelRoleTypes.Full)
+                    id += 1;
+            }
+            return id;
+        }
+        internal static bool GetIfBtmIsInside(long ID)
+        {
+            if ((ID & 2) == 0) // 0_
+            {
+                return (ID & 1) != 0;
+            }
+            // 1_
+            return (ID & 1) == 1; // 11
+        }
+        internal static long SetBtmCoordIsInside(long ID, bool btmIsInside)
+        {
+            if (btmIsInside)
+            {
+                if ((ID & 1) == 0) return ID + 1;
+            }
+            else
+                if ((ID & 1) != 0) return ID - 1;
+
+            return ID;
+        }
+
+        internal static byte GetLevel(long ID)
+        {
+            var level = (byte)((ID & 12) >> 2); //12 is (1100)
+            if (level == 3) level = 6; //level 3 (11) is actually 6 (See comment above)
+            else if ((ID & 16) != 0) level += 3;
+            return level;
+        }
+
         /// <summary>
         /// Sets the role flags.
         /// </summary>
@@ -117,7 +177,7 @@ namespace TVGL.Voxelization
         /// <param name="role">The role.</param>
         /// <param name="btmIsInside">if set to <c>true</c> [BTM is inside].</param>
         /// <returns>System.Int64.</returns>
-        public static long SetRoleFlags(int level, VoxelRoleTypes role, bool btmIsInside = false)
+        internal static long MakeFlags(int level, VoxelRoleTypes role, bool btmIsInside = false)
         {
             var result = (btmIsInside || role == VoxelRoleTypes.Full) ? 1L : 0L;
             if (role == VoxelRoleTypes.Partial) result += 2;
@@ -201,26 +261,29 @@ namespace TVGL.Voxelization
         internal static Dictionary<int, int[]> DefaultBitLevelDistribution
             = new Dictionary<int, int[]>()
             {
-                {5, new[] {3, 2}},
-                {6, new[] {2, 2, 2}},
-                {7, new[] {3, 2, 2}},
-                {8, new[] {3, 3, 2}},
-                {9, new[] {3, 2,2,2}},
-                {10, new[] {4, 3, 3}},
-                {11, new[] {4, 4, 3}},
-                {12, new[] {4, 3, 3, 2}},
-                {13, new[] {4, 3, 3, 3}},
-                {14, new[] {4, 3, 4, 3}},  //what is attempted from this level on down 
-                {15, new[] {5, 3, 4, 3}},  // is to try to get a certain number of levels after
-                {16, new[] {5, 3, 3, 2, 1}}, //level-0 to sum to 10. This is because this allows
-                {17, new[] {5, 3, 4, 3, 2}},  //the midLevel comparer in the VoxelHashSet to be used
-                {18, new[] {5, 3, 4, 3, 3}},  //most effectively. Above this, the finecomparer is used
-                {19, new[] {5, 3, 3, 2, 2, 2, 2}},
-                {20, new[] {5, 3, 3, 2, 2, 3, 2}}
+                {2, new[] { 2 }},
+                {3, new[] { 3 }},
+                {4, new[] { 4 }},
+                {5, new[] { 5 }},
+                {6, new[] { 4, 2 }},
+                {7, new[] { 4, 3 }},
+                {8, new[] { 5, 3 }},
+                {9, new[] { 5, 2, 2 }},
+                {10, new[] { 5, 3, 2}},
+                {11, new[] {5, 3, 3}},
+                {12, new[] {5, 4, 3}},
+                {13, new[] {5, 4, 4}},
+                {14, new[] {5, 3, 3, 3}},  //what is attempted from this level on down 
+                {15, new[] {5, 4, 3, 3}},  // is to try to get a certain number of levels after
+                {16, new[] {5, 4, 3, 3, 1}}, //level-0 to sum to 10. This is because this allows
+                {17, new[] {5, 4, 3, 3, 2}},  //the midLevel comparer in the VoxelHashSet to be used
+                {18, new[] {6, 4, 3, 3, 2}},  //most effectively. Above this, the finecomparer is used
+                {19, new[] {6, 4, 3, 3, 3}},
+                {20, new[] {6, 4, 3, 3, 2, 2}}
             };
 
 
-        internal const int LevelAtWhichLinkToTessellation = 2;
+        internal const int DefaultLevelAtWhichLinkToTessellation = 1;
 
         /// <summary>
         /// Is the double currently at an integer value?
@@ -231,7 +294,6 @@ namespace TVGL.Voxelization
         {
             return Math.Ceiling(d) == d;
         }
-
 
     }
 

@@ -722,6 +722,16 @@ namespace TVGL
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
+        public static void ShowAndHang(VoxelizedSolid solid, int showPartialLevel)
+        {
+            var window = new Window3DPlot();
+            var models = new List<Visual3D>();
+            Visual3D model = MakeModelVisual3D(solid, showPartialLevel);
+            models.Add(model);
+            window.view1.Children.Add(model);
+            window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
+            window.ShowDialog();
+        }
 
         public static void ShowAndHang(IList<Solid> solids)
         {
@@ -946,7 +956,7 @@ namespace TVGL
             };
         }
 
-        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, bool showPartialGreen)
+        private static Visual3D MakeModelVisual3D(VoxelizedSolid vs, int showPartialLevel)
         {
             var normalsTemplate = new[]
             {
@@ -975,27 +985,40 @@ namespace TVGL
             };
             var fullPositions = new Point3DCollection();
             var fullNormals = new Vector3DCollection();
-            var partialPositions = new Point3DCollection();
-            var partialNormals = new Vector3DCollection();
-            var lowestLevel = (int) vs.VoxelSideLengths.Length - 1;
+            var partialInPositions = new Point3DCollection();
+            var partialInNormals = new Vector3DCollection();
+            var partialOutPositions = new Point3DCollection();
+            var partialOutNormals = new Vector3DCollection();
             foreach (var v in vs.Voxels(VoxelRoleTypes.Partial))
             {
-                if (v.Level == 0 || v.Level == lowestLevel) continue;
+                if (v.Level != showPartialLevel ) continue;
                 var x = (float) v.BottomCoordinate[0];
                 var y = (float) v.BottomCoordinate[1];
                 var z = (float) v.BottomCoordinate[2];
                 var s = (float) v.SideLength;
+
                 for (int i = 0; i < 12; i++)
                 {
-                   for (int j = 0; j < 3; j++)
+                    for (int j = 0; j < 3; j++)
                     {
-                        partialPositions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
-                            y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
-                        partialNormals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1],
-                            normalsTemplate[i][2]));
+                        if (v.BtmCoordIsInside)
+                        {
+                            partialInPositions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
+                                y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
+                            partialInNormals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1],
+                                normalsTemplate[i][2]));
+                        }
+                        else
+                        {
+                            partialOutPositions.Add(new Point3D(x + coordOffsets[i][j][0] * s,
+                                y + coordOffsets[i][j][1] * s, z + coordOffsets[i][j][2] * s));
+                            partialOutNormals.Add(new Vector3D(normalsTemplate[i][0], normalsTemplate[i][1],
+                                normalsTemplate[i][2]));
+                        }
                     }
                 }
             }
+            
 
             foreach (var v in vs.Voxels(VoxelRoleTypes.Full)) 
             {
@@ -1049,9 +1072,9 @@ namespace TVGL
                             {
                                 Geometry = new MeshGeometry3D
                                 {
-                                    Positions = partialPositions,
+                                    Positions = partialInPositions,
                                     // TriangleIndices = new Int32Collection(triIndices),
-                                    Normals = partialNormals
+                                    Normals = partialInNormals
                                 },
                                 Material = MaterialHelper.CreateMaterial(
                                     new System.Windows.Media.Color
@@ -1060,6 +1083,27 @@ namespace TVGL
                                         B = 64,
                                         G = 255,
                                         R = 33
+                                    })
+                            }
+                    },
+                    new ModelVisual3D
+                    {
+                        Content =
+                            new GeometryModel3D
+                            {
+                                Geometry = new MeshGeometry3D
+                                {
+                                    Positions = partialOutPositions,
+                                    // TriangleIndices = new Int32Collection(triIndices),
+                                    Normals = partialOutNormals
+                                },
+                                Material = MaterialHelper.CreateMaterial(
+                                    new System.Windows.Media.Color
+                                    {
+                                        A = 64,
+                                        B = 64,
+                                        G = 33,
+                                        R = 255
                                     })
                             }
                     }
