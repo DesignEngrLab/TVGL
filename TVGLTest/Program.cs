@@ -8,9 +8,10 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
+using Constants = TVGL.Constants;
 
 
-namespace TVGLPresenterDX
+namespace TVGLTest
 {
     internal class Program
     {
@@ -107,12 +108,438 @@ namespace TVGLPresenterDX
                 using (fileStream = File.OpenRead(filename))
                     ts = IO.Open(fileStream, filename);
                 if (!ts.Any()) continue;
-                Presenter.ShowAndHang(ts);
+               // Presenter.ShowAndHang(ts);
 
                 //Put your test function here
-                TestSilhouette(ts[0]);
+                var silhouette = TVGL.Silhouette.Run(ts[0], new[] { 0.5, 0.0, 0.5 });
+                foreach (var positivePolygon in silhouette.Where(p => MiscFunctions.AreaOfPolygon(p) > 0))
+                {
+                    var area = MiscFunctions.AreaOfPolygon(positivePolygon);
+                    //Presenter.ShowAndHang(positivePolygon);
+                    var sampled = PolygonOperations.SampleWithEdgeLength(positivePolygon, MiscFunctions.Perimeter(positivePolygon) / 600);
+                    var smaller = PolygonOperations.OffsetRound(sampled, -0.001 * MiscFunctions.Perimeter(positivePolygon)).Select(p => new PolygonLight(p)).First();
+                    //Presenter.ShowAndHang(sampled);
+                    //var circlePaths = new List<List<PointLight>>();
+                    //var medialAxisPoints = GetMedialAxisPoints(new PolygonLight(sampled));
+                    //circlePaths.Add(medialAxisPoints);
+                    //circlePaths.Add(sampled);
+                    //Presenter.ShowAndHang(circlePaths);
+
+                    //Delaunay Medial Axis
+                    var allTriangles = new List<List<PointLight>>();     
+                    allTriangles.Add(sampled);
+                    var delaunay = MIConvexHull.Triangulation.CreateDelaunay(sampled);
+                    var lines = new List<List<Point>>();
+                    foreach (var triangle in delaunay.Cells)
+                    {
+                        var triangleCenterLineVertices = new List<Point>();
+                        var edge1Center = new Point(triangle.Vertices[0].Position.add(triangle.Vertices[1].Position)
+                            .divide(2));
+                        if (MiscFunctions.IsPointInsidePolygon(smaller, edge1Center.Light))
+                        {
+                            triangleCenterLineVertices.Add(edge1Center);
+                        }
+
+                        var edge2Center = new Point(triangle.Vertices[1].Position.add(triangle.Vertices[2].Position)
+                            .divide(2));
+                        if (MiscFunctions.IsPointInsidePolygon(smaller, edge2Center.Light))
+                        {
+                            triangleCenterLineVertices.Add(edge2Center);
+                        }
+
+                        var edge3Center = new Point(triangle.Vertices[2].Position.add(triangle.Vertices[0].Position)
+                            .divide(2));
+                        if (MiscFunctions.IsPointInsidePolygon(smaller, edge3Center.Light))
+                        {
+                            triangleCenterLineVertices.Add(edge3Center);
+                        }
+
+                        if (triangleCenterLineVertices.Any())
+                        {
+                            if (triangleCenterLineVertices.Count == 1)
+                            {
+                                continue; // This vertex has no line associated with it. 
+                                //If the vertex should be attached to a line, it will show up again for another triangle.
+                            }
+                            if (triangleCenterLineVertices.Count == 3)
+                            {
+                                //If there are two long edges with one short, collapse the long edges to the middle
+                                //of the short edge.
+                                //If 
+                                //Order the points, such that the larger edge is not included
+                                var d0 = edge1Center.Position.subtract(edge2Center.Position).norm2();
+                                var d1 = edge2Center.Position.subtract(edge3Center.Position).norm2();
+                                var d2 = edge3Center.Position.subtract(edge1Center.Position).norm2();
+                                var ds = new List<double>() {d0, d1, d2};
+                                ds.Sort();
+                                if (ds[0] - ds[1] > ds[1] - ds[2])
+                                {
+                                    //There is a bigger difference in length between the longest edge than the other two
+                                    //Therefore, remove the longest edge.
+                                    if (d0 > d1 && d0 > d2)
+                                    {
+                                        //If d0 is the largest edge, it should be point 2,3,1
+                                        lines.Add(new List<Point> {edge2Center, edge3Center});
+                                        lines.Add(new List<Point> {edge3Center, edge1Center});
+                                    }
+                                    else if (d1 > d2)
+                                    {
+                                        lines.Add(new List<Point> {edge3Center, edge1Center});
+                                        lines.Add(new List<Point> {edge1Center, edge2Center});
+                                    }
+                                    else
+                                    {
+                                        lines.Add(new List<Point> {edge1Center, edge2Center});
+                                        lines.Add(new List<Point> {edge2Center, edge3Center});
+                                    }
+                                }
+                                else
+                                {
+                                    Point newPoint;
+                                    //Create a new center point on the shortest line and set three point sets
+                                    if (d0 < d1 && d0 < d2)
+                                    {
+                                        newPoint = new Point(
+                                            edge1Center.Position.add(edge2Center.Position).divide(2, 2));
+                                    }
+                                    else if (d1 < d2)
+                                    {
+                                        newPoint = new Point(
+                                            edge2Center.Position.add(edge3Center.Position).divide(2, 2));
+                                    }
+                                    else
+                                    {
+                                        newPoint = new Point(
+                                            edge3Center.Position.add(edge1Center.Position).divide(2, 2));
+                                    }
+
+                                    lines.Add(new List<Point> {edge1Center, newPoint});
+                                    lines.Add(new List<Point> {edge2Center, newPoint});
+                                    lines.Add(new List<Point> {edge3Center, newPoint});
+                                }
+                            }
+                            else
+                            {
+                                lines.Add(triangleCenterLineVertices);
+                            }
+                        }
+                    }
+
+                    //Merge all the points 
+                    for (var j = 0; j < lines.Count - 1; j++)
+                    {
+                        var l1 = lines[j];
+                        var sameLineInt = -1;
+                        for (var k = j + 1 ; k < lines.Count; k++)
+                        {
+                            var sameLineCount = 0;
+                            var l2 = lines[k];
+                            if (l1[0].Position.subtract(l2[0].Position).norm2().IsNegligible(0.0001))
+                            {
+                                l2[0] = l1[0];
+                                sameLineCount++;
+                            }
+                            else if (l1[0].Position.subtract(l2[1].Position).norm2().IsNegligible(0.0001))
+                            {
+                                l2[1] = l1[0];
+                                sameLineCount++;
+                            }
+                            if (l1[1].Position.subtract(l2[0].Position).norm2().IsNegligible(0.0001))
+                            {
+                                l2[0] = l1[1];
+                                sameLineCount++;
+                            }
+                            else if (l1[1].Position.subtract(l2[1].Position).norm2().IsNegligible(0.0001))
+                            {
+                                l2[1] = l1[1];
+                                sameLineCount++;
+                            }
+                            if (sameLineCount == 2)
+                            {
+                                sameLineInt = k;
+                            }
+                        }
+                        if (sameLineInt != -1)
+                        {
+                            //lines.RemoveAt(sameLineInt);
+                        }
+                    }
+
+                    //Get all the points
+                    var points = new HashSet<Point>();
+                    foreach (var line in lines)
+                    {
+                        points.Add(line[0]);
+                        points.Add(line[1]);
+                    }
+
+                    //Get all the node points
+                    //Also create a new branch for each line that attached to this node
+                    var nodes = new HashSet<Point>();
+                    var branches = new List<List<Point>>();
+                    foreach (var p1 in points)
+                    {
+                        var adjacentLineCount = 0;
+                        var adjacentLinesOtherPoints = new List<Point>();
+                        foreach (var line in lines)
+                        {
+                            for (var p = 0; p < 2; p++)
+                            {
+                                var p2 = line[p];
+                                if (p1 != p2) continue;
+                                adjacentLineCount++;
+                                if (p == 0) adjacentLinesOtherPoints.Add(line[1]);
+                                else adjacentLinesOtherPoints.Add(line[0]);
+                            }
+                        }
+                        if (adjacentLineCount > 2)
+                        {
+                            nodes.Add(p1);
+                            //Add a new branch for each adjacent line
+                            foreach (var p2 in adjacentLinesOtherPoints)
+                            {
+                                branches.Add(new List<Point> { p1, p2 });
+                            }
+                        }
+                    }
+
+                    while (branches.Any())
+                    {
+                        //Pop off the first branch
+                        var branch = branches.First();
+                        branches.RemoveAt(0);
+
+                        //Continue adding points to this branch until it reaches another node
+                        //Or the branch reaches its end
+                        var hitEndOfBranch = false;
+                        var hitNode = false;
+                        while (!hitEndOfBranch && !hitNode)
+                        {
+                            //Search until we find the next line (2-points) that attaches to this branch
+                            //Once it is added, remove it from the list of lines to make future searching faster
+                            var p0 = branch.First();
+                            var p1 = branch.Last();
+
+                            //Check if we reached a node
+                            //If we reached a node, then we need to remove a branch from that node
+                            foreach (var node in nodes)
+                            {
+                                if (p1 != node || branch[0] == node) continue;
+                                hitNode = true;
+                                //Get the branch that has this node and the prior point
+                                var p2 = branch[branch.Count - 2];
+                                for (var j = 0; j < branches.Count; j++)
+                                {
+                                    if (branches[j][0].Position.subtract(p1.Position).norm2().IsNegligible(0.0001) &&
+                                        branches[j][1].Position.subtract(p2.Position).norm2().IsNegligible(0.0001))
+                                    {
+                                        branches.RemoveAt(j);
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                            if (hitNode) continue;
+
+                            hitEndOfBranch = true;
+                            for (var j = 0; j < lines.Count; j++)
+                            {
+                                var line = lines[j];
+                                if (line[0] == p1) //.Position.subtract(p1.Position).norm2().IsNegligible(0.0001))
+                                {
+                                    if (line[1] == p0)
+                                    {
+                                        //This line is the starting line for the branch. 
+                                        continue;
+                                    }
+                                    branch.Add(line[1]);
+                                    hitEndOfBranch = false;
+                                    lines.RemoveAt(j);
+                                    break;
+                                }
+                                if (line[1] == p1) // .Position.subtract(p1.Position).norm2().IsNegligible(0.0001))
+                                {
+                                    if (line[0] == p0)
+                                    {
+                                        //This line is the starting line for the branch. 
+                                        continue;
+                                    }
+                                    branch.Add(line[0]);
+                                    hitEndOfBranch = false;
+                                    lines.RemoveAt(j);
+                                    break;
+                                }
+                            }
+                        }
+
+                        //if(hitEndOfBranch && branch.Count < 4)
+                        allTriangles.Add(branch.Select(p => p.Light).ToList());
+                        //Presenter.ShowAndHang(allTriangles, "", Plot2DType.Line, false);
+                        //allTriangles.Add(nodes.Select(p => p.Light).ToList());
+                    }
+                    //Note: some lines are never removed (if they are the first line in a branch)
+                    Presenter.ShowAndHang(allTriangles, "", Plot2DType.Line, false);
+                }
             }
             Console.WriteLine("Completed.");
+        }
+
+        public static List<Point> SimplifyStraights(List<Point> points)
+        {
+
+            return null;
+        }
+
+        public static List<PointLight> GetMedialAxisPoints(PolygonLight polygon)
+        {
+            var medialAxisPoints = new List<PointLight>();
+            var circles = new List<Circle>();
+
+            //Start with large radius
+            var startRadius = polygon.Length / 2;
+
+            for (var j = 0; j < polygon.Path.Count; j++)
+            {
+                //Define the start circle
+                var i = j - 1;
+                if (j == 0) i = polygon.Path.Count - 1;
+                var k = j + 1;
+                if (j == polygon.Path.Count - 1) k = 0;
+                var startPoint = polygon.Path[j];
+
+                //Get angle between the three points
+                var interiorAngle =
+                    MiscFunctions.InteriorAngleBetweenEdgesInCCWList(polygon.Path[i], startPoint, polygon.Path[k]);
+                var sv1 = startPoint.Position.subtract(polygon.Path[i].Position, 2).normalize(2);
+                var sv2 = polygon.Path[k].Position.subtract(startPoint.Position, 2).normalize(2);
+
+                double[] radiusVector;
+                var ik = polygon.Path[k].Position.add(polygon.Path[i].Position, 2).divide(2, 2);
+                if (interiorAngle.IsPracticallySame(Math.PI, TVGL.Constants.SameFaceNormalDotTolerance))
+                {
+                    var temp = polygon.Path[k].Position.subtract(polygon.Path[i].Position, 2);
+                    //(y, -x) for clockwise rotation
+                    radiusVector = new[] { -temp[1], temp[0] }.normalize(2);
+                }
+                //If angle > 180
+                else if (interiorAngle > Math.PI)
+                {
+                    radiusVector = sv1.subtract(sv2).normalize(2);
+                }
+                else
+                {
+                    radiusVector = sv2.subtract(sv1).normalize(2);
+
+                }
+                var startCenter = new PointLight(startPoint.Position.add(radiusVector.multiply(startRadius), 2));
+                var circle = new Circle(startCenter, startRadius);
+
+                var pointsInCircle = new HashSet<PointLight>(polygon.Path);
+                pointsInCircle.Remove(startPoint);
+                var finalPoint = new PointLight();
+                var priorArea = Math.PI * startRadius * startRadius;
+                var deltaArea = priorArea;
+                while (pointsInCircle.Any() && !deltaArea.IsNegligible(0.1))
+                {
+                    //Reset
+                    pointsInCircle = new HashSet<PointLight>(polygon.Path);
+                    pointsInCircle.Remove(startPoint);
+
+                    var minDistance = circle.Radius;
+                    //Find the closes point to the center. This point will be part of the definition of the new circle
+                    for (var p = 0; p < polygon.Path.Count; p++)
+                    {
+                        if (p == j) continue;
+                        var point = polygon.Path[p];
+                        //If the distance between point and center is greater than radius, it is outside the circle
+                        var d = circle.Center.Position.subtract(point.Position, 2).norm2();
+                        var dif = d - minDistance;
+                        if (dif.IsLessThanNonNegligible(0.01))
+                        {
+                            minDistance = d;
+                            finalPoint = point;
+                        }
+                        else 
+                        {
+                            pointsInCircle.Remove(point);
+                        }
+                    }
+                    // throw new Exception("Error in GetMedialAxisPoints");
+
+                    if (finalPoint.Position == null)
+                    {
+                        Presenter.ShowAndHang(new List<List<PointLight>>{MiscFunctions.CreateCirclePath(new Point(circle.Center), circle.Radius)
+                                 .Select(p => new PointLight(p)).ToList(),polygon.Path});
+                        radiusVector = radiusVector.multiply(-1);
+                        startCenter = new PointLight(startPoint.Position.add(radiusVector.multiply(startRadius), 2));
+                        circle = new Circle(startCenter, startRadius);
+                        Presenter.ShowAndHang(new List<List<PointLight>>
+                        {
+                            MiscFunctions.CreateCirclePath(new Point(circle.Center), circle.Radius)
+                                .Select(p => new PointLight(p)).ToList(),
+                            polygon.Path
+                        });
+                    };
+                    //Shrink the circle
+                    var v1 = new[] { radiusVector[0], radiusVector[1], 0.0 }.normalize();
+                    //Start by getting the median point between the final two points
+                    var p3 = finalPoint.Position.add(startPoint.Position, 2).divide(2, 2);
+                    //The center point of the circle will be perpendicular to p2-p1
+                    var temp = finalPoint.Position.subtract(startPoint.Position, 2).normalize(2);
+                    var v2 = new[] { -temp[1], temp[0], 0.0 };
+                    var dot = v1.dotProduct(v2);
+                    //if (dot < 0) v2 = v2.multiply(-1); //Make sure v2 points toward the middle of the circle
+                    if (dot.IsPracticallySame(1.0, Constants.SameFaceNormalDotTolerance))
+                    {
+                        //These lines are parallel. 
+
+                    }
+                    MiscFunctions.SkewedLineIntersection(new[] { startPoint.X, startPoint.Y, 0.0 }, v1,
+                        new[] { p3[0], p3[1], 0 }, v2, out var centerPosition);
+                    var centerPoint = new PointLight(centerPosition);
+                    var radius = centerPoint.Position.subtract(startPoint.Position).norm2();
+                    var area = Math.PI * radius * radius;
+                    deltaArea = priorArea - area;
+                    if (deltaArea < 0 || deltaArea.IsNegligible(0.01)) break; //No, or even bad change. Stop
+                    priorArea = area;
+
+                    circle = new Circle(centerPoint, radius);
+                    pointsInCircle.Remove(finalPoint);
+                    //Presenter.ShowAndHang(new List<List<PointLight>>{MiscFunctions.CreateCirclePath(new Point(circle.Center), circle.Radius)
+                    //    .Select(p => new PointLight(p)).ToList(),polygon.Path});
+                }
+
+                if (MiscFunctions.IsPointInsidePolygon(polygon, circle.Center))
+                {
+                    circles.Add(circle);
+                    medialAxisPoints.Add(circle.Center);
+                }
+                //Presenter.ShowAndHang(new List<List<PointLight>>{MiscFunctions.CreateCirclePath(new Point(circle.Center), circle.Radius)
+                //    .Select(p => new PointLight(p)).ToList(),polygon.Path, medialAxisPoints});
+            }
+
+            double GetRadius(PointLight p1, PointLight p2, PointLight c)
+            {
+                var v1 = p1.Position.subtract(p2.Position);
+                var v2 = p1.Position.subtract(c.Position);
+                //Cosine theta = the dot product of the 2 vectors divided by their magnitudes
+                var cosTheta = v1.dotProduct(v2) / (v1.norm2() * v2.norm2());
+                return v1.norm2() / (2 * cosTheta);
+            }
+
+            return medialAxisPoints;
+        }
+
+        public class Circle
+        {
+            public PointLight Center { get; set; }
+            public double Radius { get; set; }
+
+            public Circle(PointLight center, double radius)
+            {
+                Center = center;
+                Radius = radius;
+            }
         }
 
         public static void TestMachinability(TessellatedSolid ts, string _fileName)

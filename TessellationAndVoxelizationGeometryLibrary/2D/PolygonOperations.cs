@@ -239,7 +239,62 @@ namespace TVGL
                 simplePath.RemoveAt(j);
                 i--;
             }
-            return simplePath;
+
+            //If the simplification destroys a polygon, do not simplify it.
+            return MiscFunctions.AreaOfPolygon(simplePath).IsNegligible() ? (PathAsLight) path : simplePath;
+        }
+
+        /// <summary>
+        /// Simplifies the lines on a polygon to use fewer points when possible.
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="edgeLength"></param>
+        /// <param name="lengthTolerance"></param>
+        /// <param name="slopeTolerance"></param>
+        /// <returns></returns>
+        public static List<PointLight> SampleWithEdgeLength (IList<PointLight> path, double edgeLength)
+        {
+            var newPath = new List<PointLight>();
+            var simplePath = new List<PointLight>(path);
+            for (var i = 0; i < simplePath.Count; i++)
+            {
+                var j = i + 1;
+                if (i == simplePath.Count - 1) j = 0;
+                var k = j + 1;
+                if (j == simplePath.Count - 1) k = 0;
+                var current = simplePath[i];
+                var next = simplePath[j];
+                var nextNext = simplePath[k];
+                var length = MiscFunctions.DistancePointToPoint(current, next);
+                if (length > edgeLength)
+                {
+                    var n = (int) (length / edgeLength);
+                    var vector = next.Position.subtract(current.Position, 2).normalize().multiply(edgeLength);
+                    newPath.Add(current);
+                    for (var p = 0; p < n; p++)
+                    {
+                        current = new PointLight(current.Position.add(vector));
+                        newPath.Add(current);
+                    }
+                }
+                else if (i == 0 && NegligibleLine(current, next, edgeLength / 2))
+                {
+                    simplePath.RemoveAt(j);
+                    i--;
+                    continue;
+                }
+                else if (NegligibleLine(next, nextNext, edgeLength/2))
+                {
+                    simplePath.RemoveAt(k);
+                    i--;
+                    continue;
+                }
+                else
+                {
+                    newPath.Add(current);
+                }
+            }
+            return newPath;
         }
 
         /// <summary>
@@ -474,7 +529,7 @@ namespace TVGL
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
         }
         public static PolygonsAsLight Union(PolygonsAsLight subject, bool simplifyPriorToUnion = true, PolygonFillType polyFill = PolygonFillType.Positive)
-        {
+        {          
             return BooleanOperation(polyFill, ClipType.ctUnion, subject, null, simplifyPriorToUnion);
         }
 
@@ -781,6 +836,7 @@ namespace TVGL
             {
                 fillType = PolyFillType.pftEvenOdd;
             }
+
             return BooleanOperation(fillType, clipType, subject, clip, simplifyPriorToBooleanOperation, scale);
         }
 
