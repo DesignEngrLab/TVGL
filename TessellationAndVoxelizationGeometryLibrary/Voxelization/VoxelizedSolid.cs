@@ -56,6 +56,13 @@ namespace TVGL.Voxelization
         /// The offset.
         /// </value>
         public double[] Offset => Bounds[0];
+
+
+        /// <summary>
+        /// Gets the number of levels.
+        /// </summary>
+        /// <value>The number of levels.</value>
+        public int NumberOfLevels => bitLevelDistribution.Length;
         #endregion
 
         #region Constructor (from another voxelized solid, or maybe from a file)
