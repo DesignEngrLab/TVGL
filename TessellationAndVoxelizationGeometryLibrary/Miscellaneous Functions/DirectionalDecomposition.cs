@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using StarMathLib;
@@ -40,13 +41,8 @@ namespace TVGL
         /// <returns>List&lt;System.Double[]&gt;.</returns>
         /// <exception cref="Exception">Pick one or the other. Can't do both at the same time</exception>
         public static List<double[]> NonUniformAreaDecomposition(TessellatedSolid ts, double[] axis, double stepSize,
-            double minOffset = double.NaN, bool ignoreNegativeSpace = false, bool convexHull2DDecompositon = false,
-            bool boundingRectangleArea = false)
+            double minOffset = double.NaN, bool ignoreNegativeSpace = false)
         {
-            //individualFaceAreas = new List<List<double[]>>(); //Plot changes for the area of each flat that makes up a slice. (e.g. 2 positive loop areas)
-            if (convexHull2DDecompositon && boundingRectangleArea)
-                throw new Exception("Pick one or the other. Can't do both at the same time");
-
             var outputData = new List<double[]>();
             if (double.IsNaN(minOffset)) minOffset = Math.Sqrt(ts.SameTolerance);
             if (stepSize <= minOffset * 2)
@@ -72,14 +68,9 @@ namespace TVGL
                     //Determine cross sectional area for section right after previous vertex
                     var distance = previousVertexDistance + minOffset; //X value (distance along axis) 
                     var cuttingPlane = new Flat(distance, axis);
-                    List<List<Edge>> outputEdgeLoops = null;
                     var inputEdgeLoops = new List<List<Edge>>();
-                    var area = 0.0;
-                    if (convexHull2DDecompositon) area = ConvexHull2DArea(edgeListDictionary, cuttingPlane);
-                    else if (boundingRectangleArea) area = BoundingRectangleArea(edgeListDictionary, cuttingPlane);
-                    else
-                        area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops, inputEdgeLoops,
-                            ignoreNegativeSpace); //Y value (area)
+                    var area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out var outputEdgeLoops, inputEdgeLoops,
+                        ignoreNegativeSpace); //Y value (area)
                     outputData.Add(new[] { distance, area });
 
                     //If the difference is far enough, add another data point right before the current vertex
@@ -88,14 +79,9 @@ namespace TVGL
                     {
                         var distance2 = distanceAlongAxis - minOffset; //X value (distance along axis) 
                         cuttingPlane = new Flat(distance2, axis);
-                        if (convexHull2DDecompositon) area = ConvexHull2DArea(edgeListDictionary, cuttingPlane);
-                        else if (boundingRectangleArea) area = BoundingRectangleArea(edgeListDictionary, cuttingPlane);
-                        else
-                        {
-                            inputEdgeLoops = outputEdgeLoops;
-                            area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops,
-                                inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
-                        }
+                        inputEdgeLoops = outputEdgeLoops;
+                        area = CrossSectionalArea(edgeListDictionary, cuttingPlane, out outputEdgeLoops,
+                            inputEdgeLoops, ignoreNegativeSpace); //Y value (area)
                         outputData.Add(new[] { distance2, area });
                     }
 
@@ -519,7 +505,7 @@ namespace TVGL
             //Return null if crossSection3D is null (uses null propogation "?")
             var crossSection = crossSection3D?.Select(loop => MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(loop, direction, out _, tolerance)).ToList();
             var polygons = crossSection?.Select(p => new PolygonLight(p)).ToList();
-            if (polygons?.Sum(a => a.Area) < 0.0) throw new Exception("Cross section should not have a negative area");
+            if (polygons?.Sum(a => a.Area) < 0.0) Debug.WriteLine("Cross section should not have a negative area");
             return polygons;
         }
 
@@ -596,7 +582,7 @@ namespace TVGL
 
                 if (currentVertexDistance.IsPracticallySame(distance, tolerance) || currentVertexDistance > distance)
                 {
-                    //Determine cross sectional area for section as close to given distance as possitible (after previous vertex, but before current vertex)
+                    //Determine cross sectional area for section as close to given distance as possible (after previous vertex, but before current vertex)
                     //But not actually on the current vertex
                     double distance2;
                     if (currentVertexDistance.IsPracticallySame(distance))
@@ -621,7 +607,7 @@ namespace TVGL
                     var inputEdgeLoops = new List<List<long>>();
                     var loops = GetLoops(edgeList, cuttingPlane, out _, inputEdgeLoops, vertexLookup, vertexEdges, edgeFaces, faceEdgeLookup, 
                         ref maxVertexIndex);
-                    return loops;
+                    return loops; //May return null if line intersections are not valid
                 }
                 foreach (var edge in vertexEdges[vertex.IndexInList])
                 {
@@ -818,7 +804,6 @@ namespace TVGL
         #endregion
 
         #region Uniform Directional Segmentation
-
         /// <summary>
         /// Returns the Directional Segments found from decomposing a solid along a given direction. 
         /// This data is used in other methods. Optional parameter "orderedforcedSteps" adds in steps at the 
@@ -1149,7 +1134,7 @@ namespace TVGL
             Implications:   A segment may only be defined for one step, but its volume should be thought of as extending a half-step forward
                             and backward from that step to form a volume.  
             */
-            //if(debugCounter == 145) Debug.WriteLine("Bug Stop Hit");
+            //if(debugCounter == 52) Debug.WriteLine("Bug Stop Hit");
             var distanceAlongAxis = segmentationData.DistanceAlongDirection;
 
             //Get all the current segments.
@@ -1430,7 +1415,7 @@ namespace TVGL
                     }
 
                     //Create a new segment that starts from these completed segments. 
-                    var segmentIndex = allDirectionalSegments.Count();
+                    var segmentIndex = allDirectionalSegments.Keys.Max() + 1;
                     var newSegment = new DirectionalSegment(segmentIndex, inStepSegmentEdges,
                         allInStepSegmentVertices, newSegmentCurrentEdges, connectedSegments.ToList());
 
@@ -1507,7 +1492,7 @@ namespace TVGL
                 //Don't remove from the unusedInStepVertices list until we are done collecting
                 //All the edges that belong to this segment. Otherwise, we will be missing some
                 //of the edges between in step vertices.
-                var newSegmentIndex = allDirectionalSegments.Count;
+                var newSegmentIndex = allDirectionalSegments.Any()? allDirectionalSegments.Keys.Max() + 1 : 0;
                 usedInStepVertices.Add(startVertex);
                 var verticesToConsider = new Stack<Vertex>();
                 verticesToConsider.Push(startVertex);
@@ -1655,7 +1640,18 @@ namespace TVGL
                                     currentSegment.ReferenceVertices.Add(vertex);
                                 }
 
-                                currentSegment.AddPolygonDataGroup(negativePolygonDataGroup, true);
+                                //If this segment is not branching, go ahead and set this negative polygon.
+                                //Otherwise, it will be set when creating the branches
+                                if (paths.Count == 1)
+                                {
+                                    currentSegment.AddPolygonDataGroup(negativePolygonDataGroup, true);
+                                }
+                                else
+                                {
+                                    currentSegment.CurrentPolygonDataGroups.Add(negativePolygonDataGroup);
+                                    negativePolygonDataGroup.SegmentIndex = -1;
+                                    negativePolygonDataGroup.PotentialSegmentIndices.Add(currentSegment.Index);
+                                }
                             }
                         }
 
@@ -2153,7 +2149,7 @@ namespace TVGL
                 {
                     foreach (var positivePolygonDataGroup in CurrentPolygonDataGroups.Where(p => p.Area > 0.0))
                     {
-                        var newSegmentIndex = allDirectionalSegments.Count;
+                        var newSegmentIndex = allDirectionalSegments.Keys.Max() + 1;
                         var newSegment = new DirectionalSegment(newSegmentIndex, positivePolygonDataGroup, this);
                         allDirectionalSegments.Add(newSegmentIndex, newSegment);
                         newSegments.Add(newSegment);
@@ -2187,7 +2183,7 @@ namespace TVGL
 
                         //Now that we have all the parent segments fo the current positivePolygonDataGroup, 
                         //we can create the new segment.
-                        var newSegmentIndex = allDirectionalSegments.Count;
+                        var newSegmentIndex = allDirectionalSegments.Keys.Max() + 1;
 
                         //For the reference Edges and Vertices, all should belong to the parents.
                         //The current edges are those in the polygon data group
@@ -2281,7 +2277,7 @@ namespace TVGL
                     else
                     {
                         //This is a positive polygon
-                        //Check to make sure that we are not addind a second positive polygon to the same step index 
+                        //Check to make sure that we are not adding a second positive polygon to the same step index 
                         //We can only have one per segment per step 
 
                         if (CrossSectionPathDictionary[dataGroup.StepIndex].Any(p => p.Area > 0.0))
@@ -2622,6 +2618,7 @@ namespace TVGL
             Dictionary<int, List<long>> vertexEdgeLoopup, Dictionary<long, List<PolygonalFace>> edgeFaceLookup, 
             Dictionary<PolygonalFace, List<long>> faceEdgeLookup, ref int maxVertexIndex)
         {
+            outputEdgeLoops = new List<List<long>>();
             var edgeLoops = new List<List<long>>();
             var loops = new List<List<Vertex>>();
             if (intputEdgeLoops.Any())
@@ -2703,8 +2700,9 @@ namespace TVGL
                         {
                             (vertex1, vertex2) = Edge.GetVertexIndices(nextEdge);
                             //For the first set of edges, check to make sure this list is going in the proper direction
-                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
+                            intersectVertex = MiscFunctions.PointOnPlaneFromIntersectingLineSegment(cuttingPlane.Normal,
                                 cuttingPlane.DistanceToOrigin, vertexLookup[vertex1], vertexLookup[vertex2]);
+                            if (intersectVertex == null) return null;
 
                             var vector = intersectVertex.Position.subtract(loop.Last().Position, 3);
                             //Use the previous face, since that is the one that contains both of the edges that are in use.
@@ -2738,43 +2736,6 @@ namespace TVGL
             }
             outputEdgeLoops = edgeLoops;
             return loops;
-        }
-
-        /// <summary>
-        ///     Convexes the hull2 d area.
-        /// </summary>
-        /// <param name="edgeList">The edge list.</param>
-        /// <param name="cuttingPlane">The cutting plane.</param>
-        /// <returns>System.Double.</returns>
-        private static double ConvexHull2DArea(Dictionary<int, Edge> edgeList, Flat cuttingPlane)
-        {
-            //Don't bother with loops. Just get all the intercept vertices, project to 2d and run 2dConvexHull
-            var vertices =
-                edgeList.Select(
-                    edge =>
-                        MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
-                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From));
-            var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
-            return MinimumEnclosure.ConvexHull2DArea(MinimumEnclosure.ConvexHull2D(points));
-        }
-
-        /// <summary>
-        ///     Boundings the rectangle area.
-        /// </summary>
-        /// <param name="edgeList">The edge list.</param>
-        /// <param name="cuttingPlane">The cutting plane.</param>
-        /// <returns>System.Double.</returns>
-        private static double BoundingRectangleArea(Dictionary<int, Edge> edgeList, Flat cuttingPlane)
-        {
-            //Don't bother with loops. Just get all the intercept vertices, project to 2d and run 2dConvexHull
-            var vertices =
-                edgeList.Select(
-                    edge =>
-                        MiscFunctions.PointOnPlaneFromIntersectingLine(cuttingPlane.Normal,
-                            cuttingPlane.DistanceToOrigin, edge.Value.To, edge.Value.From));
-            var points = MiscFunctions.Get2DProjectionPoints(vertices.ToArray(), cuttingPlane.Normal, true);
-            var boundingRectangle = MinimumEnclosure.BoundingRectangle(points, false);
-            return boundingRectangle.Area;
         }
         #endregion
     }

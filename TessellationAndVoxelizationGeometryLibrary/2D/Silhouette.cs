@@ -105,6 +105,7 @@ namespace TVGL
             var allVertices = new HashSet<Vertex>();
             foreach (var face in faces)
             {
+                if (face.Area.IsNegligible()) continue;
                 var dot = normal.dotProduct(face.Normal, 3);
                 if (dot.IsGreaterThanNonNegligible(angleTolerance))
                 {

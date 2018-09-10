@@ -10,8 +10,7 @@ using TVGL.IOFunctions;
 using TVGL.Voxelization;
 using Constants = TVGL.Voxelization.Constants;
 
-
-namespace TVGLPresenterDX
+namespace TVGLTest
 {
     internal class Program
     {
