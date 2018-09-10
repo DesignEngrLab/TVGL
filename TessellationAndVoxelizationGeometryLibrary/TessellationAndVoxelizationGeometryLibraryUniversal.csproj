@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="2D\Clipper\clipper.cs" />
     <Compile Include="2D\Line.cs" />
+    <Compile Include="2D\MedialAxis2D.cs" />
     <Compile Include="2D\Polygon.cs" />
     <Compile Include="2D\PolygonTree.cs" />
     <Compile Include="2D\Slice2D.cs" />
