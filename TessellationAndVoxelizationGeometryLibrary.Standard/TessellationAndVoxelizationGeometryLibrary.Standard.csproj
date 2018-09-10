@@ -31,6 +31,7 @@
   <ItemGroup>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\clipper.cs" Link="2D\Clipper\clipper.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Line.cs" Link="2D\Line.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\MedialAxis2D.cs" Link="2D\MedialAxis2D.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Point.cs" Link="2D\Point.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Polygon.cs" Link="2D\Polygon.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\PolygonOperations.cs" Link="2D\PolygonOperations.cs" />

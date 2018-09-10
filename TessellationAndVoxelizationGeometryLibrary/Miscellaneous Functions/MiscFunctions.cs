@@ -664,7 +664,8 @@ namespace TVGL
                         }
                         else
                         {
-                            throw new Exception("area mismatch during 2D projection");
+                            attempts++;
+                            //throw new Exception("area mismatch during 2D projection");
                         }
                     }
                 }
@@ -673,7 +674,8 @@ namespace TVGL
                     attempts++;
                 }
             }
-            if (attempts > 0 && attempts < 4) Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
+
+            if (attempts > 0 && attempts < 4) ;//Debug.WriteLine("Minor area mismatch = " + dif + "  during 2D projection");
             else if (attempts == 4) throw new Exception("Major area mismatch during 2D projection. Resulting path is incorrect");
 
             return path;
@@ -1016,6 +1018,18 @@ namespace TVGL
         /// <param name="c">The c.</param>
         /// <returns>System.Double.</returns>
         internal static double InteriorAngleBetweenEdgesInCCWList(Point a, Point b, Point c)
+        {
+            return InteriorAngleBetweenEdgesInCCWList(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
+        }
+
+        /// <summary>
+        ///     Angles the between edges CCW.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <param name="c">The c.</param>
+        /// <returns>System.Double.</returns>
+        internal static double InteriorAngleBetweenEdgesInCCWList(PointLight a, PointLight b, PointLight c)
         {
             return InteriorAngleBetweenEdgesInCCWList(new[] { b.X - a.X, b.Y - a.Y }, new[] { c.X - b.X, c.Y - b.Y });
         }
@@ -1693,6 +1707,43 @@ namespace TVGL
             return IsVertexInsideTriangle(vertices, position, true) ? position : null;
         }
 
+        /// <summary>
+        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that plane.Returns null if the intersection point is not on the line segment.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static Vertex PointOnPlaneFromIntersectingLineSegment(double[] normalOfPlane, double distOfPlane, Vertex point1,
+            Vertex point2)
+        {
+            var position =
+                PointOnPlaneFromIntersectingLineSegment(normalOfPlane, distOfPlane, point1.Position, point2.Position);
+            return position == null ? null : new Vertex(position);
+        }
+
+        /// <summary>
+        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that plane. Returns null if the intersection point is not on the line segment.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnPlaneFromIntersectingLineSegment(double[] normalOfPlane, double distOfPlane, double[] point1,
+            double[] point2)
+        {
+            var position = PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1, point2);
+            var d1 = point2.subtract(point1).norm2();
+            var d2 = point2.subtract(position).norm2();
+            var d3 = point1.subtract(position).norm2();
+            return d1.IsPracticallySame(d2 + d3, 1 - Constants.HighConfidence) ? position : null;
+        }
 
         /// <summary>
         ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
@@ -1707,17 +1758,33 @@ namespace TVGL
         public static Vertex PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Vertex point1,
             Vertex point2)
         {
-            var d1 = normalOfPlane.dotProduct(point1.Position, 3);
-            var d2 = normalOfPlane.dotProduct(point2.Position, 3);
+            return new Vertex(PointOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, point1.Position, point2.Position));
+        }
+
+        /// <summary>
+        ///     Finds the point on the plane made by a line (which is described by connecting point1 and point2) intersecting
+        ///     with that plane.
+        /// </summary>
+        /// <param name="normalOfPlane">The normal of plane.</param>
+        /// <param name="distOfPlane">The dist of plane.</param>
+        /// <param name="point1">The point1.</param>
+        /// <param name="point2">The point2.</param>
+        /// <returns>Vertex.</returns>
+        /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
+        public static double[] PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, double[] point1,
+            double[] point2)
+        {
+            var d1 = normalOfPlane.dotProduct(point1, 3);
+            var d2 = normalOfPlane.dotProduct(point2, 3);
             var fraction = (d1 - distOfPlane) / (d1 - d2);
             var position = new double[3];
             for (var i = 0; i < 3; i++)
             {
-                position[i] = point2.Position[i] * fraction + point1.Position[i] * (1 - fraction);
+                position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
                 if (double.IsNaN(position[i]))
                     throw new Exception("This should never occur. Prevent this from happening");
             }
-            return new Vertex(position);
+            return position;
         }
 
         /// <summary>

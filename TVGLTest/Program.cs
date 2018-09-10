@@ -10,7 +10,6 @@ using TVGL.IOFunctions;
 using TVGL.Voxelization;
 using Constants = TVGL.Voxelization.Constants;
 
-
 namespace TVGLPresenterDX
 {
     internal class Program
@@ -91,12 +90,12 @@ namespace TVGLPresenterDX
             try
             {
                 //x64
-                dir = new DirectoryInfo("../../../TestFiles");
+                dir = new DirectoryInfo("../../../../TestFiles");
             }
             catch
             {
                 //x86
-                dir = new DirectoryInfo("../../TestFiles");
+                dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();

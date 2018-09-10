@@ -375,6 +375,11 @@ namespace TVGL
             return TessellatedSolid.GetEdgeChecksum(vertex1, vertex2);
         }
 
+        internal static long GetEdgeChecksum(int vertex1Index, int vertex2Index)
+        {
+            return TessellatedSolid.GetEdgeChecksum(vertex1Index, vertex2Index);
+        }
+
         #endregion
     }
 }

@@ -108,6 +108,9 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Line.cs">
       <Link>TVGL\2D\Line.cs</Link>
     </Compile>
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\MedialAxis2D.cs">
+      <Link>TVGL\2D\MedialAxis2D.cs</Link>
+    </Compile>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Point.cs">
       <Link>TVGL\2D\Point.cs</Link>
     </Compile>
