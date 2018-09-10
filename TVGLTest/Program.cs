@@ -100,10 +100,10 @@ namespace TVGLPresenterDX
             }
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*").ToArray();
+            var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 5; i < fileNames.Count(); i+=76)
+            for (var i = 0; i < fileNames.Count(); i+=76)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -147,7 +147,7 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
             stopwatch.Start();
-            var vs1 = new VoxelizedSolid(ts,9);
+            var vs1 = new VoxelizedSolid(ts,8);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
@@ -204,7 +204,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Intersecting Drafted Solids...");
             var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1yneg, vs1zpos);
-            // Presenter.ShowAndHang(intersect);
+             Presenter.ShowAndHang(intersect);
             //return;
             //var intersectts = intersect.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
