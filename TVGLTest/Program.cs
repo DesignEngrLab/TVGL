@@ -87,12 +87,12 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
             DirectoryInfo dir;
-            try
+            if (Directory.Exists("../../../../TestFiles"))
             {
                 //x64
                 dir = new DirectoryInfo("../../../../TestFiles");
             }
-            catch
+            else
             {
                 //x86
                 dir = new DirectoryInfo("../../../TestFiles");
