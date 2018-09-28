@@ -425,7 +425,15 @@ namespace TVGL
                 //Else, use the triangulate function
                 else
                 {
-                    var edgeDic = edges.ToDictionary(SetAndGetEdgeChecksum);
+                    Dictionary<long, Edge> edgeDic = new Dictionary<long, Edge>();
+                    foreach (var edge in edges)
+                    {
+                        var checksum = GetEdgeChecksum(edge.From, edge.To);
+                        if (!edgeDic.ContainsKey(checksum))
+                        {
+                            edgeDic.Add(checksum, edge);
+                        }
+                    }
                     List<List<Vertex[]>> triangleFaceList = null;
                     try
                     {
