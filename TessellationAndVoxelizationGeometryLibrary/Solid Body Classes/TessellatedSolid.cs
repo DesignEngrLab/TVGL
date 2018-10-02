@@ -892,10 +892,26 @@ namespace TVGL
             Transform(transformationMatrix);
         }
 
+        /// <summary>
+        /// Translates and Squares Tesselated Solid based on the give bounding box. 
+        /// The resulting Solid should be located at the origin, and only in the positive X, Y, Z octant.
+        /// </summary>
+        /// <returns></returns>
+        public void SetToOriginAndSquare(BoundingBox obb, out double[,] backTransform)
+        {
+            var transformationMatrix = getSquaredandOriginTransform(obb, out backTransform);
+            Transform(transformationMatrix);
+        }
+
         private double[,] getSquaredandOriginTransform(out double[,] backTransform)
         {
-            //First, get the oriented bounding box directions. 
             var obb = MinimumEnclosure.OrientedBoundingBox(this);
+            return getSquaredandOriginTransform(obb, out backTransform);
+        }
+
+        private double[,] getSquaredandOriginTransform(BoundingBox obb, out double[,] backTransform)
+        {
+            //First, get the oriented bounding box directions. 
             var obbDirections = obb.Directions.ToList();
 
             //The bounding box directions are in no particular order.
