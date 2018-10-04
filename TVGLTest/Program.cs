@@ -14,69 +14,68 @@ namespace TVGLPresenterDX
 {
     internal class Program
     {
-
-     static readonly  Stopwatch stopwatch = new Stopwatch();
+        static readonly  Stopwatch stopwatch = new Stopwatch();
 
         private static readonly string[] FileNames = {
-           //"../../../TestFiles/Binary.stl",
-         //   "../../../TestFiles/ABF.ply",
-          //   "../../../TestFiles/Beam_Boss.STL",
-         "../../../TestFiles/Beam_Clean.STL",
+            //"../../../TestFiles/Binary.stl",
+            //   "../../../TestFiles/ABF.ply",
+            //   "../../../TestFiles/Beam_Boss.STL",
+            "../../../TestFiles/Beam_Clean.STL",
 
-        "../../../TestFiles/bigmotor.amf",
-        "../../../TestFiles/DxTopLevelPart2.shell",
-        "../../../TestFiles/Candy.shell",
-        "../../../TestFiles/amf_Cube.amf",
-        "../../../TestFiles/train.3mf",
-        "../../../TestFiles/Castle.3mf",
-        "../../../TestFiles/Raspberry Pi Case.3mf",
-       //"../../../TestFiles/shark.ply",
-       "../../../TestFiles/bunnySmall.ply",
-        "../../../TestFiles/cube.ply",
-        "../../../TestFiles/airplane.ply",
-        "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
-        "../../../TestFiles/Tetrahedron.STL",
-        "../../../TestFiles/off_axis_box.STL",
-           "../../../TestFiles/Wedge.STL",
-        "../../../TestFiles/Mic_Holder_SW.stl",
-        "../../../TestFiles/Mic_Holder_JR.stl",
-        "../../../TestFiles/3_bananas.amf",
-        "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
-        "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
-        "../../../TestFiles/hdodec.off",
-        "../../../TestFiles/tref.off",
-        "../../../TestFiles/mushroom.off",
-        "../../../TestFiles/vertcube.off",
-        "../../../TestFiles/trapezoid.4d.off",
-        "../../../TestFiles/ABF.STL",
-        "../../../TestFiles/Pump-1repair.STL",
-        "../../../TestFiles/Pump-1.STL",
-        "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
-        "../../../TestFiles/Beam_Clean.STL",
-        "../../../TestFiles/Square_Support.STL",
-        "../../../TestFiles/Aerospace_Beam.STL",
-        "../../../TestFiles/Rook.amf",
-       "../../../TestFiles/bunny.ply",
+            "../../../TestFiles/bigmotor.amf",
+            "../../../TestFiles/DxTopLevelPart2.shell",
+            "../../../TestFiles/Candy.shell",
+            "../../../TestFiles/amf_Cube.amf",
+            "../../../TestFiles/train.3mf",
+            "../../../TestFiles/Castle.3mf",
+            "../../../TestFiles/Raspberry Pi Case.3mf",
+            //"../../../TestFiles/shark.ply",
+            "../../../TestFiles/bunnySmall.ply",
+            "../../../TestFiles/cube.ply",
+            "../../../TestFiles/airplane.ply",
+            "../../../TestFiles/TXT - G5 support de carrosserie-1.STL.ply",
+            "../../../TestFiles/Tetrahedron.STL",
+            "../../../TestFiles/off_axis_box.STL",
+            "../../../TestFiles/Wedge.STL",
+            "../../../TestFiles/Mic_Holder_SW.stl",
+            "../../../TestFiles/Mic_Holder_JR.stl",
+            "../../../TestFiles/3_bananas.amf",
+            "../../../TestFiles/drillparts.amf",  //Edge/face relationship contains errors
+            "../../../TestFiles/wrenchsns.amf", //convex hull edge contains a concave edge outside of tolerance
+            "../../../TestFiles/hdodec.off",
+            "../../../TestFiles/tref.off",
+            "../../../TestFiles/mushroom.off",
+            "../../../TestFiles/vertcube.off",
+            "../../../TestFiles/trapezoid.4d.off",
+            "../../../TestFiles/ABF.STL",
+            "../../../TestFiles/Pump-1repair.STL",
+            "../../../TestFiles/Pump-1.STL",
+            "../../../TestFiles/SquareSupportWithAdditionsForSegmentationTesting.STL",
+            "../../../TestFiles/Beam_Clean.STL",
+            "../../../TestFiles/Square_Support.STL",
+            "../../../TestFiles/Aerospace_Beam.STL",
+            "../../../TestFiles/Rook.amf",
+            "../../../TestFiles/bunny.ply",
 
-        "../../../TestFiles/piston.stl",
-        "../../../TestFiles/Z682.stl",
-        "../../../TestFiles/sth2.stl",
-        "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
-        "../../../TestFiles/new/5.STL",
-       "../../../TestFiles/new/2.stl", //Note that this is an assembly 
-        "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
-       "../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
-        "../../../TestFiles/radiobox.stl",
-        "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
-        "../../../TestFiles/G0.stl",
-        "../../../TestFiles/GKJ0.stl",
-        "../../../TestFiles/testblock2.stl",
-        "../../../TestFiles/Z665.stl",
-        "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
-        "../../../TestFiles/mendel_extruder.stl",
+            "../../../TestFiles/piston.stl",
+            "../../../TestFiles/Z682.stl",
+            "../../../TestFiles/sth2.stl",
+            "../../../TestFiles/Cuboide.stl", //Note that this is an assembly 
+            "../../../TestFiles/new/5.STL",
+            "../../../TestFiles/new/2.stl", //Note that this is an assembly 
+            "../../../TestFiles/new/6.stl", //Note that this is an assembly  //breaks in slice at 1/2 y direction
+            "../../../TestFiles/new/4.stl", //breaks because one of its faces has no normal
+            "../../../TestFiles/radiobox.stl",
+            "../../../TestFiles/brace.stl",  //Convex hull fails in MIconvexHull
+            "../../../TestFiles/G0.stl",
+            "../../../TestFiles/GKJ0.stl",
+            "../../../TestFiles/testblock2.stl",
+            "../../../TestFiles/Z665.stl",
+            "../../../TestFiles/Casing.stl", //breaks because one of its faces has no normal
+            "../../../TestFiles/mendel_extruder.stl",
 
-       "../../../TestFiles/MV-Test files/holding-device.STL",
-       "../../../TestFiles/MV-Test files/gear.STL"
+            "../../../TestFiles/MV-Test files/holding-device.STL",
+            "../../../TestFiles/MV-Test files/gear.STL"
         };
 
         [STAThread]
@@ -102,7 +101,7 @@ namespace TVGLPresenterDX
             var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i+=76)
+            for (var i = 0; i < fileNames.Count(); i += 76)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -121,6 +120,8 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(ts);
                 //TestVoxelization(ts, filename);
                 TestSearch1(ts);
+                TestSearchAll(ts);
+                TestSearch5Axis(ts);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -147,7 +148,7 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
             stopwatch.Start();
-            var vs1 = new VoxelizedSolid(ts,8);
+            var vs1 = new VoxelizedSolid(ts, 8);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
@@ -204,7 +205,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Intersecting Drafted Solids...");
             var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1yneg, vs1zpos);
-             Presenter.ShowAndHang(intersect);
+            Presenter.ShowAndHang(intersect);
             //return;
             //var intersectts = intersect.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
@@ -282,6 +283,7 @@ namespace TVGLPresenterDX
                         vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive)
                     })}
                 };
+            stopwatch.Start();
 
             //Take the intersects of all six direcions, and of + and - directions individually (i.e. +x with -x, +y with -y, +z with -z
             //Print number of voxels in each, as well as complete intersection (all six directions)
@@ -304,7 +306,7 @@ namespace TVGLPresenterDX
             if (initials[0].Value.Volume - targetVolume < 0.01)
             {
                 Console.WriteLine("Fewer setups found, level 1");
-                //return;
+                return;
             }
 
             var signindex = new Dictionary<char, int>()
@@ -325,7 +327,7 @@ namespace TVGLPresenterDX
             if (level2Candidates[0].Value.Volume - targetVolume < 0.01)
             {
                 Console.WriteLine("Fewer setups found: {0}", level2Candidates[0].Key);
-                //return;
+                return;
             }
 
             var l3n = level2Candidates[0].Value.IntersectToNewSolid(extrusions[initials[2].Key][signindex['-']]);
@@ -340,7 +342,7 @@ namespace TVGLPresenterDX
             if (level3Candidates[0].Value.Volume - targetVolume < 0.01)
             {
                 Console.WriteLine("Fewer setups found: {0}", level3Candidates[0].Key);
-                //return;
+                return;
             }
 
             // need the -2 position of key string
@@ -358,23 +360,142 @@ namespace TVGLPresenterDX
             if (level4Candidates[0].Value.Volume - targetVolume < 0.01)
             {
                 Console.WriteLine("Fewer setups found: {0}", level4Candidates[0].Key);
-                //return;
+                return;
             }
-
             Console.WriteLine("All setups required for maximum machinability");
 
-            //Search tree for determinng machinability with fewer setups
-            //Number of setups is 1 + level #
+            stopwatch.Start();
+            Console.WriteLine("Time elapsed is: {0}", stopwatch.Elapsed);
+            Console.ReadKey();
 
             Presenter.ShowAndHang(intersect);
             Presenter.ShowAndHang(initials[0].Value);
-            Console.ReadKey();
         }
-
 
         public static void TestSearchAll(TessellatedSolid ts)
         {
+            //Convert tesselated solid to voxelized solid
+            Console.WriteLine("Voxelizing solid");
+            var vs1 = new VoxelizedSolid(ts, 8);
 
+            //Perform extrusions in all six directions
+            Console.WriteLine("Extruding solid in all six directions");
+            var extrusions = new List<VoxelizedSolid>(new VoxelizedSolid[]
+            {
+                vs1.ExtrudeToNewSolid(VoxelDirections.XNegative),
+                vs1.ExtrudeToNewSolid(VoxelDirections.XPositive),
+                vs1.ExtrudeToNewSolid(VoxelDirections.YNegative),
+                vs1.ExtrudeToNewSolid(VoxelDirections.YPositive),
+                vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative),
+                vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive)
+            });
+            stopwatch.Start();
+
+            //Intersect all non-repeating combinatinos of directions
+            Console.WriteLine("Intersecting all combinations");
+            var combinations = new List<List<int>>(64);
+            for (int i = 0; i < 2; i++)
+            {
+                for (int j = 0; j < 2; j++)
+                {
+                    for (int k = 0; k < 2; k++)
+                    {
+                        for (int l = 0; l < 2; l++)
+                        {
+                            for (int m = 0; m < 2; m++)
+                            {
+                                for (int n = 0; n < 2; n++)
+                                {
+                                    var permutation = new List<int>(new int[] {i, j, k, l, m, n});
+                                    combinations.Add(permutation);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            combinations.RemoveAt(0);
+            var intersections = new List<VoxelizedSolid>(63);
+            foreach (List<int> combination in combinations)
+            {
+                Console.WriteLine("{0} {1} {2} {3} {4} {5}", combination[0], combination[1],
+                    combination[2], combination[3], combination[4], combination[5]);
+                var indices = Enumerable.Range(0, combination.Count).Where(i => combination[i] == 1).ToList();
+                if (indices.Count() == 1)
+                {
+                    intersections.Add(extrusions[indices[0]]);
+                }
+                else if (indices.Count() == 2)
+                {
+                    intersections.Add(extrusions[indices[0]].
+                        IntersectToNewSolid(extrusions[indices[1]]));
+                }
+                else if (indices.Count() == 3)
+                {
+                    intersections.Add(extrusions[indices[0]].
+                        IntersectToNewSolid(extrusions[indices[1]], extrusions[indices[2]]));
+                }
+                else if (indices.Count() == 4)
+                {
+                    intersections.Add(extrusions[indices[0]].
+                        IntersectToNewSolid(extrusions[indices[1]], extrusions[indices[2]], extrusions[indices[3]]));
+                }
+                else if (indices.Count() == 5)
+                {
+                    intersections.Add(extrusions[indices[0]].
+                        IntersectToNewSolid(extrusions[indices[1]], extrusions[indices[2]],
+                        extrusions[indices[3]], extrusions[indices[4]]));
+                }
+                else if (indices.Count() == 6)
+                {
+                    intersections.Add(extrusions[0].IntersectToNewSolid(extrusions[1],
+                        extrusions[2], extrusions[3], extrusions[4], extrusions[5]));
+                }
+            }
+
+            stopwatch.Stop();
+            Console.WriteLine("Time elapsed is: {0}", stopwatch.Elapsed);
+            Console.ReadKey();
+        }
+
+        public static void TestSearch5Axis(TessellatedSolid ts)
+        {
+            //Convert tesselated solid to voxelized solid
+            Console.WriteLine("Voxelizing solid");
+            var vs1 = new VoxelizedSolid(ts, 8);
+
+            //Perform extrusions in all six directions
+            Console.WriteLine("Extruding solid in all six directions");
+            var extrusions = new List<VoxelizedSolid>(new VoxelizedSolid[]
+            {
+                vs1.ExtrudeToNewSolid(VoxelDirections.XNegative),
+                vs1.ExtrudeToNewSolid(VoxelDirections.XPositive),
+                vs1.ExtrudeToNewSolid(VoxelDirections.YNegative),
+                vs1.ExtrudeToNewSolid(VoxelDirections.YPositive),
+                vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative),
+                vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive)
+            });
+            stopwatch.Start();
+
+            var setups = new List<VoxelizedSolid>(7);
+            setups.Add(extrusions[0].IntersectToNewSolid(
+                extrusions[1], extrusions[2], extrusions[3], extrusions[4], extrusions[5]));
+            setups.Add(extrusions[0].IntersectToNewSolid(
+                extrusions[1], extrusions[2], extrusions[3], extrusions[4]));
+            setups.Add(extrusions[0].IntersectToNewSolid(
+                extrusions[1], extrusions[2], extrusions[3], extrusions[5]));
+            setups.Add(extrusions[0].IntersectToNewSolid(
+                extrusions[1], extrusions[2], extrusions[4], extrusions[5]));
+            setups.Add(extrusions[0].IntersectToNewSolid(
+                extrusions[1], extrusions[3], extrusions[4], extrusions[5]));
+            setups.Add(extrusions[0].IntersectToNewSolid(
+                extrusions[2], extrusions[3], extrusions[4], extrusions[5]));
+            setups.Add(extrusions[1].IntersectToNewSolid(
+                extrusions[2], extrusions[3], extrusions[4], extrusions[5]));
+
+            stopwatch.Stop();
+            Console.WriteLine("Time elapsed is: {0}", stopwatch.Elapsed);
+            Console.ReadKey();
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
