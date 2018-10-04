@@ -119,7 +119,8 @@ namespace TVGLPresenterDX
                     Af = 0.25f
                 };
                 //Presenter.ShowAndHang(ts);
-                TestVoxelization(ts, filename);
+                //TestVoxelization(ts, filename);
+                TestSearch1(ts);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -210,6 +211,7 @@ namespace TVGLPresenterDX
             //savename = "intersect_" + _fileName;
             //IO.Save(intersectts, savename, FileType.STL_ASCII);
 
+
             Console.WriteLine("Subtracting Original Voxelized Shape From Intersect...");
             var unmachinableVoxels = intersect.SubtractToNewSolid(vs1);
             // Presenter.ShowAndHang(unmachinableVoxels);
@@ -254,6 +256,125 @@ namespace TVGLPresenterDX
             //PresenterShowAndHang(unmachinableVoxelsSolid);
 
             //var originalTS = new Solid[] { ts };
+        }
+
+
+        public static void TestSearch1(TessellatedSolid ts)
+        {
+            //Convert tesselated solid to voxelized solid
+            Console.WriteLine("Voxelizing solid");
+            var vs1 = new VoxelizedSolid(ts, 8);
+
+            //Perform extrusions in all six directions
+            Console.WriteLine("Extruding solid in all six directions");
+            var extrusions = new Dictionary<char, List<VoxelizedSolid>>()
+                {
+                    { 'x', new List<VoxelizedSolid>(new VoxelizedSolid[]{
+                        vs1.ExtrudeToNewSolid(VoxelDirections.XNegative),
+                        vs1.ExtrudeToNewSolid(VoxelDirections.XPositive)
+                    })},
+                    { 'y', new List<VoxelizedSolid>(new VoxelizedSolid[]{
+                        vs1.ExtrudeToNewSolid(VoxelDirections.YNegative),
+                        vs1.ExtrudeToNewSolid(VoxelDirections.YPositive)
+                    })},
+                    { 'z', new List<VoxelizedSolid>(new VoxelizedSolid[]{
+                        vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative),
+                        vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive)
+                    })}
+                };
+
+            //Take the intersects of all six direcions, and of + and - directions individually (i.e. +x with -x, +y with -y, +z with -z
+            //Print number of voxels in each, as well as complete intersection (all six directions)
+            Console.WriteLine("Intersecting positive and negative directions");
+            var intersect = extrusions['x'][0].IntersectToNewSolid(extrusions['x'][1], extrusions['y'][0],
+                extrusions['y'][1], extrusions['z'][0], extrusions['z'][1]);
+            var initials = new List<KeyValuePair<char, VoxelizedSolid>>(new KeyValuePair<char, VoxelizedSolid>[]
+                {
+                    new KeyValuePair<char, VoxelizedSolid>('x', extrusions['x'][0].IntersectToNewSolid(extrusions['x'][1])),
+                    new KeyValuePair<char, VoxelizedSolid>('y', extrusions['y'][0].IntersectToNewSolid(extrusions['y'][1])),
+                    new KeyValuePair<char, VoxelizedSolid>('z', extrusions['z'][0].IntersectToNewSolid(extrusions['z'][1]))
+                });
+            Console.WriteLine("Intersect volume = {0}\n+/-X volume = {1}\n+/-Y volume = {2}\n+/-Z volume = {3}",
+                intersect.Volume, initials[0].Value.Volume, initials[0].Value.Volume, initials[0].Value.Volume);
+
+            var targetVolume = intersect.Volume;
+            initials.Sort((x, y) => x.Value.Volume.CompareTo(y.Value.Volume));
+
+            //A positive/negative direction pair has as good machinability as using all 6 direction
+            if (initials[0].Value.Volume - targetVolume < 0.01)
+            {
+                Console.WriteLine("Fewer setups found, level 1");
+                //return;
+            }
+
+            var signindex = new Dictionary<char, int>()
+                {
+                    { '-', 0},
+                    { '+', 1}
+                };
+
+            var l2n = initials[0].Value.IntersectToNewSolid(extrusions[initials[1].Key][signindex['-']]);
+            var l2p = initials[0].Value.IntersectToNewSolid(extrusions[initials[1].Key][signindex['+']]);
+            var level2Candidates = new List<KeyValuePair<string, VoxelizedSolid>>(new KeyValuePair<string, VoxelizedSolid>[]
+            {
+                    new KeyValuePair<string, VoxelizedSolid>(initials[0].Key + "-" + initials[1].Key, l2n),
+                    new KeyValuePair<string, VoxelizedSolid>(initials[0].Key + "+" + initials[1].Key, l2p)
+            });
+            level2Candidates.Sort((x, y) => x.Value.Volume.CompareTo(y.Value.Volume));
+            //A member of level 2 has as good machinability as using all 6 direction
+            if (level2Candidates[0].Value.Volume - targetVolume < 0.01)
+            {
+                Console.WriteLine("Fewer setups found: {0}", level2Candidates[0].Key);
+                //return;
+            }
+
+            var l3n = level2Candidates[0].Value.IntersectToNewSolid(extrusions[initials[2].Key][signindex['-']]);
+            var l3p = level2Candidates[0].Value.IntersectToNewSolid(extrusions[initials[2].Key][signindex['+']]);
+            var level3Candidates = new List<KeyValuePair<string, VoxelizedSolid>>(new KeyValuePair<string, VoxelizedSolid>[]
+            {
+                    new KeyValuePair<string, VoxelizedSolid>(level2Candidates[0].Key + "-" + initials[2].Key, l3n),
+                    new KeyValuePair<string, VoxelizedSolid>(level2Candidates[0].Key + "+" + initials[2].Key, l3p)
+            });
+            level3Candidates.Sort((x, y) => x.Value.Volume.CompareTo(y.Value.Volume));
+            //A member of level 3 has as good machinability as using all 6 direction
+            if (level3Candidates[0].Value.Volume - targetVolume < 0.01)
+            {
+                Console.WriteLine("Fewer setups found: {0}", level3Candidates[0].Key);
+                //return;
+            }
+
+            // need the -2 position of key string
+            var l42k = signindex[level2Candidates[1].Key[1]];
+            var l43k = signindex[level3Candidates[1].Key[3]];
+            var l42 = level3Candidates[0].Value.IntersectToNewSolid(extrusions[level2Candidates[1].Key[2]][l42k]);
+            var l43 = level3Candidates[0].Value.IntersectToNewSolid(extrusions[level3Candidates[1].Key[4]][l43k]);
+            var level4Candidates = new List<KeyValuePair<string, VoxelizedSolid>>(new KeyValuePair<string, VoxelizedSolid>[]
+            {
+                    new KeyValuePair<string, VoxelizedSolid>(level3Candidates[0].Key + l42k + level2Candidates[1].Key, l42),
+                    new KeyValuePair<string, VoxelizedSolid>(level3Candidates[0].Key + l43k + level3Candidates[1].Key, l43)
+            });
+            level4Candidates.Sort((x, y) => x.Value.Volume.CompareTo(y.Value.Volume));
+            //A member of level 4 has as good machinability as using all 6 direction
+            if (level4Candidates[0].Value.Volume - targetVolume < 0.01)
+            {
+                Console.WriteLine("Fewer setups found: {0}", level4Candidates[0].Key);
+                //return;
+            }
+
+            Console.WriteLine("All setups required for maximum machinability");
+
+            //Search tree for determinng machinability with fewer setups
+            //Number of setups is 1 + level #
+
+            Presenter.ShowAndHang(intersect);
+            Presenter.ShowAndHang(initials[0].Value);
+            Console.ReadKey();
+        }
+
+
+        public static void TestSearchAll(TessellatedSolid ts)
+        {
+
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
