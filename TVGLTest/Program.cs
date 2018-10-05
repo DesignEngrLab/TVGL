@@ -119,9 +119,10 @@ namespace TVGLPresenterDX
                 };
                 //Presenter.ShowAndHang(ts);
                 //TestVoxelization(ts, filename);
-                TestSearch1(ts);
-                TestSearchAll(ts);
-                TestSearch5Axis(ts);
+                //TestSearch1(ts);
+                //TestSearchAll(ts);
+                //TestSearch5Axis(ts);
+                SearchComparison(ts);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -259,140 +260,211 @@ namespace TVGLPresenterDX
             //var originalTS = new Solid[] { ts };
         }
 
-
-        public static void TestSearch1(TessellatedSolid ts)
+        public static void SearchComparison(TessellatedSolid ts)
         {
-            //Convert tesselated solid to voxelized solid
-            Console.WriteLine("Voxelizing solid");
-            var vs1 = new VoxelizedSolid(ts, 8);
+            TestSearchAll(ts, out TimeSpan elapsedAll,
+                out int requiredSetupsAll, out List<VoxelDirections> manufacturingPlanAll);
+            Console.WriteLine("Searching all Possible Combinations of Setups\nRequired Setups: {0}\n{1}", requiredSetupsAll, elapsedAll);
 
-            //Perform extrusions in all six directions
-            Console.WriteLine("Extruding solid in all six directions");
-            var extrusions = new Dictionary<char, List<VoxelizedSolid>>()
-                {
-                    { 'x', new List<VoxelizedSolid>(new VoxelizedSolid[]{
-                        vs1.ExtrudeToNewSolid(VoxelDirections.XNegative),
-                        vs1.ExtrudeToNewSolid(VoxelDirections.XPositive)
-                    })},
-                    { 'y', new List<VoxelizedSolid>(new VoxelizedSolid[]{
-                        vs1.ExtrudeToNewSolid(VoxelDirections.YNegative),
-                        vs1.ExtrudeToNewSolid(VoxelDirections.YPositive)
-                    })},
-                    { 'z', new List<VoxelizedSolid>(new VoxelizedSolid[]{
-                        vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative),
-                        vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive)
-                    })}
-                };
-            stopwatch.Start();
+            TestSearchGreedy(ts, out TimeSpan elapsedGreedy,
+                out int requiredSetupsGreedy, out List<VoxelDirections> manufacturingPlanGreedy);
+            Console.WriteLine("Performing Greedy Search\nRequired Setups: {0}\n{1}", requiredSetupsGreedy, elapsedGreedy);
 
-            //Take the intersects of all six direcions, and of + and - directions individually (i.e. +x with -x, +y with -y, +z with -z
-            //Print number of voxels in each, as well as complete intersection (all six directions)
-            Console.WriteLine("Intersecting positive and negative directions");
-            var intersect = extrusions['x'][0].IntersectToNewSolid(extrusions['x'][1], extrusions['y'][0],
-                extrusions['y'][1], extrusions['z'][0], extrusions['z'][1]);
-            var initials = new List<KeyValuePair<char, VoxelizedSolid>>(new KeyValuePair<char, VoxelizedSolid>[]
-                {
-                    new KeyValuePair<char, VoxelizedSolid>('x', extrusions['x'][0].IntersectToNewSolid(extrusions['x'][1])),
-                    new KeyValuePair<char, VoxelizedSolid>('y', extrusions['y'][0].IntersectToNewSolid(extrusions['y'][1])),
-                    new KeyValuePair<char, VoxelizedSolid>('z', extrusions['z'][0].IntersectToNewSolid(extrusions['z'][1]))
-                });
-            Console.WriteLine("Intersect volume = {0}\n+/-X volume = {1}\n+/-Y volume = {2}\n+/-Z volume = {3}",
-                intersect.Volume, initials[0].Value.Volume, initials[0].Value.Volume, initials[0].Value.Volume);
-
-            var targetVolume = intersect.Volume;
-            initials.Sort((x, y) => x.Value.Volume.CompareTo(y.Value.Volume));
-
-            //A positive/negative direction pair has as good machinability as using all 6 direction
-            if (initials[0].Value.Volume - targetVolume < 0.01)
-            {
-                Console.WriteLine("Fewer setups found, level 1");
-                return;
-            }
-
-            var signindex = new Dictionary<char, int>()
-                {
-                    { '-', 0},
-                    { '+', 1}
-                };
-
-            var l2n = initials[0].Value.IntersectToNewSolid(extrusions[initials[1].Key][signindex['-']]);
-            var l2p = initials[0].Value.IntersectToNewSolid(extrusions[initials[1].Key][signindex['+']]);
-            var level2Candidates = new List<KeyValuePair<string, VoxelizedSolid>>(new KeyValuePair<string, VoxelizedSolid>[]
-            {
-                    new KeyValuePair<string, VoxelizedSolid>(initials[0].Key + "-" + initials[1].Key, l2n),
-                    new KeyValuePair<string, VoxelizedSolid>(initials[0].Key + "+" + initials[1].Key, l2p)
-            });
-            level2Candidates.Sort((x, y) => x.Value.Volume.CompareTo(y.Value.Volume));
-            //A member of level 2 has as good machinability as using all 6 direction
-            if (level2Candidates[0].Value.Volume - targetVolume < 0.01)
-            {
-                Console.WriteLine("Fewer setups found: {0}", level2Candidates[0].Key);
-                return;
-            }
-
-            var l3n = level2Candidates[0].Value.IntersectToNewSolid(extrusions[initials[2].Key][signindex['-']]);
-            var l3p = level2Candidates[0].Value.IntersectToNewSolid(extrusions[initials[2].Key][signindex['+']]);
-            var level3Candidates = new List<KeyValuePair<string, VoxelizedSolid>>(new KeyValuePair<string, VoxelizedSolid>[]
-            {
-                    new KeyValuePair<string, VoxelizedSolid>(level2Candidates[0].Key + "-" + initials[2].Key, l3n),
-                    new KeyValuePair<string, VoxelizedSolid>(level2Candidates[0].Key + "+" + initials[2].Key, l3p)
-            });
-            level3Candidates.Sort((x, y) => x.Value.Volume.CompareTo(y.Value.Volume));
-            //A member of level 3 has as good machinability as using all 6 direction
-            if (level3Candidates[0].Value.Volume - targetVolume < 0.01)
-            {
-                Console.WriteLine("Fewer setups found: {0}", level3Candidates[0].Key);
-                return;
-            }
-
-            // need the -2 position of key string
-            var l42k = signindex[level2Candidates[1].Key[1]];
-            var l43k = signindex[level3Candidates[1].Key[3]];
-            var l42 = level3Candidates[0].Value.IntersectToNewSolid(extrusions[level2Candidates[1].Key[2]][l42k]);
-            var l43 = level3Candidates[0].Value.IntersectToNewSolid(extrusions[level3Candidates[1].Key[4]][l43k]);
-            var level4Candidates = new List<KeyValuePair<string, VoxelizedSolid>>(new KeyValuePair<string, VoxelizedSolid>[]
-            {
-                    new KeyValuePair<string, VoxelizedSolid>(level3Candidates[0].Key + l42k + level2Candidates[1].Key, l42),
-                    new KeyValuePair<string, VoxelizedSolid>(level3Candidates[0].Key + l43k + level3Candidates[1].Key, l43)
-            });
-            level4Candidates.Sort((x, y) => x.Value.Volume.CompareTo(y.Value.Volume));
-            //A member of level 4 has as good machinability as using all 6 direction
-            if (level4Candidates[0].Value.Volume - targetVolume < 0.01)
-            {
-                Console.WriteLine("Fewer setups found: {0}", level4Candidates[0].Key);
-                return;
-            }
-            Console.WriteLine("All setups required for maximum machinability");
-
-            stopwatch.Start();
-            Console.WriteLine("Time elapsed is: {0}", stopwatch.Elapsed);
-            Console.ReadKey();
-
-            Presenter.ShowAndHang(intersect);
-            Presenter.ShowAndHang(initials[0].Value);
+            TestSearch5Axis(ts, out TimeSpan elapsed5Axis,
+                out int requiredSetups5Axis, out List<VoxelDirections> manufacturingPlan5Axis);
+            Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", requiredSetups5Axis, elapsed5Axis);
         }
 
-        public static void TestSearchAll(TessellatedSolid ts)
+        public class Candidate
+        {
+            public double Volume = 0;
+            public int RequiredSetups = 0;
+            public List<VoxelDirections> ManfacturingPlan = new List<VoxelDirections>();
+
+            public Candidate(Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
+            {
+                var vs = ex[vd[0]];
+                for (int i = 0; i < vd.Length; i++)
+                {
+                    vs = vs.IntersectToNewSolid(ex[vd[i]]);
+                }
+                Volume = vs.Volume;
+                RequiredSetups = vd.Length;
+                ManfacturingPlan.AddRange(vd);
+            }
+            public Candidate(Dictionary<VoxelDirections, VoxelizedSolid> ex, List<VoxelDirections> vd)
+            {
+                var vs = ex[vd[0]];
+                for (int i = 0; i < vd.Count; i++)
+                {
+                    vs = vs.IntersectToNewSolid(ex[vd[i]]);
+                }
+                Volume = vs.Volume;
+                RequiredSetups = vd.Count;
+                ManfacturingPlan.AddRange(vd);
+            }
+            public Candidate(Candidate cn, Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
+            {
+                var vs = ex[cn.ManfacturingPlan[0]];
+                for (int i = 0; i < cn.ManfacturingPlan.Count; i++)
+                {
+                    vs = vs.IntersectToNewSolid(ex[cn.ManfacturingPlan[i]]);
+                }
+                for (int i = 0; i < vd.Length; i++)
+                {
+                    vs.IntersectToNewSolid(ex[vd[i]]);
+                }
+                Volume = vs.Volume;
+                RequiredSetups = cn.RequiredSetups + vd.Length;
+                ManfacturingPlan = cn.ManfacturingPlan;
+                ManfacturingPlan.AddRange(vd);
+            }
+
+            public void AddStep(Dictionary<VoxelDirections, VoxelizedSolid> ex, VoxelDirections vd)
+            {
+                var vs = ex[ManfacturingPlan[0]];
+                for (int i = 0; i < ManfacturingPlan.Count; i++)
+                {
+                    vs = vs.IntersectToNewSolid(ex[ManfacturingPlan[i]]);
+                }
+                vs = vs.IntersectToNewSolid(ex[vd]);
+                Volume = vs.Volume;
+                RequiredSetups++;
+                ManfacturingPlan.Add(vd);
+            }
+        }
+
+        public static void TestSearchGreedy(TessellatedSolid ts, out TimeSpan elapsed,
+            out int requiredSetups, out List<VoxelDirections> manufacturingPlan)
         {
             //Convert tesselated solid to voxelized solid
-            Console.WriteLine("Voxelizing solid");
+            var vs1 = new VoxelizedSolid(ts, 8);
+            
+            //Perform extrusions in all six directions
+            var extrusions = new Dictionary<VoxelDirections, VoxelizedSolid>()
+                {
+                    { VoxelDirections.XNegative, vs1.ExtrudeToNewSolid(VoxelDirections.XNegative) },
+                    { VoxelDirections.XPositive, vs1.ExtrudeToNewSolid(VoxelDirections.XPositive) },
+                    { VoxelDirections.YNegative, vs1.ExtrudeToNewSolid(VoxelDirections.YNegative) },
+                    { VoxelDirections.YPositive, vs1.ExtrudeToNewSolid(VoxelDirections.YPositive) },
+                    { VoxelDirections.ZNegative, vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative) },
+                    { VoxelDirections.ZPositive, vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive) }
+                };
+
+            Stopwatch Stopwatch = new Stopwatch();
+            Stopwatch.Start();
+
+            //Take the intersects of all six direcions, and of + and - directions individually (i.e. +x with -x, +y with -y, +z with -z
+            var complete = new Candidate(extrusions, VoxelDirections.XNegative, VoxelDirections.XPositive, VoxelDirections.YNegative,
+                VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive);
+            var initials = new List<Candidate>(new Candidate[]
+                {
+                    new Candidate(extrusions, VoxelDirections.XNegative, VoxelDirections.XPositive),
+                    new Candidate(extrusions, VoxelDirections.YNegative, VoxelDirections.YPositive),
+                    new Candidate(extrusions, VoxelDirections.ZNegative, VoxelDirections.ZPositive)
+                });
+
+            var targetVolume = complete.Volume;
+            initials.Sort((x, y) => x.Volume.CompareTo(y.Volume));
+
+            //A positive/negative direction pair has as good machinability as using all 6 direction
+            if (initials[0].Volume - targetVolume < 0.01)
+            {
+                Stopwatch.Stop();
+                elapsed = Stopwatch.Elapsed;
+                requiredSetups = initials[0].RequiredSetups;
+                manufacturingPlan = initials[0].ManfacturingPlan;
+                return;
+            }
+
+            var level2 = new List<Candidate>(new Candidate[]
+                {
+                    new Candidate(initials[0], extrusions, initials[1].ManfacturingPlan[0]),
+                    new Candidate(initials[0], extrusions, initials[1].ManfacturingPlan[1])
+                });
+            level2.Sort((x, y) => x.Volume.CompareTo(y.Volume));
+            //A member of level 2 has as good machinability as using all 6 direction
+            if (level2[0].Volume - targetVolume < 0.01)
+            {
+                Stopwatch.Stop();
+                elapsed = Stopwatch.Elapsed;
+                requiredSetups = level2[0].RequiredSetups;
+                manufacturingPlan = level2[0].ManfacturingPlan;
+                return;
+            }
+
+            var level3 = new List<Candidate>(new Candidate[]
+                {
+                    new Candidate(level2[0], extrusions, initials[2].ManfacturingPlan[0]),
+                    new Candidate(level2[0], extrusions, initials[2].ManfacturingPlan[1])
+                });
+            level3.Sort((x, y) => x.Volume.CompareTo(y.Volume));
+            //A member of level 3 has as good machinability as using all 6 direction
+            if (level3[0].Volume - targetVolume < 0.01)
+            {
+                Stopwatch.Stop();
+                elapsed = Stopwatch.Elapsed;
+                requiredSetups = level3[0].RequiredSetups;
+                manufacturingPlan = level3[0].ManfacturingPlan;
+                return;
+            }
+
+            var level4 = new List<Candidate>(new Candidate[]
+                {
+                    new Candidate(level3[0], extrusions, level2[1].ManfacturingPlan[2]),
+                    new Candidate(level3[0], extrusions, level3[1].ManfacturingPlan[3])
+                });
+            level4.Sort((x, y) => x.Volume.CompareTo(y.Volume));
+            //A member of level 4 has as good machinability as using all 6 direction
+            if (level4[0].Volume - targetVolume < 0.01)
+            {
+                Stopwatch.Stop();
+                elapsed = Stopwatch.Elapsed;
+                requiredSetups = level4[0].RequiredSetups;
+                manufacturingPlan = level4[0].ManfacturingPlan;
+                return;
+            }
+
+            Stopwatch.Stop();
+            elapsed = Stopwatch.Elapsed;
+            requiredSetups = complete.RequiredSetups;
+            manufacturingPlan = complete.ManfacturingPlan;
+        }
+
+        public static void TestSearchAll(TessellatedSolid ts, out TimeSpan elapsed,
+            out int requiredSetups, out List<VoxelDirections> manufacturingPlan)
+        {
+            //Convert tesselated solid to voxelized solid
             var vs1 = new VoxelizedSolid(ts, 8);
 
             //Perform extrusions in all six directions
-            Console.WriteLine("Extruding solid in all six directions");
-            var extrusions = new List<VoxelizedSolid>(new VoxelizedSolid[]
+            var extrusions = new Dictionary<VoxelDirections, VoxelizedSolid>()
+                {
+                    { VoxelDirections.XNegative, vs1.ExtrudeToNewSolid(VoxelDirections.XNegative) },
+                    { VoxelDirections.XPositive, vs1.ExtrudeToNewSolid(VoxelDirections.XPositive) },
+                    { VoxelDirections.YNegative, vs1.ExtrudeToNewSolid(VoxelDirections.YNegative) },
+                    { VoxelDirections.YPositive, vs1.ExtrudeToNewSolid(VoxelDirections.YPositive) },
+                    { VoxelDirections.ZNegative, vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative) },
+                    { VoxelDirections.ZPositive, vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive) }
+                };
+
+            var key = new List<VoxelDirections>(new VoxelDirections[]
             {
-                vs1.ExtrudeToNewSolid(VoxelDirections.XNegative),
-                vs1.ExtrudeToNewSolid(VoxelDirections.XPositive),
-                vs1.ExtrudeToNewSolid(VoxelDirections.YNegative),
-                vs1.ExtrudeToNewSolid(VoxelDirections.YPositive),
-                vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative),
-                vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive)
+                VoxelDirections.XNegative,
+                VoxelDirections.XPositive,
+                VoxelDirections.YNegative,
+                VoxelDirections.YPositive,
+                VoxelDirections.ZNegative,
+                VoxelDirections.ZPositive
             });
-            stopwatch.Start();
+
+            Stopwatch Stopwatch = new Stopwatch();
+            Stopwatch.Start();
+
+            var complete = new Candidate(extrusions, VoxelDirections.XNegative, VoxelDirections.XPositive, VoxelDirections.YNegative,
+                VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive);
 
             //Intersect all non-repeating combinatinos of directions
-            Console.WriteLine("Intersecting all combinations");
             var combinations = new List<List<int>>(64);
             for (int i = 0; i < 2; i++)
             {
@@ -414,88 +486,76 @@ namespace TVGLPresenterDX
                     }
                 }
             }
+
+            requiredSetups = complete.RequiredSetups;
+            combinations.RemoveAt(63);
             combinations.RemoveAt(0);
-            var intersections = new List<VoxelizedSolid>(63);
+            var intersections = new List<Candidate>(63) { complete };
+
             foreach (List<int> combination in combinations)
             {
-                Console.WriteLine("{0} {1} {2} {3} {4} {5}", combination[0], combination[1],
-                    combination[2], combination[3], combination[4], combination[5]);
                 var indices = Enumerable.Range(0, combination.Count).Where(i => combination[i] == 1).ToList();
-                if (indices.Count() == 1)
-                {
-                    intersections.Add(extrusions[indices[0]]);
-                }
-                else if (indices.Count() == 2)
-                {
-                    intersections.Add(extrusions[indices[0]].
-                        IntersectToNewSolid(extrusions[indices[1]]));
-                }
-                else if (indices.Count() == 3)
-                {
-                    intersections.Add(extrusions[indices[0]].
-                        IntersectToNewSolid(extrusions[indices[1]], extrusions[indices[2]]));
-                }
-                else if (indices.Count() == 4)
-                {
-                    intersections.Add(extrusions[indices[0]].
-                        IntersectToNewSolid(extrusions[indices[1]], extrusions[indices[2]], extrusions[indices[3]]));
-                }
-                else if (indices.Count() == 5)
-                {
-                    intersections.Add(extrusions[indices[0]].
-                        IntersectToNewSolid(extrusions[indices[1]], extrusions[indices[2]],
-                        extrusions[indices[3]], extrusions[indices[4]]));
-                }
-                else if (indices.Count() == 6)
-                {
-                    intersections.Add(extrusions[0].IntersectToNewSolid(extrusions[1],
-                        extrusions[2], extrusions[3], extrusions[4], extrusions[5]));
-                }
+                var keys = new List<VoxelDirections>();
+                foreach (int index in indices) { keys.Add(key[index]); }
+                intersections.Add(new Candidate(extrusions, keys));
             }
 
-            stopwatch.Stop();
-            Console.WriteLine("Time elapsed is: {0}", stopwatch.Elapsed);
-            Console.ReadKey();
+            intersections.Sort((x, y) => x.Volume.CompareTo(y.Volume));
+            var bests = intersections.FindAll(delegate(Candidate inter) { return inter.Volume - intersections[0].Volume < 0.01; });
+            bests.Sort((x, y) => x.RequiredSetups.CompareTo(y.RequiredSetups));            
+
+            Stopwatch.Stop();
+            elapsed = Stopwatch.Elapsed;
+            requiredSetups = bests[0].RequiredSetups;
+            manufacturingPlan = bests[0].ManfacturingPlan;
         }
 
-        public static void TestSearch5Axis(TessellatedSolid ts)
+        public static void TestSearch5Axis(TessellatedSolid ts, out TimeSpan elapsed,
+            out int requiredSetups, out List<VoxelDirections> manufacturingPlan)
         {
             //Convert tesselated solid to voxelized solid
-            Console.WriteLine("Voxelizing solid");
             var vs1 = new VoxelizedSolid(ts, 8);
 
             //Perform extrusions in all six directions
-            Console.WriteLine("Extruding solid in all six directions");
-            var extrusions = new List<VoxelizedSolid>(new VoxelizedSolid[]
+            var extrusions = new Dictionary<VoxelDirections, VoxelizedSolid>()
+                {
+                    { VoxelDirections.XNegative, vs1.ExtrudeToNewSolid(VoxelDirections.XNegative) },
+                    { VoxelDirections.XPositive, vs1.ExtrudeToNewSolid(VoxelDirections.XPositive) },
+                    { VoxelDirections.YNegative, vs1.ExtrudeToNewSolid(VoxelDirections.YNegative) },
+                    { VoxelDirections.YPositive, vs1.ExtrudeToNewSolid(VoxelDirections.YPositive) },
+                    { VoxelDirections.ZNegative, vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative) },
+                    { VoxelDirections.ZPositive, vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive) }
+                };
+            Stopwatch Stopwatch = new Stopwatch();
+            Stopwatch.Start();
+
+            var setups = new List<Candidate>(7)
             {
-                vs1.ExtrudeToNewSolid(VoxelDirections.XNegative),
-                vs1.ExtrudeToNewSolid(VoxelDirections.XPositive),
-                vs1.ExtrudeToNewSolid(VoxelDirections.YNegative),
-                vs1.ExtrudeToNewSolid(VoxelDirections.YPositive),
-                vs1.ExtrudeToNewSolid(VoxelDirections.ZNegative),
-                vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive)
-            });
-            stopwatch.Start();
+                new Candidate(extrusions, VoxelDirections.XNegative, VoxelDirections.XPositive,
+                VoxelDirections.YNegative, VoxelDirections.YPositive, VoxelDirections.ZNegative),
 
-            var setups = new List<VoxelizedSolid>(7);
-            setups.Add(extrusions[0].IntersectToNewSolid(
-                extrusions[1], extrusions[2], extrusions[3], extrusions[4], extrusions[5]));
-            setups.Add(extrusions[0].IntersectToNewSolid(
-                extrusions[1], extrusions[2], extrusions[3], extrusions[4]));
-            setups.Add(extrusions[0].IntersectToNewSolid(
-                extrusions[1], extrusions[2], extrusions[3], extrusions[5]));
-            setups.Add(extrusions[0].IntersectToNewSolid(
-                extrusions[1], extrusions[2], extrusions[4], extrusions[5]));
-            setups.Add(extrusions[0].IntersectToNewSolid(
-                extrusions[1], extrusions[3], extrusions[4], extrusions[5]));
-            setups.Add(extrusions[0].IntersectToNewSolid(
-                extrusions[2], extrusions[3], extrusions[4], extrusions[5]));
-            setups.Add(extrusions[1].IntersectToNewSolid(
-                extrusions[2], extrusions[3], extrusions[4], extrusions[5]));
+                new Candidate(extrusions, VoxelDirections.XNegative, VoxelDirections.XPositive,
+                VoxelDirections.YNegative, VoxelDirections.YPositive, VoxelDirections.ZPositive),
 
-            stopwatch.Stop();
-            Console.WriteLine("Time elapsed is: {0}", stopwatch.Elapsed);
-            Console.ReadKey();
+                new Candidate(extrusions, VoxelDirections.XNegative, VoxelDirections.XPositive,
+                VoxelDirections.YNegative, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+
+                new Candidate(extrusions, VoxelDirections.XNegative, VoxelDirections.XPositive,
+                VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+
+                new Candidate(extrusions, VoxelDirections.XNegative, VoxelDirections.YNegative,
+                VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+
+                new Candidate(extrusions, VoxelDirections.XPositive, VoxelDirections.YNegative,
+                VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+            };
+
+            setups.Sort((x, y) => x.Volume.CompareTo(y.Volume));
+
+            Stopwatch.Stop();
+            elapsed = Stopwatch.Elapsed;
+            requiredSetups = setups[0].RequiredSetups;
+            manufacturingPlan = setups[0].ManfacturingPlan;
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
