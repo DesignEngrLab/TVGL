@@ -279,11 +279,19 @@ namespace TVGLPresenterDX
             //Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", requiredSetups5Axis, elapsed5Axis);
         }
 
-        class Candidate
+        public class Candidate
         {
-            private double _Volume = 0;
-            private List<VoxelDirections> _ManfacturingPlan = new List<VoxelDirections>();
-            private int _RequiredSetups = 0;
+            private readonly double _Volume;
+            private readonly List<VoxelDirections> _ManfacturingPlan;
+
+            private List<VoxelDirections> mp;
+            private Dictionary<VoxelDirections, VoxelizedSolid> ex;
+            private VoxelDirections vd;
+
+            private VoxelizedSolid vs;
+            private List<VoxelizedSolid> vs1;
+            private List<VoxelDirections> mp1;
+
 
             public double Volume
             {
@@ -295,16 +303,15 @@ namespace TVGLPresenterDX
             }
             public int RequiredSetups
             {
-                get { return _RequiredSetups; }
+                get { return _ManfacturingPlan.Count; }
             }
 
             public Candidate(Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
             {
                 _ManfacturingPlan = vd.ToList();
-                _RequiredSetups = _ManfacturingPlan.Count;
-                var vs = ex[_ManfacturingPlan[0]];
-                var vs1 = new List<VoxelizedSolid>();
-                for (int i = 1; i < _RequiredSetups; i++)
+                vs = ex[_ManfacturingPlan[0]];
+                vs1 = new List<VoxelizedSolid>();
+                for (int i = 1; i < _ManfacturingPlan.Count; i++)
                 {
                     vs1.Add(ex[_ManfacturingPlan[i]]);
                 }
@@ -312,12 +319,12 @@ namespace TVGLPresenterDX
             }
             public Candidate(List<VoxelDirections> mp, Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
             {
-                mp.AddRange(vd);
-                _ManfacturingPlan = mp;
-                _RequiredSetups = _ManfacturingPlan.Count;
-                var vs = ex[_ManfacturingPlan[0]];
-                var vs1 = new List<VoxelizedSolid>();
-                for (int i = 1; i < _RequiredSetups; i++)
+                mp1 = mp;
+                mp1.AddRange(vd);
+                _ManfacturingPlan = mp1;
+                vs = ex[_ManfacturingPlan[0]];
+                vs1 = new List<VoxelizedSolid>();
+                for (int i = 1; i < _ManfacturingPlan.Count; i++)
                 {
                     vs1.Add(ex[_ManfacturingPlan[i]]);
                 }
@@ -369,6 +376,7 @@ namespace TVGLPresenterDX
             int i = 0;
             while (Math.Abs(candidates[i][0].Volume - targetVolume) > 0.01)
             {
+                Console.WriteLine("{0}", i);
                 if (i < 2)
                 {
                     candidates.Add(new List<Candidate>(new Candidate[]
@@ -376,7 +384,7 @@ namespace TVGLPresenterDX
                             new Candidate(candidates[i][0].ManfacturingPlan, extrusions, candidates[0][i+1].ManfacturingPlan[0]),
                             new Candidate(candidates[i][0].ManfacturingPlan, extrusions, candidates[0][i+1].ManfacturingPlan[1])
                         }));
-                    candidates[i + 1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
+                    candidates[i+1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
                 }
                 else if (i == 2)
                 {
@@ -387,7 +395,7 @@ namespace TVGLPresenterDX
                             new Candidate(candidates[i][0].ManfacturingPlan, extrusions, candidates[2][1].ManfacturingPlan[
                                 candidates[2][1].ManfacturingPlan.Count-1])
                         }));
-                    candidates[i + 1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
+                    candidates[i+1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
                 }
                 else if (i == 3)
                 {
