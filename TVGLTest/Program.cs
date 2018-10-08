@@ -262,73 +262,65 @@ namespace TVGLPresenterDX
 
         public static void SearchComparison(TessellatedSolid ts)
         {
-            //TestSearchAll(ts, out TimeSpan elapsedAll,
-            //    out int requiredSetupsAll, out List<VoxelDirections> manufacturingPlanAll);
-            //Console.WriteLine("Searching all Possible Combinations of Setups\nRequired Setups: {0}\n{1}", requiredSetupsAll, elapsedAll);
+            TestSearchAll(ts, out TimeSpan elapsedAll, out Candidate AllCand);
+            Console.WriteLine("Searching all Possible Combinations of Setups\nRequired Setups: {0}\n{1}", AllCand, elapsedAll);
 
-            TestSearchGreedy2(ts, out TimeSpan elapsedGreedy2,
-                out int requiredSetupsGreedy2, out List<VoxelDirections> manufacturingPlanGreedy2);
-            Console.WriteLine("Performing Modified Greedy Search\nRequired Setups: {0}\n{1}", requiredSetupsGreedy2, elapsedGreedy2);
+            TestSearchGreedy2(ts, out TimeSpan elapsedGreedy2, out Candidate Greedy2);
+            Console.WriteLine("Performing Modified Greedy Search\nRequired Setups: {0}\n{1}", Greedy2, elapsedGreedy2);
 
-            //TestSearchGreedy(ts, out TimeSpan elapsedGreedy,
-            //    out int requiredSetupsGreedy, out List<VoxelDirections> manufacturingPlanGreedy);
-            //Console.WriteLine("Performing Greedy Search\nRequired Setups: {0}\n{1}", requiredSetupsGreedy, elapsedGreedy);
+            TestSearchGreedy(ts, out TimeSpan elapsedGreedy, out Candidate Greedy);
+            Console.WriteLine("Performing Greedy Search\nRequired Setups: {0}\n{1}", Greedy, elapsedGreedy);
 
-            //TestSearch5Axis(ts, out TimeSpan elapsed5Axis,
-            //    out int requiredSetups5Axis, out List<VoxelDirections> manufacturingPlan5Axis);
-            //Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", requiredSetups5Axis, elapsed5Axis);
+            TestSearch5Axis(ts, out TimeSpan elapsed5Axis, out Candidate Axis5);
+            Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", Axis5, elapsed5Axis);
         }
 
-        public class Candidate
+        public struct Candidate
         {
-            private readonly double _Volume;
-            private readonly List<VoxelDirections> _ManfacturingPlan;
-
-            private List<VoxelDirections> mp;
-            private Dictionary<VoxelDirections, VoxelizedSolid> ex;
-            private VoxelDirections vd;
-
-            private VoxelizedSolid vs;
-            private List<VoxelizedSolid> vs1;
-            private List<VoxelDirections> mp1;
-
-
-            public double Volume
-            {
-                get { return _Volume; }
-            }
-            public List<VoxelDirections> ManfacturingPlan
-            {
-                get { return _ManfacturingPlan; }
-            }
-            public int RequiredSetups
-            {
-                get { return _ManfacturingPlan.Count; }
-            }
-
+            public double Volume { get; }
+            public List<VoxelDirections> ManufacturingPlan { get; }
+            public int RequiredSetups { get { return ManufacturingPlan.Count; } }
             public Candidate(Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
             {
-                _ManfacturingPlan = vd.ToList();
-                vs = ex[_ManfacturingPlan[0]];
-                vs1 = new List<VoxelizedSolid>();
-                for (int i = 1; i < _ManfacturingPlan.Count; i++)
+                ManufacturingPlan = vd.ToList();
+                var vs = ex[ManufacturingPlan[0]];
+                var vs1 = new List<VoxelizedSolid>();
+                for (int i = 1; i < ManufacturingPlan.Count; i++)
                 {
-                    vs1.Add(ex[_ManfacturingPlan[i]]);
+                    vs1.Add(ex[ManufacturingPlan[i]]);
                 }
-                _Volume = vs.IntersectToNewSolid(vs1.ToArray()).Volume;
+                Volume = vs.IntersectToNewSolid(vs1.ToArray()).Volume;
             }
-            public Candidate(List<VoxelDirections> mp, Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
+            public Candidate(Candidate cd, Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
             {
-                mp1 = mp;
-                mp1.AddRange(vd);
-                _ManfacturingPlan = mp1;
-                vs = ex[_ManfacturingPlan[0]];
-                vs1 = new List<VoxelizedSolid>();
-                for (int i = 1; i < _ManfacturingPlan.Count; i++)
+                ManufacturingPlan = new List<VoxelDirections>();
+                ManufacturingPlan.AddRange(cd.ManufacturingPlan);
+                ManufacturingPlan.AddRange(vd.ToList());
+                var vs = ex[ManufacturingPlan[0]];
+                var vs1 = new List<VoxelizedSolid>();
+                for (int i = 1; i < ManufacturingPlan.Count; i++)
                 {
-                    vs1.Add(ex[_ManfacturingPlan[i]]);
+                    vs1.Add(ex[ManufacturingPlan[i]]);
                 }
-                _Volume = vs.IntersectToNewSolid(vs1.ToArray()).Volume;
+                Volume = vs.IntersectToNewSolid(vs1.ToArray()).Volume;
+            }
+            public override string ToString()
+            {
+                var vxd = new Dictionary<VoxelDirections, string>()
+                    {
+                        {VoxelDirections.XNegative, "-x" },
+                        {VoxelDirections.XPositive, "+x" },
+                        {VoxelDirections.YNegative, "-y" },
+                        {VoxelDirections.YPositive, "+y" },
+                        {VoxelDirections.ZNegative, "-z" },
+                        {VoxelDirections.ZPositive, "+z" }
+                    };
+                string tostring = vxd[ManufacturingPlan[0]];
+                for (int i = 1; i < ManufacturingPlan.Count; i++)
+                {
+                    tostring = tostring + ", " + vxd[ManufacturingPlan[i]];
+                }
+                return tostring;
             }
         }
         public class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
@@ -340,8 +332,7 @@ namespace TVGLPresenterDX
             }
         }
 
-        public static void TestSearchGreedy2(TessellatedSolid ts, out TimeSpan elapsed,
-            out int requiredSetups, out List<VoxelDirections> manufacturingPlan)
+        public static void TestSearchGreedy2(TessellatedSolid ts, out TimeSpan elapsed, out Candidate cd)
         {
             //Convert tesselated solid to voxelized solid
             var vs1 = new VoxelizedSolid(ts, 8);
@@ -376,13 +367,12 @@ namespace TVGLPresenterDX
             int i = 0;
             while (Math.Abs(candidates[i][0].Volume - targetVolume) > 0.01)
             {
-                Console.WriteLine("{0}", i);
                 if (i < 2)
                 {
                     candidates.Add(new List<Candidate>(new Candidate[]
                         {
-                            new Candidate(candidates[i][0].ManfacturingPlan, extrusions, candidates[0][i+1].ManfacturingPlan[0]),
-                            new Candidate(candidates[i][0].ManfacturingPlan, extrusions, candidates[0][i+1].ManfacturingPlan[1])
+                            new Candidate(candidates[i][0], extrusions, candidates[0][i+1].ManufacturingPlan[0]),
+                            new Candidate(candidates[i][0], extrusions, candidates[0][i+1].ManufacturingPlan[1])
                         }));
                     candidates[i+1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
                 }
@@ -390,10 +380,10 @@ namespace TVGLPresenterDX
                 {
                     candidates.Add(new List<Candidate>(new Candidate[]
                         {
-                            new Candidate(candidates[i][0].ManfacturingPlan, extrusions, candidates[1][1].ManfacturingPlan[
-                                candidates[1][1].ManfacturingPlan.Count-1]),
-                            new Candidate(candidates[i][0].ManfacturingPlan, extrusions, candidates[2][1].ManfacturingPlan[
-                                candidates[2][1].ManfacturingPlan.Count-1])
+                            new Candidate(candidates[i][0], extrusions, candidates[1][1].ManufacturingPlan[
+                                candidates[1][1].ManufacturingPlan.Count-1]),
+                            new Candidate(candidates[i][0], extrusions, candidates[2][1].ManufacturingPlan[
+                                candidates[2][1].ManufacturingPlan.Count-1])
                         }));
                     candidates[i+1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
                 }
@@ -405,14 +395,12 @@ namespace TVGLPresenterDX
                 i++;
             }
 
+            cd = candidates[i][0];
+
             Stopwatch.Stop();
             elapsed = Stopwatch.Elapsed;
-            requiredSetups = candidates[i][0].RequiredSetups;
-            manufacturingPlan = candidates[i][0].ManfacturingPlan;
-            return;
         }
-        public static void TestSearchGreedy(TessellatedSolid ts, out TimeSpan elapsed,
-            out int requiredSetups, out List<VoxelDirections> manufacturingPlan)
+        public static void TestSearchGreedy(TessellatedSolid ts, out TimeSpan elapsed, out Candidate cd)
         {
             //Convert tesselated solid to voxelized solid
             var vs1 = new VoxelizedSolid(ts, 8);
@@ -452,27 +440,24 @@ namespace TVGLPresenterDX
                     candidates.Add(new List<Candidate>(new Candidate[] { complete }));
                     break;
                 }
-                Console.WriteLine("{0}", i);
                 candidates.Add(new List<Candidate>());
                 foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vdvs in extrusions)
                 {
-                    if (!candidates[i][0].ManfacturingPlan.Contains(vdvs.Key))
+                    if (!candidates[i][0].ManufacturingPlan.Contains(vdvs.Key))
                     {
-                        candidates[i+1].Add(new Candidate(candidates[i][0].ManfacturingPlan, extrusions, vdvs.Key));
+                        candidates[i+1].Add(new Candidate(candidates[i][0], extrusions, vdvs.Key));
                     }
                 }
                 candidates[i+1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
                 i++;
             }
 
+            cd = candidates[i][0];
+
             Stopwatch.Stop();
             elapsed = Stopwatch.Elapsed;
-            requiredSetups = candidates[i][0].RequiredSetups;
-            manufacturingPlan = candidates[i][0].ManfacturingPlan;
-            return;
         }
-        //public static void TestSearchBF(TessellatedSolid ts, out TimeSpan elapsed,
-        //    out int requiredSetups, out List<VoxelDirections> manufacturingPlan)
+        //public static void TestSearchBFS(TessellatedSolid ts, out TimeSpan elapsed, out Candidate cd)
         //{
         //    //Convert tesselated solid to voxelized solid
         //    var vs1 = new VoxelizedSolid(ts, 8);
@@ -487,8 +472,7 @@ namespace TVGLPresenterDX
         //            { VoxelDirections.ZPositive, vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive) }
         //        };
         //}
-        public static void TestSearchAll(TessellatedSolid ts, out TimeSpan elapsed,
-            out int requiredSetups, out List<VoxelDirections> manufacturingPlan)
+        public static void TestSearchAll(TessellatedSolid ts, out TimeSpan elapsed, out Candidate cd)
         {
             //Convert tesselated solid to voxelized solid
             var vs1 = new VoxelizedSolid(ts, 8);
@@ -541,7 +525,6 @@ namespace TVGLPresenterDX
                 }
             }
 
-            requiredSetups = complete.RequiredSetups;
             combinations.RemoveAt(63);
             combinations.RemoveAt(0);
             var intersections = new List<Candidate>(63) { complete };
@@ -550,22 +533,21 @@ namespace TVGLPresenterDX
             {
                 var indices = Enumerable.Range(0, combination.Count).Where(i => combination[i] == 1).ToList();
                 var keys = new List<VoxelDirections>();
-                foreach (int index in indices) { directions.Add(keys[index]); }
+                foreach (int index in indices) { keys.Add(directions[index]); }
                 intersections.Add(new Candidate(extrusions, keys.ToArray()));
             }
 
             intersections.Sort((x, y) => x.Volume.CompareTo(y.Volume));
             var bests = intersections.FindAll(delegate(Candidate inter) { return Math.Abs(inter.Volume - intersections[0].Volume) < 0.01; });
-            bests.Sort((x, y) => x.RequiredSetups.CompareTo(y.RequiredSetups));            
+            bests.Sort((x, y) => x.RequiredSetups.CompareTo(y.RequiredSetups));
+            cd = bests[0];
 
             Stopwatch.Stop();
             elapsed = Stopwatch.Elapsed;
-            requiredSetups = bests[0].RequiredSetups;
-            manufacturingPlan = bests[0].ManfacturingPlan;
+
         }
 
-        public static void TestSearch5Axis(TessellatedSolid ts, out TimeSpan elapsed,
-            out int requiredSetups, out List<VoxelDirections> manufacturingPlan)
+        public static void TestSearch5Axis(TessellatedSolid ts, out TimeSpan elapsed, out Candidate cd)
         {
             //Convert tesselated solid to voxelized solid
             var vs1 = new VoxelizedSolid(ts, 8);
@@ -582,6 +564,8 @@ namespace TVGLPresenterDX
                 };
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
+
+            var complete = new Candidate(extrusions, extrusions.Keys.ToArray());
 
             var setups = new List<Candidate>(7)
             {
@@ -605,11 +589,17 @@ namespace TVGLPresenterDX
             };
 
             setups.Sort((x, y) => x.Volume.CompareTo(y.Volume));
+            if (Math.Abs(setups[0].Volume - complete.Volume) < 0.01)
+            {
+                cd = setups[0];
+            }
+            else
+            {
+                cd = complete;
+            }
 
             Stopwatch.Stop();
             elapsed = Stopwatch.Elapsed;
-            requiredSetups = setups[0].RequiredSetups;
-            manufacturingPlan = setups[0].ManfacturingPlan;
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
