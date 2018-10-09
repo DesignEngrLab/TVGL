@@ -269,11 +269,15 @@ namespace TVGLPresenterDX
             var scatterpoints = new List<OxyPlot.Series.ScatterPoint>();
             foreach (Candidate candidate in cands)
             {
-                scatterpoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups));
+                scatterpoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups, 15, 0));
             }
             scatterseries.Points.AddRange(scatterpoints);
             AllPlot.Series.Add(scatterseries);
-            AllPlot.Axes.Add(new OxyPlot.Axes.LinearColorAxis { Position = OxyPlot.Axes.AxisPosition.Right, Palette = OxyPlot.OxyPalettes.Jet(200) });
+            using (var stream = File.Create("C:\\Users\\alan\\desktop\\test.png"))
+            {
+                var pngExporter = new OxyPlot.Wpf.PngExporter { Width = 1050, Height = 800, Background = OxyPlot.OxyColors.White };
+                pngExporter.Export(AllPlot, stream);
+            }
 
             //TestSearchGreedy2(ts, out TimeSpan elapsedGreedy2, out Candidate Greedy2);
             //Console.WriteLine("Performing Modified Greedy Search\nRequired Setups: {0}\n{1}", Greedy2, elapsedGreedy2);
