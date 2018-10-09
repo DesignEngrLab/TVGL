@@ -262,17 +262,27 @@ namespace TVGLPresenterDX
 
         public static void SearchComparison(TessellatedSolid ts)
         {
-            TestSearchAll(ts, out TimeSpan elapsedAll, out Candidate AllCand);
+            TestSearchAll(ts, out TimeSpan elapsedAll, out Candidate AllCand, out List<Candidate> cands);
             Console.WriteLine("Searching all Possible Combinations of Setups\nRequired Setups: {0}\n{1}", AllCand, elapsedAll);
+            var AllPlot = new OxyPlot.PlotModel { Title = "Example 1" };
+            var scatterseries = new OxyPlot.Series.ScatterSeries { MarkerType = OxyPlot.MarkerType.Circle };
+            var scatterpoints = new List<OxyPlot.Series.ScatterPoint>();
+            foreach (Candidate candidate in cands)
+            {
+                scatterpoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups));
+            }
+            scatterseries.Points.AddRange(scatterpoints);
+            AllPlot.Series.Add(scatterseries);
+            AllPlot.Axes.Add(new OxyPlot.Axes.LinearColorAxis { Position = OxyPlot.Axes.AxisPosition.Right, Palette = OxyPlot.OxyPalettes.Jet(200) });
 
-            TestSearchGreedy2(ts, out TimeSpan elapsedGreedy2, out Candidate Greedy2);
-            Console.WriteLine("Performing Modified Greedy Search\nRequired Setups: {0}\n{1}", Greedy2, elapsedGreedy2);
+            //TestSearchGreedy2(ts, out TimeSpan elapsedGreedy2, out Candidate Greedy2);
+            //Console.WriteLine("Performing Modified Greedy Search\nRequired Setups: {0}\n{1}", Greedy2, elapsedGreedy2);
 
-            TestSearchGreedy(ts, out TimeSpan elapsedGreedy, out Candidate Greedy);
-            Console.WriteLine("Performing Greedy Search\nRequired Setups: {0}\n{1}", Greedy, elapsedGreedy);
+            //TestSearchGreedy(ts, out TimeSpan elapsedGreedy, out Candidate Greedy);
+            //Console.WriteLine("Performing Greedy Search\nRequired Setups: {0}\n{1}", Greedy, elapsedGreedy);
 
-            TestSearch5Axis(ts, out TimeSpan elapsed5Axis, out Candidate Axis5);
-            Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", Axis5, elapsed5Axis);
+            //TestSearch5Axis(ts, out TimeSpan elapsed5Axis, out Candidate Axis5);
+            //Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", Axis5, elapsed5Axis);
         }
 
         public struct Candidate
@@ -472,7 +482,7 @@ namespace TVGLPresenterDX
         //            { VoxelDirections.ZPositive, vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive) }
         //        };
         //}
-        public static void TestSearchAll(TessellatedSolid ts, out TimeSpan elapsed, out Candidate cd)
+        public static void TestSearchAll(TessellatedSolid ts, out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
         {
             //Convert tesselated solid to voxelized solid
             var vs1 = new VoxelizedSolid(ts, 8);
@@ -541,6 +551,7 @@ namespace TVGLPresenterDX
             var bests = intersections.FindAll(delegate(Candidate inter) { return Math.Abs(inter.Volume - intersections[0].Volume) < 0.01; });
             bests.Sort((x, y) => x.RequiredSetups.CompareTo(y.RequiredSetups));
             cd = bests[0];
+            cds = intersections;
 
             Stopwatch.Stop();
             elapsed = Stopwatch.Elapsed;
