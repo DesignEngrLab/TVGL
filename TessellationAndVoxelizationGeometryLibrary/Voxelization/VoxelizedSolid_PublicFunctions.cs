@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 
@@ -689,14 +690,25 @@ namespace TVGL.Voxelization
             var layerOfVoxels = new VoxelHashSet[numLayers]; /* the voxels are organized into layers */
             for (int i = 0; i < numLayers; i++)
                 layerOfVoxels[i] = new VoxelHashSet(level, bitLevelDistribution);
+            var exceptions = new ConcurrentQueue<Exception>();
             Parallel.ForEach(voxels, v =>
-            //foreach (var v in voxels)
-            {  //place all the voxels in this level into layers along the extrude direction
-                var layerIndex = (int)((v >> (20 * dimension + 4 + singleCoordinateShifts[level])) & (voxelsPerSide[level] - 1));
+                //foreach (var v in voxels)
+            {
+                //place all the voxels in this level into layers along the extrude direction
+                var layerIndex = (int) ((v >> (20 * dimension + 4 + singleCoordinateShifts[level])) &
+                                        (voxelsPerSide[level] - 1));
                 if (!positiveDir) layerIndex = numLayers - 1 - layerIndex;
-                lock (layerOfVoxels[layerIndex])
-                    layerOfVoxels[layerIndex].AddOrReplace(v);
+                try
+                {
+                    lock (layerOfVoxels[layerIndex])
+                        layerOfVoxels[layerIndex].AddOrReplace(v);
+                }
+                catch(Exception e)
+                {
+                    exceptions.Enqueue(e);
+                }
             });
+            if (exceptions.Count > 0) throw new AggregateException(exceptions);
             /* now, for the main loop */
             var loopLimit = lastLayer ? numLayers - 1 : numLayers;
             // loopLimit is one more than the numer of layers so that we can "inform" the set below this one.
