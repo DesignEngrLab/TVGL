@@ -127,14 +127,14 @@ namespace TVGLPresenterDX
                 //TestSearch1(ts);
                 //TestSearchAll(ts);
                 //TestSearch5Axis(ts);
-                try
-                {
+                //try
+                //{
                     SearchComparison(ts, filename);
-                }
-                catch
-                {
-                    continue;
-                }
+                //}
+                //catch
+                //{
+                //    continue;
+                //}
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -340,14 +340,17 @@ namespace TVGLPresenterDX
             //    }
             //}
 
-            TestSearchGreedy2(vs, vd, out TimeSpan elapsedGreedy2, out Candidate Greedy2, out List<Candidate> G2Cands);
-            Console.WriteLine("Modified Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy2, elapsedGreedy2);
+            //TestSearchGreedy2(vs, vd, out TimeSpan elapsedGreedy2, out Candidate Greedy2, out List<Candidate> G2Cands);
+            //Console.WriteLine("Modified Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy2, elapsedGreedy2);
 
-            TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
-            Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
+            //TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
+            //Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
 
-            TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
-            Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
+            //TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
+            //Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
+
+            TestSearchBest(vs, vd, out TimeSpan elapsedBest, out Candidate Best, out List<Candidate> BestCands);
+            Console.WriteLine("Best-First-Search\nRequired Setups: {0}\n{1}\n", Best, elapsedBest);
 
             //TestSearch5Axis(vs, vd, out TimeSpan elapsed5Axis, out Candidate Axis5);
             //Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", Axis5, elapsed5Axis);
@@ -452,6 +455,14 @@ namespace TVGLPresenterDX
                     tostring = tostring + ", " + vxd[ManufacturingPlan[i]];
                 }
                 return tostring;
+            }
+        }
+        public class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
+        {
+            public int Compare(TKey x, TKey y)
+            {
+                var result = x.CompareTo(y);
+                return result == 0 ? 1 : result;
             }
         }
 
@@ -626,15 +637,82 @@ namespace TVGLPresenterDX
             elapsed = Stopwatch.Elapsed;
         }
 
-        //public static void TestSearchBest(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
-        //    out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
-        //{
-        //    Stopwatch Stopwatch = new Stopwatch();
-        //    Stopwatch.Start();
+        public static double BFSCost(Candidate cd)
+        {
+            var cost = cd.Volume * Math.Pow(2 , (cd.RequiredSetups - 1));
+            return cost;
+        }
 
-        //    Stopwatch.Stop();
-        //    elapsed = Stopwatch.Elapsed;
-        //}
+        public static void TestSearchBest(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+        {
+            Stopwatch Stopwatch = new Stopwatch();
+            Stopwatch.Start();
+
+            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var targetVolume = complete.Volume;
+            var tol = targetVolume * 0.001;
+            var candidates = new SortedList<double, Candidate>(new DuplicateKeyComparer<double>());
+
+            foreach (VoxelDirections voxd in vd.Keys)
+            {
+                var cand = new Candidate(vd, voxd);
+                candidates.Add(BFSCost(cand), cand);
+            }
+
+            var setups1 = new List<VoxelDirections>();
+            var volume1 = new double();
+
+            while (Math.Abs(candidates.Values[0].Volume - targetVolume) > tol)
+            {
+                var cn = candidates.Values[0];
+                if ((setups1 == cn.ManufacturingPlan) && (volume1 == cn.Volume))
+                {
+                    candidates.RemoveAt(0);
+                    continue;
+                }
+                    
+                var dirs = vd.Keys.Except(cn.ManufacturingPlan).ToList();
+                foreach (VoxelDirections dir in dirs)
+                {
+                    var unique = true;
+                    foreach (Candidate cnd in candidates.Values)
+                    {
+                        var i = 0;
+                        var manplan = new List<VoxelDirections>(new VoxelDirections[] { dir });
+                        manplan.AddRange(cn.ManufacturingPlan);
+                        foreach (VoxelDirections mp in manplan)
+                        {
+                            if (cnd.ManufacturingPlan.Contains(mp)) i++;
+                        }
+
+                        if (i == manplan.Count)
+                        {
+                            unique = false;
+                            break;
+                        }
+                    }
+                    if (unique)
+                    {
+                        var cand = new Candidate(cn, vd, dir);
+                        if (Math.Abs(cn.Volume - cand.Volume) > tol)
+                        {
+                            candidates.Add(BFSCost(cand), cand);
+                        }
+                    }
+
+                }
+
+                setups1 = cn.ManufacturingPlan.ToList();
+                volume1 = cn.Volume;
+            }
+
+            cd = candidates.Values[0];
+            cds = candidates.Values.ToList();
+
+            Stopwatch.Stop();
+            elapsed = Stopwatch.Elapsed;
+        }
 
         public static void TestSearchAll(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
             out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
