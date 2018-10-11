@@ -100,10 +100,11 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray(); //causes error in extrusion
             //var fileNames = dir.GetFiles("*Candy*").ToArray(); //only one machining setup required
+            var fileNames = dir.GetFiles("*Table*").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i ++)
@@ -346,11 +347,11 @@ namespace TVGLPresenterDX
             //TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
             //Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
 
-            //TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
-            //Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
+            TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
+            Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
 
-            TestSearchBest(vs, vd, out TimeSpan elapsedBest, out Candidate Best, out List<Candidate> BestCands);
-            Console.WriteLine("Best-First-Search\nRequired Setups: {0}\n{1}\n", Best, elapsedBest);
+            //TestSearchBest(vs, vd, out TimeSpan elapsedBest, out Candidate Best, out List<Candidate> BestCands);
+            //Console.WriteLine("Best-First-Search\nRequired Setups: {0}\n{1}\n", Best, elapsedBest);
 
             //TestSearch5Axis(vs, vd, out TimeSpan elapsed5Axis, out Candidate Axis5);
             //Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", Axis5, elapsed5Axis);
@@ -589,6 +590,7 @@ namespace TVGLPresenterDX
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
             var candidates = new Queue<Candidate>();
+            var noImprovement = new List<KeyValuePair<VoxelDirections, List<VoxelDirections>>>();
 
             foreach (VoxelDirections voxd in vd.Keys)
             {
@@ -601,6 +603,21 @@ namespace TVGLPresenterDX
                 var dirs = vd.Keys.Except(qp.ManufacturingPlan).ToList();
                 foreach (VoxelDirections dir in dirs)
                 {
+                    var skip = false;
+                    foreach (KeyValuePair<VoxelDirections, List<VoxelDirections>> kvp in noImprovement)
+                    {
+                        var oldKeys = kvp.Value.ToList();
+                        oldKeys.Add(kvp.Key);
+                        var newKeys = qp.ManufacturingPlan.ToList();
+                        newKeys.Add(dir);
+                        if (oldKeys.Intersect(newKeys).Count() != oldKeys.Count) continue;
+                        if ((dir == kvp.Key) && (kvp.Value.Intersect(qp.ManufacturingPlan).Count() == kvp.Value.Count))
+                        {
+                            skip = true;
+                            break;
+                        }
+                    }
+                    if (skip) continue;
                     var unique = true;
                     foreach (Candidate cnd in candidates)
                     {
@@ -624,6 +641,11 @@ namespace TVGLPresenterDX
                         if (Math.Abs(qp.Volume - cand.Volume) > tol)
                         {
                             candidates.Enqueue(cand);
+                        }
+                        else
+                        {
+                            noImprovement.Add(new KeyValuePair<VoxelDirections,List<VoxelDirections>>
+                                (dir, qp.ManufacturingPlan.ToList()));
                         }
                     }
 
