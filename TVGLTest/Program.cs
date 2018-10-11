@@ -102,7 +102,8 @@ namespace TVGLPresenterDX
             var random = new Random();
             var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
-            //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray();
+            //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray(); //causes error in extrusion
+            //var fileNames = dir.GetFiles("*Candy*").ToArray(); //only one machining setup required
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i ++)
@@ -454,73 +455,6 @@ namespace TVGLPresenterDX
             }
         }
 
-        public static void TestSearchGreedy2(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
-            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
-        {
-            Stopwatch Stopwatch = new Stopwatch();
-            Stopwatch.Start();
-
-            var complete = new Candidate(vd, vd.Keys.ToArray());
-            var targetVolume = complete.Volume;
-            var tol = targetVolume * 0.001;
-            var candidates = new List<List<Candidate>>
-            {
-                new List<Candidate>(new Candidate[]
-                {
-                    new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive),
-                    new Candidate(vd, VoxelDirections.YNegative, VoxelDirections.YPositive),
-                    new Candidate(vd, VoxelDirections.ZNegative, VoxelDirections.ZPositive)
-                })
-            };
-            candidates[0].Sort((x, y) => x.Volume.CompareTo(y.Volume));
-
-            int i = 0;
-            while (Math.Abs(candidates[i][0].Volume - targetVolume) > tol)
-            {
-                if (i < 2)
-                {
-                    candidates.Add(new List<Candidate>(new Candidate[]
-                        {
-                            new Candidate(candidates[i][0], vd, candidates[0][i+1].ManufacturingPlan[0]),
-                            new Candidate(candidates[i][0], vd, candidates[0][i+1].ManufacturingPlan[1])
-                        }));
-                    candidates[i+1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
-                }
-                else if (i == 2)
-                {
-                    candidates.Add(new List<Candidate>(new Candidate[]
-                        {
-                            new Candidate(candidates[i][0], vd, candidates[1][1].ManufacturingPlan[
-                                candidates[1][1].ManufacturingPlan.Count-1]),
-                            new Candidate(candidates[i][0], vd, candidates[2][1].ManufacturingPlan[
-                                candidates[2][1].ManufacturingPlan.Count-1])
-                        }));
-                    candidates[i+1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
-                }
-                else if (i == 3)
-                {
-                    candidates.Add(new List<Candidate>(new Candidate[] { complete }));
-                    break;
-                }
-                i++;
-            }
-
-            cd = candidates[i][0];
-            cds = new List<Candidate>();
-            i = 0;
-            foreach (List<Candidate> c1 in candidates)
-            {
-                foreach (Candidate c2 in c1)
-                {
-                    cds.Add(c2);
-                    i++;
-                }
-            }
-
-            Stopwatch.Stop();
-            elapsed = Stopwatch.Elapsed;
-        }
-
         public static void TestSearchGreedy(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
             out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
         {
@@ -563,14 +497,71 @@ namespace TVGLPresenterDX
 
             cd = candidates[i][0];
             cds = new List<Candidate>();
-            i = 0;
             foreach (List<Candidate> c1 in candidates)
             {
-                foreach (Candidate c2 in c1)
+                cds.AddRange(c1);
+            }
+
+            Stopwatch.Stop();
+            elapsed = Stopwatch.Elapsed;
+        }
+
+        public static void TestSearchGreedy2(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+        {
+            Stopwatch Stopwatch = new Stopwatch();
+            Stopwatch.Start();
+
+            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var targetVolume = complete.Volume;
+            var tol = targetVolume * 0.001;
+            var candidates = new List<List<Candidate>>
+            {
+                new List<Candidate>(new Candidate[]
                 {
-                    cds.Add(c2);
-                    i++;
+                    new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive),
+                    new Candidate(vd, VoxelDirections.YNegative, VoxelDirections.YPositive),
+                    new Candidate(vd, VoxelDirections.ZNegative, VoxelDirections.ZPositive)
+                })
+            };
+            candidates[0].Sort((x, y) => x.Volume.CompareTo(y.Volume));
+
+            int i = 0;
+            while (Math.Abs(candidates[i][0].Volume - targetVolume) > tol)
+            {
+                if (i < 2)
+                {
+                    candidates.Add(new List<Candidate>(new Candidate[]
+                        {
+                            new Candidate(candidates[i][0], vd, candidates[0][i+1].ManufacturingPlan[0]),
+                            new Candidate(candidates[i][0], vd, candidates[0][i+1].ManufacturingPlan[1])
+                        }));
+                    candidates[i + 1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
                 }
+                else if (i == 2)
+                {
+                    candidates.Add(new List<Candidate>(new Candidate[]
+                        {
+                            new Candidate(candidates[i][0], vd, candidates[1][1].ManufacturingPlan[
+                                candidates[1][1].ManufacturingPlan.Count-1]),
+                            new Candidate(candidates[i][0], vd, candidates[2][1].ManufacturingPlan[
+                                candidates[2][1].ManufacturingPlan.Count-1])
+                        }));
+                    candidates[i + 1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
+                }
+                else if (i == 3)
+                {
+                    candidates.Add(new List<Candidate>(new Candidate[] {complete}));
+                }
+                else break;
+                i++;
+            }
+
+            cd = candidates[i][0];
+            cds = new List<Candidate>();
+            foreach (List<Candidate> c1 in candidates)
+            {
+                cds.AddRange(c1);
             }
 
             Stopwatch.Stop();
@@ -588,12 +579,12 @@ namespace TVGLPresenterDX
             var tol = targetVolume * 0.001;
             var candidates = new Queue<Candidate>();
 
-            foreach (var voxd in vd.Keys)
+            foreach (VoxelDirections voxd in vd.Keys)
             {
                 candidates.Enqueue(new Candidate(vd, voxd));
             }
 
-            while (Math.Abs(candidates.Last().Volume - targetVolume) > tol)
+            while (Math.Abs(candidates.Peek().Volume - targetVolume) > tol)
             {
                 var qp = candidates.Dequeue();
                 var dirs = vd.Keys.Except(qp.ManufacturingPlan).ToList();
@@ -628,12 +619,22 @@ namespace TVGLPresenterDX
                 }
             }
 
-            cd = candidates.Last();
+            cd = candidates.Peek();
             cds = candidates.ToList();
 
             Stopwatch.Stop();
             elapsed = Stopwatch.Elapsed;
         }
+
+        //public static void TestSearchBest(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+        //    out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+        //{
+        //    Stopwatch Stopwatch = new Stopwatch();
+        //    Stopwatch.Start();
+
+        //    Stopwatch.Stop();
+        //    elapsed = Stopwatch.Elapsed;
+        //}
 
         public static void TestSearchAll(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
             out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
