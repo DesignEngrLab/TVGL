@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Drawing;
 using Microsoft.Office.Interop.Excel;
 using OxyPlot;
 using OxyPlot.Axes;
@@ -659,6 +662,7 @@ namespace TVGLPresenterDX
             elapsed = Stopwatch.Elapsed;
         }
 
+        //Doesn't work very well
         public static double BFSCost(Candidate cd)
         {
             var cost = cd.Volume * Math.Pow(2 , (cd.RequiredSetups - 1));
@@ -783,13 +787,13 @@ namespace TVGLPresenterDX
             combinations.RemoveAt(0);
             var intersections = new List<Candidate>(63) { complete };
 
-            foreach (List<int> combination in combinations)
+            Parallel.ForEach(combinations.Cast<List<int>>(), combination =>
             {
                 var indices = Enumerable.Range(0, combination.Count).Where(i => combination[i] == 1).ToList();
                 var vds = new List<VoxelDirections>();
                 foreach (int index in indices) { vds.Add(directions[index]); }
                 intersections.Add(new Candidate(vd, vds.ToArray()));
-            }
+            });
 
             intersections.Sort((x, y) => x.Volume.CompareTo(y.Volume));
             var bests = intersections.FindAll(delegate(Candidate inter) { return Math.Abs(inter.Volume - intersections[0].Volume) < tol; });
