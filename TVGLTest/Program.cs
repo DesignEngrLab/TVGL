@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.Office.Interop.Excel;
 using OxyPlot;
 using OxyPlot.Axes;
+using PropertyTools.DataAnnotations;
 using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
@@ -101,11 +103,12 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray(); //causes error in extrusion
             //var fileNames = dir.GetFiles("*Candy*").ToArray(); //only one machining setup required
             //var fileNames = dir.GetFiles("*Table*").ToArray();
+            var fileNames = dir.GetFiles("*Casing*").ToArray(); //5 pareto points
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i ++)
@@ -332,28 +335,28 @@ namespace TVGLPresenterDX
             foreach (Candidate candidate in cands)
             {
                 var pareto = true;
-                foreach (Candidate candidate1 in cands)
+                foreach (Candidate compare in cands)
                 {
-                    if ((candidate.RequiredSetups == candidate1.RequiredSetups) &&
-                        (Math.Abs(candidate.Volume - candidate1.Volume) < AllCand.Volume * 0.001))
+                    if (candidate == compare) continue;
+                    else if (((candidate.RequiredSetups == compare.RequiredSetups) && (candidate.Volume > compare.Volume)) ||
+                             ((candidate > compare) && (Math.Abs(candidate.Volume - compare.Volume) < AllCand.Volume *0.001)))
                     {
-                        continue;
-                    }
-                    else if (((candidate.RequiredSetups > candidate1.RequiredSetups) &&
-                         (candidate.Volume >= candidate1.Volume)) ||
-                        ((candidate.RequiredSetups >= candidate1.RequiredSetups) &&
-                         (candidate.Volume > candidate1.Volume)))
-                    {
-                        allPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups, 8));
                         pareto = false;
                         break;
                     }
+                    else if ((candidate <= compare) || (candidate.Volume <= compare.Volume)) continue;
+                    pareto = false;
+                    break;
                 }
 
                 if (pareto)
                 {
-                    paretoPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups, 8));
+                    paretoPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups, 10));
                     paretofront.Add(candidate);
+                }
+                else
+                {
+                    allPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups, 8));
                 }
             }
 
@@ -363,8 +366,8 @@ namespace TVGLPresenterDX
             TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
             Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
 
-            //TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
-            //Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
+            TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
+            Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
 
             //TestSearchBest(vs, vd, out TimeSpan elapsedBest, out Candidate Best, out List<Candidate> BestCands);
             //Console.WriteLine("Best-First-Search\nRequired Setups: {0}\n{1}\n", Best, elapsedBest);
@@ -432,7 +435,7 @@ namespace TVGLPresenterDX
             }
         }
 
-        public struct Candidate
+        public class Candidate : IEquatable<Candidate>
         {
             public double Volume { get; }
             public List<VoxelDirections> ManufacturingPlan { get; }
@@ -478,6 +481,51 @@ namespace TVGLPresenterDX
                     tostring = tostring + ", " + vxd[ManufacturingPlan[i]];
                 }
                 return tostring;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return this.Equals(obj as Candidate);
+            }
+
+            public bool Equals(Candidate cd)
+            {
+                return (this == cd);
+            }
+
+            public static bool operator ==(Candidate lhs, Candidate rhs)
+            {
+                if (lhs.RequiredSetups != rhs.RequiredSetups) return false;
+                else if (lhs.ManufacturingPlan.Intersect(rhs.ManufacturingPlan).Count() == lhs.RequiredSetups) return true;
+                else return false;
+            }
+
+            public static bool operator !=(Candidate lhs, Candidate rhs)
+            {
+                if (lhs.RequiredSetups != rhs.RequiredSetups) return true;
+                else if (lhs.ManufacturingPlan.Intersect(rhs.ManufacturingPlan).Count() == lhs.RequiredSetups) return false;
+                else return true;
+            }
+
+            public static bool operator >(Candidate lhs, Candidate rhs)
+            {
+                if (lhs.RequiredSetups > rhs.RequiredSetups) return true;
+                else return false;
+            }
+            public static bool operator <(Candidate lhs, Candidate rhs)
+            {
+                if (lhs.RequiredSetups < rhs.RequiredSetups) return true;
+                else return false;
+            }
+            public static bool operator >=(Candidate lhs, Candidate rhs)
+            {
+                if (lhs.RequiredSetups >= rhs.RequiredSetups) return true;
+                else return false;
+            }
+            public static bool operator <=(Candidate lhs, Candidate rhs)
+            {
+                if (lhs.RequiredSetups <= rhs.RequiredSetups) return true;
+                else return false;
             }
         }
         public class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
@@ -643,15 +691,9 @@ namespace TVGLPresenterDX
                     var unique = true;
                     foreach (Candidate cnd in candidates)
                     {
-                        var i = 0;
                         var manplan = new List<VoxelDirections>(new VoxelDirections[] {dir});
                         manplan.AddRange(qp.ManufacturingPlan);
-                        foreach (VoxelDirections mp in manplan)
-                        {
-                            if (cnd.ManufacturingPlan.Contains(mp)) i++;
-                        }
-
-                        if (i == manplan.Count)
+                        if (manplan.Intersect(cnd.ManufacturingPlan).Count() == manplan.Count)
                         {
                             unique = false;
                             break;
