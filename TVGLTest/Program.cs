@@ -671,7 +671,7 @@ namespace TVGLPresenterDX
             {
                 var qp = candidates.Dequeue();
                 var dirs = vd.Keys.Except(qp.ManufacturingPlan).ToList();
-                foreach (VoxelDirections dir in dirs)
+                Parallel.ForEach(dirs.Cast<VoxelDirections>(), dir =>
                 {
                     var skip = false;
                     foreach (KeyValuePair<VoxelDirections, List<VoxelDirections>> kvp in noImprovement)
@@ -687,33 +687,34 @@ namespace TVGLPresenterDX
                             break;
                         }
                     }
-                    if (skip) continue;
-                    var unique = true;
-                    foreach (Candidate cnd in candidates)
+                    if (!skip)
                     {
-                        var manplan = new List<VoxelDirections>(new VoxelDirections[] {dir});
-                        manplan.AddRange(qp.ManufacturingPlan);
-                        if (manplan.Intersect(cnd.ManufacturingPlan).Count() == manplan.Count)
+                        var unique = true;
+                        foreach (Candidate cnd in candidates)
                         {
-                            unique = false;
-                            break;
+                            var manplan = new List<VoxelDirections>(new VoxelDirections[] { dir });
+                            manplan.AddRange(qp.ManufacturingPlan);
+                            if (manplan.Intersect(cnd.ManufacturingPlan).Count() == manplan.Count)
+                            {
+                                unique = false;
+                                break;
+                            }
+                        }
+                        if (unique)
+                        {
+                            var cand = new Candidate(qp, vd, dir);
+                            if (Math.Abs(qp.Volume - cand.Volume) > tol)
+                            {
+                                candidates.Enqueue(cand);
+                            }
+                            else
+                            {
+                                noImprovement.Add(new KeyValuePair<VoxelDirections, List<VoxelDirections>>
+                                    (dir, qp.ManufacturingPlan.ToList()));
+                            }
                         }
                     }
-                    if (unique)
-                    {
-                        var cand = new Candidate(qp, vd, dir);
-                        if (Math.Abs(qp.Volume - cand.Volume) > tol)
-                        {
-                            candidates.Enqueue(cand);
-                        }
-                        else
-                        {
-                            noImprovement.Add(new KeyValuePair<VoxelDirections,List<VoxelDirections>>
-                                (dir, qp.ManufacturingPlan.ToList()));
-                        }
-                    }
-
-                }
+                });
             }
 
             cd = candidates.Peek();
