@@ -108,7 +108,8 @@ namespace TVGLPresenterDX
             //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray(); //causes error in extrusion
             //var fileNames = dir.GetFiles("*Candy*").ToArray(); //only one machining setup required
             //var fileNames = dir.GetFiles("*Table*").ToArray();
-            var fileNames = dir.GetFiles("*Casing*").ToArray(); //5 pareto points
+            //var fileNames = dir.GetFiles("*Casing*").ToArray(); //5 pareto points
+            var fileNames = dir.GetFiles("*testblock2*").ToArray(); //oblique holes
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i ++)
@@ -132,14 +133,15 @@ namespace TVGLPresenterDX
                 //TestSearch1(ts);
                 //TestSearchAll(ts);
                 //TestSearch5Axis(ts);
-                try
-                {
-                    SearchComparison(ts, filename);
-                }
-                catch
-                {
-                    continue;
-                }
+                //try
+                //{
+                //    SearchComparison(ts, filename);
+                //}
+                //catch
+                //{
+                //    continue;
+                //}
+                FindAlternateSearchDirections(ts, out List<double> sd);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -284,7 +286,7 @@ namespace TVGLPresenterDX
             var vs = new VoxelizedSolid(ts, 8);
             var unitdictionary = new Dictionary<string, string>()
             {
-                {"unspecified", "??" },
+                {"unspecified", "mm" },
                 { "millimeter", "mm" },
                 {"micron", "um" },
                 {"cemtimeter", "cm" },
@@ -366,8 +368,8 @@ namespace TVGLPresenterDX
             TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
             Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
 
-            TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
-            Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
+            //TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
+            //Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
 
             //TestSearchBest(vs, vd, out TimeSpan elapsedBest, out Candidate Best, out List<Candidate> BestCands);
             //Console.WriteLine("Best-First-Search\nRequired Setups: {0}\n{1}\n", Best, elapsedBest);
@@ -535,6 +537,86 @@ namespace TVGLPresenterDX
                 var result = x.CompareTo(y);
                 return result == 0 ? 1 : result;
             }
+        }
+
+        public static bool SimilarAxis(Cylinder ps1, Cylinder ps2)
+        {
+            var similar = false;
+            if ((Math.Abs(ps1.Axis[0] - ps2.Axis[0]) < 0.02) &&
+                (Math.Abs(ps1.Axis[1] - ps2.Axis[1]) < 0.02) &&
+                (Math.Abs(ps1.Axis[2] - ps2.Axis[2]) < 0.02))
+            {
+                similar = true;
+            }
+            return similar;
+        }
+
+        public static void FindAlternateSearchDirections(TessellatedSolid ts, out List<double> sd)
+        {
+            sd = new List<double>();
+            var maxbb = new List<double>(new double[]
+            {
+                ts.XMax - ts.XMin,
+                ts.YMax - ts.XMin,
+                ts.ZMax - ts.ZMin
+            }).Max();
+            var primitives = PrimitiveClassification.ClassifyPrimitiveSurfaces(ts);
+            var primcyl = new List<PrimitiveSurface>();
+            foreach (PrimitiveSurface ps in primitives)
+            {
+                if (ps.Type != PrimitiveSurfaceType.Cylinder) continue;
+                var cyl = ps as Cylinder;
+                if ((Math.Abs(Math.Abs(cyl.Axis.Sum()) - 1) > 0.1) && (cyl.Radius > maxbb * 0.02))
+                {
+                    primcyl.Add(cyl);
+                }
+            }
+
+            var indices = new List<HashSet<int>>();
+            foreach (Cylinder cyl in primcyl)
+            {
+                foreach (Cylinder cyl1 in primcyl)
+                {
+                    if (cyl == cyl1) continue;
+                    if (SimilarAxis(cyl, cyl1))
+                    {
+                        if (indices.Count == 0) indices.Add(new HashSet<int>(new int[] {primcyl.IndexOf(cyl)}));
+                        else
+                        {
+                            var newdir = true;
+                            foreach (HashSet<int> dir in indices)
+                            {
+                                var cyl2 = primcyl[dir.First()] as Cylinder;
+                                if (SimilarAxis(cyl, cyl2))
+                                {
+                                    dir.Add(primcyl.IndexOf(cyl));
+                                    newdir = false;
+                                }
+                            }
+
+                            if (newdir) indices.Add(new HashSet<int>(new int[] { primcyl.IndexOf(cyl) }));
+                        }
+                    }
+                }
+            }
+
+            var dirs = new List<double[]>();
+            var i = 0;
+            foreach (HashSet<int> hindex in indices)
+            {
+                dirs.Add(new double[3]);
+                foreach (int index in hindex)
+                {
+                    var cyl = primcyl[index] as Cylinder;
+                    dirs[i][0] += cyl.Axis[0] / hindex.Count;
+                    dirs[i][1] += cyl.Axis[1] / hindex.Count;
+                    dirs[i][2] += cyl.Axis[2] / hindex.Count;
+                }
+
+                i++;
+            }
+
+            Presenter.ShowAndHang(ts);
         }
 
         public static void TestSearchGreedy(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
