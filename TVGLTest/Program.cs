@@ -548,6 +548,15 @@ namespace TVGLPresenterDX
             {
                 similar = true;
             }
+            else if ((Math.Abs(ps1.Axis[0] + ps2.Axis[0]) < 0.02) &&
+                     (Math.Abs(ps1.Axis[1] + ps2.Axis[1]) < 0.02) &&
+                     (Math.Abs(ps1.Axis[2] + ps2.Axis[2]) < 0.02))
+            {
+                similar = true;
+                ps2.Axis[0] *= -1;
+                ps2.Axis[1] *= -1;
+                ps2.Axis[2] *= -1;
+            }
             return similar;
         }
 
@@ -613,7 +622,19 @@ namespace TVGLPresenterDX
                     dirs[i][2] += cyl.Axis[2] / hindex.Count;
                 }
 
+                var j = 0;
+                foreach (double dir in dirs[i])
+                {
+                    if (Math.Abs(dir) < 0.01) dirs[i][j] = 0;
+                    j++;
+                }
+
                 i++;
+            }
+
+            foreach (double[] dir in dirs)
+            {
+                dir.normalizeInPlace();
             }
 
             Presenter.ShowAndHang(ts);
