@@ -103,13 +103,14 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray(); //causes error in extrusion
             //var fileNames = dir.GetFiles("*Candy*").ToArray(); //only one machining setup required
             //var fileNames = dir.GetFiles("*Table*").ToArray();
             //var fileNames = dir.GetFiles("*Casing*").ToArray(); //5 pareto points
-            var fileNames = dir.GetFiles("*testblock2*").ToArray(); //oblique holes
+            //var fileNames = dir.GetFiles("*testblock2*").ToArray(); //oblique holes
+            //var fileNames = dir.GetFiles("*turbine*").ToArray(); //large number of false primitive cylinders
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i ++)
@@ -541,23 +542,22 @@ namespace TVGLPresenterDX
 
         public static bool SimilarAxis(Cylinder ps1, Cylinder ps2)
         {
-            var similar = false;
             if ((Math.Abs(ps1.Axis[0] - ps2.Axis[0]) < 0.02) &&
                 (Math.Abs(ps1.Axis[1] - ps2.Axis[1]) < 0.02) &&
                 (Math.Abs(ps1.Axis[2] - ps2.Axis[2]) < 0.02))
             {
-                similar = true;
+                return true;
             }
             else if ((Math.Abs(ps1.Axis[0] + ps2.Axis[0]) < 0.02) &&
                      (Math.Abs(ps1.Axis[1] + ps2.Axis[1]) < 0.02) &&
                      (Math.Abs(ps1.Axis[2] + ps2.Axis[2]) < 0.02))
             {
-                similar = true;
-                ps2.Axis[0] *= -1;
-                ps2.Axis[1] *= -1;
-                ps2.Axis[2] *= -1;
+                ps1.Axis[0] *= -1;
+                ps1.Axis[1] *= -1;
+                ps1.Axis[2] *= -1;
+                return true;
             }
-            return similar;
+            return false;
         }
 
         public static void FindAlternateSearchDirections(TessellatedSolid ts, out List<double> sd)
@@ -571,65 +571,63 @@ namespace TVGLPresenterDX
             }).Max();
             var primitives = PrimitiveClassification.ClassifyPrimitiveSurfaces(ts);
             var primcyl = new List<PrimitiveSurface>();
+            var indices = new List<HashSet<int>>();
+            var i = 0;
             foreach (PrimitiveSurface ps in primitives)
             {
                 if (ps.Type != PrimitiveSurfaceType.Cylinder) continue;
                 var cyl = ps as Cylinder;
-                if ((Math.Abs(Math.Abs(cyl.Axis.Sum()) - 1) > 0.1) && (cyl.Radius > maxbb * 0.02))
+                if ((Math.Abs(Math.Abs(cyl.Axis.Sum()) - 1) > 0.1) && (cyl.Radius > maxbb * 0.02) && (cyl.Faces.Count >= 10))
                 {
                     primcyl.Add(cyl);
-                }
-            }
-
-            var indices = new List<HashSet<int>>();
-            foreach (Cylinder cyl in primcyl)
-            {
-                foreach (Cylinder cyl1 in primcyl)
-                {
-                    if (cyl == cyl1) continue;
-                    if (SimilarAxis(cyl, cyl1))
+                    var newdir = true;
+                    foreach (HashSet<int> dir in indices)
                     {
-                        if (indices.Count == 0) indices.Add(new HashSet<int>(new int[] {primcyl.IndexOf(cyl)}));
-                        else
+                        var cyl2 = primcyl[dir.First()] as Cylinder;
+                        if (SimilarAxis(cyl, cyl2))
                         {
-                            var newdir = true;
-                            foreach (HashSet<int> dir in indices)
-                            {
-                                var cyl2 = primcyl[dir.First()] as Cylinder;
-                                if (SimilarAxis(cyl, cyl2))
-                                {
-                                    dir.Add(primcyl.IndexOf(cyl));
-                                    newdir = false;
-                                }
-                            }
-
-                            if (newdir) indices.Add(new HashSet<int>(new int[] { primcyl.IndexOf(cyl) }));
+                            dir.Add(primcyl.IndexOf(cyl));
+                            newdir = false;
                         }
                     }
+                    if (newdir) indices.Add(new HashSet<int>(new int[] { primcyl.IndexOf(cyl) }));
+                    i++;
                 }
             }
 
             var dirs = new List<double[]>();
-            var i = 0;
+            var j = 0;
             foreach (HashSet<int> hindex in indices)
             {
                 dirs.Add(new double[3]);
                 foreach (int index in hindex)
                 {
                     var cyl = primcyl[index] as Cylinder;
-                    dirs[i][0] += cyl.Axis[0] / hindex.Count;
-                    dirs[i][1] += cyl.Axis[1] / hindex.Count;
-                    dirs[i][2] += cyl.Axis[2] / hindex.Count;
+                    dirs[j][0] += cyl.Axis[0] / hindex.Count;
+                    dirs[j][1] += cyl.Axis[1] / hindex.Count;
+                    dirs[j][2] += cyl.Axis[2] / hindex.Count;
                 }
 
-                var j = 0;
-                foreach (double dir in dirs[i])
+                var k = 0;
+                foreach (double dir in dirs[j])
                 {
-                    if (Math.Abs(dir) < 0.01) dirs[i][j] = 0;
-                    j++;
+                    if (Math.Abs(dir) < 0.05) dirs[j][k] = 0;
+                    k++;
                 }
 
-                i++;
+                if (dirs[j].Contains(0))
+                {
+                    if (Math.Abs(dirs[j][0] - dirs[j][1]) < 0.05) dirs[j][1] = dirs[j][0];
+                    else if (Math.Abs(dirs[j][0] - dirs[j][2]) < 0.05) dirs[j][2] = dirs[j][0];
+                    else if (Math.Abs(dirs[j][1] - dirs[j][2]) < 0.05) dirs[j][2] = dirs[j][1];
+                }
+                else if (Math.Abs(dirs[j][0] - dirs[j][1]) < 0.05 && Math.Abs(dirs[j][0] - dirs[j][2]) < 0.05)
+                {
+                    dirs[j][1] = dirs[j][0];
+                    dirs[j][2] = dirs[j][0];
+                }
+                
+                j++;
             }
 
             foreach (double[] dir in dirs)
@@ -637,6 +635,7 @@ namespace TVGLPresenterDX
                 dir.normalizeInPlace();
             }
 
+            Console.WriteLine("{0} search directions found...", dirs.Count);
             Presenter.ShowAndHang(ts);
         }
 
