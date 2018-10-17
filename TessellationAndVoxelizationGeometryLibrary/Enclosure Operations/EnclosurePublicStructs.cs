@@ -162,7 +162,8 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Adds the corner vertices to the bounding box
+        ///     Adds the corner vertices to the bounding box.
+        ///     The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
         /// </summary>
         /// <returns>BoundingBox.</returns>
         public void SetCornerVertices()
@@ -184,22 +185,22 @@ namespace TVGL
         }
 
         /// <summary>
-        ///     Adds the corner vertices  to the bounding box
+        ///     Adds the corner vertices to the bounding box.
         ///     This method is used when the face vertices are not known.
+        ///     The dimensions are also updated, in the event that the points of faces were altered (replaced or shifted).
         /// </summary>
         /// <returns>BoundingBox.</returns>
         public void SetCornerVertices(List<Vertex> verticesOfInterest)
         {
-            if (CornerVertices != null) return;
             var cornerVertices = new Vertex[8];
 
             //Get the low extreme vertices along each direction
             List<Vertex> vLows, vHighs;
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
+            Dimensions[0] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[0], verticesOfInterest, out vLows, out vHighs);
             var v0 = new Vertex(vLows.First().Position);
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
+            Dimensions[1] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[1], verticesOfInterest, out vLows, out vHighs);
             var v1 = new Vertex(vLows.First().Position);
-            MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
+            Dimensions[2] = MinimumEnclosure.GetLengthAndExtremeVertices(Directions[2], verticesOfInterest, out vLows, out vHighs);
             var v2 = new Vertex(vLows.First().Position);
 
             //Start with v0 and move along direction[1] by projection
