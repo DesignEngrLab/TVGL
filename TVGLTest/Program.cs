@@ -486,6 +486,11 @@ namespace TVGLPresenterDX
                 return tostring;
             }
 
+            public override int GetHashCode()
+            {
+                return new Tuple<List<VoxelDirections>, double>(ManufacturingPlan, Volume).GetHashCode();
+            }
+
             public override bool Equals(object obj)
             {
                 return this.Equals(obj as Candidate);
@@ -827,82 +832,71 @@ namespace TVGLPresenterDX
         }
 
         //Doesn't work very well
-        public static double BFSCost(Candidate cd)
-        {
-            var cost = cd.Volume * Math.Pow(2 , (cd.RequiredSetups - 1));
-            return cost;
-        }
-
-        public static void TestSearchBest(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
-            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
-        {
-            Stopwatch Stopwatch = new Stopwatch();
-            Stopwatch.Start();
-
-            var complete = new Candidate(vd, vd.Keys.ToArray());
-            var targetVolume = complete.Volume;
-            var tol = targetVolume * 0.001;
-            var candidates = new SortedList<double, Candidate>(new DuplicateKeyComparer<double>());
-
-            foreach (VoxelDirections voxd in vd.Keys)
-            {
-                var cand = new Candidate(vd, voxd);
-                candidates.Add(BFSCost(cand), cand);
-            }
-
-            var setups1 = new List<VoxelDirections>();
-            var volume1 = new double();
-
-            while (Math.Abs(candidates.Values[0].Volume - targetVolume) > tol)
-            {
-                var cn = candidates.Values[0];
-                if ((setups1 == cn.ManufacturingPlan) && (volume1 == cn.Volume))
-                {
-                    candidates.RemoveAt(0);
-                    continue;
-                }
-                    
-                var dirs = vd.Keys.Except(cn.ManufacturingPlan).ToList();
-                foreach (VoxelDirections dir in dirs)
-                {
-                    var unique = true;
-                    foreach (Candidate cnd in candidates.Values)
-                    {
-                        var i = 0;
-                        var manplan = new List<VoxelDirections>(new VoxelDirections[] { dir });
-                        manplan.AddRange(cn.ManufacturingPlan);
-                        foreach (VoxelDirections mp in manplan)
-                        {
-                            if (cnd.ManufacturingPlan.Contains(mp)) i++;
-                        }
-
-                        if (i == manplan.Count)
-                        {
-                            unique = false;
-                            break;
-                        }
-                    }
-                    if (unique)
-                    {
-                        var cand = new Candidate(cn, vd, dir);
-                        if (Math.Abs(cn.Volume - cand.Volume) > tol)
-                        {
-                            candidates.Add(BFSCost(cand), cand);
-                        }
-                    }
-
-                }
-
-                setups1 = cn.ManufacturingPlan.ToList();
-                volume1 = cn.Volume;
-            }
-
-            cd = candidates.Values[0];
-            cds = candidates.Values.ToList();
-
-            Stopwatch.Stop();
-            elapsed = Stopwatch.Elapsed;
-        }
+        //public static double BFSCost(Candidate cd)
+        //{
+        //    var cost = cd.Volume * Math.Pow(2 , (cd.RequiredSetups - 1));
+        //    return cost;
+        //}
+        //public static void TestSearchBest(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+        //    out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+        //{
+        //    Stopwatch Stopwatch = new Stopwatch();
+        //    Stopwatch.Start();
+        //    var complete = new Candidate(vd, vd.Keys.ToArray());
+        //    var targetVolume = complete.Volume;
+        //    var tol = targetVolume * 0.001;
+        //    var candidates = new SortedList<double, Candidate>(new DuplicateKeyComparer<double>());
+        //    foreach (VoxelDirections voxd in vd.Keys)
+        //    {
+        //        var cand = new Candidate(vd, voxd);
+        //        candidates.Add(BFSCost(cand), cand);
+        //    }
+        //    var setups1 = new List<VoxelDirections>();
+        //    var volume1 = new double();
+        //    while (Math.Abs(candidates.Values[0].Volume - targetVolume) > tol)
+        //    {
+        //        var cn = candidates.Values[0];
+        //        if ((setups1 == cn.ManufacturingPlan) && (volume1 == cn.Volume))
+        //        {
+        //            candidates.RemoveAt(0);
+        //            continue;
+        //        }
+        //        var dirs = vd.Keys.Except(cn.ManufacturingPlan).ToList();
+        //        foreach (VoxelDirections dir in dirs)
+        //        {
+        //            var unique = true;
+        //            foreach (Candidate cnd in candidates.Values)
+        //            {
+        //                var i = 0;
+        //                var manplan = new List<VoxelDirections>(new VoxelDirections[] { dir });
+        //                manplan.AddRange(cn.ManufacturingPlan);
+        //                foreach (VoxelDirections mp in manplan)
+        //                {
+        //                    if (cnd.ManufacturingPlan.Contains(mp)) i++;
+        //                }
+        //                if (i == manplan.Count)
+        //                {
+        //                    unique = false;
+        //                    break;
+        //                }
+        //            }
+        //            if (unique)
+        //            {
+        //                var cand = new Candidate(cn, vd, dir);
+        //                if (Math.Abs(cn.Volume - cand.Volume) > tol)
+        //                {
+        //                    candidates.Add(BFSCost(cand), cand);
+        //                }
+        //            }
+        //        }
+        //        setups1 = cn.ManufacturingPlan.ToList();
+        //        volume1 = cn.Volume;
+        //    }
+        //    cd = candidates.Values[0];
+        //    cds = candidates.Values.ToList();
+        //    Stopwatch.Stop();
+        //    elapsed = Stopwatch.Elapsed;
+        //}
 
         public static void TestSearchAll(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
             out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
