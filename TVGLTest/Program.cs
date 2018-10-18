@@ -831,6 +831,71 @@ namespace TVGLPresenterDX
             elapsed = Stopwatch.Elapsed;
         }
 
+        public static void TrimBeam(SortedList<double, Candidate> beam, int width)
+        {
+            if (beam.Count > width) beam.RemoveAt(beam.Count - 1);
+        }
+
+        public static void TestSearchBeam(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+        {
+            Stopwatch Stopwatch = new Stopwatch();
+            Stopwatch.Start();
+
+            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var targetVolume = complete.Volume;
+            var tol = targetVolume * 0.001;
+            var BEAM_WDITH = 3;
+            var candidates = new List<SortedList<double, Candidate>>();
+
+            candidates.Add(new SortedList<double, Candidate>(new DuplicateKeyComparer<double>()));
+            foreach (VoxelDirections vx in vd.Keys)
+            {
+                var cand = new Candidate(vd, vx);
+                candidates[0].Add(cand.Volume, cand);
+                TrimBeam(candidates[0], BEAM_WDITH);
+            }
+
+            var i = 1;
+            while (true)
+            {
+                var breaknow = false;
+                candidates.Add(new SortedList<double, Candidate>(new DuplicateKeyComparer<double>()));
+                foreach (Candidate cn in candidates[0].Values)
+                {
+                    var dirs = vd.Keys.Except(cn.ManufacturingPlan).ToList();
+                    foreach (VoxelDirections vx in dirs)
+                    {
+                        var manuplan = cn.ManufacturingPlan.ToList();
+                        manuplan.Add(vx);
+                        foreach (Candidate cnd in candidates[0].Values)
+                        {
+                            if (manuplan == cnd.ManufacturingPlan) continue;
+                        }
+                        var cand = new Candidate(cn, vd, vx);
+                        candidates[1].Add(cand.Volume, cand);
+                        TrimBeam(candidates[1], BEAM_WDITH);
+                        if (Math.Abs(cand.Volume - targetVolume) < tol)
+                        {
+                            breaknow = true;
+                            break;
+                        }
+                    }
+
+                    if (breaknow) break;
+                }
+                candidates.RemoveAt(0);
+                i++;
+                if (breaknow || (i == 5)) break;
+            }
+
+            cd = candidates[0].Values[0];
+            cds = candidates[0].Values.ToList();
+
+            Stopwatch.Stop();
+            elapsed = Stopwatch.Elapsed;
+        }
+
         //Doesn't work very well
         //public static double BFSCost(Candidate cd)
         //{
