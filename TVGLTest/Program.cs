@@ -311,63 +311,92 @@ namespace TVGLPresenterDX
             TestSearchAll(vs, vd, out TimeSpan elapsedAll, out Candidate AllCand, out List<Candidate> cands);
             Console.WriteLine("All Possible Setups\nRequired Setups: {0}\n{1}\n", AllCand, elapsedAll);
             var reqdstps = AllCand.RequiredSetups;
+            var minvol = AllCand.Volume;
 
-            //var ind1 = fn.LastIndexOf('.');
-            //var ind2 = fn.LastIndexOf('\\');
-            //fn = fn.Remove(ind1).Remove(0, ind2 + 1);
-            //var userprof = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            //var dpath = userprof + "\\MachinabilitySearch\\";
-            //Directory.CreateDirectory(dpath);
-            //var rootfn = dpath + fn + "_";
+            var ind1 = fn.LastIndexOf('.');
+            var ind2 = fn.LastIndexOf('\\');
+            fn = fn.Remove(ind1).Remove(0, ind2 + 1);
+            var userprof = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var dpath = userprof + "\\MachinabilitySearch\\";
+            Directory.CreateDirectory(dpath);
+            var rootfn = dpath + fn + "_";
 
-            //var allSeries = new OxyPlot.Series.ScatterSeries { Title = "All Solutions",
-            //    MarkerType = MarkerType.Circle, MarkerFill = OxyColors.Black, MarkerStroke = OxyColors.Black };
-            //var paretoSeries = new OxyPlot.Series.ScatterSeries { Title = "Pareto Front",
-            //    MarkerType = MarkerType.Square, MarkerFill = OxyColors.Red, MarkerStroke = OxyColors.Black };
-            //var gSeries = new OxyPlot.Series.ScatterSeries { Title = "Greedy Search",
-            //    MarkerType = MarkerType.Diamond, MarkerFill = OxyColors.Green, MarkerStroke = OxyColors.Black };
-            //var g2Series = new OxyPlot.Series.ScatterSeries { Title = "Modified Greedy",
-            //    MarkerType = MarkerType.Triangle, MarkerFill = OxyColors.Blue, MarkerStroke = OxyColors.Black };
+            var allSeries = new OxyPlot.Series.ScatterSeries
+            {
+                Title = "All Solutions",
+                MarkerType = MarkerType.Circle,
+                MarkerFill = OxyColors.Black,
+                MarkerStroke = OxyColors.Black
+            };
+            var paretoSeries = new OxyPlot.Series.ScatterSeries
+            {
+                Title = "Pareto Front",
+                MarkerType = MarkerType.Square,
+                MarkerFill = OxyColors.Red,
+                MarkerStroke = OxyColors.Black
+            };
+            var gSeries = new OxyPlot.Series.ScatterSeries
+            {
+                Title = "Greedy Search",
+                MarkerType = MarkerType.Diamond,
+                MarkerFill = OxyColors.Fuchsia,
+                MarkerStroke = OxyColors.Black
+            };
+            var g2Series = new OxyPlot.Series.ScatterSeries
+            {
+                Title = "Modified Greedy",
+                MarkerType = MarkerType.Triangle,
+                MarkerFill = OxyColors.Blue,
+                MarkerStroke = OxyColors.Black
+            };
+            var bSeries = new OxyPlot.Series.ScatterSeries
+            {
+                Title = "Beam Search",
+                MarkerType = MarkerType.Circle,
+                MarkerFill = OxyColors.Green,
+                MarkerStroke = OxyColors.Black
+            };
 
-            //var allPoints = new List<OxyPlot.Series.ScatterPoint>();
-            //var paretoPoints = new List<OxyPlot.Series.ScatterPoint>();
-            //var gPoints = new List<OxyPlot.Series.ScatterPoint>();
-            //var g2Points = new List<OxyPlot.Series.ScatterPoint>();
+            var allPoints = new List<OxyPlot.Series.ScatterPoint>();
+            var paretoPoints = new List<OxyPlot.Series.ScatterPoint>();
+            var gPoints = new List<OxyPlot.Series.ScatterPoint>();
+            var g2Points = new List<OxyPlot.Series.ScatterPoint>();
+            var bPoints = new List<OxyPlot.Series.ScatterPoint>();
 
-            //var paretofront = new List<Candidate>();
-            //foreach (Candidate candidate in cands)
-            //{
-            //    var pareto = true;
-            //    foreach (Candidate compare in cands)
-            //    {
-            //        if (candidate == compare) continue;
-            //        else if (((candidate.RequiredSetups == compare.RequiredSetups) && (candidate.Volume > compare.Volume)) ||
-            //                 ((candidate > compare) && (Math.Abs(candidate.Volume - compare.Volume) < AllCand.Volume *0.001)))
-            //        {
-            //            pareto = false;
-            //            break;
-            //        }
-            //        else if ((candidate <= compare) || (candidate.Volume <= compare.Volume)) continue;
-            //        pareto = false;
-            //        break;
-            //    }
+            var paretofront = new List<Candidate>();
+            foreach (Candidate candidate in cands)
+            {
+                var pareto = true;
+                foreach (Candidate compare in cands)
+                {
+                    if (candidate == compare) continue;
+                    else if (((candidate.RequiredSetups == compare.RequiredSetups) && (candidate.Volume > compare.Volume)) ||
+                             ((candidate > compare) && (Math.Abs(candidate.Volume - compare.Volume) < AllCand.Volume * 0.001)))
+                    {
+                        pareto = false;
+                        break;
+                    }
+                    else if ((candidate <= compare) || (candidate.Volume <= compare.Volume)) continue;
+                    pareto = false;
+                    break;
+                }
 
-            //    if (pareto)
-            //    {
-            //        paretoPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups, 10));
-            //        paretofront.Add(candidate);
-            //    }
-            //    else
-            //    {
-            //        allPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume, candidate.RequiredSetups, 8));
-            //    }
-            //}
+                if (pareto)
+                {
+                    paretoPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume - minvol, candidate.RequiredSetups, 10));
+                    paretofront.Add(candidate);
+                }
+                else
+                {
+                    allPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume - minvol, candidate.RequiredSetups, 8));
+                }
+            }
 
-            //TestSearchGreedy2(vs, vd, out TimeSpan elapsedGreedy2, out Candidate Greedy2, out List<Candidate> G2Cands);
-            //Console.WriteLine("Modified Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy2, elapsedGreedy2);
+            TestSearchGreedy2(vs, vd, out TimeSpan elapsedGreedy2, out Candidate Greedy2, out List<Candidate> G2Cands);
+            Console.WriteLine("Modified Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy2, elapsedGreedy2);
 
-            //TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
-            //Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
+            TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
+            Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
 
             TestSearchBeam(vs, vd, out TimeSpan elapsedBeam, out Candidate Beam, out List<Candidate> BCands);
             Console.WriteLine("Beam Search\nRequired Setups: {0}\n{1}\n", Beam, elapsedBeam);
@@ -382,63 +411,84 @@ namespace TVGLPresenterDX
             //Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", Axis5, elapsed5Axis);
             Console.WriteLine("\n");
 
-            //foreach (Candidate cd in G2Cands)
-            //{
-            //    g2Points.Add(new OxyPlot.Series.ScatterPoint(cd.Volume, cd.RequiredSetups, 8));
-            //}
-            //foreach (Candidate cd in GCands)
-            //{
-            //    gPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume, cd.RequiredSetups, 8));
-            //}
+            foreach (Candidate cd in G2Cands)
+            {
+                g2Points.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
+            }
+            foreach (Candidate cd in GCands)
+            {
+                gPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
+            }
+            foreach (Candidate cd in BCands)
+            {
+                bPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
+            }
 
-            //var g2p = false;
-            //var gp = false;
-            //foreach (Candidate pc in paretofront)
-            //{
-            //    if ((pc.RequiredSetups == 1) || (pc.RequiredSetups == 6)) continue;
-            //    if ((Greedy2.RequiredSetups == pc.RequiredSetups) &&
-            //        (Math.Abs(Greedy2.Volume - pc.Volume) < pc.Volume * 0.001))
-            //    {
-            //        g2p = true;
-            //    }
-            //    if ((Greedy.RequiredSetups == pc.RequiredSetups) &&
-            //        (Math.Abs(Greedy.Volume - pc.Volume) < pc.Volume * 0.001))
-            //    {
-            //        gp = true;
-            //    }
-            //}
+            var g2p = false;
+            var gp = false;
+            var bp = false;
+            foreach (Candidate pc in paretofront)
+            {
+                if ((pc.RequiredSetups == 1) || (pc.RequiredSetups == 6)) continue;
+                if ((Greedy2.RequiredSetups == pc.RequiredSetups) &&
+                    (Math.Abs(Greedy2.Volume - pc.Volume) < pc.Volume * 0.001))
+                {
+                    g2p = true;
+                }
+                if ((Greedy.RequiredSetups == pc.RequiredSetups) &&
+                    (Math.Abs(Greedy.Volume - pc.Volume) < pc.Volume * 0.001))
+                {
+                    gp = true;
+                }
+                if ((Beam.RequiredSetups == pc.RequiredSetups) &&
+                    (Math.Abs(Beam.Volume - pc.Volume) < pc.Volume * 0.001))
+                {
+                    bp = true;
+                }
+            }
 
-            //var truedictionary = new Dictionary<Boolean, string>() { { false, "No" }, { true, "Yes" } };
-            //var AllPlot = new PlotModel
-            //{
-            //    Title = "Pareto: " + fn + "\nRequired Setups: " + reqdstps.ToString() +
-            //                                              "\nDoes Greedy search reach Pareto Front: " + truedictionary[gp] +
-            //                                              "\nDoes modified Greedy search reach Parteo Front: " +
-            //                                              truedictionary[g2p]
-            //};
+            var truedictionary = new Dictionary<bool, string>() { { false, "No" }, { true, "Yes" } };
+            var AllPlot = new PlotModel
+            {
+                Title = "Pareto: " + fn + "\nRequired Setups: " + reqdstps.ToString() + 
+                        "\nDoes Greedy search reach Pareto Front: " + truedictionary[gp] + 
+                        "\nDoes modified Greedy search reach Parteo Front: " + truedictionary[g2p] + 
+                        "\nDoes Beam search reach Pareto Front: " + truedictionary[bp]
+            };
 
-            //AllPlot.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Title = "Number of Machining setups",
-            //    MajorGridlineStyle = LineStyle.Solid, MajorStep = 1, MinorStep = 1});
-            //AllPlot.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Title = "Part volume post-machining [" + units + "^{3}]",
-            //    MajorGridlineStyle = LineStyle.Solid });
+            AllPlot.Axes.Add(new LinearAxis
+            {
+                Position = AxisPosition.Left,
+                Title = "Number of Machining setups",
+                MajorGridlineStyle = LineStyle.Solid,
+                MajorStep = 1,
+                MinorStep = 1
+            });
+            AllPlot.Axes.Add(new LinearAxis
+            {
+                Position = AxisPosition.Bottom,
+                Title = "Added Volume [" + units + "^{3}]",
+                MajorGridlineStyle = LineStyle.Solid
+            });
 
-            //allSeries.Points.AddRange(allPoints);
-            //paretoSeries.Points.AddRange(paretoPoints);
-            //gSeries.Points.AddRange(gPoints);
-            //g2Series.Points.AddRange(g2Points);
+            allSeries.Points.AddRange(allPoints);
+            paretoSeries.Points.AddRange(paretoPoints);
+            gSeries.Points.AddRange(gPoints);
+            g2Series.Points.AddRange(g2Points);
+            bSeries.Points.AddRange(bPoints);
 
-            //AllPlot.Series.Add(allSeries);
-            //AllPlot.Series.Add(paretoSeries);
-            //AllPlot.Series.Add(gSeries);
-            //AllPlot.Series.Add(g2Series);
+            AllPlot.Series.Add(allSeries);
+            AllPlot.Series.Add(paretoSeries);
+            AllPlot.Series.Add(gSeries);
+            AllPlot.Series.Add(g2Series);
+            AllPlot.Series.Add(bSeries);
 
-
-            //var Allfn = rootfn + "pareto.png";
-            //using (var stream = File.Create(Allfn))
-            //{
-            //    var pngExporter = new OxyPlot.Wpf.PngExporter { Width = 1050, Height = 800, Background = OxyColors.White };
-            //    pngExporter.Export(AllPlot, stream);
-            //}
+            var Allfn = rootfn + "pareto.png";
+            using (var stream = File.Create(Allfn))
+            {
+                var pngExporter = new OxyPlot.Wpf.PngExporter { Width = 1050, Height = 800, Background = OxyColors.White };
+                pngExporter.Export(AllPlot, stream);
+            }
         }
 
         public class Candidate : IEquatable<Candidate>
