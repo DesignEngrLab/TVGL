@@ -306,12 +306,13 @@ namespace TVGLPresenterDX
                 { VoxelDirections.ZNegative, vs.ExtrudeToNewSolid(VoxelDirections.ZNegative) },
                 { VoxelDirections.ZPositive, vs.ExtrudeToNewSolid(VoxelDirections.ZPositive) }
             };
+            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var reqdstps = complete.RequiredSetups;
+            var minvol = vs.Volume;
             Console.WriteLine("Searching for optimal manufacturing plans...\n");
 
             TestSearchAll(vs, vd, out TimeSpan elapsedAll, out Candidate AllCand, out List<Candidate> cands);
             Console.WriteLine("All Possible Setups\nRequired Setups: {0}\n{1}\n", AllCand, elapsedAll);
-            var reqdstps = AllCand.RequiredSetups;
-            var minvol = AllCand.Volume;
 
             var ind1 = fn.LastIndexOf('.');
             var ind2 = fn.LastIndexOf('\\');
@@ -950,6 +951,33 @@ namespace TVGLPresenterDX
             cd = candidates[0].Values[0];
             cds = candidates[0].Values.ToList();
 
+            Stopwatch.Stop();
+            elapsed = Stopwatch.Elapsed;
+        }
+
+        public static void TestSearchVolume(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+            out TimeSpan elapsed, out List<Candidate> cds)
+        {
+            Stopwatch Stopwatch = new Stopwatch();
+            Stopwatch.Start();
+
+            var vols = new List<KeyValuePair<double, VoxelDirections>>();
+            foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vx in vd)
+            {
+                vols.Add(new KeyValuePair<double, VoxelDirections>(vx.Value.Volume, vx.Key));
+            }
+            vols.Sort((x, y) => x.Value.CompareTo(y.Value));
+
+            var setups = new List<int>(new int[]{1, 2, 3, 4, 5, 6});
+            var candidates = new List<Candidate>();
+            foreach (int INT in setups)
+            {
+                var vds = vols.Take(INT).ToDictionary(x => x.Key, x => x.Value).Values.ToArray();
+                var cand = new Candidate(vd, vds);
+                candidates.Add(cand);
+            }
+
+            cds = candidates.ToList();
             Stopwatch.Stop();
             elapsed = Stopwatch.Elapsed;
         }
