@@ -134,14 +134,14 @@ namespace TVGLPresenterDX
                 //TestSearch1(ts);
                 //TestSearchAll(ts);
                 //TestSearch5Axis(ts);
-                //try
-                //{
+                try
+                {
                     SearchComparison(ts, filename);
-                //}
-                //catch
-                //{
-                //    continue;
-                //}
+                }
+                catch
+                {
+                    continue;
+                }
                 //FindAlternateSearchDirections(ts, out List<double> sd);
 
                 // var stopWatch = new Stopwatch();
@@ -402,11 +402,11 @@ namespace TVGLPresenterDX
             TestSearchBeam(vs, vd, out TimeSpan elapsedBeam, out Candidate Beam, out List<Candidate> BCands);
             Console.WriteLine("Beam Search\nRequired Setups: {0}\n{1}\n", Beam, elapsedBeam);
 
+            TestSearchVolume(vs, vd, out TimeSpan elapsedVol, out List<Candidate> VCands);
+            Console.WriteLine("Volume Search\n{0}\n", elapsedVol);
+
             //TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
             //Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
-
-            //TestSearchBest(vs, vd, out TimeSpan elapsedBest, out Candidate Best, out List<Candidate> BestCands);
-            //Console.WriteLine("Best-First-Search\nRequired Setups: {0}\n{1}\n", Best, elapsedBest);
 
             //TestSearch5Axis(vs, vd, out TimeSpan elapsed5Axis, out Candidate Axis5);
             //Console.WriteLine("Searching all 5-Axis Combinations\nRequired Setups: {0}\n{1}", Axis5, elapsed5Axis);
@@ -425,36 +425,54 @@ namespace TVGLPresenterDX
                 bPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
             }
 
-            var g2p = false;
-            var gp = false;
-            var bp = false;
+            var g2p = 0;
+            var gp = 0;
+            var bp = 0;
+            var vp = 0;
             foreach (Candidate pc in paretofront)
             {
-                if ((pc.RequiredSetups == 1) || (pc.RequiredSetups == 6)) continue;
-                if ((Greedy2.RequiredSetups == pc.RequiredSetups) &&
-                    (Math.Abs(Greedy2.Volume - pc.Volume) < pc.Volume * 0.001))
+                foreach (Candidate pcn in G2Cands)
                 {
-                    g2p = true;
+                    if (pc == pcn)
+                    {
+                        g2p++;
+                        break;
+                    }
                 }
-                if ((Greedy.RequiredSetups == pc.RequiredSetups) &&
-                    (Math.Abs(Greedy.Volume - pc.Volume) < pc.Volume * 0.001))
+                foreach (Candidate pcn in GCands)
                 {
-                    gp = true;
+                    if (pc == pcn)
+                    {
+                        gp++;
+                        break;
+                    }
                 }
-                if ((Beam.RequiredSetups == pc.RequiredSetups) &&
-                    (Math.Abs(Beam.Volume - pc.Volume) < pc.Volume * 0.001))
+                foreach (Candidate pcn in BCands)
                 {
-                    bp = true;
+                    if (pc == pcn)
+                    {
+                        bp++;
+                        break;
+                    }
+                }
+                foreach (Candidate pcn in VCands)
+                {
+                    if (pc == pcn)
+                    {
+                        vp++;
+                        break;
+                    }
                 }
             }
 
             var truedictionary = new Dictionary<bool, string>() { { false, "No" }, { true, "Yes" } };
             var AllPlot = new PlotModel
             {
-                Title = "Pareto: " + fn + "\nRequired Setups: " + reqdstps.ToString() + 
-                        "\nDoes Greedy search reach Pareto Front: " + truedictionary[gp] + 
-                        "\nDoes modified Greedy search reach Parteo Front: " + truedictionary[g2p] + 
-                        "\nDoes Beam search reach Pareto Front: " + truedictionary[bp]
+                Title = "Pareto: " + fn + "\nPareto Points: " + paretoPoints.Count.ToString() + 
+                        "\nGreedy Pareto Points: " + gp.ToString() + 
+                        "\nModified Greedy Parteo Points: " + g2p.ToString() + 
+                        "\nBeam Pareto Points: " + bp.ToString() +
+                        "\nVolume Pareto Points:" + vp.ToString()
             };
 
             AllPlot.Axes.Add(new LinearAxis
@@ -961,19 +979,19 @@ namespace TVGLPresenterDX
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
-            var vols = new List<KeyValuePair<double, VoxelDirections>>();
+            var vols = new SortedList<double, VoxelDirections>(new DuplicateKeyComparer<double>());
             foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vx in vd)
             {
-                vols.Add(new KeyValuePair<double, VoxelDirections>(vx.Value.Volume, vx.Key));
+                vols.Add(vx.Value.Volume, vx.Key);
             }
-            vols.Sort((x, y) => x.Value.CompareTo(y.Value));
 
             var setups = new List<int>(new int[]{1, 2, 3, 4, 5, 6});
             var candidates = new List<Candidate>();
             foreach (int INT in setups)
             {
-                var vds = vols.Take(INT).ToDictionary(x => x.Key, x => x.Value).Values.ToArray();
-                var cand = new Candidate(vd, vds);
+                var vds = new List<VoxelDirections>();
+                for (var i = 0; i < INT; i++) vds.Add(vols.Values[i]);
+                var cand = new Candidate(vd, vds.ToArray());
                 candidates.Add(cand);
             }
 
