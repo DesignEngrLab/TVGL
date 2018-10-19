@@ -103,14 +103,20 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
+
+            dir = new DirectoryInfo("C:\\Users\\griera\\source\\repos\\machinability_TestFiles");
+
             var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
+
             //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray(); //causes error in extrusion
             //var fileNames = dir.GetFiles("*Candy*").ToArray(); //only one machining setup required
             //var fileNames = dir.GetFiles("*Table*").ToArray();
             //var fileNames = dir.GetFiles("*Casing*").ToArray(); //5 pareto points
             //var fileNames = dir.GetFiles("*testblock2*").ToArray(); //oblique holes
             //var fileNames = dir.GetFiles("*turbine*").ToArray(); //large number of false primitive cylinders
+            //var fileNames = dir.GetFiles("*wrenchsns*").ToArray(); //Voxel extrusion issues
+
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i ++)
@@ -142,6 +148,26 @@ namespace TVGLPresenterDX
                 {
                     continue;
                 }
+
+                //The part wrenchsns.amf has issues with voxel extruding
+                //var vs = new VoxelizedSolid(ts, 8);
+                //var vsxneg = vs.ExtrudeToNewSolid(VoxelDirections.XNegative);
+                //var vsxpos = vs.ExtrudeToNewSolid(VoxelDirections.XPositive);
+                //var vsyneg = vs.ExtrudeToNewSolid(VoxelDirections.YNegative);
+                //var vsypos = vs.ExtrudeToNewSolid(VoxelDirections.YPositive);
+                //var vszneg = vs.ExtrudeToNewSolid(VoxelDirections.ZNegative);
+                //var vszpos = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
+                //var vs1 = vsxneg.IntersectToNewSolid(vsxpos, vsyneg, vsypos, vszneg, vszpos);
+                //Console.WriteLine("Original Volume: {0}\nIntersect Volume: {1}", vs.Volume.ToString(), vs1.Volume.ToString());
+                //Presenter.ShowAndHang(vs);
+                //Presenter.ShowAndHang(vs1);
+                //Presenter.ShowAndHang(vsxneg);
+                //Presenter.ShowAndHang(vsxpos);
+                //Presenter.ShowAndHang(vsyneg);
+                //Presenter.ShowAndHang(vsypos);
+                //Presenter.ShowAndHang(vszneg);
+                //Presenter.ShowAndHang(vszpos);
+
                 //FindAlternateSearchDirections(ts, out List<double> sd);
 
                 // var stopWatch = new Stopwatch();
@@ -306,9 +332,10 @@ namespace TVGLPresenterDX
                 { VoxelDirections.ZNegative, vs.ExtrudeToNewSolid(VoxelDirections.ZNegative) },
                 { VoxelDirections.ZPositive, vs.ExtrudeToNewSolid(VoxelDirections.ZPositive) }
             };
-            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var complete = new Candidate(vs, vd, vd.Keys.ToArray());
             var reqdstps = complete.RequiredSetups;
             var minvol = vs.Volume;
+            var tol = minvol * 0.01;
             Console.WriteLine("Searching for optimal manufacturing plans...\n");
 
             TestSearchAll(vs, vd, out TimeSpan elapsedAll, out Candidate AllCand, out List<Candidate> cands);
@@ -350,9 +377,9 @@ namespace TVGLPresenterDX
                 MarkerFill = OxyColors.Blue,
                 MarkerStroke = OxyColors.Black
             };
-            var bSeries = new OxyPlot.Series.ScatterSeries
+            var vSeries = new OxyPlot.Series.ScatterSeries
             {
-                Title = "Beam Search",
+                Title = "Volume Search",
                 MarkerType = MarkerType.Circle,
                 MarkerFill = OxyColors.Green,
                 MarkerStroke = OxyColors.Black
@@ -362,7 +389,7 @@ namespace TVGLPresenterDX
             var paretoPoints = new List<OxyPlot.Series.ScatterPoint>();
             var gPoints = new List<OxyPlot.Series.ScatterPoint>();
             var g2Points = new List<OxyPlot.Series.ScatterPoint>();
-            var bPoints = new List<OxyPlot.Series.ScatterPoint>();
+            var vPoints = new List<OxyPlot.Series.ScatterPoint>();
 
             var paretofront = new List<Candidate>();
             foreach (Candidate candidate in cands)
@@ -372,7 +399,7 @@ namespace TVGLPresenterDX
                 {
                     if (candidate == compare) continue;
                     else if (((candidate.RequiredSetups == compare.RequiredSetups) && (candidate.Volume > compare.Volume)) ||
-                             ((candidate > compare) && (Math.Abs(candidate.Volume - compare.Volume) < AllCand.Volume * 0.001)))
+                             ((candidate > compare) && (Math.Abs(candidate.Volume - compare.Volume) < tol)))
                     {
                         pareto = false;
                         break;
@@ -382,14 +409,23 @@ namespace TVGLPresenterDX
                     break;
                 }
 
+                foreach (Candidate pf in paretofront)
+                {
+                    if ((pf.RequiredSetups == candidate.RequiredSetups) &&
+                        (Math.Abs(pf.Volume - candidate.Volume) < tol))
+                    {
+                        pareto = false;
+                    }
+                }
+
                 if (pareto)
                 {
-                    paretoPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume - minvol, candidate.RequiredSetups, 10));
+                    paretoPoints.Add(new OxyPlot.Series.ScatterPoint(Math.Abs(candidate.Volume - minvol), candidate.RequiredSetups, 10));
                     paretofront.Add(candidate);
                 }
                 else
                 {
-                    allPoints.Add(new OxyPlot.Series.ScatterPoint(candidate.Volume - minvol, candidate.RequiredSetups, 8));
+                    allPoints.Add(new OxyPlot.Series.ScatterPoint(Math.Abs(candidate.Volume - minvol), candidate.RequiredSetups, 8));
                 }
             }
 
@@ -399,8 +435,8 @@ namespace TVGLPresenterDX
             TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
             Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
 
-            TestSearchBeam(vs, vd, out TimeSpan elapsedBeam, out Candidate Beam, out List<Candidate> BCands);
-            Console.WriteLine("Beam Search\nRequired Setups: {0}\n{1}\n", Beam, elapsedBeam);
+            //TestSearchBeam(vs, vd, out TimeSpan elapsedBeam, out Candidate Beam, out List<Candidate> BCands);
+            //Console.WriteLine("Beam Search\nRequired Setups: {0}\n{1}\n", Beam, elapsedBeam);
 
             TestSearchVolume(vs, vd, out TimeSpan elapsedVol, out List<Candidate> VCands);
             Console.WriteLine("Volume Search\n{0}\n", elapsedVol);
@@ -414,26 +450,25 @@ namespace TVGLPresenterDX
 
             foreach (Candidate cd in G2Cands)
             {
-                g2Points.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
+                g2Points.Add(new OxyPlot.Series.ScatterPoint(Math.Abs(cd.Volume - minvol), cd.RequiredSetups, 8));
             }
             foreach (Candidate cd in GCands)
             {
-                gPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
+                gPoints.Add(new OxyPlot.Series.ScatterPoint(Math.Abs(cd.Volume - minvol), cd.RequiredSetups, 8));
             }
-            foreach (Candidate cd in BCands)
+            foreach (Candidate cd in VCands)
             {
-                bPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
+                vPoints.Add(new OxyPlot.Series.ScatterPoint(Math.Abs(cd.Volume - minvol), cd.RequiredSetups, 8));
             }
 
             var g2p = 0;
             var gp = 0;
-            var bp = 0;
             var vp = 0;
             foreach (Candidate pc in paretofront)
             {
                 foreach (Candidate pcn in G2Cands)
                 {
-                    if (pc == pcn)
+                    if ((pc.RequiredSetups == pcn.RequiredSetups) && (Math.Abs(pc.Volume - pcn.Volume) < tol))
                     {
                         g2p++;
                         break;
@@ -441,23 +476,15 @@ namespace TVGLPresenterDX
                 }
                 foreach (Candidate pcn in GCands)
                 {
-                    if (pc == pcn)
+                    if ((pc.RequiredSetups == pcn.RequiredSetups) && (Math.Abs(pc.Volume - pcn.Volume) < tol))
                     {
                         gp++;
                         break;
                     }
                 }
-                foreach (Candidate pcn in BCands)
-                {
-                    if (pc == pcn)
-                    {
-                        bp++;
-                        break;
-                    }
-                }
                 foreach (Candidate pcn in VCands)
                 {
-                    if (pc == pcn)
+                    if ((pc.RequiredSetups == pcn.RequiredSetups) && (Math.Abs(pc.Volume - pcn.Volume) < tol))
                     {
                         vp++;
                         break;
@@ -471,7 +498,6 @@ namespace TVGLPresenterDX
                 Title = "Pareto: " + fn + "\nPareto Points: " + paretoPoints.Count.ToString() + 
                         "\nGreedy Pareto Points: " + gp.ToString() + 
                         "\nModified Greedy Parteo Points: " + g2p.ToString() + 
-                        "\nBeam Pareto Points: " + bp.ToString() +
                         "\nVolume Pareto Points:" + vp.ToString()
             };
 
@@ -494,13 +520,13 @@ namespace TVGLPresenterDX
             paretoSeries.Points.AddRange(paretoPoints);
             gSeries.Points.AddRange(gPoints);
             g2Series.Points.AddRange(g2Points);
-            bSeries.Points.AddRange(bPoints);
+            vSeries.Points.AddRange(vPoints);
 
             AllPlot.Series.Add(allSeries);
             AllPlot.Series.Add(paretoSeries);
             AllPlot.Series.Add(gSeries);
             AllPlot.Series.Add(g2Series);
-            AllPlot.Series.Add(bSeries);
+            AllPlot.Series.Add(vSeries);
 
             var Allfn = rootfn + "pareto.png";
             using (var stream = File.Create(Allfn))
@@ -515,25 +541,23 @@ namespace TVGLPresenterDX
             public double Volume { get; }
             public List<VoxelDirections> ManufacturingPlan { get; }
             public int RequiredSetups { get { return ManufacturingPlan.Count; } }
-            public Candidate(Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
+            public Candidate(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
             {
                 ManufacturingPlan = vd.ToList();
-                var vs = ex[ManufacturingPlan[0]];
                 var vs1 = new List<VoxelizedSolid>();
-                for (int i = 1; i < ManufacturingPlan.Count; i++)
+                for (int i = 0; i < ManufacturingPlan.Count; i++)
                 {
                     vs1.Add(ex[ManufacturingPlan[i]]);
                 }
                 Volume = vs.IntersectToNewSolid(vs1.ToArray()).Volume;
             }
-            public Candidate(Candidate cd, Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
+            public Candidate(VoxelizedSolid vs, Candidate cd, Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
             {
                 ManufacturingPlan = new List<VoxelDirections>();
                 ManufacturingPlan.AddRange(cd.ManufacturingPlan);
                 ManufacturingPlan.AddRange(vd.ToList());
-                var vs = ex[ManufacturingPlan[0]];
                 var vs1 = new List<VoxelizedSolid>();
-                for (int i = 1; i < ManufacturingPlan.Count; i++)
+                for (int i = 0; i < ManufacturingPlan.Count; i++)
                 {
                     vs1.Add(ex[ManufacturingPlan[i]]);
                 }
@@ -722,16 +746,16 @@ namespace TVGLPresenterDX
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var complete = new Candidate(vs, vd, vd.Keys.ToArray());
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
             var candidates = new List<List<Candidate>>
             {
                 new List<Candidate>(new Candidate[]
                 {
-                    new Candidate(vd, VoxelDirections.XNegative),
-                    new Candidate(vd, VoxelDirections.YNegative),
-                    new Candidate(vd, VoxelDirections.ZNegative)
+                    new Candidate(vs, vd, VoxelDirections.XNegative),
+                    new Candidate(vs, vd, VoxelDirections.YNegative),
+                    new Candidate(vs, vd, VoxelDirections.ZNegative)
                 })
             };
             candidates[0].Sort((x, y) => x.Volume.CompareTo(y.Volume));
@@ -749,7 +773,7 @@ namespace TVGLPresenterDX
                 {
                     if (!candidates[i][0].ManufacturingPlan.Contains(vdvs.Key))
                     {
-                        candidates[i+1].Add(new Candidate(candidates[i][0], vd, vdvs.Key));
+                        candidates[i+1].Add(new Candidate(vs, candidates[i][0], vd, vdvs.Key));
                     }
                 }
                 candidates[i+1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
@@ -773,16 +797,16 @@ namespace TVGLPresenterDX
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var complete = new Candidate(vs, vd, vd.Keys.ToArray());
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
             var candidates = new List<List<Candidate>>
             {
                 new List<Candidate>(new Candidate[]
                 {
-                    new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive),
-                    new Candidate(vd, VoxelDirections.YNegative, VoxelDirections.YPositive),
-                    new Candidate(vd, VoxelDirections.ZNegative, VoxelDirections.ZPositive)
+                    new Candidate(vs, vd, VoxelDirections.XNegative, VoxelDirections.XPositive),
+                    new Candidate(vs, vd, VoxelDirections.YNegative, VoxelDirections.YPositive),
+                    new Candidate(vs, vd, VoxelDirections.ZNegative, VoxelDirections.ZPositive)
                 })
             };
             candidates[0].Sort((x, y) => x.Volume.CompareTo(y.Volume));
@@ -794,8 +818,8 @@ namespace TVGLPresenterDX
                 {
                     candidates.Add(new List<Candidate>(new Candidate[]
                         {
-                            new Candidate(candidates[i][0], vd, candidates[0][i+1].ManufacturingPlan[0]),
-                            new Candidate(candidates[i][0], vd, candidates[0][i+1].ManufacturingPlan[1])
+                            new Candidate(vs, candidates[i][0], vd, candidates[0][i+1].ManufacturingPlan[0]),
+                            new Candidate(vs, candidates[i][0], vd, candidates[0][i+1].ManufacturingPlan[1])
                         }));
                     candidates[i + 1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
                 }
@@ -803,9 +827,9 @@ namespace TVGLPresenterDX
                 {
                     candidates.Add(new List<Candidate>(new Candidate[]
                         {
-                            new Candidate(candidates[i][0], vd, candidates[1][1].ManufacturingPlan[
+                            new Candidate(vs, candidates[i][0], vd, candidates[1][1].ManufacturingPlan[
                                 candidates[1][1].ManufacturingPlan.Count-1]),
-                            new Candidate(candidates[i][0], vd, candidates[2][1].ManufacturingPlan[
+                            new Candidate(vs, candidates[i][0], vd, candidates[2][1].ManufacturingPlan[
                                 candidates[2][1].ManufacturingPlan.Count-1])
                         }));
                     candidates[i + 1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
@@ -835,7 +859,7 @@ namespace TVGLPresenterDX
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var complete = new Candidate(vs, vd, vd.Keys.ToArray());
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
             var candidates = new Queue<Candidate>();
@@ -843,7 +867,7 @@ namespace TVGLPresenterDX
 
             foreach (VoxelDirections voxd in vd.Keys)
             {
-                candidates.Enqueue(new Candidate(vd, voxd));
+                candidates.Enqueue(new Candidate(vs, vd, voxd));
             }
 
             while (Math.Abs(candidates.Peek().Volume - targetVolume) > tol)
@@ -881,7 +905,7 @@ namespace TVGLPresenterDX
                         }
                         if (unique)
                         {
-                            var cand = new Candidate(qp, vd, dir);
+                            var cand = new Candidate(vs, qp, vd, dir);
                             if (Math.Abs(qp.Volume - cand.Volume) > tol)
                             {
                                 candidates.Enqueue(cand);
@@ -914,7 +938,7 @@ namespace TVGLPresenterDX
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var complete = new Candidate(vs, vd, vd.Keys.ToArray());
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
             var BEAM_WDITH = 3;
@@ -927,7 +951,7 @@ namespace TVGLPresenterDX
 
             foreach (VoxelDirections vx in vd.Keys)
             {
-                var cand = new Candidate(vd, vx);
+                var cand = new Candidate(vs, vd, vx);
                 candidates[0].Add(cand.Volume, cand);
                 TrimBeam(candidates[0], BEAM_WDITH);
             }
@@ -952,7 +976,7 @@ namespace TVGLPresenterDX
                         {
                             if (manuplan == cnd.ManufacturingPlan) continue;
                         }
-                        var cand = new Candidate(cn, vd, vx);
+                        var cand = new Candidate(vs, cn, vd, vx);
                         candidates[1].Add(cand.Volume, cand);
                         TrimBeam(candidates[1], BEAM_WDITH);
                         if (Math.Abs(cand.Volume - targetVolume) < tol)
@@ -991,7 +1015,7 @@ namespace TVGLPresenterDX
             {
                 var vds = new List<VoxelDirections>();
                 for (var i = 0; i < INT; i++) vds.Add(vols.Values[i]);
-                var cand = new Candidate(vd, vds.ToArray());
+                var cand = new Candidate(vs, vd, vds.ToArray());
                 candidates.Add(cand);
             }
 
@@ -1016,7 +1040,7 @@ namespace TVGLPresenterDX
                 VoxelDirections.ZPositive
             });
             
-            var complete = new Candidate(vd, directions.ToArray());
+            var complete = new Candidate(vs, vd, directions.ToArray());
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
 
@@ -1052,7 +1076,7 @@ namespace TVGLPresenterDX
                 var indices = Enumerable.Range(0, combination.Count).Where(i => combination[i] == 1).ToList();
                 var vds = new List<VoxelDirections>();
                 foreach (int index in indices) { vds.Add(directions[index]); }
-                intersections.Add(new Candidate(vd, vds.ToArray()));
+                intersections.Add(new Candidate(vs, vd, vds.ToArray()));
             });
 
             intersections.Sort((x, y) => x.Volume.CompareTo(y.Volume));
@@ -1071,22 +1095,22 @@ namespace TVGLPresenterDX
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
+            var complete = new Candidate(vs, vd, vd.Keys.ToArray());
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
 
             var setups = new List<Candidate>(7)
             {
                 complete,
-                new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
+                new Candidate(vs, vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
                 VoxelDirections.YNegative, VoxelDirections.YPositive, VoxelDirections.ZPositive),
-                new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
+                new Candidate(vs, vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
                 VoxelDirections.YNegative, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
-                new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
+                new Candidate(vs, vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
                 VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
-                new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.YNegative,
+                new Candidate(vs, vd, VoxelDirections.XNegative, VoxelDirections.YNegative,
                 VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
-                new Candidate(vd, VoxelDirections.XPositive, VoxelDirections.YNegative,
+                new Candidate(vs, vd, VoxelDirections.XPositive, VoxelDirections.YNegative,
                 VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
             };
 
