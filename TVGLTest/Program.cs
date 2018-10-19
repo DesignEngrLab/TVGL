@@ -116,7 +116,7 @@ namespace TVGLPresenterDX
             //var fileNames = dir.GetFiles("*testblock2*").ToArray(); //oblique holes
             //var fileNames = dir.GetFiles("*turbine*").ToArray(); //large number of false primitive cylinders
             //var fileNames = dir.GetFiles("*wrenchsns*").ToArray(); //Voxel extrusion issues
-            fileNames = dir.GetFiles("*tiefighter*").ToArray();
+            //var fileNames = dir.GetFiles("*tiefighter*").ToArray();
 
             //Casing = 18
             //SquareSupport = 75
@@ -345,8 +345,7 @@ namespace TVGLPresenterDX
             var ind1 = fn.LastIndexOf('.');
             var ind2 = fn.LastIndexOf('\\');
             fn = fn.Remove(ind1).Remove(0, ind2 + 1);
-            var userprof = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            var dpath = userprof + "\\MachinabilitySearch\\";
+            var dpath = "C:\\Users\\griera\\source\\repos\\machinability_ParetoPlots\\";
             Directory.CreateDirectory(dpath);
             var rootfn = dpath + fn + "_";
 
