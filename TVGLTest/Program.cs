@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
@@ -118,9 +119,16 @@ namespace TVGLPresenterDX
             //var fileNames = dir.GetFiles("*turbine*").ToArray(); //large number of false primitive cylinders
             //var fileNames = dir.GetFiles("*wrenchsns*").ToArray(); //Voxel extrusion issues
             //var fileNames = dir.GetFiles("*tiefighter*").ToArray();
+            //var fileNames = dir.GetFiles("*bracket_*").ToArray();
 
             //Casing = 18
             //SquareSupport = 75
+
+            var csv = new StringBuilder();
+            csv.AppendLine("Part,Pareto Points,Greedy Success [%],Modified Greedy Success [%]," +
+                           "Greedy Success (both methods) [%],Volume Search Success [%],Exhaustive Time [s]," +
+                           "Greedy Time [s],Modified Greedy Time[s],Volume Search Time [s]");
+
             for (var i = 0; i < fileNames.Count(); i ++)
             {
                 //var filename = FileNames[i];
@@ -144,7 +152,15 @@ namespace TVGLPresenterDX
                 //TestSearch5Axis(ts);
                 try
                 {
-                    SearchComparison(ts, filename);
+                    SearchComparison(ts, filename, out int pp, out int gp, out int g2p, out int ggp, out int vp, out TimeSpan elapsedAll,
+                        out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2, out TimeSpan elapsedVol);
+                    var ind1 = filename.LastIndexOf('.');
+                    var ind2 = filename.LastIndexOf('\\');
+                    var partname = filename.Remove(ind1).Remove(0, ind2 + 1);
+                    var newline = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9}", partname, pp, gp*100/pp, g2p*100/pp,
+                        ggp*100/pp, vp*100/pp, elapsedAll.TotalSeconds.ToString(), elapsedGreedy.TotalSeconds.ToString(),
+                        elapsedGreedy2.TotalSeconds.ToString(), elapsedVol.TotalSeconds.ToString());
+                    csv.AppendLine(newline);
                 }
                 catch
                 {
@@ -190,6 +206,8 @@ namespace TVGLPresenterDX
                 //bounds = vs1.Bounds;
             }
 
+            var paretofname = "C:\\Users\\griera\\source\\repos\\machinability_ParetoPlots\\pareto.csv";
+            File.WriteAllText(paretofname, csv.ToString());
             Console.WriteLine("Completed.");
             Console.ReadKey();
         }
@@ -308,7 +326,8 @@ namespace TVGLPresenterDX
             //var originalTS = new Solid[] { ts };
         }
 
-        public static void SearchComparison(TessellatedSolid ts, string fn)
+        public static void SearchComparison(TessellatedSolid ts, string fn, out int pp, out int gp, out int g2p, out int ggp,
+            out int vp, out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2, out TimeSpan elapsedVol)
         {
             Console.WriteLine("Voxelizing and Extruding...");
             //Convert tesselated solid to voxelized solid
@@ -340,7 +359,7 @@ namespace TVGLPresenterDX
             var tol = minvol * 0.01;
             Console.WriteLine("Searching for optimal manufacturing plans...\n");
 
-            TestSearchAll(vs, vd, out TimeSpan elapsedAll, out Candidate AllCand, out List<Candidate> cands);
+            TestSearchAll(vs, vd, out elapsedAll, out Candidate AllCand, out List<Candidate> cands);
             Console.WriteLine("All Possible Setups\nRequired Setups: {0}\n{1}\n", AllCand, elapsedAll);
 
             var ind1 = fn.LastIndexOf('.');
@@ -375,7 +394,7 @@ namespace TVGLPresenterDX
             {
                 Title = "Modified Greedy",
                 MarkerType = MarkerType.Triangle,
-                MarkerFill = OxyColors.Blue,
+                MarkerFill = OxyColors.Turquoise,
                 MarkerStroke = OxyColors.Black
             };
             var vSeries = new OxyPlot.Series.ScatterSeries
@@ -385,12 +404,20 @@ namespace TVGLPresenterDX
                 MarkerFill = OxyColors.Green,
                 MarkerStroke = OxyColors.Black
             };
+            //var cSeries = new OxyPlot.Series.ScatterSeries
+            //{
+            //    Title = "Shared Volume Search",
+            //    MarkerType = MarkerType.Diamond,
+            //    MarkerFill = OxyColors.Blue,
+            //    MarkerStroke = OxyColors.Black
+            //};
 
             var allPoints = new List<OxyPlot.Series.ScatterPoint>();
             var paretoPoints = new List<OxyPlot.Series.ScatterPoint>();
             var gPoints = new List<OxyPlot.Series.ScatterPoint>();
             var g2Points = new List<OxyPlot.Series.ScatterPoint>();
             var vPoints = new List<OxyPlot.Series.ScatterPoint>();
+            //var cPoints = new List<OxyPlot.Series.ScatterPoint>();
 
             var paretofront = new List<Candidate>();
             foreach (Candidate candidate in cands)
@@ -430,17 +457,20 @@ namespace TVGLPresenterDX
                 }
             }
 
-            TestSearchGreedy2(vs, vd, out TimeSpan elapsedGreedy2, out Candidate Greedy2, out List<Candidate> G2Cands);
+            TestSearchGreedy2(vs, vd, out elapsedGreedy2, out Candidate Greedy2, out List<Candidate> G2Cands);
             Console.WriteLine("Modified Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy2, elapsedGreedy2);
 
-            TestSearchGreedy(vs, vd, out TimeSpan elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
+            TestSearchGreedy(vs, vd, out elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
             Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
 
             //TestSearchBeam(vs, vd, out TimeSpan elapsedBeam, out Candidate Beam, out List<Candidate> BCands);
             //Console.WriteLine("Beam Search\nRequired Setups: {0}\n{1}\n", Beam, elapsedBeam);
 
-            TestSearchVolume(vs, vd, out TimeSpan elapsedVol, out List<Candidate> VCands);
+            TestSearchVolume(vs, vd, out elapsedVol, out List<Candidate> VCands);
             Console.WriteLine("Volume Search\n{0}\n", elapsedVol);
+
+            //TestSearchCommon(vs, vd, complete, out TimeSpan elapsedCom, out List<Candidate> CCands);
+            //Console.WriteLine("Shared Volume Search\n{0}\n", elapsedCom);
 
             //TestSearchBFS(vs, vd, out TimeSpan elapsedBFS, out Candidate BFS, out List<Candidate> BFSCands);
             //Console.WriteLine("Breadth-First-Search\nRequired Setups: {0}\n{1}\n", BFS, elapsedBFS);
@@ -461,10 +491,20 @@ namespace TVGLPresenterDX
             {
                 vPoints.Add(new OxyPlot.Series.ScatterPoint(Math.Abs(cd.Volume - minvol), cd.RequiredSetups, 8));
             }
+            //foreach (Candidate cd in CCands)
+            //{
+            //    cPoints.Add(new OxyPlot.Series.ScatterPoint(Math.Abs(cd.Volume - minvol), cd.RequiredSetups, 8));
+            //}
 
-            var g2p = 0;
-            var gp = 0;
-            var vp = 0;
+            var GGCands = GCands.ToList();
+            GGCands.AddRange(G2Cands.ToList());
+
+            pp = paretoPoints.Count;
+            g2p = 0;
+            gp = 0;
+            ggp = 0;
+            vp = 0;
+            //var cp = 0;
             foreach (Candidate pc in paretofront)
             {
                 foreach (Candidate pcn in G2Cands)
@@ -483,6 +523,14 @@ namespace TVGLPresenterDX
                         break;
                     }
                 }
+                foreach (Candidate pcn in GGCands)
+                {
+                    if ((pc.RequiredSetups == pcn.RequiredSetups) && (Math.Abs(pc.Volume - pcn.Volume) < tol))
+                    {
+                        ggp++;
+                        break;
+                    }
+                }
                 foreach (Candidate pcn in VCands)
                 {
                     if ((pc.RequiredSetups == pcn.RequiredSetups) && (Math.Abs(pc.Volume - pcn.Volume) < tol))
@@ -491,15 +539,25 @@ namespace TVGLPresenterDX
                         break;
                     }
                 }
+                //foreach (Candidate pcn in CCands)
+                //{
+                //    if ((pc.RequiredSetups == pcn.RequiredSetups) && (Math.Abs(pc.Volume - pcn.Volume) < tol))
+                //    {
+                //        cp++;
+                //        break;
+                //    }
+                //}
             }
 
             var truedictionary = new Dictionary<bool, string>() { { false, "No" }, { true, "Yes" } };
             var AllPlot = new PlotModel
             {
-                Title = "Pareto: " + fn + "\nPareto Points: " + paretoPoints.Count.ToString() + 
+                Title = "Pareto: " + fn + "\nPareto Points: " + pp.ToString() + 
                         "\nGreedy Pareto Points: " + gp.ToString() + 
                         "\nModified Greedy Parteo Points: " + g2p.ToString() + 
-                        "\nVolume Pareto Points:" + vp.ToString()
+                        "\nGreedy Pareto Points (both methods): " + ggp.ToString() +
+                        "\nVolume Pareto Points: " + vp.ToString()// +
+                        //"\nShared Volume Pareto Points: " + cp.ToString()
             };
 
             AllPlot.Axes.Add(new LinearAxis
@@ -522,12 +580,14 @@ namespace TVGLPresenterDX
             gSeries.Points.AddRange(gPoints);
             g2Series.Points.AddRange(g2Points);
             vSeries.Points.AddRange(vPoints);
+            //cSeries.Points.AddRange(cPoints);
 
             AllPlot.Series.Add(allSeries);
             AllPlot.Series.Add(paretoSeries);
             AllPlot.Series.Add(gSeries);
             AllPlot.Series.Add(g2Series);
             AllPlot.Series.Add(vSeries);
+            //AllPlot.Series.Add(cSeries);
 
             var Allfn = rootfn + "pareto.png";
             using (var stream = File.Create(Allfn))
@@ -1052,8 +1112,8 @@ namespace TVGLPresenterDX
             {
                 vols.Add(vx.Value.Volume, vx.Key);
             }
-            candidates.Add(new Candidate(vd, vols[0]));
-            directions.Add(vols[0]);
+            candidates.Add(new Candidate(vd, vols.Values[0]));
+            directions.Add(vols.Values[0]);
 
             foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vsd in vd)
             {
@@ -1061,7 +1121,7 @@ namespace TVGLPresenterDX
                 availables.Add(vsd.Key);
             }
 
-            availables.Remove(vols[0]);
+            availables.Remove(vols.Values[0]);
 
             var volkey = new List<VoxelDirections[]>(new VoxelDirections[][]
             {
@@ -1087,7 +1147,7 @@ namespace TVGLPresenterDX
                 sharedvol.Add(vsub[key[0]].IntersectToNewSolid(vsub[key[1]]).Volume);
             }
 
-            for (var i = 1; i < 5; i++)
+            for (var i = 0; i < 4; i++)
             {
                 var newdir = VoxelDirections.XNegative;
                 var maxvol = -1.0;
@@ -1096,7 +1156,14 @@ namespace TVGLPresenterDX
                     var vol = vsub[dir].Volume;
                     for (var j = 0; j < 15; j++)
                     {
-                        if (volkey[j].Contains(dir)) vol = vol - sharedvol[j];
+                        foreach (VoxelDirections dire in directions)
+                        {
+                            if (volkey[j].Contains(dir) && volkey[j].Contains(dire))
+                            {
+                                vol = vol - sharedvol[j];
+                            }
+                        }
+
                     }
 
                     if (vol > maxvol)
@@ -1105,7 +1172,7 @@ namespace TVGLPresenterDX
                         newdir = dir;
                     }
                 }
-                candidates.Add(new Candidate(candidates[i - 1], vd, newdir));
+                candidates.Add(new Candidate(candidates[i], vd, newdir));
                 directions.Add(newdir);
                 availables.Remove(newdir);
             }
