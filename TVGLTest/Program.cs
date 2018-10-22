@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using Microsoft.Office.Core;
 using Microsoft.Office.Interop.Excel;
 using OxyPlot;
 using OxyPlot.Axes;
@@ -545,6 +546,11 @@ namespace TVGLPresenterDX
             public Candidate(Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
             {
                 ManufacturingPlan = vd.ToList();
+                if (ManufacturingPlan.Count == 1)
+                {
+                    Volume = ex[ManufacturingPlan[0]].Volume;
+                    return;
+                }
                 var vs1 = ex[ManufacturingPlan[0]];
                 var vs2 = new List<VoxelizedSolid>();
                 for (int i = 1; i < ManufacturingPlan.Count; i++)
@@ -1023,6 +1029,88 @@ namespace TVGLPresenterDX
                 var cand = new Candidate(vd, vds.ToArray());
                 candidates.Add(cand);
             }
+
+            cds = candidates.ToList();
+            Stopwatch.Stop();
+            elapsed = Stopwatch.Elapsed;
+        }
+
+        public static void TestSearchCommon(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+            Candidate cmp, out TimeSpan elapsed, out List<Candidate> cds)
+        {
+            Stopwatch Stopwatch = new Stopwatch();
+            Stopwatch.Start();
+
+            var candidates = new List<Candidate>();
+            var vsub = new Dictionary<VoxelDirections, VoxelizedSolid>();
+            var sharedvol = new List<double>();
+            var directions = new HashSet<VoxelDirections>();
+            var availables = new HashSet<VoxelDirections>();
+
+            var vols = new SortedList<double, VoxelDirections>(new DuplicateKeyComparer<double>());
+            foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vx in vd)
+            {
+                vols.Add(vx.Value.Volume, vx.Key);
+            }
+            candidates.Add(new Candidate(vd, vols[0]));
+            directions.Add(vols[0]);
+
+            foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vsd in vd)
+            {
+                vsub.Add(vsd.Key, vsd.Value.SubtractToNewSolid(vs));
+                availables.Add(vsd.Key);
+            }
+
+            availables.Remove(vols[0]);
+
+            var volkey = new List<VoxelDirections[]>(new VoxelDirections[][]
+            {
+                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.XPositive},
+                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.YNegative},
+                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.YPositive},
+                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.ZNegative},
+                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.ZPositive},
+                new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.YNegative},
+                new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.YPositive},
+                new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.ZNegative},
+                new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.ZPositive},
+                new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.YPositive},
+                new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.ZNegative},
+                new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.ZPositive},
+                new VoxelDirections[] { VoxelDirections.YPositive, VoxelDirections.ZNegative},
+                new VoxelDirections[] { VoxelDirections.YPositive, VoxelDirections.ZPositive},
+                new VoxelDirections[] { VoxelDirections.ZNegative, VoxelDirections.ZPositive}
+            });
+
+            foreach (VoxelDirections[] key in volkey)
+            {
+                sharedvol.Add(vsub[key[0]].IntersectToNewSolid(vsub[key[1]]).Volume);
+            }
+
+            for (var i = 1; i < 5; i++)
+            {
+                var newdir = VoxelDirections.XNegative;
+                var maxvol = -1.0;
+                foreach ( VoxelDirections dir in availables)
+                {
+                    var vol = vsub[dir].Volume;
+                    for (var j = 0; j < 15; j++)
+                    {
+                        if (volkey[j].Contains(dir)) vol = vol - sharedvol[j];
+                    }
+
+                    if (vol > maxvol)
+                    {
+                        maxvol = vol;
+                        newdir = dir;
+                    }
+                }
+                candidates.Add(new Candidate(candidates[i - 1], vd, newdir));
+                directions.Add(newdir);
+                availables.Remove(newdir);
+            }
+             
+            candidates.Add(cmp);
 
             cds = candidates.ToList();
             Stopwatch.Stop();
