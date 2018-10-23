@@ -733,30 +733,29 @@ namespace TVGLPresenterDX
             return false;
         }
 
-        public static void FindAlternateSearchDirections(TessellatedSolid ts, out List<double> sd)
+        public static void FindAlternateSearchDirections(TessellatedSolid ts, out List<double[]> dirs)
         {
-            sd = new List<double>();
-            var maxbb = new List<double>(new double[]
+            double maxbb = new List<double>(new double[]
             {
                 ts.XMax - ts.XMin,
                 ts.YMax - ts.XMin,
                 ts.ZMax - ts.ZMin
             }).Max();
-            var primitives = PrimitiveClassification.ClassifyPrimitiveSurfaces(ts);
-            var primcyl = new List<PrimitiveSurface>();
-            var indices = new List<HashSet<int>>();
+            List<PrimitiveSurface> primitives = PrimitiveClassification.ClassifyPrimitiveSurfaces(ts);
+            List<PrimitiveSurface> primcyl = new List<PrimitiveSurface>();
+            List<HashSet<int>> indices = new List<HashSet<int>>();
             var i = 0;
             foreach (PrimitiveSurface ps in primitives)
             {
                 if (ps.Type != PrimitiveSurfaceType.Cylinder) continue;
-                var cyl = ps as Cylinder;
+                Cylinder cyl = ps as Cylinder;
                 if ((Math.Abs(Math.Abs(cyl.Axis.Sum()) - 1) > 0.1) && (cyl.Radius > maxbb * 0.02) && (cyl.Faces.Count >= 10))
                 {
                     primcyl.Add(cyl);
-                    var newdir = true;
+                    bool newdir = true;
                     foreach (HashSet<int> dir in indices)
                     {
-                        var cyl2 = primcyl[dir.First()] as Cylinder;
+                        Cylinder cyl2 = primcyl[dir.First()] as Cylinder;
                         if (SimilarAxis(cyl, cyl2))
                         {
                             dir.Add(primcyl.IndexOf(cyl));
@@ -768,20 +767,20 @@ namespace TVGLPresenterDX
                 }
             }
 
-            var dirs = new List<double[]>();
-            var j = 0;
+            dirs = new List<double[]>();
+            int j = 0;
             foreach (HashSet<int> hindex in indices)
             {
                 dirs.Add(new double[3]);
                 foreach (int index in hindex)
                 {
-                    var cyl = primcyl[index] as Cylinder;
+                    Cylinder cyl = primcyl[index] as Cylinder;
                     dirs[j][0] += cyl.Axis[0] / hindex.Count;
                     dirs[j][1] += cyl.Axis[1] / hindex.Count;
                     dirs[j][2] += cyl.Axis[2] / hindex.Count;
                 }
 
-                var k = 0;
+                int k = 0;
                 foreach (double dir in dirs[j])
                 {
                     if (Math.Abs(dir) < 0.05) dirs[j][k] = 0;
