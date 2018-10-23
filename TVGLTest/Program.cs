@@ -108,14 +108,14 @@ namespace TVGLPresenterDX
 
             dir = new DirectoryInfo("C:\\Users\\griera\\source\\repos\\machinability_TestFiles");
 
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
 
             //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray(); //causes error in extrusion
             //var fileNames = dir.GetFiles("*Candy*").ToArray(); //only one machining setup required
             //var fileNames = dir.GetFiles("*Table*").ToArray();
             //var fileNames = dir.GetFiles("*Casing*").ToArray(); //5 pareto points
-            //var fileNames = dir.GetFiles("*testblock2*").ToArray(); //oblique holes
+            var fileNames = dir.GetFiles("*testblock2*").ToArray(); //oblique holes
             //var fileNames = dir.GetFiles("*turbine*").ToArray(); //large number of false primitive cylinders
             //var fileNames = dir.GetFiles("*wrenchsns*").ToArray(); //Voxel extrusion issues
             //var fileNames = dir.GetFiles("*tiefighter*").ToArray();
@@ -150,23 +150,23 @@ namespace TVGLPresenterDX
                 //TestSearch1(ts);
                 //TestSearchAll(ts);
                 //TestSearch5Axis(ts);
-                try
-                {
-                    SearchComparison(ts, filename, out int pp, out int gp, out int g2p, out int ggp,
-                        out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2);
-                    var ind1 = filename.LastIndexOf('.');
-                    var ind2 = filename.LastIndexOf('\\');
-                    var partname = filename.Remove(ind1).Remove(0, ind2 + 1);
-                    var newline = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}", partname, pp, gp*100/pp, g2p*100/pp,
-                        ggp*100/pp, elapsedAll.TotalSeconds.ToString(), elapsedGreedy.TotalSeconds.ToString(),
-                        elapsedGreedy2.TotalSeconds.ToString(),
-                        (elapsedGreedy.TotalSeconds+elapsedGreedy2.TotalSeconds).ToString());
-                    csv.AppendLine(newline);
-                }
-                catch
-                {
-                    continue;
-                }
+                //try
+                //{
+                //    SearchComparison(ts, filename, out int pp, out int gp, out int g2p, out int ggp,
+                //        out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2);
+                //    var ind1 = filename.LastIndexOf('.');
+                //    var ind2 = filename.LastIndexOf('\\');
+                //    var partname = filename.Remove(ind1).Remove(0, ind2 + 1);
+                //    var newline = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}", partname, pp, gp*100/pp, g2p*100/pp,
+                //        ggp*100/pp, elapsedAll.TotalSeconds.ToString(), elapsedGreedy.TotalSeconds.ToString(),
+                //        elapsedGreedy2.TotalSeconds.ToString(),
+                //        (elapsedGreedy.TotalSeconds+elapsedGreedy2.TotalSeconds).ToString());
+                //    csv.AppendLine(newline);
+                //}
+                //catch
+                //{
+                //    continue;
+                //}
 
                 //The part wrenchsns.amf has issues with voxel extruding
                 //var vs = new VoxelizedSolid(ts, 8);
@@ -187,7 +187,7 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(vszneg);
                 //Presenter.ShowAndHang(vszpos);
 
-                //FindAlternateSearchDirections(ts, out List<double> sd);
+                FindAlternateSearchDirections(ts, out List<double[]> sd);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -744,7 +744,6 @@ namespace TVGLPresenterDX
             List<PrimitiveSurface> primitives = PrimitiveClassification.ClassifyPrimitiveSurfaces(ts);
             List<PrimitiveSurface> primcyl = new List<PrimitiveSurface>();
             List<HashSet<int>> indices = new List<HashSet<int>>();
-            var i = 0;
             foreach (PrimitiveSurface ps in primitives)
             {
                 if (ps.Type != PrimitiveSurfaceType.Cylinder) continue;
@@ -763,48 +762,41 @@ namespace TVGLPresenterDX
                         }
                     }
                     if (newdir) indices.Add(new HashSet<int>(new int[] { primcyl.IndexOf(cyl) }));
-                    i++;
                 }
             }
 
             dirs = new List<double[]>();
-            int j = 0;
             foreach (HashSet<int> hindex in indices)
             {
-                dirs.Add(new double[3]);
+                double[] dir = new double[3];
                 foreach (int index in hindex)
                 {
                     Cylinder cyl = primcyl[index] as Cylinder;
-                    dirs[j][0] += cyl.Axis[0] / hindex.Count;
-                    dirs[j][1] += cyl.Axis[1] / hindex.Count;
-                    dirs[j][2] += cyl.Axis[2] / hindex.Count;
+                    dir[0] += cyl.Axis[0] / hindex.Count;
+                    dir[1] += cyl.Axis[1] / hindex.Count;
+                    dir[2] += cyl.Axis[2] / hindex.Count;
                 }
 
-                int k = 0;
-                foreach (double dir in dirs[j])
+                for (int i = 0; i < 3; i++)
                 {
-                    if (Math.Abs(dir) < 0.05) dirs[j][k] = 0;
-                    k++;
+                    if (Math.Abs(dir[i]) < 0.05) dir[i] = 0;
                 }
 
-                if (dirs[j].Contains(0))
+                if (dir.Contains(0))
                 {
-                    if (Math.Abs(dirs[j][0] - dirs[j][1]) < 0.05) dirs[j][1] = dirs[j][0];
-                    else if (Math.Abs(dirs[j][0] - dirs[j][2]) < 0.05) dirs[j][2] = dirs[j][0];
-                    else if (Math.Abs(dirs[j][1] - dirs[j][2]) < 0.05) dirs[j][2] = dirs[j][1];
+                    if (Math.Abs(dir[0] - dir[1]) < 0.05) dir[1] = dir[0];
+                    else if (Math.Abs(dir[0] - dir[2]) < 0.05) dir[2] = dir[0];
+                    else if (Math.Abs(dir[1] - dir[2]) < 0.05) dir[2] = dir[1];
                 }
-                else if (Math.Abs(dirs[j][0] - dirs[j][1]) < 0.05 && Math.Abs(dirs[j][0] - dirs[j][2]) < 0.05)
+                else if (Math.Abs(dir[0] - dir[1]) < 0.05 && Math.Abs(dir[0] - dir[2]) < 0.05)
                 {
-                    dirs[j][1] = dirs[j][0];
-                    dirs[j][2] = dirs[j][0];
+                    dir[1] = dir[0];
+                    dir[2] = dir[0];
                 }
-                
-                j++;
-            }
 
-            foreach (double[] dir in dirs)
-            {
                 dir.normalizeInPlace();
+                dirs.Add(dir);
+                Console.WriteLine("{0}, {1}, {2}", dir[0].ToString(), dir[1].ToString(), dir[2].ToString());
             }
 
             Console.WriteLine("{0} search directions found...", dirs.Count);
