@@ -146,7 +146,7 @@
     <EmbeddedResource Include="Primitive Classification\NewEdgeRules.csv" />
     <EmbeddedResource Include="Primitive Classification\NewFaRules.csv" />
     <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>

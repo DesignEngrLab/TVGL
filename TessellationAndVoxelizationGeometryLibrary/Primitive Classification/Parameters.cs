@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using TVGL.IOFunctions.threemfclasses;
 
 namespace TVGL.PrimitiveClassificationDetail
 {
@@ -76,7 +77,12 @@ namespace TVGL.PrimitiveClassificationDetail
 
         internal static List<List<int>> readingEdgesRules2()
         {
+#if NETSTANDARD
+            var resource = TVGL.Properties.Resources.NewEdgeRules;
+            var reader = StringStream(resource);
+#else
             var reader = getStreamReader("NewEdgeRules.csv"); // "EdRulesBeta.csv"
+#endif
             //var reader = new StreamReader(File.OpenRead("src/PrimitiveClassificationOfTessellatedSolids/NewEdgeRules.csv"));
             var Lists = new List<List<int>>();
             bool blocker = true;
@@ -105,7 +111,12 @@ namespace TVGL.PrimitiveClassificationDetail
 
         internal static List<List<int>> readingFacesRules()
         {
+#if NETSTANDARD
+            var resource = TVGL.Properties.Resources.NewFaRules;
+            var reader = StringStream(resource);
+#else
             var reader = getStreamReader("NewFaRules.csv");//FaRules2.csv
+#endif
             // var reader = new StreamReader(File.OpenRead("src/PrimitiveClassificationOfTessellatedSolids/NewFaRules.csv"));
             List<List<int>> Lists = new List<List<int>>();
             bool blocker = true;
@@ -133,13 +144,20 @@ namespace TVGL.PrimitiveClassificationDetail
             return Lists;
         }
 
+        private static StreamReader StringStream(string str)
+        {
+            var stream1 = new MemoryStream();
+            var writer1 = new StreamWriter(stream1);
+            writer1.Write(str);
+            writer1.Flush();
+            stream1.Position = 0;
+            return new StreamReader(stream1);
+        }
+
         private static StreamReader getStreamReader(string filepath)
         {
-#if net45
             var a = typeof(Parameters).GetTypeInfo().Assembly;
-#else
-            var a = Assembly.GetExecutingAssembly();
-#endif
+            //var a = Assembly.GetExecutingAssembly();
             var stream1 = a.GetManifestResourceStream(@"TVGL.Primitive_Classification." + filepath);
             if (stream1 == null)
             {
