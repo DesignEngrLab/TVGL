@@ -16,7 +16,7 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
-using Constants = TVGL.Voxelization.Constants;
+using Constants = TVGL.Constants;
 
 namespace TVGLPresenterDX
 {
@@ -108,14 +108,14 @@ namespace TVGLPresenterDX
 
             dir = new DirectoryInfo("C:\\Users\\griera\\source\\repos\\machinability_TestFiles");
 
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
 
             //var fileNames = dir.GetFiles("*Mic_Holder_SW*").ToArray(); //causes error in extrusion
             //var fileNames = dir.GetFiles("*Candy*").ToArray(); //only one machining setup required
             //var fileNames = dir.GetFiles("*Table*").ToArray();
             //var fileNames = dir.GetFiles("*Casing*").ToArray(); //5 pareto points
-            var fileNames = dir.GetFiles("*testblock2*").ToArray(); //oblique holes
+            //var fileNames = dir.GetFiles("*obliquehole*").ToArray(); //oblique holes
             //var fileNames = dir.GetFiles("*turbine*").ToArray(); //large number of false primitive cylinders
             //var fileNames = dir.GetFiles("*wrenchsns*").ToArray(); //Voxel extrusion issues
             //var fileNames = dir.GetFiles("*tiefighter*").ToArray();
@@ -126,8 +126,9 @@ namespace TVGLPresenterDX
 
             var csv = new StringBuilder();
             csv.AppendLine("Part,Pareto Points,Greedy Success [%],Modified Greedy Success [%]," +
-                           "Combined Greedy Success [%],Exhaustive Time [s],Greedy Time [s]," +
-                           "Modified Greedy Time[s],Cobined Search Time [s]");
+                           "Combined Greedy Success [%],Pareto Search Success [%],Exhaustive Time [s]," +
+                           "Greedy Time [s],Modified Greedy Time[s],Cobined Search Time [s]," +
+                           "Pareto Search Time [s]");
 
             for (var i = 0; i < fileNames.Count(); i ++)
             {
@@ -150,23 +151,24 @@ namespace TVGLPresenterDX
                 //TestSearch1(ts);
                 //TestSearchAll(ts);
                 //TestSearch5Axis(ts);
-                //try
-                //{
-                //    SearchComparison(ts, filename, out int pp, out int gp, out int g2p, out int ggp,
-                //        out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2);
-                //    var ind1 = filename.LastIndexOf('.');
-                //    var ind2 = filename.LastIndexOf('\\');
-                //    var partname = filename.Remove(ind1).Remove(0, ind2 + 1);
-                //    var newline = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8}", partname, pp, gp*100/pp, g2p*100/pp,
-                //        ggp*100/pp, elapsedAll.TotalSeconds.ToString(), elapsedGreedy.TotalSeconds.ToString(),
-                //        elapsedGreedy2.TotalSeconds.ToString(),
-                //        (elapsedGreedy.TotalSeconds+elapsedGreedy2.TotalSeconds).ToString());
-                //    csv.AppendLine(newline);
-                //}
-                //catch
-                //{
-                //    continue;
-                //}
+                try
+                {
+                    SearchComparison(ts, filename, out int pp, out int gp, out int g2p, out int ggp, out int psp,
+                        out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2,
+                        out TimeSpan elapsedPareto);
+                    var ind1 = filename.LastIndexOf('.');
+                    var ind2 = filename.LastIndexOf('\\');
+                    var partname = filename.Remove(ind1).Remove(0, ind2 + 1);
+                    var newline = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}", partname, pp, gp * 100 / pp, g2p * 100 / pp,
+                        ggp * 100 / pp, psp * 100 / pp, elapsedAll.TotalSeconds.ToString(), elapsedGreedy.TotalSeconds.ToString(),
+                        elapsedGreedy2.TotalSeconds.ToString(),
+                        (elapsedGreedy.TotalSeconds + elapsedGreedy2.TotalSeconds).ToString(), elapsedPareto.TotalSeconds.ToString());
+                    csv.AppendLine(newline);
+                }
+                catch
+                {
+                    continue;
+                }
 
                 //The part wrenchsns.amf has issues with voxel extruding
                 //var vs = new VoxelizedSolid(ts, 8);
@@ -187,7 +189,7 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(vszneg);
                 //Presenter.ShowAndHang(vszpos);
 
-                FindAlternateSearchDirections(ts, out List<double[]> sd);
+                //FindAlternateSearchDirections(ts, out List<double[]> sd);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -328,7 +330,7 @@ namespace TVGLPresenterDX
         }
 
         public static void SearchComparison(TessellatedSolid ts, string fn, out int pp, out int gp, out int g2p, out int ggp,
-            out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2)
+            out int psp, out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2, out TimeSpan elapsedPareto)
         {
             Console.WriteLine("Voxelizing and Extruding...");
             //Convert tesselated solid to voxelized solid
@@ -398,6 +400,13 @@ namespace TVGLPresenterDX
                 MarkerFill = OxyColors.Turquoise,
                 MarkerStroke = OxyColors.Black
             };
+            var pSeries = new OxyPlot.Series.ScatterSeries
+            {
+                Title = "Pareto Search",
+                MarkerType = MarkerType.Square,
+                MarkerFill = OxyColors.Lavender,
+                MarkerStroke = OxyColors.Black
+            };
             //var vSeries = new OxyPlot.Series.ScatterSeries
             //{
             //    Title = "Volume Search",
@@ -417,6 +426,7 @@ namespace TVGLPresenterDX
             var paretoPoints = new List<OxyPlot.Series.ScatterPoint>();
             var gPoints = new List<OxyPlot.Series.ScatterPoint>();
             var g2Points = new List<OxyPlot.Series.ScatterPoint>();
+            var pPoints = new List<OxyPlot.Series.ScatterPoint>();
             //var vPoints = new List<OxyPlot.Series.ScatterPoint>();
             //var cPoints = new List<OxyPlot.Series.ScatterPoint>();
 
@@ -458,11 +468,14 @@ namespace TVGLPresenterDX
                 }
             }
 
-            TestSearchGreedy2(vs, vd, out elapsedGreedy2, out Candidate Greedy2, out List<Candidate> G2Cands);
+            TestSearchGreedy2(vs, vd, complete, out elapsedGreedy2, out Candidate Greedy2, out List<Candidate> G2Cands);
             Console.WriteLine("Modified Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy2, elapsedGreedy2);
 
-            TestSearchGreedy(vs, vd, out elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
+            TestSearchGreedy(vs, vd, complete, out elapsedGreedy, out Candidate Greedy, out List<Candidate> GCands);
             Console.WriteLine("Greedy Search\nRequired Setups: {0}\n{1}\n", Greedy, elapsedGreedy);
+
+            TestSearchPareto(vs, vd, complete, out elapsedPareto, out List<Candidate> PCands);
+            Console.WriteLine("Pareto Search\n{0}\n", elapsedPareto);
 
             //TestSearchBeam(vs, vd, out TimeSpan elapsedBeam, out Candidate Beam, out List<Candidate> BCands);
             //Console.WriteLine("Beam Search\nRequired Setups: {0}\n{1}\n", Beam, elapsedBeam);
@@ -488,6 +501,14 @@ namespace TVGLPresenterDX
             {
                 gPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
             }
+            foreach (Candidate cd in PCands)
+            {
+                gPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 8));
+            }
+            foreach (Candidate cd in PCands)
+            {
+                pPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 6));
+            }
             //foreach (Candidate cd in VCands)
             //{
             //    vPoints.Add(new OxyPlot.Series.ScatterPoint(cd.Volume - minvol, cd.RequiredSetups, 6));
@@ -504,6 +525,7 @@ namespace TVGLPresenterDX
             g2p = 0;
             gp = 0;
             ggp = 0;
+            psp = 0;
             //vp = 0;
             //var cp = 0;
             foreach (Candidate pc in paretofront)
@@ -532,6 +554,14 @@ namespace TVGLPresenterDX
                         break;
                     }
                 }
+                foreach (Candidate pcn in PCands)
+                {
+                    if ((pc.RequiredSetups == pcn.RequiredSetups) && (Math.Abs(pc.Volume - pcn.Volume) < tol))
+                    {
+                        psp++;
+                        break;
+                    }
+                }
                 //foreach (Candidate pcn in VCands)
                 //{
                 //    if ((pc.RequiredSetups == pcn.RequiredSetups) && (Math.Abs(pc.Volume - pcn.Volume) < tol))
@@ -556,7 +586,8 @@ namespace TVGLPresenterDX
                 Title = "Pareto: " + fn + "\nPareto Points: " + pp.ToString() + 
                         "\nGreedy Pareto Points: " + gp.ToString() + 
                         "\nModified Greedy Parteo Points: " + g2p.ToString() + 
-                        "\nGreedy Pareto Points (both methods): " + ggp.ToString()// +
+                        "\nGreedy Pareto Points (both methods): " + ggp.ToString() +
+                        "\nPareto Search Points: " + psp.ToString()// +
                         //"\nVolume Pareto Points: " + vp.ToString()// +
                         //"\nShared Volume Pareto Points: " + cp.ToString()
             };
@@ -580,6 +611,7 @@ namespace TVGLPresenterDX
             paretoSeries.Points.AddRange(paretoPoints);
             gSeries.Points.AddRange(gPoints);
             g2Series.Points.AddRange(g2Points);
+            pSeries.Points.AddRange(pPoints);
             //vSeries.Points.AddRange(vPoints);
             //cSeries.Points.AddRange(cPoints);
 
@@ -587,6 +619,7 @@ namespace TVGLPresenterDX
             AllPlot.Series.Add(paretoSeries);
             AllPlot.Series.Add(gSeries);
             AllPlot.Series.Add(g2Series);
+            AllPlot.Series.Add(pSeries);
             //AllPlot.Series.Add(vSeries);
             //AllPlot.Series.Add(cSeries);
 
@@ -603,6 +636,7 @@ namespace TVGLPresenterDX
             public double Volume { get; }
             public List<VoxelDirections> ManufacturingPlan { get; }
             public int RequiredSetups { get { return ManufacturingPlan.Count; } }
+            public VoxelDirections LastSetup{ get { return ManufacturingPlan[ManufacturingPlan.Count-1]; } }
 
             public Candidate(Dictionary<VoxelDirections, VoxelizedSolid> ex, params VoxelDirections[] vd)
             {
@@ -804,12 +838,11 @@ namespace TVGLPresenterDX
         }
 
         public static void TestSearchGreedy(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
-            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+            Candidate complete, out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
         {
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
             var candidates = new List<List<Candidate>>
@@ -858,12 +891,11 @@ namespace TVGLPresenterDX
         }
 
         public static void TestSearchGreedy2(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
-            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+            Candidate complete, out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
         {
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
             var targetVolume = complete.Volume;
             var tol = targetVolume * 0.001;
             var candidates = new List<List<Candidate>>
@@ -893,10 +925,8 @@ namespace TVGLPresenterDX
                 {
                     candidates.Add(new List<Candidate>(new Candidate[]
                         {
-                            new Candidate(candidates[i][0], vd, candidates[1][1].ManufacturingPlan[
-                                candidates[1][1].ManufacturingPlan.Count-1]),
-                            new Candidate(candidates[i][0], vd, candidates[2][1].ManufacturingPlan[
-                                candidates[2][1].ManufacturingPlan.Count-1])
+                            new Candidate(candidates[i][0], vd, candidates[1][1].LastSetup),
+                            new Candidate(candidates[i][0], vd, candidates[2][1].LastSetup)
                         }));
                     candidates[i + 1].Sort((x, y) => x.Volume.CompareTo(y.Volume));
                 }
@@ -919,259 +949,298 @@ namespace TVGLPresenterDX
             elapsed = Stopwatch.Elapsed;
         }
 
-        public static void TestSearchBFS(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
-            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
-        {
-            Stopwatch Stopwatch = new Stopwatch();
-            Stopwatch.Start();
+        //public static void TestSearchBFS(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+        //    out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+        //{
+        //    Stopwatch Stopwatch = new Stopwatch();
+        //    Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
-            var targetVolume = complete.Volume;
-            var tol = targetVolume * 0.001;
-            var candidates = new Queue<Candidate>();
-            var noImprovement = new List<KeyValuePair<VoxelDirections, List<VoxelDirections>>>();
+        //    var complete = new Candidate(vd, vd.Keys.ToArray());
+        //    var targetVolume = complete.Volume;
+        //    var tol = targetVolume * 0.001;
+        //    var candidates = new Queue<Candidate>();
+        //    var noImprovement = new List<KeyValuePair<VoxelDirections, List<VoxelDirections>>>();
 
-            foreach (VoxelDirections voxd in vd.Keys)
-            {
-                candidates.Enqueue(new Candidate(vd, voxd));
-            }
+        //    foreach (VoxelDirections voxd in vd.Keys)
+        //    {
+        //        candidates.Enqueue(new Candidate(vd, voxd));
+        //    }
 
-            while (Math.Abs(candidates.Peek().Volume - targetVolume) > tol)
-            {
-                var qp = candidates.Dequeue();
-                var dirs = vd.Keys.Except(qp.ManufacturingPlan).ToList();
-                Parallel.ForEach(dirs.Cast<VoxelDirections>(), dir =>
-                {
-                    var skip = false;
-                    foreach (KeyValuePair<VoxelDirections, List<VoxelDirections>> kvp in noImprovement)
-                    {
-                        var oldKeys = kvp.Value.ToList();
-                        oldKeys.Add(kvp.Key);
-                        var newKeys = qp.ManufacturingPlan.ToList();
-                        newKeys.Add(dir);
-                        if (oldKeys.Intersect(newKeys).Count() != oldKeys.Count) continue;
-                        if ((dir == kvp.Key) && (kvp.Value.Intersect(qp.ManufacturingPlan).Count() == kvp.Value.Count))
-                        {
-                            skip = true;
-                            break;
-                        }
-                    }
-                    if (!skip)
-                    {
-                        var unique = true;
-                        foreach (Candidate cnd in candidates)
-                        {
-                            var manplan = new List<VoxelDirections>(new VoxelDirections[] { dir });
-                            manplan.AddRange(qp.ManufacturingPlan);
-                            if (manplan.Intersect(cnd.ManufacturingPlan).Count() == manplan.Count)
-                            {
-                                unique = false;
-                                break;
-                            }
-                        }
-                        if (unique)
-                        {
-                            var cand = new Candidate(qp, vd, dir);
-                            if (Math.Abs(qp.Volume - cand.Volume) > tol)
-                            {
-                                candidates.Enqueue(cand);
-                            }
-                            else
-                            {
-                                noImprovement.Add(new KeyValuePair<VoxelDirections, List<VoxelDirections>>
-                                    (dir, qp.ManufacturingPlan.ToList()));
-                            }
-                        }
-                    }
-                });
-            }
+        //    while (Math.Abs(candidates.Peek().Volume - targetVolume) > tol)
+        //    {
+        //        var qp = candidates.Dequeue();
+        //        var dirs = vd.Keys.Except(qp.ManufacturingPlan).ToList();
+        //        Parallel.ForEach(dirs.Cast<VoxelDirections>(), dir =>
+        //        {
+        //            var skip = false;
+        //            foreach (KeyValuePair<VoxelDirections, List<VoxelDirections>> kvp in noImprovement)
+        //            {
+        //                var oldKeys = kvp.Value.ToList();
+        //                oldKeys.Add(kvp.Key);
+        //                var newKeys = qp.ManufacturingPlan.ToList();
+        //                newKeys.Add(dir);
+        //                if (oldKeys.Intersect(newKeys).Count() != oldKeys.Count) continue;
+        //                if ((dir == kvp.Key) && (kvp.Value.Intersect(qp.ManufacturingPlan).Count() == kvp.Value.Count))
+        //                {
+        //                    skip = true;
+        //                    break;
+        //                }
+        //            }
+        //            if (!skip)
+        //            {
+        //                var unique = true;
+        //                foreach (Candidate cnd in candidates)
+        //                {
+        //                    var manplan = new List<VoxelDirections>(new VoxelDirections[] { dir });
+        //                    manplan.AddRange(qp.ManufacturingPlan);
+        //                    if (manplan.Intersect(cnd.ManufacturingPlan).Count() == manplan.Count)
+        //                    {
+        //                        unique = false;
+        //                        break;
+        //                    }
+        //                }
+        //                if (unique)
+        //                {
+        //                    var cand = new Candidate(qp, vd, dir);
+        //                    if (Math.Abs(qp.Volume - cand.Volume) > tol)
+        //                    {
+        //                        candidates.Enqueue(cand);
+        //                    }
+        //                    else
+        //                    {
+        //                        noImprovement.Add(new KeyValuePair<VoxelDirections, List<VoxelDirections>>
+        //                            (dir, qp.ManufacturingPlan.ToList()));
+        //                    }
+        //                }
+        //            }
+        //        });
+        //    }
 
-            cd = candidates.Peek();
-            cds = candidates.ToList();
+        //    cd = candidates.Peek();
+        //    cds = candidates.ToList();
 
-            Stopwatch.Stop();
-            elapsed = Stopwatch.Elapsed;
-        }
+        //    Stopwatch.Stop();
+        //    elapsed = Stopwatch.Elapsed;
+        //}
 
-        public static void TrimBeam(SortedList<double, Candidate> beam, int width)
-        {
-            if (beam.Count > width) beam.RemoveAt(beam.Count - 1);
-        }
+        //public static void TrimBeam(SortedList<double, Candidate> beam, int width)
+        //{
+        //    if (beam.Count > width) beam.RemoveAt(beam.Count - 1);
+        //}
 
-        public static void TestSearchBeam(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
-            out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
-        {
-            Stopwatch Stopwatch = new Stopwatch();
-            Stopwatch.Start();
+        //public static void TestSearchBeam(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+        //    out TimeSpan elapsed, out Candidate cd, out List<Candidate> cds)
+        //{
+        //    Stopwatch Stopwatch = new Stopwatch();
+        //    Stopwatch.Start();
 
-            var complete = new Candidate(vd, vd.Keys.ToArray());
-            var targetVolume = complete.Volume;
-            var tol = targetVolume * 0.001;
-            var BEAM_WDITH = 3;
-            var breaknow = false;
+        //    var complete = new Candidate(vd, vd.Keys.ToArray());
+        //    var targetVolume = complete.Volume;
+        //    var tol = targetVolume * 0.001;
+        //    var BEAM_WDITH = 3;
+        //    var breaknow = false;
 
-            var candidates = new List<SortedList<double, Candidate>>
-            {
-                new SortedList<double, Candidate>(new DuplicateKeyComparer<double>())
-            };
+        //    var candidates = new List<SortedList<double, Candidate>>
+        //    {
+        //        new SortedList<double, Candidate>(new DuplicateKeyComparer<double>())
+        //    };
 
-            foreach (VoxelDirections vx in vd.Keys)
-            {
-                var cand = new Candidate(vd, vx);
-                candidates[0].Add(cand.Volume, cand);
-                TrimBeam(candidates[0], BEAM_WDITH);
-            }
+        //    foreach (VoxelDirections vx in vd.Keys)
+        //    {
+        //        var cand = new Candidate(vd, vx);
+        //        candidates[0].Add(cand.Volume, cand);
+        //        TrimBeam(candidates[0], BEAM_WDITH);
+        //    }
 
-            if (Math.Abs(candidates[0].Values[0].Volume - targetVolume) < tol)
-            {
-                breaknow = true;
-            }
+        //    if (Math.Abs(candidates[0].Values[0].Volume - targetVolume) < tol)
+        //    {
+        //        breaknow = true;
+        //    }
 
-            var i = 1;
-            while (!breaknow && i < 6)
-            {
-                candidates.Add(new SortedList<double, Candidate>(new DuplicateKeyComparer<double>()));
-                Parallel.ForEach(candidates[0].Values, cn =>
-                {
-                    var dirs = vd.Keys.Except(cn.ManufacturingPlan).ToList();
-                    foreach (VoxelDirections vx in dirs)
-                    {
-                        var manuplan = cn.ManufacturingPlan.ToList();
-                        manuplan.Add(vx);
-                        foreach (Candidate cnd in candidates[1].Values)
-                        {
-                            if (manuplan == cnd.ManufacturingPlan) continue;
-                        }
-                        var cand = new Candidate(cn, vd, vx);
-                        candidates[1].Add(cand.Volume, cand);
-                        TrimBeam(candidates[1], BEAM_WDITH);
-                        if (Math.Abs(cand.Volume - targetVolume) < tol)
-                        {
-                            breaknow = true;
-                            break;
-                        }
-                    }
-                });
-                candidates.RemoveAt(0);
-                i++;
-            }
+        //    var i = 1;
+        //    while (!breaknow && i < 6)
+        //    {
+        //        candidates.Add(new SortedList<double, Candidate>(new DuplicateKeyComparer<double>()));
+        //        Parallel.ForEach(candidates[0].Values, cn =>
+        //        {
+        //            var dirs = vd.Keys.Except(cn.ManufacturingPlan).ToList();
+        //            foreach (VoxelDirections vx in dirs)
+        //            {
+        //                var manuplan = cn.ManufacturingPlan.ToList();
+        //                manuplan.Add(vx);
+        //                foreach (Candidate cnd in candidates[1].Values)
+        //                {
+        //                    if (manuplan == cnd.ManufacturingPlan) continue;
+        //                }
+        //                var cand = new Candidate(cn, vd, vx);
+        //                candidates[1].Add(cand.Volume, cand);
+        //                TrimBeam(candidates[1], BEAM_WDITH);
+        //                if (Math.Abs(cand.Volume - targetVolume) < tol)
+        //                {
+        //                    breaknow = true;
+        //                    break;
+        //                }
+        //            }
+        //        });
+        //        candidates.RemoveAt(0);
+        //        i++;
+        //    }
 
-            cd = candidates[0].Values[0];
-            cds = candidates[0].Values.ToList();
+        //    cd = candidates[0].Values[0];
+        //    cds = candidates[0].Values.ToList();
 
-            Stopwatch.Stop();
-            elapsed = Stopwatch.Elapsed;
-        }
+        //    Stopwatch.Stop();
+        //    elapsed = Stopwatch.Elapsed;
+        //}
 
-        public static void TestSearchVolume(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
-            out TimeSpan elapsed, out List<Candidate> cds)
-        {
-            Stopwatch Stopwatch = new Stopwatch();
-            Stopwatch.Start();
+        //public static void TestSearchVolume(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+        //    out TimeSpan elapsed, out List<Candidate> cds)
+        //{
+        //    Stopwatch Stopwatch = new Stopwatch();
+        //    Stopwatch.Start();
 
-            var vols = new SortedList<double, VoxelDirections>(new DuplicateKeyComparer<double>());
-            foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vx in vd)
-            {
-                vols.Add(vx.Value.Volume, vx.Key);
-            }
+        //    var vols = new SortedList<double, VoxelDirections>(new DuplicateKeyComparer<double>());
+        //    foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vx in vd)
+        //    {
+        //        vols.Add(vx.Value.Volume, vx.Key);
+        //    }
 
-            var setups = new List<int>(new int[]{1, 2, 3, 4, 5, 6});
-            var candidates = new List<Candidate>();
-            foreach (int INT in setups)
-            {
-                var vds = new List<VoxelDirections>();
-                for (var i = 0; i < INT; i++) vds.Add(vols.Values[i]);
-                var cand = new Candidate(vd, vds.ToArray());
-                candidates.Add(cand);
-            }
+        //    var setups = new List<int>(new int[]{1, 2, 3, 4, 5, 6});
+        //    var candidates = new List<Candidate>();
+        //    foreach (int INT in setups)
+        //    {
+        //        var vds = new List<VoxelDirections>();
+        //        for (var i = 0; i < INT; i++) vds.Add(vols.Values[i]);
+        //        var cand = new Candidate(vd, vds.ToArray());
+        //        candidates.Add(cand);
+        //    }
 
-            cds = candidates.ToList();
-            Stopwatch.Stop();
-            elapsed = Stopwatch.Elapsed;
-        }
+        //    cds = candidates.ToList();
+        //    Stopwatch.Stop();
+        //    elapsed = Stopwatch.Elapsed;
+        //}
 
-        public static void TestSearchCommon(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+        //public static void TestSearchCommon(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
+        //    Candidate cmp, out TimeSpan elapsed, out List<Candidate> cds)
+        //{
+        //    Stopwatch Stopwatch = new Stopwatch();
+        //    Stopwatch.Start();
+
+        //    var candidates = new List<Candidate>();
+        //    var vsub = new Dictionary<VoxelDirections, VoxelizedSolid>();
+        //    var sharedvol = new List<double>();
+        //    var directions = new HashSet<VoxelDirections>();
+        //    var availables = new HashSet<VoxelDirections>();
+
+        //    var vols = new SortedList<double, VoxelDirections>(new DuplicateKeyComparer<double>());
+        //    foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vx in vd)
+        //    {
+        //        vols.Add(vx.Value.Volume, vx.Key);
+        //    }
+        //    candidates.Add(new Candidate(vd, vols.Values[0]));
+        //    directions.Add(vols.Values[0]);
+
+        //    foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vsd in vd)
+        //    {
+        //        vsub.Add(vsd.Key, vsd.Value.SubtractToNewSolid(vs));
+        //        availables.Add(vsd.Key);
+        //    }
+
+        //    availables.Remove(vols.Values[0]);
+
+        //    var volkey = new List<VoxelDirections[]>(new VoxelDirections[][]
+        //    {
+        //        new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.XPositive},
+        //        new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.YNegative},
+        //        new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.YPositive},
+        //        new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.ZNegative},
+        //        new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.ZPositive},
+        //        new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.YNegative},
+        //        new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.YPositive},
+        //        new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.ZNegative},
+        //        new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.ZPositive},
+        //        new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.YPositive},
+        //        new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.ZNegative},
+        //        new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.ZPositive},
+        //        new VoxelDirections[] { VoxelDirections.YPositive, VoxelDirections.ZNegative},
+        //        new VoxelDirections[] { VoxelDirections.YPositive, VoxelDirections.ZPositive},
+        //        new VoxelDirections[] { VoxelDirections.ZNegative, VoxelDirections.ZPositive}
+        //    });
+
+        //    foreach (VoxelDirections[] key in volkey)
+        //    {
+        //        sharedvol.Add(vsub[key[0]].IntersectToNewSolid(vsub[key[1]]).Volume);
+        //    }
+
+        //    for (var i = 0; i < 4; i++)
+        //    {
+        //        var newdir = VoxelDirections.XNegative;
+        //        var maxvol = -1.0;
+        //        foreach ( VoxelDirections dir in availables)
+        //        {
+        //            var vol = vsub[dir].Volume;
+        //            for (var j = 0; j < 15; j++)
+        //            {
+        //                foreach (VoxelDirections dire in directions)
+        //                {
+        //                    if (volkey[j].Contains(dir) && volkey[j].Contains(dire))
+        //                    {
+        //                        vol = vol - sharedvol[j];
+        //                    }
+        //                }
+
+        //            }
+
+        //            if (vol > maxvol)
+        //            {
+        //                maxvol = vol;
+        //                newdir = dir;
+        //            }
+        //        }
+        //        candidates.Add(new Candidate(candidates[i], vd, newdir));
+        //        directions.Add(newdir);
+        //        availables.Remove(newdir);
+        //    }
+             
+        //    candidates.Add(cmp);
+
+        //    cds = candidates.ToList();
+        //    Stopwatch.Stop();
+        //    elapsed = Stopwatch.Elapsed;
+        //}
+
+        public static void TestSearchPareto(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
             Candidate cmp, out TimeSpan elapsed, out List<Candidate> cds)
         {
             Stopwatch Stopwatch = new Stopwatch();
             Stopwatch.Start();
 
             var candidates = new List<Candidate>();
-            var vsub = new Dictionary<VoxelDirections, VoxelizedSolid>();
-            var sharedvol = new List<double>();
-            var directions = new HashSet<VoxelDirections>();
+            //var directions = new HashSet<VoxelDirections>();
             var availables = new HashSet<VoxelDirections>();
-
             var vols = new SortedList<double, VoxelDirections>(new DuplicateKeyComparer<double>());
             foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vx in vd)
             {
                 vols.Add(vx.Value.Volume, vx.Key);
+                availables.Add(vx.Key);
             }
             candidates.Add(new Candidate(vd, vols.Values[0]));
-            directions.Add(vols.Values[0]);
-
-            foreach (KeyValuePair<VoxelDirections, VoxelizedSolid> vsd in vd)
-            {
-                vsub.Add(vsd.Key, vsd.Value.SubtractToNewSolid(vs));
-                availables.Add(vsd.Key);
-            }
-
+            //directions.Add(vols.Values[0]);
             availables.Remove(vols.Values[0]);
+            var cnds = new SortedList<double, Candidate>(new DuplicateKeyComparer<double>());
 
-            var volkey = new List<VoxelDirections[]>(new VoxelDirections[][]
+            for (int i = 0; i < 4; i++)
             {
-                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.XPositive},
-                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.YNegative},
-                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.YPositive},
-                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.ZNegative},
-                new VoxelDirections[] { VoxelDirections.XNegative, VoxelDirections.ZPositive},
-                new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.YNegative},
-                new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.YPositive},
-                new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.ZNegative},
-                new VoxelDirections[] { VoxelDirections.XPositive, VoxelDirections.ZPositive},
-                new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.YPositive},
-                new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.ZNegative},
-                new VoxelDirections[] { VoxelDirections.YNegative, VoxelDirections.ZPositive},
-                new VoxelDirections[] { VoxelDirections.YPositive, VoxelDirections.ZNegative},
-                new VoxelDirections[] { VoxelDirections.YPositive, VoxelDirections.ZPositive},
-                new VoxelDirections[] { VoxelDirections.ZNegative, VoxelDirections.ZPositive}
-            });
-
-            foreach (VoxelDirections[] key in volkey)
-            {
-                sharedvol.Add(vsub[key[0]].IntersectToNewSolid(vsub[key[1]]).Volume);
-            }
-
-            for (var i = 0; i < 4; i++)
-            {
-                var newdir = VoxelDirections.XNegative;
-                var maxvol = -1.0;
-                foreach ( VoxelDirections dir in availables)
+                cnds.Clear();
+                foreach (VoxelDirections key in availables)
                 {
-                    var vol = vsub[dir].Volume;
-                    for (var j = 0; j < 15; j++)
-                    {
-                        foreach (VoxelDirections dire in directions)
-                        {
-                            if (volkey[j].Contains(dir) && volkey[j].Contains(dire))
-                            {
-                                vol = vol - sharedvol[j];
-                            }
-                        }
-
-                    }
-
-                    if (vol > maxvol)
-                    {
-                        maxvol = vol;
-                        newdir = dir;
-                    }
+                    var cnd = new Candidate(candidates[i], vd, key);
+                    cnds.Add(cnd.Volume, cnd);
                 }
-                candidates.Add(new Candidate(candidates[i], vd, newdir));
-                directions.Add(newdir);
-                availables.Remove(newdir);
+                candidates.Add(cnds.Values[0]);
+                availables.Remove(cnds.Values[0].LastSetup);
             }
-             
+
             candidates.Add(cmp);
 
             cds = candidates.ToList();
