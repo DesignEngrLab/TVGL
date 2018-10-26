@@ -1327,15 +1327,17 @@ namespace TVGLPresenterDX
             {
                 complete,
                 new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
-                VoxelDirections.YNegative, VoxelDirections.YPositive, VoxelDirections.ZPositive),
+                    VoxelDirections.YNegative, VoxelDirections.YPositive, VoxelDirections.ZNegative),
                 new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
-                VoxelDirections.YNegative, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+                    VoxelDirections.YNegative, VoxelDirections.YPositive, VoxelDirections.ZPositive),
                 new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
-                VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+                    VoxelDirections.YNegative, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+                new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.XPositive,
+                    VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
                 new Candidate(vd, VoxelDirections.XNegative, VoxelDirections.YNegative,
-                VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+                    VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
                 new Candidate(vd, VoxelDirections.XPositive, VoxelDirections.YNegative,
-                VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive),
+                    VoxelDirections.YPositive, VoxelDirections.ZNegative, VoxelDirections.ZPositive)
             };
 
             setups.Sort((x, y) => x.Volume.CompareTo(y.Volume));
