@@ -120,15 +120,19 @@ namespace TVGLPresenterDX
             //var fileNames = dir.GetFiles("*wrenchsns*").ToArray(); //Voxel extrusion issues
             //var fileNames = dir.GetFiles("*tiefighter*").ToArray();
             //var fileNames = dir.GetFiles("*bracket*").ToArray();
+            //var fileNames = dir.GetFiles("*threehole*").ToArray();
 
             //Casing = 18
             //SquareSupport = 75
 
-            var csv = new StringBuilder();
-            csv.AppendLine("Part,Pareto Points,Greedy Success [%],Modified Greedy Success [%]," +
+            var csv1 = new StringBuilder();
+            csv1.AppendLine("Part,Pareto Points,Greedy Success [%],Modified Greedy Success [%]," +
                            "Combined Greedy Success [%],Pareto Search Success [%],Exhaustive Time [s]," +
                            "Greedy Time [s],Modified Greedy Time[s],Cobined Search Time [s]," +
                            "Pareto Search Time [s]");
+
+            var csv2 = new StringBuilder();
+            csv2.AppendLine("Part,Number of Directions,Total Time [s], Classification Time[s], Identification Time[s]");
 
             for (var i = 0; i < fileNames.Count(); i ++)
             {
@@ -151,24 +155,26 @@ namespace TVGLPresenterDX
                 //TestSearch1(ts);
                 //TestSearchAll(ts);
                 //TestSearch5Axis(ts);
-                try
-                {
-                    SearchComparison(ts, filename, out int pp, out int gp, out int g2p, out int ggp, out int psp,
-                        out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2,
-                        out TimeSpan elapsedPareto);
-                    var ind1 = filename.LastIndexOf('.');
-                    var ind2 = filename.LastIndexOf('\\');
-                    var partname = filename.Remove(ind1).Remove(0, ind2 + 1);
-                    var newline = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}", partname, pp, gp * 100 / pp, g2p * 100 / pp,
-                        ggp * 100 / pp, psp * 100 / pp, elapsedAll.TotalSeconds.ToString(), elapsedGreedy.TotalSeconds.ToString(),
-                        elapsedGreedy2.TotalSeconds.ToString(),
-                        (elapsedGreedy.TotalSeconds + elapsedGreedy2.TotalSeconds).ToString(), elapsedPareto.TotalSeconds.ToString());
-                    csv.AppendLine(newline);
-                }
-                catch
-                {
-                    continue;
-                }
+
+                var ind1 = filename.LastIndexOf('.');
+                var ind2 = filename.LastIndexOf('\\');
+                var partname = filename.Remove(ind1).Remove(0, ind2 + 1);
+
+                //try
+                //{
+                //    SearchComparison(ts, filename, out int pp, out int gp, out int g2p, out int ggp, out int psp,
+                //        out TimeSpan elapsedAll, out TimeSpan elapsedGreedy, out TimeSpan elapsedGreedy2,
+                //        out TimeSpan elapsedPareto);
+                //    var newline = string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}", partname, pp, gp * 100 / pp, g2p * 100 / pp,
+                //        ggp * 100 / pp, psp * 100 / pp, elapsedAll.TotalSeconds.ToString(), elapsedGreedy.TotalSeconds.ToString(),
+                //        elapsedGreedy2.TotalSeconds.ToString(),
+                //        (elapsedGreedy.TotalSeconds + elapsedGreedy2.TotalSeconds).ToString(), elapsedPareto.TotalSeconds.ToString());
+                //    csv1.AppendLine(newline);
+                //}
+                //catch
+                //{
+                //    continue;
+                //}
 
                 //The part wrenchsns.amf has issues with voxel extruding
                 //var vs = new VoxelizedSolid(ts, 8);
@@ -189,7 +195,11 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(vszneg);
                 //Presenter.ShowAndHang(vszpos);
 
-                //FindAlternateSearchDirections(ts, out List<double[]> sd);
+                var searchDirs = FindAlternateSearchDirections(ts,
+                    out TimeSpan ttot, out TimeSpan tclas, out TimeSpan tid);
+                var NewLine = string.Format("{0},{1},{2},{3},{4}", partname, searchDirs.Count.ToString(),
+                    ttot.TotalSeconds.ToString(), tclas.TotalSeconds.ToString(), tid.TotalSeconds.ToString());
+                csv2.AppendLine(NewLine);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -209,8 +219,12 @@ namespace TVGLPresenterDX
                 //bounds = vs1.Bounds;
             }
 
-            var paretofname = "C:\\Users\\griera\\source\\repos\\machinability_ParetoPlots\\pareto.csv";
-            File.WriteAllText(paretofname, csv.ToString());
+            //var paretofname = "C:\\Users\\griera\\source\\repos\\machinability_ParetoPlots\\pareto.csv";
+            //File.WriteAllText(paretofname, csv1.ToString());
+
+            var cylprimfname = "C:\\Users\\griera\\source\\repos\\CylinderPrimitiveSearchDirections.csv";
+            File.WriteAllText(cylprimfname, csv2.ToString());
+
             Console.WriteLine("Completed.");
             Console.ReadKey();
         }
@@ -767,15 +781,24 @@ namespace TVGLPresenterDX
             return false;
         }
 
-        public static void FindAlternateSearchDirections(TessellatedSolid ts, out List<double[]> dirs)
+        public static List<double[]> FindAlternateSearchDirections(TessellatedSolid ts,
+            out TimeSpan ttot, out TimeSpan tclas, out TimeSpan tid)
         {
+            Stopwatch St1 = new Stopwatch();
+            St1.Start();
+
+            Stopwatch St2 = new Stopwatch();
+            St2.Start();
+            List<PrimitiveSurface> primitives = PrimitiveClassification.ClassifyPrimitiveSurfaces(ts);
+            St2.Stop();
+            tclas = St2.Elapsed;
+
             double maxbb = new List<double>(new double[]
             {
                 ts.XMax - ts.XMin,
                 ts.YMax - ts.XMin,
                 ts.ZMax - ts.ZMin
             }).Max();
-            List<PrimitiveSurface> primitives = PrimitiveClassification.ClassifyPrimitiveSurfaces(ts);
             List<PrimitiveSurface> primcyl = new List<PrimitiveSurface>();
             List<HashSet<int>> indices = new List<HashSet<int>>();
             foreach (PrimitiveSurface ps in primitives)
@@ -799,7 +822,7 @@ namespace TVGLPresenterDX
                 }
             }
 
-            dirs = new List<double[]>();
+            var dirs = new List<double[]>();
             foreach (HashSet<int> hindex in indices)
             {
                 double[] dir = new double[3];
@@ -833,8 +856,12 @@ namespace TVGLPresenterDX
                 Console.WriteLine("{0}, {1}, {2}", dir[0].ToString(), dir[1].ToString(), dir[2].ToString());
             }
 
+            St1.Stop();
+            ttot = St1.Elapsed;
+            tid = ttot - tclas;
             Console.WriteLine("{0} search directions found...", dirs.Count);
-            Presenter.ShowAndHang(ts);
+            //Presenter.ShowAndHang(ts);
+            return dirs;
         }
 
         public static void TestSearchGreedy(VoxelizedSolid vs, Dictionary<VoxelDirections, VoxelizedSolid> vd,
