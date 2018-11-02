@@ -119,7 +119,10 @@ namespace TVGLPresenterDX
                     Af = 0.25f
                 };
                 //Presenter.ShowAndHang(ts);
-                TestVoxelization(ts, filename);
+                //TestVoxelization(ts, filename);
+
+                //ExtrusionIssue1(dir);
+                ExtrusionIssue2(dir);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -141,6 +144,38 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Completed.");
             Console.ReadKey();
+        }
+
+        //Voids in solid after extruding in -z
+        public static void ExtrusionIssue1(DirectoryInfo dir)
+        {
+            var part = dir.GetFiles("*wrenchsns*")[0];
+            var pname = part.FullName;
+            Stream fileStream;
+            TessellatedSolid ts;
+            using (fileStream = File.OpenRead(pname))
+                IO.Open(fileStream, pname, out ts);
+            var vs = new VoxelizedSolid(ts, 8);
+
+            Presenter.ShowAndHang(vs);
+            var vsZneg = vs.ExtrudeToNewSolid(VoxelDirections.ZNegative);
+            Presenter.ShowAndHang(vsZneg);
+        }
+
+        //Extrude parallel for loop error
+        public static void ExtrusionIssue2(DirectoryInfo dir)
+        {
+            var part = dir.GetFiles("*Mic_Holder_SW*")[0];
+            var pname = part.FullName;
+            Stream fileStream;
+            TessellatedSolid ts;
+            using (fileStream = File.OpenRead(pname))
+                IO.Open(fileStream, pname, out ts);
+            var vs = new VoxelizedSolid(ts, 8);
+
+            //Presenter.ShowAndHang(vs);
+            var vsZpos = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
+            Presenter.ShowAndHang(vsZpos);
         }
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
