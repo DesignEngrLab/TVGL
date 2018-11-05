@@ -184,7 +184,7 @@ namespace TVGLPresenterDX
             var int6 = vsXneg.IntersectToNewSolid(vsXpos, vsYneg, vsYpos, vsZneg, vsZpos);
             StopWatch.Stop();
             var tim6 = StopWatch.Elapsed;
-            Console.WriteLine("Intersecting six solids takes {0} seconds", tim6.TotalSeconds);
+            Console.WriteLine("Intersecting six solids takes {0} seconds\n", tim6.TotalSeconds);
         }
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
