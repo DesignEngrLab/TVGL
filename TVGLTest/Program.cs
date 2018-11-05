@@ -121,7 +121,7 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(ts);
                 //TestVoxelization(ts, filename);
 
-                IntersectSpeedTest(ts, filename)
+                IntersectSpeedTest(ts, filename);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
