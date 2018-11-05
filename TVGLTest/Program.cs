@@ -121,7 +121,7 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(ts);
                 //TestVoxelization(ts, filename);
 
-                //ExtrusionIssue1(dir);
+                ExtrusionIssue1(dir);
                 ExtrusionIssue2(dir);
 
                 // var stopWatch = new Stopwatch();
@@ -163,6 +163,7 @@ namespace TVGLPresenterDX
         }
 
         //Extrude parallel for loop error
+        //crashes with either parallel or single-thread loop
         public static void ExtrusionIssue2(DirectoryInfo dir)
         {
             var part = dir.GetFiles("*Mic_Holder_SW*")[0];
@@ -173,7 +174,7 @@ namespace TVGLPresenterDX
                 IO.Open(fileStream, pname, out ts);
             var vs = new VoxelizedSolid(ts, 8);
 
-            //Presenter.ShowAndHang(vs);
+            Presenter.ShowAndHang(vs);
             var vsZpos = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
             Presenter.ShowAndHang(vsZpos);
         }
