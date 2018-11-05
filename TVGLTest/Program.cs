@@ -98,8 +98,8 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i+=76)
