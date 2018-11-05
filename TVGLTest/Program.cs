@@ -119,7 +119,9 @@ namespace TVGLPresenterDX
                     Af = 0.25f
                 };
                 //Presenter.ShowAndHang(ts);
-                TestVoxelization(ts, filename);
+                //TestVoxelization(ts, filename);
+
+                IntersectSpeedTest(ts, filename)
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -141,6 +143,48 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Completed.");
             Console.ReadKey();
+        }
+
+        public static void IntersectSpeedTest(TessellatedSolid ts, string _fileName)
+        {
+            var vs = new VoxelizedSolid(ts, 8);
+            var vsXneg = vs.ExtrudeToNewSolid(VoxelDirections.XNegative);
+            var vsXpos = vs.ExtrudeToNewSolid(VoxelDirections.XPositive);
+            var vsYneg = vs.ExtrudeToNewSolid(VoxelDirections.YNegative);
+            var vsYpos = vs.ExtrudeToNewSolid(VoxelDirections.YPositive);
+            var vsZneg = vs.ExtrudeToNewSolid(VoxelDirections.ZNegative);
+            var vsZpos = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
+
+            var StopWatch = new Stopwatch();
+            StopWatch.Start();
+            var int2 = vsXneg.IntersectToNewSolid(vsXpos);
+            StopWatch.Stop();
+            var tim2 = StopWatch.Elapsed;
+            Console.WriteLine("Intersecting two solids takes {0} seconds", tim2.TotalSeconds);
+
+            StopWatch.Restart();
+            var int3 = vsXneg.IntersectToNewSolid(vsXpos, vsYneg);
+            StopWatch.Stop();
+            var tim3 = StopWatch.Elapsed;
+            Console.WriteLine("Intersecting three solids takes {0} seconds", tim3.TotalSeconds);
+
+            StopWatch.Restart();
+            var int4 = vsXneg.IntersectToNewSolid(vsXpos, vsYneg, vsYpos);
+            StopWatch.Stop();
+            var tim4 = StopWatch.Elapsed;
+            Console.WriteLine("Intersecting four solids takes {0} seconds", tim4.TotalSeconds);
+
+            StopWatch.Restart();
+            var int5 = vsXneg.IntersectToNewSolid(vsXpos, vsYneg, vsYpos, vsZneg);
+            StopWatch.Stop();
+            var tim5 = StopWatch.Elapsed;
+            Console.WriteLine("Intersecting five solids takes {0} seconds", tim5.TotalSeconds);
+
+            StopWatch.Restart();
+            var int6 = vsXneg.IntersectToNewSolid(vsXpos, vsYneg, vsYpos, vsZneg, vsZpos);
+            StopWatch.Stop();
+            var tim6 = StopWatch.Elapsed;
+            Console.WriteLine("Intersecting six solids takes {0} seconds", tim6.TotalSeconds);
         }
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
