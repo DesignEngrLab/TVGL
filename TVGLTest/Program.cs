@@ -8,7 +8,7 @@ using TVGL;
 using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
-using Constants = TVGL.Voxelization.Constants;
+using Constants = TVGL.Constants;
 
 namespace TVGLPresenterDX
 {
