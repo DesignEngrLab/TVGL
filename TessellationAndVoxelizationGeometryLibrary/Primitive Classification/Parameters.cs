@@ -76,8 +76,8 @@ namespace TVGL.PrimitiveClassificationDetail
 
         internal static List<List<int>> readingEdgesRules2()
         {
-#if NETSTANDARD
-            var resource = TVGL.Properties.Resources.NewEdgeRules;
+#if NETSTANDARD || NETSTANDARD2_0
+            var resource = Properties.Resources.NewEdgeRules;
             var reader = StringStream(resource);
 #else
             var reader = getStreamReader("NewEdgeRules.csv"); // "EdRulesBeta.csv"
@@ -110,8 +110,8 @@ namespace TVGL.PrimitiveClassificationDetail
 
         internal static List<List<int>> readingFacesRules()
         {
-#if NETSTANDARD
-            var resource = TVGL.Properties.Resources.NewFaRules;
+#if NETSTANDARD || NETSTANDARD2_0
+            var resource = Properties.Resources.NewFaRules;
             var reader = StringStream(resource);
 #else
             var reader = getStreamReader("NewFaRules.csv");//FaRules2.csv
