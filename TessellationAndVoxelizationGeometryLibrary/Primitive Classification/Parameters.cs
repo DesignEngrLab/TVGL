@@ -76,13 +76,9 @@ namespace TVGL.PrimitiveClassificationDetail
 
         internal static List<List<int>> readingEdgesRules2()
         {
-#if NETSTANDARD
-            var resource = TVGL.Properties.Resources.NewEdgeRules;
+            var resource = Properties.Resources.NewEdgeRules;
             var reader = StringStream(resource);
-#else
-            var reader = getStreamReader("NewEdgeRules.csv"); // "EdRulesBeta.csv"
-#endif
-            //var reader = new StreamReader(File.OpenRead("src/PrimitiveClassificationOfTessellatedSolids/NewEdgeRules.csv"));
+
             var Lists = new List<List<int>>();
             bool blocker = true;
             while (!reader.EndOfStream)
@@ -110,13 +106,9 @@ namespace TVGL.PrimitiveClassificationDetail
 
         internal static List<List<int>> readingFacesRules()
         {
-#if NETSTANDARD
-            var resource = TVGL.Properties.Resources.NewFaRules;
+            var resource = Properties.Resources.NewFaRules;
             var reader = StringStream(resource);
-#else
-            var reader = getStreamReader("NewFaRules.csv");//FaRules2.csv
-#endif
-            // var reader = new StreamReader(File.OpenRead("src/PrimitiveClassificationOfTessellatedSolids/NewFaRules.csv"));
+
             List<List<int>> Lists = new List<List<int>>();
             bool blocker = true;
             while (!reader.EndOfStream)
