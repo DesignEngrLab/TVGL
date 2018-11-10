@@ -98,11 +98,11 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i+=76)
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -121,6 +121,7 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(ts);
                 //TestVoxelization(ts, filename);
 
+                FindIncorrectExtrusion(ts);
                 ExtrusionIssue1(dir);
                 ExtrusionIssue2(dir);
 
@@ -177,6 +178,23 @@ namespace TVGLPresenterDX
             Presenter.ShowAndHang(vs);
             var vsZpos = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
             Presenter.ShowAndHang(vsZpos);
+        }
+
+        public static void FindIncorrectExtrusion(TessellatedSolid ts)
+        {
+            var vs = new VoxelizedSolid(ts, 8);
+            var vol = vs.Volume;
+            Console.WriteLine("Volume is {0}", vol.ToString());
+            
+            foreach (var vd in (VoxelDirections[]) Enum.GetValues(typeof(VoxelDirections)))
+            {
+                var vs1 = vs.ExtrudeToNewSolid(vd);
+                var vol1 = vs1.Volume;
+                Console.WriteLine("{0} Volume is {1}", vd.ToString(), vol1.ToString());
+                if (vol1 > vol) continue;
+                Presenter.ShowAndHang(vs);
+                Presenter.ShowAndHang(vs1);
+            }
         }
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
