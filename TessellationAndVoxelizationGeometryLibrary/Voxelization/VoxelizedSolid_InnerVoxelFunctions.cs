@@ -15,9 +15,7 @@
 using StarMathLib;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace TVGL.Voxelization
 {
@@ -88,7 +86,7 @@ namespace TVGL.Voxelization
                     voxel0 = voxelDictionaryLevel0.GetVoxel(id0);
                 }
                 else
-                    voxel0 = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(id0);
+                    voxel0 = voxelDictionaryLevel0.GetVoxel(id0);
             // make the new Voxel, and add it to the proper hashset
             var voxel = thisIDwoFlags + Constants.MakeFlags(level, VoxelRoleTypes.Full);
             lock (voxel0.InnerVoxels[level - 1])
@@ -320,14 +318,28 @@ namespace TVGL.Voxelization
             _totals[1] = voxelDictionaryLevel0.Count(v => v.Role == VoxelRoleTypes.Partial);
             for (int i = 1; i < numberOfLevels; i++)
             {
-                _totals[2 * i] = voxelDictionaryLevel0.Sum(dict => CountVoxels((VoxelBinClass)dict, i, VoxelRoleTypes.Full));
-                _totals[2 * i + 1] = voxelDictionaryLevel0.Sum(dict => CountVoxels((VoxelBinClass)dict, i, VoxelRoleTypes.Partial));
+                _totals[2 * i] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, i, VoxelRoleTypes.Full));
+                _totals[2 * i + 1] = voxelDictionaryLevel0.Sum(dict => CountVoxels(dict, i, VoxelRoleTypes.Partial));
             };
             Volume = 0.0;
             for (int i = 0; i < numberOfLevels; i++)
                 Volume += Math.Pow(VoxelSideLengths[i], 3) * _totals[2 * i];
             Volume += Math.Pow(VoxelSideLengths[numberOfLevels - 1], 3) * _totals[2 * (numberOfLevels - 1) + 1];
             _count = _totals.Sum();
+
+            SurfaceArea = 0.0;
+            var lowestLevel = this.numberOfLevels - 1;
+            foreach (var v in Voxels())
+            {
+                if (v.Role == VoxelRoleTypes.Partial && v.Level < lowestLevel) continue;
+                var neighbors = GetNeighbors(v).ToList();
+                var s = (float)v.SideLength;
+                for (int i = 0; i < 6; i++)
+                {
+                    if (neighbors[i] == null || (neighbors[i].Role == VoxelRoleTypes.Partial && v.Level != lowestLevel))
+                        SurfaceArea += s * s;
+                }
+            }
         }
 
         private long CountVoxels(VoxelBinClass voxel0, int level, VoxelRoleTypes role)

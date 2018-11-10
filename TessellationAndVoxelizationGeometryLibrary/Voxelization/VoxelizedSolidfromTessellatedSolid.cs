@@ -99,33 +99,33 @@ namespace TVGL.Voxelization
                 UpdateVertexSimulatedCoordinates(transformedCoordinates, ts.Vertices, level);
                 Parallel.ForEach(voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial),
                   voxel0 =>
-                  //foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
-                  {
-                      var voxels = voxel0.InnerVoxels[level - 1];
-                      if (level == 1)
-                      {
-                              var children = voxels.ToList();
-                          children = DefineBottomCoordinateInside(children, voxel0, 1, voxel0.BtmCoordIsInside, GetFacesToCheck(voxel0.ID, 0, voxel0), transformedCoordinates);
-                          foreach (var child in children)
-                              voxels.AddOrReplace(child);
-                          makeVoxelsInInterior(voxels, children, 1, voxel0.ID, voxel0, transformedCoordinates);
-                      }
-                      else
-                      {
-                          foreach (var parent in voxel0.InnerVoxels[level - 2]
-                              .Where(v => Constants.GetRole(v) == VoxelRoleTypes.Partial))
-                          {
-                              var children = GetChildVoxels(parent).ToList();
-                              children = DefineBottomCoordinateInside(children, voxel0, level,
-                                  Constants.GetIfBtmIsInside(parent),
-                                  GetFacesToCheck(parent, level, voxel0), transformedCoordinates);
-                              lock (voxels)
-                                  foreach (var child in children)
-                                      voxels.AddOrReplace(child);
-                              makeVoxelsInInterior(voxels, children, level, parent, voxel0, transformedCoordinates);
-                          }
-                      }
-                  });
+                //foreach (var voxel0 in voxelDictionaryLevel0.Where(v => v.Role == VoxelRoleTypes.Partial))
+                {
+                    var voxels = voxel0.InnerVoxels[level - 1];
+                    if (level == 1)
+                    {
+                        var children = voxels.ToList();
+                        children = DefineBottomCoordinateInside(children, voxel0, 1, voxel0.BtmCoordIsInside, GetFacesToCheck(voxel0.ID, 0, voxel0), transformedCoordinates);
+                        foreach (var child in children)
+                            voxels.AddOrReplace(child);
+                        makeVoxelsInInterior(voxels, children, 1, voxel0.ID, voxel0, transformedCoordinates);
+                    }
+                    else
+                    {
+                        foreach (var parent in voxel0.InnerVoxels[level - 2]
+                            .Where(v => Constants.GetRole(v) == VoxelRoleTypes.Partial))
+                        {
+                            var children = GetChildVoxels(parent).ToList();
+                            children = DefineBottomCoordinateInside(children, voxel0, level,
+                                Constants.GetIfBtmIsInside(parent),
+                                GetFacesToCheck(parent, level, voxel0), transformedCoordinates);
+                            lock (voxels)
+                                foreach (var child in children)
+                                    voxels.AddOrReplace(child);
+                            makeVoxelsInInterior(voxels, children, level, parent, voxel0, transformedCoordinates);
+                        }
+                    }
+                });
             }
             #endregion
             UpdateProperties();
@@ -675,17 +675,17 @@ namespace TVGL.Voxelization
             foreach (var voxel in voxelDictionaryLevel0)
             {
                 #region Step 1: if the face has all positive normals or all negative then quick and easy
-                List<PolygonalFace> faces = GetFacesToCheck(voxel.ID, 0, (VoxelBinClass)voxel);
+                List<PolygonalFace> faces = GetFacesToCheck(voxel.ID, 0, voxel);
                 if (faces.SelectMany(f => f.Normal).All(n => n > 0))
                 {
                     voxel.BtmCoordIsInside = true;
-                    assignedHashSet.Add((VoxelBinClass)voxel);
+                    assignedHashSet.Add(voxel);
                     continue;
                 }
                 if (faces.SelectMany(f => f.Normal).All(n => n < 0))
                 {
                     voxel.BtmCoordIsInside = false;
-                    assignedHashSet.Add((VoxelBinClass)voxel);
+                    assignedHashSet.Add(voxel);
                     continue;
                 }
                 #endregion
@@ -882,8 +882,8 @@ namespace TVGL.Voxelization
             var outsiders = new Stack<VoxelBinClass>();
             /* separate the partial/surface voxels into insiders and outsiders.  */
             foreach (var voxel in voxelDictionaryLevel0)
-                if (voxel.BtmCoordIsInside) insiders.Push((VoxelBinClass)voxel);
-                else outsiders.Push((VoxelBinClass)voxel);
+                if (voxel.BtmCoordIsInside) insiders.Push(voxel);
+                else outsiders.Push(voxel);
             /* the outsiders are done first as these may create insiders that are useful to finding other insiders.
              * Note, that new interior voxels created here (20 lines down) are added to the insider queue. */
             // debug: potential problem!!! what if there are no outsiders or insiders but there are unknown partials?
@@ -1032,7 +1032,7 @@ namespace TVGL.Voxelization
             {
                 if (lineToFaceIntersection(face, coord, dimension, 1, transformedCoordinates, out var signedDistance))
                     //if (lineToFaceIntersection(face, coord, dimension, startingMinFaceToCornerDistance, out var signedDistance))
-                    if (signedDistance > maxDistance)
+                    if (signedDistance >= maxDistance)
                     {
                         negativeFace = face.Normal[dimension] < 0;
                         maxDistance = signedDistance;
