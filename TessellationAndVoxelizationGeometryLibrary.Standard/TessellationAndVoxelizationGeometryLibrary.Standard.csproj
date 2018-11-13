@@ -18,6 +18,7 @@
     <PackageTags>3d, solid moedling, computaional geometry, geometric modeling, mesh, tessellation, voxelization</PackageTags>
     <NeutralLanguage />
     <Platforms>AnyCPU;x64</Platforms>
+    <Configurations>Debug;Release;DebugSingleThread</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
