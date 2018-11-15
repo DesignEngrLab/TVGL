@@ -121,9 +121,10 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(ts);
                 //TestVoxelization(ts, filename);
 
-                FindIncorrectExtrusion(ts);
-                ExtrusionIssue1(dir);
-                ExtrusionIssue2(dir);
+                //ExtrusionIssue1(dir);
+                //ExtrusionIssue2(dir);
+                //FindIncorrectExtrusion(ts);
+                DebugTableTopOpExtrude(dir);
 
                 // var stopWatch = new Stopwatch();
                 // Color color = new Color(KnownColors.AliceBlue);
@@ -190,10 +191,31 @@ namespace TVGLPresenterDX
             {
                 var vs1 = vs.ExtrudeToNewSolid(vd);
                 var vol1 = vs1.Volume;
-                Console.WriteLine("{0} Volume is {1}", vd.ToString(), vol1.ToString());
                 if (vol1 > vol) continue;
-                Presenter.ShowAndHang(vs);
-                Presenter.ShowAndHang(vs1);
+                Console.WriteLine("{0} Volume is {1}", vd.ToString(), vol1.ToString());
+                //Presenter.ShowAndHang(vs);
+                //Presenter.ShowAndHang(vs1);
+            }
+        }
+
+        public static void DebugTableTopOpExtrude(DirectoryInfo dir)
+        {
+            var parts = new FileInfo[2];
+            parts[0] = dir.GetFiles("*TableTopOp.*")[0];
+            //Part has been rotated 180deg about X so that Z axis is flipped
+            //Both parts "fail" (have smaller extruded volume) in their local -Z
+            parts[1] = dir.GetFiles("*TableTopOp_rx180.*")[0];
+            var vs = new VoxelizedSolid[2];
+            var vz = new VoxelizedSolid[2];
+            for (var i = 0; i < 2; i++)
+            {
+                var fullName = parts[i].FullName;
+                Console.WriteLine("Attempting: " + fullName);
+                IO.Open(File.OpenRead(fullName), fullName, out TessellatedSolid ts);
+                vs[i] = new VoxelizedSolid(ts, 8);
+                vz[i] = vs[i].ExtrudeToNewSolid(VoxelDirections.ZNegative);
+                Presenter.ShowAndHang(vs[i]);
+                Presenter.ShowAndHang(vz[i]);
             }
         }
 
