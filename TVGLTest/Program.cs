@@ -171,7 +171,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Drafting Solid in Y Positive...");
             var vs1ypos = vs1.ExtrudeToNewSolid(VoxelDirections.YPositive);
-            // Presenter.ShowAndHang(vs1ypos);
+            //Presenter.ShowAndHang(vs1ypos);
             //var vs1yposts = vs1ypos.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
             //savename = "vs1ypos_" + _fileName;
@@ -179,7 +179,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Drafting Solid in Y Negative...");
             var vs1yneg = vs1.ExtrudeToNewSolid(VoxelDirections.YNegative);
-            // Presenter.ShowAndHang(vs1yneg);
+            //Presenter.ShowAndHang(vs1yneg);
             ////var vs1ynegts = vs1yneg.ConvertToTessellatedSolid(color);
             ////Console.WriteLine("Saving Solid...");
             ////savename = "vs1yneg_" + _fileName;
@@ -187,7 +187,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Drafting Solid in Z Positive...");
             var vs1zpos = vs1.ExtrudeToNewSolid(VoxelDirections.ZPositive);
-            // Presenter.ShowAndHang(vs1zpos);
+            //Presenter.ShowAndHang(vs1zpos);
             ////var vs1zposts = vs1zpos.ConvertToTessellatedSolid(color);
             ////Console.WriteLine("Saving Solid...");
             ////savename = "vs1zpos_" + _fileName;
@@ -203,7 +203,7 @@ namespace TVGLPresenterDX
 
             Console.WriteLine("Intersecting Drafted Solids...");
             var intersect = vs1xpos.IntersectToNewSolid(vs1xneg, vs1ypos, vs1zneg, vs1yneg, vs1zpos);
-             Presenter.ShowAndHang(intersect);
+            Presenter.ShowAndHang(intersect);
             //return;
             //var intersectts = intersect.ConvertToTessellatedSolid(color);
             //Console.WriteLine("Saving Solid...");
