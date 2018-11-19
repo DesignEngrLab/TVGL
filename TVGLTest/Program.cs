@@ -121,7 +121,7 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(ts);
                 //TestVoxelization(ts, filename);
 
-                //ExtrusionIssue1(dir);
+                ExtrusionIssue1(dir);
                 //ExtrusionIssue2(dir);
                 //FindIncorrectExtrusion(ts);
                 DebugTableTopOpExtrude(dir);
@@ -196,6 +196,7 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(vs);
                 //Presenter.ShowAndHang(vs1);
             }
+            Console.WriteLine("");
         }
 
         public static void DebugTableTopOpExtrude(DirectoryInfo dir)
