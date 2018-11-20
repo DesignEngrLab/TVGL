@@ -119,6 +119,12 @@ namespace TVGLPresenterDX
                     Af = 0.25f
                 };
                 //Presenter.ShowAndHang(ts);
+                var vs = new VoxelizedSolid(ts, 8);
+                var bb = vs.CreateBoundingVoxelizedSolid();
+                var neg = vs.Invert();
+                Presenter.ShowAndHang(vs);
+                Presenter.ShowAndHang(bb);
+                Presenter.ShowAndHang(neg);
                 TestVoxelization(ts, filename);
 
                 // var stopWatch = new Stopwatch();

@@ -899,47 +899,58 @@ namespace TVGL.Voxelization
         }
 
         #endregion
-        #region Invert
+        #region Bounding Solid
         /// <summary>
         /// Negates to new solid.
         /// </summary>
         /// <returns>VoxelizedSolid.</returns>
-        public VoxelizedSolid InvertToNewSolid()
+        public VoxelizedSolid CreateBoundingVoxelizedSolid()
         {
-            var copy = (VoxelizedSolid)Copy();
-            copy.Invert();
+            var copy = (VoxelizedSolid) Copy();
+            copy.BoundingVoxelizedSolid();
             return copy;
         }
-        public void Invert()
+        private void BoundingVoxelizedSolid()
         {
             var maxVoxels = new int[3];
             for (var i = 0; i < 3; i++)
             {
                 maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[numberOfLevels - 1]);
             }
-            Invert(0, 0, maxVoxels);
+            BoundingVoxelizedSolid(0, 0, maxVoxels);
             UpdateProperties();
         }
-        private void Invert(long parent, int level, int[] maxVoxels)
+        private void BoundingVoxelizedSolid(long parent, int level, int[] maxVoxels)
         {
-            var voxels = GetChildVoxels(parent);
-            Parallel.ForEach(voxels, thisVoxel =>
-                //foreach(var thisVoxel in voxels)
+            //var voxels = GetChildVoxels(parent);
+            var voxels = AddAllDescendants(parent, level - 1);
+            if (level == NumberOfLevels - 1) return;
+            foreach(var thisVoxel in voxels)
+            //Parallel.ForEach(voxels, thisVoxel =>
             {
-                switch (Constants.GetRole(thisVoxel))
-                {
-                    case VoxelRoleTypes.Full:
-                        ChangeVoxelToEmpty(thisVoxel, true, false);
-                        break;
-                    case VoxelRoleTypes.Partial:
-                        if (level < numberOfLevels - 1) Invert(thisVoxel, level + 1, maxVoxels);
-                        else ChangeVoxelToEmpty(thisVoxel, true, false);
-                        break;
-                    default:
-                        ChangeVoxelToFull(thisVoxel, false);
-                        break;
-                }
-            });
+                var vox = voxelDictionaryLevel0.GetVoxel(thisVoxel);
+                //AddAllDescendants(thisVoxel, level, voxelDictionaryLevel0.GetVoxel(thisVoxel));
+                //BoundingVoxelizedSolid(thisVoxel, level + 1, maxVoxels);
+                //switch (Constants.GetRole(thisVoxel))
+                //{
+                //    case VoxelRoleTypes.Full:
+                //        ChangeVoxelToEmpty(thisVoxel, true, false);
+                //        break;
+                //    case VoxelRoleTypes.Partial:
+                //        if (level < numberOfLevels - 1) Invert(thisVoxel, level + 1, maxVoxels);
+                //        else ChangeVoxelToEmpty(thisVoxel, true, false);
+                //        break;
+                //    default:
+                //        ChangeVoxelToFull(thisVoxel, false);
+                //        break;
+                //}
+            }//);
+        }
+        #endregion
+        #region Invert
+        public VoxelizedSolid Invert()
+        {
+            return CreateBoundingVoxelizedSolid().SubtractToNewSolid(this);
         }
         #endregion
         #region Union
