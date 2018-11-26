@@ -20,6 +20,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
+using TVGL.IOFunctions.amfclasses;
 
 namespace TVGL.Voxelization
 {
@@ -904,53 +905,57 @@ namespace TVGL.Voxelization
         /// Negates to new solid.
         /// </summary>
         /// <returns>VoxelizedSolid.</returns>
-        public VoxelizedSolid CreateBoundingVoxelizedSolid()
+        public VoxelizedSolid CreateBoundingSolid()
         {
             var copy = (VoxelizedSolid) Copy();
-            copy.BoundingVoxelizedSolid();
+            copy.BoundingSolid();
             return copy;
         }
-        private void BoundingVoxelizedSolid()
+        private void BoundingSolid()
         {
             var maxVoxels = new int[3];
             for (var i = 0; i < 3; i++)
             {
                 maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[numberOfLevels - 1]);
             }
-            BoundingVoxelizedSolid(0, 0, maxVoxels);
+            BoundingSolid(maxVoxels);
             UpdateProperties();
         }
-        private void BoundingVoxelizedSolid(long parent, int level, int[] maxVoxels)
+        private void BoundingSolid(IReadOnlyList<int> maxVoxels)
         {
-            //var voxels = GetChildVoxels(parent);
-            var voxels = AddAllDescendants(parent, level - 1);
-            if (level == NumberOfLevels - 1) return;
-            foreach(var thisVoxel in voxels)
-            //Parallel.ForEach(voxels, thisVoxel =>
+            var nL = numberOfLevels - 1;
+            //for (var i = 0; i < maxVoxels[0]; i++)
+            Parallel.For(0, maxVoxels[0], i =>
             {
-                var vox = voxelDictionaryLevel0.GetVoxel(thisVoxel);
-                //AddAllDescendants(thisVoxel, level, voxelDictionaryLevel0.GetVoxel(thisVoxel));
-                //BoundingVoxelizedSolid(thisVoxel, level + 1, maxVoxels);
-                //switch (Constants.GetRole(thisVoxel))
-                //{
-                //    case VoxelRoleTypes.Full:
-                //        ChangeVoxelToEmpty(thisVoxel, true, false);
-                //        break;
-                //    case VoxelRoleTypes.Partial:
-                //        if (level < numberOfLevels - 1) Invert(thisVoxel, level + 1, maxVoxels);
-                //        else ChangeVoxelToEmpty(thisVoxel, true, false);
-                //        break;
-                //    default:
-                //        ChangeVoxelToFull(thisVoxel, false);
-                //        break;
-                //}
-            }//);
+                for (var j = 0; j < maxVoxels[1]; j++)
+                {
+                    for (var k = 0; k < maxVoxels[2]; k++)
+                    {
+                        var coord = new[] {i, j, k};
+                        var vox = GetVoxelID(coord, nL);
+                        if (Constants.GetRole(vox) != VoxelRoleTypes.Full)
+                        {
+                            ChangeVoxelToFull(vox, true);
+                        }
+                    }
+                }
+            });
+            //foreach (var coord in voxelCoords)
+            ////Parallel.ForEach(voxelCoords, coord =>
+            //{
+            //    var vox = GetVoxelID(coord, nL);
+            //    if (Constants.GetRole(vox) != VoxelRoleTypes.Full)
+            //    {
+            //        ChangeVoxelToFull(vox, true);
+            //    }
+            //}//);
         }
         #endregion
         #region Invert
+        //ToDo: This could work in a similar way to BoundingSolid, but with a switch/case
         public VoxelizedSolid Invert()
         {
-            return CreateBoundingVoxelizedSolid().SubtractToNewSolid(this);
+            return CreateBoundingSolid().SubtractToNewSolid(this);
         }
         #endregion
         #region Union

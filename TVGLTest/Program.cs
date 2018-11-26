@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Microsoft.Office.Interop.Excel;
 using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
@@ -120,7 +121,7 @@ namespace TVGLPresenterDX
                 };
                 //Presenter.ShowAndHang(ts);
                 var vs = new VoxelizedSolid(ts, 8);
-                var bb = vs.CreateBoundingVoxelizedSolid();
+                var bb = vs.CreateBoundingSolid();
                 var neg = vs.Invert();
                 Presenter.ShowAndHang(vs);
                 Presenter.ShowAndHang(bb);
