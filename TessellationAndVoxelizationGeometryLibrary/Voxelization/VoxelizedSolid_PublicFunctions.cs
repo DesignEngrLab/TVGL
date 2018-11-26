@@ -918,11 +918,7 @@ namespace TVGL.Voxelization
             {
                 maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[numberOfLevels - 1]);
             }
-            BoundingSolid(maxVoxels);
-            UpdateProperties();
-        }
-        private void BoundingSolid(IReadOnlyList<int> maxVoxels)
-        {
+
             var nL = numberOfLevels - 1;
             //for (var i = 0; i < maxVoxels[0]; i++)
             Parallel.For(0, maxVoxels[0], i =>
@@ -931,7 +927,7 @@ namespace TVGL.Voxelization
                 {
                     for (var k = 0; k < maxVoxels[2]; k++)
                     {
-                        var coord = new[] {i, j, k};
+                        var coord = new[] { i, j, k };
                         var vox = GetVoxelID(coord, nL);
                         if (Constants.GetRole(vox) != VoxelRoleTypes.Full)
                         {
@@ -940,15 +936,6 @@ namespace TVGL.Voxelization
                     }
                 }
             });
-            //foreach (var coord in voxelCoords)
-            ////Parallel.ForEach(voxelCoords, coord =>
-            //{
-            //    var vox = GetVoxelID(coord, nL);
-            //    if (Constants.GetRole(vox) != VoxelRoleTypes.Full)
-            //    {
-            //        ChangeVoxelToFull(vox, true);
-            //    }
-            //}//);
         }
         #endregion
         #region Invert
