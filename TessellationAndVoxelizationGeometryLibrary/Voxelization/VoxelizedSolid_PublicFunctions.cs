@@ -914,12 +914,11 @@ namespace TVGL.Voxelization
         private void BoundingSolid()
         {
             var maxVoxels = new int[3];
+            var nL = numberOfLevels - 1;
             for (var i = 0; i < 3; i++)
             {
-                maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[numberOfLevels - 1]);
+                maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
             }
-
-            var nL = numberOfLevels - 1;
             //for (var i = 0; i < maxVoxels[0]; i++)
             Parallel.For(0, maxVoxels[0], i =>
             {
@@ -943,6 +942,58 @@ namespace TVGL.Voxelization
         public VoxelizedSolid Invert()
         {
             return CreateBoundingSolid().SubtractToNewSolid(this);
+        }
+
+        public VoxelizedSolid InvertToNewSolid()
+        {
+            var copy = (VoxelizedSolid)Copy();
+            copy.Invert(true);
+            return copy;
+        }
+        private void Invert(bool flag)
+        {
+            var maxVoxels = new int[3];
+            var nL = numberOfLevels - 1;
+            for (var i = 0; i < 3; i++)
+            {
+                maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
+            }
+            //ToDo: Need to change full voxels at higher levels to empty
+            //for (var i = 0; i < maxVoxels[0]; i++)
+            Parallel.For(0, maxVoxels[0], i =>
+            {
+                for (var j = 0; j < maxVoxels[1]; j++)
+                {
+                    for (var k = 0; k < maxVoxels[2]; k++)
+                    {
+                        var coord = new[] { i, j, k };
+                        var vox = GetVoxelID(coord, nL);
+                        switch (Constants.GetRole(vox))
+                        {
+                            case VoxelRoleTypes.Empty:
+                                ChangeVoxelToFull(vox, false);
+                                break;
+                            default:
+                                ChangeVoxelToEmpty(vox, false, false);
+                                break;
+                        }
+                    }
+                }
+            });
+            var voxels = GetChildVoxels(0);
+            Parallel.ForEach(voxels, voxel =>
+            {
+                switch (Constants.GetRole(voxel))
+                {
+                    case VoxelRoleTypes.Full:
+                        ChangeVoxelToEmpty(voxel, true, false);
+                        break;
+                    case VoxelRoleTypes.Empty:
+                        ChangeVoxelToFull(voxel, false);
+                        break;
+                }
+                    
+            });
         }
         #endregion
         #region Union
