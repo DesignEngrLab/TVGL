@@ -909,6 +909,7 @@ namespace TVGL.Voxelization
         {
             var copy = (VoxelizedSolid) Copy();
             copy.BoundingSolid();
+            copy.UpdateProperties();
             return copy;
         }
         private void BoundingSolid()
@@ -923,22 +924,19 @@ namespace TVGL.Voxelization
             Parallel.For(0, maxVoxels[0], i =>
             {
                 for (var j = 0; j < maxVoxels[1]; j++)
+                for (var k = 0; k < maxVoxels[2]; k++)
                 {
-                    for (var k = 0; k < maxVoxels[2]; k++)
-                    {
-                        var coord = new[] { i, j, k };
-                        var vox = GetVoxelID(coord, nL);
-                        if (Constants.GetRole(vox) != VoxelRoleTypes.Full)
-                        {
-                            ChangeVoxelToFull(vox, true);
-                        }
-                    }
+                    var coord = new[] { i, j, k };
+                    var vox = GetVoxelID(coord, nL);
+                    if (Constants.GetRole(vox) != VoxelRoleTypes.Full)
+                        ChangeVoxelToFull(vox, true);
                 }
             });
         }
         #endregion
         #region Invert
         //ToDo: This could work in a similar way to BoundingSolid, but with a switch/case
+        //Old version which subtracts original solid from bounding box. Slow!!!!
         public VoxelizedSolid Invert()
         {
             return CreateBoundingSolid().SubtractToNewSolid(this);
@@ -947,53 +945,62 @@ namespace TVGL.Voxelization
         public VoxelizedSolid InvertToNewSolid()
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.Invert(true);
+            copy.Invert(0, 0);
+            copy.UpdateProperties();
             return copy;
         }
-        private void Invert(bool flag)
+        private void Invert(long parent, int level)
         {
-            var maxVoxels = new int[3];
-            var nL = numberOfLevels - 1;
-            for (var i = 0; i < 3; i++)
-            {
-                maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
-            }
             //ToDo: Need to change full voxels at higher levels to empty
-            //for (var i = 0; i < maxVoxels[0]; i++)
-            Parallel.For(0, maxVoxels[0], i =>
+            var descendants = level != numberOfLevels - 1;
+            var coords = GetChildVoxelCoords(parent, level);
+            Parallel.ForEach(coords, coord =>
             {
-                for (var j = 0; j < maxVoxels[1]; j++)
+                var vox = GetVoxelID(coord, level);
+                switch (Constants.GetRole(vox))
                 {
-                    for (var k = 0; k < maxVoxels[2]; k++)
-                    {
-                        var coord = new[] { i, j, k };
-                        var vox = GetVoxelID(coord, nL);
-                        switch (Constants.GetRole(vox))
-                        {
-                            case VoxelRoleTypes.Empty:
-                                ChangeVoxelToFull(vox, false);
-                                break;
-                            default:
-                                ChangeVoxelToEmpty(vox, false, false);
-                                break;
-                        }
-                    }
-                }
-            });
-            var voxels = GetChildVoxels(0);
-            Parallel.ForEach(voxels, voxel =>
-            {
-                switch (Constants.GetRole(voxel))
-                {
-                    case VoxelRoleTypes.Full:
-                        ChangeVoxelToEmpty(voxel, true, false);
-                        break;
                     case VoxelRoleTypes.Empty:
-                        ChangeVoxelToFull(voxel, false);
+                        ChangeVoxelToFull(vox, false);
+                        break;
+                    case VoxelRoleTypes.Full:
+                        ChangeVoxelToEmpty(vox, descendants, false);
+                        break;
+                    case VoxelRoleTypes.Partial:
+                        if (descendants) Invert(vox, level + 1);
+                        else ChangeVoxelToEmpty(vox, false, false);
+                        break;
+                    default:
+                        ChangeVoxelToEmpty(vox, descendants, false);
                         break;
                 }
-                    
             });
+        }
+        private IEnumerable<int[]> GetChildVoxelCoords(long parent, int level)
+        {
+            var coords = new ConcurrentBag<int[]>();
+            var maxVoxels = new int[3];
+            for (var i = 0; i < 3; i++)
+                maxVoxels[i] = (int) Math.Ceiling(dimensions[i] / VoxelSideLengths[level]);
+            var iS = new [] { 0, 0, 0 };
+            var iE = new [] { maxVoxels[0], maxVoxels[1], maxVoxels[2] };
+            if (parent != (long) 0)
+            {
+                var vox = GetVoxel(parent);
+                var coord = vox.CoordinateIndices;
+                var num = (int) Math.Floor(VoxelSideLengths[level] / VoxelSideLengths[level - 1]);
+                for (var i = 0; i < 3; i++)
+                {
+                    iS[i] = coord[i] * num;
+                    iE[i] = coord[i] * num + num;
+                }
+            }
+            Parallel.For(iS[0], iE[0], i =>
+            {
+                for (var j = iS[1]; j < iE[1]; j++)
+                for (var k = iS[2]; k < iE[2]; k++)
+                    coords.Add(new [] { i, j, k });
+            });
+            return coords;
         }
         #endregion
         #region Union

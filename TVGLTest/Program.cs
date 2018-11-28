@@ -122,6 +122,8 @@ namespace TVGLPresenterDX
                 //Presenter.ShowAndHang(ts);
                 var vs = new VoxelizedSolid(ts, 8);
                 //var bb = vs.CreateBoundingSolid();
+                //Console.WriteLine(vs.Volume.ToString());
+                //Console.WriteLine(bb.Volume.ToString());
                 var st1 = new Stopwatch();
                 var st2 = new Stopwatch();
                 st1.Start();
