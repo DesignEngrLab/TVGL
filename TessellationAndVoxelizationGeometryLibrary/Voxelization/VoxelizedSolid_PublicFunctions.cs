@@ -935,8 +935,7 @@ namespace TVGL.Voxelization
         }
         #endregion
         #region Invert
-        //ToDo: This could work in a similar way to BoundingSolid, but with a switch/case
-        //Old version which subtracts original solid from bounding box. Slow!!!!
+        //ToDo: Old version which subtracts original solid from bounding box. Slow!!!!
         public VoxelizedSolid Invert()
         {
             return CreateBoundingSolid().SubtractToNewSolid(this);
@@ -949,11 +948,13 @@ namespace TVGL.Voxelization
             copy.UpdateProperties();
             return copy;
         }
+
         private void Invert(long parent, int level)
         {
             //ToDo: Need to change full voxels at higher levels to empty
             var descendants = level != numberOfLevels - 1;
-            var coords = GetChildVoxelCoords(parent, level);
+            var coords = GetChildVoxelCoords(parent, level, out var onSurface);
+            //foreach (var coord in coords)
             Parallel.ForEach(coords, coord =>
             {
                 var vox = GetVoxelID(coord, level);
@@ -969,25 +970,39 @@ namespace TVGL.Voxelization
                         if (descendants) Invert(vox, level + 1);
                         else ChangeVoxelToEmpty(vox, false, false);
                         break;
-                    default:
-                        ChangeVoxelToEmpty(vox, descendants, false);
-                        break;
                 }
             });
+
+            //ToDo: Check if partial voxel on outer surface of solid was made empty
+            if (!onSurface) return; // || Constants.GetRole(parent) != VoxelRoleTypes.Partial) return;
+            var empty = true;
+            Parallel.ForEach(coords, coord =>
+            {
+                if (!empty) return;
+                var vox = GetVoxelID(coord, level);
+                if (Constants.GetRole(vox) != VoxelRoleTypes.Empty) empty = false;
+            });
+            if (empty) ChangeVoxelToEmpty(parent, false, false);
         }
-        private IEnumerable<int[]> GetChildVoxelCoords(long parent, int level)
+        private IEnumerable<int[]> GetChildVoxelCoords(long parent, int level, out bool onSurface)
         {
             var coords = new ConcurrentBag<int[]>();
+            onSurface = false;
+            var voxelCoords = GetVoxel(parent).CoordinateIndices;
             var maxVoxels = new int[3];
             for (var i = 0; i < 3; i++)
+            {
                 maxVoxels[i] = (int) Math.Ceiling(dimensions[i] / VoxelSideLengths[level]);
+                var surfaceLimit = (int) Math.Ceiling((double) maxVoxels[i] / voxelsPerSide[level]) - 1;
+                if (surfaceLimit == voxelCoords[i]) onSurface = true;
+
+            }
             var iS = new [] { 0, 0, 0 };
             var iE = new [] { maxVoxels[0], maxVoxels[1], maxVoxels[2] };
             if (parent != (long) 0)
             {
-                var vox = GetVoxel(parent);
-                var coord = vox.CoordinateIndices;
-                var num = (int) Math.Floor(VoxelSideLengths[level] / VoxelSideLengths[level - 1]);
+                var coord = GetVoxel(parent, level - 1).CoordinateIndices;
+                var num = voxelsPerSide[level];
                 for (var i = 0; i < 3; i++)
                 {
                     iS[i] = coord[i] * num;
