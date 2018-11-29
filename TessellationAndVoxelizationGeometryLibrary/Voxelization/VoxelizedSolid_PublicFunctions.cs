@@ -1015,7 +1015,6 @@ namespace TVGL.Voxelization
             });
             return coords;
         }
-
         private bool OverSurface(long parent, int level)
         {
             var nL = numberOfLevels - 1;

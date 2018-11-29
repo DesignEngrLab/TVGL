@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Microsoft.Office.Interop.Excel;
 using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
@@ -120,20 +119,6 @@ namespace TVGLPresenterDX
                     Af = 0.25f
                 };
                 //Presenter.ShowAndHang(ts);
-                var vs = new VoxelizedSolid(ts, 8);
-                //var bb = vs.CreateBoundingSolid();
-                //Console.WriteLine(vs.Volume.ToString());
-                //Console.WriteLine(bb.Volume.ToString());
-                var st2 = new Stopwatch();
-                st2.Start();
-                var ne1 = vs.InvertToNewSolid();
-                st2.Stop();
-                Console.WriteLine(st2.Elapsed.TotalSeconds.ToString());
-                Console.WriteLine(ne1.Volume.ToString());
-                //Presenter.ShowAndHang(vs);
-                //Presenter.ShowAndHang(bb);
-                Presenter.ShowAndHang(ne1);
-                Presenter.ShowAndHang(ne1, 0);
                 TestVoxelization(ts, filename);
 
                 // var stopWatch = new Stopwatch();
