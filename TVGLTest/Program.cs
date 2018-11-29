@@ -124,22 +124,16 @@ namespace TVGLPresenterDX
                 //var bb = vs.CreateBoundingSolid();
                 //Console.WriteLine(vs.Volume.ToString());
                 //Console.WriteLine(bb.Volume.ToString());
-                //var st1 = new Stopwatch();
-                //st1.Start();
-                //var neg = vs.Invert();
-                //st1.Stop();
                 var st2 = new Stopwatch();
                 st2.Start();
                 var ne1 = vs.InvertToNewSolid();
                 st2.Stop();
-                //Console.WriteLine(st1.Elapsed.TotalSeconds.ToString());
                 Console.WriteLine(st2.Elapsed.TotalSeconds.ToString());
-                //Console.WriteLine(neg.Volume.ToString());
                 Console.WriteLine(ne1.Volume.ToString());
                 //Presenter.ShowAndHang(vs);
                 //Presenter.ShowAndHang(bb);
-                //Presenter.ShowAndHang(neg);
                 Presenter.ShowAndHang(ne1);
+                Presenter.ShowAndHang(ne1, 0);
                 TestVoxelization(ts, filename);
 
                 // var stopWatch = new Stopwatch();

@@ -935,12 +935,6 @@ namespace TVGL.Voxelization
         }
         #endregion
         #region Invert
-        //ToDo: Old version which subtracts original solid from bounding box. Slow!!!!
-        public VoxelizedSolid Invert()
-        {
-            return CreateBoundingSolid().SubtractToNewSolid(this);
-        }
-
         public VoxelizedSolid InvertToNewSolid()
         {
             var copy = (VoxelizedSolid)Copy();
@@ -948,10 +942,8 @@ namespace TVGL.Voxelization
             copy.UpdateProperties();
             return copy;
         }
-
         private void Invert(long parent, int level)
         {
-            //ToDo: Need to change full voxels at higher levels to empty
             var descendants = level != numberOfLevels - 1;
             var coords = GetChildVoxelCoords(parent, level, out var onSurface);
             //foreach (var coord in coords)
@@ -961,6 +953,12 @@ namespace TVGL.Voxelization
                 switch (Constants.GetRole(vox))
                 {
                     case VoxelRoleTypes.Empty:
+                        if (OverSurface(vox, level + 1))
+                        {
+                            ChangeVoxelToPartial(vox, false);
+                            Invert(vox, level + 1);
+                            break;
+                        }
                         ChangeVoxelToFull(vox, false);
                         break;
                     case VoxelRoleTypes.Full:
@@ -972,9 +970,8 @@ namespace TVGL.Voxelization
                         break;
                 }
             });
-
-            //ToDo: Check if partial voxel on outer surface of solid was made empty
-            if (!onSurface) return; // || Constants.GetRole(parent) != VoxelRoleTypes.Partial) return;
+            // Check if partial voxel on outer surface of solid was made empty
+            if (!onSurface || Constants.GetRole(parent) != VoxelRoleTypes.Partial) return;
             var empty = true;
             Parallel.ForEach(coords, coord =>
             {
@@ -990,12 +987,13 @@ namespace TVGL.Voxelization
             onSurface = false;
             var voxelCoords = GetVoxel(parent).CoordinateIndices;
             var maxVoxels = new int[3];
+            var surfaceLimit = new[] { 0, 0 };
             for (var i = 0; i < 3; i++)
             {
                 maxVoxels[i] = (int) Math.Ceiling(dimensions[i] / VoxelSideLengths[level]);
-                var surfaceLimit = (int) Math.Ceiling((double) maxVoxels[i] / voxelsPerSide[level]) - 1;
-                if (surfaceLimit == voxelCoords[i]) onSurface = true;
-
+                if (level == 0) continue;
+                surfaceLimit[1] = (int) Math.Ceiling((double) maxVoxels[i] / voxelsPerSide[level]) - 1;
+                if (surfaceLimit.Contains(voxelCoords[i])) onSurface = true;
             }
             var iS = new [] { 0, 0, 0 };
             var iE = new [] { maxVoxels[0], maxVoxels[1], maxVoxels[2] };
@@ -1005,8 +1003,8 @@ namespace TVGL.Voxelization
                 var num = voxelsPerSide[level];
                 for (var i = 0; i < 3; i++)
                 {
-                    iS[i] = coord[i] * num;
-                    iE[i] = coord[i] * num + num;
+                    iS[i] = Math.Max(coord[i] * num, iS[i]);
+                    iE[i] = Math.Min(coord[i] * num + num, iE[i]);
                 }
             }
             Parallel.For(iS[0], iE[0], i =>
@@ -1016,6 +1014,24 @@ namespace TVGL.Voxelization
                     coords.Add(new [] { i, j, k });
             });
             return coords;
+        }
+
+        private bool OverSurface(long parent, int level)
+        {
+            var nL = numberOfLevels - 1;
+            if (level > nL) return false;
+            var overSurface = false;
+            var voxelCoords = GetVoxel(parent).CoordinateIndices;
+            var totalVoxels = new int[3];
+            for (var i = 0; i < 3; i++)
+            {
+                totalVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
+                var compare = totalVoxels[i] / voxelsPerSide[level];
+                if (compare != voxelCoords[i]) continue;
+                overSurface = true;
+                break;
+            }
+            return overSurface;
         }
         #endregion
         #region Union
