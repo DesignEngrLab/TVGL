@@ -944,8 +944,8 @@ namespace TVGL.Voxelization
             //var level0 = level == 0;
             const bool level0 = false;
             var coords = GetChildVoxelCoords(parent, level, out var onSurface);
-            //foreach (var coord in coords)
-            Parallel.ForEach(coords, coord =>
+            foreach (var coord in coords)
+            //Parallel.ForEach(coords, coord =>
             {
                 var vox = GetVoxelID(coord, level);
                 switch (Constants.GetRole(vox))
@@ -967,7 +967,7 @@ namespace TVGL.Voxelization
                         else ChangeVoxelToEmpty(vox, false, !level0);
                         break;
                 }
-            });
+            }//);
             // Check if partial voxel on outer surface of solid was made empty
             if (!onSurface || Constants.GetRole(parent) != VoxelRoleTypes.Partial) return;
             var empty = true;
@@ -989,7 +989,9 @@ namespace TVGL.Voxelization
             var surfaceLimit = new[] { 0, 0 };
             for (var i = 0; i < 3; i++)
             {
-                maxVoxels[i] = (int) Math.Ceiling(dimensions[i] / VoxelSideLengths[level]);
+                var dim = dimensions[i] / VoxelSideLengths[level];
+                if (dim - Math.Floor(dim) < 1e-7) maxVoxels[i] = (int) Math.Floor(dim);
+                else maxVoxels[i] = (int) Math.Ceiling(dim);
                 if (level == 0) continue;
                 surfaceLimit[1] = (int) Math.Ceiling((double) maxVoxels[i] / voxelsPerSide[level]) - 1;
                 if (surfaceLimit.Contains(voxelCoords[i])) onSurface = true;

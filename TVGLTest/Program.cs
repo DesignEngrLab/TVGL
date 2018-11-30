@@ -100,7 +100,7 @@ namespace TVGLPresenterDX
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
             //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
-            var fileNames = dir.GetFiles("*Oblique*").ToArray();
+            var fileNames = dir.GetFiles("*Casing*").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i+=76)
