@@ -26,7 +26,7 @@ namespace TVGL.Voxelization
         /// <summary>
         /// The fraction of white space around the finest voxel (2^20 along longest side)
         /// </summary>
-        internal const double fractionOfWhiteSpaceAroundFinestVoxel = 0.0001;
+        internal const double fractionOfWhiteSpaceAroundFinestVoxel = 1e-10;
         // we call this f for short
         // to find this delta, we have two equations & two unknowns
         // Eq1: length_of_model + 2*delta = length_of_box
