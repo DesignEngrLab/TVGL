@@ -912,7 +912,6 @@ namespace TVGL.Voxelization
             copy.UpdateProperties();
             return copy;
         }
-        //ToDo: Fix BoundingSolid() so it's hierarchical like Invert
         private void BoundingSolid(long parent, int level)
         {
             var coords = GetChildVoxelCoords(parent, level, out var onSurface);
@@ -944,8 +943,8 @@ namespace TVGL.Voxelization
             //var level0 = level == 0;
             const bool level0 = false;
             var coords = GetChildVoxelCoords(parent, level, out var onSurface);
-            foreach (var coord in coords)
-            //Parallel.ForEach(coords, coord =>
+            //foreach (var coord in coords)
+            Parallel.ForEach(coords, coord =>
             {
                 var vox = GetVoxelID(coord, level);
                 switch (Constants.GetRole(vox))
@@ -967,7 +966,7 @@ namespace TVGL.Voxelization
                         else ChangeVoxelToEmpty(vox, false, !level0);
                         break;
                 }
-            }//);
+            });
             // Check if partial voxel on outer surface of solid was made empty
             if (!onSurface || Constants.GetRole(parent) != VoxelRoleTypes.Partial) return;
             var empty = true;

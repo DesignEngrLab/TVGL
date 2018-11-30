@@ -99,8 +99,7 @@ namespace TVGLPresenterDX
             }
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
-            var fileNames = dir.GetFiles("*Casing*").ToArray();
+            var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i+=76)
@@ -148,15 +147,6 @@ namespace TVGLPresenterDX
         {
             stopwatch.Start();
             var vs1 = new VoxelizedSolid(ts,8);
-            //Presenter.ShowAndHang(vs1);
-            var neg = vs1.InvertToNewSolid();
-            //Presenter.ShowAndHang(neg);
-            var bb = vs1.CreateBoundingSolid();
-            bb.SolidColor = new Color(KnownColors.Magenta)
-            {
-                Af = 0.25f
-            };
-            Presenter.ShowAndHang(vs1, bb);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
