@@ -989,8 +989,10 @@ namespace TVGL.Voxelization
             for (var i = 0; i < 3; i++)
             {
                 var dim = dimensions[i] / VoxelSideLengths[level];
+                //ToDo: These two lines are a temporary fix
                 if (dim - Math.Floor(dim) < 1e-7) maxVoxels[i] = (int) Math.Floor(dim);
                 else maxVoxels[i] = (int) Math.Ceiling(dim);
+                //maxVoxels[i] = (int) Math.Ceiling(dim);
                 if (level == 0) continue;
                 surfaceLimit[1] = (int) Math.Ceiling((double) maxVoxels[i] / voxelsPerSide[level]) - 1;
                 if (surfaceLimit.Contains(voxelCoords[i])) onSurface = true;
