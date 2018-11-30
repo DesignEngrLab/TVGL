@@ -147,6 +147,8 @@ namespace TVGLPresenterDX
         {
             stopwatch.Start();
             var vs1 = new VoxelizedSolid(ts,8);
+            var neg = vs1.InvertToNewSolid();
+            Presenter.ShowAndHang(neg);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);

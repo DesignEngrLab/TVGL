@@ -914,7 +914,7 @@ namespace TVGL.Voxelization
         }
         private void BoundingSolid(long parent, int level)
         {
-            var coords = GetChildVoxelCoords(parent, level, out var onSurface);
+            var coords = GetChildVoxelCoords(parent, level);
             //foreach (var coord in coords)
             Parallel.ForEach(coords, coord =>
             {
@@ -933,27 +933,30 @@ namespace TVGL.Voxelization
         public VoxelizedSolid InvertToNewSolid()
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.Invert(0, 0);
+            copy.Invert(0, 0, false);
             copy.UpdateProperties();
             return copy;
         }
-        private void Invert(long parent, int level)
+        private void Invert(long parent, int level, bool onSurface)
         {
             var descendants = level != numberOfLevels - 1;
-            //var level0 = level == 0;
-            const bool level0 = false;
-            var coords = GetChildVoxelCoords(parent, level, out var onSurface);
+            var level0 = level == 0;
+            var coords = GetChildVoxelCoords(parent, level);
             //foreach (var coord in coords)
             Parallel.ForEach(coords, coord =>
             {
+                // Starting at highest (largest) level, check each voxel's role and recurse down a level
+                // if it is partial or empty and crosses the outer surface of the part (i.e. is also not
+                // smallest level)
                 var vox = GetVoxelID(coord, level);
+                var overSurface = OverSurface(vox, level + 1);
                 switch (Constants.GetRole(vox))
                 {
                     case VoxelRoleTypes.Empty:
-                        if (OverSurface(vox, level + 1))
+                        if (overSurface)
                         {
                             ChangeVoxelToPartial(vox, false);
-                            Invert(vox, level + 1);
+                            Invert(vox, level + 1, true);
                             break;
                         }
                         ChangeVoxelToFull(vox, false);
@@ -962,12 +965,13 @@ namespace TVGL.Voxelization
                         ChangeVoxelToEmpty(vox, descendants, !level0);
                         break;
                     case VoxelRoleTypes.Partial:
-                        if (descendants) Invert(vox, level + 1);
+                        if (descendants) Invert(vox, level + 1, overSurface);
                         else ChangeVoxelToEmpty(vox, false, !level0);
                         break;
                 }
             });
-            // Check if partial voxel on outer surface of solid was made empty
+            // If partial voxel spanning outer surface of solid, check if it was made empty
+            // i.e. only contains empty voxels
             if (!onSurface || Constants.GetRole(parent) != VoxelRoleTypes.Partial) return;
             var empty = true;
             Parallel.ForEach(coords, coord =>
@@ -979,13 +983,11 @@ namespace TVGL.Voxelization
             if (empty) ChangeVoxelToEmpty(parent, false, false);
         }
         // Get all child coordinate indices (within part bounds) for a given parent
-        private IEnumerable<int[]> GetChildVoxelCoords(long parent, int level, out bool onSurface)
+        private IEnumerable<int[]> GetChildVoxelCoords(long parent, int level)
         {
             var coords = new ConcurrentBag<int[]>();
-            onSurface = false;
-            var voxelCoords = GetVoxel(parent).CoordinateIndices;
             var maxVoxels = new int[3];
-            var surfaceLimit = new[] { 0, 0 };
+            // Get total number of voxels in each direction at level
             for (var i = 0; i < 3; i++)
             {
                 var dim = dimensions[i] / VoxelSideLengths[level];
@@ -993,18 +995,17 @@ namespace TVGL.Voxelization
                 if (dim - Math.Floor(dim) < 1e-7) maxVoxels[i] = (int) Math.Floor(dim);
                 else maxVoxels[i] = (int) Math.Ceiling(dim);
                 //maxVoxels[i] = (int) Math.Ceiling(dim);
-                if (level == 0) continue;
-                surfaceLimit[1] = (int) Math.Ceiling((double) maxVoxels[i] / voxelsPerSide[level]) - 1;
-                if (surfaceLimit.Contains(voxelCoords[i])) onSurface = true;
             }
             var iS = new [] { 0, 0, 0 };
             var iE = new [] { maxVoxels[0], maxVoxels[1], maxVoxels[2] };
             if (parent != (long) 0)
             {
+                // Find child coordinate indices which lie within parent voxel
                 var coord = GetVoxel(parent, level - 1).CoordinateIndices;
                 var num = voxelsPerSide[level];
                 for (var i = 0; i < 3; i++)
                 {
+                    // Only take voxels that lie within part bounds
                     iS[i] = Math.Max(coord[i] * num, iS[i]);
                     iE[i] = Math.Min(coord[i] * num + num, iE[i]);
                 }
@@ -1017,7 +1018,11 @@ namespace TVGL.Voxelization
             });
             return coords;
         }
-        // Determine if Voxel at coarse level lies on the part's bounds
+        // Determine if Voxel at coarse level spans the part's bounds
+        // This will occur when the number of finest voxels along a dimension within the bounds
+        // is less than the number that should exist for the given number of coarse voxels
+        // i.e. The part is 211 voxels wide, but at resolution 8 (2^5, 2^3), it needs 27 coarse
+        // voxels in that dimension. This results in 216 "would-be" voxels
         private bool OverSurface(long parent, int level)
         {
             var nL = numberOfLevels - 1;
