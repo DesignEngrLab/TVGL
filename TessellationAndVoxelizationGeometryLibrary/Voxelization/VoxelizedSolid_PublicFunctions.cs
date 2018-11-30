@@ -908,29 +908,43 @@ namespace TVGL.Voxelization
         public VoxelizedSolid CreateBoundingSolid()
         {
             var copy = (VoxelizedSolid) Copy();
-            copy.BoundingSolid();
+            copy.BoundingSolid(0, 0);
             copy.UpdateProperties();
             return copy;
         }
-        private void BoundingSolid()
+        //ToDo: Fix BoundingSolid() so it's hierarchical like Invert
+        private void BoundingSolid(long parent, int level)
         {
-            var maxVoxels = new int[3];
-            var nL = numberOfLevels - 1;
-            for (var i = 0; i < 3; i++)
+            //var maxVoxels = new int[3];
+            //var nL = numberOfLevels - 1;
+            //for (var i = 0; i < 3; i++)
+            //{
+            //    maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
+            //}
+            ////for (var i = 0; i < maxVoxels[0]; i++)
+            //Parallel.For(0, maxVoxels[0], i =>
+            //{
+            //    for (var j = 0; j < maxVoxels[1]; j++)
+            //    for (var k = 0; k < maxVoxels[2]; k++)
+            //    {
+            //        var coord = new[] { i, j, k };
+            //        var vox = GetVoxelID(coord, nL);
+            //        if (Constants.GetRole(vox) != VoxelRoleTypes.Full)
+            //            ChangeVoxelToFull(vox, true);
+            //    }
+            //});
+            var coords = GetChildVoxelCoords(parent, level, out var onSurface);
+            //foreach (var coord in coords)
+            Parallel.ForEach(coords, coord =>
             {
-                maxVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
-            }
-            //for (var i = 0; i < maxVoxels[0]; i++)
-            Parallel.For(0, maxVoxels[0], i =>
-            {
-                for (var j = 0; j < maxVoxels[1]; j++)
-                for (var k = 0; k < maxVoxels[2]; k++)
+                var vox = GetVoxelID(coord, level);
+                if (OverSurface(vox, level + 1))
                 {
-                    var coord = new[] { i, j, k };
-                    var vox = GetVoxelID(coord, nL);
-                    if (Constants.GetRole(vox) != VoxelRoleTypes.Full)
-                        ChangeVoxelToFull(vox, true);
+                    ChangeVoxelToPartial(vox, false);
+                    BoundingSolid(vox, level + 1);
+                    return;
                 }
+                ChangeVoxelToFull(vox, false);
             });
         }
         #endregion
