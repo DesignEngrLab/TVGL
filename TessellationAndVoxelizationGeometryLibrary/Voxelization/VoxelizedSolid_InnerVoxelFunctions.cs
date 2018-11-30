@@ -45,18 +45,19 @@ namespace TVGL.Voxelization
             else
             {
                 var voxel0 = voxelDictionaryLevel0.GetVoxel(voxel);
-                lock (voxel0.InnerVoxels[level - 1]) //remove the node here
-                {
-                    voxel0.InnerVoxels[level - 1].Remove(voxel);
-                    // then check to see if the parent should be empty as well
-                    if (checkParentEmpty)
+                if (voxel0 != null)
+                    lock (voxel0.InnerVoxels[level - 1]) //remove the node here
                     {
-                        var parent = GetParentVoxel(voxel);
-                        if (voxel0.InnerVoxels[level - 1].Count == 0 ||
-                            voxel0.InnerVoxels[level - 1].CountDescendants(parent, level - 1) == 0)
-                            ChangeVoxelToEmpty(parent, false, true);
+                        voxel0.InnerVoxels[level - 1].Remove(voxel);
+                        // then check to see if the parent should be empty as well
+                        if (checkParentEmpty)
+                        {
+                            var parent = GetParentVoxel(voxel);
+                            if (voxel0.InnerVoxels[level - 1].Count == 0 ||
+                                voxel0.InnerVoxels[level - 1].CountDescendants(parent, level - 1) == 0)
+                                ChangeVoxelToEmpty(parent, false, true);
+                        }
                     }
-                }
                 // finally, any descendants of voxel need to be removed
                 if (role == VoxelRoleTypes.Partial && removeDescendants)
                 {

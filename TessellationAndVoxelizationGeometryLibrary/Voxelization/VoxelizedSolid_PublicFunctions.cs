@@ -945,6 +945,8 @@ namespace TVGL.Voxelization
         private void Invert(long parent, int level)
         {
             var descendants = level != numberOfLevels - 1;
+            //var level0 = level == 0;
+            const bool level0 = false;
             var coords = GetChildVoxelCoords(parent, level, out var onSurface);
             //foreach (var coord in coords)
             Parallel.ForEach(coords, coord =>
@@ -962,11 +964,11 @@ namespace TVGL.Voxelization
                         ChangeVoxelToFull(vox, false);
                         break;
                     case VoxelRoleTypes.Full:
-                        ChangeVoxelToEmpty(vox, descendants, false);
+                        ChangeVoxelToEmpty(vox, descendants, !level0);
                         break;
                     case VoxelRoleTypes.Partial:
                         if (descendants) Invert(vox, level + 1);
-                        else ChangeVoxelToEmpty(vox, false, false);
+                        else ChangeVoxelToEmpty(vox, false, !level0);
                         break;
                 }
             });
@@ -981,6 +983,7 @@ namespace TVGL.Voxelization
             });
             if (empty) ChangeVoxelToEmpty(parent, false, false);
         }
+        // Get all child coordinate indices (within part bounds) for a given parent
         private IEnumerable<int[]> GetChildVoxelCoords(long parent, int level, out bool onSurface)
         {
             var coords = new ConcurrentBag<int[]>();
@@ -1015,18 +1018,20 @@ namespace TVGL.Voxelization
             });
             return coords;
         }
+        // Determine if Voxel at coarse level lies on the part's bounds
         private bool OverSurface(long parent, int level)
         {
             var nL = numberOfLevels - 1;
             if (level > nL) return false;
             var overSurface = false;
             var voxelCoords = GetVoxel(parent).CoordinateIndices;
-            var totalVoxels = new int[3];
             for (var i = 0; i < 3; i++)
             {
-                totalVoxels[i] = (int)Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
-                var compare = totalVoxels[i] / voxelsPerSide[level];
-                if (compare != voxelCoords[i]) continue;
+                var totalVoxels = (int) Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
+                var compare = voxelCoords[i] + 1;
+                for (var j = level; j == nL ; j++)
+                    compare *= voxelsPerSide[j];
+                if (compare <= totalVoxels) continue;
                 overSurface = true;
                 break;
             }
