@@ -152,10 +152,7 @@ namespace TVGL.Voxelization
             voxelDictionaryLevel0 = new VoxelBinSet(dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[0])).ToArray(), bitLevelDistribution[0]);
             voxelsPerDimension = new int[NumberOfLevels][];
             for (var i = 0; i < numberOfLevels; i++)
-            {
-                var voxelNum = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[i])).ToArray();
-                voxelsPerDimension[i] = voxelNum;
-            }
+                voxelsPerDimension[i] = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[i])).ToArray();
             byte[] bytes = Convert.FromBase64String(fileData.Voxels[0]);
             for (int i = 0; i < bytes.Length; i += 8)
             {
