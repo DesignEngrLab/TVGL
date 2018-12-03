@@ -991,14 +991,11 @@ namespace TVGL.Voxelization
             for (var i = 0; i < 3; i++)
             {
                 var dim = dimensions[i] / VoxelSideLengths[level];
-                //ToDo: These two lines are a temporary fix
-                //if (dim - Math.Floor(dim) < 1e-3) maxVoxels[i] = (int) Math.Floor(dim);
-                //else maxVoxels[i] = (int) Math.Ceiling(dim);
                 maxVoxels[i] = (int) Math.Ceiling(dim);
             }
             var iS = new [] { 0, 0, 0 };
             var iE = new [] { maxVoxels[0], maxVoxels[1], maxVoxels[2] };
-            if (parent != (long) 0)
+            if (parent != 0)
             {
                 // Find child coordinate indices which lie within parent voxel
                 var coord = GetVoxel(parent, level - 1).CoordinateIndices;
