@@ -68,13 +68,15 @@ namespace TVGL.Voxelization
                 longestSide = dimensions.Max();
                 longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
 
-                const double delta = Constants.fractionOfWhiteSpaceAroundFinestVoxel;
-                //var delta = longestSide * ((voxelsonLongSide / (voxelsonLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
+                //const double delta = Constants.fractionOfWhiteSpaceAroundFinestVoxel;
+                var voxelsOnLongSide = voxelsPerSide.Aggregate(1, (current, num) => current * num);
+                var delta = new double[3];
+                for (var i = 0; i < 3; i++) delta[i] = dimensions[i] * ((voxelsOnLongSide / (voxelsOnLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
+                //var delta = longestSide * ((voxelsOnLongSide / (voxelsOnLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
 
-                Bounds[0] = ts.Bounds[0].subtract(new[] { delta, delta, delta });
-                Bounds[1] = ts.Bounds[1].add(new[] { delta, delta, delta });
-                for (int i = 0; i < 3; i++)
-                    dimensions[i] += 2 * delta;
+                Bounds[0] = ts.Bounds[0].subtract(delta);
+                Bounds[1] = ts.Bounds[1].add(delta);
+                dimensions = dimensions.add(delta.multiply(2));
             }
 
             longestSide = dimensions[longestDimensionIndex];
@@ -85,6 +87,9 @@ namespace TVGL.Voxelization
             #endregion
 
             voxelDictionaryLevel0 = new VoxelBinSet(dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[0])).ToArray(), bitLevelDistribution[0]);
+            voxelsPerDimension = new int[NumberOfLevels][];
+            for (var i = 0; i < numberOfLevels; i++)
+                voxelsPerDimension[i] = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[i])).ToArray();
             var transformedCoordinates = MakeVertexSimulatedCoordinates(ts.Vertices, numberOfLevels - 1, ts.NumberOfVertices);
             MakeVertexVoxels(ts.Vertices, (byte)(numberOfLevels - 1), transformedCoordinates);
             MakeVoxelsForFacesAndEdges(ts.Faces, (byte)(numberOfLevels - 1), transformedCoordinates);

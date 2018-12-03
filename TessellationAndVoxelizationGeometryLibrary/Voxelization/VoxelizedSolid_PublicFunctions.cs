@@ -986,19 +986,9 @@ namespace TVGL.Voxelization
         private IEnumerable<int[]> GetChildVoxelCoords(long parent, int level)
         {
             var coords = new ConcurrentBag<int[]>();
-            var maxVoxels = new int[3];
-            // Get total number of voxels in each direction at level
-            for (var i = 0; i < 3; i++)
-            {
-                var dim = dimensions[i] / VoxelSideLengths[level];
-                //ToDo: These two lines are a temporary fix
-                if (dim - Math.Floor(dim) < 1e-7) maxVoxels[i] = (int) Math.Floor(dim);
-                else maxVoxels[i] = (int) Math.Ceiling(dim);
-                //maxVoxels[i] = (int) Math.Ceiling(dim);
-            }
             var iS = new [] { 0, 0, 0 };
-            var iE = new [] { maxVoxels[0], maxVoxels[1], maxVoxels[2] };
-            if (parent != (long) 0)
+            var iE = voxelsPerDimension[level].ToArray();
+            if (parent != 0)
             {
                 // Find child coordinate indices which lie within parent voxel
                 var coord = GetVoxel(parent, level - 1).CoordinateIndices;
@@ -1027,19 +1017,15 @@ namespace TVGL.Voxelization
         {
             var nL = numberOfLevels - 1;
             if (level > nL) return false;
-            var overSurface = false;
-            var voxelCoords = GetVoxel(parent).CoordinateIndices;
+            var voxelMultiplier = 1;
+            for (var i = level; i == nL; i++) voxelMultiplier *= voxelsPerSide[i];
+            var compare = GetVoxel(parent).CoordinateIndices.add(new[] { 1, 1, 1 }).multiply(voxelMultiplier);
+            var totalVoxels = voxelsPerDimension[nL];
             for (var i = 0; i < 3; i++)
             {
-                var totalVoxels = (int) Math.Ceiling(dimensions[i] / VoxelSideLengths[nL]);
-                var compare = voxelCoords[i] + 1;
-                for (var j = level; j == nL ; j++)
-                    compare *= voxelsPerSide[j];
-                if (compare <= totalVoxels) continue;
-                overSurface = true;
-                break;
+                if (compare[i] > totalVoxels[i]) return true;
             }
-            return overSurface;
+            return false;
         }
         #endregion
         #region Union
