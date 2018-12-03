@@ -68,8 +68,9 @@ namespace TVGL.Voxelization
                 longestSide = dimensions.Max();
                 longestDimensionIndex = dimensions.FindIndex(d => d == longestSide);
 
-                const double delta = Constants.fractionOfWhiteSpaceAroundFinestVoxel;
-                //var delta = longestSide * ((voxelsonLongSide / (voxelsonLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
+                //const double delta = Constants.fractionOfWhiteSpaceAroundFinestVoxel;
+                var voxelsOnLongSide = voxelsPerSide.Aggregate(1, (current, num) => current * num);
+                var delta = longestSide * ((voxelsOnLongSide / (voxelsOnLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
 
                 Bounds[0] = ts.Bounds[0].subtract(new[] { delta, delta, delta });
                 Bounds[1] = ts.Bounds[1].add(new[] { delta, delta, delta });

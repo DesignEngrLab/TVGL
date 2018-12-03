@@ -29,6 +29,10 @@
     <DocumentationFile>bin\Release\netstandard2.0\TessellationAndVoxelizationGeometryLibrary.xml</DocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Clipper\clipper.cs" Link="2D\Clipper\clipper.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\2D\Line.cs" Link="2D\Line.cs" />
