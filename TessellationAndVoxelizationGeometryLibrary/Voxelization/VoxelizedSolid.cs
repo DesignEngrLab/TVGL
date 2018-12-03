@@ -36,6 +36,7 @@ namespace TVGL.Voxelization
         /// </summary>
         public readonly int Discretization;
         public readonly int LevelAtWhichLinkToTessellation;
+        public readonly int[][] voxelsPerDimension;
         internal int numberOfLevels;
         internal int[] bitLevelDistribution;
         private int[] voxelsPerSide;
@@ -103,6 +104,12 @@ namespace TVGL.Voxelization
             for (int i = 1; i < numberOfLevels; i++)
                 VoxelSideLengths[i] = VoxelSideLengths[i - 1] / voxelsPerSide[i];
             voxelDictionaryLevel0 = new VoxelBinSet(dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[0])).ToArray(), bitLevelDistribution[0]);
+            voxelsPerDimension = new int[NumberOfLevels][];
+            for (var i = 0; i < numberOfLevels; i++)
+            {
+                var voxelNum = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[i])).ToArray();
+                voxelsPerDimension[i] = voxelNum;
+            }
         }
 
         private void defineMaskAndShifts(int[] bits)
@@ -143,7 +150,12 @@ namespace TVGL.Voxelization
             for (int i = 1; i < numberOfLevels; i++)
                 VoxelSideLengths[i] = VoxelSideLengths[i - 1] / voxelsPerSide[i];
             voxelDictionaryLevel0 = new VoxelBinSet(dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[0])).ToArray(), bitLevelDistribution[0]);
-
+            voxelsPerDimension = new int[NumberOfLevels][];
+            for (var i = 0; i < numberOfLevels; i++)
+            {
+                var voxelNum = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[i])).ToArray();
+                voxelsPerDimension[i] = voxelNum;
+            }
             byte[] bytes = Convert.FromBase64String(fileData.Voxels[0]);
             for (int i = 0; i < bytes.Length; i += 8)
             {

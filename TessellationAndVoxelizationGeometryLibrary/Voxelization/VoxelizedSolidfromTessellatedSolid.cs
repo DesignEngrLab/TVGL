@@ -87,6 +87,12 @@ namespace TVGL.Voxelization
             #endregion
 
             voxelDictionaryLevel0 = new VoxelBinSet(dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[0])).ToArray(), bitLevelDistribution[0]);
+            voxelsPerDimension = new int[NumberOfLevels][];
+            for (var i = 0; i < numberOfLevels; i++)
+            {
+                var voxelNum = dimensions.Select(d => (int) Math.Ceiling(d / VoxelSideLengths[i])).ToArray();
+                voxelsPerDimension[i] = voxelNum;
+            }
             var transformedCoordinates = MakeVertexSimulatedCoordinates(ts.Vertices, numberOfLevels - 1, ts.NumberOfVertices);
             MakeVertexVoxels(ts.Vertices, (byte)(numberOfLevels - 1), transformedCoordinates);
             MakeVoxelsForFacesAndEdges(ts.Faces, (byte)(numberOfLevels - 1), transformedCoordinates);
