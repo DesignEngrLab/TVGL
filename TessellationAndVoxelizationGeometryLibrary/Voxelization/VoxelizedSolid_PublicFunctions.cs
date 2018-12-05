@@ -1183,23 +1183,62 @@ namespace TVGL.Voxelization
                 if (dir[i] < 0) initCoord[i] = voxelsPerDimension[nL][i] - 1;
             var voxels = new List<int[]>(new [] {initCoord});
             var c = initCoord.add(new[] { 0.5, 0.5, 0.5 });
-            var cInt = c.ToArray();
-            var t = 0.0;
-            while (t < tLimit)
+            var ts = FindIntersectionDistances(c, dir, tLimit);
+            foreach (var t in ts)
             {
-                t = double.MaxValue;
-                var nP = NextPlane(cInt, dir);
-                for (var i = 0; i < 3; i++)
-                    t = Math.Min(t, (nP[i] - c[i]) / dir[i]);
-                cInt = c.add(dir.multiply(t));
-                //ToDo: Determine which voxels are being passed through/around
+                var cInt = c.add(dir.multiply(t));
+                voxels.Add(GetNextVoxelCoord(cInt, dir));
             }
+            //var cInt = c.ToArray();
+            //var t = 0.0;
+            //while (t < tLimit)
+            //{
+            //    t = double.MaxValue;
+            //    var nP = NextPlane(cInt, dir);
+            //    for (var i = 0; i < 3; i++)
+            //        t = Math.Min(t, (nP[i] - c[i]) / dir[i]);
+            //    cInt = c.add(dir.multiply(t));
+            //    //ToDo: Determine which voxels are being passed through/around
+            //}
             return voxels;
         }
 
+        private static int[] GetNextVoxelCoord(double[] cInt, double[] direction)
+        {
+            var searchDirs = new List<int>();
+            for (var i = 0; i < 3; i++)
+                if (direction[i] != 0) searchDirs.Add(i);
+
+            var searchSigns = new[] { 0, 0, 0 };
+            foreach (var dir in searchDirs)
+                searchSigns[dir] = Math.Sign(direction[dir]);
+
+            var voxel = GetOppositeVoxel(cInt, direction);
+            return voxel;
+        }
+
+        public static int[] GetOppositeVoxel(double[] cInt, double[] direction)
+        {
+            var voxel = new int[3];
+            for (var i = 1; i < 3; i++)
+                switch (Math.Sign(direction[i]))
+                {
+                    case -1:
+                        voxel[i] = (int) Math.Ceiling(cInt[i] - 1);
+                        break;
+                    case 0:
+                        voxel[i] = (int) Math.Floor(cInt[i]);
+                        break;
+                    case 1:
+                        voxel[i] = (int) Math.Floor(cInt[i]);
+                        break;
+                }
+            return voxel;
+        }
+
         //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
-        private IEnumerable<double> FindIntersectionDistances(IReadOnlyList<double> firstVoxel, IReadOnlyList<double> direction,
-            double tLimit)
+        private IEnumerable<double> FindIntersectionDistances(IReadOnlyList<double> firstVoxel,
+            IReadOnlyList<double> direction, double tLimit)
         {
             var intersections = new ConcurrentBag<double>();
             var searchDirs = new List<int>();
