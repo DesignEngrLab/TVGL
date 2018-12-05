@@ -991,7 +991,7 @@ namespace TVGL.Voxelization
             if (parent != 0)
             {
                 // Find child coordinate indices which lie within parent voxel
-                var coord = GetVoxel(parent, level - 1).CoordinateIndices;
+                var coord = Constants.GetCoordinateIndices(parent, singleCoordinateShifts[level - 1]);
                 var num = voxelsPerSide[level];
                 for (var i = 0; i < 3; i++)
                 {
@@ -1018,8 +1018,9 @@ namespace TVGL.Voxelization
             var nL = numberOfLevels - 1;
             if (level > nL) return false;
             var voxelMultiplier = 1;
-            for (var i = level; i == nL; i++) voxelMultiplier *= voxelsPerSide[i];
-            var compare = GetVoxel(parent).CoordinateIndices.add(new[] { 1, 1, 1 }).multiply(voxelMultiplier);
+            for (var i = level; i < nL; i++) voxelMultiplier *= voxelsPerSide[i];
+            var compare = Constants.GetCoordinateIndices(parent, singleCoordinateShifts[level]).
+                add(new[] { 1, 1, 1 }).multiply(voxelMultiplier);
             var totalVoxels = voxelsPerDimension[nL];
             for (var i = 0; i < 3; i++)
             {
