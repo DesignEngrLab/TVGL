@@ -1164,8 +1164,28 @@ namespace TVGL.Voxelization
         }
 
         #endregion
+        #region Voxel Projection along line
+        public VoxelizedSolid ErodeSolid(double[] dir, double tLimit, bool inclusive = false)
+        {
+            var mask = CreateProjectionMask(dir, tLimit, inclusive);
+            return this;
+        }
+
+        private IEnumerable<long> CreateProjectionMask(double[] dir, double tLimit, bool inclusive)
+        {
+            var nL = NumberOfLevels - 1;
+            var init = new[] { 0, 0, 0 };
+            for (var i = 0; i < 3; i++)
+                if (dir[i] < 0) init[i] = voxelsPerDimension[nL][i] - 1;
+            var voxels = new List<long>(new [] {Constants.MakeIDFromCoordinates(init, singleCoordinateShifts[nL])});
+
+
+            return voxels;
+        }
+        #endregion
 
         #region Offset
+
         /*
         /// <summary>
         /// Get the partial voxels ordered along X, Y, or Z, with a dictionary of their distance. X == 0, Y == 1, Z == 2. 
@@ -1595,6 +1615,7 @@ namespace TVGL.Voxelization
             return retInts;
         }
         */
+
         #endregion
     }
 }
