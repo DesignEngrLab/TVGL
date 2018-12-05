@@ -1174,28 +1174,80 @@ namespace TVGL.Voxelization
             return this;
         }
 
-        private IEnumerable<int[]> CreateProjectionMask(IReadOnlyList<double> dir, double tLimit, bool inclusive)
+        private IEnumerable<int[]> CreateProjectionMask(double[] dir,
+            double tLimit = double.MaxValue, bool inclusive = true)
         {
             var nL = NumberOfLevels - 1;
             var initCoord = new[] { 0, 0, 0 };
             for (var i = 0; i < 3; i++)
                 if (dir[i] < 0) initCoord[i] = voxelsPerDimension[nL][i] - 1;
             var voxels = new List<int[]>(new [] {initCoord});
-            var oldVoxelCoord = initCoord.add(new[] { 0.5, 0.5, 0.5 });
-            var tTotal = 0.0;
-            while (tTotal < tLimit)
+            var c = initCoord.add(new[] { 0.5, 0.5, 0.5 });
+            var cInt = c.ToArray();
+            var t = 0.0;
+            while (t < tLimit)
             {
-                var t = 2.0;
+                t = double.MaxValue;
+                var nP = NextPlane(cInt, dir);
                 for (var i = 0; i < 3; i++)
-                {
-                    //ToDo: determine smallest t such that ray lands on face/edge/vertex
-                    var tTemp = .24;
-                    t = Math.Min(t, tTemp);
-                }
+                    t = Math.Min(t, (nP[i] - c[i]) / dir[i]);
+                cInt = c.add(dir.multiply(t));
                 //ToDo: Determine which voxels are being passed through/around
-                tTotal += t;
+
             }
             return voxels;
+        }
+
+        //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
+        private IEnumerable<double> FindIntersectionDistances(IReadOnlyList<double> firstVoxel, IReadOnlyList<double> direction)
+        {
+            var intersections = new ConcurrentBag<double>();
+            var searchDirs = new List<int>();
+
+            for (var i = 0; i < 3; i++)
+                if (direction[i] != 0) searchDirs.Add(i);
+
+            var searchSigns = new [] {0, 0, 0};
+            var firstInt = new[] { 0, 0, 0 };
+
+            foreach (var dir in searchDirs)
+            {
+                searchSigns[dir] = Math.Sign(direction[dir]);
+                firstInt[dir] = (int) (firstVoxel[dir] + 0.5 * searchSigns[dir]);
+            }
+
+            foreach (var dir in searchDirs)
+            {
+                var c = firstVoxel[dir];
+                var d = direction[dir];
+                var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[NumberOfLevels - 1][dir];
+                Parallel.For(firstInt[dir], toValue, i =>
+                {
+                    intersections.Add((i - c) / d);
+                });
+            }
+
+            var sortedIntersections = new SortedSet<double>(intersections);
+            return sortedIntersections;
+        }
+
+        private static double[] NextPlane(IReadOnlyList<double> currentIntersection, IReadOnlyList<double> dir)
+        {
+            var nextPlane = new [] { 0.0, 0.0, 0.0 };
+            for (var i = 1; i < 3; i++)
+            {
+                var d = currentIntersection[i];
+                switch (Math.Sign(dir[i]))
+                {
+                    case -1:
+                        nextPlane[i] = Math.Ceiling(d) - 1;
+                        break;
+                    case 1:
+                        nextPlane[i] = Math.Floor(d) + 1;
+                        break;
+                }
+            }
+            return nextPlane;
         }
         #endregion
 
