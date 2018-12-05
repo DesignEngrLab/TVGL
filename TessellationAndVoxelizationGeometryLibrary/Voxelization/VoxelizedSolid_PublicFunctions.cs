@@ -1170,18 +1170,31 @@ namespace TVGL.Voxelization
         public VoxelizedSolid ErodeSolid(double[] dir, double tLimit, bool inclusive = false)
         {
             var mask = CreateProjectionMask(dir, tLimit, inclusive);
+            //ToDo: Move mask around and determine which voxels can be removed
             return this;
         }
 
-        private IEnumerable<long> CreateProjectionMask(double[] dir, double tLimit, bool inclusive)
+        private IEnumerable<int[]> CreateProjectionMask(IReadOnlyList<double> dir, double tLimit, bool inclusive)
         {
             var nL = NumberOfLevels - 1;
-            var init = new[] { 0, 0, 0 };
+            var initCoord = new[] { 0, 0, 0 };
             for (var i = 0; i < 3; i++)
-                if (dir[i] < 0) init[i] = voxelsPerDimension[nL][i] - 1;
-            var voxels = new List<long>(new [] {Constants.MakeIDFromCoordinates(init, singleCoordinateShifts[nL])});
-
-
+                if (dir[i] < 0) initCoord[i] = voxelsPerDimension[nL][i] - 1;
+            var voxels = new List<int[]>(new [] {initCoord});
+            var oldVoxelCoord = initCoord.add(new[] { 0.5, 0.5, 0.5 });
+            var tTotal = 0.0;
+            while (tTotal < tLimit)
+            {
+                var t = 2.0;
+                for (var i = 0; i < 3; i++)
+                {
+                    //ToDo: determine smallest t such that ray lands on face/edge/vertex
+                    var tTemp = .24;
+                    t = Math.Min(t, tTemp);
+                }
+                //ToDo: Determine which voxels are being passed through/around
+                tTotal += t;
+            }
             return voxels;
         }
         #endregion
