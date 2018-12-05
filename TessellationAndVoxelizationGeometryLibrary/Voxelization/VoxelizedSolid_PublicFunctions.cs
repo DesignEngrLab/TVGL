@@ -1166,6 +1166,7 @@ namespace TVGL.Voxelization
 
         #endregion
         #region Voxel Projection along line
+        //Todo: these functions
         public VoxelizedSolid ErodeSolid(double[] dir, double tLimit, bool inclusive = false)
         {
             var mask = CreateProjectionMask(dir, tLimit, inclusive);
