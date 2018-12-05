@@ -1018,7 +1018,7 @@ namespace TVGL.Voxelization
             var nL = numberOfLevels - 1;
             if (level > nL) return false;
             var voxelMultiplier = 1;
-            for (var i = level; i < nL; i++) voxelMultiplier *= voxelsPerSide[i];
+            for (var i = level; i <= nL; i++) voxelMultiplier *= voxelsPerSide[i];
             var compare = Constants.GetCoordinateIndices(parent, singleCoordinateShifts[level]).
                 add(new[] { 1, 1, 1 }).multiply(voxelMultiplier);
             var totalVoxels = voxelsPerDimension[nL];
