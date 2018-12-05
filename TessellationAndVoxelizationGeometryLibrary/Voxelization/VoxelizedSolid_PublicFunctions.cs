@@ -1167,15 +1167,19 @@ namespace TVGL.Voxelization
         #endregion
         #region Voxel Projection along line
         //Todo: these functions
-        public VoxelizedSolid ErodeSolid(double[] dir, double tLimit, bool inclusive = false)
+        public VoxelizedSolid ErodeSolid(double[] dir, double tLimit = 0,
+            bool inclusive = false)
         {
+            var vPD = voxelsPerDimension[NumberOfLevels - 1];
+            if (tLimit <= 0)
+                tLimit = Math.Sqrt(Math.Pow(vPD[0], 2) + Math.Pow(vPD[1], 2) + Math.Pow(vPD[2], 2));
             var mask = CreateProjectionMask(dir, tLimit, inclusive);
             //ToDo: Move mask around and determine which voxels can be removed
             return this;
         }
 
-        private IEnumerable<int[]> CreateProjectionMask(double[] dir,
-            double tLimit = double.MaxValue, bool inclusive = true)
+        private IEnumerable<int[]> CreateProjectionMask(double[] dir, double tLimit,
+            bool inclusive = true)
         {
             var nL = NumberOfLevels - 1;
             var initCoord = new[] { 0, 0, 0 };
@@ -1187,6 +1191,7 @@ namespace TVGL.Voxelization
             foreach (var t in ts)
             {
                 var cInt = c.add(dir.multiply(t));
+                for (var i = 0; i < 3; i++) cInt[i] = Math.Round(cInt[i], 5);
                 voxels.Add(GetNextVoxelCoord(cInt, dir));
             }
             //var cInt = c.ToArray();
@@ -1220,7 +1225,7 @@ namespace TVGL.Voxelization
         public static int[] GetOppositeVoxel(double[] cInt, double[] direction)
         {
             var voxel = new int[3];
-            for (var i = 1; i < 3; i++)
+            for (var i = 0; i < 3; i++)
                 switch (Math.Sign(direction[i]))
                 {
                     case -1:
@@ -1260,17 +1265,10 @@ namespace TVGL.Voxelization
                 var c = firstVoxel[dir];
                 var d = direction[dir];
                 var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[NumberOfLevels - 1][dir];
-                var skip = false;
                 Parallel.For(firstInt[dir], toValue, i =>
                 {
-                    if (skip) return;
                     var t = (i - c) / d;
-                    if (t > tLimit)
-                    {
-                        skip = true;
-                        return;
-                    }
-                    intersections.Add(t);
+                    if (t <= tLimit) intersections.Add(t);
                 });
             }
 
@@ -1281,7 +1279,7 @@ namespace TVGL.Voxelization
         private static double[] NextPlane(IReadOnlyList<double> currentIntersection, IReadOnlyList<double> dir)
         {
             var nextPlane = new [] { 0.0, 0.0, 0.0 };
-            for (var i = 1; i < 3; i++)
+            for (var i = 0; i < 3; i++)
             {
                 var d = currentIntersection[i];
                 switch (Math.Sign(dir[i]))
