@@ -1193,13 +1193,13 @@ namespace TVGL.Voxelization
                     t = Math.Min(t, (nP[i] - c[i]) / dir[i]);
                 cInt = c.add(dir.multiply(t));
                 //ToDo: Determine which voxels are being passed through/around
-
             }
             return voxels;
         }
 
         //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
-        private IEnumerable<double> FindIntersectionDistances(IReadOnlyList<double> firstVoxel, IReadOnlyList<double> direction)
+        private IEnumerable<double> FindIntersectionDistances(IReadOnlyList<double> firstVoxel, IReadOnlyList<double> direction,
+            double tLimit)
         {
             var intersections = new ConcurrentBag<double>();
             var searchDirs = new List<int>();
@@ -1221,9 +1221,17 @@ namespace TVGL.Voxelization
                 var c = firstVoxel[dir];
                 var d = direction[dir];
                 var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[NumberOfLevels - 1][dir];
+                var skip = false;
                 Parallel.For(firstInt[dir], toValue, i =>
                 {
-                    intersections.Add((i - c) / d);
+                    if (skip) return;
+                    var t = (i - c) / d;
+                    if (t > tLimit)
+                    {
+                        skip = true;
+                        return;
+                    }
+                    intersections.Add(t);
                 });
             }
 
