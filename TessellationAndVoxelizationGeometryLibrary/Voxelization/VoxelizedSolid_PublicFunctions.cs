@@ -1167,16 +1167,23 @@ namespace TVGL.Voxelization
         #endregion
         #region Voxel Projection along line
         //Todo: these functions
-        public VoxelizedSolid ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
+        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit = 0, bool inclusive = false, bool stopAtPartial = true)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.ErodeSolid(designedSolid, dir, tLimit, inclusive, stopAtPartial);
+            copy.ErodeVoxelSolid(designedSolid, dir, tLimit, inclusive, stopAtPartial);
             copy.UpdateProperties();
             return copy;
         }
 
-        private void ErodeSolid(VoxelizedSolid designedSolid, double[] dir,
+        public void ErodeSolid(VoxelizedSolid designedSolid, double[] dir,
+            double tLimit = 0, bool inclusive = false, bool stopAtPartial = true)
+        {
+            ErodeVoxelSolid(designedSolid, dir, tLimit, inclusive, stopAtPartial);
+            UpdateProperties();
+        }
+
+        private void ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit, bool inclusive, bool stopAtPartial)
         {
             if (tLimit <= 0)
