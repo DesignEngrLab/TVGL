@@ -1172,6 +1172,7 @@ namespace TVGL.Voxelization
         {
             var copy = (VoxelizedSolid)Copy();
             copy.ErodeSolid(designedSolid, dir, tLimit, inclusive);
+            copy.UpdateProperties();
             return copy;
         }
 
@@ -1190,6 +1191,8 @@ namespace TVGL.Voxelization
             IEnumerable<int[]> start)
         {
             Parallel.ForEach(start, vox => ErodeMask(designedSolid, mask, vox));
+            //foreach (var vox in start)
+            //    ErodeMask(designedSolid, mask, vox);
         }
 
         private static IEnumerable<VoxelDirections> GetVoxelDirections(IReadOnlyList<double> dir)
@@ -1206,9 +1209,14 @@ namespace TVGL.Voxelization
 
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurfaces(IEnumerable<VoxelDirections> directions)
         {
-            var voxels = new List<int[]>();
+            var voxels = new HashSet<int[]>();
             foreach (var dir in directions)
-                voxels.AddRange(GetAllVoxelsOnBoundingSurface(dir));
+            {
+                var voxel = GetAllVoxelsOnBoundingSurface(dir);
+                foreach (var vox in voxel)
+                    voxels.Add(vox);
+            }
+
             return voxels;
         }
 
@@ -1241,12 +1249,12 @@ namespace TVGL.Voxelization
         {
             var shift = new[] { 0, 0, 0 };
             if (!(start is null))
-                shift = start.subtract(mask.First());
+                shift = start.subtract(mask[0]);
             var level = numberOfLevels - 1;
             var scShift = singleCoordinateShifts[level];
             foreach (var coord in mask)
             {
-                var coordinate = !(start is null) ? coord : coord.add(shift);
+                var coordinate = start is null ? coord : coord.add(shift);
                 if (ExceedsBounds(coordinate, level)) break;
                 var eVox = Constants.MakeIDFromCoordinates(coordinate, scShift);
                 var dVox = designedSolid.GetVoxelID(eVox, level);
