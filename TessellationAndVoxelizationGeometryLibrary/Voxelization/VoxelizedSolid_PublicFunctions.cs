@@ -1170,7 +1170,7 @@ namespace TVGL.Voxelization
         public VoxelizedSolid ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit = 0, bool inclusive = false)
         {
-            var copy = (VoxelizedSolid) Copy();
+            var copy = (VoxelizedSolid)Copy();
             copy.ErodeSolid(designedSolid, dir, tLimit, inclusive);
             return copy;
         }
@@ -1218,12 +1218,12 @@ namespace TVGL.Voxelization
             var level = NumberOfLevels - 1;
             var limit = new int[3][];
 
-            limit[0] = new [] { 0, voxelsPerDimension[level][0] };
-            limit[1] = new [] { 0, voxelsPerDimension[level][1] };
-            limit[2] = new [] { 0, voxelsPerDimension[level][2] };
+            limit[0] = new[] { 0, voxelsPerDimension[level][0] };
+            limit[1] = new[] { 0, voxelsPerDimension[level][1] };
+            limit[2] = new[] { 0, voxelsPerDimension[level][2] };
 
-            var ind = Math.Abs((int) dir) - 1;
-            if (Math.Sign((int) dir) == 1)
+            var ind = Math.Abs((int)dir) - 1;
+            if (Math.Sign((int)dir) == 1)
                 limit[ind][0] = limit[ind][1] - 1;
             else
                 limit[ind][1] = 1;
@@ -1231,7 +1231,7 @@ namespace TVGL.Voxelization
             for (var i = limit[0][0]; i < limit[0][1]; i++)
                 for (var j = limit[1][0]; j < limit[1][1]; j++)
                     for (var k = limit[2][0]; k < limit[2][1]; k++)
-                        voxels.Add(new [] { i, j, k });
+                        voxels.Add(new[] { i, j, k });
 
             return voxels;
         }
@@ -1239,7 +1239,7 @@ namespace TVGL.Voxelization
         private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask,
             IList<int> start = null)
         {
-            var shift = new [] { 0, 0, 0 };
+            var shift = new[] { 0, 0, 0 };
             if (!(start is null))
                 shift = start.subtract(mask.First());
             var level = numberOfLevels - 1;
@@ -1264,10 +1264,10 @@ namespace TVGL.Voxelization
             return false;
         }
 
-        private IEnumerable<long> GetVoxelsFromMask(IEnumerable<int[]> mask)
-        {
-            return mask.Select(coord => Constants.MakeIDFromCoordinates(coord, NumberOfLevels - 1)).ToList();
-        }
+        //private IEnumerable<long> GetVoxelsFromMask(IEnumerable<int[]> mask)
+        //{
+        //    return mask.Select(coord => Constants.MakeIDFromCoordinates(coord, NumberOfLevels - 1)).ToList();
+        //}
 
         private IList<int[]> CreateProjectionMask(double[] dir, double tLimit,
             bool inclusive)
@@ -1276,33 +1276,33 @@ namespace TVGL.Voxelization
             var initCoord = new[] { 0, 0, 0 };
             for (var i = 0; i < 3; i++)
                 if (dir[i] < 0) initCoord[i] = voxelsPerDimension[nL][i] - 1;
-            var voxels = new List<int[]>(new [] {initCoord});
+            var voxels = new List<int[]>(new[] { initCoord });
             var c = initCoord.add(new[] { 0.5, 0.5, 0.5 });
             var ts = FindIntersectionDistances(c, dir, tLimit);
             foreach (var t in ts)
             {
                 var cInt = c.add(dir.multiply(t));
                 for (var i = 0; i < 3; i++) cInt[i] = Math.Round(cInt[i], 5);
-                voxels.Add(GetNextVoxelCoord(cInt, dir));
+                voxels.Add(GetNextVoxelCoord(cInt, dir, inclusive));
             }
             return voxels;
         }
 
-        private static int[] GetNextVoxelCoord(double[] cInt, double[] direction)
+        private static int[] GetNextVoxelCoord(double[] cInt, double[] direction, bool inclusive)
         {
             var searchDirs = new List<int>();
             for (var i = 0; i < 3; i++)
-                if (direction[i] != 0) searchDirs.Add(i);
+                if (Math.Abs(direction[i]) > 0.001) searchDirs.Add(i);
 
             var searchSigns = new[] { 0, 0, 0 };
             foreach (var dir in searchDirs)
                 searchSigns[dir] = Math.Sign(direction[dir]);
 
-            var voxel = GetOppositeVoxel(cInt, direction);
+            var voxel = GetOppositeVoxel(cInt, direction, inclusive);
             return voxel;
         }
 
-        public static int[] GetOppositeVoxel(double[] cInt, double[] direction)
+        public static int[] GetOppositeVoxel(double[] cInt, double[] direction, bool inclusive)
         {
             var voxel = new int[3];
             for (var i = 0; i < 3; i++)
@@ -1320,15 +1320,15 @@ namespace TVGL.Voxelization
             var searchDirs = new List<int>();
 
             for (var i = 0; i < 3; i++)
-                if (direction[i] != 0) searchDirs.Add(i);
+                if (Math.Abs(direction[i]) > 0.001) searchDirs.Add(i);
 
-            var searchSigns = new [] {0, 0, 0};
+            var searchSigns = new[] { 0, 0, 0 };
             var firstInt = new[] { 0, 0, 0 };
 
             foreach (var dir in searchDirs)
             {
                 searchSigns[dir] = Math.Sign(direction[dir]);
-                firstInt[dir] = (int) (firstVoxel[dir] + 0.5 * searchSigns[dir]);
+                firstInt[dir] = (int)(firstVoxel[dir] + 0.5 * searchSigns[dir]);
             }
 
             foreach (var dir in searchDirs)
@@ -1348,6 +1348,7 @@ namespace TVGL.Voxelization
             var sortedIntersections = new SortedSet<double>(intersections);
             return sortedIntersections;
         }
+
         //private static double[] NextPlane(IReadOnlyList<double> currentIntersection, IReadOnlyList<double> dir)
         //{
         //    var nextPlane = new [] { 0.0, 0.0, 0.0 };
