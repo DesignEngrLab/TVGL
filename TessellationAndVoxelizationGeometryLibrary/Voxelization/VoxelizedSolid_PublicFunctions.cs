@@ -1186,11 +1186,10 @@ namespace TVGL.Voxelization
             ErodeVoxels(designedSolid, mask, voxels);
         }
 
-        private void ErodeVoxels(VoxelizedSolid designedSolid, IReadOnlyList<int[]> mask,
+        private void ErodeVoxels(VoxelizedSolid designedSolid, IList<int[]> mask,
             IEnumerable<int[]> start)
         {
-            foreach (var vox in start)
-                ErodeMask(designedSolid, mask, vox);
+            Parallel.ForEach(start, vox => ErodeMask(designedSolid, mask, vox));
         }
 
         private static IEnumerable<VoxelDirections> GetVoxelDirections(IReadOnlyList<double> dir)
@@ -1237,7 +1236,7 @@ namespace TVGL.Voxelization
             return voxels;
         }
 
-        private void ErodeMask(VoxelizedSolid designedSolid, IReadOnlyList<int[]> mask,
+        private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask,
             IList<int> start = null)
         {
             var shift = new [] { 0, 0, 0 };
@@ -1270,7 +1269,7 @@ namespace TVGL.Voxelization
             return mask.Select(coord => Constants.MakeIDFromCoordinates(coord, NumberOfLevels - 1)).ToList();
         }
 
-        private List<int[]> CreateProjectionMask(double[] dir, double tLimit,
+        private IList<int[]> CreateProjectionMask(double[] dir, double tLimit,
             bool inclusive)
         {
             var nL = NumberOfLevels - 1;
