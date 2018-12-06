@@ -1175,8 +1175,46 @@ namespace TVGL.Voxelization
             var mask = CreateProjectionMask(dir, tLimit, inclusive);
             //ToDo: Move mask around and determine which voxels can be removed
             //var maskVoxels = designedSolid.GetVoxelsFromMask(mask);
+            var dirs = GetVoxelDirections(dir);
+            var voxels = GetAllVoxelsOnBoundingSurface(VoxelDirections.XNegative);
             ErodeMask(designedSolid, mask);
             return this;
+        }
+
+        private static IEnumerable<VoxelDirections> GetVoxelDirections(IReadOnlyList<double> dir)
+        {
+            var dirs = new List<VoxelDirections>();
+            var signedDir = new[] { Math.Sign(dir[0]), Math.Sign(dir[1]), Math.Sign(dir[2]) };
+            for (var i = 0; i < 3; i++)
+            {
+                if (signedDir[i] == 0) continue;
+                dirs.Add((VoxelDirections)((i + 1) * -1 * signedDir[i]));
+            }
+            return dirs;
+        }
+
+        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(VoxelDirections dir)
+        {
+            var voxels = new List<int[]>();
+            var level = NumberOfLevels - 1;
+            var limit = new int[3][];
+
+            limit[0] = new [] { 0, voxelsPerDimension[level][0] };
+            limit[1] = new [] { 0, voxelsPerDimension[level][1] };
+            limit[2] = new [] { 0, voxelsPerDimension[level][2] };
+
+            var ind = Math.Abs((int) dir) - 1;
+            if (Math.Sign((int) dir) == 1)
+                limit[ind][0] = limit[ind][1] - 1;
+            else
+                limit[ind][1] = 1;
+
+            for (var i = limit[0][0]; i < limit[0][1]; i++)
+                for (var j = limit[1][0]; j < limit[1][1]; j++)
+                    for (var k = limit[2][0]; k < limit[2][1]; k++)
+                        voxels.Add(new [] { i, j, k });
+
+            return voxels;
         }
 
         private void ErodeMask(VoxelizedSolid designedSolid, IEnumerable<int[]> mask,
