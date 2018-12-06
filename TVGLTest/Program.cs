@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Microsoft.Office.Interop.Excel;
 using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
@@ -149,7 +150,8 @@ namespace TVGLPresenterDX
             var vs1 = new VoxelizedSolid(ts,8);
             //var dir = new List<double>(new double[] { 1, 1, 1 }).normalize();
             var dir = new List<double>(new double[] { 1, 2, 3 }).normalize();
-            vs1.ErodeSolid(dir);
+            var neg = vs1.InvertToNewSolid();
+            neg.ErodeSolid(vs1, dir);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
