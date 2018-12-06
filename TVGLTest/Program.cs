@@ -151,7 +151,8 @@ namespace TVGLPresenterDX
             //var dir = new List<double>(new double[] { 1, 1, 1 }).normalize();
             var dir = new List<double>(new double[] { 1, 2, 3 }).normalize();
             var neg = vs1.InvertToNewSolid();
-            neg.ErodeSolid(vs1, dir);
+            var erd = neg.ErodeVoxelSolid(vs1, dir);
+            Presenter.ShowAndHang(erd);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
