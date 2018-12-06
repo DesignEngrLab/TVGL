@@ -1167,15 +1167,49 @@ namespace TVGL.Voxelization
         #endregion
         #region Voxel Projection along line
         //Todo: these functions
-        public VoxelizedSolid ErodeSolid(double[] dir, double tLimit = 0,
+        public VoxelizedSolid ErodeSolid(VoxelizedSolid designedSolid, double[] dir, double tLimit = 0,
             bool inclusive = false)
         {
-            var vPD = voxelsPerDimension[NumberOfLevels - 1];
             if (tLimit <= 0)
-                tLimit = Math.Sqrt(Math.Pow(vPD[0], 2) + Math.Pow(vPD[1], 2) + Math.Pow(vPD[2], 2));
+                tLimit = voxelsPerDimension[NumberOfLevels - 1].norm2();
             var mask = CreateProjectionMask(dir, tLimit, inclusive);
             //ToDo: Move mask around and determine which voxels can be removed
+            //var maskVoxels = designedSolid.GetVoxelsFromMask(mask);
+            ErodeMask(designedSolid, mask);
             return this;
+        }
+
+        private void ErodeMask(VoxelizedSolid designedSolid, IEnumerable<int[]> mask,
+            IList<int> start = null)
+        {
+            var shift = new [] { 0, 0, 0 };
+            if (!(start is null))
+                shift = start.subtract(mask.First());
+            var level = numberOfLevels - 1;
+            var scShift = singleCoordinateShifts[level];
+            foreach (var coord in mask)
+            {
+                var coordinate = !(start is null) ? coord : coord.add(shift);
+                if (ExceedsBounds(coordinate, level)) break;
+                var eVox = Constants.MakeIDFromCoordinates(coordinate, scShift);
+                var dVox = designedSolid.GetVoxelID(eVox, level);
+                if (Constants.GetRole(dVox) == VoxelRoleTypes.Full)
+                    break;
+                ChangeVoxelToEmpty(eVox, false, true);
+            }
+        }
+
+        private bool ExceedsBounds(IReadOnlyList<int> coord, int level)
+        {
+            var uL = voxelsPerDimension[level];
+            for (var i = 0; i < 3; i++)
+                if (coord[i] < 0 || coord[i] >= uL[i]) return true;
+            return false;
+        }
+
+        private IEnumerable<long> GetVoxelsFromMask(IEnumerable<int[]> mask)
+        {
+            return mask.Select(coord => Constants.MakeIDFromCoordinates(coord, NumberOfLevels - 1)).ToList();
         }
 
         private IEnumerable<int[]> CreateProjectionMask(double[] dir, double tLimit,
@@ -1215,15 +1249,9 @@ namespace TVGL.Voxelization
         {
             var voxel = new int[3];
             for (var i = 0; i < 3; i++)
-                switch (Math.Sign(direction[i]))
-                {
-                    case -1:
-                        voxel[i] = (int) Math.Ceiling(cInt[i] - 1);
-                        break;
-                    default:
-                        voxel[i] = (int) Math.Floor(cInt[i]);
-                        break;
-                }
+                if (Math.Sign(direction[i]) == -1)
+                    voxel[i] = (int)Math.Ceiling(cInt[i] - 1);
+                else voxel[i] = (int)Math.Floor(cInt[i]);
             return voxel;
         }
 
