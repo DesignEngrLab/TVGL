@@ -99,11 +99,11 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
+            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i+=76)
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -149,11 +149,12 @@ namespace TVGLPresenterDX
             stopwatch.Start();
             var vs1 = new VoxelizedSolid(ts,8);
             //var dir = new List<double>(new double[] { 1, 1, 1 }).normalize();
-            var dir = new List<double>(new double[] { 1, 2, 3 }).normalize(); //Second voxel is skipped in CreateProjectionMask
+            var dir = new List<double>(new double[] { 1, 2, 3 }).normalize();
             var neg = vs1.InvertToNewSolid();
             var erd = neg.ErodeVoxelSolid(vs1, dir);
             erd.SolidColor = new Color(KnownColors.Magenta);
             Presenter.ShowAndHang(vs1, erd);
+            return;
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
