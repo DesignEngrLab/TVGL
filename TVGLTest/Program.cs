@@ -99,8 +99,8 @@ namespace TVGLPresenterDX
                 dir = new DirectoryInfo("../../../TestFiles");
             }
             var random = new Random();
-            var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            //var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
+            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+            var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i++)
@@ -151,7 +151,7 @@ namespace TVGLPresenterDX
             //var dir = new List<double>(new double[] { 1, 1, 1 }).normalize();
             var dir = new List<double>(new double[] { 1, 2, 3 }).normalize();
             var neg = vs1.InvertToNewSolid();
-            var erd = neg.ErodeVoxelSolid(vs1, dir);
+            var erd = neg.ErodeToNewSolid(vs1, dir);
             erd.SolidColor = new Color(KnownColors.Magenta);
             Presenter.ShowAndHang(vs1, erd);
             return;
