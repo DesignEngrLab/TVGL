@@ -131,7 +131,7 @@ namespace TVGL.Voxelization
         public VoxelBinClass(long ID, VoxelRoleTypes voxelRole, VoxelizedSolid solid,
             bool btmCoordIsInside = false)
         {
-            InnerVoxels = new VoxelHashSet[solid.numberOfLevels - 1];
+            InnerVoxels = new VoxelHashSet[solid.lastLevel];
             for (int i = 1; i < solid.numberOfLevels; i++)
                 InnerVoxels[i - 1] = new VoxelHashSet(i, solid.bitLevelDistribution);
             Role = voxelRole;

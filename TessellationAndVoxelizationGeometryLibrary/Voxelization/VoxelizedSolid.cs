@@ -38,6 +38,7 @@ namespace TVGL.Voxelization
         public readonly int LevelAtWhichLinkToTessellation;
         public readonly int[][] voxelsPerDimension;
         internal int numberOfLevels;
+        internal int lastLevel => numberOfLevels - 1;
         internal int[] bitLevelDistribution;
         private int[] voxelsPerSide;
         private int[] voxelsInParent;

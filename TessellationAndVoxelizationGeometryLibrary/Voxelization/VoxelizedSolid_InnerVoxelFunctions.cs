@@ -59,13 +59,18 @@ namespace TVGL.Voxelization
                 // finally, any descendants of voxel need to be removed
                 if (role == VoxelRoleTypes.Partial && removeDescendants)
                 {
-                    for (int i = level; i < numberOfLevels - 1; i++)
+                    for (int i = level; i < lastLevel; i++)
                     {
                         // by starting at level (and not doing an i-1), we are starting at the next lower level
                         lock (voxel0.InnerVoxels[i]) voxel0.InnerVoxels[i].RemoveDescendants(voxel, level);
                     }
                 }
             }
+        }
+
+        public void DeleteLowLevelVoxelCollection(IEnumerable<long> voxels)
+        {
+if(            numberOfLevels==1
         }
 
         private long ChangeEmptyVoxelToFull(long ID, int level, bool checkParentFull)
@@ -160,7 +165,7 @@ namespace TVGL.Voxelization
                 // by deleting the InnerVoxels object.
                 lock (voxel0)
                 {
-                    voxel0.InnerVoxels = new VoxelHashSet[numberOfLevels - 1];
+                    voxel0.InnerVoxels = new VoxelHashSet[lastLevel];
                     for (int i = 1; i < numberOfLevels; i++)
                         voxel0.InnerVoxels[i - 1] = new VoxelHashSet(i, bitLevelDistribution);
                     voxel0.BtmCoordIsInside = true;
@@ -173,7 +178,7 @@ namespace TVGL.Voxelization
             lock (voxel0.InnerVoxels[level - 1])
                 voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
             // now, remove all the descendants - for all lower levels. This is just like in changing partial to empty
-            for (int i = level; i < numberOfLevels - 1; i++)
+            for (int i = level; i < lastLevel; i++)
                 lock (voxel0.InnerVoxels[i])
                     voxel0.InnerVoxels[i].RemoveDescendants(voxel, level);
             if (checkParentFull)
@@ -279,7 +284,7 @@ namespace TVGL.Voxelization
             voxel = Constants.ClearFlagsFromID(voxel) + Constants.MakeFlags(level, VoxelRoleTypes.Partial);
             lock (voxel0.InnerVoxels[level - 1])
                 voxel0.InnerVoxels[level - 1].AddOrReplace(voxel);
-            if (addAllDescendants && this.numberOfLevels - 1 != level)
+            if (addAllDescendants && this.lastLevel != level)
                 AddAllDescendants(Constants.ClearFlagsFromID(voxel), level, voxel0);
             return voxel;  //if at the lowest level or
         }
@@ -327,7 +332,7 @@ namespace TVGL.Voxelization
             Volume = 0.0;
             for (int i = 0; i < numberOfLevels; i++)
                 Volume += Math.Pow(VoxelSideLengths[i], 3) * _totals[2 * i];
-            Volume += Math.Pow(VoxelSideLengths[numberOfLevels - 1], 3) * _totals[2 * (numberOfLevels - 1) + 1];
+            Volume += Math.Pow(VoxelSideLengths[lastLevel], 3) * _totals[2 * (lastLevel) + 1];
             _count = _totals.Sum();
         }
 
