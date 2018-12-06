@@ -1168,29 +1168,29 @@ namespace TVGL.Voxelization
         #region Voxel Projection along line
         //Todo: these functions
         public VoxelizedSolid ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
-            double tLimit = 0, bool inclusive = false)
+            double tLimit = 0, bool inclusive = false, bool stopAtPartial = true)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.ErodeSolid(designedSolid, dir, tLimit, inclusive);
+            copy.ErodeSolid(designedSolid, dir, tLimit, inclusive, stopAtPartial);
             copy.UpdateProperties();
             return copy;
         }
 
         private void ErodeSolid(VoxelizedSolid designedSolid, double[] dir,
-            double tLimit, bool inclusive)
+            double tLimit, bool inclusive, bool stopAtPartial)
         {
             if (tLimit <= 0)
                 tLimit = voxelsPerDimension[NumberOfLevels - 1].norm2();
             var mask = CreateProjectionMask(dir, tLimit, inclusive);
             var dirs = GetVoxelDirections(dir);
             var voxels = GetAllVoxelsOnBoundingSurfaces(dirs);
-            ErodeVoxels(designedSolid, mask, voxels);
+            ErodeVoxels(designedSolid, mask, voxels, stopAtPartial);
         }
 
         private void ErodeVoxels(VoxelizedSolid designedSolid, IList<int[]> mask,
-            IEnumerable<int[]> start)
+            IEnumerable<int[]> start, bool stopAtPartial)
         {
-            Parallel.ForEach(start, vox => ErodeMask(designedSolid, mask, vox));
+            Parallel.ForEach(start, vox => ErodeMask(designedSolid, mask, stopAtPartial, vox));
             //foreach (var vox in start)
             //    ErodeMask(designedSolid, mask, vox);
         }
@@ -1245,7 +1245,7 @@ namespace TVGL.Voxelization
         }
 
         private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask,
-            IList<int> start = null)
+            bool stopAtPartial, IList<int> start = null)
         {
             var shift = new[] { 0, 0, 0 };
             if (!(start is null))
@@ -1259,7 +1259,9 @@ namespace TVGL.Voxelization
                 //var eVox = Constants.MakeIDFromCoordinates(coordinate, scShift);
                 var eVox = GetVoxelID(coordinate, level);
                 var dVox = designedSolid.GetVoxelID(eVox, level);
-                if (Constants.GetRole(dVox) == VoxelRoleTypes.Full)
+                var role = Constants.GetRole(dVox);
+                if ((role == VoxelRoleTypes.Full) ||
+                    (role == VoxelRoleTypes.Partial && stopAtPartial))
                     break;
                 ChangeVoxelToEmpty(eVox, false, true);
             }
