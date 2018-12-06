@@ -1345,7 +1345,7 @@ namespace TVGL.Voxelization
                 var c = firstVoxel[dir];
                 var d = direction[dir];
                 var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[NumberOfLevels - 1][dir];
-                var toInt = Math.Max(toValue, firstInt[dir]);
+                var toInt = Math.Max(toValue, firstInt[dir]) + (searchSigns[dir] == -1 ? 1 : 0);
                 var fromInt = Math.Min(toValue, firstInt[dir]);
                 Parallel.For(fromInt, toInt, i =>
                 {
