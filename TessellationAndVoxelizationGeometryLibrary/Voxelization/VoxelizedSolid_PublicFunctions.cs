@@ -1171,7 +1171,8 @@ namespace TVGL.Voxelization
             double tLimit = 0.0, bool inclusive = false, bool stopAtPartial = true)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.ErodeSolid(designedSolid, dir, tLimit, inclusive, stopAtPartial);
+            copy.ErodeVoxelSolid(designedSolid, dir, tLimit, inclusive, stopAtPartial);
+            UpdateProperties();
             return copy;
         }
 
