@@ -149,10 +149,11 @@ namespace TVGLPresenterDX
             stopwatch.Start();
             var vs1 = new VoxelizedSolid(ts,8);
             //var dir = new List<double>(new double[] { 1, 1, 1 }).normalize();
-            var dir = new List<double>(new double[] { 1, 2, 3 }).normalize();
+            var dir = new List<double>(new double[] { 1, 2, 3 }).normalize(); //Second voxel is skipped in CreateProjectionMask
             var neg = vs1.InvertToNewSolid();
             var erd = neg.ErodeVoxelSolid(vs1, dir);
-            Presenter.ShowAndHang(erd);
+            erd.SolidColor = new Color(KnownColors.Magenta);
+            Presenter.ShowAndHang(vs1, erd);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
