@@ -1251,12 +1251,13 @@ namespace TVGL.Voxelization
             if (!(start is null))
                 shift = start.subtract(mask[0]);
             var level = numberOfLevels - 1;
-            var scShift = singleCoordinateShifts[level];
+            //var scShift = singleCoordinateShifts[level];
             foreach (var coord in mask)
             {
                 var coordinate = start is null ? coord : coord.add(shift);
                 if (ExceedsBounds(coordinate, level)) break;
-                var eVox = Constants.MakeIDFromCoordinates(coordinate, scShift);
+                //var eVox = Constants.MakeIDFromCoordinates(coordinate, scShift);
+                var eVox = GetVoxelID(coordinate, level);
                 var dVox = designedSolid.GetVoxelID(eVox, level);
                 if (Constants.GetRole(dVox) == VoxelRoleTypes.Full)
                     break;
