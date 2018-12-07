@@ -1332,19 +1332,21 @@ namespace TVGL.Voxelization
                 firstInt[dir] = (int)(firstVoxel[dir] + 0.5 * searchSigns[dir]);
             }
 
-            foreach (var dir in searchDirs)
+            //foreach (var dir in searchDirs)
+            Parallel.ForEach(searchDirs, dir =>
             {
                 var c = firstVoxel[dir];
                 var d = direction[dir];
                 var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[lastLevel][dir];
                 var toInt = Math.Max(toValue, firstInt[dir]) + (searchSigns[dir] == -1 ? 1 : 0);
                 var fromInt = Math.Min(toValue, firstInt[dir]);
-                Parallel.For(fromInt, toInt, i =>
+                //Parallel.For(fromInt, toInt, i =>
+                for (var i = fromInt; i < toInt; i++)
                 {
                     var t = (i - c) / d;
                     if (t <= tLimit) intersections.Add(t);
-                });
-            }
+                } //);
+            });
 
             var sortedIntersections = new SortedSet<double>(intersections);
             return sortedIntersections;
