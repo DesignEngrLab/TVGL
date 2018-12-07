@@ -1015,13 +1015,12 @@ namespace TVGL.Voxelization
         // voxels in that dimension. This results in 216 "would-be" voxels
         private bool OverSurface(long parent, int level)
         {
-            var nL = lastLevel;
-            if (level > nL) return false;
+            if (level > lastLevel) return false;
             var voxelMultiplier = 1;
-            for (var i = level; i <= nL; i++) voxelMultiplier *= voxelsPerSide[i];
+            for (var i = level; i <= lastLevel; i++) voxelMultiplier *= voxelsPerSide[i];
             var compare = Constants.GetCoordinateIndices(parent, singleCoordinateShifts[level]).
                 add(new[] { 1, 1, 1 }).multiply(voxelMultiplier);
-            var totalVoxels = voxelsPerDimension[nL];
+            var totalVoxels = voxelsPerDimension[lastLevel];
             for (var i = 0; i < 3; i++)
             {
                 if (compare[i] > totalVoxels[i]) return true;
@@ -1280,10 +1279,9 @@ namespace TVGL.Voxelization
         private IList<int[]> CreateProjectionMask(double[] dir, double tLimit,
             bool inclusive)
         {
-            var nL = lastLevel;
             var initCoord = new[] { 0, 0, 0 };
             for (var i = 0; i < 3; i++)
-                if (dir[i] < 0) initCoord[i] = voxelsPerDimension[nL][i] - 1;
+                if (dir[i] < 0) initCoord[i] = voxelsPerDimension[lastLevel][i] - 1;
             var voxels = new List<int[]>(new[] { initCoord });
             var c = initCoord.add(new[] { 0.5, 0.5, 0.5 });
             var ts = FindIntersectionDistances(c, dir, tLimit);
