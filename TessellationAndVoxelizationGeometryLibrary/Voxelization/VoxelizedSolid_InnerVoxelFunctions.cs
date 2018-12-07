@@ -68,10 +68,10 @@ namespace TVGL.Voxelization
             }
         }
 
-        public void DeleteLowLevelVoxelCollection(IEnumerable<long> voxels)
-        {
-if(            numberOfLevels==1
-        }
+        //public void DeleteLowLevelVoxelCollection(IEnumerable<long> voxels)
+        //{
+        //    if (numberOfLevels == 1)
+        //}
 
         private long ChangeEmptyVoxelToFull(long ID, int level, bool checkParentFull)
         {
