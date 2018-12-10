@@ -151,7 +151,8 @@ namespace TVGLPresenterDX
             //var dir = new List<double>(new double[] { 1, 1, 1 }).normalize();
             var dir = new List<double>(new double[] { 1, 2, 3 }).normalize();
             var neg = vs1.InvertToNewSolid();
-            var erd = neg.ErodeToNewSolid(vs1, dir);
+            //var erd = neg.ErodeToNewSolid(vs1, dir);
+            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:10);
             erd.SolidColor = new Color(KnownColors.Magenta);
             Presenter.ShowAndHang(vs1, erd);
             return;
