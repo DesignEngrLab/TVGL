@@ -1165,32 +1165,35 @@ namespace TVGL.Voxelization
 
         #endregion
         #region Voxel Projection along line
-        //Todo: these functions
         public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, double[] dir,
-            double tLimit = 0.0, bool inclusive = false, bool stopAtPartial = true)
+            double tLimit = 0.0, double toolDia = -1, bool inclusive = false, bool stopAtPartial = true)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.ErodeVoxelSolid(designedSolid, dir, tLimit, inclusive, stopAtPartial);
+            copy.ErodeVoxelSolid(designedSolid, dir, tLimit, toolDia, inclusive, stopAtPartial);
             UpdateProperties();
             return copy;
         }
 
         public void ErodeSolid(VoxelizedSolid designedSolid, double[] dir,
-            double tLimit = 0.0, bool inclusive = false, bool stopAtPartial = true)
+            double tLimit = 0.0, double toolDia = -1, bool inclusive = false, bool stopAtPartial = true)
         {
-            ErodeVoxelSolid(designedSolid, dir, tLimit, inclusive, stopAtPartial);
+            ErodeVoxelSolid(designedSolid, dir, tLimit, toolDia, inclusive, stopAtPartial);
             UpdateProperties();
         }
 
         private void ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
-            double tLimit, bool inclusive, bool stopAtPartial)
+            double tLimit, double toolDia, bool inclusive, bool stopAtPartial)
         {
             if (tLimit <= 0)
                 tLimit = voxelsPerDimension[lastLevel].norm2();
             var mask = CreateProjectionMask(dir, tLimit, inclusive);
             var dirs = GetVoxelDirections(dir);
             var starts = GetAllVoxelsOnBoundingSurfaces(dirs);
-            Parallel.ForEach(starts, vox => ErodeMask(designedSolid, mask, stopAtPartial, vox));
+            if (toolDia <= 0)
+                Parallel.ForEach(starts, vox => ErodeMask(designedSolid, mask, stopAtPartial, vox));
+            else
+                Parallel.ForEach(starts, vox =>
+                    ErodeMask(designedSolid, mask, stopAtPartial, toolDia, dir, vox));
             //foreach (var vox in starts)
             //    ErodeMask(designedSolid, mask, vox);
             //ErodeVoxels(designedSolid, mask, starts, stopAtPartial);
@@ -1261,10 +1264,43 @@ namespace TVGL.Voxelization
                 var eVox = GetVoxelID(coordinate, level);
                 var dVox = designedSolid.GetVoxelID(eVox, level);
                 var role = Constants.GetRole(dVox);
-                if ((role == VoxelRoleTypes.Full) ||
+                if (role == VoxelRoleTypes.Full ||
                     (role == VoxelRoleTypes.Partial && stopAtPartial))
                     break;
                 ChangeVoxelToEmpty(eVox, false, true);
+            }
+        }
+
+        private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask,
+            bool stopAtPartial, double toolDia, double[] dir, IList<int> start = null)
+        {
+            var shift = new[] { 0, 0, 0 };
+            if (!(start is null))
+                shift = start.subtract(mask[0]);
+            var level = lastLevel;
+            foreach (var initCoord in mask)
+            {
+                var coordinate = start is null ? initCoord : initCoord.add(shift);
+                var slice = ThickenMask(coordinate, toolDia, dir);
+                var stop = true;
+                foreach (var coord in slice)
+                {
+                    if (!ExceedsBounds(coord, level)) stop = false;
+                    var eVox = GetVoxelID(coord, level);
+                    var dVox = designedSolid.GetVoxelID(eVox, level);
+                    var role = Constants.GetRole(dVox);
+                    if (role == VoxelRoleTypes.Full ||
+                        (role == VoxelRoleTypes.Partial && stopAtPartial))
+                        stop = false;
+                    break;
+                }
+
+                if (stop) break;
+                foreach (var coord in slice)
+                {
+                    var eVox = GetVoxelID(coord, level);
+                    ChangeVoxelToEmpty(eVox, false, true);
+                }
             }
         }
 
@@ -1274,6 +1310,12 @@ namespace TVGL.Voxelization
             for (var i = 0; i < 3; i++)
                 if (coord[i] < 0 || coord[i] >= uL[i]) return true;
             return false;
+        }
+
+        //ToDo: Add tool diameter to mask voxels
+        private IList<int[]> ThickenMask(int[] vox, double toolDia, double[] dir)
+        {
+
         }
 
         private IList<int[]> CreateProjectionMask(double[] dir, double tLimit,
