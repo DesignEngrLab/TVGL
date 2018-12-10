@@ -1278,24 +1278,30 @@ namespace TVGL.Voxelization
             if (!(start is null))
                 shift = start.subtract(mask[0]);
             var level = lastLevel;
+            var slice = ThickenMask(mask[0], toolDia, dir);
             foreach (var initCoord in mask)
             {
-                var coordinate = start is null ? initCoord : initCoord.add(shift);
-                var slice = ThickenMask(coordinate, toolDia, dir);
-                var stop = true;
-                foreach (var coord in slice)
+                var tOffset = initCoord.subtract(mask[0]);
+                var stop = new [] { true, false };
+
+                for (var i = 0; i < slice.Count; i++)
                 {
-                    if (!ExceedsBounds(coord, level)) stop = false;
-                    var eVox = GetVoxelID(coord, level);
+                    slice[i] = start is null ? slice[i] : slice[i].add(shift);
+                    slice[i].add(tOffset);
+                    //var coord = slice[i];
+                    if (!ExceedsBounds(slice[i], level)) stop[0] = false;
+                    var eVox = GetVoxelID(slice[i], level);
                     var dVox = designedSolid.GetVoxelID(eVox, level);
                     var role = Constants.GetRole(dVox);
                     if (role == VoxelRoleTypes.Full ||
                         (role == VoxelRoleTypes.Partial && stopAtPartial))
-                        stop = false;
-                    break;
+                    {
+                        stop[1] = true;
+                        break;
+                    }
                 }
 
-                if (stop) break;
+                if (stop[0] || stop[1]) break;
                 foreach (var coord in slice)
                 {
                     var eVox = GetVoxelID(coord, level);
@@ -1315,7 +1321,15 @@ namespace TVGL.Voxelization
         //ToDo: Add tool diameter to mask voxels
         private IList<int[]> ThickenMask(int[] vox, double toolDia, double[] dir)
         {
+            var voxels = new List<int[]>(new[] { vox });
+            //var voxDouble = new double[3];
+            //for (var i = 0; i < 3; i++)
+            //    voxDouble[i] = vox[i];
+            var toolPlane = new Flat(new double[] { vox[0], vox[1], vox[2] }, dir);
+            
 
+
+            return voxels;
         }
 
         private IList<int[]> CreateProjectionMask(double[] dir, double tLimit,
@@ -1336,6 +1350,7 @@ namespace TVGL.Voxelization
             return voxels;
         }
 
+        //Exclusive by default (i.e. if line passes through vertex/edge it ony includes two voxels that are actually passed through)
         private static int[] GetNextVoxelCoord(IReadOnlyList<double> cInt, IReadOnlyList<double> direction, bool inclusive)
         {
             var searchDirs = new List<int>();
