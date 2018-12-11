@@ -148,13 +148,14 @@ namespace TVGLPresenterDX
         {
             stopwatch.Start();
             var vs1 = new VoxelizedSolid(ts,8);
-            //var dir = new List<double>(new double[] { 1, 1, 1 }).normalize();
-            var dir = new List<double>(new double[] { 1, 2, 3 }).normalize();
+            //var dir = new List<double>(new [] { 1.0, 1.0, 1.0 }).normalize();
+            var dir = new List<double>(new[] { 1.0, 2.0, 3.0 }).normalize();
+            //var dir = new List<double>(new [] { 0.0, 0.4706, -0.8824 }).normalize(); //Direction of holes in ObliqueHoles
             var neg = vs1.InvertToNewSolid();
             //var erd = neg.ErodeToNewSolid(vs1, dir);
             var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:10);
-            erd.SolidColor = new Color(KnownColors.Magenta);
-            Presenter.ShowAndHang(vs1, erd);
+            //erd.SolidColor = new Color(KnownColors.Magenta);
+            //Presenter.ShowAndHang(vs1, erd);
             return;
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
