@@ -1171,7 +1171,7 @@ namespace TVGL.Voxelization
         {
             var copy = (VoxelizedSolid)Copy();
             copy.ErodeVoxelSolid(designedSolid, dir, tLimit, toolDia, inclusive, stopAtPartial, removePartial);
-            UpdateProperties();
+            copy.UpdateProperties();
             return copy;
         }
 
