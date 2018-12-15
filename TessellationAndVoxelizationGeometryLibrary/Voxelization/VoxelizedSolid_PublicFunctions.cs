@@ -17,6 +17,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
@@ -1167,27 +1168,30 @@ namespace TVGL.Voxelization
         #region Voxel Projection along line
         public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit = 0.0, double toolDia = -1, bool inclusive = false,
-            bool stopAtPartial = true, bool removePartial = false)
+            bool stopAtPartial = true, bool removePartial = false, params string[] toolOptions)
         {
             var copy = (VoxelizedSolid)Copy();
-            copy.ErodeVoxelSolid(designedSolid, dir, tLimit, toolDia, inclusive, stopAtPartial, removePartial);
+            copy.ErodeVoxelSolid(designedSolid, dir, tLimit, toolDia, inclusive, stopAtPartial, removePartial, toolOptions);
             copy.UpdateProperties();
             return copy;
         }
 
         public void ErodeSolid(VoxelizedSolid designedSolid, double[] dir,
             double tLimit = 0.0, double toolDia = -1, bool inclusive = false,
-            bool stopAtPartial = true, bool removePartial = false)
+            bool stopAtPartial = true, bool removePartial = false, params string[] toolOptions)
         {
-            ErodeVoxelSolid(designedSolid, dir, tLimit, toolDia, inclusive, stopAtPartial, removePartial);
+            ErodeVoxelSolid(designedSolid, dir, tLimit, toolDia, inclusive, stopAtPartial, removePartial, toolOptions);
             UpdateProperties();
         }
 
         private void ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
-            double tLimit, double toolDia, bool inclusive, bool stopAtPartial, bool removePartial)
+            double tLimit, double toolDia, bool inclusive, bool stopAtPartial,
+            bool removePartial, params string[] toolOptions)
         {
             if (tLimit <= 0)
                 tLimit = voxelsPerDimension[lastLevel].norm2();
+            if (toolDia > 0)
+                tLimit += Math.Sqrt(3 * Math.Pow(toolDia / 2, 2));
             var mask = CreateProjectionMask(dir, tLimit, inclusive);
             var dirs = GetVoxelDirections(dir);
             var starts = GetAllVoxelsOnBoundingSurfaces(dirs);
@@ -1195,7 +1199,7 @@ namespace TVGL.Voxelization
                 Parallel.ForEach(starts, vox => ErodeMask(designedSolid, mask, stopAtPartial, removePartial, vox));
             else
                 Parallel.ForEach(starts, vox =>
-                    ErodeMask(designedSolid, mask, stopAtPartial, removePartial, toolDia, dir, vox));
+                    ErodeMask(designedSolid, mask, stopAtPartial, removePartial, toolDia, dir, vox, toolOptions));
             //foreach (var vox in starts)
             //    ErodeMask(designedSolid, mask, vox);
             //ErodeVoxels(designedSolid, mask, starts, stopAtPartial);
@@ -1222,7 +1226,6 @@ namespace TVGL.Voxelization
                 foreach (var vox in voxel)
                     voxels.Add(vox);
             }
-
             return voxels;
         }
 
@@ -1275,13 +1278,14 @@ namespace TVGL.Voxelization
         }
 
         private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask,
-            bool stopAtPartial, bool removePartial, double toolDia, double[] dir, IList<int> start = null)
+            bool stopAtPartial, bool removePartial, double toolDia, double[] dir,
+            IList<int> start = null, params string[] toolOptions)
         {
             var shift = new[] { 0, 0, 0 };
             if (!(start is null))
                 shift = start.subtract(mask[0]);
             var level = lastLevel;
-            var slice = ThickenMask(mask[0], toolDia, dir);
+            var slice = ThickenMask(mask[0], dir, toolDia, toolOptions);
             foreach (var initCoord in mask)
             {
                 var tOffset = initCoord.subtract(mask[0]);
@@ -1322,18 +1326,53 @@ namespace TVGL.Voxelization
             return false;
         }
 
-        //ToDo: Add tool diameter to mask voxels
-        private IList<int[]> ThickenMask(int[] vox, double toolDia, double[] dir)
+        private IList<int[]> GetVoxelsWithinCircle(int[] center, IList<double> dir, double radius)
         {
-            var voxels = new List<int[]>(new[] { vox });
-            //var voxDouble = new double[3];
-            //for (var i = 0; i < 3; i++)
-            //    voxDouble[i] = vox[i];
-            var toolPlane = new Flat(new double[] { vox[0], vox[1], vox[2] }, dir);
+            var voxels = new HashSet<int[]>(new [] { center });
+
+            var rStep = VoxelSideLengths[lastLevel];
+            var radii = new List<double>();
+            for (var i = rStep; i < radius; i += rStep)
+                radii.Add(i);
+            radii.Add(radius);
+
+            var a = new[] { dir[1], -dir[0], 0 };
+            var b = a.crossProduct(dir);
+
+            foreach (var r in radii)
+            {
+                var inc = Math.PI * 2 * r / rStep * 1.5;
+                for (var i = .0; i < 2 * Math.PI; i += 2 * Math.PI / inc)
+                {
+                    var theta = (Math.PI * 2 / inc) * i;
+                    var x = (int) Math.Floor(center[0] + r * Math.Cos(theta) * a[0] + r * Math.Sin(theta) * b[0]);
+                    var y = (int) Math.Floor(center[1] + r * Math.Cos(theta) * a[1] + r * Math.Sin(theta) * b[1]);
+                    var z = (int) Math.Floor(center[2] + r * Math.Cos(theta) * a[2] + r * Math.Sin(theta) * b[2]);
+                    voxels.Add(new[] {x, y, z});
+                }
+            }
             
+            return voxels.ToList();
+        }
 
-
-            return voxels;
+        //ToDo: Add tool diameter to mask voxels
+        private IList<int[]> ThickenMask(int[] vox, double[] dir, double toolDia,
+            params string[] toolOptions)
+        {
+            var start = new int[3];
+            for (var i = 0; i < 3; i++)
+                start[i] = vox[i] - Math.Sign(dir[i]) * (int) Math.Ceiling(toolDia / 2);
+            toolOptions = toolOptions.Length == 0 ? new [] {"flat"} : toolOptions;
+            switch (toolOptions[0])
+            {
+                case "ball":
+                    return GetVoxelsWithinCircle(start, dir, toolDia / 2);
+                case "cone":
+                    var angle = toolOptions[1];
+                    return GetVoxelsWithinCircle(start, dir, toolDia / 2);
+                default:
+                    return GetVoxelsWithinCircle(start, dir, toolDia / 2);
+            }
         }
 
         private IList<int[]> CreateProjectionMask(double[] dir, double tLimit,
