@@ -154,8 +154,8 @@ namespace TVGLPresenterDX
             var neg = vs1.InvertToNewSolid();
             //var erd = neg.ErodeToNewSolid(vs1, dir);
             var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:10);
-            //erd.SolidColor = new Color(KnownColors.Magenta);
-            //Presenter.ShowAndHang(vs1, erd);
+            erd.SolidColor = new Color(KnownColors.Magenta);
+            Presenter.ShowAndHang(vs1, erd);
             return;
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
