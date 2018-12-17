@@ -1254,22 +1254,18 @@ namespace TVGL.Voxelization
             bool stopAtPartial, double toolDia, IList<double> dir,
             IList<int> start = null, params string[] toolOptions)
         {
-            var shift = new[] { 0, 0, 0 };
-            if (!(start is null))
-                shift = start.subtract(mask[0]);
-            var slice = ThickenMask(mask[0], dir, toolDia, toolOptions);
+            start = start ?? mask[0].ToArray();
+            var shift = start.subtract(mask[0]);
             foreach (var initCoord in mask)
             {
-                var tOffset = initCoord.subtract(mask[0]);
                 var stop = new [] { true, false };
-                var voxels = slice.ToList();
+                stop[0] = false;
+                var slice = ThickenMask(initCoord.add(shift), dir, toolDia, toolOptions);
 
-                for (var i = 0; i < voxels.Count; i++)
+                foreach (var coord in slice)
                 {
-                    voxels[i] = start is null ? voxels[i] : voxels[i].add(shift);
-                    voxels[i] = voxels[i].add(tOffset);
-                    if (!ExceedsBounds(voxels[i], dir)) stop[0] = false;
-                    var eVox = GetVoxelID(voxels[i], lastLevel);
+                    //if (!ExceedsBounds(coord, dir)) stop[0] = false;
+                    var eVox = GetVoxelID(coord, lastLevel);
                     var dVox = designedSolid.GetVoxelID(eVox, lastLevel);
                     var role = Constants.GetRole(dVox);
                     if (role == VoxelRoleTypes.Full ||
@@ -1281,7 +1277,7 @@ namespace TVGL.Voxelization
                 }
 
                 if (stop[0] || stop[1]) break;
-                foreach (var coord in voxels)
+                foreach (var coord in slice)
                 {
                     var eVox = GetVoxelID(coord, lastLevel);
                     ChangeVoxelToEmpty(eVox, false, true);
