@@ -153,7 +153,7 @@ namespace TVGLPresenterDX
             //var dir = new List<double>(new [] { 0.0, 0.4706, -0.8824 }).normalize(); //Direction of holes in ObliqueHoles
             var neg = vs1.InvertToNewSolid();
             //var erd = neg.ErodeToNewSolid(vs1, dir);
-            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:10);
+            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:20);
             erd.SolidColor = new Color(KnownColors.Magenta);
             Presenter.ShowAndHang(vs1, erd);
             return;
