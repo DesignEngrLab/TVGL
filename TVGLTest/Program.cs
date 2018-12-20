@@ -148,9 +148,9 @@ namespace TVGLPresenterDX
         {
             stopwatch.Start();
             var vs1 = new VoxelizedSolid(ts,8);
-            //var dir = new List<double>(new [] { 1.0, 1.0, 1.0 }).normalize();
-            var dir = new List<double>(new[] { 1.0, 2.0, 3.0 }).normalize();
-            //var dir = new List<double>(new [] { 0.0, 0.4706, -0.8824 }).normalize(); //Direction of holes in ObliqueHoles
+            //var dir = new [] { 1.0, 1.0, 1.0 };
+            var dir = new [] { 1.0, 2.0, 3.0 };
+            //var dir = new [] { 0.0, 0.4706, -0.8824 }; //Direction of holes in ObliqueHoles
             var neg = vs1.InvertToNewSolid();
             //var erd = neg.ErodeToNewSolid(vs1, dir);
             var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:20);
