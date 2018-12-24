@@ -1428,6 +1428,10 @@ namespace TVGL.Voxelization
                 case "cone":
                     var angle = toolOptions[1];
                     return GetVoxelsWithinCircle(vox, dir, toolDia / 2);
+                    double angle;
+                    if (toolOptions.Length < 2) angle = 118;
+                    else if (!double.TryParse(toolOptions[1], out angle))
+                        angle = 118;
                 default:
                     return GetVoxelsWithinCircle(vox, dir, toolDia / 2);
             }
