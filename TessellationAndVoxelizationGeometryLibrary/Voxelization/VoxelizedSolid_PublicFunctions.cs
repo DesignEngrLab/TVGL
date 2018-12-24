@@ -1423,6 +1423,65 @@ namespace TVGL.Voxelization
             return voxels;
         }
 
+        private IEnumerable<int[]> GetVoxelsOnCircle(IReadOnlyList<double> center, IList<double> dir, double radius)
+        {
+            var voxels = new List<int[]>();
+
+            var a = new[] { dir[1], -dir[0], 0 };
+            var b = a.crossProduct(dir);
+
+            var first = GetVoxelOnCircle(radius, .0, a, b, center);
+            var prev = first.ToArray();
+            var increments = Math.Ceiling(Math.PI * 2 * radius / VoxelSideLengths[lastLevel] * 1.5);
+
+            for (var theta = .0; theta < 2 * Math.PI; theta += 2 * Math.PI / increments)
+            {
+                var vox = GetVoxelOnCircle(radius, theta, a, b, center);
+                if (AreEqual(vox, prev) || AreEqual(vox, first))
+                    continue;
+                if (vox == prev) continue;
+                if (theta <= .0) first = vox.ToArray();
+                prev = vox.ToArray();
+                voxels.Add(vox.ToArray());
+            }
+
+            return voxels;
+        }
+
+        private IList<int[]> GetVoxelsOnCone(int[] center, IList<double> dir, double radius, double angle)
+        {
+            var voxels = new HashSet<int[]>(new[] { center });
+
+            var tan = angle * Math.Tan((Math.PI / 180) / 2);
+            var tStep = 0.8 * VoxelSideLengths[lastLevel];
+            var rInc = tStep * tan;
+            if (rInc > tStep)
+            {
+                rInc = tStep;
+                tStep = rInc / tan;
+            }
+
+            var r = rInc;
+            var centerDouble = new double[]{ center[0], center[1], center[2] };
+            var c = centerDouble.ToArray();
+
+            while (r < radius)
+            {
+                var voxelsOnCircle = GetVoxelsOnCircle(c, dir, r);
+                foreach (var voxel in voxelsOnCircle)
+                    voxels.Add(voxel);
+                r += rInc;
+                c = c.subtract(dir.multiply(tStep));
+            }
+
+            c = centerDouble.subtract(dir.multiply(radius / tan));
+            var vox = GetVoxelsOnCircle(c, dir, radius);
+            foreach (var voxel in vox)
+                voxels.Add(voxel);
+
+            return voxels.ToList();
+        }
+
         private IList<int[]> ThickenMask(int[] vox, IList<double> dir,
             double toolDia, params string[] toolOptions)
         {
