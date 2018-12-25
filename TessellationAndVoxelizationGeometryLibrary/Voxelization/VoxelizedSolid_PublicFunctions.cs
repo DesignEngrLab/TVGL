@@ -1474,6 +1474,32 @@ namespace TVGL.Voxelization
             return voxels.ToList();
         }
 
+        //ToDo: Correct for integer coordinates
+        private static IList<int[]> GetVoxelsOnHemisphere(int[] center, IList<double> dir, double radius)
+        {
+            var comparer = new SameCoordinates();
+            var voxels = new HashSet<int[]>(new[] { center }, comparer);
+
+            var centerDouble = new double[] { center[0], center[1], center[2] };
+
+            var arcStep = 0.8;
+            var numSteps = Math.Ceiling(Math.PI * radius / 2 / arcStep);
+            var aStep = (Math.PI / 2) / numSteps;
+
+            for (var i = 1; i <= numSteps; i++)
+            {
+                var a = aStep * i;
+                var r = radius * Math.Cos(Math.PI / 2 - a);
+                var tStep = radius - radius * Math.Sin(Math.PI / 2 - a);
+                var c = centerDouble.subtract(dir.multiply(tStep));
+                var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
+                foreach (var voxel in voxelsOnCircle)
+                    voxels.Add(voxel);
+            }
+
+            return voxels.ToList();
+        }
+
         private IList<int[]> ThickenMask(int[] vox, IList<double> dir,
             double toolDia, params string[] toolOptions)
         {
