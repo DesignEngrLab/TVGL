@@ -1358,15 +1358,7 @@ namespace TVGL.Voxelization
             return false;
         }
 
-        private static int[] GetVoxelOnCircle(double r, double t,
-            IReadOnlyList<double> a, IReadOnlyList<double> b, IReadOnlyList<int> c)
-        {
-            var x = (int)Math.Floor(c[0] + r * Math.Cos(t) * a[0] + r * Math.Sin(t) * b[0]);
-            var y = (int)Math.Floor(c[1] + r * Math.Cos(t) * a[1] + r * Math.Sin(t) * b[1]);
-            var z = (int)Math.Floor(c[2] + r * Math.Cos(t) * a[2] + r * Math.Sin(t) * b[2]);
-            return new[] {x, y, z};
-        }
-        private static int[] GetVoxelOnCircle(double r, double t,
+        private static IEnumerable<int> GetVoxelOnCircle(double r, double t,
             IReadOnlyList<double> a, IReadOnlyList<double> b, IReadOnlyList<double> c)
         {
             var x = (int)Math.Floor(c[0] + r * Math.Cos(t) * a[0] + r * Math.Sin(t) * b[0]);
