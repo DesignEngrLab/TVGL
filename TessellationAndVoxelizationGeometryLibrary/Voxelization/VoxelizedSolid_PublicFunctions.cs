@@ -1487,19 +1487,22 @@ namespace TVGL.Voxelization
         {
             if (toolDia <= 0) return new List<int[]>(new []{vox});
 
+            var radius = toolDia / VoxelSideLengths[lastLevel] / 2;
             toolOptions = toolOptions.Length == 0 ? new [] {"flat"} : toolOptions;
+
             switch (toolOptions[0])
             {
                 case "ball":
-                    return GetVoxelsWithinCircle(vox, dir, toolDia / 2);
+                    return GetVoxelsOnHemisphere(vox, dir, radius);
                 case "cone":
                     double angle;
                     if (toolOptions.Length < 2) angle = 118;
                     else if (!double.TryParse(toolOptions[1], out angle))
                         angle = 118;
-                    return GetVoxelsOnCone(vox, dir, toolDia / 2, angle);
+                    return GetVoxelsOnCone(vox, dir, radius, angle);
                 default:
-                    return GetVoxelsWithinCircle(vox, dir, toolDia / 2);
+                    var voxDouble = new double[] {vox[0], vox[1], vox[2]};
+                    return GetVoxelsWithinCircle(voxDouble, dir, radius);
             }
         }
 
