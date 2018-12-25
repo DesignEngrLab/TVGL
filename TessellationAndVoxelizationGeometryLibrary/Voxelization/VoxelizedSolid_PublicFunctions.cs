@@ -1312,33 +1312,33 @@ namespace TVGL.Voxelization
             }
         }
 
-        //private class SameCoordinates : EqualityComparer<int[]>
-        //{
-        //    public override bool Equals(int[] a1, int[] a2)
-        //    {
-        //        if (a1 == null && a2 == null)
-        //            return true;
-        //        if (a1 == null || a2 == null)
-        //            return false;
-        //        if (a1.Length != a2.Length)
-        //            return false;
-        //        var ret = true;
-        //        for (var i = 0; i < a1.Length; i++)
-        //            if (a1[i] != a2[i])
-        //            {
-        //                ret = false;
-        //                break;
-        //            }
-        //        return ret;
-        //    }
-        //    public override int GetHashCode(int[] ax)
-        //    {
-        //        int hCode = ax[0];
-        //        for (var i = 1; i < ax.Length; i++)
-        //            hCode = hCode ^ ax[i];
-        //        return hCode.GetHashCode();
-        //    }
-        //}
+        private class SameCoordinates : EqualityComparer<int[]>
+        {
+            public override bool Equals(int[] a1, int[] a2)
+            {
+                if (a1 == null && a2 == null)
+                    return true;
+                if (a1 == null || a2 == null)
+                    return false;
+                if (a1.Length != a2.Length)
+                    return false;
+                var ret = true;
+                for (var i = 0; i < a1.Length; i++)
+                    if (a1[i] != a2[i])
+                    {
+                        ret = false;
+                        break;
+                    }
+                return ret;
+            }
+            public override int GetHashCode(int[] ax)
+            {
+                int hCode = ax[0];
+                for (var i = 1; i < ax.Length; i++)
+                    hCode = hCode ^ ax[i];
+                return hCode.GetHashCode();
+            }
+        }
 
         private bool ExceedsBounds(IReadOnlyList<int> coord, IList<double> dir)
         {
