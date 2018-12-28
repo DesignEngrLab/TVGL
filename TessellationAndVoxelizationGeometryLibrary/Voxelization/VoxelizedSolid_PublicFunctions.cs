@@ -1320,22 +1320,14 @@ namespace TVGL.Voxelization
                     return true;
                 if (a1 == null || a2 == null)
                     return false;
-                if (a1.Length != a2.Length)
-                    return false;
-                var ret = true;
-                for (var i = 0; i < a1.Length; i++)
-                    if (a1[i] != a2[i])
-                    {
-                        ret = false;
-                        break;
-                    }
-                return ret;
+                return (a1[0] == a2[0] &&
+                        a1[1] == a2[1] &&
+                        a1[2] == a2[2]);
             }
             public override int GetHashCode(int[] ax)
             {
-                int hCode = ax[0];
-                for (var i = 1; i < ax.Length; i++)
-                    hCode = hCode ^ ax[i];
+                if (ax is null) return 0;
+                var hCode = ax[0] ^ ax[1] ^ ax[2];
                 return hCode.GetHashCode();
             }
         }
@@ -1358,31 +1350,6 @@ namespace TVGL.Voxelization
             return false;
         }
 
-        private static IEnumerable<int> GetVoxelOnCircle(double r, double t,
-            IReadOnlyList<double> a, IReadOnlyList<double> b, IReadOnlyList<double> c)
-        {
-            var x = (int)Math.Floor(c[0] + r * Math.Cos(t) * a[0] + r * Math.Sin(t) * b[0]);
-            var y = (int)Math.Floor(c[1] + r * Math.Cos(t) * a[1] + r * Math.Sin(t) * b[1]);
-            var z = (int)Math.Floor(c[2] + r * Math.Cos(t) * a[2] + r * Math.Sin(t) * b[2]);
-            return new[] { x, y, z };
-        }
-
-        //private static bool AreEqual<T>(IReadOnlyList<T> a, IReadOnlyList<T> b)
-        //{
-        //    var comparer = EqualityComparer<T>.Default;
-        //    if (a == b)
-        //        return true;
-        //    if (a == null || b == null)
-        //        return false;
-        //    if (a.Count != b.Count)
-        //        return false;
-        //    for (var i = 0; i < a.Count; i++)
-        //        if (!comparer.Equals(a[i], b[i]))
-        //            return false;
-        //    return true;
-        //}
-
-        //ToDo: Correct for integer coordinates
         private static IList<int[]> GetVoxelsWithinCircle(IReadOnlyList<double> center, IList<double> dir, double radius, bool edge = false)
         {
             var comparer = new SameCoordinates();
@@ -1393,83 +1360,67 @@ namespace TVGL.Voxelization
                 for (var i = .0; i < radius; i += 0.8)
                     radii.Add(i);
             radii.Add(radius);
-
-            var a = new[] { dir[1], - dir[0], 0 };
+            var a = Math.Abs(dir[0]) < 1e-5 ? new[] { .0, -dir[2], dir[1] }.normalize() : new[] { dir[1], -dir[0], 0 }.normalize();
             var b = a.crossProduct(dir);
 
             foreach (var r in radii)
             {
-                //var prev = center.ToArray();
-                //var first = GetVoxelOnCircle(r, .0, a, b, center);
                 var step = 2 * Math.PI / Math.Ceiling(Math.PI * 2 * r / 0.8);
-                for (var theta = .0; theta < 2 * Math.PI; theta += step)
+                for (var t = .0; t < 2 * Math.PI; t += step)
                 {
-                    var vox = GetVoxelOnCircle(r, theta, a, b, center);
-                    //if (AreEqual(vox, prev) || AreEqual(vox, first))
-                    //    continue;
-                    //if (vox == prev) continue;
-                    //if (theta <= .0) first = vox.ToArray();
-                    //prev = vox.ToArray();
-                    voxels.Add(vox.ToArray());
+                    var x = (int)Math.Floor(center[0] + 0.5 + r * Math.Cos(t) * a[0] + r * Math.Sin(t) * b[0]);
+                    var y = (int)Math.Floor(center[1] + 0.5 + r * Math.Cos(t) * a[1] + r * Math.Sin(t) * b[1]);
+                    var z = (int)Math.Floor(center[2] + 0.5 + r * Math.Cos(t) * a[2] + r * Math.Sin(t) * b[2]);
+                    voxels.Add(new []{x, y, z});
                 }
             }
             
             return voxels.ToList();
         }
 
-        //ToDo: Correct for integer coordinates
-        private static IList<int[]> GetVoxelsOnCone(int[] center, IList<double> dir, double radius, double angle)
+        private static IList<int[]> GetVoxelsOnCone(IList<int> center, IList<double> dir, double radius, double angle)
         {
             var comparer = new SameCoordinates();
-            var voxels = new HashSet<int[]>(new[] { center }, comparer);
+            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, comparer);
 
-            var tan = angle * Math.Tan((Math.PI / 180) / 2);
-            var tStep = 0.8;
-            var rInc = tStep * tan;
-            if (rInc > tStep)
-            {
-                rInc = tStep;
-                tStep = rInc / tan;
-            }
+            var a = angle * (Math.PI / 180) / 2;
+            var l = radius / Math.Sin(a);
+            var numSteps = (int)Math.Ceiling(l / 0.8);
+            var lStep = l / numSteps;
+            var tStep = lStep * Math.Cos(a);
+            var rStep = lStep * Math.Sin(a);
 
-            var r = rInc;
-            var centerDouble = new double[]{ center[0], center[1], center[2] };
+            var centerDouble = new double[] { center[0], center[1], center[2] };
             var c = centerDouble.ToArray();
+            var cStep = dir.multiply(tStep);
 
-            while (r < radius)
+            for (var i = 1; i <= numSteps; i++)
             {
+                var r = rStep * i;
+                c = c.subtract(cStep);
                 var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
                 foreach (var voxel in voxelsOnCircle)
                     voxels.Add(voxel);
-                r += rInc;
-                c = c.subtract(dir.multiply(tStep));
             }
-
-            c = centerDouble.subtract(dir.multiply(radius / tan));
-            var vox = GetVoxelsWithinCircle(c, dir, radius, true);
-            foreach (var voxel in vox)
-                voxels.Add(voxel);
 
             return voxels.ToList();
         }
 
-        //ToDo: Correct for integer coordinates
-        private static IList<int[]> GetVoxelsOnHemisphere(int[] center, IList<double> dir, double radius)
+        private static IList<int[]> GetVoxelsOnHemisphere(IList<int> center, IList<double> dir, double radius)
         {
             var comparer = new SameCoordinates();
-            var voxels = new HashSet<int[]>(new[] { center }, comparer);
+            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, comparer);
 
             var centerDouble = new double[] { center[0], center[1], center[2] };
 
-            var arcStep = 0.8;
-            var numSteps = Math.Ceiling(Math.PI * radius / 2 / arcStep);
-            var aStep = (Math.PI / 2) / numSteps;
+            var numSteps = (int)Math.Ceiling(Math.PI * radius / 2 / 0.8);
+            var aStep = Math.PI / 2 / numSteps;
 
             for (var i = 1; i <= numSteps; i++)
             {
                 var a = aStep * i;
-                var r = radius * Math.Cos(Math.PI / 2 - a);
-                var tStep = radius - radius * Math.Sin(Math.PI / 2 - a);
+                var r = radius * Math.Sin(a);
+                var tStep = radius * (1 - Math.Cos(a));
                 var c = centerDouble.subtract(dir.multiply(tStep));
                 var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
                 foreach (var voxel in voxelsOnCircle)
