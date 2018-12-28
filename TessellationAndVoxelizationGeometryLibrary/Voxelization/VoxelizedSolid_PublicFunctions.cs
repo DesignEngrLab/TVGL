@@ -1276,16 +1276,21 @@ namespace TVGL.Voxelization
             var shift = start.subtract(mask[0]);
             var pBounds = true;
             var entryCoord = new [] { 0, 0, 0 };
+
+            var sliceMask = ThickenMask(start, dir, toolDia, toolOptions);
+
             foreach (var initCoord in mask)
             {
                 var eBounds = true;
                 var startCoord = initCoord.add(shift);
                 if (!pBounds && startCoord.subtract(entryCoord).norm2() > tLimit)
                     break;
-                var slice = ThickenMask(startCoord, dir, toolDia, toolOptions);
 
-                foreach (var coord in slice)
+                var tShift = startCoord.subtract(start);
+
+                foreach (var voxCoord in sliceMask)
                 {
+                    var coord = voxCoord.add(tShift);
                     if (pBounds && PrecedesBounds(coord, dir)) continue;
                     if (pBounds) entryCoord = startCoord.ToArray();
                     pBounds = false;
@@ -1304,8 +1309,9 @@ namespace TVGL.Voxelization
 
                 if (pBounds) continue;
                 if (eBounds) break;
-                foreach (var coord in slice)
+                foreach (var voxCoord in sliceMask)
                 {
+                    var coord = voxCoord.add(tShift);
                     var eVox = GetVoxelID(coord, lastLevel);
                     ChangeVoxelToEmpty(eVox, false, true);
                 }
@@ -1430,10 +1436,10 @@ namespace TVGL.Voxelization
             return voxels.ToList();
         }
 
-        private IList<int[]> ThickenMask(int[] vox, IList<double> dir,
+        private IList<int[]> ThickenMask(IList<int> vox, IList<double> dir,
             double toolDia, params string[] toolOptions)
         {
-            if (toolDia <= 0) return new List<int[]>(new []{vox});
+            if (toolDia <= 0) return new List<int[]>(new []{ vox.ToArray() });
 
             var radius = toolDia / VoxelSideLengths[lastLevel] / 2;
             toolOptions = toolOptions.Length == 0 ? new [] {"flat"} : toolOptions;
@@ -1516,7 +1522,8 @@ namespace TVGL.Voxelization
             {
                 var c = firstVoxel[dir];
                 var d = direction[dir];
-                var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[lastLevel][dir];
+                //var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[lastLevel][dir];
+                var toValue = searchSigns[dir] == -1 ? voxelsPerDimension[lastLevel][dir] - Math.Ceiling(tLimit) : Math.Ceiling(tLimit);
                 var toInt = Math.Max(toValue, firstInt[dir]) + (searchSigns[dir] == -1 ? 1 : 0);
                 var fromInt = Math.Min(toValue, firstInt[dir]);
                 //Parallel.For(fromInt, toInt, i =>
