@@ -1193,8 +1193,9 @@ namespace TVGL.Voxelization
             var mLimit = tLimit + voxelsPerDimension[lastLevel].norm2();
             var mask = CreateProjectionMask(dir, mLimit, inclusive);
             var starts = GetAllVoxelsOnBoundingSurfaces(dir, toolDia);
+            var sliceMask = ThickenMask(mask[0], dir, toolDia, toolOptions);
             Parallel.ForEach(starts, vox =>
-                    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, toolDia, dir, vox, toolOptions));
+                    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox));
             //foreach (var vox in starts)
             //    ErodeMask(designedSolid, mask, vox);
             //ErodeVoxels(designedSolid, mask, starts, stopAtPartial);
@@ -1269,15 +1270,14 @@ namespace TVGL.Voxelization
         //}
 
         private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask, double tLimit,
-            bool stopAtPartial, double toolDia, IList<double> dir,
-            IList<int> start = null, params string[] toolOptions)
+            bool stopAtPartial, IList<double> dir, IList<int[]> sliceMask = null,
+            IList<int> start = null)
         {
             start = start ?? mask[0].ToArray();
+            sliceMask = sliceMask ?? new List<int[]>(new []{ mask[0].ToArray() });
             var shift = start.subtract(mask[0]);
             var pBounds = true;
             var entryCoord = new [] { 0, 0, 0 };
-
-            var sliceMask = ThickenMask(start, dir, toolDia, toolOptions);
 
             foreach (var initCoord in mask)
             {
@@ -1286,7 +1286,7 @@ namespace TVGL.Voxelization
                 if (!pBounds && startCoord.subtract(entryCoord).norm2() > tLimit)
                     break;
 
-                var tShift = startCoord.subtract(start);
+                var tShift = startCoord.subtract(mask[0]);
 
                 foreach (var voxCoord in sliceMask)
                 {
