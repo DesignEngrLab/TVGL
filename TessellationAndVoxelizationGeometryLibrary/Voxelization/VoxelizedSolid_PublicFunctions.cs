@@ -1215,7 +1215,7 @@ namespace TVGL.Voxelization
 
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurfaces(IReadOnlyList<double> dir, double toolDia)
         {
-            var voxels = new HashSet<int[]>();
+            var voxels = new HashSet<int[]>(new SameCoordinates());
             var directions = GetVoxelDirections(dir);
             foreach (var direction in directions)
             {
@@ -1357,8 +1357,7 @@ namespace TVGL.Voxelization
 
         private static IList<int[]> GetVoxelsWithinCircle(IReadOnlyList<double> center, IList<double> dir, double radius, bool edge = false)
         {
-            var comparer = new SameCoordinates();
-            var voxels = new HashSet<int[]>(comparer);
+            var voxels = new HashSet<int[]>(new SameCoordinates());
 
             var radii = new List<double>();
             if (!edge)
@@ -1385,8 +1384,7 @@ namespace TVGL.Voxelization
 
         private static IList<int[]> GetVoxelsOnCone(IList<int> center, IList<double> dir, double radius, double angle)
         {
-            var comparer = new SameCoordinates();
-            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, comparer);
+            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
 
             var a = angle * (Math.PI / 180) / 2;
             var l = radius / Math.Sin(a);
@@ -1413,8 +1411,7 @@ namespace TVGL.Voxelization
 
         private static IList<int[]> GetVoxelsOnHemisphere(IList<int> center, IList<double> dir, double radius)
         {
-            var comparer = new SameCoordinates();
-            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, comparer);
+            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
 
             var centerDouble = new double[] { center[0], center[1], center[2] };
 
