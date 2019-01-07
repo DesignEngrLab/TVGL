@@ -1229,19 +1229,18 @@ namespace TVGL.Voxelization
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(VoxelDirections dir, double toolDia)
         {
             var voxels = new List<int[]>();
-            var level = lastLevel;
             var limit = new int[3][];
-            var offset = (int)Math.Ceiling(0.5 * toolDia / voxelsPerSide[lastLevel]);
+            var offset = (int)Math.Ceiling(0.5 * toolDia / VoxelSideLengths[lastLevel]);
 
-            limit[0] = new[] { 0 - offset, voxelsPerDimension[level][0] + offset };
-            limit[1] = new[] { 0 - offset, voxelsPerDimension[level][1] + offset };
-            limit[2] = new[] { 0 - offset, voxelsPerDimension[level][2] + offset };
+            limit[0] = new[] { 0 - offset, voxelsPerDimension[lastLevel][0] + offset };
+            limit[1] = new[] { 0 - offset, voxelsPerDimension[lastLevel][1] + offset };
+            limit[2] = new[] { 0 - offset, voxelsPerDimension[lastLevel][2] + offset };
 
             var ind = Math.Abs((int)dir) - 1;
             if (Math.Sign((int)dir) == 1)
                 limit[ind][0] = limit[ind][1] - 1;
             else
-                limit[ind][1] = 1;
+                limit[ind][1] = limit[ind][0] + 1;
 
             for (var i = limit[0][0]; i < limit[0][1]; i++)
                 for (var j = limit[1][0]; j < limit[1][1]; j++)
