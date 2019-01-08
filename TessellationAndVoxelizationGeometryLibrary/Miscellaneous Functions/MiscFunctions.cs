@@ -417,6 +417,84 @@ namespace TVGL
             return area;
         }
 
+        /// <summary>
+        ///     Calculate the area of any non-intersecting polygon in 3D space (loops)
+        ///     This is faster than projecting to a 2D surface first in a seperate function.
+        /// </summary>
+        /// <param name="loop"></param>
+        /// <param name="normal">The normal.</param>
+        /// <returns>System.Double.</returns>
+        /// <references>http://geomalgorithms.com/a01-_area.html </references>
+        public static double AreaOf3DPolygon(IEnumerable<double[]> loop, double[] normal)
+        {
+            var ax = Math.Abs(normal[0]);
+            var ay = Math.Abs(normal[1]);
+            var az = Math.Abs(normal[2]);
+
+            //Make a new list from the loop
+            var vertices = new List<double[]>(loop);
+            //Add the first vertex to the end
+            vertices.Add(vertices.First());
+
+            //Choose the largest abs coordinate to ignore for projections
+            var coord = 3; //ignore z-coord
+            if (ax > az && (ax > ay || ax.IsPracticallySame(ay))) coord = 1; //ignore x-coord
+            else if (ay > az && ay > ax) coord = 2; //ignore y-coord
+            //These are the results for eqaul directions
+            //if az == ax, then ignore z-coord.
+            //if az == ax == ay, then ignore z-coord.
+            //if ax == ay and both are greater than az, ignore the x-coord
+
+            // compute area of the 2D projection
+            // -1 so as to not include the vertex that was added to the end of the list
+            var n = vertices.Count - 1;
+            var i = 1;
+            var area = 0.0;
+            switch (coord)
+            {
+                case 1:
+                    for (i = 1; i < n; i++)
+                        area += vertices[i][1] * (vertices[i + 1][2] - vertices[i - 1][2]);
+                    break;
+                case 2:
+                    for (i = 1; i < n; i++)
+                        area += vertices[i][2] * (vertices[i + 1][0] - vertices[i - 1][0]);
+                    break;
+                case 3:
+                    for (i = 1; i < n; i++)
+                        area += vertices[i][0] * (vertices[i + 1][1] - vertices[i - 1][1]);
+                    break;
+            }
+            switch (coord)
+            {
+                case 1:
+                    area += vertices[n][1] * (vertices[1][2] - vertices[n - 1][2]);
+                    break;
+                case 2:
+                    area += vertices[n][2] * (vertices[1][0] - vertices[n - 1][0]);
+                    break;
+                case 3:
+                    area += vertices[n][0] * (vertices[1][1] - vertices[n - 1][1]);
+                    break;
+            }
+
+            // scale to get area before projection
+            var an = Math.Sqrt(ax * ax + ay * ay + az * az); // length of normal vector
+            switch (coord)
+            {
+                case 1:
+                    area *= an / (2 * normal[0]);
+                    break;
+                case 2:
+                    area *= an / (2 * normal[1]);
+                    break;
+                case 3:
+                    area *= an / (2 * normal[2]);
+                    break;
+            }
+            return area;
+        }
+
         #region Split Tesselated Solid into multiple solids if faces are disconnected 
         /// <summary>
         ///     Gets all the individual solids from a tesselated solid.
