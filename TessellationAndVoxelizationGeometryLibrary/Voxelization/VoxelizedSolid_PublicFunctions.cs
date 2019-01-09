@@ -1260,7 +1260,7 @@ namespace TVGL.Voxelization
 
             foreach (var initCoord in mask)
             {
-                var eBounds = true;
+                var sBounds = true;
                 var startCoord = initCoord.add(shift, 3);
                 if (!pBounds && startCoord.subtract(entryCoord, 3).norm2() > tLimit)
                     break;
@@ -1278,21 +1278,21 @@ namespace TVGL.Voxelization
                         entryCoord = startCoord.ToArray();
                         pBounds = false;
                     }
-                    if (ExceedsBounds(coord, dir)) continue;
-                    eBounds = false;
+                    if (SucceedsBounds(coord, dir)) continue;
+                    sBounds = false;
                     var eVox = GetVoxelID(coord, lastLevel);
                     var dVox = designedSolid.GetVoxelID(eVox, lastLevel);
                     var role = Constants.GetRole(dVox);
                     if (role == VoxelRoleTypes.Full ||
                         (role == VoxelRoleTypes.Partial && stopAtPartial))
                     {
-                        eBounds = true;
+                        sBounds = true;
                         break;
                     }
                 }
 
                 if (pBounds) continue;
-                if (eBounds) break;
+                if (sBounds) break;
 
                 foreach (var voxCoord in sliceMask)
                 {
@@ -1300,7 +1300,7 @@ namespace TVGL.Voxelization
                     //determined to also be empty when it should instead be made partial. This is because none of
                     //the child voxels exist within the parent voxel
                     var coord = voxCoord.add(tShift, 3);
-                    if (PrecedesBounds(coord, dir) || ExceedsBounds(coord, dir)) continue; //*p/e*
+                    if (OutsideBounds(coord)) continue; //*p/e*
                     var eVox = GetVoxelID(coord, lastLevel);
                     ChangeVoxelToEmpty(eVox, false, true);
                 }
@@ -1327,7 +1327,7 @@ namespace TVGL.Voxelization
             }
         }
 
-        private bool ExceedsBounds(IReadOnlyList<int> coord, IList<double> dir)
+        private bool SucceedsBounds(IReadOnlyList<int> coord, IList<double> dir)
         {
             var uL = voxelsPerDimension[lastLevel];
             for (var i = 0; i < 3; i++)
@@ -1355,13 +1355,13 @@ namespace TVGL.Voxelization
         return false;
     }
 
-        //private bool OutsideBounds(IReadOnlyList<int> coord)
-        //{
-        //    var uL = voxelsPerDimension[lastLevel];
-        //    for (var i = 0; i < 3; i++)
-        //        if (coord[i] < 0 || coord[i] >= uL[i]) return true;
-        //    return false;
-        //}
+        private bool OutsideBounds(IReadOnlyList<int> coord)
+        {
+            var uL = voxelsPerDimension[lastLevel];
+            for (var i = 0; i < 3; i++)
+                if (coord[i] < 0 || coord[i] >= uL[i]) return true;
+            return false;
+        }
 
         private static IList<int[]> GetVoxelsWithinCircle(IReadOnlyList<double> center, IList<double> dir, double radius, bool edge = false)
         {
