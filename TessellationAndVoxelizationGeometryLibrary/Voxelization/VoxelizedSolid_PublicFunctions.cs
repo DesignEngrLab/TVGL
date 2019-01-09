@@ -1269,10 +1269,15 @@ namespace TVGL.Voxelization
 
                 foreach (var voxCoord in sliceMask)
                 {
-                    var coord = voxCoord.add(tShift);
-                    if (pBounds && PrecedesBounds(coord, dir)) continue;
-                    if (pBounds) entryCoord = startCoord.ToArray();
-                    pBounds = false;
+                    var coord = voxCoord.add(tShift, 3);
+                    //ToDo: This pBounds check is causing issues. Removing it fixes some issues but then makes new issues
+                    //Potentially fixed by removing the check and adding a precede/exceed check down below, marked by: *p/e*
+                    if (/*pBounds && */PrecedesBounds(coord, dir)) continue;
+                    if (pBounds)
+                    {
+                        entryCoord = startCoord.ToArray();
+                        pBounds = false;
+                    }
                     if (ExceedsBounds(coord, dir)) continue;
                     eBounds = false;
                     var eVox = GetVoxelID(coord, lastLevel);
@@ -1291,7 +1296,11 @@ namespace TVGL.Voxelization
 
                 foreach (var voxCoord in sliceMask)
                 {
+                    //ToDo: A child voxel inside a full parent voxel is being set to empty, and the parent voxel is
+                    //determined to also be empty when it should instead be made partial. This is because none of
+                    //the child voxels exist within the parent voxel
                     var coord = voxCoord.add(tShift, 3);
+                    if (PrecedesBounds(coord, dir) || ExceedsBounds(coord, dir)) continue; //*p/e*
                     var eVox = GetVoxelID(coord, lastLevel);
                     ChangeVoxelToEmpty(eVox, false, true);
                 }
