@@ -926,7 +926,7 @@ namespace TVGL.Voxelization
                     BoundingSolid(vox, level + 1);
                     return;
                 }
-                ChangeVoxelToFull(vox, false);
+                ChangeVoxelToFull(vox, true);
             });
         }
         #endregion
@@ -941,7 +941,6 @@ namespace TVGL.Voxelization
         private void Invert(long parent, int level, bool onSurface)
         {
             var descendants = level != lastLevel;
-            var level0 = level == 0;
             var coords = GetChildVoxelCoords(parent, level);
             //foreach (var coord in coords)
             Parallel.ForEach(coords, coord =>
@@ -960,14 +959,14 @@ namespace TVGL.Voxelization
                             Invert(vox, level + 1, true);
                             break;
                         }
-                        ChangeVoxelToFull(vox, false);
+                        ChangeVoxelToFull(vox, true);
                         break;
                     case VoxelRoleTypes.Full:
-                        ChangeVoxelToEmpty(vox, descendants, !level0);
+                        ChangeVoxelToEmpty(vox, descendants, true);
                         break;
                     case VoxelRoleTypes.Partial:
                         if (descendants) Invert(vox, level + 1, overSurface);
-                        else ChangeVoxelToEmpty(vox, false, !level0);
+                        else ChangeVoxelToEmpty(vox, false, true);
                         break;
                 }
             });
@@ -1258,54 +1257,47 @@ namespace TVGL.Voxelization
             var pBounds = true;
             var entryCoord = new [] { 0, 0, 0 };
 
+            //foreach depth or timestep
             foreach (var initCoord in mask)
             {
-                var sBounds = true;
                 var startCoord = initCoord.add(shift, 3);
                 if (!pBounds && startCoord.subtract(entryCoord, 3).norm2() > tLimit)
                     break;
 
                 var tShift = startCoord.subtract(mask[0], 3);
 
+                //Iterate over the template of the slice mask
+                //to move them to the appropriate location but 
+                //need to be sure that we are in the space (not negative)
                 foreach (var voxCoord in sliceMask)
                 {
                     var coord = voxCoord.add(tShift, 3);
-                    //ToDo: This pBounds check is causing issues. Removing it fixes some issues but then makes new issues
-                    //Potentially fixed by removing the check and adding a precede/exceed check down below, marked by: *p/e*
-                    if (/*pBounds && */PrecedesBounds(coord, dir)) continue;
+                    if (PrecedesBounds(coord, dir)) continue;
                     if (pBounds)
                     {
                         entryCoord = startCoord.ToArray();
                         pBounds = false;
                     }
                     if (SucceedsBounds(coord, dir)) continue;
-                    sBounds = false;
                     var eVox = GetVoxelID(coord, lastLevel);
                     var dVox = designedSolid.GetVoxelID(eVox, lastLevel);
                     var role = Constants.GetRole(dVox);
+                    //Return if you've left the part or you've hit the as-designed part
                     if (role == VoxelRoleTypes.Full ||
                         (role == VoxelRoleTypes.Partial && stopAtPartial))
-                    {
-                        sBounds = true;
-                        break;
-                    }
+                        return;
                 }
 
+                //Continue if you haven't yet started (you're still outside of the shape)
                 if (pBounds) continue;
-                if (sBounds) break;
 
+                //So, now we need to remove the voxels at this valid timestep
+                //This is iterate over the same template of the slice mask as before
                 foreach (var voxCoord in sliceMask)
                 {
-                    //ToDo: A child voxel inside a full parent voxel is being set to empty, and the parent voxel is
-                    //determined to also be empty when it should instead be made partial. This is because none of
-                    //the child voxels exist within the parent voxel
-                    //Adding all descendants to full voxels fixes this issues. May be problem in Invert()
                     var coord = voxCoord.add(tShift, 3);
-                    if (OutsideBounds(coord)) continue; //*p/e*
+                    if (OutsideBounds(coord)) continue;
                     var eVox = GetVoxelID(coord, lastLevel);
-                    var parent = GetParentVoxel(eVox);
-                    if (Constants.GetRole(parent) == VoxelRoleTypes.Full)
-                        ChangeVoxelToPartial(parent, true);
                     ChangeVoxelToEmpty(eVox, false, true);
                 }
             }
