@@ -1299,9 +1299,13 @@ namespace TVGL.Voxelization
                     //ToDo: A child voxel inside a full parent voxel is being set to empty, and the parent voxel is
                     //determined to also be empty when it should instead be made partial. This is because none of
                     //the child voxels exist within the parent voxel
+                    //Adding all descendants to full voxels fixes this issues. May be problem in Invert()
                     var coord = voxCoord.add(tShift, 3);
                     if (OutsideBounds(coord)) continue; //*p/e*
                     var eVox = GetVoxelID(coord, lastLevel);
+                    var parent = GetParentVoxel(eVox);
+                    if (Constants.GetRole(parent) == VoxelRoleTypes.Full)
+                        ChangeVoxelToPartial(parent, true);
                     ChangeVoxelToEmpty(eVox, false, true);
                 }
             }
