@@ -50,8 +50,11 @@ namespace TVGL.Voxelization
                     {
                         voxel0.InnerVoxels[level - 1].Remove(voxel);
                         var parent = GetParentVoxel(voxel);
+                        // make parent partial if it was full
+                        if (Constants.GetRole(parent) == VoxelRoleTypes.Full)
+                            ChangeVoxelToPartial(parent, true);
                         // then check to see if the parent should be empty as well
-                        if (checkParentEmpty)
+                        else if (checkParentEmpty)
                             if (voxel0.InnerVoxels[level - 1].Count == 0 ||
                                 voxel0.InnerVoxels[level - 1].CountDescendants(parent, level - 1) == 0)
                                 ChangeVoxelToEmpty(parent, false, true);
