@@ -194,10 +194,20 @@ namespace TVGL.Voxelization
         /// <returns>System.Int64.</returns>
         internal static long ClearFlagsFromID(long ID)
         {
-            if ((ID & 12) == 12) return ID & -16; // which is FFFFFFFFFFFFFFF0 or 1...10000
-            else return ID & -32; // which is FFFFFFFFFFFFFFF0 or 1...100000
+            if ((ID & 12) == 12) return ID & -16; // which is FFFF FFFF FFFF FFF0 or 1....10000
+            else return ID & -32;                 // which is FFFF FFFF FFFF FFE0 or 1...100000
         }
 
+        /// <summary>
+        /// Gets the flags from identifier.
+        /// </summary>
+        /// <param name="ID">The identifier.</param>
+        /// <returns>System.Int64.</returns>
+        internal static long GetFlagsFromID(long ID)
+        {
+            if ((ID & 12) == 12) return ID & 15; // which is 0F or 0000 1111
+            else return ID & 31;                 // which is 1F or 0001 1111
+        }
 
 
         #endregion
