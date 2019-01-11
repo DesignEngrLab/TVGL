@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Microsoft.Office.Interop.Excel;
 using StarMathLib;
 using TVGL;
 using TVGL.Boolean_Operations;
@@ -102,7 +103,7 @@ namespace TVGLPresenterDX
             var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
             //Casing = 18
             //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i+=76)
+            for (var i = 0; i < fileNames.Count(); i++)
             {
                 //var filename = FileNames[i];
                 var filename = fileNames[i].FullName;
@@ -146,7 +147,16 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
             stopwatch.Start();
-            var vs1 = new VoxelizedSolid(ts,8);
+            var vs1 = new VoxelizedSolid(ts,7);
+            //var dir = new [] { 1.0, 1.0, 1.0 };
+            var dir = new [] { 1.0, 2.0, 3.0 };
+            //var dir = new [] { 0.0, 0.4706, -0.8824 }; //Direction of holes in ObliqueHoles
+            var neg = vs1.InvertToNewSolid();
+            //var erd = neg.ErodeToNewSolid(vs1, dir);
+            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:30, toolOptions: new []{"ball", "118"});
+            erd.SolidColor = new Color(KnownColors.Magenta);
+            Presenter.ShowAndHang(vs1, erd);
+            return;
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);

@@ -17,6 +17,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
@@ -121,7 +122,7 @@ namespace TVGL.Voxelization
             if (level >= numberOfLevels)
             {
                 if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
-                level = numberOfLevels - 1;
+                level = lastLevel;
             }
             if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
                 foreach (var v in voxelDictionaryLevel0.Where(v => v.Role == role)) yield return v;
@@ -155,7 +156,7 @@ namespace TVGL.Voxelization
             if (level >= numberOfLevels)
             {
                 if (onlyThisLevel) throw new ArgumentException("Specifying voxels at a level that is finer than created.");
-                level = numberOfLevels - 1;
+                level = lastLevel;
             }
             if ((onlyThisLevel && level == 0) || (!onlyThisLevel && level >= 0))
                 foreach (var v in voxelDictionaryLevel0) yield return v;
@@ -339,7 +340,7 @@ namespace TVGL.Voxelization
         public IEnumerable<IVoxel> GetChildVoxels(IVoxel parent)
         {
             if (parent == null) return voxelDictionaryLevel0;
-            if (parent.Level == numberOfLevels - 1) return null;
+            if (parent.Level == lastLevel) return null;
             VoxelBinClass level0Parent;
             if (parent is VoxelBinClass)
             {
@@ -562,7 +563,7 @@ namespace TVGL.Voxelization
         {
             if (parent == 0) return voxelDictionaryLevel0.Select(v => v.ID);
             var level = Constants.GetLevel(parent);
-            if (level == numberOfLevels - 1) return null;
+            if (level == lastLevel) return null;
             VoxelBinClass level0Parent = voxelDictionaryLevel0.GetVoxel(parent);
             if (level == 0) return level0Parent.InnerVoxels[0];
             // else the parent is level 1, 2, or 3
@@ -655,7 +656,7 @@ namespace TVGL.Voxelization
             if (direction > 0)
             {
                 var maxVoxels =
-                    (int)Math.Ceiling(dimensions[(int)direction - 1] / VoxelSideLengths[numberOfLevels - 1]);// + 1;
+                    (int)Math.Ceiling(dimensions[(int)direction - 1] / VoxelSideLengths[lastLevel]);// + 1;
                 Extrude(direction, 0, maxVoxels, 0);
             }
             else
@@ -713,7 +714,7 @@ namespace TVGL.Voxelization
                 {
                     #region fill up the layers below this one
                     if (Constants.GetRole(voxel) == VoxelRoleTypes.Full
-                        || (Constants.GetRole(voxel) == VoxelRoleTypes.Partial && level == numberOfLevels - 1))
+                        || (Constants.GetRole(voxel) == VoxelRoleTypes.Partial && level == lastLevel))
                     { //if at the lowest level - then treat partial voxel as if it were full
                         numVoxelsOnXSection++;
                         var neighbor = voxel;
@@ -725,7 +726,7 @@ namespace TVGL.Voxelization
                             if (lastLayer && neighborLayer == loopLimit)
                             {
                                 neighbor = ChangeVoxelToPartial(neighbor, false);
-                                if (level < numberOfLevels - 1)
+                                if (level < lastLevel)
                                     // todo: this should go down to the lowest level!
                                     AddAllDescendants(Constants.ClearFlagsFromID(neighbor), level,
                                         voxelDictionaryLevel0.GetVoxel(neighbor), dimension, 1);
@@ -831,7 +832,7 @@ namespace TVGL.Voxelization
                                                     + Constants.MakeFlags(level, VoxelRoleTypes.Partial);
                         lock (voxel0.InnerVoxels[level - 1])
                             voxel0.InnerVoxels[level - 1].AddOrReplace(newVoxel);
-                        if (level < numberOfLevels - 1)
+                        if (level < lastLevel)
                             Intersect(newVoxel, level + 1, references, true);
                     }
                 });
@@ -849,7 +850,7 @@ namespace TVGL.Voxelization
                     {
                         var thisVoxelWasFull = Constants.GetRole(thisVoxel) == VoxelRoleTypes.Full;
                         if (thisVoxelWasFull) ChangeVoxelToPartial(thisVoxel, false);
-                        if (level < numberOfLevels - 1)
+                        if (level < lastLevel)
                             Intersect(thisVoxel, level + 1, references, thisVoxelWasFull);
                     }
                 });
@@ -890,7 +891,7 @@ namespace TVGL.Voxelization
                 var referenceHighestRole = GetHighestRole(thisVoxel, level, subtrahends);
                 if (referenceHighestRole == VoxelRoleTypes.Empty) return;
                 if (referenceHighestRole == VoxelRoleTypes.Full) ChangeVoxelToEmpty(thisVoxel, true, true);
-                else if (level < numberOfLevels - 1)
+                else if (level < lastLevel)
                 {
                     if (Constants.GetRole(thisVoxel) == VoxelRoleTypes.Full) ChangeVoxelToPartial(thisVoxel, true);
                     Subtract(thisVoxel, level + 1, subtrahends);
@@ -925,7 +926,7 @@ namespace TVGL.Voxelization
                     BoundingSolid(vox, level + 1);
                     return;
                 }
-                ChangeVoxelToFull(vox, false);
+                ChangeVoxelToFull(vox, true);
             });
         }
         #endregion
@@ -939,8 +940,7 @@ namespace TVGL.Voxelization
         }
         private void Invert(long parent, int level, bool onSurface)
         {
-            var descendants = level != numberOfLevels - 1;
-            var level0 = level == 0;
+            var descendants = level != lastLevel;
             var coords = GetChildVoxelCoords(parent, level);
             //foreach (var coord in coords)
             Parallel.ForEach(coords, coord =>
@@ -959,14 +959,14 @@ namespace TVGL.Voxelization
                             Invert(vox, level + 1, true);
                             break;
                         }
-                        ChangeVoxelToFull(vox, false);
+                        ChangeVoxelToFull(vox, true);
                         break;
                     case VoxelRoleTypes.Full:
-                        ChangeVoxelToEmpty(vox, descendants, !level0);
+                        ChangeVoxelToEmpty(vox, descendants, true);
                         break;
                     case VoxelRoleTypes.Partial:
                         if (descendants) Invert(vox, level + 1, overSurface);
-                        else ChangeVoxelToEmpty(vox, false, !level0);
+                        else ChangeVoxelToEmpty(vox, false, true);
                         break;
                 }
             });
@@ -1015,13 +1015,12 @@ namespace TVGL.Voxelization
         // voxels in that dimension. This results in 216 "would-be" voxels
         private bool OverSurface(long parent, int level)
         {
-            var nL = numberOfLevels - 1;
-            if (level > nL) return false;
+            if (level > lastLevel) return false;
             var voxelMultiplier = 1;
-            for (var i = level; i <= nL; i++) voxelMultiplier *= voxelsPerSide[i];
+            for (var i = level; i <= lastLevel; i++) voxelMultiplier *= voxelsPerSide[i];
             var compare = Constants.GetCoordinateIndices(parent, singleCoordinateShifts[level]).
-                add(new[] { 1, 1, 1 }).multiply(voxelMultiplier);
-            var totalVoxels = voxelsPerDimension[nL];
+                add(new[] { 1, 1, 1 }).multiply(voxelMultiplier, 3);
+            var totalVoxels = voxelsPerDimension[lastLevel];
             for (var i = 0; i < 3; i++)
             {
                 if (compare[i] > totalVoxels[i]) return true;
@@ -1067,7 +1066,7 @@ namespace TVGL.Voxelization
                 else
                 {
                     if (thisRole == VoxelRoleTypes.Empty) ChangeEmptyVoxelToPartial(refVoxel, level);
-                    if (level < numberOfLevels - 1)
+                    if (level < lastLevel)
                         Union(refVoxel, level + 1, reference);
                 }
             });
@@ -1125,7 +1124,7 @@ namespace TVGL.Voxelization
                 else
                 {
                     ChangeVoxelToPartial(thisVoxel, true);
-                    if (level < numberOfLevels - 1) ExclusiveOr(refVoxel, level + 1, reference);
+                    if (level < lastLevel) ExclusiveOr(refVoxel, level + 1, reference);
                 }
             });
         }
@@ -1165,8 +1164,383 @@ namespace TVGL.Voxelization
         }
 
         #endregion
+        #region Voxel Projection along line
+        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, double[] dir,
+            double tLimit = 0, double toolDia = 0, bool inclusive = false,
+            bool stopAtPartial = true, params string[] toolOptions)
+        {
+            var copy = (VoxelizedSolid)Copy();
+            copy.ErodeVoxelSolid(designedSolid, dir.normalize(3), tLimit, toolDia, inclusive, stopAtPartial, toolOptions);
+            copy.UpdateProperties();
+            return copy;
+        }
+
+        //public void ErodeSolid(VoxelizedSolid designedSolid, double[] dir,
+        //    double tLimit = 0.0, double toolDia = -1, bool inclusive = false,
+        //    bool stopAtPartial = true, params string[] toolOptions)
+        //{
+        //    ErodeVoxelSolid(designedSolid, dir.normalize(3), tLimit, toolDia, inclusive, stopAtPartial, toolOptions);
+        //    UpdateProperties();
+        //}
+
+        private void ErodeVoxelSolid(VoxelizedSolid designedSolid, double[] dir,
+            double tLimit, double toolDia, bool inclusive, bool stopAtPartial,
+            params string[] toolOptions)
+        {
+            tLimit = tLimit <= 0 ? voxelsPerDimension[lastLevel].norm2() : tLimit / VoxelSideLengths[lastLevel];
+            var mLimit = tLimit + voxelsPerDimension[lastLevel].norm2();
+            var mask = CreateProjectionMask(dir, mLimit, inclusive);
+            var starts = GetAllVoxelsOnBoundingSurfaces(dir, toolDia);
+            var sliceMask = ThickenMask(mask[0], dir, toolDia, toolOptions);
+            Parallel.ForEach(starts, vox =>
+                    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox));
+            //foreach (var vox in starts)
+            //    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
+        }
+
+        private static IEnumerable<VoxelDirections> GetVoxelDirections(IReadOnlyList<double> dir)
+        {
+            var dirs = new List<VoxelDirections>();
+            var signedDir = new[] { Math.Sign(dir[0]), Math.Sign(dir[1]), Math.Sign(dir[2]) };
+            for (var i = 0; i < 3; i++)
+            {
+                if (signedDir[i] == 0) continue;
+                dirs.Add((VoxelDirections)((i + 1) * -1 * signedDir[i]));
+            }
+            return dirs;
+        }
+
+        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurfaces(IReadOnlyList<double> dir, double toolDia)
+        {
+            var voxels = new HashSet<int[]>(new SameCoordinates());
+            var directions = GetVoxelDirections(dir);
+            foreach (var direction in directions)
+            {
+                var voxel = GetAllVoxelsOnBoundingSurface(direction, toolDia);
+                foreach (var vox in voxel)
+                    voxels.Add(vox);
+            }
+            return voxels;
+        }
+
+        private IEnumerable<int[]> GetAllVoxelsOnBoundingSurface(VoxelDirections dir, double toolDia)
+        {
+            var voxels = new List<int[]>();
+            var limit = new int[3][];
+            var offset = (int)Math.Ceiling(0.5 * toolDia / VoxelSideLengths[lastLevel]);
+
+            limit[0] = new[] { 0 - offset, voxelsPerDimension[lastLevel][0] + offset };
+            limit[1] = new[] { 0 - offset, voxelsPerDimension[lastLevel][1] + offset };
+            limit[2] = new[] { 0 - offset, voxelsPerDimension[lastLevel][2] + offset };
+
+            var ind = Math.Abs((int)dir) - 1;
+            if (Math.Sign((int)dir) == 1)
+                limit[ind][0] = limit[ind][1] - 1;
+            else
+                limit[ind][1] = limit[ind][0] + 1;
+
+            for (var i = limit[0][0]; i < limit[0][1]; i++)
+                for (var j = limit[1][0]; j < limit[1][1]; j++)
+                    for (var k = limit[2][0]; k < limit[2][1]; k++)
+                        voxels.Add(new[] { i, j, k });
+
+            return voxels;
+        }
+
+        private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask, double tLimit,
+            bool stopAtPartial, IList<double> dir, IList<int[]> sliceMask = null,
+            IList<int> start = null)
+        {
+            start = start ?? mask[0].ToArray();
+            sliceMask = sliceMask ?? new List<int[]>(new []{ mask[0].ToArray() });
+            var shift = start.subtract(mask[0], 3);
+            var pBounds = true;
+            var entryCoord = new [] { 0, 0, 0 };
+
+            //foreach depth or timestep
+            foreach (var initCoord in mask)
+            {
+                var startCoord = initCoord.add(shift, 3);
+                if (!pBounds && startCoord.subtract(entryCoord, 3).norm2() > tLimit)
+                    break;
+
+                var tShift = startCoord.subtract(mask[0], 3);
+
+                //Iterate over the template of the slice mask
+                //to move them to the appropriate location but 
+                //need to be sure that we are in the space (not negative)
+                foreach (var voxCoord in sliceMask)
+                {
+                    var coord = voxCoord.add(tShift, 3);
+                    if (PrecedesBounds(coord, dir)) continue;
+                    if (pBounds)
+                    {
+                        entryCoord = startCoord.ToArray();
+                        pBounds = false;
+                    }
+                    if (SucceedsBounds(coord, dir)) continue;
+                    var eVox = GetVoxelID(coord, lastLevel);
+                    var dVox = designedSolid.GetVoxelID(eVox, lastLevel);
+                    var role = Constants.GetRole(dVox);
+                    //Return if you've left the part or you've hit the as-designed part
+                    if (role == VoxelRoleTypes.Full ||
+                        (role == VoxelRoleTypes.Partial && stopAtPartial))
+                        return;
+                }
+
+                //Continue if you haven't yet started (you're still outside of the shape)
+                if (pBounds) continue;
+
+                //So, now we need to remove the voxels at this valid timestep
+                //This is iterate over the same template of the slice mask as before
+                foreach (var voxCoord in sliceMask)
+                {
+                    var coord = voxCoord.add(tShift, 3);
+                    if (OutsideBounds(coord)) continue;
+                    var eVox = GetVoxelID(coord, lastLevel);
+                    ChangeVoxelToEmpty(eVox, false, true);
+                }
+            }
+        }
+
+        private class SameCoordinates : EqualityComparer<int[]>
+        {
+            public override bool Equals(int[] a1, int[] a2)
+            {
+                if (a1 == null && a2 == null)
+                    return true;
+                if (a1 == null || a2 == null)
+                    return false;
+                return (a1[0] == a2[0] &&
+                        a1[1] == a2[1] &&
+                        a1[2] == a2[2]);
+            }
+            public override int GetHashCode(int[] ax)
+            {
+                if (ax is null) return 0;
+                var hCode = ax[0] ^ ax[1] ^ ax[2];
+                return hCode.GetHashCode();
+            }
+        }
+
+        private bool SucceedsBounds(IReadOnlyList<int> coord, IList<double> dir)
+        {
+            var uL = voxelsPerDimension[lastLevel];
+            for (var i = 0; i < 3; i++)
+            {
+                if (dir[i] < 0)
+                    if (coord[i] < 0) return true;
+                else if(dir[i] > 0)
+                    if (coord[i] >= uL[i]) return true;
+                else if (coord[i] < 0 || coord[i] >= uL[i]) return true;
+            }
+        return false;
+    }
+
+        private bool PrecedesBounds(IReadOnlyList<int> coord, IList<double> dir)
+        {
+            var uL = voxelsPerDimension[lastLevel];
+            for (var i = 0; i < 3; i++)
+            {
+                if (dir[i] < 0)
+                    if (coord[i] >= uL[i]) return true;
+                else if (dir[i] > 0)
+                    if (coord[i] < 0) return true;
+                else if (coord[i] >= uL[i] || coord[i] < 0) return true;
+            }
+        return false;
+    }
+
+        private bool OutsideBounds(IReadOnlyList<int> coord)
+        {
+            var uL = voxelsPerDimension[lastLevel];
+            for (var i = 0; i < 3; i++)
+                if (coord[i] < 0 || coord[i] >= uL[i]) return true;
+            return false;
+        }
+
+        private static IList<int[]> GetVoxelsWithinCircle(IReadOnlyList<double> center, IList<double> dir, double radius, bool edge = false)
+        {
+            var voxels = new HashSet<int[]>(new SameCoordinates());
+
+            var radii = new List<double>();
+            if (!edge)
+                for (var i = .0; i < radius; i += 0.5)
+                    radii.Add(i);
+            radii.Add(radius);
+            var a = Math.Abs(dir[0]) < 1e-5 ? new[] { .0, -dir[2], dir[1] }.normalize(3) : new[] { dir[1], -dir[0], 0 }.normalize(3);
+            var b = a.crossProduct(dir);
+
+            foreach (var r in radii)
+            {
+                var step = 2 * Math.PI / Math.Ceiling(Math.PI * 2 * r / 0.5);
+                for (var t = .0; t < 2 * Math.PI; t += step)
+                {
+                    var x = (int)Math.Floor(center[0] + 0.5 + r * Math.Cos(t) * a[0] + r * Math.Sin(t) * b[0]);
+                    var y = (int)Math.Floor(center[1] + 0.5 + r * Math.Cos(t) * a[1] + r * Math.Sin(t) * b[1]);
+                    var z = (int)Math.Floor(center[2] + 0.5 + r * Math.Cos(t) * a[2] + r * Math.Sin(t) * b[2]);
+                    voxels.Add(new []{x, y, z});
+                }
+            }
+            
+            return voxels.ToList();
+        }
+
+        private static IList<int[]> GetVoxelsOnCone(IList<int> center, IList<double> dir, double radius, double angle)
+        {
+            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
+
+            var a = angle * (Math.PI / 180) / 2;
+            var l = radius / Math.Sin(a);
+            var numSteps = (int)Math.Ceiling(l / 0.5);
+            var lStep = l / numSteps;
+            var tStep = lStep * Math.Cos(a);
+            var rStep = lStep * Math.Sin(a);
+
+            var centerDouble = new double[] { center[0], center[1], center[2] };
+            var c = centerDouble.ToArray();
+            var cStep = dir.multiply(tStep, 3);
+
+            for (var i = 1; i <= numSteps; i++)
+            {
+                var r = rStep * i;
+                c = c.subtract(cStep, 3);
+                var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
+                foreach (var voxel in voxelsOnCircle)
+                    voxels.Add(voxel);
+            }
+
+            return voxels.ToList();
+        }
+
+        private static IList<int[]> GetVoxelsOnHemisphere(IList<int> center, IList<double> dir, double radius)
+        {
+            var voxels = new HashSet<int[]>(new[] { center.ToArray() }, new SameCoordinates());
+
+            var centerDouble = new double[] { center[0], center[1], center[2] };
+
+            var numSteps = (int)Math.Ceiling(Math.PI * radius / 2 / 0.5);
+            var aStep = Math.PI / 2 / numSteps;
+
+            for (var i = 1; i <= numSteps; i++)
+            {
+                var a = aStep * i;
+                var r = radius * Math.Sin(a);
+                var tStep = radius * (1 - Math.Cos(a));
+                var c = centerDouble.subtract(dir.multiply(tStep, 3), 3);
+                var voxelsOnCircle = GetVoxelsWithinCircle(c, dir, r, true);
+                foreach (var voxel in voxelsOnCircle)
+                    voxels.Add(voxel);
+            }
+
+            return voxels.ToList();
+        }
+
+        private IList<int[]> ThickenMask(IList<int> vox, IList<double> dir,
+            double toolDia, params string[] toolOptions)
+        {
+            if (toolDia <= 0) return new List<int[]>(new []{ vox.ToArray() });
+
+            var radius = 0.5 * toolDia / VoxelSideLengths[lastLevel];
+            toolOptions = toolOptions.Length == 0 ? new [] {"flat"} : toolOptions;
+
+            switch (toolOptions[0])
+            {
+                case "ball":
+                    return GetVoxelsOnHemisphere(vox, dir, radius);
+                case "cone":
+                    double angle;
+                    if (toolOptions.Length < 2) angle = 118;
+                    else if (!double.TryParse(toolOptions[1], out angle))
+                        angle = 118;
+                    return GetVoxelsOnCone(vox, dir, radius, angle);
+                default:
+                    var voxDouble = new double[] {vox[0], vox[1], vox[2]};
+                    return GetVoxelsWithinCircle(voxDouble, dir, radius);
+            }
+        }
+
+        private IList<int[]> CreateProjectionMask(double[] dir, double tLimit,
+            bool inclusive)
+        {
+            var initCoord = new[] { 0, 0, 0 };
+            for (var i = 0; i < 3; i++)
+                if (dir[i] < 0) initCoord[i] = voxelsPerDimension[lastLevel][i] - 1;
+            var voxels = new List<int[]>(new[] { initCoord });
+            var c = initCoord.add(new[] { 0.5, 0.5, 0.5 }, 3);
+            var ts = FindIntersectionDistances(c, dir, tLimit);
+            foreach (var t in ts)
+            {
+                var cInt = c.add(dir.multiply(t, 3), 3);
+                for (var i = 0; i < 3; i++) cInt[i] = Math.Round(cInt[i], 5);
+                voxels.Add(GetNextVoxelCoord(cInt, dir, inclusive));
+            }
+            return voxels;
+        }
+
+        //Exclusive by default (i.e. if line passes through vertex/edge it ony includes two voxels that are actually passed through)
+        private static int[] GetNextVoxelCoord(IReadOnlyList<double> cInt, IReadOnlyList<double> direction, bool inclusive)
+        {
+            var searchDirs = new List<int>();
+            for (var i = 0; i < 3; i++)
+                if (Math.Abs(direction[i]) > 0.001) searchDirs.Add(i);
+
+            var searchSigns = new[] { 0, 0, 0 };
+            foreach (var dir in searchDirs)
+                searchSigns[dir] = Math.Sign(direction[dir]);
+
+            var voxel = new int[3];
+            for (var i = 0; i < 3; i++)
+                if (Math.Sign(direction[i]) == -1)
+                    voxel[i] = (int)Math.Ceiling(cInt[i] - 1);
+                else voxel[i] = (int)Math.Floor(cInt[i]);
+
+            return voxel;
+        }
+
+        //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
+        private IEnumerable<double> FindIntersectionDistances(IReadOnlyList<double> firstVoxel,
+            IReadOnlyList<double> direction, double tLimit)
+        {
+            var intersections = new ConcurrentBag<double>();
+            var searchDirs = new List<int>();
+
+            for (var i = 0; i < 3; i++)
+                if (Math.Abs(direction[i]) > 0.001) searchDirs.Add(i);
+
+            var searchSigns = new[] { 0, 0, 0 };
+            var firstInt = new[] { 0, 0, 0 };
+
+            foreach (var dir in searchDirs)
+            {
+                searchSigns[dir] = Math.Sign(direction[dir]);
+                firstInt[dir] = (int)(firstVoxel[dir] + 0.5 * searchSigns[dir]);
+            }
+
+            //foreach (var dir in searchDirs)
+            Parallel.ForEach(searchDirs, dir =>
+            {
+                var c = firstVoxel[dir];
+                var d = direction[dir];
+                //var toValue = searchSigns[dir] == -1 ? 0 : voxelsPerDimension[lastLevel][dir];
+                var toValue = searchSigns[dir] == -1 ? voxelsPerDimension[lastLevel][dir] - Math.Ceiling(tLimit) : Math.Ceiling(tLimit);
+                var toInt = Math.Max(toValue, firstInt[dir]) + (searchSigns[dir] == -1 ? 1 : 0);
+                var fromInt = Math.Min(toValue, firstInt[dir]);
+                //Parallel.For(fromInt, toInt, i =>
+                for (var i = fromInt; i < toInt; i++)
+                {
+                    var t = (i - c) / d;
+                    if (t <= tLimit) intersections.Add(t);
+                } //);
+            });
+
+            var sortedIntersections = new SortedSet<double>(intersections);
+            return sortedIntersections;
+        }
+        #endregion
 
         #region Offset
+
         /*
         /// <summary>
         /// Get the partial voxels ordered along X, Y, or Z, with a dictionary of their distance. X == 0, Y == 1, Z == 2. 
@@ -1596,6 +1970,7 @@ namespace TVGL.Voxelization
             return retInts;
         }
         */
+
         #endregion
     }
 }

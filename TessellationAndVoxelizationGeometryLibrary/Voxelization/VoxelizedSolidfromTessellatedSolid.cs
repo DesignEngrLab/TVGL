@@ -90,9 +90,9 @@ namespace TVGL.Voxelization
             voxelsPerDimension = new int[NumberOfLevels][];
             for (var i = 0; i < numberOfLevels; i++)
                 voxelsPerDimension[i] = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[i])).ToArray();
-            var transformedCoordinates = MakeVertexSimulatedCoordinates(ts.Vertices, numberOfLevels - 1, ts.NumberOfVertices);
-            MakeVertexVoxels(ts.Vertices, (byte)(numberOfLevels - 1), transformedCoordinates);
-            MakeVoxelsForFacesAndEdges(ts.Faces, (byte)(numberOfLevels - 1), transformedCoordinates);
+            var transformedCoordinates = MakeVertexSimulatedCoordinates(ts.Vertices, lastLevel, ts.NumberOfVertices);
+            MakeVertexVoxels(ts.Vertices, (byte)(lastLevel), transformedCoordinates);
+            MakeVoxelsForFacesAndEdges(ts.Faces, (byte)(lastLevel), transformedCoordinates);
             if (onlyDefineBoundary) { UpdateProperties(); return; }
             UpdateVertexSimulatedCoordinates(transformedCoordinates, ts.Vertices, 0);
             DefineBottomCoordinateInsideLevel0(ts.Faces, transformedCoordinates);
