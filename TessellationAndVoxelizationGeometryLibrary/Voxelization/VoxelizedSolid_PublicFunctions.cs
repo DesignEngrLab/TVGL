@@ -534,9 +534,15 @@ namespace TVGL.Voxelization
                 return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(0, VoxelRoleTypes.Full);
             if (parentLevel == 0) return level0Parent.ID;
             //now for childlevels 2,3, 4 or parent levels 1, 2, 3
-            var parentID = MakeParentVoxelID(child, parentLevel);
-            parentID = level0Parent.InnerVoxels[parentLevel - 1].GetVoxel(parentID);
-            if (parentID != 0) return parentID;
+            var parentID1 = MakeParentVoxelID(child, parentLevel);
+            var parentID = level0Parent.InnerVoxels[parentLevel - 1].GetVoxel(parentID1);
+            //ToDo: Sometimes parentID1 and parentID have differences other than the flag bits. This causes fatal errors
+            //if (parentID >> 4 != parentID1 >> 4)
+            //    return parentID1;
+            if (parentID != 0)
+                if (parentID >> 4 == parentID1 >> 4) return parentID;
+                else return Constants.ClearFlagsFromID(parentID1) + Constants.GetFlagsFromID(parentID);
+            
             // so the rest of this should be either fulls or empties as there is no immediate partial parent
             if (parentLevel == 1)
                 return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty);
@@ -1192,10 +1198,10 @@ namespace TVGL.Voxelization
             var mask = CreateProjectionMask(dir, mLimit, inclusive);
             var starts = GetAllVoxelsOnBoundingSurfaces(dir, toolDia);
             var sliceMask = ThickenMask(mask[0], dir, toolDia, toolOptions);
-            Parallel.ForEach(starts, vox =>
-                    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox));
-            //foreach (var vox in starts)
-            //    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
+            //Parallel.ForEach(starts, vox =>
+            //        ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox));
+            foreach (var vox in starts)
+                ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
         }
 
         private static IEnumerable<VoxelDirections> GetVoxelDirections(IReadOnlyList<double> dir)

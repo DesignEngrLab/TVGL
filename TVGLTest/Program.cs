@@ -141,21 +141,26 @@ namespace TVGLPresenterDX
             }
 
             Console.WriteLine("Completed.");
+            return;
             Console.ReadKey();
         }
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
             stopwatch.Start();
-            var vs1 = new VoxelizedSolid(ts,7);
+            var vs1 = new VoxelizedSolid(ts,6);
+            //Presenter.ShowAndHang(vs1, 0);
             //var dir = new [] { 1.0, 1.0, 1.0 };
-            var dir = new [] { 1.0, 2.0, 3.0 };
+            var dir = new [] { -1.0, -2.0, -3.0 };
+            //var dir = new[] { -1.0, -.2, .0 };
             //var dir = new [] { 0.0, 0.4706, -0.8824 }; //Direction of holes in ObliqueHoles
             var neg = vs1.InvertToNewSolid();
+            Presenter.ShowAndHang(neg, 0);
             //var erd = neg.ErodeToNewSolid(vs1, dir);
-            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:30, toolOptions: new []{"ball", "118"});
+            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:30, toolOptions: new []{"ball", "90"});
             erd.SolidColor = new Color(KnownColors.Magenta);
             Presenter.ShowAndHang(vs1, erd);
+            //Presenter.ShowAndHang(erd, 0);
             return;
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
