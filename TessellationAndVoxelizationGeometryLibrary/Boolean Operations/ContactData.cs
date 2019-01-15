@@ -333,6 +333,8 @@ namespace TVGL
         /// </summary>
         public readonly IEnumerable<int> StraddleFaceIndices;
 
+        public readonly int Index;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Loop" /> class.
         /// </summary>
@@ -341,9 +343,10 @@ namespace TVGL
         /// <param name="normal">The normal.</param>
         /// <param name="straddleFaceIndices"></param>
         /// <param name="adjOnsideFaceIndices"></param>
+        /// <param name="index"></param>
         /// <param name="isClosed">is closed.</param>
         internal Loop(ICollection<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, double[] normal, 
-            IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, bool isClosed = true)
+            IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool isClosed = true)
         {
             if (!IsClosed) Message.output("loop not closed!",3);
             VertexLoop = new List<Vertex>(vertexLoop);
@@ -354,9 +357,8 @@ namespace TVGL
             Perimeter = MiscFunctions.Perimeter(vertexLoop);
             AdjOnsideFaceIndices = new List<int>(adjOnsideFaceIndices);
             StraddleFaceIndices = new List<int>(straddleFaceIndices);
+            Index = index;
         }
-
-        
     }
 }
   
