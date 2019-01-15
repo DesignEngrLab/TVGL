@@ -265,6 +265,9 @@ namespace TVGL.Voxelization
             if (role == VoxelRoleTypes.Empty) return ChangeEmptyVoxelToPartial(voxel, level);
             // otherwise, we are changing a full to a partial
             var voxel0 = voxelDictionaryLevel0.GetVoxel(voxel);
+            if (voxel0.ID == 13194154213376 || voxel0.ID == 2305856203367907328 ||
+                voxel0.ID == 4611699212581601280 || voxel0.ID == 6917542221795295232)
+                Console.WriteLine("");
             if (level == 0)
             {
                 //again, level-0 is easy. there's no parent, and the class allows us to change role directly.

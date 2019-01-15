@@ -151,7 +151,7 @@ namespace TVGLPresenterDX
             var vs1 = new VoxelizedSolid(ts,6);
             //Presenter.ShowAndHang(vs1, 0);
             //var dir = new [] { 1.0, 1.0, 1.0 };
-            var dir = new [] { -1.0, -2.0, -3.0 };
+            var dir = new[] { -1.0, -2.0, -3.0 };
             //var dir = new[] { -1.0, -.2, .0 };
             //var dir = new [] { 0.0, 0.4706, -0.8824 }; //Direction of holes in ObliqueHoles
             var neg = vs1.InvertToNewSolid();

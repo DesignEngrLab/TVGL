@@ -523,6 +523,8 @@ namespace TVGL.Voxelization
         /// <exception cref="ArgumentException">There are no parents for level-0 voxels.</exception>
         public long GetParentVoxel(long child)
         {
+            if (child == 13469031333897)
+                Console.WriteLine("");
             var childLevel = Constants.GetLevel(child);
             var parentLevel = childLevel - 1;
             if (childLevel == 0) throw new ArgumentException("There are no parents for level-0 voxels.");
@@ -540,9 +542,11 @@ namespace TVGL.Voxelization
             //if (parentID >> 4 != parentID1 >> 4)
             //    return parentID1;
             if (parentID != 0)
-                if (parentID >> 4 == parentID1 >> 4) return parentID;
-                else return Constants.ClearFlagsFromID(parentID1) + Constants.GetFlagsFromID(parentID);
-            
+                return parentID;
+                //if (Constants.ClearFlagsFromID(parentID) == Constants.ClearFlagsFromID(parentID1)) return parentID;
+                //else return Constants.ClearFlagsFromID(parentID1) + Constants.GetFlagsFromID(parentID);
+                //else return Constants.ClearFlagsFromID(parentID1) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Full);
+
             // so the rest of this should be either fulls or empties as there is no immediate partial parent
             if (parentLevel == 1)
                 return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty);
@@ -1299,11 +1303,14 @@ namespace TVGL.Voxelization
 
                 //So, now we need to remove the voxels at this valid timestep
                 //This is iterate over the same template of the slice mask as before
+                //ToDo: ChangeVoxelToEmpty is failing at 3+ levels
                 foreach (var voxCoord in sliceMask)
                 {
                     var coord = voxCoord.add(tShift, 3);
                     if (OutsideBounds(coord)) continue;
                     var eVox = GetVoxelID(coord, lastLevel);
+                    if (eVox == 13469031333897)
+                        Presenter.ShowAndHang(this, 0);
                     ChangeVoxelToEmpty(eVox, false, true);
                 }
             }
