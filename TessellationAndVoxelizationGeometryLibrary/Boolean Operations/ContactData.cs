@@ -12,13 +12,9 @@ namespace TVGL
     /// </summary>
     public class ContactData
     {
-        internal ContactData(IEnumerable<SolidContactData> positiveSideContactData,
-            IEnumerable<SolidContactData> negativeSideContactData, Flat plane)
+        internal ContactData(IEnumerable<SolidContactData>solidContactData, Flat plane)
         {
-            PositiveSideContactData = new List<SolidContactData>(positiveSideContactData);
-            NumPositiveSideSolids = PositiveSideContactData.Count();
-            NegativeSideContactData = new List<SolidContactData>(negativeSideContactData);
-            NumNegativeSideSolids= NegativeSideContactData.Count();
+            SolidContactData = new List<SolidContactData>(solidContactData);
             Plane = plane;
         }
 
@@ -26,25 +22,19 @@ namespace TVGL
         /// Gets the list of positive side contact data
         /// </summary>
         /// <value>The positive loops.</value>
-        public readonly IEnumerable<SolidContactData> PositiveSideContactData;
+        public readonly IEnumerable<SolidContactData> SolidContactData;
 
         /// <summary>
-        /// Gets the list of negative side contact data
+        /// Gets the list of positive side contact data. If finite plane, this contact data could also be on the negative side.
         /// </summary>
         /// <value>The positive loops.</value>
-        public readonly IEnumerable<SolidContactData> NegativeSideContactData;
+        public IEnumerable<SolidContactData> PositiveSideContactData => SolidContactData.Where(s => s.OnPositiveSide);
 
         /// <summary>
-        /// Gets the number of positive side solids
+        /// Gets the list of negative side contact data. If finite plane, this contact data could also be on the positive side.
         /// </summary>
         /// <value>The positive loops.</value>
-        public readonly int NumPositiveSideSolids;
-
-        /// <summary>
-        /// Gets the number of negative side solids
-        /// </summary>
-        /// <value>The positive loops.</value>
-        public readonly int NumNegativeSideSolids;
+        public IEnumerable<SolidContactData> NegativeSideContactData => SolidContactData.Where(s => s.OnNegativeSide);
 
         /// <summary>
         /// Gets the plane for this contact data 
@@ -72,6 +62,10 @@ namespace TVGL
                 if (loop.IsPositive) positiveLoops.Add(loop);
                 else negativeLoops.Add(loop);
                 onSideContactFaces.AddRange(loop.OnSideContactFaces);
+                //Note: With a finite plane, it is possible to have loops on both the positive and negative sides (Consider cutting 
+                //vertically through the center of "S" without seperating the middle).
+                if (loop.PositiveSide) OnPositiveSide = true;
+                else OnNegativeSide = true;
             }
 
             var area2 = polygonalFaces.Sum(face => face.Area);
@@ -83,6 +77,11 @@ namespace TVGL
             _vertices = new List<Vertex>();
             _volume = 0;
         }
+
+        //Contact data can be made up of information from the positive side or the negative side with infinite cutting planes
+        //Finite cutting planes may have solids with contact data on both sides. 
+        public bool OnPositiveSide { get; }
+        public bool OnNegativeSide { get; }
 
         /// <summary>
         /// Gets the vertices belonging to this solid
@@ -237,6 +236,8 @@ namespace TVGL
         /// </summary>
         public readonly IEnumerable<PolygonalFace> OnPlaneFaces;
 
+        public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
+
         internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<PolygonalFace> onPlaneFaces)
         {
             var onSideContactFaces = new List<PolygonalFace>(positiveLoop.OnSideContactFaces);
@@ -244,11 +245,13 @@ namespace TVGL
             var adjOnsideFaceIndices = new HashSet<int>(positiveLoop.AdjOnsideFaceIndices);
             OnPlaneFaces = new List<PolygonalFace>(onPlaneFaces);
             PositiveLoop = positiveLoop;
+            StraddleEdgeOnSideVertices = new HashSet<Vertex>(positiveLoop.StraddleEdgeOnSideVertices);
             NegativeLoops = new List<Loop>(negativeLoops);
             foreach (var negativeLoop in NegativeLoops)
             {
                 onSideContactFaces.AddRange(negativeLoop.OnSideContactFaces);
-                
+                foreach(var vertex in negativeLoop.StraddleEdgeOnSideVertices) StraddleEdgeOnSideVertices.Add(vertex);
+
                 foreach (var straddleFaceIndex in negativeLoop.StraddleFaceIndices)
                 {
                     straddleFaceIndices.Add(straddleFaceIndex);
@@ -283,6 +286,8 @@ namespace TVGL
         /// of these faces should have one negligible adjacent face. 
         /// </summary>
         public readonly IEnumerable<PolygonalFace> OnSideContactFaces;
+
+        public readonly HashSet<Vertex> StraddleEdgeOnSideVertices;
 
         /// <summary>
         /// Is the loop positive - meaning does it enclose material versus representing a hole
@@ -335,6 +340,8 @@ namespace TVGL
 
         public readonly int Index;
 
+        public readonly bool PositiveSide;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Loop" /> class.
         /// </summary>
@@ -344,9 +351,12 @@ namespace TVGL
         /// <param name="straddleFaceIndices"></param>
         /// <param name="adjOnsideFaceIndices"></param>
         /// <param name="index"></param>
+        /// <param name="fromPositiveSide"></param>
+        /// <param name="straddleEdgeOnSideVertices"></param>
         /// <param name="isClosed">is closed.</param>
         internal Loop(ICollection<Vertex> vertexLoop, IEnumerable<PolygonalFace> onSideContactFaces, double[] normal, 
-            IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool isClosed = true)
+            IEnumerable<int> straddleFaceIndices, IEnumerable<int> adjOnsideFaceIndices, int index, bool fromPositiveSide,
+            IEnumerable<Vertex> straddleEdgeOnSideVertices, bool isClosed = true)
         {
             if (!IsClosed) Message.output("loop not closed!",3);
             VertexLoop = new List<Vertex>(vertexLoop);
@@ -358,6 +368,8 @@ namespace TVGL
             AdjOnsideFaceIndices = new List<int>(adjOnsideFaceIndices);
             StraddleFaceIndices = new List<int>(straddleFaceIndices);
             Index = index;
+            PositiveSide = fromPositiveSide;
+            StraddleEdgeOnSideVertices = new HashSet<Vertex>(straddleEdgeOnSideVertices);
         }
     }
 }
