@@ -384,11 +384,7 @@ namespace TVGL.Voxelization
         /// <returns>IVoxel.</returns>
         public long GetVoxelID(long ID, int level = -1)
         {
-            if (level == -1)
-            {
-                Constants.GetAllFlags(ID, out var levelFromID, out var role, out var btmIsInside);
-                level = levelFromID;
-            }
+            if (level == -1) level = Constants.GetLevel(ID);
             var voxel0 = voxelDictionaryLevel0.GetVoxel(ID);
             if (level == 0)
             {
