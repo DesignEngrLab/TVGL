@@ -1322,37 +1322,44 @@ namespace TVGL.Voxelization
         private bool SucceedsBounds(IReadOnlyList<int> coord, IList<double> dir)
         {
             var uL = voxelsPerDimension[lastLevel];
-            for (var i = 0; i < 3; i++)
-            {
-                if (dir[i] < 0)
-                    if (coord[i] < 0) return true;
-                else if(dir[i] > 0)
-                    if (coord[i] >= uL[i]) return true;
-                else if (coord[i] < 0 || coord[i] >= uL[i]) return true;
-            }
-        return false;
-    }
+
+            if (dir[0] < 0 && coord[0] < 0) return true;
+            if (dir[0] > 0 && coord[0] >= uL[0]) return true;
+            if (dir[0] == 0 && (coord[0] < 0 || coord[0] >= uL[0])) return true;
+
+            if (dir[1] < 0 && coord[1] < 0) return true;
+            if (dir[1] > 0 && coord[1] >= uL[1]) return true;
+            if (dir[1] == 0 && (coord[1] < 0 || coord[1] >= uL[1])) return true;
+
+            if (dir[2] < 0 && coord[2] < 0) return true;
+            if (dir[2] > 0 && coord[2] >= uL[2]) return true;
+            return dir[2] == 0 && (coord[2] < 0 || coord[2] >= uL[2]);
+        }
 
         private bool PrecedesBounds(IReadOnlyList<int> coord, IList<double> dir)
         {
             var uL = voxelsPerDimension[lastLevel];
-            for (var i = 0; i < 3; i++)
-            {
-                if (dir[i] < 0)
-                    if (coord[i] >= uL[i]) return true;
-                else if (dir[i] > 0)
-                    if (coord[i] < 0) return true;
-                else if (coord[i] >= uL[i] || coord[i] < 0) return true;
-            }
-        return false;
-    }
+
+            if (dir[0] < 0 && coord[0] >= uL[0]) return true;
+            if (dir[0] > 0 && coord[0] < 0) return true;
+            if (dir[0] == 0 && (coord[0] >= uL[0] || coord[0] < 0)) return true;
+
+            if (dir[1] < 0 && coord[1] >= uL[1]) return true;
+            if (dir[1] > 0 && coord[1] < 0) return true;
+            if (dir[1] == 0 && (coord[1] >= uL[1] || coord[1] < 0)) return true;
+
+            if (dir[2] < 0 && coord[2] >= uL[2]) return true;
+            if (dir[2] > 0 && coord[2] < 0) return true;
+            return dir[2] == 0 && (coord[2] >= uL[2] || coord[2] < 0);
+        }
 
         private bool OutsideBounds(IReadOnlyList<int> coord)
         {
             var uL = voxelsPerDimension[lastLevel];
-            for (var i = 0; i < 3; i++)
-                if (coord[i] < 0 || coord[i] >= uL[i]) return true;
-            return false;
+
+            return coord[0] < 0 || coord[0] >= uL[0] ||
+                   coord[1] < 0 || coord[1] >= uL[1] ||
+                   coord[2] < 0 || coord[2] >= uL[2];
         }
 
         private static IList<int[]> GetVoxelsWithinCircle(IReadOnlyList<double> center, IList<double> dir, double radius, bool edge = false)
