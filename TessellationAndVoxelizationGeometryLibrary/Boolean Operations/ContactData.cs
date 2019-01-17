@@ -11,17 +11,17 @@ namespace TVGL
     /// </summary>
     public class ContactData
     {
-        internal ContactData(IEnumerable<SolidContactData>solidContactData, IEnumerable<IntersectionLoop> intersectionLoops, Flat plane)
+        internal ContactData(IEnumerable<SolidContactData>solidContactData, IEnumerable<IntersectionGroup> intersectionGroups, Flat plane)
         {
             SolidContactData = new List<SolidContactData>(solidContactData);
-            IntersectionLoops = new List<IntersectionLoop>(intersectionLoops);
+            IntersectionGroups = new List<IntersectionGroup>(intersectionGroups);
             Plane = plane;
         }
 
         /// <summary>
         /// Gets the intersection loop information. Empty, unless considering finite planes.
         /// </summary>
-        public readonly IEnumerable<IntersectionLoop> IntersectionLoops;
+        public readonly IEnumerable<IntersectionGroup> IntersectionGroups;
 
         /// <summary>
         /// Gets the list of positive side contact data
@@ -174,19 +174,27 @@ namespace TVGL
     /// loops connect together. This includes a 2D intersection and pointers back to the GroupOfLoops
     /// that contributes to it from each side. 
     /// </summary>
-    public class IntersectionLoop
+    public class IntersectionGroup
     {
         public readonly List<PolygonLight> Intersection2D;
-        public readonly GroupOfLoops PosSideGroupOfLoops;
-        public readonly GroupOfLoops NegSideGroupOfLoops;
+        public readonly HashSet<GroupOfLoops> GroupOfLoops;
+        public List<int> GetLoopIndices()
+        {
+            var loopIndices = new List<int>();
+            foreach (var group in GroupOfLoops)
+            {
+                foreach (var loop in group.AllLoops)
+                {
+                    loopIndices.Add(loop.Index);
+                }
+            }
+            return loopIndices;
+        }
 
-        public IntersectionLoop(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops, 
+        public IntersectionGroup(GroupOfLoops posSideGroupOfLoops, GroupOfLoops negSideGroupOfLoops, 
             IEnumerable<PolygonLight> intersection2D, int index)
         {
-            PosSideGroupOfLoops = posSideGroupOfLoops;
-            PosSideGroupOfLoops.Pairs.Add(negSideGroupOfLoops);
-            NegSideGroupOfLoops = negSideGroupOfLoops;
-            NegSideGroupOfLoops.Pairs.Add(posSideGroupOfLoops);
+            GroupOfLoops = new HashSet<GroupOfLoops>{posSideGroupOfLoops, negSideGroupOfLoops };
             Intersection2D = new List<PolygonLight>(intersection2D);
             Index = index;
         }
@@ -205,12 +213,6 @@ namespace TVGL
         /// </summary>
         /// <value>The positive loops.</value>
         public readonly Loop PositiveLoop;
-
-        /// <summary>
-        /// List of the adjacent group of loops (those on the opposite side of the plane that intersect this group of loops).
-        /// </summary>
-        /// <value>The positive loops.</value>
-        public readonly HashSet<GroupOfLoops> Pairs;
 
         /// <summary>
         /// Gets the loops of negative area (i.e. holes).
@@ -269,7 +271,6 @@ namespace TVGL
 
         internal GroupOfLoops(Loop positiveLoop, IEnumerable<Loop> negativeLoops, IEnumerable<PolygonalFace> onPlaneFaces)
         {
-            Pairs = new HashSet<GroupOfLoops>();
             var onSideContactFaces = new List<PolygonalFace>(positiveLoop.OnSideContactFaces);
             var straddleFaceIndices = new HashSet<int>(positiveLoop.StraddleFaceIndices);
             var adjOnsideFaceIndices = new HashSet<int>(positiveLoop.AdjOnsideFaceIndices);
