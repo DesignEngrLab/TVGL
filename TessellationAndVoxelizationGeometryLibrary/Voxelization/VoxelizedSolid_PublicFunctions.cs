@@ -384,11 +384,7 @@ namespace TVGL.Voxelization
         /// <returns>IVoxel.</returns>
         public long GetVoxelID(long ID, int level = -1)
         {
-            if (level == -1)
-            {
-                Constants.GetAllFlags(ID, out var levelFromID, out var role, out var btmIsInside);
-                level = levelFromID;
-            }
+            if (level == -1) level = Constants.GetLevel(ID);
             var voxel0 = voxelDictionaryLevel0.GetVoxel(ID);
             if (level == 0)
             {
@@ -529,14 +525,15 @@ namespace TVGL.Voxelization
             // childlevels 1, 2, 3, 4 or parent levels 0, 1, 2, 3
             var level0Parent = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(child);
             if (level0Parent == null)
-                return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(0, VoxelRoleTypes.Empty);
+                return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty);
             if (level0Parent.Role == VoxelRoleTypes.Full)
-                return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(0, VoxelRoleTypes.Full);
+                return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Full);
             if (parentLevel == 0) return level0Parent.ID;
             //now for childlevels 2,3, 4 or parent levels 1, 2, 3
             var parentID = MakeParentVoxelID(child, parentLevel);
             parentID = level0Parent.InnerVoxels[parentLevel - 1].GetVoxel(parentID);
             if (parentID != 0) return parentID;
+
             // so the rest of this should be either fulls or empties as there is no immediate partial parent
             if (parentLevel == 1)
                 return MakeParentVoxelID(child, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty);
@@ -940,7 +937,6 @@ namespace TVGL.Voxelization
         }
         private void Invert(long parent, int level, bool onSurface)
         {
-            var descendants = level != lastLevel;
             var coords = GetChildVoxelCoords(parent, level);
             //foreach (var coord in coords)
             Parallel.ForEach(coords, coord =>
@@ -962,10 +958,10 @@ namespace TVGL.Voxelization
                         ChangeVoxelToFull(vox, true);
                         break;
                     case VoxelRoleTypes.Full:
-                        ChangeVoxelToEmpty(vox, descendants, true);
+                        ChangeVoxelToEmpty(vox, true, true);
                         break;
                     case VoxelRoleTypes.Partial:
-                        if (descendants) Invert(vox, level + 1, overSurface);
+                        if (level != lastLevel) Invert(vox, level + 1, overSurface);
                         else ChangeVoxelToEmpty(vox, false, true);
                         break;
                 }
@@ -1318,7 +1314,7 @@ namespace TVGL.Voxelization
             public override int GetHashCode(int[] ax)
             {
                 if (ax is null) return 0;
-                var hCode = ax[0] ^ ax[1] ^ ax[2];
+                var hCode = ax[0] + (ax[1] << 10) + (ax[2] << 20);
                 return hCode.GetHashCode();
             }
         }

@@ -48,13 +48,13 @@ namespace TVGL.Voxelization
                 if (voxel0 != null)
                     lock (voxel0.InnerVoxels[level - 1]) //remove the node here
                     {
-                        voxel0.InnerVoxels[level - 1].Remove(voxel);
                         var parent = GetParentVoxel(voxel);
                         // make parent partial if it was full
                         if (Constants.GetRole(parent) == VoxelRoleTypes.Full)
                             ChangeVoxelToPartial(parent, true);
+                        voxel0.InnerVoxels[level - 1].Remove(voxel);
                         // then check to see if the parent should be empty as well
-                        else if (checkParentEmpty)
+                        if (checkParentEmpty)
                             if (voxel0.InnerVoxels[level - 1].Count == 0 ||
                                 voxel0.InnerVoxels[level - 1].CountDescendants(parent, level - 1) == 0)
                                 ChangeVoxelToEmpty(parent, false, true);
@@ -273,7 +273,7 @@ namespace TVGL.Voxelization
                 {
                     voxel0.Role = VoxelRoleTypes.Partial;
                     if (addAllDescendants) AddAllDescendants(Constants.ClearFlagsFromID(voxel), level, voxel0);
-                    voxel0.ID = Constants.ClearFlagsFromID(voxel) +
+                    voxel0.ID = Constants.ClearFlagsFromID(voxel0.ID) +
                                 Constants.MakeFlags(level, VoxelRoleTypes.Partial, true);
                 }
                 return voxel0.ID;
