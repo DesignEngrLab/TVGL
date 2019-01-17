@@ -16,6 +16,7 @@ namespace TVGL.Boolean_Operations
     public static class Slice
     {
         #region Define Contact at a Flat Plane
+
         /// <summary>
         /// This slice function makes a seperate cut for the positive and negative side,
         /// at a specified offset in both directions. It rebuilds straddle triangles, 
@@ -25,10 +26,11 @@ namespace TVGL.Boolean_Operations
         /// <param name="ts">The ts.</param>
         /// <param name="plane">The plane.</param>
         /// <param name="solids">The resulting solids </param>
+        /// <param name="setIntersectionLoops">Determines whether to output the intersections (2D cross sections and other info)</param>
         public static void OnInfiniteFlat(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> solids)
+            out List<TessellatedSolid> solids, bool setIntersectionLoops = false)
         {
-            if (!GetContactData(ts, plane, out var contactData))
+            if (!GetContactData(ts, plane, out var contactData, setIntersectionLoops))
             {
                 solids = new List<TessellatedSolid>();
                 Debug.WriteLine("CuttingPlane does not cut through the given solid.");
@@ -44,18 +46,46 @@ namespace TVGL.Boolean_Operations
             }
         }
 
-        public static void OnFiniteFlatByIngoringLoops(TessellatedSolid ts, Flat plane,
-            out List<TessellatedSolid> solids, ICollection<int> loopsToIngore)
+        /// <summary>
+        /// This slice function makes a seperate cut for the positive and negative side,
+        /// at a specified offset in both directions. It rebuilds straddle triangles, 
+        /// but only uses one of the two straddle edge intersection vertices to prevent
+        /// tiny triangles from being created.
+        /// This version allows the user to input IntersectionLoop indices to ignore,
+        /// which are set with OnFlatConsideringFinite.
+        /// </summary>
+        public static void OnFiniteFlatByIngoringLoops(TessellatedSolid ts, Flat plane, ContactData oldContactData,
+            out List<TessellatedSolid> solids, ICollection<int> intersectionsToIngore, out ContactData newContactData)
         {
-            if (!GetContactData(ts, plane, out var contactData, loopsToIngore))
+            var groupsOfLoops = new HashSet<GroupOfLoops>();
+            foreach (var solid in oldContactData.SolidContactData)
             {
-                solids = new List<TessellatedSolid>();
-                Debug.WriteLine("CuttingPlane does not cut through the given solid.");
-                return;
+                foreach (var groupOfLoops in solid.GroupsOfLoops)
+                {
+                    groupsOfLoops.Add(groupOfLoops);
+                }
             }
-            MakeSolids(contactData, ts.Units, out solids);
+
+            var intersectionLoops = new List<IntersectionLoop>();
+            foreach (var intersection in oldContactData.IntersectionLoops)
+            {
+                if (intersectionsToIngore.Contains(intersection.Index))
+                {
+                    intersection.PosSideGroupOfLoops.Pairs.Remove(intersection.NegSideGroupOfLoops);
+                    intersection.NegSideGroupOfLoops.Pairs.Remove(intersection.PosSideGroupOfLoops);
+                }
+                else
+                {
+                    intersectionLoops.Add(intersection);
+                }
+            }
+
+            var contactDataForEachSolid = MakeContactDataForEachSolid(ts, groupsOfLoops);
+            newContactData = new ContactData(contactDataForEachSolid, intersectionLoops, plane);
+            MakeSolids(newContactData, ts.Units, out solids);
+
             var totalVolume1 = solids.Sum(solid => solid.Volume);
-            var totalVolume2 = contactData.SolidContactData.Sum(solidContactData => solidContactData.Volume());
+            var totalVolume2 = newContactData.SolidContactData.Sum(solidContactData => solidContactData.Volume());
             if (!totalVolume2.IsPracticallySame(totalVolume1, 100))
             {
                 Debug.WriteLine("Error with Volume function calculation in TVGL. SolidContactData Volumes and Solid Volumes should match, since they use all the same faces.");
@@ -77,7 +107,7 @@ namespace TVGL.Boolean_Operations
         public static void OnFlatAsSingleSolids(TessellatedSolid ts, Flat plane,
             out TessellatedSolid positiveSideSolid, out TessellatedSolid negativeSideSolid)
         {
-            if (!GetContactData(ts, plane, out var contactData))
+            if (!GetContactData(ts, plane, out var contactData, false))
             {
                 positiveSideSolid = null;
                 negativeSideSolid = null;
@@ -93,8 +123,8 @@ namespace TVGL.Boolean_Operations
         /// <param name="ts"></param>
         /// <param name="plane"></param>
         /// <param name="contactData"></param>
-        /// <param name="loopsToIngore"></param>
-        public static bool GetContactData(TessellatedSolid ts, Flat plane, out ContactData contactData, ICollection<int> loopsToIngore = null)
+        /// <param name="setIntersectionLoops"></param>
+        public static bool GetContactData(TessellatedSolid ts, Flat plane, out ContactData contactData, bool setIntersectionLoops)
         {
             #region Get the loops
             //1. Offset positive and get the positive faces.
@@ -109,12 +139,14 @@ namespace TVGL.Boolean_Operations
                 return false; //This plane does not slice through the solid, or an error occured from the plane shift
             }
             DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + posPlaneShift, plane.Normal),
-                out var positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift, loopsToIngore);
+                out var positiveSideLoops, 1, new List<double>(distancesToPlane), posPlaneShift);
             DivideUpFaces(ts, new Flat(plane.DistanceToOrigin + negPlaneShift, plane.Normal),
-                out var negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift, loopsToIngore);
+                out var negativeSideLoops, -1, new List<double>(distancesToPlane), negPlaneShift);
             #endregion
 
-            contactData = MakeContactDataForEachSolid(ts, positiveSideLoops, negativeSideLoops, plane);
+            var groupOfLoops = GroupLoops(positiveSideLoops, negativeSideLoops, plane, setIntersectionLoops, out var intersectionLoops);
+            var contactDataForEachSolid = MakeContactDataForEachSolid(ts, groupOfLoops);
+            contactData = new ContactData(contactDataForEachSolid, intersectionLoops, plane);
             return true;
         }
 
@@ -146,14 +178,14 @@ namespace TVGL.Boolean_Operations
 
 
         /// <summary>
-        /// Seperates the loops into multiple solids prior to making solids by using
-        /// loop information and face wrapping to identify which loops belong together.
+        /// Groups the loops and creates triangles for the newly exposed surfaces.
         /// The direction of each loop is not necessary as it can be inferred.
         /// </summary>
-        /// <param name="ts">The ts.</param>
         /// <param name="posSideLoops">The on side loops.</param>
         /// <param name="negSideLoops"></param>
         /// <param name="plane"></param>
+        /// <param name="setIntersectionLoops"></param>
+        /// <param name="intersectionLoops"></param>
         /// <returns>IEnumerable&lt;SolidContactData&gt;.</returns>
         /// <exception cref="System.Exception">
         /// This loop should always be positive. Check to may sure the group was created correctly in 'OrderLoops' 
@@ -162,8 +194,8 @@ namespace TVGL.Boolean_Operations
         /// or
         /// The face should be in this list. Otherwise, it should not have been selected with face wrapping
         /// </exception>
-        private static ContactData MakeContactDataForEachSolid(TessellatedSolid ts,
-            IList<Loop> posSideLoops, IList<Loop> negSideLoops, Flat plane)
+        private static ISet<GroupOfLoops> GroupLoops(IList<Loop> posSideLoops, IList<Loop> negSideLoops, 
+            Flat plane, bool setIntersectionLoops, out List<IntersectionLoop> intersectionLoops)
         {
             //Process the positive and negative side loops to create List<GroupOfLoops>. This requires the 
             //directionallity (hole vs. filled) and pairing of loops into groups, and the triangulation of
@@ -171,6 +203,8 @@ namespace TVGL.Boolean_Operations
             //Since the positive side loops actually need to look in reverse to see the new faces, use the reverse direction.
             //Vise-versa for the negative side.
             var groupsOfLoops = new HashSet<GroupOfLoops>();
+            var posSideGroups = new List<GroupOfLoops>();
+            var negSideGroups = new List<GroupOfLoops>();
             for (var k = -1; k < 2; k += 2) //-1 for positive side and 1 for negative side.
             {
                 var direction = plane.Normal.multiply(k);
@@ -185,10 +219,11 @@ namespace TVGL.Boolean_Operations
                 //The isPositive output is used to determine whether each loop should be positive or negative.
                 //The groupsOfLoopsIndices is a list of groups that was used to triangulate each surface.
                 var groupsOfTriangles =
-                    TriangulatePolygon.Run(vertexLoops, direction, out var groupsOfLoopsIndices, out var isPositive, false);
+                    TriangulatePolygon.Run(vertexLoops, direction, out var groupsOfLoopsIndices, out var isPositive,
+                        false);
                 //Reverse loops if necessary to match the isPositive list from the triangulation.
                 for (var i = 0; i < isPositive.Length; i++) loops[i].IsPositive = isPositive[i];
-                
+
                 //Put the groups of loops into a GroupOfLoops class.
                 for (var i = 0; i < groupsOfLoopsIndices.Count; i++)
                 {
@@ -196,19 +231,62 @@ namespace TVGL.Boolean_Operations
                     var groupOfTriangles = groupsOfTriangles[i];
                     var positiveLoop = loops[groupOfLoopIndices.First()];
                     var negativeLoops = new List<Loop>();
-                    if (!positiveLoop.IsPositive) throw new Exception("This loop should always be positive. Check to may sure the group was created correctly in 'OrderLoops' ");
+                    if (!positiveLoop.IsPositive)
+                        throw new Exception(
+                            "This loop should always be positive. Check to may sure the group was created correctly in 'OrderLoops' ");
                     //Skip the first loop, since that is the positive loop
                     for (var j = 1; j < groupOfLoopIndices.Count; j++)
                     {
                         var negativeLoop = loops[groupOfLoopIndices[j]];
-                        if (negativeLoop.IsPositive) throw new Exception("This loop should always be negative. Check to may sure the group was created correctly in 'OrderLoops' ");
+                        if (negativeLoop.IsPositive)
+                            throw new Exception(
+                                "This loop should always be negative. Check to may sure the group was created correctly in 'OrderLoops' ");
                         negativeLoops.Add(negativeLoop);
                     }
-                    var groupOfOnPlaneFaces = groupOfTriangles.Select(triangle => new PolygonalFace(triangle, direction, false));
+
+                    var groupOfOnPlaneFaces =
+                        groupOfTriangles.Select(triangle => new PolygonalFace(triangle, direction, false));
                     var groupOfLoops = new GroupOfLoops(positiveLoop, negativeLoops, groupOfOnPlaneFaces);
                     groupsOfLoops.Add(groupOfLoops);
+                    if (k == -1) posSideGroups.Add(groupOfLoops);
+                    else negSideGroups.Add(groupOfLoops);
                 }
-            }           
+            }
+
+            //Pair up the groups of loops
+            //Note: since projecting and intersection are time intensive. Do not perform this next operation unless
+            //considering finite planes. This information is not necessary for infinite planes.
+            intersectionLoops = new List<IntersectionLoop>();
+            if (setIntersectionLoops)
+            {
+                foreach (var group in groupsOfLoops) group.SetCrossSection2D(plane);
+                var i = 0;
+                foreach (var posGroup in posSideGroups)
+                {
+                    //Find all the negative side groups that it intersects with.
+                    foreach (var negGroup in negSideGroups)
+                    {
+                        var intersection =
+                            PolygonOperations.Intersection(posGroup.CrossSection2D, negGroup.CrossSection2D);
+                        if (intersection == null || !intersection.Any() ||
+                            intersection.Sum(p => p.Area).IsNegligible()) continue;
+                        intersectionLoops.Add(new IntersectionLoop(posGroup, negGroup, intersection, i));
+                        i++;
+                    }
+                }
+            }
+
+            return groupsOfLoops;
+        }
+
+        /// <summary>
+        /// Uses face wrapping on the groups of loops to identigy multiple solids.
+        /// </summary>
+        /// <param name="ts"></param>
+        /// <param name="groupsOfLoops"></param>
+        /// <returns></returns>
+        private static IEnumerable<SolidContactData> MakeContactDataForEachSolid(TessellatedSolid ts, ISet<GroupOfLoops> groupsOfLoops)
+        {
 
             //Perform face wrapping (using adjacency to build up a list of all the faces on a solid) -- Similar to 'GetMultipleSolids'
             //The straddle faces form the barrier for the wrapping procedure.
@@ -220,7 +298,7 @@ namespace TVGL.Boolean_Operations
             {
                 var groupOfLoops = groupsOfLoops.First();
                 var onPlaneFaces = new List<PolygonalFace>(groupOfLoops.OnPlaneFaces);
-                var allLoopsBelongingToSolid = new List<Loop>(groupOfLoops.AllLoops);
+                var allLoopsBelongingToSolid = new List<GroupOfLoops>{groupOfLoops};
                 groupsOfLoops.Remove(groupOfLoops);
                 //Push all the adjacent onside faces to a stack
                 //Note that blind pockets and holes are also included in this loop, since the onside faces for every loop in the group are included
@@ -236,9 +314,6 @@ namespace TVGL.Boolean_Operations
                 while (stack.Any())
                 {
                     var face = stack.Pop();
-                    //if (!hashSetFaces.Contains(face))
-                    //    throw new Exception(
-                    //        "The face should be in this list. Otherwise, it should not have been selected with face wrapping");//ToDo: Remove this line and 'onSideFaces' from this function when convinced its working well
                     if (facesBelongingToSolid.Contains(face)) continue;
                     facesBelongingToSolid.Add(face);
                     foreach (var adjacentFace in face.AdjacentFaces)
@@ -249,9 +324,10 @@ namespace TVGL.Boolean_Operations
                         if (straddleFaceIndices.Contains(adjacentFace.IndexInList)) continue; //Don't add the straddle face. 
                         //If the wrapping gets to any faces that are straddle faces for other loops, then that group of loops is part of the same solid.
                         //Note that blind pockets and holes are also included in this loop, since the onside faces for every loop in the group are included
+                        //If the groups have been paired with the intersection loops, do not add group2.
                         var notStraddleEdge = true;
                         var groupsToRemove = new List<GroupOfLoops>();
-                        foreach (var group2 in groupsOfLoops)
+                        foreach (var group2 in groupsOfLoops.Where(g2 => !groupOfLoops.Pairs.Contains(g2)))
                         {
                             if (!group2.StraddleFaceIndices.Contains(adjacentFace.IndexInList)) continue;
                             //This is a straddle edge for the current group of loops. Since we are considering both sides at the same time, 
@@ -277,7 +353,7 @@ namespace TVGL.Boolean_Operations
                                 stack.Push(ts.Faces[adjOnsideFaceIndex]);
                             }
                             //Add this the loops in this group to this solid
-                            allLoopsBelongingToSolid.AddRange(group2.AllLoops);
+                            allLoopsBelongingToSolid.Add(group2);
                             //Add the onPlane faces 
                             onPlaneFaces.AddRange(group2.OnPlaneFaces);
                             //Remove that group from the list of groups
@@ -289,7 +365,7 @@ namespace TVGL.Boolean_Operations
                 }
                 contactDataForEachSolid.Add(new SolidContactData(allLoopsBelongingToSolid, facesBelongingToSolid.ToList(), onPlaneFaces));
             }
-            return new ContactData(contactDataForEachSolid, plane);
+            return contactDataForEachSolid;
         }
 
         private static bool ShiftPlaneForRobustCut(TessellatedSolid ts, Flat plane, out List<double> distancesToPlane, out double posPlaneShift, 
@@ -368,7 +444,7 @@ namespace TVGL.Boolean_Operations
         ///Returns a list of onSideFaces from the ts (not including straddle faces), and a list of all the new faces that make up the 
         /// halves of the straddle faces that are on this side.
         private static void DivideUpFaces(TessellatedSolid ts, Flat plane, out List<Loop> loops, int isPositiveSide, 
-            IList<double> distancesToPlane, double planeOffset = double.NaN, ICollection<int> loopsToIngore = null)
+            IList<double> distancesToPlane, double planeOffset = double.NaN)
         {
             loops = new List<Loop>();
 
@@ -474,7 +550,7 @@ namespace TVGL.Boolean_Operations
             var tolerance = Math.Sqrt(ts.SameTolerance);
             for (var i = 0; i < loopsOfStraddleEdges.Count; i++)
             {
-                if (loopsToIngore!= null && loopsToIngore.Contains(i)) continue;
+                //if (loopsToIngore!= null && loopsToIngore.Contains(i)) continue;
                 var loopOfStraddleEdges = loopsOfStraddleEdges[i];
                 var straddleEdgeOnSideVertices = loopOfStraddleEdges.Select(e => e.OnSideVertex);
                 var straddleFaceIndices = loopsOfStraddleFaceIndices[i];
