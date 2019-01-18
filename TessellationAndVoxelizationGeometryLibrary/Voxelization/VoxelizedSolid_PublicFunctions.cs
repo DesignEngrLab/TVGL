@@ -1188,10 +1188,14 @@ namespace TVGL.Voxelization
             var mask = CreateProjectionMask(dir, mLimit, inclusive);
             var starts = GetAllVoxelsOnBoundingSurfaces(dir, toolDia);
             var sliceMask = ThickenMask(mask[0], dir, toolDia, toolOptions);
+            var vt = new VoxelTracker();
             Parallel.ForEach(starts, vox =>
-                    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox));
+                    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, vt, sliceMask, vox));
             //foreach (var vox in starts)
             //    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
+
+            foreach (var vox in vt.voxelsToRemove)
+                ChangeVoxelToEmpty(vox, false, true);
         }
 
         private static IEnumerable<VoxelDirections> GetVoxelDirections(IReadOnlyList<double> dir)
@@ -1244,59 +1248,86 @@ namespace TVGL.Voxelization
         }
 
         private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask, double tLimit,
-            bool stopAtPartial, IList<double> dir, IList<int[]> sliceMask = null,
-            IList<int> start = null)
+            bool stopAtPartial, IList<double> dir, VoxelTracker vt,
+            IList<int[]> sliceMask = null, IList<int> start = null)
         {
             start = start ?? mask[0].ToArray();
             sliceMask = sliceMask ?? new List<int[]>(new []{ mask[0].ToArray() });
             var shift = start.subtract(mask[0], 3);
-            var pBounds = true;
-            var entryCoord = new [] { 0, 0, 0 };
+            //var pBounds = true;
+            //var entryCoord = new [] { 0, 0, 0 };
 
             //foreach depth or timestep
             foreach (var initCoord in mask)
             {
                 var startCoord = initCoord.add(shift, 3);
-                if (!pBounds && startCoord.subtract(entryCoord, 3).norm2() > tLimit)
-                    break;
+                //if (!pBounds && startCoord.subtract(entryCoord, 3).norm2() > tLimit)
+                //    break;
 
                 var tShift = startCoord.subtract(mask[0], 3);
 
                 //Iterate over the template of the slice mask
                 //to move them to the appropriate location but 
                 //need to be sure that we are in the space (not negative)
+                var succeedCounter = 0;
                 foreach (var voxCoord in sliceMask)
                 {
                     var coord = voxCoord.add(tShift, 3);
                     if (PrecedesBounds(coord, dir)) continue;
-                    if (pBounds)
+                    //if (pBounds)
+                    //{
+                    //    entryCoord = startCoord.ToArray();
+                    //    pBounds = false;
+                    //}
+
+                    if (SucceedsBounds(coord, dir))
                     {
-                        entryCoord = startCoord.ToArray();
-                        pBounds = false;
+                        succeedCounter++;
+                        // Return if you've left the part
+                        if (succeedCounter == sliceMask.Count)
+                            return;
+                        continue;
                     }
-                    if (SucceedsBounds(coord, dir)) continue;
+
                     var eVox = GetVoxelID(coord, lastLevel);
+                    if (vt.voxelsToRemove.Contains(eVox))
+                        continue;
+
                     var dVox = designedSolid.GetVoxelID(eVox, lastLevel);
                     var role = Constants.GetRole(dVox);
-                    //Return if you've left the part or you've hit the as-designed part
+
+                    //Return if you've hit the as-designed part
                     if (role == VoxelRoleTypes.Full ||
                         (role == VoxelRoleTypes.Partial && stopAtPartial))
                         return;
+
+                    lock (vt.voxelsToRemove)
+                        vt.voxelsToRemove.Add(eVox);
                 }
 
-                //Continue if you haven't yet started (you're still outside of the shape)
-                if (pBounds) continue;
+                ////Continue if you haven't yet started (you're still outside of the shape)
+                //if (pBounds) continue;
 
-                //So, now we need to remove the voxels at this valid timestep
-                //This is iterate over the same template of the slice mask as before
-                foreach (var voxCoord in sliceMask)
-                {
-                    var coord = voxCoord.add(tShift, 3);
-                    if (OutsideBounds(coord)) continue;
-                    var eVox = GetVoxelID(coord, lastLevel);
-                    ChangeVoxelToEmpty(eVox, false, true);
-                }
+                ////So, now we need to remove the voxels at this valid timestep
+                ////This is iterate over the same template of the slice mask as before
+                //foreach (var voxCoord in sliceMask)
+                //{
+                //    var coord = voxCoord.add(tShift, 3);
+                //    if (OutsideBounds(coord)) continue;
+                //    var eVox = GetVoxelID(coord, lastLevel);
+                //    ChangeVoxelToEmpty(eVox, false, true);
+                //}
             }
+        }
+
+        private class VoxelTracker
+        {
+            public HashSet<long> voxelsToRemove;
+            public VoxelTracker()
+            {
+                voxelsToRemove = new HashSet<long>();
+            }
+            //ToDo:Add method to empty voxelsToRemove (change all to empty) when it gets too large
         }
 
         private class SameCoordinates : EqualityComparer<int[]>
