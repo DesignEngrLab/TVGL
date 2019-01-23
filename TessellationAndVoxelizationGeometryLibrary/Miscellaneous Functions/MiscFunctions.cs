@@ -1860,7 +1860,7 @@ namespace TVGL
             {
                 position[i] = point2[i] * fraction + point1[i] * (1 - fraction);
                 if (double.IsNaN(position[i]))
-                    throw new Exception("This should never occur. Prevent this from happening");
+                    throw new Exception("This should never occur. The line must not be in-plane. Prevent this from happening");
             }
             return position;
         }
