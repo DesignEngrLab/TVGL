@@ -257,7 +257,7 @@ namespace TVGL.Boolean_Operations
             //Note: since projecting and intersection are time intensive. Do not perform this next operation unless
             //considering finite planes. This information is not necessary for infinite planes.
             var g = 0;
-            foreach (var group in groupsOfLoops) @group.SetCrossSection2D(plane);
+            foreach (var group in groupsOfLoops) group.SetCrossSection2D(plane);
             foreach (var posGroup in posSideGroups)
             {
                 //Find all the negative side groups that it intersects with.

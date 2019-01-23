@@ -262,9 +262,14 @@ namespace TVGL
         public void SetCrossSection2D(Flat plane)
         {
             var paths = new List<List<PointLight>>();
-            foreach (var loop in AllLoops)
+            var positivePath = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(PositiveLoop.VertexLoop, plane.Normal).ToList());
+            if (positivePath.Area < 0) positivePath.Path.Reverse();
+            paths.Add(positivePath.Path);
+            foreach (var loop in NegativeLoops)
             {
-                paths.Add(MiscFunctions.Get2DProjectionPointsAsLight(loop.VertexLoop, plane.Normal).ToList());
+                var negativePath = new PolygonLight(MiscFunctions.Get2DProjectionPointsAsLight(loop.VertexLoop, plane.Normal).ToList());
+                if (negativePath.Area > 0) negativePath.Path.Reverse();
+                paths.Add(negativePath.Path);
             }
             CrossSection2D = PolygonOperations.Union(paths).Select(p => new PolygonLight(p)).ToList();
         }

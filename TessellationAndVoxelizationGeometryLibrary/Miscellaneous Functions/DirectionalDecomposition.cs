@@ -128,7 +128,7 @@ namespace TVGL
 
             //Adjust the step size to be an even increment over the entire length of the solid
             stepSize = length / Math.Round(length / stepSize + 1);
-
+            
             //make the minimum step size 1/10 of the length.
             if (length < 10 * stepSize)
             {
@@ -280,15 +280,18 @@ namespace TVGL
         #endregion
 
         #region Additive Volume
+
         /// <summary>
         /// Gets the additive volume given a list of decomposition data
         /// </summary>
         /// <param name="decompData"></param>
-        /// <param name="additiveAccuracy"></param>
+        /// <param name="layerHeight"></param>
+        /// <param name="scanningAccuracy"></param>
         /// <param name="outputData"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static double AdditiveVolume(List<DecompositionData> decompData, double additiveAccuracy, out List<DecompositionData> outputData)
+        public static double AdditiveVolume(List<DecompositionData> decompData, double layerHeight, 
+            double scanningAccuracy, out List<DecompositionData> outputData)
         {
             outputData = new List<DecompositionData>();
             var previousPolygons = new List<List<PointLight>>();
@@ -300,13 +303,13 @@ namespace TVGL
             foreach (var data in decompData)
             {
                 var currentPaths = data.Paths;
-                //Offset the distance back by the additive accuracy. THis acts as a vertical offset
-                var distance = data.DistanceAlongDirection - additiveAccuracy;
+                //Offset the distance back by the layer height. THis acts as a vertical offset
+                var distance = data.DistanceAlongDirection - layerHeight;
                 //currentPaths = PolygonOperations.UnionEvenOdd(currentPaths);
 
                 //Offset if the additive accuracy is significant
                 var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentPaths);
-                var offsetPaths = !additiveAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, additiveAccuracy) : new List<List<PointLight>>(currentPaths);
+                var offsetPaths = !scanningAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentPaths, scanningAccuracy) : new List<List<PointLight>>(currentPaths);
                 var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
                 //Simplify the paths, but remove any that are eliminated (e.g. points are all very close together)
                 var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
@@ -366,7 +369,7 @@ namespace TVGL
                         area2 = -area2;
                         Debug.WriteLine("The first polygon in the Additive Volume estimate was negative. This means there was an issue with the polygon ordering");
                     }
-                    additiveVolume += additiveAccuracy * area2;
+                    additiveVolume += layerHeight * area2;
                 }
 
                 //Add the volume from this iteration.
@@ -392,8 +395,8 @@ namespace TVGL
                 //This is the last iteration. Add it to the output data.
                 if (i == n - 1)
                 {
-                    outputData.Add(new DecompositionData(currentPaths, distance + additiveAccuracy));
-                    additiveVolume += additiveAccuracy * area;
+                    outputData.Add(new DecompositionData(currentPaths, distance + layerHeight));
+                    additiveVolume += layerHeight * area;
                 }
 
                 previousPolygons = currentPaths;
