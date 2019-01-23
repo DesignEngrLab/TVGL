@@ -72,7 +72,7 @@ namespace TVGL.Voxelization
             if (level == 0)
             {
                 if (voxel0 != null) return voxel0;
-                return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.MakeFlags(0, VoxelRoleTypes.Empty), this);
+                return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.MakeFlags(level, VoxelRoleTypes.Empty), this);
             }
             //var newIDwoTags = Constants.ClearFlagsFromID(ID);
             //var parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[0]);
@@ -294,14 +294,14 @@ namespace TVGL.Voxelization
             var parentLevel = child.Level - 1;
             if (child.Level == 0) throw new ArgumentException("There are no parents for level-0 voxels.");
             // childlevels 1, 2, 3, 4 or parent levels 0, 1, 2, 3
-            var parentID = MakeParentVoxelID(child.ID, 0);
+            var parentID = MakeParentVoxelID(child.ID, parentLevel);
             var level0Parent = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(parentID);
             if (level0Parent == null)
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
-                                 + Constants.MakeFlags(0, VoxelRoleTypes.Empty), this);
+                                 + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty), this);
             if (level0Parent.Role == VoxelRoleTypes.Full)
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
-                                 + Constants.MakeFlags(0, VoxelRoleTypes.Full), this);
+                                 + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Full), this);
             if (parentLevel == 0) return level0Parent;
             //now for childlevels 2,3, 4 or parent levels 1, 2, 3
             parentID = MakeParentVoxelID(child.ID, parentLevel);
@@ -1188,10 +1188,14 @@ namespace TVGL.Voxelization
             var mask = CreateProjectionMask(dir, mLimit, inclusive);
             var starts = GetAllVoxelsOnBoundingSurfaces(dir, toolDia);
             var sliceMask = ThickenMask(mask[0], dir, toolDia, toolOptions);
+            var vt = new VoxelTracker();
             Parallel.ForEach(starts, vox =>
-                    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox));
+                    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, vt, sliceMask, vox));
             //foreach (var vox in starts)
             //    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
+
+            foreach (var vox in vt.voxelsToRemove)
+                ChangeVoxelToEmpty(vox, false, true);
         }
 
         private static IEnumerable<VoxelDirections> GetVoxelDirections(IReadOnlyList<double> dir)
@@ -1244,59 +1248,86 @@ namespace TVGL.Voxelization
         }
 
         private void ErodeMask(VoxelizedSolid designedSolid, IList<int[]> mask, double tLimit,
-            bool stopAtPartial, IList<double> dir, IList<int[]> sliceMask = null,
-            IList<int> start = null)
+            bool stopAtPartial, IList<double> dir, VoxelTracker vt,
+            IList<int[]> sliceMask = null, IList<int> start = null)
         {
             start = start ?? mask[0].ToArray();
             sliceMask = sliceMask ?? new List<int[]>(new []{ mask[0].ToArray() });
             var shift = start.subtract(mask[0], 3);
-            var pBounds = true;
-            var entryCoord = new [] { 0, 0, 0 };
+            //var pBounds = true;
+            //var entryCoord = new [] { 0, 0, 0 };
 
             //foreach depth or timestep
             foreach (var initCoord in mask)
             {
                 var startCoord = initCoord.add(shift, 3);
-                if (!pBounds && startCoord.subtract(entryCoord, 3).norm2() > tLimit)
-                    break;
+                //if (!pBounds && startCoord.subtract(entryCoord, 3).norm2() > tLimit)
+                //    break;
 
                 var tShift = startCoord.subtract(mask[0], 3);
 
                 //Iterate over the template of the slice mask
                 //to move them to the appropriate location but 
                 //need to be sure that we are in the space (not negative)
+                var succeedCounter = 0;
                 foreach (var voxCoord in sliceMask)
                 {
                     var coord = voxCoord.add(tShift, 3);
                     if (PrecedesBounds(coord, dir)) continue;
-                    if (pBounds)
+                    //if (pBounds)
+                    //{
+                    //    entryCoord = startCoord.ToArray();
+                    //    pBounds = false;
+                    //}
+
+                    if (SucceedsBounds(coord, dir))
                     {
-                        entryCoord = startCoord.ToArray();
-                        pBounds = false;
+                        succeedCounter++;
+                        // Return if you've left the part
+                        if (succeedCounter == sliceMask.Count)
+                            return;
+                        continue;
                     }
-                    if (SucceedsBounds(coord, dir)) continue;
+
                     var eVox = GetVoxelID(coord, lastLevel);
+                    if (vt.voxelsToRemove.Contains(eVox))
+                        continue;
+
                     var dVox = designedSolid.GetVoxelID(eVox, lastLevel);
                     var role = Constants.GetRole(dVox);
-                    //Return if you've left the part or you've hit the as-designed part
+
+                    //Return if you've hit the as-designed part
                     if (role == VoxelRoleTypes.Full ||
                         (role == VoxelRoleTypes.Partial && stopAtPartial))
                         return;
+
+                    lock (vt.voxelsToRemove)
+                        vt.voxelsToRemove.Add(eVox);
                 }
 
-                //Continue if you haven't yet started (you're still outside of the shape)
-                if (pBounds) continue;
+                ////Continue if you haven't yet started (you're still outside of the shape)
+                //if (pBounds) continue;
 
-                //So, now we need to remove the voxels at this valid timestep
-                //This is iterate over the same template of the slice mask as before
-                foreach (var voxCoord in sliceMask)
-                {
-                    var coord = voxCoord.add(tShift, 3);
-                    if (OutsideBounds(coord)) continue;
-                    var eVox = GetVoxelID(coord, lastLevel);
-                    ChangeVoxelToEmpty(eVox, false, true);
-                }
+                ////So, now we need to remove the voxels at this valid timestep
+                ////This is iterate over the same template of the slice mask as before
+                //foreach (var voxCoord in sliceMask)
+                //{
+                //    var coord = voxCoord.add(tShift, 3);
+                //    if (OutsideBounds(coord)) continue;
+                //    var eVox = GetVoxelID(coord, lastLevel);
+                //    ChangeVoxelToEmpty(eVox, false, true);
+                //}
             }
+        }
+
+        private class VoxelTracker
+        {
+            public HashSet<long> voxelsToRemove;
+            public VoxelTracker()
+            {
+                voxelsToRemove = new HashSet<long>();
+            }
+            //ToDo:Add method to empty voxelsToRemove (change all to empty) when it gets too large
         }
 
         private class SameCoordinates : EqualityComparer<int[]>
@@ -1322,37 +1353,44 @@ namespace TVGL.Voxelization
         private bool SucceedsBounds(IReadOnlyList<int> coord, IList<double> dir)
         {
             var uL = voxelsPerDimension[lastLevel];
-            for (var i = 0; i < 3; i++)
-            {
-                if (dir[i] < 0)
-                    if (coord[i] < 0) return true;
-                else if(dir[i] > 0)
-                    if (coord[i] >= uL[i]) return true;
-                else if (coord[i] < 0 || coord[i] >= uL[i]) return true;
-            }
-        return false;
-    }
+
+            if (dir[0] < 0 && coord[0] < 0) return true;
+            if (dir[0] > 0 && coord[0] >= uL[0]) return true;
+            if (dir[0] == 0 && (coord[0] < 0 || coord[0] >= uL[0])) return true;
+
+            if (dir[1] < 0 && coord[1] < 0) return true;
+            if (dir[1] > 0 && coord[1] >= uL[1]) return true;
+            if (dir[1] == 0 && (coord[1] < 0 || coord[1] >= uL[1])) return true;
+
+            if (dir[2] < 0 && coord[2] < 0) return true;
+            if (dir[2] > 0 && coord[2] >= uL[2]) return true;
+            return dir[2] == 0 && (coord[2] < 0 || coord[2] >= uL[2]);
+        }
 
         private bool PrecedesBounds(IReadOnlyList<int> coord, IList<double> dir)
         {
             var uL = voxelsPerDimension[lastLevel];
-            for (var i = 0; i < 3; i++)
-            {
-                if (dir[i] < 0)
-                    if (coord[i] >= uL[i]) return true;
-                else if (dir[i] > 0)
-                    if (coord[i] < 0) return true;
-                else if (coord[i] >= uL[i] || coord[i] < 0) return true;
-            }
-        return false;
-    }
+
+            if (dir[0] < 0 && coord[0] >= uL[0]) return true;
+            if (dir[0] > 0 && coord[0] < 0) return true;
+            if (dir[0] == 0 && (coord[0] >= uL[0] || coord[0] < 0)) return true;
+
+            if (dir[1] < 0 && coord[1] >= uL[1]) return true;
+            if (dir[1] > 0 && coord[1] < 0) return true;
+            if (dir[1] == 0 && (coord[1] >= uL[1] || coord[1] < 0)) return true;
+
+            if (dir[2] < 0 && coord[2] >= uL[2]) return true;
+            if (dir[2] > 0 && coord[2] < 0) return true;
+            return dir[2] == 0 && (coord[2] >= uL[2] || coord[2] < 0);
+        }
 
         private bool OutsideBounds(IReadOnlyList<int> coord)
         {
             var uL = voxelsPerDimension[lastLevel];
-            for (var i = 0; i < 3; i++)
-                if (coord[i] < 0 || coord[i] >= uL[i]) return true;
-            return false;
+
+            return coord[0] < 0 || coord[0] >= uL[0] ||
+                   coord[1] < 0 || coord[1] >= uL[1] ||
+                   coord[2] < 0 || coord[2] >= uL[2];
         }
 
         private static IList<int[]> GetVoxelsWithinCircle(IReadOnlyList<double> center, IList<double> dir, double radius, bool edge = false)
