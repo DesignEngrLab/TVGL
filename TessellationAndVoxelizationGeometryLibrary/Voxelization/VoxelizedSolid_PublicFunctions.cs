@@ -1171,6 +1171,20 @@ namespace TVGL.Voxelization
             return copy;
         }
 
+        public VoxelizedSolid ErodeToNewSolid(VoxelizedSolid designedSolid, VoxelDirections dir,
+            double tLimit = 0, double toolDia = 0, bool inclusive = false,
+            bool stopAtPartial = true, params string[] toolOptions)
+        {
+            var copy = (VoxelizedSolid)Copy();
+
+            var tDir = new[] {.0, .0, .0};
+            tDir[Math.Abs((int) dir) - 1] = Math.Sign((int) dir);
+
+            copy.ErodeVoxelSolid(designedSolid, tDir.normalize(3), tLimit, toolDia, inclusive, stopAtPartial, toolOptions);
+            copy.UpdateProperties();
+            return copy;
+        }
+
         //public void ErodeSolid(VoxelizedSolid designedSolid, double[] dir,
         //    double tLimit = 0.0, double toolDia = -1, bool inclusive = false,
         //    bool stopAtPartial = true, params string[] toolOptions)
