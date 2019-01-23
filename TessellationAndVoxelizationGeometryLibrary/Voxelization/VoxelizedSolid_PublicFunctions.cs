@@ -913,8 +913,8 @@ namespace TVGL.Voxelization
         private void BoundingSolid(long parent, int level)
         {
             var coords = GetChildVoxelCoords(parent, level);
-            //foreach (var coord in coords)
-            Parallel.ForEach(coords, coord =>
+            foreach (var coord in coords)
+            //Parallel.ForEach(coords, coord =>
             {
                 var vox = GetVoxelID(coord, level);
                 if (OverSurface(vox, level + 1))
@@ -924,7 +924,7 @@ namespace TVGL.Voxelization
                     return;
                 }
                 ChangeVoxelToFull(vox, true);
-            });
+            }//);
         }
         #endregion
         #region Invert
