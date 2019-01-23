@@ -72,7 +72,7 @@ namespace TVGL.Voxelization
             if (level == 0)
             {
                 if (voxel0 != null) return voxel0;
-                return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.MakeFlags(0, VoxelRoleTypes.Empty), this);
+                return new Voxel(Constants.ClearFlagsFromID(ID) + Constants.MakeFlags(level, VoxelRoleTypes.Empty), this);
             }
             //var newIDwoTags = Constants.ClearFlagsFromID(ID);
             //var parentID = Constants.MakeParentVoxelID(newIDwoTags, singleCoordinateMasks[0]);
@@ -294,14 +294,14 @@ namespace TVGL.Voxelization
             var parentLevel = child.Level - 1;
             if (child.Level == 0) throw new ArgumentException("There are no parents for level-0 voxels.");
             // childlevels 1, 2, 3, 4 or parent levels 0, 1, 2, 3
-            var parentID = MakeParentVoxelID(child.ID, 0);
+            var parentID = MakeParentVoxelID(child.ID, parentLevel);
             var level0Parent = (VoxelBinClass)voxelDictionaryLevel0.GetVoxel(parentID);
             if (level0Parent == null)
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
-                                 + Constants.MakeFlags(0, VoxelRoleTypes.Empty), this);
+                                 + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty), this);
             if (level0Parent.Role == VoxelRoleTypes.Full)
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel)
-                                 + Constants.MakeFlags(0, VoxelRoleTypes.Full), this);
+                                 + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Full), this);
             if (parentLevel == 0) return level0Parent;
             //now for childlevels 2,3, 4 or parent levels 1, 2, 3
             parentID = MakeParentVoxelID(child.ID, parentLevel);
