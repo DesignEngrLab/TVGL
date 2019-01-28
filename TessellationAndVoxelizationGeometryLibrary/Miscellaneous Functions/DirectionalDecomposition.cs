@@ -106,9 +106,10 @@ namespace TVGL
         #endregion
 
         #region Uniform Directional Decomposition
-
         /// <summary>
         /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
+        /// The slices are spaced as close to the stepSizes as possible, while avoiding in-plane faces. The cross sections
+        /// will all be interior to the part, unless addCrossSectionAtStartAndEnd = true.
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="direction"></param>
@@ -118,30 +119,18 @@ namespace TVGL
         /// <param name="addCrossSectionAtStartAndEnd"></param>
         /// <returns></returns>
         public static List<DecompositionData> UniformDecomposition(TessellatedSolid ts, double[] direction,
-            double stepSize, out Dictionary<int, double> stepDistances,
-            out Dictionary<int, double> sortedVertexDistanceLookup, bool addCrossSectionAtStartAndEnd)
+        double stepSize, out Dictionary<int, double> stepDistances,
+        out Dictionary<int, double> sortedVertexDistanceLookup,
+        bool addCrossSectionAtStartAndEnd)
         {
-            var outputData = new List<DecompositionData>();
-
-            var length = MinimumEnclosure.GetLengthAndExtremeVertices(direction, ts.Vertices,
-                out _, out _);
-
-            //Adjust the step size to be an even increment over the entire length of the solid
-            stepSize = length / Math.Round(length / stepSize + 1);
-            
-            //make the minimum step size 1/10 of the length.
-            if (length < 10 * stepSize)
-            {
-                stepSize = length / 10;
-            }
+            sortedVertexDistanceLookup = new Dictionary<int, double>();
 
             //This is a list of all the step indices matched with its distance along the axis.
             //This may be different that just multiplying the step index by the step size, because
             //minor adjustments occur to avoid cutting through vertices.
             stepDistances = new Dictionary<int, double>();
 
-            //Choose whichever min offset is smaller
-            var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
+         
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<Tuple<Vertex, double>> sortedVertices);
@@ -151,16 +140,48 @@ namespace TVGL
             var edgeListDictionary = new Dictionary<int, Edge>();
             var firstDistance = sortedVertices.First().Item2;
             var furthestDistance = sortedVertices.Last().Item2;
-            var distanceAlongAxis = firstDistance;
+            var length = furthestDistance - firstDistance;
+          
             var currentVertexIndex = 0;
             var inputEdgeLoops = new List<List<Edge>>();
 
-            //Start the step index at -1, so that the increment can be at the start of the while loop, 
-            //making the final stepIndex correct for use in a later function.
-            var stepIndex = addCrossSectionAtStartAndEnd ? - 1 : 0;
-            while (distanceAlongAxis < furthestDistance - stepSize)
+
+            //Choose whichever min offset is smaller
+            var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
+            var remainder = (length % stepSize); 
+            //If the remainder is less than the minOffset, set it equal to the step size.
+            //This is to avoid the issue of missing the last cutting plane. 
+            if (remainder.IsNegligible(minOffset * 2)) remainder += stepSize;
+            //Shift the first distance. At minimum, d = f + minOffset. At maxium, d = f + stepSize / 2.
+            //The last step distance should be equally spaced from the furthest distance.
+            var distanceAlongAxis = firstDistance + remainder / 2; //Shift the step indices toward the center of the part, if not exact.
+            var stepIndex = addCrossSectionAtStartAndEnd ? 1 : 0;
+            do
             {
+                stepDistances.Add(stepIndex, distanceAlongAxis);
+                stepIndex++;
                 distanceAlongAxis += stepSize;
+                if(distanceAlongAxis > furthestDistance) throw new Exception("Error in implementation of directional decomposition steps");
+            } while (!distanceAlongAxis.IsPracticallySame(furthestDistance - remainder / 2, minOffset));
+            if (addCrossSectionAtStartAndEnd)
+            {
+                stepDistances[0] = firstDistance + remainder / 2 - stepSize;
+                stepDistances[stepDistances.Count] = furthestDistance - remainder / 2 + stepSize;
+            }
+            var numSteps = stepDistances.Count;
+            if (numSteps < 4) return null; //Steps will not be accurate if too few. 
+
+            //Initialize the size of the list.
+            var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
+
+            //Start the step index at +1, so that the increment can be at the start of the while loop, 
+            //making the final stepIndex correct for use in a later function.
+            stepIndex = addCrossSectionAtStartAndEnd ? 1 : 0;
+            //Stop at -1 if adding additional cross sections, because there is one item at the end of the list we want to skip.
+            var n = addCrossSectionAtStartAndEnd ? numSteps - 1: numSteps;
+            while (stepIndex < n)
+            {
+                distanceAlongAxis = stepDistances[stepIndex];
 
                 //Update vertex/edge list up until distanceAlongAxis
                 for (var i = currentVertexIndex; i < sortedVertices.Count; i++)
@@ -255,14 +276,14 @@ namespace TVGL
                     }
 
                     //Add the data to the output
-                    outputData.Add(new DecompositionData(currentPaths, distanceAlongAxis));
+                    outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, distanceAlongAxis);
                 }
                 else
                 {
                     Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
                 }
 
-                stepDistances.Add(stepIndex, distanceAlongAxis);
+                stepDistances[stepIndex] = distanceAlongAxis; //Update to the adjusted value.
                 stepIndex++;
             }
 
@@ -271,8 +292,20 @@ namespace TVGL
             {
                 //Add the first and last cross sections. 
                 //Note, these may not be great fits if step size is large
-                outputData.Insert(0, new DecompositionData(outputData.First().Paths, firstDistance));
-                outputData.Add(new DecompositionData(outputData.Last().Paths, furthestDistance));
+                var firstCrossSection = new List<List<Vertex>>();
+                foreach (var path in outputData[1].Paths)
+                {
+                    firstCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(path.Select(p => new Point(p)).ToList(),
+                        direction, firstDistance));
+                }
+                outputData[0] = new DecompositionData(outputData[1].Paths, firstCrossSection, stepDistances[0]);
+                var lastCrossSection = new List<List<Vertex>>();
+                foreach (var path in outputData[numSteps - 2].Paths)
+                {
+                    lastCrossSection.Add(MiscFunctions.GetVerticesFrom2DPoints(path.Select(p => new Point(p)).ToList(),
+                        direction, firstDistance));
+                }
+                outputData[stepIndex] = new DecompositionData(outputData[numSteps - 2].Paths, lastCrossSection, stepDistances[stepIndex]);
             }
 
             return outputData;
@@ -657,9 +690,27 @@ namespace TVGL
             public List<List<PointLight>> Paths;
 
             /// <summary>
+            /// A list of the paths that make up the slice of the solid at this distance along this direction
+            /// </summary>
+            public List<List<Vertex>> Vertices;
+
+            /// <summary>
             /// The distance along this direction
             /// </summary>
             public double DistanceAlongDirection;
+
+            /// <summary>
+            /// The Decomposition Data Class used to store information from A Directional Decomposition
+            /// </summary>
+            /// <param name="paths"></param>
+            /// <param name="vertices"></param>
+            /// <param name="distanceAlongDirection"></param>
+            public DecompositionData(IEnumerable<List<PointLight>> paths, IEnumerable<List<Vertex>> vertices, double distanceAlongDirection)
+            {
+                Paths = new List<List<PointLight>>(paths);
+                Vertices = new List<List<Vertex>>(vertices);
+                DistanceAlongDirection = distanceAlongDirection;
+            }
 
             /// <summary>
             /// The Decomposition Data Class used to store information from A Directional Decomposition
