@@ -913,11 +913,10 @@ namespace TVGL.Voxelization
         private void BoundingSolid(long parent, int level)
         {
             var coords = GetChildVoxelCoords(parent, level);
-            //foreach (var coord in coords)
             Parallel.ForEach(coords, coord =>
             {
                 var vox = GetVoxelID(coord, level);
-                if (OverSurface(vox, level + 1))
+                if (OverSurface(coord, level))
                 {
                     ChangeVoxelToPartial(vox, false);
                     BoundingSolid(vox, level + 1);
@@ -945,7 +944,7 @@ namespace TVGL.Voxelization
                 // if it is partial or empty and crosses the outer surface of the part (i.e. is also not
                 // smallest level)
                 var vox = GetVoxelID(coord, level);
-                var overSurface = OverSurface(vox, level + 1);
+                var overSurface = OverSurface(coord, level);
                 switch (Constants.GetRole(vox))
                 {
                     case VoxelRoleTypes.Empty:
@@ -993,7 +992,7 @@ namespace TVGL.Voxelization
                 {
                     // Only take voxels that lie within part bounds
                     iS[i] = Math.Max(coord[i] * num, iS[i]);
-                    iE[i] = Math.Min(coord[i] * num + num, iE[i]);
+                    iE[i] = Math.Min((coord[i] + 1) * num, iE[i]);
                 }
             }
             Parallel.For(iS[0], iE[0], i =>
@@ -1009,18 +1008,24 @@ namespace TVGL.Voxelization
         // is less than the number that should exist for the given number of coarse voxels
         // i.e. The part is 211 voxels wide, but at resolution 8 (2^5, 2^3), it needs 27 coarse
         // voxels in that dimension. This results in 216 "would-be" voxels
-        private bool OverSurface(long parent, int level)
+        private bool OverSurface(IReadOnlyList<int> coord, int level)
         {
-            if (level > lastLevel) return false;
+            if (level == lastLevel) return false;
+            if (coord[0] != voxelsPerDimension[level][0] - 1 &&
+                coord[1] != voxelsPerDimension[level][1] - 1 &&
+                coord[2] != voxelsPerDimension[level][2] - 1) return false;
+
             var voxelMultiplier = 1;
-            for (var i = level; i <= lastLevel; i++) voxelMultiplier *= voxelsPerSide[i];
-            var compare = Constants.GetCoordinateIndices(parent, singleCoordinateShifts[level]).
-                add(new[] { 1, 1, 1 }).multiply(voxelMultiplier, 3);
+            for (var i = level + 1; i <= lastLevel; i++)
+                voxelMultiplier *= voxelsPerSide[i];
+
             var totalVoxels = voxelsPerDimension[lastLevel];
+
             for (var i = 0; i < 3; i++)
             {
-                if (compare[i] > totalVoxels[i]) return true;
+                if ((coord[i] + 1) * voxelMultiplier > totalVoxels[i]) return true;
             }
+
             return false;
         }
         #endregion
