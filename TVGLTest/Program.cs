@@ -78,12 +78,18 @@ namespace TVGLPresenterDX
         [STAThread]
         private static void Main(string[] args)
         {
+            var averageTimes = new Dictionary<int, List<(string MethodName, double AverageTimeInMilliseconds)>>();
             var nums = new[] { 3, 10 };
-            for (int k = 0; k < 6; k++)
+            var repeat = 10;
+            for (int k = 0; k < 6; k++) 
             {
                 foreach (var n in nums)
                 {
-                    for (int i = 0; i < 10; i++)
+                    averageTimes[n] = new List<(string MethodName, double AverageTimeInMilliseconds)>();
+                    var campbellTotalTime = TimeSpan.Zero;
+                    var ouelletTotalTime = TimeSpan.Zero;
+                    var monotoneChainTotalTime = TimeSpan.Zero;
+                    for (int i = 0; i < repeat; i++)
                     {
                         var random = new Random();
 
@@ -93,30 +99,45 @@ namespace TVGLPresenterDX
                         stopwatch.Restart();
                         var convexHull = MinimumEnclosure.ConvexHull2D(points);
                         stopwatch.Stop();
+                        campbellTotalTime += stopwatch.Elapsed;
                         //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
-                        Console.WriteLine("{0}:{1} in {2}", n, convexHull.Count(),
-                            stopwatch.Elapsed);
+                        //Console.WriteLine("{0}:{1} in {2}", n, convexHull.Count(),
+                        //    stopwatch.Elapsed);
 
                         var windowsPoints = points.Select(p => new System.Windows.Point(p.X, p.Y)).ToList();
                         stopwatch.Restart();
                         var ouelletConvexHull = new OuelletConvexHull.OuelletConvexHull(windowsPoints);
                         ouelletConvexHull.CalcConvexHull(ConvexHullThreadUsage.OnlyOne);
                         stopwatch.Stop();
-                        Console.WriteLine("{0}:{1} in {2}", n, ouelletConvexHull.GetResultsAsArrayOfPoint().Count(),
-                            stopwatch.Elapsed);
+                        ouelletTotalTime += stopwatch.Elapsed;
+                        //Console.WriteLine("{0}:{1} in {2}", n, ouelletConvexHull.GetResultsAsArrayOfPoint().Count(),
+                        //    stopwatch.Elapsed);
 
                         stopwatch.Restart();
                         var monotoneChainConvexHull = MinimumEnclosure.ConvexHull2D(points);
                         stopwatch.Stop();
+                        monotoneChainTotalTime += stopwatch.Elapsed;
                         //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
-                        Console.WriteLine("{0}:{1} in {2}", n, monotoneChainConvexHull.Count(),
-                            stopwatch.Elapsed);
+                        //Console.WriteLine("{0}:{1} in {2}", n, monotoneChainConvexHull.Count(),
+                        //    stopwatch.Elapsed);
                     }
+                    var campbellAverage = campbellTotalTime.TotalMilliseconds / repeat;
+                    var ouelletAverage = ouelletTotalTime.TotalMilliseconds / repeat;
+                    var monotoneChainAverage = monotoneChainTotalTime.TotalMilliseconds / repeat;
+                    Console.WriteLine("N = {0}", n);
+                    Console.WriteLine("1) {0} in {1} ", "Campbell", campbellAverage);
+                    Console.WriteLine("2) {0} in {1} ", "Ouellet", ouelletAverage);
+                    Console.WriteLine("3) {0} in {1} ", "Monotone Chain", monotoneChainAverage);
 
+                    averageTimes[n].Add(("Campbell", campbellAverage));
+                    averageTimes[n].Add(("Ouellet", ouelletAverage));
+                    averageTimes[n].Add(("Monotone Chain", monotoneChainAverage));
                 }
 
-                nums[0] *= 10;
-                nums[1] *= 10;
+                for (var n = 0; n < nums.Length; n++)
+                {
+                    nums[n] *= 10;
+                }
             }
         }
     }
