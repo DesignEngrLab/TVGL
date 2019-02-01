@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using StarMathLib;
 
 namespace TVGL
 {
@@ -55,7 +54,7 @@ namespace TVGL
         /// <returns>
         /// List&lt;Point&gt;.
         /// </returns>
-        public static Point[] ConvexHull2D(IList<Point> points, double tolerance = Constants.BaseTolerance	)
+        public static Point[] ConvexHull2D(IList<Point> points, double tolerance = Constants.BaseTolerance)
         {
             //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
             var numPoints = points.Count;
@@ -63,22 +62,22 @@ namespace TVGL
             try
             {
                 if (double.IsNaN(tolerance))
-                    cvxPoints = (Point[]) MIConvexHull.ConvexHull.Create(points).Points;
-                else cvxPoints = (Point[]) MIConvexHull.ConvexHull.Create(points, tolerance).Points;
+                    cvxPoints = (Point[])MIConvexHull.ConvexHull.Create(points).Points;
+                else cvxPoints = (Point[])MIConvexHull.ConvexHull.Create(points, tolerance).Points;
             }
             catch
             {
                 Debug.WriteLine("ConvexHull2D failed on first iteration");
                 try
                 {
-                   cvxPoints = (Point[])MIConvexHull.ConvexHull.Create(points, 0.01).Points;
+                    cvxPoints = (Point[])MIConvexHull.ConvexHull.Create(points, 0.01).Points;
                 }
                 catch
                 {
                     throw new Exception("ConvexHull2D failed on second attempt");
                 }
             }
-            
+
             return cvxPoints;
         }
 
@@ -160,99 +159,107 @@ namespace TVGL
         /// <summary>
         /// Returns the 2D convex hull for given list of points. 
         /// </summary>
-        /// <param name="origVertices">The points.</param>
+        /// <param name="points">The points.</param>
         /// <param name="tolerance">The tolerance.</param>
         /// <returns>
         /// List&lt;Point&gt;.
         /// </returns>
-        public static IEnumerable<PointLight> ConvexHull2D(IList<PointLight> origVertices, double tolerance = Constants.BaseTolerance)
+        public static List<PointLight> ConvexHull2D(IList<PointLight> points)
         {
-            //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
-            var origVNum = origVertices.Count;
+            // instead of calling points.Count several times, we create this variable. 
+            // by the ways points is unaffected by this method
+            var numPoints = points.Count;
 
             #region Step 1 : Define Convex Octogon
-
             /* The first step is to quickly identify the three to eight vertices based on the
              * Akl-Toussaint heuristic. */
             var maxX = double.NegativeInfinity;
+            var maxXIndex = -1;
             var maxY = double.NegativeInfinity;
+            var maxYIndex = -1;
             var maxSum = double.NegativeInfinity;
+            var maxSumIndex = -1;
             var maxDiff = double.NegativeInfinity;
+            var maxDiffIndex = -1;
             var minX = double.PositiveInfinity;
+            var minXIndex = -1;
             var minY = double.PositiveInfinity;
+            var minYIndex = -1;
             var minSum = double.PositiveInfinity;
+            var minSumIndex = -1;
             var minDiff = double.PositiveInfinity;
-
-            /* the array of extreme is comprised of: 0.minX, 1. minSum, 2. minY, 3. maxDiff, 4. MaxX, 5. MaxSum, 6. MaxY, 7. MinDiff. */
-            var extremeVertices = new PointLight[8];
-            //  int[] extremeVertexIndices = new int[8]; I thought that this might speed things up. That is, to use this to RemoveAt
-            // as oppoaws to the Remove in line 91, which I thought might be slow. Turns out I was wrong - plus code is more succinct
-            // way.
-            for (var i = 0; i < origVNum; i++)
+            var minDiffIndex = -1;
+            // search of all points to find the extrema. What is stored here is the position (or index) within
+            // points and the value
+            for (var i = 0; i < numPoints; i++)
             {
-                var n = origVertices[i];
-                if (n.Position[0] < minX)
+                var x = points[i].X;
+                var y = points[i].Y;
+                var sum = x + y;
+                var diff = x - y;
+                if (x < minX)
                 {
-                    extremeVertices[0] = n;
-                    minX = n.Position[0];
+                    minXIndex = i;
+                    minX = x;
                 }
-                if ((n.Position[0] + n.Position[1]) < minSum)
+                if (y < minY)
                 {
-                    extremeVertices[1] = n;
-                    minSum = n.Position[0] + n.Position[1];
+                    minYIndex = i;
+                    minY = y;
                 }
-                if (n.Position[1] < minY)
+                if (sum < minSum)
                 {
-                    extremeVertices[2] = n;
-                    minY = n.Position[1];
+                    minSumIndex = i;
+                    minSum = sum;
                 }
-                if ((n.Position[0] - n.Position[1]) > maxDiff)
+                if (diff < minDiff)
                 {
-                    extremeVertices[3] = n;
-                    maxDiff = n.Position[0] - n.Position[1];
+                    minDiffIndex = i;
+                    minDiff = diff;
                 }
-                if (n.Position[0] > maxX)
+                if (x > maxX)
                 {
-                    extremeVertices[4] = n;
-                    maxX = n.Position[0];
+                    maxXIndex = i;
+                    maxX = x;
                 }
-                if ((n.Position[0] + n.Position[1]) > maxSum)
+                if (y > maxY)
                 {
-                    extremeVertices[5] = n;
-                    maxSum = n.Position[0] + n.Position[1];
+                    maxYIndex = i;
+                    maxY = y;
                 }
-                if (n.Position[1] > maxY)
+                if (sum > maxSum)
                 {
-                    extremeVertices[6] = n;
-                    maxY = n.Position[1];
+                    maxSumIndex = i;
+                    maxSum = sum;
                 }
-                if ((n.Position[0] - n.Position[1]) >= minDiff) continue;
-                extremeVertices[7] = n;
-                minDiff = n.Position[0] - n.Position[1];
+                if (diff > maxDiff)
+                {
+                    maxDiffIndex = i;
+                    maxDiff = diff;
+                }
             }
-
-            /* convexHullCCW is the result of this function. It is a list of 
-             * vertices found in the original vertices and ordered to make a
-             * counter-clockwise loop beginning with the leftmost (minimum
-             * value of X) IVertexConvHull. */
+            //put these on a list in CCW direction
+            var extremeIndices = new[] { minXIndex, minSumIndex,minYIndex,maxDiffIndex,
+                maxXIndex, maxSumIndex, maxYIndex, minDiffIndex };
+            // however there could be repeats. If there are they will be next to each other in the list.
+            // next, we gather these 3 to 8 points as the seed of the list which is returned.
             var convexHullCCW = new List<PointLight>();
-            for (var i = 0; i < 8; i++)
-                if (!convexHullCCW.Contains(extremeVertices[i]))
-                {
-                    convexHullCCW.Add(extremeVertices[i]);
-                    origVertices.Remove(extremeVertices[i]);
-                }
-
+            for (var i = 0; i < extremeIndices.Length; i++)
+            {
+                var index = extremeIndices[i];
+                if (i > 0 && extremeIndices[i] == extremeIndices[i - 1])
+                    // this curious condition is to check if there are repeats. If so, do not add them more than once
+                    continue;
+                convexHullCCW.Add(points[index]);
+            }
             #endregion
 
             /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
              * steamline the code, these are established. */
-            origVNum = origVertices.Count;
             var cvxVNum = convexHullCCW.Count;
             var last = cvxVNum - 1;
 
-            #region Step 2 : Find Signed-Distance to each convex edge
-
+            #region Step 2 : Create the sorted zig-zag line for each extrema edge
             /* Of the 3 to 8 vertices identified in the convex hull, we now define a matrix called edgeUnitVectors, 
              * which includes the unit vectors of the edges that connect the vertices in a counter-clockwise loop. 
              * The first column corresponds to the X-value,and  the second column to the Y-value. Calculating this 
@@ -262,65 +269,63 @@ namespace TVGL
             double magnitude;
             for (var i = 0; i < last; i++)
             {
-                edgeUnitVectors[i, 0] = (convexHullCCW[i + 1].Position[0] - convexHullCCW[i].Position[0]);
-                edgeUnitVectors[i, 1] = (convexHullCCW[i + 1].Position[1] - convexHullCCW[i].Position[1]);
+                edgeUnitVectors[i, 0] = (convexHullCCW[i + 1].X - convexHullCCW[i].X);
+                edgeUnitVectors[i, 1] = (convexHullCCW[i + 1].Y - convexHullCCW[i].Y);
                 magnitude = Math.Sqrt(edgeUnitVectors[i, 0] * edgeUnitVectors[i, 0] +
                                       edgeUnitVectors[i, 1] * edgeUnitVectors[i, 1]);
                 edgeUnitVectors[i, 0] /= magnitude;
                 edgeUnitVectors[i, 1] /= magnitude;
             }
-            edgeUnitVectors[last, 0] = convexHullCCW[0].Position[0] - convexHullCCW[last].Position[0];
-            edgeUnitVectors[last, 1] = convexHullCCW[0].Position[1] - convexHullCCW[last].Position[1];
+            edgeUnitVectors[last, 0] = convexHullCCW[0].X - convexHullCCW[last].X;
+            edgeUnitVectors[last, 1] = convexHullCCW[0].Y - convexHullCCW[last].Y;
             magnitude = Math.Sqrt(edgeUnitVectors[last, 0] * edgeUnitVectors[last, 0] +
                                   edgeUnitVectors[last, 1] * edgeUnitVectors[last, 1]);
             edgeUnitVectors[last, 0] /= magnitude;
             edgeUnitVectors[last, 1] /= magnitude;
 
-            /* Originally, I was storing all the distances from the vertices to the convex hull points
-             * in a big 3D matrix. This is not necessary and the storage may be difficult to handle for large
-             * sets. However, I have kept these lines of code here because they could be useful in establishing
-             * the voronoi sets. */
-            //var signedDists = new double[2, origVNum, cvxVNum];
-
-            /* An array of sorted dictionaries! As we find new candidate convex points, we store them here. The second
-             * part of the tuple (Item2 is a double) is the "positionAlong" - this is used to order the nodes that
+            /* An array of sorted lists. As we find new candidate convex points, we store them here. The key in the
+             * list is the "positionAlong" - this is used to order the nodes that
              * are found for a particular side (More on this in 23 lines). */
             var hullCands = new SortedList<double, PointLight>[cvxVNum];
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
-            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>();
+            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>(new NoEqualSort());
 
+            // the extreme indices are sorted from least to greatest in order to prevent the following
+            // loop from checking this indices again
+            extremeIndices = extremeIndices.Distinct().OrderBy(index => index).ToArray();
+            var indexOfExtremeIndices = 0;
             /* Now a big loop. For each of the original vertices, check them with the 3 to 8 edges to see if they 
              * are inside or out. If they are out, add them to the proper row of the hullCands array. */
-            for (var i = 0; i < origVNum; i++)
+            for (var i = 0; i < numPoints; i++)
             {
-                for (var j = 0; j < cvxVNum; j++)
+                if (indexOfExtremeIndices < extremeIndices.Length && i == extremeIndices[indexOfExtremeIndices])
+                    //in order to avoid a contains function call, we know to only check with next extremeIndex in order
+                    indexOfExtremeIndices++;
+                else
                 {
-                    var b = new[]
-                                {
-                                    origVertices[i].Position[0] - convexHullCCW[j].Position[0],
-                                    origVertices[i].Position[1] - convexHullCCW[j].Position[1]
-                                };
-                    //signedDists[0, k, i] = signedDistance(convexVectInfo[i, 0], convexVectInfo[i, 1], bX, bY, convexVectInfo[i, 2]);
-                    //signedDists[1, k, i] = positionAlong(convexVectInfo[i, 0], convexVectInfo[i, 1], bX, bY, convexVectInfo[i, 2]);
-                    //if (signedDists[0, k, i] <= 0)
-                    /* Again, these lines are commented because the signedDists has been removed. This data may be useful in 
-                     * other applications though. In the condition below, any signed distance that is negative is outside of the
-                     * original polygon. It is only possible for the IVertexConvHull to be outside one of the 3 to 8 edges, so once we
-                     * add it, we break out of the inner loop (gotta save time where we can!). */
-                    double val = edgeUnitVectors[j, 0] * b[1] - edgeUnitVectors[j, 1] * b[0]; // Cross2D from StarMath
-                    if (val > 0) continue;
-                    val = edgeUnitVectors[j, 0] * b[0] + edgeUnitVectors[j, 1] * b[1]; // GetRow + dot
-                    hullCands[j].Add(val, origVertices[i]);
-                    break;
+                    var point = points[i];
+                    for (var j = 0; j < cvxVNum; j++) //cycle over the 3 to 8 edges. however, notice the break below. 
+                    // once point is successfully added to one side, there is no need to check the remainder
+                    {
+                        var b = new[] { point.X - convexHullCCW[j].X, point.Y - convexHullCCW[j].Y };
+                        double val = edgeUnitVectors[j, 0] * b[1] - edgeUnitVectors[j, 1] * b[0]; // Cross product 2D 
+                        if (val > 0) continue; // then skip this point since it's not "to the left of" the edge
+                        // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                        // the sorted dictionary
+                        val = edgeUnitVectors[j, 0] * b[0] + edgeUnitVectors[j, 1] * b[1]; // GetRow + dot
+                        hullCands[j].Add(val, point);
+                        break;
+                    }
                 }
             }
-
             #endregion
 
-            #region Step 3: now check the remaining hull candidates
-
+            #region Step 3: now remove concave "zigs" from each sorted dictionary
             /* Now it's time to go through our array of sorted lists of tuples. We search backwards through
-             * the current convex hull points s.t. any additions will not confuse our for-loop indexers. */
+             * the current convex hull points s.t. any additions will not confuse our for-loop indexers.
+             * This approach is linear over the zig-zag polyline defined by each sorted list. This linear approach
+             * was defined long ago by a number of author pairs: McCallum and Avis, Tor and Middleditch (1984), or
+             * Melkman (1985) */
             for (var j = cvxVNum; j > 0; j--)
             {
                 if (hullCands[j - 1].Count == 1)
@@ -328,14 +333,10 @@ namespace TVGL
                     convexHullCCW.InsertRange(j, hullCands[j - 1].Values);
                 else if (hullCands[j - 1].Count > 1)
                 {
-                    /* If there's more than one than...Well, now comes the tricky part. Here is where the
-                     * most time is spent for large sets. this is the O(N*logN) part (the previous steps
-                     * were all linear). The above octagon trick was to conquer and divide the candidates. */
-
                     /* a renaming for compactness and clarity */
                     var hc = new List<PointLight>(hullCands[j - 1].Values);
 
-                    /* put the known starting IVertexConvHull as the beginning of the list. No need for the "positionAlong"
+                    /* put the known starting point as the beginning of the list. No need for the "positionAlong"
                      * anymore since the list is now sorted. At any rate, the positionAlong is zero. */
                     hc.Insert(0, convexHullCCW[j - 1]);
                     /* put the ending IVertexConvHull on the end of the list. Need to check if it wraps back around to 
@@ -344,15 +345,13 @@ namespace TVGL
                     else hc.Add(convexHullCCW[j]);
 
                     /* Now starting from second from end, work backwards looks for places where the angle 
-                     * between the vertices in concave (which would produce a negative value of z). */
+                     * between the vertices is concave (which would produce a negative value of z). */
                     var i = hc.Count - 2;
                     while (i > 0)
                     {
-                        double lX = hc[i].Position[0] - hc[i - 1].Position[0], lY = hc[i].Position[1] - hc[i - 1].Position[1];
-                        double rX = hc[i + 1].Position[0] - hc[i].Position[0], rY = hc[i + 1].Position[1] - hc[i].Position[1];
+                        double lX = hc[i].X - hc[i - 1].X, lY = hc[i].Y - hc[i - 1].Y;
+                        double rX = hc[i + 1].X - hc[i].X, rY = hc[i + 1].Y - hc[i].Y;
                         double zValue = lX * rY - lY * rX;
-                        //var zValue = StarMath.multiplyCross2D(StarMath.subtract(hc[i].PositionData, hc[i - 1].PositionData),
-                        //                                      StarMath.subtract(hc[i + 1].PositionData, hc[i].PositionData));
                         if (zValue < 0)
                         {
                             /* remove any vertices that create concave angles. */
@@ -377,3 +376,4 @@ namespace TVGL
         }
     }
 }
+
