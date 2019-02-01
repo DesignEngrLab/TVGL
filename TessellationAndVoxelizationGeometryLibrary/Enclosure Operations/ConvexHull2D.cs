@@ -82,6 +82,81 @@ namespace TVGL
             return cvxPoints;
         }
 
+        public static IEnumerable<PointLight> MIConvexHull2D(IList<PointLight> points, double tolerance = Constants.BaseTolerance)
+        {
+            //This only works on the x and y coordinates of the points and requires that the Z values be NaN. 
+            var numPoints = points.Count;
+            try
+            {
+                return double.IsNaN(tolerance) ?
+                    MIConvexHull.ConvexHull.Create(points).Points :
+                    MIConvexHull.ConvexHull.Create(points, tolerance).Points;
+            }
+            catch
+            {
+                Debug.WriteLine("ConvexHull2D failed on first iteration");
+                try
+                {
+                    return MIConvexHull.ConvexHull.Create(points, 0.01).Points;
+                }
+                catch
+                {
+                    throw new Exception("ConvexHull2D failed on second attempt");
+                }
+            }
+        }
+
+        //From https://stackoverflow.com/questions/14671206/convex-hull-library
+        //Note: DList provides O(1) insertion at beginning and end, but it is complicated, so I've just used a list.
+        public static List<PointLight> MonotoneChain(List<PointLight> points, out TimeSpan savingsIfUsingDList)
+        {
+            points.Sort((a, b) =>
+                a.X == b.X ? a.Y.CompareTo(b.Y) : (a.X > b.X ? 1 : -1));
+
+            // Importantly, DList provides O(1) insertion at beginning and end
+            //var hull = new DList<PointLight>();
+            var hull = new List<PointLight>();
+            int L = 0, U = 0; // size of lower and upper hulls
+
+            // Builds a hull such that the output polygon starts at the leftmost point.
+            for (int i = points.Count - 1; i >= 0; i--)
+            {
+                PointLight p = points[i], p1;
+
+                // build lower hull (at end of output list)
+                while (L >= 2 && CrossProduct2D((p1 = hull.Last()).Subtract(hull[hull.Count - 2]), p.Subtract(p1)) >= 0)
+                {
+                    hull.RemoveAt(hull.Count - 1);
+                    L--;
+                }
+                //hull.PushLast(p);
+                hull.Add(p);
+                L++;
+
+                // build upper hull (at beginning of output list)
+                while (U >= 2 && CrossProduct2D((p1 = hull.First()).Subtract(hull[1]), p.Subtract(p1)) <= 0)
+                {
+                    hull.RemoveAt(0);
+                    U--;
+                }
+
+                if (U != 0) // when U=0, share the point added above
+                    hull.Insert(0, p);
+                    //hull.PushFirst(p);
+
+                U++;
+                //Debug.Assert(U + L == hull.Count + 1);
+            }
+            hull.RemoveAt(hull.Count - 1);
+
+            return hull;
+        }
+
+        private static double CrossProduct2D(double[] a, double[] b)
+        {
+            return a[0] * b[1] - a[1] * b[0];
+        }
+
         /// <summary>
         /// Returns the 2D convex hull for given list of points. 
         /// </summary>
@@ -300,6 +375,5 @@ namespace TVGL
 
             return convexHullCCW;
         }
-        #endregion
     }
 }

@@ -48,6 +48,11 @@ namespace TVGL
         {
             Position = new[] { position[0], position[1] };
         }
+
+        public double[] Subtract(PointLight b)
+        {
+            return Position.subtract(b.Position);
+        }
     }
 
     /// <summary>
