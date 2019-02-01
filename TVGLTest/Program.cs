@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using OuelletConvexHull;
 using TVGL;
 
 namespace TVGLPresenterDX
@@ -93,6 +95,21 @@ namespace TVGLPresenterDX
                         stopwatch.Stop();
                         //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
                         Console.WriteLine("{0}:{1} in {2}", n, convexHull.Count(),
+                            stopwatch.Elapsed);
+
+                        var windowsPoints = points.Select(p => new System.Windows.Point(p.X, p.Y)).ToList();
+                        stopwatch.Restart();
+                        var ouelletConvexHull = new OuelletConvexHull.OuelletConvexHull(windowsPoints);
+                        ouelletConvexHull.CalcConvexHull(ConvexHullThreadUsage.OnlyOne);
+                        stopwatch.Stop();
+                        Console.WriteLine("{0}:{1} in {2}", n, ouelletConvexHull.GetResultsAsArrayOfPoint().Count(),
+                            stopwatch.Elapsed);
+
+                        stopwatch.Restart();
+                        var monotoneChainConvexHull = MinimumEnclosure.ConvexHull2D(points);
+                        stopwatch.Stop();
+                        //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
+                        Console.WriteLine("{0}:{1} in {2}", n, monotoneChainConvexHull.Count(),
                             stopwatch.Elapsed);
                     }
 
