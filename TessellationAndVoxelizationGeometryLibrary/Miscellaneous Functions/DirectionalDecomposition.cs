@@ -690,6 +690,11 @@ namespace TVGL
             public List<List<PointLight>> Paths;
 
             /// <summary>
+            /// The convex hull for each slice. Optional parameter that is only set when SetConvexHull() is called.
+            /// </summary>
+            public IEnumerable<PointLight> ConvexHull; 
+
+            /// <summary>
             /// A list of the paths that make up the slice of the solid at this distance along this direction
             /// </summary>
             public List<List<Vertex>> Vertices;
@@ -721,6 +726,11 @@ namespace TVGL
             {
                 Paths = new List<List<PointLight>>(paths);
                 DistanceAlongDirection = distanceAlongDirection;
+            }
+
+            public void SetConvexHull()
+            {
+                ConvexHull = MinimumEnclosure.ConvexHull2D(Paths.SelectMany(s => s.Select(p => p)).ToList());
             }
         }
 
