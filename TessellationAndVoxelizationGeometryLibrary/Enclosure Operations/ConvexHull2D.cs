@@ -213,7 +213,7 @@ namespace TVGL
              * are found for a particular side (More on this in 23 lines). */
             var hullCands = new SortedList<double, PointLight>[cvxVNum];
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
-            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>();
+            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>(new NoEqualSort());
 
             // the extreme indices are sorted from least to greatest in order to prevent the following
             // loop from checking this indices again
@@ -301,3 +301,4 @@ namespace TVGL
         }
     }
 }
+
