@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.AccessControl;
 using OuelletConvexHull;
+using StarMathLib;
 using TVGL;
 
 namespace TVGLPresenterDX
@@ -121,6 +123,26 @@ namespace TVGLPresenterDX
                         //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});
                         //Console.WriteLine("{0}:{1} in {2}", n, monotoneChainConvexHull.Count(),
                         //    stopwatch.Elapsed);
+
+                        var miConvexHull = MinimumEnclosure.MIConvexHull2D(points);
+                        var p0 = new PolygonLight(miConvexHull);
+                        var p1 = new PolygonLight(convexHull);
+                        var p2 = new PolygonLight(ouelletConvexHull.GetResultsAsArrayOfPoint()
+                            .Select(p => new PointLight(p.X, p.Y)));
+                        monotoneChainConvexHull.Reverse();
+                        var p3 = new PolygonLight(monotoneChainConvexHull);
+                        if (!p1.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
+                        {
+                            Presenter.ShowAndHang(new List<PolygonLight>{p0, p1});
+                        }
+                        if (!p2.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
+                        {
+                            Presenter.ShowAndHang(new List<PolygonLight> { p0, p2 });
+                        }
+                        if (!p3.Area.IsPracticallySame(p0.Area, p0.Area * (1 - Constants.HighConfidence)))
+                        {
+                            Presenter.ShowAndHang(new List<PolygonLight> { p0, p3 });
+                        }
                     }
                     var campbellAverage = campbellTotalTime.TotalMilliseconds / repeat;
                     var ouelletAverage = ouelletTotalTime.TotalMilliseconds / repeat;
