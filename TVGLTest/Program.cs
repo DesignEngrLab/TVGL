@@ -113,8 +113,9 @@ namespace TVGLPresenterDX
                         //Console.WriteLine("{0}:{1} in {2}", n, ouelletConvexHull.GetResultsAsArrayOfPoint().Count(),
                         //    stopwatch.Elapsed);
 
+                        var pointsAsList = points.ToList();
                         stopwatch.Restart();
-                        var monotoneChainConvexHull = MinimumEnclosure.ConvexHull2D(points);
+                        var monotoneChainConvexHull = MinimumEnclosure.MonotoneChain(pointsAsList);
                         stopwatch.Stop();
                         monotoneChainTotalTime += stopwatch.Elapsed;
                         //Presenter.ShowAndHang(new[] {points.ToList(), convexHull});

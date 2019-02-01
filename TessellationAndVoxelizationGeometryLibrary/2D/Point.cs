@@ -30,28 +30,34 @@ namespace TVGL
         [DataMember]
         public double[] Position { get; set; }
 
-        public double X => Position[0];
-
-        public double Y => Position[1];
+        public double X { get; set; }
+      
+        public double Y { get; set; }
 
         public PointLight(double x, double y)
         {
             Position = new []{x , y};
+            X = x;
+            Y = y;
         }
 
         public PointLight(Point point)
         {
             Position = new[] { point.X, point.Y };
+            X = point.X;
+            Y = point.Y;
         }
 
         public PointLight(double[] position)
         {
             Position = new[] { position[0], position[1] };
+            X = position[0];
+            Y = position[1];
         }
 
         public double[] Subtract(PointLight b)
         {
-            return Position.subtract(b.Position);
+            return Position.subtract(b.Position, 2);
         }
     }
 

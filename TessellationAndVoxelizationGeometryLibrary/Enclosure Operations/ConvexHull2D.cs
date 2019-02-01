@@ -107,7 +107,7 @@ namespace TVGL
 
         //From https://stackoverflow.com/questions/14671206/convex-hull-library
         //Note: DList provides O(1) insertion at beginning and end, but it is complicated, so I've just used a list.
-        public static List<PointLight> MonotoneChain(List<PointLight> points, out TimeSpan savingsIfUsingDList)
+        public static List<PointLight> MonotoneChain(List<PointLight> points)
         {
             points.Sort((a, b) =>
                 a.X == b.X ? a.Y.CompareTo(b.Y) : (a.X > b.X ? 1 : -1));
