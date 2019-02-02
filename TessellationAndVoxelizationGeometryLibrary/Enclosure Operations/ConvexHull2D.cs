@@ -157,7 +157,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the 2D convex hull for given list of points. 
+        /// Returns the 2D convex hull for given list of points. The input points list is unaffected
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="tolerance">The tolerance.</param>
@@ -244,13 +244,14 @@ namespace TVGL
             // however there could be repeats. If there are they will be next to each other in the list.
             // next, we gather these 3 to 8 points as the seed of the list which is returned.
             var convexHullCCW = new List<PointLight>();
-            for (var i = 0; i < extremeIndices.Length; i++)
+            for (var i = 0; i < 8; i++)
             {
-                var index = extremeIndices[i];
-                if (i > 0 && extremeIndices[i] == extremeIndices[i - 1])
-                    // this curious condition is to check if there are repeats. If so, do not add them more than once
+                var thisExtremeIndex = extremeIndices[i];
+                var prevExtremeIndex = (i == 0) ? extremeIndices[7] : extremeIndices[i - 1];
+                if (thisExtremeIndex == prevExtremeIndex)
+                    // this condition is to check if there are repeats. If so, do not add them more than once
                     continue;
-                convexHullCCW.Add(points[index]);
+                convexHullCCW.Add(points[thisExtremeIndex]);
             }
             #endregion
 
@@ -336,7 +337,7 @@ namespace TVGL
                         double lX = hc[i].X - hc[i - 1].X, lY = hc[i].Y - hc[i - 1].Y;
                         double rX = hc[i + 1].X - hc[i].X, rY = hc[i + 1].Y - hc[i].Y;
                         double zValue = lX * rY - lY * rX;
-                        if (zValue < 0)
+                        if (zValue <= 0)
                         {
                             /* remove any vertices that create concave angles. */
                             hc.RemoveAt(i);
