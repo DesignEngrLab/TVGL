@@ -141,7 +141,7 @@ namespace TVGL
 
                 if (U != 0) // when U=0, share the point added above
                     hull.Insert(0, p);
-                    //hull.PushFirst(p);
+                //hull.PushFirst(p);
 
                 U++;
                 //Debug.Assert(U + L == hull.Count + 1);
@@ -157,7 +157,7 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the 2D convex hull for given list of points. 
+        /// Returns the 2D convex hull for given list of points. The input points list is unaffected
         /// </summary>
         /// <param name="points">The points.</param>
         /// <param name="tolerance">The tolerance.</param>
@@ -244,13 +244,14 @@ namespace TVGL
             // however there could be repeats. If there are they will be next to each other in the list.
             // next, we gather these 3 to 8 points as the seed of the list which is returned.
             var convexHullCCW = new List<PointLight>();
-            for (var i = 0; i < extremeIndices.Length; i++)
+            for (var i = 0; i < 8; i++)
             {
-                var index = extremeIndices[i];
-                if (i > 0 && extremeIndices[i] == extremeIndices[i - 1])
-                    // this curious condition is to check if there are repeats. If so, do not add them more than once
+                var thisExtremeIndex = extremeIndices[i];
+                var prevExtremeIndex = (i == 0) ? extremeIndices[7] : extremeIndices[i - 1];
+                if (thisExtremeIndex == prevExtremeIndex)
+                    // this condition is to check if there are repeats. If so, do not add them more than once
                     continue;
-                convexHullCCW.Add(points[index]);
+                convexHullCCW.Add(points[thisExtremeIndex]);
             }
             #endregion
 
@@ -260,28 +261,7 @@ namespace TVGL
             var last = cvxVNum - 1;
 
             #region Step 2 : Create the sorted zig-zag line for each extrema edge
-            /* Of the 3 to 8 vertices identified in the convex hull, we now define a matrix called edgeUnitVectors, 
-             * which includes the unit vectors of the edges that connect the vertices in a counter-clockwise loop. 
-             * The first column corresponds to the X-value,and  the second column to the Y-value. Calculating this 
-             * should not take long since there are only 3 to 8 members currently in hull, and it will save time 
-             * comparing to all the result vertices. */
-            var edgeUnitVectors = new double[cvxVNum, 2];
-            double magnitude;
-            for (var i = 0; i < last; i++)
-            {
-                edgeUnitVectors[i, 0] = (convexHullCCW[i + 1].X - convexHullCCW[i].X);
-                edgeUnitVectors[i, 1] = (convexHullCCW[i + 1].Y - convexHullCCW[i].Y);
-                magnitude = Math.Sqrt(edgeUnitVectors[i, 0] * edgeUnitVectors[i, 0] +
-                                      edgeUnitVectors[i, 1] * edgeUnitVectors[i, 1]);
-                edgeUnitVectors[i, 0] /= magnitude;
-                edgeUnitVectors[i, 1] /= magnitude;
-            }
-            edgeUnitVectors[last, 0] = convexHullCCW[0].X - convexHullCCW[last].X;
-            edgeUnitVectors[last, 1] = convexHullCCW[0].Y - convexHullCCW[last].Y;
-            magnitude = Math.Sqrt(edgeUnitVectors[last, 0] * edgeUnitVectors[last, 0] +
-                                  edgeUnitVectors[last, 1] * edgeUnitVectors[last, 1]);
-            edgeUnitVectors[last, 0] /= magnitude;
-            edgeUnitVectors[last, 1] /= magnitude;
+            /* Of the 3 to 8 vertices identified in the convex hull, ... */
 
             /* An array of sorted lists. As we find new candidate convex points, we store them here. The key in the
              * list is the "positionAlong" - this is used to order the nodes that
@@ -307,12 +287,18 @@ namespace TVGL
                     for (var j = 0; j < cvxVNum; j++) //cycle over the 3 to 8 edges. however, notice the break below. 
                     // once point is successfully added to one side, there is no need to check the remainder
                     {
-                        var b = new[] { point.X - convexHullCCW[j].X, point.Y - convexHullCCW[j].Y };
-                        double val = edgeUnitVectors[j, 0] * b[1] - edgeUnitVectors[j, 1] * b[0]; // Cross product 2D 
+                        var nextIndex = (j == last) ? 0 : j + 1;
+                        var pX = convexHullCCW[j].X;
+                        var pY = convexHullCCW[j].Y;
+                        var vX = convexHullCCW[nextIndex].X - pX;
+                        var vY = convexHullCCW[nextIndex].Y - pY;
+                        var bX = point.X - pX;
+                        var bY = point.Y - pY;
+                        double val = vX * bY - vY * bX; // Cross product 2D 
                         if (val > 0) continue; // then skip this point since it's not "to the left of" the edge
                         // if it is to be included "val" is rewritten as the "position along" which is the key to 
                         // the sorted dictionary
-                        val = edgeUnitVectors[j, 0] * b[0] + edgeUnitVectors[j, 1] * b[1]; // GetRow + dot
+                        val = vX * bX + vY * bY; // GetRow + dot
                         hullCands[j].Add(val, point);
                         break;
                     }
@@ -334,12 +320,11 @@ namespace TVGL
                 else if (hullCands[j - 1].Count > 1)
                 {
                     /* a renaming for compactness and clarity */
-                    var hc = new List<PointLight>(hullCands[j - 1].Values);
-
-                    /* put the known starting point as the beginning of the list. No need for the "positionAlong"
-                     * anymore since the list is now sorted. At any rate, the positionAlong is zero. */
-                    hc.Insert(0, convexHullCCW[j - 1]);
-                    /* put the ending IVertexConvHull on the end of the list. Need to check if it wraps back around to 
+                    var hc = new List<PointLight>();
+                    /* put the known starting point as the beginning of the list.  */
+                    hc.Add(convexHullCCW[j - 1]);
+                    hc.AddRange(hullCands[j - 1].Values);
+                    /* put the ending point on the end of the list. Need to check if it wraps back around to 
                      * the first in the loop (hence the simple condition). */
                     if (j == cvxVNum) hc.Add(convexHullCCW[0]);
                     else hc.Add(convexHullCCW[j]);
@@ -352,7 +337,7 @@ namespace TVGL
                         double lX = hc[i].X - hc[i - 1].X, lY = hc[i].Y - hc[i - 1].Y;
                         double rX = hc[i + 1].X - hc[i].X, rY = hc[i + 1].Y - hc[i].Y;
                         double zValue = lX * rY - lY * rX;
-                        if (zValue < 0)
+                        if (zValue <= 0)
                         {
                             /* remove any vertices that create concave angles. */
                             hc.RemoveAt(i);
