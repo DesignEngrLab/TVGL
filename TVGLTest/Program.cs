@@ -77,6 +77,30 @@ namespace TVGLPresenterDX
             "../../../TestFiles/MV-Test files/gear.STL"
         };
 
+        internal static PointLight[] CurrentIssue()
+        {
+            var points = new []
+            {
+                new PointLight(25.3999977, -237.46763546929208),
+                new PointLight(25.3999977, -254.00001529999997),
+                new PointLight(292.1000061, -254.0000153),
+                new PointLight(330.2000122, -254.00001529999997),
+                new PointLight(330.2000122, -219.39469697624477),
+                new PointLight(330.2000122, 1.1742143626199923E-15),
+                new PointLight(63.5000038, 1.1742143626199925E-15),
+                new PointLight(25.3999977, 1.1742143626199923E-15),
+                new PointLight(25.399997699999997, -17.010983139277897),
+                new PointLight(25.3999977, -254.0000153),
+                new PointLight(63.5000038, -254.00001530000003),
+                new PointLight(292.1000061, -254.00001530000003),
+                new PointLight(330.20001220000006, -254.0000153),
+                new PointLight(330.20001220000006, -219.22213574366245),
+                new PointLight(330.20001220000006, 1.1586618619264479E-15),
+                new PointLight(25.3999977, 1.1586618619264479E-15),
+            };
+            return points;
+        }
+
         [STAThread]
         private static void Main(string[] args)
         {
@@ -95,9 +119,9 @@ namespace TVGLPresenterDX
                     {
                         var random = new Random();
 
-                        var points = new PointLight[n];
-                        for (int j = 0; j < n; j++)
-                            points[j] = new PointLight(100 * random.NextDouble(), 100 * random.NextDouble());
+                        var points = CurrentIssue(); //new PointLight[n];
+                        //for (int j = 0; j < n; j++)
+                        //    points[j] = new PointLight(100 * random.NextDouble(), 100 * random.NextDouble());
                         stopwatch.Restart();
                         var convexHull = MinimumEnclosure.ConvexHull2D(points);
                         stopwatch.Stop();
@@ -108,7 +132,7 @@ namespace TVGLPresenterDX
 
                         var windowsPoints = points.Select(p => new System.Windows.Point(p.X, p.Y)).ToList();
                         stopwatch.Restart();
-                        var ouelletConvexHull = new OuelletConvexHull.OuelletConvexHull(windowsPoints);
+                        var ouelletConvexHull = new OuelletConvexHull.ConvexHull(windowsPoints);
                         ouelletConvexHull.CalcConvexHull(ConvexHullThreadUsage.OnlyOne);
                         stopwatch.Stop();
                         ouelletTotalTime += stopwatch.Elapsed;
