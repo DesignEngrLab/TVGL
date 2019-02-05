@@ -293,7 +293,8 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         /// <reference>
         ///     Method 1: http://www.mathopenref.com/coordpolygonarea2.html
-        ///     Faster Method: http://geomalgorithms.com/a01-_area.html
+        ///     Faster Method: http://geomalgorithms.com/a01-_area.html.
+        ///     The faster method has been optimized for speed, since it is called often.
         /// </reference>
         public static double AreaOfPolygon(IList<PointLight> polygon)
         {
@@ -313,30 +314,46 @@ namespace TVGL
 
             #endregion
 
-            //First, check if all x are the same. The algorithm will catch all y's and output zero,
+            //Also check if all x are the same. The algorithm will catch all y's and output zero,
             //But it may output a small number, even if all the x's are the same
-            var xval = polygon.First().X;
-            var returnZero = true;
-            for (var i = 1; i < polygon.Count; i++)
-            {
-                if (polygon[i].X.IsPracticallySame(xval)) continue;
-                returnZero = false;
-                break;
-            }
-            if (returnZero) return 0.0;
-
-            //Faster Method
-            var area = 0.0;
             var n = polygon.Count;
+            var p0 = polygon[0];
+            var xval = p0.X;
+
+            //Optimized version reduces get functions from arrays and point.X and point.Y
+            // j == i - 1;
+            // k == i + 1
+            var area = 0.0;
+            var p1 = polygon[1];
+            var jY = p0.Y;
+            var iX = p1.X;
+            var iY = p1.Y;
+            var returnZero = true;
             for (var i = 1; i < n - 1; i++)
-            {
-                area += polygon[i].X * (polygon[i + 1].Y - polygon[i - 1].Y);
+            {     
+                var kPoint = polygon[i + 1]; //Thus i < n - 1
+                var kX = kPoint.X;
+                var kY = kPoint.Y;
+                area += iX * (kY - jY);
+
+                if (returnZero && !iX.IsPracticallySame(xval))
+                {
+                    returnZero = false;
+                }
+
+                //Update values
+                jY = iY; //move j to i
+                iY = kY; //move i to k
+                iX = kX;
             }
-            //Final wrap around terms
-            area += polygon[0].X * (polygon[1].Y - polygon[n - 1].Y);
-            area += polygon[n - 1].X * (polygon[0].Y - polygon[n - 2].Y);
-            area = area / 2;
-            return area;
+            //Final wrap around terms (Note: this is faster than checking an if condition in the for loop).
+            var pN = polygon[n - 1];
+            area += p0.X * (p1.Y - pN.Y);
+            area += pN.X * (p0.Y - polygon[n - 2].Y);
+            //If all x's were the same, we still need to check the last point, since i doesn't do it in the loop.
+            if (returnZero && pN.X.IsPracticallySame(xval)) return 0.0;
+
+            return area / 2;
         }
 
         /// <summary>
