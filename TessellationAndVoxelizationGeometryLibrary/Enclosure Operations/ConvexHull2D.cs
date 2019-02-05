@@ -207,16 +207,6 @@ namespace TVGL
                     minYIndex = i;
                     minY = y;
                 }
-                if (sum < minSum)
-                {
-                    minSumIndex = i;
-                    minSum = sum;
-                }
-                if (diff < minDiff)
-                {
-                    minDiffIndex = i;
-                    minDiff = diff;
-                }
                 if (x > maxX)
                 {
                     maxXIndex = i;
@@ -227,12 +217,40 @@ namespace TVGL
                     maxYIndex = i;
                     maxY = y;
                 }
-                if (sum > maxSum)
+                // so that's the Akl-Toussaint (to find extrema in x and y). here, we go a step 
+                // farther and check the sum and difference of x and y. instead of a initial convex
+                // quadrilateral we have (potentially) a convex octagon. Because we are adding or substracting
+                // there is a slight time penalty, but that seems to be made up in the next two parts where
+                // having more sortedlist (with fewer elements) is faster than fewer sortedlists (with more
+                // elements. One add issue arose due to round-off error. Since the "sum" and "diff" sometimes
+                // lacked the precision of individual values. Problems were arising when just the strict inequalities
+                // (i.e. "<" and ">") were used. In one case, the maxX point had a lower Y-value than the maxDiff point
+                // which lead to a small but problematic concavity. The added conditions do not impact time too much
+                // and restore correct convex hulls for the tested cases.
+                if ((sum < minSum)
+                    || (sum == minSum && x <= points[maxDiffIndex].X &&
+                        y <= points[maxDiffIndex].Y))
+                {
+                    minSumIndex = i;
+                    minSum = sum;
+                }
+                if ((diff < minDiff)
+                    || (diff == minDiff && x <= points[maxDiffIndex].X &&
+                        y >= points[maxDiffIndex].Y))
+                {
+                    minDiffIndex = i;
+                    minDiff = diff;
+                }
+                if ((sum > maxSum)
+                    || (sum == maxSum && x >= points[maxDiffIndex].X &&
+                        y >= points[maxDiffIndex].Y))
                 {
                     maxSumIndex = i;
                     maxSum = sum;
                 }
-                if (diff > maxDiff)
+                if ((diff > maxDiff)
+                    || (diff == maxDiff && x >= points[maxDiffIndex].X &&
+                     y <= points[maxDiffIndex].Y))
                 {
                     maxDiffIndex = i;
                     maxDiff = diff;
