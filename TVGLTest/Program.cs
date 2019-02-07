@@ -3,20 +3,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Microsoft.Office.Interop.Excel;
-using StarMathLib;
 using TVGL;
-using TVGL.Boolean_Operations;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
-using Constants = TVGL.Constants;
 
 namespace TVGLPresenterDX
 {
     internal class Program
     {
 
-     static readonly  Stopwatch stopwatch = new Stopwatch();
+        static readonly Stopwatch stopwatch = new Stopwatch();
 
         private static readonly string[] FileNames = {
            //"../../../TestFiles/Binary.stl",
@@ -147,7 +143,7 @@ namespace TVGLPresenterDX
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
             stopwatch.Start();
-            var vs1 = new VoxelizedSolid(ts,7);
+            var vs1 = new VoxelizedSolid(ts, 8);
             //var dir = new [] { 1.0, 1.0, 1.0 };
             var dir = new[] { -1.0, -2.0, -3.0 };
             //var dir = new[] { -1.0, -.2, .0 };
@@ -156,9 +152,11 @@ namespace TVGLPresenterDX
             //neg.SolidColor = new Color(KnownColors.LawnGreen);
             //Presenter.ShowAndHang(vs1, neg);
             //var erd = neg.ErodeToNewSolid(vs1, dir);
-            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia:30, toolOptions: new []{"ball", "118"});
+            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia: 30, toolOptions: new[] { "ball", "118" });
             erd.SolidColor = new Color(KnownColors.Magenta);
-            Presenter.ShowAndHang(vs1, erd);
+            //Presenter.ShowAndHang(vs1, erd);
+            stopwatch.Stop();
+            Console.WriteLine("{0}", stopwatch.Elapsed);
             return;
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
