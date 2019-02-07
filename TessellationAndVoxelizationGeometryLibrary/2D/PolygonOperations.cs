@@ -213,9 +213,9 @@ namespace TVGL
         {
             if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
             var squareLengthTolerance = lengthTolerance * lengthTolerance;
+            var n = path.Count;
+            if (n < 4) return new List<PointLight>(path);
             var simplePath = new List<PointLight>(path);
-            var n = simplePath.Count;
-            if (n < 4) return simplePath;
 
             //Remove negligible length lines and combine collinear lines.
             var i = 0;
@@ -228,7 +228,10 @@ namespace TVGL
             var kX = simplePath[k].X;
             var kY = simplePath[k].Y;
             while (i < n)
-            {          
+            {
+                //The simplification is destroying this polygon. Do not simplify it.
+                if (n < 4) return new List<PointLight>(path);
+
                 //We only check line I-J in the first iteration, since later we
                 //check line J-K instead.
                 if (i == 0 && NegligibleLine(iX, iY, jX, jY, squareLengthTolerance))
