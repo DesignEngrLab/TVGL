@@ -106,6 +106,22 @@ namespace TVGL
         #endregion
 
         #region Uniform Directional Decomposition
+
+        public enum SnapType
+        {
+            //The first distance along the given direction
+            ClosestAlong,
+
+            //All cross sections are within the given solid.
+            CenterAllInside,
+
+            //Adds a cross section to the top and bottom
+            CenterEndsOutside,
+
+            //The last distance along the given direction
+            FurthestAlong,        
+        }
+
         /// <summary>
         /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
         /// The slices are spaced as close to the stepSizes as possible, while avoiding in-plane faces. The cross sections
@@ -121,7 +137,7 @@ namespace TVGL
         public static List<DecompositionData> UniformDecomposition(TessellatedSolid ts, double[] direction,
         double stepSize, out Dictionary<int, double> stepDistances,
         out Dictionary<int, double> sortedVertexDistanceLookup,
-        bool addCrossSectionAtStartAndEnd)
+        SnapType snapTo, bool addCrossSectionAtStartAndEndForCenterSnap = false)
         {
             sortedVertexDistanceLookup = new Dictionary<int, double>();
 
@@ -130,7 +146,6 @@ namespace TVGL
             //minor adjustments occur to avoid cutting through vertices.
             stepDistances = new Dictionary<int, double>();
 
-         
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.
             MiscFunctions.SortAlongDirection(direction, ts.Vertices, out List<Tuple<Vertex, double>> sortedVertices);
@@ -148,37 +163,77 @@ namespace TVGL
 
             //Choose whichever min offset is smaller
             var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
-            var remainder = (length % stepSize); 
-            //If the remainder is less than the minOffset, set it equal to the step size.
-            //This is to avoid the issue of missing the last cutting plane. 
-            if (remainder.IsNegligible(minOffset * 2)) remainder += stepSize;
-            //Shift the first distance. At minimum, d = f + minOffset. At maxium, d = f + stepSize / 2.
-            //The last step distance should be equally spaced from the furthest distance.
-            var distanceAlongAxis = firstDistance + remainder / 2; //Shift the step indices toward the center of the part, if not exact.
-            var stepIndex = addCrossSectionAtStartAndEnd ? 1 : 0;
-            do
+            var div = length / stepSize;
+            var t = (int) (length / stepSize);
+            var numSteps = t + 1; //Round up to nearest integer (or down and then add 1)
+            var remainder = length - t * stepSize;
+            if (remainder.IsPracticallySame(stepSize, minOffset))
             {
-                stepDistances.Add(stepIndex, distanceAlongAxis);
-                stepIndex++;
-                distanceAlongAxis += stepSize;
-                if(distanceAlongAxis > furthestDistance) throw new Exception("Error in implementation of directional decomposition steps");
-            } while (!distanceAlongAxis.IsPracticallySame(furthestDistance - remainder / 2, minOffset));
-            if (addCrossSectionAtStartAndEnd)
-            {
-                stepDistances[0] = firstDistance + remainder / 2 - stepSize;
-                stepDistances[stepDistances.Count] = furthestDistance - remainder / 2 + stepSize;
+                remainder = 0.0;
+                numSteps++;
             }
-            var numSteps = stepDistances.Count;
-            if (numSteps < 4) return null; //Steps will not be accurate if too few. 
+
+            ////If the remainder is less than the minOffset, set it equal to the step size.
+            ////This is to avoid the issue of missing the last cutting plane. 
+            //if (remainder.IsNegligible(minOffset * 2)) remainder += stepSize;
+
+            double topRemainder;
+            double bottomRemainder;
+            bool addToStart = false;
+            bool addToEnd = false;
+            switch (snapTo)
+            {
+                case SnapType.ClosestAlong:
+                    topRemainder = 0.0;
+                    bottomRemainder = stepSize - remainder; //move outward (positive)
+                    numSteps++; //one cross section will be outside the part
+                    addToEnd = true;
+                    break;
+                case SnapType.CenterAllInside: //Subtract the remainder, split between the top and bottom.
+                    topRemainder = - remainder / 2; //move inward (negative)
+                    bottomRemainder = - remainder / 2; //move inward (negative)
+                    addToStart = true;
+                    addToEnd = true;
+                    break;
+                case SnapType.CenterEndsOutside: //Add (stepsize - remainder) split between the top and bottom. 
+                    topRemainder = (stepSize - remainder) / 2; //move outward (positive)
+                    bottomRemainder = (stepSize - remainder) / 2; //move outward (positive)
+                    numSteps ++; //Add the normal +1 cross section caused by centering and adding the remainder
+                    addToStart = true;
+                    addToEnd = true;
+                    break;
+                case SnapType.FurthestAlong:
+                    topRemainder = stepSize - remainder; //move outward (positive)
+                    bottomRemainder = 0.0;
+                    numSteps++; //one cross section will be outside the part
+                    addToStart = true;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(snapTo), snapTo, null);
+            }
+
+            if (numSteps < 2) return null; //Steps will not be accurate if too few. 
+            var distanceAlongAxis = firstDistance - topRemainder; //positive moves inward, negative outward      
+            for (var i = 0; i < numSteps; i++)
+            {
+                stepDistances.Add(i, distanceAlongAxis);
+                distanceAlongAxis += stepSize;
+            }
+            if (!(distanceAlongAxis - stepSize).IsPracticallySame(furthestDistance + bottomRemainder, 0.0001))
+            {    
+                stepDistances.Add(numSteps, distanceAlongAxis);
+                numSteps++;
+                //throw new Exception(); //positive moves inward, negative outward     
+            }
 
             //Initialize the size of the list.
             var outputData = new List<DecompositionData>(new DecompositionData[numSteps]);
 
             //Start the step index at +1, so that the increment can be at the start of the while loop, 
             //making the final stepIndex correct for use in a later function.
-            stepIndex = addCrossSectionAtStartAndEnd ? 1 : 0;
+            var stepIndex = addToStart ? 1 : 0;
             //Stop at -1 if adding additional cross sections, because there is one item at the end of the list we want to skip.
-            var n = addCrossSectionAtStartAndEnd ? numSteps - 1: numSteps;
+            var n = addToEnd ? numSteps - 1: numSteps;
             while (stepIndex < n)
             {
                 distanceAlongAxis = stepDistances[stepIndex];
@@ -197,8 +252,16 @@ namespace TVGL
                     //Update the edge list with this vertex.
                     if (vertexDistanceAlong.IsPracticallySame(distanceAlongAxis, minOffset))
                     {
-                        //Move the distance enough so that this vertex is now less than 
-                        distanceAlongAxis = vertexDistanceAlong + minOffset * 1.1;
+                        if (stepIndex == n - 1)
+                        {
+                            //Move backward
+                            distanceAlongAxis = vertexDistanceAlong - minOffset * 1.1;
+                        }
+                        else
+                        {
+                            //Move the distance enough so that this vertex is now less than 
+                            distanceAlongAxis = vertexDistanceAlong + minOffset * 1.1;
+                        }
                     }
                     //Else, Break after we get to a vertex that is further than the distance along axis
                     if (vertexDistanceAlong > distanceAlongAxis)
@@ -276,22 +339,18 @@ namespace TVGL
                     }
 
                     //Add the data to the output
-                    outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, distanceAlongAxis);
+                    //Use the original distance value for this index.
+                    outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, stepDistances[stepIndex]);
                 }
                 else
                 {
                     Debug.WriteLine("Slice at this distance was unsuccessful, even with multiple minimum offsets.");
                 }
-
-                stepDistances[stepIndex] = distanceAlongAxis; //Update to the adjusted value.
                 stepIndex++;
             }
 
-            // ReSharper disable once InvertIf, since it is more readible this way.
-            if (addCrossSectionAtStartAndEnd)
+            if (addToStart)
             {
-                //Add the first and last cross sections. 
-                //Note, these may not be great fits if step size is large
                 var firstCrossSection = new List<List<Vertex>>();
                 foreach (var path in outputData[1].Paths)
                 {
@@ -299,6 +358,9 @@ namespace TVGL
                         direction, firstDistance));
                 }
                 outputData[0] = new DecompositionData(outputData[1].Paths, firstCrossSection, stepDistances[0]);
+            }
+            if (addToEnd)
+            {
                 var lastCrossSection = new List<List<Vertex>>();
                 foreach (var path in outputData[numSteps - 2].Paths)
                 {
@@ -369,14 +431,6 @@ namespace TVGL
                         }
                         else
                         {
-                            ////Debug Mode
-                            //var previousData = outputData.Last();
-                            //outputData = new List<DecompositionData>() { previousData, new DecompositionData( currentPaths, distance )};
-                            //return 0.0;
-
-                            //Run mode: Use previous path
-                            Debug.WriteLine("Union failed and not similar");
-                            //
                             currentPaths = outputData.Last().Paths;
                         }
                     }
@@ -437,6 +491,86 @@ namespace TVGL
                 previousArea = area;
                 i++;
             }
+            return additiveVolume;
+        }
+
+        /// <summary>
+        /// Gets the additive volume given a list of decomposition data
+        /// </summary>
+        /// <param name="decompData"></param>
+        /// <param name="layerHeight"></param>
+        /// <param name="scanningAccuracy"></param>
+        /// <param name="outputData"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static double AdditiveVolumeWithoutSupport(List<DecompositionData> decompData, double layerHeight,
+            double scanningAccuracy, out List<DecompositionData> outputData)
+        {
+            outputData = new List<DecompositionData>();
+            var previousDistance = 0.0;
+            var previousArea = 0.0;
+            var additiveVolume = 0.0;
+            var n = decompData.Count;
+            //Foreach cross section, union it with the next cross section to ensure the surfaces are covered
+            //This assumes that cross sections were added to the top and bottom of decomp data.         
+            var currentPaths = new List<List<PointLight>>();
+            for (var i = 0; i < decompData.Count - 1; i++)
+            {
+                var currentData = decompData[i];
+                var currentCrossSection = currentData.Paths;
+                var nextData = decompData[i + 1];
+                var nextCrossSection = nextData.Paths;
+                var distance = currentData.DistanceAlongDirection;
+
+                //Offset if the additive accuracy is significant
+                var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentCrossSection);
+                var offsetPaths = !scanningAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentCrossSection, scanningAccuracy) : new List<List<PointLight>>(currentPaths);
+                var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
+                //Simplify the paths, but remove any that are eliminated (e.g. points are all very close together)
+                var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
+                var areaAfterSimplification = MiscFunctions.AreaOfPolygon(simpleOffset);
+                if (areaPriorToOffset > areaAfterOffset) throw new Exception("Path is ordered incorrectly");
+                if (!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset * .05)) throw new Exception("Simplify Fuzzy Alterned the Geometry more than 5% of the area");
+
+                //Union the current cross section with the next cross section
+                try
+                {
+                    currentPaths = PolygonOperations.Union(nextCrossSection, simpleOffset);
+                }
+                catch
+                {
+                    var testArea1 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                    if (testArea1.IsPracticallySame(previousArea, 0.01))
+                    {
+                        currentPaths = simpleOffset;
+                        //They are probably throwing an error because they are closely overlapping
+                    }
+                    else
+                    {
+                        currentPaths = outputData.Last().Paths;
+                    }
+                }  
+
+                //Get the area of this layer
+                var area = currentPaths.Sum(p => MiscFunctions.AreaOfPolygon(p));
+                if (area < 0)
+                {
+                    //Rather than throwing an exception, just assume the polygons were the wrong direction      
+                    area = -area;
+                    Debug.WriteLine("Area for a polygon in the Additive Volume estimate was negative. This means there was an issue with the polygon ordering");
+                }
+
+                //Add the volume from this iteration.
+                var deltaX = Math.Abs(distance - previousDistance);                  
+                additiveVolume += deltaX * area;
+                outputData.Add(new DecompositionData(currentPaths, distance));
+                previousDistance = distance;
+                previousArea = area;
+            }
+            //Add the final layer
+            outputData.Add(new DecompositionData(currentPaths, previousDistance + layerHeight));
+            additiveVolume += layerHeight * previousArea;
+
             return additiveVolume;
         }
         #endregion
