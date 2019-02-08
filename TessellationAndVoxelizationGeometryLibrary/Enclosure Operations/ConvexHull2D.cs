@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using StarMathLib;
 
 namespace TVGL
 {
@@ -156,6 +157,11 @@ namespace TVGL
             return a[0] * b[1] - a[1] * b[0];
         }
 
+        public static List<PointLight> ConvexHull2D(IList<PointLight> points)
+        {
+            return ConvexHull2D(points, out _);
+        }
+
         /// <summary>
         /// Returns the 2D convex hull for given list of points. The input points list is unaffected
         /// </summary>
@@ -164,7 +170,7 @@ namespace TVGL
         /// <returns>
         /// List&lt;Point&gt;.
         /// </returns>
-        public static List<PointLight> ConvexHull2D(IList<PointLight> points)
+        public static List<PointLight> ConvexHull2D(IList<PointLight> points, out SortedList<double, PointLight>[] hullCands)
         {
             // instead of calling points.Count several times, we create this variable. 
             // by the ways points is unaffected by this method
@@ -257,11 +263,12 @@ namespace TVGL
                 }
             }
             //put these on a list in CCW direction
-            var extremeIndices = new[] { minXIndex, minSumIndex,minYIndex,maxDiffIndex,
+            var extremeIndices = new[] { minXIndex, minSumIndex, minYIndex, maxDiffIndex,
                 maxXIndex, maxSumIndex, maxYIndex, minDiffIndex };
             // however there could be repeats. If there are they will be next to each other in the list.
             // next, we gather these 3 to 8 points as the seed of the list which is returned.
             var convexHullCCW = new List<PointLight>();
+            var removalIndices = new List<int>();
             for (var i = 0; i < 8; i++)
             {
                 var thisExtremeIndex = extremeIndices[i];
@@ -269,14 +276,42 @@ namespace TVGL
                 if (thisExtremeIndex == prevExtremeIndex)
                     // this condition is to check if there are repeats. If so, do not add them more than once
                     continue;
-                convexHullCCW.Add(points[thisExtremeIndex]);
+                var current = points[thisExtremeIndex];
+                var previous = points[prevExtremeIndex];
+                var dx = current.X - previous.X;
+                var dy = current.Y - previous.Y;
+                if (dx == 0 && dy == 0)
+                {
+                    removalIndices.Add(thisExtremeIndex);
+                    continue;
+                }
+                if ((i == 7 || i == 0) && (dx > 0 || dy > 0))
+                {
+                    removalIndices.Add(thisExtremeIndex);
+                    continue;
+                }
+                if ((i == 1 || i == 2) && (dx < 0 || dy > 0))
+                {
+                    removalIndices.Add(thisExtremeIndex);
+                    continue;
+                }
+                if ((i == 3 || i == 4) && (dx < 0 || dy < 0))
+                {
+                    removalIndices.Add(thisExtremeIndex);
+                    continue;
+                }
+                if ((i == 5 || i == 6) && (dx > 0 || dy < 0))
+                {
+                    removalIndices.Add(thisExtremeIndex);
+                    continue;
+                }
+                convexHullCCW.Add(current);
             }
             #endregion
 
             /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
              * steamline the code, these are established. */
             var cvxVNum = convexHullCCW.Count;
-            var last = cvxVNum - 1;
 
             #region Step 2 : Create the sorted zig-zag line for each extrema edge
             /* Of the 3 to 8 vertices identified in the convex hull, ... */
@@ -284,7 +319,7 @@ namespace TVGL
             /* An array of sorted lists. As we find new candidate convex points, we store them here. The key in the
              * list is the "positionAlong" - this is used to order the nodes that
              * are found for a particular side (More on this in 23 lines). */
-            var hullCands = new SortedList<double, PointLight>[cvxVNum];
+            hullCands = new SortedList<double, PointLight>[cvxVNum];
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
             for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>(new NoEqualSort());
 
@@ -292,6 +327,116 @@ namespace TVGL
             // loop from checking this indices again
             extremeIndices = extremeIndices.Distinct().OrderBy(index => index).ToArray();
             var indexOfExtremeIndices = 0;
+
+            //Set local variables for the points in the convex hull
+            var p0 = convexHullCCW[0];
+            var p0X = p0.X;
+            var p0Y = p0.Y;
+            var p1 = convexHullCCW[1];
+            var p1X = p1.X;
+            var p1Y = p1.Y;
+            var p2 = convexHullCCW[2];
+            var p2X = p2.X;
+            var p2Y = p2.Y;
+            var p3X = double.NaN;
+            var p3Y = double.NaN;
+            var p4X = double.NaN;
+            var p4Y = double.NaN;
+            var p5X = double.NaN;
+            var p5Y = double.NaN;
+            var p6X = double.NaN;
+            var p6Y = double.NaN;
+            var p7X = double.NaN;
+            var p7Y = double.NaN;
+
+            var v0X = p1X - p0X;
+            var v0Y = p1Y - p0Y;
+            var v1X = p2X - p1X;
+            var v1Y = p2Y - p1Y;           
+            var v2X = double.NaN;
+            var v2Y = double.NaN;
+            var v3X = double.NaN;
+            var v3Y = double.NaN;         
+            var v4X = double.NaN;
+            var v4Y = double.NaN;           
+            var v5X = double.NaN;
+            var v5Y = double.NaN;          
+            var v6X = double.NaN;
+            var v6Y = double.NaN;
+            var v7X = double.NaN;
+            var v7Y = double.NaN;
+            if (cvxVNum > 3)
+            {
+                var p3 = convexHullCCW[3];
+                p3X = p3.X;
+                p3Y = p3.Y;
+                v2X = p3X - p2X;
+                v2Y = p3Y - p2Y;
+                if (cvxVNum > 4)
+                {
+                    var p4 = convexHullCCW[4];
+                    p4X = p4.X;
+                    p4Y = p4.Y;
+                    v3X = p4X - p3X;
+                    v3Y = p4Y - p3Y;
+                    if (cvxVNum > 5)
+                    {
+                        var p5 = convexHullCCW[5];
+                        p5X = p5.X;
+                        p5Y = p5.Y;
+                        v4X = p5X - p4X;
+                        v4Y = p5Y - p4Y;
+                        if (cvxVNum > 6)
+                        {
+                            var p6 = convexHullCCW[6];
+                            p6X = p6.X;
+                            p6Y = p6.Y;
+                            v5X = p6X - p5X;
+                            v5Y = p6Y - p5Y;
+                            if (cvxVNum > 7)
+                            {
+                                var p7 = convexHullCCW[7];
+                                p7X = p7.X;
+                                p7Y = p7.Y;
+                                v6X = p7X - p6X;
+                                v6Y = p7Y - p6Y;
+                                //Wrap arounf from 7
+                                v7X = p0X - p7X;
+                                v7Y = p0Y - p7Y;
+                            }
+                            else //Wrap arounf from 6
+                            {
+                                v6X = p0X - p6X;
+                                v6Y = p0Y - p6Y;
+                            }
+                        }
+                        else //Wrap arounf from 5
+                        {
+                            v5X = p0X - p5X;
+                            v5Y = p0Y - p5Y;
+                        }
+                    }
+                    else
+                    {
+                        //Wrap around from 4
+                        v4X = p0X - p4X;
+                        v4Y = p0Y - p4Y;
+                    }
+                }
+                else
+                {
+                    //Wrap around from 3
+                    v3X = p0X - p3X;
+                    v3Y = p0Y - p3Y;
+                }
+            }
+            else
+            {
+                //Wrap around from 2
+                v2X = p0X - p2X;
+                v2Y = p0Y - p2Y;
+            }
+
             /* Now a big loop. For each of the original vertices, check them with the 3 to 8 edges to see if they 
              * are inside or out. If they are out, add them to the proper row of the hullCands array. */
             for (var i = 0; i < numPoints; i++)
@@ -302,27 +447,151 @@ namespace TVGL
                 else
                 {
                     var point = points[i];
-                    for (var j = 0; j < cvxVNum; j++) //cycle over the 3 to 8 edges. however, notice the break below. 
+                    var pointX = point.X;
+                    var pointY = point.Y;
+
+                    //cycle over the 3 to 8 edges. however, notice the break below. 
                     // once point is successfully added to one side, there is no need to check the remainder
+                    var chosenJ = -1;
+                    var value = -1.0;
+                    while(chosenJ == -1)
                     {
-                        var nextIndex = (j == last) ? 0 : j + 1;
-                        var pX = convexHullCCW[j].X;
-                        var pY = convexHullCCW[j].Y;
-                        var vX = convexHullCCW[nextIndex].X - pX;
-                        var vY = convexHullCCW[nextIndex].Y - pY;
-                        var bX = point.X - pX;
-                        var bY = point.Y - pY;
-                        double val = vX * bY - vY * bX; // Cross product 2D 
-                        if (val > 0) continue; // then skip this point since it's not "to the left of" the edge
-                        // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                        // the sorted dictionary
-                        val = vX * bX + vY * bY; // GetRow + dot
-                        hullCands[j].Add(val, point);
+                        //First check p0 to p1
+                        var b_X = pointX - p0X;
+                        var b_Y = pointY - p0Y;
+                        if (!(v0X * b_Y - v0Y * b_X > 0)) // Cross product 2D
+                        {
+                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                            // the sorted dictionary
+                            value = v0X * b_X + v0Y * b_Y; // GetRow + dot
+                            chosenJ = 0;
+                            hullCands[0].Add(value, point);
+                            break;
+                        }
+                        // else then skip this point since it's not "to the left of" the edge
+                        //P1 to P2
+                        b_X = pointX - p1X;
+                        b_Y = pointY - p1Y;
+                        if (!(v1X * b_Y - v1Y * b_X > 0)) // Cross product 2D
+                        {
+                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                            // the sorted dictionary
+                            value = v1X * b_X + v1Y * b_Y; // GetRow + dot
+                            chosenJ = 1;
+                            hullCands[1].Add(value, point);
+                            break;
+                        }
+                        //Next line P2 to next point (either p0 or p3)    
+                        b_X = pointX - p2X;
+                        b_Y = pointY - p2Y;
+                        if (!(v2X * b_Y - v2Y * b_X > 0)) // Cross product 2D
+                        {
+                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                            // the sorted dictionary
+                            value = v2X * b_X + v2Y * b_Y; // GetRow + dot
+                            chosenJ = 2;
+                            hullCands[2].Add(value, point);
+                            break;
+                        }
+                        if (cvxVNum == 3) break;
+                        //Next line: P3 to next point (either p0 or p4)  
+                        b_X = pointX - p3X;
+                        b_Y = pointY - p3Y;
+                        if (!(v3X * b_Y - v3Y * b_X > 0)) // Cross product 2D
+                        {
+                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                            // the sorted dictionary
+                            value = v3X * b_X + v3Y * b_Y; // GetRow + dot
+                            chosenJ = 3;
+                            hullCands[3].Add(value, point);
+                            break;
+                        }
+                        if (cvxVNum == 4) break;
+                        //Next line: P4 to next point (either p0 or p5)  
+                        b_X = pointX - p4X;
+                        b_Y = pointY - p4Y;
+                        if (!(v4X * b_Y - v4Y * b_X > 0)) // Cross product 2D
+                        {
+                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                            // the sorted dictionary
+                            value = v4X * b_X + v4Y * b_Y; // GetRow + dot
+                            chosenJ = 4;
+                            hullCands[4].Add(value, point);
+                            break;
+                        }
+                        if (cvxVNum == 5) break;
+                        //Next line: P5 to next point (either p0 or p6)  
+                        b_X = pointX - p5X;
+                        b_Y = pointY - p5Y;
+                        if (!(v5X * b_Y - v5Y * b_X > 0)) // Cross product 2D
+                        {
+                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                            // the sorted dictionary
+                            value = v5X * b_X + v5Y * b_Y; // GetRow + dot
+                            chosenJ = 5;
+                            hullCands[5].Add(value, point);
+                            break;
+                        }
+                        if (cvxVNum == 6) break;
+                        //Next line: P6 to next point (either p0 or p7)  
+                        b_X = pointX - p6X;
+                        b_Y = pointY - p6Y;
+                        if (!(v6X * b_Y - v6Y * b_X > 0)) // Cross product 2D
+                        {
+                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                            // the sorted dictionary
+                            value = v6X * b_X + v6Y * b_Y; // GetRow + dot
+                            chosenJ = 6;
+                            hullCands[6].Add(value, point);
+                            break;
+                        }
+                        if (cvxVNum == 7) break;
+                        //Next line: P7 to P0 
+                        b_X = pointX - p7X;
+                        b_Y = pointY - p7Y;
+                        if (!(v7X * b_Y - v7Y * b_X > 0)) // Cross product 2D
+                        {
+                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                            // the sorted dictionary
+                            value = v7X * b_X + v7Y * b_Y; // GetRow + dot
+                            chosenJ = 7;
+                            hullCands[7].Add(value, point);
+                            break;
+                        }
                         break;
                     }
+
+                    //var current = convexHullCCW[0];
+                    //var pX = current.X;
+                    //var pY = current.Y;
+                    //for (var j = 0; j < cvxVNum; j++) //cycle over the 3 to 8 edges. however, notice the break below. 
+                    //// once point is successfully added to one side, there is no need to check the remainder
+                    //{
+                    //    var nextIndex = (j == last) ? 0 : j + 1;
+                    //    var next = convexHullCCW[nextIndex];
+                    //    var nextX = next.X;
+                    //    var nextY = next.Y;
+                    //    var vX = nextX - pX;
+                    //    var vY = nextY - pY;
+                    //    var bX = pointX - pX;
+                    //    var bY = pointY - pY;
+                    //    double val = vX * bY - vY * bX; // Cross product 2D
+                    //    pX = nextX;
+                    //    pY = nextY;
+                    //    if (val > 0) continue; // then skip this point since it's not "to the left of" the edge
+                    //    // if it is to be included "val" is rewritten as the "position along" which is the key to 
+                    //    // the sorted dictionary
+                    //    val = vX * bX + vY * bY; // GetRow + dot
+                    //    //hullCands[j].Add(val, point);
+                    //    if (chosenJ != j) { }
+                    //    if (!value.IsPracticallySame(val)) { }
+                    //    break;
+                    //}
                 }
             }
             #endregion
+
+            //return convexHullCCW;
 
             #region Step 3: now remove concave "zigs" from each sorted dictionary
             /* Now it's time to go through our array of sorted lists of tuples. We search backwards through
