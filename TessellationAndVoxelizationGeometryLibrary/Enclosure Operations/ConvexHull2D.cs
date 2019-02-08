@@ -197,22 +197,22 @@ namespace TVGL
                 var y = points[i].Y;
                 var sum = x + y;
                 var diff = x - y;
-                if (x < minX)
+                if (x <= minX)
                 {
                     minXIndex = i;
                     minX = x;
                 }
-                if (y < minY)
+                if (y <= minY)
                 {
                     minYIndex = i;
                     minY = y;
                 }
-                if (x > maxX)
+                if (x >= maxX)
                 {
                     maxXIndex = i;
                     maxX = x;
                 }
-                if (y > maxY)
+                if (y >= maxY)
                 {
                     maxYIndex = i;
                     maxY = y;
