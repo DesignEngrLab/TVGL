@@ -203,22 +203,22 @@ namespace TVGL
                 var y = points[i].Y;
                 var sum = x + y;
                 var diff = x - y;
-                if (x <= minX)
+                if (x < minX)
                 {
                     minXIndex = i;
                     minX = x;
                 }
-                if (y <= minY)
+                if (y < minY)
                 {
                     minYIndex = i;
                     minY = y;
                 }
-                if (x >= maxX)
+                if (x > maxX)
                 {
                     maxXIndex = i;
                     maxX = x;
                 }
-                if (y >= maxY)
+                if (y > maxY)
                 {
                     maxYIndex = i;
                     maxY = y;
@@ -228,35 +228,23 @@ namespace TVGL
                 // quadrilateral we have (potentially) a convex octagon. Because we are adding or substracting
                 // there is a slight time penalty, but that seems to be made up in the next two parts where
                 // having more sortedlist (with fewer elements) is faster than fewer sortedlists (with more
-                // elements. One add issue arose due to round-off error. Since the "sum" and "diff" sometimes
-                // lacked the precision of individual values. Problems were arising when just the strict inequalities
-                // (i.e. "<" and ">") were used. In one case, the maxX point had a lower Y-value than the maxDiff point
-                // which lead to a small but problematic concavity. The added conditions do not impact time too much
-                // and restore correct convex hulls for the tested cases.
-                if ((sum < minSum)
-                    || (sum == minSum && x <= points[maxDiffIndex].X &&
-                        y <= points[maxDiffIndex].Y))
+                // elements. 
+                if (sum < minSum)
                 {
                     minSumIndex = i;
                     minSum = sum;
                 }
-                if ((diff < minDiff)
-                    || (diff == minDiff && x <= points[maxDiffIndex].X &&
-                        y >= points[maxDiffIndex].Y))
+                if (diff < minDiff)
                 {
                     minDiffIndex = i;
                     minDiff = diff;
                 }
-                if ((sum > maxSum)
-                    || (sum == maxSum && x >= points[maxDiffIndex].X &&
-                        y >= points[maxDiffIndex].Y))
+                if (sum > maxSum)
                 {
                     maxSumIndex = i;
                     maxSum = sum;
                 }
-                if ((diff > maxDiff)
-                    || (diff == maxDiff && x >= points[maxDiffIndex].X &&
-                     y <= points[maxDiffIndex].Y))
+                if (diff > maxDiff)
                 {
                     maxDiffIndex = i;
                     maxDiff = diff;
@@ -268,7 +256,7 @@ namespace TVGL
             // however there could be repeats. If there are they will be next to each other in the list.
             // next, we gather these 3 to 8 points as the seed of the list which is returned.
             var convexHullCCW = new List<PointLight>();
-            var removalIndices = new List<int>();
+            var indicesUsed = new List<int>();
             for (var i = 0; i < 8; i++)
             {
                 var thisExtremeIndex = extremeIndices[i];
@@ -280,31 +268,17 @@ namespace TVGL
                 var previous = points[prevExtremeIndex];
                 var dx = current.X - previous.X;
                 var dy = current.Y - previous.Y;
-                if (dx == 0 && dy == 0)
-                {
-                    removalIndices.Add(thisExtremeIndex);
-                    continue;
-                }
-                if ((i == 7 || i == 0) && (dx > 0 || dy > 0))
-                {
-                    removalIndices.Add(thisExtremeIndex);
-                    continue;
-                }
-                if ((i == 1 || i == 2) && (dx < 0 || dy > 0))
-                {
-                    removalIndices.Add(thisExtremeIndex);
-                    continue;
-                }
-                if ((i == 3 || i == 4) && (dx < 0 || dy < 0))
-                {
-                    removalIndices.Add(thisExtremeIndex);
-                    continue;
-                }
-                if ((i == 5 || i == 6) && (dx > 0 || dy < 0))
-                {
-                    removalIndices.Add(thisExtremeIndex);
-                    continue;
-                }
+                // due to repeated points and round-off errors, we now check to see that the consecutive points
+                // and indeed following CCW in convex hull order. If points are on top of each other or there
+                // is a slight round-off error (usually due to the sum or diff terms above having a slightly
+                // reduced precision), then it has been observed that a concave edge is produced. This ruins
+                // the remainder of checks.
+                if (dx == 0 && dy == 0) continue;
+                if ((i == 7 || i == 0) && (dx > 0 || dy > 0)) continue;
+                if ((i == 1 || i == 2) && (dx < 0 || dy > 0)) continue;
+                if ((i == 3 || i == 4) && (dx < 0 || dy < 0)) continue;
+                if ((i == 5 || i == 6) && (dx > 0 || dy < 0)) continue;
+                indicesUsed.Add(thisExtremeIndex);
                 convexHullCCW.Add(current);
             }
             #endregion
@@ -323,10 +297,10 @@ namespace TVGL
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
             for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>(new NoEqualSort());
 
-            // the extreme indices are sorted from least to greatest in order to prevent the following
+            // the used indices are sorted from least to greatest in order to prevent the following
             // loop from checking this indices again
-            extremeIndices = extremeIndices.Distinct().OrderBy(index => index).ToArray();
-            var indexOfExtremeIndices = 0;
+            indicesUsed = indicesUsed.OrderBy(index => index).ToList();
+            var indexOfUsedIndices = 0;
 
             //Set local variables for the points in the convex hull
             var p0 = convexHullCCW[0];
@@ -441,9 +415,9 @@ namespace TVGL
              * are inside or out. If they are out, add them to the proper row of the hullCands array. */
             for (var i = 0; i < numPoints; i++)
             {
-                if (indexOfExtremeIndices < extremeIndices.Length && i == extremeIndices[indexOfExtremeIndices])
-                    //in order to avoid a contains function call, we know to only check with next extremeIndex in order
-                    indexOfExtremeIndices++;
+                if (indexOfUsedIndices < indicesUsed.Count && i == indicesUsed[indexOfUsedIndices])
+                    //in order to avoid a contains function call, we know to only check with next usedIndex in order
+                    indexOfUsedIndices++;
                 else
                 {
                     var point = points[i];
