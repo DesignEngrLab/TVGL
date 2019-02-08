@@ -331,7 +331,7 @@ namespace TVGL.Voxelization
                 return new Voxel(MakeParentVoxelID(child.ID, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Full), this);
             return new Voxel(MakeParentVoxelID(child.ID, parentLevel) + Constants.MakeFlags(parentLevel, VoxelRoleTypes.Empty), this);
         }
-        
+
         /// <summary>
         /// Gets the child voxels.
         /// </summary>
@@ -905,7 +905,7 @@ namespace TVGL.Voxelization
         /// <returns>VoxelizedSolid.</returns>
         public VoxelizedSolid CreateBoundingSolid()
         {
-            var copy = (VoxelizedSolid) Copy();
+            var copy = (VoxelizedSolid)Copy();
             copy.BoundingSolid(0, 0);
             copy.UpdateProperties();
             return copy;
@@ -981,7 +981,7 @@ namespace TVGL.Voxelization
         private IEnumerable<int[]> GetChildVoxelCoords(long parent, int level)
         {
             var coords = new ConcurrentBag<int[]>();
-            var iS = new [] { 0, 0, 0 };
+            var iS = new[] { 0, 0, 0 };
             var iE = voxelsPerDimension[level].ToArray();
             if (parent != 0)
             {
@@ -998,8 +998,8 @@ namespace TVGL.Voxelization
             Parallel.For(iS[0], iE[0], i =>
             {
                 for (var j = iS[1]; j < iE[1]; j++)
-                for (var k = iS[2]; k < iE[2]; k++)
-                    coords.Add(new [] { i, j, k });
+                    for (var k = iS[2]; k < iE[2]; k++)
+                        coords.Add(new[] { i, j, k });
             });
             return coords;
         }
@@ -1182,8 +1182,8 @@ namespace TVGL.Voxelization
         {
             var copy = (VoxelizedSolid)Copy();
 
-            var tDir = new[] {.0, .0, .0};
-            tDir[Math.Abs((int) dir) - 1] = Math.Sign((int) dir);
+            var tDir = new[] { .0, .0, .0 };
+            tDir[Math.Abs((int)dir) - 1] = Math.Sign((int)dir);
 
             copy.ErodeVoxelSolid(designedSolid, tDir.normalize(3), tLimit, toolDia, inclusive, stopAtPartial, toolOptions);
             copy.UpdateProperties();
@@ -1271,19 +1271,24 @@ namespace TVGL.Voxelization
             IList<int[]> sliceMask = null, IList<int> start = null)
         {
             start = start ?? mask[0].ToArray();
-            sliceMask = sliceMask ?? new List<int[]>(new []{ mask[0].ToArray() });
-            var shift = start.subtract(mask[0], 3);
-            //var pBounds = true;
-            //var entryCoord = new [] { 0, 0, 0 };
+            sliceMask = sliceMask ?? new List<int[]>(new[] { mask[0].ToArray() });
+            var xMask = mask[0][0];
+            var yMask = mask[0][1];
+            var zMask = mask[0][2];
+            var xShift = start[0] - xMask;
+            var yShift = start[1] - yMask;
+            var zShift = start[2] - zMask;
 
             //foreach depth or timestep
             foreach (var initCoord in mask)
             {
-                var startCoord = initCoord.add(shift, 3);
-                //if (!pBounds && startCoord.subtract(entryCoord, 3).norm2() > tLimit)
-                //    break;
+                var xStartCoord = initCoord[0] + xShift;
+                var yStartCoord = initCoord[1] + yShift;
+                var zStartCoord = initCoord[2] + zShift;
 
-                var tShift = startCoord.subtract(mask[0], 3);
+                var xTShift = xStartCoord - xMask;
+                var yTShift = yStartCoord - yMask;
+                var zTShift = zStartCoord - zMask;
 
                 //Iterate over the template of the slice mask
                 //to move them to the appropriate location but 
@@ -1291,15 +1296,13 @@ namespace TVGL.Voxelization
                 var succeedCounter = 0;
                 foreach (var voxCoord in sliceMask)
                 {
-                    var coord = voxCoord.add(tShift, 3);
-                    if (PrecedesBounds(coord, dir)) continue;
-                    //if (pBounds)
-                    //{
-                    //    entryCoord = startCoord.ToArray();
-                    //    pBounds = false;
-                    //}
+                    var coordX = voxCoord[0] + xTShift;
+                    var coordY = voxCoord[1] + yTShift;
+                    var coordZ = voxCoord[2] + zTShift;
+                    if (PrecedesBounds(coordX, coordY, coordZ, dir)) continue;
+                
 
-                    if (SucceedsBounds(coord, dir))
+                    if (SucceedsBounds(coordX, coordY, coordZ, dir))
                     {
                         succeedCounter++;
                         // Return if you've left the part
@@ -1308,7 +1311,8 @@ namespace TVGL.Voxelization
                         continue;
                     }
 
-                    var eVox = GetVoxelID(coord, lastLevel);
+                    var eVox = GetVoxelID(Constants.MakeIDFromCoordinates((long)coordX, (long)coordY,
+                        (long)coordZ, singleCoordinateShifts[lastLevel]), lastLevel);
                     if (vt.voxelsToRemove.Contains(eVox))
                         continue;
 
@@ -1369,38 +1373,38 @@ namespace TVGL.Voxelization
             }
         }
 
-        private bool SucceedsBounds(IReadOnlyList<int> coord, IList<double> dir)
+        private bool SucceedsBounds(int xCoord, int yCoord, int zCoord, IList<double> dir)
         {
             var uL = voxelsPerDimension[lastLevel];
 
-            if (dir[0] < 0 && coord[0] < 0) return true;
-            if (dir[0] > 0 && coord[0] >= uL[0]) return true;
-            if (dir[0] == 0 && (coord[0] < 0 || coord[0] >= uL[0])) return true;
+            if (dir[0] < 0 && xCoord < 0) return true;
+            if (dir[0] > 0 && xCoord >= uL[0]) return true;
+            if (dir[0] == 0 && (xCoord < 0 || xCoord >= uL[0])) return true;
 
-            if (dir[1] < 0 && coord[1] < 0) return true;
-            if (dir[1] > 0 && coord[1] >= uL[1]) return true;
-            if (dir[1] == 0 && (coord[1] < 0 || coord[1] >= uL[1])) return true;
+            if (dir[1] < 0 && yCoord < 0) return true;
+            if (dir[1] > 0 && yCoord >= uL[1]) return true;
+            if (dir[1] == 0 && (yCoord < 0 || yCoord >= uL[1])) return true;
 
-            if (dir[2] < 0 && coord[2] < 0) return true;
-            if (dir[2] > 0 && coord[2] >= uL[2]) return true;
-            return dir[2] == 0 && (coord[2] < 0 || coord[2] >= uL[2]);
+            if (dir[2] < 0 && zCoord < 0) return true;
+            if (dir[2] > 0 && zCoord >= uL[2]) return true;
+            return dir[2] == 0 && (zCoord < 0 || zCoord >= uL[2]);
         }
 
-        private bool PrecedesBounds(IReadOnlyList<int> coord, IList<double> dir)
+        private bool PrecedesBounds(int xCoord, int yCoord, int zCoord, IList<double> dir)
         {
             var uL = voxelsPerDimension[lastLevel];
 
-            if (dir[0] < 0 && coord[0] >= uL[0]) return true;
-            if (dir[0] > 0 && coord[0] < 0) return true;
-            if (dir[0] == 0 && (coord[0] >= uL[0] || coord[0] < 0)) return true;
+            if (dir[0] < 0 && xCoord >= uL[0]) return true;
+            if (dir[0] > 0 && xCoord < 0) return true;
+            if (dir[0] == 0 && (xCoord >= uL[0] || xCoord < 0)) return true;
 
-            if (dir[1] < 0 && coord[1] >= uL[1]) return true;
-            if (dir[1] > 0 && coord[1] < 0) return true;
-            if (dir[1] == 0 && (coord[1] >= uL[1] || coord[1] < 0)) return true;
+            if (dir[1] < 0 && yCoord >= uL[1]) return true;
+            if (dir[1] > 0 && yCoord < 0) return true;
+            if (dir[1] == 0 && (yCoord >= uL[1] || yCoord < 0)) return true;
 
-            if (dir[2] < 0 && coord[2] >= uL[2]) return true;
-            if (dir[2] > 0 && coord[2] < 0) return true;
-            return dir[2] == 0 && (coord[2] >= uL[2] || coord[2] < 0);
+            if (dir[2] < 0 && zCoord >= uL[2]) return true;
+            if (dir[2] > 0 && zCoord < 0) return true;
+            return dir[2] == 0 && (zCoord >= uL[2] || zCoord < 0);
         }
 
         private bool OutsideBounds(IReadOnlyList<int> coord)
@@ -1432,10 +1436,10 @@ namespace TVGL.Voxelization
                     var x = (int)Math.Floor(center[0] + 0.5 + r * Math.Cos(t) * a[0] + r * Math.Sin(t) * b[0]);
                     var y = (int)Math.Floor(center[1] + 0.5 + r * Math.Cos(t) * a[1] + r * Math.Sin(t) * b[1]);
                     var z = (int)Math.Floor(center[2] + 0.5 + r * Math.Cos(t) * a[2] + r * Math.Sin(t) * b[2]);
-                    voxels.Add(new []{x, y, z});
+                    voxels.Add(new[] { x, y, z });
                 }
             }
-            
+
             return voxels.ToList();
         }
 
@@ -1492,10 +1496,10 @@ namespace TVGL.Voxelization
         private IList<int[]> ThickenMask(IList<int> vox, IList<double> dir,
             double toolDia, params string[] toolOptions)
         {
-            if (toolDia <= 0) return new List<int[]>(new []{ vox.ToArray() });
+            if (toolDia <= 0) return new List<int[]>(new[] { vox.ToArray() });
 
             var radius = 0.5 * toolDia / VoxelSideLengths[lastLevel];
-            toolOptions = toolOptions.Length == 0 ? new [] {"flat"} : toolOptions;
+            toolOptions = toolOptions.Length == 0 ? new[] { "flat" } : toolOptions;
 
             switch (toolOptions[0])
             {
@@ -1508,7 +1512,7 @@ namespace TVGL.Voxelization
                         angle = 118;
                     return GetVoxelsOnCone(vox, dir, radius, angle);
                 default:
-                    var voxDouble = new double[] {vox[0], vox[1], vox[2]};
+                    var voxDouble = new double[] { vox[0], vox[1], vox[2] };
                     return GetVoxelsWithinCircle(voxDouble, dir, radius);
             }
         }

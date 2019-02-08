@@ -222,15 +222,19 @@ namespace TVGL.Voxelization
         /// <returns>System.Int64.</returns>
         internal static long MakeIDFromCoordinates(int[] coordinates, int singleCoordShift)
         {
+            return MakeIDFromCoordinates((long)coordinates[0], (long)coordinates[1],(long)coordinates[2] ,singleCoordShift);
+        }
+        internal static long MakeIDFromCoordinates(long xCoord, long yCoord, long zCoord, int singleCoordShift)
+        {
             var shift = 4 + singleCoordShift;
             //   z0   z1    z2   z3    z4   y0   y1    y2   y3    y4    x0   x1    x2   x3    x4   flags
             // ||----|----||----|----||----|----||----|----||----|----||----|----||----|----||----|----|
             // 64   60    56    52   48    44   40    36   32    28   24    20   16    12    8    4
-            var result = (long)coordinates[0] << shift;
+            var result = xCoord << shift;
             shift += 20;
-            result += (long)coordinates[1] << shift;
+            result += yCoord << shift;
             shift += 20;
-            result += (long)coordinates[2] << shift;
+            result += zCoord << shift;
             return result;
         }
 
