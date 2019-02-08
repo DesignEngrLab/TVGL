@@ -1407,13 +1407,13 @@ namespace TVGL.Voxelization
             return dir[2] == 0 && (zCoord >= uL[2] || zCoord < 0);
         }
 
-        private bool OutsideBounds(IReadOnlyList<int> coord)
+        private bool OutsideBounds(int xCoord, int yCoord, int zCoord)
         {
             var uL = voxelsPerDimension[lastLevel];
 
-            return coord[0] < 0 || coord[0] >= uL[0] ||
-                   coord[1] < 0 || coord[1] >= uL[1] ||
-                   coord[2] < 0 || coord[2] >= uL[2];
+            return xCoord < 0 || xCoord >= uL[0] ||
+                   yCoord < 0 || yCoord >= uL[1] ||
+                   zCoord < 0 || zCoord >= uL[2];
         }
 
         private static IList<int[]> GetVoxelsWithinCircle(IReadOnlyList<double> center, IList<double> dir, double radius, bool edge = false)

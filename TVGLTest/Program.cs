@@ -142,7 +142,7 @@ namespace TVGLPresenterDX
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
-            stopwatch.Start();
+            
             var vs1 = new VoxelizedSolid(ts, 8);
             //var dir = new [] { 1.0, 1.0, 1.0 };
             var dir = new[] { -1.0, -2.0, -3.0 };
@@ -152,8 +152,9 @@ namespace TVGLPresenterDX
             //neg.SolidColor = new Color(KnownColors.LawnGreen);
             //Presenter.ShowAndHang(vs1, neg);
             //var erd = neg.ErodeToNewSolid(vs1, dir);
+            stopwatch.Start();
             var erd = neg.ErodeToNewSolid(vs1, dir, toolDia: 30, toolOptions: new[] { "ball", "118" });
-            erd.SolidColor = new Color(KnownColors.Magenta);
+            //erd.SolidColor = new Color(KnownColors.Magenta);
             //Presenter.ShowAndHang(vs1, erd);
             stopwatch.Stop();
             Console.WriteLine("{0}", stopwatch.Elapsed);
