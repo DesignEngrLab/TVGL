@@ -253,39 +253,61 @@ namespace TVGL
             //put these on a list in CCW direction
             var extremeIndices = new[] { minXIndex, minSumIndex, minYIndex, maxDiffIndex,
                 maxXIndex, maxSumIndex, maxYIndex, minDiffIndex };
-            // however there could be repeats. If there are they will be next to each other in the list.
-            // next, we gather these 3 to 8 points as the seed of the list which is returned.
-            var convexHullCCW = new List<PointLight>();
+            // Gather these 3 to 8 points as the seed of the list which is returned.
+            // However there could be repeats. In this first loop, check if the Sum and Diff
+            // points are contributing to the convex hull, not just considered because of round-off error.
+            // In the next for loop, we will consider if the other extreme points are the same.
+            var tempConvexHull = new List<PointLight>();
             var indicesUsed = new List<int>();
             for (var i = 0; i < 8; i++)
             {
                 var thisExtremeIndex = extremeIndices[i];
                 var prevExtremeIndex = (i == 0) ? extremeIndices[7] : extremeIndices[i - 1];
-                if (thisExtremeIndex == prevExtremeIndex)
+                var nextExtremeIndex = (i == 7) ? extremeIndices[0] : extremeIndices[i + 1];
+                if (i % 2 == 1 && thisExtremeIndex == prevExtremeIndex)
                     // this condition is to check if there are repeats. If so, do not add them more than once
                     continue;
-                var current = points[thisExtremeIndex];
                 var previous = points[prevExtremeIndex];
-                var dx = current.X - previous.X;
-                var dy = current.Y - previous.Y;
+                var current = points[thisExtremeIndex];
+                var next = points[nextExtremeIndex];
                 // due to repeated points and round-off errors, we now check to see that the consecutive points
                 // and indeed following CCW in convex hull order. If points are on top of each other or there
                 // is a slight round-off error (usually due to the sum or diff terms above having a slightly
                 // reduced precision), then it has been observed that a concave edge is produced. This ruins
                 // the remainder of checks.
-                if (dx == 0 && dy == 0) continue;
-                if ((i == 7 || i == 0) && (dx > 0 || dy > 0)) continue;
-                if ((i == 1 || i == 2) && (dx < 0 || dy > 0)) continue;
-                if ((i == 3 || i == 4) && (dx < 0 || dy < 0)) continue;
-                if ((i == 5 || i == 6) && (dx > 0 || dy < 0)) continue;
+                // For this problem, check that the Sum and Diff points did not get added because of round-off (and order),
+                // but because they are actually better. If the point is practically the same, it provides us no benefit. Ignore it.
+                var previousSum = previous.X + previous.Y;
+                var currentSum = current.X + current.Y;
+                var previousDiff = previous.X - previous.Y;
+                var currentDiff = current.X - current.Y;
+                var nextSum = next.X + next.Y;
+                var nextDiff = next.X - next.Y; 
+                if ((i == 1 || i == 5) && (currentSum.IsPracticallySame(previousSum) || currentSum.IsPracticallySame(nextSum))) continue;            
+                if ((i == 3 || i == 7) && (currentDiff.IsPracticallySame(previousDiff) || currentDiff.IsPracticallySame(nextDiff))) continue;               
+                tempConvexHull.Add(current);
+                //If any of the even index extremes (xMax, xMin, yMax, yMin) are the same,
+                //don't re-add them to the indicesUsed list.We will handle the case of even
+                //index extremes in the next loop.
+                if (thisExtremeIndex == prevExtremeIndex) continue;
                 indicesUsed.Add(thisExtremeIndex);
+            }
+            //Consider whether any of the remaining points are the same
+            var n = tempConvexHull.Count;
+            var convexHullCCW = new List<PointLight>();
+            for (var i = 0; i < n; i++)
+            {
+                var current = tempConvexHull[i];
+                var previous = (i == 0) ? tempConvexHull[n - 1] : tempConvexHull[i - 1];
+                if (previous.X == current.X && previous.Y == current.Y) continue;
                 convexHullCCW.Add(current);
             }
+
             #endregion
 
-            /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
-             * steamline the code, these are established. */
-            var cvxVNum = convexHullCCW.Count;
+                /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
+                 * steamline the code, these are established. */
+                var cvxVNum = convexHullCCW.Count;
 
             #region Step 2 : Create the sorted zig-zag line for each extrema edge
             /* Of the 3 to 8 vertices identified in the convex hull, ... */
@@ -302,7 +324,7 @@ namespace TVGL
             indicesUsed = indicesUsed.OrderBy(index => index).ToList();
             var indexOfUsedIndices = 0;
 
-            //Set local variables for the points in the convex hull
+            #region Set local variables for the points in the convex hull
             var p0 = convexHullCCW[0];
             var p0X = p0.X;
             var p0Y = p0.Y;
@@ -410,6 +432,7 @@ namespace TVGL
                 v2X = p0X - p2X;
                 v2Y = p0Y - p2Y;
             }
+            #endregion
 
             /* Now a big loop. For each of the original vertices, check them with the 3 to 8 edges to see if they 
              * are inside or out. If they are out, add them to the proper row of the hullCands array. */
@@ -423,112 +446,85 @@ namespace TVGL
                     var point = points[i];
                     var pointX = point.X;
                     var pointY = point.Y;
-
+                    //if (pointX.IsPracticallySame(6.01, 0.01) && pointY.IsPracticallySame(34.37, 0.01)) { }
                     //cycle over the 3 to 8 edges. however, notice the break below. 
                     // once point is successfully added to one side, there is no need to check the remainder
-                    var chosenJ = -1;
-                    var value = -1.0;
-                    while(chosenJ == -1)
+                    while(true)
                     {
                         //First check p0 to p1
-                        var b_X = pointX - p0X;
-                        var b_Y = pointY - p0Y;
-                        if (!(v0X * b_Y - v0Y * b_X > 0)) // Cross product 2D
+                        var bX = pointX - p0X;
+                        var bY = pointY - p0Y;
+                        if ((v0X * bY - v0Y * bX).IsLessThanNonNegligible()) // Cross product 2D
                         {
-                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                            // the sorted dictionary
-                            value = v0X * b_X + v0Y * b_Y; // GetRow + dot
-                            chosenJ = 0;
+                            var value = v0X * bX + v0Y * bY; // GetRow + dot
                             hullCands[0].Add(value, point);
                             break;
                         }
-                        // else then skip this point since it's not "to the left of" the edge
                         //P1 to P2
-                        b_X = pointX - p1X;
-                        b_Y = pointY - p1Y;
-                        if (!(v1X * b_Y - v1Y * b_X > 0)) // Cross product 2D
+                        bX = pointX - p1X;
+                        bY = pointY - p1Y;
+                        if ((v1X * bY - v1Y * bX).IsLessThanNonNegligible()) // Cross product 2D
                         {
-                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                            // the sorted dictionary
-                            value = v1X * b_X + v1Y * b_Y; // GetRow + dot
-                            chosenJ = 1;
+                            var value = v1X * bX + v1Y * bY; // GetRow + dot
                             hullCands[1].Add(value, point);
                             break;
                         }
                         //Next line P2 to next point (either p0 or p3)    
-                        b_X = pointX - p2X;
-                        b_Y = pointY - p2Y;
-                        if (!(v2X * b_Y - v2Y * b_X > 0)) // Cross product 2D
+                        bX = pointX - p2X;
+                        bY = pointY - p2Y;
+                        if ((v2X * bY - v2Y * bX).IsLessThanNonNegligible()) // Cross product 2D
                         {
-                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                            // the sorted dictionary
-                            value = v2X * b_X + v2Y * b_Y; // GetRow + dot
-                            chosenJ = 2;
+                            var value = v2X * bX + v2Y * bY; // GetRow + dot
                             hullCands[2].Add(value, point);
                             break;
                         }
                         if (cvxVNum == 3) break;
                         //Next line: P3 to next point (either p0 or p4)  
-                        b_X = pointX - p3X;
-                        b_Y = pointY - p3Y;
-                        if (!(v3X * b_Y - v3Y * b_X > 0)) // Cross product 2D
+                        bX = pointX - p3X;
+                        bY = pointY - p3Y;
+                        if ((v3X * bY - v3Y * bX).IsLessThanNonNegligible()) // Cross product 2D
                         {
-                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                            // the sorted dictionary
-                            value = v3X * b_X + v3Y * b_Y; // GetRow + dot
-                            chosenJ = 3;
+                            var value = v3X * bX + v3Y * bY; // GetRow + dot
                             hullCands[3].Add(value, point);
                             break;
                         }
                         if (cvxVNum == 4) break;
                         //Next line: P4 to next point (either p0 or p5)  
-                        b_X = pointX - p4X;
-                        b_Y = pointY - p4Y;
-                        if (!(v4X * b_Y - v4Y * b_X > 0)) // Cross product 2D
+                        bX = pointX - p4X;
+                        bY = pointY - p4Y;
+                        if ((v4X * bY - v4Y * bX).IsLessThanNonNegligible()) // Cross product 2D
                         {
-                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                            // the sorted dictionary
-                            value = v4X * b_X + v4Y * b_Y; // GetRow + dot
-                            chosenJ = 4;
+                            var value = v4X * bX + v4Y * bY; // GetRow + dot
                             hullCands[4].Add(value, point);
                             break;
                         }
                         if (cvxVNum == 5) break;
                         //Next line: P5 to next point (either p0 or p6)  
-                        b_X = pointX - p5X;
-                        b_Y = pointY - p5Y;
-                        if (!(v5X * b_Y - v5Y * b_X > 0)) // Cross product 2D
+                        bX = pointX - p5X;
+                        bY = pointY - p5Y;
+                        if ((v5X * bY - v5Y * bX).IsLessThanNonNegligible()) // Cross product 2D
                         {
-                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                            // the sorted dictionary
-                            value = v5X * b_X + v5Y * b_Y; // GetRow + dot
-                            chosenJ = 5;
+                            var value = v5X * bX + v5Y * bY; // GetRow + dot
                             hullCands[5].Add(value, point);
                             break;
                         }
                         if (cvxVNum == 6) break;
                         //Next line: P6 to next point (either p0 or p7)  
-                        b_X = pointX - p6X;
-                        b_Y = pointY - p6Y;
-                        if (!(v6X * b_Y - v6Y * b_X > 0)) // Cross product 2D
+                        bX = pointX - p6X;
+                        bY = pointY - p6Y;
+                        if ((v6X * bY - v6Y * bX).IsLessThanNonNegligible()) // Cross product 2D
                         {
-                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                            // the sorted dictionary
-                            value = v6X * b_X + v6Y * b_Y; // GetRow + dot
-                            chosenJ = 6;
+                            var value = v6X * bX + v6Y * bY; // GetRow + dot
                             hullCands[6].Add(value, point);
                             break;
                         }
                         if (cvxVNum == 7) break;
                         //Next line: P7 to P0 
-                        b_X = pointX - p7X;
-                        b_Y = pointY - p7Y;
-                        if (!(v7X * b_Y - v7Y * b_X > 0)) // Cross product 2D
+                        bX = pointX - p7X;
+                        bY = pointY - p7Y;
+                        if ((v7X * bY - v7Y * bX).IsLessThanNonNegligible()) // Cross product 2D
                         {
-                            // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                            // the sorted dictionary
-                            value = v7X * b_X + v7Y * b_Y; // GetRow + dot
-                            chosenJ = 7;
+                            var value = v7X * bX + v7Y * bY; // GetRow + dot
                             hullCands[7].Add(value, point);
                             break;
                         }
@@ -598,7 +594,7 @@ namespace TVGL
                         double lX = hc[i].X - hc[i - 1].X, lY = hc[i].Y - hc[i - 1].Y;
                         double rX = hc[i + 1].X - hc[i].X, rY = hc[i + 1].Y - hc[i].Y;
                         double zValue = lX * rY - lY * rX;
-                        if (zValue <= 0)
+                        if (!zValue.IsGreaterThanNonNegligible(Constants.LineSlopeTolerance)) // <= 0
                         {
                             /* remove any vertices that create concave angles. */
                             hc.RemoveAt(i);
