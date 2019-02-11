@@ -199,8 +199,9 @@ namespace TVGL
             // points and the value
             for (var i = 0; i < numPoints; i++)
             {
-                var x = points[i].X;
-                var y = points[i].Y;
+                var p = points[i];
+                var x = p.X;
+                var y = p.Y;
                 var sum = x + y;
                 var diff = x - y;
                 if (x < minX)
@@ -258,7 +259,6 @@ namespace TVGL
             // points are contributing to the convex hull, not just considered because of round-off error.
             // In the next for loop, we will consider if the other extreme points are the same.
             var tempConvexHull = new List<PointLight>();
-            var indicesUsed = new List<int>();
             for (var i = 0; i < 8; i++)
             {
                 var thisExtremeIndex = extremeIndices[i];
@@ -286,11 +286,6 @@ namespace TVGL
                 if ((i == 1 || i == 5) && (currentSum.IsPracticallySame(previousSum) || currentSum.IsPracticallySame(nextSum))) continue;            
                 if ((i == 3 || i == 7) && (currentDiff.IsPracticallySame(previousDiff) || currentDiff.IsPracticallySame(nextDiff))) continue;               
                 tempConvexHull.Add(current);
-                //If any of the even index extremes (xMax, xMin, yMax, yMin) are the same,
-                //don't re-add them to the indicesUsed list.We will handle the case of even
-                //index extremes in the next loop.
-                if (thisExtremeIndex == prevExtremeIndex) continue;
-                indicesUsed.Add(thisExtremeIndex);
             }
             //Consider whether any of the remaining points are the same
             var n = tempConvexHull.Count;
@@ -305,9 +300,9 @@ namespace TVGL
 
             #endregion
 
-                /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
-                 * steamline the code, these are established. */
-                var cvxVNum = convexHullCCW.Count;
+            /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
+             * steamline the code, these are established. */
+            var cvxVNum = convexHullCCW.Count;
 
             #region Step 2 : Create the sorted zig-zag line for each extrema edge
             /* Of the 3 to 8 vertices identified in the convex hull, ... */
@@ -319,128 +314,128 @@ namespace TVGL
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
             for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>(new NoEqualSort());
 
-            // the used indices are sorted from least to greatest in order to prevent the following
+            // The used indices are sorted from least to greatest in order to prevent the following
             // loop from checking this indices again
-            indicesUsed = indicesUsed.OrderBy(index => index).ToList();
+            var noDuplicates = new HashSet<int>(extremeIndices); //gets rid of duplicates
+            var indicesUsed = new List<int>(noDuplicates.OrderBy(index => index));
             var indexOfUsedIndices = 0;
 
             #region Set local variables for the points in the convex hull
+            //This is used to limit the number of calls to convexHullCCW[] and point.X and point.Y, which 
+            //can take a significant amount of time. 
+            //Initialize the point locations and vectors:
+            //At minimum, the convex hull must contain two points (e.g. consider three points in a near line,
+            //the third point will be added later, since it was not an extreme.)
             var p0 = convexHullCCW[0];
             var p0X = p0.X;
             var p0Y = p0.Y;
             var p1 = convexHullCCW[1];
             var p1X = p1.X;
             var p1Y = p1.Y;
-            var p2 = convexHullCCW[2];
-            var p2X = p2.X;
-            var p2Y = p2.Y;
-            var p3X = double.NaN;
-            var p3Y = double.NaN;
-            var p4X = double.NaN;
-            var p4Y = double.NaN;
-            var p5X = double.NaN;
-            var p5Y = double.NaN;
-            var p6X = double.NaN;
-            var p6Y = double.NaN;
-            var p7X = double.NaN;
-            var p7Y = double.NaN;
-
+            double p2X = 0, p2Y = 0, p3X = 0, p3Y = 0, p4X = 0, p4Y = 0, 
+                p5X = 0, p5Y = 0, p6X = 0, p6Y = 0, p7X = 0, p7Y = 0;
             var v0X = p1X - p0X;
             var v0Y = p1Y - p0Y;
-            var v1X = p2X - p1X;
-            var v1Y = p2Y - p1Y;           
-            var v2X = double.NaN;
-            var v2Y = double.NaN;
-            var v3X = double.NaN;
-            var v3Y = double.NaN;         
-            var v4X = double.NaN;
-            var v4Y = double.NaN;           
-            var v5X = double.NaN;
-            var v5Y = double.NaN;          
-            var v6X = double.NaN;
-            var v6Y = double.NaN;
-            var v7X = double.NaN;
-            var v7Y = double.NaN;
-            if (cvxVNum > 3)
+            double v1X, v1Y, v2X = 0, v2Y = 0, v3X = 0, v3Y = 0, v4X = 0, v4Y = 0,
+                v5X = 0, v5Y = 0, v6X = 0, v6Y = 0, v7X = 0, v7Y = 0;
+            //A big if statement to make sure the convex hull wraps properly, since the number of initial cvxHull points changes
+            if (cvxVNum > 2)
             {
-                var p3 = convexHullCCW[3];
-                p3X = p3.X;
-                p3Y = p3.Y;
-                v2X = p3X - p2X;
-                v2Y = p3Y - p2Y;
-                if (cvxVNum > 4)
+                var p2 = convexHullCCW[2];
+                p2X = p2.X;
+                p2Y = p2.Y;
+                v1X = p2X - p1X;
+                v1Y = p2Y - p1Y;
+                if (cvxVNum > 3)
                 {
-                    var p4 = convexHullCCW[4];
-                    p4X = p4.X;
-                    p4Y = p4.Y;
-                    v3X = p4X - p3X;
-                    v3Y = p4Y - p3Y;
-                    if (cvxVNum > 5)
+                    var p3 = convexHullCCW[3];
+                    p3X = p3.X;
+                    p3Y = p3.Y;
+                    v2X = p3X - p2X;
+                    v2Y = p3Y - p2Y;
+                    if (cvxVNum > 4)
                     {
-                        var p5 = convexHullCCW[5];
-                        p5X = p5.X;
-                        p5Y = p5.Y;
-                        v4X = p5X - p4X;
-                        v4Y = p5Y - p4Y;
-                        if (cvxVNum > 6)
+                        var p4 = convexHullCCW[4];
+                        p4X = p4.X;
+                        p4Y = p4.Y;
+                        v3X = p4X - p3X;
+                        v3Y = p4Y - p3Y;
+                        if (cvxVNum > 5)
                         {
-                            var p6 = convexHullCCW[6];
-                            p6X = p6.X;
-                            p6Y = p6.Y;
-                            v5X = p6X - p5X;
-                            v5Y = p6Y - p5Y;
-                            if (cvxVNum > 7)
+                            var p5 = convexHullCCW[5];
+                            p5X = p5.X;
+                            p5Y = p5.Y;
+                            v4X = p5X - p4X;
+                            v4Y = p5Y - p4Y;
+                            if (cvxVNum > 6)
                             {
-                                var p7 = convexHullCCW[7];
-                                p7X = p7.X;
-                                p7Y = p7.Y;
-                                v6X = p7X - p6X;
-                                v6Y = p7Y - p6Y;
-                                //Wrap arounf from 7
-                                v7X = p0X - p7X;
-                                v7Y = p0Y - p7Y;
+                                var p6 = convexHullCCW[6];
+                                p6X = p6.X;
+                                p6Y = p6.Y;
+                                v5X = p6X - p5X;
+                                v5Y = p6Y - p5Y;
+                                if (cvxVNum > 7)
+                                {
+                                    var p7 = convexHullCCW[7];
+                                    p7X = p7.X;
+                                    p7Y = p7.Y;
+                                    v6X = p7X - p6X;
+                                    v6Y = p7Y - p6Y;
+                                    //Wrap around from 7
+                                    v7X = p0X - p7X;
+                                    v7Y = p0Y - p7Y;
+                                }
+                                else //Wrap around from 6
+                                {
+                                    v6X = p0X - p6X;
+                                    v6Y = p0Y - p6Y;
+                                }
                             }
-                            else //Wrap arounf from 6
+                            else //Wrap around from 5
                             {
-                                v6X = p0X - p6X;
-                                v6Y = p0Y - p6Y;
+                                v5X = p0X - p5X;
+                                v5Y = p0Y - p5Y;
                             }
                         }
-                        else //Wrap arounf from 5
+                        else
                         {
-                            v5X = p0X - p5X;
-                            v5Y = p0Y - p5Y;
+                            //Wrap around from 4
+                            v4X = p0X - p4X;
+                            v4Y = p0Y - p4Y;
                         }
                     }
                     else
                     {
-                        //Wrap around from 4
-                        v4X = p0X - p4X;
-                        v4Y = p0Y - p4Y;
+                        //Wrap around from 3
+                        v3X = p0X - p3X;
+                        v3Y = p0Y - p3Y;
                     }
                 }
                 else
                 {
-                    //Wrap around from 3
-                    v3X = p0X - p3X;
-                    v3Y = p0Y - p3Y;
+                    //Wrap around from 2
+                    v2X = p0X - p2X;
+                    v2Y = p0Y - p2Y;
                 }
             }
             else
             {
-                //Wrap around from 2
-                v2X = p0X - p2X;
-                v2Y = p0Y - p2Y;
+                //Wrap around from 1
+                v1X = p0X - p1X;
+                v1Y = p0Y - p1Y;
             }
             #endregion
 
             /* Now a big loop. For each of the original vertices, check them with the 3 to 8 edges to see if they 
              * are inside or out. If they are out, add them to the proper row of the hullCands array. */
+            var nextUsedIndex = indicesUsed[indexOfUsedIndices++]; //Note: it increments after getting the current index
             for (var i = 0; i < numPoints; i++)
             {
-                if (indexOfUsedIndices < indicesUsed.Count && i == indicesUsed[indexOfUsedIndices])
+                if (indexOfUsedIndices < indicesUsed.Count && i == nextUsedIndex)
+                {
                     //in order to avoid a contains function call, we know to only check with next usedIndex in order
-                    indexOfUsedIndices++;
+                    nextUsedIndex = indicesUsed[indexOfUsedIndices++]; //Note: it increments after getting the current index
+                }      
                 else
                 {
                     var point = points[i];
@@ -530,38 +525,9 @@ namespace TVGL
                         }
                         break;
                     }
-
-                    //var current = convexHullCCW[0];
-                    //var pX = current.X;
-                    //var pY = current.Y;
-                    //for (var j = 0; j < cvxVNum; j++) //cycle over the 3 to 8 edges. however, notice the break below. 
-                    //// once point is successfully added to one side, there is no need to check the remainder
-                    //{
-                    //    var nextIndex = (j == last) ? 0 : j + 1;
-                    //    var next = convexHullCCW[nextIndex];
-                    //    var nextX = next.X;
-                    //    var nextY = next.Y;
-                    //    var vX = nextX - pX;
-                    //    var vY = nextY - pY;
-                    //    var bX = pointX - pX;
-                    //    var bY = pointY - pY;
-                    //    double val = vX * bY - vY * bX; // Cross product 2D
-                    //    pX = nextX;
-                    //    pY = nextY;
-                    //    if (val > 0) continue; // then skip this point since it's not "to the left of" the edge
-                    //    // if it is to be included "val" is rewritten as the "position along" which is the key to 
-                    //    // the sorted dictionary
-                    //    val = vX * bX + vY * bY; // GetRow + dot
-                    //    //hullCands[j].Add(val, point);
-                    //    if (chosenJ != j) { }
-                    //    if (!value.IsPracticallySame(val)) { }
-                    //    break;
-                    //}
                 }
             }
             #endregion
-
-            //return convexHullCCW;
 
             #region Step 3: now remove concave "zigs" from each sorted dictionary
             /* Now it's time to go through our array of sorted lists of tuples. We search backwards through
