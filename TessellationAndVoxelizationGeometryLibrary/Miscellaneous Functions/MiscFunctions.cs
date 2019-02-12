@@ -2018,12 +2018,12 @@ namespace TVGL
         /// <param name="radius"></param>
         /// <param name="radianIncrement"></param>
         /// <returns></returns>
-        public static List<Point> CreateCirclePath(Point center, double radius, double radianIncrement = Math.PI / 50.0)
+        public static List<PointLight> CreateCirclePath(PointLight center, double radius, double radianIncrement = Math.PI / 50.0)
         {
-            var path = new List<Point>();
+            var path = new List<PointLight>();
             for (var theta = 0.0; theta < Math.PI * 2; theta += radianIncrement)
             {
-                path.Add(new Point(radius * Math.Cos(theta) + center.X, radius * Math.Sin(theta) + center.Y));
+                path.Add(new PointLight(radius * Math.Cos(theta) + center.X, radius * Math.Sin(theta) + center.Y));
             }
             return path;
         }
@@ -2034,7 +2034,7 @@ namespace TVGL
         /// <param name="circle"></param>
         /// <param name="radianIncrement"></param>
         /// <returns></returns>
-        public static List<Point> CreateCirclePath(BoundingCircle circle, double radianIncrement = Math.PI / 50.0)
+        public static List<PointLight> CreateCirclePath(BoundingCircle circle, double radianIncrement = Math.PI / 50.0)
         {
             return CreateCirclePath(circle.Center, circle.Radius, radianIncrement);
         }

@@ -429,7 +429,7 @@ namespace TVGL
         /// <summary>
         ///     Center Point of circle
         /// </summary>
-        public Point Center;
+        public PointLight Center;
 
         /// <summary>
         ///     Radius of circle
@@ -451,7 +451,7 @@ namespace TVGL
         /// </summary>
         /// <param name="radius">The radius.</param>
         /// <param name="center">The center.</param>
-        public BoundingCircle(double radius, Point center = null)
+        public BoundingCircle(double radius, PointLight center)
         {
             Center = center;
             Radius = radius;
