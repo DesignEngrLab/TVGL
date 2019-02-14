@@ -336,12 +336,28 @@ namespace TVGL.IOFunctions
 
         private static TVGLFileData MakeFileData(VoxelizedSolid vs)
         {
+            double[] ConvexHullCenter;
+            double ConvexHullArea;
+            double ConvexHullVolume;
+            if (vs.ConvexHull is null)
+            {
+                ConvexHullCenter = null;
+                ConvexHullArea = 0;
+                ConvexHullVolume = 0;
+            }
+            else
+            {
+                ConvexHullCenter = vs.ConvexHull.Center;
+                ConvexHullArea = vs.ConvexHull.SurfaceArea;
+                ConvexHullVolume = vs.ConvexHull.Volume;
+            }
+
             var result = new TVGLFileData
             {
                 Center = vs.Center,
-                ConvexHullCenter = vs.ConvexHull.Center,
-                ConvexHullArea = vs.ConvexHull.SurfaceArea,
-                ConvexHullVolume = vs.ConvexHull.Volume,
+                ConvexHullCenter = ConvexHullCenter,
+                ConvexHullArea = ConvexHullArea,
+                ConvexHullVolume = ConvexHullVolume,
                 HasUniformColor = true,
                 Language = vs.Language,
                 Mass = vs.Mass,
@@ -359,9 +375,14 @@ namespace TVGL.IOFunctions
                 BitLevelDistribution = (int[])vs.bitLevelDistribution.Clone()
             };
             result.Voxels = new string[vs.bitLevelDistribution.Length];
-            for (int i = 0; i < result.Voxels.Length; i++)
-                result.Voxels[i] = vs.Voxels(i, true)
-                        .SelectMany(v => BitConverter.GetBytes(v.ID)).ToString();
+
+            for (int i = 0; i < vs.NumberOfLevels; i++)
+            {
+                var byteArray = (vs.Voxels(i, true)
+                    .SelectMany(v => BitConverter.GetBytes(v.ID))).ToArray();
+                result.Voxels[i] = BitConverter.ToString(byteArray).Replace("-","");  
+            }
+
             result.Colors = vs.SolidColor.ToString();
             result.Comments.AddRange(vs.Comments);
             if (vs._inertiaTensor != null)

@@ -154,7 +154,10 @@ namespace TVGL.Voxelization
             voxelsPerDimension = new int[NumberOfLevels][];
             for (var i = 0; i < numberOfLevels; i++)
                 voxelsPerDimension[i] = dimensions.Select(d => (int)Math.Ceiling(d / VoxelSideLengths[i])).ToArray();
-            byte[] bytes = Convert.FromBase64String(fileData.Voxels[0]);
+            var numChars0 = fileData.Voxels[0].Length;
+            byte[] bytes = new byte[numChars0 / 2];
+            for (var i = 0; i < numChars0; i += 2)
+                bytes[i / 2] = Convert.ToByte(fileData.Voxels[0].Substring(i, 2), 16);
             for (int i = 0; i < bytes.Length; i += 8)
             {
                 var ID = BitConverter.ToInt64(bytes, i);
@@ -164,7 +167,10 @@ namespace TVGL.Voxelization
 
             for (int i = 1; i < bitLevelDistribution.Length; i++)
             {
-                bytes = Convert.FromBase64String(fileData.Voxels[i]);
+                var numChars = fileData.Voxels[i].Length;
+                bytes = new byte[numChars / 2];
+                for (var k = 0; k < numChars; k += 2)
+                    bytes[k / 2] = Convert.ToByte(fileData.Voxels[i].Substring(k, 2), 16);
                 for (int j = 0; j < bytes.Length; j += 8)
                 {
                     var ID = BitConverter.ToInt64(bytes, j);
