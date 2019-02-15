@@ -16,7 +16,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using StarMathLib;
 
 namespace TVGL
 {
@@ -225,11 +224,11 @@ namespace TVGL
                     maxY = y;
                 }
                 // so that's the Akl-Toussaint (to find extrema in x and y). here, we go a step 
-                // farther and check the sum and difference of x and y. instead of a initial convex
+                // further and check the sum and difference of x and y. instead of a initial convex
                 // quadrilateral we have (potentially) a convex octagon. Because we are adding or substracting
                 // there is a slight time penalty, but that seems to be made up in the next two parts where
-                // having more sortedlist (with fewer elements) is faster than fewer sortedlists (with more
-                // elements. 
+                // having more sortedlists (with fewer elements each) is faster than fewer sortedlists (with more
+                // elements). 
                 if (sum < minSum)
                 {
                     minSumIndex = i;
@@ -251,58 +250,53 @@ namespace TVGL
                     maxDiff = diff;
                 }
             }
-            //put these on a list in CCW direction
-            var extremeIndices = new[] { minXIndex, minSumIndex, minYIndex, maxDiffIndex,
-                maxXIndex, maxSumIndex, maxYIndex, minDiffIndex };
-            // Gather these 3 to 8 points as the seed of the list which is returned.
-            // However there could be repeats. In this first loop, check if the Sum and Diff
-            // points are contributing to the convex hull, not just considered because of round-off error.
-            // In the next for loop, we will consider if the other extreme points are the same.
-            var tempConvexHull = new List<PointLight>();
-            for (var i = 0; i < 8; i++)
+            //put these on a list in counter-clockwise (CCW) direction
+            var extremeIndices = new List<int>(new[]{ minXIndex, minSumIndex, minYIndex, maxDiffIndex,
+                maxXIndex, maxSumIndex, maxYIndex, minDiffIndex });
+            var cvxVNum = 8; //in some cases, we need to reduce from this eight to a smaller set
+            // The next two loops handle this reduction from 8 to as few as 3.
+            // In the first loop, simply check if any indices are repeated. Thanks to the CCW order,
+            // any repeat indices are adjacent on the list. Start from the back of the loop and
+            // remove towards zero.
+            for (int i = cvxVNum - 1; i >= 0; i--)
             {
                 var thisExtremeIndex = extremeIndices[i];
-                var prevExtremeIndex = (i == 0) ? extremeIndices[7] : extremeIndices[i - 1];
-                var nextExtremeIndex = (i == 7) ? extremeIndices[0] : extremeIndices[i + 1];
-                if (i % 2 == 1 && thisExtremeIndex == prevExtremeIndex)
-                    // this condition is to check if there are repeats. If so, do not add them more than once
-                    continue;
-                var previous = points[prevExtremeIndex];
-                var current = points[thisExtremeIndex];
-                var next = points[nextExtremeIndex];
-                // due to repeated points and round-off errors, we now check to see that the consecutive points
-                // and indeed following CCW in convex hull order. If points are on top of each other or there
-                // is a slight round-off error (usually due to the sum or diff terms above having a slightly
-                // reduced precision), then it has been observed that a concave edge is produced. This ruins
-                // the remainder of checks.
-                // For this problem, check that the Sum and Diff points did not get added because of round-off (and order),
-                // but because they are actually better. If the point is practically the same, it provides us no benefit. Ignore it.
-                var previousSum = previous.X + previous.Y;
-                var currentSum = current.X + current.Y;
-                var previousDiff = previous.X - previous.Y;
-                var currentDiff = current.X - current.Y;
-                var nextSum = next.X + next.Y;
-                var nextDiff = next.X - next.Y; 
-                if ((i == 1 || i == 5) && (currentSum.IsPracticallySame(previousSum) || currentSum.IsPracticallySame(nextSum))) continue;            
-                if ((i == 3 || i == 7) && (currentDiff.IsPracticallySame(previousDiff) || currentDiff.IsPracticallySame(nextDiff))) continue;               
-                tempConvexHull.Add(current);
+                var nextExtremeIndex = (i == cvxVNum - 1) ? extremeIndices[0] : extremeIndices[i + 1];
+                if (thisExtremeIndex == nextExtremeIndex)
+                {
+                    cvxVNum--;
+                    extremeIndices.RemoveAt(i);
+                }
             }
-            //Consider whether any of the remaining points are the same
-            var n = tempConvexHull.Count;
+            // before we check if points are on top of one another or have some round-off error issues, these
+            // indices are stored and sorted numerically for use in the second half of part 2 where we go through
+            // all the points a second time. 
+            var indicesUsed = extremeIndices.OrderBy(x => x).ToArray();
+
+            // create the list that is eventually returned by the function. Initially it will have the 3 to 8 extrema
+            // (as is produced in the following loop).
             var convexHullCCW = new List<PointLight>();
-            for (var i = 0; i < n; i++)
+            for (var i = cvxVNum - 1; i >= 0; i--)
             {
-                var current = tempConvexHull[i];
-                var previous = (i == 0) ? tempConvexHull[n - 1] : tempConvexHull[i - 1];
-                if (previous.X == current.X && previous.Y == current.Y) continue;
-                convexHullCCW.Add(current);
+                // in rare cases, often due to some roundoff error, the extrema point will produce a concavity with its
+                // two neighbors. Here, we check that case. If it does make a concavity we don't use it in the initial convex
+                // hull (we have captured its index and will still skip it below. it will not be searched a second time).
+                // counting backwards again, we grab the previous and next point and check the "cross product" to see if the 
+                // vertex in convex. if it is we add it to the returned list. 
+                var currentPt = points[extremeIndices[i]];
+                var prevPt = points[(i == 0) ? extremeIndices[cvxVNum - 1] : extremeIndices[i - 1]];
+                var nextPt = points[(i == cvxVNum - 1) ? extremeIndices[0] : extremeIndices[i + 1]];
+                if ((nextPt.X - currentPt.X) * (prevPt.Y - currentPt.Y) + (nextPt.Y - currentPt.Y) * (currentPt.X - prevPt.X) > 0)
+                    convexHullCCW.Insert(0, currentPt); //because we are counting backwards, we need to ensure that new points are added
+                // to the front of the list
+                else
+                {
+                    cvxVNum--;
+                    extremeIndices.RemoveAt(i); //the only reason to do this is to ensure that - if the loop is to 
+                    //continue - that the vectors are made to the proper new adjacent vertices
+                }
             }
-
             #endregion
-
-            /* the following limits are used extensively in for-loop below. In order to reduce the arithmetic calls and
-             * steamline the code, these are established. */
-            var cvxVNum = convexHullCCW.Count;
 
             #region Step 2 : Create the sorted zig-zag line for each extrema edge
             /* Of the 3 to 8 vertices identified in the convex hull, ... */
@@ -312,12 +306,8 @@ namespace TVGL
              * are found for a particular side (More on this in 23 lines). */
             hullCands = new SortedList<double, PointLight>[cvxVNum];
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
-            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>(new NoEqualSort());
+            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>();
 
-            // The used indices are sorted from least to greatest in order to prevent the following
-            // loop from checking this indices again
-            var noDuplicates = new HashSet<int>(extremeIndices); //gets rid of duplicates
-            var indicesUsed = new List<int>(noDuplicates.OrderBy(index => index));
             var indexOfUsedIndices = 0;
 
             #region Set local variables for the points in the convex hull
@@ -332,7 +322,7 @@ namespace TVGL
             var p1 = convexHullCCW[1];
             var p1X = p1.X;
             var p1Y = p1.Y;
-            double p2X = 0, p2Y = 0, p3X = 0, p3Y = 0, p4X = 0, p4Y = 0, 
+            double p2X = 0, p2Y = 0, p3X = 0, p3Y = 0, p4X = 0, p4Y = 0,
                 p5X = 0, p5Y = 0, p6X = 0, p6Y = 0, p7X = 0, p7Y = 0;
             var v0X = p1X - p0X;
             var v0Y = p1Y - p0Y;
@@ -431,100 +421,25 @@ namespace TVGL
             var nextUsedIndex = indicesUsed[indexOfUsedIndices++]; //Note: it increments after getting the current index
             for (var i = 0; i < numPoints; i++)
             {
-                if (indexOfUsedIndices < indicesUsed.Count && i == nextUsedIndex)
-                {
+                if (indexOfUsedIndices < indicesUsed.Length && i == nextUsedIndex)
                     //in order to avoid a contains function call, we know to only check with next usedIndex in order
                     nextUsedIndex = indicesUsed[indexOfUsedIndices++]; //Note: it increments after getting the current index
-                }      
                 else
                 {
                     var point = points[i];
-                    var pointX = point.X;
-                    var pointY = point.Y;
-                    //if (pointX.IsPracticallySame(6.01, 0.01) && pointY.IsPracticallySame(34.37, 0.01)) { }
-                    //cycle over the 3 to 8 edges. however, notice the break below. 
-                    // once point is successfully added to one side, there is no need to check the remainder
-                    while(true)
-                    {
-                        //First check p0 to p1
-                        var bX = pointX - p0X;
-                        var bY = pointY - p0Y;
-                        if ((v0X * bY - v0Y * bX).IsLessThanNonNegligible()) // Cross product 2D
-                        {
-                            var value = v0X * bX + v0Y * bY; // GetRow + dot
-                            hullCands[0].Add(value, point);
-                            break;
-                        }
-                        //P1 to P2
-                        bX = pointX - p1X;
-                        bY = pointY - p1Y;
-                        if ((v1X * bY - v1Y * bX).IsLessThanNonNegligible()) // Cross product 2D
-                        {
-                            var value = v1X * bX + v1Y * bY; // GetRow + dot
-                            hullCands[1].Add(value, point);
-                            break;
-                        }
-                        //Next line P2 to next point (either p0 or p3)    
-                        bX = pointX - p2X;
-                        bY = pointY - p2Y;
-                        if ((v2X * bY - v2Y * bX).IsLessThanNonNegligible()) // Cross product 2D
-                        {
-                            var value = v2X * bX + v2Y * bY; // GetRow + dot
-                            hullCands[2].Add(value, point);
-                            break;
-                        }
-                        if (cvxVNum == 3) break;
-                        //Next line: P3 to next point (either p0 or p4)  
-                        bX = pointX - p3X;
-                        bY = pointY - p3Y;
-                        if ((v3X * bY - v3Y * bX).IsLessThanNonNegligible()) // Cross product 2D
-                        {
-                            var value = v3X * bX + v3Y * bY; // GetRow + dot
-                            hullCands[3].Add(value, point);
-                            break;
-                        }
-                        if (cvxVNum == 4) break;
-                        //Next line: P4 to next point (either p0 or p5)  
-                        bX = pointX - p4X;
-                        bY = pointY - p4Y;
-                        if ((v4X * bY - v4Y * bX).IsLessThanNonNegligible()) // Cross product 2D
-                        {
-                            var value = v4X * bX + v4Y * bY; // GetRow + dot
-                            hullCands[4].Add(value, point);
-                            break;
-                        }
-                        if (cvxVNum == 5) break;
-                        //Next line: P5 to next point (either p0 or p6)  
-                        bX = pointX - p5X;
-                        bY = pointY - p5Y;
-                        if ((v5X * bY - v5Y * bX).IsLessThanNonNegligible()) // Cross product 2D
-                        {
-                            var value = v5X * bX + v5Y * bY; // GetRow + dot
-                            hullCands[5].Add(value, point);
-                            break;
-                        }
-                        if (cvxVNum == 6) break;
-                        //Next line: P6 to next point (either p0 or p7)  
-                        bX = pointX - p6X;
-                        bY = pointY - p6Y;
-                        if ((v6X * bY - v6Y * bX).IsLessThanNonNegligible()) // Cross product 2D
-                        {
-                            var value = v6X * bX + v6Y * bY; // GetRow + dot
-                            hullCands[6].Add(value, point);
-                            break;
-                        }
-                        if (cvxVNum == 7) break;
-                        //Next line: P7 to P0 
-                        bX = pointX - p7X;
-                        bY = pointY - p7Y;
-                        if ((v7X * bY - v7Y * bX).IsLessThanNonNegligible()) // Cross product 2D
-                        {
-                            var value = v7X * bX + v7Y * bY; // GetRow + dot
-                            hullCands[7].Add(value, point);
-                            break;
-                        }
-                        break;
-                    }
+                    if (AddToListAlong(hullCands[0], point, p0X, p0Y, v0X, v0Y)) continue;
+                    if (AddToListAlong(hullCands[1], point, p1X, p1Y, v1X, v1Y)) continue;
+                    if (AddToListAlong(hullCands[2], point, p2X, p2Y, v2X, v2Y)) continue;
+                    if (cvxVNum == 3) continue;
+                    if (AddToListAlong(hullCands[3], point, p3X, p3Y, v3X, v3Y)) continue;
+                    if (cvxVNum == 4) continue;
+                    if (AddToListAlong(hullCands[4], point, p4X, p4Y, v4X, v4Y)) continue;
+                    if (cvxVNum == 5) continue;
+                    if (AddToListAlong(hullCands[5], point, p5X, p5Y, v5X, v5Y)) continue;
+                    if (cvxVNum == 6) continue;
+                    if (AddToListAlong(hullCands[6], point, p6X, p6Y, v6X, v6Y)) continue;
+                    if (cvxVNum == 7) continue;
+                    if (AddToListAlong(hullCands[7], point, p7X, p7Y, v7X, v7Y)) continue;
                 }
             }
             #endregion
@@ -560,7 +475,7 @@ namespace TVGL
                         double lX = hc[i].X - hc[i - 1].X, lY = hc[i].Y - hc[i - 1].Y;
                         double rX = hc[i + 1].X - hc[i].X, rY = hc[i + 1].Y - hc[i].Y;
                         double zValue = lX * rY - lY * rX;
-                        if (!zValue.IsGreaterThanNonNegligible(Constants.LineSlopeTolerance)) // <= 0
+                        if (zValue <= 0)
                         {
                             /* remove any vertices that create concave angles. */
                             hc.RemoveAt(i);
@@ -581,6 +496,34 @@ namespace TVGL
             #endregion
 
             return convexHullCCW;
+        }
+
+        // this function adds the new point to the sorted list. The reason it is complicated is that
+        // if it errors - it is because there are two points at the same distance along. So, we then
+        // check if the new point or the existing one on the list should stay. Simply keep the one that is
+        // furthest from the edge vector.
+        private static bool AddToListAlong(SortedList<double, PointLight> sortedList, PointLight newPoint,
+            double basePointX, double basePointY, double edgeVectorX, double edgeVectorY)
+        {
+            var pointX = newPoint.X;
+            var pointY = newPoint.Y;
+            var vectorToNewPointX = pointX - basePointX;
+            var vectorToNewPointY = pointY - basePointY;
+            var newDxOut = vectorToNewPointX * edgeVectorY - vectorToNewPointY * edgeVectorX;
+            if (newDxOut <= 0) return false;
+            var newDxAlong = edgeVectorX * vectorToNewPointX + edgeVectorY * vectorToNewPointY;
+            try { sortedList.Add(newDxAlong, newPoint); }
+            catch
+            {
+                var ptOnList = sortedList[newDxAlong];
+                var onListDxOut = (ptOnList.X - basePointX) * edgeVectorY - (ptOnList.Y - basePointY) * edgeVectorX;
+                if (newDxOut > onListDxOut)
+                {
+                    sortedList.Remove(newDxAlong);
+                    sortedList.Add(newDxAlong, newPoint);
+                }
+            }
+            return true;
         }
     }
 }
