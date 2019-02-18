@@ -83,82 +83,194 @@ namespace TVGLPresenterDX
             var writer = new TextWriterTraceListener(Console.Out);
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
-            DirectoryInfo dir;
-            if (Directory.Exists("../../../../TestFiles"))
-            {
-                //x64
-                dir = new DirectoryInfo("../../../../TestFiles");
-            }
-            else
-            {
-                //x86
-                dir = new DirectoryInfo("../../../TestFiles");
-            }
-            var random = new Random();
-            //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
-            //Casing = 18
-            //SquareSupport = 75
-            for (var i = 0; i < fileNames.Count(); i++)
-            {
-                //var filename = FileNames[i];
-                var filename = fileNames[i].FullName;
-                Console.WriteLine("Attempting: " + filename);
-                Stream fileStream;
-                TessellatedSolid ts;
-                if (!File.Exists(filename)) continue;
+
+            Stream fileStream;
+            var partname = "TableTopOp_4x";
+            string filename;
+            Console.WriteLine("Attempting: " + partname);
+
+
+            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_XNegative.xml";
+            VoxelizedSolid vxneg = null;
+            if (File.Exists(filename))
+                using (fileStream = File.OpenRead(filename))
+                    IO.Open(fileStream, filename, out vxneg);
+            else Console.WriteLine("no file");
+            vxneg.SolidColor = new Color(KnownColors.Magenta);
+
+            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_YNegative.xml";
+            VoxelizedSolid vyneg = null;
+            if (File.Exists(filename))
+                using (fileStream = File.OpenRead(filename))
+                    IO.Open(fileStream, filename, out vyneg);
+            else Console.WriteLine("no file");
+            vyneg.SolidColor = new Color(KnownColors.Magenta);
+
+            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_ZNegative.xml";
+            VoxelizedSolid vzneg = null;
+            if (File.Exists(filename))
+                using (fileStream = File.OpenRead(filename))
+                    IO.Open(fileStream, filename, out vzneg);
+            else Console.WriteLine("no file");
+            vzneg.SolidColor = new Color(KnownColors.Magenta);
+
+            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_XPositive.xml";
+            VoxelizedSolid vxpos = null;
+            if (File.Exists(filename))
+                using (fileStream = File.OpenRead(filename))
+                    IO.Open(fileStream, filename, out vxpos);
+            else Console.WriteLine("no file");
+            vxpos.SolidColor = new Color(KnownColors.Magenta);
+
+            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_YPositive.xml";
+            VoxelizedSolid vypos = null;
+            if (File.Exists(filename))
+                using (fileStream = File.OpenRead(filename))
+                    IO.Open(fileStream, filename, out vypos);
+            else Console.WriteLine("no file");
+            vypos.SolidColor = new Color(KnownColors.Magenta);
+
+            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_ZPositive.xml";
+            VoxelizedSolid vzpos = null;
+            if (File.Exists(filename))
+                using (fileStream = File.OpenRead(filename))
+                    IO.Open(fileStream, filename, out vzpos);
+            else Console.WriteLine("no file");
+            vzpos.SolidColor = new Color(KnownColors.Magenta);
+
+
+            filename = "../../../../../" + partname + "/" + partname + "_9_ball_intersect_complete.xml";
+            VoxelizedSolid intersect = null;
+            if (File.Exists(filename))
+                using (fileStream = File.OpenRead(filename))
+                    IO.Open(fileStream, filename, out intersect);
+            else Console.WriteLine("no file");
+            intersect.SolidColor = new Color(KnownColors.Magenta);
+
+            TessellatedSolid ts = null;
+            filename = "../../../../../" + partname + "/" + partname + ".stl";
+            if (File.Exists(filename))
                 using (fileStream = File.OpenRead(filename))
                     IO.Open(fileStream, filename, out ts);
-                if (ts.Errors != null) continue;
-                Color color = new Color(KnownColors.AliceBlue);
-                ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
-                {
-                    Af = 0.25f
-                };
-                //Presenter.ShowAndHang(ts);
-                TestVoxelization(ts, filename);
+            else Console.WriteLine("no file");
+            ts.SolidColor.Af = 0.8f;
 
-                // var stopWatch = new Stopwatch();
-                // Color color = new Color(KnownColors.AliceBlue);
-                //ts[0].SetToOriginAndSquare(out var backTransform);
-                //ts[0].Transform(new double[,]
-                //  {
-                //{1,0,0,-(ts[0].XMax + ts[0].XMin)/2},
-                //{0,1,0,-(ts[0].YMax+ts[0].YMin)/2},
-                //{0,0,1,-(ts[0].ZMax+ts[0].ZMin)/2},
-                //  });
-                // stopWatch.Restart();
-                //PresenterShowAndHang(ts);
-                // Console.WriteLine("Voxelizing Tesselated File " + filename);
-                //  var vs1 = new VoxelizedSolid(ts[0], VoxelDiscretization.Coarse, false);//, bounds);
-                // Presenter.ShowAndHang(vs1);
-                //TestVoxelization(ts[0]);
-                //bounds = vs1.Bounds;
-            }
+            //var bb = MinimumEnclosure.OrientedBoundingBox(ts);
+            //bb.SetSolidRepresentation();
+            //var bbs = bb.SolidRepresentation;
+            //bbs.SolidColor = new Color(KnownColors.Magenta) {Af = 0.25f};
 
+            //var intersect = vxpos.IntersectToNewSolid(vzpos, vzneg, vxneg);
+            //intersect.SolidColor = new Color(KnownColors.Magenta);
+            //IO.Save(intersect, "../../../../../" + partname + "/" + partname + "_9_ball_intersect_+x+z-z+x.xml");
+
+            Presenter.ShowAndHang(intersect, ts);
+           
             Console.WriteLine("Completed.");
             Console.ReadKey();
+        
+        //Difference2();
+        //var writer = new TextWriterTraceListener(Console.Out);
+        //    Debug.Listeners.Add(writer);
+        //    TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
+        //    DirectoryInfo dir;
+        //    if (Directory.Exists("../../../../TestFiles"))
+        //    {
+        //        //x64
+        //        dir = new DirectoryInfo("../../../../TestFiles");
+        //    }
+        //    else
+        //    {
+        //        //x86
+        //        dir = new DirectoryInfo("../../../TestFiles");
+        //    }
+        //    var random = new Random();
+        //    //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
+        //    var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
+        //    //Casing = 18
+        //    //SquareSupport = 75
+        //    for (var i = 0; i < fileNames.Count(); i++)
+        //    {
+        //        //var filename = FileNames[i];
+        //        var filename = fileNames[i].FullName;
+        //        Console.WriteLine("Attempting: " + filename);
+        //        Stream fileStream;
+        //        TessellatedSolid ts;
+        //        if (!File.Exists(filename)) continue;
+        //        using (fileStream = File.OpenRead(filename))
+        //            IO.Open(fileStream, filename, out ts);
+        //        if (ts.Errors != null) continue;
+        //        Color color = new Color(KnownColors.AliceBlue);
+        //        ts.SolidColor = new Color(KnownColors.MediumSeaGreen)
+        //        {
+        //            Af = 0.25f
+        //        };
+        //        //Presenter.ShowAndHang(ts);
+        //        TestVoxelization(ts, filename);
+
+        //        // var stopWatch = new Stopwatch();
+        //        // Color color = new Color(KnownColors.AliceBlue);
+        //        //ts[0].SetToOriginAndSquare(out var backTransform);
+        //        //ts[0].Transform(new double[,]
+        //        //  {
+        //        //{1,0,0,-(ts[0].XMax + ts[0].XMin)/2},
+        //        //{0,1,0,-(ts[0].YMax+ts[0].YMin)/2},
+        //        //{0,0,1,-(ts[0].ZMax+ts[0].ZMin)/2},
+        //        //  });
+        //        // stopWatch.Restart();
+        //        //PresenterShowAndHang(ts);
+        //        // Console.WriteLine("Voxelizing Tesselated File " + filename);
+        //        //  var vs1 = new VoxelizedSolid(ts[0], VoxelDiscretization.Coarse, false);//, bounds);
+        //        // Presenter.ShowAndHang(vs1);
+        //        //TestVoxelization(ts[0]);
+        //        //bounds = vs1.Bounds;
+        //    }
+
+        //    Console.WriteLine("Completed.");
+        //    Console.ReadKey();
         }
 
         public static void TestVoxelization(TessellatedSolid ts, string _fileName)
         {
-            
-            var vs1 = new VoxelizedSolid(ts, 8);
-            //var dir = new [] { 1.0, 1.0, 1.0 };
-            var dir = new[] { -1.0, -2.0, -3.0 };
-            //var dir = new[] { -1.0, -.2, .0 };
-            //var dir = new [] { 0.0, 0.4706, -0.8824 }; //Direction of holes in ObliqueHoles
-            var neg = vs1.InvertToNewSolid();
-            //neg.SolidColor = new Color(KnownColors.LawnGreen);
-            //Presenter.ShowAndHang(vs1, neg);
-            //var erd = neg.ErodeToNewSolid(vs1, dir);
-            stopwatch.Start();
-            var erd = neg.ErodeToNewSolid(vs1, dir, toolDia: 30, toolOptions: new[] { "ball", "118" });
-            //erd.SolidColor = new Color(KnownColors.Magenta);
-            //Presenter.ShowAndHang(vs1, erd);
-            stopwatch.Stop();
-            Console.WriteLine("{0}", stopwatch.Elapsed);
+            var name = "SquareSupportWithAdditionsForSegmentationTesting";
+
+            for (var res = 7; res < 10; res++)
+            {
+                //var vs = new VoxelizedSolid(ts, res);
+                //IO.Save(vs,
+                //    "C:\\Users\\griera\\source\\repos\\" + name + "\\" + name + "_" + res + "_positive" + ".xml");
+
+                //var neg = vs.InvertToNewSolid();
+                //IO.Save(neg,
+                //    "C:\\Users\\griera\\source\\repos\\" + name + "\\" + name + "_" + res + "_negative" + ".xml");
+
+                IO.Open("C:\\Users\\griera\\source\\repos\\" + name + "\\" + name + "_" + res + "_positive" + ".xml",
+                    out VoxelizedSolid vs);
+
+                IO.Open("C:\\Users\\griera\\source\\repos\\" + name + "\\" + name + "_" + res + "_negative" + ".xml",
+                    out VoxelizedSolid neg);
+
+                var tools = new[] {"flat"};
+                foreach (var tool in tools)
+                {
+                    foreach (VoxelDirections dir in Enum.GetValues(typeof(VoxelDirections)))
+                    {
+                        var erd = neg.ErodeToNewSolid(vs, dir, toolDia: 10, toolOptions: new[] {tool});
+                        IO.Save(erd,
+                            "C:\\Users\\griera\\source\\repos\\" + name + "\\" + name + "_" + res + "_" + tool +
+                            "_erode_" + dir + ".xml");
+                    }
+
+                    //var dir1 = new[] {0.0, 0.4706, -0.8824};
+                    //var erd1 = neg.ErodeToNewSolid(vs, dir1, toolDia: 10, toolOptions: new[] {tool});
+                    //IO.Save(erd1,
+                    //    "C:\\Users\\griera\\source\\repos\\" + name + "\\" + name + "_" + res + "_" + tool +
+                    //    "_erode_[0.000 , 0.471, -0.882]" + ".xml");
+                }
+            }
+
             return;
+            var vs1 = new VoxelizedSolid(ts, 8);
             Console.WriteLine("done constructing, now ...");
             //Presenter.ShowAndHang(vs1,2);
             //var vs1ts = vs1.ConvertToTessellatedSolid(color);
