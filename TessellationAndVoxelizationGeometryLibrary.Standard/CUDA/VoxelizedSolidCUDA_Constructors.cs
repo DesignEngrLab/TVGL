@@ -27,14 +27,34 @@ namespace TVGL.CUDA
     public partial class VoxelizedSolidCUDA
     {
         #region VoxelizedSolid Properties
+        public byte[,,] Voxels;
         public readonly int Discretization;
         public readonly int[] VoxelsPerSide;
         public double VoxelSideLength { get; private set; }
-        public double[] Offset => Bounds[0];
         private readonly double[] Dimensions;
-        public byte[,,] Voxels;
         public double[][] Bounds { get; protected set; }
+        public double[] Offset => Bounds[0];
         #endregion
+
+        public VoxelizedSolidCUDA(byte[,,] voxels, int discretization, double voxelSideLength, IReadOnlyList<double[]> bounds)
+        {
+            Voxels = voxels.Clone();
+            Discretization = discretization;
+            VoxelsPerSide = Voxels.Rank().ToArray();
+            VoxelSideLength = voxelSideLength;
+            Bounds = bounds.ToArray();
+            Dimensions = Bounds[1].subtract(Bounds[0], 3);
+        }
+
+        public VoxelizedSolidCUDA(VoxelizedSolidCUDA vs)
+        {
+            Voxels = vs.Voxels.Clone();
+            Discretization = vs.Discretization;
+            VoxelsPerSide = vs.VoxelsPerSide.ToArray();
+            VoxelSideLength = vs.VoxelSideLength;
+            Dimensions = vs.Dimensions.ToArray();
+            Bounds = vs.Bounds.ToArray();
+        }
 
         public VoxelizedSolidCUDA(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
         {
@@ -395,18 +415,6 @@ namespace TVGL.CUDA
                         }
                     }
                 });
-        }
-
-        public int[][] GetNeighbors(int i, int j, int k)
-        {
-            var neighbors = new int[][] {null, null, null, null, null, null};
-            if (i + 1 != VoxelsPerSide[0] && Voxels[i + 1, j, k] == 1) neighbors[0] = new[] {i + 1, j, k};
-            if (j + 1 != VoxelsPerSide[1] && Voxels[i, j + 1, k] == 1) neighbors[1] = new[] {i, j + 1, k};
-            if (k + 1 != VoxelsPerSide[2] && Voxels[i, j, k + 1] == 1) neighbors[2] = new[] {i, j, k + 1};
-            if (i != 0 && Voxels[i - 1, j, k] == 1) neighbors[3] = new[] {i - 1, j, k};
-            if (j != 0 && Voxels[i, j - 1, k] == 1) neighbors[4] = new[] {i, j - 1, k};
-            if (k != 0 && Voxels[i, j, k - 1] == 1) neighbors[5] = new[] {i, j, k - 1};
-            return neighbors;
         }
     }
 }
