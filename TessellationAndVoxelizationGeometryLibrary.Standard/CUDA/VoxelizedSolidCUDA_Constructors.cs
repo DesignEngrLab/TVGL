@@ -36,11 +36,11 @@ namespace TVGL.CUDA
         public double[] Offset => Bounds[0];
         #endregion
 
-        public VoxelizedSolidCUDA(byte[,,] voxels, int discretization, double voxelSideLength, IReadOnlyList<double[]> bounds)
+        public VoxelizedSolidCUDA(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength, IReadOnlyList<double[]> bounds)
         {
-            Voxels = voxels.Clone();
+            Voxels = (byte[,,]) voxels.Clone();
             Discretization = discretization;
-            VoxelsPerSide = Voxels.Rank().ToArray();
+            VoxelsPerSide = voxelsPerSide;
             VoxelSideLength = voxelSideLength;
             Bounds = bounds.ToArray();
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
@@ -48,7 +48,7 @@ namespace TVGL.CUDA
 
         public VoxelizedSolidCUDA(VoxelizedSolidCUDA vs)
         {
-            Voxels = vs.Voxels.Clone();
+            Voxels = (byte[,,]) vs.Voxels.Clone();
             Discretization = vs.Discretization;
             VoxelsPerSide = vs.VoxelsPerSide.ToArray();
             VoxelSideLength = vs.VoxelSideLength;

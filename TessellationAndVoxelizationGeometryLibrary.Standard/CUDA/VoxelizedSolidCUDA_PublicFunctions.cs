@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using ILGPU;
+using ILGPU.Runtime;
+using ILGPU.Runtime.CPU;
 
 namespace TVGL.CUDA
 {
@@ -27,27 +29,32 @@ namespace TVGL.CUDA
             return new VoxelizedSolidCUDA(vs);
         }
 
-        static void ANDKernal(Index3 index, ArrayView<byte> a, ArrayView<byte> b, ArrayView<byte> c)
+        static void ANDKernel(Index3 index, ArrayView<byte, Index3> a, ArrayView<byte, Index3> b,
+            ArrayView<byte, Index3> c)
         {
-            a[index] = b[index] & c[index];
+            a[index] = (byte) (b[index] & c[index]);
         }
         public VoxelizedSolidCUDA IntersectToNewSolid(VoxelizedSolidCUDA vs)
         {
             byte[,,] newVoxels;
+            var idx = new Index3(VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]);
             using (var context = new Context())
             {
                 using (var accelerator = new CPUAccelerator(context))
                 {
-                    var AndKernal = accelerator.LoadAutoGroupedStreamKernel<Index3, ArrayView<byte>, ArrayView<byte>, ArrayView<byte>>(ANDKernal);
-                    using (var buffer = accelerator.Allocate<int>(1024))
+                    var andKernel =
+                        accelerator
+                            .LoadAutoGroupedStreamKernel<Index3, ArrayView<byte, Index3>, ArrayView<byte, Index3>,
+                                ArrayView<byte, Index3>>(ANDKernel);
+                    using (var buffer = accelerator.Allocate<byte,Index3>(idx))
                     {
-                        AndKernal(buffer.Lenght, buffer.View, 42);
+                        andKernel();
                         accelerator.Synchronize();
-                        var newVoxels = buffer.GetAsArray();
+                        newVoxels = buffer.GetAsRawArray();
                     }
                 }
             }
-            return new VoxelizedSolidCUDA(newVoxels, Discretization, VoxelSideLength, Bounds);
+            return new VoxelizedSolidCUDA(newVoxels, Discretization, VoxelsPerSide, VoxelSideLength, Bounds);
         }
     }
 }
