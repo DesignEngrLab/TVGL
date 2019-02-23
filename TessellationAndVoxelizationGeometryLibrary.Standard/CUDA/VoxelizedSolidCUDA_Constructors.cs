@@ -13,6 +13,7 @@
 // ***********************************************************************
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,17 +27,21 @@ namespace TVGL.CUDA
     /// </summary>
     public partial class VoxelizedSolidCUDA
     {
-        #region VoxelizedSolid Properties
+        #region Properties
         public byte[,,] Voxels;
         public readonly int Discretization;
         public readonly int[] VoxelsPerSide;
-        public double VoxelSideLength { get; private set; }
+        public double VoxelSideLength { get; internal set; }
         private readonly double[] Dimensions;
         public double[][] Bounds { get; protected set; }
         public double[] Offset => Bounds[0];
+        public Color SolidColor { get; set; }
+        public double Volume { get; internal set; }
+        public double SurfaceArea { get; internal set; }
+        public int Count { get; internal set; }
         #endregion
 
-        public VoxelizedSolidCUDA(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength, IReadOnlyList<double[]> bounds)
+        public VoxelizedSolidCUDA(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength, IEnumerable<double[]> bounds)
         {
             Voxels = (byte[,,]) voxels.Clone();
             Discretization = discretization;
@@ -44,6 +49,8 @@ namespace TVGL.CUDA
             VoxelSideLength = voxelSideLength;
             Bounds = bounds.ToArray();
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
+            SolidColor = new Color(Constants.DefaultColor);
+            UpdateProperties();
         }
 
         public VoxelizedSolidCUDA(VoxelizedSolidCUDA vs)
@@ -54,12 +61,17 @@ namespace TVGL.CUDA
             VoxelSideLength = vs.VoxelSideLength;
             Dimensions = vs.Dimensions.ToArray();
             Bounds = vs.Bounds.ToArray();
+            SolidColor = new Color(Constants.DefaultColor);
+            Volume = vs.Volume;
+            SurfaceArea = vs.SurfaceArea;
+            Count = vs.Count;
         }
 
         public VoxelizedSolidCUDA(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
         {
             int longestDimensionIndex;
             Discretization = discretization;
+            SolidColor = new Color(Constants.DefaultColor);
             var voxelsOnLongSide = Math.Pow(2, Discretization);
 
             double longestSide;
@@ -97,14 +109,16 @@ namespace TVGL.CUDA
             longestSide = Dimensions[longestDimensionIndex];
             VoxelSideLength = longestSide / voxelsOnLongSide;
             VoxelsPerSide = Dimensions.Select(d => (int) Math.Ceiling(d / VoxelSideLength)).ToArray();
+
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
+            Count = 0;
 
             var transformedCoordinates = MakeVertexSimulatedCoordinates(ts.Vertices, ts.NumberOfVertices);
             MakeVertexVoxels(ts.Vertices, transformedCoordinates);
             MakeVoxelsForFacesAndEdges(ts.Faces, transformedCoordinates);
             UpdateVertexSimulatedCoordinates(transformedCoordinates, ts.Vertices);
             MakeVoxelsInInterior();
-            //UpdateProperties();
+            UpdateProperties();
         }
 
         private double[][] MakeVertexSimulatedCoordinates(IList<Vertex> vertices, int numberOfVertices)
@@ -142,7 +156,10 @@ namespace TVGL.CUDA
             //foreach (var vertex in vertices)
             {
                 var intCoords = IntCoordsForVertex(vertex, transformedCoordinates);
-                Voxels.SetValue((byte)1, intCoords);
+                if (Voxels[intCoords[0], intCoords[1], intCoords[2]] == 1)
+                    return;
+                Voxels[intCoords[0], intCoords[1], intCoords[2]] = 1;
+                Count++;
             });
         }
 
@@ -259,7 +276,8 @@ namespace TVGL.CUDA
             for (var i = minCoord; i <= maxCoord; i++)
             {
                 coordinates[dim] = i;
-                Voxels.SetValue((byte)1, coordinates);
+                Voxels[coordinates[0], coordinates[1], coordinates[2]] = 1;
+                Count++;
             }
         }
 
@@ -294,7 +312,7 @@ namespace TVGL.CUDA
         }
 
         private void MakeVoxelsForLine(IList<double> startPoint, IList<double> endPoint, int sweepDim,
-            Dictionary<int, List<double[]>> sweepIntersections)
+            IDictionary<int, List<double[]>> sweepIntersections)
         {
             //Get every X,Y, and Z integer value intersection
             var vectorNorm = endPoint.subtract(startPoint).normalize();
@@ -373,7 +391,8 @@ namespace TVGL.CUDA
                         if (!valid) continue;
                         //This is a valid combination, so make it a voxel
                         var newIjk = new[] { ijk[0] + combination[0], ijk[1] + combination[1], ijk[2] + combination[2] };
-                        Voxels.SetValue((byte)1, newIjk);
+                        Voxels[newIjk[0], newIjk[1], newIjk[2]] = 1;
+                        Count++;
                         numVoxels++;
                     }
                     if (numVoxels != (int)Math.Pow(2, numAsInt)) throw new Exception("Error in implementation");
@@ -401,20 +420,153 @@ namespace TVGL.CUDA
                 {
                     for (var j = 0; j < VoxelsPerSide[1]; j++)
                     {
+                        var newVoxels = new HashSet<int[]>();
                         var inside = false;
+                        var wall = false;
                         for (var k = 0; k < VoxelsPerSide[2]; k++)
                         {
-                            if (Voxels[i, j, k] == (byte) 1)
+                            if (Voxels[i, j, k] == 1)
                             {
+                                if (wall) continue;
+                                if (inside)
+                                {
+                                    AddVoxelsToSolid(newVoxels);
+                                    newVoxels.Clear();
+                                }
+                                wall = true;
                                 inside = !inside;
                                 continue;
                             }
 
+                            wall = false;
                             if (!inside) continue;
-                            Voxels.SetValue((byte) 1, i, j, k);
+
+                            newVoxels.Add(new[] {i, j, k});
                         }
                     }
                 });
+        }
+
+        private void AddVoxelsToSolid(IEnumerable<int[]> voxels, byte value = 1)
+        {
+            foreach (var vox in voxels)
+            {
+                Voxels[vox[0], vox[1], vox[2]] = value;
+                Count++;
+            }
+        }
+
+        private void DefineBottomCoordinateInsideLevel0(IEnumerable<PolygonalFace> parentFaces, double[][] transformedCoordinates)
+        {
+            // This is a tricky function that has been rewritten alot in the first half of 2018. The four steps are arranged to 
+            // quickly solve easy cases before a longer process to find the remaining ones.
+            var queue = new Queue<VoxelBinClass>();
+            var assignedHashSet = new HashSet<VoxelBinClass>();
+            foreach (var voxel in Voxels)
+            {
+                if (voxel == 0) continue;
+                #region Step 1: if the face has all positive normals or all negative then quick and easy
+                List<PolygonalFace> faces = GetFacesToCheck(voxel);
+                if (faces.SelectMany(f => f.Normal).All(n => n > 0))
+                {
+                    voxel.BtmCoordIsInside = true;
+                    assignedHashSet.Add((VoxelBinClass)voxel);
+                    continue;
+                }
+                if (faces.SelectMany(f => f.Normal).All(n => n < 0))
+                {
+                    voxel.BtmCoordIsInside = false;
+                    assignedHashSet.Add((VoxelBinClass)voxel);
+                    continue;
+                }
+                #endregion
+                #region Step 2: check if a face intersects with local coordinate frame
+                // in the next loop, we check to see if a face intersects with the local coordinate frame of the voxel.
+                // That is, the 3 lines  going from 0,0,0 to 1,0,0 or 0,1,0 or 0,0,1. We 
+                var voxCoord = voxel.CoordinateIndices;
+                var closestFaceIsPositive = false;
+                var closestFaceDistance = startingMinFaceToCornerDistance;
+                foreach (var face in faces)
+                {
+                    for (int i = 0; i < 3; i++)
+                        if (lineToFaceIntersection(face, voxCoord, i, closestFaceDistance, transformedCoordinates, out var signedDistance))
+                        {
+                            closestFaceDistance = signedDistance;
+                            closestFaceIsPositive = face.Normal[i] > 0;
+                        }
+                }
+                if (closestFaceDistance <= 1.0)
+                {
+                    voxel.BtmCoordIsInside = closestFaceIsPositive;
+                    assignedHashSet.Add(voxel);
+                }
+                #endregion
+                // if not, then add the voxel to a queue for step 3
+                else queue.Enqueue(voxel);
+            }
+            #region Step 3: infer from neighbors
+            // those that we weren't able to get from Step 2 may be neighbors of ones that were figured out from one and two
+            // this is why the successes in the above were also put onto the "assignedHashSet". We now know that those on the queue
+            // have no faces along their coordinate axes, so we use this to see if the neighbor is inside, then we know the one in
+            // question is inside. We also move that to the "assignedHashSet" so that it can aid other unknowns in the queue. 
+            var cyclesSinceLastSuccess = 0;
+            while (queue.Any() && queue.Count > cyclesSinceLastSuccess)
+            {  // note the "cyclesSincesLastSuccess". This allows us to go one full additional pass through any remaining in the queue
+                // to see if they can be determined from their recently determined neighbors that were formerly on the queue
+                var voxel = queue.Dequeue();
+                var voxCoord = voxel.CoordinateIndices;
+                var gotFromNeighbor = false;
+                for (int i = 0; i < 3; i++)
+                {
+                    var neighbor = GetNeighborForTSBuildingLevel0(voxCoord, (VoxelDirections)(i + 1), out var neighborCoord);
+                    if (neighbor == null || !assignedHashSet.Contains(neighbor)) continue;
+                    voxel.BtmCoordIsInside = neighbor.BtmCoordIsInside;
+                    assignedHashSet.Add(voxel);
+                    cyclesSinceLastSuccess = 0;
+                    gotFromNeighbor = true;
+                    break;
+                }
+                if (!gotFromNeighbor)
+                {
+                    queue.Enqueue(voxel);
+                    cyclesSinceLastSuccess++;
+                }
+            }
+            #endregion
+            if (!queue.Any()) return;
+            #region Step 4 look to the parent
+            while (queue.Any())
+            {  // check the vector connection the btmCoordinate to the parent's btmCoordinate. Why? 1) the parent is known (at this point) and if nothing intersects
+                // this line then it is the same of the parent, 2) the vector back to the parent has no positive values which simplifies the check with the face normals,
+                // 3) has a superset of the tesselated elements
+                var voxel = queue.Dequeue();
+                var voxCoord = voxel.CoordinateIndices;
+                var closestFaceIsPositive = false;
+                double minDistance = startingMinFaceToCornerDistance;
+                var btmIsInside = false;
+                var foundIntersectingFace = false;
+                var line = (new[] { (double)voxCoord[0], voxCoord[1], voxCoord[2] }).multiply(-1);
+                foreach (var face in parentFaces)
+                {
+                    if (lineToFaceIntersection(face, voxCoord, line, minDistance, out var signedDistance, transformedCoordinates))
+                        if (signedDistance < minDistance)
+                        {
+                            btmIsInside = face.Normal.dotProduct(line) >= 0;
+                            minDistance = signedDistance;
+                        }
+                }
+                voxel.BtmCoordIsInside = btmIsInside;
+            }
+            #endregion
+        }
+
+        private List<PolygonalFace> GetFacesToCheck(int[] voxel)
+        {
+            if (voxel0.tsElementsForChildVoxels == null) return null;
+            if (level <= LevelAtWhichLinkToTessellation)
+                return voxel0.tsElementsForChildVoxels[voxel].Where(te => te is PolygonalFace).Cast<PolygonalFace>().ToList();
+            return voxel0.tsElementsForChildVoxels[MakeParentVoxelID(voxel, LevelAtWhichLinkToTessellation)].Where(te => te is PolygonalFace)
+                .Cast<PolygonalFace>().ToList();
         }
     }
 }

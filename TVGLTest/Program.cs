@@ -145,15 +145,23 @@ namespace TVGLPresenterDX
         {
             var res = 8;
 
-            stopwatch.Restart();
-            var vs = new VoxelizedSolid(ts, res);
-            stopwatch.Stop();
-            Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
+            //stopwatch.Restart();
+            //var vs = new VoxelizedSolid(ts, res);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var vs_cuda = new VoxelizedSolidCUDA(ts, res);
             stopwatch.Stop();
             Console.WriteLine("CUDA voxelization: {0}", stopwatch.Elapsed);
+
+            Console.WriteLine(ts.SurfaceArea);
+            Console.WriteLine(vs_cuda.SurfaceArea);
+            Console.WriteLine();
+
+            Console.WriteLine(ts.Volume);
+            //Console.WriteLine(vs.Volume);
+            Console.WriteLine(vs_cuda.Volume);
 
             Presenter.ShowAndHang(vs_cuda);
         }
