@@ -84,13 +84,17 @@ namespace TVGLPresenterDX
             Debug.Listeners.Add(writer);
             TVGL.Message.Verbosity = VerbosityLevels.OnlyCritical;
 
+            //var partname = "SquareSupportWithAdditionsForSegmentationTesting";
+            var partname = "ObliqueHole";
+            //var partname = "TableTopOp_4x";
+            var tooltype = "flat"; // "ball" or "flat"
+
             Stream fileStream;
-            var partname = "TableTopOp_4x";
             string filename;
             Console.WriteLine("Attempting: " + partname);
 
 
-            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_XNegative.xml";
+            filename = "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_erode_XNegative.xml";
             VoxelizedSolid vxneg = null;
             if (File.Exists(filename))
                 using (fileStream = File.OpenRead(filename))
@@ -98,7 +102,7 @@ namespace TVGLPresenterDX
             else Console.WriteLine("no file");
             vxneg.SolidColor = new Color(KnownColors.Magenta);
 
-            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_YNegative.xml";
+            filename = "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_erode_YNegative.xml";
             VoxelizedSolid vyneg = null;
             if (File.Exists(filename))
                 using (fileStream = File.OpenRead(filename))
@@ -106,7 +110,7 @@ namespace TVGLPresenterDX
             else Console.WriteLine("no file");
             vyneg.SolidColor = new Color(KnownColors.Magenta);
 
-            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_ZNegative.xml";
+            filename = "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_erode_ZNegative.xml";
             VoxelizedSolid vzneg = null;
             if (File.Exists(filename))
                 using (fileStream = File.OpenRead(filename))
@@ -114,7 +118,7 @@ namespace TVGLPresenterDX
             else Console.WriteLine("no file");
             vzneg.SolidColor = new Color(KnownColors.Magenta);
 
-            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_XPositive.xml";
+            filename = "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_erode_XPositive.xml";
             VoxelizedSolid vxpos = null;
             if (File.Exists(filename))
                 using (fileStream = File.OpenRead(filename))
@@ -122,7 +126,7 @@ namespace TVGLPresenterDX
             else Console.WriteLine("no file");
             vxpos.SolidColor = new Color(KnownColors.Magenta);
 
-            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_YPositive.xml";
+            filename = "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_erode_YPositive.xml";
             VoxelizedSolid vypos = null;
             if (File.Exists(filename))
                 using (fileStream = File.OpenRead(filename))
@@ -130,7 +134,7 @@ namespace TVGLPresenterDX
             else Console.WriteLine("no file");
             vypos.SolidColor = new Color(KnownColors.Magenta);
 
-            filename = "../../../../../" + partname + "/" + partname + "_9_ball_erode_ZPositive.xml";
+            filename = "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_erode_ZPositive.xml";
             VoxelizedSolid vzpos = null;
             if (File.Exists(filename))
                 using (fileStream = File.OpenRead(filename))
@@ -138,14 +142,27 @@ namespace TVGLPresenterDX
             else Console.WriteLine("no file");
             vzpos.SolidColor = new Color(KnownColors.Magenta);
 
-
-            filename = "../../../../../" + partname + "/" + partname + "_9_ball_intersect_complete.xml";
-            VoxelizedSolid intersect = null;
+            filename = "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_erode_[0.000 , -0.471, 0.882].xml";
+            VoxelizedSolid vextr = null;
             if (File.Exists(filename))
                 using (fileStream = File.OpenRead(filename))
-                    IO.Open(fileStream, filename, out intersect);
+                    IO.Open(fileStream, filename, out vextr);
             else Console.WriteLine("no file");
-            intersect.SolidColor = new Color(KnownColors.Magenta);
+            vextr.SolidColor = new Color(KnownColors.Magenta);
+
+
+            //filename = "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_intersect_minvol.xml";
+            //VoxelizedSolid intersect = null;
+            //if (File.Exists(filename))
+            //    using (fileStream = File.OpenRead(filename))
+            //        IO.Open(fileStream, filename, out intersect);
+            //else Console.WriteLine("no file");
+            //intersect.SolidColor = new Color(KnownColors.Magenta);
+
+            //var intersect = vxpos.IntersectToNewSolid(vzneg);
+            //intersect.SolidColor = new Color(KnownColors.Magenta);
+            //IO.Save(intersect, "../../../../../" + partname + "/" + partname + "_9_" + tooltype + "_intersect_+x-z.xml");
+
 
             TessellatedSolid ts = null;
             filename = "../../../../../" + partname + "/" + partname + ".stl";
@@ -160,11 +177,8 @@ namespace TVGLPresenterDX
             //var bbs = bb.SolidRepresentation;
             //bbs.SolidColor = new Color(KnownColors.Magenta) {Af = 0.25f};
 
-            //var intersect = vxpos.IntersectToNewSolid(vzpos, vzneg, vxneg);
-            //intersect.SolidColor = new Color(KnownColors.Magenta);
-            //IO.Save(intersect, "../../../../../" + partname + "/" + partname + "_9_ball_intersect_+x+z-z+x.xml");
 
-            Presenter.ShowAndHang(intersect, ts);
+            Presenter.ShowAndHang(vextr, ts);
            
             Console.WriteLine("Completed.");
             Console.ReadKey();
