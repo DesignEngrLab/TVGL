@@ -169,7 +169,7 @@ namespace TVGL
         /// <returns>
         /// List&lt;Point&gt;.
         /// </returns>
-        public static List<PointLight> ConvexHull2D(IList<PointLight> points, out SortedList<double, PointLight>[] hullCands)
+        public static List<PointLight> ConvexHull2D(IList<PointLight> points, out SortedList<double, (PointLight, double)>[] hullCands)
         {
             // instead of calling points.Count several times, we create this variable. 
             // by the ways points is unaffected by this method
@@ -304,9 +304,9 @@ namespace TVGL
             /* An array of sorted lists. As we find new candidate convex points, we store them here. The key in the
              * list is the "positionAlong" - this is used to order the nodes that
              * are found for a particular side (More on this in 23 lines). */
-            hullCands = new SortedList<double, PointLight>[cvxVNum];
+            hullCands = new SortedList<double, (PointLight, double)>[cvxVNum];
             /* initialize the 3 to 8 Lists s.t. members can be added below. */
-            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, PointLight>();
+            for (var j = 0; j < cvxVNum; j++) hullCands[j] = new SortedList<double, (PointLight, double)>();
 
             var indexOfUsedIndices = 0;
 
@@ -454,14 +454,14 @@ namespace TVGL
             {
                 if (hullCands[j - 1].Count == 1)
                     /* If there is one and only one candidate, it must be in the convex hull. Add it now. */
-                    convexHullCCW.InsertRange(j, hullCands[j - 1].Values);
+                    convexHullCCW.InsertRange(j, hullCands[j - 1].Select(pair => pair.Value.Item1));
                 else if (hullCands[j - 1].Count > 1)
                 {
                     /* a renaming for compactness and clarity */
                     var hc = new List<PointLight>();
                     /* put the known starting point as the beginning of the list.  */
                     hc.Add(convexHullCCW[j - 1]);
-                    hc.AddRange(hullCands[j - 1].Values);
+                    hc.AddRange(hullCands[j - 1].Select(pair => pair.Value.Item1));
                     /* put the ending point on the end of the list. Need to check if it wraps back around to 
                      * the first in the loop (hence the simple condition). */
                     if (j == cvxVNum) hc.Add(convexHullCCW[0]);
@@ -502,8 +502,8 @@ namespace TVGL
         // if it errors - it is because there are two points at the same distance along. So, we then
         // check if the new point or the existing one on the list should stay. Simply keep the one that is
         // furthest from the edge vector.
-        private static bool AddToListAlong(SortedList<double, PointLight> sortedList, PointLight newPoint,
-            double basePointX, double basePointY, double edgeVectorX, double edgeVectorY)
+        private static bool AddToListAlong(SortedList<double, (PointLight, double)> sortedList,
+            PointLight newPoint, double basePointX, double basePointY, double edgeVectorX, double edgeVectorY)
         {
             var pointX = newPoint.X;
             var pointY = newPoint.Y;
@@ -512,16 +512,16 @@ namespace TVGL
             var newDxOut = vectorToNewPointX * edgeVectorY - vectorToNewPointY * edgeVectorX;
             if (newDxOut <= 0) return false;
             var newDxAlong = edgeVectorX * vectorToNewPointX + edgeVectorY * vectorToNewPointY;
-            try { sortedList.Add(newDxAlong, newPoint); }
-            catch
+            if (sortedList.ContainsKey(newDxAlong))
             {
-                var ptOnList = sortedList[newDxAlong];
-                var onListDxOut = (ptOnList.X - basePointX) * edgeVectorY - (ptOnList.Y - basePointY) * edgeVectorX;
-                if (newDxOut > onListDxOut)
+                if (newDxOut > sortedList[newDxAlong].Item2)
                 {
-                    sortedList.Remove(newDxAlong);
-                    sortedList.Add(newDxAlong, newPoint);
+                    sortedList[newDxAlong] = (newPoint, newDxOut);
                 }
+            }
+            else
+            {
+                sortedList.Add(newDxAlong, (newPoint, newDxOut));
             }
             return true;
         }
