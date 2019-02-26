@@ -42,5 +42,14 @@ namespace TVGL
                     Voxels.Add(v);
         }
 
+        public HashSet<int[]> VoxelsC { get; protected set; }
+
+        internal void AddVoxelC(int[] v)
+        {
+            if (VoxelsC == null) VoxelsC = new HashSet<int[]>();
+            lock (VoxelsC)
+                if (!VoxelsC.Contains(v))
+                    VoxelsC.Add(v);
+        }
     }
 }
