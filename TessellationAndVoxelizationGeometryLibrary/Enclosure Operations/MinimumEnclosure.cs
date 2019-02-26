@@ -152,7 +152,7 @@ namespace TVGL
         /// <param name="bottomVertices">The bottom vertices.</param>
         /// <param name="topVertices">The top vertices.</param>
         /// <returns>System.Double.</returns>
-        public static double GetLengthAndExtremeVertices(double[] direction, IList<Vertex> vertices,
+        public static double GetLengthAndExtremeVertices(double[] direction, IEnumerable<Vertex> vertices,
             out List<Vertex> bottomVertices,
             out List<Vertex> topVertices)
         {
@@ -178,6 +178,41 @@ namespace TVGL
                 {
                     topVertices.Clear();
                     topVertices.Add(v);
+                    maxD = distance;
+                }
+            }
+            return maxD - minD;
+        }
+
+        /// <summary>
+        ///     Given a Direction, dir, this function returns the maximum length along this Direction and one vertex 
+        ///     that represents each extreme. Use this if you do not need all the vertices at the extremes.
+        /// </summary>
+        /// <param name="direction">The direction.</param>
+        /// <param name="vertices">The vertices.</param>
+        /// <param name="bottomVertex"></param>
+        /// <param name="topVertex"></param>
+        /// <returns>System.Double.</returns>
+        public static double GetLengthAndExtremeVertex(double[] direction, IEnumerable<Vertex> vertices,
+            out Vertex bottomVertex,
+            out Vertex topVertex)
+        {
+            var dir = direction.normalize(3);
+            var minD = double.PositiveInfinity;
+            bottomVertex = null;
+            topVertex = null;
+            var maxD = double.NegativeInfinity;
+            foreach (var v in vertices)
+            {
+                var distance = dir.dotProduct(v.Position, 3);
+                if (distance < minD)
+                {
+                    bottomVertex = v;
+                    minD = distance;
+                }
+                if (distance > maxD)
+                {
+                    topVertex = v;
                     maxD = distance;
                 }
             }
@@ -732,13 +767,11 @@ namespace TVGL
         }
 
         private static BoundingBox FindOBBAlongDirection(IList<Vertex> vertices, double[] direction)
-        { 
-            List<Vertex> bottomVertices, topVertices;
+        {
             var direction1 = direction.normalize(3);
-            var depth = GetLengthAndExtremeVertices(direction, vertices, out bottomVertices, out topVertices);
+            var depth = GetLengthAndExtremeVertices(direction, vertices, out var bottomVertices, out var topVertices);
 
-            double[,] backTransform;
-            var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out backTransform, false);
+            var points = MiscFunctions.Get2DProjectionPoints(vertices, direction, out var backTransform, false);
             var boundingRectangle = RotatingCalipers2DMethod(points);
 
             //Get the Direction vectors from rotating caliper and projection.
