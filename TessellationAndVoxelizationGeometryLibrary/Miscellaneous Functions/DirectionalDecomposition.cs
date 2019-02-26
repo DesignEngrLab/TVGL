@@ -506,70 +506,100 @@ namespace TVGL
         public static double AdditiveVolumeWithoutSupport(List<DecompositionData> decompData, double layerHeight,
             double scanningAccuracy, out List<DecompositionData> outputData)
         {
-            outputData = new List<DecompositionData>();
-            var previousDistance = 0.0;
-            var previousArea = 0.0;
-            var additiveVolume = 0.0;
             var n = decompData.Count;
-            //Foreach cross section, union it with the next cross section to ensure the surfaces are covered
-            //This assumes that cross sections were added to the top and bottom of decomp data.         
-            var currentPaths = new List<List<PointLight>>();
-            for (var i = 0; i < decompData.Count - 1; i++)
+            var offsetCrossSections = new List<PolygonLight>[n];
+            //Offset all paths 
+            for (var i = 0; i < n; i++)
             {
-                var currentData = decompData[i];
-                var currentCrossSection = currentData.Paths;
-                var nextData = decompData[i + 1];
-                var nextCrossSection = nextData.Paths;
-                var distance = currentData.DistanceAlongDirection;
-
+                var currentCrossSection = decompData[i].Paths;
                 //Offset if the additive accuracy is significant
                 var areaPriorToOffset = MiscFunctions.AreaOfPolygon(currentCrossSection);
-                var offsetPaths = !scanningAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentCrossSection, scanningAccuracy) : new List<List<PointLight>>(currentPaths);
+                var offsetPaths = !scanningAccuracy.IsNegligible() ? PolygonOperations.OffsetSquare(currentCrossSection, scanningAccuracy) : currentCrossSection;
                 var areaAfterOffset = MiscFunctions.AreaOfPolygon(offsetPaths);
                 //Simplify the paths, but remove any that are eliminated (e.g. points are all very close together)
                 var simpleOffset = offsetPaths.Select(PolygonOperations.SimplifyFuzzy).Where(simplePath => simplePath.Any()).ToList();
                 var areaAfterSimplification = MiscFunctions.AreaOfPolygon(simpleOffset);
                 if (areaPriorToOffset > areaAfterOffset) throw new Exception("Path is ordered incorrectly");
-                if (!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset * .05)) throw new Exception("Simplify Fuzzy Alterned the Geometry more than 5% of the area");
+                if (!areaAfterOffset.IsPracticallySame(areaAfterSimplification, areaAfterOffset * .05))
+                    throw new Exception("Simplify Fuzzy Alterned the Geometry more than 5% of the area");
+                offsetCrossSections[i] = new List<PolygonLight>(simpleOffset.Select(p => new PolygonLight(p)));
+            };
 
-                //Union the current cross section with the next cross section
+            outputData = new List<DecompositionData>();
+
+            //Foreach cross section, union it with the next two cross sections and the prior one to ensure the surfaces are covered.
+            //This creates a cross section that is dependent on 4 offset crossSections (or three layers).
+            //This assumes that cross sections were added to the top and bottom of decomp data.    
+            //This also assumes that the extrusion will be done from the cross section along the build direction.
+            
+            //Add the first and second cross section
+            //var onePrior = offsetCrossSections[1]; 
+            //outputData.Add(new DecompositionData(onePrior.Select(p => p.Path), previousDistance));
+            //previousDistance += layerHeight;
+            var additiveVolume = 0.0;// Math.Abs(onePrior.Sum(p => p.Area)) * layerHeight;
+            //var twoPrior = PolygonOperations.Union(offsetCrossSections[0], offsetCrossSections[2]);
+            //outputData.Add(new DecompositionData(twoPrior.Select(p => p.Path), previousDistance));
+            //additiveVolume += Math.Abs(twoPrior.Sum(p => p.Area)) * layerHeight;
+            //var priorVolume = 0.0;
+
+            double currentVolume;
+            if (true) //Add extra top layer
+            {
+                outputData.Add(new DecompositionData(offsetCrossSections[0].Select(p => p.Path), decompData[0].DistanceAlongDirection - layerHeight));
+                currentVolume = Math.Abs(offsetCrossSections[0].Sum(p => p.Area)) * layerHeight;
+                additiveVolume += currentVolume;
+            }
+            var union = offsetCrossSections[1];
+            for (var i = 0; i < n - 1; i++) 
+            {
+                var distance = decompData[i].DistanceAlongDirection; 
+                var deltaX = Math.Abs(distance - decompData[i + 1].DistanceAlongDirection);
+                var current = offsetCrossSections[i];  
                 try
                 {
-                    currentPaths = PolygonOperations.Union(nextCrossSection, simpleOffset);
+                    //Union with next two and the prior one
+                    if (i > 0) union = PolygonOperations.Union(current, offsetCrossSections[i - 1]); //if not the first layer
+                    if (i < n - 1) union = PolygonOperations.Union(union, offsetCrossSections[i + 1]); //if not the final layer
+                    if (i < n - 2) union = PolygonOperations.Union(union, offsetCrossSections[i + 2]); 
+                    currentVolume = Math.Abs(union.Sum(p => p.Area)) * deltaX; 
+                    ////Set the additive information. Instead of using the current path area, use the max between this one & below it.
+                    ////If the part was cut at this index, the furthest cross section would be at i.
+                    ////Therefore, the additive shape from i-1 to i should be based on the union of i-1 and i.
+                    ////Once we area past this index, the union 
+                    ////Since we are at i and want the volume below it, we want to update the prior two cross sections / volumes
+                    //onePriorUnion = PolygonOperations.Union(onePriorCrossSection, current);
+                    //currentVolume = Math.Abs(onePrior.Sum(p => p.Area)) * deltaX; //volume between onePrior and current
+                    //twoPrior = PolygonOperations.Union(twoPrior, current);
+                    //priorVolume = Math.Abs(twoPrior.Sum(p => p.Area)) * deltaX; //volume between twoPrior and onePrior               
                 }
                 catch
                 {
-                    var testArea1 = simpleOffset.Sum(p => MiscFunctions.AreaOfPolygon(p));
-                    if (testArea1.IsPracticallySame(previousArea, 0.01))
-                    {
-                        currentPaths = simpleOffset;
-                        //They are probably throwing an error because they are closely overlapping
-                    }
-                    else
-                    {
-                        currentPaths = outputData.Last().Paths;
-                    }
-                }  
-
-                //Get the area of this layer
-                var area = currentPaths.Sum(p => MiscFunctions.AreaOfPolygon(p));
-                if (area < 0)
-                {
-                    //Rather than throwing an exception, just assume the polygons were the wrong direction      
-                    area = -area;
-                    Debug.WriteLine("Area for a polygon in the Additive Volume estimate was negative. This means there was an issue with the polygon ordering");
+                    //They are probably throwing an error because they are closely overlapping.
+                    //Use the previous path
+                    var onePrior = new List<PolygonLight>(outputData.Last().Paths.Select(p => new PolygonLight(p)));
+                    currentVolume = Math.Abs(onePrior.Sum(p => p.Area)) * deltaX; //volume between onePrior and current   
                 }
-
-                //Add the volume from this iteration.
-                var deltaX = Math.Abs(distance - previousDistance);                  
-                additiveVolume += deltaX * area;
-                outputData.Add(new DecompositionData(currentPaths, distance));
-                previousDistance = distance;
-                previousArea = area;
+             
+                //if (i != 1)
+                //{
+                    outputData.Add(new DecompositionData(union.Select(p => p.Path), distance));
+                    additiveVolume += currentVolume;
+                    //if (i == n - 1)
+                    //{
+                    //    //Add the final layer
+                    //    outputData.Add(new DecompositionData(onePriorUnion.Select(p => p.Path), distance));
+                    //    additiveVolume += currentVolume;
+                    //}
+                //}
+                 
+                //Update the values for the next iteration.
+               // previousDistance = distance;
+                //Two prior is now done. One prior becomes the prior and the current becomes onePrior
+                //oPrior = onePriorUnion;
+                //priorVolume = currentVolume;
+                //onePriorUnion = currentUnion;
+                //onePrior = current;
             }
-            //Add the final layer
-            outputData.Add(new DecompositionData(currentPaths, previousDistance + layerHeight));
-            additiveVolume += layerHeight * previousArea;
 
             return additiveVolume;
         }
@@ -824,6 +854,11 @@ namespace TVGL
             public List<List<PointLight>> Paths;
 
             /// <summary>
+            /// An optional list of paths that have been offset
+            /// </summary>
+            public List<PolygonLight> OffsetPaths;
+
+            /// <summary>
             /// The convex hull for each slice. Optional parameter that is only set when SetConvexHull() is called.
             /// </summary>
             public IEnumerable<PointLight> ConvexHull; 
@@ -865,6 +900,11 @@ namespace TVGL
             public void SetConvexHull()
             {
                 ConvexHull = MinimumEnclosure.ConvexHull2D(Paths.SelectMany(s => s.Select(p => p)).ToList());
+            }
+
+            public void SetOffset(double offsetDistance)
+            {
+                OffsetPaths = PolygonOperations.OffsetSquare(Paths, offsetDistance).Select(p => new PolygonLight(p)).ToList();
             }
         }
 
