@@ -107,6 +107,8 @@ namespace TVGL
             #endregion
 
             #region Algorithm 2: Furthest Point
+            //var r = new Random();
+            //var randomPoints = new List<PointLight>(points.OrderBy(p => r.Next()));
 
             //Algorithm 2
             //I tried using the extremes (X, Y, and also tried Sum, Diff) to do a first pass at the circle
@@ -123,6 +125,7 @@ namespace TVGL
             var sqTolerance = Math.Sqrt(Constants.BaseTolerance);
             var sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
             var nextPoint = dummyPoint;
+            var priorRadius = circle.SqRadius;
             while (!successful && stallCounter < stallLimit)
             {
                 //If stallCounter is getting big, add a bit extra to the circle radius to ensure convergence
@@ -194,6 +197,11 @@ namespace TVGL
                     }
                 }
 
+                if(circle.SqRadius < priorRadius)
+                {
+                    Debug.WriteLine("Bounding circle got smaller during this iteration");
+                }
+                priorRadius = circle.SqRadius;
                 stallCounter++;
             }
             if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " + (Constants.BaseTolerance * circle.SqRadius * 2));
@@ -652,13 +660,13 @@ namespace TVGL
                         }
                         else
                         {
-                            furthestPoint = Point1;
-                            previousPoint2 = Point0;
+                            furthestPoint = Point2;
+                            previousPoint2 = Point1;
                         }
                     }
                     else
                     {
-                        furthestPoint = Point0;
+                        furthestPoint = Point1;
                     }
                 } 
             }
