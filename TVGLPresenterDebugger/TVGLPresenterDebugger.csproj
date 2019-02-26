@@ -331,6 +331,8 @@
       <Link>Presenter\Window3DPlot.xaml.cs</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TVGL\CUDA\VoxelizedSolidCUDA_Constructors.cs" />
+    <Compile Include="TVGL\CUDA\VoxelizedSolidCUDA_PublicFunctions.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="..\TessellationAndVoxelizationGeometryLibrary\Primitive Classification\NewEdgeRules.csv">

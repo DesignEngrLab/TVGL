@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGL.CUDA;
+using TVGL.CUDA
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
 
