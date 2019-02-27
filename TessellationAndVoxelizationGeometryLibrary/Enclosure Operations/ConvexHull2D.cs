@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
@@ -502,6 +503,7 @@ namespace TVGL
         // if it errors - it is because there are two points at the same distance along. So, we then
         // check if the new point or the existing one on the list should stay. Simply keep the one that is
         // furthest from the edge vector.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AddToListAlong(SortedList<double, (PointLight, double)> sortedList,
             PointLight newPoint, double basePointX, double basePointY, double edgeVectorX, double edgeVectorY)
         {
@@ -525,6 +527,437 @@ namespace TVGL
             }
             return true;
         }
+
+        public static List<PointLight> ConvexHull2D_BM(IReadOnlyList<PointLight> points)
+        {
+            // instead of calling points.Count several times, we create this variable. 
+            // by the ways points is unaffected by this method
+            var numPoints = points.Count;
+
+            #region Step 1 : Define Convex Octogon
+            /* The first step is to quickly identify the three to eight vertices based on the
+             * Akl-Toussaint heuristic. */
+            var maxX = double.NegativeInfinity;
+            var maxXIndex = -1;
+            var maxY = double.NegativeInfinity;
+            var maxYIndex = -1;
+            var maxSum = double.NegativeInfinity;
+            var maxSumIndex = -1;
+            var maxDiff = double.NegativeInfinity;
+            var maxDiffIndex = -1;
+            var minX = double.PositiveInfinity;
+            var minXIndex = -1;
+            var minY = double.PositiveInfinity;
+            var minYIndex = -1;
+            var minSum = double.PositiveInfinity;
+            var minSumIndex = -1;
+            var minDiff = double.PositiveInfinity;
+            var minDiffIndex = -1;
+            // search of all points to find the extrema. What is stored here is the position (or index) within
+            // points and the value
+            for (var i = 0; i < numPoints; i++)
+            {
+                var p = points[i];
+                var x = p.X;
+                var y = p.Y;
+                var sum = x + y;
+                var diff = x - y;
+                if (x < minX)
+                {
+                    minXIndex = i;
+                    minX = x;
+                }
+                if (y < minY)
+                {
+                    minYIndex = i;
+                    minY = y;
+                }
+                if (x > maxX)
+                {
+                    maxXIndex = i;
+                    maxX = x;
+                }
+                if (y > maxY)
+                {
+                    maxYIndex = i;
+                    maxY = y;
+                }
+                // so that's the Akl-Toussaint (to find extrema in x and y). here, we go a step 
+                // further and check the sum and difference of x and y. instead of a initial convex
+                // quadrilateral we have (potentially) a convex octagon. Because we are adding or substracting
+                // there is a slight time penalty, but that seems to be made up in the next two parts where
+                // having more sortedlists (with fewer elements each) is faster than fewer sortedlists (with more
+                // elements). 
+                if (sum < minSum)
+                {
+                    minSumIndex = i;
+                    minSum = sum;
+                }
+                if (diff < minDiff)
+                {
+                    minDiffIndex = i;
+                    minDiff = diff;
+                }
+                if (sum > maxSum)
+                {
+                    maxSumIndex = i;
+                    maxSum = sum;
+                }
+                if (diff > maxDiff)
+                {
+                    maxDiffIndex = i;
+                    maxDiff = diff;
+                }
+            }
+            //put these on a list in counter-clockwise (CCW) direction
+            var extremeIndices = new List<int>(new[]{ minXIndex, minSumIndex, minYIndex, maxDiffIndex,
+                    maxXIndex, maxSumIndex, maxYIndex, minDiffIndex });
+            var cvxVNum = 8; //in some cases, we need to reduce from this eight to a smaller set
+                             // The next two loops handle this reduction from 8 to as few as 3.
+                             // In the first loop, simply check if any indices are repeated. Thanks to the CCW order,
+                             // any repeat indices are adjacent on the list. Start from the back of the loop and
+                             // remove towards zero.
+            //TODo: type 3, 3, 4, 4, 1, 1, 2, 2
+            var hullCands = new List<Octant> { new OctantUpperRight(points), new OctantUpperRight(points), new OctantUpperRight(points),
+                new OctantUpperRight(points), new OctantUpperRight(points), new OctantUpperRight(points), new OctantUpperLeft(points),
+                new OctantUpperLeft(points) };
+            for (int i = cvxVNum - 1; i >= 0; i--)
+            {
+                var thisExtremeIndex = extremeIndices[i];
+                var nextExtremeIndex = (i == cvxVNum - 1) ? extremeIndices[0] : extremeIndices[i + 1];
+                if (thisExtremeIndex == nextExtremeIndex)
+                {
+                    cvxVNum--;
+                    extremeIndices.RemoveAt(i);
+                    hullCands.RemoveAt(i);
+                }
+            }
+            // before we check if points are on top of one another or have some round-off error issues, these
+            // indices are stored and sorted numerically for use in the second half of part 2 where we go through
+            // all the points a second time. 
+            var indicesUsed = extremeIndices.OrderBy(x => x).ToArray();
+
+            // create the list that is eventually returned by the function. Initially it will have the 3 to 8 extrema
+            // (as is produced in the following loop).
+            var convexHullCCW = new List<PointLight>();
+            for (var i = cvxVNum - 1; i >= 0; i--)
+            {
+                // in rare cases, often due to some roundoff error, the extrema point will produce a concavity with its
+                // two neighbors. Here, we check that case. If it does make a concavity we don't use it in the initial convex
+                // hull (we have captured its index and will still skip it below. it will not be searched a second time).
+                // counting backwards again, we grab the previous and next point and check the "cross product" to see if the 
+                // vertex in convex. if it is we add it to the returned list. 
+                var currentPt = points[extremeIndices[i]];
+                var prevPt = points[(i == 0) ? extremeIndices[cvxVNum - 1] : extremeIndices[i - 1]];
+                var nextPt = points[(i == cvxVNum - 1) ? extremeIndices[0] : extremeIndices[i + 1]];
+                if ((nextPt.X - currentPt.X) * (prevPt.Y - currentPt.Y) + (nextPt.Y - currentPt.Y) * (currentPt.X - prevPt.X) > 0)
+                    convexHullCCW.Insert(0, currentPt); //because we are counting backwards, we need to ensure that new points are added
+                // to the front of the list
+                else
+                {
+                    cvxVNum--;
+                    extremeIndices.RemoveAt(i); //the only reason to do this is to ensure that - if the loop is to 
+                    hullCands.RemoveAt(i);
+                    //continue - that the vectors are made to the proper new adjacent vertices
+                }
+            }
+            #endregion
+
+            //Set the extreme points for the octacts
+            for (var i = cvxVNum - 1; i >= 0; i--)
+            {
+                var currentPt = points[extremeIndices[i]];
+                var nextPt = points[(i == cvxVNum - 1) ? extremeIndices[0] : extremeIndices[i + 1]];
+                hullCands[i].FirstPoint = currentPt;
+                hullCands[i].LastPoint = nextPt;
+            }
+
+            //Now, put each point into one of the eight boxes, defined by the eight lines
+            convexHullCCW = new List<PointLight>();
+            foreach (var octant in hullCands)
+            {
+                octant.Calc();
+                convexHullCCW.AddRange(octant.HullPoints);
+            }
+
+            return convexHullCCW;
+        }
+    }
+
+    public class OctantUpperRight : Octant
+    {
+        public OctantUpperRight(IReadOnlyList<PointLight> allPoints) : base(allPoints) { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected override bool IsGoodQuadrantForPoint(PointLight pt)
+        {
+            if (pt.X > this.RootPoint.X && pt.Y > this.RootPoint.Y)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        protected override int TryAdd(double x, double y)
+        {
+            int indexLow = 0;
+            int indexHi = HullPoints.Count - 1;
+
+            while (indexLow != indexHi - 1)
+            {
+                int index = ((indexHi - indexLow) >> 1) + indexLow;
+
+                if (x <= HullPoints[index].X && y <= HullPoints[index].Y)
+                {
+                    return -1; // No calc needed
+                }
+
+                if (x > HullPoints[index].X)
+                {
+                    indexHi = index;
+                    continue;
+                }
+
+                if (x < HullPoints[index].X)
+                {
+                    indexLow = index;
+                    continue;
+                }
+
+                if (x == HullPoints[index].X)
+                {
+                    if (y > HullPoints[index].Y)
+                    {
+                        indexLow = index;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+
+                break;
+            }
+
+            if (y <= HullPoints[indexLow].Y)
+            {
+                return -1; // Eliminated without slope calc
+            }
+
+            return indexLow;
+        }
+    }
+
+    public class OctantUpperLeft : Octant
+    {
+        public OctantUpperLeft(IReadOnlyList<PointLight> allPoints) : base(allPoints) { }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected override bool IsGoodQuadrantForPoint(PointLight pt)
+        {
+            if (pt.X < this.RootPoint.X && pt.Y > this.RootPoint.Y)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        protected override int TryAdd(double x, double y)
+        {
+            int indexLow = 0;
+            int indexHi = HullPoints.Count - 1;
+
+            while (indexLow != indexHi - 1)
+            {
+                int index = ((indexHi - indexLow) >> 1) + indexLow;
+
+                if (x >= HullPoints[index].X && y <= HullPoints[index].Y)
+                {
+                    return -1; // No calc needed
+                }
+
+                if (x > HullPoints[index].X)
+                {
+                    indexHi = index;
+                    continue;
+                }
+
+                if (x < HullPoints[index].X)
+                {
+                    indexLow = index;
+                    continue;
+                }
+
+                if (x == HullPoints[index].X)
+                {
+                    if (y > HullPoints[index].Y)
+                    {
+                        indexLow = index;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+
+                break;
+            }
+
+            if (y <= HullPoints[indexHi].Y)
+            {
+                return -1; // Eliminated without slope calc
+            }
+
+            return indexLow;
+
+        }
+    }
+
+    public abstract class Octant
+    {     
+        public PointLight FirstPoint;
+        public PointLight LastPoint;
+        public PointLight RootPoint;
+
+        public readonly List<PointLight> HullPoints = null;
+        protected IReadOnlyList<PointLight> _listOfPoint;
+
+        public Octant(IReadOnlyList<PointLight> listOfPoint)
+        {
+            _listOfPoint = listOfPoint;
+        }
+
+        // Very important the Quadrant should be always build in a way where dpiFirst has minus slope to center and dpiLast has maximum slope to center
+        public Octant(IReadOnlyList<PointLight> listOfPoint, PointLight firstPoint, PointLight lastPoint)
+        {
+            _listOfPoint = listOfPoint;
+            //HullPoints = new List<Point>(initialResultGuessSize);
+            HullPoints = new List<PointLight>();
+            SetRoot();
+        }
+
+        /// <summary>
+        /// Initialize every values needed to extract values that are parts of the convex hull.
+        /// This is where the first pass of all values is done the get maximum in every directions (x and y).
+        /// </summary>
+        protected void SetRoot()
+        {
+            RootPoint = new PointLight(LastPoint.X, FirstPoint.Y);
+        }
+
+        // ************************************************************************
+        public void Calc()
+        {
+            if (!_listOfPoint.Any())
+            {
+                // There is no points at all. Hey don't try to crash me.
+                return;
+            }
+
+            // Begin : General Init
+            HullPoints.Add(FirstPoint);
+            if (FirstPoint.Equals(LastPoint))
+            {
+                return; // Case where for weird distribution (like triangle or diagonal) there could be one or more quadrants without points.
+            }
+            HullPoints.Add(LastPoint);
+
+            // Main Loop to extract ConvexHullPoints
+            foreach (PointLight point in _listOfPoint)
+            {
+                if (!IsGoodQuadrantForPoint(point))
+                {
+                    continue;
+                }
+
+                int indexLow = TryAdd(point.X, point.Y);
+
+                if (indexLow == -1)
+                {
+                    continue;
+                }
+
+                PointLight p1 = HullPoints[indexLow];
+                PointLight p2 = HullPoints[indexLow + 1];
+
+                if (!IsPointToTheRightOfOthers(p1, p2, point))
+                {
+                    continue;
+                }
+
+                int indexHi = indexLow + 1;
+
+                // Find lower bound (remove point invalidate by the new one that come before)
+                while (indexLow > 0)
+                {
+                    if (IsPointToTheRightOfOthers(HullPoints[indexLow - 1], point, HullPoints[indexLow]))
+                    {
+                        break; // We found the lower index limit of points to keep. The new point should be added right after indexLow.
+                    }
+                    indexLow--;
+                }
+
+                // Find upper bound (remove point invalidate by the new one that come after)
+                int maxIndexHi = HullPoints.Count - 1;
+                while (indexHi < maxIndexHi)
+                {
+                    if (IsPointToTheRightOfOthers(point, HullPoints[indexHi + 1], HullPoints[indexHi]))
+                    {
+                        break; // We found the higher index limit of points to keep. The new point should be added right before indexHi.
+                    }
+                    indexHi++;
+                }
+
+                if (indexLow + 1 == indexHi)
+                {
+                    // Insert Point
+                    HullPoints.Insert(indexHi, point);
+                }
+                else
+                {
+                    HullPoints[indexLow + 1] = point;
+
+                    // Remove any invalidated points if any
+                    if (indexLow + 2 < indexHi)
+                    {
+                        HullPoints.RemoveRange(indexLow + 2, indexHi - indexLow - 2);
+                    }
+                }
+
+            }
+        }
+
+        // ************************************************************************
+        /// <summary>
+        /// To know if to the right. It is meaninful when p1 is first and p2 is next.
+        /// </summary>
+        /// <param name="p1"></param>
+        /// <param name="p2"></param>
+        /// <param name="ptToCheck"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected bool IsPointToTheRightOfOthers(PointLight p1, PointLight p2, PointLight ptToCheck)
+        {
+            return ((p2.X - p1.X) * (ptToCheck.Y - p1.Y)) - ((p2.Y - p1.Y) * (ptToCheck.X - p1.X)) < 0;
+        }
+
+        // ************************************************************************
+        /// <summary>
+        /// Tell if should try to add and where. -1 ==> Should not add.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        protected abstract int TryAdd(double x, double y);
+
+        // ************************************************************************
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected abstract bool IsGoodQuadrantForPoint(PointLight pt);
+
+        // ************************************************************************
+
     }
 }
 
