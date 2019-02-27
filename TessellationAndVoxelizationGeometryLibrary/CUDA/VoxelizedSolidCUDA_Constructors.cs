@@ -146,18 +146,18 @@ namespace TVGL.CUDA
         private void VoxelizeSolid(TessellatedSolid ts)
         {
             var counts = new ConcurrentDictionary<int, int>();
-
-            Parallel.For(0, VoxelsPerSide[0], i =>
-            //for (var i = 0; i < VoxelsPerSide[0]; i++)
+            var decomp = DirectionalDecomposition.UniformDecomposition(ts, new[] { -1.0, 0, 0 }, 
+                VoxelSideLength / 2, VoxelSideLength);
+            var crossSections = decomp.Select(d => d.Vertices).ToList();
+            Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
+            var slices = decomp.Select(d => d.Paths).ToList();
+            //Parallel.For(0, VoxelsPerSide[0], i =>
+            for (var i = 0; i < VoxelsPerSide[0] - 1; i++)
             {
                 counts.TryAdd(i, 0);
 
                 var pd = (VoxelSideLength / 2) + (i * VoxelSideLength) + Bounds[0][0];
-                var slice = DirectionalDecomposition.GetCrossSectionAtGivenDistance(ts, new[] { -1, 0, .0 }, -pd);
-                //ToDo: get all slices at once: DirectionalDecomposition.UniformDecomposition()
-                if (slice is null)
-                    return;
-                    //continue;
+                var slice = slices[i].Select(p => new PolygonLight(p)).ToList();
 
                 //Within each slice, X corresponds to k, and Y corresponds to j
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
@@ -171,8 +171,8 @@ namespace TVGL.CUDA
                             polys.Add(poly);
                     if (polys.Count == 0) continue;
 
+                    //Presenter.ShowAndHang(polys);
                     Slice2D.OnLine(polys, new[] {.0, 1}, ds, false, out var inters);
-                    //ToDo: add function to slice2d that is similar to UniformDecomposition()
 
                     for (var m = 0; m < inters.Count - 1; m += 2)
                     {
@@ -185,7 +185,7 @@ namespace TVGL.CUDA
                         }
                     }
                 }
-            });
+            }//);
 
             foreach (var kvp in counts)
                 Count += kvp.Value;
