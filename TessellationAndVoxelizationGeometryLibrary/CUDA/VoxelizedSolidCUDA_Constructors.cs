@@ -46,17 +46,38 @@ namespace TVGL.CUDA
         public int Count { get; internal set; }
         #endregion
 
-        public VoxelizedSolidCUDA(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength, IEnumerable<double[]> bounds)
+        public VoxelizedSolidCUDA(int i, int j, int k, int discretization, double voxelSideLength,
+            IEnumerable<double[]> bounds, byte value = 0)
         {
-            Voxels = (byte[,,]) voxels.Clone();
+            Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
+            if (value != 0)
+            {
+                for (var m = 0; m < i; m++)
+                for (var n = 0; n < j; n++)
+                for (var o = 0; o < k; o++)
+                    Voxels[m, n, o] = value;
+            }
             Discretization = discretization;
-            VoxelsPerSide = voxelsPerSide;
+            VoxelsPerSide = new []{i, j, k};
             VoxelSideLength = voxelSideLength;
             Bounds = bounds.ToArray();
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
             SolidColor = new Color(Constants.DefaultColor);
+            Count = value == 0 ? 0 : i * j * k;
             UpdateProperties();
         }
+
+        //public VoxelizedSolidCUDA(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength, IEnumerable<double[]> bounds)
+        //{
+        //    Voxels = (byte[,,]) voxels.Clone();
+        //    Discretization = discretization;
+        //    VoxelsPerSide = voxelsPerSide;
+        //    VoxelSideLength = voxelSideLength;
+        //    Bounds = bounds.ToArray();
+        //    Dimensions = Bounds[1].subtract(Bounds[0], 3);
+        //    SolidColor = new Color(Constants.DefaultColor);
+        //    UpdateProperties();
+        //}
 
         public VoxelizedSolidCUDA(VoxelizedSolidCUDA vs)
         {
@@ -118,10 +139,10 @@ namespace TVGL.CUDA
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
             Count = 0;
 
-            var transformedCoordinates = MakeVertexSimulatedCoordinates(ts.Vertices, ts.NumberOfVertices);
-            MakeVertexVoxels(ts.Vertices, transformedCoordinates);
-            MakeVoxelsForFacesAndEdges(ts.Faces, transformedCoordinates);
-            UpdateVertexSimulatedCoordinates(transformedCoordinates, ts.Vertices);
+            //var transformedCoordinates = MakeVertexSimulatedCoordinates(ts.Vertices, ts.NumberOfVertices);
+            //MakeVertexVoxels(ts.Vertices, transformedCoordinates);
+            //MakeVoxelsForFacesAndEdges(ts.Faces, transformedCoordinates);
+            //UpdateVertexSimulatedCoordinates(transformedCoordinates, ts.Vertices);
             //MakeVoxelsInInterior();
             VoxelizeSolid(ts);
             UpdateProperties();
@@ -465,64 +486,60 @@ namespace TVGL.CUDA
         {
             var s = VoxelSideLength;
             var s2 = s / 2;
-            var dz = new[] { .0, 1};
 
             //Parallel.For(0, VoxelsPerSide[0], i =>
             for (var i = 0; i < VoxelsPerSide[0]; i++)
             {
-                var pd = s2 + (i * s);
-                var slice = DirectionalDecomposition.GetCrossSectionAtGivenDistance(ts, new[] {1, 0, .0}, pd);
+                var pd = s2 + (i * s) + Bounds[0][0];
+                var slice = DirectionalDecomposition.GetCrossSectionAtGivenDistance(ts, new[] {-1, 0, .0}, -pd);
+                //ToDo: get all slices at once: DirectionalDecomposition.UniformDecomposition()
                 if (slice is null)
                     continue;
 
+                //if (i == 124)
+                //Presenter.ShowAndHang(slice);
+
+                //Within each slice, X corresponds to k, and Y corresponds to j
                 for (var j = 0; j < VoxelsPerSide[2]; j++)
                 {
-                    var ds = s2 + (j * s);
+                    var ds = s2 + (j * s) + Bounds[0][1];
 
-                    var cont = false;
+                    var skip = true;
                     foreach (var poly in slice)
-                        if (ds < poly.MinY || ds > poly.MaxY)
-                            cont = true;
-                    if (cont) continue;
-
-                    Slice2D.OnLine(slice, dz, ds, false, out var inters);
-                    var ints = inters.Count;
-                    //var inside = false;
-
-                    for (var m = 0; m < ints - 1; m++)
-                    {
-                        //if (inside)
-                        //{
-                        //    inside = false;
-                        //    continue;
-                        //}
-                        var qp = new PointLight(inters[m].Position.add(inters[m + 1].Position, 2).divide(2, 2));
-                        var inside = false;
-
-                        foreach (var poly in slice)
+                        if (ds < poly.MaxY && ds > poly.MinY)
                         {
-                            inside = MiscFunctions.IsPointInsidePolygon(poly, qp);
-                            if (inside) break;
+                            skip = false;
+                            break;
                         }
+                    if (skip) continue;
 
-                        if (inside)
-                            AddVoxelsOnLineInPolygon(inters[m], inters[m + 1], i, j);
+                    var slice2d = Slice2D.OnLine(slice, new[] {.0, 1}, ds, false, out var inters);               
+                    //ToDo: add function to slice2d that is similar to directionaldecomposition
+                    //Presenter.ShowAndHang(slice2d);
 
-                        //var sp = (int)Math.Round(inters[m].Y / VoxelSideLength) - 1;
-                        //var ep = (int)Math.Round(inters[m + 1].Y / VoxelSideLength);
-                        //for (var k = sp; k < ep; k++)
-                        //    Voxels[i, j, k] = 1;
+                    for (var m = 0; m < inters.Count - 1; m += 2)
+                    {
+                        var ep = (int)Math.Round((inters[m].X - Bounds[0][2]) / VoxelSideLength) - 1;
+                        var sp = (int)Math.Round((inters[m + 1].X - Bounds[0][2]) / VoxelSideLength);
+                        for (var k = sp; k < ep; k++)
+                        {
+                            Voxels[i, j, k] = 1;
+                            Count++;
+                        }
                     }
                 }
             }//);
         }
 
-        private void AddVoxelsOnLineInPolygon(Point p1, Point p2, int i, int j, byte value = 1)
-        {
-            var sp = (int)Math.Round(p1.Y / VoxelSideLength) - 1;
-            var ep = (int)Math.Round(p2.Y / VoxelSideLength);
-            for (var k = sp; k < ep; k++)
-                Voxels[i, j, k] = value;
-        }
+        //private void AddVoxelsOnLineInPolygon(Point p1, Point p2, int i, int j, byte value = 1)
+        //{
+        //    var sp = (int)Math.Round(p1.Y / VoxelSideLength) - 1;
+        //    var ep = (int)Math.Round(p2.Y / VoxelSideLength);
+        //    for (var k = sp; k < ep; k++)
+        //    {
+        //        Voxels[i, j, k] = value;
+        //        Count++;
+        //    }
+        //}
     }
 }
