@@ -322,7 +322,7 @@ namespace TVGL
         /// <param name="stepSize"></param>
         /// <returns></returns>
         public static List<DecompositionData> UniformDecomposition(TessellatedSolid ts, double[] direction,
-        double startOffset, double stepSize)
+            double startOffset, double stepSize)
         {
             var sortedVertexDistanceLookup = new Dictionary<int, double>();
 
@@ -444,8 +444,7 @@ namespace TVGL
                     var currentPaths =
                         current3DLoops.Select(
                             cp =>
-                                MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(cp, direction,
-                                    out _));
+                                MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(cp, direction, out _));
 
                     //Get the area of this layer
                     var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));

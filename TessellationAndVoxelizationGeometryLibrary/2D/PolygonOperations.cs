@@ -135,7 +135,7 @@ namespace TVGL
         {
             return ShallowPolygonTree.GetShallowPolygonTrees(paths);
         }
-        public static List<ShallowPolygonTree> GetShallowPolygonTrees(PolygonsAsLight paths)
+        public static List<ShallowPolygonTree> GetShallowPolygonTrees(IEnumerable<PolygonLight> paths)
         {
             return ShallowPolygonTree.GetShallowPolygonTrees(paths.Select(p => new Polygon(p)).ToList());
         }

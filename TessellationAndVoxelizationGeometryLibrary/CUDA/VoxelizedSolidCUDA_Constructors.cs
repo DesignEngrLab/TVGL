@@ -146,34 +146,27 @@ namespace TVGL.CUDA
         private void VoxelizeSolid(TessellatedSolid ts)
         {
             var counts = new ConcurrentDictionary<int, int>();
-            var decomp = DirectionalDecomposition.UniformDecomposition(ts, new[] { -1.0, 0, 0 }, 
+            var projectionDirection = new []{ 0, 0, 1.0 }; //+Z
+            var lineSweepDirection = new []{ 1.0, 0, 0 }; //+X
+            var lineSweep2D = MiscFunctions.Get2DProjectionVector(lineSweepDirection, projectionDirection);
+            var decomp = DirectionalDecomposition.UniformDecomposition(ts, projectionDirection, 
                 VoxelSideLength / 2, VoxelSideLength);
-            var crossSections = decomp.Select(d => d.Vertices).ToList();
-            Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
             var slices = decomp.Select(d => d.Paths).ToList();
+            //var crossSections = decomp.Select(d => d.Vertices).ToList();
+            //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
+
             //Parallel.For(0, VoxelsPerSide[0], i =>
-            for (var i = 0; i < VoxelsPerSide[0] - 1; i++)
+            for (var i = 0; i < VoxelsPerSide[0] - 1; i++) //ToDo: WHY -1
             {
                 counts.TryAdd(i, 0);
-
                 var pd = (VoxelSideLength / 2) + (i * VoxelSideLength) + Bounds[0][0];
-                var slice = slices[i].Select(p => new PolygonLight(p)).ToList();
-
+                var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistances(slices[i].Select(p => new PolygonLight(p)), 
+                    lineSweep2D, VoxelSideLength / 2, VoxelSideLength, VoxelsPerSide[1]);
+                
                 //Within each slice, X corresponds to k, and Y corresponds to j
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
                 {
-                    var ds = (VoxelSideLength / 2) + (j * VoxelSideLength) + Bounds[0][1];
-
-                    //Need to remove polygons that won't be intersected with AABB check
-                    var polys = new List<PolygonLight>();
-                    foreach (var poly in slice)
-                        if (ds < poly.MaxY && ds > poly.MinY)
-                            polys.Add(poly);
-                    if (polys.Count == 0) continue;
-
-                    //Presenter.ShowAndHang(polys);
-                    Slice2D.OnLine(polys, new[] {.0, 1}, ds, false, out var inters);
-
+                    var inters = intersectionPoints[j];
                     for (var m = 0; m < inters.Count - 1; m += 2)
                     {
                         var ep = (int)Math.Round((inters[m].X - Bounds[0][2]) / VoxelSideLength) - 1;
@@ -185,7 +178,7 @@ namespace TVGL.CUDA
                         }
                     }
                 }
-            }//);
+            }
 
             foreach (var kvp in counts)
                 Count += kvp.Value;
