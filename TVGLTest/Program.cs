@@ -155,15 +155,21 @@ namespace TVGLPresenterDX
             stopwatch.Stop();
             Console.WriteLine("CUDA voxelization: {0}", stopwatch.Elapsed);
 
-            Console.WriteLine(ts.SurfaceArea);
-            Console.WriteLine(vs_cuda.SurfaceArea);
-            Console.WriteLine();
+            //Console.WriteLine(ts.SurfaceArea);
+            //Console.WriteLine(vs_cuda.SurfaceArea);
+            //Console.WriteLine();
 
-            Console.WriteLine(ts.Volume);
+            //Console.WriteLine(ts.Volume);
             //Console.WriteLine(vs.Volume);
-            Console.WriteLine(vs_cuda.Volume);
+            //Console.WriteLine(vs_cuda.Volume);
 
-            Presenter.ShowAndHang(vs_cuda);
+            //Presenter.ShowAndHang(vs_cuda);
+
+            //var bb = vs.CreateBoundingSolid();
+            //var neg = vs.InvertToNewSolid();
+
+            //var bb_cuda = vs_cuda.CreateBoundingSolid();
+            //var neg_cuda = vs_cuda.InvertToNewSolid();
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
