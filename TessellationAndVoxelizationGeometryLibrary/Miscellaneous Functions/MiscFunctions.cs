@@ -71,7 +71,7 @@ namespace TVGL
 
         private static IEnumerable<Tuple<Vertex, double>> GetVertexDistances(double[] direction, IEnumerable<Vertex> vertices)
         {
-            var vertexDistances = new List<Tuple<Vertex, double>>();
+            var vertexDistances = new List<Tuple<Vertex, double>>(vertices.Count());
             //Accuracy to the 15th decimal place
             var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
             var tolerance = int.Parse(toleranceString.Substring((toleranceString.IndexOf("-", StringComparison.Ordinal)+1)));
@@ -90,29 +90,54 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
         /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(double[] direction, IList<Point> points,
+        public static void SortAlongDirection(double[] direction, IEnumerable<Point> points,
                out List<Tuple<Point, double>> sortedPoints)
         {
             //Get integer values for every vertex as distance along direction
             //Split positive and negative numbers into seperate lists. 0 is 
             //considered positive.
             //This is an O(n) preprocessing step
-            var pointDistances = new List<Tuple<Point, double>>();
-            //Accuracy to the 15th decimal place
-            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
-            var tolerance = toleranceString.Substring(toleranceString.IndexOf(".", StringComparison.Ordinal) + 1).Length;
-            foreach (var point in points)
-            {
-                //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(direction[0]*point.X + direction[1] * point.Y, tolerance); //2D dot product
-                pointDistances.Add(new Tuple<Point, double>(point, d));
-            }
+            var pointDistances = GetPointDistances(direction, points);
 
             //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
             //tolerance as the "isNeglible" star math function 
             sortedPoints = pointDistances.OrderBy(point => point.Item2).ToList();
         }
 
+        /// <summary>
+        ///     Returns a list of sorted points along a set direction. 
+        /// </summary>
+        /// <param name="direction">The directions.</param>
+        /// <param name="points"></param>
+        /// <param name="sortedPoints"></param>
+        public static void SortAlongDirection(double[] direction, IEnumerable<Point> points,
+               out List<Point> sortedPoints)
+        {
+            //Get integer values for every vertex as distance along direction
+            //Split positive and negative numbers into seperate lists. 0 is 
+            //considered positive.
+            //This is an O(n) preprocessing step
+            var pointDistances = GetPointDistances(direction, points);
+
+            //Unsure what time domain this sort function uses. Note, however, rounding allows using the same
+            //tolerance as the "isNeglible" star math function 
+            sortedPoints = pointDistances.OrderBy(point => point.Item2).Select(p => p.Item1).ToList();
+        }
+
+        private static IEnumerable<Tuple<Point, double>> GetPointDistances(double[] direction, IEnumerable<Point> points)
+        {
+            var pointDistances = new List<Tuple<Point, double>>(points.Count());
+            //Accuracy to the 15th decimal place
+            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
+            var tolerance = toleranceString.Substring(toleranceString.IndexOf(".", StringComparison.Ordinal) + 1).Length;
+            foreach (var point in points)
+            {
+                //Get distance along the search direction with accuracy to the 15th decimal place
+                var d = Math.Round(direction[0] * point.X + direction[1] * point.Y, tolerance); //2D dot product
+                pointDistances.Add(new Tuple<Point, double>(point, d));
+            }
+            return pointDistances;
+        }
         #endregion
 
         #region Perimeter
