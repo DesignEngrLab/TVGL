@@ -281,8 +281,16 @@ namespace TVGL._2D
         public static List<List<PointLight>> IntersectionPointsAtUniformDistances(IEnumerable<PolygonLight> shape, 
             double[] direction2D, double startOffset, double distanceBetweenLines, int numLines)
         {
+            var shapeForDebugging = new List<List<PointLight>>();
+            foreach (var polygon in shape)
+            {
+      
+                shapeForDebugging.Add(PolygonOperations.SimplifyFuzzy(polygon.Path));
+            }
+
             var intersectionPoints = new List<List<PointLight>>(numLines);
-            var polygons = shape.Select(p => new Polygon(p));
+            //ToDO: debug error that occurs without simplify Fuzzy
+            var polygons = shape.Select(p => new Polygon(PolygonOperations.SimplifyFuzzy(p.Path).Select(point => new Point(point))));
             //Set the lines in all the polygons. These are needed for Slice.OnLine()
             var allPoints = new List<Point>();
             foreach (var polygon in polygons)
@@ -306,6 +314,9 @@ namespace TVGL._2D
                     var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
                         direction2D, distanceAlongDirection);
                     intersectionPoints.Add(sortedIntersectionPoints);
+                    var temp = new List<List<PointLight>>(shapeForDebugging);
+                    temp.Add(sortedIntersectionPoints);
+                    Presenter.ShowAndHang(temp);
 
                     //Update the distance along
                     i++;
@@ -315,8 +326,6 @@ namespace TVGL._2D
                 {
                     //Update the intersection lines
                     var point = pair.Item1;
-                    //If the search direction is forward, then the partial shape is defined with any lines
-                    //prior to the given distance. If reverse, then it is with lines further than the current distance.
                     foreach (var line in point.Lines)
                     {
                         if (intersectionLines.Contains(line))
