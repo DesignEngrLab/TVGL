@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using ILGPU;
 using ILGPU.Runtime;
 using ILGPU.Runtime.CPU;
@@ -87,32 +88,58 @@ namespace TVGL.CUDA
             return new VoxelizedSolidCUDA(vs);
         }
 
-        static void ANDKernel(Index3 index, ArrayView<byte, Index3> a, ArrayView<byte, Index3> b,
-            ArrayView<byte, Index3> c)
+        public VoxelizedSolidCUDA CreateBoundingSolid()
         {
-            a[index] = (byte)(b[index] & c[index]);
+            return new VoxelizedSolidCUDA(VoxelsPerSide, Discretization, VoxelSideLength, Bounds, 1);
         }
-        //public void IntersectToNewSolid(VoxelizedSolidCUDA vs)
+
+        public VoxelizedSolidCUDA InvertToNewSolid_CPU()
+        {
+            var vs = new VoxelizedSolidCUDA(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
+            
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 0; k < VoxelsPerSide[2]; k++)
+                    if (Voxels[i, j, k] == 0)
+                        vs.Voxels[i, j, k] = 1;
+            });
+
+            return vs;
+        }
+
+        //static void NOTKernel(Index3 index, ArrayView<byte, Index3> a, byte[,,] b)
         //{
-        //    byte[,,] newVoxels;
+        //    a[index] = (byte) ~b[index.X, index.Y, index.Z];
+        //}
+        //public VoxelizedSolidCUDA InvertToNewSolid()
+        //{
+        //    var newVoxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
         //    var idx = new Index3(VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]);
+
         //    using (var context = new Context())
         //    {
-        //        using (var accelerator = new CPUAccelerator(context))
+        //        foreach (var acceleratorId in Accelerator.Accelerators)
         //        {
-        //            var andKernel =
-        //                accelerator
-        //                    .LoadAutoGroupedStreamKernel<Index3, ArrayView<byte, Index3>, ArrayView<byte, Index3>,
-        //                        ArrayView<byte, Index3>>(ANDKernel);
-        //            using (var buffer = accelerator.Allocate<byte, Index3>(idx))
+        //            using (var accelerator = Accelerator.Create(context, acceleratorId))
         //            {
-        //                andKernel();
-        //                accelerator.Synchronize();
-        //                newVoxels = buffer.GetAsRawArray();
+        //                var notKernel = accelerator.LoadAutoGroupedStreamKernel<Index3, ArrayView<byte, Index3>, byte[,,]>(NOTKernel);
+        //                using (var buffer = accelerator.Allocate<byte, Index3>(idx))
+        //                {
+        //                    notKernel(buffer.Extent, buffer.View, Voxels);
+        //                    accelerator.Synchronize();
+        //                    newVoxels = buffer.GetAsArray();
+        //                }
         //            }
         //        }
         //    }
+
         //    return new VoxelizedSolidCUDA(newVoxels, Discretization, VoxelsPerSide, VoxelSideLength, Bounds);
+        //}
+
+        //public VoxelizedSolidCUDA InvertToNewSolid()
+        //{
+
         //}
     }
 }

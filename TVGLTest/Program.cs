@@ -163,7 +163,7 @@ namespace TVGLPresenterDX
             //Console.WriteLine(vs.Volume);
             //Console.WriteLine(vs_cuda.Volume);
 
-            //Presenter.ShowAndHang(vs_cuda);
+            Presenter.ShowAndHang(vs_cuda);
 
             //var bb = vs.CreateBoundingSolid();
             //var neg = vs.InvertToNewSolid();

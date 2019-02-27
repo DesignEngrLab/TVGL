@@ -147,8 +147,8 @@ namespace TVGL.CUDA
         {
             var counts = new ConcurrentDictionary<int, int>();
 
-            Parallel.For(0, VoxelsPerSide[0], i =>
-            //for (var i = 0; i < VoxelsPerSide[0]; i++)
+            //Parallel.For(0, VoxelsPerSide[0], i =>
+            for (var i = 0; i < VoxelsPerSide[0]; i++)
             {
                 counts.TryAdd(i, 0);
 
@@ -157,35 +157,51 @@ namespace TVGL.CUDA
                 //ToDo: get all slices at once: DirectionalDecomposition.UniformDecomposition()
                 if (slice is null)
                     return;
-                    //continue;
+                //continue;
 
-                //Within each slice, X corresponds to k, and Y corresponds to j
-                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                Slice2D.OnLines(slice, new[] { .0, 1 }, VoxelSideLength / 2, VoxelSideLength, VoxelsPerSide[1], false,
+                    out var intersectionPoints);
+
+                for (var m = 0; m < intersectionPoints.Count - 1; m += 2)
                 {
-                    var ds = (VoxelSideLength / 2) + (j * VoxelSideLength) + Bounds[0][1];
+                    var ep = (int)Math.Round((intersectionPoints[m].X - Bounds[0][2]) / VoxelSideLength) - 1;
+                    var sp = (int)Math.Round((intersectionPoints[m + 1].X - Bounds[0][2]) / VoxelSideLength);
+                    var j = (int)Math.Round((intersectionPoints[m].Y - Bounds[0][1]) / VoxelSideLength) - 1;
 
-                    //Need to remove polygons that won't be intersected with AABB check
-                    var polys = new List<PolygonLight>();
-                    foreach (var poly in slice)
-                        if (ds < poly.MaxY && ds > poly.MinY)
-                            polys.Add(poly);
-                    if (polys.Count == 0) continue;
-
-                    Slice2D.OnLine(polys, new[] {.0, 1}, ds, false, out var inters);
-                    //ToDo: add function to slice2d that is similar to UniformDecomposition()
-
-                    for (var m = 0; m < inters.Count - 1; m += 2)
+                    for (var k = sp; k < ep; k++)
                     {
-                        var ep = (int)Math.Round((inters[m].X - Bounds[0][2]) / VoxelSideLength) - 1;
-                        var sp = (int)Math.Round((inters[m + 1].X - Bounds[0][2]) / VoxelSideLength);
-                        for (var k = sp; k < ep; k++)
-                        {
-                            Voxels[i, j, k] = 1;
-                            counts.AddOrUpdate(i, 1, (key, value) => value + 1);
-                        }
+                        Voxels[i, j, k] = 1;
+                        counts.AddOrUpdate(i, 1, (key, value) => value + 1);
                     }
                 }
-            });
+
+                ////Within each slice, X corresponds to k, and Y corresponds to j
+                //for (var j = 0; j < VoxelsPerSide[1]; j++)
+                //{
+                //    var ds = (VoxelSideLength / 2) + (j * VoxelSideLength) + Bounds[0][1];
+
+                //    //Need to remove polygons that won't be intersected with AABB check
+                //    var polys = new List<PolygonLight>();
+                //    foreach (var poly in slice)
+                //        if (ds < poly.MaxY && ds > poly.MinY)
+                //            polys.Add(poly);
+                //    if (polys.Count == 0) continue;
+
+                //    Slice2D.OnLine(polys, new[] { .0, 1 }, ds, false, out var inters);
+                //    //ToDo: add function to slice2d that is similar to UniformDecomposition()
+
+                //    for (var m = 0; m < inters.Count - 1; m += 2)
+                //    {
+                //        var ep = (int)Math.Round((inters[m].X - Bounds[0][2]) / VoxelSideLength) - 1;
+                //        var sp = (int)Math.Round((inters[m + 1].X - Bounds[0][2]) / VoxelSideLength);
+                //        for (var k = sp; k < ep; k++)
+                //        {
+                //            Voxels[i, j, k] = 1;
+                //            counts.AddOrUpdate(i, 1, (key, value) => value + 1);
+                //        }
+                //    }
+                //}
+            }//);
 
             foreach (var kvp in counts)
                 Count += kvp.Value;
