@@ -312,18 +312,20 @@ namespace TVGL
         }
 
         /// <summary>
-        /// Returns the decomposition data found from each slice of the decomposition. This data is used in other methods.
+        /// Returns the decomposition data found from each slice of the decomposition along the Z direction. 
+        /// This function does not use Projection to 2D, instead it just ignores the Z value of the vertices.
         /// The slices are spaced as close to the stepSizes as possible, while avoiding in-plane faces. The cross sections
-        /// will all be interior to the part, unless addCrossSectionAtStartAndEnd = true.
+        /// will all be interior to the part.
         /// </summary>
         /// <param name="ts"></param>
         /// <param name="direction"></param>
         /// <param name="startDistance"></param>
         /// <param name="stepSize"></param>
         /// <returns></returns>
-        public static List<DecompositionData> UniformDecomposition(TessellatedSolid ts, double[] direction,
+        public static List<DecompositionData> UniformDecompositionAlongZ(TessellatedSolid ts,
             double startOffset, double stepSize)
         {
+            var direction = new[] { 0.0, 0, 1.0 }; //+Z
             var sortedVertexDistanceLookup = new Dictionary<int, double>();
 
             //First, sort the vertices along the given axis. Duplicate distances are not important.
@@ -441,20 +443,11 @@ namespace TVGL
                 if (successfull)
                 {
                     //Get a list of 2D paths from the 3D loops
-                    var currentPaths =
-                        current3DLoops.Select(
-                            cp =>
-                                MiscFunctions.Get2DProjectionPointsAsLightReorderingIfNecessary(cp, direction, out _));
-
-                    //Get the area of this layer
-                    var area = current3DLoops.Sum(p => MiscFunctions.AreaOf3DPolygon(p, direction));
-                    if (area < 0)
+                    var currentPaths = new List<List<PointLight>>();
+                    foreach (var loop in current3DLoops)
                     {
-                        //Rather than throwing an exception, just assume the polygons were the wrong direction      
-                        Debug.WriteLine(
-                            "Area for a cross section in UniformDirectionalDecomposition was negative. This means there was an issue with the polygon ordering");
-                    }
-
+                        currentPaths.Add(loop.Select(v => new PointLight(v.X, v.Y)).ToList());
+                    };
                     //Add the data to the output
                     outputData[stepIndex] = new DecompositionData(currentPaths, current3DLoops, distanceAlongAxis);
                 }

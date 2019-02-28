@@ -307,22 +307,25 @@ namespace TVGL._2D
             foreach (var pair in sortedPoints)
             {
                 var pointDistance = pair.Item2;
-                if (pointDistance > distanceAlongDirection)
+                if(pointDistance > distanceAlongDirection)
                 {
-                    //Get the intersection points for the lines
-                    var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
-                        direction2D, distanceAlongDirection);
-                    intersectionPoints.Add(sortedIntersectionPoints);
-                    var temp = new List<List<PointLight>>(shapeForDebugging) {sortedIntersectionPoints};
-                    Presenter.ShowAndHang(temp);
+                    while (pointDistance > distanceAlongDirection)
+                    {
+                        //Get the intersection points for the lines
+                        var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
+                            direction2D, distanceAlongDirection);
+                        intersectionPoints.Add(sortedIntersectionPoints);
+                        var temp = new List<List<PointLight>>(shapeForDebugging) { sortedIntersectionPoints };
+                        Presenter.ShowAndHang(temp);
 
-                    //Update the distance along
-                    i++;
-                    distanceAlongDirection += distanceBetweenLines;
-                    //ToDo: if the same segment between two points intersects with multiple parallel lines, we don't
-                    //want to increment distanceAlongDirection. i.e. I think distanceAlongDirection needs to be in a
-                    //nested loop such that one "pair" can check with multiple distances, and (?) maybe vice versa
-                }
+                        //Update the distance along
+                        i++;
+                        distanceAlongDirection += distanceBetweenLines;
+                        //ToDo: if the same segment between two points intersects with multiple parallel lines, we don't
+                        //want to increment distanceAlongDirection. i.e. I think distanceAlongDirection needs to be in a
+                        //nested loop such that one "pair" can check with multiple distances, and (?) maybe vice versa
+                    }
+                } 
                 else
                 {
                     //Update the intersection lines

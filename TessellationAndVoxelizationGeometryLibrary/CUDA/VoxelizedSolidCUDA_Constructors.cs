@@ -147,16 +147,16 @@ namespace TVGL.CUDA
         {
             var counts = new ConcurrentDictionary<int, int>();
 
-            var projectionDirection = new []{ -1.0, 0, 0 }; //-X
-            var lineSweepDirection = new []{ 0, 0, 1.0 }; //+Z but the line actually goes in the global Y
+            var projectionDirection = new []{ 0.0, 0, 1.0 }; //+Z
+            var lineSweepDirection = new []{ 1.0, 0, 0 }; //+X
 
             var lineSweep2D = MiscFunctions.Get2DProjectionVector(lineSweepDirection, projectionDirection);
-            var decomp = DirectionalDecomposition.UniformDecomposition(ts, projectionDirection, 
-                VoxelSideLength / 2 + Bounds[0][0], VoxelSideLength);
+            var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
+                VoxelSideLength / 2 + Bounds[0][2], VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
 
-            //var crossSections = decomp.Select(d => d.Vertices).ToList();
-            //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
+            var crossSections = decomp.Select(d => d.Vertices).ToList();
+            Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
 
             //Parallel.For(0, VoxelsPerSide[0], i =>
             for (var i = 0; i < VoxelsPerSide[0] - 1; i++) //ToDo: WHY -1. One too few slices
@@ -164,7 +164,7 @@ namespace TVGL.CUDA
                 var iCount = 0;
 
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistances(
-                    slices[i].Select(p => new PolygonLight(p)), lineSweep2D, VoxelSideLength / 2 + Bounds[0][2],
+                    slices[i].Select(p => new PolygonLight(p)), lineSweep2D, VoxelSideLength / 2 + Bounds[0][0],
                     VoxelSideLength, VoxelsPerSide[2]); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
