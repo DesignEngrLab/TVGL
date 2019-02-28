@@ -170,15 +170,16 @@ namespace TVGL.CUDA
                 foreach (var intersections in intersectionPoints)
                 {
                     //ToDo: Intersections are at [NaN, NaN]. x=63.52, j=158, k=0
-                    var i = (int)Math.Floor((intersections[0].X - Bounds[0][0]) / VoxelSideLength);// - 1;
+                    var i = (int) Math.Floor((intersections[0].X - Bounds[0][0]) / VoxelSideLength);// - 1;
                     for (var m = 0; m < intersections.Count -1; m += 2)
                     {
-                        // -1 no longer necessitated with change Round to Floor
-                        var sp = (int) Math.Floor((intersections[m].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
+                        //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
+                        //Could reverse this to add more voxels
+                        var sp = (int) Math.Ceiling((intersections[m].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
                         var ep = (int) Math.Floor((intersections[m + 1].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
 
                         //ToDo: Some intersections are outside bounds of part
-                        if (ep > VoxelsPerSide[1] || sp < 0) continue;
+                        //if (ep > VoxelsPerSide[1] || sp < 0) continue;
 
                         for (var j = sp; j < ep; j++)
                         {
