@@ -284,7 +284,6 @@ namespace TVGL._2D
             var shapeForDebugging = new List<List<PointLight>>();
             foreach (var polygon in shape)
             {
-      
                 shapeForDebugging.Add(PolygonOperations.SimplifyFuzzy(polygon.Path));
             }
 
@@ -314,13 +313,15 @@ namespace TVGL._2D
                     var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
                         direction2D, distanceAlongDirection);
                     intersectionPoints.Add(sortedIntersectionPoints);
-                    var temp = new List<List<PointLight>>(shapeForDebugging);
-                    temp.Add(sortedIntersectionPoints);
+                    var temp = new List<List<PointLight>>(shapeForDebugging) {sortedIntersectionPoints};
                     Presenter.ShowAndHang(temp);
 
                     //Update the distance along
                     i++;
                     distanceAlongDirection += distanceBetweenLines;
+                    //ToDo: if the same segment between two points intersects with multiple parallel lines, we don't
+                    //want to increment distanceAlongDirection. i.e. I think distanceAlongDirection needs to be in a
+                    //nested loop such that one "pair" can check with multiple distances, and (?) maybe vice versa
                 }
                 else
                 {

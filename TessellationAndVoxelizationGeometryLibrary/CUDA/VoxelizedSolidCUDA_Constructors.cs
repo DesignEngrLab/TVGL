@@ -146,38 +146,64 @@ namespace TVGL.CUDA
         private void VoxelizeSolid(TessellatedSolid ts)
         {
             var counts = new ConcurrentDictionary<int, int>();
-            var projectionDirection = new []{ 0, 0, 1.0 }; //+Z
-            var lineSweepDirection = new []{ 1.0, 0, 0 }; //+X
+
+            var projectionDirection = new []{ -1.0, 0, 0 }; //-X
+            var lineSweepDirection = new []{ 0, 0, 1.0 }; //+Z but the line actually goes in the global Y
+
             var lineSweep2D = MiscFunctions.Get2DProjectionVector(lineSweepDirection, projectionDirection);
             var decomp = DirectionalDecomposition.UniformDecomposition(ts, projectionDirection, 
-                VoxelSideLength / 2, VoxelSideLength);
+                VoxelSideLength / 2 + Bounds[0][0], VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
+
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
             //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
 
             //Parallel.For(0, VoxelsPerSide[0], i =>
-            for (var i = 0; i < VoxelsPerSide[0] - 1; i++) //ToDo: WHY -1
+            for (var i = 0; i < VoxelsPerSide[0] - 1; i++) //ToDo: WHY -1. One too few slices
             {
-                counts.TryAdd(i, 0);
-                var pd = (VoxelSideLength / 2) + (i * VoxelSideLength) + Bounds[0][0];
-                var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistances(slices[i].Select(p => new PolygonLight(p)), 
-                    lineSweep2D, VoxelSideLength / 2, VoxelSideLength, VoxelsPerSide[1]);
-                
-                //Within each slice, X corresponds to k, and Y corresponds to j
-                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                var iCount = 0;
+
+                var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistances(
+                    slices[i].Select(p => new PolygonLight(p)), lineSweep2D, VoxelSideLength / 2 + Bounds[0][2],
+                    VoxelSideLength, VoxelsPerSide[2]); //parallel lines aligned with Y axis
+
+                foreach (var intersections in intersectionPoints)
                 {
-                    var inters = intersectionPoints[j];
-                    for (var m = 0; m < inters.Count - 1; m += 2)
+                    for (var m = 0; m < intersections.Count - 1; m += 2)
                     {
-                        var ep = (int)Math.Round((inters[m].X - Bounds[0][2]) / VoxelSideLength) - 1;
-                        var sp = (int)Math.Round((inters[m + 1].X - Bounds[0][2]) / VoxelSideLength);
-                        for (var k = sp; k < ep; k++)
+                        // -1 no longer necessitated with change Round to Floor 
+                        var k = (int) Math.Floor((intersections[m].X - Bounds[0][2]) / VoxelSideLength);// - 1;
+                        var sp = (int) Math.Floor((intersections[m].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
+                        var ep = (int) Math.Floor((intersections[m + 1].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
+
+                        //ToDo: Some intersections are outside bounds of part
+                        if (ep > VoxelsPerSide[1] || sp < 0) continue;
+
+                        for (var j = sp; j < ep; j++)
                         {
                             Voxels[i, j, k] = 1;
-                            counts.AddOrUpdate(i, 1, (key, value) => value + 1);
+                            iCount++;
                         }
                     }
                 }
+
+                ////Within each slice, X corresponds to k, and Y corresponds to j
+                //for (var j = 0; j < VoxelsPerSide[1]; j++)
+                //{
+                //    var inters = intersectionPoints[j];
+                //    for (var m = 0; m < inters.Count - 1; m += 2)
+                //    {
+                //        var ep = (int)Math.Round((inters[m].X - Bounds[0][2]) / VoxelSideLength) - 1;
+                //        var sp = (int)Math.Round((inters[m + 1].X - Bounds[0][2]) / VoxelSideLength);
+                //        for (var k = sp; k < ep; k++)
+                //        {
+                //            Voxels[i, j, k] = 1;
+                //            counts.AddOrUpdate(i, 1, (key, value) => value + 1);
+                //        }
+                //    }
+                //}
+
+                counts.TryAdd(i, iCount);
             }
 
             foreach (var kvp in counts)
