@@ -282,100 +282,79 @@ namespace TVGL._2D
             return sortedIntersectionPoints;
         }
 
-        public static List<List<PointLight>> IntersectionPointsAtUniformDistances(IEnumerable<PolygonLight> shape,
-            double direction2DX, double direction2DY, double lowerBound, double distanceBetweenLines, int numLines)
-
+        public static Dictionary<double, List<double>> IntersectionPointsAtUniformDistancesAlongX(
+            IEnumerable<PolygonLight> shape, double lowerBound, double distanceBetweenLines, int numLines)
         {
-            var shapeForDebugging = new List<List<PointLight>>();
-            foreach (var polygon in shape)
-            {
-                shapeForDebugging.Add(polygon.Path);//PolygonOperations.SimplifyFuzzy(
-            }
+            //var shapeForDebugging = new List<List<PointLight>>();
+            //foreach (var polygon in shape)
+            //{
+            //    shapeForDebugging.Add(polygon.Path);//PolygonOperations.SimplifyFuzzy(
+            //}
 
-            var intersectionPoints = new List<List<PointLight>>(numLines);
-            //ToDO: debug error that occurs without simplify Fuzzy
-            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)))); //PolygonOperations.SimplifyFuzzy(
+     
             //Set the lines in all the polygons. These are needed for Slice.OnLine()
-            var allPoints = new List<Point>();
-            foreach (var polygon in polygons)
-            {
-                polygon.SetPathLines();
-                allPoints.AddRange(polygon.Path);
-            }
-
-            //Get the sorted points
-            MiscFunctions.SortAlongDirection(direction2DX, direction2DY, allPoints, out List<(Point, double)> sortedPoints);
-
-            var intersectionLines = new HashSet<Line>();
+            //Also, get the sorted points
+            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)), true)); 
+            var allPoints = polygons.SelectMany(poly => poly.Path);
+            var sortedPoints = allPoints.OrderBy(p => p.X).ToList();
+            
             var i = 0;
             var distanceAlongDirection =
-                (Math.Ceiling((sortedPoints[0].Item2 - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
+                (Math.Ceiling((sortedPoints[0].X - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
                 lowerBound + (distanceBetweenLines / 2);
-            foreach (var pair in sortedPoints)
+            var numIntersectionLines = 0;
+            var intersectionLines = new HashSet<Line>();
+            var intersectionPoints = new Dictionary<double, List<double>>(numLines);
+            foreach (var point in sortedPoints)
             {
-                var pointDistance = pair.Item2;
+                var pointDistance = point.X;
 
                 while (pointDistance > distanceAlongDirection)
                 {
-                    //Get the intersection points for the lines
-                    var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
-                        direction2DX, direction2DY, distanceAlongDirection);
-
-                    if (sortedIntersectionPoints is null)
+                    if(numIntersectionLines > 0)
                     {
-                        //var temp = new List<List<PointLight>>(shapeForDebugging) { sortedIntersectionPoints };
+                        intersectionPoints.Add(distanceAlongDirection, 
+                            GetYIntersectionsSortedAlongY(intersectionLines, distanceAlongDirection).ToList());
                         //Presenter.ShowAndHang(shapeForDebugging);
                     }
-                    else intersectionPoints.Add(sortedIntersectionPoints);
 
                     //Update the distance along
                     i++;
-                    distanceAlongDirection += distanceBetweenLines;
-                    //ToDo: if the same segment between two points intersects with multiple parallel lines, we don't
-                    //want to increment distanceAlongDirection. i.e. I think distanceAlongDirection needs to be in a
-                    //nested loop such that one "pair" can check with multiple distances, and (?) maybe vice versa
+                    distanceAlongDirection += distanceBetweenLines;          
                 }
 
                 //Update the intersection lines
-                var point = pair.Item1;
                 foreach (var line in point.Lines)
                 {
                     if (intersectionLines.Contains(line))
                     {
                         intersectionLines.Remove(line);
+                        numIntersectionLines--;
                     }
-                    else intersectionLines.Add(line);
+                    else
+                    {
+                        intersectionLines.Add(line);
+                        numIntersectionLines++;
+                    }
                 }
             }
-
 
             //Presenter.ShowAndHang(intersectionPoints);
             return intersectionPoints;
         }
 
-        private static List<PointLight> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, double direction2DX,
-            double direction2DY, double x)
+        private static double[] GetYIntersectionsSortedAlongY(HashSet<Line> intersectionLines, double x)
         {
             var n = intersectionLines.Count;
-            var intersectionPoints = new List<PointLight>(n);
+            var intersectionPoints = new List<double>(n);
             //Any line that is left in line hash, must be an intersection line.
             var refIndex = 0;
             foreach (var line in intersectionLines)
             {
-                intersectionPoints.Add(new PointLight(x, line.YGivenX(x)));
+                intersectionPoints.Add(line.YGivenX(x));
                 refIndex++;
             }
-            if (intersectionLines.Count == 0 || intersectionLines.Count % 2 != 0)
-            {
-                return null;
-                //throw new Exception("There must be a non-zero, even number of intersection lines");
-            }
-            if (intersectionPoints.Count == 2)
-            {
-                if (intersectionPoints[0].Y <= intersectionPoints[1].Y) return intersectionPoints;
-                else return new List<PointLight> { intersectionPoints[1], intersectionPoints[0] };
-            }
-            return new List<PointLight>(intersectionPoints.OrderBy(p => p.Y));      
+            return intersectionPoints.OrderBy(p => p).ToArray();
         }
     }
 }
