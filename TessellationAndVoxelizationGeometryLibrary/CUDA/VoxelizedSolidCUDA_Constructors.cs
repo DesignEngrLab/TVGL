@@ -95,46 +95,29 @@ namespace TVGL.CUDA
 
         public VoxelizedSolidCUDA(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
         {
-            int longestDimensionIndex;
             Discretization = discretization;
             SolidColor = new Color(Constants.DefaultColor);
             var voxelsOnLongSide = Math.Pow(2, Discretization);
 
-            double longestSide;
             Bounds = new double[2][];
+            Dimensions = new double[3];
+
             if (bounds != null)
             {
                 Bounds[0] = (double[]) bounds[0].Clone();
                 Bounds[1] = (double[]) bounds[1].Clone();
-                Dimensions = new double[3];
-                for (var i = 0; i < 3; i++)
-                    Dimensions[i] = Bounds[1][i] - Bounds[0][i];
-                longestSide = Dimensions.Max();
-                longestDimensionIndex = Dimensions.FindIndex(d => d == longestSide);
             }
             else
             {
-                // add a small buffer only if no bounds are provided.
-                Dimensions = new double[3];
-                for (var i = 0; i < 3; i++)
-                    Dimensions[i] = ts.Bounds[1][i] - ts.Bounds[0][i];
-                longestSide = Dimensions.Max();
-                longestDimensionIndex = Dimensions.FindIndex(d => d == longestSide);
-
-                const double Delta = Voxelization.Constants.fractionOfWhiteSpaceAroundFinestVoxel;
-                var delta = new double[3];
-                for (var i = 0; i < 3; i++)
-                    delta[i] = Dimensions[i] * ((voxelsOnLongSide / (voxelsOnLongSide - (2 * Delta))) - 1) / 2;
-                //var delta = longestSide * ((voxelsOnLongSide / (voxelsOnLongSide - 2 * Constants.fractionOfWhiteSpaceAroundFinestVoxel)) - 1) / 2;
-
-                Bounds[0] = ts.Bounds[0].subtract(delta);
-                Bounds[1] = ts.Bounds[1].add(delta);
-                Dimensions = Dimensions.add(delta.multiply(2));
+                Bounds[0] = ts.Bounds[0];
+                Bounds[1] = ts.Bounds[1];
             }
+            for (var i = 0; i < 3; i++)
+                Dimensions[i] = Bounds[1][i] - Bounds[0][i];
 
-            longestSide = Dimensions[longestDimensionIndex];
+            var longestSide = Dimensions.Max();
             VoxelSideLength = longestSide / voxelsOnLongSide;
-            VoxelsPerSide = Dimensions.Select(d => (int) Math.Ceiling(d / VoxelSideLength)).ToArray();
+            VoxelsPerSide = Dimensions.Select(d => (int) Math.Round(d / VoxelSideLength)).ToArray();
 
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
             Count = 0;
@@ -158,8 +141,8 @@ namespace TVGL.CUDA
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
             //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
 
-            //Parallel.For(0, VoxelsPerSide[0], i =>
-            for (var k = 0; k < VoxelsPerSide[2]/* - 1*/; k++) //ToDo: WHY -1. One too few slices. Working now?
+            //Parallel.For(0, VoxelsPerSide[2], k =>
+            for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
                 var kCount = 0;
 
@@ -169,17 +152,14 @@ namespace TVGL.CUDA
 
                 foreach (var intersections in intersectionPoints)
                 {
-                    //ToDo: Intersections are at [NaN, NaN]. x=63.52, j=158, k=0
-                    var i = (int) Math.Floor((intersections[0].X - Bounds[0][0]) / VoxelSideLength);// - 1;
-                    for (var m = 0; m < intersections.Count -1; m += 2)
+                    var i = (int) Math.Floor((intersections[0].X - Bounds[0][0]) / VoxelSideLength); // - 1;
+                    for (var m = 0; m < intersections.Count - 1; m += 2)
                     {
                         //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
+                        //Floor/Floor seems to be okay
                         //Could reverse this to add more voxels
-                        var sp = (int) Math.Ceiling((intersections[m].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
-                        var ep = (int) Math.Floor((intersections[m + 1].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
-
-                        //ToDo: Some intersections are outside bounds of part
-                        //if (ep > VoxelsPerSide[1] || sp < 0) continue;
+                        var sp = (int) Math.Floor((intersections[m].Y - Bounds[0][1]) / VoxelSideLength); // - 1;
+                        var ep = (int) Math.Floor((intersections[m + 1].Y - Bounds[0][1]) / VoxelSideLength); // - 1;
 
                         for (var j = sp; j < ep; j++)
                         {
@@ -189,24 +169,8 @@ namespace TVGL.CUDA
                     }
                 }
 
-                ////Within each slice, X corresponds to k, and Y corresponds to j
-                //for (var j = 0; j < VoxelsPerSide[1]; j++)
-                //{
-                //    var inters = intersectionPoints[j];
-                //    for (var m = 0; m < inters.Count - 1; m += 2)
-                //    {
-                //        var ep = (int)Math.Round((inters[m].X - Bounds[0][2]) / VoxelSideLength) - 1;
-                //        var sp = (int)Math.Round((inters[m + 1].X - Bounds[0][2]) / VoxelSideLength);
-                //        for (var k = sp; k < ep; k++)
-                //        {
-                //            Voxels[i, j, k] = 1;
-                //            counts.AddOrUpdate(i, 1, (key, value) => value + 1);
-                //        }
-                //    }
-                //}
-
                 counts.TryAdd(k, kCount);
-            }
+            }//);
 
             foreach (var kvp in counts)
                 Count += kvp.Value;

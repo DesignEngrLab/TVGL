@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
             }
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("*SquareSupportWithAdditionsForSegmentationTesting*").ToArray();
+            var fileNames = dir.GetFiles("*TableTopOp*").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i++)
@@ -159,9 +159,9 @@ namespace TVGLPresenterDX
             //Console.WriteLine(vs_cuda.SurfaceArea);
             //Console.WriteLine();
 
-            //Console.WriteLine(ts.Volume);
+            Console.WriteLine(ts.Volume);
             //Console.WriteLine(vs.Volume);
-            //Console.WriteLine(vs_cuda.Volume);
+            Console.WriteLine(vs_cuda.Volume);
 
             Presenter.ShowAndHang(vs_cuda);
 
