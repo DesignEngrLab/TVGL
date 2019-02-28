@@ -91,10 +91,10 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
         /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(double[] direction, IEnumerable<Point> points,
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Point> points,
                out List<(Point, double)> sortedPoints)
         {
-            var pointDistances = GetPointDistances(direction, points);
+            var pointDistances = GetPointDistances(directionX, directionY, points);
             sortedPoints = pointDistances.OrderBy(point => point.Item2).ToList();
         }
 
@@ -104,14 +104,14 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
         /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(double[] direction, IEnumerable<Point> points,
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Point> points,
                out List<Point> sortedPoints)
         {
-            var pointDistances = GetPointDistances(direction, points);
+            var pointDistances = GetPointDistances(directionX, directionY, points);
             sortedPoints = pointDistances.OrderBy(point => point.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static IEnumerable<(Point, double)> GetPointDistances(double[] direction, IEnumerable<Point> points)
+        private static IEnumerable<(Point, double)> GetPointDistances(double directionX, double directionY, IEnumerable<Point> points)
         {
             var pointDistances = new List<(Point, double)>(points.Count());
             //Accuracy to the 15th decimal place
@@ -120,7 +120,7 @@ namespace TVGL
             foreach (var point in points)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(direction[0] * point.X + direction[1] * point.Y, tolerance); //2D dot product
+                var d = Math.Round(directionX * point.X + directionY * point.Y, tolerance); //2D dot product
                 pointDistances.Add((point, d));
             }
             return pointDistances;
@@ -132,10 +132,10 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="PointLights"></param>
         /// <param name="sortedPointLights"></param>
-        public static void SortAlongDirection(double[] direction, IEnumerable<PointLight> PointLights,
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<PointLight> PointLights,
                out List<(PointLight, double)> sortedPointLights, int numDecimals)
         {
-            var PointLightDistances = GetPointLightDistances(direction, PointLights, numDecimals);
+            var PointLightDistances = GetPointLightDistances(directionX, directionY, PointLights, numDecimals);
             sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).ToList();
         }
 
@@ -145,14 +145,14 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="PointLights"></param>
         /// <param name="sortedPointLights"></param>
-        public static void SortAlongDirection(double[] direction, IEnumerable<PointLight> PointLights,
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<PointLight> PointLights,
                out List<PointLight> sortedPointLights, int numDecimals)
         {
-            var PointLightDistances = GetPointLightDistances(direction, PointLights, numDecimals);
+            var PointLightDistances = GetPointLightDistances(directionX, directionY, PointLights, numDecimals);
             sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static IEnumerable<(PointLight, double)> GetPointLightDistances(double[] direction, 
+        private static IEnumerable<(PointLight, double)> GetPointLightDistances(double directionX, double directionY,
             IEnumerable<PointLight> PointLights, int numDecimals)
         {
             var PointLightDistances = new List<(PointLight, double)>(PointLights.Count());
@@ -160,7 +160,7 @@ namespace TVGL
             foreach (var PointLight in PointLights)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(direction[0] * PointLight.X + direction[1] * PointLight.Y, numDecimals); //2D dot product
+                var d = Math.Round(directionX * PointLight.X + directionY * PointLight.Y, numDecimals); //2D dot product
                 PointLightDistances.Add((PointLight, d));
             }
             return PointLightDistances;
