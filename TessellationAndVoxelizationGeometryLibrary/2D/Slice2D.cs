@@ -307,38 +307,34 @@ namespace TVGL._2D
             foreach (var pair in sortedPoints)
             {
                 var pointDistance = pair.Item2;
-                if(pointDistance > distanceAlongDirection)
-                {
-                    while (pointDistance > distanceAlongDirection)
-                    {
-                        //Get the intersection points for the lines
-                        var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
-                            direction2D, distanceAlongDirection);
-                        intersectionPoints.Add(sortedIntersectionPoints);
-                        var temp = new List<List<PointLight>>(shapeForDebugging) { sortedIntersectionPoints };
-                        Presenter.ShowAndHang(temp);
 
-                        //Update the distance along
-                        i++;
-                        distanceAlongDirection += distanceBetweenLines;
-                        //ToDo: if the same segment between two points intersects with multiple parallel lines, we don't
-                        //want to increment distanceAlongDirection. i.e. I think distanceAlongDirection needs to be in a
-                        //nested loop such that one "pair" can check with multiple distances, and (?) maybe vice versa
-                    }
-                } 
-                else
+                while (pointDistance > distanceAlongDirection)
                 {
-                    //Update the intersection lines
-                    var point = pair.Item1;
-                    foreach (var line in point.Lines)
+                    //Get the intersection points for the lines
+                    var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
+                        direction2D, distanceAlongDirection);
+                    intersectionPoints.Add(sortedIntersectionPoints);
+                    var temp = new List<List<PointLight>>(shapeForDebugging) { sortedIntersectionPoints };
+                    //Presenter.ShowAndHang(temp);
+
+                    //Update the distance along
+                    i++;
+                    distanceAlongDirection += distanceBetweenLines;
+                    //ToDo: if the same segment between two points intersects with multiple parallel lines, we don't
+                    //want to increment distanceAlongDirection. i.e. I think distanceAlongDirection needs to be in a
+                    //nested loop such that one "pair" can check with multiple distances, and (?) maybe vice versa
+                }
+         
+                //Update the intersection lines
+                var point = pair.Item1;
+                foreach (var line in point.Lines)
+                {
+                    if (intersectionLines.Contains(line))
                     {
-                        if (intersectionLines.Contains(line))
-                        {
-                            intersectionLines.Remove(line);
-                        }
-                        else intersectionLines.Add(line);
+                        intersectionLines.Remove(line);
                     }
-                }                    
+                    else intersectionLines.Add(line);
+                }                               
             }
 
 
