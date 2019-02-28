@@ -23,6 +23,8 @@ namespace TVGL._2D
             var partialShape = new List<PolygonLight>();
             intersectionPoints = new List<Point>();
             var shallowPolygonsTrees = PolygonOperations.GetShallowPolygonTrees(shape);
+            var dirX = direction2D[0];
+            var dirY = direction2D[1];
             foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
             {
                 //Set the lines in all the polygons. These are needed for Slice.OnLine()
@@ -40,7 +42,7 @@ namespace TVGL._2D
 
                 if (sortedPoints == null)
                 {
-                    MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
+                    MiscFunctions.SortAlongDirection(dirX, dirY, allPoints, out sortedPoints);
                 }
 
                 //Get the paths for each partial shape and add them together. The paths should not overlap, given
@@ -70,6 +72,8 @@ namespace TVGL._2D
             var partialShape = new List<List<PointLight>>();
             intersectionPoints = new List<Point>();
             var shallowPolygonsTrees = ShallowPolygonTree.GetShallowPolygonTrees(shape);
+            var dirX = direction2D[0];
+            var dirY = direction2D[1];
             foreach (var shallowPolygonTree in shallowPolygonsTrees) //There is usually only one, but do them all
             {
                 //Set the lines in all the polygons. These are needed for Slice.OnLine()
@@ -87,7 +91,7 @@ namespace TVGL._2D
 
                 if (sortedPoints == null)
                 {
-                    MiscFunctions.SortAlongDirection(direction2D, allPoints, out sortedPoints);
+                    MiscFunctions.SortAlongDirection(dirX, dirY, allPoints, out sortedPoints);
                 }
 
                 //Get the paths for each partial shape and add them together. The paths should not overlap, given
@@ -261,8 +265,8 @@ namespace TVGL._2D
             {
                 throw new Exception("There must be a non-zero, even number of intersection lines");
             }
-            var searchDirectionPerpendicular = new[] { -direction2D[1], direction2D[0] };
-            MiscFunctions.SortAlongDirection(searchDirectionPerpendicular, intersectionPointsByRef.Values.ToList(),
+            //var searchDirectionPerpendicular = new[] {-direction2D[1], direction2D[0]};
+            MiscFunctions.SortAlongDirection(-direction2D[1], direction2D[0], intersectionPointsByRef.Values.ToList(),
                     out List<Point> sortedIntersectionPoints);
             if (sortedIntersectionPoints.Count % 2 != 0)
             {
@@ -271,15 +275,15 @@ namespace TVGL._2D
             //Set each points position in this sorted list
             //The points are paired together, such that sortedIntersectionPoints[0] has a line to 
             //sortedIntersectionPoints[1], [2]<=>[3], [4]<=>[5], and so on.
-            for (var i = 0; i< sortedIntersectionPoints.Count; i++)
+            for (var i = 0; i < sortedIntersectionPoints.Count; i++)
             {
                 sortedIntersectionPoints[i].IndexInPath = i;
             }
             return sortedIntersectionPoints;
-        } 
+        }
 
-        public static List<List<PointLight>> IntersectionPointsAtUniformDistances(IEnumerable<PolygonLight> shape, 
-            double direction2DX, double direction2DY, double startOffset, double distanceBetweenLines, int numLines)
+        public static List<List<PointLight>> IntersectionPointsAtUniformDistances(IEnumerable<PolygonLight> shape,
+            double direction2DX, double direction2DY, double lowerBound, double distanceBetweenLines, int numLines)
         {
             var shapeForDebugging = new List<List<PointLight>>();
             foreach (var polygon in shape)
@@ -295,15 +299,17 @@ namespace TVGL._2D
             foreach (var polygon in polygons)
             {
                 polygon.SetPathLines();
-                allPoints.AddRange(polygon.Path);      
+                allPoints.AddRange(polygon.Path);
             }
 
             //Get the sorted points
-            MiscFunctions.SortAlongDirection(direction2D, allPoints, out List<(Point, double)> sortedPoints);
-  
+            MiscFunctions.SortAlongDirection(direction2DX, direction2DY, allPoints, out List<(Point, double)> sortedPoints);
+
             var intersectionLines = new HashSet<Line>();
             var i = 0;
-            var distanceAlongDirection = sortedPoints[0].Item2 + startOffset;
+            var distanceAlongDirection =
+                (Math.Ceiling((sortedPoints[0].Item2 - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
+                lowerBound + (distanceBetweenLines / 2);
             foreach (var pair in sortedPoints)
             {
                 var pointDistance = pair.Item2;
@@ -312,10 +318,13 @@ namespace TVGL._2D
                 {
                     //Get the intersection points for the lines
                     var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
-                        direction2D, distanceAlongDirection);
-                    intersectionPoints.Add(sortedIntersectionPoints);
-                    var temp = new List<List<PointLight>>(shapeForDebugging) { sortedIntersectionPoints };
-                    //Presenter.ShowAndHang(temp);
+                        direction2DX, direction2DY, distanceAlongDirection);
+                    if (sortedIntersectionPoints is null)
+                    {
+                        //var temp = new List<List<PointLight>>(shapeForDebugging) { sortedIntersectionPoints };
+                        //Presenter.ShowAndHang(shapeForDebugging);
+                    }
+                    else intersectionPoints.Add(sortedIntersectionPoints);
 
                     //Update the distance along
                     i++;
@@ -324,7 +333,7 @@ namespace TVGL._2D
                     //want to increment distanceAlongDirection. i.e. I think distanceAlongDirection needs to be in a
                     //nested loop such that one "pair" can check with multiple distances, and (?) maybe vice versa
                 }
-         
+
                 //Update the intersection lines
                 var point = pair.Item1;
                 foreach (var line in point.Lines)
@@ -334,7 +343,7 @@ namespace TVGL._2D
                         intersectionLines.Remove(line);
                     }
                     else intersectionLines.Add(line);
-                }                               
+                }
             }
 
 
@@ -343,30 +352,28 @@ namespace TVGL._2D
         }
 
         private static List<PointLight> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, double direction2DX,
-            double direction2DY, double distance)
+            double direction2DY, double x)
         {
-            var intersectionPoints = new List<PointLight>(intersectionLines.Count);
+            var n = intersectionLines.Count;
+            var intersectionPoints = new List<PointLight>(n);
             //Any line that is left in line hash, must be an intersection line.
             var refIndex = 0;
             foreach (var line in intersectionLines)
             {
-                MiscFunctions.PointLightOnPlaneFromIntersectingLine(direction2DX, direction2DY, 
-                    distance, line.FromPoint.X, line.FromPoint.Y, line.ToPoint.X, line.ToPoint.Y, out var x, out var y);
-                intersectionPoints.Add(new PointLight(x,y));
+                intersectionPoints.Add(new PointLight(x, line.YGivenX(x)));
                 refIndex++;
             }
             if (intersectionLines.Count == 0 || intersectionLines.Count % 2 != 0)
             {
-                throw new Exception("There must be a non-zero, even number of intersection lines");
+                return null;
+                //throw new Exception("There must be a non-zero, even number of intersection lines");
             }
-            var searchDirectionPerpendicular = new[] { -direction2D[1], direction2D[0] };
-            MiscFunctions.SortAlongDirection(searchDirectionPerpendicular, intersectionPoints,
-                    out List<PointLight> sortedIntersectionPoints);
-            if (sortedIntersectionPoints.Count % 2 != 0)
+            if (intersectionPoints.Count == 2)
             {
-                throw new Exception("There must be an even number of intersection points");
+                if (intersectionPoints[0].Y <= intersectionPoints[1].Y) return intersectionPoints;
+                else return new List<PointLight> { intersectionPoints[1], intersectionPoints[0] };
             }
-            return sortedIntersectionPoints;
+            return new List<PointLight>(intersectionPoints.OrderBy(p => p.Y));      
         }
     }
 }
