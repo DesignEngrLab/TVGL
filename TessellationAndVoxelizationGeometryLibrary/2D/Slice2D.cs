@@ -284,12 +284,12 @@ namespace TVGL._2D
             var shapeForDebugging = new List<List<PointLight>>();
             foreach (var polygon in shape)
             {
-                shapeForDebugging.Add(PolygonOperations.SimplifyFuzzy(polygon.Path));
+                shapeForDebugging.Add(polygon.Path);//PolygonOperations.SimplifyFuzzy(
             }
 
             var intersectionPoints = new List<List<PointLight>>(numLines);
             //ToDO: debug error that occurs without simplify Fuzzy
-            var polygons = shape.Select(p => new Polygon(PolygonOperations.SimplifyFuzzy(p.Path).Select(point => new Point(point))));
+            var polygons = shape.Select(p => new Polygon(p.Path.Select(point => new Point(point)))); //PolygonOperations.SimplifyFuzzy(
             //Set the lines in all the polygons. These are needed for Slice.OnLine()
             var allPoints = new List<Point>();
             foreach (var polygon in polygons)
@@ -338,7 +338,7 @@ namespace TVGL._2D
             }
 
 
-            Presenter.ShowAndHang(intersectionPoints);
+            //Presenter.ShowAndHang(intersectionPoints);
             return intersectionPoints;
         }
 

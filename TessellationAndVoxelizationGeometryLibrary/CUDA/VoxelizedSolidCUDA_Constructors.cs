@@ -147,16 +147,16 @@ namespace TVGL.CUDA
         {
             var counts = new ConcurrentDictionary<int, int>();
 
-            var projectionDirection = new []{ 0.0, 0, 1.0 }; //+Z
+            var projectionDirection = new []{ 0.0, 0, -1.0 }; //-Z
             var lineSweepDirection = new []{ 1.0, 0, 0 }; //+X
 
             var lineSweep2D = MiscFunctions.Get2DProjectionVector(lineSweepDirection, projectionDirection);
             var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
-                VoxelSideLength / 2 + Bounds[0][2], VoxelSideLength);
+                VoxelSideLength / 2 - Bounds[0][2], VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
 
-            var crossSections = decomp.Select(d => d.Vertices).ToList();
-            Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
+            //var crossSections = decomp.Select(d => d.Vertices).ToList();
+            //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
 
             //Parallel.For(0, VoxelsPerSide[0], i =>
             for (var k = 0; k < VoxelsPerSide[2]/* - 1*/; k++) //ToDo: WHY -1. One too few slices. Working now?
@@ -171,7 +171,7 @@ namespace TVGL.CUDA
                 {
                     //ToDo: Intersections are at [NaN, NaN]. x=63.52, j=158, k=0
                     var i = (int)Math.Floor((intersections[0].X - Bounds[0][0]) / VoxelSideLength);// - 1;
-                    for (var m = 0; m < intersections.Count - 2; m += 2)
+                    for (var m = 0; m < intersections.Count -1; m += 2)
                     {
                         // -1 no longer necessitated with change Round to Floor
                         var sp = (int) Math.Floor((intersections[m].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
