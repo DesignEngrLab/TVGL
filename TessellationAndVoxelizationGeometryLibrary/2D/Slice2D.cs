@@ -279,7 +279,7 @@ namespace TVGL._2D
         } 
 
         public static List<List<PointLight>> IntersectionPointsAtUniformDistances(IEnumerable<PolygonLight> shape, 
-            double[] direction2D, double startOffset, double distanceBetweenLines, int numLines)
+            double direction2DX, double direction2DY, double startOffset, double distanceBetweenLines, int numLines)
         {
             var shapeForDebugging = new List<List<PointLight>>();
             foreach (var polygon in shape)
@@ -342,16 +342,17 @@ namespace TVGL._2D
             return intersectionPoints;
         }
 
-        private static List<PointLight> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, double[] direction2D,
-           double distance)
+        private static List<PointLight> GetSortedIntersectionPoints(HashSet<Line> intersectionLines, double direction2DX,
+            double direction2DY, double distance)
         {
             var intersectionPoints = new List<PointLight>(intersectionLines.Count);
             //Any line that is left in line hash, must be an intersection line.
             var refIndex = 0;
             foreach (var line in intersectionLines)
             {
-                var intersectionPoint = MiscFunctions.PointLightOnPlaneFromIntersectingLine(direction2D, distance, line);
-                intersectionPoints.Add(intersectionPoint);
+                MiscFunctions.PointLightOnPlaneFromIntersectingLine(direction2DX, direction2DY, 
+                    distance, line.FromPoint.X, line.FromPoint.Y, line.ToPoint.X, line.ToPoint.Y, out var x, out var y);
+                intersectionPoints.Add(new PointLight(x,y));
                 refIndex++;
             }
             if (intersectionLines.Count == 0 || intersectionLines.Count % 2 != 0)

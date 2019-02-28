@@ -19,6 +19,7 @@ using System.Globalization;
 using System.Linq;
 using StarMathLib;
 using TVGL.Voxelization;
+//using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
@@ -1929,7 +1930,8 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static Point PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
         {
-            PointLightOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, line, out var x, out var y);
+            PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
             return new Point(x, y);
         }
 
@@ -1944,18 +1946,20 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static PointLight PointLightOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
         {
-            PointLightOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, line, out var x, out var y);
+            PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
             return new PointLight(x, y);
         }
 
-        private static void PointLightOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line,
-            out double x, out double y)
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void PointLightOnPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane, 
+            double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
         {
-            var d1 = normalOfPlane[0] * line.ToPoint.X + normalOfPlane[1] * line.ToPoint.Y; //2D Dot product
-            var d2 = normalOfPlane[0] * line.FromPoint.X + normalOfPlane[1] * line.FromPoint.Y;  //For a point, Position[2] = 0.0
+            var d1 = normalOfPlaneX * toPointX + normalOfPlaneY * toPointY; //2D Dot product
+            var d2 = normalOfPlaneX * fromPointX + normalOfPlaneY * fromPointY;  //For a point, Position[2] = 0.0
             var fraction = (d1 - distOfPlane) / (d1 - d2);
-            x = line.FromPoint.Position[0] * fraction + line.ToPoint.Position[0] * (1 - fraction);
-            y = line.FromPoint.Position[1] * fraction + line.ToPoint.Position[1] * (1 - fraction);
+            x = fromPointX * fraction + toPointX * (1 - fraction);
+            y = fromPointY * fraction + toPointY * (1 - fraction);
         }
 
         /// <summary>
