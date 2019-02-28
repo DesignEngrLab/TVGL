@@ -196,8 +196,8 @@ namespace TVGL
         /// <returns></returns>
         public static List<PointLight> SimplifyFuzzy(IList<PointLight> path)
         {
-            double lengthTolerance = Constants.LineLengthMinimum;
-            double slopeTolerance = Constants.LineSlopeTolerance;
+            const double lengthTolerance = Constants.LineLengthMinimum;
+            const double slopeTolerance = Constants.LineSlopeTolerance;
             return SimplifyFuzzy(path, lengthTolerance, slopeTolerance);
         }
 
@@ -211,37 +211,98 @@ namespace TVGL
         public static List<PointLight> SimplifyFuzzy(IList<PointLight> path, double lengthTolerance,
             double slopeTolerance)
         {
+            if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
+            var squareLengthTolerance = lengthTolerance * lengthTolerance;
+            var n = path.Count;
+            if (n < 4) return new List<PointLight>(path);
             var simplePath = new List<PointLight>(path);
+
             //Remove negligible length lines and combine collinear lines.
-            for (var i = 0; i < simplePath.Count; i++)
+            var i = 0;
+            var j = 1; 
+            var k = 2;
+            var iX = simplePath[i].X;
+            var iY = simplePath[i].Y;
+            var jX = simplePath[j].X;
+            var jY = simplePath[j].Y;
+            var kX = simplePath[k].X;
+            var kY = simplePath[k].Y;
+            while (i < n)
             {
-                var j = i + 1;
-                if (i == simplePath.Count - 1) j = 0;
-                var k = j + 1;
-                if (j == simplePath.Count - 1) k = 0;
-                var current = simplePath[i];
-                var next = simplePath[j];
-                var nextNext = simplePath[k];
-                if (i == 0 && NegligibleLine(current, next, lengthTolerance))
+                //The simplification is destroying this polygon. Do not simplify it.
+                if (n < 4) return new List<PointLight>(path);
+
+                //We only check line I-J in the first iteration, since later we
+                //check line J-K instead.
+                if (i == 0 && NegligibleLine(iX, iY, jX, jY, squareLengthTolerance))
                 {
                     simplePath.RemoveAt(j);
-                    i--;
-                    continue;
+                    n--;
+                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+                    //Current stays the same.
+                    //j moves to k, k moves forward but has the same index.
+                    jX = kX;
+                    jY = kY;
+                    var kPoint = simplePath[k];
+                    kX = kPoint.X;
+                    kY = kPoint.Y;
                 }
-                if (NegligibleLine(next, nextNext, lengthTolerance))
+                else if (NegligibleLine(jX, jY, kX, kY, squareLengthTolerance))
                 {
                     simplePath.RemoveAt(k);
-                    i--;
-                    continue;
+                    n--;
+                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+                    //Current and Next stay the same.
+                    //k moves forward but has the same index.
+                    var kPoint = simplePath[k];
+                    kX = kPoint.X;
+                    kY = kPoint.Y;
                 }
                 //Use an even looser tolerance to determine if slopes are equal.
-                if (!LineSlopesEqual(current, next, nextNext, slopeTolerance)) continue;
-                simplePath.RemoveAt(j);
-                i--;
+                else if (LineSlopesEqual(iX, iY, jX, jY, kX, kY, slopeTolerance))
+                {
+                    simplePath.RemoveAt(j);
+                    n--;
+                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+
+                    //Current stays the same.
+                    //j moves to k, k moves forward but has the same index.
+                    jX = kX;
+                    jY = kY;
+                    var kPoint = simplePath[k];
+                    kX = kPoint.X;
+                    kY = kPoint.Y;
+                }
+                else
+                {
+                    //Everything moves forward
+                    i++;
+                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+                    iX = jX;
+                    iY = jY;
+                    jX = kX;
+                    jY = kY;
+                    var kPoint = simplePath[k];
+                    kX = kPoint.X;
+                    kY = kPoint.Y;
+                }
             }
 
+            var area1 = MiscFunctions.AreaOfPolygon(path);
+            var area2 = MiscFunctions.AreaOfPolygon(simplePath);
+
             //If the simplification destroys a polygon, do not simplify it.
-            return MiscFunctions.AreaOfPolygon(simplePath).IsNegligible() ? (PathAsLight) path : simplePath;
+            if (area2.IsNegligible() || 
+                !area1.IsPracticallySame(area2, Math.Abs(area1 * (1 - Constants.HighConfidence))))
+            {
+                return (PathAsLight) path;
+            }
+
+            return simplePath;
         }
 
         /// <summary>
@@ -249,11 +310,13 @@ namespace TVGL
         /// </summary>
         /// <param name="path"></param>
         /// <param name="edgeLength"></param>
-        /// <param name="lengthTolerance"></param>
-        /// <param name="slopeTolerance"></param>
         /// <returns></returns>
         public static List<PointLight> SampleWithEdgeLength (IList<PointLight> path, double edgeLength)
         {
+            //ToDo: Speed this up to be like SimplifyFuzzy
+            var lengthTolerance = edgeLength / 2;
+            var squareLengthTolerance = lengthTolerance * lengthTolerance;
+
             var newPath = new List<PointLight>();
             var simplePath = new List<PointLight>(path);
             for (var i = 0; i < simplePath.Count; i++)
@@ -277,13 +340,13 @@ namespace TVGL
                         newPath.Add(current);
                     }
                 }
-                else if (i == 0 && NegligibleLine(current, next, edgeLength / 2))
+                else if (i == 0 && NegligibleLine(current.X, current.Y, next.X, next.Y, squareLengthTolerance))
                 {
                     simplePath.RemoveAt(j);
                     i--;
                     continue;
                 }
-                else if (NegligibleLine(next, nextNext, edgeLength/2))
+                else if (NegligibleLine(next.X, next.Y, nextNext.X, nextNext.Y, squareLengthTolerance))
                 {
                     simplePath.RemoveAt(k);
                     i--;
@@ -304,8 +367,8 @@ namespace TVGL
         /// <returns></returns>
         public static List<Point> SimplifyFuzzy(IList<Point> path)
         {
-            double lengthTolerance = Constants.LineLengthMinimum;
-            double slopeTolerance = Constants.LineSlopeTolerance;
+            const double lengthTolerance = Constants.LineLengthMinimum;
+            const double slopeTolerance = Constants.LineSlopeTolerance;
             return SimplifyFuzzy(path, lengthTolerance, slopeTolerance);
         }
 
@@ -319,48 +382,110 @@ namespace TVGL
         public static List<Point> SimplifyFuzzy(IList<Point> path, double lengthTolerance,
             double slopeTolerance)
         {
+            if (lengthTolerance.IsNegligible()) lengthTolerance = Constants.LineLengthMinimum;
+            var squareLengthTolerance = lengthTolerance * lengthTolerance;
             var simplePath = new List<Point>(path);
+            var n = simplePath.Count;
+            if (n < 4) return simplePath;
+
             //Remove negligible length lines and combine collinear lines.
-            for (var i = 0; i < simplePath.Count; i++)
+            var i = 0;
+            var j = 1;
+            var k = 2;
+            var iX = simplePath[i].X;
+            var iY = simplePath[i].Y;
+            var jX = simplePath[j].X;
+            var jY = simplePath[j].Y;
+            var kX = simplePath[k].X;
+            var kY = simplePath[k].Y;
+            while (i < n)
             {
-                var j = i + 1;
-                if (i == simplePath.Count - 1) j = 0;
-                var k = j + 1;
-                if (j == simplePath.Count - 1) k = 0;
-                var current = simplePath[i];
-                var next = simplePath[j];
-                var nextNext = simplePath[k];
-                if (i == 0 && NegligibleLine(current.Light, next.Light, lengthTolerance))
+                //We only check line I-J in the first iteration, since later we
+                //check line J-K instead.
+                if (i == 0 && NegligibleLine(iX, iY, jX, jY, squareLengthTolerance))
                 {
                     simplePath.RemoveAt(j);
-                    i--;
-                    continue;
+                    n--;
+                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+                    //Current stays the same.
+                    //j moves to k, k moves forward but has the same index.
+                    jX = kX;
+                    jY = kY;
+                    var kPoint = simplePath[k];
+                    kX = kPoint.X;
+                    kY = kPoint.Y;
                 }
-                if (NegligibleLine(next.Light, nextNext.Light, lengthTolerance))
+                else if (NegligibleLine(jX, jY, kX, kY, squareLengthTolerance))
                 {
                     simplePath.RemoveAt(k);
-                    i--;
-                    continue;
+                    n--;
+                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+                    //Current and Next stay the same.
+                    //k moves forward but has the same index.
+                    var kPoint = simplePath[k];
+                    kX = kPoint.X;
+                    kY = kPoint.Y;
                 }
                 //Use an even looser tolerance to determine if slopes are equal.
-                if (!LineSlopesEqual(current.Light, next.Light, nextNext.Light, slopeTolerance)) continue;
-                simplePath.RemoveAt(j);
-                i--;
+                else if (LineSlopesEqual(iX, iY, jX, jY, kX, kY, slopeTolerance))
+                {
+                    simplePath.RemoveAt(j);
+                    n--;
+                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+
+                    //Current stays the same.
+                    //j moves to k, k moves forward but has the same index.
+                    jX = kX;
+                    jY = kY;
+                    var kPoint = simplePath[k];
+                    kX = kPoint.X;
+                    kY = kPoint.Y;
+                }
+                else
+                {
+                    //Everything moves forward
+                    i++;
+                    j = (i + 1) % n; //Next position in path. Goes to 0 when i = n-1; 
+                    k = (j + 1) % n; //Next position in path. Goes to 0 when j = n-1; 
+                    iX = jX;
+                    iY = jY;
+                    jX = kX;
+                    jY = kY;
+                    var kPoint = simplePath[k];
+                    kX = kPoint.X;
+                    kY = kPoint.Y;
+                }
             }
+
+            var area1 = MiscFunctions.AreaOfPolygon(path);
+            var area2 = MiscFunctions.AreaOfPolygon(simplePath);
+
+            //If the simplification destroys a polygon, do not simplify it.
+            if (area2.IsNegligible() ||
+                !area1.IsPracticallySame(area2, Math.Abs(area1 * (1 - Constants.HighConfidence))))
+            {
+                return (Path) path;
+            }
+
             return simplePath;
         }
 
 
-        private static bool NegligibleLine(PointLight pt1, PointLight pt2, double tolerance = Constants.LineLengthMinimum)
+        private static bool NegligibleLine(double p1X, double p1Y, double p2X, double p2Y, double squaredTolerance)
         {
-            if (tolerance.IsNegligible()) tolerance = Constants.LineLengthMinimum;
-            return MiscFunctions.DistancePointToPoint(pt1, pt2).IsNegligible(tolerance);
+            var dX = p1X - p2X;
+            var dY = p1Y - p2Y;
+            return (dX * dX + dY * dY).IsNegligible(squaredTolerance);
         }
 
-        private static bool LineSlopesEqual(PointLight pt1, PointLight pt2, PointLight pt3, double tolerance = Constants.LineSlopeTolerance)
+        private static bool LineSlopesEqual(double p1X, double p1Y, double p2X, double p2Y, double p3X, double p3Y, 
+            double tolerance = Constants.LineSlopeTolerance)
         {
             if (tolerance.IsNegligible()) tolerance = Constants.LineSlopeTolerance;
-            var value = (pt1.Y - pt2.Y)*(pt2.X - pt3.X) - (pt1.X - pt2.X)*(pt2.Y - pt3.Y);
+            var value = (p1Y - p2Y) * (p2X - p3X) - (p1X - p2X) * (p2Y - p3Y);
             return value.IsNegligible(tolerance);
         }
         #endregion

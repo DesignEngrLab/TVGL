@@ -27,26 +27,33 @@ namespace TVGL
     [DataContract]
     public struct PointLight: IVertex
     {
-        [DataMember]
-        public double[] Position { get; set; }
+        [DataMember] public double[] Position => new[] {X, Y};
 
-        public double X => Position[0];
+        public double X;
 
-        public double Y => Position[1];
+        public double Y;
 
         public PointLight(double x, double y)
         {
-            Position = new []{x , y};
+            X = x;
+            Y = y;
         }
 
         public PointLight(Point point)
         {
-            Position = new[] { point.X, point.Y };
+            X = point.X;
+            Y = point.Y;
         }
 
         public PointLight(double[] position)
         {
-            Position = new[] { position[0], position[1] };
+            X = position[0];
+            Y = position[1];
+        }
+
+        public double[] Subtract(PointLight b)
+        {
+            return new[] {X - b.X, Y - b.Y};
         }
     }
 
