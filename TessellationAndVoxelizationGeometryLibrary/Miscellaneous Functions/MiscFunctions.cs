@@ -19,7 +19,6 @@ using System.Globalization;
 using System.Linq;
 using StarMathLib;
 using TVGL.Voxelization;
-//using System.Runtime.CompilerServices;
 
 namespace TVGL
 {
@@ -1949,7 +1948,6 @@ namespace TVGL
             return new PointLight(x, y);
         }
 
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PointLightOnPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane, 
             double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
         {
