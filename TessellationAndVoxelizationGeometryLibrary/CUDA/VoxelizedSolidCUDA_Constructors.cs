@@ -134,6 +134,8 @@ namespace TVGL.CUDA
             var lineSweepDirection = new []{ 1.0, 0, 0 }; //+X
 
             var lineSweep2D = MiscFunctions.Get2DProjectionVector(lineSweepDirection, projectionDirection);
+            var lineSweepX = lineSweep2D[0];
+            var lineSweepY = lineSweep2D[1];
             var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
                 VoxelSideLength / 2 - Bounds[1][2], VoxelsPerSide[2], VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
@@ -147,7 +149,7 @@ namespace TVGL.CUDA
                 var kCount = 0;
 
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistances(
-                    slices[k].Select(p => new PolygonLight(p)), lineSweep2D, Bounds[0][0],
+                    slices[k].Select(p => new PolygonLight(p)), lineSweepX, lineSweepY, Bounds[0][0],
                     VoxelSideLength, VoxelsPerSide[0]); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
