@@ -133,9 +133,9 @@ namespace TVGL
         /// <param name="PointLights"></param>
         /// <param name="sortedPointLights"></param>
         public static void SortAlongDirection(double[] direction, IEnumerable<PointLight> PointLights,
-               out List<(PointLight, double)> sortedPointLights)
+               out List<(PointLight, double)> sortedPointLights, int numDecimals)
         {
-            var PointLightDistances = GetPointLightDistances(direction, PointLights);
+            var PointLightDistances = GetPointLightDistances(direction, PointLights, numDecimals);
             sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).ToList();
         }
 
@@ -146,23 +146,21 @@ namespace TVGL
         /// <param name="PointLights"></param>
         /// <param name="sortedPointLights"></param>
         public static void SortAlongDirection(double[] direction, IEnumerable<PointLight> PointLights,
-               out List<PointLight> sortedPointLights)
+               out List<PointLight> sortedPointLights, int numDecimals)
         {
-            var PointLightDistances = GetPointLightDistances(direction, PointLights);
+            var PointLightDistances = GetPointLightDistances(direction, PointLights, numDecimals);
             sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).Select(p => p.Item1).ToList();
         }
 
         private static IEnumerable<(PointLight, double)> GetPointLightDistances(double[] direction, 
-            IEnumerable<PointLight> PointLights)
+            IEnumerable<PointLight> PointLights, int numDecimals)
         {
             var PointLightDistances = new List<(PointLight, double)>(PointLights.Count());
             //Accuracy to the 15th decimal place
-            var toleranceString = StarMath.EqualityTolerance.ToString(CultureInfo.InvariantCulture);
-            var tolerance = toleranceString.Substring(toleranceString.IndexOf(".", StringComparison.Ordinal) + 1).Length;
             foreach (var PointLight in PointLights)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(direction[0] * PointLight.X + direction[1] * PointLight.Y, tolerance); //2D dot product
+                var d = Math.Round(direction[0] * PointLight.X + direction[1] * PointLight.Y, numDecimals); //2D dot product
                 PointLightDistances.Add((PointLight, d));
             }
             return PointLightDistances;

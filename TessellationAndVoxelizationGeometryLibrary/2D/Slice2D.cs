@@ -279,7 +279,11 @@ namespace TVGL._2D
         } 
 
         public static List<List<PointLight>> IntersectionPointsAtUniformDistances(IEnumerable<PolygonLight> shape, 
+<<<<<<< HEAD
             double direction2DX, double direction2DY, double startOffset, double distanceBetweenLines, int numLines)
+=======
+            double[] direction2D, double lowerBound, double distanceBetweenLines, int numLines)
+>>>>>>> ad55af13f91409bd3577de4f1e504dadc88ffc5f
         {
             var shapeForDebugging = new List<List<PointLight>>();
             foreach (var polygon in shape)
@@ -303,7 +307,9 @@ namespace TVGL._2D
   
             var intersectionLines = new HashSet<Line>();
             var i = 0;
-            var distanceAlongDirection = sortedPoints[0].Item2 + startOffset;
+            var distanceAlongDirection =
+                (Math.Ceiling((sortedPoints[0].Item2 - lowerBound) / distanceBetweenLines) * distanceBetweenLines) +
+                lowerBound + (distanceBetweenLines / 2);
             foreach (var pair in sortedPoints)
             {
                 var pointDistance = pair.Item2;
@@ -313,10 +319,13 @@ namespace TVGL._2D
                     //Get the intersection points for the lines
                     var sortedIntersectionPoints = GetSortedIntersectionPoints(intersectionLines,
                         direction2D, distanceAlongDirection);
-                    intersectionPoints.Add(sortedIntersectionPoints);
-                    var temp = new List<List<PointLight>>(shapeForDebugging) { sortedIntersectionPoints };
-                    //Presenter.ShowAndHang(temp);
-
+                    if (sortedIntersectionPoints is null)
+                    {
+                        //var temp = new List<List<PointLight>>(shapeForDebugging) { sortedIntersectionPoints };
+                        //Presenter.ShowAndHang(shapeForDebugging);
+                    }
+                    else intersectionPoints.Add(sortedIntersectionPoints);
+                    
                     //Update the distance along
                     i++;
                     distanceAlongDirection += distanceBetweenLines;
@@ -357,11 +366,12 @@ namespace TVGL._2D
             }
             if (intersectionLines.Count == 0 || intersectionLines.Count % 2 != 0)
             {
-                throw new Exception("There must be a non-zero, even number of intersection lines");
+                return null;
+                //throw new Exception("There must be a non-zero, even number of intersection lines");
             }
             var searchDirectionPerpendicular = new[] { -direction2D[1], direction2D[0] };
             MiscFunctions.SortAlongDirection(searchDirectionPerpendicular, intersectionPoints,
-                    out List<PointLight> sortedIntersectionPoints);
+                    out List<PointLight> sortedIntersectionPoints, 15);
             if (sortedIntersectionPoints.Count % 2 != 0)
             {
                 throw new Exception("There must be an even number of intersection points");
