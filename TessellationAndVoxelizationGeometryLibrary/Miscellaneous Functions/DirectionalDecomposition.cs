@@ -323,7 +323,7 @@ namespace TVGL
         /// <param name="stepSize"></param>
         /// <returns></returns>
         public static List<DecompositionData> UniformDecompositionAlongZ(TessellatedSolid ts,
-            double startOffset, double stepSize)
+            double startDistance, int numSteps, double stepSize)
         {
             var direction = new[] { 0.0, 0, -1.0 }; //+Z
             var sortedVertexDistanceLookup = new Dictionary<int, double>();
@@ -337,8 +337,7 @@ namespace TVGL
             var firstDistance = sortedVertices.First().Item2;
             var furthestDistance = sortedVertices.Last().Item2;
             var length = furthestDistance - firstDistance;
-            var numSteps = (int)((length - startOffset) / stepSize) + 1;
-
+            //var numSteps = (int)((furthestDistance - startDistance) / stepSize) + 1;
   
             var inputEdgeLoops = new List<List<Edge>>();
 
@@ -350,7 +349,7 @@ namespace TVGL
             //Choose whichever min offset is smaller
             var minOffset = Math.Min(Math.Sqrt(ts.SameTolerance), stepSize / 1000);
             var stepIndex = 0;
-            var distanceAlongAxis = firstDistance + startOffset; 
+            var distanceAlongAxis = startDistance; 
             while (distanceAlongAxis < furthestDistance)
             {
                 stepDistances[stepIndex] = distanceAlongAxis;

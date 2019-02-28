@@ -115,8 +115,8 @@ namespace TVGL.CUDA
             for (var i = 0; i < 3; i++)
                 Dimensions[i] = Bounds[1][i] - Bounds[0][i];
 
-            var longestSide = Dimensions.Max();
-            VoxelSideLength = longestSide / voxelsOnLongSide;
+            //var longestSide = Dimensions.Max();
+            VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
             VoxelsPerSide = Dimensions.Select(d => (int) Math.Round(d / VoxelSideLength)).ToArray();
 
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
@@ -135,7 +135,7 @@ namespace TVGL.CUDA
 
             var lineSweep2D = MiscFunctions.Get2DProjectionVector(lineSweepDirection, projectionDirection);
             var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
-                VoxelSideLength / 2 - Bounds[0][2], VoxelSideLength);
+                VoxelSideLength / 2 - Bounds[1][2], VoxelsPerSide[2], VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
 
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
@@ -147,7 +147,7 @@ namespace TVGL.CUDA
                 var kCount = 0;
 
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistances(
-                    slices[k].Select(p => new PolygonLight(p)), lineSweep2D, VoxelSideLength / 2 + Bounds[0][0],
+                    slices[k].Select(p => new PolygonLight(p)), lineSweep2D, Bounds[0][0],
                     VoxelSideLength, VoxelsPerSide[0]); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
@@ -159,6 +159,7 @@ namespace TVGL.CUDA
                         //Floor/Floor seems to be okay
                         //Could reverse this to add more voxels
                         var sp = (int) Math.Floor((intersections[m].Y - Bounds[0][1]) / VoxelSideLength); // - 1;
+                        if (sp == -1) sp = 0;
                         var ep = (int) Math.Floor((intersections[m + 1].Y - Bounds[0][1]) / VoxelSideLength); // - 1;
 
                         for (var j = sp; j < ep; j++)
