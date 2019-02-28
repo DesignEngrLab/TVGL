@@ -159,20 +159,21 @@ namespace TVGL.CUDA
             Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
 
             //Parallel.For(0, VoxelsPerSide[0], i =>
-            for (var i = 0; i < VoxelsPerSide[0] - 1; i++) //ToDo: WHY -1. One too few slices
+            for (var k = 0; k < VoxelsPerSide[2]/* - 1*/; k++) //ToDo: WHY -1. One too few slices. Working now?
             {
-                var iCount = 0;
+                var kCount = 0;
 
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistances(
-                    slices[i].Select(p => new PolygonLight(p)), lineSweep2D, VoxelSideLength / 2 + Bounds[0][0],
-                    VoxelSideLength, VoxelsPerSide[2]); //parallel lines aligned with Y axis
+                    slices[k].Select(p => new PolygonLight(p)), lineSweep2D, VoxelSideLength / 2 + Bounds[0][0],
+                    VoxelSideLength, VoxelsPerSide[0]); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
                 {
-                    for (var m = 0; m < intersections.Count - 1; m += 2)
+                    //ToDo: Intersections are at [NaN, NaN]. x=63.52, j=158, k=0
+                    var i = (int)Math.Floor((intersections[0].X - Bounds[0][0]) / VoxelSideLength);// - 1;
+                    for (var m = 0; m < intersections.Count - 2; m += 2)
                     {
-                        // -1 no longer necessitated with change Round to Floor 
-                        var k = (int) Math.Floor((intersections[m].X - Bounds[0][2]) / VoxelSideLength);// - 1;
+                        // -1 no longer necessitated with change Round to Floor
                         var sp = (int) Math.Floor((intersections[m].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
                         var ep = (int) Math.Floor((intersections[m + 1].Y - Bounds[0][1]) / VoxelSideLength);// - 1;
 
@@ -182,7 +183,7 @@ namespace TVGL.CUDA
                         for (var j = sp; j < ep; j++)
                         {
                             Voxels[i, j, k] = 1;
-                            iCount++;
+                            kCount++;
                         }
                     }
                 }
@@ -203,7 +204,7 @@ namespace TVGL.CUDA
                 //    }
                 //}
 
-                counts.TryAdd(i, iCount);
+                counts.TryAdd(k, kCount);
             }
 
             foreach (var kvp in counts)
