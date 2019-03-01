@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using TVGL;
-using TVGL.CUDA;
+using TVGL.DenseVoxels;
 using TVGL.IOFunctions;
 using TVGL.Voxelization;
 
@@ -151,19 +151,19 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var vs_cuda = new VoxelizedSolidCUDA(ts, res);
+            var vs_dense = new VoxelizedSolidDense(ts, res);
             stopwatch.Stop();
-            Console.WriteLine("CUDA voxelization    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
 
             //Console.WriteLine(ts.SurfaceArea);
-            //Console.WriteLine(vs_cuda.SurfaceArea);
+            //Console.WriteLine(vs_dense.SurfaceArea);
             //Console.WriteLine();
 
             //Console.WriteLine(ts.Volume);
             ////Console.WriteLine(vs.Volume);
-            //Console.WriteLine(vs_cuda.Volume);
+            //Console.WriteLine(vs_dense.Volume);
 
-            //Presenter.ShowAndHang(vs_cuda);
+            //Presenter.ShowAndHang(vs_dense);
 
             stopwatch.Restart();
             var bb = vs.CreateBoundingSolid();
@@ -171,9 +171,9 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original bounding solid: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var bb_cuda = vs_cuda.CreateBoundingSolid();
+            var bb_dense = vs_dense.CreateBoundingSolid();
             stopwatch.Stop();
-            Console.WriteLine("CUDA bounding solid    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense bounding solid    : {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var neg = vs.InvertToNewSolid();
@@ -181,9 +181,9 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original inversion: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var neg_cuda = vs_cuda.InvertToNewSolid();
+            var neg_dense = vs_dense.InvertToNewSolid();
             stopwatch.Stop();
-            Console.WriteLine("CUDA inversion    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense inversion    : {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var draft = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
@@ -191,9 +191,9 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original draft: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var draft_cuda = vs_cuda.DraftToNewSolid(VoxelDirections.ZPositive);
+            var draft_dense = vs_dense.DraftToNewSolid(VoxelDirections.ZPositive);
             stopwatch.Stop();
-            Console.WriteLine("CUDA draft    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense draft    : {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var intersect = neg.IntersectToNewSolid(draft);
@@ -201,9 +201,9 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original intersect: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var intersect_cuda = neg_cuda.IntersectToNewSolid(draft_cuda);
+            var intersect_dense = neg_dense.IntersectToNewSolid(draft_dense);
             stopwatch.Stop();
-            Console.WriteLine("CUDA intersect    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense intersect    : {0}", stopwatch.Elapsed);
 
             var draft1 = vs.ExtrudeToNewSolid(VoxelDirections.YNegative);
             stopwatch.Restart();
@@ -211,11 +211,11 @@ namespace TVGLPresenterDX
             stopwatch.Stop();
             Console.WriteLine("Original union: {0}", stopwatch.Elapsed);
 
-            var draft1_cuda = vs_cuda.DraftToNewSolid(VoxelDirections.YNegative);
+            var draft1_dense = vs_dense.DraftToNewSolid(VoxelDirections.YNegative);
             stopwatch.Restart();
-            var union_cuda = draft_cuda.UnionToNewSolid(draft1_cuda);
+            var union_dense = draft_dense.UnionToNewSolid(draft1_dense);
             stopwatch.Stop();
-            Console.WriteLine("CUDA union    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense union    : {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var subtract = draft.SubtractToNewSolid(draft1);
@@ -223,13 +223,13 @@ namespace TVGLPresenterDX
             Console.WriteLine("Original subtract: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var subtract_cuda = draft_cuda.SubtractToNewSolid(draft1_cuda);
+            var subtract_dense = draft_dense.SubtractToNewSolid(draft1_dense);
             stopwatch.Stop();
-            Console.WriteLine("CUDA subtract    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense subtract    : {0}", stopwatch.Elapsed);
 
 
             //Presenter.ShowAndHang(intersect);
-            //Presenter.ShowAndHang(intersect_cuda);
+            //Presenter.ShowAndHang(intersect_dense);
         }
 
         public static void TestSegmentation(TessellatedSolid ts)

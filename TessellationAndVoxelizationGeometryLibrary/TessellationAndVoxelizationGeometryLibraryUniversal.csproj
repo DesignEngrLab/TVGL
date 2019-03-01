@@ -71,8 +71,8 @@
     <Compile Include="Boolean Operations\Polygon.cs" />
     <Compile Include="Boolean Operations\Slice.cs" />
     <Compile Include="Comparators\SortByLength.cs" />
-    <Compile Include="CUDA\VoxelizedSolidCUDA_Constructors.cs" />
-    <Compile Include="CUDA\VoxelizedSolidCUDA_PublicFunctions.cs" />
+    <Compile Include="DenseVoxels\VoxelizedSolidDense_Constructors.cs" />
+    <Compile Include="DenseVoxels\VoxelizedSolidDense_PublicFunctions.cs" />
     <Compile Include="Enclosure Operations\GaussianSphere.cs" />
     <Compile Include="Enclosure Operations\MinimumCircleCylinder.cs" />
     <Compile Include="Enclosure Operations\MinimumEnclosure - OBBTest.cs" />

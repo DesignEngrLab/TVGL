@@ -22,7 +22,7 @@ using System.Windows.Media.Media3D;
 using HelixToolkit.Wpf;
 using OxyPlot;
 using StarMathLib;
-using TVGL.CUDA;
+using TVGL.DenseVoxels;
 using TVGL.Voxelization;
 
 namespace TVGL
@@ -723,7 +723,7 @@ namespace TVGL
             window.view1.FitView(window.view1.Camera.LookDirection, window.view1.Camera.UpDirection);
             window.ShowDialog();
         }
-        public static void ShowAndHang(VoxelizedSolidCUDA solid)
+        public static void ShowAndHang(VoxelizedSolidDense solid)
         {
             var window = new Window3DPlot();
             var models = new List<Visual3D>();
@@ -942,7 +942,7 @@ namespace TVGL
             };
         }
 
-        private static Visual3D MakeModelVisual3D(VoxelizedSolidCUDA vs)
+        private static Visual3D MakeModelVisual3D(VoxelizedSolidDense vs)
         {
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();

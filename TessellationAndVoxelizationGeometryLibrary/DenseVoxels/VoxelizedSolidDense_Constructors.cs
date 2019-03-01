@@ -6,7 +6,7 @@
 // Last Modified By : Alan Grier
 // Last Modified On : 02-18-2019
 // ***********************************************************************
-// <copyright file="CUDA.cs" company="Design Engineering Lab">
+// <copyright file="VoxelizedSolidDense_Constructors.cs" company="Design Engineering Lab">
 //     Copyright ©  2019
 // </copyright>
 // <summary></summary>
@@ -25,12 +25,12 @@ using TVGL.Enclosure_Operations;
 using TVGL.Voxelization;
 using TVGL._2D;
 
-namespace TVGL.CUDA
+namespace TVGL.DenseVoxels
 {
     /// <summary>
-    /// Class VoxelizedSolidCUDA.
+    /// Class VoxelizedSolidDense.
     /// </summary>
-    public partial class VoxelizedSolidCUDA
+    public partial class VoxelizedSolidDense
     {
         #region Properties
         public byte[,,] Voxels;
@@ -46,7 +46,7 @@ namespace TVGL.CUDA
         public int Count { get; internal set; }
         #endregion
 
-        public VoxelizedSolidCUDA(int[] voxelsPerSide, int discretization, double voxelSideLength,
+        public VoxelizedSolidDense(int[] voxelsPerSide, int discretization, double voxelSideLength,
             IEnumerable<double[]> bounds, byte value = 0)
         {
             VoxelsPerSide = (int[]) voxelsPerSide.Clone();
@@ -67,7 +67,7 @@ namespace TVGL.CUDA
             UpdateProperties();
         }
 
-        public VoxelizedSolidCUDA(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength, IEnumerable<double[]> bounds)
+        public VoxelizedSolidDense(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength, IEnumerable<double[]> bounds)
         {
             Voxels = (byte[,,])voxels.Clone();
             Discretization = discretization;
@@ -79,7 +79,7 @@ namespace TVGL.CUDA
             UpdateProperties();
         }
 
-        public VoxelizedSolidCUDA(VoxelizedSolidCUDA vs)
+        public VoxelizedSolidDense(VoxelizedSolidDense vs)
         {
             Voxels = (byte[,,]) vs.Voxels.Clone();
             Discretization = vs.Discretization;
@@ -93,7 +93,7 @@ namespace TVGL.CUDA
             Count = vs.Count;
         }
 
-        public VoxelizedSolidCUDA(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
+        public VoxelizedSolidDense(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
         {
             Discretization = discretization;
             SolidColor = new Color(Constants.DefaultColor);

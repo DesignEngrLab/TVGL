@@ -50,8 +50,8 @@
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByIndexInList.cs" Link="Comparators\SortByIndexInList.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Comparators\SortByLength.cs" Link="Comparators\SortByLength.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Constants.cs" Link="Constants.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CUDA\VoxelizedSolidCUDA_Constructors.cs" Link="CUDA\VoxelizedSolidCUDA_Constructors.cs" />
-    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\CUDA\VoxelizedSolidCUDA_PublicFunctions.cs" Link="CUDA\VoxelizedSolidCUDA_PublicFunctions.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\DenseVoxels\VoxelizedSolidDense_Constructors.cs" Link="DenseVoxels\VoxelizedSolidDense_Constructors.cs" />
+    <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\DenseVoxels\VoxelizedSolidDense_PublicFunctions.cs" Link="DenseVoxels\VoxelizedSolidDense_PublicFunctions.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\ConvexHull2D.cs" Link="Enclosure Operations\ConvexHull2D.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\EnclosurePublicStructs.cs" Link="Enclosure Operations\EnclosurePublicStructs.cs" />
     <Compile Include="..\TessellationAndVoxelizationGeometryLibrary\Enclosure Operations\GaussianSphere.cs" Link="Enclosure Operations\GaussianSphere.cs" />
