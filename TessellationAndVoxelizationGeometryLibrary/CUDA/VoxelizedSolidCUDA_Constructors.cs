@@ -131,9 +131,7 @@ namespace TVGL.CUDA
             var counts = new ConcurrentDictionary<int, int>();
 
             var projectionDirection = new []{ 0.0, 0, -1.0 }; //-Z
-            var lineSweepDirection = new []{ 1.0, 0, 0 }; //+X
 
-            var lineSweep2D = MiscFunctions.Get2DProjectionVector(lineSweepDirection, projectionDirection);
             var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
                 VoxelSideLength / 2 - Bounds[1][2], VoxelsPerSide[2], VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
@@ -146,21 +144,23 @@ namespace TVGL.CUDA
             {
                 var kCount = 0;
 
-                var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistances(
-                    slices[k].Select(p => new PolygonLight(p)), lineSweep2D, Bounds[0][0],
+                var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
+                    slices[k].Select(p => new PolygonLight(p)), Bounds[0][0],
                     VoxelSideLength, VoxelsPerSide[0]); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
                 {
-                    var i = (int) Math.Floor((intersections[0].X - Bounds[0][0]) / VoxelSideLength); // - 1;
-                    for (var m = 0; m < intersections.Count - 1; m += 2)
+                    var i = (int) Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
+                    var intersectValues = intersections.Value;
+                    var n = intersectValues.Count();
+                    for (var m = 0; m < n - 1; m += 2)
                     {
                         //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
                         //Floor/Floor seems to be okay
                         //Could reverse this to add more voxels
-                        var sp = (int) Math.Floor((intersections[m].Y - Bounds[0][1]) / VoxelSideLength); // - 1;
+                        var sp = (int) Math.Floor((intersectValues[m] - Bounds[0][1]) / VoxelSideLength); // - 1;
                         if (sp == -1) sp = 0;
-                        var ep = (int) Math.Floor((intersections[m + 1].Y - Bounds[0][1]) / VoxelSideLength); // - 1;
+                        var ep = (int) Math.Floor((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
 
                         for (var j = sp; j < ep; j++)
                         {

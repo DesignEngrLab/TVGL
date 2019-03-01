@@ -90,10 +90,10 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
         /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(double[] direction, IEnumerable<Point> points,
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Point> points,
                out List<(Point, double)> sortedPoints)
         {
-            var pointDistances = GetPointDistances(direction, points);
+            var pointDistances = GetPointDistances(directionX, directionY, points);
             sortedPoints = pointDistances.OrderBy(point => point.Item2).ToList();
         }
 
@@ -103,14 +103,14 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="points"></param>
         /// <param name="sortedPoints"></param>
-        public static void SortAlongDirection(double[] direction, IEnumerable<Point> points,
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<Point> points,
                out List<Point> sortedPoints)
         {
-            var pointDistances = GetPointDistances(direction, points);
+            var pointDistances = GetPointDistances(directionX, directionY, points);
             sortedPoints = pointDistances.OrderBy(point => point.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static IEnumerable<(Point, double)> GetPointDistances(double[] direction, IEnumerable<Point> points)
+        private static IEnumerable<(Point, double)> GetPointDistances(double directionX, double directionY, IEnumerable<Point> points)
         {
             var pointDistances = new List<(Point, double)>(points.Count());
             //Accuracy to the 15th decimal place
@@ -119,7 +119,7 @@ namespace TVGL
             foreach (var point in points)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(direction[0] * point.X + direction[1] * point.Y, tolerance); //2D dot product
+                var d = Math.Round(directionX * point.X + directionY * point.Y, tolerance); //2D dot product
                 pointDistances.Add((point, d));
             }
             return pointDistances;
@@ -131,10 +131,10 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="PointLights"></param>
         /// <param name="sortedPointLights"></param>
-        public static void SortAlongDirection(double[] direction, IEnumerable<PointLight> PointLights,
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<PointLight> PointLights,
                out List<(PointLight, double)> sortedPointLights, int numDecimals)
         {
-            var PointLightDistances = GetPointLightDistances(direction, PointLights, numDecimals);
+            var PointLightDistances = GetPointLightDistances(directionX, directionY, PointLights, numDecimals);
             sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).ToList();
         }
 
@@ -144,14 +144,14 @@ namespace TVGL
         /// <param name="direction">The directions.</param>
         /// <param name="PointLights"></param>
         /// <param name="sortedPointLights"></param>
-        public static void SortAlongDirection(double[] direction, IEnumerable<PointLight> PointLights,
+        public static void SortAlongDirection(double directionX, double directionY, IEnumerable<PointLight> PointLights,
                out List<PointLight> sortedPointLights, int numDecimals)
         {
-            var PointLightDistances = GetPointLightDistances(direction, PointLights, numDecimals);
+            var PointLightDistances = GetPointLightDistances(directionX, directionY, PointLights, numDecimals);
             sortedPointLights = PointLightDistances.OrderBy(PointLight => PointLight.Item2).Select(p => p.Item1).ToList();
         }
 
-        private static IEnumerable<(PointLight, double)> GetPointLightDistances(double[] direction, 
+        private static IEnumerable<(PointLight, double)> GetPointLightDistances(double directionX, double directionY,
             IEnumerable<PointLight> PointLights, int numDecimals)
         {
             var PointLightDistances = new List<(PointLight, double)>(PointLights.Count());
@@ -159,7 +159,7 @@ namespace TVGL
             foreach (var PointLight in PointLights)
             {
                 //Get distance along the search direction with accuracy to the 15th decimal place
-                var d = Math.Round(direction[0] * PointLight.X + direction[1] * PointLight.Y, numDecimals); //2D dot product
+                var d = Math.Round(directionX * PointLight.X + directionY * PointLight.Y, numDecimals); //2D dot product
                 PointLightDistances.Add((PointLight, d));
             }
             return PointLightDistances;
@@ -344,7 +344,8 @@ namespace TVGL
         /// <returns>System.Double.</returns>
         /// <reference>
         ///     Method 1: http://www.mathopenref.com/coordpolygonarea2.html
-        ///     Faster Method: http://geomalgorithms.com/a01-_area.html
+        ///     Faster Method: http://geomalgorithms.com/a01-_area.html.
+        ///     The faster method has been optimized for speed, since it is called often.
         /// </reference>
         public static double AreaOfPolygon(IList<PointLight> polygon)
         {
@@ -364,30 +365,46 @@ namespace TVGL
 
             #endregion
 
-            //First, check if all x are the same. The algorithm will catch all y's and output zero,
+            //Also check if all x are the same. The algorithm will catch all y's and output zero,
             //But it may output a small number, even if all the x's are the same
-            var xval = polygon.First().X;
-            var returnZero = true;
-            for (var i = 1; i < polygon.Count; i++)
-            {
-                if (polygon[i].X.IsPracticallySame(xval)) continue;
-                returnZero = false;
-                break;
-            }
-            if (returnZero) return 0.0;
-
-            //Faster Method
-            var area = 0.0;
             var n = polygon.Count;
+            var p0 = polygon[0];
+            var xval = p0.X;
+
+            //Optimized version reduces get functions from arrays and point.X and point.Y
+            // j == i - 1;
+            // k == i + 1
+            var area = 0.0;
+            var p1 = polygon[1];
+            var jY = p0.Y;
+            var iX = p1.X;
+            var iY = p1.Y;
+            var returnZero = true;
             for (var i = 1; i < n - 1; i++)
-            {
-                area += polygon[i].X * (polygon[i + 1].Y - polygon[i - 1].Y);
+            {     
+                var kPoint = polygon[i + 1]; //Thus i < n - 1
+                var kX = kPoint.X;
+                var kY = kPoint.Y;
+                area += iX * (kY - jY);
+
+                if (returnZero && !iX.IsPracticallySame(xval))
+                {
+                    returnZero = false;
+                }
+
+                //Update values
+                jY = iY; //move j to i
+                iY = kY; //move i to k
+                iX = kX;
             }
-            //Final wrap around terms
-            area += polygon[0].X * (polygon[1].Y - polygon[n - 1].Y);
-            area += polygon[n - 1].X * (polygon[0].Y - polygon[n - 2].Y);
-            area = area / 2;
-            return area;
+            //Final wrap around terms (Note: this is faster than checking an if condition in the for loop).
+            var pN = polygon[n - 1];
+            area += p0.X * (p1.Y - pN.Y);
+            area += pN.X * (p0.Y - polygon[n - 2].Y);
+            //If all x's were the same, we still need to check the last point, since i doesn't do it in the loop.
+            if (returnZero && pN.X.IsPracticallySame(xval)) return 0.0;
+
+            return area / 2;
         }
 
         /// <summary>
@@ -1927,7 +1944,8 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static Point PointOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
         {
-            PointLightOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, line, out var x, out var y);
+            PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
             return new Point(x, y);
         }
 
@@ -1942,18 +1960,19 @@ namespace TVGL
         /// <exception cref="Exception">This should never occur. Prevent this from happening</exception>
         public static PointLight PointLightOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line)
         {
-            PointLightOnPlaneFromIntersectingLine(normalOfPlane, distOfPlane, line, out var x, out var y);
+            PointLightOnPlaneFromIntersectingLine(normalOfPlane[0], normalOfPlane[1], distOfPlane, line.FromPoint.X, line.FromPoint.Y,
+                line.ToPoint.X, line.FromPoint.Y, out var x, out var y);
             return new PointLight(x, y);
         }
 
-        private static void PointLightOnPlaneFromIntersectingLine(double[] normalOfPlane, double distOfPlane, Line line,
-            out double x, out double y)
+        public static void PointLightOnPlaneFromIntersectingLine(double normalOfPlaneX, double normalOfPlaneY, double distOfPlane, 
+            double fromPointX, double fromPointY, double toPointX, double toPointY, out double x, out double y)
         {
-            var d1 = normalOfPlane[0] * line.ToPoint.X + normalOfPlane[1] * line.ToPoint.Y; //2D Dot product
-            var d2 = normalOfPlane[0] * line.FromPoint.X + normalOfPlane[1] * line.FromPoint.Y;  //For a point, Position[2] = 0.0
+            var d1 = normalOfPlaneX * toPointX + normalOfPlaneY * toPointY; //2D Dot product
+            var d2 = normalOfPlaneX * fromPointX + normalOfPlaneY * fromPointY;  //For a point, Position[2] = 0.0
             var fraction = (d1 - distOfPlane) / (d1 - d2);
-            x = line.FromPoint.Position[0] * fraction + line.ToPoint.Position[0] * (1 - fraction);
-            y = line.FromPoint.Position[1] * fraction + line.ToPoint.Position[1] * (1 - fraction);
+            x = fromPointX * fraction + toPointX * (1 - fraction);
+            y = fromPointY * fraction + toPointY * (1 - fraction);
         }
 
         /// <summary>
@@ -2068,12 +2087,12 @@ namespace TVGL
         /// <param name="radius"></param>
         /// <param name="radianIncrement"></param>
         /// <returns></returns>
-        public static List<Point> CreateCirclePath(Point center, double radius, double radianIncrement = Math.PI / 50.0)
+        public static List<PointLight> CreateCirclePath(PointLight center, double radius, double radianIncrement = Math.PI / 50.0)
         {
-            var path = new List<Point>();
+            var path = new List<PointLight>();
             for (var theta = 0.0; theta < Math.PI * 2; theta += radianIncrement)
             {
-                path.Add(new Point(radius * Math.Cos(theta) + center.X, radius * Math.Sin(theta) + center.Y));
+                path.Add(new PointLight(radius * Math.Cos(theta) + center.X, radius * Math.Sin(theta) + center.Y));
             }
             return path;
         }
@@ -2084,7 +2103,7 @@ namespace TVGL
         /// <param name="circle"></param>
         /// <param name="radianIncrement"></param>
         /// <returns></returns>
-        public static List<Point> CreateCirclePath(BoundingCircle circle, double radianIncrement = Math.PI / 50.0)
+        public static List<PointLight> CreateCirclePath(BoundingCircle circle, double radianIncrement = Math.PI / 50.0)
         {
             return CreateCirclePath(circle.Center, circle.Radius, radianIncrement);
         }

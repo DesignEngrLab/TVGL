@@ -29,9 +29,9 @@ namespace TVGL
         /// <summary>
         ///     Finds the minimum bounding circle
         /// </summary>
-        public static BoundingCircle MinimumCircle(IList<PointLight> points)
+        public static BoundingCircle MinimumCircle(IList<Point> points)
         {
-            return MinimumCircle(points.Select(p => new Point(p)).ToList());
+            return MinimumCircle(points.Select(p => new PointLight(p)).ToList());
         }
 
         /// <summary>
@@ -48,29 +48,31 @@ namespace TVGL
         ///     (doesn't care about multiple points on a line and fewer rounding functions)
         ///     and directly applicable to multiple dimensions (in our case, just 2 and 3 D).
         /// </references>
-        public static BoundingCircle MinimumCircle(IList<Point> points)
+        public static BoundingCircle MinimumCircle(IList<PointLight> points)
         {
             #region Algorithm 1
 
-            //Randomize the list of points
+            ////Randomize the list of points
             //var r = new Random();
-            //var randomPoints = new List<Point>(points.OrderBy(p=>r.Next()));
+            //var randomPoints = new List<PointLight>(points.OrderBy(p => r.Next()));
 
             //if (randomPoints.Count < 2) return new BoundingCircle(0.0, points[0]);
             ////Get any two points in the list points.
             //var point1 = randomPoints[0];
             //var point2 = randomPoints[1];
-            //var previousPoints = new List<Point>();
-            //var circle = new InternalCircle(new List<Point> {point1, point2});
+            //var previousPoints = new HashSet<PointLight>();
+            //var circle = new InternalCircle(point1, point2);
             //var stallCounter = 0;
             //var i = 0;
 
-            //Algorithm 1
             //while (i < randomPoints.Count && stallCounter < points.Count * 2)
             //{
             //    var currentPoint = randomPoints[i];
             //    //If the current point is part of the circle or inside the circle, go to the next iteration
-            //    if (circle.Points.Contains(currentPoint) || circle.IsPointInsideCircle(currentPoint))
+            //    if (circle.Point0.Equals(currentPoint) ||
+            //        circle.Point1.Equals(currentPoint) || 
+            //        circle.Point2.Equals(currentPoint) || 
+            //        circle.IsPointInsideCircle(currentPoint))
             //    {
             //        i++;
             //        continue;
@@ -80,17 +82,16 @@ namespace TVGL
             //    if (previousPoints.Contains(currentPoint))
             //    {
             //        //Make a new circle from the current two-point circle and the current point
-            //        circle = new InternalCircle(new List<Point> {circle.Points[0], circle.Points[1], currentPoint});
+            //        circle = new InternalCircle(circle.Point0, circle.Point1, currentPoint);
             //        previousPoints.Remove(currentPoint);
             //        i++;
             //    }
             //    else
             //    {
             //        //Find the point in the circle furthest from new point. 
-            //        Point furthestPoint;
-            //        circle.Furthest(currentPoint, out furthestPoint, ref previousPoints);
+            //        circle.Furthest(currentPoint, out var furthestPoint, ref previousPoints);
             //        //Make a new circle from the furthest point and current point
-            //        circle = new InternalCircle(new List<Point> {currentPoint, furthestPoint});
+            //        circle = new InternalCircle(currentPoint, furthestPoint);
             //        //Add previousPoints to the front of the list
             //        foreach (var previousPoint in previousPoints)
             //        {
@@ -106,76 +107,104 @@ namespace TVGL
             #endregion
 
             #region Algorithm 2: Furthest Point
+            //var r = new Random();
+            //var randomPoints = new List<PointLight>(points.OrderBy(p => r.Next()));
 
             //Algorithm 2
-            var listPoints = new List<Point>(points);
-            var point1 = listPoints.First();
-            var point2 = listPoints[listPoints.Count/2];
-            var circle = new InternalCircle(new List<Point> {point1, point2});
+            //I tried using the extremes (X, Y, and also tried Sum, Diff) to do a first pass at the circle
+            //or to define the starting circle for max dX or dY, but all of these were slower do to the extra
+            //for loop at the onset. The current approach is faster and simpler; just start with some arbitrary points.
+            var circle = new InternalCircle(points[0], points[points.Count / 2]);
+            var dummyPoint = new PointLight(double.NaN, double.NaN);
             var stallCounter = 0;
-            var previousPoints = new List<Point>();
             var successful = false;
-            var stallLimit = listPoints.Count*3;
+            var stallLimit = points.Count * 1.5;
             if (stallLimit < 100) stallLimit = 100;
-
+            var centerX = circle.CenterX;
+            var centerY = circle.CenterY;
+            var sqTolerance = Math.Sqrt(Constants.BaseTolerance);
+            var sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
+            var nextPoint = dummyPoint;
+            var priorRadius = circle.SqRadius;
             while (!successful && stallCounter < stallLimit)
             {
-                //Find the furthest point from the center point
                 //If stallCounter is getting big, add a bit extra to the circle radius to ensure convergence
-                if (stallCounter > stallLimit/2)
-                    circle.SqRadius = circle.SqRadius + Constants.BaseTolerance*circle.SqRadius;
+                if (stallCounter > stallLimit / 2)
+                    sqRadiusPlusTolerance = sqRadiusPlusTolerance + Constants.BaseTolerance * sqRadiusPlusTolerance;
                 //Add it a second time if stallCounter is even bigger
-                if (stallCounter > stallLimit*2/3)
-                    circle.SqRadius = circle.SqRadius + Constants.BaseTolerance*circle.SqRadius;
-                var maxDistance = circle.SqRadius;
-                Point nextPoint = null;
-                var create3PointCircle = false;
-                foreach (var point in listPoints)
-                {
-                    if (previousPoints.Contains(point) && !circle.IsPointInsideCircle(point))
-                    {
-                        create3PointCircle = true;
-                        nextPoint = point;
-                        break;
-                    }
-                    if (circle.Points.Contains(point)) continue; //Check if point is already part of the circle
-                    var squareDistanceToPoint = (circle.Center.X - point.X)*(circle.Center.X - point.X) +
-                                                (circle.Center.Y - point.Y)*(circle.Center.Y - point.Y);
-                    if (squareDistanceToPoint <= maxDistance) continue; //Beginning with the circle's square radius
+                if (stallCounter > stallLimit * 2 / 3)
+                    sqRadiusPlusTolerance = sqRadiusPlusTolerance + Constants.BaseTolerance * sqRadiusPlusTolerance;
 
-                    maxDistance = squareDistanceToPoint;
+                //Find the furthest point from the center point
+                var maxDistancePlusTolerance = sqRadiusPlusTolerance;
+                var nextPointIsSet = false;
+                foreach (var point in points)
+                {
+                    var dx = centerX - point.X;
+                    var dy = centerY - point.Y;
+                    var squareDistanceToPoint = dx * dx + dy * dy;
+                    //If the square distance is less than or equal to the max square distance, continue.
+                    if (squareDistanceToPoint < maxDistancePlusTolerance) continue;
+                    //Otherwise, set this as the next point to go to.
+                    maxDistancePlusTolerance = squareDistanceToPoint + sqTolerance;
                     nextPoint = point;
+                    nextPointIsSet = true;
                 }
-                if (nextPoint == null)
+                if (!nextPointIsSet)
                 {
                     successful = true;
                     continue;
                 }
 
-                //Create a new circle of either 2 or 3 points
-                //if the currentPoint is a previousPoint, increase dimension
-                if (create3PointCircle)
+                //Create a new circle with 2 points
+                //Find the point in the circle furthest from new point.
+                circle.Furthest(nextPoint, out var furthestPoint, out var previousPoint1,
+                    out var previousPoint2, out var numPreviousPoints);
+                //Make a new circle from the furthest point and current point
+                circle = new InternalCircle(nextPoint, furthestPoint);
+                centerX = circle.CenterX;
+                centerY = circle.CenterY;
+                sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
+
+                //Now check if the previous points are outside this circle.
+                //To be outside the circle, it must be further out than the specified tolerance. 
+                //Otherwise, the loop can get caught in a loop due to rounding error 
+                //If you wanted to use a tighter tolerance, you would need to take the square roots to get the radius.   
+                //If they are, increase the dimension and use three points in a circle
+                var dxP1 = centerX - previousPoint1.X;
+                var dyP1 = centerY - previousPoint1.Y;
+                var squareDistanceP1 = dxP1 * dxP1 + dyP1 * dyP1;
+                if (squareDistanceP1 > sqRadiusPlusTolerance)
                 {
                     //Make a new circle from the current two-point circle and the current point
-                    circle = new InternalCircle(new List<Point> {circle.Points[0], circle.Points[1], nextPoint});
-                    previousPoints.Remove(nextPoint);
+                    circle = new InternalCircle(circle.Point0, circle.Point1, previousPoint1);
+                    centerX = circle.CenterX;
+                    centerY = circle.CenterY;
+                    sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
                 }
-                else
+                else if (numPreviousPoints == 2)
                 {
-                    //Find the point in the circle furthest from new point. 
-                    Point furthestPoint;
-                    circle.Furthest(nextPoint, out furthestPoint, ref previousPoints);
-                    //Make a new circle from the furthest point and current point
-                    circle = new InternalCircle(new List<Point> {nextPoint, furthestPoint});
-                    //Add previousPoints to the front of the list
-                    foreach (var previousPoint in previousPoints)
+                    var dxP2 = centerX - previousPoint2.X;
+                    var dyP2 = centerY - previousPoint2.Y;
+                    var squareDistanceP2 = dxP2 * dxP2 + dyP2 * dyP2;
+                    if (squareDistanceP2 > sqRadiusPlusTolerance)
                     {
-                        listPoints.Remove(previousPoint);
-                        listPoints.Insert(0, previousPoint);
+                        //Make a new circle from the current two-point circle and the current point
+                        circle = new InternalCircle(circle.Point0, circle.Point1, previousPoint2);
+                        centerX = circle.CenterX;
+                        centerY = circle.CenterY;
+                        sqRadiusPlusTolerance = circle.SqRadius + sqTolerance;
                     }
                 }
+
+                if(circle.SqRadius < priorRadius)
+                {
+                    Debug.WriteLine("Bounding circle got smaller during this iteration");
+                }
+                priorRadius = circle.SqRadius;
                 stallCounter++;
             }
+            if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " + (Constants.BaseTolerance * circle.SqRadius * 2));
 
             #endregion
 
@@ -194,22 +223,19 @@ namespace TVGL
 
             #endregion
 
-            //Return information about minimum circle
-            if (stallCounter >= stallLimit) Debug.WriteLine("Bounding circle failed to converge to within " +  (Constants.BaseTolerance * circle.SqRadius * 2));
             var radius = circle.SqRadius.IsNegligible() ? 0 : Math.Sqrt(circle.SqRadius);
-            return new BoundingCircle(radius, circle.Center);
+            return new BoundingCircle(radius, new PointLight(centerX, centerY));
         }
-
 
         /// <summary>
         ///     Gets the maximum inner circle given a group of polygons and a center point.
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(IList<List<PointLight>> paths, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircle(IList<List<PointLight>> paths, PointLight centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path.Select(p => new Point(p)))).ToList();
-            return MaximumInnerCircle(polygons, centerPoint);
+            return MaximumInnerCircle(polygons, new Point(centerPoint));
         }
 
         /// <summary>
@@ -217,10 +243,10 @@ namespace TVGL
         ///     If there are no negative polygons, the function will return a negligible Bounding Circle
         /// </summary>
         /// <returns>BoundingBox.</returns>
-        public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, Point centerPoint)
+        public static BoundingCircle MaximumInnerCircle(IList<PolygonLight> paths, PointLight centerPoint)
         {
             var polygons = paths.Select(path => new Polygon(path)).ToList();
-            return MaximumInnerCircle(polygons, centerPoint);
+            return MaximumInnerCircle(polygons, new Point(centerPoint));
         }
 
         /// <summary>
@@ -261,12 +287,9 @@ namespace TVGL
             Polygon closestContainingPolygon = null;
             foreach (var negativePoly in negativePolygons)
             {
-                bool onBoundary;
-                Line closestLineAbove;
-                Line closestLineBelow;
-                if (!MiscFunctions.IsPointInsidePolygon(negativePoly, centerPoint, out closestLineAbove,
-                    out closestLineBelow, out onBoundary)) continue;
-                if (onBoundary) return new BoundingCircle(0.0, centerPoint); //Null solution.
+                if (!MiscFunctions.IsPointInsidePolygon(negativePoly, centerPoint, out var closestLineAbove,
+                    out _, out var onBoundary)) continue;
+                if (onBoundary) return new BoundingCircle(0.0, centerPoint.Light); //Null solution.
                 var d = closestLineAbove.YGivenX(centerPoint.X) - centerPoint.Y; //Not negligible because not on Boundary
                 if (d < minDistance)
                 {
@@ -285,18 +308,15 @@ namespace TVGL
             {
                 foreach (var positivePoly in positivePolygons)
                 {
-                    bool onBoundary;
-                    Line closestLineAbove;
-                    Line closestLineBelow;
-                    if (MiscFunctions.IsPointInsidePolygon(positivePoly, centerPoint, out closestLineAbove,
-                        out closestLineBelow, out onBoundary)) return new BoundingCircle(0.0, centerPoint);
+                    if (MiscFunctions.IsPointInsidePolygon(positivePoly, centerPoint, out _,
+                        out _, out _)) return new BoundingCircle(0.0, centerPoint.Light);
                     polygonsOfInterest.Add(positivePoly);
                 }
             }
             
             //Lastly, determine how big the inner circle can be.
             var shortestDistance = double.MaxValue;
-            var smallestBoundingCircle = new BoundingCircle(0.0, centerPoint);
+            var smallestBoundingCircle = new BoundingCircle(0.0, centerPoint.Light);
             foreach (var polygon in polygonsOfInterest)
             {
                 var boundingCircle = MaximumInnerCircleInHole(polygon, centerPoint);
@@ -324,15 +344,13 @@ namespace TVGL
                     continue;
 
                 //Figure out how far the center point is away from the line
-                double[] pointOnLine;
-                var d = MiscFunctions.DistancePointToLine(centerPoint.Position, line.FromPoint.Position, v1, out pointOnLine);
+                var d = MiscFunctions.DistancePointToLine(centerPoint.Position, line.FromPoint.Position, v1, out var pointOnLine);
                 if (d > shortestDistance) continue;
 
                 //Now we need to figure out if the lines intersect
                 var tempPoint = new Point(pointOnLine[0], pointOnLine[1]);
                 var tempLine = new Line(centerPoint, tempPoint, false);
-                Point intersectionPoint;
-                if (!MiscFunctions.LineLineIntersection(line, tempLine, out intersectionPoint)) continue;
+                if (!MiscFunctions.LineLineIntersection(line, tempLine, out _)) continue;
                 //if(intersectionPoint != tempPoint) throw new Exception("Error in implementation. This should always be true.");
                 shortestDistance = d;
             }
@@ -345,8 +363,8 @@ namespace TVGL
                 if (d < shortestDistance) shortestDistance = d;
             }
 
-            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new BoundingCircle(0.0, centerPoint); //Not inside any hole or outside any positive polygon
-            return new BoundingCircle(shortestDistance, centerPoint);
+            if (shortestDistance.IsPracticallySame(double.MaxValue)) return new BoundingCircle(0.0, centerPoint.Light); //Not inside any hole or outside any positive polygon
+            return new BoundingCircle(shortestDistance, centerPoint.Light);
         }
 
         /// <summary>
@@ -469,156 +487,188 @@ namespace TVGL
             #region Constructor
 
             /// <summary>
-            ///     Create a new circle from either 2 or 3 points
+            ///     Create a new circle from 3 points
             /// </summary>
-            /// <param name="points">The points.</param>
-            internal InternalCircle(IEnumerable<Point> points)
+            /// <param name="p0"></param>
+            /// <param name="p1"></param>
+            /// <param name="p2"></param>
+            internal InternalCircle(PointLight p0, PointLight p1, PointLight p2)
             {
-                Center = null;
-                SqRadius = 0;
-                Points = new List<Point>(points);
+                NumPointsDefiningCircle = 3;
+                Point0 = p0;
+                Point1 = p1;
+                Point2 = p2;
+                var point0X = Point0.X;
+                var point0Y = Point0.Y;
+                var point1X = Point1.X;
+                var point1Y = Point1.Y;
+                var point2X = Point2.X;
+                var point2Y = Point2.Y;
 
                 //Find Circle center and radius
-                if (Points.Count == 3)
+                //Assume NO two points are exactly the same 
+                var rise1 = point1Y - point0Y;
+                var run1 = point1X - point0X;
+                var rise2 = point2Y - point1Y;
+                var run2 = point2X - point1X;
+                double x;
+                double y;
+                //Check for special cases of vertical or horizontal lines
+                if (rise1.IsNegligible(Constants.BaseTolerance)) //If rise is zero, x can be found directly
                 {
-                    //Assume NO two points are exactly the same 
-                    var rise1 = Points[1].Y - Points[0].Y;
-                    var run1 = Points[1].X - Points[0].X;
-                    var rise2 = Points[2].Y - Points[1].Y;
-                    var run2 = Points[2].X - Points[1].X;
-                    double x;
-                    double y;
-                    //Check for special cases of vertical or horizontal lines
-                    if (rise1.IsNegligible(Constants.BaseTolerance)) //If rise is zero, x can be found directly
-                    {
-                        x = (Points[0].X + Points[1].X)/2;
-                        //If run of other line is approximately zero as well, y can be found directly
-                        if (run2.IsNegligible(Constants.BaseTolerance))
-                            //If run is approximately zero, y can be found directly
-                        {
-                            y = (Points[1].Y + Points[2].Y)/2;
-                            Center = new Point(new Vertex(new[] {x, y, 0.0}));
-                        }
-                        else
-                        {
-                            //Find perpendicular slope, and midpoint of line 2. 
-                            //Then use the midpoint to find "b" and solve y = mx+b
-                            //This is condensed into a single line because VS rounds the numbers 
-                            //during division.
-                            y = (Points[1].Y + Points[2].Y)/2 + -run2/rise2*(x - (Points[1].X + Points[2].X)/2);
-                            Center = new Point(new Vertex(new[] {x, y, 0.0}));
-                        }
-                    }
-                    else if (rise2.IsNegligible(Constants.BaseTolerance))
-                        //If rise is approximately zero, x can be found directly
-                    {
-                        x = (Points[1].X + Points[2].X)/2;
-                        //If run of other line is approximately zero as well, y can be found directly
-                        if (run1.IsNegligible(Constants.BaseTolerance))
-                            //If run is approximately zero, y can be found directly
-                        {
-                            y = (Points[0].Y + Points[1].Y)/2;
-                            Center = new Point(new Vertex(new[] {x, y, 0.0}));
-                        }
-                        else
-                        {
-                            //Find perpendicular slope, and midpoint of line 2. 
-                            //Then use the midpoint to find "b" and solve y = mx+b
-                            //This is condensed into a single line because VS rounds the numbers 
-                            //during division.
-                            y = (Points[0].Y + Points[1].Y)/2 + -run1/rise1*(x - (Points[0].X + Points[1].X)/2);
-                            Center = new Point(new Vertex(new[] {x, y, 0.0}));
-                        }
-                    }
-                    else if (run1.IsNegligible(Constants.BaseTolerance))
+                    x = (point0X + point1X)/2;
+                    //If run of other line is approximately zero as well, y can be found directly
+                    if (run2.IsNegligible(Constants.BaseTolerance))
                         //If run is approximately zero, y can be found directly
                     {
-                        y = (Points[0].Y + Points[1].Y)/2;
-                        //Find perpendicular slope, and midpoint of line 2. 
-                        //Then use the midpoint to find "b" and solve y = mx+b
-                        //This is condensed into a single line because VS rounds the numbers 
-                        //during division.
-                        x = (y - ((Points[1].Y + Points[2].Y)/2 - -run2/rise2*
-                                  (Points[1].X + Points[2].X)/2))/(-run2/rise2);
-                        Center = new Point(new Vertex(new[] {x, y, 0.0}));
-                    }
-                    else if (run2.IsNegligible(Constants.BaseTolerance))
-                        //If run is approximately zero, y can be found directly
-                    {
-                        y = (Points[1].Y + Points[2].Y)/2;
-                        //Find perpendicular slope, and midpoint of line 2. 
-                        //Then use the midpoint to find "b" and solve y = mx+b
-                        //This is condensed into a single line because VS rounds the numbers 
-                        //during division.
-                        x = (y - ((Points[1].Y + Points[0].Y)/2 - -run1/rise1*
-                                  (Points[1].X + Points[0].X)/2))/(-run1/rise1);
-                        Center = new Point(new Vertex(new[] {x, y, 0.0}));
+                        y = (point1Y + point2Y)/2;
                     }
                     else
                     {
-                        //Didn't solve for slopes first because of rounding error in division
-                        //ToDo: This does not always find a good center. Figure out why.
-                        x = (rise1/run1*(rise2/run2)*(Points[2].Y - Points[0].Y) +
-                             rise1/run1*(Points[1].X + Points[2].X) -
-                             rise2/run2*(Points[0].X + Points[1].X))/(2*(rise1/run1 - rise2/run2));
-                        y = -(1/(rise1/run1))*(x - (Points[0].X + Points[1].X)/2) +
-                            (Points[0].Y + Points[1].Y)/2;
-                        Center = new Point(new Vertex(new[] {x, y, 0.0}));
+                        //Find perpendicular slope, and midpoint of line 2. 
+                        //Then use the midpoint to find "b" and solve y = mx+b
+                        //This is condensed into a single line because VS rounds the numbers 
+                        //during division.
+                        y = (point1Y + point2Y)/2 + -run2/rise2*(x - (point1X + point2X)/2);
                     }
-                    SqRadius = Math.Pow(Center.X - Points[0].X, 2) + Math.Pow(Center.Y - Points[0].Y, 2);
                 }
-                else if (Points.Count == 2)
+                else if (rise2.IsNegligible(Constants.BaseTolerance))
+                    //If rise is approximately zero, x can be found directly
                 {
-                    var vector = Points[0].Position.subtract(Points[1].Position, 2);
-                    Center = new Point(new Vertex(new[] {Points[1].X + vector[0]/2, Points[1].Y + vector[1]/2, 0.0}));
-                    SqRadius = Math.Pow(vector[0]/2, 2) + Math.Pow(vector[1]/2, 2);
+                    x = (point1X + point2X)/2;
+                    //If run of other line is approximately zero as well, y can be found directly
+                    if (run1.IsNegligible(Constants.BaseTolerance))
+                        //If run is approximately zero, y can be found directly
+                    {
+                        y = (point0Y + point1Y)/2;
+                    }
+                    else
+                    {
+                        //Find perpendicular slope, and midpoint of line 2. 
+                        //Then use the midpoint to find "b" and solve y = mx+b
+                        //This is condensed into a single line because VS rounds the numbers 
+                        //during division.
+                        y = (point0Y + point1Y)/2 + -run1/rise1*(x - (point0X + point1X)/2);
+                    }
                 }
-                else //1 point
+                else if (run1.IsNegligible(Constants.BaseTolerance))
+                    //If run is approximately zero, y can be found directly
                 {
-                    Center = Points[0];
-                    SqRadius = 0;
+                    y = (point0Y + point1Y)/2;
+                    //Find perpendicular slope, and midpoint of line 2. 
+                    //Then use the midpoint to find "b" and solve y = mx+b
+                    //This is condensed into a single line because VS rounds the numbers 
+                    //during division.
+                    x = (y - ((point1Y + point2Y)/2 - -run2/rise2*
+                              (point1X + point2X)/2))/(-run2/rise2);
                 }
+                else if (run2.IsNegligible(Constants.BaseTolerance))
+                    //If run is approximately zero, y can be found directly
+                {
+                    y = (point1Y + point2Y)/2;
+                    //Find perpendicular slope, and midpoint of line 2. 
+                    //Then use the midpoint to find "b" and solve y = mx+b
+                    //This is condensed into a single line because VS rounds the numbers 
+                    //during division.
+                    x = (y - ((point1Y + point0Y)/2 - -run1/rise1*
+                              (point1X + point0X)/2))/(-run1/rise1);
+                }
+                else
+                {
+                    //Didn't solve for slopes first because of rounding error in division
+                    //ToDo: This does not always find a good center. Figure out why.
+                    x = (rise1 / run1 * (rise2 / run2) * (point2Y - point0Y) +
+                         rise1 / run1 * (point1X + point2X) -
+                         rise2 / run2 * (point0X + point1X)) / (2 * (rise1 / run1 - rise2 / run2));
+                    y = -(1 / (rise1 / run1)) * (x - (point0X + point1X) / 2) +
+                        (point0Y + point1Y) / 2;
+                }
+
+                var dx = x - point0X;
+                var dy = y - point0Y;
+                CenterX = x;
+                CenterY = y;
+                SqRadius = dx * dx + dy * dy;
             }
 
+            internal InternalCircle(PointLight p0, PointLight p1)
+            {
+                NumPointsDefiningCircle = 2;
+                Point0 = p0;
+                Point1 = p1;
+                var point0X = p0.X;
+                var point0Y = p0.Y;
+                CenterX = point0X + (Point1.X - point0X) / 2;
+                CenterY = point0Y + (Point1.Y - point0Y) / 2;
+                var dx = CenterX - point0X;
+                var dy = CenterY - point0Y;
+                SqRadius = dx * dx + dy * dy;
+            }
             #endregion
 
-            /// <summary>
-            ///     Gets X intercept given Y
-            /// </summary>
-            /// <param name="point">The point.</param>
-            /// <returns><c>true</c> if [is point inside circle] [the specified point]; otherwise, <c>false</c>.</returns>
-            internal bool IsPointInsideCircle(Point point)
-            {
-                //Distance between point and center is greater than radius, it is outside the circle
-                var distanceToPoint = (Center.X - point.X)*(Center.X - point.X) +
-                                      (Center.Y - point.Y)*(Center.Y - point.Y);
-                if (distanceToPoint.IsPracticallySame(SqRadius)) return true;
-                return distanceToPoint < SqRadius;
-            }
+            private readonly PointLight _dummyPoint = new PointLight(double.NaN, double.NaN);
 
             /// <summary>
             ///     Finds the furthest the specified point.
             /// </summary>
             /// <param name="point">The point.</param>
             /// <param name="furthestPoint">The furthest point.</param>
-            /// <param name="previousPoints">The previous points.</param>
+            /// <param name="previousPoint1"></param>
+            /// <param name="previousPoint2"></param>
             /// <exception cref="ArgumentNullException">previousPoints cannot be null</exception>
-            internal void Furthest(Point point, out Point furthestPoint, ref List<Point> previousPoints)
+            internal void Furthest(PointLight point, out PointLight furthestPoint, out PointLight previousPoint1, out PointLight previousPoint2, out int numPreviousPoints)
             {
-                if (previousPoints == null) throw new ArgumentNullException("previousPoints cannot be null");
-                furthestPoint = null;
-                previousPoints = new List<Point>(Points);
-                var maxSquareDistance = double.NegativeInfinity;
                 //Distance between point and center is greater than radius, it is outside the circle
-                foreach (var containedPoint in Points)
+                //DO P0, then P1, then P2
+                numPreviousPoints = (NumPointsDefiningCircle == 3) ? 2 : 1;
+                previousPoint2 = _dummyPoint;
+                var p0SquareDistance =  Math.Pow(Point0.X - point.X, 2) + Math.Pow(Point0.Y - point.Y, 2);
+                var p1SquareDistance = Math.Pow(Point1.X - point.X, 2) + Math.Pow(Point1.Y - point.Y, 2);              
+                if (p0SquareDistance > p1SquareDistance)
                 {
-                    var squareDistance = Math.Pow(containedPoint.X - point.X, 2) +
-                                         Math.Pow(containedPoint.Y - point.Y, 2);
-                    if (squareDistance <= maxSquareDistance) continue;
-                    maxSquareDistance = squareDistance;
-                    furthestPoint = containedPoint;
+                    previousPoint1 = Point1;
+                    if (NumPointsDefiningCircle == 3)
+                    {
+                        var p2SquareDistance = Math.Pow(Point2.X - point.X, 2) + Math.Pow(Point2.Y - point.Y, 2);
+                        if (p0SquareDistance > p2SquareDistance)
+                        {
+                            furthestPoint = Point0;
+                            previousPoint2 = Point2;
+                        }
+                        else
+                        {
+                            //If P2 > P0 and P0 > P1, P2 must also be greater than P1.
+                            furthestPoint = Point2;
+                            previousPoint2 = Point0;
+                        }        
+                    }
+                    else
+                    {
+                        furthestPoint = Point0;                
+                    }
                 }
-                previousPoints.Remove(furthestPoint);
+                else
+                {
+                    previousPoint1 = Point0;
+                    if (NumPointsDefiningCircle == 3)
+                    {
+                        var p2SquareDistance = Math.Pow(Point2.X - point.X, 2) + Math.Pow(Point2.Y - point.Y, 2);
+                        if (p1SquareDistance > p2SquareDistance)
+                        {
+                            furthestPoint = Point1;
+                            previousPoint2 = Point2;
+                        }
+                        else
+                        {
+                            furthestPoint = Point2;
+                            previousPoint2 = Point1;
+                        }
+                    }
+                    else
+                    {
+                        furthestPoint = Point1;
+                    }
+                } 
             }
 
             #region Properties
@@ -627,18 +677,30 @@ namespace TVGL
             ///     Gets one point of the circle.
             /// </summary>
             /// <value>The points.</value>
-            internal List<Point> Points { get; }
+            internal PointLight Point0 { get; }
 
             /// <summary>
             ///     Gets one point of the circle.
             /// </summary>
-            /// <value>The center.</value>
-            internal Point Center { get; }
+            /// <value>The points.</value>
+            internal PointLight Point1 { get; }
 
             /// <summary>
-            ///     Gets one point of the circle.
+            ///     Gets one point of the circle. This point may not exist.
             /// </summary>
-            /// <value>The sq radius.</value>
+            /// <value>The points.</value>
+            internal PointLight Point2 { get; }
+
+            /// <summary>
+            ///     Gets the number of points that define the circle. 2 or 3.
+            /// </summary>
+            /// <value>The points.</value>
+            internal int NumPointsDefiningCircle { get; }
+
+            internal double CenterX { get; }
+
+            internal double CenterY { get; }
+
             internal double SqRadius { get; set; }
 
             #endregion

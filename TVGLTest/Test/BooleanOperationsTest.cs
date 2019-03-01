@@ -196,47 +196,47 @@ namespace TVGL_Test
             int[] ints1 = { -150, 0, -115, 0, -115, 165, 115, 165, 115, 0, 150, 0, 150, 200, -150, 200 }; //CCW  == Solid
             var subjectList = MakePathFromInts(ints1);
 
-            var maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 90));
+            var maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(0, 90));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(75.0));
             //var circlePath = MiscFunctions.CreateCirclePath(maxInnerCircle);
             //var paths = new List<Path> { subjectList, circlePath };
             //Presenter.ShowAndHang(paths);
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 160));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(0, 160));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(5.0));
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 165));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(0, 165));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(0.0));
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 180));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(0, 180));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(0.0));
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(150, 200));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(150, 200));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(0.0));
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(155, 200));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(155, 200));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(5.0));
 
             subjectList.Reverse(); //CW == Hole
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 90));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(0, 90));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(0.0));
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 160));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(0, 160));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(0.0));
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 165));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(0, 165));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(0.0));
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(0, 180));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(0, 180));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(15.0));
             //circlePath = MiscFunctions.CreateCirclePath(maxInnerCircle);
             //paths = new List<Path> { subjectList, circlePath };
             //Presenter.ShowAndHang(paths);
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(150, 200));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(150, 200));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(0.0));
 
-            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new Point(155, 200));
+            maxInnerCircle = MinimumEnclosure.MaximumInnerCircle(new List<Path>() { subjectList }, new PointLight(155, 200));
             Assert.That(maxInnerCircle.Radius.IsPracticallySame(0.0));
         }
 
