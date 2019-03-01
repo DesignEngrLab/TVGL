@@ -145,15 +145,15 @@ namespace TVGLPresenterDX
         {
             var res = 8;
 
-            stopwatch.Restart();
-            var vs = new VoxelizedSolid(ts, res);
-            stopwatch.Stop();
-            Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
+            //stopwatch.Restart();
+            //var vs = new VoxelizedSolid(ts, res);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var vs_cuda = new VoxelizedSolidCUDA(ts, res);
             stopwatch.Stop();
-            Console.WriteLine("CUDA voxelization    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("CUDA voxelization    : {0}\n", stopwatch.Elapsed);
 
             //Console.WriteLine(ts.SurfaceArea);
             //Console.WriteLine(vs_cuda.SurfaceArea);
@@ -165,68 +165,78 @@ namespace TVGLPresenterDX
 
             //Presenter.ShowAndHang(vs_cuda);
 
-            stopwatch.Restart();
-            var bb = vs.CreateBoundingSolid();
-            stopwatch.Stop();
-            Console.WriteLine("Original bounding solid: {0}", stopwatch.Elapsed);
+            //stopwatch.Restart();
+            ///*var bb = */vs.CreateBoundingSolid();
+            //stopwatch.Stop();
+            //Console.WriteLine("Original bounding solid: {0}", stopwatch.Elapsed);
+
+            //stopwatch.Restart();
+            ///*var bb_cuda = */vs_cuda.CreateBoundingSolid/*_GPU*/();
+            //stopwatch.Stop();
+            //Console.WriteLine("CUDA bounding solid    : {0}\n", stopwatch.Elapsed);
+
+            //Presenter.ShowAndHang(bb_cuda);
+
+            //stopwatch.Restart();
+            //var neg = vs.InvertToNewSolid();
+            //stopwatch.Stop();
+            //Console.WriteLine("Original inversion: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var bb_cuda = vs_cuda.CreateBoundingSolid();
+            var neg_cuda = vs_cuda.InvertToNewSolid_GPU();
             stopwatch.Stop();
-            Console.WriteLine("CUDA bounding solid    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("CUDA inversion    : {0}\n", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var neg = vs.InvertToNewSolid();
-            stopwatch.Stop();
-            Console.WriteLine("Original inversion: {0}", stopwatch.Elapsed);
+            Presenter.ShowAndHang(neg_cuda);
 
-            stopwatch.Restart();
-            var neg_cuda = vs_cuda.InvertToNewSolid();
-            stopwatch.Stop();
-            Console.WriteLine("CUDA inversion    : {0}", stopwatch.Elapsed);
+            //stopwatch.Restart();
+            //var draft = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original draft: {0}", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var draft = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
-            stopwatch.Stop();
-            Console.WriteLine("Original draft: {0}", stopwatch.Elapsed);
+            //stopwatch.Restart();
+            //var draft_cuda = vs_cuda.DraftToNewSolid(VoxelDirections.ZPositive);
+            //stopwatch.Stop();
+            //Console.WriteLine("CUDA draft    : {0}\n", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var draft_cuda = vs_cuda.DraftToNewSolid(VoxelDirections.ZPositive);
-            stopwatch.Stop();
-            Console.WriteLine("CUDA draft    : {0}", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var intersect = neg.IntersectToNewSolid(draft);
-            stopwatch.Stop();
-            Console.WriteLine("Original intersect: {0}", stopwatch.Elapsed);
+            //stopwatch.Restart();
+            ///*var intersect = */neg.IntersectToNewSolid(draft);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original intersect: {0}", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var intersect_cuda = neg_cuda.IntersectToNewSolid(draft_cuda);
-            stopwatch.Stop();
-            Console.WriteLine("CUDA intersect    : {0}", stopwatch.Elapsed);
+            //stopwatch.Restart();
+            ///*var intersect_cuda = */neg_cuda.IntersectToNewSolid_GPU(draft_cuda);
+            //stopwatch.Stop();
+            //Console.WriteLine("CUDA intersect    : {0}\n", stopwatch.Elapsed);
 
-            var draft1 = vs.ExtrudeToNewSolid(VoxelDirections.YNegative);
-            stopwatch.Restart();
-            var union = draft.UnionToNewSolid(draft1);
-            stopwatch.Stop();
-            Console.WriteLine("Original union: {0}", stopwatch.Elapsed);
+            ////Presenter.ShowAndHang(intersect_cuda);
 
-            var draft1_cuda = vs_cuda.DraftToNewSolid(VoxelDirections.YNegative);
-            stopwatch.Restart();
-            var union_cuda = draft_cuda.UnionToNewSolid(draft1_cuda);
-            stopwatch.Stop();
-            Console.WriteLine("CUDA union    : {0}", stopwatch.Elapsed);
+            //var draft1 = vs.ExtrudeToNewSolid(VoxelDirections.YNegative);
+            //stopwatch.Restart();
+            ///*var union = */draft.UnionToNewSolid(draft1);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original union: {0}", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var subtract = draft.SubtractToNewSolid(draft1);
-            stopwatch.Stop();
-            Console.WriteLine("Original subtract: {0}", stopwatch.Elapsed);
+            //var draft1_cuda = vs_cuda.DraftToNewSolid(VoxelDirections.YNegative);
+            //stopwatch.Restart();
+            ///*var union_cuda = */draft_cuda.UnionToNewSolid_GPU(draft1_cuda);
+            //stopwatch.Stop();
+            //Console.WriteLine("CUDA union    : {0}\n", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var subtract_cuda = draft_cuda.SubtractToNewSolid(draft1_cuda);
-            stopwatch.Stop();
-            Console.WriteLine("CUDA subtract    : {0}", stopwatch.Elapsed);
+            ////Presenter.ShowAndHang(union_cuda);
 
+            //stopwatch.Restart();
+            ///*var subtract = */draft.SubtractToNewSolid(draft1);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original subtract: {0}", stopwatch.Elapsed);
+
+            //stopwatch.Restart();
+            ///*var subtract_cuda = */draft_cuda.SubtractToNewSolid_GPU(draft1_cuda);
+            //stopwatch.Stop();
+            //Console.WriteLine("CUDA subtract    : {0}\n", stopwatch.Elapsed);
+
+            //Presenter.ShowAndHang(subtract_cuda);
 
             //Presenter.ShowAndHang(intersect);
             //Presenter.ShowAndHang(intersect_cuda);
