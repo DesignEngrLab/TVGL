@@ -120,7 +120,6 @@ namespace TVGL.CUDA
             VoxelsPerSide = Dimensions.Select(d => (int) Math.Round(d / VoxelSideLength)).ToArray();
 
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
-            Count = 0;
 
             VoxelizeSolid(ts);
             UpdateProperties();
@@ -128,10 +127,6 @@ namespace TVGL.CUDA
 
         private void VoxelizeSolid(TessellatedSolid ts)
         {
-            var counts = new ConcurrentDictionary<int, int>();
-
-            var projectionDirection = new []{ 0.0, 0, -1.0 }; //-Z
-
             var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
                 VoxelSideLength / 2 - Bounds[1][2], VoxelsPerSide[2], VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
@@ -139,11 +134,9 @@ namespace TVGL.CUDA
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
             //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
 
-            //Parallel.For(0, VoxelsPerSide[2], k =>
-            for (var k = 0; k < VoxelsPerSide[2]; k++)
+            Parallel.For(0, VoxelsPerSide[2], k =>
+            //for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
-                var kCount = 0;
-
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
                     slices[k].Select(p => new PolygonLight(p)), Bounds[0][0],
                     VoxelSideLength, VoxelsPerSide[0]); //parallel lines aligned with Y axis
@@ -152,7 +145,7 @@ namespace TVGL.CUDA
                 {
                     var i = (int) Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
                     var intersectValues = intersections.Value;
-                    var n = intersectValues.Count();
+                    var n = intersectValues.Count;
                     for (var m = 0; m < n - 1; m += 2)
                     {
                         //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
@@ -163,18 +156,10 @@ namespace TVGL.CUDA
                         var ep = (int) Math.Floor((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
 
                         for (var j = sp; j < ep; j++)
-                        {
                             Voxels[i, j, k] = 1;
-                            kCount++;
-                        }
                     }
                 }
-
-                counts.TryAdd(k, kCount);
-            }//);
-
-            foreach (var kvp in counts)
-                Count += kvp.Value;
+            });
         }
     }
 }

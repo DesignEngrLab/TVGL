@@ -97,7 +97,7 @@ namespace TVGLPresenterDX
             }
             var random = new Random();
             //var fileNames = dir.GetFiles("*").OrderBy(x => random.Next()).ToArray();
-            var fileNames = dir.GetFiles("**").ToArray();
+            var fileNames = dir.GetFiles("*SquareSupport*").ToArray();
             //Casing = 18
             //SquareSupport = 75
             for (var i = 0; i < fileNames.Count(); i++)
@@ -143,33 +143,93 @@ namespace TVGLPresenterDX
 
         public static void TestVoxelization(TessellatedSolid ts)
         {
-            var res = 9;
+            var res = 8;
 
-            //stopwatch.Restart();
-            //var vs = new VoxelizedSolid(ts, res);
-            //stopwatch.Stop();
-            //Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
+            stopwatch.Restart();
+            var vs = new VoxelizedSolid(ts, res);
+            stopwatch.Stop();
+            Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var vs_cuda = new VoxelizedSolidCUDA(ts, res);
             stopwatch.Stop();
-            Console.WriteLine("CUDA voxelization: {0}", stopwatch.Elapsed);
+            Console.WriteLine("CUDA voxelization    : {0}", stopwatch.Elapsed);
 
             //Console.WriteLine(ts.SurfaceArea);
             //Console.WriteLine(vs_cuda.SurfaceArea);
             //Console.WriteLine();
 
-            Console.WriteLine(ts.Volume);
-            //Console.WriteLine(vs.Volume);
-            Console.WriteLine(vs_cuda.Volume);
+            //Console.WriteLine(ts.Volume);
+            ////Console.WriteLine(vs.Volume);
+            //Console.WriteLine(vs_cuda.Volume);
 
             //Presenter.ShowAndHang(vs_cuda);
 
-            //var bb = vs.CreateBoundingSolid();
-            //var neg = vs.InvertToNewSolid();
+            stopwatch.Restart();
+            var bb = vs.CreateBoundingSolid();
+            stopwatch.Stop();
+            Console.WriteLine("Original bounding solid: {0}", stopwatch.Elapsed);
 
-            //var bb_cuda = vs_cuda.CreateBoundingSolid();
-            //var neg_cuda = vs_cuda.InvertToNewSolid();
+            stopwatch.Restart();
+            var bb_cuda = vs_cuda.CreateBoundingSolid();
+            stopwatch.Stop();
+            Console.WriteLine("CUDA bounding solid    : {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var neg = vs.InvertToNewSolid();
+            stopwatch.Stop();
+            Console.WriteLine("Original inversion: {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var neg_cuda = vs_cuda.InvertToNewSolid();
+            stopwatch.Stop();
+            Console.WriteLine("CUDA inversion    : {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var draft = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
+            stopwatch.Stop();
+            Console.WriteLine("Original draft: {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var draft_cuda = vs_cuda.DraftToNewSolid(VoxelDirections.ZPositive);
+            stopwatch.Stop();
+            Console.WriteLine("CUDA draft    : {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var intersect = neg.IntersectToNewSolid(draft);
+            stopwatch.Stop();
+            Console.WriteLine("Original intersect: {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var intersect_cuda = neg_cuda.IntersectToNewSolid(draft_cuda);
+            stopwatch.Stop();
+            Console.WriteLine("CUDA intersect    : {0}", stopwatch.Elapsed);
+
+            var draft1 = vs.ExtrudeToNewSolid(VoxelDirections.YNegative);
+            stopwatch.Restart();
+            var union = draft.UnionToNewSolid(draft1);
+            stopwatch.Stop();
+            Console.WriteLine("Original union: {0}", stopwatch.Elapsed);
+
+            var draft1_cuda = vs_cuda.DraftToNewSolid(VoxelDirections.YNegative);
+            stopwatch.Restart();
+            var union_cuda = draft_cuda.UnionToNewSolid(draft1_cuda);
+            stopwatch.Stop();
+            Console.WriteLine("CUDA union    : {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var subtract = draft.SubtractToNewSolid(draft1);
+            stopwatch.Stop();
+            Console.WriteLine("Original subtract: {0}", stopwatch.Elapsed);
+
+            stopwatch.Restart();
+            var subtract_cuda = draft_cuda.SubtractToNewSolid(draft1_cuda);
+            stopwatch.Stop();
+            Console.WriteLine("CUDA subtract    : {0}", stopwatch.Elapsed);
+
+
+            //Presenter.ShowAndHang(intersect);
+            //Presenter.ShowAndHang(intersect_cuda);
         }
 
         public static void TestSegmentation(TessellatedSolid ts)

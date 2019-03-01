@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,16 +30,38 @@ namespace TVGL.CUDA
             return neighbors;
         }
 
+        public int NumNeighbors(int i, int j, int k)
+        {
+            var neighbors = 0;
+            if (i + 1 != VoxelsPerSide[0] && Voxels[i + 1, j, k] != 0) neighbors++;
+            if (j + 1 != VoxelsPerSide[1] && Voxels[i, j + 1, k] != 0) neighbors++;
+            if (k + 1 != VoxelsPerSide[2] && Voxels[i, j, k + 1] != 0) neighbors++;
+            if (i != 0 && Voxels[i - 1, j, k] != 0) neighbors++;
+            if (j != 0 && Voxels[i, j - 1, k] != 0) neighbors++;
+            if (k != 0 && Voxels[i, j, k - 1] != 0) neighbors++;
+            return neighbors;
+        }
+        
         public void UpdateProperties()
         {
-            //SetCount();
+            SetCount();
             SetVolume();
-            //SetSurfaceArea();
+            SetSurfaceArea();
         }
 
         private void SetCount()
         {
-            Count = Voxels.Cast<byte>().Count(vox => vox != 0);
+            var count = new ConcurrentDictionary<int, int>();
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                var counter = 0;
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 1; k < VoxelsPerSide[2]; k++)
+                    if (Voxels[i, j, k] != 0)
+                        counter++;
+                count.TryAdd(i, counter);
+            });
+            Count = count.Values.Sum();
         }
 
         private void SetVolume()
@@ -46,45 +69,20 @@ namespace TVGL.CUDA
             Volume = Count * Math.Pow(VoxelSideLength, 3);
         }
 
-        //private void SetSurfaceArea()
-        //{
-        //    var sa = 0;
-        //    for (var i = 0; i < VoxelsPerSide[0]; i++)
-        //    for (var j = 0; j < VoxelsPerSide[1]; j++)
-        //    for (var k = 1; k < VoxelsPerSide[2]; k++)
-        //    {
-        //        if (k == 1 && Voxels[i, j, k - 1] != 0)
-        //            sa++;
-        //        if (Voxels[i, j, k] != Voxels[i, j, k - 1])
-        //            sa++;
-        //        if (k == VoxelsPerSide[2] - 1 && Voxels[i, j, k] != 0)
-        //            sa++;
-        //    }
-        //    for (var j = 0; j < VoxelsPerSide[1]; j++)
-        //    for (var k = 0; k < VoxelsPerSide[2]; k++)
-        //    for (var i = 1; i < VoxelsPerSide[0]; i++)
-        //    {
-        //        if (i == 1 && Voxels[i - 1, j, k] == 1)
-        //            sa++;
-        //        if (Voxels[i, j, k] != Voxels[i - 1, j, k])
-        //            sa++;
-        //        if (i == VoxelsPerSide[0] - 1 && Voxels[i, j, k] != 0)
-        //            sa++;
-        //    }
-        //    for (var k = 0; k < VoxelsPerSide[2]; k++)
-        //    for (var i = 0; i < VoxelsPerSide[0]; i++)
-        //    for (var j = 1; j < VoxelsPerSide[1]; j++)
-        //    {
-        //        if (j == 1 && Voxels[i, j - 1, k] == 1)
-        //            sa++;
-        //        if (Voxels[i, j, k] != Voxels[i, j - 1, k])
-        //            sa++;
-        //        if (j == VoxelsPerSide[1] - 1 && Voxels[i, j, k] != 0)
-        //            sa++;
-        //    }
-
-        //    SurfaceArea = sa * Math.Pow(VoxelSideLength, 2);
-        //}
+        private void SetSurfaceArea()
+        {
+            var neighbors = new ConcurrentDictionary<int, int>();
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                var neighborCount = 0;
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 1; k < VoxelsPerSide[2]; k++)
+                    if (Voxels[i, j, k] != 0)
+                        neighborCount += NumNeighbors(i, j, k);
+                neighbors.TryAdd(i, neighborCount);
+            });
+            SurfaceArea = (Count * 6 - neighbors.Values.Sum()) * Math.Pow(VoxelSideLength, 2);
+        }
 
         public VoxelizedSolidCUDA Copy()
         {
@@ -104,7 +102,6 @@ namespace TVGL.CUDA
         public VoxelizedSolidCUDA InvertToNewSolid()
         {
             var vs = new VoxelizedSolidCUDA(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
-            
             Parallel.For(0, VoxelsPerSide[0], i =>
             {
                 for (var j = 0; j < VoxelsPerSide[1]; j++)
@@ -112,7 +109,50 @@ namespace TVGL.CUDA
                     if (Voxels[i, j, k] == 0)
                         vs.Voxels[i, j, k] = 1;
             });
+            vs.UpdateProperties();
+            return vs;
+        }
 
+        public VoxelizedSolidCUDA UnionToNewSolid(params VoxelizedSolidCUDA[] solids)
+        {
+            var vs = Copy();
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 0; k < VoxelsPerSide[2]; k++)
+                {
+                    if (solids.Any(solid => solid.Voxels[i, j, k] != 0))
+                        vs.Voxels[i, j, k] = 1;
+                }
+            });
+            vs.UpdateProperties();
+            return vs;
+        }
+
+        public VoxelizedSolidCUDA IntersectToNewSolid(params VoxelizedSolidCUDA[] solids)
+        {
+            var vs = new VoxelizedSolidCUDA(VoxelsPerSide, Discretization, VoxelSideLength, Bounds);
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 0; k < VoxelsPerSide[2]; k++)
+                    if (Voxels[i, j, k] == 1 && solids.All(solid => solid.Voxels[i, j, k] != 0))
+                        vs.Voxels[i, j, k] = 1;
+            });
+            vs.UpdateProperties();
+            return vs;
+        }
+
+        public VoxelizedSolidCUDA SubtractToNewSolid(params VoxelizedSolidCUDA[] solids)
+        {
+            var vs = Copy();
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 0; k < VoxelsPerSide[2]; k++)
+                    if (solids.Any(solid => solid.Voxels[i, j, k] != 0))
+                        vs.Voxels[i, j, k] = 0;
+            });
             vs.UpdateProperties();
             return vs;
         }
