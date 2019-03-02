@@ -145,15 +145,16 @@ namespace TVGLPresenterDX
         {
             var res = 8;
 
-            stopwatch.Restart();
-            var vs = new VoxelizedSolid(ts, res);
-            stopwatch.Stop();
-            Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
+            //stopwatch.Restart();
+            //var vs = new VoxelizedSolid(ts, res);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original voxelization: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var vs_dense = new VoxelizedSolidDense(ts, res);
             stopwatch.Stop();
             Console.WriteLine("Dense voxelization    : {0}", stopwatch.Elapsed);
+
 
             //Console.WriteLine(ts.SurfaceArea);
             //Console.WriteLine(vs_dense.SurfaceArea);
@@ -165,71 +166,87 @@ namespace TVGLPresenterDX
 
             //Presenter.ShowAndHang(vs_dense);
 
-            stopwatch.Restart();
-            var bb = vs.CreateBoundingSolid();
-            stopwatch.Stop();
-            Console.WriteLine("Original bounding solid: {0}", stopwatch.Elapsed);
+
+            //stopwatch.Restart();
+            //var bb = vs.CreateBoundingSolid();
+            //stopwatch.Stop();
+            //Console.WriteLine("Original bounding solid: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
             var bb_dense = vs_dense.CreateBoundingSolid();
             stopwatch.Stop();
-            Console.WriteLine("Dense bounding solid    : {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense bounding solid   : {0}", stopwatch.Elapsed);
+
+
+            //stopwatch.Restart();
+            //var erd = bb.ErodeToNewSolid(vs, new[] { -1, -2, -3.0 }, 0D, 20, false, true, "ball");
+            //stopwatch.Stop();
+            //Console.WriteLine("Original erosion: {0}", stopwatch.Elapsed);
 
             stopwatch.Restart();
-            var neg = vs.InvertToNewSolid();
+            var erd_dense = bb_dense.ErodeToNewSolid(vs_dense, new[] {-1, -2, -3.0}, 0D, 20, "ball");
             stopwatch.Stop();
-            Console.WriteLine("Original inversion: {0}", stopwatch.Elapsed);
+            Console.WriteLine("Dense erosion   : {0}", stopwatch.Elapsed);
 
-            stopwatch.Restart();
-            var neg_dense = vs_dense.InvertToNewSolid();
-            stopwatch.Stop();
-            Console.WriteLine("Dense inversion    : {0}", stopwatch.Elapsed);
-
-            stopwatch.Restart();
-            var draft = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
-            stopwatch.Stop();
-            Console.WriteLine("Original draft: {0}", stopwatch.Elapsed);
-
-            stopwatch.Restart();
-            var draft_dense = vs_dense.DraftToNewSolid(VoxelDirections.ZPositive);
-            stopwatch.Stop();
-            Console.WriteLine("Dense draft    : {0}", stopwatch.Elapsed);
-
-            stopwatch.Restart();
-            var intersect = neg.IntersectToNewSolid(draft);
-            stopwatch.Stop();
-            Console.WriteLine("Original intersect: {0}", stopwatch.Elapsed);
-
-            stopwatch.Restart();
-            var intersect_dense = neg_dense.IntersectToNewSolid(draft_dense);
-            stopwatch.Stop();
-            Console.WriteLine("Dense intersect    : {0}", stopwatch.Elapsed);
-
-            var draft1 = vs.ExtrudeToNewSolid(VoxelDirections.YNegative);
-            stopwatch.Restart();
-            var union = draft.UnionToNewSolid(draft1);
-            stopwatch.Stop();
-            Console.WriteLine("Original union: {0}", stopwatch.Elapsed);
-
-            var draft1_dense = vs_dense.DraftToNewSolid(VoxelDirections.YNegative);
-            stopwatch.Restart();
-            var union_dense = draft_dense.UnionToNewSolid(draft1_dense);
-            stopwatch.Stop();
-            Console.WriteLine("Dense union    : {0}", stopwatch.Elapsed);
-
-            stopwatch.Restart();
-            var subtract = draft.SubtractToNewSolid(draft1);
-            stopwatch.Stop();
-            Console.WriteLine("Original subtract: {0}", stopwatch.Elapsed);
-
-            stopwatch.Restart();
-            var subtract_dense = draft_dense.SubtractToNewSolid(draft1_dense);
-            stopwatch.Stop();
-            Console.WriteLine("Dense subtract    : {0}", stopwatch.Elapsed);
+            //Presenter.ShowAndHang(erd);
+            Presenter.ShowAndHang(erd_dense);
 
 
-            //Presenter.ShowAndHang(intersect);
-            //Presenter.ShowAndHang(intersect_dense);
+            //stopwatch.Restart();
+            //var neg = vs.InvertToNewSolid();
+            //stopwatch.Stop();
+            //Console.WriteLine("Original inversion: {0}", stopwatch.Elapsed);
+
+            //stopwatch.Restart();
+            //var neg_dense = vs_dense.InvertToNewSolid();
+            //stopwatch.Stop();
+            //Console.WriteLine("Dense inversion   : {0}", stopwatch.Elapsed);
+
+
+            //stopwatch.Restart();
+            //var draft = vs.ExtrudeToNewSolid(VoxelDirections.ZPositive);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original draft: {0}", stopwatch.Elapsed);
+
+            //stopwatch.Restart();
+            //var draft_dense = vs_dense.DraftToNewSolid(VoxelDirections.ZPositive);
+            //stopwatch.Stop();
+            //Console.WriteLine("Dense draft   : {0}", stopwatch.Elapsed);
+
+
+            //stopwatch.Restart();
+            //var intersect = neg.IntersectToNewSolid(draft);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original intersect: {0}", stopwatch.Elapsed);
+
+            //stopwatch.Restart();
+            //var intersect_dense = neg_dense.IntersectToNewSolid(draft_dense);
+            //stopwatch.Stop();
+            //Console.WriteLine("Dense intersect   : {0}", stopwatch.Elapsed);
+
+
+            //var draft1 = vs.ExtrudeToNewSolid(VoxelDirections.YNegative);
+            //stopwatch.Restart();
+            //var union = draft.UnionToNewSolid(draft1);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original union: {0}", stopwatch.Elapsed);
+
+            //var draft1_dense = vs_dense.DraftToNewSolid(VoxelDirections.YNegative);
+            //stopwatch.Restart();
+            //var union_dense = draft_dense.UnionToNewSolid(draft1_dense);
+            //stopwatch.Stop();
+            //Console.WriteLine("Dense union   : {0}", stopwatch.Elapsed);
+
+
+            //stopwatch.Restart();
+            //var subtract = draft.SubtractToNewSolid(draft1);
+            //stopwatch.Stop();
+            //Console.WriteLine("Original subtract: {0}", stopwatch.Elapsed);
+
+            //stopwatch.Restart();
+            //var subtract_dense = draft_dense.SubtractToNewSolid(draft1_dense);
+            //stopwatch.Stop();
+            //Console.WriteLine("Dense subtract   : {0}", stopwatch.Elapsed);
         }
 
         public static void TestSegmentation(TessellatedSolid ts)
