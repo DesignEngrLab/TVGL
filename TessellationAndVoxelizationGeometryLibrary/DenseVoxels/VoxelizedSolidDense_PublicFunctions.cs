@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using StarMathLib;
@@ -257,6 +258,9 @@ namespace TVGL.DenseVoxels
             var dirX = dir[0];
             var dirY = dir[1];
             var dirZ = dir[2];
+            var signX = (byte) (Math.Sign(dirX) + 1);
+            var signY = (byte) (Math.Sign(dirY) + 1);
+            var signZ = (byte) (Math.Sign(dirZ) + 1);
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
@@ -268,21 +272,21 @@ namespace TVGL.DenseVoxels
             var sliceMask = ThickenMask(mask[0], dir, toolDia, toolOptions);
 
             Parallel.ForEach(starts, vox =>
-                ErodeMask(designedSolid, mask, dirX, dirY, dirZ, xLim, yLim, zLim, sliceMask, vox));
+                ErodeMask(designedSolid, mask, signX, signY, signZ, xLim, yLim, zLim, sliceMask, vox));
             //foreach (var vox in starts)
             //    ErodeMask(designedSolid, mask, tLimit, stopAtPartial, dir, sliceMask, vox);
         }
 
         private static IEnumerable<VoxelDirections> GetVoxelDirections(double dirX, double dirY, double dirZ)
         {
-            var dirs = new VoxelDirections[3];
+            var dirs = new List<VoxelDirections>();
             var signedDir = new[] { Math.Sign(dirX), Math.Sign(dirY), Math.Sign(dirZ) };
             for (var i = 0; i < 3; i++)
             {
                 if (signedDir[i] == 0) continue;
-                dirs[i] = ((VoxelDirections)((i + 1) * -1 * signedDir[i]));
+                dirs.Add((VoxelDirections)((i + 1) * -1 * signedDir[i]));
             }
-            return dirs;
+            return dirs.ToArray();
         }
 
         private IEnumerable<int[]> GetAllVoxelsOnBoundingSurfaces(double dirX, double dirY, double dirZ,
@@ -329,8 +333,8 @@ namespace TVGL.DenseVoxels
             return voxels;
         }
 
-        private void ErodeMask(VoxelizedSolidDense designedSolid, IReadOnlyList<int[]> mask, double dirX, double dirY,
-            double dirZ, int xLim, int yLim, int zLim, int[][] sliceMask = null, int[] start = null)
+        private void ErodeMask(VoxelizedSolidDense designedSolid, int[][] mask, byte signX, byte signY,
+            byte signZ, int xLim, int yLim, int zLim, int[][] sliceMask = null, int[] start = null)
         {
             start = start ?? mask[0].ToArray();
             sliceMask = sliceMask ?? new[] {mask[0].ToArray()};
@@ -341,6 +345,8 @@ namespace TVGL.DenseVoxels
             var xShift = start[0] - xMask;
             var yShift = start[1] - yMask;
             var zShift = start[2] - zMask;
+
+            var insidePart = false;
 
             //foreach depth or timestep
             foreach (var initCoord in mask)
@@ -353,49 +359,63 @@ namespace TVGL.DenseVoxels
                 var yTShift = yStartCoord - yMask;
                 var zTShift = zStartCoord - zMask;
 
-                var voxelsToRemove = new int[sliceMaskCount][];
-                var i = 0;
-
                 //Iterate over the template of the slice mask
                 //to move them to the appropriate location but 
                 //need to be sure that we are in the space (not negative)
                 var succeedCounter = 0;
+                var precedeCounter = 0;
+                var outOfBounds = false;
 
                 foreach (var voxCoord in sliceMask)
                 {
                     var coordX = voxCoord[0] + xTShift;
                     var coordY = voxCoord[1] + yTShift;
                     var coordZ = voxCoord[2] + zTShift;
-                    if (PrecedesBounds(coordX, coordY, coordZ, dirX, dirY, dirZ, xLim, yLim, zLim)) continue;
-                    
-                    if (SucceedsBounds(coordX, coordY, coordZ, dirX, dirY, dirZ, xLim, yLim, zLim))
+
+                    // 0 is negative dir, 1 is zero, and 2 is positive
+                    if (!insidePart && ((signX == 0 && coordX >= xLim) || (signX == 2 && coordX < 0) ||
+                                        (signX == 1 && (coordX >= xLim || coordX < 0)) ||
+                                        (signY == 0 && coordY >= yLim) || (signY == 2 && coordY < 0) ||
+                                        (signY == 1 && (coordY >= yLim || coordY < 0)) ||
+                                        (signZ == 0 && coordZ >= zLim) || (signZ == 2 && coordZ < 0) ||
+                                        (signZ == 1 && (coordZ >= zLim || coordZ < 0))))
+                    {
+                        precedeCounter++;
+                        outOfBounds = true;
+                        continue;
+                    }
+
+                    if ((signX == 0 && coordX < 0) || (signX == 2 && coordX >= xLim) ||
+                        (signX == 1 && (coordX < 0 || coordX >= xLim)) ||
+                        (signY == 0 && coordY < 0) || (signY == 2 && coordY >= yLim) ||
+                        (signY == 1 && (coordY < 0 || coordY >= yLim)) ||
+                        (signZ == 0 && coordZ < 0) || (signZ == 2 && coordZ >= zLim) ||
+                        (signZ == 1 && (coordZ < 0 || coordZ >= zLim)))
                     {
                         succeedCounter++;
+                        outOfBounds = true;
                         // Return if you've left the part
-                        if (succeedCounter == sliceMaskCount)
-                        {
-                            foreach (var vox in voxelsToRemove)
-                            {
-                                if (vox is null) return;
-                                Voxels[vox[0], vox[1], vox[2]] = 0;
-                            }
-                            return;
-                        }
+                        if (succeedCounter == sliceMaskCount) return;
                         continue;
                     }
 
                     //Return if you've hit the as-designed part
                     if (designedSolid.Voxels[coordX, coordY, coordZ] != 0)
                         return;
-
-                    voxelsToRemove[i] = new[] { coordX, coordY, coordZ };
-                    i++;
                 }
 
-                foreach (var vox in voxelsToRemove)
+                if (precedeCounter == sliceMaskCount) continue;
+                if (!insidePart && precedeCounter == 0)
+                    insidePart = true;
+
+                foreach (var voxCoord in sliceMask)
                 {
-                    if (vox is null) break;
-                    Voxels[vox[0], vox[1], vox[2]] = 0;
+                    var coordX = voxCoord[0] + xTShift;
+                    var coordY = voxCoord[1] + yTShift;
+                    var coordZ = voxCoord[2] + zTShift;
+                    if (outOfBounds && (coordX < 0 || coordY < 0 || coordZ < 0 || coordX >= xLim || coordY >= yLim ||
+                                        coordZ >= zLim)) continue;
+                    Voxels[coordX, coordY, coordZ] = 0;
                 }
             }
         }
@@ -420,47 +440,46 @@ namespace TVGL.DenseVoxels
             }
         }
 
-        private static bool SucceedsBounds(int i, int j, int k, double dirX, double dirY, double dirZ, int xLim, int yLim,
-            int zLim)
-        {
-            if (dirX < 0 && i < 0) return true;
-            if (dirX > 0 && i >= xLim) return true;
-            if (dirX == 0 && (i < 0 || i >= xLim)) return true;
+        //private static bool SucceedsBounds(int i, int j, int k, double dirX, double dirY, double dirZ, int xLim, int yLim,
+        //    int zLim)
+        //{
+        //    if (dirX < 0 && i < 0) return true;
+        //    if (dirX > 0 && i >= xLim) return true;
+        //    if (dirX == 0 && (i < 0 || i >= xLim)) return true;
 
-            if (dirY < 0 && j < 0) return true;
-            if (dirY > 0 && j >= yLim) return true;
-            if (dirY == 0 && (j < 0 || j >= yLim)) return true;
+        //    if (dirY < 0 && j < 0) return true;
+        //    if (dirY > 0 && j >= yLim) return true;
+        //    if (dirY == 0 && (j < 0 || j >= yLim)) return true;
 
-            if (dirZ < 0 && k < 0) return true;
-            if (dirZ > 0 && k >= zLim) return true;
-            return dirZ == 0 && (k < 0 || k >= zLim);
-        }
+        //    if (dirZ < 0 && k < 0) return true;
+        //    if (dirZ > 0 && k >= zLim) return true;
+        //    return dirZ == 0 && (k < 0 || k >= zLim);
+        //}
 
-        private static bool PrecedesBounds(int i, int j, int k, double dirX, double dirY, double dirZ, int xLim, int yLim,
-            int zLim)
-        {
-            if (dirX < 0 && i >= xLim) return true;
-            if (dirX > 0 && i < 0) return true;
-            if (dirX == 0 && (i >= xLim || i < 0)) return true;
+        //private static bool PrecedesBounds(int i, int j, int k, double dirX, double dirY, double dirZ, int xLim, int yLim,
+        //    int zLim)
+        //{
+        //    if (dirX < 0 && i >= xLim) return true;
+        //    if (dirX > 0 && i < 0) return true;
+        //    if (dirX == 0 && (i >= xLim || i < 0)) return true;
 
-            if (dirY < 0 && j >= yLim) return true;
-            if (dirY > 0 && j < 0) return true;
-            if (dirY == 0 && (j >= yLim || j < 0)) return true;
+        //    if (dirY < 0 && j >= yLim) return true;
+        //    if (dirY > 0 && j < 0) return true;
+        //    if (dirY == 0 && (j >= yLim || j < 0)) return true;
 
-            if (dirZ < 0 && k >= zLim) return true;
-            if (dirZ > 0 && k < 0) return true;
-            return dirZ == 0 && (k >= zLim || k < 0);
-        }
+        //    if (dirZ < 0 && k >= zLim) return true;
+        //    if (dirZ > 0 && k < 0) return true;
+        //    return dirZ == 0 && (k >= zLim || k < 0);
+        //}
 
-        private static bool OutsideBounds(int i, int j, int k, int xLim, int yLim, int zLim)
-        {
-            return i < 0 || i >= xLim ||
-                   j < 0 || j >= yLim ||
-                   k < 0 || k >= zLim;
-        }
+        //private static bool OutsideBounds(int i, int j, int k, int xLim, int yLim, int zLim)
+        //{
+        //    return i < 0 || i >= xLim ||
+        //           j < 0 || j >= yLim ||
+        //           k < 0 || k >= zLim;
+        //}
 
-        private static int[][] GetVoxelsWithinCircle(IReadOnlyList<double> center, IList<double> dir, double radius,
-            bool edge = false)
+        private static int[][] GetVoxelsWithinCircle(double[] center, double[] dir, double radius, bool edge = false)
         {
             var voxels = new HashSet<int[]>(new SameCoordinates());
 
@@ -489,8 +508,7 @@ namespace TVGL.DenseVoxels
             return voxels.ToArray();
         }
 
-        private static int[][] GetVoxelsOnCone(IReadOnlyList<int> center, IList<double> dir, double radius,
-            double angle)
+        private static int[][] GetVoxelsOnCone(int[] center, double[] dir, double radius, double angle)
         {
             var voxels = new HashSet<int[]>(new[] {center.ToArray()}, new SameCoordinates());
 
@@ -517,7 +535,7 @@ namespace TVGL.DenseVoxels
             return voxels.ToArray();
         }
 
-        private static int[][] GetVoxelsOnHemisphere(IReadOnlyList<int> center, IList<double> dir, double radius)
+        private static int[][] GetVoxelsOnHemisphere(int[] center, double[] dir, double radius)
         {
             var voxels = new HashSet<int[]>(new[] {center.ToArray()}, new SameCoordinates());
 
@@ -540,10 +558,9 @@ namespace TVGL.DenseVoxels
             return voxels.ToArray();
         }
 
-        private int[][] ThickenMask(IReadOnlyList<int> vox, IList<double> dir, double toolDia,
-            params string[] toolOptions)
+        private int[][] ThickenMask(int[] vox, double[] dir, double toolDia, params string[] toolOptions)
         {
-            if (toolDia <= 0) return new[] {vox.ToArray()};
+            if (toolDia <= 0) return new[] {vox};
 
             var radius = 0.5 * toolDia / VoxelSideLength;
             toolOptions = toolOptions.Length == 0 ? new[] { "flat" } : toolOptions;
@@ -564,7 +581,7 @@ namespace TVGL.DenseVoxels
             }
         }
 
-        private List<int[]> CreateProjectionMask(double[] dir, double tLimit)
+        private int[][] CreateProjectionMask(double[] dir, double tLimit)
         {
             var initCoord = new[] { 0, 0, 0 };
             for (var i = 0; i < 3; i++)
@@ -578,11 +595,11 @@ namespace TVGL.DenseVoxels
                 for (var i = 0; i < 3; i++) cInt[i] = Math.Round(cInt[i], 5);
                 voxels.Add(GetNextVoxelCoord(cInt, dir));
             }
-            return voxels;
+            return voxels.ToArray();
         }
 
         //Exclusive by default (i.e. if line passes through vertex/edge it ony includes two voxels that are actually passed through)
-        private static int[] GetNextVoxelCoord(IReadOnlyList<double> cInt, IReadOnlyList<double> direction)
+        private static int[] GetNextVoxelCoord(double[] cInt, double[] direction)
         {
             var searchDirs = new List<int>();
             for (var i = 0; i < 3; i++)
@@ -602,8 +619,7 @@ namespace TVGL.DenseVoxels
         }
 
         //firstVoxel needs to be in voxel coordinates and represent the center of the voxel (i.e. {0.5, 0.5, 0.5})
-        private IEnumerable<double> FindIntersectionDistances(IReadOnlyList<double> firstVoxel,
-            IReadOnlyList<double> direction, double tLimit)
+        private double[] FindIntersectionDistances(double[] firstVoxel, double[] direction, double tLimit)
         {
             var intersections = new ConcurrentBag<double>();
             var searchDirs = new List<int>();
@@ -636,7 +652,7 @@ namespace TVGL.DenseVoxels
                 }
             });
 
-            var sortedIntersections = new SortedSet<double>(intersections);
+            var sortedIntersections = new SortedSet<double>(intersections).ToArray();
             return sortedIntersections;
         }
         #endregion
