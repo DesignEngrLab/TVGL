@@ -362,8 +362,10 @@ namespace TVGL.DenseVoxels
                 //Iterate over the template of the slice mask
                 //to move them to the appropriate location but 
                 //need to be sure that we are in the space (not negative)
-                var succeedCounter = 0;
-                var precedeCounter = 0;
+                //var succeedCounter = 0;
+                //var precedeCounter = 0;
+                var succeeds = true;
+                var precedes = true;
                 var outOfBounds = false;
 
                 foreach (var voxCoord in sliceMask)
@@ -380,32 +382,27 @@ namespace TVGL.DenseVoxels
                                         (signZ == 0 && coordZ >= zLim) || (signZ == 2 && coordZ < 0) ||
                                         (signZ == 1 && (coordZ >= zLim || coordZ < 0))))
                     {
-                        precedeCounter++;
                         outOfBounds = true;
                         continue;
                     }
+                    precedes = false;
 
-                    if ((signX == 0 && coordX < 0) || (signX == 2 && coordX >= xLim) ||
-                        (signX == 1 && (coordX < 0 || coordX >= xLim)) ||
-                        (signY == 0 && coordY < 0) || (signY == 2 && coordY >= yLim) ||
-                        (signY == 1 && (coordY < 0 || coordY >= yLim)) ||
-                        (signZ == 0 && coordZ < 0) || (signZ == 2 && coordZ >= zLim) ||
-                        (signZ == 1 && (coordZ < 0 || coordZ >= zLim)))
+                    if (coordX < 0 || coordY < 0 || coordZ < 0 || coordX >= xLim || coordY >= yLim || coordZ >= zLim)
                     {
-                        succeedCounter++;
                         outOfBounds = true;
                         // Return if you've left the part
-                        if (succeedCounter == sliceMaskCount) return;
                         continue;
                     }
+                    succeeds = false;
 
                     //Return if you've hit the as-designed part
                     if (designedSolid.Voxels[coordX, coordY, coordZ] != 0)
                         return;
                 }
 
-                if (precedeCounter == sliceMaskCount) continue;
-                if (!insidePart && precedeCounter == 0)
+                if (!insidePart && precedes) continue;
+                if (succeeds) return;
+                if (!insidePart && !precedes)
                     insidePart = true;
 
                 foreach (var voxCoord in sliceMask)
