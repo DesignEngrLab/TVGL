@@ -50,13 +50,18 @@ namespace TVGL.DenseVoxels
             IEnumerable<double[]> bounds, byte value = 0)
         {
             VoxelsPerSide = (int[]) voxelsPerSide.Clone();
+            var xLim = VoxelsPerSide[0];
+            var yLim = VoxelsPerSide[1];
+            var zLim = VoxelsPerSide[2];
             Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
             if (value != 0)
             {
-                for (var m = 0; m < VoxelsPerSide[0]; m++)
-                for (var n = 0; n < VoxelsPerSide[1]; n++)
-                for (var o = 0; o < VoxelsPerSide[2]; o++)
-                    Voxels[m, n, o] = value;
+                Parallel.For(0, xLim, m =>
+                {
+                    for (var n = 0; n < yLim; n++)
+                    for (var o = 0; o < zLim; o++)
+                        Voxels[m, n, o] = value;
+                });
             }
             Discretization = discretization;
             VoxelSideLength = voxelSideLength;
@@ -67,7 +72,8 @@ namespace TVGL.DenseVoxels
             UpdateProperties();
         }
 
-        public VoxelizedSolidDense(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength, IEnumerable<double[]> bounds)
+        public VoxelizedSolidDense(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength,
+            IEnumerable<double[]> bounds)
         {
             Voxels = (byte[,,])voxels.Clone();
             Discretization = discretization;
@@ -127,19 +133,22 @@ namespace TVGL.DenseVoxels
 
         private void VoxelizeSolid(TessellatedSolid ts)
         {
+            var xLim = VoxelsPerSide[0];
+            //var yLim = VoxelsPerSide[1];
+            var zLim = VoxelsPerSide[2];
             var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
-                VoxelSideLength / 2 - Bounds[1][2], VoxelsPerSide[2], VoxelSideLength);
+                VoxelSideLength / 2 - Bounds[1][2], zLim, VoxelSideLength);
             var slices = decomp.Select(d => d.Paths).ToList();
-
+            
             //var crossSections = decomp.Select(d => d.Vertices).ToList();
             //Presenter.ShowVertexPathsWithSolid(crossSections, new List<TessellatedSolid> { ts });
 
-            Parallel.For(0, VoxelsPerSide[2], k =>
+            Parallel.For(0, zLim, k =>
             //for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
                     slices[k].Select(p => new PolygonLight(p)), Bounds[0][0],
-                    VoxelSideLength, VoxelsPerSide[0]); //parallel lines aligned with Y axis
+                    VoxelSideLength, xLim); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
                 {
