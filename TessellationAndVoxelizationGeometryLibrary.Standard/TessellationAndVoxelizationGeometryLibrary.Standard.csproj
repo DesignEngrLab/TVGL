@@ -115,9 +115,6 @@
 
 
   <ItemGroup>
-    <PackageReference Include="Alea" Version="3.0.4" />
-    <PackageReference Include="ILGPU" Version="0.3.0" />
-    <PackageReference Include="ILGPU.Lightning" Version="0.3.0" />
     <PackageReference Include="MIConvexHull" Version="1.1.17.1019" />
     <PackageReference Include="StarMath" Version="2.0.17.1019" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
