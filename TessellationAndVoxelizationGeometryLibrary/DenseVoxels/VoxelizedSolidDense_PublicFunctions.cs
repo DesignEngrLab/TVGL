@@ -238,7 +238,6 @@ namespace TVGL.DenseVoxels
             Volume = Count * Math.Pow(VoxelSideLength, 3);
         }
 
-        //ToDo: fix surface area
         //Surface area uses VoxelsPerSide
         private void SetSurfaceArea()
         {
@@ -302,12 +301,14 @@ namespace TVGL.DenseVoxels
         // NOT A
         public VoxelizedSolidDense InvertToNewSolid()
         {
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, LongDimension, Bounds);
+            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, LongDimension, Bounds,
+                true);
             Parallel.For(0, BytesPerSide[0], i =>
             {
                 for (var j = 0; j < BytesPerSide[1]; j++)
                 for (var k = 0; k < BytesPerSide[2]; k++)
-                    vs.Voxels[i, j, k] = (byte) ~Voxels[i, j, k];
+                    if (Voxels[i, j, k] != byte.MaxValue)
+                        vs.Voxels[i, j, k] = (byte) ~Voxels[i, j, k];
             });
             vs.UpdateProperties();
             return vs;
@@ -316,7 +317,7 @@ namespace TVGL.DenseVoxels
         // A OR B
         public VoxelizedSolidDense UnionToNewSolid(params VoxelizedSolidDense[] solids)
         {
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, LongDimension, Bounds);
+            var vs = Copy();
             var xLim = BytesPerSide[0];
             var yLim = BytesPerSide[1];
             var zLim = BytesPerSide[2];
@@ -326,11 +327,11 @@ namespace TVGL.DenseVoxels
                 for (var k = 0; k < zLim; k++)
                 {
                     var voxel = Voxels[i, j, k];
-                    if (voxel != 0) continue;
+                    if (voxel == byte.MaxValue) continue;
                     foreach (var vox in solids)
                     {
                         voxel = (byte)(voxel | vox.Voxels[i, j, k]);
-                        if (voxel != 0) break;
+                        if (voxel == byte.MaxValue) break;
                     }
                     vs.Voxels[i, j, k] = voxel;
                 }
@@ -342,7 +343,8 @@ namespace TVGL.DenseVoxels
         // A AND B
         public VoxelizedSolidDense IntersectToNewSolid(params VoxelizedSolidDense[] solids)
         {
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, LongDimension, Bounds);
+            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, LongDimension, Bounds,
+                true);
             var xLim = BytesPerSide[0];
             var yLim = BytesPerSide[1];
             var zLim = BytesPerSide[2];
@@ -354,7 +356,12 @@ namespace TVGL.DenseVoxels
                     var voxel = Voxels[i, j, k];
                     if (voxel == 0) continue;
                     foreach (var vox in solids)
+                    {
                         voxel = (byte) (voxel & vox.Voxels[i, j, k]);
+                        if (voxel == 0) break;
+                    }
+
+                    if (voxel == 0) continue;
                     vs.Voxels[i, j, k] = voxel;
                 }
             });
@@ -365,7 +372,7 @@ namespace TVGL.DenseVoxels
         // A AND (NOT B)
         public VoxelizedSolidDense SubtractToNewSolid(params VoxelizedSolidDense[] subtrahends)
         {
-            var vs = new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, LongDimension, Bounds);
+            var vs = Copy();
             var xLim = BytesPerSide[0];
             var yLim = BytesPerSide[1];
             var zLim = BytesPerSide[2];
