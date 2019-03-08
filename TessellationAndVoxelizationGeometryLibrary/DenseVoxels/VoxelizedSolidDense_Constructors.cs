@@ -240,12 +240,16 @@ namespace TVGL.DenseVoxels
                         else if (LongDimension == 1)
                         {
                             for (var j = sp; j < ep; j++)
-                                Voxels[i, j / 8, k] += (byte)(1 << (7 - (j % 8)));
+                            {
+                                var jB = j / 8;
+                                var jS = 7 - (j % 8);
+                                Voxels[i, jB, k] += (byte) (1 << jS);
+                            }
                         }
                         else
                         {
                             for (var j = sp; j < ep; j++)
-                                Voxels[i, j, kB] += (byte)(1 << kS);
+                                Voxels[i, j, kB] += (byte) (1 << kS);
                         }
                     }
                 }
