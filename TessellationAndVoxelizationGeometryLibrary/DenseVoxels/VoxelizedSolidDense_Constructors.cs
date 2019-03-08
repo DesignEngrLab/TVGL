@@ -134,7 +134,7 @@ namespace TVGL.DenseVoxels
         private void VoxelizeSolid(TessellatedSolid ts)
         {
             var xLim = VoxelsPerSide[0];
-            //var yLim = VoxelsPerSide[1];
+            var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
             var decomp = DirectionalDecomposition.UniformDecompositionAlongZ(ts, 
                 VoxelSideLength / 2 - Bounds[1][2], zLim, VoxelSideLength);
@@ -159,10 +159,12 @@ namespace TVGL.DenseVoxels
                     {
                         //Use ceiling for lower bound and floor for upper bound to guarantee voxels are inside.
                         //Floor/Floor seems to be okay
+                        //Floor/ceiling with the yLim check also works
                         //Could reverse this to add more voxels
                         var sp = (int) Math.Floor((intersectValues[m] - Bounds[0][1]) / VoxelSideLength); // - 1;
                         if (sp == -1) sp = 0;
-                        var ep = (int) Math.Floor((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
+                        var ep = (int) Math.Ceiling((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
+                        if (ep >= yLim) ep = yLim;
 
                         for (var j = sp; j < ep; j++)
                             Voxels[i, j, k] = 1;
