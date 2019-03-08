@@ -947,13 +947,39 @@ namespace TVGL
             var positions = new Point3DCollection();
             var normals = new Vector3DCollection();
             var s = vs.VoxelSideLength;
+            var xLim = vs.VoxelsPerSide[0];
+            var yLim = vs.VoxelsPerSide[1];
+            var zLim = vs.VoxelsPerSide[2];
 
-            for (var i = 0; i < vs.VoxelsPerSide[0]; i++)
-                for (var j = 0; j < vs.VoxelsPerSide[1]; j++)
-                    for (var k = 0; k < vs.VoxelsPerSide[2]; k++)
+            for (var i = 0; i < xLim; i++)
+            {
+                var iB = i / 8;
+                var iS = i % 8;
+                for (var j = 0; j < yLim; j++)
+                {
+                    var jB = j / 8;
+                    var jS = j % 8;
+                    for (var k = 0; k < zLim; k++)
                     {
-                        if (vs.Voxels[i, j, k] == 0) continue;
-                        var neighbors = vs.GetNeighbors(i, j, k).ToList();
+                        if (vs.LongDimension == 0)
+                        {
+                            if ((vs.Voxels[iB, j, k] << iS) >> 7 == 0)
+                                continue;
+                        }
+                        if (vs.LongDimension == 1)
+                        {
+                            if ((vs.Voxels[i, jB, k] << jS) >> 7 == 0)
+                                continue;
+                        }
+                        if (vs.LongDimension == 2)
+                        {
+                            var kB = k / 8;
+                            var kS = k % 8;
+                            if ((vs.Voxels[i, j, kB] << kS) >> 7 == 0)
+                                continue;
+                        }
+                        
+                        var neighbors = vs.GetNeighbors(i, j, k, xLim, yLim, zLim).ToList();
                         if (neighbors.All(n => n != null)) continue;
 
                         var x = i * s + vs.Bounds[0][0];
@@ -971,6 +997,8 @@ namespace TVGL
                             }
                         }
                     }
+                }
+            }
 
             return new ModelVisual3D
             {
