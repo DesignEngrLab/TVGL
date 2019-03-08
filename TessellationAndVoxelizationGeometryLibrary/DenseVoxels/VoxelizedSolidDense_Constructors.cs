@@ -78,7 +78,7 @@ namespace TVGL.DenseVoxels
          * one (1) if it exists, and zero (0) if it doesn't.
          ***************************************************/
         public VoxelizedSolidDense(int[] voxelsPerSide, int discretization, double voxelSideLength, int longDimension,
-            IEnumerable<double[]> bounds, byte value = 0)
+            IEnumerable<double[]> bounds, bool empty = false)
         {
             Discretization = discretization;
             LongDimension = longDimension;
@@ -99,13 +99,13 @@ namespace TVGL.DenseVoxels
             var yLim = BytesPerSide[1];
             var zLim = BytesPerSide[2];
             Voxels = new byte[BytesPerSide[0], BytesPerSide[1], BytesPerSide[2]];
-            if (value != 0)
+            if (empty == false)
             {
                 Parallel.For(0, xLim, m =>
                 {
                     for (var n = 0; n < yLim; n++)
                     for (var o = 0; o < zLim; o++)
-                        Voxels[m, n, o] = value;
+                        Voxels[m, n, o] = byte.MaxValue;
                 });
             }
 

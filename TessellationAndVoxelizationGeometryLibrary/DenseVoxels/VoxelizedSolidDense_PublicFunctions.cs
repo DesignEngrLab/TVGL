@@ -277,9 +277,10 @@ namespace TVGL.DenseVoxels
         #endregion
 
         #region Boolean functions
+        //Boolean functions use BytesPerSide
         public VoxelizedSolidDense CreateBoundingSolid()
         {
-            return new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, LongDimension, Bounds, 1);
+            return new VoxelizedSolidDense(VoxelsPerSide, Discretization, VoxelSideLength, LongDimension, Bounds);
         }
 
         // NOT A
