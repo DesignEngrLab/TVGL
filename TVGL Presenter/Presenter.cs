@@ -963,19 +963,19 @@ namespace TVGL
                     {
                         if (vs.LongDimension == 0)
                         {
-                            if ((vs.Voxels[iB, j, k] << iS) >> 7 == 0)
+                            if ((byte) (vs.Voxels[iB, j, k] << iS) >> 7 == 0)
                                 continue;
                         }
                         if (vs.LongDimension == 1)
                         {
-                            if ((vs.Voxels[i, jB, k] << jS) >> 7 == 0)
+                            if ((byte) (vs.Voxels[i, jB, k] << jS) >> 7 == 0)
                                 continue;
                         }
                         if (vs.LongDimension == 2)
                         {
                             var kB = k / 8;
                             var kS = k % 8;
-                            if ((vs.Voxels[i, j, kB] << kS) >> 7 == 0)
+                            if ((byte) (vs.Voxels[i, j, kB] << kS) >> 7 == 0)
                                 continue;
                         }
                         
