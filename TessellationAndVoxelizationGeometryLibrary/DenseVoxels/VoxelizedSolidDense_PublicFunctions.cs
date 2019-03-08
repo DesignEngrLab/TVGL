@@ -39,21 +39,21 @@ namespace TVGL.DenseVoxels
                 {
                     var iS1 = iS == 7 ? 0 : iS + 1;
                     var iB1 = iS == 7 ? iB + 1 : iB;
-                    if ((Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors[1] = new[] {i + 1, j, k};
+                    if ((byte) (Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors[1] = new[] {i + 1, j, k};
                 }
 
-                if (j + 1 != yLim && (Voxels[iB, j + 1, k] << iS) >> 7 != 0) neighbors[3] = new[] {i, j + 1, k};
-                if (k + 1 != zLim && (Voxels[iB, j, k + 1] << iS) >> 7 != 0) neighbors[5] = new[] {i, j, k + 1};
+                if (j + 1 != yLim && (byte) (Voxels[iB, j + 1, k] << iS) >> 7 != 0) neighbors[3] = new[] {i, j + 1, k};
+                if (k + 1 != zLim && (byte) (Voxels[iB, j, k + 1] << iS) >> 7 != 0) neighbors[5] = new[] {i, j, k + 1};
 
                 if (i != 0)
                 {
                     var iS1 = iS == 0 ? 7 : iS - 1;
                     var iB1 = iS == 0 ? iB - 1 : iB;
-                    if ((Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors[0] = new[] {i - 1, j, k};
+                    if ((byte) (Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors[0] = new[] {i - 1, j, k};
                 }
 
-                if (j != 0 && (Voxels[iB, j - 1, k] << iS) >> 7 != 0) neighbors[2] = new[] {i, j - 1, k};
-                if (k != 0 && (Voxels[iB, j, k - 1] << iS) >> 7 != 0) neighbors[4] = new[] {i, j, k - 1};
+                if (j != 0 && (byte) (Voxels[iB, j - 1, k] << iS) >> 7 != 0) neighbors[2] = new[] {i, j - 1, k};
+                if (k != 0 && (byte) (Voxels[iB, j, k - 1] << iS) >> 7 != 0) neighbors[4] = new[] {i, j, k - 1};
             }
 
             if (LongDimension == 1)
@@ -61,25 +61,25 @@ namespace TVGL.DenseVoxels
                 var jB = j / 8;
                 var jS = j % 8;
 
-                if (i + 1 != xLim && (Voxels[i + 1, jB, k] << jS) >> 7 != 0) neighbors[1] = new[] {i + 1, j, k};
+                if (i + 1 != xLim && (byte) (Voxels[i + 1, jB, k] << jS) >> 7 != 0) neighbors[1] = new[] {i + 1, j, k};
                 if (j + 1 != yLim)
                 {
                     var jS1 = jS == 7 ? 0 : jS + 1;
                     var jB1 = jS == 7 ? jB + 1 : jB;
-                    if ((Voxels[i, jB1, k] << jS1) >> 7 != 0) neighbors[3] = new[] {i, j + 1, k};
+                    if ((byte) (Voxels[i, jB1, k] << jS1) >> 7 != 0) neighbors[3] = new[] {i, j + 1, k};
                 }
 
-                if (k + 1 != zLim && (Voxels[i, jB, k + 1] << jS) >> 7 != 0) neighbors[5] = new[] {i, j, k + 1};
+                if (k + 1 != zLim && (byte) (Voxels[i, jB, k + 1] << jS) >> 7 != 0) neighbors[5] = new[] {i, j, k + 1};
                 
-                if (i != 0 && (Voxels[i - 1, jB, k] << jS) >> 7 != 0) neighbors[0] = new[] {i - 1, j, k};
+                if (i != 0 && (byte) (Voxels[i - 1, jB, k] << jS) >> 7 != 0) neighbors[0] = new[] {i - 1, j, k};
                 if (j != 0)
                 {
                     var jS1 = jS == 0 ? 7 : jS - 1;
                     var jB1 = jS == 0 ? jB - 1 : jB;
-                    if ((Voxels[i, jB1, k] << jS1) >> 7 != 0) neighbors[2] = new[] {i, j - 1, k};
+                    if ((byte) (Voxels[i, jB1, k] << jS1) >> 7 != 0) neighbors[2] = new[] {i, j - 1, k};
                 }
 
-                if (k != 0 && (Voxels[i, jB, k - 1] << jS) >> 7 != 0) neighbors[4] = new[] {i, j, k - 1};
+                if (k != 0 && (byte) (Voxels[i, jB, k - 1] << jS) >> 7 != 0) neighbors[4] = new[] {i, j, k - 1};
             }
 
             if (LongDimension == 2)
@@ -87,22 +87,22 @@ namespace TVGL.DenseVoxels
                 var kB = k / 8;
                 var kS = k % 8;
 
-                if (i + 1 != xLim && (Voxels[i + 1, j, kB] << kS) >> 7 != 0) neighbors[1] = new[] {i + 1, j, k};
-                if (j + 1 != yLim && (Voxels[i, j + 1, kB] << kS) >> 7 != 0) neighbors[3] = new[] {i, j + 1, k};
+                if (i + 1 != xLim && (byte) (Voxels[i + 1, j, kB] << kS) >> 7 != 0) neighbors[1] = new[] {i + 1, j, k};
+                if (j + 1 != yLim && (byte) (Voxels[i, j + 1, kB] << kS) >> 7 != 0) neighbors[3] = new[] {i, j + 1, k};
                 if (k + 1 != zLim)
                 {
                     var kS1 = kS == 7 ? 0 : kS + 1;
                     var kB1 = kS == 7 ? kB + 1 : kB;
-                    if ((Voxels[i, j, kB1] << kS1) >> 7 != 0) neighbors[5] = new[] {i, j, k + 1};
+                    if ((byte) (Voxels[i, j, kB1] << kS1) >> 7 != 0) neighbors[5] = new[] {i, j, k + 1};
                 }
 
-                if (i != 0 && (Voxels[i - 1, j, kB] << kS) >> 7 != 0) neighbors[0] = new[] {i - 1, j, k};
-                if (j != 0 && (Voxels[i, j - 1, kB] << kS) >> 7 != 0) neighbors[2] = new[] {i, j - 1, k};
+                if (i != 0 && (byte) (Voxels[i - 1, j, kB] << kS) >> 7 != 0) neighbors[0] = new[] {i - 1, j, k};
+                if (j != 0 && (byte) (Voxels[i, j - 1, kB] << kS) >> 7 != 0) neighbors[2] = new[] {i, j - 1, k};
                 if (k != 0)
                 {
                     var kS1 = kS == 0 ? 7 : kS - 1;
                     var kB1 = kS == 0 ? kB - 1 : kB;
-                    if ((Voxels[i, j, kB1] << kS1) >> 7 != 0) neighbors[4] = new[] {i, j, k - 1};
+                    if ((byte) (Voxels[i, j, kB1] << kS1) >> 7 != 0) neighbors[4] = new[] {i, j, k - 1};
                 }
             }
 
@@ -121,21 +121,21 @@ namespace TVGL.DenseVoxels
                 {
                     var iS1 = iS == 7 ? 0 : iS + 1;
                     var iB1 = iS == 7 ? iB + 1 : iB;
-                    if ((Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors++;
+                    if ((byte) (Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors++;
                 }
 
-                if (j + 1 != yLim && (Voxels[iB, j + 1, k] << iS) >> 7 != 0) neighbors++;
-                if (k + 1 != zLim && (Voxels[iB, j, k + 1] << iS) >> 7 != 0) neighbors++;
+                if (j + 1 != yLim && (byte) (Voxels[iB, j + 1, k] << iS) >> 7 != 0) neighbors++;
+                if (k + 1 != zLim && (byte) (Voxels[iB, j, k + 1] << iS) >> 7 != 0) neighbors++;
 
                 if (i != 0)
                 {
                     var iS1 = iS == 0 ? 7 : iS - 1;
                     var iB1 = iS == 0 ? iB - 1 : iB;
-                    if ((Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors++;
+                    if ((byte) (Voxels[iB1, j, k] << iS1) >> 7 != 0) neighbors++;
                 }
 
-                if (j != 0 && (Voxels[iB, j - 1, k] << iS) >> 7 != 0) neighbors++;
-                if (k != 0 && (Voxels[iB, j, k - 1] << iS) >> 7 != 0) neighbors++;
+                if (j != 0 && (byte) (Voxels[iB, j - 1, k] << iS) >> 7 != 0) neighbors++;
+                if (k != 0 && (byte) (Voxels[iB, j, k - 1] << iS) >> 7 != 0) neighbors++;
             }
 
             if (LongDimension == 1)
@@ -143,25 +143,25 @@ namespace TVGL.DenseVoxels
                 var jB = j / 8;
                 var jS = j % 8;
 
-                if (i + 1 != xLim && (Voxels[i + 1, jB, k] << jS) >> 7 != 0) neighbors++;
+                if (i + 1 != xLim && (byte) (Voxels[i + 1, jB, k] << jS) >> 7 != 0) neighbors++;
                 if (j + 1 != yLim)
                 {
                     var jS1 = jS == 7 ? 0 : jS + 1;
                     var jB1 = jS == 7 ? jB + 1 : jB;
-                    if ((Voxels[i, jB1, k] << jS1) >> 7 != 0) neighbors++;
+                    if ((byte) (Voxels[i, jB1, k] << jS1) >> 7 != 0) neighbors++;
                 }
 
-                if (k + 1 != zLim && (Voxels[i, jB, k + 1] << jS) >> 7 != 0) neighbors++;
+                if (k + 1 != zLim && (byte) (Voxels[i, jB, k + 1] << jS) >> 7 != 0) neighbors++;
 
-                if (i != 0 && (Voxels[i - 1, jB, k] << jS) >> 7 != 0) neighbors++;
+                if (i != 0 && (byte) (Voxels[i - 1, jB, k] << jS) >> 7 != 0) neighbors++;
                 if (j != 0)
                 {
                     var jS1 = jS == 0 ? 7 : jS - 1;
                     var jB1 = jS == 0 ? jB - 1 : jB;
-                    if ((Voxels[i, jB1, k] << jS1) >> 7 != 0) neighbors++;
+                    if ((byte) (Voxels[i, jB1, k] << jS1) >> 7 != 0) neighbors++;
                 }
 
-                if (k != 0 && (Voxels[i, jB, k - 1] << jS) >> 7 != 0) neighbors++;
+                if (k != 0 && (byte) (Voxels[i, jB, k - 1] << jS) >> 7 != 0) neighbors++;
             }
 
             if (LongDimension == 2)
@@ -169,22 +169,22 @@ namespace TVGL.DenseVoxels
                 var kB = k / 8;
                 var kS = k % 8;
 
-                if (i + 1 != xLim && (Voxels[i + 1, j, kB] << kS) >> 7 != 0) neighbors++;
-                if (j + 1 != yLim && (Voxels[i, j + 1, kB] << kS) >> 7 != 0) neighbors++;
+                if (i + 1 != xLim && (byte) (Voxels[i + 1, j, kB] << kS) >> 7 != 0) neighbors++;
+                if (j + 1 != yLim && (byte) (Voxels[i, j + 1, kB] << kS) >> 7 != 0) neighbors++;
                 if (k + 1 != zLim)
                 {
                     var kS1 = kS == 7 ? 0 : kS + 1;
                     var kB1 = kS == 7 ? kB + 1 : kB;
-                    if ((Voxels[i, j, kB1] << kS1) >> 7 != 0) neighbors++;
+                    if ((byte) (Voxels[i, j, kB1] << kS1) >> 7 != 0) neighbors++;
                 }
 
-                if (i != 0 && (Voxels[i - 1, j, kB] << kS) >> 7 != 0) neighbors++;
-                if (j != 0 && (Voxels[i, j - 1, kB] << kS) >> 7 != 0) neighbors++;
+                if (i != 0 && (byte) (Voxels[i - 1, j, kB] << kS) >> 7 != 0) neighbors++;
+                if (j != 0 && (byte) (Voxels[i, j - 1, kB] << kS) >> 7 != 0) neighbors++;
                 if (k != 0)
                 {
                     var kS1 = kS == 0 ? 7 : kS - 1;
                     var kB1 = kS == 0 ? kB - 1 : kB;
-                    if ((Voxels[i, j, kB1] << kS1) >> 7 != 0) neighbors++;
+                    if ((byte) (Voxels[i, j, kB1] << kS1) >> 7 != 0) neighbors++;
                 }
             }
 
@@ -258,16 +258,16 @@ namespace TVGL.DenseVoxels
                     for (var k = 0; k < zLim; k++)
                     {
                         if (LongDimension == 0)
-                            if ((Voxels[iB , j, k] << iS) >> 7 == 0)
+                            if ((byte) (Voxels[iB , j, k] << iS) >> 7 == 0)
                                 continue;
                         if (LongDimension == 1)
-                            if ((Voxels[i, jB, k] << jS) >> 7 == 0)
+                            if ((byte) (Voxels[i, jB, k] << jS) >> 7 == 0)
                                 continue;
                         if (LongDimension == 2)
                         {
                             var kB = k / 8;
                             var kS = k % 8;
-                            if ((Voxels[i, j, kB] << kS) >> 7 == 0)
+                            if ((byte) (Voxels[i, j, kB] << kS) >> 7 == 0)
                                 continue;
                         }
                         var num = NumNeighbors(i, j, k, xLim, yLim, zLim);
