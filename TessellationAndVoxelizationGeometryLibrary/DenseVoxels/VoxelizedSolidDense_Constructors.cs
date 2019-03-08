@@ -35,8 +35,12 @@ namespace TVGL.DenseVoxels
         #region Properties
         public byte[,,] Voxels;
         public readonly int Discretization;
+        public readonly int LongDimension;
         public readonly int[] VoxelsPerSide;
+        public readonly int[] BytesPerSide;
+        public readonly int BytesOnLongSide;
         public double VoxelSideLength { get; internal set; }
+        public double ByteSideLength => VoxelSideLength * 8;
         private readonly double[] Dimensions;
         public double[][] Bounds { get; protected set; }
         public double[] Offset => Bounds[0];
@@ -46,14 +50,28 @@ namespace TVGL.DenseVoxels
         public int Count { get; internal set; }
         #endregion
 
-        public VoxelizedSolidDense(int[] voxelsPerSide, int discretization, double voxelSideLength,
+        public VoxelizedSolidDense(int[] voxelsPerSide, int discretization, double voxelSideLength, int longDimension,
             IEnumerable<double[]> bounds, byte value = 0)
         {
-            VoxelsPerSide = (int[]) voxelsPerSide.Clone();
-            var xLim = VoxelsPerSide[0];
-            var yLim = VoxelsPerSide[1];
-            var zLim = VoxelsPerSide[2];
-            Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
+            Discretization = discretization;
+            LongDimension = longDimension;
+            VoxelsPerSide = (int[])voxelsPerSide.Clone();
+            BytesOnLongSide = VoxelsPerSide[LongDimension] / 8;
+            BytesPerSide = new[]
+            {
+                LongDimension == 0 ? BytesOnLongSide : VoxelsPerSide[0],
+                LongDimension == 1 ? BytesOnLongSide : VoxelsPerSide[1],
+                LongDimension == 2 ? BytesOnLongSide : VoxelsPerSide[2]
+            };
+            VoxelSideLength = voxelSideLength;
+            Bounds = bounds.ToArray();
+            Dimensions = Bounds[1].subtract(Bounds[0], 3);
+            SolidColor = new Color(Constants.DefaultColor);
+
+            var xLim = BytesPerSide[0];
+            var yLim = BytesPerSide[1];
+            var zLim = BytesPerSide[2];
+            Voxels = new byte[BytesPerSide[0], BytesPerSide[1], BytesPerSide[2]];
             if (value != 0)
             {
                 Parallel.For(0, xLim, m =>
@@ -63,21 +81,24 @@ namespace TVGL.DenseVoxels
                         Voxels[m, n, o] = value;
                 });
             }
-            Discretization = discretization;
-            VoxelSideLength = voxelSideLength;
-            Bounds = bounds.ToArray();
-            Dimensions = Bounds[1].subtract(Bounds[0], 3);
-            SolidColor = new Color(Constants.DefaultColor);
-            Count = value == 0 ? 0 : VoxelsPerSide[0] * VoxelsPerSide[1] * VoxelsPerSide[2];
+
             UpdateProperties();
         }
 
         public VoxelizedSolidDense(byte[,,] voxels, int discretization, int[] voxelsPerSide, double voxelSideLength,
-            IEnumerable<double[]> bounds)
+            int longDimension, IEnumerable<double[]> bounds)
         {
             Voxels = (byte[,,])voxels.Clone();
             Discretization = discretization;
+            LongDimension = longDimension;
             VoxelsPerSide = voxelsPerSide;
+            BytesOnLongSide = VoxelsPerSide[LongDimension] / 8;
+            BytesPerSide = new[]
+            {
+                LongDimension == 0 ? BytesOnLongSide : VoxelsPerSide[0],
+                LongDimension == 1 ? BytesOnLongSide : VoxelsPerSide[1],
+                LongDimension == 2 ? BytesOnLongSide : VoxelsPerSide[2]
+            };
             VoxelSideLength = voxelSideLength;
             Bounds = bounds.ToArray();
             Dimensions = Bounds[1].subtract(Bounds[0], 3);
@@ -87,9 +108,12 @@ namespace TVGL.DenseVoxels
 
         public VoxelizedSolidDense(VoxelizedSolidDense vs)
         {
-            Voxels = (byte[,,]) vs.Voxels.Clone();
+            Voxels = (byte[,,])vs.Voxels.Clone();
             Discretization = vs.Discretization;
+            LongDimension = vs.LongDimension;
             VoxelsPerSide = vs.VoxelsPerSide.ToArray();
+            BytesPerSide = vs.BytesPerSide.ToArray();
+            BytesOnLongSide = vs.BytesOnLongSide;
             VoxelSideLength = vs.VoxelSideLength;
             Dimensions = vs.Dimensions.ToArray();
             Bounds = vs.Bounds.ToArray();
@@ -103,6 +127,8 @@ namespace TVGL.DenseVoxels
         {
             Discretization = discretization;
             SolidColor = new Color(Constants.DefaultColor);
+            if (discretization < 3)
+                throw new ArgumentException("Discretization must be greater than or equal to 3.");
             var voxelsOnLongSide = Math.Pow(2, Discretization);
 
             Bounds = new double[2][];
@@ -121,11 +147,21 @@ namespace TVGL.DenseVoxels
             for (var i = 0; i < 3; i++)
                 Dimensions[i] = Bounds[1][i] - Bounds[0][i];
 
-            //var longestSide = Dimensions.Max();
-            VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
-            VoxelsPerSide = Dimensions.Select(d => (int) Math.Round(d / VoxelSideLength)).ToArray();
+            LongDimension = Dimensions.FindIndex(Dimensions.Max());
+            VoxelSideLength = Dimensions[LongDimension] / voxelsOnLongSide;
 
-            Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
+            VoxelsPerSide = Dimensions.Select(d => (int) Math.Round(d / VoxelSideLength)).ToArray();
+            BytesOnLongSide = VoxelsPerSide[LongDimension] / 8;
+
+
+            BytesPerSide = new[]
+            {
+                LongDimension == 0 ? BytesOnLongSide : VoxelsPerSide[0],
+                LongDimension == 1 ? BytesOnLongSide : VoxelsPerSide[1],
+                LongDimension == 2 ? BytesOnLongSide : VoxelsPerSide[2]
+            };
+
+            Voxels = new byte[BytesPerSide[0], BytesPerSide[1], BytesPerSide[2]];
 
             VoxelizeSolid(ts);
             UpdateProperties();
@@ -149,10 +185,15 @@ namespace TVGL.DenseVoxels
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
                     slices[k].Select(p => new PolygonLight(p)), Bounds[0][0],
                     VoxelSideLength, xLim); //parallel lines aligned with Y axis
+                var kB = k / 8;
+                var kS = k % 8;
 
                 foreach (var intersections in intersectionPoints)
                 {
                     var i = (int) Math.Floor((intersections.Key - Bounds[0][0]) / VoxelSideLength); // - 1;
+                    var iB = i / 8;
+                    var iS = i % 8;
+
                     var intersectValues = intersections.Value;
                     var n = intersectValues.Count;
                     for (var m = 0; m < n - 1; m += 2)
@@ -164,8 +205,21 @@ namespace TVGL.DenseVoxels
                         if (sp == -1) sp = 0;
                         var ep = (int) Math.Floor((intersectValues[m + 1] - Bounds[0][1]) / VoxelSideLength); // - 1;
 
-                        for (var j = sp; j < ep; j++)
-                            Voxels[i, j, k] = 1;
+                        if (LongDimension == 0)
+                        {
+                            for (var j = sp; j < ep; j++)
+                                Voxels[iB, j, k] += (byte) (1 << iS);
+                        }
+                        else if (LongDimension == 1)
+                        {
+                            for (var j = sp; j < ep; j++)
+                                Voxels[i, j / 8, k] += (byte)(1 << (j % 8));
+                        }
+                        else
+                        {
+                            for (var j = sp; j < ep; j++)
+                                Voxels[i, j, kB] += (byte)(1 << kS);
+                        }
                     }
                 }
             });
