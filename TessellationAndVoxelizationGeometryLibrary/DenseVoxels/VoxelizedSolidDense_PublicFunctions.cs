@@ -400,7 +400,6 @@ namespace TVGL.DenseVoxels
         #region Draft in VoxelDirection
         public VoxelizedSolidDense DraftToNewSolid(VoxelDirections vd)
         {
-            var vs = Copy();
 
             var draftDir = (int) vd;
             var draftIndex = Math.Abs(draftDir) - 1;
@@ -417,6 +416,10 @@ namespace TVGL.DenseVoxels
             var nLim = VoxelsPerSide[planeIndices[1]];
             var pLim = VoxelsPerSide[draftIndex];
 
+            if (draftIndex == LongDimension)
+                return DraftOnLongDimension(draftDir, draftIndex, mLim, nLim, pLim);
+            var vs = Copy();
+
             Parallel.For(0, mLim, m =>
             {
                 for (var n = 0; n < nLim; n++)
@@ -428,23 +431,54 @@ namespace TVGL.DenseVoxels
                         int i;
                         int j;
                         int k;
+                        int shift;
 
                         switch (draftIndex)
                         {
                             case 0:
                                 i = q;
-                                j = m;
-                                k = n;
+                                if (LongDimension == 1)
+                                {
+                                    j = m / 8;
+                                    k = n;
+                                    shift = 7 - (m % 8);
+                                }
+                                else
+                                {
+                                    j = m;
+                                    k = n / 8;
+                                    shift = 7 - (n % 8);
+                                }
                                 break;
                             case 1:
-                                i = m;
                                 j = q;
-                                k = n;
+                                if (LongDimension == 0)
+                                {
+                                    i = m / 8;
+                                    k = n;
+                                    shift = 7 - (m % 8);
+                                }
+                                else
+                                {
+                                    i = m;
+                                    k = n / 8;
+                                    shift = 7 - (n % 8);
+                                }
                                 break;
                             case 2:
-                                i = m;
-                                j = n;
                                 k = q;
+                                if (LongDimension == 0)
+                                {
+                                    i = m / 8;
+                                    j = n;
+                                    shift = 7 - (m % 8);
+                                }
+                                else
+                                {
+                                    i = m;
+                                    j = n / 8;
+                                    shift = 7 - (n % 8);
+                                }
                                 break;
                             default:
                                 continue;
@@ -452,10 +486,10 @@ namespace TVGL.DenseVoxels
 
                         if (fillAll)
                         {
-                            vs.Voxels[i, j, k] = 1;
+                            vs.Voxels[i, j, k] += (byte) (1 << shift);
                             continue;
                         }
-                        if (vs.Voxels[i, j, k] != 0)
+                        if ((byte) (vs.Voxels[i, j, k] << shift) >> 7 != 0)
                             fillAll = true;
                     }
 
@@ -465,6 +499,65 @@ namespace TVGL.DenseVoxels
             vs.UpdateProperties();
             return vs;
         }
+
+        public VoxelizedSolidDense DraftOnLongDimension(int draftDir, int draftIndex, int mLim, int nLim, int pLim)
+        {
+            var vs = Copy();
+
+            Parallel.For(0, mLim, m =>
+            {
+                for (var n = 0; n < nLim; n++)
+                {
+                    var fillAll = false;
+                    var fillByte = false;
+
+                    for (var p = 0; p < pLim; p++)
+                    {
+                        var q = draftDir > 0 ? p : pLim - 1 - p;
+                        var qB = q / 8;
+                        var qS = q % 8;
+                        if (!fillByte && fillAll && qS == 0)
+                            fillByte = true;
+
+                        switch (draftIndex)
+                        {
+                            case 0:
+                                if (fillByte)
+                                    vs.Voxels[qB, m, n] = byte.MaxValue;
+                                else if (fillAll)
+                                    vs.Voxels[qB, m, n] += (byte) (1 << (7 - qS));
+                                else if ((byte) (vs.Voxels[qB, m, n] << qS) >> 7 != 0)
+                                    fillAll = true;
+                                break;
+                            case 1:
+                                if (fillByte)
+                                    vs.Voxels[m, qB, n] = byte.MaxValue;
+                                else if (fillAll)
+                                    vs.Voxels[m, qB, n] += (byte)(1 << (7 - qS));
+                                else if ((byte)(vs.Voxels[m, qB, n] << qS) >> 7 != 0)
+                                    fillAll = true;
+                                break;
+                            case 2:
+                                if (fillByte)
+                                    vs.Voxels[m, n, qB] = byte.MaxValue;
+                                else if (fillAll)
+                                    vs.Voxels[m, n, qB] += (byte)(1 << (7 - qS));
+                                else if ((byte)(vs.Voxels[m, n, qB] << qS) >> 7 != 0)
+                                    fillAll = true;
+                                break;
+                            default:
+                                continue;
+                        }
+
+
+                    }
+                }
+            });
+            
+            vs.UpdateProperties();
+            return vs;
+        }
+
         #endregion
 
         #region Voxel erosion
