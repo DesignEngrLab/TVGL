@@ -486,10 +486,11 @@ namespace TVGL.DenseVoxels
 
                         if (fillAll)
                         {
-                            vs.Voxels[i, j, k] += (byte) (1 << shift);
+                            if ((byte) (vs.Voxels[i, j, k] << (7 - shift)) >> 7 == 0)
+                                vs.Voxels[i, j, k] += (byte) (1 << shift);
                             continue;
                         }
-                        if ((byte) (vs.Voxels[i, j, k] << shift) >> 7 != 0)
+                        if ((byte) (vs.Voxels[i, j, k] << (7 - shift)) >> 7 != 0)
                             fillAll = true;
                     }
 
@@ -514,10 +515,15 @@ namespace TVGL.DenseVoxels
                     for (var p = 0; p < pLim; p++)
                     {
                         var q = draftDir > 0 ? p : pLim - 1 - p;
+                        
                         var qB = q / 8;
                         var qS = q % 8;
-                        if (!fillByte && fillAll && qS == 0)
-                            fillByte = true;
+                        if (!fillByte && fillAll)
+                        {
+                            var fillByteComparator = draftDir > 0 ? 0 : 7;
+                            if (qS == fillByteComparator)
+                                fillByte = true;
+                        }
 
                         switch (draftIndex)
                         {
@@ -525,7 +531,11 @@ namespace TVGL.DenseVoxels
                                 if (fillByte)
                                     vs.Voxels[qB, m, n] = byte.MaxValue;
                                 else if (fillAll)
-                                    vs.Voxels[qB, m, n] += (byte) (1 << (7 - qS));
+                                {
+                                    if ((byte) (vs.Voxels[qB, m, n] << qS) >> 7 == 0)
+                                        vs.Voxels[qB, m, n] += (byte) (1 << (7 - qS));
+                                }
+
                                 else if ((byte) (vs.Voxels[qB, m, n] << qS) >> 7 != 0)
                                     fillAll = true;
                                 break;
@@ -533,16 +543,24 @@ namespace TVGL.DenseVoxels
                                 if (fillByte)
                                     vs.Voxels[m, qB, n] = byte.MaxValue;
                                 else if (fillAll)
-                                    vs.Voxels[m, qB, n] += (byte)(1 << (7 - qS));
-                                else if ((byte)(vs.Voxels[m, qB, n] << qS) >> 7 != 0)
+                                {
+                                    if ((byte) (vs.Voxels[m, qB, n] << qS) >> 7 == 0)
+                                        vs.Voxels[m, qB, n] += (byte) (1 << (7 - qS));
+                                }
+
+                                else if ((byte) (vs.Voxels[m, qB, n] << qS) >> 7 != 0)
                                     fillAll = true;
                                 break;
                             case 2:
                                 if (fillByte)
                                     vs.Voxels[m, n, qB] = byte.MaxValue;
                                 else if (fillAll)
-                                    vs.Voxels[m, n, qB] += (byte)(1 << (7 - qS));
-                                else if ((byte)(vs.Voxels[m, n, qB] << qS) >> 7 != 0)
+                                {
+                                    if ((byte) (vs.Voxels[m, n, qB] << qS) >> 7 == 0)
+                                        vs.Voxels[m, n, qB] += (byte) (1 << (7 - qS));
+                                }
+
+                                else if ((byte) (vs.Voxels[m, n, qB] << qS) >> 7 != 0)
                                     fillAll = true;
                                 break;
                             default:
