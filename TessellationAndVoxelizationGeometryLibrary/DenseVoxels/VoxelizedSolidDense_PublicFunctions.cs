@@ -441,13 +441,13 @@ namespace TVGL.DenseVoxels
                                 {
                                     j = m / 8;
                                     k = n;
-                                    shift = 7 - (m % 8);
+                                    shift = m % 8;
                                 }
                                 else
                                 {
                                     j = m;
                                     k = n / 8;
-                                    shift = 7 - (n % 8);
+                                    shift = n % 8;
                                 }
                                 break;
                             case 1:
@@ -456,13 +456,13 @@ namespace TVGL.DenseVoxels
                                 {
                                     i = m / 8;
                                     k = n;
-                                    shift = 7 - (m % 8);
+                                    shift = m % 8;
                                 }
                                 else
                                 {
                                     i = m;
                                     k = n / 8;
-                                    shift = 7 - (n % 8);
+                                    shift = n % 8;
                                 }
                                 break;
                             case 2:
@@ -471,13 +471,13 @@ namespace TVGL.DenseVoxels
                                 {
                                     i = m / 8;
                                     j = n;
-                                    shift = 7 - (m % 8);
+                                    shift = m % 8;
                                 }
                                 else
                                 {
                                     i = m;
                                     j = n / 8;
-                                    shift = 7 - (n % 8);
+                                    shift = n % 8;
                                 }
                                 break;
                             default:
@@ -486,11 +486,11 @@ namespace TVGL.DenseVoxels
 
                         if (fillAll)
                         {
-                            if ((byte) (vs.Voxels[i, j, k] << (7 - shift)) >> 7 == 0)
-                                vs.Voxels[i, j, k] += (byte) (1 << shift);
+                            if ((byte) (vs.Voxels[i, j, k] << shift) >> 7 == 0)
+                                vs.Voxels[i, j, k] += (byte) (1 << (7 - shift));
                             continue;
                         }
-                        if ((byte) (vs.Voxels[i, j, k] << (7 - shift)) >> 7 != 0)
+                        if ((byte) (vs.Voxels[i, j, k] << shift) >> 7 != 0)
                             fillAll = true;
                     }
 
@@ -748,13 +748,32 @@ namespace TVGL.DenseVoxels
                     succeeds = false;
 
                     //Return if you've hit the as-designed part
-                    if (designedSolid.Voxels[coordX, coordY, coordZ] != 0)
-                        return;
+                    if (LongDimension == 0)
+                    {
+                        var shift = coordX % 8;
+                        var coord = coordX / 8;
+                        if ((byte)(designedSolid.Voxels[coord, coordY, coordZ] << shift) >> 7 != 0)
+                            return;
+                    }
+                    else if (LongDimension == 1)
+                    {
+                        var shift = coordY % 8;
+                        var coord = coordY / 8;
+                        if ((byte)(designedSolid.Voxels[coordX, coord, coordZ] << shift) >> 7 != 0)
+                            return;
+                    }
+                    else
+                    {
+                        var shift = coordZ % 8;
+                        var coord = coordZ / 8;
+                        if ((byte)(designedSolid.Voxels[coordX, coordY, coord] << shift) >> 7 != 0)
+                            return;
+                    }
                 }
 
                 if (!insidePart && precedes) continue;
                 if (succeeds) return;
-                if (!insidePart && !precedes)
+                if (!insidePart)
                     insidePart = true;
 
                 foreach (var voxCoord in sliceMask)
@@ -764,7 +783,27 @@ namespace TVGL.DenseVoxels
                     var coordZ = voxCoord[2] + zTShift;
                     if (outOfBounds && (coordX < 0 || coordY < 0 || coordZ < 0 || coordX >= xLim || coordY >= yLim ||
                                         coordZ >= zLim)) continue;
-                    Voxels[coordX, coordY, coordZ] = 0;
+                    if (LongDimension == 0)
+                    {
+                        var shift = coordX % 8;
+                        var coord = coordX / 8;
+                        if ((byte) (Voxels[coord, coordY, coordZ] << shift) >> 7 != 0)
+                            Voxels[coord, coordY, coordZ] -= (byte) (1 << (7 - shift));
+                    }
+                    else if (LongDimension == 1)
+                    {
+                        var shift = coordY % 8;
+                        var coord = coordY / 8;
+                        if ((byte) (Voxels[coordX, coord, coordZ] << shift) >> 7 != 0)
+                            Voxels[coordX, coord, coordZ] -= (byte)(1 << (7 - shift));
+                    }
+                    else
+                    {
+                        var shift = coordZ % 8;
+                        var coord = coordZ / 8;
+                        if ((byte) (Voxels[coordX, coordY, coord] << shift) >> 7 != 0)
+                            Voxels[coordX, coordY, coord] -= (byte)(1 << (7 - shift));
+                    }
                 }
             }
         }
