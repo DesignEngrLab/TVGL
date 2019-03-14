@@ -124,9 +124,67 @@ namespace TVGL.DenseVoxels
 
         public override Solid TransformToNewSolid(double[,] transformationMatrix)
         {
-            var copy = (VoxelizedSolidDense) Copy();
-            copy.Transform(transformationMatrix);
-            return copy;
+            if (TS is null)
+                throw new NotImplementedException();
+            var ts = (TessellatedSolid) TS.TransformToNewSolid(transformationMatrix);
+            return new VoxelizedSolidDense(ts, Discretization);
+
+            //// This works, but leaves a lot of void space if the solid increases in size
+            //// Voxels are transformed 1 to 1, and new voxels are not added when the solid
+            //// is stretched larger
+            //var xLim = VoxelsPerSide[0] - 1;
+            //var yLim = VoxelsPerSide[1] - 1;
+            //var zLim = VoxelsPerSide[2] - 1;
+            //
+            //var maxDim = new[] { 0, 0, 0 };
+            //var minDim = new[] { xLim, yLim, zLim };
+            //
+            //for (var i = 0; i <= xLim; i += xLim)
+            //    for (var j = 0; j <= yLim; j += yLim)
+            //        for (var k = 0; k <= zLim; k += zLim)
+            //        {
+            //            var newIJK = transformationMatrix.multiply(new[] {i, j, k, 1}, 4, 4)
+            //                .Select(a => (int) Math.Round(a)).ToArray();
+            //            for (var m = 0; m < 3; m++)
+            //            {
+            //                if (newIJK[m] > maxDim[m])
+            //                    maxDim[m] = newIJK[m];
+            //                if (newIJK[m] < minDim[m])
+            //                    minDim[m] = newIJK[m];
+            //            }
+            //        }
+            //
+            //var newVoxPerSide = maxDim.subtract(minDim, 3).add(new[] { 1, 1, 1 }, 3);
+            //var minBound = transformationMatrix.multiply(Bounds[0].Append(1).ToArray(), 4, 4);
+            //var maxBound = transformationMatrix.multiply(Bounds[1].Append(1).ToArray(), 4, 4);
+            //var newBound = new[] { minBound, maxBound };
+            //var vs = new VoxelizedSolidDense(newVoxPerSide, Discretization, VoxelSideLength, newBound);
+            //
+            //var xOff = -minDim[0];
+            //var yOff = -minDim[1];
+            //var zOff = -minDim[2];
+            //
+            //var xMax = xOff + maxDim[0];
+            //var yMax = yOff + maxDim[1];
+            //var zMax = zOff + maxDim[2];
+            //
+            //Parallel.For(0, xLim + 1, i =>
+            //{
+            //    for (var j = 0; j <= yLim; j++)
+            //    for (var k = 0; k <= zLim; k++)
+            //    {
+            //        if (Voxels[i, j, k] == 0) continue;
+            //
+            //        var newIJK = transformationMatrix.multiply(new[] {i, j, k, 1}, 4, 4)
+            //            .Select(a => (int) Math.Ceiling(a)).ToArray();
+            //        if (newIJK[0] > xMax || newIJK[1] > yMax || newIJK[2] > zMax)
+            //            throw new NotImplementedException();
+            //
+            //        vs.Voxels[newIJK[0] + xOff, newIJK[1] + yOff, newIJK[2] + zOff] = 1;
+            //    }
+            //});
+            //
+            //return vs;
         }
 
         /// <summary>

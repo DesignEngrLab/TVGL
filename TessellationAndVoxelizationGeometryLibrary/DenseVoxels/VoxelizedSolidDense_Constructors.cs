@@ -41,6 +41,8 @@ namespace TVGL.DenseVoxels
         private readonly double[] Dimensions;
         public double[] Offset => Bounds[0];
         public int Count { get; internal set; }
+        public TessellatedSolid TS { get; }
+
         #endregion
 
         public VoxelizedSolidDense(int[] voxelsPerSide, int discretization, double voxelSideLength,
@@ -98,6 +100,7 @@ namespace TVGL.DenseVoxels
 
         public VoxelizedSolidDense(TessellatedSolid ts, int discretization, IReadOnlyList<double[]> bounds = null)
         {
+            TS = ts;
             Discretization = discretization;
             SolidColor = new Color(Constants.DefaultColor);
             var voxelsOnLongSide = Math.Pow(2, Discretization);
