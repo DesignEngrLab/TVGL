@@ -147,7 +147,7 @@ namespace TVGL.DenseVoxels
             //for (var k = 0; k < VoxelsPerSide[2]; k++)
             {
                 var intersectionPoints = Slice2D.IntersectionPointsAtUniformDistancesAlongX(
-                    slices[k].Select(p => new PolygonLight(p)), Bounds[0][0],
+                    slices[zLim - 1 - k].Select(p => new PolygonLight(p)), Bounds[0][0],
                     VoxelSideLength, xLim); //parallel lines aligned with Y axis
 
                 foreach (var intersections in intersectionPoints)
