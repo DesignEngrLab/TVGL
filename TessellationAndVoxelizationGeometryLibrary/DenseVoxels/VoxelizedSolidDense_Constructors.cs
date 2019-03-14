@@ -27,10 +27,11 @@ using TVGL._2D;
 
 namespace TVGL.DenseVoxels
 {
+    /// <inheritdoc />
     /// <summary>
     /// Class VoxelizedSolidDense.
     /// </summary>
-    public partial class VoxelizedSolidDense
+    public partial class VoxelizedSolidDense : Solid
     {
         #region Properties
         public byte[,,] Voxels;
@@ -38,11 +39,7 @@ namespace TVGL.DenseVoxels
         public readonly int[] VoxelsPerSide;
         public double VoxelSideLength { get; internal set; }
         private readonly double[] Dimensions;
-        public double[][] Bounds { get; protected set; }
         public double[] Offset => Bounds[0];
-        public Color SolidColor { get; set; }
-        public double Volume { get; internal set; }
-        public double SurfaceArea { get; internal set; }
         public int Count { get; internal set; }
         #endregion
 

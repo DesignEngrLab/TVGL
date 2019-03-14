@@ -755,6 +755,8 @@ namespace TVGL
                     model = MakeModelVisual3D((TessellatedSolid)s);
                 else if (s is VoxelizedSolid)
                     model = MakeModelVisual3D((VoxelizedSolid)s);
+                else if (s is VoxelizedSolidDense)
+                    model = MakeModelVisual3D((VoxelizedSolidDense) s);
                 models.Add(model);
                 window.view1.Children.Add(model);
             }

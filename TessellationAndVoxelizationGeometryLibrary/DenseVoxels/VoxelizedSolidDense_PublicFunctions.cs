@@ -10,6 +10,7 @@ using TVGL.Voxelization;
 
 namespace TVGL.DenseVoxels
 {
+    /// <inheritdoc />
     /// <summary>
     /// Class VoxelizedSolidDense.
     /// </summary>
@@ -115,8 +116,24 @@ namespace TVGL.DenseVoxels
         }
         #endregion
 
-        #region Copy
-        public VoxelizedSolidDense Copy()
+        #region Solid Method Overrides (Transforms & Copy)
+        public override void Transform(double[,] transformMatrix)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Solid TransformToNewSolid(double[,] transformationMatrix)
+        {
+            var copy = (VoxelizedSolidDense) Copy();
+            copy.Transform(transformationMatrix);
+            return copy;
+        }
+
+        /// <summary>
+        /// Copies this instance.
+        /// </summary>
+        /// <returns>Solid.</returns>
+        public override Solid Copy()
         {
             return new VoxelizedSolidDense(this);
         }
@@ -151,7 +168,7 @@ namespace TVGL.DenseVoxels
         // A OR B
         public VoxelizedSolidDense UnionToNewSolid(params VoxelizedSolidDense[] solids)
         {
-            var vs = Copy();
+            var vs = (VoxelizedSolidDense)Copy();
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
@@ -200,7 +217,7 @@ namespace TVGL.DenseVoxels
         // A AND (NOT B)
         public VoxelizedSolidDense SubtractToNewSolid(params VoxelizedSolidDense[] subtrahends)
         {
-            var vs = Copy();
+            var vs = (VoxelizedSolidDense)Copy();
             var xLim = VoxelsPerSide[0];
             var yLim = VoxelsPerSide[1];
             var zLim = VoxelsPerSide[2];
@@ -219,7 +236,7 @@ namespace TVGL.DenseVoxels
         #region Draft in VoxelDirection
         public VoxelizedSolidDense DraftToNewSolid(VoxelDirections vd)
         {
-            var vs = Copy();
+            var vs = (VoxelizedSolidDense)Copy();
 
             var draftDir = (int) vd;
             var draftIndex = Math.Abs(draftDir) - 1;
@@ -290,7 +307,7 @@ namespace TVGL.DenseVoxels
         public VoxelizedSolidDense ErodeToNewSolid(VoxelizedSolidDense designedSolid, double[] dir,
             double tLimit = 0, double toolDia = 0, params string[] toolOptions)
         {
-            var copy = Copy();
+            var copy = (VoxelizedSolidDense) Copy();
             copy.ErodeVoxelSolid(designedSolid, dir.normalize(3), tLimit, toolDia, toolOptions);
             copy.UpdateProperties();
             return copy;
@@ -299,7 +316,7 @@ namespace TVGL.DenseVoxels
         public VoxelizedSolidDense ErodeToNewSolid(VoxelizedSolidDense designedSolid, VoxelDirections dir,
             double tLimit = 0, double toolDia = 0, params string[] toolOptions)
         {
-            var copy = Copy();
+            var copy = (VoxelizedSolidDense)Copy();
 
             var tDir = new[] {.0, .0, .0};
             tDir[Math.Abs((int) dir) - 1] = Math.Sign((int) dir);
@@ -462,7 +479,7 @@ namespace TVGL.DenseVoxels
 
                 if (!insidePart && precedes) continue;
                 if (succeeds) return;
-                if (!insidePart && !precedes)
+                if (!insidePart)
                     insidePart = true;
 
                 foreach (var voxCoord in sliceMask)
