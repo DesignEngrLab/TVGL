@@ -398,6 +398,7 @@ namespace TVGL.DenseVoxels
             var zLim = VoxelsPerSide[2];
 
             tLimit = tLimit <= 0 ? VoxelsPerSide.norm2() : tLimit / VoxelSideLength;
+            toolDia = toolDia <= 0 ? 0 : toolDia;
             var mLimit = tLimit + VoxelsPerSide.norm2();
             var mask = CreateProjectionMask(dir, mLimit);
             var starts = GetAllVoxelsOnBoundingSurfaces(dirX, dirY, dirZ, toolDia);
