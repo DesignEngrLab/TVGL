@@ -17,28 +17,28 @@ namespace TVGL.DenseVoxels
     public partial class VoxelizedSolidDense
     {
         #region Getting Neighbors
-        public int[][] GetNeighbors(int i, int j, int k)
+        public bool GetNeighbors(int i, int j, int k, out int[][] neighbors)
         {
-            var neighbors = new int[][] { null, null, null, null, null, null };
+            neighbors = new int[][] { null, null, null, null, null, null };
             if (i + 1 != VoxelsPerSide[0] && Voxels[i + 1, j, k] != 0) neighbors[1] = new[] { i + 1, j, k };
             if (j + 1 != VoxelsPerSide[1] && Voxels[i, j + 1, k] != 0) neighbors[3] = new[] { i, j + 1, k };
             if (k + 1 != VoxelsPerSide[2] && Voxels[i, j, k + 1] != 0) neighbors[5] = new[] { i, j, k + 1 };
             if (i != 0 && Voxels[i - 1, j, k] != 0) neighbors[0] = new[] { i - 1, j, k };
             if (j != 0 && Voxels[i, j - 1, k] != 0) neighbors[2] = new[] { i, j - 1, k };
             if (k != 0 && Voxels[i, j, k - 1] != 0) neighbors[4] = new[] { i, j, k - 1 };
-            return neighbors;
+            return neighbors.Any(a => a is null);
         }
 
-        public int[][] GetNeighbors(int i, int j, int k, int xLim, int yLim, int zLim)
+        public bool GetNeighbors(int i, int j, int k, int xLim, int yLim, int zLim, out int[][] neighbors)
         {
-            var neighbors = new int[][] { null, null, null, null, null, null };
+            neighbors = new int[][] { null, null, null, null, null, null };
             if (i + 1 != xLim && Voxels[i + 1, j, k] != 0) neighbors[1] = new[] { i + 1, j, k };
             if (j + 1 != yLim && Voxels[i, j + 1, k] != 0) neighbors[3] = new[] { i, j + 1, k };
             if (k + 1 != zLim && Voxels[i, j, k + 1] != 0) neighbors[5] = new[] { i, j, k + 1 };
             if (i != 0 && Voxels[i - 1, j, k] != 0) neighbors[0] = new[] { i - 1, j, k };
             if (j != 0 && Voxels[i, j - 1, k] != 0) neighbors[2] = new[] { i, j - 1, k };
             if (k != 0 && Voxels[i, j, k - 1] != 0) neighbors[4] = new[] { i, j, k - 1 };
-            return neighbors;
+            return neighbors.Any(a => a is null);
         }
 
         public int NumNeighbors(int i, int j, int k)

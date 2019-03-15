@@ -955,8 +955,7 @@ namespace TVGL
                     for (var k = 0; k < vs.VoxelsPerSide[2]; k++)
                     {
                         if (vs.Voxels[i, j, k] == 0) continue;
-                        var neighbors = vs.GetNeighbors(i, j, k).ToList();
-                        if (neighbors.All(n => n != null)) continue;
+                        if (!vs.GetNeighbors(i, j, k, out var neighbors)) continue;
 
                         var x = i * s + vs.Bounds[0][0];
                         var y = j * s + vs.Bounds[0][0];
