@@ -55,6 +55,17 @@ namespace TVGL
         {
             return new[] {X - b.X, Y - b.Y};
         }
+
+        //Note: This equality operator CANNOT use references, since this is a struct.
+        public static bool operator ==(PointLight a, PointLight b)
+        {   
+            return a.X.IsPracticallySame(b.X) && a.Y.IsPracticallySame(b.Y);
+        }
+
+        public static bool operator !=(PointLight a, PointLight b)
+        {
+            return !(a == b);
+        }
     }
 
     /// <summary>
