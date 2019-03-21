@@ -36,12 +36,12 @@ namespace TVGL.DenseVoxels
         #region Properties
         public byte[,,] Voxels;
         public readonly int Discretization;
-        public readonly int[] VoxelsPerSide;
+        public int[] VoxelsPerSide;
         public double VoxelSideLength { get; internal set; }
         private readonly double[] Dimensions;
         public double[] Offset => Bounds[0];
         public int Count { get; internal set; }
-        public TessellatedSolid TS { get; }
+        public TessellatedSolid TS { get; set; }
 
         #endregion
 

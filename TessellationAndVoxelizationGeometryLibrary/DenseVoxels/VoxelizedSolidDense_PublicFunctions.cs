@@ -119,7 +119,25 @@ namespace TVGL.DenseVoxels
         #region Solid Method Overrides (Transforms & Copy)
         public override void Transform(double[,] transformMatrix)
         {
-            throw new NotImplementedException();
+            if (TS is null)
+                throw new NotImplementedException();
+            TS = (TessellatedSolid)TS.TransformToNewSolid(transformMatrix);
+
+            var voxelsOnLongSide = Math.Pow(2, Discretization);
+
+            Bounds[0] = TS.Bounds[0];
+            Bounds[1] = TS.Bounds[1];
+            for (var i = 0; i < 3; i++)
+                Dimensions[i] = Bounds[1][i] - Bounds[0][i];
+
+            //var longestSide = Dimensions.Max();
+            VoxelSideLength = Dimensions.Max() / voxelsOnLongSide;
+            VoxelsPerSide = Dimensions.Select(d => (int)Math.Round(d / VoxelSideLength)).ToArray();
+
+            Voxels = new byte[VoxelsPerSide[0], VoxelsPerSide[1], VoxelsPerSide[2]];
+
+            VoxelizeSolid(TS);
+            UpdateProperties();
         }
 
         public override Solid TransformToNewSolid(double[,] transformationMatrix)
@@ -186,7 +204,7 @@ namespace TVGL.DenseVoxels
             //                continue;
             //            }
             //
-            //            var voxels = new HashSet<int[]> {newIJK};
+            //            var voxels = new HashSet<int[]>(new SameCoordinates()) {newIJK};
             //
             //            for (var n = 1; n < 6; n += 2)
             //            //foreach (var neighbor in neighbors)
