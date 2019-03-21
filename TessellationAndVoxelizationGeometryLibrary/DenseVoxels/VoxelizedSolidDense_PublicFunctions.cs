@@ -126,10 +126,126 @@ namespace TVGL.DenseVoxels
         {
             if (TS is null)
                 throw new NotImplementedException();
-            var ts = (TessellatedSolid) TS.TransformToNewSolid(transformationMatrix);
+            var ts = (TessellatedSolid)TS.TransformToNewSolid(transformationMatrix);
             return new VoxelizedSolidDense(ts, Discretization);
 
-            //// This works, but leaves a lot of void space if the solid increases in size
+            //var xLim = VoxelsPerSide[0] - 1;
+            //var yLim = VoxelsPerSide[1] - 1;
+            //var zLim = VoxelsPerSide[2] - 1;
+
+            //var maxDim = new[] { 0, 0, 0 };
+            //var minDim = new[] { xLim, yLim, zLim };
+
+            //for (var i = 0; i <= xLim; i += xLim)
+            //    for (var j = 0; j <= yLim; j += yLim)
+            //        for (var k = 0; k <= zLim; k += zLim)
+            //        {
+            //            var newIJK = transformationMatrix.multiply(new[] { i, j, k, 1 }, 4, 4)
+            //                .Select(a => (int)Math.Round(a)).ToArray();
+            //            for (var m = 0; m < 3; m++)
+            //            {
+            //                if (newIJK[m] > maxDim[m])
+            //                    maxDim[m] = newIJK[m];
+            //                if (newIJK[m] < minDim[m])
+            //                    minDim[m] = newIJK[m];
+            //            }
+            //        }
+
+            //var newVoxPerSide = maxDim.subtract(minDim, 3).add(new[] { 1, 1, 1 }, 3);
+            //var minBound = transformationMatrix.multiply(Bounds[0].Append(1).ToArray(), 4, 4);
+            //var maxBound = transformationMatrix.multiply(Bounds[1].Append(1).ToArray(), 4, 4);
+            //var newBound = new[] { minBound, maxBound };
+            //var vs = new VoxelizedSolidDense(newVoxPerSide, Discretization, VoxelSideLength, newBound);
+
+            //var xOff = -minDim[0];
+            //var yOff = -minDim[1];
+            //var zOff = -minDim[2];
+
+            //var xMax = xOff + maxDim[0];
+            //var yMax = yOff + maxDim[1];
+            //var zMax = zOff + maxDim[2];
+
+            //// This leaves void space if the solid increases in size
+            //// Voxels are transformed 1 to 1, and some new voxels are added when the solid
+            //// is stretched larger
+            //Parallel.For(0, xLim + 1, i =>
+            //{
+            //    for (var j = 0; j <= yLim; j++)
+            //        for (var k = 0; k <= zLim; k++)
+            //        {
+            //            if (Voxels[i, j, k] == 0) continue;
+            //
+            //            var newIJK = transformationMatrix.multiply(new[] { i, j, k, 1 }, 4, 4)
+            //                .Select(a => (int)Math.Ceiling(a)).ToArray();
+            //            if (newIJK[0] > xMax || newIJK[1] > yMax || newIJK[2] > zMax)
+            //                throw new NotImplementedException();
+            //
+            //            if (!GetNeighbors(i, j, k, xLim + 1, yLim + 1, zLim + 1, out var neighbors))
+            //            {
+            //                vs.Voxels[newIJK[0] + xOff, newIJK[1] + yOff, newIJK[2] + zOff] = 1;
+            //                continue;
+            //            }
+            //
+            //            var voxels = new HashSet<int[]> {newIJK};
+            //
+            //            for (var n = 1; n < 6; n += 2)
+            //            //foreach (var neighbor in neighbors)
+            //            {
+            //                var neighbor = neighbors[n];
+            //                if (neighbor is null) continue;
+            //                var nIJK = transformationMatrix
+            //                    .multiply(new[] {neighbor[0], neighbor[1], neighbor[2], 1}, 4, 4)
+            //                    .Select(a => (int) Math.Ceiling(a)).ToArray();
+            //                voxels.Add(nIJK);
+            //
+            //                ///////////////////////////////////////////////////////
+            //                var direction = nIJK.subtract(newIJK, 4);
+            //
+            //                ///////////////////////////////////
+            //                var intersections = new ConcurrentBag<double>();
+            //
+            //                var searchDirs = new List<int>();
+            //                for (var m = 0; m < 3; m++)
+            //                    if (Math.Abs(direction[m]) > 0.001) searchDirs.Add(m);
+            //
+            //                var searchSigns = new[] { 0, 0, 0 };
+            //                foreach (var dir in searchDirs)
+            //                    searchSigns[dir] = Math.Sign(direction[dir]);
+            //
+            //                //foreach (var dir in searchDirs)
+            //                foreach (var dir in searchDirs)
+            //                {
+            //                    var toInt = Math.Max(nIJK[dir], newIJK[dir]);
+            //                    var fromInt = Math.Min(nIJK[dir], newIJK[dir]) + 1;
+            //                    for (var m = fromInt; m < toInt; m++)
+            //                        intersections.Add((m - (newIJK[dir] + .5)) / direction[dir]);
+            //                }
+            //
+            //                var ts = new SortedSet<double>(intersections).ToArray();
+            //                ///////////////////////////////////
+            //                foreach (var t in ts)
+            //                {
+            //                    var cInt = newIJK.add(new[] {0.5, 0.5, 0.5 ,0}).add(direction.multiply(t, 4), 4);
+            //                    for (var m = 0; m < 3; m++) cInt[m] = Math.Round(cInt[m], 5);
+            //                    //voxels.Add(GetNextVoxelCoord(cInt, direction));
+            //                    ////////////////
+            //                    var voxel = new int[4];
+            //                    for (var m = 0; m < 3; m++)
+            //                        if (Math.Sign(direction[m]) == -1)
+            //                            voxel[m] = (int)Math.Ceiling(cInt[m] - 1);
+            //                        else voxel[m] = (int)Math.Floor(cInt[m]);
+            //                    voxels.Add(voxel);
+            //                    ////////////////
+            //                }
+            //                ///////////////////////////////////////////////////////
+            //            }
+            //
+            //            foreach (var vox in voxels)
+            //                vs.Voxels[vox[0] + xOff, vox[1] + yOff, vox[2] + zOff] = 1;
+            //        }
+            //});
+
+            //// This leaves a lot of void space if the solid increases in size
             //// Voxels are transformed 1 to 1, and new voxels are not added when the solid
             //// is stretched larger
             //var xLim = VoxelsPerSide[0] - 1;
@@ -183,7 +299,8 @@ namespace TVGL.DenseVoxels
             //        vs.Voxels[newIJK[0] + xOff, newIJK[1] + yOff, newIJK[2] + zOff] = 1;
             //    }
             //});
-            //
+
+            //vs.UpdateProperties();
             //return vs;
         }
 
