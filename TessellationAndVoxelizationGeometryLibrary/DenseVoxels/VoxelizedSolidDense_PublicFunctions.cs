@@ -367,9 +367,9 @@ namespace TVGL.DenseVoxels
             var bounds1 = new double[2][];
             bounds1[0] = (double[]) Bounds[0].Clone();
             bounds1[1] = (double[]) Bounds[1].Clone();
-            bounds1[1][cutDir] = bounds1[0][cutDir] + (voxelsPerSide1[cutDir] * VoxelSideLength);
-
+            bounds1[1][cutDir] = bounds1[0][cutDir] + voxelsPerSide1[cutDir] * VoxelSideLength;
             var vs1 = new VoxelizedSolidDense(voxels1, Discretization, voxelsPerSide1, VoxelSideLength, bounds1);
+
             var voxelsPerSide2 = VoxelsPerSide.ToArray();
             voxelsPerSide2[cutDir] = VoxelsPerSide[cutDir] - cutBefore;
             var voxels2 = new byte[voxelsPerSide2[0], voxelsPerSide2[1], voxelsPerSide2[2]];
@@ -392,11 +392,38 @@ namespace TVGL.DenseVoxels
             bounds2[0] = (double[])Bounds[0].Clone();
             bounds2[1] = (double[])Bounds[1].Clone();
             bounds2[0][cutDir] = bounds1[1][cutDir];
-
             var vs2 = new VoxelizedSolidDense(voxels2, Discretization, voxelsPerSide2, VoxelSideLength, bounds2);
+
             var cutSign = Math.Sign((int)vd);
             var voxelSolids = cutSign == -1 ? (vs1, vs2) : (vs2, vs1);
             return voxelSolids;
+        }
+
+        // Solid on positive side of flat is in position one of return tuple
+        // Voxels exactly on the plane are assigned to the positive side
+        public (VoxelizedSolidDense, VoxelizedSolidDense) CutSolid(Flat plane)
+        {
+            var vs1 = (VoxelizedSolidDense) Copy();
+            var vs2 = (VoxelizedSolidDense) Copy();
+
+            Parallel.For(0, VoxelsPerSide[0], i =>
+            {
+                for (var j = 0; j < VoxelsPerSide[1]; j++)
+                for (var k = 0; k < VoxelsPerSide[2]; k++)
+                {
+                    var x = Offset[0] + i * VoxelSideLength;
+                    var y = Offset[1] + j * VoxelSideLength;
+                    var z = Offset[2] + k * VoxelSideLength;
+                    var d = MiscFunctions.DistancePointToPlane(new[] {x, y, z}, plane.Normal,
+                        plane.ClosestPointToOrigin);
+                    if (d < 0)
+                        vs1.Voxels[i, j, k] = 0;
+                    else
+                        vs2.Voxels[i, j, k] = 0;
+                }
+            });
+
+            return (vs1, vs2);
         }
         #endregion
 
